@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Base CXX)
+project(Mesh CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
@@ -9,11 +9,12 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
-add_library(WallTreatment
-            EllipticRelaxation.C
+add_library(Mesh
+            Mesh.C
+            Overlap.C
 )
 
-INSTALL(TARGETS WallTreatment
+INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

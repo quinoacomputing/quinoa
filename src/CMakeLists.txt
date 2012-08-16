@@ -4,8 +4,6 @@ project(QUINOA CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
-SET(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Set build type" FORCE)
-
 # Set Quinoa version number: major.minor
 set(QUINOA_MAJOR_VERSION 0)
 set(QUINOA_MINOR_VERSION 1)
