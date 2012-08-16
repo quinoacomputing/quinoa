@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Base CXX)
+project(FEM CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)

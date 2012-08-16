@@ -1,0 +1,235 @@
+#!/bin/bash -eu
+#
+# Automatically compile and install the libraries needed by Quinoa,
+# then build Quinoa itself.
+#
+# Arguments to bash:
+# -e: will exit if any statement returns a non-true return value
+# -u: will exit if we try to use an uninitialised variable
+#
+
+# BUILD_SCRIPT_DIR is the directory in which this script lives
+BUILD_SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+# Use BUILD_SCRIPT_DIR minus "/scripts" as QUINOA checkout root
+QUINOA=${BUILD_SCRIPT_DIR%/scripts}
+# Path where library builds will happen
+TPL_BUILD_DIR=`pwd`/temp
+# Debug mode: true will not clean tarballs's sources in ${TPL_BUILD_DIR}
+DEBUG=false
+# Get list of available platform files
+AVAILABLE_PLATFORMS="$(ls $BUILD_SCRIPT_DIR/platforms)"
+# Set default MAKEFLAGS
+MAKEFLAGS=-s
+
+# trap and cleanup on signals INT, TERM, and EXIT
+trap cleanup INT TERM EXIT
+
+cleanup()
+{
+  # Remove ${TPL_BUILD_DIR} if not DEBUG
+  if [[ $DEBUG == false ]]; then
+    rm -rf ${TPL_BUILD_DIR}
+  fi
+  exit
+}
+
+# Command line arguments help
+help()
+{
+cat<<EOF
+
+Build & install third party libraries and Quinoa
+
+Usage:
+------
+$ $0 -p PLATFORM_FILE [-n PACKAGE] [-f MAKEFLAGS] [-c] [-d]
+
+where:
+  -p PLATFORM_FILE
+     File containing platform and compiler dependent configuration
+     Available platform files in $BUILD_SCRIPT_DIR/platforms:
+EOF
+
+for f in $AVAILABLE_PLATFORMS; do
+  echo -e "\t$f"
+done
+
+cat<<EOF
+
+  -n PACKAGE
+     Do not build PACKAGE
+
+  -f MAKEFLAGS
+     Set makeflags
+
+  -c
+     Only generate CMake config (using PLATFORM_FILE) for Quinoa
+
+  -d
+     Run build script in DEBUG mode
+     Do not cleanup $TPL_BUILD_DIR
+
+Tips:
+-----
+  * Run this script from a directory with fast disk access, e.g.
+
+    $ cd /tmp
+    $ $BUILD_SCRIPT_DIR/build -p linux-gnu
+
+  * Use "-f -j32" for make commands on 32 cores
+
+EOF
+  exit 
+}
+
+# Trap no arguments and echo usage
+if [ $# -eq "0" ]; then
+  help
+  exit 
+fi
+
+# Will contain the bool that shows whether we have the mandatory argument(s)
+REQARG=false
+# Whether to run only a cmake for Quinoa and quit
+QUINOA_CMAKE_ONLY=false
+# Whether to build Quinoa
+BUILDQUINOA=true
+
+# Parse through the list of arguments
+while getopts ":p:n:f:cd" opt
+do
+  case $opt in
+    p) PLATFORM=${OPTARG}
+       source ${BUILD_SCRIPT_DIR}/platforms/$PLATFORM
+       REQARG=true
+       ;;
+    n) case $OPTARG in
+         openmpi)  OPENMPI=false;;
+         quinoa)   BUILDQUINOA=false;;
+       esac
+       ;;
+    f) MAKEFLAGS=${OPTARG}
+       ;;
+    c) QUINOA_CMAKE_ONLY=true
+       BUILDQUINOA=true
+       OPENMPI=false
+       ;;
+    d) DEBUG=true
+       ;;
+    *) help
+       exit
+       ;;
+  esac
+done
+
+# Exit if any of the required arguments is not given
+if [[ $REQARG == false ]]; then
+  help
+  exit
+fi
+
+# Echo configuration
+echo "* Will build:"
+echo "  openmpi           = $OPENMPI"
+if [[ $QUINOA_CMAKE_ONLY == false ]]; then
+echo "  quinoa            = $BUILDQUINOA"
+else
+echo "  quinoa            = $BUILDQUINOA (cmake only)"
+fi
+echo ""
+echo "* Variables:"
+echo "  PLATFORM          = ${PLATFORM}"
+echo "  DEBUG             = $DEBUG"
+echo "  MAKEFLAGS         = ${MAKEFLAGS}"
+echo "  QUINOA_SRC_DIR     = ${QUINOA_SRC_DIR}"
+echo "  TARBALLS_DIR      = ${TARBALLS_DIR}"
+echo "  TPL_BUILD_DIR     = ${TPL_BUILD_DIR}"
+echo "  TPL_INSTALL_DIR   = ${TPL_INSTALL_DIR}"
+echo "  QUINOA_BUILD_DIR   = ${QUINOA_BUILD_DIR}"
+echo "  QUINOA_INSTALL_DIR = ${QUINOA_INSTALL_DIR}"
+echo ""
+echo "* Tarballs:"
+echo "  OPENMPI_FILENAME  = ${OPENMPI_FILENAME}"
+
+# Create ${TPL_BUILD_DIR}
+if [ ! -d ${TPL_BUILD_DIR} ]; then
+  mkdir ${TPL_BUILD_DIR}
+fi
+
+# Warn if $TPL_INSTALL_DIR exists
+if [[ $QUINOA_CMAKE_ONLY == false ]]; then
+  if [ -d ${TPL_INSTALL_DIR} ]; then
+    echo "WARNING: TPL_INSTALL_DIR = "${TPL_INSTALL_DIR}" exists and its contents may be overwritten!"
+    echo -n "Proceed? [y/n] "
+    read ok
+    case "$ok" in
+      y|Y) ;;
+      n|N) exit;;
+      *) echo "Must answer y/n."
+         exit;;
+    esac
+  fi
+fi
+
+# Warn if Quinoa is to be built and $QUINOA_BUILD_DIR or $QUINOA_INSTALL_DIR exists
+if [[ $BUILDQUINOA == true ]]; then
+  if [ -d ${QUINOA_BUILD_DIR} ]; then
+    echo ""
+    echo "WARNING: QUINOA_BUILD_DIR = "${QUINOA_BUILD_DIR}" exists and it will be wiped out!"
+    echo -n "Proceed? [y/n] "
+    read ok
+    case "$ok" in
+      y|Y) ;;
+      n|N) exit;;
+      *) echo "Must answer y/n."
+         exit;;
+    esac
+  fi
+  if [[ $QUINOA_CMAKE_ONLY == false ]]; then
+    if [ -d ${QUINOA_INSTALL_DIR} ]; then
+      echo ""
+      echo "WARNING: QUINOA_INSTALL_DIR = "${QUINOA_INSTALL_DIR}" exists and it will be wiped out!"
+      echo -n "Proceed? [y/n] "
+      read ok
+      case "$ok" in
+        y|Y) ;;
+        n|N) exit;;
+        *) echo "Must answer y/n."
+           exit;;
+      esac
+    fi
+  fi
+fi
+
+# OpenMPI
+if [[ $OPENMPI == true ]]; then
+  echo "------------------------------------------------------------------"
+  echo " OPENMPI: $OPENMPI_FILENAME"
+  echo "------------------------------------------------------------------"
+  cd "${TPL_BUILD_DIR}"
+  tar xzf ${TARBALLS_DIR}/${OPENMPI_FILENAME}
+  cd ${OPENMPI_DIR}
+  ${OPENMPI_CONF_CMD}
+  make $MAKEFLAGS install
+fi
+
+# Quinoa
+if [[ $BUILDQUINOA == true ]]; then
+  echo "------------------------------------------------------------------"
+  echo " QUINOA: $QUINOA_SRC_DIR"
+  echo "------------------------------------------------------------------"
+  rm -rf ${QUINOA_BUILD_DIR}
+  mkdir -p ${QUINOA_BUILD_DIR}
+  cd ${QUINOA_BUILD_DIR}
+  ${QUINOA_CONF_CMD}
+  if [[ $QUINOA_CMAKE_ONLY == false ]]; then
+    make $MAKEFLAGS install
+    # list the executables to see if they exist and with correct date/time
+    echo "------------------------------------------------------------------"
+    echo "-- Now check if the dates are current on all executables ---------"
+    date
+    ls -l ${QUINOA_INSTALL_DIR}/bin
+  fi
+fi
+
+cleanup

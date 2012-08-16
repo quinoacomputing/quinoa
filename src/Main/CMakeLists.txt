@@ -20,7 +20,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
 add_executable(${QUINOA_EXECUTABLE}
-               hydra.C
+               Quinoa.C
 )
 
 target_link_libraries(${QUINOA_EXECUTABLE}

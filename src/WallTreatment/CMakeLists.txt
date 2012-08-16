@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Base CXX)
+project(WallTreatment CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
@@ -9,11 +9,11 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
-add_library(SDE
-            Langevin.C
+add_library(WallTreatment
+            EllipticRelaxation.C
 )
 
-INSTALL(TARGETS SDE
+INSTALL(TARGETS WallTreatment
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development
