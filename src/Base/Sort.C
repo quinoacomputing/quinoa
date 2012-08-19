@@ -1,32 +1,14 @@
-//  ------------------------------------------------------------------------------------------------------------
-//
-//  Copyright 2007 Jozsef Bakosi
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//  ------------------------------------------------------------------------------------------------------------
-//
-//  Functions that do all sorts of sorting and ordering (mainly different versions of quicksort)
-//  for more info see main.cc
-//
+// -----------------------------------------------------------------------------
+// \file    src/Base/Sort.h
+// \author  jbakosi
+// \date    The Aug 14 9:32:00 2012
+// \brief   Shorting functions
+// \note    Copyright 2012 Jozsef Bakosi
+//          All rights reserved.
+// -----------------------------------------------------------------------------
 
-#include <stdio.h>
-#include "sort.h"
-
-
-
-
+#include <cstdio>
+#include "Sort.h"
 
 static void q_sort_i1(int numbers[], int ind[], int left, int right)
 {
@@ -69,19 +51,10 @@ static void q_sort_i1(int numbers[], int ind[], int left, int right)
 
 
 void quickSort_i1(int numbers[], int ind[], int array_size)
-//
 // quicksorts (int)array numbers and drags array ind along
-//
 {
   q_sort_i1(numbers, ind, 0, array_size - 1);
 }
-
-
-
-
-
-
-
 
 static void q_sort_d1(double numbers[], int ind[], int left, int right)
 {
@@ -124,19 +97,10 @@ static void q_sort_d1(double numbers[], int ind[], int left, int right)
 
 
 void quickSort_d1(double numbers[], int ind[], int array_size)
-//
 // quicksorts array numbers and drags array ind along
-//
 {
   q_sort_d1(numbers, ind, 0, array_size - 1);
 }
-
-
-
-
-
-
-
 
 static void q_sort_d3(double numbers[], int ind[], double d1[], double d2[], int left, int right)
 {
@@ -187,10 +151,7 @@ static void q_sort_d3(double numbers[], int ind[], double d1[], double d2[], int
 
 
 void quickSort_d3(double numbers[], int ind[], double d1[], double d2[], int array_size)
-//
 // quicksorts array numbers and drags arrays ind, d1, d2 along
-//
 {
   q_sort_d3(numbers, ind, d1, d2, 0, array_size - 1);
 }
-

@@ -21,9 +21,9 @@
 //  for more info see main.cc
 //
 
-#include <stdio.h>
-#include <math.h>
-#include "matrix3.h"
+#include <cstdio>
+#include <cmath>
+#include "Matrix3.h"
 
 
 static double m2[9], m3[9], m4[9], m5[9];

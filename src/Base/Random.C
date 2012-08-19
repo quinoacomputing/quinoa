@@ -1,35 +1,18 @@
-//  ------------------------------------------------------------------------------------------------------------
-//
-//  Copyright 2007 Jozsef Bakosi
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//  ------------------------------------------------------------------------------------------------------------
-//
-//  Functions dealing with random numbers. For mor info, see main.cc.
-//
-//
+// -----------------------------------------------------------------------------
+// \file    src/Base/Macros.C
+// \author  jbakosi
+// \date    The Aug 14 9:32:00 2012
+// \brief   Utilities for random numbers
+// \note    Copyright 2012 Jozsef Bakosi
+//          All rights reserved.
+// -----------------------------------------------------------------------------
 
-#include <stdio.h>
+#include <cstdio>
 #include "mkl.h"
-#include "macros.h"
-#include "const.h"
-#include "random.h"
-#include "errcheck.inc"
-
-
-
+#include "Macros.h"
+#include "Const.h"
+#include "Random.h"
+#include "RandomErrors.h"
 
 // local data for random number generation in tables
 static int _gchunk, _gremainder;
@@ -40,22 +23,21 @@ static int _uchunk, _uremainder;
 static VSLStreamStatePtr *_ustream;
 #endif
 
-
-
-
-
-void preprng_tables( int ngr, int nthreads, int restarted, int samenthreads,
-                     #ifndef WALLFUNCTIONS
-		     int nur, double **ru,
-		     #endif
-		     double **rg )
-//
-// initializes random number generator streams for parallel generation into tables,
-// allocates memory for random number tables
-//
-// these streams and tables are used to generate a given (fixed) number of
-// given (fixed property) uniform and Gaussian random numbers into tables in parallel
-//
+void preprng_tables(int ngr, int nthreads, int restarted, int samenthreads,
+                    #ifndef WALLFUNCTIONS
+		    int nur, double **ru,
+		    #endif
+		    double **rg)
+// -----------------------------------------------------------------------------
+// Routine: preprng_tables - Initialize random number tables
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
+// Initialize random number generator streams for parallel generation into
+// tables and allocate memory for random number tables.
+// These streams and tables are used to generate a given (fixed) number of
+// given (fixed property) uniform and Gaussian random numbers into tables in
+// parallel.
+// -----------------------------------------------------------------------------
 {
   int k;
   char filename[STRLEN];
@@ -69,12 +51,13 @@ void preprng_tables( int ngr, int nthreads, int restarted, int samenthreads,
          ngr)*sizeof(double)/1024/1024);
   fflush(stdout);
 
-  // allocate memory for array of stream of uniform random numbers for 'nthreads' threads
+  // allocate memory for array of stream of uniform random numbers for
+  // 'nthreads' threads
   #ifndef WALLFUNCTIONS
-  if ( !(_ustream = (VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))) )
+  if(!(_ustream=(VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))))
     ERR("Can't allocate memory!");
   #endif
-  if ( !(_gstream = (VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))) )
+  if(!(_gstream=(VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))))
     ERR("Can't allocate memory!");
 
 
@@ -113,9 +96,8 @@ void preprng_tables( int ngr, int nthreads, int restarted, int samenthreads,
   _gremainder = ngr % nthreads;
 
   // create SkipAheadStream setting for streams
-  if ( restarted && samenthreads )
-    for ( k = 1; k < nthreads; k++ )
-    {
+  if (restarted && samenthreads)
+    for (k=1; k<nthreads; k++) {
       #ifndef WALLFUNCTIONS
       // uniform
       // construct filename for uniform stream used in tables
@@ -133,8 +115,7 @@ void preprng_tables( int ngr, int nthreads, int restarted, int samenthreads,
       CheckVslError( vslSkipAheadStream(_gstream[k], _gchunk) );
     }
   else
-    for ( k = 0; k < nthreads-1; k++ )
-    {
+    for (k=0; k<nthreads-1; k++) {
       #ifndef WALLFUNCTIONS
       // uniform
       CheckVslError( vslCopyStream(&_ustream[k+1], _ustream[k]) );
@@ -145,41 +126,31 @@ void preprng_tables( int ngr, int nthreads, int restarted, int samenthreads,
       CheckVslError( vslSkipAheadStream(_gstream[k+1], _gchunk) );
     }
 
-
   #ifndef WALLFUNCTIONS
   // array to store uniform random numbers
-  if ( !(*ru = (double*)malloc(nur*sizeof(double))) ) ERR("Can't allocate memory!");
+  if (!(*ru=(double*)malloc(nur*sizeof(double)))) ERR("Can't allocate memory!");
   #endif
   // array to store Gaussian random numbers
-  if ( !(*rg = (double*)malloc(ngr*sizeof(double))) ) ERR("Can't allocate memory!");
-
+  if (!(*rg=(double*)malloc(ngr*sizeof(double)))) ERR("Can't allocate memory!");
 
   // initially fill random number tables
-  regenrng_tables( nthreads,
-                   #ifndef WALLFUNCTIONS
-		   *ru,
-		   #endif
-		   *rg );
+  regenrng_tables(nthreads,
+                  #ifndef WALLFUNCTIONS
+                  *ru,
+                  #endif
+                  *rg );
 }
 
-
-
-
-
-
-
-void destroyrng_tables( int nthreads,
-                        #ifndef WALLFUNCTIONS
-			double **ru,
-			#endif
-			double **rg )
-//
-// destroys random number streams and tables
-//
+void destroyrng_tables(int nthreads,
+                       #ifndef WALLFUNCTIONS
+                       double **ru,
+                       #endif
+                       double **rg )
+// -----------------------------------------------------------------------------
+// Routine: destroyrng_tables - Destroy random number streams and tables
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
-  int k;
-
-
   // random number tables
   #ifndef WALLFUNCTIONS
   free( *ru );
@@ -187,8 +158,7 @@ void destroyrng_tables( int nthreads,
   free( *rg );
 
   // destroy streams
-  for ( k = 0; k < nthreads; k++ )
-  {
+  for (int k=0; k<nthreads; k++) {
     #ifndef WALLFUNCTIONS
     CheckVslError( vslDeleteStream(&_ustream[k]) );
     #endif
@@ -200,82 +170,67 @@ void destroyrng_tables( int nthreads,
   free( _ustream );
   #endif
   free( _gstream );
-
 }
 
-
-
-
-
-
-void regenrng_tables( int nthreads,
-                      #ifndef WALLFUNCTIONS
-                      double *ru,
-		      #endif
-		      double *rg )
-//
-// regenerates random numbers in tables in parallel
-//
+void regenrng_tables(int nthreads,
+                     #ifndef WALLFUNCTIONS
+                     double *ru,
+                     #endif
+                     double *rg )
+// -----------------------------------------------------------------------------
+// Routine: regerrng_tables - Regenerate random numbers in tables in parallel
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
-  int k;
-
-
   // standard uniform between [0 and 1)
   #ifndef WALLFUNCTIONS
   #ifdef _OPENMP
   #pragma omp parallel for
   #endif
-  for ( k = 0; k < nthreads; k++ )
-    CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[k], _uchunk, ru+k*_uchunk, 0.0, 1.0) );
+  for (int k=0; k<nthreads; k++)
+    CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[k], _uchunk,
+                                ru+k*_uchunk, 0.0, 1.0) );
   // generate remaining portion
-  CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[0], _uremainder, ru+nthreads*_uchunk, 0.0, 1.0) );
+  CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[0], _uremainder,
+                              ru+nthreads*_uchunk, 0.0, 1.0) );
   #endif
-  
-  
+
   // Gaussian with zero mean and unit variance
   #ifdef _OPENMP
   #pragma omp parallel for
   #endif
-  for ( k = 0; k < nthreads; k++ )
-    CheckVslError( vdRngGaussian(GAUSSIAN_METHOD, _gstream[k], _gchunk, rg+k*_gchunk, 0.0, 1.0) );
+  for (int k=0; k<nthreads; k++)
+    CheckVslError( vdRngGaussian(GAUSSIAN_METHOD, _gstream[k], _gchunk,
+                                 rg+k*_gchunk, 0.0, 1.0) );
   // generate remaining portion
-  CheckVslError( vdRngUniform(GAUSSIAN_METHOD, _gstream[0], _gremainder, rg+nthreads*_gchunk, 0.0, 1.0) );
+  CheckVslError( vdRngUniform(GAUSSIAN_METHOD, _gstream[0], _gremainder,
+                              rg+nthreads*_gchunk, 0.0, 1.0) );
 }
 
-
-
-
-
-
-
-
-void preprng_streams( int nthreads, VSLStreamStatePtr **stream
-                      #ifndef WALLFUNCTIONS
-                      , int restarted, int samenthreads
-		      #endif
-		    )
-//
-// initializes random number generator streams for parallel generation
-//
-// this stream is used to sample a few random numbers at a time
-// with no restrictions on the distribution parameters
-//
-// prepared for parallel execution
-//
+void preprng_streams(int nthreads, VSLStreamStatePtr **stream
+                     #ifndef WALLFUNCTIONS
+                     , int restarted, int samenthreads
+                     #endif
+                     )
+// -----------------------------------------------------------------------------
+// Routine: preprng_streams - Initialize random number generator streams
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
+// These streams are used to sample a few random numbers at a time
+// with no restrictions on the distribution parameters; prepared for parallel
+// execution.
+// -----------------------------------------------------------------------------
 {
-  int k;
   #ifndef WALLFUNCTIONS
   char filename[STRLEN];
   #endif
 
-
   // allocate memory for array of streams for 'nthreads' threads
-  if ( !(*stream = (VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))) )
+  if(!(*stream=(VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))))
     ERR("Can't allocate memory!");
 
   // initialize stream using the leapfrog technique
-  for ( k = 0; k < nthreads; k++ )
-  {
+  for (int k=0; k<nthreads; k++) {
     #ifndef WALLFUNCTIONS
     if ( restarted && samenthreads )
     {
@@ -294,50 +249,34 @@ void preprng_streams( int nthreads, VSLStreamStatePtr **stream
   }
 }
 
-
-
-
-
-
-
 void destroyrng_streams( int nthreads, VSLStreamStatePtr **stream )
-//
-// destroys random number streams
-//
+// -----------------------------------------------------------------------------
+// Routine: destroyrng_streams - Destroy random number streams
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
-  int k;
-
-
   // destroy streams
-  for ( k = 0; k < nthreads; k++ )
+  for (int k=0; k<nthreads; k++)
     CheckVslError( vslDeleteStream(&(*stream)[k]) );
 
   // pointer to stream
   free( *stream );
 }
 
-
-
-
-
-
-
 void saverng_streams( int nthreads
                       #ifndef WALLFUNCTIONS
                       , VSLStreamStatePtr *stream
                       #endif
-                    )
-//
-// saves the state of all random number streams into files for a later restart
-//
+                     )
+// -----------------------------------------------------------------------------
+// Routine: saverng_streams - Save the state of random number streams into files
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
-  int k;
   char filename[STRLEN];
 
-
   // save the state of random number streams into files
-  for ( k = 0; k < nthreads; k++ )
-  {
+  for (int k=0; k<nthreads; k++) {
     #ifndef WALLFUNCTIONS
     // construct filename for uniform stream used in tables
     sprintf( filename, "%s.u.%d", RESTART_FILENAME, k );
