@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <cstdlib>
 
 static void CheckVslError(int num)
 {

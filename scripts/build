@@ -130,26 +130,26 @@ fi
 
 # Echo configuration
 echo "* Will build:"
-echo "  openmpi           = $OPENMPI"
+echo "  openmpi            = $OPENMPI"
 if [[ $QUINOA_CMAKE_ONLY == false ]]; then
-echo "  quinoa            = $BUILDQUINOA"
+echo "  quinoa             = $BUILDQUINOA"
 else
-echo "  quinoa            = $BUILDQUINOA (cmake only)"
+echo "  quinoa             = $BUILDQUINOA (cmake only)"
 fi
 echo ""
 echo "* Variables:"
-echo "  PLATFORM          = ${PLATFORM}"
-echo "  DEBUG             = $DEBUG"
-echo "  MAKEFLAGS         = ${MAKEFLAGS}"
+echo "  PLATFORM           = ${PLATFORM}"
+echo "  DEBUG              = $DEBUG"
+echo "  MAKEFLAGS          = ${MAKEFLAGS}"
 echo "  QUINOA_SRC_DIR     = ${QUINOA_SRC_DIR}"
-echo "  TARBALLS_DIR      = ${TARBALLS_DIR}"
-echo "  TPL_BUILD_DIR     = ${TPL_BUILD_DIR}"
-echo "  TPL_INSTALL_DIR   = ${TPL_INSTALL_DIR}"
+echo "  TARBALLS_DIR       = ${TARBALLS_DIR}"
+echo "  TPL_BUILD_DIR      = ${TPL_BUILD_DIR}"
+echo "  TPL_INSTALL_DIR    = ${TPL_INSTALL_DIR}"
 echo "  QUINOA_BUILD_DIR   = ${QUINOA_BUILD_DIR}"
 echo "  QUINOA_INSTALL_DIR = ${QUINOA_INSTALL_DIR}"
 echo ""
 echo "* Tarballs:"
-echo "  OPENMPI_FILENAME  = ${OPENMPI_FILENAME}"
+echo "  OPENMPI_FILENAME   = ${OPENMPI_FILENAME}"
 
 # Create ${TPL_BUILD_DIR}
 if [ ! -d ${TPL_BUILD_DIR} ]; then
