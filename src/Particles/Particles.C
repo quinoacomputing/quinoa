@@ -1,21 +1,11 @@
-//  ------------------------------------------------------------------------------------------------------------
-//
-//  Copyright 2007 Jozsef Bakosi
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU General Public License for more details.
-//
-//  You should have received a copy of the GNU General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//  ------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// \file    src/Particles/Particles.h
+// \author  jbakosi
+// \date    Thu Aug 14 9:32:00 2012
+// \brief   Functions related to particles in 1D and 2D
+// \note    Copyright 2012 Jozsef Bakosi
+//          All rights reserved.
+// -----------------------------------------------------------------------------
 //
 //  Functions related to Lagrangian particles in 1d and 2d.
 //  
@@ -25,18 +15,17 @@
 //   *  several particle search algorithms for 1d and 2d grids,
 //   *  diagnostic functions,
 //   *  routines for the (re-)generation of dynamically changing linked lists,
-//   *  a function to generate an additional derived data structure (a linked list)
-//      that store 2d elements surrounding nodes of a 2d element (this is used in the
-//      efficient access of memory in the particle search algorithm),
+//   *  a function to generate an additional derived data structure (a linked
+//      list) that store 2d elements surrounding nodes of a 2d element (this is
+//      used in the efficient access of memory in the particle search algorithm),
 //   *  functions to intially generate particles,
-//   *  functions that implement the different restart capabilities (saving/loading of restartfiles),
-//   *  functions that generate additional data structures for the easy access of
-//      stripe-related information (exploiting downstream homogeneity),
-//   *  functions that compute statistics for velocity and scalar (including velocity-conditioned
-//      mean for VCIEM using the projection method of Fox)
-//   
-//  For more info see main.cc.
-//
+//   *  functions that implement the different restart capabilities
+//      (saving/loading of restartfiles),
+//   *  functions that generate additional data structures for the easy access
+//      of stripe-related information (exploiting downstream homogeneity),
+//   *  functions that compute statistics for velocity and scalar (including
+//      velocity-conditioned mean for VCIEM using the projection method of Fox)
+// -----------------------------------------------------------------------------
 
 
 #include <stdlib.h>
