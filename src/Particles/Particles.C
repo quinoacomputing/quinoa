@@ -27,27 +27,23 @@
 //      velocity-conditioned mean for VCIEM using the projection method of Fox)
 // -----------------------------------------------------------------------------
 
-
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <string.h>
-#include <math.h>
+#include <cmath>
 #include "mkl.h"
 #ifdef _OPENMP
 #include "omp.h"
 #endif
-#include "const.h"
-#include "macros.h"
-#include "particles.h"
-#include "sparsemat.h"
-#include "matrix3.h"
-#include "random.h"
-#include "errcheck.inc"
-#include "overlap.h"
-#include "sort.h"
-
-
-
+#include "Const.h"
+#include "Macros.h"
+#include "Particles.h"
+#include "SparseMatrix.h"
+#include "Matrix3.h"
+#include "Random.h"
+#include "RandomErrors.h"
+#include "Overlap.h"
+#include "Sort.h"
 
 static int /*_parid, *_elp;*/ *_npels, *_npeli;
 static double /**_parcoord, *_parvel, *_parfreq, *_parc, *_dist,*/ *_v1e;
@@ -56,26 +52,23 @@ static double *_v2e;
 #endif
 static FILE *restartfile;
 
-
-
-
-
-
-static void assign_initial_stats_from_scratch( int i, int myid, double *parvel, double *parfreq,
-					       VSLStreamStatePtr *stream
-	                                       #ifdef MICROMIXING
-					       , double *parc
-					       #endif
+static void assign_initial_stats_from_scratch(int i, int myid, double *parvel,
+                                              double *parfreq,
+                                              VSLStreamStatePtr *stream
+	                                      #ifdef MICROMIXING
+					      , double *parc
+					      #endif
 					     )
-//
-// assigns initial statistics from scratch to particle i
-// 
+// -----------------------------------------------------------------------------
+// Routine: assign_initial_stats_from_scratch - Assign initial statistics from
+//                                              scratch to particle i
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
   int i3 = i*3;
   double mean, var;
   double cov[9], x[3];
 
-  
   // assign particle velocity with given mean and covariance matrix
   mean = 1.0;
   cov[0] = 0.01/3.0;
@@ -90,9 +83,11 @@ static void assign_initial_stats_from_scratch( int i, int myid, double *parvel, 
   parvel[i3+1] = cov[3]*x[0] + cov[4]*x[1] + cov[5]*x[2];
   parvel[i3+2] = cov[6]*x[0] + cov[7]*x[1] + cov[8]*x[2];
 
-  // assign turbulent frequency: gamma with prescribed mean (1.0) and variance (0.25)
+  // assign turbulent frequency: gamma with prescribed mean (1.0) and
+  // variance (0.25)
   mean = 1.0;  var = 0.25;
-  CheckVslError( vdRngGamma(GAMMA_METHOD, stream[myid], 1, parfreq+i, mean*mean/var, 0.0, var/mean) );
+  CheckVslError( vdRngGamma(GAMMA_METHOD, stream[myid], 1, parfreq+i,
+                 mean*mean/var, 0.0, var/mean) );
 
   #ifdef MICROMIXING
   // assign particle scalar
@@ -100,39 +95,33 @@ static void assign_initial_stats_from_scratch( int i, int myid, double *parvel, 
   #endif
 }
 
-
-
-
-
-
-static void genpar( int e, int i, int myid, int *inpoel, double *parcoord, double *parvel, double *parfreq,
-                    double *coord, double *Ae, VSLStreamStatePtr *stream
-	            #ifdef MICROMIXING
-		    , double *parc
-                    #endif
+static void genpar(int e, int i, int myid, int *inpoel, double *parcoord,
+                   double *parvel, double *parfreq,
+                   double *coord, double *Ae, VSLStreamStatePtr *stream
+	           #ifdef MICROMIXING
+		   , double *parc
+                   #endif
 		  )
-//
-// generates a particle (whose index will be i) into element e
-// 
+// -----------------------------------------------------------------------------
+// Routine: genpar - Generate a particle (whose index will be i) into element e
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
   int success=0, A, B, C;
   double pos[NDIMN], NA;
-
 
   // get node information of element e
   A = inpoel[e*NNODE+0];
   B = inpoel[e*NNODE+1];
   C = inpoel[e*NNODE+2];
 
-  do
-  {
-     // get two uniformly distributed random numers between [0...1)
-     CheckVslError( vdRngUniform(UNIFORM_METHOD, stream[myid], 2, pos, 0.0, 1.0) );
-     
+  do {
+    // get two uniformly distributed random numers between [0...1)
+    CheckVslError(vdRngUniform(UNIFORM_METHOD, stream[myid], 2, pos, 0.0, 1.0));
+
      NA = 1.0-pos[0]-pos[1];	// evaluate local shapefunction of node A
 
-     if ( fmin(NA,1-NA) > 0 )	// if (xp,yp) falls into element, keep it...
-     {
+     if ( fmin(NA,1-NA) > 0 ) {	// if (xp,yp) falls into element, keep it...
         success = 1;		// get out of while cycle
 
         // store global coordinates
@@ -144,49 +133,45 @@ static void genpar( int e, int i, int myid, int *inpoel, double *parcoord, doubl
 			  + pos[1]*coord[C*NDIMN+1];
 
         // assign initial statistics to particle
-        assign_initial_stats_from_scratch( i, myid, parvel, parfreq, stream
-	                                   #ifdef MICROMIXING
-					   , parc
-					   #endif
+        assign_initial_stats_from_scratch(i, myid, parvel, parfreq, stream
+	                                  #ifdef MICROMIXING
+					  , parc
+					  #endif
 					 );
      }
-  } while ( !success );
-
+  } while (!success);
 
   // test if particle i is indeed in element e
-  // (this should not be necessary, however, for some weird reason, I encountered situations
-  // when the generated particle positions would pass the above loop (coming out with
-  // success=1) and the following test still would fail, this is rare, eg. a single particle
-  // among 7M particles and only in parallel and only with the VSL_BRNG_MCG59 generator, using
-  // VSL_BRNG_MCG31 has been okay so far (which is the default), but let's just keep this test
+  // (this should not be necessary, however, for some weird reason, I
+  // encountered situations when the generated particle positions would pass the
+  // above loop (coming out with success=1) and the following test still would
+  // fail, this is rare, eg. a single particle among 7M particles and only in
+  // parallel and only with the VSL_BRNG_MCG59 generator, using VSL_BRNG_MCG31
+  // has been okay so far (which is the default), but let's just keep this test
   // here, it's inexpensive and only done once during initialization anyway)
   double a1, a2;
   if (!PARINEL(i,e,a1,a2,coord,inpoel,parcoord,Ae)) printf("N");
 }
 
-
-
-
-
-
-static int parinelx( int p, int *e, int nelem, int *nexte, double minx, double maxx, int *inpoel, int *esuel,
-                     int *esupel1, int *esupel2, double *coord, double *parcoord, double *Ae,
-		     int cry, int *bf )
-//
-// particle search based on cross-products
-//
+static int parinelx(int p, int *e, int nelem, int *nexte, double minx,
+                    double maxx, int *inpoel, int *esuel, int *esupel1,
+                    int *esupel2, double *coord, double *parcoord, double *Ae,
+		    int cry, int *bf )
+// -----------------------------------------------------------------------------
+// Routine: parinelx - particle search based on cross-products
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 // returns 1 if particle p is in element e, 0 if not
 // increases bf if particle had to be brute-forced (only for diagnostics)
 //
 // if particle not found in element e, in nexte it returns the neighboring
 // element of e in the direction of the particle (ie. the nexte element is
 // the hint to check as next)
-//
+// -----------------------------------------------------------------------------
 {
   int A, B, C, AN, BN, CN, eN, i;
   double NA, NC, xp, yp, a1, a2;
   double x[NNODE], y[NNODE];
-
 
   // get node-, and particle position-information
   eN = (*e)*NNODE;
@@ -228,89 +213,73 @@ static int parinelx( int p, int *e, int nelem, int *nexte, double minx, double m
         *nexte = esuel[eN+2];
     }
 
-    if ( *nexte == -1 )			// we are at the boundary, things are not so cool here,
-    					// so we make sure the particle is found, even with brute-force
-					// if nothing else helps
-    {
+    // if we are at the boundary, things are not so cool there,
+    // so we make sure the particle is found, even with brute-force
+    // if nothing else helps
+    if ( *nexte == -1 ) {
       // look for particle in the elements surrounding the nodes of element e
       for ( i = esupel2[*e]+1; i <= esupel2[(*e)+1]; i++ )
-        if (PARINEL(p,esupel1[i],a1,a2,coord,inpoel,parcoord,Ae))
-	{
-	  *e = esupel1[i];		// now that we will get out as the particle found,
-	  return(1);			// make sure e will contain the element of the particle
+        if (PARINEL(p,esupel1[i],a1,a2,coord,inpoel,parcoord,Ae)) {
+          // now that we will get out as the particle found,
+          // make sure e will contain the element of the particle
+	  *e = esupel1[i];
+	  return(1);
 	}
 
-      // if we got here, the particle still hasn't been found, so fall back to brute-force
+      // if we got here, the particle still hasn't been found,
+      // so fall back to brute-force
       for ( i = 0; i < nelem; i++ )
-        if (PARINEL(p,i,a1,a2,coord,inpoel,parcoord,Ae))
-        {
-          if ( cry && (fabs(xp-minx-0.0001)>EPS) && (fabs(xp-maxx+0.0001)>EPS) )
-            (*bf)++;			// increase number of brute-forced particles
-	  *e = i;			// now that we will get out as the particle found,
-	  return(1);			// make sure e will contain the element of the particle
+        if (PARINEL(p,i,a1,a2,coord,inpoel,parcoord,Ae)) {
+          if (cry && (fabs(xp-minx-0.0001)>EPS) && (fabs(xp-maxx+0.0001)>EPS))
+            (*bf)++;	// increase number of brute-forced particles
+	  *e = i;	// now that we will get out as the particle found,
+	  return(1);	// make sure e will contain the element of the particle
 	}
 
       printf("%d,%d: %g,%g\n",*e,*nexte,xp,yp);
       ERR("Particle not found!");
     }
-    
+
     return(0);
   }
 }
 
-
-
-
-
-
-
-
-
-int findpar( int p, int e, int myid, int nelem, double minx, double maxx, int *npeldt, int *elp,
-             int *inpoel, int *esuel, int *esupel1, int *esupel2, double *coord, double *parcoord,
-             double *Ae, int *bf )
-//
-// finds particle in 2d grid and updates elp, npeldt
-// 
+int findpar(int p, int e, int myid, int nelem, double minx, double maxx,
+            int *npeldt, int *elp, int *inpoel, int *esuel, int *esupel1,
+            int *esupel2, double *coord, double *parcoord, double *Ae, int *bf )
+// -----------------------------------------------------------------------------
+// Routine: findpar - Find particle in 2d grid and update elp, npeldt
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 // this should only be called if particle p hasn't been found in its element
-//
 // p - particle number
 // e - element where the particles has last been seen
-//
 // if particle found, updates elp, npeldt and returns 1, otherwise returns 0
-//
+// -----------------------------------------------------------------------------
 {
   int nexte;
 
-	
-  npeldt[myid*nelem+e]--;		// register leaving particle from element e
+  npeldt[myid*nelem+e]--;	// register leaving particle from element e
   
   // look for particle until it's found
-  while (!(parinelx(p,&e,nelem,&nexte,minx,maxx,inpoel,esuel,esupel1,esupel2,coord,parcoord,Ae,1,bf)))
-  {
-    e = nexte;				// try next best element
+  while (!(parinelx(p, &e, nelem, &nexte, minx, maxx, inpoel, esuel, esupel1,
+                    esupel2, coord, parcoord, Ae, 1, bf))) {
+    e = nexte;                  // try next best element
   }
-  
-  elp[p] = e;				// store new element index
-  npeldt[myid*nelem+e]++;		// register arriving particle in element e
+
+  elp[p] = e;                   // store new element index
+  npeldt[myid*nelem+e]++;       // register arriving particle in element e
 
   return(1);
 }
 
-
-
-
-
-
-
-
 int minnpel( int nelem, int *npel )
-//
-// returns the minimum number of particles / element
-//
+// -----------------------------------------------------------------------------
+// Routine: minnpel - Return the minimum number of particles / element
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
   int e, min;
-
 
   // find minimum number of particles/element
   min = npel[0];
@@ -330,19 +299,14 @@ int minnpel( int nelem, int *npel )
   return( min );
 }
 
-
-
-
-
-
 /* not needed right now
 static int maxnpel( int nelem, int *npel )
-//
-// returns the maxmum number of particles / element
-//
+// -----------------------------------------------------------------------------
+// Routine: minnpel - Return the maxmum number of particles / element
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
   int e, max;
-
 
   // find maximum number of particles/element
   max = npel[0];
@@ -362,68 +326,57 @@ static int maxnpel( int nelem, int *npel )
   return( max );
 }*/
 
-
-
-
-
-
-
-void genpsel( int nelem, int npar, int nthreads, int *npeldt, int *npel, int *elp, int *psel1, int *psel2 )
-//
-// generates psel1, psel2, static npel based on dynamic npeldt and elp,
-//
+void genpsel(int nelem, int npar, int nthreads, int *npeldt, int *npel,
+             int *elp, int *psel1, int *psel2)
+// -----------------------------------------------------------------------------
+// Routine: genpsel - Generate psel1, psel2, static npel based on dynamic
+//                    npeldt and elp,
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {
-
   int e, p, np;
-
 
   // generate psel2
   psel2[0] = -1;
-  for ( e = 0; e < nelem; e++  )		// loop over all elements
-  {
-     for ( np=p=0; p < nthreads; p++ )		// collect changes from all threads
+  for (e=0; e<nelem; e++) {             // loop over all elements
+     for (np=p=0; p < nthreads; p++)    // collect changes from all threads
        np += npeldt[p*nelem+e];
 
-     psel2[e+1] = psel2[e] + np;		// store element index
+     psel2[e+1] = psel2[e] + np;	// store element index
   }
 
-
   // zero static npel
-  ipzero( npel, nelem, nthreads );
+  ipzero(npel, nelem, nthreads);
 
   // generate psel1 and static npel
-  for ( p = 0; p < npar; p++ )		// loop over all particles
-  {
-     e = elp[p];			// get current element number of particle p and
-
-     npel[e]++;				// increase number of particles/element e
-
-     psel1[psel2[e]+npel[e]] = p;	// store particle index in new location of psel1
+  for (p=0; p<npar; p++) {      // loop over all particles
+    e = elp[p];                 // get current element number of particle p and
+    npel[e]++;                  // increase number of particles/element e
+    psel1[psel2[e]+npel[e]] = p;// store particle index in new location of psel1
   }
 }
 
-
-
-
-
-
-static void moveapar( int i, int j, int nelem, int npar, int nthreads, int *npeldt, int *elp, int *npel,
-                      double *parcoord, double *parvel, int *psel1, int *psel2, double *parfreq
-                      #ifdef MICROMIXING
-	              , double *parc
-	              #endif
+static void moveapar(int i, int j, int nelem, int npar, int nthreads,
+                     int *npeldt, int *elp, int *npel, double *parcoord,
+                     double *parvel, int *psel1, int *psel2, double *parfreq
+                     #ifdef MICROMIXING
+	             , double *parc
+	             #endif
 	            )
-//  
-// moves a particle from element i to element j
-//  
+// -----------------------------------------------------------------------------
+// Routine: moveapar - Moves a particle from element i to element j
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
 {   
   int pi, pj;
 
-  
-  pi = psel1[psel2[i+1]];		// get the index of the last particle from element i
-  pj = psel1[psel2[j]+1];		// get a particle from element j (can be any, get the first one)
+  // get the index of the last particle from element i
+  pi = psel1[psel2[i+1]];
+  // get a particle from element j (can be any, get the first one)
+  pj = psel1[psel2[j]+1];
 
-  parcoord[pi*2+0] = parcoord[pj*2+0];  // copy particle pj to pi
+  // copy particle pj to pi
+  parcoord[pi*2+0] = parcoord[pj*2+0];
   parcoord[pi*2+1] = parcoord[pj*2+1];
   parvel[pi*3+0] = parvel[pj*3+0];
   parvel[pi*3+1] = parvel[pj*3+1];
@@ -433,19 +386,13 @@ static void moveapar( int i, int j, int nelem, int npar, int nthreads, int *npel
   parc[pi] = parc[pj];
   #endif
 
-  npeldt[i]--;				// take out particle from element i
-  npeldt[j]++;				// put particle into element j
-  elp[pi] = j;				// store particle's new element number
+  npeldt[i]--;          // take out particle from element i
+  npeldt[j]++;          // put particle into element j
+  elp[pi] = j;          // store particle's new element number
 
-					// update psel, npel
+  // update psel, npel
   genpsel( nelem, npar, nthreads, npeldt, npel, elp, psel1, psel2 );
 }
-
-
-
-
-
-
 
 void improvepar( int nelem, int npar, int nthreads, int *cnt, int *npeldt, int *elp, int *npel,
                  double *parcoord, double *parvel, int *psel1, int *psel2, double *parfreq
