@@ -47,9 +47,11 @@ OPENMPI_CONF_CMD=" \
   ./configure --prefix=${TPL_INSTALL_DIR} \
               --enable-static CC=icc CXX=icpc F77=ifort FC=ifort"
 
+export FC=ifort
+export CC=icc
+export CXX=icpc
 QUINOA_CONF_CMD=" \
   cmake \
-    -D CMAKE_CXX_COMPILER:PATH=icc \
     -D PLATFORM:STRING=$PLATFORM \
     -D CMAKE_INSTALL_PREFIX:PATH=${QUINOA_INSTALL_DIR} \
     -D THIRD_PARTY_PREFIX:PATH=${TPL_INSTALL_DIR} \
