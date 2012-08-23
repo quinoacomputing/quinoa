@@ -20,13 +20,22 @@ set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 # Set build type
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+# Find OpenMP and set its compiler flag
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
 # Grab info about the compiler to stick into the binary
 execute_process(
   COMMAND           ${CMAKE_CXX_COMPILER} "-dumpversion"
   OUTPUT_VARIABLE   CXX_COMPILER_VERSION
 )
 # Remove the newline character at the end
-string(REGEX REPLACE "[\r\n]" "" CXX_COMPILER_VERSION "v${CXX_COMPILER_VERSION}")
+string(REGEX REPLACE "[\r\n]" "" CXX_COMPILER_VERSION
+       "v${CXX_COMPILER_VERSION}")
 # Set compiler string
 set(QUINOA_COMPILER "${CMAKE_CXX_COMPILER} - ${CXX_COMPILER_VERSION}")
 
@@ -52,11 +61,11 @@ configure_file(
   "${PROJECT_BINARY_DIR}/Base/QuinoaConfig.h"
 )
 
-# Set compiler flags
+# Add compiler flags
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-Wall HAS_WALL)
 IF(HAS_WALL)
-  SET(CMAKE_CXX_FLAGS "-Wall" CACHE STRING "Set c++ compiler flags" FORCE)
+  add_definitions("-Wall")
 ENDIF(HAS_WALL)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
@@ -74,7 +83,8 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+     "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 ENDIF("${isSystemDir}" STREQUAL "-1")

@@ -7,6 +7,10 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Particles
+                    ${QUINOA_SOURCE_DIR}/IO
+                    ${QUINOA_SOURCE_DIR}/FEM
+                    ${QUINOA_SOURCE_DIR}/WallTreatment
 )
 
 add_library(SDE

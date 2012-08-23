@@ -7,6 +7,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/LinearAlgebra
 )
 
 add_library(WallTreatment
