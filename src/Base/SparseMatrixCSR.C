@@ -1,13 +1,11 @@
-//******************************************************************************
-/*!
-  \file      src/Base/SparseMatrix.C
-  \author    J. Bakosi
-  \date      Sun 26 Aug 2012 09:20:18 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Sparse matrix definition
-  \details   Sparse matrix base class definition
-*/
-//******************************************************************************
+// -----------------------------------------------------------------------------
+// \file    src/Base/SparseMatrixCSR.C
+// \author  jbakosi
+// \date    The Aug 14 9:32:00 2012
+// \brief   Functions for sparse matrices
+// \note    Copyright 2012 Jozsef Bakosi
+//          All rights reserved.
+// -----------------------------------------------------------------------------
 
 #include <cstdio>
 #include <cstdlib>
@@ -18,25 +16,19 @@
 #include "Macros.h"
 #include "SparseMatrix.h"
 
-using namespace Quinoa;
-
-SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
-//******************************************************************************
-//!\details
-//! Allocates data structures for a size x size sparse symmetric matrix with dof
-//! degrees of freedom, ie. the real size will be (size x dof) x (size x dof)
-//! and symmetric, storing only the upper triangle.
-//!
-//! Also allocates vectors for the conjugate gradients
-//! solve: r, p, z, q, d, u. Also allocates linked lists for level scheduling
-//! for SGS preconditioner.
-//!
-//! \param[in]  size  Size of matrix
-//! \param[in]  dof   Number of degrees of freedom
-//! \param[in]  psup1,psup2  Linked lists storing points surrounding points
-//!
-//! \author    J. Bakosi
-//******************************************************************************
+void create_sparsemat(sparsemat *m, int DOF, int size, int *psup1, int *psup2)
+// -----------------------------------------------------------------------------
+// Routine: create_sparsemat - Initialize sparse matrix
+// Author : J. Bakosi
+// -----------------------------------------------------------------------------
+// Allocates data structures for a size x size sparse symmetric matrix with DOF
+// degrees of freedom, ie. the real size will be (size x DOF) x (size x DOF) and
+// symmetric, storing only the upper triangle, see also header-file for
+// structure definition. Also allocates vectors for the conjugate gradients
+// solve: r, p, z, q, d, u. Also allocates linked lists for level scheduling for
+// SGS preconditioner.
+// -----------------------------------------------------------------------------
+//
 {
   int i, j, k, l, n, e, itmp;
   int *depth;
@@ -45,10 +37,10 @@ SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
   m->size = size;
 
   // put in real size
-  m->rsize = size*dof;
+  m->rsize = size*DOF;
 
   // put in number of unknowns/point
-  m->dof = dof;
+  m->dof = DOF;
 
   // allocate vectors for conjugate gradients solve
   if ( !(m->r = (double*)calloc(m->rsize,sizeof(double))) )
@@ -65,7 +57,7 @@ SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
      ERR("Can't allocate memory!");
 
   // allocate array for row indices
-  if ( !(m->ia = (int*)calloc(size*dof+1,sizeof(int))) )
+  if ( !(m->ia = (int*)calloc(size*DOF+1,sizeof(int))) )
      ERR("Can't allocate memory!");
   // allocate array for for storing the nonzeros in each row
   if ( !(m->rnz = (int*)calloc(size,sizeof(int))) )
@@ -80,11 +72,11 @@ SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
       m->rnz[i]++;
 
     // add up total number of nonzeros
-    m->nnz += m->rnz[i]*dof;
+    m->nnz += m->rnz[i]*DOF;
     
     // fill up rowindex
-    for ( k = 0; k < dof; k++ )
-      m->ia[i*dof+k+1] = m->ia[i*dof+k] + m->rnz[i];
+    for ( k = 0; k < DOF; k++ )
+      m->ia[i*DOF+k+1] = m->ia[i*DOF+k] + m->rnz[i];
   }
 
   // allocate array for nonzero matrix values
@@ -101,13 +93,13 @@ SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
   // fill column indices and compute depths of rows (for level scheduling)
   m->nlev = 0;
   for ( i = 0; i < size; i++ )  // loop over all points
-    for ( k = 0; k < dof; k++ ) // loop over all degrees of freedom in a point
+    for ( k = 0; k < DOF; k++ ) // loop over all degrees of freedom in a point
     {
-      itmp = i*dof+k;
+      itmp = i*DOF+k;
       m->ja[m->ia[itmp]-1] = itmp+1;    // put in column index of main diagonal
       for ( l=0, n=1, j=psup2[i]+1; j <= psup2[i+1]; j++ ) // loop over all points surrounding point i
       {
-	m->ja[m->ia[itmp]-1+(n++)] = e = psup1[j]*dof+k+1; // put in column index of an off-diagonal
+	m->ja[m->ia[itmp]-1+(n++)] = e = psup1[j]*DOF+k+1; // put in column index of an off-diagonal
         if ( (i > psup1[j]) && (depth[e-1] > l) ) // find maximum depth of previous rows needed
 	  l = depth[e-1]; // to compute row i (consider lower triangle)
       }
@@ -117,12 +109,12 @@ SparseMatrix::SparseMatrix(int size, int dof, int *psup1, int *psup2)
 
   // (bubble-)sort column indices
   for ( i = 0; i < size; i++ )  // loop over all points
-    for ( k = 0; k < dof; k++ ) // loop over all degrees of freedom in a point
+    for ( k = 0; k < DOF; k++ ) // loop over all degrees of freedom in a point
       for ( j = psup2[i]+1; j <= psup2[i+1]; j++ ) // loop over all points surrounding point i
          for ( l = 1; l < m->rnz[i]; l++ ) // sort column indices of row i
             for ( e = 0; e < (m->rnz[i]-l); e++ )
-              if ( m->ja[m->ia[i*dof+k]-1+e] > m->ja[m->ia[i*dof+k]+e] )
-	        SWAP(m->ja[m->ia[i*dof+k]-1+e], m->ja[m->ia[i*dof+k]+e], itmp);
+              if ( m->ja[m->ia[i*DOF+k]-1+e] > m->ja[m->ia[i*DOF+k]+e] )
+	        SWAP(m->ja[m->ia[i*DOF+k]-1+e], m->ja[m->ia[i*DOF+k]+e], itmp);
 
   // allocate arrays for linked lists: lev1, lev2
   // lev1: permutation of rows according to consecutive levels
