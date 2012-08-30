@@ -14,6 +14,7 @@ add_library(Base
             Random.C
             Sort.C
             SparseMatrix.C
+            SymCompressedRowMatrix.C
             TimeStepping.C
 )
 
