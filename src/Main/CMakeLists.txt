@@ -32,11 +32,11 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       SDE
                       WallTreatment
                       Base
-                      ${MKL_INTEL_LIBRARY}
-                      ${MKL_INTEL_THREAD_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${PTHREAD_LIBRARY}
-                      ${MATH_LIBRARY}
+#                      ${MKL_INTEL_LIBRARY}
+#                      ${MKL_INTEL_THREAD_LIBRARY}
+#                      ${MKL_CORE_LIBRARY}
+#                      ${PTHREAD_LIBRARY}
+#                      ${MATH_LIBRARY}
 )
 
 INSTALL(TARGETS ${QUINOA_EXECUTABLE}
