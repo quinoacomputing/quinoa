@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SparseMatrix.C
   \author    J. Bakosi
-  \date      Wed 29 Aug 2012 07:29:29 PM MDT
+  \date      Thu 30 Aug 2012 10:54:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix definition
   \details   Sparse matrix base class definition
@@ -22,7 +22,7 @@ using namespace Quinoa;
 
 SparseMatrix::SparseMatrix()
 //******************************************************************************
-//  Function: Constructor
+//  Constructor
 //! \author    J. Bakosi
 //******************************************************************************
 {
@@ -30,7 +30,7 @@ SparseMatrix::SparseMatrix()
 
 SparseMatrix::~SparseMatrix()
 //******************************************************************************
-//  Function: Destructor
+//  Destructor
 //! \author    J. Bakosi
 //******************************************************************************
 {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Wed 29 Aug 2012 07:44:35 PM MDT
+  \date      Thu 30 Aug 2012 10:55:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -26,7 +26,7 @@ using namespace Quinoa;
 SymCompressedRowMatrix::SymCompressedRowMatrix(int size, int dof, int *psup1,
                                                int *psup2)
 //******************************************************************************
-//  Function: Constructor
+//  Constructor
 //! \details
 //! Creates a size x size compressed row sparse matrix with dof degrees of
 //! freedom, ie. the real size will be (size x dof) x (size x dof) and
@@ -119,7 +119,7 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(int size, int dof, int *psup1,
 
 SymCompressedRowMatrix::~SymCompressedRowMatrix()
 //******************************************************************************
-//  Function: Destructor
+//  Destructor
 //! \author    J. Bakosi
 //******************************************************************************
 {
