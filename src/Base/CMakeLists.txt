@@ -10,6 +10,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
 add_library(Base
+            Memory.C
             Matrix3.C
             Random.C
             Sort.C
