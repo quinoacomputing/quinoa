@@ -24,13 +24,13 @@ add_executable(${QUINOA_EXECUTABLE}
 )
 
 target_link_libraries(${QUINOA_EXECUTABLE}
-                      IO
-                      FEM
-                      LinearAlgebra
-                      Particles
-                      Mesh
-                      SDE
-                      WallTreatment
+#                      IO
+#                      FEM
+#                      LinearAlgebra
+#                      Particles
+#                      Mesh
+#                      SDE
+#                      WallTreatment
                       Base
 #                      ${MKL_INTEL_LIBRARY}
 #                      ${MKL_INTEL_THREAD_LIBRARY}
