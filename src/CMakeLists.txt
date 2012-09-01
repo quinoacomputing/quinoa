@@ -21,12 +21,12 @@ set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Find OpenMP and set its compiler flag
-find_package(OpenMP REQUIRED)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
+#find_package(OpenMP REQUIRED)
+#if(OPENMP_FOUND)
+#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#endif()
 
 # Grab info about the compiler to stick into the binary
 execute_process(
@@ -68,6 +68,12 @@ IF(HAS_WALL)
   add_definitions("-Wall")
 ENDIF(HAS_WALL)
 
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
+IF(HAS_CPP11)
+  add_definitions("-std=c++11")
+ENDIF(HAS_CPP11)
+
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -97,14 +103,14 @@ include_directories("${PROJECT_BINARY_DIR}/Base")
 # Infrastructure
 add_subdirectory(Base)
 #add_subdirectory(Control)
-add_subdirectory(FEM)
-add_subdirectory(IO)
-add_subdirectory(LinearAlgebra)
-add_subdirectory(Mesh)
+#add_subdirectory(FEM)
+#add_subdirectory(IO)
+#add_subdirectory(LinearAlgebra)
+#add_subdirectory(Mesh)
 #add_subdirectory(ParseControl)
-add_subdirectory(Particles)
-add_subdirectory(SDE)
-add_subdirectory(WallTreatment)
+#add_subdirectory(Particles)
+#add_subdirectory(SDE)
+#add_subdirectory(WallTreatment)
 #add_subdirectory(ThirdParty/exodiff)
 #add_subdirectory(Utilities/forcenorm)
 #add_subdirectory(Utilities/divset)

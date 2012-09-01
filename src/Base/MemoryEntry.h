@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Thu 30 Aug 2012 11:26:34 PM MDT
+  \date      Sat 01 Sep 2012 03:04:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -14,74 +14,67 @@
 #include <string>
 #include <map>
 
+#include <QuinoaTypes.h>
+
+using namespace std;
+
 namespace Quinoa {
 
 //! Variable types
-enum VariableType { SCALAR_VAR = 0,     //!< Scalar quantity
-                    VECTOR_VAR,         //!< Vector quantity
-                    SYMTENSOR_VAR,      //!< Symmetric tensor quantity
-                    TENSOR_VAR          //!< Tensor quantity
+enum VarType { SCALAR_VAR = 0,     //!< Scalar quantity
+               VECTOR_VAR,         //!< Vector quantity
+               SYMTENSOR_VAR,      //!< Symmetric tensor quantity
+               TENSOR_VAR,         //!< Tensor quantity
+               NUM_VAR_TYPES
 };
-static pair<VariableType, size_t> VariableTypePair[] = {
-  pair<VariableType, size_t>(SCALAR_VAR,      sizeof(double)),
-  pair<VariableType, size_t>(VECTOR_VAR,    3*sizeof(double)),
-  pair<VariableType, size_t>(SYMTENSOR_VAR, 6*sizeof(double)),
-  pair<VariableType, size_t>(TENSOR_VAR,    9*sizeof(double)),
-};
-// Initialize a static const map based on the VariableTypePair array
-static const map<VariableType, size_t>
-  VariableSize(VariableTypePair,
-               VariableTypePair +
-               sizeof(VariableTypePair)/sizeof(VariableTypePair[0]));
 
-//! Memory storage layout for multi-dimensional arrays
-enum StorageLayout { LINEAR_ARRAY = 0,   //!< Linear memory storage
-                     COLUMN_MAJOR_ARRAY, //!< Column-major storage
-                     ROW_MAJOR_ARRAY,    //!< Row-major storage
-                     NUM_MEMORY_LAYOUT
+//! Variable components
+const Int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
+                                   3,  //!< Vector
+                                   6,  //!< Symmetric tensor
+                                   9   //!< Tensor
 };
 
 //! MemoryEntry declaration
+template<class V>
 class MemoryEntry {
 
-  public:
+  //! Befriend class Memory to allow direct manipulation of private fields
+  template<class> friend class Memory;
+
+  private:
     //! Constructor
     MemoryEntry(size_t number,
-                VariableType type,
-                int dim,
+                VarType type,
                 string name,
-                StorageLayout layout,
-                bool plot,
-                bool restart,
-                void* ptr) :
+                Bool plot,
+                Bool restart,
+                V* ptr) :
       m_number(number),
       m_type(type),
-      m_dim(dim),
       m_name(name),
-      m_layout(layout),
       m_plot(plot), 
       m_restart(restart),
       m_ptr(ptr) {}
 
-   //! Destructor
-   ~MemoryEntry() {}
+    //! Destructor: Free allocated memory when leaving scope
+    ~MemoryEntry() {
+      delete [] m_ptr;
+    }
 
-  private:
     //! Don't permit copy operator
     MemoryEntry(const MemoryEntry&);
     //! Don't permit assigment operator
     MemoryEntry& operator=(const MemoryEntry&);
 
-    size_t m_number;            //!< Number of items per dimension
-    VariableType m_type;        //!< Variable type
-    int m_dim;                  //!< Number of dimensions
-    string m_name;              //!< Variable name
-    StorageLayout m_layout;     //!< Memory storage layout
-    bool m_plot;                //!< Variable can be plotted
-    bool m_restart;             //!< Write to restart file
-    void* m_ptr;                //!< Pointer to data
+    size_t m_number;        //!< Number of items
+    VarType m_type;         //!< Variable type (SCALAR_VAR, VECTOR_VAR, etc.)
+    string m_name;          //!< Variable name
+    Bool m_plot;            //!< Variable can be plotted
+    Bool m_restart;         //!< Write to restart file
+    V* m_ptr;               //!< Pointer to data
 };
 
 } // namespace Quinoa
 
-#endif // MemoryEntry.h
+#endif // MemoryEntry_h
