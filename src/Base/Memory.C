@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 03:00:26 PM MDT
+  \date      Sun 02 Sep 2012 06:49:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -26,20 +26,19 @@ Memory::Memory()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_entries = 0;
 }
 
 Memory::~Memory()
 //******************************************************************************
 //  Destructor
-//! \details Free all allocated memory when leaving scope
+//! \details Free all allocated memory when leaving scope (just in case)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  freeAll();
+  freeAllEntries();
 }
 
-Int
+MemoryEntry*
 Memory::newEntry(size_t number,
                  ValueType value,
                  VariableType variable,
@@ -78,21 +77,53 @@ Memory::newEntry(size_t number,
                                        restart,
                                        ptr);
   // Store memory entry
-  m_entry.push_back(entry);
+  pair<MemorySet::iterator,Bool> p = m_entry.insert(entry);
+  cout << p.second << ": " << ptr << endl;
 
-  // Increase total number of memory entries, return id to caller
-  return m_entries++;
+  // Return key to caller
+  return entry;
 }
 
 void
-Memory::freeAll()
+Memory::freeEntry(MemoryEntry* id)
+//******************************************************************************
+//  Deallocate a memory entry
+//! \param[in]  id  ID of the entry to be freed
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Return if entry is already deallocated
+  if (id == 0) return;
+
+  if (m_entry.size()) {
+    // Deallocate memory entry pointed to by m_entry[id]
+    // This also automatically calls MemoryEntry::~MemoryEntry(), which
+    // deallocates the memory pointed to by MemoryEntry::m_ptr
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end()) {
+      delete *it;
+    }
+
+    // Remove MemoryEntry from MemorySet
+    m_entry.erase(id);
+
+    // Zero id, so the caller can also tell that this memory entry has been
+    // deallocated
+    id = 0;
+  }
+}
+
+void
+Memory::freeAllEntries()
 //******************************************************************************
 //  Deallocate all memory entries
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_entries) {
-    do delete m_entry[--m_entries]; while (m_entries);
+  if (m_entry.size()) {
+    for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
+      delete *it;
+    }
     m_entry.clear();
   }
 }
@@ -101,22 +132,26 @@ size_t
 Memory::getBytes()
 //******************************************************************************
 //  Get number of allocated bytes
+//! \details Return the number of bytes allocated in newEntry(). We account for
+//!          the size of the MemoryEntry class and the allocated data pointed to
+//!          by MemoryEntry::m_ptr. We do not account for the overhead of the
+//!          STL container, therefore we will always underestimate the actual
+//!          memory usage, though by only a very small fraction, i.e. <1e-4%
+//!          for memory allocated in the range of MBytes.
 //! \return Number of allocated bytes in the memory store
 //! \author J. Bakosi
 //******************************************************************************
 {
-  typedef vector<MemoryEntry*>::size_type size_type;
+  size_t bytes = 0;
 
-  if (m_entries) {
-    size_t bytes = 0;
-    size_type size = m_entry.size();
-    for (size_type i=0; i<size; i++) {
-      MemoryEntry* e = m_entry[i];
+  if (m_entry.size()) {
+    for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
       bytes += sizeof(MemoryEntry) +
-           e->m_number * VariableComponents[e->m_variable] * SizeOf[e->m_value];
-    }
-    return bytes;
-  } else {
-    return 0;
+                 (*it)->m_number *
+                 VariableComponents[(*it)->m_variable] *
+                 SizeOf[(*it)->m_value];
+     }
   }
+
+  return bytes;
 }
