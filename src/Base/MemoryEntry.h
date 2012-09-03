@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 08:13:55 AM MDT
+  \date      Sun 02 Sep 2012 06:29:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -12,7 +12,6 @@
 #define MemoryEntry_h
 
 #include <string>
-#include <map>
 
 #include <QuinoaTypes.h>
 
