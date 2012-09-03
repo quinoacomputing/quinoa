@@ -2,16 +2,15 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 07:00:11 PM MDT
+  \date      Sun 02 Sep 2012 08:09:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
 */
 //******************************************************************************
 
-#include <string>
-#include <cassert>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
@@ -80,6 +79,13 @@ Memory::newEntry(size_t number,
   pair<MemorySet::iterator,Bool> p = m_entry.insert(entry);
   cout << p.second << ": " << ptr << endl;
 
+  // Map variable name to MemorySet key
+  m_name.emplace(name,entry);
+
+  if (m_entry.size() != m_name.size()) {
+    cout << "Names should be unique!" << endl;
+  }
+
   // Return key to caller
   return entry;
 }
@@ -96,11 +102,13 @@ Memory::freeEntry(MemoryEntry* id)
   if (id == 0) return;
 
   if (m_entry.size()) {
-    // Deallocate memory entry pointed to by m_entry[id]
-    // This also automatically calls MemoryEntry::~MemoryEntry(), which
-    // deallocates the memory pointed to by MemoryEntry::m_ptr
     auto it = m_entry.find(id);
     if (it!=m_entry.end()) {
+      // Remove variable name mapped to MemorySet key
+      m_name.erase((*it)->m_name);
+      // Deallocate memory entry pointed to by m_entry[id]
+      // This also automatically calls MemoryEntry::~MemoryEntry(), which
+      // deallocates the memory pointed to by MemoryEntry::m_ptr
       delete *it;
     }
 
@@ -121,17 +129,37 @@ Memory::freeAllEntries()
 //******************************************************************************
 {
   if (m_entry.size()) {
+    // Deallocate memory entry pointed to by m_entry[*]
+    // This also automatically calls MemoryEntry::~MemoryEntry(), which
+    // deallocates the memory pointed to by MemoryEntry::m_ptr
     for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
       delete *it;
     }
+    // Clear containers
+    m_name.clear();
     m_entry.clear();
   }
+}
+
+MemoryEntry*
+Memory::getID(string name)
+//******************************************************************************
+//  Return the MemorySet key based on the variable name
+//! \return MemorySet key (used as ID)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto it = m_name.find(name);
+  if (it!=m_name.end())
+    return it->second;
+  else
+    return 0;
 }
 
 size_t
 Memory::getBytes()
 //******************************************************************************
-//  Get number of allocated bytes
+//  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
 //!          the size of the MemoryEntry class instances and the allocated data
 //!          pointed to by MemoryEntry::m_ptr. We do not account for the
