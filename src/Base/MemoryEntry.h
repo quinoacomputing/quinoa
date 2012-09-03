@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 06:29:09 PM MDT
+  \date      Sun 02 Sep 2012 11:38:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -20,9 +20,9 @@ using namespace std;
 namespace Quinoa {
 
 //! Value types
-enum ValueType { BOOL_VAL = 0,  //!< Boolean value
-                 INT_VAL,       //!< Integer value
-                 REAL_VAL,      //!< Real value
+enum ValueType { BOOL_VAL=0,        //!< Boolean value
+                 INT_VAL,           //!< Integer value
+                 REAL_VAL,          //!< Real value
                  NUM_VALUE_TYPES
 };
 
@@ -34,7 +34,7 @@ const size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
 
 
 //! Variable types
-enum VariableType { SCALAR_VAR = 0,     //!< Scalar quantity
+enum VariableType { SCALAR_VAR=0,       //!< Scalar quantity
                     VECTOR_VAR,         //!< Vector quantity
                     SYMTENSOR_VAR,      //!< Symmetric tensor quantity
                     TENSOR_VAR,         //!< Tensor quantity

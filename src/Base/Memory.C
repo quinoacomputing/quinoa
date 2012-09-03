@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 08:09:14 PM MDT
+  \date      Sun 02 Sep 2012 11:52:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -117,7 +117,7 @@ Memory::freeEntry(MemoryEntry* id)
 
     // Zero id, so the caller can also tell that this memory entry has been
     // deallocated
-    id = 0;
+    id = const_cast<MemoryEntry*>(UNDEFINED_ENTRY);
   }
 }
 
@@ -139,6 +139,120 @@ Memory::freeAllEntries()
     m_name.clear();
     m_entry.clear();
   }
+}
+
+size_t
+Memory::getNumber(MemoryEntry* id)
+//******************************************************************************
+//  Return the number of items based on the ID
+//! \return Number of items
+//! \author J. Bakosi
+//******************************************************************************
+{
+  size_t number = 0;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      number = (*it)->m_number;
+  }
+
+  return number;
+}
+
+ValueType
+Memory::getValue(MemoryEntry* id)
+//******************************************************************************
+//  Return the value type based on the ID
+//! \return The value type
+//! \author J. Bakosi
+//******************************************************************************
+{
+  ValueType value;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      value = (*it)->m_value;
+  }
+
+  return value;
+}
+
+VariableType
+Memory::getVariable(MemoryEntry* id)
+//******************************************************************************
+//  Return the variable type based on the ID
+//! \return The variable type
+//! \author J. Bakosi
+//******************************************************************************
+{
+  VariableType variable;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      variable = (*it)->m_variable;
+  }
+
+  return variable;
+}
+
+string
+Memory::getName(MemoryEntry* id)
+//******************************************************************************
+//  Return the variable name based on the ID
+//! \return The variable name
+//! \author J. Bakosi
+//******************************************************************************
+{
+  string name;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      name = (*it)->m_name;
+  }
+
+  return name;
+}
+
+Bool
+Memory::getPlot(MemoryEntry* id)
+//******************************************************************************
+//  Return true if the variable can be plotted based on the ID
+//! \return True if the variable can be plotted
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Bool plot;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      plot = (*it)->m_plot;
+  }
+
+  return plot;
+}
+
+Bool
+Memory::getRestart(MemoryEntry* id)
+//******************************************************************************
+//  Return true if the variable is writted to restart file based on the ID
+//! \return True if the variable is written to restart file
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Bool restart;
+
+  if (m_entry.size()) {
+    auto it = m_entry.find(id);
+    if (it!=m_entry.end())
+      restart = (*it)->m_restart;
+  }
+
+  return restart;
 }
 
 MemoryEntry*
