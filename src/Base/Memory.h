@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 08:26:49 PM MDT
+  \date      Sun 02 Sep 2012 11:39:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -21,6 +21,9 @@ namespace Quinoa {
 
 //! Memory store
 class Memory {
+
+  //! Undefined ID (i.e. entry not allocated)
+  const MemoryEntry* UNDEFINED_ENTRY = 0;
 
   //! Memory entries are stored in an STL unordered_set.
   //! The keys of the set are pointers to (dynamically allocated) MemoryEntry
@@ -54,7 +57,25 @@ class Memory {
     //! Deallocate all memory entries
     void freeAllEntries();
 
-    //! Return raw pointer for memory entry,
+    //! Return the number of items based on the ID
+    size_t getNumber(MemoryEntry* id);
+
+    //! Return the value type based on the ID
+    ValueType getValue(MemoryEntry* id);
+
+    //! Return the variable type based on the ID
+    VariableType getVariable(MemoryEntry* id);
+
+    //! Return the variable name based on the ID
+    string getName(MemoryEntry* id);
+
+    //! Return true if the variable can be plotted based on the ID
+    Bool getPlot(MemoryEntry* id);
+
+    //! Return true if the variable is written to restart file based on the ID
+    Bool getRestart(MemoryEntry* id);
+
+    //! Return raw pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) {
       if (id == 0) return 0;

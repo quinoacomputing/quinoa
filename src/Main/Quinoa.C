@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 08:28:57 PM MDT
+  \date      Sun 02 Sep 2012 11:53:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
   Memory store;
 
-  MemoryEntry* e1 = store.newEntry(1000, INT_VAL, SCALAR_VAR, "scalars");
+  MemoryEntry* e1 = store.newEntry(100, INT_VAL, SCALAR_VAR, "scalars");
   MemoryEntry* e2 = store.newEntry(1000, REAL_VAL, VECTOR_VAR, "vectors");
   MemoryEntry* e3 = store.newEntry(1000000, REAL_VAL, TENSOR_VAR, "tensors");
 
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
   cout << "---" << endl;
 
-  cout << store.getPtr<Real>(store.getID("vectors")) << endl;
+  cout << store.getName(e1) << endl;
 
   //store.freeEntry(e1);
   //store.freeEntry(e2);
