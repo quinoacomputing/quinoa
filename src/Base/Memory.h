@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 06:47:13 PM MDT
+  \date      Sun 02 Sep 2012 07:08:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -23,16 +23,19 @@ namespace Quinoa {
 //! Memory store
 class Memory {
 
-  //! Memory entries are stored in an STL unordered_set
+  //! Memory entries are stored in an STL unordered_set.
+  //! The keys of the set are pointers to (dynamically allocated) MemoryEntry
+  //! class instances that store basic metadata on the memory entry allocated.
   //! Compared to O(log n) in standard sets, the cost of searches, insertions,
-  //! and deletions in unordered sets are amortized to O(1).
+  //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
+  //! and deallocating memory entries) is amortized to O(1).
   typedef unordered_set<MemoryEntry*> MemorySet;
 
   public:
     //! Constructor
     Memory();
 
-    //! Destructor: Free all allocated memory when leaving scope
+    //! Destructor
     ~Memory();
 
     //! Allocate memory entry
