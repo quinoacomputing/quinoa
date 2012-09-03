@@ -2,10 +2,10 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 06:49:51 PM MDT
+  \date      Sun 02 Sep 2012 07:00:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Memory (a store for MemoryEntry objects) base class declaration
-  \details   Memory (a store for MemoryEntry objects) base class declaration
+  \brief     Memory (a store for MemoryEntry objects) base class definition
+  \details   Memory (a store for MemoryEntry objects) base class definition
 */
 //******************************************************************************
 
@@ -133,11 +133,11 @@ Memory::getBytes()
 //******************************************************************************
 //  Get number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
-//!          the size of the MemoryEntry class and the allocated data pointed to
-//!          by MemoryEntry::m_ptr. We do not account for the overhead of the
-//!          STL container, therefore we will always underestimate the actual
-//!          memory usage, though by only a very small fraction, i.e. <1e-4%
-//!          for memory allocated in the range of MBytes.
+//!          the size of the MemoryEntry class instances and the allocated data
+//!          pointed to by MemoryEntry::m_ptr. We do not account for the
+//!          overhead of the STL container, therefore we will always
+//!          underestimate the actual memory usage, though by only a very small
+//!          fraction, i.e. <1e-4% for memory allocated in the range of MBytes.
 //! \return Number of allocated bytes in the memory store
 //! \author J. Bakosi
 //******************************************************************************
