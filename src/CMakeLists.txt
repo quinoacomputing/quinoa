@@ -69,10 +69,10 @@ IF(HAS_WALL)
 ENDIF(HAS_WALL)
 
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
-IF(HAS_CPP11)
-  add_definitions("-std=c++11")
-ENDIF(HAS_CPP11)
+check_cxx_compiler_flag(-std=c++0x HAS_CPP0x)
+IF(HAS_CPP0x)
+  add_definitions("-std=c++0x")
+ENDIF(HAS_CPP0x)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree

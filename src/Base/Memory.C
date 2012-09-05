@@ -2,20 +2,21 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 11:52:52 PM MDT
+  \date      Tue 04 Sep 2012 11:28:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
 */
 //******************************************************************************
 
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
 #include <MemoryEntry.h>
 #include <Memory.h>
+#include <MemoryException.h>
 
 using namespace Quinoa;
 
@@ -44,6 +45,7 @@ Memory::newEntry(size_t number,
                  string name,
                  Bool plot,
                  Bool restart)
+        throw(MemoryException)
 //******************************************************************************
 //  Allocate memory entry
 //! \param[in]  number    Number of items to allocate
@@ -64,70 +66,78 @@ Memory::newEntry(size_t number,
   // Compute total number of bytes to be allocated
   size_t nbytes = number * VariableComponents[variable] * SizeOf[value];
 
-  // Allocate memory
-  void* ptr = static_cast<void*>(new char [nbytes]);
+  // Allocate memory and its metadata
+  try {
+    void* ptr = static_cast<void*>(new char [nbytes]);
 
-  // Allocate memory entry
-  MemoryEntry* entry = new MemoryEntry(number,
-                                       value,
-                                       variable,
-                                       name,
-                                       plot,
-                                       restart,
-                                       ptr);
-  // Store memory entry
-  pair<MemorySet::iterator,Bool> p = m_entry.insert(entry);
-  cout << p.second << ": " << ptr << endl;
+    MemoryEntry* entry = new MemoryEntry(number,
+                                         value,
+                                         variable,
+                                         name,
+                                         plot,
+                                         restart,
+                                         ptr);
+    // Store memory entry
+    pair<MemorySet::iterator,Bool> e = m_entry.insert(entry);
+    if (!e.second) throw MemoryException(FATAL, BAD_INSERT);
 
-  // Map variable name to MemorySet key
-  m_name.emplace(name,entry);
+    // Map variable name to MemorySet key
+    pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
+    if (!n.second) throw MemoryException(FATAL, BAD_INSERT);
 
-  if (m_entry.size() != m_name.size()) {
-    cout << "Names should be unique!" << endl;
-  }
+    // Test if name is unique
+    if (m_entry.size() != m_name.size())
+      throw MemoryException(WARNING, BAD_NAME);
 
-  // Return key to caller
-  return entry;
+    // Return key to caller
+    return entry;
+  } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }
 }
 
 void
-Memory::freeEntry(MemoryEntry* id)
+Memory::freeEntry(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Deallocate a memory entry
 //! \param[in]  id  ID of the entry to be freed
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return if entry is already deallocated
-  if (id == 0) return;
+  // Return and throw warning if entry is already deallocated
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end()) {
-      // Remove variable name mapped to MemorySet key
-      m_name.erase((*it)->m_name);
-      // Deallocate memory entry pointed to by m_entry[id]
-      // This also automatically calls MemoryEntry::~MemoryEntry(), which
-      // deallocates the memory pointed to by MemoryEntry::m_ptr
-      delete *it;
-    }
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-    // Remove MemoryEntry from MemorySet
-    m_entry.erase(id);
+  // Find and remove memory entry
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
 
-    // Zero id, so the caller can also tell that this memory entry has been
-    // deallocated
-    id = const_cast<MemoryEntry*>(UNDEFINED_ENTRY);
-  }
+  // Remove variable name mapped to MemorySet key
+  MemoryNames::size_type erased = m_name.erase((*it)->m_name);
+  if (!erased) throw MemoryException(WARNING, NOT_ERASED);
+
+  // Deallocate memory entry pointed to by m_entry[id]
+  // This also automatically calls MemoryEntry::~MemoryEntry(), which
+  // deallocates the memory pointed to by MemoryEntry::m_ptr
+  delete *it;
+
+  // Remove MemoryEntry from MemorySet
+  MemorySet::size_type removed = m_entry.erase(id);
+  if (!removed) throw MemoryException(WARNING, NOT_ERASED);
+
+  // Zero id, so the caller can also tell that this memory entry has been
+  // deallocated
+  id = const_cast<MemoryEntry*>(UNDEFINED_ENTRY);
 }
 
 void
-Memory::freeAllEntries()
+Memory::freeAllEntries() throw(MemoryException)
 //******************************************************************************
 //  Deallocate all memory entries
 //! \author J. Bakosi
 //******************************************************************************
 {
+cout << "!" << endl;
   if (m_entry.size()) {
     // Deallocate memory entry pointed to by m_entry[*]
     // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -142,13 +152,14 @@ Memory::freeAllEntries()
 }
 
 size_t
-Memory::getNumber(MemoryEntry* id)
+Memory::getNumber(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return the number of items based on the ID
 //! \return Number of items
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // TODO: This is not good, need error handling instead!
   size_t number = 0;
 
   if (m_entry.size()) {
@@ -168,7 +179,8 @@ Memory::getValue(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ValueType value;
+  // TODO: This is not good, need error handling instead!
+  ValueType value = BOOL_VAL;
 
   if (m_entry.size()) {
     auto it = m_entry.find(id);
@@ -187,7 +199,8 @@ Memory::getVariable(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  VariableType variable;
+  // TODO: This is not good, need error handling instead!
+  VariableType variable = SCALAR_VAR;
 
   if (m_entry.size()) {
     auto it = m_entry.find(id);
@@ -206,6 +219,7 @@ Memory::getName(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // TODO: This is not good, need error handling instead!
   string name;
 
   if (m_entry.size()) {
@@ -225,7 +239,8 @@ Memory::getPlot(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Bool plot;
+  // TODO: This is not good, need error handling instead!
+  Bool plot = false;
 
   if (m_entry.size()) {
     auto it = m_entry.find(id);
@@ -244,7 +259,8 @@ Memory::getRestart(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Bool restart;
+  // TODO: This is not good, need error handling instead!
+  Bool restart = false;
 
   if (m_entry.size()) {
     auto it = m_entry.find(id);

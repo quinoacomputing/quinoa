@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 11:39:59 PM MDT
+  \date      Tue 04 Sep 2012 11:27:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -16,6 +16,7 @@
 #include <unordered_map>
 
 #include <MemoryEntry.h>
+#include <MemoryException.h>
 
 namespace Quinoa {
 
@@ -49,16 +50,17 @@ class Memory {
                           VariableType variable,
                           string name,
                           Bool plot = false,
-                          Bool restart = false);
+                          Bool restart = false)
+                 throw(MemoryException);
 
     //! Deallocate a memory entry
-    void freeEntry(MemoryEntry* id);
+    void freeEntry(MemoryEntry* id) throw(MemoryException);
 
     //! Deallocate all memory entries
-    void freeAllEntries();
+    void freeAllEntries() throw(MemoryException);
 
     //! Return the number of items based on the ID
-    size_t getNumber(MemoryEntry* id);
+    size_t getNumber(MemoryEntry* id) throw(MemoryException);
 
     //! Return the value type based on the ID
     ValueType getValue(MemoryEntry* id);
