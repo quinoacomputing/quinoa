@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Sun 02 Sep 2012 11:38:22 PM MDT
+  \date      Wed 05 Sep 2012 08:28:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -56,13 +56,15 @@ class MemoryEntry {
 
   private:
     //! Constructor
-    MemoryEntry(size_t number,
+    MemoryEntry(size_t nbytes,
+                size_t number,
                 ValueType value,
                 VariableType variable,
                 string name,
                 Bool plot,
                 Bool restart,
                 void* ptr) :
+      m_nbytes(nbytes),
       m_number(number),
       m_value(value),
       m_variable(variable),
@@ -81,6 +83,7 @@ class MemoryEntry {
     //! Don't permit assigment operator
     MemoryEntry& operator=(const MemoryEntry&);
 
+    size_t m_nbytes;          //!< Size in bytes (number of chars) allocated
     size_t m_number;          //!< Number of items
     ValueType m_value;        //!< Value type (BOOL_VAL, INT_VAL, etc.)
     VariableType m_variable;  //!< Variable type (SCALAR_VAR, VECTOR_VAR, etc.)

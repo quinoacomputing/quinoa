@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu 30 Aug 2012 10:55:08 PM MDT
+  \date      Wed 05 Sep 2012 08:57:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -23,75 +23,75 @@
 
 using namespace Quinoa;
 
-SymCompressedRowMatrix::SymCompressedRowMatrix(int size, int dof, int *psup1,
-                                               int *psup2)
+SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
+                                               string name,
+                                               Int size,
+                                               Int dof,
+                                               Int *psup1,
+                                               Int *psup2) :
+  SparseMatrix(name, size, dof)
 //******************************************************************************
 //  Constructor
-//! \details
-//! Creates a size x size compressed row sparse matrix with dof degrees of
-//! freedom, ie. the real size will be (size x dof) x (size x dof) and
-//! symmetric, storing only the upper triangle.
+//! \details Creates a size x size compressed row sparse matrix with dof degrees
+//!          of freedom, ie. the real size will be (size x dof) x (size x dof)
+//!          and symmetric, storing only the upper triangle.
 //!
-//! \param[in]  size  Size of matrix
-//! \param[in]  dof   Number of degrees of freedom
+//! \param[in]  memory       Pointer to MemoryStore object
+//! \param[in]  size         Size of matrix
+//! \param[in]  dof          Number of degrees of freedom
 //! \param[in]  psup1,psup2  Linked lists storing points surrounding points,
 //!                          i.e. the graph of the nonzero structure
 //!
 //! \author    J. Bakosi
 //******************************************************************************
 {
-  // put in size
-  m_size = size;
-  // put in real size
-  m_rsize = size*dof;
-  // put in number of unknowns/point
-  m_dof = dof;
+  // Allocate array for row indices
+  m_ia = memory->newZeroEntry(size*dof+1, INT_VAL, SCALAR_VAR, name+"_ia");
+  // Get its raw pointer right away
+  Int* ia = memory->getPtr<Int>(m_ia);
 
-  // allocate array for row indices
-  if ( !(m_ia = (int*)calloc(size*dof+1,sizeof(int))) )
-     ERR("Can't allocate memory!");
-  // allocate array for for storing the nonzeros in each row
-  if ( !(m_rnz = (int*)calloc(size,sizeof(int))) )
-     ERR("Can't allocate memory!");
+  // Allocate array for for storing the nonzeros in each row
+  m_rnz = memory->newZeroEntry(size, INT_VAL, SCALAR_VAR, name+"_rnz");
+  // Get its raw pointer right away
+  Int* rnz = memory->getPtr<Int>(m_rnz);
 
   // calculate number of nonzeros in each block row (rnz[]),
   // total number of nonzeros (nnz) and fill row indices (ia[])
   m_nnz = 0;
-  m_ia[0] = 1;
+  ia[0] = 1;
   for (int i=0; i<size; i++) {
     // add up and store nonzeros of row i
     // (only upper triangular part, matrix is symmetric)
-    m_rnz[i] = 1;
+    rnz[i] = 1;
     for ( int j=psup2[i]+1; j<=psup2[i+1]; j++) {
-      m_rnz[i]++;
+      rnz[i]++;
     }
 
     // add up total number of nonzeros
-    m_nnz += m_rnz[i]*dof;
+    m_nnz += rnz[i]*dof;
     
     // fill up rowindex
     for (int k=0; k<dof; k++)
-      m_ia[i*dof+k+1] = m_ia[i*dof+k] + m_rnz[i];
+      ia[i*dof+k+1] = ia[i*dof+k] + rnz[i];
   }
 
   // allocate array for nonzero matrix values
-  if ( !(m_a = (double*)calloc(m_nnz,sizeof(double))) )
-    ERR("Can't allocate memory!");
+  m_a = memory->newZeroEntry(m_nnz, REAL_VAL, SCALAR_VAR, name+"_a");
   // allocate array for column indices
-  if ( !(m_ja = (int*)calloc(m_nnz,sizeof(int))) )
-    ERR("Can't allocate memory!");
+  m_ja = memory->newZeroEntry(m_nnz, INT_VAL, SCALAR_VAR, name+"_ja");
+  Int* ja = memory->getPtr<Int>(m_ja);
 
   // fill column indices
   for (int i=0; i<size; i++) { // loop over all points
     for (int k=0; k<dof; k++) { // loop over all degrees of freedom in a point
       int itmp = i*dof+k;
-      m_ja[m_ia[itmp]-1] = itmp+1;    // put in column index of main diagonal
+      ja[ia[itmp]-1] = itmp+1;    // put in column index of main diagonal
       // loop over all points surrounding point i
       int j = psup2[i]+1;
       for (int n=1; j<=psup2[i+1]; j++) {
         int e = psup1[j]*dof+k+1;
         // put in column index of an off-diagonal
-	m_ja[m_ia[itmp]-1+(n++)] = e;
+	ja[ia[itmp]-1+(n++)] = e;
       }
     }
   }
@@ -104,29 +104,17 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(int size, int dof, int *psup1,
       // loop over all points surrounding point i
       for (int j=psup2[i]+1; j<=psup2[i+1]; j++) {
         // sort column indices of row i
-        for (int l=1; l<m_rnz[i]; l++) {
-          for (int e=0; e<m_rnz[i]-l; e++) {
-            if (m_ja[m_ia[i*dof+k]-1+e] > m_ja[m_ia[i*dof+k]+e]) {
+        for (int l=1; l<rnz[i]; l++) {
+          for (int e=0; e<rnz[i]-l; e++) {
+            if (ja[ia[i*dof+k]-1+e] > ja[ia[i*dof+k]+e]) {
               int itmp;
-	      SWAP(m_ja[m_ia[i*dof+k]-1+e], m_ja[m_ia[i*dof+k]+e], itmp);
+	      SWAP(ja[ia[i*dof+k]-1+e], ja[ia[i*dof+k]+e], itmp);
             }
           }
         }
       }
     }
   }
-}
-
-SymCompressedRowMatrix::~SymCompressedRowMatrix()
-//******************************************************************************
-//  Destructor
-//! \author    J. Bakosi
-//******************************************************************************
-{
-  free( m_ia );
-  free( m_rnz );
-  free( m_a );
-  free( m_ja );
 }
 
 // void destroy_sparsemat(sparsemat *m)
