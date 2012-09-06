@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed Sep  5 17:41:11 2012
+  \date      Wed 05 Sep 2012 08:24:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -52,6 +52,14 @@ class Memory {
                           Bool plot = false,
                           Bool restart = false)
                  throw(MemoryException);
+
+    //! Allocate and zero memory entry
+    MemoryEntry* newZeroEntry(size_t number,
+                              ValueType value,
+                              VariableType variable,
+                              string name,
+                              Bool plot = false,
+                              Bool restart = false);
 
     //! Deallocate a memory entry
     void freeEntry(MemoryEntry* id) throw(MemoryException);

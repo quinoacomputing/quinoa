@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed Sep  5 17:25:34 2012
+  \date      Wed 05 Sep 2012 08:33:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 
 using namespace std;
@@ -70,7 +71,8 @@ Memory::newEntry(size_t number,
   try {
     void* ptr = static_cast<void*>(new char [nbytes]);
 
-    MemoryEntry* entry = new MemoryEntry(number,
+    MemoryEntry* entry = new MemoryEntry(nbytes,
+                                         number,
                                          value,
                                          variable,
                                          name,
@@ -92,6 +94,35 @@ Memory::newEntry(size_t number,
     // Return key to caller
     return entry;
   } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }
+}
+
+MemoryEntry*
+Memory::newZeroEntry(size_t number,
+                     ValueType value,
+                     VariableType variable,
+                     string name,
+                     Bool plot,
+                     Bool restart)
+//******************************************************************************
+//  Allocate and zero memory entry
+//! \param[in]  number    Number of items to allocate
+//! \param[in]  value     Chosen value type (BOOL_VAL, INT_VAL, REAL_VAL, etc.)
+//! \param[in]  variable  Chosen variable type (SCALAR_VAR, VECTOR_VAR, etc.)
+//! \param[in]  name      Given variable name
+//! \param[in]  plot      True if variable can be plotted
+//! \param[in]  restart   True if variable will be written to restart file
+//! \return               ID for the allocated entry
+//! \author     J. Bakosi
+//******************************************************************************
+{
+  // Allocate new entry
+  MemoryEntry* entry = newEntry(number, value, variable, name, plot, restart);
+
+  // Zero new entry
+  memset(getPtr<void>(entry), 0, entry->m_nbytes*sizeof(char));
+
+  // Return key to caller
+  return entry;
 }
 
 void

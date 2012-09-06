@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SparseMatrix.C
   \author    J. Bakosi
-  \date      Thu 30 Aug 2012 10:54:54 PM MDT
+  \date      Wed 05 Sep 2012 08:57:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix definition
   \details   Sparse matrix base class definition
@@ -19,22 +19,6 @@
 #include "SparseMatrix.h"
 
 using namespace Quinoa;
-
-SparseMatrix::SparseMatrix()
-//******************************************************************************
-//  Constructor
-//! \author    J. Bakosi
-//******************************************************************************
-{
-}
-
-SparseMatrix::~SparseMatrix()
-//******************************************************************************
-//  Destructor
-//! \author    J. Bakosi
-//******************************************************************************
-{
-}
 
 // void destroy_sparsemat(sparsemat *m)
 // //
