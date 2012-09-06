@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 11:28:58 PM MDT
+  \date      Wed Sep  5 17:25:34 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -131,13 +131,18 @@ Memory::freeEntry(MemoryEntry* id) throw(MemoryException)
 }
 
 void
-Memory::freeAllEntries() throw(MemoryException)
+Memory::freeAllEntries() throw()
 //******************************************************************************
 //  Deallocate all memory entries
+//! \details This may (and probably will) be called several times. At normal
+//!          leave-of-scope the destructor calls it. The Driver also calls it
+//!          via its destructor. Additionally, the Exception::handleException()
+//!          may also call it (through Driver::finalize()) at any time if a
+//!          FATAL error is encountered. Because of this the test of
+//!          m_entry.size() does not throw an exception.
 //! \author J. Bakosi
 //******************************************************************************
 {
-cout << "!" << endl;
   if (m_entry.size()) {
     // Deallocate memory entry pointed to by m_entry[*]
     // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -159,135 +164,119 @@ Memory::getNumber(MemoryEntry* id) throw(MemoryException)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  size_t number = 0;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      number = (*it)->m_number;
-  }
-
-  return number;
+  // Find memory entry and return its number of variables
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_number;
 }
 
 ValueType
-Memory::getValue(MemoryEntry* id)
+Memory::getValue(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return the value type based on the ID
 //! \return The value type
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  ValueType value = BOOL_VAL;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      value = (*it)->m_value;
-  }
-
-  return value;
+  // Find memory entry and return its value type
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_value;
 }
 
 VariableType
-Memory::getVariable(MemoryEntry* id)
+Memory::getVariable(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return the variable type based on the ID
 //! \return The variable type
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  VariableType variable = SCALAR_VAR;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      variable = (*it)->m_variable;
-  }
-
-  return variable;
+  // Find memory entry and return its value type
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_variable;
 }
 
 string
-Memory::getName(MemoryEntry* id)
+Memory::getName(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return the variable name based on the ID
 //! \return The variable name
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  string name;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      name = (*it)->m_name;
-  }
-
-  return name;
+  // Find memory entry and return its value type
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_name;
 }
 
 Bool
-Memory::getPlot(MemoryEntry* id)
+Memory::getPlot(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
 //! \return True if the variable can be plotted
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  Bool plot = false;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      plot = (*it)->m_plot;
-  }
-
-  return plot;
+  // Find memory entry and return its value type
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_plot;
 }
 
 Bool
-Memory::getRestart(MemoryEntry* id)
+Memory::getRestart(MemoryEntry* id) throw(MemoryException)
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
 //! \return True if the variable is written to restart file
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // TODO: This is not good, need error handling instead!
-  Bool restart = false;
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  if (m_entry.size()) {
-    auto it = m_entry.find(id);
-    if (it!=m_entry.end())
-      restart = (*it)->m_restart;
-  }
-
-  return restart;
+  // Find memory entry and return its value type
+  auto it = m_entry.find(id);
+  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return (*it)->m_restart;
 }
 
 MemoryEntry*
-Memory::getID(string name)
+Memory::getID(string name) throw(MemoryException)
 //******************************************************************************
 //  Return the MemorySet key based on the variable name
 //! \return MemorySet key (used as ID)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if memory store is empty
+  if (!m_name.size()) throw MemoryException(WARNING, EMPTY_STORE);
+
+  // Find memory entry and return its value type
   auto it = m_name.find(name);
-  if (it!=m_name.end())
-    return it->second;
-  else
-    return 0;
+  if (it==m_name.end()) throw MemoryException(WARNING, NOT_FOUND);
+  return it->second;
 }
 
 size_t
-Memory::getBytes()
+Memory::getBytes() throw(MemoryException)
 //******************************************************************************
 //  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
@@ -300,16 +289,14 @@ Memory::getBytes()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+
   size_t bytes = 0;
-
-  if (m_entry.size()) {
-    for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
-      bytes += sizeof(MemoryEntry) +
-                 (*it)->m_number *
-                 VariableComponents[(*it)->m_variable] *
-                 SizeOf[(*it)->m_value];
-     }
+  for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
+    bytes += sizeof(MemoryEntry) +
+               (*it)->m_number * VariableComponents[(*it)->m_variable] *
+               SizeOf[(*it)->m_value];
   }
-
   return bytes;
 }

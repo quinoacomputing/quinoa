@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 11:13:08 PM MDT
+  \date      Wed Sep  5 17:42:12 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     cout << e3ptr << endl;
 
     cout << "---" << endl;
-    cout << memStore.getName(e1) << endl;
+    cout << memStore.getPtr<Int>(memStore.getID("scalars")) << endl;
 
     memStore.freeEntry(e1);
     //memStore.freeEntry(e2);
