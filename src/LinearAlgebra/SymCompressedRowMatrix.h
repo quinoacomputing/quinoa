@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.h
   \author    J. Bakosi
-  \date      Thu Sep  6 15:15:14 2012
+  \date      Thu Sep  6 15:29:11 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix declaration
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -40,6 +40,11 @@ class SymCompressedRowMatrix : SparseMatrix {
     void ins(Int row, Int column, Int i, Real value);
     //! Insert value to matrix in specified position using absolute indexing
     void ins(Int row, Int column, Real value);
+
+    //! Get value from matrix from specified position using relative indexing
+    Real get(Int row, Int column, Int i);
+    //! Get value from matrix from specified position using absolute indexing
+    Real get(Int row, Int column);
 
   private:
     // Don't permit copy or assignment operators

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu Sep  6 15:18:03 2012
+  \date      Thu Sep  6 16:37:06 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -240,143 +240,54 @@ SymCompressedRowMatrix::ins(Int row, Int column, Real value)
   m_pa[m_pia[row]-1+idx] = value;
 }
 
-// double getmr( sparsemat *M, int row, int column, int i )
-// // -----------------------------------------------------------------------------
-// // Routine: getmr - Obtain a value from sparse matrix M from a specified position
-// //                  using relative addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // i :      position in block
-// // returns value from matrix
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx, rmdof;
-// 
-//   rmdof = row * M->dof;
-// 
-//   for (n=0, j=M->ia[rmdof+i]-1; j <= M->ia[rmdof+i+1]-2; j++, n++)
-//     if (column*M->dof+i+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[rmdof+i+1]-1;
-//     }
-// 
-//   return( M->a[M->ia[rmdof+i]-1+idx] );
-// }
-// 
-// double getma( sparsemat *M, int row, int column )
-// // -----------------------------------------------------------------------------
-// // Routine: getma - Obtain a value from sparse matrix M from a specified position
-// //                  using absolute addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // returns value from matrix
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx;
-// 
-//   for (n=0, j=M->ia[row]-1; j <= M->ia[row+1]-2; j++, n++)
-//     if (column+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[row+1]-1;
-//     }
-// 
-//   return( M->a[M->ia[row]-1+idx] );
-// }
-// 
-// void dpzero( double *ptr, int size, int nthreads )
-// // -----------------------------------------------------------------------------
-// // Routine: dpzero - Parallel zero of an array of doubles
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   int i, myid;
-//  
-//   // compute chunk size
-//   i = size / nthreads;
-//   
-//   // zero remaining portion
-//   memset( ptr + nthreads*i, 0, (size % nthreads)*sizeof(double) );
-// 
-//   #ifdef _OPENMP
-//   #pragma omp parallel private(myid)
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     myid = omp_get_thread_num();
-//     #else
-//     myid = 0;
-//     #endif
-//     
-//     // each processor zeros its own portion of the matrix
-//     memset( ptr + myid*i, 0, i*sizeof(double) );
-//   }
-// }
-// 
-// void ipzero( int *ptr, int size, int nthreads )
-// // -----------------------------------------------------------------------------
-// // Routine: ipzero - Parallel zero of an array of integers
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   int i, myid;
-//  
-//   // compute chunk size
-//   i = size / nthreads;
-//   
-//   // zero remaining portion
-//   memset( ptr + nthreads*i, 0, (size % nthreads)*sizeof(int) );
-// 
-//   #ifdef _OPENMP
-//   #pragma omp parallel private(myid)
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     myid = omp_get_thread_num();
-//     #else
-//     myid = 0;
-//     #endif
-//     
-//     // each processor zeros its own portion of the matrix
-//     memset( ptr + myid*i, 0, i*sizeof(int) );
-//   }
-// }
-// 
-// void ipzero_u( int *ptr, int size, int nthreads )
-// // -----------------------------------------------------------------------------
-// // Routine: ipzero_u - Parallel zero of an array of integers,
-// //                     except the portion belonging to CPU 0
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   int i, myid;
-//  
-//   // compute chunk size
-//   i = size / nthreads;
-//   
-//   // zero remaining portion
-//   memset( ptr + nthreads*i, 0, (size % nthreads)*sizeof(int) );
-// 
-//   #ifdef _OPENMP
-//   #pragma omp parallel private(myid)
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     myid = omp_get_thread_num();
-//     #else
-//     myid = 0;
-//     #endif
-//     
-//     // each processor zeros its own portion of the matrix
-//     memset( ptr + myid*i, 0, i*sizeof(int) );
-//   }
-// }
-// 
+Real
+SymCompressedRowMatrix::get(Int row, Int column, Int i)
+//******************************************************************************
+//  Get value from matrix from specified position using relative indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \param[in]  i       relative position in block
+//! \return             matrix value
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+  Int rmdof = row*m_dof;
+
+  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+    if (column*m_dof+i+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[rmdof+i+1]-1;
+    }
+
+  return m_pa[m_pia[rmdof+i]-1+idx];
+}
+
+Real
+SymCompressedRowMatrix::get(Int row, Int column)
+//******************************************************************************
+//  Get value from matrix from specified position using absolute indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \return             matrix value
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+
+  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+    if (column+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[row+1]-1;
+    }
+
+  return m_pa[m_pia[row]-1+idx];
+}
+
 // void printmat_as_stored( sparsemat *M )
 // // -----------------------------------------------------------------------------
 // // Routine: ipzero_u - Print out sparse matrix as stored
