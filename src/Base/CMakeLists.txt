@@ -13,12 +13,9 @@ add_library(Base
             Driver.C
             Exception.C
             MemoryException.C
-            Matrix3.C
             Memory.C
             Random.C
             Sort.C
-            SparseMatrix.C
-            SymCompressedRowMatrix.C
             TimeStepping.C
 )
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.h
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:57:13 PM MDT
+  \date      Thu Sep  6 15:15:14 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix declaration
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -29,17 +29,31 @@ class SymCompressedRowMatrix : SparseMatrix {
                            Int *psup1,
                            Int* psup2);
     //! Destructor
-    ~SymCompressedRowMatrix() {};
+    ~SymCompressedRowMatrix();
+
+    //! Add value to matrix in specified position using relative indexing
+    void add(Int row, Int column, Int i, Real value);
+    //! Add value to matrix in specified position using absolute indexing
+    void add(Int row, Int column, Real value);
+
+    //! Insert value to matrix in specified position using relative indexing
+    void ins(Int row, Int column, Int i, Real value);
+    //! Insert value to matrix in specified position using absolute indexing
+    void ins(Int row, Int column, Real value);
 
   private:
     // Don't permit copy or assignment operators
     SymCompressedRowMatrix(const SymCompressedRowMatrix&);
     SymCompressedRowMatrix& operator=(const SymCompressedRowMatrix&);
 
-    MemoryEntry *m_rnz;  //!< Number of nonzeros of each row, vector size: size
-    MemoryEntry *m_ia;   //!< Row pointers, vector size: size*dof+1
-    MemoryEntry *m_ja;   //!< Column indices, vector size: nnz
-    MemoryEntry *m_a;   //!< Nonzero values, vector size: nnz
+    MemoryEntry* m_rnz;  //!< Number of nonzeros of each row, vector size: size
+    MemoryEntry* m_ia;   //!< Row pointers, vector size: size*dof+1
+    MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
+    MemoryEntry* m_a;    //!< Nonzero values, vector size: nnz
+
+    Int* m_pia;  //!< Data pointer to row indices
+    Int* m_pja;  //!< Data pointer to column indices
+    Real* m_pa;  //!< Data pointer to matrix values
 };
 
 } // namespace Quinoa
