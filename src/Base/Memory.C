@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:33:02 PM MDT
+  \date      Thu Sep  6 16:43:05 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -20,14 +20,6 @@ using namespace std;
 #include <MemoryException.h>
 
 using namespace Quinoa;
-
-Memory::Memory()
-//******************************************************************************
-//  Constructor
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
 
 Memory::~Memory()
 //******************************************************************************
@@ -119,7 +111,7 @@ Memory::newZeroEntry(size_t number,
   MemoryEntry* entry = newEntry(number, value, variable, name, plot, restart);
 
   // Zero new entry
-  memset(getPtr<void>(entry), 0, entry->m_nbytes*sizeof(char));
+  zero(entry);
 
   // Return key to caller
   return entry;
@@ -330,4 +322,38 @@ Memory::getBytes() throw(MemoryException)
                SizeOf[(*it)->m_value];
   }
   return bytes;
+}
+
+void
+Memory::zero(MemoryEntry* id)
+//******************************************************************************
+//  Zero entry using multiple threads
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Get size of value type
+  size_t size = SizeOf[id->m_value];
+
+  // Compute chunk size
+  Int i = id->m_number/m_nthreads;
+
+  // Zero remaining portion
+  memset(static_cast<char*>(id->m_ptr) + m_nthreads*i*size,
+         0,
+         (id->m_number%m_nthreads)*size);
+
+  Int myid;
+  #ifdef _OPENMP
+  #pragma omp parallel private(myid)
+  #endif
+  {
+    #ifdef _OPENMP
+    myid = omp_get_thread_num();
+    #else
+    myid = 0;
+    #endif
+
+    // each processor zeros its own portion
+    memset(static_cast<char*>(id->m_ptr) + myid*i*size, 0, i*size);
+  }
 }

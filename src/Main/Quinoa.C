@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed Sep  5 17:42:12 2012
+  \date      Thu Sep  6 16:40:58 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -21,7 +21,7 @@ using namespace Quinoa;
 
 int main(int argc, char* argv[]) {
 
-  Memory memStore;
+  Memory memStore(1);
   Driver driver(&memStore);
 
   ErrorCode error = NO_ERROR;

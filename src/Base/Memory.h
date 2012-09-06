@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:24:03 PM MDT
+  \date      Thu Sep  6 16:41:18 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -39,7 +39,7 @@ class Memory {
 
   public:
     //! Constructor
-    Memory();
+    Memory(Int nthreads) : m_nthreads(nthreads) {}
 
     //! Destructor
     ~Memory();
@@ -100,11 +100,17 @@ class Memory {
     //! Return the number of allocated bytes
     size_t getBytes() throw(MemoryException);
 
+    //! Zero entry using multiple threads
+    void zero(MemoryEntry* id);
+
   private:
     //! Don't permit copy operator
     Memory(const Memory&);
     //! Don't permit assigment operator
     Memory& operator=(const Memory&);
+
+    //! Local copy of the number of threads
+    Int m_nthreads;
 
     //! Memory entries
     MemorySet m_entry;
