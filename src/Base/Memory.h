@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 11:27:15 PM MDT
+  \date      Wed Sep  5 17:41:11 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -57,42 +57,40 @@ class Memory {
     void freeEntry(MemoryEntry* id) throw(MemoryException);
 
     //! Deallocate all memory entries
-    void freeAllEntries() throw(MemoryException);
+    void freeAllEntries() throw();
 
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* id) throw(MemoryException);
 
     //! Return the value type based on the ID
-    ValueType getValue(MemoryEntry* id);
+    ValueType getValue(MemoryEntry* id) throw(MemoryException);
 
     //! Return the variable type based on the ID
-    VariableType getVariable(MemoryEntry* id);
+    VariableType getVariable(MemoryEntry* id) throw(MemoryException);
 
     //! Return the variable name based on the ID
-    string getName(MemoryEntry* id);
+    string getName(MemoryEntry* id) throw(MemoryException);
 
     //! Return true if the variable can be plotted based on the ID
-    Bool getPlot(MemoryEntry* id);
+    Bool getPlot(MemoryEntry* id) throw(MemoryException);
 
     //! Return true if the variable is written to restart file based on the ID
-    Bool getRestart(MemoryEntry* id);
+    Bool getRestart(MemoryEntry* id) throw(MemoryException);
 
     //! Return raw pointer for memory entry based on ID,
     //! template V specifies return pointer type
-    template<class V> V* getPtr(MemoryEntry* id) {
-      if (id == 0) return 0;
+    template<class V> V* getPtr(MemoryEntry* id) throw(MemoryException) {
+      if (id == 0) throw MemoryException(WARNING, UNDEFINED);
       auto it = m_entry.find(id);
-      if (it!=m_entry.end())
-        return static_cast<V*>((*it)->m_ptr);
-      else
-        return 0;
+      if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+      return static_cast<V*>((*it)->m_ptr);
     }
 
     //! Return the MemorySet key based on the variable name
-    MemoryEntry* getID(string name);
+    MemoryEntry* getID(string name) throw(MemoryException);
 
     //! Return the number of allocated bytes
-    size_t getBytes();
+    size_t getBytes() throw(MemoryException);
 
   private:
     //! Don't permit copy operator
