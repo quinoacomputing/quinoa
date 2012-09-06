@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SparseMatrix.h
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:57:39 PM MDT
+  \date      Thu Sep  6 14:52:10 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix declaration
   \details   Sparse matrix base class declaration
@@ -16,6 +16,7 @@
 using namespace std;
 
 #include <QuinoaTypes.h>
+#include <Memory.h>
 
 namespace Quinoa {
 
@@ -25,13 +26,15 @@ class SparseMatrix {
   public:
     //! Constructor
     SparseMatrix(string name, Int size, Int dof) :
-      m_name(name), m_size(size), m_rsize(size*dof), m_dof(dof) {}
+      m_name(name), m_dof(dof), m_size(size), m_rsize(size*dof) {}
     //! Destructor
     virtual ~SparseMatrix();
 
   protected:
-    string m_name;  //!< Name of the sparse matrix instance
-    Int m_nnz;      //!< Total number of nonzeros
+    Memory *m_memory;  //!< Local copy of the memory store pointer
+    string m_name;     //!< Name of the sparse matrix instance
+    Int m_dof;         //!< Number of degrees of freedom
+    Int m_nnz;         //!< Total number of nonzeros
 
   private:
     //! Don't permit copy operator
@@ -41,7 +44,6 @@ class SparseMatrix {
 
     Int m_size;   //!< Size of matrix: (dof x size) x (dof x size)
     Int m_rsize;  //!< Width of matrix: dof x size
-    Int m_dof;    //!< Number of degrees of freedom
 };
 
 // Free memory allocated for data structures of sparse matrix

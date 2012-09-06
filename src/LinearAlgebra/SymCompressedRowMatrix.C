@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:57:21 PM MDT
+  \date      Thu Sep  6 15:18:03 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -45,20 +45,23 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
 //! \author    J. Bakosi
 //******************************************************************************
 {
-  // Allocate array for row indices
-  m_ia = memory->newZeroEntry(size*dof+1, INT_VAL, SCALAR_VAR, name+"_ia");
-  // Get its raw pointer right away
-  Int* ia = memory->getPtr<Int>(m_ia);
+  // Store memory store pointer
+  m_memory = memory;
 
   // Allocate array for for storing the nonzeros in each row
   m_rnz = memory->newZeroEntry(size, INT_VAL, SCALAR_VAR, name+"_rnz");
   // Get its raw pointer right away
   Int* rnz = memory->getPtr<Int>(m_rnz);
 
+  // Allocate array for row indices
+  m_ia = memory->newZeroEntry(size*dof+1, INT_VAL, SCALAR_VAR, name+"_ia");
+  // Get and store its raw pointer right away
+  m_pia = memory->getPtr<Int>(m_ia);
+
   // calculate number of nonzeros in each block row (rnz[]),
-  // total number of nonzeros (nnz) and fill row indices (ia[])
+  // total number of nonzeros (nnz) and fill row indices (m_pia[])
   m_nnz = 0;
-  ia[0] = 1;
+  m_pia[0] = 1;
   for (int i=0; i<size; i++) {
     // add up and store nonzeros of row i
     // (only upper triangular part, matrix is symmetric)
@@ -72,31 +75,35 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
     
     // fill up rowindex
     for (int k=0; k<dof; k++)
-      ia[i*dof+k+1] = ia[i*dof+k] + rnz[i];
+      m_pia[i*dof+k+1] = m_pia[i*dof+k] + rnz[i];
   }
 
-  // allocate array for nonzero matrix values
-  m_a = memory->newZeroEntry(m_nnz, REAL_VAL, SCALAR_VAR, name+"_a");
-  // allocate array for column indices
+  // Allocate array for column indices
   m_ja = memory->newZeroEntry(m_nnz, INT_VAL, SCALAR_VAR, name+"_ja");
-  Int* ja = memory->getPtr<Int>(m_ja);
+  // Get and store its raw pointer right away
+  m_pja = memory->getPtr<Int>(m_ja);
 
-  // fill column indices
+  // Allocate array for nonzero matrix values
+  m_a = memory->newZeroEntry(m_nnz, REAL_VAL, SCALAR_VAR, name+"_a");
+  // Get and store its raw pointer right away
+  m_pa = m_memory->getPtr<Real>(m_a);
+
+  // Fill column indices
   for (int i=0; i<size; i++) { // loop over all points
     for (int k=0; k<dof; k++) { // loop over all degrees of freedom in a point
       int itmp = i*dof+k;
-      ja[ia[itmp]-1] = itmp+1;    // put in column index of main diagonal
+      m_pja[m_pia[itmp]-1] = itmp+1;    // put in column index of main diagonal
       // loop over all points surrounding point i
       int j = psup2[i]+1;
       for (int n=1; j<=psup2[i+1]; j++) {
         int e = psup1[j]*dof+k+1;
         // put in column index of an off-diagonal
-	ja[ia[itmp]-1+(n++)] = e;
+	m_pja[m_pia[itmp]-1+(n++)] = e;
       }
     }
   }
 
-  // (bubble-)sort column indices
+  // (bubble-)Sort column indices
   // loop over all points
   for (int i=0; i<size; i++) {
     // loop over all degrees of freedom in a point
@@ -106,9 +113,9 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
         // sort column indices of row i
         for (int l=1; l<rnz[i]; l++) {
           for (int e=0; e<rnz[i]-l; e++) {
-            if (ja[ia[i*dof+k]-1+e] > ja[ia[i*dof+k]+e]) {
+            if (m_pja[m_pia[i*dof+k]-1+e] > m_pja[m_pia[i*dof+k]+e]) {
               int itmp;
-	      SWAP(ja[ia[i*dof+k]-1+e], ja[ia[i*dof+k]+e], itmp);
+	      SWAP(m_pja[m_pia[i*dof+k]-1+e], m_pja[m_pia[i*dof+k]+e], itmp);
             }
           }
         }
@@ -117,125 +124,122 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   }
 }
 
-// void destroy_sparsemat(sparsemat *m)
-// //
-// // frees memory allocated for data structures of sparse matrix m
-// //
-// {
-//   free( m->r );
-//   free( m->p );
-//   free( m->z );
-//   free( m->q );
-//   free( m->d );
-//   free( m->u );
-//   free( m->lev1 );
-//   free( m->lev2 );
-// }
-// 
-// void addmr(sparsemat *M, int row, int column, int i, double value)
-// // -----------------------------------------------------------------------------
-// // Routine: addmr - Add a value to sparse matrix M into a specified position
-// //                  using relative addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // i :      position in block
-// // value :  value to add
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx, rmdof;
-// 
-//   rmdof = row * M->dof;
-// 
-//   for (n=0, j=M->ia[rmdof+i]-1; j <= M->ia[rmdof+i+1]-2; j++, n++)
-//     if (column*M->dof+i+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[rmdof+i+1]-1;
-//     }
-// 
-//   #ifdef _OPENMP
-//   #pragma omp atomic
-//   #endif
-//   M->a[M->ia[rmdof+i]-1+idx] += value;
-// }
-// 
-// void insmr(sparsemat *M, int row, int column, int i, double value)
-// // -----------------------------------------------------------------------------
-// // Routine: insmr - Insert a value to sparse matrix M into a specified position
-// //                  using relative addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // i :      position in block
-// // value :  value to insert
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx, rmdof;
-// 
-//   rmdof = row * M->dof;
-//   
-//   for (n=0, j=M->ia[rmdof+i]-1; j <= M->ia[rmdof+i+1]-2; j++, n++)
-//     if (column*M->dof+i+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[rmdof+i+1]-1;
-//     }
-// 
-//   M->a[M->ia[rmdof+i]-1+idx] = value;
-// }
-// 
-// void addma(sparsemat *M, int row, int column, double value)
-// // -----------------------------------------------------------------------------
-// // Routine: addma - Add a value to sparse matrix M into a specified position
-// //                  using absolute addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // value :  value to add
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx;
-// 
-//   for (n=0, j=M->ia[row]-1; j <= M->ia[row+1]-2; j++, n++)
-//     if (column+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[row+1]-1;
-//     }
-// 
-//   #ifdef _OPENMP
-//   #pragma omp atomic
-//   #endif
-//   M->a[M->ia[row]-1+idx] += value;
-// }
-// 
-// void insma(sparsemat *M, int row, int column, double value)
-// // -----------------------------------------------------------------------------
-// // Routine: insma - Insert a value to sparse matrix M into a specified position
-// //                  using absolute addressing
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // row :    block row
-// // column : block column
-// // value :  value to insert
-// // -----------------------------------------------------------------------------
-// {
-//   int n, j, idx;
-// 
-//   for (n=0, j=M->ia[row]-1; j <= M->ia[row+1]-2; j++, n++)
-//     if (column+1 == M->ja[j])
-//     {
-//       idx = n;
-//       j = M->ia[row+1]-1;
-//     }
-// 
-//   M->a[M->ia[row]-1+idx] = value;
-// }
-// 
+SymCompressedRowMatrix::~SymCompressedRowMatrix()
+//******************************************************************************
+//  Destructor
+//! \details Free all memory allocated by SymCompressedRowMatrix in the
+//!          constructor when leaving scope
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_memory->freeEntry(m_rnz);
+  m_memory->freeEntry(m_ia);
+  m_memory->freeEntry(m_ja);
+  m_memory->freeEntry(m_a);
+}
+
+void
+SymCompressedRowMatrix::add(Int row, Int column, Int i, Real value)
+//******************************************************************************
+//  Add value to matrix in specified position using relative indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \param[in]  i       relative position in block
+//! \param[in]  value   value to add
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+  Int rmdof = row*m_dof;
+
+  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+    if (column*m_dof+i+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[rmdof+i+1]-1;
+    }
+
+  #ifdef _OPENMP
+  #pragma omp atomic
+  #endif
+  m_pa[m_pia[rmdof+i]-1+idx] += value;
+}
+
+void
+SymCompressedRowMatrix::add(Int row, Int column, Real value)
+//******************************************************************************
+//  Add value to matrix in specified position using absolute indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \param[in]  value   value to add
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+
+  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+    if (column+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[row+1]-1;
+    }
+
+  #ifdef _OPENMP
+  #pragma omp atomic
+  #endif
+  m_pa[m_pia[row]-1+idx] += value;
+}
+
+void
+SymCompressedRowMatrix::ins(Int row, Int column, Int i, Real value)
+//******************************************************************************
+//  Insert value to matrix in specified position using relative indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \param[in]  i       relative position in block
+//! \param[in]  value   value to add
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+  Int rmdof = row*m_dof;
+  
+  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+    if (column*m_dof+i+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[rmdof+i+1]-1;
+    }
+
+  m_pa[m_pia[rmdof+i]-1+idx] = value;
+}
+
+void
+SymCompressedRowMatrix::ins(Int row, Int column, Real value)
+//******************************************************************************
+//  Insert value to matrix in specified position using absolute indexing
+//!
+//! \param[in]  row     block row
+//! \param[in]  column  block column
+//! \param[in]  value   value to add
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int idx;
+
+  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+    if (column+1 == m_pja[j]) {
+      idx = n;
+      j = m_pia[row+1]-1;
+    }
+
+  m_pa[m_pia[row]-1+idx] = value;
+}
+
 // double getmr( sparsemat *M, int row, int column, int i )
 // // -----------------------------------------------------------------------------
 // // Routine: getmr - Obtain a value from sparse matrix M from a specified position
