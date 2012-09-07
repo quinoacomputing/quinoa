@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 07:17:19 PM MDT
+  \date      Thu 06 Sep 2012 08:57:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix declaration
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -46,6 +46,18 @@ class SymCompressedRowMatrix : SparseMatrix {
     //! Get value from matrix from specified position using absolute indexing
     Real get(Int row, Int column);
 
+    //! Print out matrix entries as stored
+    void echoAsStored(ostream& ofs);
+
+    //! Print out nonzero structure of matrix
+    void echoNonzeroStructure(ostream& ofs);
+
+    //! Print out matrix as a real matrix
+    void echoAsMatrix(ostream& ofs);
+
+    //! Print out matrix as a matlab matrix
+    void echoAsMatlab(ostream& ofs);
+
   private:
     // Don't permit copy or assignment operators
     SymCompressedRowMatrix(const SymCompressedRowMatrix&);
@@ -62,4 +74,4 @@ class SymCompressedRowMatrix : SparseMatrix {
 
 } // namespace Quinoa
 
-#endif // SymCompressedRowMatrix.h
+#endif // SymCompressedRowMatrix_h
