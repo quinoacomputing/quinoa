@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.h
   \author    J. Bakosi
-  \date      Thu Sep  6 15:29:11 2012
+  \date      Thu 06 Sep 2012 07:17:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix declaration
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -51,7 +51,6 @@ class SymCompressedRowMatrix : SparseMatrix {
     SymCompressedRowMatrix(const SymCompressedRowMatrix&);
     SymCompressedRowMatrix& operator=(const SymCompressedRowMatrix&);
 
-    MemoryEntry* m_rnz;  //!< Number of nonzeros of each row, vector size: size
     MemoryEntry* m_ia;   //!< Row pointers, vector size: size*dof+1
     MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
     MemoryEntry* m_a;    //!< Nonzero values, vector size: nnz

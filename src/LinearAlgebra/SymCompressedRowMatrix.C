@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu Sep  6 16:37:06 2012
+  \date      Thu 06 Sep 2012 07:23:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -48,17 +48,18 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   // Store memory store pointer
   m_memory = memory;
 
-  // Allocate array for for storing the nonzeros in each row
-  m_rnz = memory->newZeroEntry(size, INT_VAL, SCALAR_VAR, name+"_rnz");
+  // Allocate array for storing the nonzeros in each row
+  MemoryEntry* mrnz =
+    memory->newZeroEntry(size, INT_VAL, SCALAR_VAR, name+"_rnz");
   // Get its raw pointer right away
-  Int* rnz = memory->getPtr<Int>(m_rnz);
+  Int* rnz = memory->getPtr<Int>(mrnz);
 
   // Allocate array for row indices
   m_ia = memory->newZeroEntry(size*dof+1, INT_VAL, SCALAR_VAR, name+"_ia");
   // Get and store its raw pointer right away
   m_pia = memory->getPtr<Int>(m_ia);
 
-  // calculate number of nonzeros in each block row (rnz[]),
+  // Calculate number of nonzeros in each block row (rnz[]),
   // total number of nonzeros (nnz) and fill row indices (m_pia[])
   m_nnz = 0;
   m_pia[0] = 1;
@@ -122,6 +123,9 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
       }
     }
   }
+
+  // Free array for storing the nonzeros in each row
+  m_memory->freeEntry(mrnz);
 }
 
 SymCompressedRowMatrix::~SymCompressedRowMatrix()
@@ -132,7 +136,6 @@ SymCompressedRowMatrix::~SymCompressedRowMatrix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_memory->freeEntry(m_rnz);
   m_memory->freeEntry(m_ia);
   m_memory->freeEntry(m_ja);
   m_memory->freeEntry(m_a);
