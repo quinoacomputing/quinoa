@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshReader.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 04:42:30 PM MDT
+  \date      Fri 07 Sep 2012 05:15:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -42,8 +42,17 @@ class GmshReader : MeshReader {
     //! Don't permit assigment operator
     GmshReader& operator=(const GmshReader&);
 
-    //! Read mandatory "$MeshFormat" section
+    //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
+
+    //! Read "$Nodes--$EndNodes" section
+    void readNodes();
+
+    //! Read "$Elements--$EndElements" section
+    void readElements();
+
+    //! Read "$PhysicalNames--$EndPhysicalNames" section
+    void readPhysicalNames();
 };
 
 } // namespace Quinoa

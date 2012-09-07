@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 04:55:50 PM MDT
+  \date      Fri 07 Sep 2012 05:39:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -52,6 +52,19 @@ GmshReader::read(UnsMesh* mesh)
 {
   // Read in mandatory "$MeshFormat" section
   readMeshFormat();
+
+  // Keep reading in sections until end of file
+  while (!m_mesh.eof()) {
+    string s;
+    getline(m_mesh, s);
+    if (s=="$Nodes") readNodes();
+    else if (s=="$Elements") readElements();
+    else if (s=="$PhysicalNames") readPhysicalNames();
+  }
+
+  // Clear failbit triggered by eof, so that close() won't throw a false
+  // FAILED_CLOSE
+  m_mesh.clear();
 }
 
 void
@@ -79,6 +92,35 @@ GmshReader::readMeshFormat()
   getline(m_mesh, s);
   if (s!="$EndMeshFormat") throw GmshException(FATAL, BAD_FORMAT);
 }
+
+void
+GmshReader::readNodes()
+//******************************************************************************
+//  Read "$Nodes--$EndNodes" section
+//! \author J. Bakosi
+//******************************************************************************
+{
+
+}
+
+void
+GmshReader::readElements()
+//******************************************************************************
+//  Read "$Elements--$EndElements" section
+//! \author J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+GmshReader::readPhysicalNames()
+//******************************************************************************
+//  Read "$PhysicalNames--$EndPhysicalNames" section
+//! \author J. Bakosi
+//******************************************************************************
+{
+}
+
 
 // static void readmeshfile(int *npoin, int *nbpoin, int *nelem, double **coord,
 //                          int **binpoel, int **inpoel, int **bptags, int **betags)
