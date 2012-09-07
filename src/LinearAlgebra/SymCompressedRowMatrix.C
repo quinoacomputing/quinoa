@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 07:23:46 PM MDT
+  \date      Thu 06 Sep 2012 09:00:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -11,15 +11,15 @@
 */
 //******************************************************************************
 
-#include <cstdio>
-#include <cstdlib>
-#include <string.h>
+#include <iostream>
+
 #ifdef _OPENMP
-#include "omp.h"
+#include <omp.h>
 #endif
-#include "Macros.h"
-#include "SparseMatrix.h"
-#include "SymCompressedRowMatrix.h"
+
+#include <SparseMatrix.h>
+#include <SymCompressedRowMatrix.h>
+#include <Macros.h>
 
 using namespace Quinoa;
 
@@ -55,7 +55,7 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   Int* rnz = memory->getPtr<Int>(mrnz);
 
   // Allocate array for row indices
-  m_ia = memory->newZeroEntry(size*dof+1, INT_VAL, SCALAR_VAR, name+"_ia");
+  m_ia = memory->newZeroEntry(m_rsize+1, INT_VAL, SCALAR_VAR, name+"_ia");
   // Get and store its raw pointer right away
   m_pia = memory->getPtr<Int>(m_ia);
 
@@ -291,137 +291,120 @@ SymCompressedRowMatrix::get(Int row, Int column)
   return m_pa[m_pia[row]-1+idx];
 }
 
-// void printmat_as_stored( sparsemat *M )
-// // -----------------------------------------------------------------------------
-// // Routine: ipzero_u - Print out sparse matrix as stored
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   int i;
-// 
-//   printf("int size = %d\n",M->size);
-//   printf("int rsize = %d\n",M->rsize);
-//   printf("int dof = %d\n",M->dof);
-//   printf("int nnz = %d\n",M->nnz);
-// 
-//   printf("int rnz[] = { ");
-//   for ( i = 0; i < M->size-1; i++ ) printf("%d, ",M->rnz[i]);
-//   printf("%d };\n",M->rnz[i]);
-//   
-//   printf("int ia[] = { ");
-//   for ( i = 0; i < M->rsize; i++ ) printf("%d, ",M->ia[i]);
-//   printf("%d };\n",M->ia[i]);
-//   
-//   printf("int ja[] = { ");
-//   for ( i = 0; i < M->nnz-1; i++ ) printf("%d, ",M->ja[i]);
-//   printf("%d };\n",M->ja[i]);
-//   
-//   printf("double a[] = { ");
-//   for ( i = 0; i < M->nnz-1; i++ ) printf("%.3g, ",M->a[i]);
-//   printf("%.3g };\n",M->a[i]);
-// }
-// 
-// void printmat2file_as_stored( sparsemat *M, char *filename, double *rhs )
-// // -----------------------------------------------------------------------------
-// // Routine: printmat2file_as_stores - Print out sparse matrix and a vector (rhs)
-// //                                    into file as stored
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // Vector rhs should be the same size as M->rsize (no error checking is done here)
-// {
-//   int i;
-//   FILE *fout;
-// 
-//   if (!(fout = fopen(filename,"w"))) ERR("cannot open outputfile for matrix");
-// 
-//   fprintf(fout,"%d\t%d\n",M->rsize,M->nnz);
-//   
-//   for ( i = 0; i < M->rsize+1; i++ ) fprintf(fout,"%d\t",M->ia[i]);
-//   fprintf(fout,"\n");
-//   
-//   for ( i = 0; i < M->nnz; i++ ) fprintf(fout,"%d\t",M->ja[i]);
-//   fprintf(fout,"\n");
-//   
-//   for ( i = 0; i < M->nnz; i++ ) fprintf(fout,"%g\t",M->a[i]);
-//   fprintf(fout,"\n");
-//   
-//   for ( i = 0; i < M->rsize; i++ ) fprintf(fout,"%g\t",rhs[i]);
-//   fprintf(fout,"\n");
-// 
-//   fclose( fout );
-// }
-// 
-// void printmat_as_structure( sparsemat *M )
-// // -----------------------------------------------------------------------------
-// // Routine: printmat_as_structure - Print out nonzero structure of sparse matrix
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   for (int i=0; i<M->rsize; i++) {
-// 
-//     for (int j=1; j<M->ja[M->ia[i]-1]; j++)
-//        printf(". ");// leading zeros
-// 
-//     for (int n=M->ia[i]-1; n<M->ia[i+1]-1; n++) {
-//       if (n>M->ia[i]-1)
-//         for (int j=M->ja[n-1]; j<M->ja[n]-1; j++)
-//            printf(". "); // zeros between nonzeros
-//       printf("o "); // nonzero
-//     }
-// 
-//     for (int j=M->ja[M->ia[i+1]-2]; j<M->rsize; j++)
-//        printf(". "); // trailing zeros
-// 
-//     printf("\n");
-//   }
-// }
-// 
-// void printmat_as_matrix( sparsemat *M )
-// // -----------------------------------------------------------------------------
-// // Routine: printmat_as_matrix - Print out sparse matrix as a real matrix
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   for (int i=0; i<M->rsize; i++) {
-//     for (int j=1; j<M->ja[M->ia[i]-1]; j++)
-//        printf("0\t");
-// 
-//     for (int n=M->ia[i]-1; n<M->ia[i+1]-1; n++) {
-//       if (n>M->ia[i]-1)
-//         for (int j=M->ja[n-1]; j<M->ja[n]-1; j++)
-//           printf("0\t");
-//       printf("%.3g\t",M->a[n]);
-//     }
-// 
-//     for (int j=M->ja[M->ia[i+1]-2]; j<M->rsize; j++)
-//       printf("0\t");
-// 
-//     printf("\n");
-//   }
-// }
-// 
-// void printmat_as_matlab( sparsemat *M )
-// // -----------------------------------------------------------------------------
-// // Routine: printmat_as_matrix - Print out sparse matrix as a matlab matrix
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   printf("A = [ ");
-//   for (int i=0; i<M->rsize; i++) {
-//     for (int j=1; j<M->ja[M->ia[i]-1]; j++)
-//        printf("0 ");
-// 
-//     for (int n=M->ia[i]-1; n<M->ia[i+1]-1; n++) {
-//       if (n>M->ia[i]-1)
-//         for (int j=M->ja[n-1]; j<M->ja[n]-1; j++)
-//           printf("0 ");
-//       printf("%.3g ",M->a[n]);
-//     }
-// 
-//     for (int j=M->ja[M->ia[i+1]-2]; j<M->rsize; j++)
-//       printf("0 ");
-// 
-//     printf(";\n");
-//   }
-//   printf("]\n");
-// }
+void
+SymCompressedRowMatrix::echoAsStored(ostream& ofs)
+//******************************************************************************
+//  Print out matrix entries as stored
+//!
+//! \param[in]  ofs  output stream
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ofs << "name  = " << m_name << endl;
+  ofs << "size  = " << m_size << endl;
+  ofs << "rsize = " << m_rsize << endl;
+  ofs << "dof   = " << m_dof << endl;
+  ofs << "nnz   = " << m_nnz << endl;
+
+  Int i;
+  ofs << "ia[] = { ";
+  for (i=0; i<m_rsize; i++) ofs << m_pia[i];
+  ofs << m_pia[i] << endl;
+
+  ofs << "ja[] = { ";
+  for (i=0; i<m_nnz-1; i++) ofs << m_pja[i];
+  ofs << m_pja[i] << endl;
+
+  ofs << "a[] = { ";
+  for (i=0; i<m_nnz-1; i++) ofs << m_pa[i];
+  ofs << m_pa[i] << endl;
+}
+
+void
+SymCompressedRowMatrix::echoNonzeroStructure(ostream& ofs)
+//******************************************************************************
+//  Print out nonzero structure of matrix
+//!
+//! \param[in]  ofs  output stream
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  for (Int i=0; i<m_rsize; i++) {
+    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)  // leading zeros
+       ofs << ". ";
+
+    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+      if (n>m_pia[i]-1) {  // zeros between nonzeros
+        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+           ofs << ". ";
+      }
+      ofs << "o ";  // nonzero
+    }
+
+    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+       ofs << ". ";  // trailing zeros
+
+    ofs << endl;
+  }
+}
+
+void
+SymCompressedRowMatrix::echoAsMatrix(ostream& ofs)
+//******************************************************************************
+//  Print out matrix as a real matrix
+//!
+//! \param[in]  ofs  output stream
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  for (Int i=0; i<m_rsize; i++) {
+    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)
+       ofs << "0\t";
+
+    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+      if (n>m_pia[i]-1) {
+        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+          ofs << "0\t";
+      }
+      ofs << m_pa[n] << "\t";
+    }
+
+    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+      ofs << "0\t";
+
+    ofs << endl;
+  }
+}
+
+void
+SymCompressedRowMatrix::echoAsMatlab(ostream& ofs)
+//******************************************************************************
+//  Print out matrix as a maltab matrix
+//!
+//! \param[in]  ofs  output stream
+//!
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ofs << "A = [ ";
+  for (Int i=0; i<m_rsize; i++) {
+    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)
+       ofs << "0 ";
+
+    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+      if (n>m_pia[i]-1)
+        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+          ofs << "0 ";
+      ofs << m_pa[n] << " ";
+    }
+
+    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+      ofs << "0 ";
+
+    ofs << ";" << endl;
+  }
+  ofs << "]" << endl;
+}
