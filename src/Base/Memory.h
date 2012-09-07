@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:08:24 PM MDT
+  \date      Fri 07 Sep 2012 03:33:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -50,8 +50,7 @@ class Memory {
                           VariableType variable,
                           string name,
                           Bool plot = false,
-                          Bool restart = false)
-                 throw(MemoryException);
+                          Bool restart = false);
 
     //! Allocate and zero memory entry
     MemoryEntry* newZeroEntry(size_t number,
@@ -62,32 +61,32 @@ class Memory {
                               Bool restart = false);
 
     //! Deallocate a memory entry
-    void freeEntry(MemoryEntry* id) throw(MemoryException);
+    void freeEntry(MemoryEntry* id);
 
     //! Deallocate all memory entries
-    void freeAllEntries() throw();
+    void freeAllEntries() noexcept;
 
     //! Return the number of items based on the ID
-    size_t getNumber(MemoryEntry* id) throw(MemoryException);
+    size_t getNumber(MemoryEntry* id);
 
     //! Return the value type based on the ID
-    ValueType getValue(MemoryEntry* id) throw(MemoryException);
+    ValueType getValue(MemoryEntry* id);
 
     //! Return the variable type based on the ID
-    VariableType getVariable(MemoryEntry* id) throw(MemoryException);
+    VariableType getVariable(MemoryEntry* id);
 
     //! Return the variable name based on the ID
-    string getName(MemoryEntry* id) throw(MemoryException);
+    string getName(MemoryEntry* id);
 
     //! Return true if the variable can be plotted based on the ID
-    Bool getPlot(MemoryEntry* id) throw(MemoryException);
+    Bool getPlot(MemoryEntry* id);
 
     //! Return true if the variable is written to restart file based on the ID
-    Bool getRestart(MemoryEntry* id) throw(MemoryException);
+    Bool getRestart(MemoryEntry* id);
 
     //! Return raw pointer for memory entry based on ID,
     //! template V specifies return pointer type
-    template<class V> V* getPtr(MemoryEntry* id) throw(MemoryException) {
+    template<class V> V* getPtr(MemoryEntry* id) {
       if (id == 0) throw MemoryException(WARNING, UNDEFINED);
       auto it = m_entry.find(id);
       if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
@@ -95,10 +94,10 @@ class Memory {
     }
 
     //! Return the MemorySet key based on the variable name
-    MemoryEntry* getID(string name) throw(MemoryException);
+    MemoryEntry* getID(string name);
 
     //! Return the number of allocated bytes
-    size_t getBytes() throw(MemoryException);
+    size_t getBytes();
 
     //! Zero entry using multiple threads
     void zero(MemoryEntry* id);

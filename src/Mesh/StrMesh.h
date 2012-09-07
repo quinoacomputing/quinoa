@@ -1,38 +1,38 @@
 //******************************************************************************
 /*!
-  \file      src/Base/UnsMesh.h
+  \file      src/Base/StrMesh.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:35:05 PM MDT
+  \date      Fri 07 Sep 2012 12:32:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Unstructured mesh class declaration
-  \details   Unstructured mesh class declaration
+  \brief     Structured mesh class declaration
+  \details   Structured mesh class declaration
 */
 //******************************************************************************
-#ifndef UnsMesh_h
-#define UnsMesh_h
+#ifndef StrMesh_h
+#define StrMesh_h
 
 #include <Mesh.h>
 
 namespace Quinoa {
 
-//! UnsMesh : Mesh
-class UnsMesh : Mesh {
+//! StrMesh : Mesh
+class StrMesh : Mesh {
 
   public:
     //! Constructor
-    UnsMesh();
+    StrMesh();
 
     //! Destructor
-    virtual ~UnsMesh();
+    ~StrMesh();
 
   private:
     //! Don't permit copy operator
-    UnsMesh(const UnsMesh&);
+    StrMesh(const StrMesh&);
 
     //! Dont' permit assigment operator
-    UnsMesh& operator=(const UnsMesh&);
+    StrMesh& operator=(const StrMesh&);
 };
 
 } // namespace Quinoa
 
-#endif // UnsMesh_h
+#endif // StrMesh_h

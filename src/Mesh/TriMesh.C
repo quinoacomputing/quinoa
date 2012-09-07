@@ -1,19 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/Mesh.C
+  \file      src/Mesh/TriMesh.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:55:39 PM MDT
+  \date      Fri 07 Sep 2012 12:46:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mesh base class definition
-  \details   Mesh base class definition
+  \brief     Unstructured triangle (2D) mesh class definition
+  \details   Unstructured triangle (2D) mesh class definition
 */
 //******************************************************************************
 
-#include <Mesh.h>
+#include <TriMesh.h>
 
 using namespace Quinoa;
 
-Mesh::Mesh()
+TriMesh::TriMesh()
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -21,7 +21,7 @@ Mesh::Mesh()
 {
 }
 
-Mesh::~Mesh()
+TriMesh::~TriMesh()
 //******************************************************************************
 //  Destructor
 //! \author J. Bakosi

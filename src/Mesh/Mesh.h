@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:28:56 PM MDT
+  \date      Fri 07 Sep 2012 12:34:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -21,7 +21,7 @@ class Mesh {
     Mesh();
 
     //! Destructor
-    ~Mesh();
+    virtual ~Mesh();
 
   private:
     //! Don't permit copy operator

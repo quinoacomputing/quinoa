@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Thu Sep  6 16:43:05 2012
+  \date      Fri 07 Sep 2012 03:35:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -11,7 +11,6 @@
 
 #include <cassert>
 #include <cstring>
-#include <iostream>
 
 using namespace std;
 
@@ -38,7 +37,6 @@ Memory::newEntry(size_t number,
                  string name,
                  Bool plot,
                  Bool restart)
-        throw(MemoryException)
 //******************************************************************************
 //  Allocate memory entry
 //! \param[in]  number    Number of items to allocate
@@ -118,7 +116,7 @@ Memory::newZeroEntry(size_t number,
 }
 
 void
-Memory::freeEntry(MemoryEntry* id) throw(MemoryException)
+Memory::freeEntry(MemoryEntry* id)
 //******************************************************************************
 //  Deallocate a memory entry
 //! \param[in]  id  ID of the entry to be freed
@@ -154,7 +152,7 @@ Memory::freeEntry(MemoryEntry* id) throw(MemoryException)
 }
 
 void
-Memory::freeAllEntries() throw()
+Memory::freeAllEntries() noexcept
 //******************************************************************************
 //  Deallocate all memory entries
 //! \details This may (and probably will) be called several times. At normal
@@ -180,7 +178,7 @@ Memory::freeAllEntries() throw()
 }
 
 size_t
-Memory::getNumber(MemoryEntry* id) throw(MemoryException)
+Memory::getNumber(MemoryEntry* id)
 //******************************************************************************
 //  Return the number of items based on the ID
 //! \return Number of items
@@ -197,7 +195,7 @@ Memory::getNumber(MemoryEntry* id) throw(MemoryException)
 }
 
 ValueType
-Memory::getValue(MemoryEntry* id) throw(MemoryException)
+Memory::getValue(MemoryEntry* id)
 //******************************************************************************
 //  Return the value type based on the ID
 //! \return The value type
@@ -214,7 +212,7 @@ Memory::getValue(MemoryEntry* id) throw(MemoryException)
 }
 
 VariableType
-Memory::getVariable(MemoryEntry* id) throw(MemoryException)
+Memory::getVariable(MemoryEntry* id)
 //******************************************************************************
 //  Return the variable type based on the ID
 //! \return The variable type
@@ -231,7 +229,7 @@ Memory::getVariable(MemoryEntry* id) throw(MemoryException)
 }
 
 string
-Memory::getName(MemoryEntry* id) throw(MemoryException)
+Memory::getName(MemoryEntry* id)
 //******************************************************************************
 //  Return the variable name based on the ID
 //! \return The variable name
@@ -248,7 +246,7 @@ Memory::getName(MemoryEntry* id) throw(MemoryException)
 }
 
 Bool
-Memory::getPlot(MemoryEntry* id) throw(MemoryException)
+Memory::getPlot(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
 //! \return True if the variable can be plotted
@@ -265,7 +263,7 @@ Memory::getPlot(MemoryEntry* id) throw(MemoryException)
 }
 
 Bool
-Memory::getRestart(MemoryEntry* id) throw(MemoryException)
+Memory::getRestart(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
 //! \return True if the variable is written to restart file
@@ -282,7 +280,7 @@ Memory::getRestart(MemoryEntry* id) throw(MemoryException)
 }
 
 MemoryEntry*
-Memory::getID(string name) throw(MemoryException)
+Memory::getID(string name)
 //******************************************************************************
 //  Return the MemorySet key based on the variable name
 //! \return MemorySet key (used as ID)
@@ -299,7 +297,7 @@ Memory::getID(string name) throw(MemoryException)
 }
 
 size_t
-Memory::getBytes() throw(MemoryException)
+Memory::getBytes()
 //******************************************************************************
 //  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
