@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshReader.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 03:35:39 PM MDT
+  \date      Fri 07 Sep 2012 04:42:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -34,13 +34,16 @@ class GmshReader : MeshReader {
     virtual void close();
 
     //! Interface for read
-    virtual void read(Mesh* mesh);
+    virtual void read(UnsMesh* mesh);
 
   private:
     //! Don't permit copy operator
     GmshReader(const GmshReader&);
     //! Don't permit assigment operator
     GmshReader& operator=(const GmshReader&);
+
+    //! Read mandatory "$MeshFormat" section
+    void readMeshFormat();
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 03:55:50 PM MDT
+  \date      Fri 07 Sep 2012 04:55:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -10,7 +10,9 @@
 //******************************************************************************
 
 #include <fstream>
+#include <iostream>
 
+#include <QuinoaTypes.h>
 #include <GmshReader.h>
 #include <GmshException.h>
 
@@ -39,12 +41,43 @@ GmshReader::close()
 }
 
 void
-GmshReader::read(Mesh* mesh)
+GmshReader::read(UnsMesh* mesh)
 //******************************************************************************
 //  Read Gmsh mesh from file
+//!
+//! \param[in]  mesh  Mesh object that will hold the mesh
+//!
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Read in mandatory "$MeshFormat" section
+  readMeshFormat();
+}
+
+void
+GmshReader::readMeshFormat()
+//******************************************************************************
+//  Read mandatory "$MeshFormat" section
+//! \author J. Bakosi
+//******************************************************************************
+{
+  string s;
+
+  // Read in beginning of header: $MeshFormat
+  getline(m_mesh, s);
+  if (s!="$MeshFormat") throw GmshException(FATAL, BAD_FORMAT);
+
+  // Read in "version-number file-type data-size"
+  Real version;
+  Int type, datasize;
+  m_mesh >> version >> type >> datasize;
+  if (version!=2.2 || type!=0 || datasize!=sizeof(Real))
+    throw GmshException(FATAL, BAD_FORMAT);
+  getline(m_mesh, s);  // finish reading the line
+
+  // Read in end of header: $EndMeshFormat
+  getline(m_mesh, s);
+  if (s!="$EndMeshFormat") throw GmshException(FATAL, BAD_FORMAT);
 }
 
 // static void readmeshfile(int *npoin, int *nbpoin, int *nelem, double **coord,
@@ -87,7 +120,6 @@ GmshReader::read(Mesh* mesh)
 //   // start reading mesh data in...
 //   if (!(imesh = fopen(INP_MESH_FILENAME,"r")))
 //     ERR("cannot open INP_MESH_FILENAME!");
-// 
 //   fgets( str, STRLEN, imesh );			// str << "$MeshFormat\n"
 //   fprintf( omesh, "%s", str );			// copy to omesh
 // 

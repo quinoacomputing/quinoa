@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:34:54 PM MDT
+  \date      Fri 07 Sep 2012 04:20:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -16,7 +16,7 @@ namespace Quinoa {
 //! Mesh base class
 class Mesh {
 
-  protected:
+  public:
     //! Constructor
     Mesh();
 
