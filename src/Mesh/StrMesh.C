@@ -1,19 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/Mesh.C
+  \file      src/Mesh/StrMesh.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:55:39 PM MDT
+  \date      Fri 07 Sep 2012 12:38:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mesh base class definition
-  \details   Mesh base class definition
+  \brief     Unstructured mesh class definition
+  \details   Unstructured mesh class definition
 */
 //******************************************************************************
 
-#include <Mesh.h>
+#include <StrMesh.h>
 
 using namespace Quinoa;
 
-Mesh::Mesh()
+StrMesh::StrMesh()
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -21,7 +21,7 @@ Mesh::Mesh()
 {
 }
 
-Mesh::~Mesh()
+StrMesh::~StrMesh()
 //******************************************************************************
 //  Destructor
 //! \author J. Bakosi

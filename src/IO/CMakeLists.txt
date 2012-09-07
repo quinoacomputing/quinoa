@@ -7,10 +7,14 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Mesh
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
 add_library(IO
-            Postprocess.C
+            GmshException.C
+            GmshReader.C
+            #Postprocess.C
 )
 
 INSTALL(TARGETS IO
