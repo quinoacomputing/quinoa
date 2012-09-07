@@ -7,11 +7,13 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Mesh
 )
 
 add_library(Mesh
             Mesh.C
-            Overlap.C
+            UnsMesh.C
+            #Overlap.C
 )
 
 INSTALL(TARGETS Mesh

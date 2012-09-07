@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 08:57:38 PM MDT
+  \date      Thu 06 Sep 2012 09:07:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix declaration
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -17,7 +17,7 @@
 
 namespace Quinoa {
 
-//! Symmetric compressed row sparse matrix class
+//! SymCompressedRowMatrix : SparseMatrix
 class SymCompressedRowMatrix : SparseMatrix {
 
   public:

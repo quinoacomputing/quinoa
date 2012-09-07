@@ -1,15 +1,35 @@
-// -----------------------------------------------------------------------------
-// \file    src/Mesh/Mesh.h
-// \author  jbakosi
-// \date    Thu Aug 14 9:32:00 2012
-// \brief   Unstructured mesh
-// \note    Copyright 2012 Jozsef Bakosi
-//          All rights reserved.
-// -----------------------------------------------------------------------------
+//******************************************************************************
+/*!
+  \file      src/Mesh/Mesh.h
+  \author    J. Bakosi
+  \date      Thu 06 Sep 2012 09:28:56 PM MDT
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \brief     Mesh base class declaration
+  \details   Mesh base class declaration
+*/
+//******************************************************************************
+#ifndef Mesh_h
+#define Mesh_h
 
-void prepmsh(int *npoin, int *nbpoin, int *nelem, double **coord, int **bpg,
-             int **binpoel, int **inpoel, int **esup1, int **esup2, int **psup1,
-             int **psup2, int **bpsup1, int **bpsup2, int **esupel1,
-             int **esupel2, int **esuel, int**bptags, int **betags, double **Ae,
-             double **dNx, double **dNy, double **dete, double **sqrtAp,
-             double *minsqrtAp);
+namespace Quinoa {
+
+//! Mesh base class
+class Mesh {
+
+  protected:
+    //! Constructor
+    Mesh();
+
+    //! Destructor
+    ~Mesh();
+
+  private:
+    //! Don't permit copy operator
+    Mesh(const Mesh&);
+    //! Don't permit assigment operator
+    Mesh& operator=(const Mesh&);
+};
+
+} // namespace Quinoa
+
+#endif // Mesh_h

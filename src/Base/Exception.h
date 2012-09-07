@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 10:50:59 PM MDT
+  \date      Thu 06 Sep 2012 09:38:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -29,7 +29,7 @@ enum ErrorCode { NO_ERROR=0,        //!< Everything went fine
 
 class Driver;
 
-//! Exception base class declaration
+//! Exception base class
 class Exception {
 
   public:
