@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Wed 05 Sep 2012 08:28:58 PM MDT
+  \date      Thu 06 Sep 2012 09:08:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -48,7 +48,7 @@ const Int VariableComponents[NUM_VARIABLE_TYPES] { 1,  //!< Scalar
                                                    9   //!< Tensor
 };
 
-//! MemoryEntry declaration
+//! MemoryEntry base class
 class MemoryEntry {
 
   //! Befriend class Memory to allow direct manipulation of private fields

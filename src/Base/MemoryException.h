@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 10:54:23 PM MDT
+  \date      Thu 06 Sep 2012 09:38:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -41,7 +41,7 @@ const string MemoryMessage[NUM_MEMORY_EXCEPTIONS] = {
   "Memory entry not defined"
 };
 
-//! MemoryException class declaration
+//! MemoryException : Exception class declaration
 class MemoryException : Exception {
 
   public:

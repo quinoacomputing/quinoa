@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Driver.h
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 10:19:00 PM MDT
+  \date      Thu 06 Sep 2012 09:08:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -15,7 +15,7 @@
 
 namespace Quinoa {
 
-//! Driver base class declaration
+//! Driver base class
 class Driver {
 
   public:
