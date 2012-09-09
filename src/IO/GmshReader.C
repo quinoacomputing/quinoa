@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 05:39:48 PM MDT
+  \date      Mon 10 Sep 2012 04:31:23 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -18,35 +18,31 @@
 
 using namespace Quinoa;
 
-void
-GmshReader::open()
+GmshReader::GmshReader(string filename) : MeshReader(filename)
 //******************************************************************************
-//  Open Gmsh mesh file
+//  Constructor: Open Gmsh mesh file
 //! \author J. Bakosi
 //******************************************************************************
 {
   m_mesh.open(m_filename, ifstream::in);
-  if (!m_mesh.good()) throw GmshException(FATAL, FAILED_OPEN);
+  if (!m_mesh.good()) throw GmshException(FATAL, FAILED_OPEN, m_filename);
 }
 
-void
-GmshReader::close()
+GmshReader::~GmshReader()
 //******************************************************************************
-//  Close Gmsh mesh file
+//  Destructor: Close Gmsh mesh file
 //! \author J. Bakosi
 //******************************************************************************
 {
   m_mesh.close();
-  if (m_mesh.fail()) throw GmshException(WARNING, FAILED_CLOSE);
+  if (m_mesh.fail()) throw GmshException(WARNING, FAILED_CLOSE, m_filename);
 }
 
 void
 GmshReader::read(UnsMesh* mesh)
 //******************************************************************************
 //  Read Gmsh mesh from file
-//!
 //! \param[in]  mesh  Mesh object that will hold the mesh
-//!
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -62,8 +58,7 @@ GmshReader::read(UnsMesh* mesh)
     else if (s=="$PhysicalNames") readPhysicalNames();
   }
 
-  // Clear failbit triggered by eof, so that close() won't throw a false
-  // FAILED_CLOSE
+  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_mesh.clear();
 }
 
@@ -78,19 +73,19 @@ GmshReader::readMeshFormat()
 
   // Read in beginning of header: $MeshFormat
   getline(m_mesh, s);
-  if (s!="$MeshFormat") throw GmshException(FATAL, BAD_FORMAT);
+  if (s!="$MeshFormat") throw GmshException(FATAL, BAD_FORMAT, m_filename);
 
   // Read in "version-number file-type data-size"
   Real version;
   Int type, datasize;
   m_mesh >> version >> type >> datasize;
   if (version!=2.2 || type!=0 || datasize!=sizeof(Real))
-    throw GmshException(FATAL, BAD_FORMAT);
+    throw GmshException(FATAL, BAD_FORMAT, m_filename);
   getline(m_mesh, s);  // finish reading the line
 
   // Read in end of header: $EndMeshFormat
   getline(m_mesh, s);
-  if (s!="$EndMeshFormat") throw GmshException(FATAL, BAD_FORMAT);
+  if (s!="$EndMeshFormat") throw GmshException(FATAL, BAD_FORMAT, m_filename);
 }
 
 void
