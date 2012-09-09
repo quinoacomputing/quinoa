@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 03:21:28 AM KST
+  \date      Mon 10 Sep 2012 05:36:56 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -82,6 +82,12 @@ class MemoryEntry {
     MemoryEntry(const MemoryEntry&);
     //! Don't permit assigment operator
     MemoryEntry& operator=(const MemoryEntry&);
+
+    //! Name accessor
+    string name() { return m_name; }
+
+    //! One-liner accessor for all fields
+    string line();
 
     size_t m_nbytes;          //!< Size in bytes (number of chars) allocated
     size_t m_number;          //!< Number of items
