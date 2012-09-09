@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 02:57:41 AM KST
+  \date      Mon 10 Sep 2012 04:39:33 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -22,9 +22,6 @@ namespace Quinoa {
 
 //! Memory (store) base class
 class Memory {
-
-  //! Undefined ID (i.e. entry not allocated)
-  const MemoryEntry* UNDEFINED_ENTRY = 0;
 
   //! Memory entries are stored in an STL unordered_set.
   //! The keys of the set are pointers to (dynamically allocated) MemoryEntry
@@ -65,6 +62,9 @@ class Memory {
 
     //! Deallocate all memory entries
     void freeAllEntries() noexcept;
+
+    //! Echo all memory entries
+    void echoAllEntries();
 
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* id);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 03:56:19 AM KST
+  \date      Mon 10 Sep 2012 06:05:34 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -11,6 +11,10 @@
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
@@ -158,7 +162,7 @@ Memory::freeEntry(MemoryEntry* id)
   if (!removed) throw MemoryException(WARNING, NOT_ERASED);
 
   // Zero id, so the caller can also tell that memory entry has been removed
-  id = const_cast<MemoryEntry*>(UNDEFINED_ENTRY);
+  id = 0;
 }
 
 void
@@ -185,6 +189,48 @@ Memory::freeAllEntries() noexcept
     m_name.clear();
     m_entry.clear();
   }
+}
+
+void
+Memory::echoAllEntries()
+//******************************************************************************
+//  Echo all memory entries
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Return and throw warning if memory store is empty
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+
+  // Echo AllEntries-header
+  cout << "-----------------------------------------------------------" << endl;
+  cout << "* Dynamically allocated memory entries:" << endl;
+  cout << endl;
+  cout << "  " << setw(10) << "Name"
+       << "  " << setw(10) << "Number"
+       << "  " << setw(10) << "Value"
+       << "  " << setw(10) << "Variable"
+       << "  " << setw(10) << "Bytes"
+       << "  " << setw(10) << "Plot"
+       << "  " << setw(10) << "Restart"
+       << "  " << setw(10) << "Ptr"
+       << endl;
+  cout << setfill('=');
+  cout << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << "  " << setw(10) << "="
+       << endl;
+  cout << setfill(' ');
+
+  // Echo all entries as one-liners
+  transform(m_entry.begin(),
+            m_entry.end(),
+            ostream_iterator<string>(cout),
+            mem_fun(&MemoryEntry::line));
 }
 
 size_t
