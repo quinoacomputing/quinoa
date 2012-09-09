@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 04:18:15 PM MDT
+  \date      Mon 10 Sep 2012 03:22:16 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -29,11 +29,12 @@ int main(int argc, char* argv[]) {
   ErrorCode error = NO_ERROR;
   try {
 
-    UnsMesh mesh;
-    GmshReader gmsh("../../tmp/cylinder.msh");
-    gmsh.open();
-    gmsh.read(&mesh);
-    gmsh.close();
+    MemoryEntry* e = memStore.newEntry(10, INT, SCALAR, "scalars");
+//     UnsMesh mesh;
+//     GmshReader gmsh("../../tmp/cylinder.msh");
+//     gmsh.open();
+//     gmsh.read(&mesh);
+//     gmsh.close();
 
   } catch (MemoryException& m) { error = m.handleException(&driver); }
     catch (GmshException& g) { error = g.handleException(&driver); }

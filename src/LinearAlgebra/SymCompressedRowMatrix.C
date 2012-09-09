@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:00:28 PM MDT
+  \date      Mon 10 Sep 2012 03:22:05 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -37,6 +37,7 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
 //!          and symmetric, storing only the upper triangle.
 //!
 //! \param[in]  memory       Pointer to MemoryStore object
+//! \param[in]  name         Name of the SparseMatrix instance
 //! \param[in]  size         Size of matrix
 //! \param[in]  dof          Number of degrees of freedom
 //! \param[in]  psup1,psup2  Linked lists storing points surrounding points,
@@ -50,12 +51,12 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
 
   // Allocate array for storing the nonzeros in each row
   MemoryEntry* mrnz =
-    memory->newZeroEntry(size, INT_VAL, SCALAR_VAR, name+"_rnz");
+    memory->newZeroEntry(size, INT, SCALAR, name+"_rnz");
   // Get its raw pointer right away
   Int* rnz = memory->getPtr<Int>(mrnz);
 
   // Allocate array for row indices
-  m_ia = memory->newZeroEntry(m_rsize+1, INT_VAL, SCALAR_VAR, name+"_ia");
+  m_ia = memory->newZeroEntry(m_rsize+1, INT, SCALAR, name+"_ia");
   // Get and store its raw pointer right away
   m_pia = memory->getPtr<Int>(m_ia);
 
@@ -80,12 +81,12 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   }
 
   // Allocate array for column indices
-  m_ja = memory->newZeroEntry(m_nnz, INT_VAL, SCALAR_VAR, name+"_ja");
+  m_ja = memory->newZeroEntry(m_nnz, INT, SCALAR, name+"_ja");
   // Get and store its raw pointer right away
   m_pja = memory->getPtr<Int>(m_ja);
 
   // Allocate array for nonzero matrix values
-  m_a = memory->newZeroEntry(m_nnz, REAL_VAL, SCALAR_VAR, name+"_a");
+  m_a = memory->newZeroEntry(m_nnz, REAL, SCALAR, name+"_a");
   // Get and store its raw pointer right away
   m_pa = m_memory->getPtr<Real>(m_a);
 
