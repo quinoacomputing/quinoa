@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/GmshException.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 01:17:58 PM MDT
+  \date      Mon 10 Sep 2012 04:09:50 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshException class definition
   \details   GmshException class definition
@@ -23,7 +23,7 @@ GmshException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Output message
-  cerr << "Gmsh exception: " << GmshMessage[m_exception] << endl;
+  cerr << "Gmsh exception: " << GmshMessage[m_exception] << m_filename << endl;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

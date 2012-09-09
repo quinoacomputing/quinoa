@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 04:26:00 PM MDT
+  \date      Mon 10 Sep 2012 04:17:55 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -30,12 +30,6 @@ class MeshReader {
 
     //! Destructor
     ~MeshReader() {};
-
-    //! Interface for open
-    virtual void open() = 0;
-
-    //! Interface for close
-    virtual void close() = 0;
 
     //! Interface for read mesh
     virtual void read(UnsMesh* mesh) = 0;

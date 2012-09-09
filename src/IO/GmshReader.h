@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshReader.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 05:15:09 PM MDT
+  \date      Mon 10 Sep 2012 04:22:38 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -22,16 +22,10 @@ class GmshReader : MeshReader {
 
   public:
     //! Constructor
-    GmshReader(string filename) : MeshReader(filename) {}
+    GmshReader(string filename);
 
     //! Destructor
-    ~GmshReader() {};
-
-    //! Interface for open
-    virtual void open();
-
-    //! Interface for close
-    virtual void close();
+    ~GmshReader();
 
     //! Interface for read
     virtual void read(UnsMesh* mesh);
