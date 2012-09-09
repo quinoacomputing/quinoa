@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 03:35:12 PM MDT
+  \date      Mon 10 Sep 2012 03:56:19 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -57,33 +57,44 @@ Memory::newEntry(size_t number,
   // Compute total number of bytes to be allocated
   size_t nbytes = number * VariableComponents[variable] * SizeOf[value];
 
-  // Allocate memory and its metadata
-  try {
-    void* ptr = static_cast<void*>(new char [nbytes]);
+  // Allocate memory
+  void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
+  if (ptr == 0) throw MemoryException(FATAL, BAD_ALLOC);
 
-    MemoryEntry* entry = new MemoryEntry(nbytes,
-                                         number,
-                                         value,
-                                         variable,
-                                         name,
-                                         plot,
-                                         restart,
-                                         ptr);
-    // Store memory entry
-    pair<MemorySet::iterator,Bool> e = m_entry.insert(entry);
-    if (!e.second) throw MemoryException(FATAL, BAD_INSERT);
+  // Allocate memory entry metadata
+  MemoryEntry* entry = new (nothrow) MemoryEntry(nbytes,
+                                                 number,
+                                                 value,
+                                                 variable,
+                                                 name,
+                                                 plot,
+                                                 restart,
+                                                 ptr);
+  if (entry == 0) {
+    if (ptr) { delete [] static_cast<char*>(ptr); ptr = 0; }
+    throw MemoryException(FATAL, BAD_ALLOC);
+  }
 
-    // Map variable name to MemorySet key
-    pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
-    if (!n.second) throw MemoryException(FATAL, BAD_INSERT);
+  // Store memory entry
+  pair<MemorySet::iterator,Bool> e = m_entry.insert(entry);
+  if (!e.second) {
+    if (entry) { delete entry; entry = 0; }
+    throw MemoryException(FATAL, BAD_INSERT);
+  }
 
-    // Test if name is unique
-    if (m_entry.size() != m_name.size())
-      throw MemoryException(WARNING, BAD_NAME);
+  // Map variable name to MemorySet key
+  pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
+  if (!n.second) {
+    if (entry) { delete entry; entry = 0; }
+    throw MemoryException(FATAL, BAD_INSERT);
+  }
 
-    // Return key to caller
-    return entry;
-  } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }
+  // Test if name is unique
+  if (m_entry.size() != m_name.size())
+    throw MemoryException(WARNING, BAD_NAME);
+
+  // Return key to caller
+  return entry;
 }
 
 MemoryEntry*
@@ -129,7 +140,7 @@ Memory::freeEntry(MemoryEntry* id)
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
-  // Find and remove memory entry
+  // Find memory entry
   auto it = m_entry.find(id);
   if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
 
@@ -146,8 +157,7 @@ Memory::freeEntry(MemoryEntry* id)
   MemorySet::size_type removed = m_entry.erase(id);
   if (!removed) throw MemoryException(WARNING, NOT_ERASED);
 
-  // Zero id, so the caller can also tell that this memory entry has been
-  // deallocated
+  // Zero id, so the caller can also tell that memory entry has been removed
   id = const_cast<MemoryEntry*>(UNDEFINED_ENTRY);
 }
 

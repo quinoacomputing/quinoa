@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:08:53 PM MDT
+  \date      Mon 10 Sep 2012 03:21:28 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -20,9 +20,9 @@ using namespace std;
 namespace Quinoa {
 
 //! Value types
-enum ValueType { BOOL_VAL=0,        //!< Boolean value
-                 INT_VAL,           //!< Integer value
-                 REAL_VAL,          //!< Real value
+enum ValueType { BOOL=0,        //!< Boolean value
+                 INT,           //!< Integer value
+                 REAL,          //!< Real value
                  NUM_VALUE_TYPES
 };
 
@@ -34,10 +34,10 @@ const size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
 
 
 //! Variable types
-enum VariableType { SCALAR_VAR=0,       //!< Scalar quantity
-                    VECTOR_VAR,         //!< Vector quantity
-                    SYMTENSOR_VAR,      //!< Symmetric tensor quantity
-                    TENSOR_VAR,         //!< Tensor quantity
+enum VariableType { SCALAR=0,       //!< Scalar quantity
+                    VECTOR,         //!< Vector quantity
+                    SYMTENSOR,      //!< Symmetric tensor quantity
+                    TENSOR,         //!< Tensor quantity
                     NUM_VARIABLE_TYPES
 };
 
@@ -75,7 +75,7 @@ class MemoryEntry {
 
     //! Destructor: Free allocated memory when leaving scope
     ~MemoryEntry() {
-      delete [] static_cast<char*>(m_ptr);
+      if (m_ptr) delete [] static_cast<char*>(m_ptr);
     }
 
     //! Don't permit copy operator
