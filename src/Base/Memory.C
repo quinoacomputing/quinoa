@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 06:05:34 AM KST
+  \date      Mon 10 Sep 2012 01:43:36 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -202,27 +202,26 @@ Memory::echoAllEntries()
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
   // Echo AllEntries-header
-  cout << "-----------------------------------------------------------" << endl;
   cout << "* Dynamically allocated memory entries:" << endl;
   cout << endl;
-  cout << "  " << setw(10) << "Name"
-       << "  " << setw(10) << "Number"
-       << "  " << setw(10) << "Value"
-       << "  " << setw(10) << "Variable"
-       << "  " << setw(10) << "Bytes"
-       << "  " << setw(10) << "Plot"
-       << "  " << setw(10) << "Restart"
-       << "  " << setw(10) << "Ptr"
+  cout << "  " << setw(MemoryEntryWidth[0]) << "Name"
+       << "  " << setw(MemoryEntryWidth[1]) << "Number"
+       << "  " << setw(MemoryEntryWidth[2]) << "Value"
+       << "  " << setw(MemoryEntryWidth[3]) << "Variable"
+       << "  " << setw(MemoryEntryWidth[4]) << "Bytes"
+       << "  " << setw(MemoryEntryWidth[5]) << "Plot"
+       << "  " << setw(MemoryEntryWidth[6]) << "Restart"
+       << "  " << setw(MemoryEntryWidth[7]) << "Ptr"
        << endl;
   cout << setfill('=');
-  cout << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
-       << "  " << setw(10) << "="
+  cout << "  " << setw(MemoryEntryWidth[0]) << "="
+       << "  " << setw(MemoryEntryWidth[1]) << "="
+       << "  " << setw(MemoryEntryWidth[2]) << "="
+       << "  " << setw(MemoryEntryWidth[3]) << "="
+       << "  " << setw(MemoryEntryWidth[4]) << "="
+       << "  " << setw(MemoryEntryWidth[5]) << "="
+       << "  " << setw(MemoryEntryWidth[6]) << "="
+       << "  " << setw(MemoryEntryWidth[7]) << "="
        << endl;
   cout << setfill(' ');
 

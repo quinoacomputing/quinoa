@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 05:36:56 AM KST
+  \date      Mon 10 Sep 2012 01:55:36 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -32,6 +32,11 @@ const size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
                                          sizeof(Real)   //!< Size of Real
 };
 
+//! Name of value types
+const string ValueName[NUM_VALUE_TYPES] = { "bool",  //! Screen name of bool
+                                            "int",   //! Screen name of integer
+                                            "real"   //! Screen name of real
+};
 
 //! Variable types
 enum VariableType { SCALAR=0,       //!< Scalar quantity
@@ -46,6 +51,24 @@ const Int VariableComponents[NUM_VARIABLE_TYPES] { 1,  //!< Scalar
                                                    3,  //!< Vector
                                                    6,  //!< Symmetric tensor
                                                    9   //!< Tensor
+};
+
+//! Name of variable types
+const string VariableTypeName[NUM_VARIABLE_TYPES] = { "scalar",
+                                                      "vector",
+                                                      "symtensor",
+                                                      "tensor"
+};
+
+//! Static width of fields for echo of MemoryEntry fields
+const Int MemoryEntryWidth[] = { 15,  //! Width of Name field
+                                 10,  //! Width of Number field
+                                 10,  //! Width of Value field
+                                 10,  //! Width of Variable field
+                                 10,  //! Width of Bytes field
+                                  5,  //! Width of Plot field
+                                  7,  //! Width of Restart field
+                                 10   //! Width of Ptr field
 };
 
 //! MemoryEntry base class
