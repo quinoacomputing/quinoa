@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 04:03:24 PM KST
+  \date      Tue 11 Sep 2012 04:58:34 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -38,7 +38,25 @@ class Mesh {
     virtual ~Mesh();
 
     //! Add new MeshSet entry (e.g. list of nodes, elements, node ids, etc.)
-    void newEntry(MemoryEntry* entry);
+    template<class V> V* newEntry(size_t number,
+                                  ValueType value,
+                                  VariableType variable,
+                                  string name,
+                                  Bool plot = false,
+                                  Bool restart = false) {
+      // Allocate new mmeory entry
+      MemoryEntry* entry = m_memory->newEntry(number,
+                                              value,
+                                              variable,
+                                              name,
+                                              plot,
+                                              restart);
+      // Store new entry
+      pair<MeshSet::iterator,Bool> n = m_entry.insert(entry);
+      if (!n.second) throw MemoryException(FATAL, BAD_INSERT);
+      // Get pointers to element ids and 
+      return m_memory->getPtr<V>(entry);
+    }
 
   protected:
     //! Set mesh dimension
