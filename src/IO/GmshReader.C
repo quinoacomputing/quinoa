@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 04:25:45 PM KST
+  \date      Tue 11 Sep 2012 04:57:35 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -79,19 +79,14 @@ GmshReader::readNodes()
   Int num;
   m_inMesh >> num;
 
-  // Allocate and store new memory entry for the node set ids
-  MemoryEntry* nodeEntry = m_memory->newEntry(num, INT, SCALAR, "node");
-  m_mesh->newEntry(nodeEntry);
-  // Allocate and store new memory entry for the coordinates of the node set
-  MemoryEntry* coordEntry = m_memory->newEntry(num, REAL, VECTOR, "coord");
-  m_mesh->newEntry(coordEntry);
-
-  // Get pointers to node ids and coordinates
-  Int* node = m_memory->getPtr<Int>(nodeEntry);
-  Real* coord = m_memory->getPtr<Real>(coordEntry);
+  // Add new MeshSet Entry for the node set ids
+  Int* node = m_mesh->newEntry<Int>(num, INT, SCALAR, "node");
+  // Add new MeshSet Entry for the coordinates of the node set
+  Real* coord = m_mesh->newEntry<Real>(num, REAL, VECTOR, "coord");
 
   // Read in node ids and coordinates
   for (Int i=0; i<num; i++) {
+    // node-number x-coord y-coord z-coord
     m_inMesh >> node[i] >> coord[3*i] >> coord[3*i+1] >> coord[3*i+2];
   }
   string s;
@@ -109,6 +104,30 @@ GmshReader::readElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Read in number of elements in this element set
+  Int num;
+  m_inMesh >> num;
+
+  // Add new MeshSet Entry for the element set ids
+//  Int* element = m_mesh->newEntry<Int>(num, INT, SCALAR, "element");
+  // Add new MeshSet Entry for the element types
+//  Int* elmtype = m_mesh->newEntry<Int>(num, INT, SCALAR, "elm-type");
+// 
+//   // Get pointers to element ids and 
+//   Int* node = m_memory->getPtr<Int>(nodeEntry);
+//   Real* coord = m_memory->getPtr<Real>(coordEntry);
+// 
+//   // Read in node ids and coordinates
+//   for (Int i=0; i<num; i++) {
+//     // elm-number elm-type number-of-tags < tag > ... node-number-list
+//     m_inMesh >> node[i] >> coord[3*i] >> coord[3*i+1] >> coord[3*i+2];
+//   }
+//   string s;
+//   getline(m_inMesh, s);  // finish reading the last line
+// 
+//   // Read in end of header: $EndNodes
+//   getline(m_inMesh, s);
+//   if (s!="$EndNodes") throw MeshException(FATAL, BAD_FORMAT, m_filename);
 }
 
 void
