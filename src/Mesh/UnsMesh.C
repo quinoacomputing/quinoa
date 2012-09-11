@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:37:51 PM MDT
+  \date      Tue 11 Sep 2012 07:00:22 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -13,22 +13,22 @@
 
 using namespace Quinoa;
 
-UnsMesh::UnsMesh()
-//******************************************************************************
-//  Constructor
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
-
-UnsMesh::~UnsMesh()
-//******************************************************************************
-//  Destructor
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
-
+// UnsMesh::UnsMesh()
+// //******************************************************************************
+// //  Constructor
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+// }
+// 
+// UnsMesh::~UnsMesh()
+// //******************************************************************************
+// //  Destructor
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+// }
+// 
 // #include <cstdlib>
 // #include <cstdio>
 // #include <cmath>

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/StrMesh.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 12:32:50 PM MDT
+  \date      Tue 11 Sep 2012 12:22:51 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Structured mesh class declaration
   \details   Structured mesh class declaration
@@ -20,7 +20,7 @@ class StrMesh : Mesh {
 
   public:
     //! Constructor
-    StrMesh();
+    StrMesh(Memory* memory) : Mesh(memory) {}
 
     //! Destructor
     ~StrMesh();

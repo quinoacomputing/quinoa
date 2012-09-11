@@ -1,29 +1,29 @@
 //******************************************************************************
 /*!
-  \file      src/Base/GmshException.C
+  \file      src/Base/MeshException.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:09:50 AM KST
+  \date      Tue 11 Sep 2012 06:50:25 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     GmshException class definition
-  \details   GmshException class definition
+  \brief     MeshException class definition
+  \details   MeshException class definition
 */
 //******************************************************************************
 
 #include <iostream>
 
-#include <GmshException.h>
+#include <MeshException.h>
 
 using namespace Quinoa;
 
 ErrorCode
-GmshException::handleException(Driver* driver)
+MeshException::handleException(Driver* driver)
 //******************************************************************************
-//  Handle GmshException
+//  Handle MeshException
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Output message
-  cerr << "Gmsh exception: " << GmshMessage[m_exception] << m_filename << endl;
+  cerr << "Mesh exception: " << MeshMessage[m_exception] << m_filename << endl;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

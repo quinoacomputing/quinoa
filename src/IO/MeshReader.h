@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:17:55 AM KST
+  \date      Tue 11 Sep 2012 06:35:15 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -16,8 +16,9 @@
 
 using namespace std;
 
-#include <Mesh.h>
+#include <UnsMesh.h>
 #include <Exception.h>
+#include <Memory.h>
 
 namespace Quinoa {
 
@@ -26,19 +27,26 @@ class MeshReader {
 
   public:
     //! Constructor
-    MeshReader(string filename) : m_filename(filename) {}
+    MeshReader(string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor
-    ~MeshReader() {};
+    virtual ~MeshReader();
 
     //! Interface for read mesh
-    virtual void read(UnsMesh* mesh) = 0;
+    virtual void read() = 0;
 
   protected:
     //! Mesh file name
     string m_filename;
+
     //! Mesh file input stream
-    ifstream m_mesh;
+    ifstream m_inMesh;
+
+    //! Mesh object pointer
+    UnsMesh* m_mesh;
+
+    //! Memory object pointer
+    Memory* m_memory;
 
   private:
     //! Don't permit copy operator
