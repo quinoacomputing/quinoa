@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:41:27 AM KST
+  \date      Tue 11 Sep 2012 04:07:13 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -16,7 +16,7 @@
 #include <Memory.h>
 #include <Driver.h>
 #include <GmshReader.h>
-#include <GmshException.h>
+#include <MeshException.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -30,13 +30,15 @@ int main(int argc, char* argv[]) {
   try {
 
     MemoryEntry* e = memStore.newEntry(10, INT, SCALAR, "scalars");
-    GmshReader gmsh("../../tmp/cylinder.msh");
-    UnsMesh mesh;
-    gmsh.read(&mesh);
+
+    UnsMesh mesh(&memStore);
+    GmshReader gmsh("../../tmp/cylinder.msh", &mesh, &memStore);
+    gmsh.read();
+
     memStore.echoAllEntries();
 
-  } catch (MemoryException& m) { error = m.handleException(&driver); }
-    catch (GmshException& g) { error = g.handleException(&driver); }
+  } catch (MemoryException& e) { error = e.handleException(&driver); }
+    catch (MeshException& e) { error = e.handleException(&driver); }
 
   if (error != FATAL_ERROR) {
     cout << "still running..." << endl;

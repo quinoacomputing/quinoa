@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshReader.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:22:38 AM KST
+  \date      Tue 11 Sep 2012 06:53:42 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -13,7 +13,7 @@
 
 #include <UnsMesh.h>
 #include <MeshReader.h>
-#include <GmshException.h>
+#include <MeshException.h>
 
 namespace Quinoa {
 
@@ -22,13 +22,14 @@ class GmshReader : MeshReader {
 
   public:
     //! Constructor
-    GmshReader(string filename);
+    GmshReader(string filename, UnsMesh* mesh, Memory* memory) :
+      MeshReader(filename, mesh, memory) {};
 
     //! Destructor
-    ~GmshReader();
+    ~GmshReader() {};
 
     //! Interface for read
-    virtual void read(UnsMesh* mesh);
+    void read();
 
   private:
     //! Don't permit copy operator

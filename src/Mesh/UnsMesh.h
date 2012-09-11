@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 04:20:14 PM MDT
+  \date      Tue 11 Sep 2012 12:20:41 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -16,14 +16,14 @@
 namespace Quinoa {
 
 //! UnsMesh : Mesh
-class UnsMesh : Mesh {
+class UnsMesh : public Mesh {
 
   public:
     //! Constructor
-    UnsMesh();
+    UnsMesh(Memory* memory) : Mesh(memory) {};
 
     //! Destructor
-    virtual ~UnsMesh();
+    ~UnsMesh() {};
 
   private:
     //! Don't permit copy operator

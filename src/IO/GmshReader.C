@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:31:23 AM KST
+  \date      Tue 11 Sep 2012 04:25:45 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -14,35 +14,15 @@
 
 #include <QuinoaTypes.h>
 #include <GmshReader.h>
-#include <GmshException.h>
+#include <MeshException.h>
+#include <Memory.h>
 
 using namespace Quinoa;
 
-GmshReader::GmshReader(string filename) : MeshReader(filename)
-//******************************************************************************
-//  Constructor: Open Gmsh mesh file
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_mesh.open(m_filename, ifstream::in);
-  if (!m_mesh.good()) throw GmshException(FATAL, FAILED_OPEN, m_filename);
-}
-
-GmshReader::~GmshReader()
-//******************************************************************************
-//  Destructor: Close Gmsh mesh file
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_mesh.close();
-  if (m_mesh.fail()) throw GmshException(WARNING, FAILED_CLOSE, m_filename);
-}
-
 void
-GmshReader::read(UnsMesh* mesh)
+GmshReader::read()
 //******************************************************************************
 //  Read Gmsh mesh from file
-//! \param[in]  mesh  Mesh object that will hold the mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -50,16 +30,16 @@ GmshReader::read(UnsMesh* mesh)
   readMeshFormat();
 
   // Keep reading in sections until end of file
-  while (!m_mesh.eof()) {
+  while (!m_inMesh.eof()) {
     string s;
-    getline(m_mesh, s);
+    getline(m_inMesh, s);
     if (s=="$Nodes") readNodes();
     else if (s=="$Elements") readElements();
     else if (s=="$PhysicalNames") readPhysicalNames();
   }
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_mesh.clear();
+  m_inMesh.clear();
 }
 
 void
@@ -72,20 +52,20 @@ GmshReader::readMeshFormat()
   string s;
 
   // Read in beginning of header: $MeshFormat
-  getline(m_mesh, s);
-  if (s!="$MeshFormat") throw GmshException(FATAL, BAD_FORMAT, m_filename);
+  getline(m_inMesh, s);
+  if (s!="$MeshFormat") throw MeshException(FATAL, BAD_FORMAT, m_filename);
 
   // Read in "version-number file-type data-size"
   Real version;
   Int type, datasize;
-  m_mesh >> version >> type >> datasize;
+  m_inMesh >> version >> type >> datasize;
   if (version!=2.2 || type!=0 || datasize!=sizeof(Real))
-    throw GmshException(FATAL, BAD_FORMAT, m_filename);
-  getline(m_mesh, s);  // finish reading the line
+    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  getline(m_inMesh, s);  // finish reading the line
 
   // Read in end of header: $EndMeshFormat
-  getline(m_mesh, s);
-  if (s!="$EndMeshFormat") throw GmshException(FATAL, BAD_FORMAT, m_filename);
+  getline(m_inMesh, s);
+  if (s!="$EndMeshFormat") throw MeshException(FATAL, BAD_FORMAT, m_filename);
 }
 
 void
@@ -95,7 +75,31 @@ GmshReader::readNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Read in number of nodes in this node set
+  Int num;
+  m_inMesh >> num;
 
+  // Allocate and store new memory entry for the node set ids
+  MemoryEntry* nodeEntry = m_memory->newEntry(num, INT, SCALAR, "node");
+  m_mesh->newEntry(nodeEntry);
+  // Allocate and store new memory entry for the coordinates of the node set
+  MemoryEntry* coordEntry = m_memory->newEntry(num, REAL, VECTOR, "coord");
+  m_mesh->newEntry(coordEntry);
+
+  // Get pointers to node ids and coordinates
+  Int* node = m_memory->getPtr<Int>(nodeEntry);
+  Real* coord = m_memory->getPtr<Real>(coordEntry);
+
+  // Read in node ids and coordinates
+  for (Int i=0; i<num; i++) {
+    m_inMesh >> node[i] >> coord[3*i] >> coord[3*i+1] >> coord[3*i+2];
+  }
+  string s;
+  getline(m_inMesh, s);  // finish reading the last line
+
+  // Read in end of header: $EndNodes
+  getline(m_inMesh, s);
+  if (s!="$EndNodes") throw MeshException(FATAL, BAD_FORMAT, m_filename);
 }
 
 void
