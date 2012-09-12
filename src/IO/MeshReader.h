@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 06:35:15 AM KST
+  \date      Thu 13 Sep 2012 03:54:13 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -26,10 +26,10 @@ namespace Quinoa {
 class MeshReader {
 
   public:
-    //! Constructor
+    //! Constructor: Acquire mesh file handle
     MeshReader(string filename, UnsMesh* mesh, Memory* memory);
 
-    //! Destructor
+    //! Destructor: Release mesh file handle
     virtual ~MeshReader();
 
     //! Interface for read mesh

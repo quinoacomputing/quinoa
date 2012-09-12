@@ -12,6 +12,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 add_library(Base
             Driver.C
             Exception.C
+            IOException.C
             MemoryException.C
             MeshException.C
             MemoryEntry.C
