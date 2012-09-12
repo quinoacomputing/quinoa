@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 06:50:25 AM KST
+  \date      Wed 12 Sep 2012 06:26:46 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class definition
   \details   MeshException class definition
@@ -23,7 +23,9 @@ MeshException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Output message
-  cerr << "Mesh exception: " << MeshMessage[m_exception] << m_filename << endl;
+  cerr << "Mesh exception: " << MeshMessage[m_exception];
+  if (m_filename.size()) cerr << m_filename;
+  cerr << endl;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

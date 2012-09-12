@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 04:57:35 PM KST
+  \date      Wed 12 Sep 2012 08:19:58 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 
 #include <QuinoaTypes.h>
@@ -79,10 +80,15 @@ GmshReader::readNodes()
   Int num;
   m_inMesh >> num;
 
-  // Add new MeshSet Entry for the node set ids
-  Int* node = m_mesh->newEntry<Int>(num, INT, SCALAR, "node");
-  // Add new MeshSet Entry for the coordinates of the node set
-  Real* coord = m_mesh->newEntry<Real>(num, REAL, VECTOR, "coord");
+  // Increase number of node sets
+  Int nodesets = m_mesh->addNodeSet();
+  stringstream nss;
+  nss << nodesets;
+
+  // Add new MeshSet entry for the node ids
+  Int* node = m_mesh->newEntry<Int>(num, INT, SCALAR, NODEID_NAME+nss.str());
+  // Add new MeshSet entry for the coordinates of the node
+  Real* coord = m_mesh->newEntry<Real>(num, REAL, VECTOR, COORD_NAME+nss.str());
 
   // Read in node ids and coordinates
   for (Int i=0; i<num; i++) {
@@ -108,26 +114,50 @@ GmshReader::readElements()
   Int num;
   m_inMesh >> num;
 
-  // Add new MeshSet Entry for the element set ids
-//  Int* element = m_mesh->newEntry<Int>(num, INT, SCALAR, "element");
-  // Add new MeshSet Entry for the element types
-//  Int* elmtype = m_mesh->newEntry<Int>(num, INT, SCALAR, "elm-type");
-// 
-//   // Get pointers to element ids and 
-//   Int* node = m_memory->getPtr<Int>(nodeEntry);
-//   Real* coord = m_memory->getPtr<Real>(coordEntry);
-// 
-//   // Read in node ids and coordinates
-//   for (Int i=0; i<num; i++) {
-//     // elm-number elm-type number-of-tags < tag > ... node-number-list
-//     m_inMesh >> node[i] >> coord[3*i] >> coord[3*i+1] >> coord[3*i+2];
-//   }
-//   string s;
-//   getline(m_inMesh, s);  // finish reading the last line
-// 
-//   // Read in end of header: $EndNodes
-//   getline(m_inMesh, s);
-//   if (s!="$EndNodes") throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  // Increase number of element sets
+  Int elemsets = m_mesh->addElemSet();
+  stringstream ess;
+  ess << elemsets;
+
+  // Add new MeshSet entry for the element ids
+  Int* element = m_mesh->newEntry<Int>(num, INT, SCALAR, ELEMID_NAME+ess.str());
+  // Add new MeshSet entry for the element types
+  Int* elmtype = m_mesh->newEntry<Int>(num, INT, SCALAR, ELEMTYPE_NAME+ess.str());
+
+  // Reserve capacity to store connectivity and tags
+  m_mesh->reserveElem(num);
+
+  // Read in element ids, tags, and node list
+  for (Int i=0; i<num; i++) {
+    // elm-number elm-type number-of-tags < tag > ... node-number-list
+    Int ntags;
+    m_inMesh >> element[i] >> elmtype[i] >> ntags;
+
+    // Read and add tags
+    vector<Int> tags(ntags,0);
+    for (Int j=0; j<ntags; j++) {
+      m_inMesh >> tags[j];
+    }
+    m_mesh->addElemTags(tags);
+
+    // Read and add element node list
+    auto it = GmshElemNodes.find(elmtype[i]);
+    if (it==GmshElemNodes.end()) {
+      throw MeshException(FATAL, BAD_ELEMENT, m_filename);
+    }
+    Int nnodes = it->second;
+    vector<Int> nodes(nnodes,0);
+    for (Int j=0; j<nnodes; j++) {
+      m_inMesh >> nodes[j];
+    }
+    m_mesh->addElem(nodes);
+  }
+  string s;
+  getline(m_inMesh, s);  // finish reading the last line
+
+  // Read in end of header: $EndNodes
+  getline(m_inMesh, s);
+  if (s!="$EndElements") throw MeshException(FATAL, BAD_FORMAT, m_filename);
 }
 
 void
@@ -138,189 +168,3 @@ GmshReader::readPhysicalNames()
 //******************************************************************************
 {
 }
-
-
-// static void readmeshfile(int *npoin, int *nbpoin, int *nelem, double **coord,
-//                          int **binpoel, int **inpoel, int **bptags, int **betags)
-// // -----------------------------------------------------------------------------
-// // Routine: readmeshfile - Read in mesh from file
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // reads meshfile, also puts some header info into the file specified by
-// // OUT_MESH_FILENAME, where the reordered (and finally used) mesh will be
-// // written, arguments:
-// //   o npoin: the total the number of points (nodes) read in from the meshfile,
-// //   o nbpoin: the total number of boundary points/elements read in from the
-// //             meshfile,
-// //   o nelem: the total number of domain (triangular) elements read in from the
-// //            meshfile,
-// //   o coord[npoin*NDIMN]: matrix that stores x,y coordinates of all points,
-// //   o binpoel[nelem_g*NBNODE]: matrix that stores the global element
-// //                              connectivity indices of boundary elements,
-// //   o inpoel[nelem_g*NNODE]: matrix that stores the global element connectivity
-// //                            indices of domain elements,
-// //   o bptags[nbpoin*3]: matrix that stores the boundary tags assigned to
-// //                       boundary points,
-// //   o betags[nelem_g*2]: matrix that stores the boundary tags assigned to
-// //                        boundary elements.
-// //  the output arrays are allocated dynamically in this function, so the caller
-// //  needs to take care of freeing them
-// // -----------------------------------------------------------------------------
-// {
-//   FILE *imesh, *omesh, *opos3d, *igeo;
-//   char str[STRLEN];
-//   int meshversion, meshtype, meshdoublesize, e, p, etype, ntags, itmp, num, i,
-//       q;
-//   double dtmp;
-// 
-//   // start writing omesh...
-//   if (!(omesh = fopen(OUT_MESH_FILENAME,"w")))
-//     ERR("cannot open OUT_MESH_FILENAME!");
-// 
-//   // start reading mesh data in...
-//   if (!(imesh = fopen(INP_MESH_FILENAME,"r")))
-//     ERR("cannot open INP_MESH_FILENAME!");
-//   fgets( str, STRLEN, imesh );			// str << "$MeshFormat\n"
-//   fprintf( omesh, "%s", str );			// copy to omesh
-// 
-//   // 2 0 8
-//   fscanf( imesh, "%d %d %d\n", &meshversion, &meshtype, &meshdoublesize );
-//   // copy to omesh
-//   fprintf( omesh, "%d %d %d\n", meshversion, meshtype, meshdoublesize );
-//   if ( (meshversion != 2) ||
-//        (meshtype != 0) ||
-//        (meshdoublesize != sizeof(double)) )
-//     ERR("wrong meshformat");
-// 
-//   fgets( str, STRLEN, imesh );			// str << "$EndMeshFormat\n"
-//   fprintf( omesh, "%s", str );			// copy to omesh
-// 
-//   fgets( str, STRLEN, imesh );			// str << "$Nodes\n"
-//   fprintf( omesh, "%s", str );			// copy to omesh
-// 
-//   fscanf( imesh, "%d\n", npoin );		// read in number of points
-//   fprintf( omesh, "%d\n", *npoin );		// copy to omesh
-//   
-//   // read in points...
-//   // the node numbering and the order can be arbitrary in imesh and probably
-//   // doesn't start with 0, so save the indices in Pg...
-//   // array for storing point indices...
-//   if ( !(pg = (int*)malloc((*npoin)*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-// 
-//   // array for storing x and y coordinates of vertices,
-//   if ( !(*coord = (double*)malloc((*npoin)*NDIMN*sizeof(double))) )
-//     ERR("Can't allocate memory!");
-// 
-//   for ( p = 0; p < *npoin; p++ ) {
-//     // read in coordinates of point p and throw away z coordinate...
-//     fscanf( imesh, "%d %lf %lf %lf\n", pg+p, *coord+p*NDIMN+0,
-//                                        *coord+p*NDIMN+1, &dtmp );
-//   }
-// 
-//   // check if numbering starts from 0...
-//   for ( itmp = p = 0; p < *npoin; p++ ) if (pg[p] == 0) itmp = 1;
-//   if (!itmp)
-//     ERR("point numbering should start with 0, create a Point(0) in"
-//         " the gmsh .geo file");
-// 
-//   fgets( str, STRLEN, imesh );	// str << "$EndNodes\n"
-//   fgets( str, STRLEN, imesh );	// str << "$Elements\n"
-//   // read in Nelem_g = number of boundary (line) elements +
-//   //                   number of domain elements (triangles)
-//   // (Nelem_g: total number of elements from gmsh)
-//   fscanf( imesh, "%d\n", &nelem_g );
-// 
-//   // allocate maximum possible size for Etags, Betags, Binpoel, Inpoel,
-//   // (the real sizes are certainly smaller than Nelem_g, however, we
-//   // don't know this yet...
-//   if ( !(etags = (int*)malloc(nelem_g*2*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-//   if ( !(*betags = (int*)malloc(nelem_g*2*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-//   if ( !(*binpoel = (int*)malloc(nelem_g*NBNODE*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-//   if ( !(*inpoel = (int*)malloc(nelem_g*NNODE*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-// 
-//   // read in all Nelem_g elements, also count up total number of boundary
-//   // elements/points (Nbpoin) and total number of domain elements (Nelem)
-//   // (Nelem_g = Nbpoin + Nelem)...
-//   for ( e = *nelem = *nbpoin = 0; e < nelem_g; e++ ) {
-//     // element index, element type, number of tags
-//     fscanf( imesh, "%d %d %d\n", &itmp, &etype, &ntags );
-//     if ( ntags > MAXNTAGS ) ERR("ntags > MAXNTAGS in meshfile");
-//     switch ( etype )
-//     {
-//       case 1: // line (boundary element with 2 nodes)...
-// 	      // store physical entity index in betags
-// 	      if ( ntags > 0 ) fscanf( imesh, "%d", *betags+(*nbpoin)*2+0 );
-// 	      // store elementary geometrical entity index in betags
-// 	      if ( ntags > 1 ) fscanf( imesh, "%d", *betags+(*nbpoin)*2+1 );
-// 	      // throw away mesh partition index (if any)
-// 	      if ( ntags > 2 ) fscanf( imesh, "%d", &itmp );
-// 	      // store boundary element connectivity indices in binpoel...
-//               fscanf( imesh, "%d %d\n", *binpoel+(*nbpoin)*NBNODE+0,
-//                                         *binpoel+(*nbpoin)*NBNODE+1 );
-// 	      // increase number of boundary elements/points...
-// 	      (*nbpoin)++;
-// 	      break;
-// 
-//       case 2: // triangle (surface element with 3 nodes)
-// 	      // store physical entity index in etags
-// 	      if ( ntags > 0 ) fscanf( imesh, "%d", etags+(*nelem)*2+0 );
-// 	      // store elementary geometrical entity index in etags
-// 	      if ( ntags > 1 ) fscanf( imesh, "%d", etags+(*nelem)*2+1 );
-// 	      // throw away mesh partition index (if any)
-// 	      if ( ntags > 2 ) fscanf( imesh, "%d", &itmp );
-// 	      // store three node indices in inpoel...
-//     	      fscanf( imesh, "%d %d %d\n", *inpoel+(*nelem)*NNODE+0,
-//                                            *inpoel+(*nelem)*NNODE+1,
-// 					   *inpoel+(*nelem)*NNODE+2 );
-// 	      // increase number of domain elements...
-// 	      (*nelem)++;
-// 	      break;
-// 
-//       default: ERR("unknown element type");
-//     }
-//   }
-// 
-//   fclose( imesh );	// finish reading mesh data
-// 
-//   // generate boundary tags assigned to points instead of elements...
-//   // array for containing the above: the first column is the global indices
-//   // of the boundary points, the other two are the physical and elementary
-//   // geometrical tags
-//   if ( !(*bptags = (int*)malloc((*nbpoin)*3*sizeof(int))) )
-//     ERR("Can't allocate memory!");
-//   
-//   for ( e = num = 0; e < *nbpoin; e++ )
-//     for ( p = 0; p < NBNODE; p++ ) {
-//       itmp = (*binpoel)[e*NBNODE+0];	// get next point index
-//       
-//       for ( i = q = 0; i < num; i++ )   // see if we have encountered it already
-//          if ( (*bptags)[i*3+0] == itmp ) { q = 1; break; }
-// 
-//       if ( q == 0 ) {    // add new only if we haven't encountered it yet
-//         (*bptags)[num*3+0] = itmp;		// copy global point index
-//         (*bptags)[num*3+1] = (*betags)[e*2+0];	// copy physical index
-//         (*bptags)[num*3+2] = (*betags)[e*2+1];	// copy geometrical index
-//         num++;
-//       }
-//     }
-// 
-//   // start writing postprocess-file (specified by OUT_POSTPROCESS_3D_FILENAME)
-//   // by copying file specified by INP_GEO_FILENAME in it...
-//   if (!(opos3d = fopen(OUT_POSTPROCESS_3D_FILENAME,"w")))
-//     ERR("cannot open OUT_POSTPROCESS_3D_FILENAME!");
-// 
-//   if (!(igeo = fopen(INP_GEO_FILENAME,"r")))
-//     ERR("cannot open INP_GEO_FILENAME!");
-//   
-//   while ( fgets(str,STRLEN,igeo) ) fprintf( opos3d, "%s", str );
-// 
-//   fclose( igeo );	// finish reading mesh data
-//   fclose( opos3d );	// close opos3d for now (cont'd during postprocess)
-//   fclose( omesh );	// close omesh for now (cont'd in writemeshfile)
-// }
-

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 03:44:18 PM KST
+  \date      Wed 12 Sep 2012 08:11:09 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -202,26 +202,25 @@ Memory::echoAllEntries()
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
   // Echo AllEntries-header
-  cout << "* Dynamically allocated memory entries:" << endl;
-  cout << endl;
-  cout << "  " << setw(MemoryEntryWidth[0]) << "Name"
-       << "  " << setw(MemoryEntryWidth[1]) << "Number"
-       << "  " << setw(MemoryEntryWidth[2]) << "Value"
-       << "  " << setw(MemoryEntryWidth[3]) << "Variable"
-       << "  " << setw(MemoryEntryWidth[4]) << "Bytes"
-       << "  " << setw(MemoryEntryWidth[5]) << "Plot"
-       << "  " << setw(MemoryEntryWidth[6]) << "Restart"
-       << "  " << setw(MemoryEntryWidth[7]) << "Ptr"
+  cout << "* Dynamically allocated memory entries:" << endl << endl;
+  cout << "  " << setw(EntryWidth[0]) << "Name"
+       << "  " << setw(EntryWidth[1]) << "Number"
+       << "  " << setw(EntryWidth[2]) << "Value"
+       << "  " << setw(EntryWidth[3]) << "Variable"
+       << "  " << setw(EntryWidth[4]) << "Bytes"
+       << "  " << setw(EntryWidth[5]) << "Plot"
+       << "  " << setw(EntryWidth[6]) << "Restart"
+       << "  " << setw(EntryWidth[7]) << "Ptr"
        << endl;
   cout << setfill('=');
-  cout << "  " << setw(MemoryEntryWidth[0]) << "="
-       << "  " << setw(MemoryEntryWidth[1]) << "="
-       << "  " << setw(MemoryEntryWidth[2]) << "="
-       << "  " << setw(MemoryEntryWidth[3]) << "="
-       << "  " << setw(MemoryEntryWidth[4]) << "="
-       << "  " << setw(MemoryEntryWidth[5]) << "="
-       << "  " << setw(MemoryEntryWidth[6]) << "="
-       << "  " << setw(MemoryEntryWidth[7]) << "="
+  cout << "  " << setw(EntryWidth[0]) << "="
+       << "  " << setw(EntryWidth[1]) << "="
+       << "  " << setw(EntryWidth[2]) << "="
+       << "  " << setw(EntryWidth[3]) << "="
+       << "  " << setw(EntryWidth[4]) << "="
+       << "  " << setw(EntryWidth[5]) << "="
+       << "  " << setw(EntryWidth[6]) << "="
+       << "  " << setw(EntryWidth[7]) << "="
        << endl;
   cout << setfill(' ');
 
@@ -240,6 +239,9 @@ Memory::getNumber(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -257,6 +259,9 @@ Memory::getValue(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -274,6 +279,9 @@ Memory::getVariable(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -291,6 +299,9 @@ Memory::getName(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -308,6 +319,9 @@ Memory::getPlot(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -325,6 +339,9 @@ Memory::getRestart(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Return and throw warning if memory store is empty
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -342,6 +359,8 @@ Memory::getID(string name)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(name.size() > 0);
+
   // Return and throw warning if memory store is empty
   if (!m_name.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
@@ -384,6 +403,9 @@ Memory::zero(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Return and throw warning if entry is invalid
+  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+
   // Get size of value type
   size_t size = SizeOf[id->m_value];
 
