@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/IO/MeshReader.h
+  \file      src/IO/MeshWriter.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:09:24 AM KST
+  \date      Thu 13 Sep 2012 05:11:15 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     MeshReader base class declaration
-  \details   MeshReader base class declaration
+  \brief     MeshWriter base class declaration
+  \details   MeshWriter base class declaration
 */
 //******************************************************************************
-#ifndef MeshReader_h
-#define MeshReader_h
+#ifndef MeshWriter_h
+#define MeshWriter_h
 
 #include <string>
 #include <fstream>
@@ -21,25 +21,25 @@ using namespace std;
 
 namespace Quinoa {
 
-//! MeshReader base class
-class MeshReader {
+//! MeshWriter base class
+class MeshWriter {
 
   public:
     //! Constructor: Acquire mesh file handle
-    MeshReader(string filename, UnsMesh* mesh, Memory* memory);
+    MeshWriter(string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor: Release mesh file handle
-    virtual ~MeshReader();
+    virtual ~MeshWriter();
 
-    //! Interface for read mesh
-    virtual void read() = 0;
+    //! Interface for write mesh
+    virtual void write() = 0;
 
   protected:
     //! Mesh file name
     string m_filename;
 
-    //! Mesh file input stream
-    ifstream m_inMesh;
+    //! Mesh file output stream
+    ofstream m_outMesh;
 
     //! Mesh object pointer
     UnsMesh* m_mesh;
@@ -49,11 +49,11 @@ class MeshReader {
 
   private:
     //! Don't permit copy operator
-    MeshReader(const MeshReader&);
+    MeshWriter(const MeshWriter&);
     //! Don't permit assigment operator
-    MeshReader& operator=(const MeshReader&);
+    MeshWriter& operator=(const MeshWriter&);
 };
 
 } // namespace Quinoa
 
-#endif // MeshReader_h
+#endif // MeshWriter_h
