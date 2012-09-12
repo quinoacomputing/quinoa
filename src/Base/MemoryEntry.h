@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 11:08:53 AM KST
+  \date      Thu 13 Sep 2012 05:56:46 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -60,13 +60,14 @@ const string VariableTypeName[NUM_VARIABLE_TYPES] = { "scalar",
                                                       "tensor"
 };
 
-//! Static width of fields for echo of MemoryEntry fields
-const Int EntryWidth[] = { 15,  //! Width of Name field
+//! Output width of MemoryEntry fields
+const Int EntryWidth[] = { 10,  //! Width of Name field
                            10,  //! Width of Number field
-                           10,  //! Width of Value field
+                            5,  //! Width of Value field
+                            9,  //! Width of Value size field
                            10,  //! Width of Variable field
                            10,  //! Width of Bytes field
-                            5,  //! Width of Plot field
+                            6,  //! Width of Plot field
                             7,  //! Width of Restart field
                            10   //! Width of Ptr field
 };

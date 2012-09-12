@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 08:11:09 PM KST
+  \date      Thu 13 Sep 2012 05:55:50 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -206,11 +206,12 @@ Memory::echoAllEntries()
   cout << "  " << setw(EntryWidth[0]) << "Name"
        << "  " << setw(EntryWidth[1]) << "Number"
        << "  " << setw(EntryWidth[2]) << "Value"
-       << "  " << setw(EntryWidth[3]) << "Variable"
-       << "  " << setw(EntryWidth[4]) << "Bytes"
-       << "  " << setw(EntryWidth[5]) << "Plot"
-       << "  " << setw(EntryWidth[6]) << "Restart"
-       << "  " << setw(EntryWidth[7]) << "Ptr"
+       << "  " << setw(EntryWidth[3]) << "ValueSize"
+       << "  " << setw(EntryWidth[4]) << "Variable"
+       << "  " << setw(EntryWidth[5]) << "Bytes"
+       << "  " << setw(EntryWidth[6]) << "Plot"
+       << "  " << setw(EntryWidth[7]) << "Restart"
+       << "  " << setw(EntryWidth[8]) << "Ptr"
        << endl;
   cout << setfill('=');
   cout << "  " << setw(EntryWidth[0]) << "="
@@ -221,6 +222,7 @@ Memory::echoAllEntries()
        << "  " << setw(EntryWidth[5]) << "="
        << "  " << setw(EntryWidth[6]) << "="
        << "  " << setw(EntryWidth[7]) << "="
+       << "  " << setw(EntryWidth[8]) << "="
        << endl;
   cout << setfill(' ');
 
