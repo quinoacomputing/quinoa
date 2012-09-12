@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 06:27:37 AM KST
+  \date      Thu 13 Sep 2012 04:35:04 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -20,9 +20,7 @@ using namespace std;
 namespace Quinoa {
 
 //! MeshException types
-enum MeshExceptionType { FAILED_OPEN=0,  //!< failed to open file
-                         FAILED_CLOSE,   //!< failed to close file
-                         BAD_FORMAT,     //!< unsupported Gmsh mesh format
+enum MeshExceptionType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
                          BAD_ELEMENT,    //!< unknown element type
                          EMPTY_SET,      //!< no element/node sets
                          NUM_MESH_EXCEPTIONS
@@ -30,14 +28,12 @@ enum MeshExceptionType { FAILED_OPEN=0,  //!< failed to open file
 
 //! MeshException error messages
 const string MeshMessage[NUM_MESH_EXCEPTIONS] = {
-  "Failed to open mesh file: ",
-  "Failed to close mesh file: ",
   "Unsupported mesh format: ",
   "Unknown element type in mesh file ",
   "No element/node sets in mesh",
 };
 
-//! MeshException : Exception class declaration
+//! MeshException : Exception
 class MeshException : Exception {
 
   public:
@@ -69,7 +65,7 @@ class MeshException : Exception {
     //! Dont' permit assigment operator
     MeshException& operator=(const MeshException&);
 
-    //! MeshException (BAD_INPUTFILE, BAD_FORMAT, etc.)
+    //! MeshException (BAD_FORMAT, BAD_ELEMENT, etc.)
     MeshExceptionType m_exception;
 };
 

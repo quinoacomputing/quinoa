@@ -2,10 +2,10 @@
 /*!
   \file      src/Mesh/StrMesh.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 12:23:36 PM KST
+  \date      Thu 13 Sep 2012 03:33:38 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Unstructured mesh class definition
-  \details   Unstructured mesh class definition
+  \brief     Structured mesh class definition
+  \details   Structured mesh class definition
 */
 //******************************************************************************
 
