@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 06:53:24 AM KST
+  \date      Wed 12 Sep 2012 06:27:37 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -24,6 +24,7 @@ enum MeshExceptionType { FAILED_OPEN=0,  //!< failed to open file
                          FAILED_CLOSE,   //!< failed to close file
                          BAD_FORMAT,     //!< unsupported Gmsh mesh format
                          BAD_ELEMENT,    //!< unknown element type
+                         EMPTY_SET,      //!< no element/node sets
                          NUM_MESH_EXCEPTIONS
 };
 
@@ -32,18 +33,24 @@ const string MeshMessage[NUM_MESH_EXCEPTIONS] = {
   "Failed to open mesh file: ",
   "Failed to close mesh file: ",
   "Unsupported mesh format: ",
-  "Unknown element type in mesh file "
+  "Unknown element type in mesh file ",
+  "No element/node sets in mesh",
 };
 
 //! MeshException : Exception class declaration
 class MeshException : Exception {
 
   public:
-    //! Constructor
+    //! Constructor with filename
     MeshException(ExceptionType exception,
                   MeshExceptionType meshException,
                   string filename) :
       Exception(exception), m_filename(filename), m_exception(meshException) {}
+
+    //! Constructor without filename
+    MeshException(ExceptionType exception,
+                  MeshExceptionType meshException) :
+      Exception(exception), m_exception(meshException) {}
 
     //! Copy constructor
     MeshException(const MeshException&);

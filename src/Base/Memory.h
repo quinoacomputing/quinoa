@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 04:39:33 AM KST
+  \date      Wed 12 Sep 2012 08:09:13 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -84,13 +84,26 @@ class Memory {
     //! Return true if the variable is written to restart file based on the ID
     Bool getRestart(MemoryEntry* id);
 
-    //! Return raw pointer for memory entry based on ID,
+    //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) {
       if (id == 0) throw MemoryException(WARNING, UNDEFINED);
       auto it = m_entry.find(id);
       if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
       return static_cast<V*>((*it)->m_ptr);
+    }
+
+    //! Return the data pointer for memory entry based on the variable name,
+    //! template V specifies return pointer type
+    template<class V> V* getPtr(string name) {
+      return static_cast<V*>(getID(name)->m_ptr);
+    }
+
+    //! Return the pair of data pointer and number of variables for memory entry
+    //! based on the variable name, template V specifies return pointer type
+    template<class V> pair<size_t,V*> getNumPtr(string name) {
+      MemoryEntry* entry = getID(name);
+      return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
     }
 
     //! Return the MemorySet key based on the variable name

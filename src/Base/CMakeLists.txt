@@ -13,6 +13,7 @@ add_library(Base
             Driver.C
             Exception.C
             MemoryException.C
+            MeshException.C
             MemoryEntry.C
             Memory.C
             Random.C

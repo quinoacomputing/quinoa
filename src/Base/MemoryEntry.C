@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 01:54:38 PM KST
+  \date      Wed 12 Sep 2012 01:58:02 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryEntry base class definition
   \details   Memoryentry base class definition
@@ -27,14 +27,14 @@ MemoryEntry::line()
 //******************************************************************************
 {
   stringstream ss;
-  ss << "  " << setw(MemoryEntryWidth[0]) << m_name
-     << "  " << setw(MemoryEntryWidth[1]) << m_number
-     << "  " << setw(MemoryEntryWidth[2]) << ValueName[m_value]
-     << "  " << setw(MemoryEntryWidth[3]) << VariableTypeName[m_variable]
-     << "  " << setw(MemoryEntryWidth[4]) << m_nbytes
-     << "  " << setw(MemoryEntryWidth[5]) << (m_plot == true ? "true" : "false")
-     << "  " << setw(MemoryEntryWidth[6]) << (m_restart == true ? "true" : "false")
-     << "  " << setw(MemoryEntryWidth[7]) << m_ptr
+  ss << "  " << setw(EntryWidth[0]) << m_name
+     << "  " << setw(EntryWidth[1]) << m_number
+     << "  " << setw(EntryWidth[2]) << ValueName[m_value]
+     << "  " << setw(EntryWidth[3]) << VariableTypeName[m_variable]
+     << "  " << setw(EntryWidth[4]) << m_nbytes
+     << "  " << setw(EntryWidth[5]) << (m_plot == true ? "true" : "false")
+     << "  " << setw(EntryWidth[6]) << (m_restart == true ? "true" : "false")
+     << "  " << setw(EntryWidth[7]) << m_ptr
      << endl;
   return ss.str();
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 04:07:13 PM KST
+  \date      Wed 12 Sep 2012 08:24:00 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -34,8 +34,10 @@ int main(int argc, char* argv[]) {
     UnsMesh mesh(&memStore);
     GmshReader gmsh("../../tmp/cylinder.msh", &mesh, &memStore);
     gmsh.read();
+    mesh.echoElemSets();
 
     memStore.echoAllEntries();
+    memStore.freeEntry(e);
 
   } catch (MemoryException& e) { error = e.handleException(&driver); }
     catch (MeshException& e) { error = e.handleException(&driver); }

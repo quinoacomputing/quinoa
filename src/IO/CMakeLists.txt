@@ -12,7 +12,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
 add_library(IO
-            MeshException.C
             MeshReader.C
             GmshReader.C
             #Postprocess.C

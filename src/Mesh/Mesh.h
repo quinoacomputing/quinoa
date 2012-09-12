@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Tue 11 Sep 2012 04:58:34 PM KST
+  \date      Wed 12 Sep 2012 07:56:41 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -11,12 +11,19 @@
 #ifndef Mesh_h
 #define Mesh_h
 
+#include <vector>
 #include <unordered_set>
 
 #include <MemoryEntry.h>
 #include <Memory.h>
 
 namespace Quinoa {
+
+//! Base names for various mesh memory entries
+const string   NODEID_NAME = "nodeID_";
+const string    COORD_NAME = "coord_";
+const string   ELEMID_NAME = "elmID_";
+const string ELEMTYPE_NAME = "elmType_";
 
 //! Mesh dimension
 enum MeshDim { TWOD=0,
@@ -26,13 +33,12 @@ enum MeshDim { TWOD=0,
 //! Mesh base class
 class Mesh {
 
-  //! MeshSet stores all memory entry keys that belong to a given instance of
-  //! the Mesh object.
+  //! Memory entry keys holding Mesh data
   typedef unordered_set<MemoryEntry*> MeshSet;
 
   public:
     //! Constructor
-    Mesh(Memory* memory) : m_memory(memory) {}
+    Mesh(Memory* memory) : m_memory(memory), m_nodesets(0), m_elemsets(0) {}
 
     //! Destructor
     virtual ~Mesh();
@@ -44,19 +50,37 @@ class Mesh {
                                   string name,
                                   Bool plot = false,
                                   Bool restart = false) {
-      // Allocate new mmeory entry
+      // Allocate new memory entry
       MemoryEntry* entry = m_memory->newEntry(number,
                                               value,
                                               variable,
                                               name,
                                               plot,
                                               restart);
-      // Store new entry
+      // Store new MeshSet entry
       pair<MeshSet::iterator,Bool> n = m_entry.insert(entry);
       if (!n.second) throw MemoryException(FATAL, BAD_INSERT);
-      // Get pointers to element ids and 
+      // Get pointer to new entry 
       return m_memory->getPtr<V>(entry);
     }
+
+    //! Reserve element capacity
+    void reserveElem(vector< vector<Int> >::size_type n);
+
+    //! Add new element
+    void addElem(vector<Int>& nodes);
+
+    //! Add new element tags
+    void addElemTags(vector<Int>& tags);
+
+    //! Echo element tags and connectivity in all element sets
+    void echoElemSets();
+
+    //! Increase number of node sets
+    Int addNodeSet() { return ++m_nodesets; }
+
+    //! Increase number of element sets
+    Int addElemSet() { return ++m_elemsets; }
 
   protected:
     //! Set mesh dimension
@@ -74,8 +98,20 @@ class Mesh {
     //! Mesh dimension
     MeshDim m_dim;
 
-    //! Node sets
+    //! Number of node sets
+    Int m_nodesets;
+
+    //! Number of element sets
+    Int m_elemsets;
+
+    //! Memory entry keys for Mesh data
     MeshSet m_entry;
+
+    //! Elements
+    vector< vector<Int> > m_elem;
+
+    //! Element tags
+    vector< vector<Int> > m_tag;
 };
 
 } // namespace Quinoa
