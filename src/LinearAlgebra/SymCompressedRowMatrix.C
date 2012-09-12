@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 03:22:05 AM KST
+  \date      Thu 13 Sep 2012 04:53:18 AM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -155,7 +155,7 @@ SymCompressedRowMatrix::add(Int row, Int column, Int i, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
   Int rmdof = row*m_dof;
 
   for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
@@ -182,7 +182,7 @@ SymCompressedRowMatrix::add(Int row, Int column, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
 
   for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
@@ -209,7 +209,7 @@ SymCompressedRowMatrix::ins(Int row, Int column, Int i, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
   Int rmdof = row*m_dof;
   
   for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
@@ -233,7 +233,7 @@ SymCompressedRowMatrix::ins(Int row, Int column, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
 
   for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
@@ -257,7 +257,7 @@ SymCompressedRowMatrix::get(Int row, Int column, Int i)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
   Int rmdof = row*m_dof;
 
   for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
@@ -281,7 +281,7 @@ SymCompressedRowMatrix::get(Int row, Int column)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx;
+  Int idx = 0;
 
   for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
