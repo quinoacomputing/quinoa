@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:55:50 AM KST
+  \date      Thu 13 Sep 2012 04:04:40 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -36,8 +36,8 @@ Memory::~Memory()
 
 MemoryEntry*
 Memory::newEntry(size_t number,
-                 ValueType value,
-                 VariableType variable,
+                 ValType value,
+                 VarType variable,
                  string name,
                  Bool plot,
                  Bool restart)
@@ -54,12 +54,16 @@ Memory::newEntry(size_t number,
 //******************************************************************************
 {
   assert(number > 0);
-  assert(0 <= value && value < NUM_VALUE_TYPES);
-  assert(0 <= variable && variable < NUM_VARIABLE_TYPES);
   assert(name.size() > 0);
+  assert(static_cast<Int>(value) >= 0 &&
+         static_cast<Int>(value) < NUM_VALUE_TYPES);
+  assert(static_cast<Int>(variable) >= 0 &&
+         static_cast<Int>(variable) < NUM_VARIABLE_TYPES);
 
   // Compute total number of bytes to be allocated
-  size_t nbytes = number * VariableComponents[variable] * SizeOf[value];
+  size_t nbytes = number *
+                  VarComp[static_cast<Int>(variable)] *
+                  SizeOf[static_cast<Int>(value)];
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
@@ -103,8 +107,8 @@ Memory::newEntry(size_t number,
 
 MemoryEntry*
 Memory::newZeroEntry(size_t number,
-                     ValueType value,
-                     VariableType variable,
+                     ValType value,
+                     VarType variable,
                      string name,
                      Bool plot,
                      Bool restart)
@@ -253,7 +257,7 @@ Memory::getNumber(MemoryEntry* id)
   return (*it)->m_number;
 }
 
-ValueType
+ValType
 Memory::getValue(MemoryEntry* id)
 //******************************************************************************
 //  Return the value type based on the ID
@@ -273,7 +277,7 @@ Memory::getValue(MemoryEntry* id)
   return (*it)->m_value;
 }
 
-VariableType
+VarType
 Memory::getVariable(MemoryEntry* id)
 //******************************************************************************
 //  Return the variable type based on the ID
@@ -392,8 +396,8 @@ Memory::getBytes()
   size_t bytes = 0;
   for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
     bytes += sizeof(MemoryEntry) +
-               (*it)->m_number * VariableComponents[(*it)->m_variable] *
-               SizeOf[(*it)->m_value];
+               (*it)->m_number * VarComp[static_cast<Int>((*it)->m_variable)] *
+               SizeOf[static_cast<Int>((*it)->m_value)];
   }
   return bytes;
 }
@@ -409,7 +413,7 @@ Memory::zero(MemoryEntry* id)
   if (id == 0) throw MemoryException(WARNING, UNDEFINED);
 
   // Get size of value type
-  size_t size = SizeOf[id->m_value];
+  size_t size = SizeOf[static_cast<Int>(id->m_value)];
 
   // Compute chunk size
   Int i = id->m_number/m_nthreads;

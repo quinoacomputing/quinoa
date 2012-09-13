@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:56:46 AM KST
+  \date      Thu 13 Sep 2012 04:10:14 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -19,45 +19,43 @@ using namespace std;
 
 namespace Quinoa {
 
+//! Number of value types
+const Int NUM_VALUE_TYPES = 3;
 //! Value types
-enum ValueType { BOOL=0,        //!< Boolean value
-                 INT,           //!< Integer value
-                 REAL,          //!< Real value
-                 NUM_VALUE_TYPES
+enum class ValType : Int { BOOL=0,  //!< Boolean value
+                           INT,     //!< Integer value
+                           REAL     //!< Real value
 };
-
 //! Size of value types
-const size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
-                                         sizeof(Int),   //!< Size of Integer
-                                         sizeof(Real)   //!< Size of Real
+constexpr size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
+                                             sizeof(Int),   //!< Size of Integer
+                                             sizeof(Real)   //!< Size of Real
 };
-
 //! Name of value types
-const string ValueName[NUM_VALUE_TYPES] = { "bool",  //! Screen name of bool
-                                            "int",   //! Screen name of integer
-                                            "real"   //! Screen name of real
+const string ValName[NUM_VALUE_TYPES] = { "bool",  //! Screen name of bool
+                                          "int",   //! Screen name of integer
+                                          "real"   //! Screen name of real
 };
 
+//! Number of value types
+const Int NUM_VARIABLE_TYPES = 4;
 //! Variable types
-enum VariableType { SCALAR=0,       //!< Scalar quantity
-                    VECTOR,         //!< Vector quantity
-                    SYMTENSOR,      //!< Symmetric tensor quantity
-                    TENSOR,         //!< Tensor quantity
-                    NUM_VARIABLE_TYPES
+enum class VarType : Int { SCALAR=0,   //!< Scalar quantity
+                           VECTOR,     //!< Vector quantity
+                           SYMTENSOR,  //!< Symmetric tensor quantity
+                           TENSOR      //!< Tensor quantity
 };
-
 //! Variable components
-const Int VariableComponents[NUM_VARIABLE_TYPES] { 1,  //!< Scalar
-                                                   3,  //!< Vector
-                                                   6,  //!< Symmetric tensor
-                                                   9   //!< Tensor
+const Int VarComp[NUM_VARIABLE_TYPES] { 1,  //!< Scalar
+                                        3,  //!< Vector
+                                        6,  //!< Symmetric tensor
+                                        9   //!< Tensor
 };
-
 //! Name of variable types
-const string VariableTypeName[NUM_VARIABLE_TYPES] = { "scalar",
-                                                      "vector",
-                                                      "symtensor",
-                                                      "tensor"
+const string VarTypeName[NUM_VARIABLE_TYPES] = { "scalar",
+                                                 "vector",
+                                                 "symtensor",
+                                                 "tensor"
 };
 
 //! Output width of MemoryEntry fields
@@ -82,8 +80,8 @@ class MemoryEntry {
     //! Constructor
     MemoryEntry(size_t nbytes,
                 size_t number,
-                ValueType value,
-                VariableType variable,
+                ValType value,
+                VarType variable,
                 string name,
                 Bool plot,
                 Bool restart,
@@ -112,8 +110,8 @@ class MemoryEntry {
 
     size_t m_nbytes;          //!< Size in bytes (number of chars) allocated
     size_t m_number;          //!< Number of items
-    ValueType m_value;        //!< Value type (BOOL_VAL, INT_VAL, etc.)
-    VariableType m_variable;  //!< Variable type (SCALAR_VAR, VECTOR_VAR, etc.)
+    ValType m_value;          //!< Value type (BOOL_VAL, INT_VAL, etc.)
+    VarType m_variable;       //!< Variable type (SCALAR_VAR, VECTOR_VAR, etc.)
     string m_name;            //!< Variable name
     Bool m_plot;              //!< Variable can be plotted
     Bool m_restart;           //!< Write to restart file

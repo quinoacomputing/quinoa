@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 06:01:27 AM KST
+  \date      Thu 13 Sep 2012 04:09:56 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -30,13 +30,14 @@ int main(int argc, char* argv[]) {
   ErrorCode error = NO_ERROR;
   try {
 
-    MemoryEntry* e = memStore.newEntry(10, INT, SCALAR, "scalars");
+    MemoryEntry* e =
+      memStore.newEntry(10, ValType::INT, VarType::SCALAR, "scalars");
 
-    //UnsMesh mesh(&memStore);
-    //GmshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
-    //inMesh.read();
-    //GmshMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-    //outMesh.write();
+    UnsMesh mesh(&memStore);
+    GmshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+    inMesh.read();
+    GmshMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+    outMesh.write();
 
     memStore.echoAllEntries();
     cout << "Allocated memory: " << memStore.getBytes() << endl;

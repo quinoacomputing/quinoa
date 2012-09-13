@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 08:09:13 PM KST
+  \date      Thu 13 Sep 2012 03:52:25 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -43,16 +43,16 @@ class Memory {
 
     //! Allocate memory entry
     MemoryEntry* newEntry(size_t number,
-                          ValueType value,
-                          VariableType variable,
+                          ValType value,
+                          VarType variable,
                           string name,
                           Bool plot = false,
                           Bool restart = false);
 
     //! Allocate and zero memory entry
     MemoryEntry* newZeroEntry(size_t number,
-                              ValueType value,
-                              VariableType variable,
+                              ValType value,
+                              VarType variable,
                               string name,
                               Bool plot = false,
                               Bool restart = false);
@@ -70,10 +70,10 @@ class Memory {
     size_t getNumber(MemoryEntry* id);
 
     //! Return the value type based on the ID
-    ValueType getValue(MemoryEntry* id);
+    ValType getValue(MemoryEntry* id);
 
     //! Return the variable type based on the ID
-    VariableType getVariable(MemoryEntry* id);
+    VarType getVariable(MemoryEntry* id);
 
     //! Return the variable name based on the ID
     string getName(MemoryEntry* id);
