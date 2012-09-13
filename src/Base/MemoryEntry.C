@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:52:04 AM KST
+  \date      Thu 13 Sep 2012 03:52:39 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryEntry base class definition
   \details   Memoryentry base class definition
@@ -29,9 +29,9 @@ MemoryEntry::line()
   stringstream ss;
   ss << "  " << setw(EntryWidth[0]) << m_name
      << "  " << setw(EntryWidth[1]) << m_number
-     << "  " << setw(EntryWidth[2]) << ValueName[m_value]
-     << "  " << setw(EntryWidth[3]) << SizeOf[m_value]
-     << "  " << setw(EntryWidth[4]) << VariableTypeName[m_variable]
+     << "  " << setw(EntryWidth[2]) << ValName[static_cast<Int>(m_value)]
+     << "  " << setw(EntryWidth[3]) << SizeOf[static_cast<Int>(m_value)]
+     << "  " << setw(EntryWidth[4]) << VarTypeName[static_cast<Int>(m_variable)]
      << "  " << setw(EntryWidth[5]) << m_nbytes
      << "  " << setw(EntryWidth[6]) << (m_plot == true ? "true" : "false")
      << "  " << setw(EntryWidth[7]) << (m_restart == true ? "true" : "false")

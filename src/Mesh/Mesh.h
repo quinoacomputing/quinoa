@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 07:56:41 PM KST
+  \date      Thu 13 Sep 2012 04:05:32 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -45,8 +45,8 @@ class Mesh {
 
     //! Add new MeshSet entry (e.g. list of nodes, elements, node ids, etc.)
     template<class V> V* newEntry(size_t number,
-                                  ValueType value,
-                                  VariableType variable,
+                                  ValType value,
+                                  VarType variable,
                                   string name,
                                   Bool plot = false,
                                   Bool restart = false) {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompressedRowMatrix.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:53:18 AM KST
+  \date      Thu 13 Sep 2012 04:09:19 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix definition
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -51,12 +51,13 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
 
   // Allocate array for storing the nonzeros in each row
   MemoryEntry* mrnz =
-    memory->newZeroEntry(size, INT, SCALAR, name+"_rnz");
+    memory->newZeroEntry(size, ValType::INT, VarType::SCALAR, name+"_rnz");
   // Get its raw pointer right away
   Int* rnz = memory->getPtr<Int>(mrnz);
 
   // Allocate array for row indices
-  m_ia = memory->newZeroEntry(m_rsize+1, INT, SCALAR, name+"_ia");
+  m_ia =
+    memory->newZeroEntry(m_rsize+1, ValType::INT, VarType::SCALAR, name+"_ia");
   // Get and store its raw pointer right away
   m_pia = memory->getPtr<Int>(m_ia);
 
@@ -81,12 +82,12 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   }
 
   // Allocate array for column indices
-  m_ja = memory->newZeroEntry(m_nnz, INT, SCALAR, name+"_ja");
+  m_ja = memory->newZeroEntry(m_nnz, ValType::INT, VarType::SCALAR, name+"_ja");
   // Get and store its raw pointer right away
   m_pja = memory->getPtr<Int>(m_ja);
 
   // Allocate array for nonzero matrix values
-  m_a = memory->newZeroEntry(m_nnz, REAL, SCALAR, name+"_a");
+  m_a = memory->newZeroEntry(m_nnz, ValType::REAL, VarType::SCALAR, name+"_a");
   // Get and store its raw pointer right away
   m_pa = m_memory->getPtr<Real>(m_a);
 

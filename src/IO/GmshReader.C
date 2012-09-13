@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 08:19:58 PM KST
+  \date      Thu 13 Sep 2012 04:07:35 PM KST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -86,9 +86,15 @@ GmshReader::readNodes()
   nss << nodesets;
 
   // Add new MeshSet entry for the node ids
-  Int* node = m_mesh->newEntry<Int>(num, INT, SCALAR, NODEID_NAME+nss.str());
+  Int* node = m_mesh->newEntry<Int>(num,
+                                    ValType::INT,
+                                    VarType::SCALAR,
+                                    NODEID_NAME+nss.str());
   // Add new MeshSet entry for the coordinates of the node
-  Real* coord = m_mesh->newEntry<Real>(num, REAL, VECTOR, COORD_NAME+nss.str());
+  Real* coord = m_mesh->newEntry<Real>(num,
+                                       ValType::REAL,
+                                       VarType::VECTOR,
+                                       COORD_NAME+nss.str());
 
   // Read in node ids and coordinates
   for (Int i=0; i<num; i++) {
@@ -120,9 +126,15 @@ GmshReader::readElements()
   ess << elemsets;
 
   // Add new MeshSet entry for the element ids
-  Int* element = m_mesh->newEntry<Int>(num, INT, SCALAR, ELEMID_NAME+ess.str());
+  Int* element = m_mesh->newEntry<Int>(num,
+                                       ValType::INT,
+                                       VarType::SCALAR,
+                                       ELEMID_NAME+ess.str());
   // Add new MeshSet entry for the element types
-  Int* elmtype = m_mesh->newEntry<Int>(num, INT, SCALAR, ELEMTYPE_NAME+ess.str());
+  Int* elmtype = m_mesh->newEntry<Int>(num,
+                                       ValType::INT,
+                                       VarType::SCALAR,
+                                       ELEMTYPE_NAME+ess.str());
 
   // Reserve capacity to store connectivity and tags
   m_mesh->reserveElem(num);
