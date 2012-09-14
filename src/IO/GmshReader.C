@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:07:35 PM KST
+  \date      Fri Sep 14 16:20:07 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -60,7 +60,7 @@ GmshReader::readMeshFormat()
   Real version;
   Int type, datasize;
   m_inMesh >> version >> type >> datasize;
-  if (version!=2.2 || type!=0 || datasize!=sizeof(Real))
+  if ((version!=2.2 && version!=2.0) || type!=0 || datasize!=sizeof(Real))
     throw MeshException(FATAL, BAD_FORMAT, m_filename);
   getline(m_inMesh, s);  // finish reading the line
 
