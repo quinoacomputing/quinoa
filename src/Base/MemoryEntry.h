@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:10:14 PM KST
+  \date      Fri Sep 14 16:50:32 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry declaration
   \details   The memory store contains memory entries
@@ -19,43 +19,45 @@ using namespace std;
 
 namespace Quinoa {
 
-//! Number of value types
-const Int NUM_VALUE_TYPES = 3;
 //! Value types
 enum class ValType : Int { BOOL=0,  //!< Boolean value
                            INT,     //!< Integer value
-                           REAL     //!< Real value
+                           REAL,    //!< Real value
+                           NUM_VAL_TYPES
 };
+//! Number of value types
+const Int NUM_VAL_TYPES = static_cast<Int>(ValType::NUM_VAL_TYPES);
 //! Size of value types
-constexpr size_t SizeOf[NUM_VALUE_TYPES] = { sizeof(Bool),  //!< Size of Bool
-                                             sizeof(Int),   //!< Size of Integer
-                                             sizeof(Real)   //!< Size of Real
+constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(Bool),  //!< Size of Bool
+                                           sizeof(Int),   //!< Size of Integer
+                                           sizeof(Real)   //!< Size of Real
 };
 //! Name of value types
-const string ValName[NUM_VALUE_TYPES] = { "bool",  //! Screen name of bool
-                                          "int",   //! Screen name of integer
-                                          "real"   //! Screen name of real
+const string ValName[NUM_VAL_TYPES] = { "bool",  //! Screen name of bool
+                                        "int",   //! Screen name of integer
+                                        "real"   //! Screen name of real
 };
 
-//! Number of value types
-const Int NUM_VARIABLE_TYPES = 4;
 //! Variable types
 enum class VarType : Int { SCALAR=0,   //!< Scalar quantity
                            VECTOR,     //!< Vector quantity
                            SYMTENSOR,  //!< Symmetric tensor quantity
-                           TENSOR      //!< Tensor quantity
+                           TENSOR,     //!< Tensor quantity
+                           NUM_VAR_TYPES
 };
+//! Number of variable types
+const Int NUM_VAR_TYPES = static_cast<Int>(VarType::NUM_VAR_TYPES);
 //! Variable components
-const Int VarComp[NUM_VARIABLE_TYPES] { 1,  //!< Scalar
-                                        3,  //!< Vector
-                                        6,  //!< Symmetric tensor
-                                        9   //!< Tensor
+const Int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
+                                   3,  //!< Vector
+                                   6,  //!< Symmetric tensor
+                                   9   //!< Tensor
 };
 //! Name of variable types
-const string VarTypeName[NUM_VARIABLE_TYPES] = { "scalar",
-                                                 "vector",
-                                                 "symtensor",
-                                                 "tensor"
+const string VarTypeName[NUM_VAR_TYPES] = { "scalar",
+                                            "vector",
+                                            "symtensor",
+                                            "tensor"
 };
 
 //! Output width of MemoryEntry fields

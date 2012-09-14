@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri Sep 14 16:20:37 2012
+  \date      Fri Sep 14 16:47:57 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -27,8 +27,6 @@ int main(int argc, char* argv[]) {
 
   Memory memStore(1);   // arg: nthreads
   Driver driver(&memStore);
-
-  //cout << sizeof(ValType) << endl;
 
   ErrorCode error = NO_ERROR;
   try {
