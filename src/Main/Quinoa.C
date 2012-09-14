@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri Sep 14 15:57:12 2012
+  \date      Fri Sep 14 16:20:37 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -18,6 +18,7 @@
 #include <GmshReader.h>
 #include <GmshMeshWriter.h>
 #include <MeshException.h>
+#include <IOException.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -36,10 +37,10 @@ int main(int argc, char* argv[]) {
       memStore.newEntry(10, ValType::INT, VarType::SCALAR, "scalars");
 
     UnsMesh mesh(&memStore);
-    GmshReader inMesh("../../tmp/cylinde.msh", &mesh, &memStore);
-    //inMesh.read();
-    //GmshMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-    //outMesh.write();
+    GmshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+    inMesh.read();
+    GmshMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+    outMesh.write();
 
     memStore.echoAllEntries();
     cout << "Allocated memory: " << memStore.getBytes() << endl;
@@ -47,7 +48,8 @@ int main(int argc, char* argv[]) {
 
   } // catch different exception types
     catch (MemoryException& e) { error = e.handleException(&driver); }
-    catch (MeshException& e) { error = e.handleException(&driver); }
+    catch (MeshException& e)   { error = e.handleException(&driver); }
+    catch (IOException& e)     { error = e.handleException(&driver); }
     // catch uncaught exceptions
     catch (...) { Exception e(UNCAUGHT); error = e.handleException(&driver); }
 
