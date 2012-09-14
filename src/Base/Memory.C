@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:04:40 PM KST
+  \date      Fri Sep 14 16:53:32 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -56,9 +56,9 @@ Memory::newEntry(size_t number,
   assert(number > 0);
   assert(name.size() > 0);
   assert(static_cast<Int>(value) >= 0 &&
-         static_cast<Int>(value) < NUM_VALUE_TYPES);
+         static_cast<Int>(value) < NUM_VAL_TYPES);
   assert(static_cast<Int>(variable) >= 0 &&
-         static_cast<Int>(variable) < NUM_VARIABLE_TYPES);
+         static_cast<Int>(variable) < NUM_VAR_TYPES);
 
   // Compute total number of bytes to be allocated
   size_t nbytes = number *
@@ -206,7 +206,7 @@ Memory::echoAllEntries()
   if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
   // Echo AllEntries-header
-  cout << "* Dynamically allocated memory entries:" << endl << endl;
+  cout << "* Dynamically allocated memory entries:\n";
   cout << "  " << setw(EntryWidth[0]) << "Name"
        << "  " << setw(EntryWidth[1]) << "Number"
        << "  " << setw(EntryWidth[2]) << "Value"
@@ -216,7 +216,7 @@ Memory::echoAllEntries()
        << "  " << setw(EntryWidth[6]) << "Plot"
        << "  " << setw(EntryWidth[7]) << "Restart"
        << "  " << setw(EntryWidth[8]) << "Ptr"
-       << endl;
+       << "\n";
   cout << setfill('=');
   cout << "  " << setw(EntryWidth[0]) << "="
        << "  " << setw(EntryWidth[1]) << "="
