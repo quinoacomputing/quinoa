@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 07 Sep 2012 01:23:57 PM MDT
+  \date      Fri Sep 14 15:41:09 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -17,6 +17,7 @@ namespace Quinoa {
 enum ExceptionType { CUMULATIVE=0,  //!< Only several will produce a warning
                      WARNING,       //!< Warning: output message
                      ERROR,         //!< Error: output but will not interrupt
+                     UNCAUGHT,      //!< Uncaught: will interrupt
                      FATAL          //!< Fatal error: will interrupt
 };
 
@@ -36,16 +37,16 @@ class Exception {
     //! Constructor
     Exception(ExceptionType exception) : m_exception(exception) {}
 
+    //! Copy operator
+    Exception(const Exception&);
+
     //! Destructor
     ~Exception() {}
 
-  protected:
     //! Handle Exception
     ErrorCode handleException(Driver* driver);
 
   private:
-    //! Don't permit copy operator
-    Exception(const Exception&);
     //! Don't permit assigment operator
     Exception& operator=(const Exception&);
 
