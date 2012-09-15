@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Fri Sep 14 16:53:32 2012
+  \date      Fri Sep 14 17:45:41 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -67,7 +67,8 @@ Memory::newEntry(size_t number,
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
-  if (ptr == 0) throw MemoryException(FATAL, BAD_ALLOC);
+  if (ptr == 0)
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
 
   // Allocate memory entry metadata
   MemoryEntry* entry = new (nothrow) MemoryEntry(nbytes,
@@ -80,26 +81,26 @@ Memory::newEntry(size_t number,
                                                  ptr);
   if (entry == 0) {
     if (ptr) { delete [] static_cast<char*>(ptr); ptr = 0; }
-    throw MemoryException(FATAL, BAD_ALLOC);
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
   }
 
   // Store memory entry
   pair<MemorySet::iterator,Bool> e = m_entry.insert(entry);
   if (!e.second) {
     if (entry) { delete entry; entry = 0; }
-    throw MemoryException(FATAL, BAD_INSERT);
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_INSERT);
   }
 
   // Map variable name to MemorySet key
   pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
   if (!n.second) {
     if (entry) { delete entry; entry = 0; }
-    throw MemoryException(FATAL, BAD_INSERT);
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_INSERT);
   }
 
   // Test if name is unique
   if (m_entry.size() != m_name.size())
-    throw MemoryException(WARNING, BAD_NAME);
+    throw MemoryException(ExceptType::WARNING, MemExceptType::BAD_NAME);
 
   // Return key to caller
   return entry;
@@ -143,18 +144,22 @@ Memory::freeEntry(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is already deallocated
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
 
   // Remove variable name mapped to MemorySet key
   MemoryNames::size_type erased = m_name.erase((*it)->m_name);
-  if (!erased) throw MemoryException(WARNING, NOT_ERASED);
+  if (!erased)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_ERASED);
 
   // Deallocate memory entry pointed to by m_entry[id]
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -163,7 +168,8 @@ Memory::freeEntry(MemoryEntry* id)
 
   // Remove MemoryEntry from MemorySet
   MemorySet::size_type removed = m_entry.erase(id);
-  if (!removed) throw MemoryException(WARNING, NOT_ERASED);
+  if (!removed)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_ERASED);
 
   // Zero id, so the caller can also tell that memory entry has been removed
   id = 0;
@@ -203,7 +209,8 @@ Memory::echoAllEntries()
 //******************************************************************************
 {
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Echo AllEntries-header
   cout << "* Dynamically allocated memory entries:\n";
@@ -246,14 +253,17 @@ Memory::getNumber(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its number of variables
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_number;
 }
 
@@ -266,14 +276,17 @@ Memory::getValue(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_value;
 }
 
@@ -286,14 +299,17 @@ Memory::getVariable(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_variable;
 }
 
@@ -306,14 +322,17 @@ Memory::getName(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_name;
 }
 
@@ -326,14 +345,17 @@ Memory::getPlot(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_plot;
 }
 
@@ -346,14 +368,17 @@ Memory::getRestart(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_entry.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return (*it)->m_restart;
 }
 
@@ -368,11 +393,13 @@ Memory::getID(string name)
   assert(name.size() > 0);
 
   // Return and throw warning if memory store is empty
-  if (!m_name.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_name.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_name.find(name);
-  if (it==m_name.end()) throw MemoryException(WARNING, NOT_FOUND);
+  if (it==m_name.end())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
   return it->second;
 }
 
@@ -391,7 +418,8 @@ Memory::getBytes()
 //******************************************************************************
 {
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size())
+    throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   size_t bytes = 0;
   for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
@@ -410,7 +438,8 @@ Memory::zero(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+  if (id == 0)
+    throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
 
   // Get size of value type
   size_t size = SizeOf[static_cast<Int>(id->m_value)];

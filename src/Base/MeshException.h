@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:35:04 AM KST
+  \date      Sat 15 Sep 2012 02:10:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -20,14 +20,16 @@ using namespace std;
 namespace Quinoa {
 
 //! MeshException types
-enum MeshExceptionType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
-                         BAD_ELEMENT,    //!< unknown element type
-                         EMPTY_SET,      //!< no element/node sets
-                         NUM_MESH_EXCEPTIONS
+enum class MeshExceptType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
+                            BAD_ELEMENT,    //!< unknown element type
+                            EMPTY_SET,      //!< no element/node sets
+                            NUM_MESH_EXCEPT
 };
+//! Number of mesh exception types
+const Int NUM_MESH_EXCEPT = static_cast<Int>(MeshExceptType::NUM_MESH_EXCEPT);
 
-//! MeshException error messages
-const string MeshMessage[NUM_MESH_EXCEPTIONS] = {
+//! Mesh exception error messages
+const string MeshMsg[NUM_MESH_EXCEPT] = {
   "Unsupported mesh format: ",
   "Unknown element type in mesh file ",
   "No element/node sets in mesh",
@@ -38,15 +40,14 @@ class MeshException : Exception {
 
   public:
     //! Constructor with filename
-    MeshException(ExceptionType exception,
-                  MeshExceptionType meshException,
-                  string filename) :
-      Exception(exception), m_filename(filename), m_exception(meshException) {}
+    MeshException(ExceptType except,
+                  MeshExceptType meshExcept,
+                  string filename) : Exception(except),
+      m_filename(filename), m_except(meshExcept) {}
 
     //! Constructor without filename
-    MeshException(ExceptionType exception,
-                  MeshExceptionType meshException) :
-      Exception(exception), m_exception(meshException) {}
+    MeshException(ExceptType except, MeshExceptType meshExcept) :
+      Exception(except), m_except(meshExcept) {}
 
     //! Copy constructor
     MeshException(const MeshException&);
@@ -55,7 +56,7 @@ class MeshException : Exception {
     ~MeshException() {}
 
     //! Handle MeshException
-    ErrorCode handleException(Driver* driver);
+    ErrCode handleException(Driver* driver);
 
   protected:
     //! Mesh file name
@@ -65,8 +66,8 @@ class MeshException : Exception {
     //! Dont' permit assigment operator
     MeshException& operator=(const MeshException&);
 
-    //! MeshException (BAD_FORMAT, BAD_ELEMENT, etc.)
-    MeshExceptionType m_exception;
+    //! Mesh exception type (BAD_FORMAT, BAD_ELEMENT, etc.)
+    MeshExceptType m_except;
 };
 
 } // namespace Quinoa

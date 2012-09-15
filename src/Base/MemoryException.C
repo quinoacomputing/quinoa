@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.C
   \author    J. Bakosi
-  \date      Tue 04 Sep 2012 10:48:48 PM MDT
+  \date      Fri Sep 14 17:32:49 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class definition
   \details   MemoryException class definition
@@ -15,7 +15,7 @@
 
 using namespace Quinoa;
 
-ErrorCode
+ErrCode
 MemoryException::handleException(Driver* driver)
 //******************************************************************************
 //  Handle MemoryException
@@ -23,7 +23,7 @@ MemoryException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Output message
-  cerr << "Memory exception: " << MemoryMessage[m_exception] << endl;
+  cerr << "Memory exception: " << MemMsg[static_cast<Int>(m_except)] << endl;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

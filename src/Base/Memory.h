@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 03:52:25 PM KST
+  \date      Fri Sep 14 17:10:08 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class declaration
   \details   Memory (a store for MemoryEntry objects) base class declaration
@@ -87,9 +87,11 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) {
-      if (id == 0) throw MemoryException(WARNING, UNDEFINED);
+      if (id == 0)
+        throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
       auto it = m_entry.find(id);
-      if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+      if (it==m_entry.end())
+        throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_FOUND);
       return static_cast<V*>((*it)->m_ptr);
     }
 
