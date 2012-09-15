@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.C
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 08:30:02 PM KST
+  \date      Sat 15 Sep 2012 02:16:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class definition
   \details   Mesh base class definition
@@ -49,7 +49,9 @@ Mesh::reserveElem(vector< vector<Int> >::size_type n)
   try {
     m_elem.reserve(n);
     m_tag.reserve(n);
-  } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }  
+  } catch (bad_alloc& ba) {
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
+  }
 }
 
 void
@@ -62,7 +64,9 @@ Mesh::addElem(vector<int>& nodes)
 {
   try {
     m_elem.push_back(nodes);
-  } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }
+  } catch (bad_alloc& ba) {
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
+  }
 }
 
 void
@@ -75,7 +79,9 @@ Mesh::addElemTags(vector<Int>& tags)
 {
   try {
     m_tag.push_back(tags);
-  } catch (bad_alloc& ba) { throw MemoryException(FATAL, BAD_ALLOC); }
+  } catch (bad_alloc& ba) {
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
+  }
 }
 
 void
@@ -86,7 +92,8 @@ Mesh::echoElemSets()
 //******************************************************************************
 {
   // Return and throw warning if there are no element sets
-  if (!m_elemsets) throw MeshException(WARNING, EMPTY_SET);
+  if (!m_elemsets)
+    throw MeshException(ExceptType::WARNING, MeshExceptType::EMPTY_SET);
 
   // Echo all element sets
   for (Int k=1; k<=m_elemsets; k++) {

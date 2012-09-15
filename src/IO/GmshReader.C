@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Fri Sep 14 16:20:07 2012
+  \date      Sat 15 Sep 2012 02:11:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -54,19 +54,27 @@ GmshReader::readMeshFormat()
 
   // Read in beginning of header: $MeshFormat
   getline(m_inMesh, s);
-  if (s!="$MeshFormat") throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  if (s!="$MeshFormat")
+    throw MeshException(ExceptType::FATAL,
+                        MeshExceptType::BAD_FORMAT, 
+                        m_filename);
 
   // Read in "version-number file-type data-size"
   Real version;
   Int type, datasize;
   m_inMesh >> version >> type >> datasize;
   if ((version!=2.2 && version!=2.0) || type!=0 || datasize!=sizeof(Real))
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+    throw MeshException(ExceptType::FATAL,
+                        MeshExceptType::BAD_FORMAT,
+                        m_filename);
   getline(m_inMesh, s);  // finish reading the line
 
   // Read in end of header: $EndMeshFormat
   getline(m_inMesh, s);
-  if (s!="$EndMeshFormat") throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  if (s!="$EndMeshFormat")
+    throw MeshException(ExceptType::FATAL,
+                        MeshExceptType::BAD_FORMAT,
+                        m_filename);
 }
 
 void
@@ -106,7 +114,10 @@ GmshReader::readNodes()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndNodes") throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  if (s!="$EndNodes")
+    throw MeshException(ExceptType::FATAL,
+                        MeshExceptType::BAD_FORMAT,
+                        m_filename);
 }
 
 void
@@ -154,9 +165,10 @@ GmshReader::readElements()
 
     // Read and add element node list
     auto it = GmshElemNodes.find(elmtype[i]);
-    if (it==GmshElemNodes.end()) {
-      throw MeshException(FATAL, BAD_ELEMENT, m_filename);
-    }
+    if (it==GmshElemNodes.end())
+      throw MeshException(ExceptType::FATAL,
+            MeshExceptType::BAD_ELEMENT,
+            m_filename);
     Int nnodes = it->second;
     vector<Int> nodes(nnodes,0);
     for (Int j=0; j<nnodes; j++) {
@@ -169,7 +181,10 @@ GmshReader::readElements()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndElements") throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  if (s!="$EndElements")
+    throw MeshException(ExceptType::FATAL,
+                        MeshExceptType::BAD_FORMAT,
+                        m_filename);
 }
 
 void

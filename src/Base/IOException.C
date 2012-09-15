@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:29:05 AM KST
+  \date      Fri Sep 14 17:31:38 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class definition
   \details   IOException class definition
@@ -15,7 +15,7 @@
 
 using namespace Quinoa;
 
-ErrorCode
+ErrCode
 IOException::handleException(Driver* driver)
 //******************************************************************************
 //  Handle IOException
@@ -23,7 +23,7 @@ IOException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Output message
-  cerr << "IO exception: " << IOMessage[m_exception];
+  cerr << "IO exception: " << IOMsg[static_cast<Int>(m_except)];
   if (m_filename.size()) cerr << m_filename;
   cerr << endl;
 

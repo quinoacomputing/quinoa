@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:32:04 AM KST
+  \date      Fri Sep 14 17:29:23 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -15,18 +15,21 @@
 
 using namespace std;
 
+#include <QuinoaTypes.h>
 #include <Exception.h>
 
 namespace Quinoa {
 
 //! IOException types
-enum IOExceptionType { FAILED_OPEN=0,  //!< failed to open file
-                       FAILED_CLOSE,   //!< failed to close file
-                       NUM_IO_EXCEPTIONS
+enum class IOExceptType { FAILED_OPEN=0,  //!< failed to open file
+                          FAILED_CLOSE,   //!< failed to close file
+                          NUM_IO_EXCEPT
 };
+//! Number of IO exception types
+const Int NUM_IO_EXCEPT = static_cast<Int>(IOExceptType::NUM_IO_EXCEPT);
 
 //! IOException error messages
-const string IOMessage[NUM_IO_EXCEPTIONS] = {
+const string IOMsg[NUM_IO_EXCEPT] = {
   "Failed to open file: ",
   "Failed to close file: "
 };
@@ -36,15 +39,12 @@ class IOException : Exception {
 
   public:
     //! Constructor with filename
-    IOException(ExceptionType exception,
-                IOExceptionType ioException,
-                string filename) :
-      Exception(exception), m_filename(filename), m_exception(ioException) {}
+    IOException(ExceptType except, IOExceptType ioExcept, string filename) :
+      Exception(except), m_filename(filename), m_except(ioExcept) {}
 
     //! Constructor without filename
-    IOException(ExceptionType exception,
-                  IOExceptionType ioException) :
-      Exception(exception), m_exception(ioException) {}
+    IOException(ExceptType except, IOExceptType ioExcept) :
+      Exception(except), m_except(ioExcept) {}
 
     //! Copy constructor
     IOException(const IOException&);
@@ -53,7 +53,7 @@ class IOException : Exception {
     ~IOException() {}
 
     //! Handle IOException
-    ErrorCode handleException(Driver* driver);
+    ErrCode handleException(Driver* driver);
 
   protected:
     //! File name
@@ -63,8 +63,8 @@ class IOException : Exception {
     //! Dont' permit assigment operator
     IOException& operator=(const IOException&);
 
-    //! IOException (FAILED_OPEN, FAILED_CLOSE, etc.)
-    IOExceptionType m_exception;
+    //! IO exception type (FAILED_OPEN, FAILED_CLOSE, etc.)
+    IOExceptType m_except;
 };
 
 } // namespace Quinoa

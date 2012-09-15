@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.C
   \author    J. Bakosi
-  \date      Wed 12 Sep 2012 06:26:46 AM KST
+  \date      Fri Sep 14 17:36:41 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class definition
   \details   MeshException class definition
@@ -15,7 +15,7 @@
 
 using namespace Quinoa;
 
-ErrorCode
+ErrCode
 MeshException::handleException(Driver* driver)
 //******************************************************************************
 //  Handle MeshException
@@ -23,7 +23,7 @@ MeshException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Output message
-  cerr << "Mesh exception: " << MeshMessage[m_exception];
+  cerr << "Mesh exception: " << MeshMsg[static_cast<Int>(m_except)];
   if (m_filename.size()) cerr << m_filename;
   cerr << endl;
 

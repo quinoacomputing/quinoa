@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:05:32 PM KST
+  \date      Fri Sep 14 17:48:09 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -26,9 +26,12 @@ const string   ELEMID_NAME = "elmID_";
 const string ELEMTYPE_NAME = "elmType_";
 
 //! Mesh dimension
-enum MeshDim { TWOD=0,
-               THREED
+enum class MeshDim { TWOD=0,
+                     THREED,
+                     NUM_MESH_DIM
 };
+//! Number of mesh dimensions
+const Int NUM_MESH_DIM = static_cast<Int>(MeshDim::NUM_MESH_DIM);
 
 //! Mesh base class
 class Mesh {
@@ -59,7 +62,8 @@ class Mesh {
                                               restart);
       // Store new MeshSet entry
       pair<MeshSet::iterator,Bool> n = m_entry.insert(entry);
-      if (!n.second) throw MemoryException(FATAL, BAD_INSERT);
+      if (!n.second)
+        throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_INSERT);
       // Get pointer to new entry 
       return m_memory->getPtr<V>(entry);
     }

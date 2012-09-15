@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 06:09:12 AM KST
+  \date      Fri Sep 14 17:25:47 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -19,19 +19,22 @@ using namespace std;
 
 namespace Quinoa {
 
-//! MemoryException types
-enum MemoryExceptionType { BAD_ALLOC=0,  //!< std::bad_alloc
+//! Memory exception types
+enum class MemExceptType : Int {
+                           BAD_ALLOC=0,  //!< std::bad_alloc
                            BAD_INSERT,   //!< unsuccessful STL::insert
                            BAD_NAME,     //!< non-unique variable name
                            EMPTY_STORE,  //!< memory store empty
                            NOT_FOUND,    //!< STL::find did not find entry
                            NOT_ERASED,   //!< STL::erase did not erase entry
                            UNDEFINED,    //!< memory entry not defined
-                           NUM_MEMORY_EXCEPTIONS
+                           NUM_MEM_EXCEPT
 };
+//! Number of memory exception types
+const Int NUM_MEM_EXCEPT = static_cast<Int>(MemExceptType::NUM_MEM_EXCEPT);
 
-//! MemoryException error messages
-const string MemoryMessage[NUM_MEMORY_EXCEPTIONS] = {
+//! Memory exception error messages
+const string MemMsg[NUM_MEM_EXCEPT] = {
   "Cannot allocate memory",
   "Cannot insert new memory entry",
   "Memory entry already exists",
@@ -46,9 +49,8 @@ class MemoryException : Exception {
 
   public:
     //! Constructor
-    MemoryException(ExceptionType exception,
-                    MemoryExceptionType memoryException) :
-      Exception(exception), m_exception(memoryException) {}
+    MemoryException(ExceptType except, MemExceptType memExcept) :
+      Exception(except), m_except(memExcept) {}
 
     //! Copy constructor
     MemoryException(const MemoryException&);
@@ -57,14 +59,14 @@ class MemoryException : Exception {
     ~MemoryException() {}
 
     //! Handle MemoryException
-    ErrorCode handleException(Driver* driver);
+    ErrCode handleException(Driver* driver);
 
   private:
     //! Dont' permit assigment operator
     MemoryException& operator=(const MemoryException&);
 
-    //! MemoryException (BAD_ALLOC, BAD_INSERT, BAD_NAME, etc.)
-    MemoryExceptionType m_exception;
+    //! Memory exception type (BAD_ALLOC, BAD_INSERT, BAD_NAME, etc.)
+    MemExceptType m_except;
 };
 
 } // namespace Quinoa
