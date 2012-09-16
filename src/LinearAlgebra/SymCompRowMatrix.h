@@ -1,35 +1,35 @@
 //******************************************************************************
 /*!
-  \file      src/Base/SymCompressedRowMatrix.h
+  \file      src/Base/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:07:24 PM MDT
+  \date      Sun 16 Sep 2012 08:38:57 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Symmetric compressed row sparse matrix declaration
+  \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
              (CSR) storage format, with only the upper triangle stored,
              including the main diagonal.
 */
 //******************************************************************************
-#ifndef SymCompressedRowMatrix_h
-#define SymCompressedRowMatrix_h
+#ifndef SymCompRowMatrix_h
+#define SymCompRowMatrix_h
 
 #include <Memory.h>
 
 namespace Quinoa {
 
-//! SymCompressedRowMatrix : SparseMatrix
-class SymCompressedRowMatrix : SparseMatrix {
+//! Symmetric compressed row sparse matrix
+class SymCompRowMatrix : SparseMatrix {
 
   public:
     //! Constructor
-    SymCompressedRowMatrix(Memory* memory,
-                           string name,
-                           Int size,
-                           Int dof,
-                           Int *psup1,
-                           Int* psup2);
+    SymCompRowMatrix(Memory* memory,
+                     string name,
+                     Int size,
+                     Int dof,
+                     Int *psup1,
+                     Int* psup2);
     //! Destructor
-    ~SymCompressedRowMatrix();
+    ~SymCompRowMatrix();
 
     //! Add value to matrix in specified position using relative indexing
     void add(Int row, Int column, Int i, Real value);
@@ -60,8 +60,8 @@ class SymCompressedRowMatrix : SparseMatrix {
 
   private:
     // Don't permit copy or assignment operators
-    SymCompressedRowMatrix(const SymCompressedRowMatrix&);
-    SymCompressedRowMatrix& operator=(const SymCompressedRowMatrix&);
+    SymCompRowMatrix(const SymCompRowMatrix&);
+    SymCompRowMatrix& operator=(const SymCompRowMatrix&);
 
     MemoryEntry* m_ia;   //!< Row pointers, vector size: size*dof+1
     MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
@@ -74,4 +74,4 @@ class SymCompressedRowMatrix : SparseMatrix {
 
 } // namespace Quinoa
 
-#endif // SymCompressedRowMatrix_h
+#endif // SymCompRowMatrix_h
