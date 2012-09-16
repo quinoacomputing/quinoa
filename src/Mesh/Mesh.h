@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Fri Sep 14 17:48:09 2012
+  \date      Sun 16 Sep 2012 08:49:59 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -69,7 +69,7 @@ class Mesh {
     }
 
     //! Reserve element capacity
-    void reserveElem(vector< vector<Int> >::size_type n);
+    void reserveElem(vector<vector<Int>>::size_type n);
 
     //! Add new element
     void addElem(vector<Int>& nodes);
@@ -112,10 +112,10 @@ class Mesh {
     MeshSet m_entry;
 
     //! Elements
-    vector< vector<Int> > m_elem;
+    vector<vector<Int>> m_elem;
 
     //! Element tags
-    vector< vector<Int> > m_tag;
+    vector<vector<Int>> m_tag;
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.C
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:16:33 PM MDT
+  \date      Sun 16 Sep 2012 08:48:14 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class definition
   \details   Mesh base class definition
@@ -39,7 +39,7 @@ Mesh::~Mesh()
 }
 
 void
-Mesh::reserveElem(vector< vector<Int> >::size_type n)
+Mesh::reserveElem(vector<vector<Int>>::size_type n)
 //******************************************************************************
 //  Add new element
 //! \param[in]  n  Desired new capacity to store n elements with their tags

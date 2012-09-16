@@ -1,10 +1,10 @@
 //******************************************************************************
 /*!
-  \file      src/Base/SymCompressedRowMatrix.C
+  \file      src/Base/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 04:09:19 PM KST
+  \date      Sun 16 Sep 2012 08:40:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Symmetric compressed row sparse matrix definition
+  \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
              (CSR) storage format, with only the upper triangle stored,
              including the main diagonal.
@@ -18,31 +18,28 @@
 #endif
 
 #include <SparseMatrix.h>
-#include <SymCompressedRowMatrix.h>
+#include <SymCompRowMatrix.h>
 #include <Macros.h>
 
 using namespace Quinoa;
 
-SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
-                                               string name,
-                                               Int size,
-                                               Int dof,
-                                               Int *psup1,
-                                               Int *psup2) :
-  SparseMatrix(name, size, dof)
+SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
+                                   string name,
+                                   Int size,
+                                   Int dof,
+                                   Int *psup1,
+                                   Int *psup2) : SparseMatrix(name, size, dof)
 //******************************************************************************
 //  Constructor
 //! \details Creates a size x size compressed row sparse matrix with dof degrees
 //!          of freedom, ie. the real size will be (size x dof) x (size x dof)
 //!          and symmetric, storing only the upper triangle.
-//!
 //! \param[in]  memory       Pointer to MemoryStore object
 //! \param[in]  name         Name of the SparseMatrix instance
 //! \param[in]  size         Size of matrix
 //! \param[in]  dof          Number of degrees of freedom
 //! \param[in]  psup1,psup2  Linked lists storing points surrounding points,
 //!                          i.e. the graph of the nonzero structure
-//!
 //! \author    J. Bakosi
 //******************************************************************************
 {
@@ -130,10 +127,10 @@ SymCompressedRowMatrix::SymCompressedRowMatrix(Memory* memory,
   m_memory->freeEntry(mrnz);
 }
 
-SymCompressedRowMatrix::~SymCompressedRowMatrix()
+SymCompRowMatrix::~SymCompRowMatrix()
 //******************************************************************************
 //  Destructor
-//! \details Free all memory allocated by SymCompressedRowMatrix in the
+//! \details Free all memory allocated by SymCompRowMatrix in the
 //!          constructor when leaving scope
 //! \author  J. Bakosi
 //******************************************************************************
@@ -144,15 +141,13 @@ SymCompressedRowMatrix::~SymCompressedRowMatrix()
 }
 
 void
-SymCompressedRowMatrix::add(Int row, Int column, Int i, Real value)
+SymCompRowMatrix::add(Int row, Int column, Int i, Real value)
 //******************************************************************************
 //  Add value to matrix in specified position using relative indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \param[in]  i       relative position in block
 //! \param[in]  value   value to add
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -172,14 +167,12 @@ SymCompressedRowMatrix::add(Int row, Int column, Int i, Real value)
 }
 
 void
-SymCompressedRowMatrix::add(Int row, Int column, Real value)
+SymCompRowMatrix::add(Int row, Int column, Real value)
 //******************************************************************************
 //  Add value to matrix in specified position using absolute indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \param[in]  value   value to add
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -198,15 +191,13 @@ SymCompressedRowMatrix::add(Int row, Int column, Real value)
 }
 
 void
-SymCompressedRowMatrix::ins(Int row, Int column, Int i, Real value)
+SymCompRowMatrix::ins(Int row, Int column, Int i, Real value)
 //******************************************************************************
 //  Insert value to matrix in specified position using relative indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \param[in]  i       relative position in block
 //! \param[in]  value   value to add
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -223,14 +214,12 @@ SymCompressedRowMatrix::ins(Int row, Int column, Int i, Real value)
 }
 
 void
-SymCompressedRowMatrix::ins(Int row, Int column, Real value)
+SymCompRowMatrix::ins(Int row, Int column, Real value)
 //******************************************************************************
 //  Insert value to matrix in specified position using absolute indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \param[in]  value   value to add
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -246,15 +235,13 @@ SymCompressedRowMatrix::ins(Int row, Int column, Real value)
 }
 
 Real
-SymCompressedRowMatrix::get(Int row, Int column, Int i)
+SymCompRowMatrix::get(Int row, Int column, Int i)
 //******************************************************************************
 //  Get value from matrix from specified position using relative indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \param[in]  i       relative position in block
 //! \return             matrix value
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -271,14 +258,12 @@ SymCompressedRowMatrix::get(Int row, Int column, Int i)
 }
 
 Real
-SymCompressedRowMatrix::get(Int row, Int column)
+SymCompRowMatrix::get(Int row, Int column)
 //******************************************************************************
 //  Get value from matrix from specified position using absolute indexing
-//!
 //! \param[in]  row     block row
 //! \param[in]  column  block column
 //! \return             matrix value
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -294,12 +279,10 @@ SymCompressedRowMatrix::get(Int row, Int column)
 }
 
 void
-SymCompressedRowMatrix::echoAsStored(ostream& ofs)
+SymCompRowMatrix::echoAsStored(ostream& ofs)
 //******************************************************************************
 //  Print out matrix entries as stored
-//!
 //! \param[in]  ofs  output stream
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -324,12 +307,10 @@ SymCompressedRowMatrix::echoAsStored(ostream& ofs)
 }
 
 void
-SymCompressedRowMatrix::echoNonzeroStructure(ostream& ofs)
+SymCompRowMatrix::echoNonzeroStructure(ostream& ofs)
 //******************************************************************************
 //  Print out nonzero structure of matrix
-//!
 //! \param[in]  ofs  output stream
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -353,12 +334,10 @@ SymCompressedRowMatrix::echoNonzeroStructure(ostream& ofs)
 }
 
 void
-SymCompressedRowMatrix::echoAsMatrix(ostream& ofs)
+SymCompRowMatrix::echoAsMatrix(ostream& ofs)
 //******************************************************************************
 //  Print out matrix as a real matrix
-//!
 //! \param[in]  ofs  output stream
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -382,12 +361,10 @@ SymCompressedRowMatrix::echoAsMatrix(ostream& ofs)
 }
 
 void
-SymCompressedRowMatrix::echoAsMatlab(ostream& ofs)
+SymCompRowMatrix::echoAsMatlab(ostream& ofs)
 //******************************************************************************
 //  Print out matrix as a maltab matrix
-//!
 //! \param[in]  ofs  output stream
-//!
 //! \author  J. Bakosi
 //******************************************************************************
 {
