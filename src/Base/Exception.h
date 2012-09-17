@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri Sep 14 17:32:08 2012
+  \date      Sun 16 Sep 2012 05:54:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -44,18 +44,24 @@ class Exception {
     //! Constructor
     Exception(ExceptType except) : m_except(except) {}
 
-    //! Copy operator
-    Exception(const Exception&);
-
-    //! Destructor
-    ~Exception() {}
-
     //! Handle Exception
     ErrCode handleException(Driver* driver);
 
+  protected:
+    //! Move constructor, necessary for throws, default compiler generated,
+    //! can only be thrown from within derived Exception classes
+    Exception(Exception&&) = default;
+
+    //! Destructor
+    ~Exception() = default;
+
   private:
-    //! Don't permit assigment operator
-    Exception& operator=(const Exception&);
+    //! Don't permit copy constructor
+    Exception(const Exception&) = delete;
+    //! Don't permit copy assignment
+    Exception& operator=(const Exception&) = delete;
+    //! Don't permit move assignment
+    Exception& operator=(Exception&&) = delete;
 
     //! Exception type (CUMULATIVE, WARNING, ERROR, etc.)
     ExceptType m_except;

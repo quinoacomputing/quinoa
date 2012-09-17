@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Fri Sep 14 17:25:47 2012
+  \date      Sun 16 Sep 2012 05:47:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -52,18 +52,22 @@ class MemoryException : Exception {
     MemoryException(ExceptType except, MemExceptType memExcept) :
       Exception(except), m_except(memExcept) {}
 
-    //! Copy constructor
-    MemoryException(const MemoryException&);
+    //! Move constructor, necessary for throws, default compiler generated
+    MemoryException(MemoryException&&) = default;
 
     //! Destructor
-    ~MemoryException() {}
+    ~MemoryException() = default;
 
     //! Handle MemoryException
     ErrCode handleException(Driver* driver);
 
   private:
-    //! Dont' permit assigment operator
-    MemoryException& operator=(const MemoryException&);
+    //! Don't permit copy constructor
+    MemoryException(const MemoryException&) = delete;
+    //! Don't permit copy assignment
+    MemoryException& operator=(const MemoryException&) = delete;
+    //! Don't permit move assignment
+    MemoryException& operator=(MemoryException&&) = delete;
 
     //! Memory exception type (BAD_ALLOC, BAD_INSERT, BAD_NAME, etc.)
     MemExceptType m_except;

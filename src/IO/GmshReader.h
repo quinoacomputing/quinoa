@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshReader.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:29:23 AM KST
+  \date      Sun 16 Sep 2012 06:29:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -66,17 +66,21 @@ class GmshReader : MeshReader {
     GmshReader(string filename, UnsMesh* mesh, Memory* memory) :
       MeshReader(filename, mesh, memory) {};
 
-    //! Destructor
-    ~GmshReader() {};
+    //! Destructor, default compiler generated
+    ~GmshReader() = default;
 
-    //! Interface for read
+    //! Public interface for read Gmsh mesh
     void read();
 
   private:
-    //! Don't permit copy operator
-    GmshReader(const GmshReader&);
-    //! Don't permit assigment operator
-    GmshReader& operator=(const GmshReader&);
+    //! Don't permit copy constructor
+    GmshReader(const GmshReader&) = delete;
+    //! Don't permit copy assigment
+    GmshReader& operator=(const GmshReader&) = delete;
+    //! Don't permit move constructor
+    GmshReader(GmshReader&&) = delete;
+    //! Don't permit move assigment
+    GmshReader& operator=(GmshReader&&) = delete;
 
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();

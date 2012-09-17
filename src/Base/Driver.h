@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Driver.h
   \author    J. Bakosi
-  \date      Thu 06 Sep 2012 09:08:00 PM MDT
+  \date      Sun 16 Sep 2012 04:58:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -29,10 +29,14 @@ class Driver {
     void finalize();
 
   private:
-    //! Don't permit copy operator
-    Driver(const Driver&);
-    //! Don't permit assigment operator
-    Driver& operator=(const Driver&);
+    //! Don't permit copy constructor
+    Driver(const Driver&) = delete;
+    //! Don't permit assigment constructor
+    Driver& operator=(const Driver&) = delete;
+    //! Don't permit move constructor
+    Driver(Driver&&) = delete;
+    //! Don't permit move assignment
+    Driver& operator=(Driver&&) = delete;
 
     //! Pointer to Memory object
     Memory* m_memory;

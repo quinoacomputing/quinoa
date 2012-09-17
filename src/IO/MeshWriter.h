@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:11:15 AM KST
+  \date      Sun 16 Sep 2012 05:57:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshWriter base class declaration
   \details   MeshWriter base class declaration
@@ -24,7 +24,7 @@ namespace Quinoa {
 //! MeshWriter base class
 class MeshWriter {
 
-  public:
+  protected:
     //! Constructor: Acquire mesh file handle
     MeshWriter(string filename, UnsMesh* mesh, Memory* memory);
 
@@ -34,7 +34,6 @@ class MeshWriter {
     //! Interface for write mesh
     virtual void write() = 0;
 
-  protected:
     //! Mesh file name
     string m_filename;
 
@@ -48,10 +47,14 @@ class MeshWriter {
     Memory* m_memory;
 
   private:
-    //! Don't permit copy operator
-    MeshWriter(const MeshWriter&);
-    //! Don't permit assigment operator
-    MeshWriter& operator=(const MeshWriter&);
+    //! Don't permit copy constructor
+    MeshWriter(const MeshWriter&) = delete;
+    //! Don't permit copy assigment
+    MeshWriter& operator=(const MeshWriter&) = delete;
+    //! Don't permit move constructor
+    MeshWriter(MeshWriter&&) = delete;
+    //! Don't permit move assigment
+    MeshWriter& operator=(MeshWriter&&) = delete;
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.h
   \author    J. Bakosi
-  \date      Fri Sep 14 17:29:23 2012
+  \date      Sun 16 Sep 2012 05:45:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -46,11 +46,11 @@ class IOException : Exception {
     IOException(ExceptType except, IOExceptType ioExcept) :
       Exception(except), m_except(ioExcept) {}
 
-    //! Copy constructor
-    IOException(const IOException&);
+    //! Move constructor, necessary for throws, default compiler generated
+    IOException(IOException&&) = default;
 
     //! Destructor
-    ~IOException() {}
+    ~IOException() = default;
 
     //! Handle IOException
     ErrCode handleException(Driver* driver);
@@ -60,8 +60,12 @@ class IOException : Exception {
     string m_filename;
 
   private:
-    //! Dont' permit assigment operator
-    IOException& operator=(const IOException&);
+    //! Don't permit copy constructor
+    IOException(const IOException&) = delete;
+    //! Don't permit copy assignment
+    IOException& operator=(const IOException&) = delete;
+    //! Don't permit move assignment
+    IOException& operator=(IOException&&) = delete;
 
     //! IO exception type (FAILED_OPEN, FAILED_CLOSE, etc.)
     IOExceptType m_except;

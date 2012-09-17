@@ -2,10 +2,10 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Fri Sep 14 17:10:08 2012
+  \date      Sun 16 Sep 2012 05:09:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Memory (a store for MemoryEntry objects) base class declaration
-  \details   Memory (a store for MemoryEntry objects) base class declaration
+  \brief     Memory store, container of memory entries
+  \details   Memory store, container of memory entries
 */
 //******************************************************************************
 #ifndef Memory_h
@@ -20,7 +20,7 @@
 
 namespace Quinoa {
 
-//! Memory (store) base class
+//! Memory store, container of memory entries
 class Memory {
 
   //! Memory entries are stored in an STL unordered_set.
@@ -118,10 +118,14 @@ class Memory {
     void zero(MemoryEntry* id);
 
   private:
-    //! Don't permit copy operator
-    Memory(const Memory&);
-    //! Don't permit assigment operator
-    Memory& operator=(const Memory&);
+    //! Don't permit copy constructor
+    Memory(const Memory&) = delete;
+    //! Don't permit copy assigment
+    Memory& operator=(const Memory&) = delete;
+    //! Don't permit move constructor
+    Memory(Memory&&) = delete;
+    //! Don't permit move assigment
+    Memory& operator=(Memory&&) = delete;
 
     //! Local copy of the number of threads
     Int m_nthreads;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:38:57 AM MDT
+  \date      Sun 16 Sep 2012 06:01:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -59,9 +59,14 @@ class SymCompRowMatrix : SparseMatrix {
     void echoAsMatlab(ostream& ofs);
 
   private:
-    // Don't permit copy or assignment operators
-    SymCompRowMatrix(const SymCompRowMatrix&);
-    SymCompRowMatrix& operator=(const SymCompRowMatrix&);
+    //! Don't permit copy constructor
+    SymCompRowMatrix(const SymCompRowMatrix&) = delete;
+    //! Don't permit copy assigment
+    SymCompRowMatrix& operator=(const SymCompRowMatrix&) = delete;
+    //! Don't permit move constructor
+    SymCompRowMatrix(SymCompRowMatrix&&) = delete;
+    //! Don't permit move assigment
+    SymCompRowMatrix& operator=(SymCompRowMatrix&&) = delete;
 
     MemoryEntry* m_ia;   //!< Row pointers, vector size: size*dof+1
     MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
