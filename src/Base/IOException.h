@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:45:03 PM MDT
+  \date      Sun 16 Sep 2012 07:11:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -44,7 +44,7 @@ class IOException : Exception {
 
     //! Constructor without filename
     IOException(ExceptType except, IOExceptType ioExcept) :
-      Exception(except), m_except(ioExcept) {}
+      IOException(except, ioExcept, 0) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     IOException(IOException&&) = default;
