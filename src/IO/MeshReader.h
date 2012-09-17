@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:09:24 AM KST
+  \date      Sun 16 Sep 2012 05:57:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -24,7 +24,7 @@ namespace Quinoa {
 //! MeshReader base class
 class MeshReader {
 
-  public:
+  protected:
     //! Constructor: Acquire mesh file handle
     MeshReader(string filename, UnsMesh* mesh, Memory* memory);
 
@@ -34,7 +34,6 @@ class MeshReader {
     //! Interface for read mesh
     virtual void read() = 0;
 
-  protected:
     //! Mesh file name
     string m_filename;
 
@@ -48,10 +47,14 @@ class MeshReader {
     Memory* m_memory;
 
   private:
-    //! Don't permit copy operator
-    MeshReader(const MeshReader&);
-    //! Don't permit assigment operator
-    MeshReader& operator=(const MeshReader&);
+    //! Don't permit copy constructor
+    MeshReader(const MeshReader&) = delete;
+    //! Don't permit copy assigment
+    MeshReader& operator=(const MeshReader&) = delete;
+    //! Don't permit move constructor
+    MeshReader(MeshReader&&) = delete;
+    //! Don't permit move assigment
+    MeshReader& operator=(MeshReader&&) = delete;
 };
 
 } // namespace Quinoa

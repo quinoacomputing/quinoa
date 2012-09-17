@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshPlotWriter.h
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 05:37:43 AM KST
+  \date      Sun 16 Sep 2012 05:22:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshPlotWriter class declaration
   \details   GmshPlotWriter class declaration
@@ -33,10 +33,14 @@ class GmshPlotWriter : PlotWriter {
     virtual ~GmshPlotWriter();
 
   private:
-    //! Don't permit copy operator
-    GmshPlotWriter(const GmshPlotWriter&);
-    //! Don't permit assigment operator
-    GmshPlotWriter& operator=(const GmshPlotWriter&);
+    //! Don't permit copy constructor
+    GmshPlotWriter(const GmshPlotWriter&) = delete;
+    //! Don't permit copy assigment
+    GmshPlotWriter& operator=(const GmshPlotWriter&) = delete;
+    //! Don't permit move constructor
+    GmshPlotWriter(GmshPlotWriter&&) = delete;
+    //! Don't permit move assigment
+    GmshPlotWriter& operator=(GmshPlotWriter&&) = delete;
 };
 
 } // namespace Quinoa

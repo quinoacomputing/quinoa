@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:10:07 PM MDT
+  \date      Sun 16 Sep 2012 05:48:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -49,11 +49,11 @@ class MeshException : Exception {
     MeshException(ExceptType except, MeshExceptType meshExcept) :
       Exception(except), m_except(meshExcept) {}
 
-    //! Copy constructor
-    MeshException(const MeshException&);
+    //! Move constructor, necessary for throws, default compiler generated
+    MeshException(MeshException&&) = default;
 
     //! Destructor
-    ~MeshException() {}
+    ~MeshException() = default;
 
     //! Handle MeshException
     ErrCode handleException(Driver* driver);
@@ -63,8 +63,12 @@ class MeshException : Exception {
     string m_filename;
 
   private:
-    //! Dont' permit assigment operator
-    MeshException& operator=(const MeshException&);
+    //! Don't permit copy constructor
+    MeshException(const MeshException&) = delete;
+    //! Don't permit copy assignment
+    MeshException& operator=(const MeshException&) = delete;
+    //! Don't permit move assignment
+    MeshException& operator=(MeshException&&) = delete;
 
     //! Mesh exception type (BAD_FORMAT, BAD_ELEMENT, etc.)
     MeshExceptType m_except;

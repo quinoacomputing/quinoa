@@ -2,9 +2,9 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:02:04 PM MDT
+  \date      Sun 16 Sep 2012 09:11:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Memory entry declaration
+  \brief     Memory entry
   \details   The memory store contains memory entries
 */
 //******************************************************************************
@@ -72,14 +72,14 @@ const Int EntryWidth[] = { 10,  //! Width of Name field
                            10   //! Width of Ptr field
 };
 
-//! MemoryEntry base class
+//! Memory entry
 class MemoryEntry {
 
   //! Befriend class Memory to allow direct manipulation of private fields
   friend class Memory;
 
   private:
-    //! Constructor
+    //! Constructor: fill in all fields
     MemoryEntry(size_t nbytes,
                 size_t number,
                 ValType value,
@@ -97,23 +97,27 @@ class MemoryEntry {
       m_restart(restart),
       m_ptr(ptr) {}
 
-    //! Destructor: Free allocated memory when leaving scope
+    //! Destructor: free allocated memory when leaving scope
     ~MemoryEntry() {
       if (m_ptr) delete [] static_cast<char*>(m_ptr);
     }
 
-    //! Don't permit copy operator
-    MemoryEntry(const MemoryEntry&);
-    //! Don't permit assigment operator
-    MemoryEntry& operator=(const MemoryEntry&);
+    //! Don't permit copy constructor
+    MemoryEntry(const MemoryEntry&) = delete;
+    //! Don't permit copy assigment
+    MemoryEntry& operator=(const MemoryEntry&) = delete;
+    //! Don't permit move constructor
+    MemoryEntry(MemoryEntry&&) = delete;
+    //! Don't permit move assigment
+    MemoryEntry& operator=(MemoryEntry&&) = delete;
 
     //! One-liner accessor for all fields
     string line();
 
     size_t m_nbytes;          //!< Size in bytes (number of chars) allocated
     size_t m_number;          //!< Number of items
-    ValType m_value;          //!< Value type (BOOL_VAL, INT_VAL, etc.)
-    VarType m_variable;       //!< Variable type (SCALAR_VAR, VECTOR_VAR, etc.)
+    ValType m_value;          //!< Value type (BOOL, INT, etc.)
+    VarType m_variable;       //!< Variable type (SCALAR, VECTOR, etc.)
     string m_name;            //!< Variable name
     Bool m_plot;              //!< Variable can be plotted
     Bool m_restart;           //!< Write to restart file
