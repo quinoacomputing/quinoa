@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:09:48 PM MDT
+  \date      Sun 16 Sep 2012 07:23:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -87,7 +87,7 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) {
-      if (id == 0)
+      if (id == nullptr)
         throw MemoryException(ExceptType::WARNING, MemExceptType::UNDEFINED);
       auto it = m_entry.find(id);
       if (it==m_entry.end())
