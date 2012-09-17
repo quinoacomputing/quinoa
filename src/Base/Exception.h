@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:54:34 PM MDT
+  \date      Sun 16 Sep 2012 08:08:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -44,7 +44,7 @@ class Exception {
     //! Constructor
     Exception(ExceptType except) : m_except(except) {}
 
-    //! Handle Exception
+    //! Handle Exception passing pointer to driver
     ErrCode handleException(Driver* driver);
 
   protected:

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshReader.C
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:11:49 PM MDT
+  \date      Sun 16 Sep 2012 08:50:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -23,7 +23,7 @@ using namespace Quinoa;
 void
 GmshReader::read()
 //******************************************************************************
-//  Read Gmsh mesh from file
+//  Public interface for read Gmsh mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -46,7 +46,7 @@ GmshReader::read()
 void
 GmshReader::readMeshFormat()
 //******************************************************************************
-//  Read mandatory "$MeshFormat" section
+//  Read mandatory "$MeshFormat--$EndMeshFormat" section
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -68,6 +68,10 @@ GmshReader::readMeshFormat()
                         MeshExceptType::BAD_FORMAT,
                         m_filename);
   getline(m_inMesh, s);  // finish reading the line
+  // Save version, type, datasize
+  m_mesh->setVersion(version);
+  m_mesh->setType(type);
+  m_mesh->setDatasize(datasize);
 
   // Read in end of header: $EndMeshFormat
   getline(m_inMesh, s);
@@ -194,4 +198,7 @@ GmshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  throw MeshException(ExceptType::WARNING,
+                      MeshExceptType::UNIMPLEMENTED,
+                      "$PhysicalNames--$EndPhysicalNames");
 }

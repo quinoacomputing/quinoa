@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/UnsMesh.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 06:15:35 PM MDT
+  \date      Sun 16 Sep 2012 09:00:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -79,6 +79,24 @@ class UnsMesh : Mesh {
     //! Increase number of element sets
     Int addElemSet() { return ++m_elemsets; }
 
+    //! Set mesh version
+    void setVersion(Real& version) { m_version = version; }
+
+    //! Set mesh type
+    void setType(Int& type) { m_type = type; }
+
+    //! Set mesh data size
+    void setDatasize(Int& datasize) { m_datasize = datasize; }
+
+    //! Get mesh version
+    Real getVersion() { return m_version; }
+
+    //! Get mesh type
+    Int getType() { return m_type; }
+
+    //! Get mesh data size
+    Int getDatasize() { return m_datasize; }
+
   private:
     //! Don't permit copy constructor
     UnsMesh(const UnsMesh&) = delete;
@@ -89,23 +107,15 @@ class UnsMesh : Mesh {
     //! Don't permit move assignment
     UnsMesh& operator=(UnsMesh&&) = delete;
 
-    //! Memory object pointer
-    Memory* m_memory;
-
-    //! Number of node sets
-    Int m_nodesets;
-
-    //! Number of element sets
-    Int m_elemsets;
-
-    //! Memory entry keys for Mesh data
-    MeshSet m_entry;
-
-    //! Elements
-    vector<vector<Int>> m_elem;
-
-    //! Element tags
-    vector<vector<Int>> m_tag;
+    Real m_version;              //!< Mesh version in mesh file
+    Int m_type;                  //!< File type in mesh file
+    Int m_datasize;              //!< Data size in mesh file
+    Memory* m_memory;            //!< Memory object pointer
+    Int m_nodesets;              //!< Number of node sets
+    Int m_elemsets;              //!< Number of element sets
+    MeshSet m_entry;             //!< Memory entry keys for Mesh data
+    vector<vector<Int>> m_elem;  //!< Elements
+    vector<vector<Int>> m_tag;   //!< Element tags
 };
 
 } // namespace Quinoa

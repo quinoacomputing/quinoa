@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 06:26:37 PM MDT
+  \date      Sun 16 Sep 2012 08:11:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -42,6 +42,18 @@ class GmshMeshWriter : MeshWriter {
     GmshMeshWriter(GmshMeshWriter&&) = delete;
     //! Don't permit move assigment
     GmshMeshWriter& operator=(GmshMeshWriter&&) = delete;
+
+    //! Write mandatory "$MeshFormat--$EndMeshFormat" section
+    void writeMeshFormat();
+
+    //! Write "$Nodes--$EndNodes" section
+    void writeNodes();
+
+    //! Write "$Elements--$EndElements" section
+    void writeElements();
+
+    //! Write "$PhysicalNames--$EndPhysicalNames" section
+    void writePhysicalNames();
 };
 
 } // namespace Quinoa

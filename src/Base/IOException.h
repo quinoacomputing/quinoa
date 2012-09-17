@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 07:11:46 PM MDT
+  \date      Sun 16 Sep 2012 08:35:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -23,6 +23,7 @@ namespace Quinoa {
 //! IOException types
 enum class IOExceptType { FAILED_OPEN=0,  //!< failed to open file
                           FAILED_CLOSE,   //!< failed to close file
+                          FAILED_WRITE,   //!< failed to write to file
                           NUM_IO_EXCEPT
 };
 //! Number of IO exception types
@@ -32,6 +33,7 @@ const Int NUM_IO_EXCEPT = static_cast<Int>(IOExceptType::NUM_IO_EXCEPT);
 const string IOMsg[NUM_IO_EXCEPT] = {
   "Failed to open file: ",
   "Failed to close file: "
+  "Failed to write to file: "
 };
 
 //! IOException : Exception
