@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 07:10:11 PM MDT
+  \date      Sun 16 Sep 2012 08:24:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -23,6 +23,7 @@ namespace Quinoa {
 enum class MeshExceptType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
                             BAD_ELEMENT,    //!< unknown element type
                             EMPTY_SET,      //!< no element/node sets
+                            UNIMPLEMENTED,  //!< mesh file section unimplemented
                             NUM_MESH_EXCEPT
 };
 //! Number of mesh exception types
@@ -33,19 +34,20 @@ const string MeshMsg[NUM_MESH_EXCEPT] = {
   "Unsupported mesh format: ",
   "Unknown element type in mesh file ",
   "No element/node sets in mesh",
+  "Section not yet implemented: ",
 };
 
 //! MeshException : Exception
 class MeshException : Exception {
 
   public:
-    //! Constructor with filename
+    //! Constructor with message from thrower
     MeshException(ExceptType except,
                   MeshExceptType meshExcept,
-                  string filename) : Exception(except),
-      m_filename(filename), m_except(meshExcept) {}
+                  string throwerMsg) : Exception(except),
+      m_throwerMsg(throwerMsg), m_except(meshExcept) {}
 
-    //! Constructor without filename
+    //! Constructor without message from thrower
     MeshException(ExceptType except, MeshExceptType meshExcept) :
       MeshException(except, meshExcept, 0) {}
 
@@ -59,8 +61,8 @@ class MeshException : Exception {
     ErrCode handleException(Driver* driver);
 
   protected:
-    //! Mesh file name
-    string m_filename;
+    //! Message from thrower
+    string m_throwerMsg;
 
   private:
     //! Don't permit copy constructor
