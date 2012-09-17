@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:48:58 PM MDT
+  \date      Sun 16 Sep 2012 07:10:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -47,7 +47,7 @@ class MeshException : Exception {
 
     //! Constructor without filename
     MeshException(ExceptType except, MeshExceptType meshExcept) :
-      Exception(except), m_except(meshExcept) {}
+      MeshException(except, meshExcept, 0) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     MeshException(MeshException&&) = default;
