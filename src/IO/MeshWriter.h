@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:57:47 PM MDT
+  \date      Tue 18 Sep 2012 09:29:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshWriter base class declaration
   \details   MeshWriter base class declaration
@@ -29,7 +29,7 @@ class MeshWriter {
     MeshWriter(string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor: Release mesh file handle
-    virtual ~MeshWriter();
+    ~MeshWriter();
 
     //! Interface for write mesh
     virtual void write() = 0;

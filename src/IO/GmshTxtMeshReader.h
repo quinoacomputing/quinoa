@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/IO/GmshReader.h
+  \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Tue Sep 18 15:10:46 2012
+  \date      Tue 18 Sep 2012 09:26:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
 */
 //******************************************************************************
-#ifndef GmshReader_h
-#define GmshReader_h
+#ifndef GmshTxtMeshReader_h
+#define GmshTxtMeshReader_h
 
 #include <map>
 
@@ -58,29 +58,29 @@ const map<Int, Int> GmshElemNodes = {
           {93,125}   //! 125-node fourth order hexahedron
 };
 
-//! GmshReader : MeshReader
-class GmshReader : MeshReader {
+//! GmshTxtMeshReader : MeshReader
+class GmshTxtMeshReader : MeshReader {
 
   public:
     //! Constructor
-    GmshReader(string filename, UnsMesh* mesh, Memory* memory) :
-      MeshReader(filename, mesh, memory) {};
+    GmshTxtMeshReader(string filename, UnsMesh* mesh, Memory* memory) :
+      MeshReader(filename, mesh, memory) {}
 
     //! Destructor, default compiler generated
-    ~GmshReader() = default;
+    ~GmshTxtMeshReader() = default;
 
     //! Public interface for read Gmsh mesh
     void read();
 
   private:
     //! Don't permit copy constructor
-    GmshReader(const GmshReader&) = delete;
+    GmshTxtMeshReader(const GmshTxtMeshReader&) = delete;
     //! Don't permit copy assigment
-    GmshReader& operator=(const GmshReader&) = delete;
+    GmshTxtMeshReader& operator=(const GmshTxtMeshReader&) = delete;
     //! Don't permit move constructor
-    GmshReader(GmshReader&&) = delete;
+    GmshTxtMeshReader(GmshTxtMeshReader&&) = delete;
     //! Don't permit move assigment
-    GmshReader& operator=(GmshReader&&) = delete;
+    GmshTxtMeshReader& operator=(GmshTxtMeshReader&&) = delete;
 
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
@@ -97,4 +97,4 @@ class GmshReader : MeshReader {
 
 } // namespace Quinoa
 
-#endif // GmshReader_h
+#endif // GmshTxtMeshReader_h
