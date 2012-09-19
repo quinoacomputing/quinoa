@@ -72,6 +72,7 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++0x HAS_CPP0x)
 IF(HAS_CPP0x)
   add_definitions("-std=c++0x")
+  set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
 ENDIF(HAS_CPP0x)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
