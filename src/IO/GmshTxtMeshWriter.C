@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/IO/GmshMeshWriter.C
+  \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:54:23 PM MDT
+  \date      Tue 18 Sep 2012 09:16:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
 */
 //******************************************************************************
 
-#include <GmshMeshWriter.h>
+#include <GmshTxtMeshWriter.h>
 #include <IOException.h>
 
 using namespace Quinoa;
 
 void
-GmshMeshWriter::write()
+GmshTxtMeshWriter::write()
 //******************************************************************************
 //  Write Gmsh mesh file
 //! \author J. Bakosi
@@ -38,7 +38,7 @@ GmshMeshWriter::write()
 }
 
 void
-GmshMeshWriter::writeMeshFormat()
+GmshTxtMeshWriter::writeMeshFormat()
 //******************************************************************************
 //  Write mandatory "$MeshFormat" section
 //! \author J. Bakosi

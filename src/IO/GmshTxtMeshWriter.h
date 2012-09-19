@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/IO/GmshMeshWriter.h
+  \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:11:55 PM MDT
+  \date      Tue 18 Sep 2012 09:16:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     GmshMeshWriter class declaration
-  \details   GmshMeshWriter class declaration
+  \brief     GmshTxtMeshWriter class declaration
+  \details   GmshTxtMeshWriter class declaration
 */
 //******************************************************************************
-#ifndef GmshMeshWriter_h
-#define GmshMeshWriter_h
+#ifndef GmshTxtMeshWriter_h
+#define GmshTxtMeshWriter_h
 
 #include <string>
 
@@ -19,29 +19,29 @@ using namespace std;
 
 namespace Quinoa {
 
-//! GmshMeshWriter : MeshWriter
-class GmshMeshWriter : MeshWriter {
+//! GmshTxtMeshWriter : MeshWriter
+class GmshTxtMeshWriter : MeshWriter {
 
   public:
     //! Constructor
-    GmshMeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
+    GmshTxtMeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
       MeshWriter(filename, mesh, memory) {}
 
     //! Destructor, default compiler generated
-    ~GmshMeshWriter() = default;
+    ~GmshTxtMeshWriter() = default;
 
     //! Write Gmsh mesh to file
     void write();
 
   private:
     //! Don't permit copy constructor
-    GmshMeshWriter(const GmshMeshWriter&) = delete;
+    GmshTxtMeshWriter(const GmshTxtMeshWriter&) = delete;
     //! Don't permit copy assigment
-    GmshMeshWriter& operator=(const GmshMeshWriter&) = delete;
+    GmshTxtMeshWriter& operator=(const GmshTxtMeshWriter&) = delete;
     //! Don't permit move constructor
-    GmshMeshWriter(GmshMeshWriter&&) = delete;
+    GmshTxtMeshWriter(GmshTxtMeshWriter&&) = delete;
     //! Don't permit move assigment
-    GmshMeshWriter& operator=(GmshMeshWriter&&) = delete;
+    GmshTxtMeshWriter& operator=(GmshTxtMeshWriter&&) = delete;
 
     //! Write mandatory "$MeshFormat--$EndMeshFormat" section
     void writeMeshFormat();
@@ -58,4 +58,4 @@ class GmshMeshWriter : MeshWriter {
 
 } // namespace Quinoa
 
-#endif // GmshMeshWriter_h
+#endif // GmshTxtMeshWriter_h

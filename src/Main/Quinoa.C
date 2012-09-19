@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 17 Sep 2012 09:36:19 PM MDT
+  \date      Tue 18 Sep 2012 09:23:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -15,8 +15,8 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 #include <Driver.h>
-#include <GmshReader.h>
-#include <GmshMeshWriter.h>
+#include <GmshTxtMeshReader.h>
+#include <GmshTxtMeshWriter.h>
 #include <MeshException.h>
 #include <IOException.h>
 
@@ -35,9 +35,9 @@ int main(int argc, char* argv[]) {
       memStore.newEntry(10, ValType::INT, VarType::SCALAR, "scalars");
 
     UnsMesh mesh(&memStore);
-    GmshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+    GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
     inMesh.read();
-    GmshMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+    GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
     outMesh.write();
 
     memStore.echoAllEntries();

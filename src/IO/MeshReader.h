@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:57:26 PM MDT
+  \date      Tue 18 Sep 2012 09:28:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -29,7 +29,7 @@ class MeshReader {
     MeshReader(string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor: Release mesh file handle
-    virtual ~MeshReader();
+    ~MeshReader();
 
     //! Interface for read mesh
     virtual void read() = 0;

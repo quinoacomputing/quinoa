@@ -13,11 +13,11 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_library(IO
             MeshReader.C
-            GmshReader.C
             MeshWriter.C
-            GmshMeshWriter.C
             PlotWriter.C
-            GmshPlotWriter.C
+            GmshTxtMeshReader.C
+            GmshTxtMeshWriter.C
+            GmshTxtPlotWriter.C
 )
 
 INSTALL(TARGETS IO

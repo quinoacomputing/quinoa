@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/IO/GmshPlotWriter.h
+  \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 05:22:29 PM MDT
+  \date      Tue 18 Sep 2012 09:21:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     GmshPlotWriter class declaration
-  \details   GmshPlotWriter class declaration
+  \brief     GmshTxtPlotWriter class declaration
+  \details   GmshTxtPlotWriter class declaration
 */
 //******************************************************************************
-#ifndef GmshPlotWriter_h
-#define GmshPlotWriter_h
+#ifndef GmshTxtPlotWriter_h
+#define GmshTxtPlotWriter_h
 
 #include <string>
 #include <fstream>
@@ -21,28 +21,28 @@ using namespace std;
 
 namespace Quinoa {
 
-//! GmshPlotWriter base class
-class GmshPlotWriter : PlotWriter {
+//! GmshTxtPlotWriter : PlotWriter
+class GmshTxtPlotWriter : PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    GmshPlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
+    GmshTxtPlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
       PlotWriter(filename, mesh, memory) {}
 
     //! Destructor: Release plot file handle
-    virtual ~GmshPlotWriter();
+    ~GmshTxtPlotWriter() = default;
 
   private:
     //! Don't permit copy constructor
-    GmshPlotWriter(const GmshPlotWriter&) = delete;
+    GmshTxtPlotWriter(const GmshTxtPlotWriter&) = delete;
     //! Don't permit copy assigment
-    GmshPlotWriter& operator=(const GmshPlotWriter&) = delete;
+    GmshTxtPlotWriter& operator=(const GmshTxtPlotWriter&) = delete;
     //! Don't permit move constructor
-    GmshPlotWriter(GmshPlotWriter&&) = delete;
+    GmshTxtPlotWriter(GmshTxtPlotWriter&&) = delete;
     //! Don't permit move assigment
-    GmshPlotWriter& operator=(GmshPlotWriter&&) = delete;
+    GmshTxtPlotWriter& operator=(GmshTxtPlotWriter&&) = delete;
 };
 
 } // namespace Quinoa
 
-#endif // GmshPlotWriter_h
+#endif // GmshTxtPlotWriter_h

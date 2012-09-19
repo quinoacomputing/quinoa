@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/GmshReader.C
+  \file      src/Mesh/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:50:10 PM MDT
+  \date      Tue 18 Sep 2012 09:15:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -14,14 +14,14 @@
 #include <iostream>
 
 #include <QuinoaTypes.h>
-#include <GmshReader.h>
+#include <GmshTxtMeshReader.h>
 #include <MeshException.h>
 #include <Memory.h>
 
 using namespace Quinoa;
 
 void
-GmshReader::read()
+GmshTxtMeshReader::read()
 //******************************************************************************
 //  Public interface for read Gmsh mesh
 //! \author J. Bakosi
@@ -44,7 +44,7 @@ GmshReader::read()
 }
 
 void
-GmshReader::readMeshFormat()
+GmshTxtMeshReader::readMeshFormat()
 //******************************************************************************
 //  Read mandatory "$MeshFormat--$EndMeshFormat" section
 //! \author J. Bakosi
@@ -82,7 +82,7 @@ GmshReader::readMeshFormat()
 }
 
 void
-GmshReader::readNodes()
+GmshTxtMeshReader::readNodes()
 //******************************************************************************
 //  Read "$Nodes--$EndNodes" section
 //! \author J. Bakosi
@@ -125,7 +125,7 @@ GmshReader::readNodes()
 }
 
 void
-GmshReader::readElements()
+GmshTxtMeshReader::readElements()
 //******************************************************************************
 //  Read "$Elements--$EndElements" section
 //! \author J. Bakosi
@@ -192,7 +192,7 @@ GmshReader::readElements()
 }
 
 void
-GmshReader::readPhysicalNames()
+GmshTxtMeshReader::readPhysicalNames()
 //******************************************************************************
 //  Read "$PhysicalNames--$EndPhysicalNames" section
 //! \author J. Bakosi
