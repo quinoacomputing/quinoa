@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 07:22:40 PM MDT
+  \date      Tue 18 Sep 2012 08:03:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -15,6 +15,7 @@
 #include <iterator>
 #include <algorithm>
 #include <iomanip>
+#include <utility>
 
 using namespace std;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:08:38 PM MDT
+  \date      Tue Sep 18 15:34:46 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -44,6 +44,9 @@ class Exception {
     //! Constructor
     Exception(ExceptType except) : m_except(except) {}
 
+    //! Destructor
+    ~Exception() = default;
+
     //! Handle Exception passing pointer to driver
     ErrCode handleException(Driver* driver);
 
@@ -51,9 +54,6 @@ class Exception {
     //! Move constructor, necessary for throws, default compiler generated,
     //! can only be thrown from within derived Exception classes
     Exception(Exception&&) = default;
-
-    //! Destructor
-    ~Exception() = default;
 
   private:
     //! Don't permit copy constructor
