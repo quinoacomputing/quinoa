@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Platform and compiler dependent configuration for Quinoa & ThirdParty libs build.
+# Anything in this file will overrule the defaults in the build script.
+#
+# PLATFORM is a combination of:
+#   (1) OS: linux
+#   (2) COMPILER: clang
+
+
+# This is platform linux-clang
+PLATFORM=linux-clang
+
+# Path to Quinoa source
+QUINOA_SRC_DIR=${QUINOA}/src
+
+# Path where the ThirdParty library tarballs reside
+TARBALLS_DIR=${QUINOA}/tpl/tarballs
+
+# Path where library builds will happen
+TPL_BUILD_DIR=`pwd`/temp
+
+# Path where the ThirdParty (tpl) libraries will be installed (must be absolute)
+TPL_INSTALL_DIR=${QUINOA}/tpl/clang
+
+# Path to Quinoa build
+QUINOA_BUILD_DIR=${QUINOA}/build/clang
+
+# Path to Quinoa install
+QUINOA_INSTALL_DIR=${QUINOA}/install/clang
+
+# Filenames of library tarballs:
+#  - They must all reside in ${TARBALLS_DIR} relative to the current dir
+#  - They must all end in tar.gz
+#  - They must all create a directory with the same name w/o "tar.gz"
+OPENMPI_FILENAME=openmpi-1.4.3.tar.gz
+
+# Bools that show whether the lib is to be built
+OPENMPI=false
+QUINOA=true
+
+# Source directory names (used after untar of each)
+OPENMPI_DIR=`echo $OPENMPI_FILENAME | sed 's/[ tar.gz]*$//'`
+
+# Configure commands
+OPENMPI_CONF_CMD=" \
+  ./configure --prefix=${TPL_INSTALL_DIR} \
+              --enable-static CC=clang CXX=clang"
+
+export CXX=clang
+QUINOA_CONF_CMD=" \
+  cmake \
+    -D PLATFORM:STRING=$PLATFORM \
+    -D CMAKE_INSTALL_PREFIX:PATH=${QUINOA_INSTALL_DIR} \
+    -D THIRD_PARTY_PREFIX:PATH=${TPL_INSTALL_DIR} \
+    -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+    ${QUINOA_SRC_DIR}"
