@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 18 Sep 2012 09:23:53 PM MDT
+  \date      Fri 21 Sep 2012 07:24:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <iostream>
-#include <limits>
 
 #include <QuinoaTypes.h>
 #include <Memory.h>
