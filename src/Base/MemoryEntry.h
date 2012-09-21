@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 09:11:15 AM MDT
+  \date      Wed Sep 19 17:24:25 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -20,22 +20,22 @@ using namespace std;
 namespace Quinoa {
 
 //! Value types
-enum class ValType : Int { BOOL=0,  //!< Boolean value
-                           INT,     //!< Integer value
-                           REAL,    //!< Real value
+enum class ValType : Int { BOOL=0,        //!< Boolean value
+                           INT,           //!< Integer value
+                           REAL,          //!< Real value
                            NUM_VAL_TYPES
 };
 //! Number of value types
 const Int NUM_VAL_TYPES = static_cast<Int>(ValType::NUM_VAL_TYPES);
 //! Size of value types
-constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(Bool),  //!< Size of Bool
-                                           sizeof(Int),   //!< Size of Integer
-                                           sizeof(Real)   //!< Size of Real
+constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(Bool),
+                                           sizeof(Int),
+                                           sizeof(Real)
 };
-//! Name of value types
-const string ValName[NUM_VAL_TYPES] = { "bool",  //! Screen name of bool
-                                        "int",   //! Screen name of integer
-                                        "real"   //! Screen name of real
+//! (Screen) names of value types
+const string ValName[NUM_VAL_TYPES] = { "Bool",
+                                        "Int",
+                                        "Real"
 };
 
 //! Variable types

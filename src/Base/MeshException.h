@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:24:06 PM MDT
+  \date      Fri 21 Sep 2012 07:23:34 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -34,7 +34,7 @@ const string MeshMsg[NUM_MESH_EXCEPT] = {
   "Unsupported mesh format: ",
   "Unknown element type in mesh file ",
   "No element/node sets in mesh",
-  "Section not yet implemented: ",
+  "Section not yet implemented: "
 };
 
 //! MeshException : Exception
