@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Wed Sep 19 17:24:25 2012
+  \date      Fri 21 Sep 2012 12:37:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -72,15 +72,27 @@ const Int EntryWidth[] = { 10,  //! Width of Name field
                            10   //! Width of Ptr field
 };
 
+//! Memory entry field designators
+enum class MemoryEntryField : Int { UNSPECIFIED=0,
+                                    BYTES,
+                                    NUMBER,
+                                    VALUE,
+                                    VARIABLE,
+                                    NAME,
+                                    PLOT,
+                                    RESTART,
+                                    PTR
+};
+
 //! Memory entry
 class MemoryEntry {
 
-  //! Befriend class Memory to allow direct manipulation of private fields
-  friend class Memory;
-
   private:
+    //! Befriend class Memory to allow direct manipulation of private fields
+    friend class Memory;
+
     //! Constructor: fill in all fields
-    MemoryEntry(size_t nbytes,
+    MemoryEntry(size_t bytes,
                 size_t number,
                 ValType value,
                 VarType variable,
@@ -88,7 +100,7 @@ class MemoryEntry {
                 Bool plot,
                 Bool restart,
                 void* ptr) :
-      m_nbytes(nbytes),
+      m_bytes(bytes),
       m_number(number),
       m_value(value),
       m_variable(variable),
@@ -113,8 +125,8 @@ class MemoryEntry {
 
     //! One-liner accessor for all fields
     string line();
-
-    size_t m_nbytes;          //!< Size in bytes (number of chars) allocated
+ 
+    size_t m_bytes;           //!< Size in bytes (number of chars) allocated
     size_t m_number;          //!< Number of items
     ValType m_value;          //!< Value type (BOOL, INT, etc.)
     VarType m_variable;       //!< Variable type (SCALAR, VECTOR, etc.)

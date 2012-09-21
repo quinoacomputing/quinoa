@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.C
   \author    J. Bakosi
-  \date      Thu 13 Sep 2012 03:52:39 PM KST
+  \date      Fri 21 Sep 2012 12:34:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryEntry base class definition
   \details   Memoryentry base class definition
@@ -32,7 +32,7 @@ MemoryEntry::line()
      << "  " << setw(EntryWidth[2]) << ValName[static_cast<Int>(m_value)]
      << "  " << setw(EntryWidth[3]) << SizeOf[static_cast<Int>(m_value)]
      << "  " << setw(EntryWidth[4]) << VarTypeName[static_cast<Int>(m_variable)]
-     << "  " << setw(EntryWidth[5]) << m_nbytes
+     << "  " << setw(EntryWidth[5]) << m_bytes
      << "  " << setw(EntryWidth[6]) << (m_plot == true ? "true" : "false")
      << "  " << setw(EntryWidth[7]) << (m_restart == true ? "true" : "false")
      << "  " << setw(EntryWidth[8]) << m_ptr

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 07:23:44 PM MDT
+  \date      Fri 21 Sep 2012 12:57:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -63,8 +63,8 @@ class Memory {
     //! Deallocate all memory entries
     void freeAllEntries() noexcept;
 
-    //! Echo all memory entries
-    void echoAllEntries();
+    //! Echo all (optionally sorted) memory entries
+    void echoAllEntries(MemoryEntryField crit = MemoryEntryField::UNSPECIFIED);
 
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* id);
@@ -127,14 +127,18 @@ class Memory {
     //! Don't permit move assigment
     Memory& operator=(Memory&&) = delete;
 
-    //! Local copy of the number of threads
-    Int m_nthreads;
+    void echo();           //!< Echo unsorted entries
+    void echoByBytes();    //!< Echo entries sorted by Bytes
+    void echoByNumber();   //!< Echo entries sorted by Number
+    void echoByValue();    //!< Echo entries sorted by Value
+    void echoByVariable(); //!< Echo entries sorted by Variable
+    void echoByName();     //!< Echo entries sorted by Name
+    void echoByPlot();     //!< Echo entries sorted by Plot
+    void echoByRestart();  //!< Echo entries sorted by Restart
 
-    //! Memory entries
-    MemorySet m_entry;
-
-    //! Memory entry names mapped to MemorySet keys
-    MemoryNames m_name;
+    Int m_nthreads;      //!< Local copy of the number of threads
+    MemorySet m_entry;   //!< Memory entries
+    MemoryNames m_name;  //!< Memory entry names mapped to MemorySet keys
 };
 
 } // namespace Quinoa

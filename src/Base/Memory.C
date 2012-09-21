@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Tue 18 Sep 2012 08:03:53 PM MDT
+  \date      Fri 21 Sep 2012 12:53:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <utility>
+#include <set>
 
 using namespace std;
 
@@ -203,9 +204,10 @@ Memory::freeAllEntries() noexcept
 }
 
 void
-Memory::echoAllEntries()
+Memory::echoAllEntries(MemoryEntryField crit)
 //******************************************************************************
 //  Echo all memory entries
+//! \param[in]  by    Sort items by memory entry field criteria
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -214,7 +216,17 @@ Memory::echoAllEntries()
     throw MemoryException(ExceptType::WARNING, MemExceptType::EMPTY_STORE);
 
   // Echo AllEntries-header
-  cout << "* Dynamically allocated memory entries:\n";
+  cout << "* Dynamically allocated memory entries ";
+  switch (crit) {
+    case MemoryEntryField::BYTES:    cout << "(sorted by Bytes)\n";    break;
+    case MemoryEntryField::NUMBER:   cout << "(sorted by Number)\n";   break;
+    case MemoryEntryField::VALUE:    cout << "(sorted by Value)\n";    break;
+    case MemoryEntryField::VARIABLE: cout << "(sorted by Variable)\n"; break;
+    case MemoryEntryField::NAME:     cout << "(sorted by Name)\n";     break;
+    case MemoryEntryField::PLOT:     cout << "(sorted by Plot)\n";     break;
+    case MemoryEntryField::RESTART:  cout << "(sorted by Restart)\n";  break;
+    case MemoryEntryField::UNSPECIFIED: default: cout << "\n";
+  }
   cout << "  " << setw(EntryWidth[0]) << "Name"
        << "  " << setw(EntryWidth[1]) << "Number"
        << "  " << setw(EntryWidth[2]) << "Value"
@@ -238,11 +250,182 @@ Memory::echoAllEntries()
        << endl;
   cout << setfill(' ');
 
-  // Echo all entries as one-liners
-  transform(m_entry.begin(),
-            m_entry.end(),
-            ostream_iterator<string>(cout),
-            mem_fun(&MemoryEntry::line));
+  switch (crit) {
+    case MemoryEntryField::BYTES:    echoByBytes();    break;
+    case MemoryEntryField::NUMBER:   echoByNumber();   break;
+    case MemoryEntryField::VALUE:    echoByValue();    break;
+    case MemoryEntryField::VARIABLE: echoByVariable(); break;
+    case MemoryEntryField::NAME:     echoByName();     break;
+    case MemoryEntryField::PLOT:     echoByPlot();     break;
+    case MemoryEntryField::RESTART:  echoByRestart();  break;
+    case MemoryEntryField::UNSPECIFIED: default: echo();
+  }
+}
+
+void
+Memory::echo()
+//******************************************************************************
+//  Echo unsorted memory entries
+//! \author J. Bakosi
+//******************************************************************************
+{
+  transform(m_entry.begin(), m_entry.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByBytes()
+//******************************************************************************
+//  Echo memory entries sorted by Bytes
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Bytes
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_bytes > b->m_bytes;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByNumber()
+//******************************************************************************
+//  Echo memory entries sorted by Number
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Number
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_number > b->m_number;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+
+void
+Memory::echoByValue()
+//******************************************************************************
+//  Echo memory entries sorted by Value
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Value
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_value < b->m_value;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByVariable()
+//******************************************************************************
+//  Echo memory entries sorted by Variable
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Variable
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_variable < b->m_variable;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByName()
+//******************************************************************************
+//  Echo memory entries sorted by Name
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Name
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_name < b->m_name;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByPlot()
+//******************************************************************************
+//  Echo memory entries sorted by Plot
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Plot
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_plot < b->m_plot;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+}
+
+void
+Memory::echoByRestart()
+//******************************************************************************
+//  Echo memory entries sorted by Restart
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Copy unordered memory entry keys to vector
+  vector<MemoryEntry*> srt;
+  copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
+
+  // Sort vector of memory entries by their Restart
+  sort(srt.begin(), srt.end(),
+       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+             return a->m_restart < b->m_restart;
+          });
+
+  // Echo ordered entries
+  transform(srt.begin(), srt.end(),
+            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
 }
 
 size_t
