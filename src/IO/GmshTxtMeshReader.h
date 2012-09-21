@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 07:15:13 AM MDT
+  \date      Fri 21 Sep 2012 09:40:23 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -71,7 +71,7 @@ class GmshTxtMeshReader : MeshReader {
   //! Memory entry keys holding Mesh data
   typedef unordered_set<MemoryEntry*> MeshSet;
 
-  public:
+  protected:
     //! Constructor
     GmshTxtMeshReader(string filename, UnsMesh* mesh, Memory* memory) :
       MeshReader(filename, mesh, memory), m_nodesets(0), m_elemsets(0) {}
@@ -79,11 +79,8 @@ class GmshTxtMeshReader : MeshReader {
     //! Destructor: free mesh entries
     ~GmshTxtMeshReader();
 
-    //! Public interface for read Gmsh mesh
+    //! Read Gmsh mesh
     void read();
-
-    //! Echo element tags and connectivity in all element sets
-    void echoElemSets();
 
   private:
     //! Don't permit copy constructor
@@ -137,6 +134,9 @@ class GmshTxtMeshReader : MeshReader {
 
     //! Reserve element capacity
     void reserveElem(vector<vector<Int>>::size_type n);
+
+    //! Echo element tags and connectivity in all element sets
+    void echoElemSets();
 
     MeshSet m_meshEntry;         //!< Memory entry keys for Mesh data
     Int m_nodesets;              //!< Number of node sets

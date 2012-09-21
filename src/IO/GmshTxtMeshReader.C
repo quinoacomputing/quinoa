@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 07:23:39 AM MDT
+  \date      Fri 21 Sep 2012 09:23:56 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -39,6 +39,7 @@ GmshTxtMeshReader::~GmshTxtMeshReader()
     m_meshEntry.clear();
   }
 }
+
 void
 GmshTxtMeshReader::read()
 //******************************************************************************
