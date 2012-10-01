@@ -28,7 +28,7 @@ const string   ELEMID_NAME = "elmID";
 const string ELEMTYPE_NAME = "elmType";
 
 //! Gmsh element types and their number of nodes,
-//! all Gmsh-supported listed, Quinoa-supported uncommented
+//! all Gmsh-supported listed, Quinoa-supported at this time uncommented
 const map<Int, Int> GmshElemNodes = {
           { 1,  2},  //! 2-node line
           { 2,  3},  //! 3-node triangle
@@ -66,7 +66,7 @@ const map<Int, Int> GmshElemNodes = {
 };
 
 //! GmshTxtMeshReader : MeshReader
-class GmshTxtMeshReader : MeshReader {
+class GmshTxtMeshReader : protected MeshReader {
 
   //! Memory entry keys holding Mesh data
   typedef unordered_set<MemoryEntry*> MeshSet;
@@ -81,16 +81,6 @@ class GmshTxtMeshReader : MeshReader {
 
     //! Read Gmsh mesh
     void read();
-
-  private:
-    //! Don't permit copy constructor
-    GmshTxtMeshReader(const GmshTxtMeshReader&) = delete;
-    //! Don't permit copy assigment
-    GmshTxtMeshReader& operator=(const GmshTxtMeshReader&) = delete;
-    //! Don't permit move constructor
-    GmshTxtMeshReader(GmshTxtMeshReader&&) = delete;
-    //! Don't permit move assigment
-    GmshTxtMeshReader& operator=(GmshTxtMeshReader&&) = delete;
 
     //! Add new MeshSet entry (e.g. list of nodes, elements, node ids, etc.)
     template<class V> V* newEntry(size_t number,
@@ -113,6 +103,21 @@ class GmshTxtMeshReader : MeshReader {
       // Get pointer to new entry 
       return m_memory->getPtr<V>(entry);
     }
+
+    Int m_nodesets;              //!< Number of node sets
+    Int m_elemsets;              //!< Number of element sets
+    vector<vector<Int>> m_elem;  //!< Elements
+    vector<vector<Int>> m_tag;   //!< Element tags
+
+  private:
+    //! Don't permit copy constructor
+    GmshTxtMeshReader(const GmshTxtMeshReader&) = delete;
+    //! Don't permit copy assigment
+    GmshTxtMeshReader& operator=(const GmshTxtMeshReader&) = delete;
+    //! Don't permit move constructor
+    GmshTxtMeshReader(GmshTxtMeshReader&&) = delete;
+    //! Don't permit move assigment
+    GmshTxtMeshReader& operator=(GmshTxtMeshReader&&) = delete;
 
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
@@ -139,10 +144,6 @@ class GmshTxtMeshReader : MeshReader {
     void echoElemSets();
 
     MeshSet m_meshEntry;         //!< Memory entry keys for Mesh data
-    Int m_nodesets;              //!< Number of node sets
-    Int m_elemsets;              //!< Number of element sets
-    vector<vector<Int>> m_elem;  //!< Elements
-    vector<vector<Int>> m_tag;   //!< Element tags
 };
 
 } // namespace Quinoa

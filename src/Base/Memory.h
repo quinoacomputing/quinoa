@@ -69,6 +69,9 @@ class Memory {
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* id);
 
+    //! Return the number of items based on the variable name
+    size_t getNumber(string name);
+
     //! Return the value type based on the ID
     ValType getValue(MemoryEntry* id);
 

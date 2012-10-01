@@ -39,8 +39,8 @@ class GmshTxtMeshReader2D : GmshTxtMeshReader {
     //! Don't permit move assigment
     GmshTxtMeshReader2D& operator=(GmshTxtMeshReader2D&&) = delete;
 
-    //! Compress mesh data from STL to memory entries
-    void compress();
+    //! Pack mesh data from STL to memory entries
+    void pack();
 };
 
 } // namespace Quinoa

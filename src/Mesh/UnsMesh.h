@@ -20,6 +20,10 @@
 
 namespace Quinoa {
 
+//! Base names for various mesh memory entries
+const string LINECONN_NAME = "ConnLine";
+const string  TRICONN_NAME = "ConnTri";
+
 //! UnsMesh : Mesh
 class UnsMesh : Mesh {
 
@@ -27,8 +31,8 @@ class UnsMesh : Mesh {
     //! Constructor
     UnsMesh(Memory* memory) : m_memory(memory) {}
 
-    //! Destructor
-    ~UnsMesh() = default;
+    //! Destructor: graceful free memory entries held
+    ~UnsMesh();
 
     //! Set mesh version
     void setVersion(Real& version) { m_version = version; }
@@ -48,6 +52,9 @@ class UnsMesh : Mesh {
     //! Get mesh data size
     Int getDatasize() { return m_datasize; }
 
+    MemoryEntry* m_connLine = nullptr;     //!< Line connectivity
+    MemoryEntry* m_connTri  = nullptr;     //!< Triangle connectivity
+
   private:
     //! Don't permit copy constructor
     UnsMesh(const UnsMesh&) = delete;
@@ -61,6 +68,7 @@ class UnsMesh : Mesh {
     Real m_version;              //!< Mesh version in mesh file
     Int m_type;                  //!< File type in mesh file
     Int m_datasize;              //!< Data size in mesh file
+
     Memory* m_memory;            //!< Memory object pointer
 };
 

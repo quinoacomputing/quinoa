@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 12:53:47 PM MDT
+  \date      Sun 30 Sep 2012 09:22:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -173,7 +173,7 @@ Memory::freeEntry(MemoryEntry* id)
   if (!removed)
     throw MemoryException(ExceptType::WARNING, MemExceptType::NOT_ERASED);
 
-  // Zero id, so the caller can also tell that memory entry has been removed
+  // Zero id, so the caller can also tell that the memory entry has been removed
   id = nullptr;
 }
 
@@ -432,6 +432,7 @@ size_t
 Memory::getNumber(MemoryEntry* id)
 //******************************************************************************
 //  Return the number of items based on the ID
+//! \param[in]  id  ID of the entry
 //! \return Number of items
 //! \author J. Bakosi
 //******************************************************************************
@@ -451,10 +452,24 @@ Memory::getNumber(MemoryEntry* id)
   return (*it)->m_number;
 }
 
+size_t
+Memory::getNumber(string name)
+//******************************************************************************
+//  Return the number of items based on the variable name
+//! \param[in]  name  name of the variable
+//! \return Number of items
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Find memory entry and return its number of variables
+  return getID(name)->m_number;
+}
+
 ValType
 Memory::getValue(MemoryEntry* id)
 //******************************************************************************
 //  Return the value type based on the ID
+//! \param[in]  id  ID of the entry
 //! \return The value type
 //! \author J. Bakosi
 //******************************************************************************
@@ -478,6 +493,7 @@ VarType
 Memory::getVariable(MemoryEntry* id)
 //******************************************************************************
 //  Return the variable type based on the ID
+//! \param[in]  id  ID of the entry
 //! \return The variable type
 //! \author J. Bakosi
 //******************************************************************************
@@ -501,6 +517,7 @@ string
 Memory::getName(MemoryEntry* id)
 //******************************************************************************
 //  Return the variable name based on the ID
+//! \param[in]  id  ID of the entry
 //! \return The variable name
 //! \author J. Bakosi
 //******************************************************************************
@@ -524,6 +541,7 @@ Bool
 Memory::getPlot(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
+//! \param[in]  id  ID of the entry
 //! \return True if the variable can be plotted
 //! \author J. Bakosi
 //******************************************************************************
@@ -547,6 +565,7 @@ Bool
 Memory::getRestart(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
+//! \param[in]  id  ID of the entry
 //! \return True if the variable is written to restart file
 //! \author J. Bakosi
 //******************************************************************************
@@ -570,6 +589,7 @@ MemoryEntry*
 Memory::getID(string name)
 //******************************************************************************
 //  Return the MemorySet key based on the variable name
+//! \param[in]  name  Name of the variable
 //! \return MemorySet key (used as ID)
 //! \author J. Bakosi
 //******************************************************************************

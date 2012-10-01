@@ -87,7 +87,7 @@ GmshTxtMeshReader::echoElemSets()
     // elm-number elm-type number-of-tags < tag > ... node-number-list
     for (size_t i=0; i<num; i++) {
       cout << "  " << element[i] << " " << elmtype[i] << " {";
-      copy(m_tag[i].begin(),m_tag[i].end()-1,ostream_iterator<Int>(cout,", "));
+      copy(m_tag[i].begin(), m_tag[i].end()-1,ostream_iterator<Int>(cout,", "));
       cout << m_tag[i].back()-1 << "} {";
       copy(m_elem[i].begin(),m_elem[i].end()-1,ostream_iterator<Int>(cout,", "));
       cout << m_elem[i].back()-1 << "}" << endl;
