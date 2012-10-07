@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 09:51:35 AM MDT
+  \date      Sun 07 Oct 2012 05:55:12 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -22,14 +22,10 @@ using namespace std;
 namespace Quinoa {
 
 //! Base names for various mesh memory entries
-const string     NODEID_NAME = "nodeId";
-const string      COORD_NAME = "coord";
-const string      LINID_NAME = "linId";
-const string      TRIID_NAME = "triId";
-const string   LINNODES_NAME = "linNode";
-const string   TRINODES_NAME = "triNode";
-const string     LINTAG_NAME = "linTag";
-const string     TRITAG_NAME = "triTag";
+const string     NODES_NAME = "nodes";
+const string    COORDS_NAME = "coords";
+const string     LINES_NAME = "lines";
+const string TRIANGLES_NAME = "triangles";
 
 //! Gmsh element types and their number of nodes,
 //! all Gmsh-supported listed, Quinoa-supported at this time uncommented
@@ -108,6 +104,12 @@ class GmshTxtMeshReader : protected MeshReader {
       return m_memory->getPtr<V>(entry);
     }
 
+    vector<vector<Int>> m_linpoel;      //!< Line elements connectivity
+    vector<vector<Int>> m_tinpoel;      //!< Triangle elements connectivity
+
+    vector<vector<Int>> m_linTag;       //!< Line element tags
+    vector<vector<Int>> m_triTag;       //!< Triangle element tags
+
   private:
     //! Don't permit copy constructor
     GmshTxtMeshReader(const GmshTxtMeshReader&) = delete;
@@ -151,35 +153,31 @@ class GmshTxtMeshReader : protected MeshReader {
     //! Add new element tags
     void addElemTags(Int type, vector<Int>& tags);
 
+    //! Reserver capacity to store element connectivities and tags
+    void reserveElem();
+
     //! Echo element tags and connectivity in all element sets
     void echoElemSets();
 
     MeshSet m_meshEntry;         //!< Memory entry keys for Mesh data
 
     Int m_nnodes = 0;            //!< Number of nodes
+
     Int m_nLins = 0;             //!< Number of line elements
     Int m_nTris = 0;             //!< Number of triangle elements
     Int m_nLinNodes = 0;         //!< Number of line element nodes
     Int m_nTriNodes = 0;         //!< Number of triangle element nodes
-    Int m_nLinTags = 0;          //!< Number of line of tags
+    Int m_nLinTags = 0;          //!< Number of line tags
     Int m_nTriTags = 0;          //!< Number of triangle tags
 
     Int m_nodeCnt = 0;           //!< Counter for nodes added
     Int m_linCnt = 0;            //!< Counter for line elems added
-    Int m_triCnt = 0;            //!< Counter for triangles added
-    Int m_linNodeCnt = 0;        //!< Counter for line nodes added
-    Int m_triNodeCnt = 0;        //!< Counter for triangle nodes added
-    Int m_linTagCnt = 0;         //!< Counter for line tags added
-    Int m_triTagCnt = 0;         //!< Counter for triangle tags added
+    Int m_triCnt = 0;            //!< Counter for triangle elems added
 
-    Int* m_node = nullptr;       //!< Node Ids
     Real* m_coord = nullptr;     //!< Node coordinates
+    Int* m_nodeId = nullptr;     //!< Node Ids
     Int* m_linId = nullptr;      //!< Line element Ids
     Int* m_triId = nullptr;      //!< Triangle element Ids
-    Int* m_lin = nullptr;        //!< Line elements
-    Int* m_tri = nullptr;        //!< Triangle elements
-    Int* m_linTag = nullptr;     //!< Line element tags
-    Int* m_triTag = nullptr;     //!< Triangle element tags
 };
 
 } // namespace Quinoa

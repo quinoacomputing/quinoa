@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 09:54:52 AM MDT
+  \date      Sun 07 Oct 2012 04:28:56 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     //  memStore.newEntry(10, ValType::INT, VarType::SCALAR, "scalars");
 
     UnsMesh mesh(&memStore);
-    GmshTxtMeshReader2D inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+    GmshTxtMeshReader2D inMesh("../../tmp/cylinder_stripped.msh", &mesh, &memStore);
     inMesh.read();
     //GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
     //outMesh.write();
