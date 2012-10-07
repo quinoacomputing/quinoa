@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 09:54:04 AM MDT
+  \date      Sun 07 Oct 2012 05:55:19 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -104,40 +104,40 @@ GmshTxtMeshReader::echoElemSets()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   // Echo all lines
-//   cout << "* Lines: " << endl;
-// 
-//   // elm-number elm-type number-of-tags < tag > ... node-number-list
-//   typedef vector<vector<Int>>::size_type ST;
-//   ST num = m_lin.size();
-//   for (ST i=0; i<num; i++) {
-//     cout << "  " << m_linId[i] << " " << 1 << " {";
-// 
-//     copy(m_linTag[i].begin(), m_linTag[i].end()-1,
-//          ostream_iterator<Int>(cout,", "));
-//     cout << m_linTag[i].back() << "} {";
-// 
-//     copy(m_lin[i].begin(), m_lin[i].end()-1,
-//          ostream_iterator<Int>(cout,", "));
-//     cout << m_lin[i].back() << "}" << endl;
-//   }
-// 
-//   // Echo all triangles
-//   cout << "* Triangles: " << endl;
-// 
-//   // elm-number elm-type number-of-tags < tag > ... node-number-list
-//   num = m_tri.size();
-//   for (ST i=0; i<num; i++) {
-//     cout << "  " << m_triId[i] << " " << 2 << " {";
-// 
-//     copy(m_triTag[i].begin(), m_triTag[i].end()-1,
-//          ostream_iterator<Int>(cout,", "));
-//     cout << m_triTag[i].back() << "} {";
-// 
-//     copy(m_tri[i].begin(), m_tri[i].end()-1,
-//          ostream_iterator<Int>(cout,", "));
-//     cout << m_tri[i].back() << "}" << endl;
-//   }
+  // Echo all lines
+  cout << "* Lines: " << endl;
+
+  // elm-number elm-type number-of-tags < tag > ... node-number-list
+  typedef vector<vector<Int>>::size_type ST;
+  ST num = m_linpoel.size();
+  for (ST i=0; i<num; i++) {
+    cout << "  " << m_linId[i] << " " << 1 << " {";
+
+    copy(m_linTag[i].begin(), m_linTag[i].end()-1,
+         ostream_iterator<Int>(cout,", "));
+    cout << m_linTag[i].back() << "} {";
+
+    copy(m_linpoel[i].begin(), m_linpoel[i].end()-1,
+         ostream_iterator<Int>(cout,", "));
+    cout << m_linpoel[i].back() << "}" << endl;
+  }
+
+  // Echo all triangles
+  cout << "* Triangles: " << endl;
+
+  // elm-number elm-type number-of-tags < tag > ... node-number-list
+  num = m_tinpoel.size();
+  for (ST i=0; i<num; i++) {
+    cout << "  " << m_triId[i] << " " << 2 << " {";
+
+    copy(m_triTag[i].begin(), m_triTag[i].end()-1,
+         ostream_iterator<Int>(cout,", "));
+    cout << m_triTag[i].back() << "} {";
+
+    copy(m_tinpoel[i].begin(), m_tinpoel[i].end()-1,
+         ostream_iterator<Int>(cout,", "));
+    cout << m_tinpoel[i].back() << "}" << endl;
+  }
 }
 
 void
@@ -225,7 +225,7 @@ GmshTxtMeshReader::readNodes()
   for (Int i=0; i<num; ++i, ++m_nodeCnt) {
     // node-number x-coord y-coord z-coord
     Int n3 = 3*m_nodeCnt;
-    m_inMesh >> m_node[m_nodeCnt]
+    m_inMesh >> m_nodeId[m_nodeCnt]
              >> m_coord[n3] >> m_coord[n3+1] >> m_coord[n3+2];
   }
   string s;
@@ -381,36 +381,19 @@ GmshTxtMeshReader::alloc()
 //******************************************************************************
 {
   // Allocate new memory entry to store the node Ids
-  m_node = newEntry<Int>(m_nnodes, ValType::INT, VarType::SCALAR,
-                         NODEID_NAME);
+  m_nodeId = newEntry<Int>(m_nnodes, ValType::INT, VarType::SCALAR, NODES_NAME);
 
   // Allocate new memory entry to store the coordinates of nodes
-  m_coord = newEntry<Real>(m_nnodes, ValType::REAL, VarType::VECTOR,
-                           COORD_NAME);
+  m_coord = newEntry<Real>(m_nnodes, ValType::REAL, VarType::VECTOR, COORDS_NAME);
 
   // Allocate new memory entry to store the line element Ids
-  m_linId = newEntry<Int>(m_nLins, ValType::INT, VarType::SCALAR,
-                          LINID_NAME);
+  m_linId = newEntry<Int>(m_nLins, ValType::INT, VarType::SCALAR, LINES_NAME);
 
   // Allocate new memory entry to store the triangle element Ids
-  m_triId = newEntry<Int>(m_nTris, ValType::INT, VarType::SCALAR,
-                          TRIID_NAME);
+  m_triId = newEntry<Int>(m_nTris, ValType::INT, VarType::SCALAR, TRIANGLES_NAME);
 
-  // Allocate new memory entry to store the line element connectivity
-  m_lin = newEntry<Int>(m_nLinNodes, ValType::INT, VarType::SCALAR,
-                        LINNODES_NAME);
-
-  // Allocate new memory entry to store the triangle element connectivity
-  m_tri = newEntry<Int>(m_nTriNodes, ValType::INT, VarType::SCALAR,
-                        TRINODES_NAME);
-
-  // Allocate new memory entry to store the line element tags
-  m_linTag = newEntry<Int>(m_nLinTags, ValType::INT, VarType::SCALAR,
-                           LINTAG_NAME);
-
-  // Allocate new memory entry to store the triangle element tags
-  m_triTag = newEntry<Int>(m_nTriTags, ValType::INT, VarType::SCALAR,
-                           TRITAG_NAME);
+  // Reserve capacity to store element connectivities and tags
+  reserveElem();
 }
 
 void
@@ -422,23 +405,12 @@ GmshTxtMeshReader::addElem(Int type, vector<Int>& nodes)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Int nnodes = nodes.size();
-
   switch (type) {
-  case 1:  // Insert line element connectivity
-    for (Int i=0; i<nnodes; ++i, ++m_linNodeCnt) {
-      m_lin[m_linNodeCnt] = nodes[i];
-    }
-    break;
-  case 2:  // Insert triangle element connectivity
-    for (Int i=0; i<nnodes; ++i, ++m_triNodeCnt) {
-      m_tri[m_triNodeCnt] = nodes[i];
-    }
-    break;
-  default:
-      throw MeshException(ExceptType::FATAL,
-            MeshExceptType::BAD_ELEMENT,
-            m_filename);
+  case 1: m_linpoel.push_back(nodes); break;
+  case 2: m_tinpoel.push_back(nodes); break;
+  default: throw MeshException(ExceptType::FATAL,
+                 MeshExceptType::BAD_ELEMENT,
+                 m_filename);
   }
 }
 
@@ -451,22 +423,28 @@ GmshTxtMeshReader::addElemTags(Int type, vector<Int>& tags)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Int ntags = tags.size();
-
   switch (type) {
-  case 1:  // Insert line element tags
-    for (Int i=0; i<ntags; ++i, ++m_linTagCnt) {
-      m_linTag[m_linTagCnt] = tags[i];
-    }
-    break;
-  case 2:  // Insert triangle element tags
-    for (Int i=0; i<ntags; ++i, ++m_triTagCnt) {
-      m_triTag[m_triTagCnt] = tags[i];
-    }
-    break;
-  default:
-      throw MeshException(ExceptType::FATAL,
-            MeshExceptType::BAD_ELEMENT,
-            m_filename);
+    case 1: m_linTag.push_back(tags); break;
+    case 2: m_triTag.push_back(tags); break;
+    default: throw MeshException(ExceptType::FATAL,
+                                 MeshExceptType::BAD_ELEMENT,
+                                 m_filename);
+  }
+}
+
+void
+GmshTxtMeshReader::reserveElem()
+//******************************************************************************
+//  Reserve capacity to store element connectivities and tags
+//! \author J. Bakosi
+//******************************************************************************
+{
+  try {
+    m_linpoel.reserve(m_nLins);
+    m_tinpoel.reserve(m_nTris);
+    m_linTag.reserve(m_nLins);
+    m_triTag.reserve(m_nTris);
+  } catch (bad_alloc& ba) {
+    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
   }
 }
