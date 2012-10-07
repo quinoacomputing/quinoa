@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 09:40:23 AM MDT
+  \date      Sat 06 Oct 2012 07:49:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -22,10 +22,10 @@ using namespace std;
 namespace Quinoa {
 
 //! Base names for various mesh memory entries
-const string   NODEID_NAME = "nodeID";
-const string    COORD_NAME = "coord";
-const string   ELEMID_NAME = "elmID";
-const string ELEMTYPE_NAME = "elmType";
+const string     NODEID_NAME = "nodeId";
+const string      COORD_NAME = "coord";
+const string      LINID_NAME = "linId";
+const string      TRIID_NAME = "triId";
 
 //! Gmsh element types and their number of nodes,
 //! all Gmsh-supported listed, Quinoa-supported at this time uncommented
@@ -74,7 +74,7 @@ class GmshTxtMeshReader : protected MeshReader {
   protected:
     //! Constructor
     GmshTxtMeshReader(string filename, UnsMesh* mesh, Memory* memory) :
-      MeshReader(filename, mesh, memory), m_nodesets(0), m_elemsets(0) {}
+      MeshReader(filename, mesh, memory) {}
 
     //! Destructor: free mesh entries
     ~GmshTxtMeshReader();
@@ -104,10 +104,11 @@ class GmshTxtMeshReader : protected MeshReader {
       return m_memory->getPtr<V>(entry);
     }
 
-    Int m_nodesets;              //!< Number of node sets
-    Int m_elemsets;              //!< Number of element sets
-    vector<vector<Int>> m_elem;  //!< Elements
-    vector<vector<Int>> m_tag;   //!< Element tags
+    vector<vector<Int>> m_lin;      //!< Line elements
+    vector<vector<Int>> m_tri;      //!< Triangle elements
+
+    vector<vector<Int>> m_linTag;   //!< Line element tags
+    vector<vector<Int>> m_triTag;   //!< Triangle element tags
 
   private:
     //! Don't permit copy constructor
@@ -122,28 +123,56 @@ class GmshTxtMeshReader : protected MeshReader {
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
 
+    //! Count up elements, nodes, physicals
+    void count();
+
+    //! Read "$Nodes--$EndNodes" section and count nodes
+    void countNodes();
+
     //! Read "$Nodes--$EndNodes" section
     void readNodes();
+
+    //! Read "$Elements--$EndElements" section and count elements
+    void countElements();
 
     //! Read "$Elements--$EndElements" section
     void readElements();
 
+    //! Read "$PhysicalNames--$EndPhysicalNames" section and count physicals
+    void countPhysicalNames();
+
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
 
+    //! Allocate memory to read mesh in
+    void alloc();
+
     //! Add new element
-    void addElem(vector<Int>& nodes);
+    void addElem(vector<vector<Int>>& elemType, vector<Int>& nodes);
 
     //! Add new element tags
-    void addElemTags(vector<Int>& tags);
+    void addElemTags(vector<vector<Int>>& elemType, vector<Int>& tags);
 
     //! Reserve element capacity
-    void reserveElem(vector<vector<Int>>::size_type n);
+    void reserveElem();
 
     //! Echo element tags and connectivity in all element sets
     void echoElemSets();
 
     MeshSet m_meshEntry;         //!< Memory entry keys for Mesh data
+    Int m_nnodes = 0;            //!< Total number of nodes
+    Int m_nelems = 0;            //!< Total number of elements (all types)
+    Int m_nLins = 0;             //!< Total number of line elements
+    Int m_nTris = 0;             //!< Total number of triangle elements
+
+    Int m_nodeCnt = 0;           //!< Counter showing number of nodes read
+    Int m_linCnt = 0;            //!< Counter showing number of line elems read
+    Int m_triCnt = 0;            //!< Counter showing number of triangles read
+
+    Int* m_node = nullptr;       //!< Node Ids
+    Real* m_coord = nullptr;     //!< Node coordinates
+    Int* m_linId = nullptr;      //!< Line element Ids
+    Int* m_triId = nullptr;      //!< Triangle element Ids
 };
 
 } // namespace Quinoa
