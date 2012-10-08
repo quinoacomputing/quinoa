@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 04:28:56 PM EDT
+  \date      Sun 07 Oct 2012 11:36:02 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -14,8 +14,8 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 #include <Driver.h>
-#include <GmshTxtMeshReader2D.h>
-//#include <GmshTxtMeshWriter.h>
+#include <GmshTxtMeshReader.h>
+#include <GmshTxtMeshWriter.h>
 #include <MeshException.h>
 #include <IOException.h>
 
@@ -29,20 +29,14 @@ int main(int argc, char* argv[]) {
 
   ErrCode error = ErrCode::NO_ERROR;
   try {
-
-    //MemoryEntry* e =
-    //  memStore.newEntry(10, ValType::INT, VarType::SCALAR, "scalars");
-
     UnsMesh mesh(&memStore);
-    GmshTxtMeshReader2D inMesh("../../tmp/cylinder_stripped.msh", &mesh, &memStore);
+    GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
     inMesh.read();
-    //GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-    //outMesh.write();
+    GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+    outMesh.write();
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;
-    //memStore.freeEntry(e);
-
   } // catch different exception types
     catch (MemoryException& e) { error = e.handleException(&driver); }
     catch (MeshException& e)   { error = e.handleException(&driver); }

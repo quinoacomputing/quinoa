@@ -2,43 +2,16 @@
 /*!
   \file      src/Mesh/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 05:55:19 PM EDT
+  \date      Sun 07 Oct 2012 11:26:27 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
 */
 //******************************************************************************
 
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <iterator>
-
-#include <QuinoaTypes.h>
 #include <GmshTxtMeshReader.h>
-#include <MeshException.h>
-#include <MemoryException.h>
-#include <Memory.h>
 
 using namespace Quinoa;
-
-GmshTxtMeshReader::~GmshTxtMeshReader()
-//******************************************************************************
-//  Destructor: free mesh entries
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Free node sets
-  if (m_meshEntry.size()) {
-    // Free all mesh sets
-    MeshSet::const_iterator it;
-    for (it=m_meshEntry.begin(); it!=m_meshEntry.end(); it++) {
-      m_memory->freeEntry(*it);
-    }
-    // Clear container
-    m_meshEntry.clear();
-  }
-}
 
 void
 GmshTxtMeshReader::count()
@@ -77,7 +50,7 @@ GmshTxtMeshReader::read()
   count();
 
   // Allocate memory to read mesh in
-  alloc();
+  m_mesh->alloc(m_nnodes, m_nLins, m_nTris);
 
   // Read in mandatory "$MeshFormat" section
   readMeshFormat();
@@ -93,51 +66,6 @@ GmshTxtMeshReader::read()
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_inMesh.clear();
-
-  echoElemSets();
-}
-
-void
-GmshTxtMeshReader::echoElemSets()
-//******************************************************************************
-//  Echo element tags and connectivity in all element sets
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Echo all lines
-  cout << "* Lines: " << endl;
-
-  // elm-number elm-type number-of-tags < tag > ... node-number-list
-  typedef vector<vector<Int>>::size_type ST;
-  ST num = m_linpoel.size();
-  for (ST i=0; i<num; i++) {
-    cout << "  " << m_linId[i] << " " << 1 << " {";
-
-    copy(m_linTag[i].begin(), m_linTag[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
-    cout << m_linTag[i].back() << "} {";
-
-    copy(m_linpoel[i].begin(), m_linpoel[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
-    cout << m_linpoel[i].back() << "}" << endl;
-  }
-
-  // Echo all triangles
-  cout << "* Triangles: " << endl;
-
-  // elm-number elm-type number-of-tags < tag > ... node-number-list
-  num = m_tinpoel.size();
-  for (ST i=0; i<num; i++) {
-    cout << "  " << m_triId[i] << " " << 2 << " {";
-
-    copy(m_triTag[i].begin(), m_triTag[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
-    cout << m_triTag[i].back() << "} {";
-
-    copy(m_tinpoel[i].begin(), m_tinpoel[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
-    cout << m_tinpoel[i].back() << "}" << endl;
-  }
 }
 
 void
@@ -221,12 +149,16 @@ GmshTxtMeshReader::readNodes()
   Int num;
   m_inMesh >> num;
 
+  // Get pointers to node ids and coordinates
+  Int* nodeId = m_mesh->getNodeId();
+  Real* coord = m_mesh->getCoord();
+
   // Read in node ids and coordinates
   for (Int i=0; i<num; ++i, ++m_nodeCnt) {
     // node-number x-coord y-coord z-coord
     Int n3 = 3*m_nodeCnt;
-    m_inMesh >> m_nodeId[m_nodeCnt]
-             >> m_coord[n3] >> m_coord[n3+1] >> m_coord[n3+2];
+    m_inMesh >> nodeId[m_nodeCnt]
+             >> coord[n3] >> coord[n3+1] >> coord[n3+2];
   }
   string s;
   getline(m_inMesh, s);  // finish reading the last line
@@ -276,10 +208,10 @@ GmshTxtMeshReader::countElements()
       m_inMesh >> n;
     }
 
-    // Count up different types of elements, tags, and nodes
+    // Count up different types of elements
     switch (type) {
-      case 1: ++m_nLins; m_nLinTags += ntags; m_nLinNodes += nnodes; break;
-      case 2: ++m_nTris; m_nTriTags += ntags; m_nTriNodes += nnodes; break;
+      case 1: ++m_nLins; break;
+      case 2: ++m_nTris; break;
     }
   }
   string s;
@@ -303,6 +235,10 @@ GmshTxtMeshReader::readElements()
   // Read in number of elements in this element set
   Int num;
   m_inMesh >> num;
+
+  // Get pointers to the element ids
+  Int* linId = m_mesh->getLineId();
+  Int* triId = m_mesh->getTriangleId();
 
   // Read in element ids, tags, and element connectivity (node list)
   for (Int i=0; i<num; ++i) {
@@ -334,8 +270,8 @@ GmshTxtMeshReader::readElements()
 
     // Put in elemId and increase counter for different types of elements
     switch (type) {
-      case 1: m_linId[m_linCnt++] = id; break;
-      case 2: m_triId[m_triCnt++] = id; break;
+      case 1: linId[m_linCnt++] = id; break;
+      case 2: triId[m_triCnt++] = id; break;
     }
   }
   string s;
@@ -374,29 +310,6 @@ GmshTxtMeshReader::readPhysicalNames()
 }
 
 void
-GmshTxtMeshReader::alloc()
-//******************************************************************************
-//  Allocate memory to read mesh in
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Allocate new memory entry to store the node Ids
-  m_nodeId = newEntry<Int>(m_nnodes, ValType::INT, VarType::SCALAR, NODES_NAME);
-
-  // Allocate new memory entry to store the coordinates of nodes
-  m_coord = newEntry<Real>(m_nnodes, ValType::REAL, VarType::VECTOR, COORDS_NAME);
-
-  // Allocate new memory entry to store the line element Ids
-  m_linId = newEntry<Int>(m_nLins, ValType::INT, VarType::SCALAR, LINES_NAME);
-
-  // Allocate new memory entry to store the triangle element Ids
-  m_triId = newEntry<Int>(m_nTris, ValType::INT, VarType::SCALAR, TRIANGLES_NAME);
-
-  // Reserve capacity to store element connectivities and tags
-  reserveElem();
-}
-
-void
 GmshTxtMeshReader::addElem(Int type, vector<Int>& nodes)
 //******************************************************************************
 //  Add new element (connectivity) to given element type container
@@ -406,11 +319,11 @@ GmshTxtMeshReader::addElem(Int type, vector<Int>& nodes)
 //******************************************************************************
 {
   switch (type) {
-  case 1: m_linpoel.push_back(nodes); break;
-  case 2: m_tinpoel.push_back(nodes); break;
-  default: throw MeshException(ExceptType::FATAL,
-                 MeshExceptType::BAD_ELEMENT,
-                 m_filename);
+    case 1: m_mesh->addLine(nodes); break;
+    case 2: m_mesh->addTriangle(nodes); break;
+    default: throw MeshException(ExceptType::FATAL,
+                                 MeshExceptType::BAD_ELEMENT,
+                                 m_filename);
   }
 }
 
@@ -424,27 +337,10 @@ GmshTxtMeshReader::addElemTags(Int type, vector<Int>& tags)
 //******************************************************************************
 {
   switch (type) {
-    case 1: m_linTag.push_back(tags); break;
-    case 2: m_triTag.push_back(tags); break;
+    case 1: m_mesh->addLineTags(tags); break;
+    case 2: m_mesh->addTriangleTags(tags); break;
     default: throw MeshException(ExceptType::FATAL,
                                  MeshExceptType::BAD_ELEMENT,
                                  m_filename);
-  }
-}
-
-void
-GmshTxtMeshReader::reserveElem()
-//******************************************************************************
-//  Reserve capacity to store element connectivities and tags
-//! \author J. Bakosi
-//******************************************************************************
-{
-  try {
-    m_linpoel.reserve(m_nLins);
-    m_tinpoel.reserve(m_nTris);
-    m_linTag.reserve(m_nLins);
-    m_triTag.reserve(m_nTris);
-  } catch (bad_alloc& ba) {
-    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
   }
 }
