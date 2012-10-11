@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon 08 Oct 2012 12:11:11 AM EDT
+  \date      Wed 10 Oct 2012 01:57:16 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -117,10 +117,10 @@ class UnsMesh : Mesh {
     Int m_type;                            //!< File type in mesh file
     Int m_datasize;                        //!< Data size in mesh file
 
-    MemoryEntry* m_COORD = nullptr;        //!< Node coordinates
-    MemoryEntry* m_NODEID = nullptr;       //!< Node Ids
-    MemoryEntry* m_LINEID = nullptr;       //!< Line element Ids
-    MemoryEntry* m_TRIANGLEID = nullptr;   //!< Triangle element Ids
+    MemoryEntry* m_COORD;                  //!< Node coordinates
+    MemoryEntry* m_NODEID;                 //!< Node Ids
+    MemoryEntry* m_LINEID;                 //!< Line element Ids
+    MemoryEntry* m_TRIANGLEID;             //!< Triangle element Ids
 
     vector<vector<Int>> m_linpoel;         //!< Line elements connectivity
     vector<vector<Int>> m_tinpoel;         //!< Triangle elements connectivity

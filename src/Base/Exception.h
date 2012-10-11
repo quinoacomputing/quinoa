@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Tue Sep 18 15:34:46 2012
+  \date      Wed 10 Oct 2012 04:11:31 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -16,24 +16,21 @@
 namespace Quinoa {
 
 //! Exception types
-enum class ExceptType { CUMULATIVE=0,  //!< Only several will produce a warning
-                        WARNING,       //!< Warning: output message
-                        ERROR,         //!< Error: output but will not interrupt
-                        UNCAUGHT,      //!< Uncaught: will interrupt
-                        FATAL,         //!< Fatal error: will interrupt
-                        NUM_EXCEPT
+// ICC: no strongly typed enums yet
+enum ExceptType { CUMULATIVE=0,  //!< Only several will produce a warning
+                  WARNING,       //!< Warning: output message
+                  ERROR,         //!< Error: output but will not interrupt
+                  UNCAUGHT,      //!< Uncaught: will interrupt
+                  FATAL,         //!< Fatal error: will interrupt
+                  NUM_EXCEPT
 };
-//! Number of exception types
-const Int NUM_EXCEPT = static_cast<Int>(ExceptType::NUM_EXCEPT);
 
 //! Error codes for the OS (or whatever calls Quinoa)
-enum class ErrCode { NO_ERROR=0,       //!< Everything went fine
-                     NONFATAL,         //!< Exception occurred but continue
-                     FATAL,            //!< Fatal error occurred
-                     NUM_ERR_CODE
+enum ErrCode { NO_ERROR=0,       //!< Everything went fine
+               NONFATAL,         //!< Exception occurred but continue
+               FATAL_ERROR,      //!< Fatal error occurred
+               NUM_ERR_CODE
 };
-//! Number of error codes
-const Int NUM_ERR_CODE = static_cast<Int>(ErrCode::NUM_ERR_CODE);
 
 class Driver;
 
@@ -55,9 +52,11 @@ class Exception {
     //! can only be thrown from within derived Exception classes
     Exception(Exception&&) = default;
 
-  private:
     //! Don't permit copy constructor
-    Exception(const Exception&) = delete;
+    // ICC: should be deleted and private
+    Exception(const Exception&);
+
+  private:
     //! Don't permit copy assignment
     Exception& operator=(const Exception&) = delete;
     //! Don't permit move assignment
