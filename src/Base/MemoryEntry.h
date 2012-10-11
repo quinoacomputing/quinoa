@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 12:37:19 PM MDT
+  \date      Wed 10 Oct 2012 01:46:10 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -20,13 +20,11 @@ using namespace std;
 namespace Quinoa {
 
 //! Value types
-enum class ValType : Int { BOOL=0,        //!< Boolean value
-                           INT,           //!< Integer value
-                           REAL,          //!< Real value
-                           NUM_VAL_TYPES
+enum ValType { BOOL=0,        //!< Boolean value
+               INT,           //!< Integer value
+               REAL,          //!< Real value
+               NUM_VAL_TYPES
 };
-//! Number of value types
-const Int NUM_VAL_TYPES = static_cast<Int>(ValType::NUM_VAL_TYPES);
 //! Size of value types
 constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(Bool),
                                            sizeof(Int),
@@ -39,14 +37,12 @@ const string ValName[NUM_VAL_TYPES] = { "Bool",
 };
 
 //! Variable types
-enum class VarType : Int { SCALAR=0,   //!< Scalar quantity
-                           VECTOR,     //!< Vector quantity
-                           SYMTENSOR,  //!< Symmetric tensor quantity
-                           TENSOR,     //!< Tensor quantity
-                           NUM_VAR_TYPES
+enum VarType { SCALAR=0,   //!< Scalar quantity
+               VECTOR,     //!< Vector quantity
+               SYMTENSOR,  //!< Symmetric tensor quantity
+               TENSOR,     //!< Tensor quantity
+               NUM_VAR_TYPES
 };
-//! Number of variable types
-const Int NUM_VAR_TYPES = static_cast<Int>(VarType::NUM_VAR_TYPES);
 //! Variable components
 const Int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
                                    3,  //!< Vector
@@ -73,15 +69,15 @@ const Int EntryWidth[] = { 10,  //! Width of Name field
 };
 
 //! Memory entry field designators
-enum class MemoryEntryField : Int { UNSPECIFIED=0,
-                                    BYTES,
-                                    NUMBER,
-                                    VALUE,
-                                    VARIABLE,
-                                    NAME,
-                                    PLOT,
-                                    RESTART,
-                                    PTR
+enum MemoryEntryField { UNSPECIFIED=0,
+                        BYTES,
+                        NUMBER,
+                        VALUE,
+                        VARIABLE,
+                        NAME,
+                        PLOT,
+                        RESTART,
+                        PTR
 };
 
 //! Memory entry

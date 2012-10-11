@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 11:36:02 PM EDT
+  \date      Wed 10 Oct 2012 04:09:53 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
   Memory memStore(1);   // arg: nthreads
   Driver driver(&memStore);
 
-  ErrCode error = ErrCode::NO_ERROR;
+  ErrCode error = NO_ERROR;
   try {
     UnsMesh mesh(&memStore);
     GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
@@ -43,11 +43,11 @@ int main(int argc, char* argv[]) {
     catch (IOException& e)     { error = e.handleException(&driver); }
     // catch uncaught exceptions
     catch (...) {
-      Exception e(ExceptType::UNCAUGHT);
+      Exception e(UNCAUGHT);
       error = e.handleException(&driver);
     }
 
-  if (error != ErrCode::FATAL) {
+  if (error != FATAL_ERROR) {
     cout << "still running..." << endl;
   }
 }

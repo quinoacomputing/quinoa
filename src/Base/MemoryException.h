@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Mon 17 Sep 2012 10:00:03 PM MDT
+  \date      Wed 10 Oct 2012 01:44:33 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -20,18 +20,15 @@ using namespace std;
 namespace Quinoa {
 
 //! Memory exception types
-enum class MemExceptType : Int {
-                           BAD_ALLOC=0,  //!< std::bad_alloc
-                           BAD_INSERT,   //!< unsuccessful STL::insert
-                           BAD_NAME,     //!< non-unique variable name
-                           EMPTY_STORE,  //!< memory store empty
-                           NOT_FOUND,    //!< STL::find did not find entry
-                           NOT_ERASED,   //!< STL::erase did not erase entry
-                           UNDEFINED,    //!< memory entry not defined
-                           NUM_MEM_EXCEPT
+enum MemExceptType { BAD_ALLOC=0,  //!< std::bad_alloc
+                     BAD_INSERT,   //!< unsuccessful STL::insert
+                     BAD_NAME,     //!< non-unique variable name
+                     EMPTY_STORE,  //!< memory store empty
+                     NOT_FOUND,    //!< STL::find did not find entry
+                     NOT_ERASED,   //!< STL::erase did not erase entry
+                     UNDEFINED,    //!< memory entry not defined
+                     NUM_MEM_EXCEPT
 };
-//! Number of memory exception types
-const Int NUM_MEM_EXCEPT = static_cast<Int>(MemExceptType::NUM_MEM_EXCEPT);
 
 //! Memory exception error messages
 const string MemMsg[NUM_MEM_EXCEPT] = {

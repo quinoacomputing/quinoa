@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/IOException.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:35:36 PM MDT
+  \date      Wed 10 Oct 2012 02:01:18 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -21,13 +21,11 @@ using namespace std;
 namespace Quinoa {
 
 //! IOException types
-enum class IOExceptType { FAILED_OPEN=0,  //!< failed to open file
-                          FAILED_CLOSE,   //!< failed to close file
-                          FAILED_WRITE,   //!< failed to write to file
-                          NUM_IO_EXCEPT
+enum IOExceptType { FAILED_OPEN=0,  //!< failed to open file
+                    FAILED_CLOSE,   //!< failed to close file
+                    FAILED_WRITE,   //!< failed to write to file
+                    NUM_IO_EXCEPT
 };
-//! Number of IO exception types
-const Int NUM_IO_EXCEPT = static_cast<Int>(IOExceptType::NUM_IO_EXCEPT);
 
 //! IOException error messages
 const string IOMsg[NUM_IO_EXCEPT] = {
@@ -45,8 +43,9 @@ class IOException : Exception {
       Exception(except), m_filename(filename), m_except(ioExcept) {}
 
     //! Constructor without filename
-    IOException(ExceptType except, IOExceptType ioExcept) :
-      IOException(except, ioExcept, 0) {}
+    // ICC: no delegate constructors
+    //IOException(ExceptType except, IOExceptType ioExcept) :
+    //  IOException(except, ioExcept, 0) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     IOException(IOException&&) = default;

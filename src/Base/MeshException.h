@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MeshException.h
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 07:23:34 AM MDT
+  \date      Wed 10 Oct 2012 01:41:37 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -20,14 +20,12 @@ using namespace std;
 namespace Quinoa {
 
 //! MeshException types
-enum class MeshExceptType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
-                            BAD_ELEMENT,    //!< unknown element type
-                            EMPTY_SET,      //!< no element/node sets
-                            UNIMPLEMENTED,  //!< mesh file section unimplemented
-                            NUM_MESH_EXCEPT
+enum MeshExceptType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
+                      BAD_ELEMENT,    //!< unknown element type
+                      EMPTY_SET,      //!< no element/node sets
+                      UNIMPLEMENTED,  //!< mesh file section unimplemented
+                      NUM_MESH_EXCEPT
 };
-//! Number of mesh exception types
-const Int NUM_MESH_EXCEPT = static_cast<Int>(MeshExceptType::NUM_MESH_EXCEPT);
 
 //! Mesh exception error messages
 const string MeshMsg[NUM_MESH_EXCEPT] = {
@@ -48,8 +46,9 @@ class MeshException : Exception {
       m_throwerMsg(throwerMsg), m_except(meshExcept) {}
 
     //! Constructor without message from thrower
-    MeshException(ExceptType except, MeshExceptType meshExcept) :
-      MeshException(except, meshExcept, 0) {}
+    // ICC: no delegate constructors
+    //MeshException(ExceptType except, MeshExceptType meshExcept) :
+    //  MeshException(except, meshExcept, 0) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     MeshException(MeshException&&) = default;

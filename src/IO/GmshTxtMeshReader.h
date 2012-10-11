@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 11:25:25 PM EDT
+  \date      Wed 10 Oct 2012 02:29:10 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -19,51 +19,12 @@ using namespace std;
 
 namespace Quinoa {
 
-//! Gmsh element types and their number of nodes,
-//! all Gmsh-supported listed, Quinoa-supported at this time uncommented
-const map<Int, Int> GmshElemNodes = {
-          { 1,  2},  //! 2-node line
-          { 2,  3},  //! 3-node triangle
-//        { 3,  4},  //! 4-node quadrangle
-//        { 4,  4},  //! 4-node tetrahedron
-//        { 5,  8},  //! 8-node hexahedron
-//        { 6,  6},  //! 6-node prism
-//        { 7,  5},  //! 5-node pyramid
-//        { 8,  3},  //! 3-node second order line
-//        { 9,  6},  //! 6-node second order triangle
-//        {10,  9},  //! 9-node second order quadrangle
-//        {11, 10},  //! 10-node second order tetrahedron
-//        {12, 27},  //! 27-node second order hexahedron
-//        {13, 18},  //! 18-node second order prism
-//        {14, 14},  //! 14-node second order pyramid
-//        {15,  1},  //! 1-node point
-//        {16,  8},  //! 8-node second order quadrangle
-//        {17, 20},  //! 20-node second order hexahedron
-//        {18, 15},  //! 15-node second order prism
-//        {19, 13},  //! 13-node second order pyramid
-//        {20,  9},  //! 9-node third order incomplete triangle
-//        {21, 10},  //! 10-node third order triangle
-//        {22, 12},  //! 12-node fourth order incomplete triangle
-//        {23, 15},  //! 15-node fourth order triangle
-//        {24, 15},  //! 15-node fifth order incomplete triangle
-//        {25, 21},  //! 21-node fifth order complete triangle
-//        {26,  4},  //! 4-node third order edge
-//        {27,  5},  //! 5-node fourth order edge
-//        {28,  6},  //! 6-node fifth order edge
-//        {29, 20},  //! 20-node third order tetrahedron
-//        {30, 35},  //! 35-node fourth order tetrahedron
-//        {31, 56},  //! 56-node fifth order tetrahedron
-//        {92, 64},  //! 64-node third order hexahedron
-//        {93,125}   //! 125-node fourth order hexahedron
-};
-
 //! GmshTxtMeshReader : MeshReader
 class GmshTxtMeshReader : MeshReader {
 
   public:
     //! Constructor
-    GmshTxtMeshReader(string filename, UnsMesh* mesh, Memory* memory) :
-      MeshReader(filename, mesh, memory) {}
+    GmshTxtMeshReader(string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor, default compiler generated
     ~GmshTxtMeshReader() = default;
@@ -111,13 +72,15 @@ class GmshTxtMeshReader : MeshReader {
     //! Add new element tags
     void addElemTags(Int type, vector<Int>& tags);
 
-    Int m_nnodes = 0;              //!< Number of nodes
-    Int m_nLins = 0;               //!< Number of line elements
-    Int m_nTris = 0;               //!< Number of triangle elements
+    map<Int, Int> GmshElemNodes; //!< Element types and their number of nodes
 
-    Int m_nodeCnt = 0;             //!< Counter for nodes added
-    Int m_linCnt = 0;              //!< Counter for line elems added
-    Int m_triCnt = 0;              //!< Counter for triangle elems added
+    Int m_nnodes;                //!< Number of nodes
+    Int m_nLins;                 //!< Number of line elements
+    Int m_nTris;                 //!< Number of triangle elements
+
+    Int m_nodeCnt;               //!< Counter for nodes added
+    Int m_linCnt;                //!< Counter for line elems added
+    Int m_triCnt;                //!< Counter for triangle elems added
 };
 
 } // namespace Quinoa

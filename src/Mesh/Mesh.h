@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 06:16:21 PM MDT
+  \date      Wed 10 Oct 2012 01:57:10 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -26,10 +26,12 @@ const Int NUM_MESH_DIM = static_cast<Int>(MeshDim::NUM_MESH_DIM);
 //! Mesh base class
 class Mesh {
 
-  protected:
+  public:
     //! Constructor, default compiler generated
+    // ICC wants it public
     Mesh() = default;
 
+  protected:
     //! Destructor, default compiler generated
     ~Mesh() = default;
 
@@ -38,7 +40,7 @@ class Mesh {
 
   private:
     //! Don't permit copy constructor
-    Mesh(const Mesh&) = delete;
+    //Mesh(const Mesh&) = delete;
     //! Don't permit assigment constructor
     Mesh& operator=(const Mesh&) = delete;
     //! Don't permit move constructor

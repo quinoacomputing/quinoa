@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Fri Sep 14 17:27:05 2012
+  \date      Wed 10 Oct 2012 01:42:29 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -25,14 +25,14 @@ Exception::handleException(Driver* driver)
 {
   switch (m_except) {
     // If exception is uncaught, warn and fall through FATAL
-    case ExceptType::UNCAUGHT:
+    case UNCAUGHT:
       cerr << "WARNING: Uncaught exception" << endl;
     // If exception is fatal, do cleanup and exit
-    case ExceptType::FATAL:
+    case FATAL:
       cerr << "FATAL ERROR: Attempting cleanup & graceful exit..." << endl;
       driver->finalize();
-      return ErrCode::FATAL;
+      return FATAL_ERROR;
     default:
-      return ErrCode::NONFATAL;
+      return NONFATAL;
   }
 }
