@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 01:39:48 PM EDT
+  \date      Thu 11 Oct 2012 09:12:06 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -17,6 +17,10 @@
 #include <iomanip>
 #include <utility>
 #include <set>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 
 using namespace std;
 

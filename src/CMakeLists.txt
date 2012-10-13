@@ -14,6 +14,11 @@ set(QUINOA_RELEASE "LA-CC-XX-XXX")
 # Set platform string (from build script)
 set(QUINOA_PLATFORM ${PLATFORM})
 
+IF(PLATFORM STREQUAL "linux-intel")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
+ENDIF(PLATFORM STREQUAL "linux-intel")
+
 # Set third party prefix (from build script)
 set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 
@@ -21,12 +26,12 @@ set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Find OpenMP and set its compiler flag
-#find_package(OpenMP REQUIRED)
-#if(OPENMP_FOUND)
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#endif()
+find_package(OpenMP)
+if(OPENMP_FOUND AND NOT PLATFORM MATCHES "clang")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 # Grab info about the compiler to stick into the binary
 execute_process(
@@ -103,12 +108,11 @@ include_directories("${PROJECT_BINARY_DIR}/Base")
 
 # Infrastructure
 add_subdirectory(Base)
-#add_subdirectory(Control)
 #add_subdirectory(FEM)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
-#add_subdirectory(ParseControl)
+add_subdirectory(Random)
 #add_subdirectory(Particles)
 #add_subdirectory(SDE)
 #add_subdirectory(WallTreatment)

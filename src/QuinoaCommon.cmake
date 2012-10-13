@@ -2,6 +2,9 @@
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
+# Prefer static libraries
+#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
 ### Include Dirs ###
 
 #find_path(EXODUS_INCLUDE_DIR exodusII.h
@@ -23,30 +26,35 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 
 ### Libraries ###
 
-#find_library(PTHREAD_LIBRARY
-#             NAMES pthread
-#             PATHS /usr/lib
-#)
-#
-#find_library(MATH_LIBRARY
-#             NAMES libm.a
-#             PATHS /usr/lib64
-#)
-#
-#find_library(MKL_INTEL_LIBRARY
-#             NAMES mkl_intel_ilp64
-#             PATHS $ENV{MKLROOT}/lib/intel64
-#)
-#
-#find_library(MKL_INTEL_THREAD_LIBRARY
-#             NAMES mkl_intel_thread
-#             PATHS $ENV{MKLROOT}/lib/intel64
-#)
-#
-#find_library(MKL_CORE_LIBRARY
-#             NAMES mkl_core
-#             PATHS $ENV{MKLROOT}/lib/intel64
-#)
+find_library(MKL_INTEL_LIBRARY
+             NAMES mkl_intel_ilp64
+             PATHS $ENV{MKLROOT}/lib/intel64
+)
+
+find_library(MKL_INTEL_THREAD_LIBRARY
+             NAMES mkl_intel_thread
+             PATHS $ENV{MKLROOT}/lib/intel64
+)
+
+find_library(INTEL_OMP_LIBRARY
+             NAMES iomp5
+             PATHS $ENV{INTEL}/lib/intel64
+)
+
+find_library(MKL_CORE_LIBRARY
+             NAMES mkl_core
+             PATHS $ENV{MKLROOT}/lib/intel64
+)
+
+find_library(PTHREAD_LIBRARY
+             NAMES pthread
+             PATHS /usr/lib
+)
+
+find_library(MATH_LIBRARY
+             NAMES m
+             PATHS /usr/lib64
+)
 
 #find_library(EXO_C_LIBRARY
 #             NAMES exoIIv2c
