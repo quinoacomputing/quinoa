@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 11 Oct 2012 10:43:27 PM EDT
+  \date      Sat 13 Oct 2012 12:31:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 //     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
 //     outMesh.write();
 
-    MKLRandom random(2,1);      // nthreads, seed
+    MKLRandom random(1,1);      // nthreads, seed
     random.addTable(UNIFORM,1000);
 
     //memStore.echoAllEntries(MemoryEntryField::NAME);

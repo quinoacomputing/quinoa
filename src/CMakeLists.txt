@@ -14,10 +14,14 @@ set(QUINOA_RELEASE "LA-CC-XX-XXX")
 # Set platform string (from build script)
 set(QUINOA_PLATFORM ${PLATFORM})
 
-IF(PLATFORM STREQUAL "linux-intel")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
-ENDIF(PLATFORM STREQUAL "linux-intel")
+# Set link strategy (from build script)
+set(LINK_STRATEGY ${LINK_STRATEGY}
+    CACHE STRING "DYNAMIC, STATIC (Set this at the command line)"
+    FORCE)
+
+# Add compiler options needed for MKL
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
 # Set third party prefix (from build script)
 set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
@@ -54,11 +58,11 @@ string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
 set (QUINOA_EXECUTABLE "quinoa")
 
 # Set DEBUG bool depending on CMAKE_BUILD_TYPE
-IF(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-  set (DEBUG OFF)
-ELSE(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-  set (DEBUG ON)
-ENDIF(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+  set (DEBUG off)
+else()
+  set (DEBUG on)
+endif()
 
 # Configure a header file to pass info to the code
 configure_file(
@@ -69,37 +73,37 @@ configure_file(
 # Add compiler flags
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-Wall HAS_WALL)
-IF(HAS_WALL)
+if(HAS_WALL)
   add_definitions("-Wall")
-ENDIF(HAS_WALL)
+endif()
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++0x HAS_CPP0x)
-IF(HAS_CPP0x)
+if(HAS_CPP0x)
   add_definitions("-std=c++0x")
   set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
-ENDIF(HAS_CPP0x)
+endif(HAS_CPP0x)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_SKIP_BUILD_RPATH false)
 
 # When building, don't use the install RPATH
 # (use later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 # Add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
 
 # the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
      "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-ENDIF("${isSystemDir}" STREQUAL "-1")
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif("${isSystemDir}" STREQUAL "-1")
 
 
 # Make sure that the config file is in the search path

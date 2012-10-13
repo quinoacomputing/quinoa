@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Fri 12 Oct 2012 10:03:30 PM MDT
+  \date      Sat 13 Oct 2012 12:30:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -41,21 +41,20 @@ MKLRandom::~MKLRandom()
 
   ST tabs = table.size();
   for (ST i=0; i<tabs; ++i) {
+    // Get pointer to array of thread-stream pointers
+    VSLStreamStatePtr* tab = table[i];
     // Delete all thread streams
-    //for (Int t=0; t<m_nthreads; ++t) {
-    Int t=0;
+    for (Int t=0; t<m_nthreads; ++t) {
       cout << "free: " << i << ", " << t << endl;
-      //if (vslDeleteStream(&table[0][0]) != VSL_STATUS_OK) {
-      //  throw RandomException(FATAL, RND_UNIMPLEMENTED);
-      //}
-    //}
-
+      if (vslDeleteStream(&tab[t]) != VSL_STATUS_OK) {
+        throw RandomException(FATAL, RND_UNIMPLEMENTED);
+      }
+    }
     // Delete all thread-stream pointers
-    //table[i].clear();
+    delete [] tab;
   }
-
   // Delete tables
-  //table.clear();
+  table.clear();
 }
 
 void
@@ -67,30 +66,31 @@ MKLRandom::addTable(Distribution dist, size_t number)
 {
   // Allocate memory for array of streams of random numbers for several threads
   try {
-    //vector<VSLStreamStatePtr> tab(m_nthreads,nullptr); 
-    //table.push_back(tab);
+    table.push_back(new VSLStreamStatePtr [m_nthreads]);
   } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
 
-  double r[10];
-  VSLStreamStatePtr stream;
-  CheckVslError( vslNewStream(&stream, VSL_BRNG_MCG59, m_seed) );
+  //double r[10];
+  //VSLStreamStatePtr stream;
+  //CheckVslError( vslNewStream(&stream, VSL_BRNG_MCG59, m_seed) );
   //CheckVslError( vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, 10,
   //                             r, 0.0, 1.0) );
-  CheckVslError( vslDeleteStream(&stream) );
+  //CheckVslError( vslDeleteStream(&stream) );
 
+  // Get pointer to newly created array of stream pointers
+  VSLStreamStatePtr* newtab = table.back();
 
   // Initialize first thread-stream for block-splitting
-  //if (vslNewStream(&table[0][0], VSL_BRNG_MCG59, m_seed) != VSL_STATUS_OK)
-  //  throw RandomException(FATAL, RND_UNIMPLEMENTED);
+  if (vslNewStream(&newtab[0], VSL_BRNG_MCG59, m_seed) != VSL_STATUS_OK)
+    throw RandomException(FATAL, RND_UNIMPLEMENTED);
   
-//   // Initialize the rest of the thread-streams for block-splitting
-//   size_t chunk = number / m_nthreads;
-//   for (Int t=0; t<m_nthreads-1; t++) {
-//     if (vslCopyStream(&newtab[t+1], newtab[t]) != VSL_STATUS_OK)
-//       throw RandomException(FATAL, RND_UNIMPLEMENTED);
-//     if (vslSkipAheadStream(newtab[t+1], chunk) != VSL_STATUS_OK)
-//       throw RandomException(FATAL, RND_UNIMPLEMENTED);
-//   }
+  // Initialize the rest of the thread-streams for block-splitting
+  size_t chunk = number / m_nthreads;
+  for (Int t=0; t<m_nthreads-1; t++) {
+    if (vslCopyStream(&newtab[t+1], newtab[t]) != VSL_STATUS_OK)
+      throw RandomException(FATAL, RND_UNIMPLEMENTED);
+    if (vslSkipAheadStream(newtab[t+1], chunk) != VSL_STATUS_OK)
+      throw RandomException(FATAL, RND_UNIMPLEMENTED);
+  }
 }
 
 

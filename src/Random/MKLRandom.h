@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.h
   \author    J. Bakosi
-  \date      Thu 11 Oct 2012 10:48:59 PM EDT
+  \date      Sat 13 Oct 2012 12:17:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -53,7 +53,7 @@ class MKLRandom : Random {
 
     //! Stream tables to generate fixed numbers of random numbers with fixed
     //! properties using Random::m_nthreads
-    vector<vector<VSLStreamStatePtr>> table;
+    vector<VSLStreamStatePtr*> table;
 };
 
 } // namespace Quinoa
