@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaTypes.h
   \author    J. Bakosi
-  \date      Sat 01 Sep 2012 10:09:17 AM MDT
+  \date      Thu 11 Oct 2012 08:27:55 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Code-global type definitions
   \details   Code-global type definitions
@@ -15,6 +15,7 @@ namespace Quinoa {
 
 typedef bool Bool;
 typedef int Int;
+typedef unsigned int uInt;
 typedef double Real;
 
 } // namespace Quinoa

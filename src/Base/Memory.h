@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Fri 21 Sep 2012 12:57:59 PM MDT
+  \date      Thu 11 Oct 2012 06:18:45 PM EDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -139,9 +139,9 @@ class Memory {
     void echoByPlot();     //!< Echo entries sorted by Plot
     void echoByRestart();  //!< Echo entries sorted by Restart
 
-    Int m_nthreads;      //!< Local copy of the number of threads
-    MemorySet m_entry;   //!< Memory entries
-    MemoryNames m_name;  //!< Memory entry names mapped to MemorySet keys
+    Int m_nthreads;        //!< Local copy of the number of threads
+    MemorySet m_entry;     //!< Memory entries
+    MemoryNames m_name;    //!< Memory entry names mapped to MemorySet keys
 };
 
 } // namespace Quinoa

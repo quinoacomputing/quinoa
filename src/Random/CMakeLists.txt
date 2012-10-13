@@ -1,28 +1,21 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Base CXX)
+project(Random CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Random
 )
 
-add_library(Base
-            Driver.C
-            Exception.C
-            IOException.C
-            MemoryException.C
-            MeshException.C
-            RandomException.C
-            MemoryEntry.C
-            Memory.C
-            #Sort.C
-            #TimeStepping.C
+add_library(Random
+            Random.C
+            MKLRandom.C
 )
 
-INSTALL(TARGETS Base
+INSTALL(TARGETS Random
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development
