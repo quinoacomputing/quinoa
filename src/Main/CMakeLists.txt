@@ -34,8 +34,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
 #                      Particles
 #                      SDE
 #                      WallTreatment
-                      ${MKL_INTEL_LIBRARY}
-                      ${MKL_INTEL_THREAD_LIBRARY}
+                      ${MKL_LIBRARY}
+                      ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_LIBRARY}
                       ${PTHREAD_LIBRARY}

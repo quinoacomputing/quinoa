@@ -3,7 +3,9 @@
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Prefer static libraries
-#set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+if(LINK_STRATEGY STREQUAL "STATIC")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+endif()
 
 ### Include Dirs ###
 
@@ -26,20 +28,23 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 
 ### Libraries ###
 
-find_library(MKL_INTEL_LIBRARY
+find_library(MKL_LIBRARY
              NAMES mkl_intel_ilp64
              PATHS $ENV{MKLROOT}/lib/intel64
 )
 
-find_library(MKL_INTEL_THREAD_LIBRARY
+find_library(MKL_THREAD_LIBRARY
              NAMES mkl_intel_thread
              PATHS $ENV{MKLROOT}/lib/intel64
 )
 
-find_library(INTEL_OMP_LIBRARY
-             NAMES iomp5
-             PATHS $ENV{INTEL}/lib/intel64
-)
+# Linking MKL/OpenMP with clang needs explicit linking to openmp
+if(PLATFORM MATCHES "clang")
+  find_library(INTEL_OMP_LIBRARY
+               NAMES iomp5
+               PATHS $ENV{INTEL}/lib/intel64
+  )
+endif()
 
 find_library(MKL_CORE_LIBRARY
              NAMES mkl_core
