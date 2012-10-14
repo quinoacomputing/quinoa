@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:02:48 PM MDT
+  \date      Sat 13 Oct 2012 10:59:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -24,9 +24,9 @@ GmshTxtMeshReader::GmshTxtMeshReader(string filename,
 //******************************************************************************
 {
   // Gmsh element types and their number of nodes,
-  // all Gmsh-supported listed, Quinoa-supported at this time uncommented
-  GmshElemNodes.insert(make_pair<Int,Int>(1, 2));  // 2-node line
-  GmshElemNodes.insert(make_pair<Int,Int>(2, 3));  // 3-node triangle
+  // all Gmsh-supported listed, Quinoa-supported at this time commented
+  m_GmshElemNodes.insert(make_pair<Int,Int>(1, 2));  // 2-node line
+  m_GmshElemNodes.insert(make_pair<Int,Int>(2, 3));  // 3-node triangle
   //           { 3,  4},  //! 4-node quadrangle
   //           { 4,  4},  //! 4-node tetrahedron
   //           { 5,  8},  //! 8-node hexahedron
@@ -227,8 +227,8 @@ GmshTxtMeshReader::countElements()
     m_inMesh >> e >> type >> ntags;
 
     // Find element type, throw exception if not supported
-    auto it = GmshElemNodes.find(type);
-    if (it==GmshElemNodes.end())
+    auto it = m_GmshElemNodes.find(type);
+    if (it==m_GmshElemNodes.end())
       throw MeshException(FATAL, BAD_ELEMENT, m_filename);
 
     // Read tags and throw all away
@@ -281,8 +281,8 @@ GmshTxtMeshReader::readElements()
     m_inMesh >> id >> type >> ntags;
 
     // Find element type, throw exception if not supported
-    auto it = GmshElemNodes.find(type);
-    if (it==GmshElemNodes.end())
+    auto it = m_GmshElemNodes.find(type);
+    if (it==m_GmshElemNodes.end())
       throw MeshException(FATAL, BAD_ELEMENT, m_filename);
 
     // Read and add element tags

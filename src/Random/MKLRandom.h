@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 04:37:13 PM MDT
+  \date      Sat 13 Oct 2012 10:43:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -36,7 +36,7 @@ class MKLRandom : Random {
     void addTable(Distribution dist, size_t number);
 
     //! Constructor: Setup random number generator streams
-    MKLRandom(const Int nthreads, const uInt seed);
+    MKLRandom(const Int nthreads, const uInt seed) : Random(nthreads, seed) {}
 
     //! Destructor: Destroy random number generator streams
     ~MKLRandom();
@@ -50,6 +50,11 @@ class MKLRandom : Random {
     MKLRandom(MKLRandom&&) = delete;
     //! Don't permit move assigment
     MKLRandom& operator=(MKLRandom&&) = delete;
+
+    //! Call MKL's vslNewStream() and handle error
+    void newStream(VSLStreamStatePtr* stream,
+                   const int& brng,
+                   const unsigned int& seed);
 
     //! Stream tables to generate fixed numbers of random numbers with fixed
     //! properties using Random::m_nthreads
