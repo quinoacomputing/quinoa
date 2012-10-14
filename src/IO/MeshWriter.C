@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:13:47 PM MDT
+  \date      Sat 13 Oct 2012 08:10:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
@@ -23,7 +23,7 @@ MeshWriter::MeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
 {
   m_outMesh.open(m_filename, ofstream::out);
   if (!m_outMesh.good())
-    throw IOException(ExceptType::FATAL, IOExceptType::FAILED_OPEN, m_filename);
+    throw IOException(FATAL, FAILED_OPEN, m_filename);
 }
 
 MeshWriter::~MeshWriter()
@@ -33,8 +33,8 @@ MeshWriter::~MeshWriter()
 //******************************************************************************
 {
   m_outMesh.close();
+  // No exception leaves a destructor: if the above close() fails, we only emit
+  // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outMesh.fail())
-    throw IOException(ExceptType::WARNING,
-                      IOExceptType::FAILED_CLOSE,
-                      m_filename);
+    cerr << "WARNING: Failed to close file: " << m_filename << endl;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Sat 15 Sep 2012 02:14:38 PM MDT
+  \date      Sat 13 Oct 2012 08:11:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -23,7 +23,7 @@ PlotWriter::PlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
 {
   m_outPlot.open(m_filename, ofstream::out);
   if (!m_outPlot.good())
-    throw IOException(ExceptType::FATAL, IOExceptType::FAILED_OPEN, m_filename);
+    throw IOException(FATAL, FAILED_OPEN, m_filename);
 }
 
 PlotWriter::~PlotWriter()
@@ -33,8 +33,8 @@ PlotWriter::~PlotWriter()
 //******************************************************************************
 {
   m_outPlot.close();
+  // No exception leaves a destructor: if the above close() fails, we only emit
+  // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outPlot.fail())
-    throw IOException(ExceptType::WARNING,
-                      IOExceptType::FAILED_CLOSE,
-                      m_filename);
+    cerr << "WARNING: Failed to close file: " << m_filename << endl;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 12:30:33 PM MDT
+  \date      Sat 13 Oct 2012 08:14:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -16,7 +16,7 @@
 
 #include <MKLRandom.h>
 #include <MemoryException.h>
-#include <RandomException.h>
+#include <MKLException.h>
 
 using namespace Quinoa;
 
@@ -45,10 +45,8 @@ MKLRandom::~MKLRandom()
     VSLStreamStatePtr* tab = table[i];
     // Delete all thread streams
     for (Int t=0; t<m_nthreads; ++t) {
-      cout << "free: " << i << ", " << t << endl;
-      if (vslDeleteStream(&tab[t]) != VSL_STATUS_OK) {
-        throw RandomException(FATAL, RND_UNIMPLEMENTED);
-      }
+      if (tab[t] != nullptr && vslDeleteStream(&tab[t]) != VSL_STATUS_OK)
+        cerr << "WARNING: Failed to delete MKL VSL stream" << endl;
     }
     // Delete all thread-stream pointers
     delete [] tab;
@@ -66,7 +64,7 @@ MKLRandom::addTable(Distribution dist, size_t number)
 {
   // Allocate memory for array of streams of random numbers for several threads
   try {
-    table.push_back(new VSLStreamStatePtr [m_nthreads]);
+    table.push_back(new VSLStreamStatePtr [m_nthreads]()); // initialize to zero
   } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
 
   //double r[10];
@@ -76,20 +74,23 @@ MKLRandom::addTable(Distribution dist, size_t number)
   //                             r, 0.0, 1.0) );
   //CheckVslError( vslDeleteStream(&stream) );
 
+  throw MKLException(WARNING, MKL_UNIMPLEMENTED);
+  cout << sizeof(MKLExceptType) << endl;
+
   // Get pointer to newly created array of stream pointers
   VSLStreamStatePtr* newtab = table.back();
 
   // Initialize first thread-stream for block-splitting
   if (vslNewStream(&newtab[0], VSL_BRNG_MCG59, m_seed) != VSL_STATUS_OK)
-    throw RandomException(FATAL, RND_UNIMPLEMENTED);
+    throw MKLException(FATAL, MKL_UNIMPLEMENTED);
   
   // Initialize the rest of the thread-streams for block-splitting
   size_t chunk = number / m_nthreads;
   for (Int t=0; t<m_nthreads-1; t++) {
     if (vslCopyStream(&newtab[t+1], newtab[t]) != VSL_STATUS_OK)
-      throw RandomException(FATAL, RND_UNIMPLEMENTED);
+      throw MKLException(FATAL, MKL_UNIMPLEMENTED);
     if (vslSkipAheadStream(newtab[t+1], chunk) != VSL_STATUS_OK)
-      throw RandomException(FATAL, RND_UNIMPLEMENTED);
+      throw MKLException(FATAL, MKL_UNIMPLEMENTED);
   }
 }
 

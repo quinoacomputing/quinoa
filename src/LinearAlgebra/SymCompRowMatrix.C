@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 08:40:51 AM MDT
+  \date      Sat 13 Oct 2012 08:16:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -135,9 +135,18 @@ SymCompRowMatrix::~SymCompRowMatrix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_memory->freeEntry(m_ia);
-  m_memory->freeEntry(m_ja);
-  m_memory->freeEntry(m_a);
+  try {
+    m_memory->freeEntry(m_ia);
+    m_memory->freeEntry(m_ja);
+    m_memory->freeEntry(m_a);
+    // No exception leaves a destructor: if any of the above calls throws and
+    // exception, e.g. m_ia points to an unallocated entry, a MemoryException
+    // is thrown, caught inside here and we only emit a warning. This ensures
+    // that terminate is not called and that we finish a potentially already
+    // propagating exception.
+  } catch (...) {
+    cerr << "WARNING: Exception in SymCompRowMatrix::~SymCompRowMatrix" << endl;
+  }
 }
 
 void

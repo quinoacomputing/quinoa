@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sun 07 Oct 2012 11:35:47 PM EDT
+  \date      Sat 13 Oct 2012 08:16:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -16,6 +16,19 @@
 
 using namespace Quinoa;
 
+UnsMesh::UnsMesh(Memory* memory) : m_memory(memory)
+//******************************************************************************
+//  Constructor: zero memory entry pointers held
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Free memory entries held
+  m_COORD = nullptr;
+  m_NODEID = nullptr;
+  m_LINEID = nullptr;
+  m_TRIANGLEID = nullptr;
+}
+
 UnsMesh::~UnsMesh()
 //******************************************************************************
 //  Destructor: free memory mesh entries held and containers
@@ -23,10 +36,17 @@ UnsMesh::~UnsMesh()
 //******************************************************************************
 {
   // Free memory entries held
-  m_memory->freeEntry(m_COORD);
-  m_memory->freeEntry(m_NODEID);
-  m_memory->freeEntry(m_LINEID);
-  m_memory->freeEntry(m_TRIANGLEID);
+  try {
+    m_memory->freeEntry(m_COORD);
+    m_memory->freeEntry(m_NODEID);
+    m_memory->freeEntry(m_LINEID);
+    m_memory->freeEntry(m_TRIANGLEID);
+    // No exception leaves a destructor: if any of the above calls throws and
+    // exception, e.g. m_COORD points to an unallocated entry, a MemoryException
+    // is thrown, caught inside here and we only emit a warning. This ensures
+    // that terminate is not called and that we finish a potentially already
+    // propagating exception.
+  } catch (...) { cerr << "WARNING: Exception in UnsMesh::~UnsMesh" << endl; }
 
   // Free containers held
   m_linpoel.clear();
@@ -83,7 +103,7 @@ UnsMesh::reserveElem(const Int nlines, const Int ntriangles)
     m_lintag.reserve(nlines);
     m_tritag.reserve(ntriangles);
   } catch (bad_alloc& ba) {
-    throw MemoryException(ExceptType::FATAL, MemExceptType::BAD_ALLOC);
+    throw MemoryException(FATAL, BAD_ALLOC);
   }
 }
 

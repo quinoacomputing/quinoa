@@ -14,6 +14,7 @@ add_library(Mesh
             Mesh.C
             StrMesh.C
             UnsMesh.C
+            MeshException.C
             #Overlap.C
 )
 

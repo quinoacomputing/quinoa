@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/MeshException.h
+  \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 01:41:37 PM EDT
+  \date      Sat 13 Oct 2012 07:23:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
