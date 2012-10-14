@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:17:11 PM MDT
+  \date      Sun 14 Oct 2012 10:52:13 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -38,11 +38,12 @@ int main(int argc, char* argv[]) {
     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
     outMesh.write();
 
-    MKLRandom random(10,1);      // nthreads, seed
-    random.addTable(UNIFORM,1000);
+    MKLRandom random(10,1,&memStore);      // nthreads, seed
+    random.addTable(UNIFORM,1000,"Gauss");
+    random.addTable(UNIFORM,10000,"Uniform");
 
-    //memStore.echoAllEntries(MemoryEntryField::NAME);
-    //cout << "Allocated memory: " << memStore.getBytes() << endl;
+    memStore.echoAllEntries(MemoryEntryField::NAME);
+    cout << "Allocated memory: " << memStore.getBytes() << endl;
 
   } // catch different exception types
     catch (MemoryException& e) { error = e.handleException(&driver); }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:16:42 PM MDT
+  \date      Sun 14 Oct 2012 10:31:09 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -63,28 +63,16 @@ UnsMesh::alloc(const Int nnodes, const Int nlines, const Int ntriangles)
 //******************************************************************************
 {
   // Allocate new memory entry to store the coordinates
-  m_COORD = m_memory->newEntry(nnodes,
-                               ValType::REAL,
-                               VarType::VECTOR,
-                               COORDS_NAME);
+  m_COORD = m_memory->newEntry(nnodes, REAL, VECTOR, COORDS_NAME);
 
   // Allocate new memory entry to store the node Ids
-  m_NODEID = m_memory->newEntry(nnodes,
-                                ValType::INT,
-                                VarType::SCALAR,
-                                NODES_NAME);
+  m_NODEID = m_memory->newEntry(nnodes, INT, SCALAR, NODES_NAME);
 
   // Allocate new memory entry to store the line element Ids
-  m_LINEID = m_memory->newEntry(nlines,
-                                ValType::INT,
-                                VarType::SCALAR,
-                                LINES_NAME);
+  m_LINEID = m_memory->newEntry(nlines, INT, SCALAR, LINES_NAME);
 
   // Allocate new memory entry to store the triangle element Ids
-  m_TRIANGLEID = m_memory->newEntry(ntriangles,
-                                    ValType::INT,
-                                    VarType::SCALAR,
-                                    TRIANGLES_NAME);
+  m_TRIANGLEID = m_memory->newEntry(ntriangles, INT, SCALAR, TRIANGLES_NAME);
 
   // Reserve capacity to store element connectivities and tags
   reserveElem(nlines, ntriangles);
