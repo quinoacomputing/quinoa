@@ -22,7 +22,7 @@
 #include <string.h>
 #include <cmath>
 #ifdef _OPENMP
-#include "omp.h"
+#include <omp.h>
 #endif
 #include "mkl.h"
 #include "Const.h"
