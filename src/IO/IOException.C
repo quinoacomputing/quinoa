@@ -1,31 +1,28 @@
 //******************************************************************************
 /*!
-  \file      src/Base/RandomException.C
+  \file      src/IO/IOException.C
   \author    J. Bakosi
-  \date      Thu 11 Oct 2012 08:47:09 PM EDT
+  \date      Sat 13 Oct 2012 05:26:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     RandomException class definition
-  \details   RandomException class definition
+  \brief     IOException class definition
+  \details   IOException class definition
 */
 //******************************************************************************
 
-#include <iostream>
-
-#include <RandomException.h>
+#include <IOException.h>
 
 using namespace Quinoa;
 
 ErrCode
-RandomException::handleException(Driver* driver)
+IOException::handleException(Driver* driver)
 //******************************************************************************
-//  Handle RandomException
+//  Handle IOException
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Output message
-  cerr << "Random number generator exception: "
-       << RndMsg[static_cast<Int>(m_except)]
-       << endl;
+  // Start error message
+  message = IOMsg[static_cast<Int>(m_except)];
+  if (m_filename.size()) message += m_filename;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

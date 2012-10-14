@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 02:00:42 PM EDT
+  \date      Sat 13 Oct 2012 08:09:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -33,6 +33,9 @@ MeshReader::~MeshReader()
 //******************************************************************************
 {
   m_inMesh.close();
+
+  // No exception leaves a destructor: if the above close() fails, we only emit
+  // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_inMesh.fail())
-    throw IOException(WARNING, FAILED_CLOSE, m_filename);
+    cerr << "WARNING: Failed to close file: " << m_filename << endl;
 }

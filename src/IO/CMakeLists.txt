@@ -12,6 +12,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
 add_library(IO
+            IOException.C
             MeshReader.C
             MeshWriter.C
             PlotWriter.C

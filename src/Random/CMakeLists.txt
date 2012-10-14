@@ -12,6 +12,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_library(Random
             Random.C
+            RandomException.C
+            MKLException.C
             MKLRandom.C
 )
 

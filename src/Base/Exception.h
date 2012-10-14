@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 04:11:31 PM EDT
+  \date      Sat 13 Oct 2012 07:48:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Exception_h
 #define Exception_h
+
+#include <iostream>
 
 #include <QuinoaTypes.h>
 
@@ -20,8 +22,8 @@ namespace Quinoa {
 enum ExceptType { CUMULATIVE=0,  //!< Only several will produce a warning
                   WARNING,       //!< Warning: output message
                   ERROR,         //!< Error: output but will not interrupt
-                  UNCAUGHT,      //!< Uncaught: will interrupt
                   FATAL,         //!< Fatal error: will interrupt
+                  UNCAUGHT,      //!< Uncaught: will interrupt
                   NUM_EXCEPT
 };
 
@@ -49,12 +51,15 @@ class Exception {
 
   protected:
     //! Move constructor, necessary for throws, default compiler generated,
-    //! can only be thrown from within derived Exception classes
+    //! Can only be thrown from within derived Exception classes
     Exception(Exception&&) = default;
 
     //! Don't permit copy constructor
     // ICC: should be deleted and private
     Exception(const Exception&);
+
+    //! Error message (constructed along the inheritance tree)
+    string message;
 
   private:
     //! Don't permit copy assignment

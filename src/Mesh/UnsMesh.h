@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 01:57:16 PM EDT
+  \date      Sat 13 Oct 2012 06:53:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -29,8 +29,8 @@ const string TRIANGLES_NAME = "triangles";
 class UnsMesh : Mesh {
 
   public:
-    //! Constructor
-    UnsMesh(Memory* memory) : m_memory(memory) {}
+    //! Constructor: zero memory entry pointers held
+    UnsMesh(Memory* memory);
 
     //! Destructor: free memory entries held
     ~UnsMesh();

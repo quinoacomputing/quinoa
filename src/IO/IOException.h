@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/IOException.h
+  \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 02:01:18 PM EDT
+  \date      Sat 13 Oct 2012 06:42:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -30,7 +30,7 @@ enum IOExceptType { FAILED_OPEN=0,  //!< failed to open file
 //! IOException error messages
 const string IOMsg[NUM_IO_EXCEPT] = {
   "Failed to open file: ",
-  "Failed to close file: "
+  "Failed to close file: ",
   "Failed to write to file: "
 };
 
