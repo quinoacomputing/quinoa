@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:52:13 AM MDT
+  \date      Sun 14 Oct 2012 09:00:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -10,6 +10,10 @@
 //******************************************************************************
 
 #include <iostream>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <QuinoaTypes.h>
 #include <Memory.h>
@@ -26,7 +30,15 @@ using namespace Quinoa;
 
 int main(int argc, char* argv[]) {
 
-  Memory memStore(1);   // arg: nthreads
+  // query number of threads available
+  #ifdef _OPENMP
+  Int nthreads = 1;//omp_get_max_threads();
+  #else
+  Int nthreads = 1;
+  #endif
+  cout << "* Using number of OpenMP threads: " << nthreads << endl;
+
+  Memory memStore(nthreads);   // arg: nthreads
   Driver driver(&memStore);
 
   ErrCode error = NO_ERROR;
@@ -38,9 +50,10 @@ int main(int argc, char* argv[]) {
     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
     outMesh.write();
 
-    MKLRandom random(10,1,&memStore);      // nthreads, seed
-    random.addTable(UNIFORM,1000,"Gauss");
-    random.addTable(UNIFORM,10000,"Uniform");
+    MKLRandom random(nthreads,1,&memStore);      // nthreads, seed
+    random.addTable(UNIFORM,1000000,"Gauss");
+    random.addTable(UNIFORM,1000000,"Uniform");
+    random.regenTables();
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:54:58 AM MDT
+  \date      Sun 14 Oct 2012 09:00:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -73,7 +73,7 @@ MKLRandom::newStream(VSLStreamStatePtr* stream,
 
 void
 MKLRandom::copyStream(VSLStreamStatePtr* newstream,
-                      const VSLStreamStatePtr srcstream)
+                      const VSLStreamStatePtr& srcstream)
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[out]  newstream  Copied random stream descriptor
@@ -86,8 +86,8 @@ MKLRandom::copyStream(VSLStreamStatePtr* newstream,
 }
 
 void
-MKLRandom::skipAheadStream(VSLStreamStatePtr stream,
-                           const long long int nskip)
+MKLRandom::skipAheadStream(VSLStreamStatePtr& stream,
+                           const long long int& nskip)
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[in]  stream  Pointer to the stream state structure to which the
@@ -97,6 +97,29 @@ MKLRandom::skipAheadStream(VSLStreamStatePtr stream,
 //******************************************************************************
 {
   Int vslerr = vslSkipAheadStream(stream, nskip);
+  if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
+}
+
+void
+MKLRandom::uniform(const Int& method, 
+                   VSLStreamStatePtr& stream,
+                   const Int& n,
+                   Real* r,
+                   const Real& a,
+                   const Real& b)
+//******************************************************************************
+//  Call MKL's vdRngUniform() and handle error
+//! \param[in]  method   Generation method
+//! \param[in]  stream   Pointer to the stream state structure
+//! \param[in]  n        Number of random values to be generated
+//! \param[out] rnd      Vector of n random numbers uniformly distributed over
+//                       the interval [a,b]
+//! \param[in]  a        Left bound
+//! \param[in]  b        Right bound
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int vslerr = vdRngUniform(method, stream, n, r, a, b);
   if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
 }
 
@@ -121,13 +144,6 @@ MKLRandom::addTable(const Distribution dist,
                  m_memory->newEntry(number, REAL, SCALAR, name)));
   } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
 
-  //double r[10];
-  //VSLStreamStatePtr stream;
-  //CheckVslError( vslNewStream(&stream, VSL_BRNG_MCG59, m_seed) );
-  //CheckVslError( vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, 10,
-  //                             r, 0.0, 1.0) );
-  //CheckVslError( vslDeleteStream(&stream) );
-
   // Get pointer to newly created RndStreams
   const RndStreams* s = &m_table.back();
   // Get its chunk size
@@ -144,6 +160,35 @@ MKLRandom::addTable(const Distribution dist,
   }
 }
 
+void
+MKLRandom::regenTables()
+//******************************************************************************
+//  Regenerate random numbers in tables
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  typedef vector<RndStreams>::size_type ST;
+
+  ST tabs = m_table.size();
+  for (ST i=0; i<tabs; ++i) {
+    // Unpack
+    const RndStreams* s = &m_table[i];
+    const long long int chunk = s->chunk;
+    const long long int remainder = s->remainder;
+    VSLStreamStatePtr* stream = s->stream;
+    Real* rnd = m_memory->getPtr<Real>(s->rnd);
+    // Regenerate
+    #ifdef _OPENMP
+    //#pragma omp parallel for
+    #endif
+    for (Int t=0; t<m_nthreads; ++t) {
+      uniform(VSL_METHOD_DUNIFORM_STD, stream[t], chunk, rnd + t*chunk,
+              0.0, 1.0);
+    }
+    uniform(VSL_METHOD_DUNIFORM_STD, stream[0], remainder,
+            rnd + m_nthreads*chunk, 0.0, 1.0);
+  }
+}
 
 // void regenrng_tables(int nthreads,
 //                      #ifndef WALLFUNCTIONS

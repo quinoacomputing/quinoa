@@ -33,7 +33,7 @@
 #include <cmath>
 #include "mkl.h"
 #ifdef _OPENMP
-#include "omp.h"
+#include <omp.h>
 #endif
 #include "Const.h"
 #include "Macros.h"

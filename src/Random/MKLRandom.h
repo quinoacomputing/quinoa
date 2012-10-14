@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.h
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:49:07 AM MDT
+  \date      Sun 14 Oct 2012 11:32:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -48,17 +48,20 @@ struct RndStreams {
 class MKLRandom : Random {
 
   public:
-    //! Add random table
-    void addTable(const Distribution dist,
-                  const long long int number,
-                  const string name);
-
     //! Constructor: Setup random number generator streams
     MKLRandom(const long long int nthreads, const uInt seed, Memory* memory) :
       Random(nthreads, seed), m_memory(memory) {}
 
     //! Destructor: Destroy random number generator streams
     ~MKLRandom();
+
+    //! Add random table
+    void addTable(const Distribution dist,
+                  const long long int number,
+                  const string name);
+
+    //! Regenerate random numbers in all tables
+    void regenTables();
 
   private:
     //! Don't permit copy constructor
@@ -77,11 +80,19 @@ class MKLRandom : Random {
 
     //! Call MKL's vslCopyStream() and handle error
     void copyStream(VSLStreamStatePtr* newstream,
-                    const VSLStreamStatePtr srcstream);
+                    const VSLStreamStatePtr& srcstream);
 
     //! Call MKL's vslSkipaheadStream() and handle error
-    void skipAheadStream(VSLStreamStatePtr stream,
-                         const long long int nskip);
+    void skipAheadStream(VSLStreamStatePtr& stream,
+                         const long long int& nskip);
+
+    //! Call MKL's vdRngUniform() and handle error
+    void uniform(const Int& method, 
+                 VSLStreamStatePtr& stream,
+                 const Int& n,
+                 Real* r,
+                 const Real& a,
+                 const Real& b);
 
     //! Memory object pointer
     Memory* m_memory;
