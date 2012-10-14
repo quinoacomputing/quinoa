@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:14:24 PM MDT
+  \date      Sat 13 Oct 2012 08:37:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -73,9 +73,6 @@ MKLRandom::addTable(Distribution dist, size_t number)
   //CheckVslError( vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, 10,
   //                             r, 0.0, 1.0) );
   //CheckVslError( vslDeleteStream(&stream) );
-
-  throw MKLException(WARNING, MKL_UNIMPLEMENTED);
-  cout << sizeof(MKLExceptType) << endl;
 
   // Get pointer to newly created array of stream pointers
   VSLStreamStatePtr* newtab = table.back();
