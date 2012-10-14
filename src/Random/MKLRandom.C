@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 06:39:36 AM MDT
+  \date      Sun 14 Oct 2012 07:21:56 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -27,19 +27,19 @@ MKLRandom::~MKLRandom()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  typedef vector<vector<VSLStreamStatePtr>>::size_type ST;
+  typedef vector<RndStreams>::size_type ST;
 
   ST tabs = table.size();
   for (ST i=0; i<tabs; ++i) {
     // Get pointer to array of thread-stream pointers
-    VSLStreamStatePtr* tab = table[i];
+    VSLStreamStatePtr* stream = table[i].stream;
     // Delete all thread streams
     for (Int t=0; t<m_nthreads; ++t) {
-      if (tab[t] != nullptr && vslDeleteStream(&tab[t]) != VSL_STATUS_OK)
+      if (stream[t] != nullptr && vslDeleteStream(&stream[t]) != VSL_STATUS_OK)
         cerr << "WARNING: Failed to delete MKL VSL stream" << endl;
     }
     // Delete all thread-stream pointers
-    delete [] tab;
+    delete [] stream;
   }
   // Delete tables
   table.clear();
@@ -99,7 +99,10 @@ MKLRandom::addTable(Distribution dist, const long long int number)
 {
   // Allocate memory for array of streams of random numbers for several threads
   try {
-    table.push_back(new VSLStreamStatePtr [m_nthreads]()); // initialize to zero
+    table.push_back(
+      RndStreams(number / m_nthreads,
+                 number % m_nthreads,
+                 new VSLStreamStatePtr [m_nthreads]())); // initialize to zero
   } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
 
   //double r[10];
@@ -109,17 +112,19 @@ MKLRandom::addTable(Distribution dist, const long long int number)
   //                             r, 0.0, 1.0) );
   //CheckVslError( vslDeleteStream(&stream) );
 
-  // Get pointer to newly created array of stream pointers
-  VSLStreamStatePtr* newtab = table.back();
+  // Get pointer to newly created RndStreams
+  const RndStreams* s = &table.back();
+  // Get its chunk size
+  const long long int chunk = s->chunk;
+  // Get pointer to newly created array of thread-stream pointers
+  VSLStreamStatePtr* stream = s->stream;
 
-  // Initialize first thread-stream for block-splitting
-  newStream(&newtab[0], VSL_BRNG_MCG59, m_seed);
-
+  // Initialize first thread-stream for given distribution using seed
+  newStream(&stream[0], VSL_BRNG_MCG59, m_seed);
   // Initialize the rest of the thread-streams for block-splitting
-  size_t chunk = number / m_nthreads;
   for (Int t=0; t<m_nthreads-1; t++) {
-    copyStream(&newtab[t+1], newtab[t]);
-    skipAheadStream(newtab[t+1], chunk);
+    copyStream(&stream[t+1], stream[t]);
+    skipAheadStream(stream[t+1], chunk);
   }
 }
 
