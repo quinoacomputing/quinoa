@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 09:13:18 PM MDT
+  \date      Sun 14 Oct 2012 10:24:03 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -72,7 +72,7 @@ class GmshTxtMeshReader : MeshReader {
     //! Add new element tags
     void addElemTags(Int type, vector<Int>& tags);
 
-    map<Int, Int> m_GmshElemNodes; //!< Element types and their number of nodes
+    map<Int,Int> m_GmshElemNodes; //!< Element types and their number of nodes
 
     Int m_nnodes;                  //!< Number of nodes
     Int m_nLins;                   //!< Number of line elements

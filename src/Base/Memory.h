@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 06:36:53 PM MDT
+  \date      Sun 14 Oct 2012 10:44:58 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -64,7 +64,7 @@ class Memory {
     void freeAllEntries() noexcept;
 
     //! Echo all (optionally sorted) memory entries
-    void echoAllEntries(MemoryEntryField crit = MemoryEntryField::UNSPECIFIED);
+    void echoAllEntries(MemoryEntryField crit = UNSPECIFIED);
 
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* id);

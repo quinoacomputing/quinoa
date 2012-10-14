@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 06:43:56 PM MDT
+  \date      Sun 14 Oct 2012 10:47:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -150,22 +150,18 @@ Memory::freeEntry(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is already deallocated
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  if (id == nullptr) throw MemoryException(WARNING, UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
 
   // Find memory entry
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  if (it == m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
 
   // Remove variable name mapped to MemorySet key
   MemoryNames::size_type erased = m_name.erase((*it)->m_name);
-  if (!erased)
-    throw MemoryException(WARNING, NOT_ERASED);
+  if (!erased) throw MemoryException(WARNING, NOT_ERASED);
 
   // Deallocate memory entry pointed to by m_entry[id]
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -174,8 +170,7 @@ Memory::freeEntry(MemoryEntry* id)
 
   // Remove MemoryEntry from MemorySet
   MemorySet::size_type removed = m_entry.erase(id);
-  if (!removed)
-    throw MemoryException(WARNING, NOT_ERASED);
+  if (!removed) throw MemoryException(WARNING, NOT_ERASED);
 
   // Zero id, so the caller can also tell that the memory entry has been removed
   id = nullptr;
