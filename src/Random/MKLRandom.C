@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 10:51:46 PM MDT
+  \date      Sun 14 Oct 2012 06:39:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -51,7 +51,7 @@ MKLRandom::newStream(VSLStreamStatePtr* stream,
                      const unsigned int& seed)
 //******************************************************************************
 //  Call MKL's vslNewStream() and handle error
-//! \param[out]  stream  VSL stream state descriptor  
+//! \param[out]  stream  VSL stream state descriptor
 //! \param[in]   brng    Index of the basic generator to initialize the stream  
 //! \param[in]   seed    Initial condition of the stream  
 //! \author  J. Bakosi
@@ -62,7 +62,36 @@ MKLRandom::newStream(VSLStreamStatePtr* stream,
 }
 
 void
-MKLRandom::addTable(Distribution dist, size_t number)
+MKLRandom::copyStream(VSLStreamStatePtr* newstream,
+                      const VSLStreamStatePtr srcstream)
+//******************************************************************************
+//  Call MKL's vslCopyStream() and handle error
+//! \param[out]  newstream  Copied random stream descriptor
+//! \param[in]   srcstream  Pointer to the stream state structure to be copied
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int vslerr = vslCopyStream(newstream, srcstream);
+  if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
+}
+
+void
+MKLRandom::skipAheadStream(VSLStreamStatePtr stream,
+                           const long long int nskip)
+//******************************************************************************
+//  Call MKL's vslCopyStream() and handle error
+//! \param[in]  stream  Pointer to the stream state structure to which the
+//!                     block-splitting method is applied
+//! \param[in]  nskip   Number of skipped elements
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int vslerr = vslSkipAheadStream(stream, nskip);
+  if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
+}
+
+void
+MKLRandom::addTable(Distribution dist, const long long int number)
 //******************************************************************************
 //  Add random number table
 //! \author  J. Bakosi
@@ -89,10 +118,8 @@ MKLRandom::addTable(Distribution dist, size_t number)
   // Initialize the rest of the thread-streams for block-splitting
   size_t chunk = number / m_nthreads;
   for (Int t=0; t<m_nthreads-1; t++) {
-    if (vslCopyStream(&newtab[t+1], newtab[t]) != VSL_STATUS_OK)
-      throw MKLException(FATAL, MKL_UNIMPLEMENTED);
-    if (vslSkipAheadStream(newtab[t+1], chunk) != VSL_STATUS_OK)
-      throw MKLException(FATAL, MKL_UNIMPLEMENTED);
+    copyStream(&newtab[t+1], newtab[t]);
+    skipAheadStream(newtab[t+1], chunk);
   }
 }
 
