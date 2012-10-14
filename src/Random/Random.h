@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Random.h
   \author    J. Bakosi
-  \date      Thu 11 Oct 2012 08:29:27 PM EDT
+  \date      Sun 14 Oct 2012 07:20:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -20,14 +20,14 @@ class Random {
 
   protected:
     //! Constructor: Setup random number generators
-    Random(const Int nthreads, const uInt seed) :
+    Random(const long long int nthreads, const uInt seed) :
       m_nthreads(nthreads), m_seed(seed) {}
 
     //! Destructor: Destroy random number generators
     ~Random() = default;
 
-    Int m_nthreads;              //!< Number of threads
-    const uInt m_seed;           //!< Seed
+    const long long int m_nthreads;     //!< Number of threads
+    const uInt m_seed;                  //!< Seed
 
   private:
     //! Don't permit copy constructor
