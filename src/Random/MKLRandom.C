@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:37:27 PM MDT
+  \date      Sat 13 Oct 2012 10:51:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -19,16 +19,6 @@
 #include <MKLException.h>
 
 using namespace Quinoa;
-
-MKLRandom::MKLRandom(const Int nthreads, const uInt seed) :
-  Random(nthreads, seed)
-//******************************************************************************
-//  Constructor
-//! \details Setup random number generator streams
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
 
 MKLRandom::~MKLRandom()
 //******************************************************************************
@@ -56,6 +46,22 @@ MKLRandom::~MKLRandom()
 }
 
 void
+MKLRandom::newStream(VSLStreamStatePtr* stream,
+                     const int& brng,
+                     const unsigned int& seed)
+//******************************************************************************
+//  Call MKL's vslNewStream() and handle error
+//! \param[out]  stream  VSL stream state descriptor  
+//! \param[in]   brng    Index of the basic generator to initialize the stream  
+//! \param[in]   seed    Initial condition of the stream  
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int vslerr = vslNewStream(stream, brng, seed);
+  if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
+}
+
+void
 MKLRandom::addTable(Distribution dist, size_t number)
 //******************************************************************************
 //  Add random number table
@@ -78,9 +84,8 @@ MKLRandom::addTable(Distribution dist, size_t number)
   VSLStreamStatePtr* newtab = table.back();
 
   // Initialize first thread-stream for block-splitting
-  if (vslNewStream(&newtab[0], VSL_BRNG_MCG59, m_seed) != VSL_STATUS_OK)
-    throw MKLException(FATAL, MKL_UNIMPLEMENTED);
-  
+  newStream(&newtab[0], VSL_BRNG_MCG59, m_seed);
+
   // Initialize the rest of the thread-streams for block-splitting
   size_t chunk = number / m_nthreads;
   for (Int t=0; t<m_nthreads-1; t++) {

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 02:29:10 PM EDT
+  \date      Sat 13 Oct 2012 09:13:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -72,15 +72,15 @@ class GmshTxtMeshReader : MeshReader {
     //! Add new element tags
     void addElemTags(Int type, vector<Int>& tags);
 
-    map<Int, Int> GmshElemNodes; //!< Element types and their number of nodes
+    map<Int, Int> m_GmshElemNodes; //!< Element types and their number of nodes
 
-    Int m_nnodes;                //!< Number of nodes
-    Int m_nLins;                 //!< Number of line elements
-    Int m_nTris;                 //!< Number of triangle elements
+    Int m_nnodes;                  //!< Number of nodes
+    Int m_nLins;                   //!< Number of line elements
+    Int m_nTris;                   //!< Number of triangle elements
 
-    Int m_nodeCnt;               //!< Counter for nodes added
-    Int m_linCnt;                //!< Counter for line elems added
-    Int m_triCnt;                //!< Counter for triangle elems added
+    Int m_nodeCnt;                 //!< Counter for nodes added
+    Int m_linCnt;                  //!< Counter for line elems added
+    Int m_triCnt;                  //!< Counter for triangle elems added
 };
 
 } // namespace Quinoa

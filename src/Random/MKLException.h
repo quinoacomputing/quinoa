@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:37:01 PM MDT
+  \date      Sat 13 Oct 2012 10:54:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -12,6 +12,7 @@
 #define MKLException_h
 
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -20,7 +21,8 @@ using namespace std;
 namespace Quinoa {
 
 //! MKL exception types
-enum MKLExceptType { MKL_UNIMPLEMENTED=0,  //!< VSL feature not implemented
+enum MKLExceptType { MKLEXCEPTION_UNIMPLEMENTED=0,
+                     MKL_UNIMPLEMENTED,
                      MKL_UNKNOWN,
                      MKL_BADARGS,
                      MKL_MEM_FAILURE,
@@ -49,6 +51,7 @@ enum MKLExceptType { MKL_UNIMPLEMENTED=0,  //!< VSL feature not implemented
 
 //! MKL exception error messages
 const string MKLMsg[NUM_MKL_EXCEPT] = {
+  "MKL exception type unimplemented",
   "VSL feature not yet implemented",
   "VSL unknown error",
   "VSL bad arguments",
@@ -79,9 +82,8 @@ const string MKLMsg[NUM_MKL_EXCEPT] = {
 class MKLException : protected RandomException {
 
   public:
-    //! Constructor
-    MKLException(ExceptType except, MKLExceptType mklExcept) :
-      RandomException(except, RND_MKL), m_except(mklExcept) {}
+    //! Constructor: fill VSLErrMap
+    MKLException(ExceptType except, Int vslerr);
 
     //! Move constructor, necessary for throws, default compiler generated
     MKLException(MKLException&&) = default;
@@ -92,6 +94,9 @@ class MKLException : protected RandomException {
     //! Handle MKLException
     ErrCode handleException(Driver* driver);
 
+    //! Get MKLException based on VSLError
+    MKLExceptType getException(Int vslerr);
+
   private:
     //! Don't permit copy constructor
     MKLException(const MKLException&) = delete;
@@ -100,8 +105,11 @@ class MKLException : protected RandomException {
     //! Don't permit move assignment
     MKLException& operator=(MKLException&&) = delete;
 
-    //! MKL exception type (, etc.)
+    //! MKL exception type (MKL_UNIMPLEMENTED, MKL_UNKNOWN, etc.)
     MKLExceptType m_except;
+
+    //! VSLError -> MKLExceptType map
+    map<Int,MKLExceptType> m_VSLErrMap;
 };
 
 } // namespace Quinoa
