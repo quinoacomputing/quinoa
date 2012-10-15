@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 11:44:37 AM MDT
+  \date      Mon Oct 15 08:34:58 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -98,7 +98,10 @@ Memory::newEntry(size_t number,
   }
 
   // Map variable name to MemorySet key
-  pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
+  //pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
+  // ICC: should be emplace (move constructor instead of copy)
+  pair<MemoryNames::iterator,Bool> n =
+    m_name.insert(pair<string,MemoryEntry*>(name,entry));
   if (!n.second) {
     if (entry) { delete entry; entry = nullptr; }
     throw MemoryException(FATAL, BAD_INSERT);
