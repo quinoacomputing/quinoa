@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 10:54:53 PM MDT
+  \date      Mon 15 Oct 2012 09:23:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -21,7 +21,8 @@ using namespace std;
 namespace Quinoa {
 
 //! MKL exception types
-enum MKLExceptType { MKLEXCEPTION_UNIMPLEMENTED=0,
+enum MKLExceptType { MKLEXCEPT_UNIMPLEMENTED=0,
+                     MKLEXCEPT_UNKNOWN_METHOD,
                      MKL_UNIMPLEMENTED,
                      MKL_UNKNOWN,
                      MKL_BADARGS,
@@ -52,6 +53,7 @@ enum MKLExceptType { MKLEXCEPTION_UNIMPLEMENTED=0,
 //! MKL exception error messages
 const string MKLMsg[NUM_MKL_EXCEPT] = {
   "MKL exception type unimplemented",
+  "Unknown VSL generation method",
   "VSL feature not yet implemented",
   "VSL unknown error",
   "VSL bad arguments",
