@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Oct 15 08:41:42 2012
+  \date      Mon 15 Oct 2012 08:25:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -14,6 +14,8 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#include <mkl_vsl.h>
 
 #include <QuinoaTypes.h>
 #include <Memory.h>
@@ -51,8 +53,8 @@ int main(int argc, char* argv[]) {
     outMesh.write();
 
     MKLRandom random(nthreads,1,&memStore);      // nthreads, seed
-    random.addTable(UNIFORM,1000000,"Gauss");
-    random.addTable(UNIFORM,1000000,"Uniform");
+    random.addTable(VSL_BRNG_MCG59, UNIFORM, 1000000, "Gauss");
+    random.addTable(VSL_BRNG_MCG59, UNIFORM, 1000000, "Uniform");
     random.regenTables();
 
     memStore.echoAllEntries(MemoryEntryField::NAME);

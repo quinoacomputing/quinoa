@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Mon Oct 15 08:40:58 2012
+  \date      Mon 15 Oct 2012 08:25:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include <mkl_vsl.h>
-#include <errcheck.inc>
 
 #include <MKLRandom.h>
 #include <MemoryException.h>
@@ -124,7 +123,8 @@ MKLRandom::uniform(const Int& method,
 }
 
 void
-MKLRandom::addTable(const Distribution dist,
+MKLRandom::addTable(const int brng,
+                    const Distribution dist,
                     const long long int number,
                     const string name)
 //******************************************************************************
@@ -152,7 +152,7 @@ MKLRandom::addTable(const Distribution dist,
   VSLStreamStatePtr* stream = s->stream;
 
   // Initialize first thread-stream for given distribution using seed
-  newStream(&stream[0], VSL_BRNG_MCG59, m_seed);
+  newStream(&stream[0], brng, m_seed);
   // Initialize the rest of the thread-streams for block-splitting
   for (Int t=0; t<m_nthreads-1; t++) {
     copyStream(&stream[t+1], stream[t]);
@@ -190,41 +190,6 @@ MKLRandom::regenTables()
   }
 }
 
-// void regenrng_tables(int nthreads,
-//                      #ifndef WALLFUNCTIONS
-//                      double *ru,
-//                      #endif
-//                      double *rg )
-// // -----------------------------------------------------------------------------
-// // Routine: regerrng_tables - Regenerate random numbers in tables in parallel
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   // standard uniform between [0 and 1)
-//   #ifndef WALLFUNCTIONS
-//   #ifdef _OPENMP
-//   #pragma omp parallel for
-//   #endif
-//   for (int k=0; k<nthreads; k++)
-//     CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[k], _uchunk,
-//                                 ru+k*_uchunk, 0.0, 1.0) );
-//   // generate remaining portion
-//   CheckVslError( vdRngUniform(UNIFORM_METHOD, _ustream[0], _uremainder,
-//                               ru+nthreads*_uchunk, 0.0, 1.0) );
-//   #endif
-// 
-//   // Gaussian with zero mean and unit variance
-//   #ifdef _OPENMP
-//   #pragma omp parallel for
-//   #endif
-//   for (int k=0; k<nthreads; k++)
-//     CheckVslError( vdRngGaussian(GAUSSIAN_METHOD, _gstream[k], _gchunk,
-//                                  rg+k*_gchunk, 0.0, 1.0) );
-//   // generate remaining portion
-//   CheckVslError( vdRngUniform(GAUSSIAN_METHOD, _gstream[0], _gremainder,
-//                               rg+nthreads*_gchunk, 0.0, 1.0) );
-// }
-// 
 // void preprng_streams(int nthreads, VSLStreamStatePtr **stream
 //                      #ifndef WALLFUNCTIONS
 //                      , int restarted, int samenthreads
