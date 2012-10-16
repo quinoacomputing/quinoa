@@ -23,6 +23,12 @@ set(LINK_STRATEGY ${LINK_STRATEGY}
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
+# Make sure ICC uses gcc-4.7 compatibililty
+if(PLATFORM MATCHES "intel")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
+endif()
+
 # Set third party prefix (from build script)
 set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 
