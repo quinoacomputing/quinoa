@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 10:54:43 PM MDT
+  \date      Mon 15 Oct 2012 09:23:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class definition
   \details   MKLException class definition
@@ -110,7 +110,7 @@ MKLException::getException(Int vslerr)
 {
   auto it = m_VSLErrMap.find(vslerr);
   if (it == m_VSLErrMap.end())
-    return MKLEXCEPTION_UNIMPLEMENTED;
+    return MKLEXCEPT_UNIMPLEMENTED;
   else
     return it->second;
 }

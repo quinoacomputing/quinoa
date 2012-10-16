@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 15 Oct 2012 08:25:37 PM MDT
+  \date      Mon 15 Oct 2012 09:52:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -53,9 +53,11 @@ int main(int argc, char* argv[]) {
     outMesh.write();
 
     MKLRandom random(nthreads,1,&memStore);      // nthreads, seed
-    random.addTable(VSL_BRNG_MCG59, UNIFORM, 1000000, "Gauss");
-    random.addTable(VSL_BRNG_MCG59, UNIFORM, 1000000, "Uniform");
-    random.regenTables();
+    random.addTable(VSL_BRNG_MCG59, UNIFORM, VSL_RNG_METHOD_UNIFORM_STD,
+                    1000000, "Uniform");
+    random.addTable(VSL_BRNG_MCG59, GAUSSIAN, VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                    1000000, "Gaussian");
+    random.regenAllTables();
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;
