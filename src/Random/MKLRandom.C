@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.C
   \author    J. Bakosi
-  \date      Mon 15 Oct 2012 10:03:32 PM MDT
+  \date      Tue 16 Oct 2012 10:14:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -19,15 +19,53 @@
 
 using namespace Quinoa;
 
-MKLRandom::~MKLRandom()
+MKLRandom::MKLRandom(const int brng,
+                     const long long int nthreads,
+                     const uInt seed,
+                     Memory* memory) :
+  Random(nthreads, seed), m_memory(memory)
 //******************************************************************************
-//  Destructor
-//! \details Destroy random number generator streams
+//  Constructor
+//! \param[in]   brng     Index of the basic generator to initialize the stream
+//! \param[in]   nthreads Initialize generators using nthreads threads
+//! \param[in]   seed     Initial condition of the stream
+//! \param[in]   memory   Memory store object pointer
+//! \details Initialize random number generator thread-streams for sampling a
+//!          few numbers at a time.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  typedef vector<RndStreams>::size_type ST;
+  // Allocate array of thread-stream pointers (used for a few at a time),
+  // initialize to zero
+  try {
+    m_stream = new VSLStreamStatePtr [m_nthreads]();
+  } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
 
+  // Create new thread-streams and initialize using the leapfrog method
+  for (Int t=0; t<m_nthreads; ++t) {
+    newStream(&m_stream[t], brng, m_seed);
+    leapfrogStream(m_stream[t], t, m_nthreads);
+  }
+}
+
+MKLRandom::~MKLRandom()
+//******************************************************************************
+//  Destructor
+//! \details Destroy random number generator thread-streams and tables
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Free thread-streams (used for a few at a time)
+  for (int t=0; t<m_nthreads; ++t) {
+    if (m_stream[t] != nullptr &&
+        vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK)
+      cerr << "WARNING: Failed to delete MKL VSL stream" << endl;
+  }
+  // Free array of thread-stream pointers (used for a few at a time)
+  if (m_stream) delete [] m_stream;
+
+  // Free tables
+  typedef vector<RndStreams>::size_type ST;
   try {
     ST tabs = m_table.size();
     for (ST i=0; i<tabs; ++i) {
@@ -61,8 +99,8 @@ MKLRandom::newStream(VSLStreamStatePtr* stream,
 //******************************************************************************
 //  Call MKL's vslNewStream() and handle error
 //! \param[out]  stream  VSL stream state descriptor
-//! \param[in]   brng    Index of the basic generator to initialize the stream  
-//! \param[in]   seed    Initial condition of the stream  
+//! \param[in]   brng    Index of the basic generator to initialize the stream
+//! \param[in]   seed    Initial condition of the stream
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -96,6 +134,23 @@ MKLRandom::skipAheadStream(VSLStreamStatePtr& stream,
 //******************************************************************************
 {
   Int vslerr = vslSkipAheadStream(stream, nskip);
+  if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
+}
+
+void
+MKLRandom::leapfrogStream(VSLStreamStatePtr& stream,
+                          const int& k,
+                          const int& nstreams)
+//******************************************************************************
+//  Call MKL's vslCopyStream() and handle error
+//! \param[in]  stream   Pointer to the stream state structure to which leapfrog
+//                       method is applied
+//! \param[in]  k        Index of the computational node, or stream number
+//! \param[in]  nstreams Largest number of computational nodes, or stride
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  Int vslerr = vslLeapfrogStream(stream, k, nstreams);
   if (vslerr != VSL_STATUS_OK) throw MKLException(FATAL, vslerr);
 }
 
@@ -284,94 +339,3 @@ MKLRandom::regenAllTables()
   for (ST i=0; i<tabs; ++i)
     regenTable(i);
 }
-
-// void preprng_streams(int nthreads, VSLStreamStatePtr **stream
-//                      #ifndef WALLFUNCTIONS
-//                      , int restarted, int samenthreads
-//                      #endif
-//                      )
-// // -----------------------------------------------------------------------------
-// // Routine: preprng_streams - Initialize random number generator streams
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// // These streams are used to sample a few random numbers at a time
-// // with no restrictions on the distribution parameters; prepared for parallel
-// // execution.
-// // -----------------------------------------------------------------------------
-// {
-//   #ifndef WALLFUNCTIONS
-//   char filename[STRLEN];
-//   #endif
-// 
-//   // allocate memory for array of streams for 'nthreads' threads
-//   if(!(*stream=(VSLStreamStatePtr*)malloc(nthreads*sizeof(VSLStreamStatePtr))))
-//     ERR("Can't allocate memory!");
-// 
-//   // initialize stream using the leapfrog technique
-//   for (int k=0; k<nthreads; k++) {
-//     #ifndef WALLFUNCTIONS
-//     if ( restarted && samenthreads )
-//     {
-//       // construct filename for stream used for a few numbers at a time
-//       sprintf( filename, "%s.f.%d", RESTART_FILENAME, k );
-//       // load stream
-//       CheckVslError( vslLoadStreamF(&(*stream)[k], filename) );
-//     }
-//     else
-//       CheckVslError( vslNewStream(&(*stream)[k], BRNG_FEW, SEED) );
-//     #else
-//       CheckVslError( vslNewStream(&(*stream)[k], BRNG_FEW, SEED) );
-//     #endif
-// 
-//     CheckVslError( vslLeapfrogStream((*stream)[k], k, nthreads) );
-//   }
-// }
-// 
-// void destroyrng_streams( int nthreads, VSLStreamStatePtr **stream )
-// // -----------------------------------------------------------------------------
-// // Routine: destroyrng_streams - Destroy random number streams
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   // destroy streams
-//   for (int k=0; k<nthreads; k++)
-//     CheckVslError( vslDeleteStream(&(*stream)[k]) );
-// 
-//   // pointer to stream
-//   free( *stream );
-// }
-// 
-// void saverng_streams( int nthreads
-//                       #ifndef WALLFUNCTIONS
-//                       , VSLStreamStatePtr *stream
-//                       #endif
-//                      )
-// // -----------------------------------------------------------------------------
-// // Routine: saverng_streams - Save the state of random number streams into files
-// // Author : J. Bakosi
-// // -----------------------------------------------------------------------------
-// {
-//   char filename[STRLEN];
-// 
-//   // save the state of random number streams into files
-//   for (int k=0; k<nthreads; k++) {
-//     #ifndef WALLFUNCTIONS
-//     // construct filename for uniform stream used in tables
-//     sprintf( filename, "%s.u.%d", RESTART_FILENAME, k );
-//     // save stream
-//     CheckVslError( vslSaveStreamF(_ustream[k], filename) );
-//     #endif
-//     
-//     // construct filename for Gaussian stream used in tables
-//     sprintf( filename, "%s.g.%d", RESTART_FILENAME, k );
-//     // save stream
-//     CheckVslError( vslSaveStreamF(_gstream[k], filename) );
-//     
-//     #ifndef WALLFUNCTIONS
-//     // construct filename for stream used for a few numbers at a time
-//     sprintf( filename, "%s.f.%d", RESTART_FILENAME, k );
-//     // save stream
-//     CheckVslError( vslSaveStreamF(stream[k], filename) );
-//     #endif
-//   }
-// }
