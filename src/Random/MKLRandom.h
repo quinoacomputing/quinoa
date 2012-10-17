@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MKLRandom.h
   \author    J. Bakosi
-  \date      Mon 15 Oct 2012 09:53:48 PM MDT
+  \date      Tue 16 Oct 2012 10:13:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -22,7 +22,7 @@ using namespace std;
 
 namespace Quinoa {
 
-//! Probability distributions
+//! Probability distributions for sampling into tables
 enum Distribution { UNIFORM=0,        //!< Uniform
                     GAUSSIAN,         //!< Gaussian
                     GAMMA,            //!< Gamma
@@ -69,10 +69,12 @@ class MKLRandom : Random {
 
   public:
     //! Constructor: Setup random number generator streams
-    MKLRandom(const long long int nthreads, const uInt seed, Memory* memory) :
-      Random(nthreads, seed), m_memory(memory) {}
+    MKLRandom(const int brng,
+              const long long int nthreads,
+              const uInt seed,
+              Memory* memory);
 
-    //! Destructor: Destroy random number generator streams
+    //! Destructor: Destroy random number generator thread-streams and tables
     ~MKLRandom();
 
     //! Add random table
@@ -85,28 +87,8 @@ class MKLRandom : Random {
     //! Regenerate random numbers in all tables
     void regenAllTables();
 
-  private:
-    //! Don't permit copy constructor
-    MKLRandom(const MKLRandom&) = delete;
-    //! Don't permit copy assigment
-    MKLRandom& operator=(const MKLRandom&) = delete;
-    //! Don't permit move constructor
-    MKLRandom(MKLRandom&&) = delete;
-    //! Don't permit move assigment
-    MKLRandom& operator=(MKLRandom&&) = delete;
-
-    //! Call MKL's vslNewStream() and handle error
-    void newStream(VSLStreamStatePtr* stream,
-                   const int& brng,
-                   const unsigned int& seed);
-
-    //! Call MKL's vslCopyStream() and handle error
-    void copyStream(VSLStreamStatePtr* newstream,
-                    const VSLStreamStatePtr& srcstream);
-
-    //! Call MKL's vslSkipaheadStream() and handle error
-    void skipAheadStream(VSLStreamStatePtr& stream,
-                         const long long int& nskip);
+    //! Thread-streams accessor (for sampling a few numbers at a time)
+    const VSLStreamStatePtr* getStream() const { return m_stream; }
 
     //! Call MKL's vdRngUniform() and handle error
     void uniform(const Int& method,
@@ -133,11 +115,42 @@ class MKLRandom : Random {
                const Real& a,
                const Real& beta);
 
+  private:
+    //! Don't permit copy constructor
+    MKLRandom(const MKLRandom&) = delete;
+    //! Don't permit copy assigment
+    MKLRandom& operator=(const MKLRandom&) = delete;
+    //! Don't permit move constructor
+    MKLRandom(MKLRandom&&) = delete;
+    //! Don't permit move assigment
+    MKLRandom& operator=(MKLRandom&&) = delete;
+
+    //! Call MKL's vslNewStream() and handle error
+    void newStream(VSLStreamStatePtr* stream,
+                   const int& brng,
+                   const unsigned int& seed);
+
+    //! Call MKL's vslCopyStream() and handle error
+    void copyStream(VSLStreamStatePtr* newstream,
+                    const VSLStreamStatePtr& srcstream);
+
+    //! Call MKL's vslSkipaheadStream() and handle error
+    void skipAheadStream(VSLStreamStatePtr& stream,
+                         const long long int& nskip);
+
+    //! Call MKL's vslLeapfrogStream() and handle error
+    void leapfrogStream(VSLStreamStatePtr& stream,
+                        const int& k,
+                        const int& nstreams);
+
     //! Regenerate random numbers in a table
     void regenTable(const Int table);
 
     //! Memory object pointer
     Memory* m_memory;
+
+    //! Array of pointers to thread-streams (for sampling a few at a time)
+    VSLStreamStatePtr* m_stream;
 
     //! Stream tables to generate fixed numbers of random numbers with fixed
     //! properties using Random::m_nthreads
