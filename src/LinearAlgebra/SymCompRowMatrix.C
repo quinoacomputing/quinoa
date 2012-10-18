@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/SymCompRowMatrix.C
+  \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 08:16:35 PM MDT
+  \date      Wed 17 Oct 2012 07:28:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row

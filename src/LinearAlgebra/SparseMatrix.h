@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/SparseMatrix.h
+  \file      src/LinearAlgebra/SparseMatrix.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 06:00:49 PM MDT
+  \date      Wed 17 Oct 2012 07:30:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix declaration
   \details   Sparse matrix base class declaration

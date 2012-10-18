@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/MKLRandom.h
+  \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Tue 16 Oct 2012 10:13:07 PM MDT
+  \date      Wed 17 Oct 2012 07:29:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator

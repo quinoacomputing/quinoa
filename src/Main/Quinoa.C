@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 16 Oct 2012 09:38:16 PM MDT
+  \date      Wed 17 Oct 2012 06:50:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -46,11 +46,11 @@ int main(int argc, char* argv[]) {
   ErrCode error = NO_ERROR;
   try {
 
-    UnsMesh mesh(&memStore);
-    GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
-    inMesh.read();
-    GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-    outMesh.write();
+//     UnsMesh mesh(&memStore);
+//     GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+//     inMesh.read();
+//     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+//     outMesh.write();
 
     MKLRandom random(VSL_BRNG_MCG31, nthreads, 1, &memStore);
     random.addTable(VSL_BRNG_MCG59, UNIFORM, VSL_RNG_METHOD_UNIFORM_STD,

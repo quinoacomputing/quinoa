@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/StrMesh.h
+  \file      src/Mesh/StrMesh.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 06:25:25 PM MDT
+  \date      Wed 17 Oct 2012 07:28:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Structured mesh class declaration
   \details   Structured mesh class declaration

@@ -118,11 +118,12 @@ include_directories("${PROJECT_BINARY_DIR}/Base")
 
 # Infrastructure
 add_subdirectory(Base)
-#add_subdirectory(FEM)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
 add_subdirectory(Random)
+add_subdirectory(Statistics)
+#add_subdirectory(FEM)
 #add_subdirectory(Particles)
 #add_subdirectory(SDE)
 #add_subdirectory(WallTreatment)

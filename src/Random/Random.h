@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/Random.h
+  \file      src/Random/Random.h
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 07:20:41 AM MDT
+  \date      Wed 17 Oct 2012 07:30:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
