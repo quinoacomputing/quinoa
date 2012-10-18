@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/GmshTxtMeshReader.C
+  \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 10:59:29 PM MDT
+  \date      Wed 17 Oct 2012 07:27:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition

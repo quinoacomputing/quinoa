@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/MKLRandom.C
+  \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Tue 16 Oct 2012 10:14:26 PM MDT
+  \date      Wed 17 Oct 2012 07:29:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -166,7 +166,7 @@ MKLRandom::uniform(const Int& method,
 //! \param[in]  method   Generation method
 //! \param[in]  stream   Pointer to the stream state structure
 //! \param[in]  n        Number of random values to be generated
-//! \param[out] rnd      Vector of n uniform random numbers
+//! \param[out] r        Vector of n uniform random numbers
 //! \param[in]  a        Left bound
 //! \param[in]  b        Right bound
 //! \author  J. Bakosi
@@ -188,7 +188,7 @@ MKLRandom::gaussian(const Int& method,
 //! \param[in]  method   Generation method
 //! \param[in]  stream   Pointer to the stream state structure
 //! \param[in]  n        Number of random values to be generated
-//! \param[out] rnd      Vector of n Gaussian random numbers
+//! \param[out] r        Vector of n Gaussian random numbers
 //! \param[in]  a        mean
 //! \param[in]  b        standard deviation
 //! \author  J. Bakosi
@@ -211,7 +211,7 @@ MKLRandom::gamma(const Int& method,
 //! \param[in]  method   Generation method
 //! \param[in]  stream   Pointer to the stream state structure
 //! \param[in]  n        Number of random values to be generated
-//! \param[out] rnd      Vector of n gamma-distributed random numbers
+//! \param[out] r        Vector of n gamma-distributed random numbers
 //! \param[in]  alpha    Shape
 //! \param[in]  a        Displacement
 //! \param[in]  beta     Scale factor
