@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 06:54:45 PM MDT
+  \date      Sat 20 Oct 2012 10:44:42 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -192,7 +192,7 @@ Memory::freeAllEntries() noexcept
   // Deallocate all memory entries
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
   // deallocates the memory pointed to by MemoryEntry::m_ptr
-  for (MemoryEntry* e : m_entry) { delete e; }
+  for (auto& e : m_entry) { delete e; }
   // Clear containers
   m_name.clear();
   m_entry.clear();
@@ -281,7 +281,7 @@ Memory::echoByBytes()
 
   // Sort vector of memory entries by their Bytes
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_bytes > b->m_bytes;
           });
 
@@ -303,7 +303,7 @@ Memory::echoByNumber()
 
   // Sort vector of memory entries by their Number
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_number > b->m_number;
           });
 
@@ -326,7 +326,7 @@ Memory::echoByValue()
 
   // Sort vector of memory entries by their Value
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_value < b->m_value;
           });
 
@@ -348,7 +348,7 @@ Memory::echoByVariable()
 
   // Sort vector of memory entries by their Variable
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_variable < b->m_variable;
           });
 
@@ -370,7 +370,7 @@ Memory::echoByName()
 
   // Sort vector of memory entries by their Name
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_name < b->m_name;
           });
 
@@ -392,7 +392,7 @@ Memory::echoByPlot()
 
   // Sort vector of memory entries by their Plot
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_plot < b->m_plot;
           });
 
@@ -414,7 +414,7 @@ Memory::echoByRestart()
 
   // Sort vector of memory entries by their Restart
   sort(srt.begin(), srt.end(),
-       [&] (const MemoryEntry* a, const MemoryEntry* b) {
+       [] (const MemoryEntry* a, const MemoryEntry* b) {
              return a->m_restart < b->m_restart;
           });
 
@@ -621,7 +621,7 @@ Memory::getBytes()
     throw MemoryException(WARNING, EMPTY_STORE);
 
   size_t bytes = 0;
-  for (MemoryEntry* e : m_entry) {
+  for (auto& e : m_entry) {
     bytes += sizeof(MemoryEntry) +
                e->m_number * VarComp[static_cast<int>(e->m_variable)] *
                SizeOf[static_cast<int>(e->m_value)];
