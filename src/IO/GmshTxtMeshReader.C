@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 07:27:52 PM MDT
+  \date      Fri 19 Oct 2012 04:15:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -25,8 +25,8 @@ GmshTxtMeshReader::GmshTxtMeshReader(string filename,
 {
   // Gmsh element types and their number of nodes,
   // all Gmsh-supported listed, Quinoa-supported at this time commented
-  m_GmshElemNodes.insert(make_pair<Int,Int>(1, 2));  // 2-node line
-  m_GmshElemNodes.insert(make_pair<Int,Int>(2, 3));  // 3-node triangle
+  m_GmshElemNodes.insert(make_pair<int,int>(1, 2));  // 2-node line
+  m_GmshElemNodes.insert(make_pair<int,int>(2, 3));  // 3-node triangle
   //           { 3,  4},  //! 4-node quadrangle
   //           { 4,  4},  //! 4-node tetrahedron
   //           { 5,  8},  //! 8-node hexahedron
@@ -131,10 +131,10 @@ GmshTxtMeshReader::readMeshFormat()
     throw MeshException(FATAL, BAD_FORMAT, m_filename);
 
   // Read in "version-number file-type data-size"
-  Real version;
-  Int type, datasize;
+  real version;
+  int type, datasize;
   m_inMesh >> version >> type >> datasize;
-  if ((version!=2.2 && version!=2.0) || type!=0 || datasize!=sizeof(Real))
+  if ((version!=2.2 && version!=2.0) || type!=0 || datasize!=sizeof(real))
     throw MeshException(FATAL, BAD_FORMAT, m_filename);
   getline(m_inMesh, s);  // finish reading the line
   // Save version, type, datasize
@@ -156,16 +156,16 @@ GmshTxtMeshReader::countNodes()
 //******************************************************************************
 {
   // Read in number of nodes in this node set
-  Int num;
+  int num;
   m_inMesh >> num;
 
   // Count total number of nodes in file
   m_nnodes += num;
 
   // Read in node ids and coordinates throw all away
-  for (Int i=0; i<num; i++) {
-    Int n;
-    Real r;
+  for (int i=0; i<num; i++) {
+    int n;
+    real r;
     // node-number x-coord y-coord z-coord
     m_inMesh >> n >> r >> r >> r;
   }
@@ -186,17 +186,17 @@ GmshTxtMeshReader::readNodes()
 //******************************************************************************
 {
   // Read in number of nodes in this node set
-  Int num;
+  int num;
   m_inMesh >> num;
 
   // Get pointers to node ids and coordinates
-  Int* nodeId = m_mesh->getNodeId();
-  Real* coord = m_mesh->getCoord();
+  int* nodeId = m_mesh->getNodeId();
+  real* coord = m_mesh->getCoord();
 
   // Read in node ids and coordinates
-  for (Int i=0; i<num; ++i, ++m_nodeCnt) {
+  for (int i=0; i<num; ++i, ++m_nodeCnt) {
     // node-number x-coord y-coord z-coord
-    Int n3 = 3*m_nodeCnt;
+    int n3 = 3*m_nodeCnt;
     m_inMesh >> nodeId[m_nodeCnt]
              >> coord[n3] >> coord[n3+1] >> coord[n3+2];
   }
@@ -217,13 +217,13 @@ GmshTxtMeshReader::countElements()
 //******************************************************************************
 {
   // Read in number of elements in this element set
-  Int num;
+  int num;
   m_inMesh >> num;
 
   // Read in element ids, tags, and element connectivity and throw all away
-  for (Int i=0; i<num; i++) {
+  for (int i=0; i<num; i++) {
     // elm-number elm-type number-of-tags < tag > ... node-number-list
-    Int e, type, ntags;
+    int e, type, ntags;
     m_inMesh >> e >> type >> ntags;
 
     // Find element type, throw exception if not supported
@@ -232,15 +232,15 @@ GmshTxtMeshReader::countElements()
       throw MeshException(FATAL, BAD_ELEMENT, m_filename);
 
     // Read tags and throw all away
-    for (Int j=0; j<ntags; j++) {
-      Int t;
+    for (int j=0; j<ntags; j++) {
+      int t;
       m_inMesh >> t;
     }
 
     // Read element node list and throw all away
-    Int nnodes = it->second;
-    for (Int j=0; j<nnodes; j++) {
-      Int n;
+    int nnodes = it->second;
+    for (int j=0; j<nnodes; j++) {
+      int n;
       m_inMesh >> n;
     }
 
@@ -267,17 +267,17 @@ GmshTxtMeshReader::readElements()
 //******************************************************************************
 {
   // Read in number of elements in this element set
-  Int num;
+  int num;
   m_inMesh >> num;
 
   // Get pointers to the element ids
-  Int* linId = m_mesh->getLineId();
-  Int* triId = m_mesh->getTriangleId();
+  int* linId = m_mesh->getLineId();
+  int* triId = m_mesh->getTriangleId();
 
   // Read in element ids, tags, and element connectivity (node list)
-  for (Int i=0; i<num; ++i) {
+  for (int i=0; i<num; ++i) {
     // elm-number elm-type number-of-tags < tag > ... node-number-list
-    Int id, type, ntags;
+    int id, type, ntags;
     m_inMesh >> id >> type >> ntags;
 
     // Find element type, throw exception if not supported
@@ -286,16 +286,16 @@ GmshTxtMeshReader::readElements()
       throw MeshException(FATAL, BAD_ELEMENT, m_filename);
 
     // Read and add element tags
-    vector<Int> tags(ntags,0);
-    for (Int j=0; j<ntags; j++) {
+    vector<int> tags(ntags,0);
+    for (int j=0; j<ntags; j++) {
       m_inMesh >> tags[j];
     }
     addElemTags(type, tags);
 
     // Read and add element node list (i.e. connectivity)
-    Int nnodes = it->second;
-    vector<Int> nodes(nnodes,0);
-    for (Int j=0; j<nnodes; j++) {
+    int nnodes = it->second;
+    vector<int> nodes(nnodes,0);
+    for (int j=0; j<nnodes; j++) {
       m_inMesh >> nodes[j];
     }
     addElem(type, nodes);
@@ -338,7 +338,7 @@ GmshTxtMeshReader::readPhysicalNames()
 }
 
 void
-GmshTxtMeshReader::addElem(Int type, vector<Int>& nodes)
+GmshTxtMeshReader::addElem(int type, vector<int>& nodes)
 //******************************************************************************
 //  Add new element (connectivity) to given element type container
 //! \param[in]  type    Elem type (container) to add to (lines, triangles, etc)
@@ -354,7 +354,7 @@ GmshTxtMeshReader::addElem(Int type, vector<Int>& nodes)
 }
 
 void
-GmshTxtMeshReader::addElemTags(Int type, vector<Int>& tags)
+GmshTxtMeshReader::addElemTags(int type, vector<int>& tags)
 //******************************************************************************
 //  Add new element tags to given element type
 //! \param[in]  type    Elem type (container) to add to (lines, triangles, etc)

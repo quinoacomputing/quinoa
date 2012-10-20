@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 01:57:10 PM EDT
+  \date      Fri 19 Oct 2012 04:12:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -21,7 +21,7 @@ enum class MeshDim { TWOD=0,
                      NUM_MESH_DIM
 };
 //! Number of mesh dimensions
-const Int NUM_MESH_DIM = static_cast<Int>(MeshDim::NUM_MESH_DIM);
+const int NUM_MESH_DIM = static_cast<int>(MeshDim::NUM_MESH_DIM);
 
 //! Mesh base class
 class Mesh {

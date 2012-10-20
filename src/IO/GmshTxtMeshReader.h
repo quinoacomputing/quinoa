@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:24:03 AM MDT
+  \date      Fri 19 Oct 2012 04:14:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -67,20 +67,20 @@ class GmshTxtMeshReader : MeshReader {
     void readPhysicalNames();
 
     //! Add new element
-    void addElem(Int type, vector<Int>& nodes);
+    void addElem(int type, vector<int>& nodes);
 
     //! Add new element tags
-    void addElemTags(Int type, vector<Int>& tags);
+    void addElemTags(int type, vector<int>& tags);
 
-    map<Int,Int> m_GmshElemNodes; //!< Element types and their number of nodes
+    map<int,int> m_GmshElemNodes; //!< Element types and their number of nodes
 
-    Int m_nnodes;                  //!< Number of nodes
-    Int m_nLins;                   //!< Number of line elements
-    Int m_nTris;                   //!< Number of triangle elements
+    int m_nnodes;                  //!< Number of nodes
+    int m_nLins;                   //!< Number of line elements
+    int m_nTris;                   //!< Number of triangle elements
 
-    Int m_nodeCnt;                 //!< Counter for nodes added
-    Int m_linCnt;                  //!< Counter for line elems added
-    Int m_triCnt;                  //!< Counter for triangle elems added
+    int m_nodeCnt;                 //!< Counter for nodes added
+    int m_linCnt;                  //!< Counter for line elems added
+    int m_triCnt;                  //!< Counter for triangle elems added
 };
 
 } // namespace Quinoa

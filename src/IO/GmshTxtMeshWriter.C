@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 06:34:26 PM MDT
+  \date      Fri 19 Oct 2012 04:15:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -70,17 +70,17 @@ GmshTxtMeshWriter::writeNodes()
   m_outMesh << "$Nodes" << endl;
 
   // Get number of nodes, and pointers node ids and coordinates
-  Int nnodes = m_mesh->getNnodes();
-  Int* nodeId = m_mesh->getNodeId();
-  Real* coord = m_mesh->getCoord();
+  int nnodes = m_mesh->getNnodes();
+  int* nodeId = m_mesh->getNodeId();
+  real* coord = m_mesh->getCoord();
 
   // Write out number of nodes
   m_outMesh << nnodes << endl;
 
   // Write node ids and coordinates
-  for (Int i=0; i<nnodes; ++i) {
+  for (int i=0; i<nnodes; ++i) {
     // node-number x-coord y-coord z-coord
-    Int i3 = i*3;
+    int i3 = i*3;
     m_outMesh << nodeId[i] << " " << setprecision(16)
               << coord[i3] << " " << coord[i3+1] << " " << coord[i3+2] << endl;
   }
@@ -95,17 +95,17 @@ GmshTxtMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  typedef vector<vector<Int>>::size_type ST;
+  typedef vector<vector<int>>::size_type ST;
 
   m_outMesh << "$Elements" << endl;
 
   // Get pointers to the element ids, connectivities, and tags
-  Int* linId = m_mesh->getLineId();
-  Int* triId = m_mesh->getTriangleId();
-  vector<vector<Int>> linpoel = m_mesh->getLinpoel();
-  vector<vector<Int>> lintag = m_mesh->getLintag();
-  vector<vector<Int>> tinpoel = m_mesh->getTinpoel();
-  vector<vector<Int>> tritag = m_mesh->getTritag();
+  int* linId = m_mesh->getLineId();
+  int* triId = m_mesh->getTriangleId();
+  vector<vector<int>> linpoel = m_mesh->getLinpoel();
+  vector<vector<int>> lintag = m_mesh->getLintag();
+  vector<vector<int>> tinpoel = m_mesh->getTinpoel();
+  vector<vector<int>> tritag = m_mesh->getTritag();
 
   // Get number of line and triangle elements
   ST nlines = linpoel.size();
@@ -120,11 +120,11 @@ GmshTxtMeshWriter::writeElements()
     m_outMesh << linId[i] << " " << 1 << " " << lintag[i].size() << " ";
 
     copy(lintag[i].begin(), lintag[i].end()-1,
-         ostream_iterator<Int>(m_outMesh," "));
+         ostream_iterator<int>(m_outMesh," "));
     m_outMesh << lintag[i].back() << " ";
 
     copy(linpoel[i].begin(), linpoel[i].end()-1,
-         ostream_iterator<Int>(m_outMesh," "));
+         ostream_iterator<int>(m_outMesh," "));
     m_outMesh << linpoel[i].back() << endl;
   }
 
@@ -134,11 +134,11 @@ GmshTxtMeshWriter::writeElements()
     m_outMesh << triId[i] << " " << 2 << " " << tritag[i].size() << " ";
 
     copy(tritag[i].begin(), tritag[i].end()-1,
-         ostream_iterator<Int>(m_outMesh," "));
+         ostream_iterator<int>(m_outMesh," "));
     m_outMesh << tritag[i].back() << " ";
 
     copy(tinpoel[i].begin(), tinpoel[i].end()-1,
-         ostream_iterator<Int>(m_outMesh," "));
+         ostream_iterator<int>(m_outMesh," "));
     m_outMesh << tinpoel[i].back() << endl;
   }
 

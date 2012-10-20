@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Mon 15 Oct 2012 09:23:04 PM MDT
+  \date      Fri 19 Oct 2012 05:19:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -23,6 +23,7 @@ namespace Quinoa {
 //! MKL exception types
 enum MKLExceptType { MKLEXCEPT_UNIMPLEMENTED=0,
                      MKLEXCEPT_UNKNOWN_METHOD,
+                     MKLEXCEPT_UNKNOWN_TABLE,
                      MKL_UNIMPLEMENTED,
                      MKL_UNKNOWN,
                      MKL_BADARGS,
@@ -54,6 +55,7 @@ enum MKLExceptType { MKLEXCEPT_UNIMPLEMENTED=0,
 const string MKLMsg[NUM_MKL_EXCEPT] = {
   "MKL exception type unimplemented",
   "Unknown VSL generation method",
+  "MKL random number table not found",
   "VSL feature not yet implemented",
   "VSL unknown error",
   "VSL bad arguments",
@@ -85,7 +87,7 @@ class MKLException : protected RandomException {
 
   public:
     //! Constructor: fill VSLErrMap
-    MKLException(ExceptType except, Int vslerr);
+    MKLException(ExceptType except, int vslerr);
 
     //! Move constructor, necessary for throws, default compiler generated
     MKLException(MKLException&&) = default;
@@ -97,7 +99,7 @@ class MKLException : protected RandomException {
     ErrCode handleException(Driver* driver);
 
     //! Get MKLException based on VSLError
-    MKLExceptType getException(Int vslerr);
+    MKLExceptType getException(int vslerr);
 
   private:
     //! Don't permit copy constructor
@@ -111,7 +113,7 @@ class MKLException : protected RandomException {
     MKLExceptType m_except;
 
     //! VSLError -> MKLExceptType map
-    map<Int,MKLExceptType> m_VSLErrMap;
+    map<int,MKLExceptType> m_VSLErrMap;
 };
 
 } // namespace Quinoa
