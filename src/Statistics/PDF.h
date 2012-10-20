@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:59:14 PM MDT
+  \date      Sat 20 Oct 2012 10:49:19 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF estimator base class
   \details   PDF estimator base class

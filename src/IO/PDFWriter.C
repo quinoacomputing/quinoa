@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:40:20 PM MDT
+  \date      Sat 20 Oct 2012 10:43:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -50,7 +50,7 @@ PDFWriter::write(const PDF* pdf)
   const Pdf* f = pdf->getPDF();
   const real binsize = pdf->getBinsize();
   const real sp = pdf->getNsample()*binsize;
-  for (pair<int,real> p : *f) {
+  for (auto& p : *f) {
     m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
   }
 }
