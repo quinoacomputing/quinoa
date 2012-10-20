@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 09:09:17 PM MDT
+  \date      Fri 19 Oct 2012 10:48:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -73,12 +73,12 @@ class MKLRndTable : MKLCall {
     //! Don't permit move assigment
     MKLRndTable& operator=(MKLRndTable&&) = delete;
 
+    Memory* m_memory;                //!< Memory object pointer
     const int m_nthread;             //!< Number of threads to use
     const Distribution m_dist;       //!< Distribution (UNIFORM, GAUSSIAN, etc.)
     const int m_method;              //!< Generation method (dist. specific)
     const long long int m_chunk;     //!< Number of numbers generated per thread
     const long long int m_remainder; //!< Leftover
-    Memory* m_memory;                //!< Memory object pointer
     VSLStreamStatePtr* m_stream;     //!< Array of pointers to thread-streams
     MemoryEntry* m_rnd;              //!< MemoryEntry Pointer to random numbers
     real* m_rndPtr;                  //!< Raw pointer to random numbers

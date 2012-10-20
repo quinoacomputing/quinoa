@@ -11,7 +11,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Statistics
 )
 
 add_library(Statistics
-            PDF.C
 )
 
 INSTALL(TARGETS Statistics
