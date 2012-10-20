@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/Random.h
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 07:30:26 PM MDT
+  \date      Fri 19 Oct 2012 04:31:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -18,16 +18,12 @@ namespace Quinoa {
 //! Random number generator base
 class Random {
 
-  protected:
-    //! Constructor: Setup random number generators
-    Random(const long long int nthreads, const uInt seed) :
-      m_nthreads(nthreads), m_seed(seed) {}
+  public:
+    //! Constructor: Default, compiler generated
+    Random() = default;
 
-    //! Destructor: Destroy random number generators
+    //! Destructor: Default, compiler generated
     ~Random() = default;
-
-    const long long int m_nthreads;     //!< Number of threads
-    const uInt m_seed;                  //!< Seed
 
   private:
     //! Don't permit copy constructor

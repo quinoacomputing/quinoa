@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 07:28:35 PM MDT
+  \date      Fri 19 Oct 2012 04:17:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -25,10 +25,10 @@ using namespace Quinoa;
 
 SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
                                    string name,
-                                   Int size,
-                                   Int dof,
-                                   Int *psup1,
-                                   Int *psup2) : SparseMatrix(name, size, dof)
+                                   int size,
+                                   int dof,
+                                   int *psup1,
+                                   int *psup2) : SparseMatrix(name, size, dof)
 //******************************************************************************
 //  Constructor
 //! \details Creates a size x size compressed row sparse matrix with dof degrees
@@ -50,13 +50,13 @@ SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
   MemoryEntry* mrnz =
     memory->newZeroEntry(size, ValType::INT, VarType::SCALAR, name+"_rnz");
   // Get its raw pointer right away
-  Int* rnz = memory->getPtr<Int>(mrnz);
+  int* rnz = memory->getPtr<int>(mrnz);
 
   // Allocate array for row indices
   m_ia =
     memory->newZeroEntry(m_rsize+1, ValType::INT, VarType::SCALAR, name+"_ia");
   // Get and store its raw pointer right away
-  m_pia = memory->getPtr<Int>(m_ia);
+  m_pia = memory->getPtr<int>(m_ia);
 
   // Calculate number of nonzeros in each block row (rnz[]),
   // total number of nonzeros (nnz) and fill row indices (m_pia[])
@@ -81,12 +81,12 @@ SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
   // Allocate array for column indices
   m_ja = memory->newZeroEntry(m_nnz, ValType::INT, VarType::SCALAR, name+"_ja");
   // Get and store its raw pointer right away
-  m_pja = memory->getPtr<Int>(m_ja);
+  m_pja = memory->getPtr<int>(m_ja);
 
   // Allocate array for nonzero matrix values
   m_a = memory->newZeroEntry(m_nnz, ValType::REAL, VarType::SCALAR, name+"_a");
   // Get and store its raw pointer right away
-  m_pa = m_memory->getPtr<Real>(m_a);
+  m_pa = m_memory->getPtr<real>(m_a);
 
   // Fill column indices
   for (int i=0; i<size; i++) { // loop over all points
@@ -150,7 +150,7 @@ SymCompRowMatrix::~SymCompRowMatrix()
 }
 
 void
-SymCompRowMatrix::add(Int row, Int column, Int i, Real value)
+SymCompRowMatrix::add(int row, int column, int i, real value)
 //******************************************************************************
 //  Add value to matrix in specified position using relative indexing
 //! \param[in]  row     block row
@@ -160,10 +160,10 @@ SymCompRowMatrix::add(Int row, Int column, Int i, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
-  Int rmdof = row*m_dof;
+  int idx = 0;
+  int rmdof = row*m_dof;
 
-  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+  for (int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
     if (column*m_dof+i+1 == m_pja[j]) {
       idx = n;
       j = m_pia[rmdof+i+1]-1;
@@ -176,7 +176,7 @@ SymCompRowMatrix::add(Int row, Int column, Int i, Real value)
 }
 
 void
-SymCompRowMatrix::add(Int row, Int column, Real value)
+SymCompRowMatrix::add(int row, int column, real value)
 //******************************************************************************
 //  Add value to matrix in specified position using absolute indexing
 //! \param[in]  row     block row
@@ -185,9 +185,9 @@ SymCompRowMatrix::add(Int row, Int column, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
+  int idx = 0;
 
-  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+  for (int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
       idx = n;
       j = m_pia[row+1]-1;
@@ -200,7 +200,7 @@ SymCompRowMatrix::add(Int row, Int column, Real value)
 }
 
 void
-SymCompRowMatrix::ins(Int row, Int column, Int i, Real value)
+SymCompRowMatrix::ins(int row, int column, int i, real value)
 //******************************************************************************
 //  Insert value to matrix in specified position using relative indexing
 //! \param[in]  row     block row
@@ -210,10 +210,10 @@ SymCompRowMatrix::ins(Int row, Int column, Int i, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
-  Int rmdof = row*m_dof;
+  int idx = 0;
+  int rmdof = row*m_dof;
   
-  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+  for (int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
     if (column*m_dof+i+1 == m_pja[j]) {
       idx = n;
       j = m_pia[rmdof+i+1]-1;
@@ -223,7 +223,7 @@ SymCompRowMatrix::ins(Int row, Int column, Int i, Real value)
 }
 
 void
-SymCompRowMatrix::ins(Int row, Int column, Real value)
+SymCompRowMatrix::ins(int row, int column, real value)
 //******************************************************************************
 //  Insert value to matrix in specified position using absolute indexing
 //! \param[in]  row     block row
@@ -232,9 +232,9 @@ SymCompRowMatrix::ins(Int row, Int column, Real value)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
+  int idx = 0;
 
-  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+  for (int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
       idx = n;
       j = m_pia[row+1]-1;
@@ -243,8 +243,8 @@ SymCompRowMatrix::ins(Int row, Int column, Real value)
   m_pa[m_pia[row]-1+idx] = value;
 }
 
-Real
-SymCompRowMatrix::get(Int row, Int column, Int i)
+real
+SymCompRowMatrix::get(int row, int column, int i)
 //******************************************************************************
 //  Get value from matrix from specified position using relative indexing
 //! \param[in]  row     block row
@@ -254,10 +254,10 @@ SymCompRowMatrix::get(Int row, Int column, Int i)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
-  Int rmdof = row*m_dof;
+  int idx = 0;
+  int rmdof = row*m_dof;
 
-  for (Int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
+  for (int n=0, j=m_pia[rmdof+i]-1; j<=m_pia[rmdof+i+1]-2; j++, n++)
     if (column*m_dof+i+1 == m_pja[j]) {
       idx = n;
       j = m_pia[rmdof+i+1]-1;
@@ -266,8 +266,8 @@ SymCompRowMatrix::get(Int row, Int column, Int i)
   return m_pa[m_pia[rmdof+i]-1+idx];
 }
 
-Real
-SymCompRowMatrix::get(Int row, Int column)
+real
+SymCompRowMatrix::get(int row, int column)
 //******************************************************************************
 //  Get value from matrix from specified position using absolute indexing
 //! \param[in]  row     block row
@@ -276,9 +276,9 @@ SymCompRowMatrix::get(Int row, Int column)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Int idx = 0;
+  int idx = 0;
 
-  for (Int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
+  for (int n=0, j=m_pia[row]-1; j<=m_pia[row+1]-2; j++, n++)
     if (column+1 == m_pja[j]) {
       idx = n;
       j = m_pia[row+1]-1;
@@ -301,7 +301,7 @@ SymCompRowMatrix::echoAsStored(ostream& ofs)
   ofs << "dof   = " << m_dof << endl;
   ofs << "nnz   = " << m_nnz << endl;
 
-  Int i;
+  int i;
   ofs << "ia[] = { ";
   for (i=0; i<m_rsize; i++) ofs << m_pia[i];
   ofs << m_pia[i] << endl;
@@ -323,19 +323,19 @@ SymCompRowMatrix::echoNonzeroStructure(ostream& ofs)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  for (Int i=0; i<m_rsize; i++) {
-    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)  // leading zeros
+  for (int i=0; i<m_rsize; i++) {
+    for (int j=1; j<m_pja[m_pia[i]-1]; j++)  // leading zeros
        ofs << ". ";
 
-    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+    for (int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
       if (n>m_pia[i]-1) {  // zeros between nonzeros
-        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+        for (int j=m_pja[n-1]; j<m_pja[n]-1; j++)
            ofs << ". ";
       }
       ofs << "o ";  // nonzero
     }
 
-    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+    for (int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
        ofs << ". ";  // trailing zeros
 
     ofs << endl;
@@ -350,19 +350,19 @@ SymCompRowMatrix::echoAsMatrix(ostream& ofs)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  for (Int i=0; i<m_rsize; i++) {
-    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)
+  for (int i=0; i<m_rsize; i++) {
+    for (int j=1; j<m_pja[m_pia[i]-1]; j++)
        ofs << "0\t";
 
-    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+    for (int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
       if (n>m_pia[i]-1) {
-        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+        for (int j=m_pja[n-1]; j<m_pja[n]-1; j++)
           ofs << "0\t";
       }
       ofs << m_pa[n] << "\t";
     }
 
-    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+    for (int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
       ofs << "0\t";
 
     ofs << endl;
@@ -378,18 +378,18 @@ SymCompRowMatrix::echoAsMatlab(ostream& ofs)
 //******************************************************************************
 {
   ofs << "A = [ ";
-  for (Int i=0; i<m_rsize; i++) {
-    for (Int j=1; j<m_pja[m_pia[i]-1]; j++)
+  for (int i=0; i<m_rsize; i++) {
+    for (int j=1; j<m_pja[m_pia[i]-1]; j++)
        ofs << "0 ";
 
-    for (Int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
+    for (int n=m_pia[i]-1; n<m_pia[i+1]-1; n++) {
       if (n>m_pia[i]-1)
-        for (Int j=m_pja[n-1]; j<m_pja[n]-1; j++)
+        for (int j=m_pja[n-1]; j<m_pja[n]-1; j++)
           ofs << "0 ";
       ofs << m_pa[n] << " ";
     }
 
-    for (Int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
+    for (int j=m_pja[m_pia[i+1]-2]; j<m_rsize; j++)
       ofs << "0 ";
 
     ofs << ";" << endl;

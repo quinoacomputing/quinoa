@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 08:53:45 PM MDT
+  \date      Fri 19 Oct 2012 06:54:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -45,8 +45,8 @@ Memory::newEntry(size_t number,
                  ValType value,
                  VarType variable,
                  string name,
-                 Bool plot,
-                 Bool restart)
+                 bool plot,
+                 bool restart)
 //******************************************************************************
 //  Allocate memory entry
 //! \param[in]  number    Number of items to allocate
@@ -61,15 +61,15 @@ Memory::newEntry(size_t number,
 {
   assert(number > 0);
   assert(name.size() > 0);
-  assert(static_cast<Int>(value) >= 0 &&
-         static_cast<Int>(value) < NUM_VAL_TYPES);
-  assert(static_cast<Int>(variable) >= 0 &&
-         static_cast<Int>(variable) < NUM_VAR_TYPES);
+  assert(static_cast<int>(value) >= 0 &&
+         static_cast<int>(value) < NUM_VAL_TYPES);
+  assert(static_cast<int>(variable) >= 0 &&
+         static_cast<int>(variable) < NUM_VAR_TYPES);
 
   // Compute total number of bytes to be allocated
   size_t nbytes = number *
-                  VarComp[static_cast<Int>(variable)] *
-                  SizeOf[static_cast<Int>(value)];
+                  VarComp[static_cast<int>(variable)] *
+                  SizeOf[static_cast<int>(value)];
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
@@ -91,14 +91,14 @@ Memory::newEntry(size_t number,
   }
 
   // Store memory entry
-  pair<MemorySet::iterator,Bool> e = m_entry.insert(entry);
+  pair<MemorySet::iterator,bool> e = m_entry.insert(entry);
   if (!e.second) {
     if (entry) { delete entry; entry = nullptr; }
     throw MemoryException(FATAL, BAD_INSERT);
   }
 
   // Map variable name to MemorySet key
-  pair<MemoryNames::iterator,Bool> n = m_name.emplace(name,entry);
+  pair<MemoryNames::iterator,bool> n = m_name.emplace(name,entry);
   if (!n.second) {
     if (entry) { delete entry; entry = nullptr; }
     throw MemoryException(FATAL, BAD_INSERT);
@@ -117,8 +117,8 @@ Memory::newZeroEntry(size_t number,
                      ValType value,
                      VarType variable,
                      string name,
-                     Bool plot,
-                     Bool restart)
+                     bool plot,
+                     bool restart)
 //******************************************************************************
 //  Allocate and zero memory entry
 //! \param[in]  number    Number of items to allocate
@@ -189,17 +189,13 @@ Memory::freeAllEntries() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_entry.size()) {
-    // Deallocate memory entry pointed to by m_entry[*]
-    // This also automatically calls MemoryEntry::~MemoryEntry(), which
-    // deallocates the memory pointed to by MemoryEntry::m_ptr
-    for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
-      delete *it;
-    }
-    // Clear containers
-    m_name.clear();
-    m_entry.clear();
-  }
+  // Deallocate all memory entries
+  // This also automatically calls MemoryEntry::~MemoryEntry(), which
+  // deallocates the memory pointed to by MemoryEntry::m_ptr
+  for (MemoryEntry* e : m_entry) { delete e; }
+  // Clear containers
+  m_name.clear();
+  m_entry.clear();
 }
 
 void
@@ -536,7 +532,7 @@ Memory::getName(MemoryEntry* id)
   return (*it)->m_name;
 }
 
-Bool
+bool
 Memory::getPlot(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
@@ -560,7 +556,7 @@ Memory::getPlot(MemoryEntry* id)
   return (*it)->m_plot;
 }
 
-Bool
+bool
 Memory::getRestart(MemoryEntry* id)
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
@@ -625,10 +621,10 @@ Memory::getBytes()
     throw MemoryException(WARNING, EMPTY_STORE);
 
   size_t bytes = 0;
-  for (auto it=m_entry.begin(); it!=m_entry.end(); it++) {
+  for (MemoryEntry* e : m_entry) {
     bytes += sizeof(MemoryEntry) +
-               (*it)->m_number * VarComp[static_cast<Int>((*it)->m_variable)] *
-               SizeOf[static_cast<Int>((*it)->m_value)];
+               e->m_number * VarComp[static_cast<int>(e->m_variable)] *
+               SizeOf[static_cast<int>(e->m_value)];
   }
   return bytes;
 }
@@ -645,17 +641,17 @@ Memory::zero(MemoryEntry* id)
     throw MemoryException(WARNING, UNDEFINED);
 
   // Get size of value type
-  size_t size = SizeOf[static_cast<Int>(id->m_value)];
+  size_t size = SizeOf[static_cast<int>(id->m_value)];
 
   // Compute chunk size
-  Int i = id->m_number/m_nthreads;
+  int i = id->m_number/m_nthreads;
 
   // Zero remaining portion
   memset(static_cast<char*>(id->m_ptr) + m_nthreads*i*size,
          0,
          (id->m_number%m_nthreads)*size);
 
-  Int myid;
+  int myid;
   #ifdef _OPENMP
   #pragma omp parallel private(myid)
   #endif

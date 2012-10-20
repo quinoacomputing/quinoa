@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 07:28:46 PM MDT
+  \date      Fri 19 Oct 2012 04:16:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -24,27 +24,27 @@ class SymCompRowMatrix : SparseMatrix {
     //! Constructor
     SymCompRowMatrix(Memory* memory,
                      string name,
-                     Int size,
-                     Int dof,
-                     Int *psup1,
-                     Int* psup2);
+                     int size,
+                     int dof,
+                     int *psup1,
+                     int* psup2);
     //! Destructor
     ~SymCompRowMatrix();
 
     //! Add value to matrix in specified position using relative indexing
-    void add(Int row, Int column, Int i, Real value);
+    void add(int row, int column, int i, real value);
     //! Add value to matrix in specified position using absolute indexing
-    void add(Int row, Int column, Real value);
+    void add(int row, int column, real value);
 
     //! Insert value to matrix in specified position using relative indexing
-    void ins(Int row, Int column, Int i, Real value);
+    void ins(int row, int column, int i, real value);
     //! Insert value to matrix in specified position using absolute indexing
-    void ins(Int row, Int column, Real value);
+    void ins(int row, int column, real value);
 
     //! Get value from matrix from specified position using relative indexing
-    Real get(Int row, Int column, Int i);
+    real get(int row, int column, int i);
     //! Get value from matrix from specified position using absolute indexing
-    Real get(Int row, Int column);
+    real get(int row, int column);
 
     //! Print out matrix entries as stored
     void echoAsStored(ostream& ofs);
@@ -72,9 +72,9 @@ class SymCompRowMatrix : SparseMatrix {
     MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
     MemoryEntry* m_a;    //!< Nonzero values, vector size: nnz
 
-    Int* m_pia;  //!< Data pointer to row indices
-    Int* m_pja;  //!< Data pointer to column indices
-    Real* m_pa;  //!< Data pointer to matrix values
+    int* m_pia;  //!< Data pointer to row indices
+    int* m_pja;  //!< Data pointer to column indices
+    real* m_pa;  //!< Data pointer to matrix values
 };
 
 } // namespace Quinoa

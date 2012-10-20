@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Thu 11 Oct 2012 03:55:01 PM EDT
+  \date      Fri 19 Oct 2012 04:10:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -26,14 +26,14 @@ enum ValType { BOOL=0,        //!< Boolean value
                NUM_VAL_TYPES
 };
 //! Size of value types
-constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(Bool),
-                                           sizeof(Int),
-                                           sizeof(Real)
+constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(bool),
+                                           sizeof(int),
+                                           sizeof(real)
 };
 //! (Screen) names of value types
-const string ValName[NUM_VAL_TYPES] = { "Bool",
-                                        "Int",
-                                        "Real"
+const string ValName[NUM_VAL_TYPES] = { "bool",
+                                        "int",
+                                        "real"
 };
 
 //! Variable types
@@ -44,7 +44,7 @@ enum VarType { SCALAR=0,   //!< Scalar quantity
                NUM_VAR_TYPES
 };
 //! Variable components
-const Int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
+const int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
                                    3,  //!< Vector
                                    6,  //!< Symmetric tensor
                                    9   //!< Tensor
@@ -57,7 +57,7 @@ const string VarTypeName[NUM_VAR_TYPES] = { "scalar",
 };
 
 //! Output width of MemoryEntry fields
-const Int EntryWidth[] = { 10,  //! Width of Name field
+const int EntryWidth[] = { 10,  //! Width of Name field
                            10,  //! Width of Number field
                             5,  //! Width of Value field
                             9,  //! Width of Value size field
@@ -93,8 +93,8 @@ class MemoryEntry {
                 ValType value,
                 VarType variable,
                 string name,
-                Bool plot,
-                Bool restart,
+                bool plot,
+                bool restart,
                 void* ptr) :
       m_bytes(bytes),
       m_number(number),
@@ -127,8 +127,8 @@ class MemoryEntry {
     ValType m_value;          //!< Value type (BOOL, INT, etc.)
     VarType m_variable;       //!< Variable type (SCALAR, VECTOR, etc.)
     string m_name;            //!< Variable name
-    Bool m_plot;              //!< Variable can be plotted
-    Bool m_restart;           //!< Write to restart file
+    bool m_plot;              //!< Variable can be plotted
+    bool m_restart;           //!< Write to restart file
     void* m_ptr;              //!< Pointer to data
 };
 

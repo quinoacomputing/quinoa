@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 06:50:24 PM MDT
+  \date      Fri 19 Oct 2012 09:43:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -26,6 +26,7 @@
 #include <MeshException.h>
 #include <IOException.h>
 #include <MKLException.h>
+#include <PDF.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -34,30 +35,46 @@ int main(int argc, char* argv[]) {
 
   // query number of threads available
   #ifdef _OPENMP
-  Int nthreads = 1;//omp_get_max_threads();
+  int nthread = 1;//omp_get_max_threads();
   #else
-  Int nthreads = 1;
+  int nthread = 1;
   #endif
-  cout << "* Using number of OpenMP threads: " << nthreads << endl;
+  cout << "* Using number of OpenMP threads: " << nthread << endl;
 
-  Memory memStore(nthreads);   // arg: nthreads
+  Memory memStore(nthread);   // arg: nthread
   Driver driver(&memStore);
 
   ErrCode error = NO_ERROR;
   try {
 
+    //MemoryEntry* a = memStore.newEntry(10, INT, SCALAR, "_ja");
+
+    // Mesh
 //     UnsMesh mesh(&memStore);
 //     GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
 //     inMesh.read();
 //     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
 //     outMesh.write();
 
-    MKLRandom random(VSL_BRNG_MCG31, nthreads, 1, &memStore);
-    random.addTable(VSL_BRNG_MCG59, UNIFORM, VSL_RNG_METHOD_UNIFORM_STD,
-                    1000000, "Uniform");
-    random.addTable(VSL_BRNG_MCG59, GAUSSIAN, VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                    1000000, "Gaussian");
-    random.regenAllTables();
+    // Random
+    int num = 10000000;
+    MKLRandom random(nthread, &memStore);
+    MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
+                                     VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                                     1, num, "Gaussian");
+    //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, UNIFORM,
+    //                                 VSL_RNG_METHOD_UNIFORM_STD,
+    //                                 1, num, "Uniform");
+    //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAMMA,
+    //                                 VSL_RNG_METHOD_GAMMA_GNORM,
+    //                                 1, num, "Gamma");
+    random.regenTables();
+
+    // PDF
+    const real* rnd = random.getRnd(t);
+    PDF pdf(0.05);
+    for (int i=0; i<num; ++i) pdf.insert(rnd[i]);
+    pdf.save("pdf");
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:44:58 AM MDT
+  \date      Fri 19 Oct 2012 04:41:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -36,7 +36,7 @@ class Memory {
 
   public:
     //! Constructor
-    Memory(Int nthreads) : m_nthreads(nthreads) {}
+    Memory(int nthreads) : m_nthreads(nthreads) {}
 
     //! Destructor
     ~Memory();
@@ -46,16 +46,16 @@ class Memory {
                           ValType value,
                           VarType variable,
                           string name,
-                          Bool plot = false,
-                          Bool restart = false);
+                          bool plot = false,
+                          bool restart = false);
 
     //! Allocate and zero memory entry
     MemoryEntry* newZeroEntry(size_t number,
                               ValType value,
                               VarType variable,
                               string name,
-                              Bool plot = false,
-                              Bool restart = false);
+                              bool plot = false,
+                              bool restart = false);
 
     //! Deallocate a memory entry
     void freeEntry(MemoryEntry* id);
@@ -82,10 +82,10 @@ class Memory {
     string getName(MemoryEntry* id);
 
     //! Return true if the variable can be plotted based on the ID
-    Bool getPlot(MemoryEntry* id);
+    bool getPlot(MemoryEntry* id);
 
     //! Return true if the variable is written to restart file based on the ID
-    Bool getRestart(MemoryEntry* id);
+    bool getRestart(MemoryEntry* id);
 
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
@@ -139,7 +139,7 @@ class Memory {
     void echoByPlot();     //!< Echo entries sorted by Plot
     void echoByRestart();  //!< Echo entries sorted by Restart
 
-    Int m_nthreads;        //!< Local copy of the number of threads
+    int m_nthreads;        //!< Local copy of the number of threads
     MemorySet m_entry;     //!< Memory entries
     MemoryNames m_name;    //!< Memory entry names mapped to MemorySet keys
 };

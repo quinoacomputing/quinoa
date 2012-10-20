@@ -14,7 +14,10 @@ add_library(Random
             Random.C
             RandomException.C
             MKLException.C
+            MKLCall.C
             MKLRandom.C
+            MKLRndStream.C
+            MKLRndTable.C
 )
 
 INSTALL(TARGETS Random

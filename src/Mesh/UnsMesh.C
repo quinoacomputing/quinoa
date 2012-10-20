@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sun 14 Oct 2012 10:31:09 AM MDT
+  \date      Fri 19 Oct 2012 04:18:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -56,7 +56,7 @@ UnsMesh::~UnsMesh()
 }
 
 void
-UnsMesh::alloc(const Int nnodes, const Int nlines, const Int ntriangles)
+UnsMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 //******************************************************************************
 //  Allocate memory to read mesh in
 //! \author J. Bakosi
@@ -79,7 +79,7 @@ UnsMesh::alloc(const Int nnodes, const Int nlines, const Int ntriangles)
 }
 
 void
-UnsMesh::reserveElem(const Int nlines, const Int ntriangles)
+UnsMesh::reserveElem(const int nlines, const int ntriangles)
 //******************************************************************************
 //  Reserve capacity to store element connectivities and tags
 //! \author J. Bakosi
@@ -102,11 +102,11 @@ UnsMesh::echoElemSets() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  typedef vector<vector<Int>>::size_type ST;
+  typedef vector<vector<int>>::size_type ST;
 
   // Get pointers to the element ids
-  Int* linId = getLineId();
-  Int* triId = getTriangleId();
+  int* linId = getLineId();
+  int* triId = getTriangleId();
 
   // Echo all lines
   cout << "* Lines: " << endl;
@@ -116,11 +116,11 @@ UnsMesh::echoElemSets() const
     cout << "  " << linId[i] << " " << 1 << " {";
 
     copy(m_lintag[i].begin(), m_lintag[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
+         ostream_iterator<int>(cout,", "));
     cout << m_lintag[i].back() << "} {";
 
     copy(m_linpoel[i].begin(), m_linpoel[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
+         ostream_iterator<int>(cout,", "));
     cout << m_linpoel[i].back() << "}" << endl;
   }
 
@@ -132,11 +132,11 @@ UnsMesh::echoElemSets() const
     cout << "  " << triId[i] << " " << 2 << " {";
 
     copy(m_tritag[i].begin(), m_tritag[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
+         ostream_iterator<int>(cout,", "));
     cout << m_tritag[i].back() << "} {";
 
     copy(m_tinpoel[i].begin(), m_tinpoel[i].end()-1,
-         ostream_iterator<Int>(cout,", "));
+         ostream_iterator<int>(cout,", "));
     cout << m_tinpoel[i].back() << "}" << endl;
   }
 }
