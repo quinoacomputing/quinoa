@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 09:43:33 PM MDT
+  \date      Fri 19 Oct 2012 10:44:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -27,6 +27,7 @@
 #include <IOException.h>
 #include <MKLException.h>
 #include <PDF.h>
+#include <PDFWriter.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -47,14 +48,15 @@ int main(int argc, char* argv[]) {
   ErrCode error = NO_ERROR;
   try {
 
+    // Memory
     //MemoryEntry* a = memStore.newEntry(10, INT, SCALAR, "_ja");
 
     // Mesh
-//     UnsMesh mesh(&memStore);
-//     GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
-//     inMesh.read();
-//     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-//     outMesh.write();
+    //UnsMesh mesh(&memStore);
+    //GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
+    //inMesh.read();
+    //GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
+    //outMesh.write();
 
     // Random
     int num = 10000000;
@@ -72,9 +74,10 @@ int main(int argc, char* argv[]) {
 
     // PDF
     const real* rnd = random.getRnd(t);
-    PDF pdf(0.05);
+    PDF pdf(0.1);       // binsize
     for (int i=0; i<num; ++i) pdf.insert(rnd[i]);
-    pdf.save("pdf");
+    PDFWriter pw("pdf");
+    pw.write(&pdf);
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

@@ -9,6 +9,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/IO
+                    ${QUINOA_SOURCE_DIR}/Statistics
 )
 
 add_library(IO
@@ -19,6 +20,7 @@ add_library(IO
             GmshTxtMeshReader.C
             GmshTxtMeshWriter.C
             GmshTxtPlotWriter.C
+            PDFWriter.C
 )
 
 INSTALL(TARGETS IO

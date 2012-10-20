@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLCall.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:33:16 PM MDT
+  \date      Fri 19 Oct 2012 10:50:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -14,8 +14,6 @@
 #include <mkl_vsl.h>
 
 #include <QuinoaTypes.h>
-
-using namespace std;
 
 namespace Quinoa {
 

@@ -9,13 +9,13 @@ add_definitions()
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
-#                    ${QUINOA_SOURCE_DIR}/FEM
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Statistics
+#                    ${QUINOA_SOURCE_DIR}/FEM
 #                    ${QUINOA_SOURCE_DIR}/Particles
 #                    ${QUINOA_SOURCE_DIR}/SDE
 #                    ${QUINOA_SOURCE_DIR}/WallTreatment
@@ -31,7 +31,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Mesh
                       Random
-                      Statistics
+#                      Statistics
 #                      FEM
 #                      Particles
 #                      SDE
