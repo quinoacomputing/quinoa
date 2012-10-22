@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 20 Oct 2012 10:44:42 AM MDT
+  \date      Sun 21 Oct 2012 09:30:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -264,8 +264,8 @@ Memory::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  transform(m_entry.begin(), m_entry.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(m_entry.begin(), m_entry.end(),
+           [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -282,12 +282,11 @@ Memory::echoByBytes()
   // Sort vector of memory entries by their Bytes
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_bytes > b->m_bytes;
-          });
+         return a->m_bytes > b->m_bytes;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -304,12 +303,11 @@ Memory::echoByNumber()
   // Sort vector of memory entries by their Number
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_number > b->m_number;
-          });
+         return a->m_number > b->m_number;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 
@@ -327,12 +325,11 @@ Memory::echoByValue()
   // Sort vector of memory entries by their Value
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_value < b->m_value;
-          });
+         return a->m_value < b->m_value;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -349,12 +346,11 @@ Memory::echoByVariable()
   // Sort vector of memory entries by their Variable
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_variable < b->m_variable;
-          });
+         return a->m_variable < b->m_variable;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -371,12 +367,11 @@ Memory::echoByName()
   // Sort vector of memory entries by their Name
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_name < b->m_name;
-          });
+         return a->m_name < b->m_name;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -393,12 +388,11 @@ Memory::echoByPlot()
   // Sort vector of memory entries by their Plot
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_plot < b->m_plot;
-          });
+         return a->m_plot < b->m_plot;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 void
@@ -415,12 +409,11 @@ Memory::echoByRestart()
   // Sort vector of memory entries by their Restart
   sort(srt.begin(), srt.end(),
        [] (const MemoryEntry* a, const MemoryEntry* b) {
-             return a->m_restart < b->m_restart;
-          });
+         return a->m_restart < b->m_restart;
+       });
 
   // Echo ordered entries
-  transform(srt.begin(), srt.end(),
-            ostream_iterator<string>(cout), mem_fun(&MemoryEntry::line));
+  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
 }
 
 size_t
