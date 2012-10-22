@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 21 Oct 2012 09:30:00 PM MDT
+  \date      Sun 21 Oct 2012 09:39:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -264,8 +264,7 @@ Memory::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  for_each(m_entry.begin(), m_entry.end(),
-           [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : m_entry) cout << e->line();
 }
 
 void
@@ -286,7 +285,7 @@ Memory::echoByBytes()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 void
@@ -307,7 +306,7 @@ Memory::echoByNumber()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 
@@ -329,7 +328,7 @@ Memory::echoByValue()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 void
@@ -350,7 +349,7 @@ Memory::echoByVariable()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 void
@@ -371,7 +370,7 @@ Memory::echoByName()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 void
@@ -392,7 +391,7 @@ Memory::echoByPlot()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 void
@@ -413,7 +412,7 @@ Memory::echoByRestart()
        });
 
   // Echo ordered entries
-  for_each(srt.begin(), srt.end(), [](MemoryEntry* e) {cout << e->line();} );
+  for (auto* e : srt) cout << e->line();
 }
 
 size_t
