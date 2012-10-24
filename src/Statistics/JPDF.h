@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Wed 24 Oct 2012 06:16:55 AM MDT
+  \date      Wed Oct 24 08:08:12 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -67,10 +67,12 @@ class JPDF {
       }
     };
 
-    //! Joint PDF as unordered_map: bin ids as key, counter as mapped value
+    //! Joint PDF as unordered_map: key: bin ids,
+    //                              mapped value: sample counter,
+    //                              hasher: XORed hash of all bin ids
     using Pdf = unordered_map<key_type,real,key_hash>;
 
-    key_type m_key;         //! Temporary key for finding the sample space bin
+    key_type m_key;         //!< Temporary key for finding the sample space bin
     const int m_dim;        //!< Sample space dimension
     const real m_binsize;   //!< Sample space bin size
     int m_nsample;          //!< Number of samples collected
