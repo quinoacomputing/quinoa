@@ -31,7 +31,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Mesh
                       Random
-#                      Statistics
+                      Statistics
 #                      FEM
 #                      Particles
 #                      SDE

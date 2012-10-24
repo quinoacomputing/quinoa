@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 21 Oct 2012 09:35:40 PM MDT
+  \date      Wed 24 Oct 2012 05:37:48 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -26,7 +26,7 @@
 #include <MeshException.h>
 #include <IOException.h>
 #include <MKLException.h>
-#include <PDF.h>
+#include <JPDF.h>
 #include <PDFWriter.h>
 
 using namespace std;
@@ -59,25 +59,32 @@ int main(int argc, char* argv[]) {
     outMesh.write();
 
     // Random
-    int num = 10000000;
+    int num = 100000;
     MKLRandom random(nthread, &memStore);
-    MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
-                                     VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                                     1, num, "Gaussian");
-    //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, UNIFORM,
-    //                                 VSL_RNG_METHOD_UNIFORM_STD,
-    //                                 1, num, "Uniform");
+    MKLRndTable* tg = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
+                                      VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                                      1, num, "Gaussian");
+    MKLRndTable* tu = random.addTable(VSL_BRNG_MCG59, UNIFORM,
+                                      VSL_RNG_METHOD_UNIFORM_STD,
+                                      1, num, "Uniform");
     //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAMMA,
     //                                 VSL_RNG_METHOD_GAMMA_GNORM,
     //                                 1, num, "Gamma");
     random.regenTables();
 
     // PDF
-    const real* rnd = random.getRnd(t);
-    PDF pdf(0.1);       // binsize
-    for (int i=0; i<num; ++i) pdf.insert(rnd[i]);
+    const real* rndg = random.getRnd(tg);
+    const real* rndu = random.getRnd(tu);
+    JPDF pdf(2,0.1);
+    for (int i=0; i<num; ++i) {
+      vector<real> v;
+      v.push_back(rndg[i]);
+      v.push_back(rndu[i]);
+      v.push_back(rndu[i]);
+      pdf.insert(v);
+    }
     PDFWriter pw("pdf");
-    pw.write(&pdf);
+    //pw.write(&pdf);
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

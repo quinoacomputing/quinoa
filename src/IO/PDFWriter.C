@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sat 20 Oct 2012 10:43:15 AM MDT
+  \date      Wed 24 Oct 2012 05:38:14 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -40,17 +40,17 @@ PDFWriter::~PDFWriter()
     cerr << "WARNING: Failed to close file: " << m_filename << endl;
 }
 
-void
-PDFWriter::write(const PDF* pdf)
-//******************************************************************************
-//  Write out standardized PDF to file
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  const Pdf* f = pdf->getPDF();
-  const real binsize = pdf->getBinsize();
-  const real sp = pdf->getNsample()*binsize;
-  for (auto& p : *f) {
-    m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
-  }
-}
+// void
+// PDFWriter::write(const PDF* pdf)
+// //******************************************************************************
+// //  Write out standardized PDF to file
+// //! \author  J. Bakosi
+// //******************************************************************************
+// {
+//   const Pdf* f = pdf->getPDF();
+//   const real binsize = pdf->getBinsize();
+//   const real sp = pdf->getNsample()*binsize;
+//   for (auto& p : *f) {
+//     m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
+//   }
+// }

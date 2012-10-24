@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:40:54 PM MDT
+  \date      Wed 24 Oct 2012 05:38:06 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -31,7 +31,7 @@ class PDFWriter {
     ~PDFWriter();
 
     //! Write PDF to file
-    void write(const PDF* pdf);
+    //void write(const PDF* pdf);
 
     //! PDF file name
     const string m_filename;
