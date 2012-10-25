@@ -2,16 +2,15 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Wed Oct 24 08:08:12 2012
+  \date      Thu 25 Oct 2012 06:34:48 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
 */
 //******************************************************************************
-#ifndef PDF_h
-#define PDF_h
+#ifndef JPDF_h
+#define JPDF_h
 
-#include <cassert>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
@@ -22,25 +21,27 @@ using namespace std;
 
 namespace Quinoa {
 
-//! JPDF estimator
+//! Joint PDF estimator
 class JPDF {
 
   public:
     //! Constructor: Initialize joint PDF container
     JPDF(const real dim, const real binsize);
 
-    //! Destructor: Clear PDF container
+    //! Destructor: Clear joint PDF container
     ~JPDF();
 
-    //! Insert new value into PDF
+    //! Insert new value into joint PDF
     void insert(const vector<real>& value);
 
     //! Constant accessor to PDF
     //! \param[out] Pointer to Pdf
     //const Pdf* getPDF() const { return &m_pdf; }
+
     //! Constant accessor to binsize
     //! \param[out] Sample space bin size
     const real& getBinsize() const { return m_binsize; }
+
     //! Constant accessor to number of samples
     //! \param[out] Number of samples collected
     const int& getNsample() const { return m_nsample; }
@@ -81,4 +82,4 @@ class JPDF {
 
 } // namespace Quinoa
 
-#endif // PDF_h
+#endif // JPDF_h

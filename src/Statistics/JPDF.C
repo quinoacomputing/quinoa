@@ -2,12 +2,15 @@
 /*!
   \file      src/Statistics/JPD.C
   \author    J. Bakosi
-  \date      Wed Oct 24 08:11:24 2012
+  \date      Thu 25 Oct 2012 06:07:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
 */
 //******************************************************************************
+
+#include <cassert>
+#include <iostream>
 
 #include <JPDF.h>
 
@@ -23,7 +26,7 @@ JPDF::JPDF(const real dim, const real binsize) :
 //******************************************************************************
 {
   // Grow temporary key vector size in advance
-  m_key.reserve(dim);
+  m_key.resize(dim);
 }
 
 JPDF::~JPDF()
@@ -45,11 +48,14 @@ JPDF::insert(const vector<real>& value)
 {
   // Make sure sample has the same dimension as the joint PDF
   assert(value.size() == m_key.size());
+
   // Find bin ids in all dimensions
   transform(value.begin(), value.end(), m_key.begin(),
             [&](const int& v)->int { return floor(v/m_binsize+0.5); } );
+
   // Increase number of samples in joint PDF
   ++m_nsample;
+
   // Add sample to joint PDF
   ++m_pdf[m_key];
 }

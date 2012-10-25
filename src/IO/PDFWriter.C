@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 24 Oct 2012 05:38:14 AM MDT
+  \date      Thu 25 Oct 2012 06:39:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     PDF writer
-  \details   PDF writer
+  \brief     Univariate PDF writer
+  \details   Univariate PDF writer
 */
 //******************************************************************************
 
@@ -20,6 +20,7 @@ using namespace Quinoa;
 PDFWriter::PDFWriter(const string filename) : m_filename(filename)
 //******************************************************************************
 //  Constructor: Acquire PDF file handle
+//! \param[in]  filename  File name to open for writing
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -35,22 +36,21 @@ PDFWriter::~PDFWriter()
 {
   m_outPDF.close();
   // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
+  // a warning, thus we avoid terminate if an exception is propagating through
   if (m_outPDF.fail())
     cerr << "WARNING: Failed to close file: " << m_filename << endl;
 }
 
-// void
-// PDFWriter::write(const PDF* pdf)
-// //******************************************************************************
-// //  Write out standardized PDF to file
-// //! \author  J. Bakosi
-// //******************************************************************************
-// {
-//   const Pdf* f = pdf->getPDF();
-//   const real binsize = pdf->getBinsize();
-//   const real sp = pdf->getNsample()*binsize;
-//   for (auto& p : *f) {
-//     m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
-//   }
-// }
+void
+PDFWriter::write(const PDF* pdf)
+//******************************************************************************
+//  Write out standardized PDF to file
+//! \param[in]  pdf  Object pointer to univariate PDF
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto f = pdf->getMap();
+  const real binsize = pdf->getBinsize();
+  const real sp = pdf->getNsample()*binsize;
+  for (auto& p : *f) m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
+}
