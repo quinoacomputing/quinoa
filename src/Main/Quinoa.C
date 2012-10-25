@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 24 Oct 2012 05:37:48 AM MDT
+  \date      Thu 25 Oct 2012 06:37:16 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -26,6 +26,7 @@
 #include <MeshException.h>
 #include <IOException.h>
 #include <MKLException.h>
+#include <PDF.h>
 #include <JPDF.h>
 #include <PDFWriter.h>
 
@@ -59,7 +60,7 @@ int main(int argc, char* argv[]) {
     outMesh.write();
 
     // Random
-    int num = 100000;
+    int num = 1000000;
     MKLRandom random(nthread, &memStore);
     MKLRndTable* tg = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
                                       VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
@@ -75,16 +76,17 @@ int main(int argc, char* argv[]) {
     // PDF
     const real* rndg = random.getRnd(tg);
     const real* rndu = random.getRnd(tu);
-    JPDF pdf(2,0.1);
+    PDF pdf(0.1);
+    JPDF jpdf(2,0.1);
     for (int i=0; i<num; ++i) {
-      vector<real> v;
-      v.push_back(rndg[i]);
-      v.push_back(rndu[i]);
-      v.push_back(rndu[i]);
-      pdf.insert(v);
+      pdf.insert(rndg[i]);
+      vector<real> v(2,0);
+      v[0] = rndg[i];
+      v[1] = rndu[i];
+      jpdf.insert(v);
     }
-    PDFWriter pw("pdf");
-    //pw.write(&pdf);
+    PDFWriter pw("../../tmp/pdf");
+    pw.write(&pdf);
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;
