@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 07:23:28 PM MDT
+  \date      Sat 27 Oct 2012 11:40:28 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -23,7 +23,8 @@ namespace Quinoa {
 enum MeshExceptType { BAD_FORMAT=0,   //!< unsupported Gmsh mesh format
                       BAD_ELEMENT,    //!< unknown element type
                       EMPTY_SET,      //!< no element/node sets
-                      UNIMPLEMENTED,  //!< mesh file section unimplemented
+                                      //! mesh file section unimplemented
+                      MESHEXCEPT_UNIMPLEMENTED,
                       NUM_MESH_EXCEPT
 };
 

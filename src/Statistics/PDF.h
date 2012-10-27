@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Thu 25 Oct 2012 06:26:38 AM MDT
+  \date      Sat 27 Oct 2012 11:45:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -15,22 +15,24 @@
 #include <unordered_map>
 
 #include <QuinoaTypes.h>
+#include <Distribution.h>
+#include <StatException.h>
 
 using namespace std;
 
 namespace Quinoa {
 
 //! Univariate PDF estimator
-class PDF {
+class PDF : Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
-    //                                   mapped value: sample counter
+    //!                                  mapped value: sample counter
     using Pdf = unordered_map<int,real>;
 
   public:
     //! Constructor: Initialize univariate PDF container
     //! \param[in]   binsize    Sample space bin size
-    PDF(const real& binsize) : m_binsize(binsize), m_nsample(0) {}
+    PDF(const real& binsize) : m_binsize(binsize) {}
 
     //! Destructor: Clear univariate PDF container
     ~PDF() { m_pdf.clear(); }
@@ -40,6 +42,10 @@ class PDF {
     void insert(const real& value) {
       ++m_nsample;
       ++m_pdf[floor(value/m_binsize+0.5)];
+    }
+    //! Throw exception if vector sample is given
+    void insert(const vector<real>& value) {
+      throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
     }
 
     //! Constant accessor to PDF map
@@ -65,7 +71,6 @@ class PDF {
     PDF& operator=(PDF&&) = delete;
 
     const real m_binsize;   //!< Sample space bin size
-    int m_nsample;          //!< Number of samples collected
     Pdf m_pdf;              //!< Probability density function
 };
 

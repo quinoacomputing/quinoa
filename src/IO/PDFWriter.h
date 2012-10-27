@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu 25 Oct 2012 06:13:46 AM MDT
+  \date      Sat 27 Oct 2012 02:23:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -15,6 +15,7 @@
 #include <fstream>
 
 #include <PDF.h>
+#include <JPDF.h>
 
 using namespace std;
 
@@ -32,6 +33,9 @@ class PDFWriter {
 
     //! Write PDF to file
     void write(const PDF* pdf);
+
+    //! Write joint PDF to file
+    void write(const JPDF* jpdf);
 
     //! PDF file name
     const string m_filename;

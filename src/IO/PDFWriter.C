@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu 25 Oct 2012 06:39:26 AM MDT
+  \date      Sat 27 Oct 2012 03:25:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -53,4 +53,21 @@ PDFWriter::write(const PDF* pdf)
   const real binsize = pdf->getBinsize();
   const real sp = pdf->getNsample()*binsize;
   for (auto& p : *f) m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
+}
+
+void
+PDFWriter::write(const JPDF* jpdf)
+//******************************************************************************
+//  Write out standardized joint PDF to file
+//! \param[in]  jpdf  Object pointer to joint PDF
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto f = jpdf->getMap();
+  real binsize = jpdf->getBinsize();
+  const real sp = jpdf->getNsample()*binsize*binsize;
+  for (auto& p : *f) {
+    m_outPDF << p.first[0]*binsize << " " << p.first[1]*binsize
+             << " " << p.second/sp << endl;
+  }
 }

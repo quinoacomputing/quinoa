@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:48:15 PM MDT
+  \date      Sat 27 Oct 2012 11:13:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -19,10 +19,10 @@
 namespace Quinoa {
 
 //! Probability distributions for sampling into tables
-enum Distribution { UNIFORM=0,        //!< Uniform
-                    GAUSSIAN,         //!< Gaussian
-                    GAMMA,            //!< Gamma
-                    NUM_DIST_TYPES
+enum RndDist { UNIFORM=0,        //!< Uniform
+               GAUSSIAN,         //!< Gaussian
+               GAMMA,            //!< Gamma
+               NUM_DIST_TYPES
 };
 
 //! Constants for sampling the uniform distribution in tables
@@ -48,7 +48,7 @@ class MKLRndTable : MKLCall {
     MKLRndTable(Memory* memory,
                 const int nthread,
                 const int brng,
-                const Distribution dist,
+                const RndDist dist,
                 const int method,
                 const unsigned int seed,
                 const long long int number,
@@ -75,7 +75,7 @@ class MKLRndTable : MKLCall {
 
     Memory* m_memory;                //!< Memory object pointer
     const int m_nthread;             //!< Number of threads to use
-    const Distribution m_dist;       //!< Distribution (UNIFORM, GAUSSIAN, etc.)
+    const RndDist m_dist;            //!< RndDist (UNIFORM, GAUSSIAN, etc.)
     const int m_method;              //!< Generation method (dist. specific)
     const long long int m_chunk;     //!< Number of numbers generated per thread
     const long long int m_remainder; //!< Leftover
