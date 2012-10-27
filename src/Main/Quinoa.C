@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 25 Oct 2012 06:37:16 AM MDT
+  \date      Sat 27 Oct 2012 03:28:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 
   // query number of threads available
   #ifdef _OPENMP
-  int nthread = 1;//omp_get_max_threads();
+  int nthread = omp_get_max_threads();
   #else
   int nthread = 1;
   #endif
@@ -65,9 +65,9 @@ int main(int argc, char* argv[]) {
     MKLRndTable* tg = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
                                       VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
                                       1, num, "Gaussian");
-    MKLRndTable* tu = random.addTable(VSL_BRNG_MCG59, UNIFORM,
-                                      VSL_RNG_METHOD_UNIFORM_STD,
-                                      1, num, "Uniform");
+    MKLRndTable* tu = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
+                                      VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                                      num, num, "Gaussian2");
     //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAMMA,
     //                                 VSL_RNG_METHOD_GAMMA_GNORM,
     //                                 1, num, "Gamma");
@@ -86,7 +86,9 @@ int main(int argc, char* argv[]) {
       jpdf.insert(v);
     }
     PDFWriter pw("../../tmp/pdf");
+    PDFWriter jpw("../../tmp/jpdf");
     pw.write(&pdf);
+    jpw.write(&jpdf);
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

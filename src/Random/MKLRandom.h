@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 07:40:27 PM MDT
+  \date      Sat 27 Oct 2012 11:14:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -34,7 +34,7 @@ class MKLRandom : Random {
 
     //! Add random table
     MKLRndTable* addTable(const int brng,
-                          const Distribution dist,
+                          const RndDist dist,
                           const int method,
                           const unsigned int seed,
                           const long long int number,

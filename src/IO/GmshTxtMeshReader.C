@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:15:05 PM MDT
+  \date      Sat 27 Oct 2012 11:40:58 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -322,7 +322,7 @@ GmshTxtMeshReader::countPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw MeshException(WARNING, UNIMPLEMENTED,
+  throw MeshException(WARNING, MESHEXCEPT_UNIMPLEMENTED,
                       "$PhysicalNames--$EndPhysicalNames");
 }
 
@@ -333,7 +333,7 @@ GmshTxtMeshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw MeshException(WARNING, UNIMPLEMENTED,
+  throw MeshException(WARNING, MESHEXCEPT_UNIMPLEMENTED,
                       "$PhysicalNames--$EndPhysicalNames");
 }
 

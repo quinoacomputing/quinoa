@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Thu 25 Oct 2012 06:34:48 AM MDT
+  \date      Sat 27 Oct 2012 02:23:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -16,46 +16,17 @@
 #include <algorithm>
 
 #include <QuinoaTypes.h>
+#include <Distribution.h>
+#include <StatException.h>
 
 using namespace std;
 
 namespace Quinoa {
 
 //! Joint PDF estimator
-class JPDF {
-
-  public:
-    //! Constructor: Initialize joint PDF container
-    JPDF(const real dim, const real binsize);
-
-    //! Destructor: Clear joint PDF container
-    ~JPDF();
-
-    //! Insert new value into joint PDF
-    void insert(const vector<real>& value);
-
-    //! Constant accessor to PDF
-    //! \param[out] Pointer to Pdf
-    //const Pdf* getPDF() const { return &m_pdf; }
-
-    //! Constant accessor to binsize
-    //! \param[out] Sample space bin size
-    const real& getBinsize() const { return m_binsize; }
-
-    //! Constant accessor to number of samples
-    //! \param[out] Number of samples collected
-    const int& getNsample() const { return m_nsample; }
+class JPDF : Distribution {
 
   private:
-    //! Don't permit copy constructor
-    JPDF(const JPDF&) = delete;
-    //! Don't permit copy assigment
-    JPDF& operator=(const JPDF&) = delete;
-    //! Don't permit move constructor
-    JPDF(JPDF&&) = delete;
-    //! Don't permit move assigment
-    JPDF& operator=(JPDF&&) = delete;
-
     //! Key type
     using key_type = vector<int>;
 
@@ -73,10 +44,45 @@ class JPDF {
     //                              hasher: XORed hash of all bin ids
     using Pdf = unordered_map<key_type,real,key_hash>;
 
+  public:
+    //! Constructor: Initialize joint PDF container
+    JPDF(const real dim, const real binsize);
+
+    //! Destructor: Clear joint PDF container
+    ~JPDF();
+
+    //! Throw exception if scalar sample is given
+    void insert(const real& value) {
+      throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
+    }
+    //! Insert new value into joint PDF
+    void insert(const vector<real>& value);
+
+    //! Constant accessor to number of samples
+    //! \return Number of samples collected
+    const int& getNsample() const { return m_nsample; }
+
+    //! Constant accessor to PDF map
+    //! \return Pointer to map
+    const Pdf* getMap() const { return &m_pdf; }
+
+    //! Constant accessor to binsize
+    //! \return Sample space bin size
+    const real& getBinsize() const { return m_binsize; }
+
+  private:
+    //! Don't permit copy constructor
+    JPDF(const JPDF&) = delete;
+    //! Don't permit copy assigment
+    JPDF& operator=(const JPDF&) = delete;
+    //! Don't permit move constructor
+    JPDF(JPDF&&) = delete;
+    //! Don't permit move assigment
+    JPDF& operator=(JPDF&&) = delete;
+
     key_type m_key;         //!< Temporary key for finding the sample space bin
     const int m_dim;        //!< Sample space dimension
     const real m_binsize;   //!< Sample space bin size
-    int m_nsample;          //!< Number of samples collected
     Pdf m_pdf;              //!< Probability density function
 };
 

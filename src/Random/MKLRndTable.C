@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 07:18:27 PM MDT
+  \date      Sat 27 Oct 2012 03:08:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -20,7 +20,7 @@ using namespace Quinoa;
 MKLRndTable::MKLRndTable(Memory* memory,
                          const int nthread,
                          const int brng,
-                         const Distribution dist,
+                         const RndDist dist,
                          const int method,
                          const unsigned int seed,
                          const long long int number,
@@ -102,7 +102,7 @@ MKLRndTable::generate()
   switch (m_dist) {
     case UNIFORM:
       #ifdef _OPENMP
-      //#pragma omp parallel for
+      #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
         uniform(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
@@ -113,7 +113,7 @@ MKLRndTable::generate()
       break;
     case GAUSSIAN:
       #ifdef _OPENMP
-      //#pragma omp parallel for
+      #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
         gaussian(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
@@ -124,7 +124,7 @@ MKLRndTable::generate()
       break;
     case GAMMA:
       #ifdef _OPENMP
-      //#pragma omp parallel for
+      #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
         gamma(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
