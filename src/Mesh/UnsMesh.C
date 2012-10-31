@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:18:07 PM MDT
+  \date      Wed 31 Oct 2012 06:00:08 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -102,7 +102,7 @@ UnsMesh::echoElemSets() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  typedef vector<vector<int>>::size_type ST;
+  using ST = vector<vector<int>>::size_type;
 
   // Get pointers to the element ids
   int* linId = getLineId();

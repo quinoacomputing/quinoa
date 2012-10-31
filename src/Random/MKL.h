@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLCall.h
+  \file      src/Random/MKLC.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:50:17 PM MDT
+  \date      Wed 31 Oct 2012 05:57:10 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
 */
 //******************************************************************************
-#ifndef MKLCall_h
-#define MKLCall_h
+#ifndef MKL_h
+#define MKL_h
 
 #include <mkl_vsl.h>
 
@@ -18,14 +18,14 @@
 namespace Quinoa {
 
 //! MKL-call wrappers with error handling
-class MKLCall {
+class MKL {
 
   public:
     //! Constructor: Default, compiler-generated
-    MKLCall() = default;
+    MKL() = default;
 
     //! Destructor: Default, compiler-generated
-    ~MKLCall() = default;
+    ~MKL() = default;
 
     //! Call MKL's vdRngUniform() and handle error
     void uniform(const int& method,
@@ -73,15 +73,15 @@ class MKLCall {
 
   private:
     //! Don't permit copy constructor
-    MKLCall(const MKLCall&) = delete;
+    MKL(const MKL&) = delete;
     //! Don't permit copy assigment
-    MKLCall& operator=(const MKLCall&) = delete;
+    MKL& operator=(const MKL&) = delete;
     //! Don't permit move constructor
-    MKLCall(MKLCall&&) = delete;
+    MKL(MKL&&) = delete;
     //! Don't permit move assigment
-    MKLCall& operator=(MKLCall&&) = delete;
+    MKL& operator=(MKL&&) = delete;
 };
 
 } // namespace Quinoa
 
-#endif // MKLCall_h
+#endif // MKL_h
