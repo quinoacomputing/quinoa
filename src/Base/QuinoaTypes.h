@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaTypes.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:08:37 PM MDT
+  \date      Wed 31 Oct 2012 06:00:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Code-global type definitions
   \details   Code-global type definitions
@@ -13,7 +13,7 @@
 
 namespace Quinoa {
 
-typedef double real;
+using real = double;
 
 } // namespace Quinoa
 

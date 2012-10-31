@@ -2,11 +2,11 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:13:26 AM MDT
+  \date      Wed 31 Oct 2012 06:07:33 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
-  \details   Tables are used to generate a fix number of fixed property random
-             numbers by several threads using block-splitting.
+  \details   Tables are used to generate a fixed large number of fixed property
+             random numbers by several threads using block-splitting.
 */
 //******************************************************************************
 #ifndef MKLRndTable_h
@@ -14,7 +14,7 @@
 
 #include <QuinoaTypes.h>
 #include <Memory.h>
-#include <MKLCall.h>
+#include <MKL.h>
 
 namespace Quinoa {
 
@@ -40,11 +40,11 @@ const real GAMMA_SHAPE = GAMMA_MEAN * GAMMA_MEAN / GAMMA_VAR;
 const real GAMMA_DISPLACEMENT = 0.0;
 const real GAMMA_SCALE = GAMMA_VAR / GAMMA_MEAN;
 
-//! MKLRndTable
-class MKLRndTable : MKLCall {
+//! MKL-based random number generator into tables using block-splitting
+class MKLRndTable : MKL {
 
   public:
-    //! Constructor: Create random number table
+    //! Constructor: Create random number skip-ahead table
     MKLRndTable(Memory* memory,
                 const int nthread,
                 const int brng,
@@ -54,7 +54,7 @@ class MKLRndTable : MKLCall {
                 const long long int number,
                 const string name);
 
-    //! Destructor: Destroy random number table
+    //! Destructor: Destroy random number skip-ahead table
     ~MKLRndTable();
 
     //! Regenerate random numbers in table

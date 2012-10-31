@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:15:40 PM MDT
+  \date      Wed 31 Oct 2012 06:00:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -95,7 +95,7 @@ GmshTxtMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  typedef vector<vector<int>>::size_type ST;
+  using ST = vector<vector<int>>::size_type;
 
   m_outMesh << "$Elements" << endl;
 

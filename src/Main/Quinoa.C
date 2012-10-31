@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 03:28:28 PM MDT
+  \date      Wed 31 Oct 2012 06:40:45 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
     GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
     outMesh.write();
 
-    // Random
-    int num = 1000000;
+    // Random: Table
+    int num = 10000;
     MKLRandom random(nthread, &memStore);
     MKLRndTable* tg = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
                                       VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
@@ -89,6 +89,9 @@ int main(int argc, char* argv[]) {
     PDFWriter jpw("../../tmp/jpdf");
     pw.write(&pdf);
     jpw.write(&jpdf);
+
+    // Random: Stream
+    //MKLRndStream* sg = random.addStream();
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

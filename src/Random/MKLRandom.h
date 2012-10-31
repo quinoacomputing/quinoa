@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:14:31 AM MDT
+  \date      Wed 31 Oct 2012 06:05:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -62,16 +62,21 @@ class MKLRandom : Random {
     const int m_nthread;    //!< Number of threads to use
     Memory* m_memory;       //!< Memory object pointer
 
-    //! Array of pointers to thread-streams (for sampling a few at a time)
-    //VSLStreamStatePtr* m_stream;
-
     //! Type for a set of stream-tables to generate a large (and fixed) number
     //! of random numbers with fixed properties using several threads
-    typedef unordered_set<MKLRndTable*> Tables;
+    using Tables = unordered_set<MKLRndTable*>;
+
+    //! Type for a set of streams to generate a few  random numbers with
+    //! arbitrary properties using several threads with leap-frogging
+    using Streams = unordered_set<MKLRndStream*>;
 
     //! Stream tables to generate fixed numbers of random numbers with fixed
     //! properties using several threads
     Tables m_table;
+
+    //! Streams to generate a few random numbers at a time leap-frogging
+    Streams m_stream;
+
 };
 
 } // namespace Quinoa

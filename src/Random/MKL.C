@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLCall.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:21:00 PM MDT
+  \date      Wed 31 Oct 2012 05:56:02 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -11,18 +11,18 @@
 
 #include <mkl_vsl.h>
 
-#include <MKLCall.h>
+#include <MKL.h>
 #include <MKLException.h>
 
 using namespace Quinoa;
 
 void
-MKLCall::uniform(const int& method,
-                 VSLStreamStatePtr& stream,
-                 const int& n,
-                 real* r,
-                 const real& a,
-                 const real& b)
+MKL::uniform(const int& method,
+             VSLStreamStatePtr& stream,
+             const int& n,
+             real* r,
+             const real& a,
+             const real& b)
 //******************************************************************************
 //  Call MKL's vdRngUniform() and handle error
 //! \param[in]  method   Generation method
@@ -39,12 +39,12 @@ MKLCall::uniform(const int& method,
 }
 
 void
-MKLCall::gaussian(const int& method,
-                  VSLStreamStatePtr& stream,
-                  const int& n,
-                  real* r,
-                  const real& a,
-                  const real& b)
+MKL::gaussian(const int& method,
+              VSLStreamStatePtr& stream,
+              const int& n,
+              real* r,
+              const real& a,
+              const real& b)
 //******************************************************************************
 //  Call MKL's vdRngGaussian() and handle error
 //! \param[in]  method   Generation method
@@ -61,13 +61,13 @@ MKLCall::gaussian(const int& method,
 }
 
 void
-MKLCall::gamma(const int& method,
-               VSLStreamStatePtr& stream,
-               const int& n,
-               real* r,
-               const real& alpha,
-               const real& a,
-               const real& beta)
+MKL::gamma(const int& method,
+           VSLStreamStatePtr& stream,
+           const int& n,
+           real* r,
+           const real& alpha,
+           const real& a,
+           const real& beta)
 //******************************************************************************
 //  Call MKL's vdRngGamma() and handle error
 //! \param[in]  method   Generation method
@@ -85,9 +85,9 @@ MKLCall::gamma(const int& method,
 }
 
 void
-MKLCall::newStream(VSLStreamStatePtr* stream,
-                   const int& brng,
-                   const unsigned int& seed)
+MKL::newStream(VSLStreamStatePtr* stream,
+               const int& brng,
+               const unsigned int& seed)
 //******************************************************************************
 //  Call MKL's vslNewStream() and handle error
 //! \param[out]  stream  VSL stream state descriptor
@@ -101,8 +101,8 @@ MKLCall::newStream(VSLStreamStatePtr* stream,
 }
 
 void
-MKLCall::copyStream(VSLStreamStatePtr* newstream,
-                    const VSLStreamStatePtr& srcstream)
+MKL::copyStream(VSLStreamStatePtr* newstream,
+                const VSLStreamStatePtr& srcstream)
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[out]  newstream  Copied random stream descriptor
@@ -115,8 +115,8 @@ MKLCall::copyStream(VSLStreamStatePtr* newstream,
 }
 
 void
-MKLCall::skipAheadStream(VSLStreamStatePtr& stream,
-                         const long long int& nskip)
+MKL::skipAheadStream(VSLStreamStatePtr& stream,
+                     const long long int& nskip)
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[in]  stream  Pointer to the stream state structure to which the
@@ -130,9 +130,9 @@ MKLCall::skipAheadStream(VSLStreamStatePtr& stream,
 }
 
 void
-MKLCall::leapfrogStream(VSLStreamStatePtr& stream,
-                        const int& k,
-                        const int& nstreams)
+MKL::leapfrogStream(VSLStreamStatePtr& stream,
+                    const int& k,
+                    const int& nstreams)
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[in]  stream   Pointer to the stream state structure to which leapfrog

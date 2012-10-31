@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:41:21 PM MDT
+  \date      Wed 31 Oct 2012 06:01:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -29,10 +29,10 @@ class Memory {
   //! Compared to O(log n) in standard sets, the cost of searches, insertions,
   //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
   //! and deallocating memory entries) is amortized to O(1).
-  typedef unordered_set<MemoryEntry*> MemorySet;
+  using MemorySet = unordered_set<MemoryEntry*>;
 
   //! Map of memory entry names to MemorySet keys
-  typedef unordered_map<string,MemoryEntry*> MemoryNames;
+  using MemoryNames = unordered_map<string,MemoryEntry*>;
 
   public:
     //! Constructor
