@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 31 Oct 2012 06:40:45 AM MDT
+  \date      Thu 01 Nov 2012 07:39:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -91,7 +91,15 @@ int main(int argc, char* argv[]) {
     jpw.write(&jpdf);
 
     // Random: Stream
-    //MKLRndStream* sg = random.addStream();
+    MKLRndStream* rs = random.addStream(VSL_BRNG_MCG59, 0);
+    const VSLStreamStatePtr* s = random.getStr(rs);
+    real r[12];
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int t=0; t<nthread; ++t) {
+      rs->uniform(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, s[t], 12, r, 0.0, 1.0 );
+    }
 
     memStore.echoAllEntries(MemoryEntryField::NAME);
     cout << "Allocated memory: " << memStore.getBytes() << endl;

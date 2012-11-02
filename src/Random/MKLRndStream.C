@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Wed 31 Oct 2012 06:32:16 AM MDT
+  \date      Thu 01 Nov 2012 07:49:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -24,11 +24,9 @@ MKLRndStream::MKLRndStream(const int nthread,
   m_nthread(nthread)
 //******************************************************************************
 //  Constructor: Create random number generator leap-frog stream
-//! \param[in]  memory   Pointer to memory store
 //! \param[in]  nthread  Number of threads to use
 //! \param[in]  brng     Basic VSL generator type
 //! \param[in]  seed     Random number generator seed
-//! \param[in]  name     MemoryEntry name of the random number table
 //! \author  J. Bakosi
 //******************************************************************************
 {

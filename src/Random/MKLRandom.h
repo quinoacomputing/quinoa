@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Wed 31 Oct 2012 06:05:17 AM MDT
+  \date      Thu 01 Nov 2012 07:30:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -48,6 +48,15 @@ class MKLRandom : Random {
 
     //! Constant accessor to random number table
     const real* getRnd(MKLRndTable* table);
+
+    //! Add a random number stream
+    MKLRndStream* addStream(const int brng, const unsigned int seed);
+
+    //! Erase a random number stream
+    void eraseStream(MKLRndStream* stream);
+
+    //! Constant accessor to random number VSL stream
+    const VSLStreamStatePtr* getStr(MKLRndStream* stream);
 
   private:
     //! Don't permit copy constructor
