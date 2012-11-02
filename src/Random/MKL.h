@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLC.h
+  \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Wed 31 Oct 2012 05:57:10 AM MDT
+  \date      Thu 01 Nov 2012 07:49:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -29,7 +29,7 @@ class MKL {
 
     //! Call MKL's vdRngUniform() and handle error
     void uniform(const int& method,
-                 VSLStreamStatePtr& stream,
+                 const VSLStreamStatePtr& stream,
                  const int& n,
                  real* r,
                  const real& a,
@@ -37,7 +37,7 @@ class MKL {
 
     //! Call MKL's vdRngGaussian() and handle error
     void gaussian(const int& method,
-                  VSLStreamStatePtr& stream,
+                  const VSLStreamStatePtr& stream,
                   const int& n,
                   real* r,
                   const real& a,
@@ -45,7 +45,7 @@ class MKL {
 
     //! Call MKL's vdRngGamma() and handle error
     void gamma(const int& method,
-               VSLStreamStatePtr& stream,
+               const VSLStreamStatePtr& stream,
                const int& n,
                real* r,
                const real& alpha,

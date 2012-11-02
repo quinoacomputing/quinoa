@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:14:49 AM MDT
+  \date      Thu 01 Nov 2012 07:14:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -17,12 +17,14 @@ using namespace Quinoa;
 
 MKLRandom::~MKLRandom()
 //******************************************************************************
-//  Destructor: Free all random number tables
+//  Destructor: Free all random number tables and streams
 //! \author  J. Bakosi
 //******************************************************************************
 {
   for (MKLRndTable* t : m_table) { delete t; }
   m_table.clear();
+  for (MKLRndStream* s : m_stream) { delete s; }
+  m_stream.clear();
 }
 
 MKLRndTable*
@@ -99,5 +101,62 @@ MKLRandom::getRnd(MKLRndTable* table)
     return (*it)->getRnd();
   } else {
     throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_TABLE);
+  }
+}
+
+MKLRndStream*
+MKLRandom::addStream(const int brng, const unsigned int seed)
+//******************************************************************************
+//  Add a random number stream
+//! \param[in]  brng     Basic VSL generator type
+//! \param[in]  seed     Seed
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Create new stream
+  MKLRndStream* stream = new (nothrow) MKLRndStream(m_nthread, brng, seed);
+  if (stream == nullptr) throw MemoryException(FATAL, BAD_ALLOC);
+
+  // Store new stream
+  pair<Streams::iterator,bool> e = m_stream.insert(stream);
+  if (!e.second) {
+    if (stream) delete stream;
+    throw MemoryException(FATAL, BAD_INSERT);
+  }
+
+  // Return key to caller
+  return stream;
+}
+
+void
+MKLRandom::eraseStream(MKLRndStream* stream)
+//******************************************************************************
+//  Erase a random number stream
+//! \param[in]  stream    Pointer to stream to erase
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto it = m_stream.find(stream);
+  if (it != m_stream.end()) {
+    delete stream;
+    m_stream.erase(it);
+  } else {
+    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_STREAM);
+  }
+}
+
+const VSLStreamStatePtr*
+MKLRandom::getStr(MKLRndStream* stream)
+//******************************************************************************
+//  Constant accessor to VSL stream
+//! \param[in]  stream    Stream id to access
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto it = m_stream.find(stream);
+  if (it != m_stream.end()) {
+    return (*it)->getStr();
+  } else {
+    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_STREAM);
   }
 }
