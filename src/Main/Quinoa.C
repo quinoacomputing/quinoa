@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 07:39:19 PM MDT
+  \date      Sun 04 Nov 2012 10:05:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -11,111 +11,31 @@
 
 #include <iostream>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-#include <mkl_vsl.h>
-
-#include <QuinoaTypes.h>
-#include <Memory.h>
-#include <Driver.h>
-#include <GmshTxtMeshReader.h>
-#include <GmshTxtMeshWriter.h>
-#include <MKLRandom.h>
-#include <MeshException.h>
-#include <IOException.h>
-#include <MKLException.h>
-#include <PDF.h>
-#include <JPDF.h>
-#include <PDFWriter.h>
+#include <QuinoaConfig.h>
+#include <Paradigm.h>
+#include <Setup.h>
 
 using namespace std;
 using namespace Quinoa;
 
 int main(int argc, char* argv[]) {
 
-  // query number of threads available
-  #ifdef _OPENMP
-  int nthread = omp_get_max_threads();
-  #else
-  int nthread = 1;
-  #endif
-  cout << "* Using number of OpenMP threads: " << nthread << endl;
+  // Echo build environment
+  cout << "Build environment:" << endl;
+  cout << " * Executable         : " << QUINOA_EXECUTABLE << endl;
+  cout << " * Version            : " << QUINOA_VERSION << endl;
+  cout << " * Release            : " << QUINOA_RELEASE << endl;
+  cout << " * Revision           : " << QUINOA_REVISION << endl;
+  cout << " * Revision date      : " << QUINOA_REVISION_DATE << endl;
+  cout << " * Configuration      : " << QUINOA_CONFIGURATION << endl;
+  cout << " * Third-party prefix : " << QUINOA_THIRD_PARTY_PREFIX << endl;
+  cout << " * Compiler           : " << QUINOA_COMPILER << endl;
+  cout << " * Build type         : " << QUINOA_BUILD_TYPE << endl;
+  cout << " * Build date         : " << QUINOA_BUILD_DATE << endl;
+  cout << endl;
 
-  Memory memStore(nthread);   // arg: nthread
-  Driver driver(&memStore);
+  // Query parallel programming enviroment
+  Paradigm paradigm;
+  paradigm.echo();
 
-  ErrCode error = NO_ERROR;
-  try {
-
-    // Memory
-    //MemoryEntry* a = memStore.newEntry(10, INT, SCALAR, "_ja");
-
-    // Mesh
-    UnsMesh mesh(&memStore);
-    GmshTxtMeshReader inMesh("../../tmp/cylinder.msh", &mesh, &memStore);
-    inMesh.read();
-    GmshTxtMeshWriter outMesh("../../tmp/cylinder_out.msh", &mesh, &memStore);
-    outMesh.write();
-
-    // Random: Table
-    int num = 10000;
-    MKLRandom random(nthread, &memStore);
-    MKLRndTable* tg = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
-                                      VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                                      1, num, "Gaussian");
-    MKLRndTable* tu = random.addTable(VSL_BRNG_MCG59, GAUSSIAN,
-                                      VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                                      num, num, "Gaussian2");
-    //MKLRndTable* t = random.addTable(VSL_BRNG_MCG59, GAMMA,
-    //                                 VSL_RNG_METHOD_GAMMA_GNORM,
-    //                                 1, num, "Gamma");
-    random.regenTables();
-
-    // PDF
-    const real* rndg = random.getRnd(tg);
-    const real* rndu = random.getRnd(tu);
-    PDF pdf(0.1);
-    JPDF jpdf(2,0.1);
-    for (int i=0; i<num; ++i) {
-      pdf.insert(rndg[i]);
-      vector<real> v(2,0);
-      v[0] = rndg[i];
-      v[1] = rndu[i];
-      jpdf.insert(v);
-    }
-    PDFWriter pw("../../tmp/pdf");
-    PDFWriter jpw("../../tmp/jpdf");
-    pw.write(&pdf);
-    jpw.write(&jpdf);
-
-    // Random: Stream
-    MKLRndStream* rs = random.addStream(VSL_BRNG_MCG59, 0);
-    const VSLStreamStatePtr* s = random.getStr(rs);
-    real r[12];
-    #ifdef _OPENMP
-    #pragma omp parallel for
-    #endif
-    for (int t=0; t<nthread; ++t) {
-      rs->uniform(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER, s[t], 12, r, 0.0, 1.0 );
-    }
-
-    memStore.echoAllEntries(MemoryEntryField::NAME);
-    cout << "Allocated memory: " << memStore.getBytes() << endl;
-
-  } // catch different exception types
-    catch (MemoryException& e) { error = e.handleException(&driver); }
-    catch (MeshException& e)   { error = e.handleException(&driver); }
-    catch (IOException& e)     { error = e.handleException(&driver); }
-    catch (MKLException& e)    { error = e.handleException(&driver); }
-    // catch uncaught exceptions
-    catch (...) {
-      Exception e(UNCAUGHT);
-      error = e.handleException(&driver);
-    }
-
-  if (error != FATAL_ERROR) {
-    cout << "still running..." << endl;
-  }
 }
