@@ -56,7 +56,7 @@ set(QUINOA_COMPILER "${CMAKE_CXX_COMPILER} - ${CXX_COMPILER_VERSION}")
 
 # Grab current date to stick into the binary
 execute_process(
-  COMMAND "date" "+%m/%d/%Y"
+  COMMAND "date" #"+%m/%d/%Y"
   OUTPUT_VARIABLE QUINOA_BUILD_DATE
 )
 string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
@@ -121,6 +121,7 @@ add_subdirectory(Base)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
+add_subdirectory(Paradigm)
 add_subdirectory(Random)
 add_subdirectory(Statistics)
 #add_subdirectory(FEM)
