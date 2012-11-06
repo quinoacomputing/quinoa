@@ -70,6 +70,11 @@ else()
   set (DEBUG on)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules/")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+# Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
   "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
@@ -111,8 +116,6 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-
-# Make sure that the config file is in the search path
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_BINARY_DIR}/Base")
 

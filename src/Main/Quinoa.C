@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 04 Nov 2012 10:05:54 PM MST
+  \date      Mon 05 Nov 2012 06:42:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -21,12 +21,11 @@ using namespace Quinoa;
 int main(int argc, char* argv[]) {
 
   // Echo build environment
-  cout << "Build environment:" << endl;
+  cout << endl << "Build environment:" << endl;
   cout << " * Executable         : " << QUINOA_EXECUTABLE << endl;
   cout << " * Version            : " << QUINOA_VERSION << endl;
   cout << " * Release            : " << QUINOA_RELEASE << endl;
-  cout << " * Revision           : " << QUINOA_REVISION << endl;
-  cout << " * Revision date      : " << QUINOA_REVISION_DATE << endl;
+  cout << " * Git commit         : " << QUINOA_GIT_COMMIT << endl;
   cout << " * Configuration      : " << QUINOA_CONFIGURATION << endl;
   cout << " * Third-party prefix : " << QUINOA_THIRD_PARTY_PREFIX << endl;
   cout << " * Compiler           : " << QUINOA_COMPILER << endl;
@@ -34,7 +33,7 @@ int main(int argc, char* argv[]) {
   cout << " * Build date         : " << QUINOA_BUILD_DATE << endl;
   cout << endl;
 
-  // Query parallel programming enviroment
+  // Query and echo parallel programming enviroment
   Paradigm paradigm;
   paradigm.echo();
 
