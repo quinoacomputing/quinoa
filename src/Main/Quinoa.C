@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 05 Nov 2012 06:42:12 PM MST
+  \date      Tue 06 Nov 2012 06:15:47 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -14,6 +14,8 @@
 #include <QuinoaConfig.h>
 #include <Paradigm.h>
 #include <Setup.h>
+#include <Memory.h>
+#include <Driver.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -37,4 +39,30 @@ int main(int argc, char* argv[]) {
   Paradigm paradigm;
   paradigm.echo();
 
+  // Get number of OpenMP threads
+  const OpenMP* omp = paradigm.getOpenMP();
+  const int ntomp = omp->nthread();
+
+  // Initialize memory manager and driver
+  Memory memStore(ntomp);
+  Driver driver(&memStore);
+
+  ErrCode error = NO_ERROR;
+  try {
+
+
+  } // catch different exception types
+//     catch (MemoryException& e) { error = e.handleException(&driver); }
+//     catch (MeshException& e)   { error = e.handleException(&driver); }
+//     catch (IOException& e)     { error = e.handleException(&driver); }
+//     catch (MKLException& e)    { error = e.handleException(&driver); }
+    // catch uncaught exceptions
+    catch (...) {
+      Exception e(UNCAUGHT);
+      error = e.handleException(&driver);
+    }
+
+  if (error != FATAL_ERROR) {
+    cout << "still running..." << endl;
+  }
 }

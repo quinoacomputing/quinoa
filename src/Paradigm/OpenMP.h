@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Sun 04 Nov 2012 09:42:12 PM MST
+  \date      Tue 06 Nov 2012 05:47:14 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -24,6 +24,7 @@ class OpenMP {
     ~OpenMP() = default;
 
     //! Return true if compiled with OpenMP
+    //! \return true if compiled with OpenMP enabled
     bool available() const;
 
     //! Query if OpenMP is used

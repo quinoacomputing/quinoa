@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Thu Nov  1 12:48:47 2012
+  \date      Tue 06 Nov 2012 06:17:25 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -36,7 +36,7 @@ class Memory {
 
   public:
     //! Constructor
-    Memory(int nthreads) : m_nthreads(nthreads) {}
+    Memory(const int nthreads) : m_nthreads(nthreads) {}
 
     //! Destructor
     ~Memory();

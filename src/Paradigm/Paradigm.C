@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Sun 04 Nov 2012 10:06:06 PM MST
+  \date      Tue 06 Nov 2012 06:04:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -30,11 +30,11 @@ Paradigm::echo()
   if (m_omp.available()) {
     cout << "found";
     if (m_omp.used()) {
-      cout << ", used";
+      cout << ", using ";
     } else {
-      cout << ", not used";
+      cout << ", not using ";
     }
-    cout << ", " << m_omp.nthread() << " threads" << endl;
+    cout << m_omp.nthread() << " threads" << endl;
   } else {
     cout << "not found" << endl;
   }
