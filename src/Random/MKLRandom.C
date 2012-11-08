@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 07:14:10 PM MDT
+  \date      Wed Nov  7 17:30:24 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -74,7 +74,7 @@ MKLRandom::eraseTable(MKLRndTable* table)
     delete table;
     m_table.erase(it);
   } else {
-    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_TABLE);
+    throw MKLException(WARNING, MKL_UNKNOWN_TABLE);
   }
 }
 
@@ -100,7 +100,7 @@ MKLRandom::getRnd(MKLRndTable* table)
   if (it != m_table.end()) {
     return (*it)->getRnd();
   } else {
-    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_TABLE);
+    throw MKLException(WARNING, MKL_UNKNOWN_TABLE);
   }
 }
 
@@ -141,7 +141,7 @@ MKLRandom::eraseStream(MKLRndStream* stream)
     delete stream;
     m_stream.erase(it);
   } else {
-    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_STREAM);
+    throw MKLException(WARNING, MKL_UNKNOWN_STREAM);
   }
 }
 
@@ -157,6 +157,6 @@ MKLRandom::getStr(MKLRndStream* stream)
   if (it != m_stream.end()) {
     return (*it)->getStr();
   } else {
-    throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_STREAM);
+    throw MKLException(WARNING, MKL_UNKNOWN_STREAM);
   }
 }

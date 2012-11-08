@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 08:56:54 PM MDT
+  \date      Wed 07 Nov 2012 05:41:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -47,7 +47,7 @@ class Exception {
     ~Exception() = default;
 
     //! Handle Exception passing pointer to driver
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   protected:
     //! Move constructor, necessary for throws, default compiler generated,
@@ -59,7 +59,7 @@ class Exception {
     Exception(const Exception&);
 
     //! Error message (constructed along the inheritance tree)
-    string message;
+    string m_message;
 
   private:
     //! Don't permit copy assignment

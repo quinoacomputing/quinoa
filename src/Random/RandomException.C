@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:18:40 PM MDT
+  \date      Wed 07 Nov 2012 05:21:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class definition
   \details   RandomException class definition
@@ -21,7 +21,7 @@ RandomException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Contribute to error message
-  message = RndMsg[static_cast<int>(m_except)] + message;
+  m_message = RndMsg[static_cast<int>(m_except)] + m_message;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:39:08 AM MDT
+  \date      Wed 07 Nov 2012 05:52:16 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -31,7 +31,7 @@ const string StatMsg[NUM_STAT_EXCEPT] = {
 };
 
 //! StatException : Exception
-class StatException : Exception {
+class StatException : public Exception {
 
   public:
     //! Constructor with filename
@@ -45,7 +45,7 @@ class StatException : Exception {
     ~StatException() = default;
 
     //! Handle StatException
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   private:
     //! Don't permit copy constructor

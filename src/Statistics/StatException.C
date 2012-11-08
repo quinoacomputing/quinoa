@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.C
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:38:38 AM MDT
+  \date      Wed 07 Nov 2012 05:21:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics exception
@@ -21,7 +21,7 @@ StatException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Start error message
-  message = StatMsg[static_cast<int>(m_except)];
+  m_message = StatMsg[static_cast<int>(m_except)];
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

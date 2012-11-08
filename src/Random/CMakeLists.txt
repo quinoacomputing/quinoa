@@ -16,6 +16,7 @@ add_library(Random
             MKL.C
             MKLRandom.C
             MKLException.C
+            VSLException.C
             MKLRndStream.C
             MKLRndTable.C
 )

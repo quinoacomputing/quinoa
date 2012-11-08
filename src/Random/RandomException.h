@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 06:23:22 PM MDT
+  \date      Wed Nov  7 17:46:17 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -21,25 +21,24 @@ namespace Quinoa {
 
 //! RandomException types
 enum RndExceptType { RND_MKL=0,             //!< MKL error
-                     RND_UNIMPLEMENTED,     //!< unimplemented feature
+                     RND_UNIMPLEMENTED,     //!< Unimplemented exception
                      NUM_RND_EXCEPT
 };
 
 //! Random exception error messages
 const string RndMsg[NUM_RND_EXCEPT] = {
   "MKL exception: ",
-  "Random number generator exception"
+  "Unimplemented random number generator exception"
 };
 
 //! RandomException : Exception
-class RandomException : protected Exception {
+class RandomException : public Exception {
 
   public:
     //! Constructor with message from thrower
     RandomException(ExceptType except, RndExceptType rndExcept) :
       Exception(except), m_except(rndExcept) {}
 
-  protected:
     //! Move constructor, necessary for throws, default compiler generated
     //! Can only be thrown from within derived RandomException classes
     RandomException(RandomException&&) = default;
@@ -52,7 +51,7 @@ class RandomException : protected Exception {
     ~RandomException() = default;
 
     //! Handle RandomException
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   private:
     //! Don't permit copy assignment

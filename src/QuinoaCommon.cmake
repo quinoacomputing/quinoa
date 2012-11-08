@@ -54,11 +54,13 @@ find_library(MKL_CORE_LIBRARY
 find_library(PTHREAD_LIBRARY
              NAMES pthread
              PATHS /usr/lib
+             PATHS /usr/lib/x86_64-redhat-linux5E/lib64
 )
 
 find_library(MATH_LIBRARY
              NAMES m
              PATHS /usr/lib64
+             PATHS /usr/lib/x86_64-redhat-linux5E/lib64
 )
 
 #find_library(EXO_C_LIBRARY

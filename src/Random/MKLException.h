@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 06:36:15 PM MDT
+  \date      Wed 07 Nov 2012 07:42:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -21,101 +21,50 @@ using namespace std;
 namespace Quinoa {
 
 //! MKL exception types
-enum MKLExceptType { MKLEXCEPT_UNIMPLEMENTED=0,
-                     MKLEXCEPT_UNKNOWN_METHOD,
-                     MKLEXCEPT_UNKNOWN_TABLE,
-                     MKLEXCEPT_UNKNOWN_STREAM,
-                     MKL_UNIMPLEMENTED,
-                     MKL_UNKNOWN,
-                     MKL_BADARGS,
-                     MKL_MEM_FAILURE,
-                     MKL_NULL_PTR,
-                     MKL_INVALID_BRNG_INDEX,
-                     MKL_LEAPFROG_UNSUPPORTED,
-                     MKL_SKIPAHEAD_UNSUPPORTED,
-                     MKL_BRNGS_INCOMPATIBLE,
-                     MKL_BAD_STREAM,
-                     MKL_BRNG_TABLE_FULL,
-                     MKL_BAD_STREAM_STATE_SIZE,
-                     MKL_BAD_WORD_SIZE,
-                     MKL_BAD_NSEEDS,
-                     MKL_BAD_NBITS,
-                     MKL_BAD_UPDATE,
-                     MKL_NO_NUMBERS,
-                     MKL_INVALID_ABSTRACT_STREAM,
-                     MKL_ERROR_FILE_CLOSE,
-                     MKL_ERROR_FILE_OPEN,
-                     MKL_ERROR_FILE_WRITE,
-                     MKL_ERROR_FILE_READ,
-                     MKL_BAD_FILE_FORMAT,
-                     MKL_UNSUPPORTED_FILE_VER,
+enum MKLExceptType { MKL_UNKNOWN_METHOD=0,
+                     MKL_UNKNOWN_TABLE,
+                     MKL_UNKNOWN_STREAM,
+                     MKL_VSL_ERROR,
                      NUM_MKL_EXCEPT
 };
 
 //! MKL exception error messages
 const string MKLMsg[NUM_MKL_EXCEPT] = {
-  "MKL exception type unimplemented",
   "Unknown VSL generation method",
-  "MKL random number table not found",
-  "MKL random number stream not found",
-  "VSL feature not yet implemented",
-  "VSL unknown error",
-  "VSL bad arguments",
-  "VSL memory allocation problem",
-  "VSL null pointer",
-  "VSL invalid BRNG index",
-  "VSL LeapFrog initialization unsupported",
-  "VSL SkipAhead initialization unsupported",
-  "VSL BRNGs are not compatible for the operation",
-  "VSL random stream is invalid",
-  "VSL table of registered BRNGs is full",
-  "VSL value in StreamStateSize field is bad",
-  "VSL value in WordSize field is bad",
-  "VSL value in NSeeds field is bad",
-  "VSL value in NBits field is bad",
-  "VSL number of updated entries in buffer is invalid",
-  "VSL zero number of updated entries in buffer",
-  "VSL abstract random stream is invalid",
-  "VSL can`t close file",
-  "VSL can`t open file",
-  "VSL can`t write to file",
-  "VSL can`t read from file",
-  "VSL file format is unknown",
-  "VSL unsupported file version"
+  "Random number table not found",
+  "Random number stream not found",
+  "VSL ",
 };
 
 //! MKLException : RandomException
-class MKLException : protected RandomException {
+class MKLException : public RandomException {
 
   public:
     //! Constructor: fill VSLErrMap
-    MKLException(ExceptType except, int vslerr);
+    MKLException(ExceptType except, MKLExceptType mklExcept) :
+      RandomException(except, RND_MKL), m_except(mklExcept) {};
 
     //! Move constructor, necessary for throws, default compiler generated
     MKLException(MKLException&&) = default;
+
+    //! Don't permit copy constructor
+    // ICC: should be deleted and private
+    MKLException(const MKLException&);
 
     //! Destructor
     ~MKLException() = default;
 
     //! Handle MKLException
-    ErrCode handleException(Driver* driver);
-
-    //! Get MKLException based on VSLError
-    MKLExceptType getException(int vslerr);
+    virtual ErrCode handleException(Driver* driver);
 
   private:
-    //! Don't permit copy constructor
-    MKLException(const MKLException&) = delete;
     //! Don't permit copy assignment
     MKLException& operator=(const MKLException&) = delete;
     //! Don't permit move assignment
     MKLException& operator=(MKLException&&) = delete;
 
-    //! MKL exception type (MKL_UNIMPLEMENTED, MKL_UNKNOWN, etc.)
+    //! MKL exception type (MKL_UNIMPLEMENTED, MKL_UNKNOWN_METHOD, etc.)
     MKLExceptType m_except;
-
-    //! VSLError -> MKLExceptType map
-    map<int,MKLExceptType> m_VSLErrMap;
 };
 
 } // namespace Quinoa
