@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Driver.C
   \author    J. Bakosi
-  \date      Mon 10 Sep 2012 03:57:07 AM KST
+  \date      Wed 07 Nov 2012 09:00:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -20,6 +20,24 @@ Driver::~Driver()
 //******************************************************************************
 {
   finalize();
+}
+
+void
+Driver::setup(int argc, char* argv[])
+//******************************************************************************
+//  Setup
+//! \author J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+Driver::solve()
+//******************************************************************************
+//  Solve
+//! \author J. Bakosi
+//******************************************************************************
+{
 }
 
 void

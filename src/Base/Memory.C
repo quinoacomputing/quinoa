@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 21 Oct 2012 09:39:00 PM MDT
+  \date      Wed 07 Nov 2012 08:56:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -184,8 +184,8 @@ Memory::freeAllEntries() noexcept
 //!          leave-of-scope the destructor calls it. The Driver also calls it
 //!          via its destructor. Additionally, the Exception::handleException()
 //!          may also call it (through Driver::finalize()) at any time if a
-//!          FATAL error is encountered. Because of this the test of
-//!          m_entry.size() does not throw an exception.
+//!          FATAL error is encountered. Because of this we do not throw an
+//!          exception here.
 //! \author J. Bakosi
 //******************************************************************************
 {

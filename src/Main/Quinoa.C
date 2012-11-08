@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed Nov  7 18:02:24 2012
+  \date      Wed 07 Nov 2012 08:54:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -16,13 +16,6 @@
 #include <Setup.h>
 #include <Memory.h>
 #include <Driver.h>
-#include <MemoryException.h>
-#include <MeshException.h>
-#include <IOException.h>
-#include <MKLException.h>
-#include <VSLException.h>
-#include <mkl_vsl.h>
-#include <StatException.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -57,28 +50,21 @@ int main(int argc, char* argv[]) {
   ErrCode error = NO_ERROR;
   try {
 
-    //throw MemoryException(WARNING, UNDEFINED);
-    //throw MeshException(WARNING, BAD_ELEMENT, "asd");
-    //throw IOException(WARNING, FAILED_WRITE, "bas");
-    //throw RandomException(WARNING, RND_UNIMPLEMENTED);
-    //throw MKLException(WARNING, MKL_UNKNOWN_TABLE);
-    throw VSLException(WARNING, VSL_ERROR_MEM_FAILURE);
-    //throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
+    //!< Setup
+    driver.setup(argc, argv);
+    //!< Solve
+    driver.solve();
 
+  } catch (Exception& e) { error = e.handleException(&driver); }
+    catch (...) { // catch uncaught exceptions
+      Exception e(UNCAUGHT);
+      error = e.handleException(&driver);
+    }
 
-  } // catch different exception types
-    catch (Exception& e) { error = e.handleException(&driver); }
-//     catch (MemoryException& e) { error = e.handleException(&driver); }
-//     catch (MeshException& e)   { error = e.handleException(&driver); }
-//     catch (IOException& e)     { error = e.handleException(&driver); }
-//     catch (MKLException& e)    { error = e.handleException(&driver); }
-    // catch uncaught exceptions
-    //catch (...) {
-    //  Exception e(UNCAUGHT);
-    //  error = e.handleException(&driver);
-    //}
+  //!< Finalize
+  driver.finalize();
 
   if (error != FATAL_ERROR) {
-    cout << "still running..." << endl;
+    cout << "Normal finish." << endl;
   }
 }
