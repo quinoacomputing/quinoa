@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Models/Mix/Dirichlet/Dirichlet.h
+  \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:33:35 PM MST
+  \date      Thu 08 Nov 2012 06:20:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -12,11 +12,12 @@
 #define Dirichlet_h
 
 #include <MixModel.h>
+#include <DirichletSetup.h>
 
 namespace Quinoa {
 
 //! Dirichlet : MixModel
-class Dirichlet : MixModel {
+class Dirichlet : public MixModel {
 
   public:
     //! Constructor
@@ -24,6 +25,9 @@ class Dirichlet : MixModel {
 
     //! Destructor
     ~Dirichlet() = default;
+
+    //! Set initial conditions
+    void setIC() {}
 
   private:
     //! Don't permit copy constructor
@@ -34,6 +38,8 @@ class Dirichlet : MixModel {
     Dirichlet(Dirichlet&&) = delete;
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
+
+    DirichletSetup m_setup;
 };
 
 } // namespace Quinoa

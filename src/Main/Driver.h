@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/Driver.h
+  \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:58:45 PM MST
+  \date      Thu 08 Nov 2012 06:01:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -12,6 +12,7 @@
 #define Driver_h
 
 #include <Memory.h>
+#include <Model.h>
 
 namespace Quinoa {
 
@@ -44,8 +45,8 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
-    //! Pointer to Memory object
-    Memory* m_memory;
+    Memory* m_memory;           //!< Pointer to Memory object
+    Model* m_model;             //!< Pointer to Model object
 };
 
 } // namespace Quinoa

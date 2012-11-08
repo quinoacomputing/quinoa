@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:39:41 PM MST
+  \date      Thu 08 Nov 2012 05:43:07 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Basic setup: specify models, parameters, etc.
-  \details   Basic setup: specify models, parameters, etc.
+  \brief     Model setup
+  \details   Model setup
 */
 //******************************************************************************
 #ifndef Setup_h
@@ -15,11 +15,8 @@
 
 namespace Quinoa {
 
-//! Select mix model; see Control.h for available mix models
-const MixModel MIX_MODEL = MIX_DIRICHLET;
-
-//! Select velocity model; see Control.h for available velocity models
-const VelocityModel VELOCITY_MODEL = VEL_NONE;
+//! Select model; see Control.h for available models
+const ModelType MODEL = DIRICHLET;
 
 } // namespace Quinoa
 

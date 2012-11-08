@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:54:57 PM MST
+  \date      Thu 08 Nov 2012 05:19:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -13,7 +13,6 @@
 
 #include <QuinoaConfig.h>
 #include <Paradigm.h>
-#include <Setup.h>
 #include <Memory.h>
 #include <Driver.h>
 
@@ -50,9 +49,7 @@ int main(int argc, char* argv[]) {
   ErrCode error = NO_ERROR;
   try {
 
-    //!< Setup
     driver.setup(argc, argv);
-    //!< Solve
     driver.solve();
 
   } catch (Exception& e) { error = e.handleException(&driver); }
@@ -64,7 +61,5 @@ int main(int argc, char* argv[]) {
   //!< Finalize
   driver.finalize();
 
-  if (error != FATAL_ERROR) {
-    cout << "Normal finish." << endl;
-  }
+  if (error != FATAL_ERROR) cout << "Normal finish." << endl;
 }
