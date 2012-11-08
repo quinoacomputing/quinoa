@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:40:28 AM MDT
+  \date      Wed 07 Nov 2012 05:51:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -37,7 +37,7 @@ const string MeshMsg[NUM_MESH_EXCEPT] = {
 };
 
 //! MeshException : Exception
-class MeshException : Exception {
+class MeshException : public Exception {
 
   public:
     //! Constructor with message from thrower
@@ -58,7 +58,7 @@ class MeshException : Exception {
     ~MeshException() = default;
 
     //! Handle MeshException
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   protected:
     //! Message from thrower

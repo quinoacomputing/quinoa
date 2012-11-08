@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:12:34 PM MDT
+  \date      Wed 07 Nov 2012 05:20:50 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class definition
   \details   IOException class definition
@@ -21,8 +21,8 @@ IOException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Start error message
-  message = IOMsg[static_cast<int>(m_except)];
-  if (m_filename.size()) message += m_filename;
+  m_message = IOMsg[static_cast<int>(m_except)];
+  if (m_filename.size()) m_message += m_filename;
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);

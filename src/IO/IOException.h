@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Sat 13 Oct 2012 06:42:45 PM MDT
+  \date      Wed 07 Nov 2012 05:50:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -35,7 +35,7 @@ const string IOMsg[NUM_IO_EXCEPT] = {
 };
 
 //! IOException : Exception
-class IOException : Exception {
+class IOException : public Exception {
 
   public:
     //! Constructor with filename
@@ -54,7 +54,7 @@ class IOException : Exception {
     ~IOException() = default;
 
     //! Handle IOException
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   protected:
     //! File name

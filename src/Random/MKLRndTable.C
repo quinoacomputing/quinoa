@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 07:39:37 PM MDT
+  \date      Wed Nov  7 17:37:27 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -134,7 +134,7 @@ MKLRndTable::generate()
             GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
       break;
     default:
-      throw MKLException(WARNING, MKLEXCEPT_UNKNOWN_METHOD);
+      throw MKLException(WARNING, MKL_UNKNOWN_METHOD);
   }
 }
 

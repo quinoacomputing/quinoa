@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Wed 10 Oct 2012 01:44:33 PM EDT
+  \date      Wed 07 Nov 2012 05:38:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -42,7 +42,7 @@ const string MemMsg[NUM_MEM_EXCEPT] = {
 };
 
 //! MemoryException : Exception
-class MemoryException : Exception {
+class MemoryException : public Exception {
 
   public:
     //! Constructor
@@ -56,7 +56,7 @@ class MemoryException : Exception {
     ~MemoryException() = default;
 
     //! Handle MemoryException
-    ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* driver);
 
   private:
     //! Don't permit copy constructor

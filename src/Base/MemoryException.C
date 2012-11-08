@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:11:26 PM MDT
+  \date      Wed 07 Nov 2012 05:20:40 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class definition
   \details   MemoryException class definition
@@ -21,7 +21,7 @@ MemoryException::handleException(Driver* driver)
 //******************************************************************************
 {
   // Start error message
-  message = MemMsg[static_cast<int>(m_except)];
+  m_message = MemMsg[static_cast<int>(m_except)];
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);
