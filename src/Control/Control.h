@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sun 04 Nov 2012 06:52:33 PM MST
+  \date      Wed 07 Nov 2012 08:38:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base, decides which sub-control category is used
@@ -14,15 +14,17 @@
 namespace Quinoa {
 
 //! Mix models
-enum MixModel { DIRICHLET=0,            //!< Dirichlet
-                GENERALIZED_DIRICHLET,  //!< Generalized Dirichlet
+enum MixModel { MIX_NONE=0,                 //!< No mix model
+                MIX_DIRICHLET,              //!< Dirichlet
+                MIX_GENERALIZED_DIRICHLET,  //!< Generalized Dirichlet
                 NUM_MIX_MODELS
 };
 
 //! Velocity models
-enum VelocityModel { SIMPLIFIED_LANGEVIN=0,//!< Homogeneous Simplified Langevin
-                     GENERALIZED_LANGEVIN, //!< Homogeneous Generalized Langevin
-                     NUM_VELOCITY_MODELS
+enum VelocityModel { VEL_NONE=0,                //!< No velocity model
+                     VEL_SIMPLIFIED_LANGEVIN,   //!< Simplified Langevin
+                     VEL_GENERALIZED_LANGEVIN,  //!< Generalized Langevin
+                     NUM_VEL_MODELS
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:41:39 AM MST
+  \date      Wed 07 Nov 2012 07:48:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -31,7 +31,7 @@ Exception::handleException(Driver* driver)
       cerr << "ERROR: " << m_message << endl;
       return NONFATAL;
     case UNCAUGHT:  // Warn and fall through FATAL
-      cerr << "UNCAUGHT EXCEPTION: " << m_message << endl;
+      cerr << "UNCAUGHT EXCEPTION" << m_message << endl;
     case FATAL:     // Attempt cleanup and exit
       cerr << "FATAL ERROR: " << m_message << endl
            << "Attempting cleanup & graceful exit..." << endl;

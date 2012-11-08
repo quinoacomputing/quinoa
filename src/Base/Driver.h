@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Driver.h
   \author    J. Bakosi
-  \date      Sun 16 Sep 2012 04:58:49 PM MDT
+  \date      Wed 07 Nov 2012 08:58:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -24,6 +24,12 @@ class Driver {
 
     //! Destructor
     ~Driver();
+
+    //! Setup
+    void setup(int argc, char* argv[]);
+
+    //! Solve
+    void solve();
 
     //! Finalize (either at normal exit, or due to exception)
     void finalize();
