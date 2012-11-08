@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/Driver.C
+  \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 09:00:40 PM MST
+  \date      Thu 08 Nov 2012 06:13:13 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -10,6 +10,8 @@
 //******************************************************************************
 
 #include <Driver.h>
+#include <Setup.h>
+#include <Dirichlet.h>
 
 using namespace Quinoa;
 
@@ -29,6 +31,10 @@ Driver::setup(int argc, char* argv[])
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Select model
+  switch (MODEL) {
+    case DIRICHLET : m_model = new Dirichlet;
+  }
 }
 
 void

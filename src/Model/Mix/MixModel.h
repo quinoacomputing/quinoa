@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Models/Mix/MixModel.h
+  \file      src/Model/Mix/MixModel.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:23:32 PM MST
+  \date      Thu 08 Nov 2012 06:16:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -11,12 +11,12 @@
 #ifndef MixModel_h
 #define MixModel_h
 
-#include <QuinoaTypes.h>
+#include <Model.h>
 
 namespace Quinoa {
 
 //! MixModel base
-class MixModel {
+class MixModel : public Model {
 
   public:
     //! Constructor

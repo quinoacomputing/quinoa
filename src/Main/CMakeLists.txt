@@ -9,21 +9,16 @@ add_definitions()
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
-                    ${QUINOA_SOURCE_DIR}/Mesh
+                    ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
-                    ${QUINOA_SOURCE_DIR}/Random
-                    ${QUINOA_SOURCE_DIR}/Statistics
-#                    ${QUINOA_SOURCE_DIR}/FEM
-#                    ${QUINOA_SOURCE_DIR}/Particles
-#                    ${QUINOA_SOURCE_DIR}/SDE
-#                    ${QUINOA_SOURCE_DIR}/WallTreatment
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/Mix
+                    ${QUINOA_SOURCE_DIR}/Model
 )
 
 add_executable(${QUINOA_EXECUTABLE}
+               Driver.C
                Quinoa.C
 )
 
@@ -35,10 +30,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Paradigm
                       Random
                       Statistics
-#                      FEM
-#                      Particles
-#                      SDE
-#                      WallTreatment
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
