@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.C
   \author    J. Bakosi
-  \date      Wed Nov  7 17:37:01 2012
+  \date      Thu 08 Nov 2012 08:36:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     VSLException class definition
   \details   VSLException class definition
@@ -25,77 +25,308 @@ VSLException::VSLException(ExceptType except, int vslerr) :
   // Fill VSLError -> VSLExceptType map
   // ICC: once initializer lists are supported this should be a constant map
   m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_ERROR_CPU_NOT_SUPPORTED,
+                                       VSL_CPU_NOT_SUPPORTED));
+  m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_ERROR_FEATURE_NOT_IMPLEMENTED,
-                                 VSL_UNIMPLEMENTED));
+                                       VSL_FEATURE_NOT_IMPLEMENTED));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_ERROR_UNKNOWN,
-                                 VSL_UNKNOWN));
+                                       VSL_UNKNOWN));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_ERROR_BADARGS,
-                                 VSL_BADARGS));
+                                       VSL_BADARGS));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_ERROR_MEM_FAILURE,
-                                 VSL_MEM_FAILURE));
+                                       VSL_MEM_FAILURE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_ERROR_NULL_PTR,
-                                 VSL_NULL_PTR));
+                                       VSL_NULL_PTR));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_INVALID_BRNG_INDEX,
-                                 VSL_INVALID_BRNG_INDEX));
+                                           VSL_INVALID_BRNG_INDEX));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_LEAPFROG_UNSUPPORTED,
-                                 VSL_LEAPFROG_UNSUPPORTED));
+                                           VSL_LEAPFROG_UNSUPPORTED));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_SKIPAHEAD_UNSUPPORTED,
-                                 VSL_SKIPAHEAD_UNSUPPORTED));
+                                           VSL_SKIPAHEAD_UNSUPPORTED));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BRNGS_INCOMPATIBLE,
-                                 VSL_BRNGS_INCOMPATIBLE));
+                                           VSL_BRNGS_INCOMPATIBLE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_STREAM,
-                                 VSL_BAD_STREAM));
+                                           VSL_BAD_STREAM));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BRNG_TABLE_FULL,
-                                 VSL_BRNG_TABLE_FULL));
+                                           VSL_BRNG_TABLE_FULL));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_STREAM_STATE_SIZE,
-                                 VSL_BAD_STREAM_STATE_SIZE));
+                                           VSL_BAD_STREAM_STATE_SIZE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_WORD_SIZE,
-                                 VSL_BAD_WORD_SIZE));
+                                           VSL_BAD_WORD_SIZE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_NSEEDS,
-                                 VSL_BAD_NSEEDS));
+                                           VSL_BAD_NSEEDS));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_NBITS,
-                                 VSL_BAD_NBITS));
+                                           VSL_BAD_NBITS));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_UPDATE,
-                                 VSL_BAD_UPDATE));
+                                          VSL_BAD_UPDATE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_NO_NUMBERS,
-                                 VSL_NO_NUMBERS));
+                                           VSL_NO_NUMBERS));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_INVALID_ABSTRACT_STREAM,
-                                 VSL_INVALID_ABSTRACT_STREAM));
+                                           VSL_INVALID_ABSTRACT_STREAM));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_FILE_CLOSE,
-                                 VSL_FILE_CLOSE));
+                                           VSL_FILE_CLOSE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_FILE_OPEN,
-                                 VSL_FILE_OPEN));
+                                           VSL_FILE_OPEN));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_FILE_WRITE,
-                                 VSL_FILE_WRITE));
+                                           VSL_FILE_WRITE));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_FILE_READ,
-                                 VSL_FILE_READ));
+                                           VSL_FILE_READ));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_FILE_FORMAT,
-                                 VSL_BAD_FILE_FORMAT));
+                                           VSL_BAD_FILE_FORMAT));
   m_VSLErrMap.insert(
     make_pair<int,VSLExceptType>(VSL_RNG_ERROR_UNSUPPORTED_FILE_VER,
-                                 VSL_UNSUPPORTED_FILE_VER));
+                                           VSL_UNSUPPORTED_FILE_VER));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_RNG_ERROR_BAD_MEM_FORMAT,
+                                           VSL_BAD_MEM_FORMAT));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_ALLOCATION_FAILURE,
+                                          VSL_ALLOCATION_FAILURE));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_DIMEN,
+                                          VSL_BAD_DIMEN));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_OBSERV_N,
+                                          VSL_BAD_OBSERV_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_STORAGE_NOT_SUPPORTED,
+                                          VSL_STORAGE_NOT_SUPPORTED));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_INDC_ADDR,
+                                    VSL_BAD_INDC_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_WEIGHTS,
+                                          VSL_BAD_WEIGHTS));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MEAN_ADDR,
+                                          VSL_BAD_MEAN_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_2R_MOM_ADDR,
+                                          VSL_BAD_2R_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_3R_MOM_ADDR,
+                                          VSL_BAD_3R_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_4R_MOM_ADDR,
+                                          VSL_BAD_4R_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_2C_MOM_ADDR,
+                                          VSL_BAD_2C_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_3C_MOM_ADDR,
+                                          VSL_BAD_3C_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_4C_MOM_ADDR,
+                                          VSL_BAD_4C_MOM_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_KURTOSIS_ADDR,
+                                          VSL_BAD_KURTOSIS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_SKEWNESS_ADDR,
+                                          VSL_BAD_SKEWNESS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MIN_ADDR,
+                                          VSL_BAD_MIN_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MAX_ADDR,
+                                          VSL_BAD_MAX_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_VARIATION_ADDR,
+                                          VSL_BAD_VARIATION_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_COV_ADDR,
+                                          VSL_BAD_COV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_COR_ADDR,
+                                          VSL_BAD_COR_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_QUANT_ORDER_ADDR,
+                                          VSL_BAD_QUANT_ORDER_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_QUANT_ORDER,
+                                          VSL_BAD_QUANT_ORDER));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_QUANT_ADDR,
+                                          VSL_BAD_QUANT_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_ORDER_STATS_ADDR,
+                                          VSL_BAD_ORDER_STATS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_MOMORDER_NOT_SUPPORTED,
+                                          VSL_MOMORDER_NOT_SUPPORTED));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_NOT_FULL_RANK_MATRIX,
+                                    VSL_NOT_FULL_RANK_MATRIX));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_ALL_OBSERVS_OUTLIERS,
+                                          VSL_ALL_OBSERVS_OUTLIERS));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_ROBUST_COV_ADDR,
+                                          VSL_BAD_ROBUST_COV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_ROBUST_MEAN_ADDR,
+                                          VSL_BAD_ROBUST_MEAN_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_METHOD_NOT_SUPPORTED,
+                                          VSL_METHOD_NOT_SUPPORTED));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_NULL_TASK_DESCRIPTOR,
+                                          VSL_NULL_TASK_DESCRIPTOR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_OBSERV_ADDR,
+                                          VSL_BAD_OBSERV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_SINGULAR_COV,
+                                          VSL_SINGULAR_COV));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_POOLED_COV_ADDR,
+                                          VSL_BAD_POOLED_COV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_POOLED_MEAN_ADDR,
+                                          VSL_BAD_POOLED_MEAN_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_GROUP_COV_ADDR,
+                                          VSL_BAD_GROUP_COV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_GROUP_MEAN_ADDR,
+                                          VSL_BAD_GROUP_MEAN_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_GROUP_INDC_ADDR,
+                                          VSL_BAD_GROUP_INDC_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_GROUP_INDC,
+                                          VSL_BAD_GROUP_INDC));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_OUTLIERS_PARAMS_ADDR,
+                                          VSL_BAD_OUTLIERS_PARAMS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_OUTLIERS_PARAMS_N_ADDR,
+                                          VSL_BAD_OUTLIERS_PARAMS_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_OUTLIERS_WEIGHTS_ADDR,
+                                          VSL_BAD_OUTLIERS_WEIGHTS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_ROBUST_COV_PARAMS_ADDR,
+                                          VSL_BAD_ROBUST_COV_PARAMS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_ROBUST_COV_PARAMS_N_ADDR,
+                                          VSL_BAD_ROBUST_COV_PARAMS_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STORAGE_ADDR,
+                                          VSL_BAD_STORAGE_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARTIAL_COV_IDX_ADDR,
+                                          VSL_BAD_PARTIAL_COV_IDX_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARTIAL_COV_ADDR,
+                                          VSL_BAD_PARTIAL_COV_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARTIAL_COR_ADDR,
+                                          VSL_BAD_PARTIAL_COR_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_PARAMS_ADDR,
+                                          VSL_BAD_MI_PARAMS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_PARAMS_N_ADDR,
+                                          VSL_BAD_MI_PARAMS_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_BAD_PARAMS_N,
+                                          VSL_BAD_MI_BAD_PARAMS_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_PARAMS,
+                                          VSL_BAD_MI_PARAMS));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_INIT_ESTIMATES_N_ADDR,
+                                          VSL_BAD_MI_INIT_ESTIMATES_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_INIT_ESTIMATES_ADDR,
+                                          VSL_BAD_MI_INIT_ESTIMATES_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_SIMUL_VALS_ADDR,
+                                          VSL_BAD_MI_SIMUL_VALS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_SIMUL_VALS_N_ADDR,
+                                          VSL_BAD_MI_SIMUL_VALS_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_ESTIMATES_N_ADDR,
+                                          VSL_BAD_MI_ESTIMATES_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_ESTIMATES_ADDR,
+                                          VSL_BAD_MI_ESTIMATES_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_SIMUL_VALS_N,
+                                          VSL_BAD_MI_SIMUL_VALS_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_ESTIMATES_N,
+                                          VSL_BAD_MI_ESTIMATES_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_OUTPUT_PARAMS,
+                                          VSL_BAD_MI_OUTPUT_PARAMS));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_PRIOR_N_ADDR,
+                                          VSL_BAD_MI_PRIOR_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_PRIOR_ADDR,
+                                          VSL_BAD_MI_PRIOR_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_MI_MISSING_VALS_N,
+                                          VSL_BAD_MI_MISSING_VALS_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_SEMIDEFINITE_COR,
+                                    VSL_SEMIDEFINITE_COR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARAMTR_COR_ADDR,
+                                          VSL_BAD_PARAMTR_COR_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_COR,
+                                          VSL_BAD_COR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_PARAMS_N_ADDR,
+                                          VSL_BAD_STREAM_QUANT_PARAMS_N_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_PARAMS_ADDR,
+                                          VSL_BAD_STREAM_QUANT_PARAMS_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_PARAMS_N,
+                                          VSL_BAD_STREAM_QUANT_PARAMS_N));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_PARAMS,
+                                          VSL_BAD_STREAM_QUANT_PARAMS));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_ORDER_ADDR,
+                                          VSL_BAD_STREAM_QUANT_ORDER_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_ORDER,
+                                          VSL_BAD_STREAM_QUANT_ORDER));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_STREAM_QUANT_ADDR,
+                                          VSL_BAD_STREAM_QUANT_ADDR));
+  m_VSLErrMap.insert(
+    make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARTIAL_COV_IDX,
+                                          VSL_BAD_PARTIAL_COV_IDX));
 
   // Set VSL exception type based on VSL error
   m_except = getException(vslerr);
