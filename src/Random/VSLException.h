@@ -2,10 +2,10 @@
 /*!
   \file      src/Random/VSLException.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 08:39:10 PM MST
+  \date      Fri Nov  9 13:48:47 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Intel's Vector Sstatistical Library exception
-  \details   Intel's Vector Sstatistical Library exception
+  \brief     Intel's Vector Statistical Library exception
+  \details   Intel's Vector Statistical Library exception
 */
 //******************************************************************************
 #ifndef VSLException_h
