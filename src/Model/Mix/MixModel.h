@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixModel.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 09:14:12 PM MST
+  \date      Fri 09 Nov 2012 05:42:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -23,7 +23,7 @@ class MixModel : public Model {
     MixModel() = default;
 
     //! Destructor
-    virtual ~MixModel() {};
+    virtual ~MixModel() {}
 
     //! Interface for setting initial conditions
     virtual void setIC() = 0;
