@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 05:43:07 AM MST
+  \date      Thu 08 Nov 2012 08:54:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup

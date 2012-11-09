@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 06:20:49 AM MST
+  \date      Thu 08 Nov 2012 09:13:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -24,10 +24,10 @@ class Dirichlet : public MixModel {
     Dirichlet() = default;
 
     //! Destructor
-    ~Dirichlet() = default;
+    virtual ~Dirichlet() {}
 
     //! Set initial conditions
-    void setIC() {}
+    virtual void setIC() {}
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 06:05:42 AM MST
+  \date      Thu 08 Nov 2012 09:14:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -21,7 +21,7 @@ class Model {
     Model() = default;
 
     //! Destructor
-    ~Model() = default;
+    virtual ~Model() {};
 
     //! Interface for setting initial conditions
     virtual void setIC() = 0;

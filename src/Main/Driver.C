@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 06:13:13 AM MST
+  \date      Thu 08 Nov 2012 08:53:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -14,6 +14,15 @@
 #include <Dirichlet.h>
 
 using namespace Quinoa;
+
+Driver::Driver(Memory* memory) : m_memory(memory)
+//******************************************************************************
+//  Constructor
+//! \author J. Bakosi
+//******************************************************************************
+{
+  m_model = nullptr;
+}
 
 Driver::~Driver()
 //******************************************************************************
@@ -55,5 +64,6 @@ Driver::finalize()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  if (m_model) { delete m_model; m_model = nullptr; }
   m_memory->freeAllEntries();
 }
