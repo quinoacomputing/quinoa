@@ -94,12 +94,21 @@ if(HAS_WALL)
   add_definitions("-Wall")
 endif()
 
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-std=c++0x HAS_CPP0x)
-if(HAS_CPP0x)
+check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
+if(HAS_WREMARKS)
+  add_definitions("-Wremarks")
+endif()
+
+check_cxx_compiler_flag(-Wremarks HAS_OPTREPORT)
+if(HAS_OPTREPORT)
+  add_definitions("-opt-report=0")
+endif()
+
+check_cxx_compiler_flag(-std=c++0x HAS_CPP0X)
+if(HAS_CPP0X)
   add_definitions("-std=c++0x")
   set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
-endif(HAS_CPP0x)
+endif()
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
