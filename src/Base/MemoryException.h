@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:25:49 AM MST
+  \date      Sat 10 Nov 2012 02:33:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -41,7 +41,7 @@ const string MemMsg[NUM_MEM_EXCEPT] = {
   "Memory entry not found",
   "Memory entry not erased",
   "Memory entry not defined",
-  "Bad number of items"
+  "Bad number of items",
   "Must specify a name with non-zero length"
 };
 
@@ -50,8 +50,12 @@ class MemoryException : public Exception {
 
   public:
     //! Constructor
-    MemoryException(ExceptType except, MemExceptType memExcept) :
-      Exception(except), m_except(memExcept) {}
+    MemoryException(ExceptType except,
+                    MemExceptType memExcept,
+                    const string& file,
+                    const string& func,
+                    const unsigned int& line) :
+      Exception(except, file, func, line), m_except(memExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     MemoryException(MemoryException&&) = default;

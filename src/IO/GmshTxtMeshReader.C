@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:53:04 PM MST
+  \date      Sat 10 Nov 2012 02:49:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include <GmshTxtMeshReader.h>
+#include <MeshException.h>
 
 using namespace Quinoa;
 
@@ -130,17 +131,17 @@ GmshTxtMeshReader::readMeshFormat()
 
   // Read in beginning of header: $MeshFormat
   getline(m_inMesh, s);
-  if (s!="$MeshFormat")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$MeshFormat", MeshException,FATAL,BAD_FORMAT,m_filename);
 
   // Read in "version-number file-type data-size"
   real version;
   int type, datasize;
   m_inMesh >> version >> type >> datasize;
-  if ((fabs(version-2.2) < numeric_limits<real>::epsilon() &&
-       fabs(version-2.0) < numeric_limits<real>::epsilon()) ||
-      type!=0 || datasize!=sizeof(real))
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert((fabs(version-2.2) < numeric_limits<real>::epsilon() ||
+          fabs(version-2.0) < numeric_limits<real>::epsilon()),
+         MeshException,FATAL,BAD_FORMAT,m_filename);
+  Assert(type == 0, MeshException,FATAL,BAD_FORMAT,m_filename);
+  Assert(datasize == sizeof(real), MeshException,FATAL,BAD_FORMAT,m_filename);
   getline(m_inMesh, s);  // finish reading the line
   // Save version, type, datasize
   m_mesh->setVersion(version);
@@ -149,8 +150,7 @@ GmshTxtMeshReader::readMeshFormat()
 
   // Read in end of header: $EndMeshFormat
   getline(m_inMesh, s);
-  if (s!="$EndMeshFormat")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$EndMeshFormat", MeshException,FATAL,BAD_FORMAT,m_filename);
 }
 
 void
@@ -179,8 +179,7 @@ GmshTxtMeshReader::countNodes()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndNodes")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$EndNodes", MeshException,FATAL,BAD_FORMAT,m_filename);
 }
 
 void
@@ -210,8 +209,7 @@ GmshTxtMeshReader::readNodes()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndNodes")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$EndNodes", MeshException,FATAL,BAD_FORMAT,m_filename);
 }
 
 void
@@ -233,8 +231,8 @@ GmshTxtMeshReader::countElements()
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
-    if (it==m_GmshElemNodes.end())
-      throw MeshException(FATAL, BAD_ELEMENT, m_filename);
+    Assert(it != m_GmshElemNodes.end(),
+           MeshException,FATAL,BAD_ELEMENT,m_filename);
 
     // Read tags and throw all away
     for (int j=0; j<ntags; j++) {
@@ -260,8 +258,7 @@ GmshTxtMeshReader::countElements()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndElements")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$EndElements", MeshException,FATAL,BAD_FORMAT,m_filename);
 }
 
 void
@@ -287,8 +284,8 @@ GmshTxtMeshReader::readElements()
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
-    if (it==m_GmshElemNodes.end())
-      throw MeshException(FATAL, BAD_ELEMENT, m_filename);
+    Assert(it != m_GmshElemNodes.end(),
+           MeshException,FATAL,BAD_ELEMENT,m_filename);
 
     // Read and add element tags
     vector<int> tags(ntags,0);
@@ -316,8 +313,7 @@ GmshTxtMeshReader::readElements()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s!="$EndElements")
-    throw MeshException(FATAL, BAD_FORMAT, m_filename);
+  Assert(s == "$EndElements", MeshException,FATAL,BAD_FORMAT,m_filename);
 }
 
 void
@@ -327,8 +323,8 @@ GmshTxtMeshReader::countPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw MeshException(WARNING, MESHEXCEPT_UNIMPLEMENTED,
-                      "$PhysicalNames--$EndPhysicalNames");
+  Assert(false, MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
+         "$PhysicalNames--$EndPhysicalNames");
 }
 
 void
@@ -338,8 +334,8 @@ GmshTxtMeshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw MeshException(WARNING, MESHEXCEPT_UNIMPLEMENTED,
-                      "$PhysicalNames--$EndPhysicalNames");
+  Assert(false, MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
+         "$PhysicalNames--$EndPhysicalNames");
 }
 
 void
@@ -354,7 +350,7 @@ GmshTxtMeshReader::addElem(int type, vector<int>& nodes)
   switch (type) {
     case 1: m_mesh->addLine(nodes); break;
     case 2: m_mesh->addTriangle(nodes); break;
-    default: throw MeshException(FATAL, BAD_ELEMENT, m_filename);
+    default: Assert(false, MeshException,FATAL,BAD_ELEMENT,m_filename);
   }
 }
 
@@ -370,6 +366,6 @@ GmshTxtMeshReader::addElemTags(int type, vector<int>& tags)
   switch (type) {
     case 1: m_mesh->addLineTags(tags); break;
     case 2: m_mesh->addTriangleTags(tags); break;
-    default: throw MeshException(FATAL, BAD_ELEMENT, m_filename);
+    default: Assert(false, MeshException,FATAL,BAD_ELEMENT,m_filename);
   }
 }

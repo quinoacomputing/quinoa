@@ -2,13 +2,15 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:35:27 AM MST
+  \date      Sat 10 Nov 2012 02:55:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
              numbers by several threads using block-splitting.
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <MKLRndTable.h>
 #include <MKLException.h>
@@ -44,12 +46,12 @@ MKLRndTable::MKLRndTable(Memory* memory,
 {
   if (nthread <= 0) throw MKLException(FATAL, MKL_BAD_NTHREADS);
   if (number <= 0) throw MKLException(FATAL, MKL_BAD_NUMBER);
-  if (name.size() == 0) throw MemoryException(FATAL, EMPTY_NAME);
+  Assert(name.size() != 0, MemoryException,FATAL,EMPTY_NAME);
 
   // Allocate memory for array of stream-pointers for several threads
   try {
     m_stream = new VSLStreamStatePtr [m_nthread](); // initialize all to zero
-  } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
+  } catch (bad_alloc&) { Assert(false, MemoryException,FATAL,BAD_ALLOC); }
 
   // Initialize first thread-stream for given distribution using seed
   newStream(&m_stream[0], brng, seed);
@@ -134,4 +136,3 @@ MKLRndTable::generate()
       throw MKLException(WARNING, MKL_UNKNOWN_METHOD);
   }
 }
-

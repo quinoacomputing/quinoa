@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Tue 06 Nov 2012 06:17:25 AM MST
+  \date      Sat 10 Nov 2012 02:26:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -70,7 +70,7 @@ class Memory {
     size_t getNumber(MemoryEntry* id);
 
     //! Return the number of items based on the variable name
-    size_t getNumber(string name);
+    size_t getNumber(const string& name);
 
     //! Return the value type based on the ID
     ValType getValue(MemoryEntry* id);
@@ -90,27 +90,27 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) {
-      if (id == nullptr) throw MemoryException(WARNING, UNDEFINED);
+      Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
       auto it = m_entry.find(id);
-      if (it==m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+      Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
       return static_cast<V*>((*it)->m_ptr);
     }
 
     //! Return the data pointer for memory entry based on the variable name,
     //! template V specifies return pointer type
-    template<class V> V* getPtr(string name) {
+    template<class V> V* getPtr(const string& name) {
       return static_cast<V*>(getID(name)->m_ptr);
     }
 
     //! Return the pair of data pointer and number of variables for memory entry
     //! based on the variable name, template V specifies return pointer type
-    template<class V> pair<size_t,V*> getNumPtr(string name) {
-      MemoryEntry* entry = getID(name);
+    template<class V> pair<size_t,V*> getNumPtr(const string& name) {
+      const MemoryEntry* entry = getID(name);
       return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
     }
 
     //! Return the MemorySet key based on the variable name
-    MemoryEntry* getID(string name);
+    const MemoryEntry* getID(const string& name);
 
     //! Return the number of allocated bytes
     size_t getBytes();

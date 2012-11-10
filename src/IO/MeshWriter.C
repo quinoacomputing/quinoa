@@ -2,12 +2,14 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:02:26 PM MST
+  \date      Sat 10 Nov 2012 10:05:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <MeshWriter.h>
 #include <IOException.h>

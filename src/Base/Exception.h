@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 07:14:50 PM MST
+  \date      Sat 10 Nov 2012 01:44:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -11,11 +11,23 @@
 #ifndef Exception_h
 #define Exception_h
 
-#include <iostream>
-
 #include <QuinoaTypes.h>
 
 namespace Quinoa {
+
+// If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing.  If NDEBUG
+// is not defined, evaluate expr. If expr is true, do nothing. If expr is
+// false, throw exception passed in as argument 2 with exception-arguments
+// passed in as arguments 2+. Add source filename, function name, and line
+// number where exception occurred.
+#ifdef NDEBUG
+#  define Assert(expr, exception, ...) (static_cast<void>(0))
+#else  // NDEBUG
+#  define Assert(expr, exception, ...)                                       \
+   ((expr)                                                                   \
+    ? static_cast<void>(0)                                                   \
+    : throw exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__))
+#endif // NDEBUG
 
 //! Exception types
 // ICC: no strongly typed enums yet
@@ -42,8 +54,17 @@ class Exception {
   public:
     //! Constructor
     Exception(ExceptType except) : m_except(except) {}
+
     Exception(ExceptType except, const string& msg) :
       m_message(msg), m_except(except) {}
+
+    Exception(const ExceptType except,
+              const string& file,
+              const string& func,
+              const unsigned int& line) : m_file(file),
+                                          m_func(func),
+                                          m_line(line),
+                                          m_except(except) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     Exception(Exception&&) = default;
@@ -59,8 +80,10 @@ class Exception {
     // ICC: should be deleted and private
     Exception(const Exception&);
 
-    //! Error message (constructed along the inheritance tree)
-    string m_message;
+    string m_message;     //!< Error message (constructed along the tree)
+    string m_file;        //!< Source file where the exception is occurred
+    string m_func;        //!< Functionn name in which the exception is occurred
+    unsigned int m_line;  //!< Source line where the exception is occurred
 
   private:
     //! Don't permit copy assignment

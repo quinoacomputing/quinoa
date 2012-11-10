@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:23:46 AM MST
+  \date      Sat 10 Nov 2012 02:53:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -10,6 +10,8 @@
              between threads
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <MKLRndStream.h>
 #include <MKLException.h>
@@ -33,7 +35,7 @@ MKLRndStream::MKLRndStream(const int nthread,
   // Allocate memory for array of stream-pointers for several threads
   try {
     m_stream = new VSLStreamStatePtr [m_nthread](); // initialize all to zero
-  } catch (bad_alloc&) { throw MemoryException(FATAL, BAD_ALLOC); }
+  } catch (bad_alloc&) { Assert(false, MemoryException,FATAL,BAD_ALLOC); }
 
   // Initialize thread-streams for block-splitting
   for (int t=0; t<m_nthread; ++t) {
