@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:18:29 PM MST
+  \date      Sat 10 Nov 2012 09:25:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -20,13 +20,15 @@ using namespace std;
 namespace Quinoa {
 
 //! Memory exception types
-enum MemExceptType { BAD_ALLOC=0,  //!< std::bad_alloc
-                     BAD_INSERT,   //!< unsuccessful STL::insert
-                     BAD_NAME,     //!< non-unique variable name
-                     EMPTY_STORE,  //!< memory store empty
-                     NOT_FOUND,    //!< STL::find did not find entry
-                     NOT_ERASED,   //!< STL::erase did not erase entry
-                     UNDEFINED,    //!< memory entry not defined
+enum MemExceptType { BAD_ALLOC=0,     //!< std::bad_alloc
+                     BAD_INSERT,      //!< unsuccessful STL::insert
+                     NONUNIQUE_NAME,  //!< non-unique variable name
+                     EMPTY_STORE,     //!< memory store empty
+                     NOT_FOUND,       //!< STL::find did not find entry
+                     NOT_ERASED,      //!< STL::erase did not erase entry
+                     UNDEFINED,       //!< memory entry not defined
+                     BAD_NUMBER,      //!< bad number of items
+                     EMPTY_NAME,      //!< bad number of items
                      NUM_MEM_EXCEPT
 };
 
@@ -38,7 +40,9 @@ const string MemMsg[NUM_MEM_EXCEPT] = {
   "Memory story is empty",
   "Memory entry not found",
   "Memory entry not erased",
-  "Memory entry not defined"
+  "Memory entry not defined",
+  "Bad number of items"
+  "Must specify a name with non-zero length"
 };
 
 //! MemoryException : Exception

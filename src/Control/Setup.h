@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 08:48:53 AM MST
+  \date      Sat 10 Nov 2012 09:35:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -22,7 +22,7 @@ const ModelType MODEL = ModelType::DIRICHLET;
 const MixModelType MIX_MODEL = MixModelType::DIRICHLET;
 
 //! Select number of scalars
-const int NUM_SCALARS = 0;
+const int NUM_SCALARS = 3;
 
 //! Select velocity model
 const VelocityModelType VELOCITY_MODEL = VelocityModelType::NONE;

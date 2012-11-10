@@ -1,34 +1,31 @@
 //******************************************************************************
 /*!
-  \file      src/Statistics/JPDF.C
+  \file      src/Statistics/PDF.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:39:15 AM MST
+  \date      Sat 10 Nov 2012 09:43:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Joint PDF estimator
-  \details   Joint PDF estimator
+  \brief     Univariate PDF estimator
+  \details   Univariate PDF estimator
 */
 //******************************************************************************
 
 #include <iostream>
 
-#include <JPDF.h>
+#include <PDF.h>
 #include <StatException.h>
 
 using namespace Quinoa;
 
-JPDF::JPDF(const int dim, const real binsize) : m_dim(dim), m_binsize(binsize)
+PDF::PDF(const real& binsize) : m_binsize(binsize)
 //******************************************************************************
 //  Constructor: Initialize joint PDF container
-//! \param[in]   dim        Dimension of sample space
 //! \param[in]   binsize    Sample space bin size
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Grow temporary key vector size in advance
-  m_key.resize(dim);
 }
 
-JPDF::~JPDF()
+PDF::~PDF()
 //******************************************************************************
 //  Destructor: Clear joint PDF container
 //! \author J. Bakosi
@@ -38,25 +35,16 @@ JPDF::~JPDF()
 }
 
 void
-JPDF::insert(const vector<real>& value)
+PDF::insert(const real& value)
 //******************************************************************************
 //  Insert new value into joint PDF
 //! \param[in]   value    Value to insert
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Make sure sample has the same dimension as the joint PDF
-  if(value.size() != m_key.size())
-    throw StatException(FATAL, STATEXCEPT_BAD_SAMPLE);
-
-  // Find bin ids in all dimensions
-  transform(value.begin(), value.end(), m_key.begin(),
-            [&](const real& val)->int {
-               return static_cast<int>(floor(val/m_binsize+0.5)); } );
-
   // Increase number of samples in joint PDF
   ++m_nsample;
 
   // Add sample to joint PDF
-  ++m_pdf[m_key];
+  ++m_pdf[floor(value/m_binsize+0.5)];
 }
