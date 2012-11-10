@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:19:56 PM MST
+  \date      Sat 10 Nov 2012 09:18:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -40,7 +40,6 @@ class RandomException : public Exception {
       Exception(except), m_except(rndExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
-    //! Can only be thrown from within derived RandomException classes
     RandomException(RandomException&&) = default;
 
     //! Don't permit copy constructor

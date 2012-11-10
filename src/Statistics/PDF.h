@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 08:00:32 PM MST
+  \date      Sat 10 Nov 2012 09:43:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -31,18 +31,13 @@ class PDF : private Distribution {
 
   public:
     //! Constructor: Initialize univariate PDF container
-    //! \param[in]   binsize    Sample space bin size
-    PDF(const real& binsize) : m_binsize(binsize) {}
+    PDF(const real& binsize);
 
     //! Destructor: Clear univariate PDF container
-    virtual ~PDF() { m_pdf.clear(); }
+    virtual ~PDF();
 
     //! Insert new value into univariate PDF
-    //! \param[in]   value    Value to insert
-    virtual void insert(const real& value) {
-      ++m_nsample;
-      ++m_pdf[floor(value/m_binsize+0.5)];
-    }
+    virtual void insert(const real& value);
 
     //! Constant accessor to PDF map
     //! \return Pointer to map

@@ -2,14 +2,13 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 08:56:34 PM MST
+  \date      Sat 10 Nov 2012 09:15:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
 */
 //******************************************************************************
 
-#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <iterator>
@@ -59,12 +58,8 @@ Memory::newEntry(size_t number,
 //! \author     J. Bakosi
 //******************************************************************************
 {
-  assert(number > 0);
-  assert(name.size() > 0);
-  assert(static_cast<int>(value) >= 0 &&
-         static_cast<int>(value) < NUM_VAL_TYPES);
-  assert(static_cast<int>(variable) >= 0 &&
-         static_cast<int>(variable) < NUM_VAR_TYPES);
+  if (number == 0) throw MemoryException(FATAL, BAD_NUMBER);
+  if (name.size() == 0) throw MemoryException(FATAL, EMPTY_NAME);
 
   // Compute total number of bytes to be allocated
   size_t nbytes = number *
@@ -106,7 +101,7 @@ Memory::newEntry(size_t number,
 
   // Test if name is unique
   if (m_entry.size() != m_name.size())
-    throw MemoryException(WARNING, BAD_NAME);
+    throw MemoryException(WARNING, NONUNIQUE_NAME);
 
   // Return key to caller
   return entry;
@@ -581,7 +576,7 @@ Memory::getID(string name)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(name.size() > 0);
+  if (name.size() == 0) throw MemoryException(FATAL, EMPTY_NAME);
 
   // Return and throw warning if memory store is empty
   if (!m_name.size())

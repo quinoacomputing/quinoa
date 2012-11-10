@@ -28,8 +28,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       IO
                       LinearAlgebra
                       Mesh
-                      MixModel
                       Dirichlet
+                      MixModel
                       Paradigm
                       Random
                       Statistics

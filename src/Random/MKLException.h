@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:20:14 PM MST
+  \date      Sat 10 Nov 2012 09:33:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -24,6 +24,8 @@ namespace Quinoa {
 enum MKLExceptType { MKL_UNKNOWN_METHOD=0,
                      MKL_UNKNOWN_TABLE,
                      MKL_UNKNOWN_STREAM,
+                     MKL_BAD_NTHREADS,
+                     MKL_BAD_NUMBER,
                      MKL_VSL_ERROR,
                      NUM_MKL_EXCEPT
 };
@@ -33,6 +35,8 @@ const string MKLMsg[NUM_MKL_EXCEPT] = {
   "Unknown VSL generation method",
   "Random number table not found",
   "Random number stream not found",
+  "Wrong number of threads",
+  "Bad number of items"
   "VSL ",
 };
 
