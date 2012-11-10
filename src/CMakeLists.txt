@@ -108,7 +108,8 @@ if(HAS_WREMARKS)
   # Disregard the following remarks:
   #   981: operands are evaluated in unspecified order
   #   383: value copied to temporary, reference to temporary used
-  add_definitions("-diag-disable 981,383")
+  add_definitions("-diag-disable 981")
+  add_definitions("-diag-disable 383")
 endif()
 
 check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)

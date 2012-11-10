@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:45:20 PM MST
+  \date      Fri 09 Nov 2012 08:00:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -42,10 +42,6 @@ class PDF : private Distribution {
     virtual void insert(const real& value) {
       ++m_nsample;
       ++m_pdf[floor(value/m_binsize+0.5)];
-    }
-    //! Throw exception if vector sample is given
-    virtual void insert(const vector<real>& value) {
-      throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
     }
 
     //! Constant accessor to PDF map
