@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:17:46 PM MDT
+  \date      Sat 10 Nov 2012 02:17:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row

@@ -2,12 +2,14 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:02:47 PM MST
+  \date      Sat 10 Nov 2012 10:06:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <PlotWriter.h>
 #include <IOException.h>

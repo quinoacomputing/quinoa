@@ -2,12 +2,14 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:02:15 PM MST
+  \date      Sat 10 Nov 2012 10:04:29 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <MeshReader.h>
 #include <IOException.h>

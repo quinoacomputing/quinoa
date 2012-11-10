@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:19:24 PM MST
+  \date      Sat 10 Nov 2012 02:27:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -15,7 +15,6 @@
 
 #include <Memory.h>
 #include <Mesh.h>
-#include <MeshException.h>
 
 namespace Quinoa {
 

@@ -2,12 +2,14 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 06:29:44 AM MST
+  \date      Sat 10 Nov 2012 10:04:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
 */
 //******************************************************************************
+
+#include <iostream>
 
 #include <mkl_vsl.h>
 

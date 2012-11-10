@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:47:42 PM MST
+  \date      Sat 10 Nov 2012 02:50:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -13,6 +13,7 @@
 #include <iterator>
 
 #include <UnsMesh.h>
+#include <MeshException.h>
 
 using namespace Quinoa;
 
@@ -91,7 +92,7 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     m_lintag.reserve(nlines);
     m_tritag.reserve(ntriangles);
   } catch (bad_alloc&) {
-    throw MemoryException(FATAL, BAD_ALLOC);
+    Assert(false, MemoryException,FATAL,BAD_ALLOC);
   }
 }
 

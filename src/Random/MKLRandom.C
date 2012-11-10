@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Wed Nov  7 17:30:24 2012
+  \date      Sat 10 Nov 2012 02:52:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -48,13 +48,13 @@ MKLRandom::addTable(const int brng,
   // Create new table
   MKLRndTable* table = new (nothrow)
     MKLRndTable(m_memory, m_nthread, brng, dist, method, seed, number, name);
-  if (table == nullptr) throw MemoryException(FATAL, BAD_ALLOC);
+  Assert(table != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Store new table
   pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    throw MemoryException(FATAL, BAD_INSERT);
+    Assert(false, MemoryException,FATAL,BAD_INSERT);
   }
 
   // Return key to caller
@@ -115,13 +115,13 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 {
   // Create new stream
   MKLRndStream* stream = new (nothrow) MKLRndStream(m_nthread, brng, seed);
-  if (stream == nullptr) throw MemoryException(FATAL, BAD_ALLOC);
+  Assert(stream != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Store new stream
   pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    throw MemoryException(FATAL, BAD_INSERT);
+    Assert(false, MemoryException,FATAL,BAD_INSERT);
   }
 
   // Return key to caller

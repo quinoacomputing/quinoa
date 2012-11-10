@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:15:31 AM MST
+  \date      Sat 10 Nov 2012 02:21:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -58,8 +58,8 @@ Memory::newEntry(size_t number,
 //! \author     J. Bakosi
 //******************************************************************************
 {
-  if (number == 0) throw MemoryException(FATAL, BAD_NUMBER);
-  if (name.size() == 0) throw MemoryException(FATAL, EMPTY_NAME);
+  Assert(number > 0, MemoryException,FATAL,BAD_NUMBER);
+  Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
 
   // Compute total number of bytes to be allocated
   size_t nbytes = number *
@@ -68,8 +68,7 @@ Memory::newEntry(size_t number,
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
-  if (ptr == nullptr)
-    throw MemoryException(FATAL, BAD_ALLOC);
+  Assert(ptr != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Allocate memory entry metadata
   MemoryEntry* entry = new (nothrow) MemoryEntry(nbytes,
@@ -81,27 +80,38 @@ Memory::newEntry(size_t number,
                                                  restart,
                                                  ptr);
   if (entry == nullptr) {
-    if (ptr) { delete [] static_cast<char*>(ptr); ptr = nullptr; }
-    throw MemoryException(FATAL, BAD_ALLOC);
+    if (ptr) {
+      delete [] static_cast<char*>(ptr);
+      ptr = nullptr;
+    }
+    throw MemoryException(FATAL, BAD_ALLOC,
+                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
   }
 
   // Store memory entry
   pair<MemorySet::iterator,bool> e = m_entry.insert(entry);
   if (!e.second) {
-    if (entry) { delete entry; entry = nullptr; }
-    throw MemoryException(FATAL, BAD_INSERT);
+    if (entry) {
+       delete entry;
+       entry = nullptr;
+    }
+    throw MemoryException(FATAL, BAD_INSERT,
+                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
   }
 
   // Map variable name to MemorySet key
   pair<MemoryNames::iterator,bool> n = m_name.emplace(name,entry);
   if (!n.second) {
-    if (entry) { delete entry; entry = nullptr; }
-    throw MemoryException(FATAL, BAD_INSERT);
+    if (entry) {
+      delete entry;
+      entry = nullptr;
+    }
+    throw MemoryException(FATAL, BAD_INSERT,
+                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
   }
 
   // Test if name is unique
-  if (m_entry.size() != m_name.size())
-    throw MemoryException(WARNING, NONUNIQUE_NAME);
+  Assert(m_entry.size()==m_name.size(), MemoryException,WARNING,NONUNIQUE_NAME);
 
   // Return key to caller
   return entry;
@@ -145,18 +155,18 @@ Memory::freeEntry(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is already deallocated
-  if (id == nullptr) throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size()) throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry
   auto it = m_entry.find(id);
-  if (it == m_entry.end()) throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
 
   // Remove variable name mapped to MemorySet key
   MemoryNames::size_type erased = m_name.erase((*it)->m_name);
-  if (!erased) throw MemoryException(WARNING, NOT_ERASED);
+  Assert(erased, MemoryException,WARNING,NOT_ERASED);
 
   // Deallocate memory entry pointed to by m_entry[id]
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -165,7 +175,7 @@ Memory::freeEntry(MemoryEntry* id)
 
   // Remove MemoryEntry from MemorySet
   MemorySet::size_type removed = m_entry.erase(id);
-  if (!removed) throw MemoryException(WARNING, NOT_ERASED);
+  Assert(removed, MemoryException,WARNING,NOT_ERASED);
 
   // Zero id, so the caller can also tell that the memory entry has been removed
   id = nullptr;
@@ -202,8 +212,7 @@ Memory::echoAllEntries(MemoryEntryField crit)
 //******************************************************************************
 {
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Echo AllEntries-header
   cout << "* Dynamically allocated memory entries ";
@@ -420,22 +429,19 @@ Memory::getNumber(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its number of variables
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_number;
 }
 
 size_t
-Memory::getNumber(string name)
+Memory::getNumber(const string& name)
 //******************************************************************************
 //  Return the number of items based on the variable name
 //! \param[in]  name  name of the variable
@@ -457,17 +463,14 @@ Memory::getValue(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_value;
 }
 
@@ -481,17 +484,14 @@ Memory::getVariable(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_variable;
 }
 
@@ -505,17 +505,14 @@ Memory::getName(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_name;
 }
 
@@ -529,17 +526,14 @@ Memory::getPlot(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_plot;
 }
 
@@ -553,22 +547,19 @@ Memory::getRestart(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  if (it==m_entry.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
   return (*it)->m_restart;
 }
 
-MemoryEntry*
-Memory::getID(string name)
+const MemoryEntry*
+Memory::getID(const string& name)
 //******************************************************************************
 //  Return the MemorySet key based on the variable name
 //! \param[in]  name  Name of the variable
@@ -576,16 +567,14 @@ Memory::getID(string name)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (name.size() == 0) throw MemoryException(FATAL, EMPTY_NAME);
+  Assert(name.size() != 0, MemoryException,FATAL,EMPTY_NAME);
 
   // Return and throw warning if memory store is empty
-  if (!m_name.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_name.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   // Find memory entry and return its value type
   auto it = m_name.find(name);
-  if (it==m_name.end())
-    throw MemoryException(WARNING, NOT_FOUND);
+  Assert(it != m_name.end(), MemoryException,WARNING,NOT_FOUND);
   return it->second;
 }
 
@@ -604,8 +593,7 @@ Memory::getBytes()
 //******************************************************************************
 {
   // Return and throw warning if memory store is empty
-  if (!m_entry.size())
-    throw MemoryException(WARNING, EMPTY_STORE);
+  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
   size_t bytes = 0;
   for (auto& e : m_entry) {
@@ -624,8 +612,7 @@ Memory::zero(MemoryEntry* id)
 //******************************************************************************
 {
   // Return and throw warning if entry is invalid
-  if (id == nullptr)
-    throw MemoryException(WARNING, UNDEFINED);
+  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Get size of value type
   size_t size = SizeOf[static_cast<int>(id->m_value)];
