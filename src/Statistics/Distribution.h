@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:53:11 AM MDT
+  \date      Fri 09 Nov 2012 06:44:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -28,7 +28,7 @@ class Distribution {
     Distribution() : m_nsample(0) {}
 
     //! Destructor
-    ~Distribution() = default;
+    virtual ~Distribution() {}
 
     //! Insert new value into distribution
     virtual void insert(const real& value) = 0;

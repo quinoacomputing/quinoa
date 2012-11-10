@@ -89,6 +89,13 @@ configure_file(
 
 # Add compiler flags
 include(CheckCXXCompilerFlag)
+
+check_cxx_compiler_flag(-std=c++0x HAS_CPP0X)
+if(HAS_CPP0X)
+  add_definitions("-std=c++0x")
+  set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
+endif()
+
 check_cxx_compiler_flag(-Wall HAS_WALL)
 if(HAS_WALL)
   add_definitions("-Wall")
@@ -96,18 +103,17 @@ endif()
 
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
 if(HAS_WREMARKS)
+  # Turn on remarks
   add_definitions("-Wremarks")
+  # Disregard the following remarks:
+  #   981: operands are evaluated in unspecified order
+  #   383: value copied to temporary, reference to temporary used
+  add_definitions("-diag-disable 981,383")
 endif()
 
-check_cxx_compiler_flag(-Wremarks HAS_OPTREPORT)
+check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)
 if(HAS_OPTREPORT)
   add_definitions("-opt-report=0")
-endif()
-
-check_cxx_compiler_flag(-std=c++0x HAS_CPP0X)
-if(HAS_CPP0X)
-  add_definitions("-std=c++0x")
-  set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
 endif()
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###

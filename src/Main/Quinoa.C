@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 08:42:36 PM MST
+  \date      Fri 09 Nov 2012 06:56:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
   ErrCode error = NO_ERROR;
   try {
 
-    driver.setup(argc, argv);
+    driver.setup();
     driver.solve();
 
   } catch (Exception& e) { error = e.handleException(&driver); }

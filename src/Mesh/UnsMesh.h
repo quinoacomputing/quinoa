@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:13:52 PM MDT
+  \date      Fri 09 Nov 2012 05:19:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -26,7 +26,7 @@ const string     LINES_NAME = "lines";
 const string TRIANGLES_NAME = "triangles";
 
 //! UnsMesh : Mesh
-class UnsMesh : Mesh {
+class UnsMesh : private Mesh {
 
   public:
     //! Constructor: zero memory entry pointers held

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 07:30:54 PM MDT
+  \date      Fri 09 Nov 2012 06:50:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -22,7 +22,7 @@ using namespace std;
 namespace Quinoa {
 
 //! MKL-based random number generator
-class MKLRandom : Random {
+class MKLRandom : private Random {
 
   public:
     //! Constructor

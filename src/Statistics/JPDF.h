@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 02:23:17 PM MDT
+  \date      Fri 09 Nov 2012 06:53:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -24,7 +24,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Joint PDF estimator
-class JPDF : Distribution {
+class JPDF : private Distribution {
 
   private:
     //! Key type
@@ -46,17 +46,17 @@ class JPDF : Distribution {
 
   public:
     //! Constructor: Initialize joint PDF container
-    JPDF(const real dim, const real binsize);
+    JPDF(const int dim, const real binsize);
 
     //! Destructor: Clear joint PDF container
-    ~JPDF();
+    virtual ~JPDF();
 
     //! Throw exception if scalar sample is given
-    void insert(const real& value) {
+    virtual void insert(const vector<real>& value);
+    //! Insert new value into joint PDF
+    virtual void insert(const real& value) {
       throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
     }
-    //! Insert new value into joint PDF
-    void insert(const vector<real>& value);
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected

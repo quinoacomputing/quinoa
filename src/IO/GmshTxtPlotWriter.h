@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Tue 18 Sep 2012 09:21:59 PM MDT
+  \date      Fri 09 Nov 2012 05:55:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -22,7 +22,7 @@ using namespace std;
 namespace Quinoa {
 
 //! GmshTxtPlotWriter : PlotWriter
-class GmshTxtPlotWriter : PlotWriter {
+class GmshTxtPlotWriter : private PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
