@@ -1,13 +1,13 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/Dirichlet/Dirichlet.C
+  \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 06:20:39 AM MST
+  \date      Sat 10 Nov 2012 08:00:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Dirichlet mix model
-  \details   Dirichlet mix model
+  \brief     The generalized Dirichlet mix model
+  \details   The generalized Dirichlet mix model
 */
 //******************************************************************************
 
-#include <Dirichlet.h>
+#include <GeneralizedDirichlet.h>
 
