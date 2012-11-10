@@ -12,9 +12,10 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
-                    ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
-                    ${QUINOA_SOURCE_DIR}/Model/Mix
                     ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel/GeneralizedDirichlet
 )
 
 add_executable(${QUINOA_EXECUTABLE}
@@ -27,6 +28,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       IO
                       LinearAlgebra
                       Mesh
+                      MixModel
+                      Dirichlet
                       Paradigm
                       Random
                       Statistics

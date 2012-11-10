@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 05:40:47 AM MST
+  \date      Sat 10 Nov 2012 07:56:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base, select model
@@ -14,23 +14,20 @@
 namespace Quinoa {
 
 //! Models
-enum ModelType { DIRICHLET=0,            //!< Dirichlet
-                 GENERALIZED_DIRICHLET,  //!< Generalized Dirichlet
-                 NUM_MODELS
+enum class ModelType { DIRICHLET,              //!< Dirichlet
+                       GENERALIZED_DIRICHLET   //!< Generalized Dirichlet
 };
 
 //! Mix models
-enum MixModelType { MIX_NONE=0,                 //!< No mix model
-                    MIX_DIRICHLET,              //!< Dirichlet
-                    MIX_GENERALIZED_DIRICHLET,  //!< Generalized Dirichlet
-                    NUM_MIX_MODELS
+enum class MixModelType { NONE,                   //!< No mix model
+                          DIRICHLET,              //!< Dirichlet
+                          GENERALIZED_DIRICHLET   //!< Generalized Dirichlet
 };
 
 //! Velocity models
-enum VelocityModelType { VEL_NONE=0,                //!< No velocity model
-                         VEL_SIMPLIFIED_LANGEVIN,   //!< Simplified Langevin
-                         VEL_GENERALIZED_LANGEVIN,  //!< Generalized Langevin
-                         NUM_VEL_MODELS
+enum class VelocityModelType { NONE,                 //!< No velocity model
+                               SIMPLIFIED_LANGEVIN,  //!< Simplified Langevin
+                               GENERALIZED_LANGEVIN  //!< Generalized Langevin
 };
 
 } // namespace Quinoa

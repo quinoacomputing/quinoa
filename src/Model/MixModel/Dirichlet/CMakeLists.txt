@@ -6,12 +6,9 @@ project(Dirichlet CXX)
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
-include_directories(${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
-                    ${QUINOA_SOURCE_DIR}/Model/Mix
+include_directories(${QUINOA_SOURCE_DIR}/Model/MixModel/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel
                     ${QUINOA_SOURCE_DIR}/Model
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Main
 )
 
 add_library(Dirichlet

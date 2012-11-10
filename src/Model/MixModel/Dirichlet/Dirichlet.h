@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:45:13 AM MST
+  \date      Sat 10 Nov 2012 08:37:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -12,7 +12,6 @@
 #define Dirichlet_h
 
 #include <MixModel.h>
-#include <DirichletSetup.h>
 
 namespace Quinoa {
 
@@ -21,7 +20,7 @@ class Dirichlet : public MixModel {
 
   public:
     //! Constructor
-    Dirichlet() = default;
+    Dirichlet(const int nscalar);
 
     //! Destructor
     virtual ~Dirichlet() {}
@@ -38,8 +37,6 @@ class Dirichlet : public MixModel {
     Dirichlet(Dirichlet&&) = delete;
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
-
-    DirichletSetup m_setup;
 };
 
 } // namespace Quinoa
