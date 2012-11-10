@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:53:06 PM MST
+  \date      Fri 09 Nov 2012 08:00:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -51,12 +51,8 @@ class JPDF : private Distribution {
     //! Destructor: Clear joint PDF container
     virtual ~JPDF();
 
-    //! Throw exception if scalar sample is given
-    virtual void insert(const vector<real>& value);
     //! Insert new value into joint PDF
-    virtual void insert(const real& value) {
-      throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
-    }
+    virtual void insert(const vector<real>& value);
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
