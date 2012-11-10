@@ -2,12 +2,15 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:40:58 AM MDT
+  \date      Fri 09 Nov 2012 05:53:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
 */
 //******************************************************************************
+
+#include <limits>
+#include <cmath>
 
 #include <GmshTxtMeshReader.h>
 
@@ -24,9 +27,9 @@ GmshTxtMeshReader::GmshTxtMeshReader(string filename,
 //******************************************************************************
 {
   // Gmsh element types and their number of nodes,
-  // all Gmsh-supported listed, Quinoa-supported at this time commented
-  m_GmshElemNodes.insert(make_pair<int,int>(1, 2));  // 2-node line
-  m_GmshElemNodes.insert(make_pair<int,int>(2, 3));  // 3-node triangle
+  // all Gmsh-supported listed, Quinoa-supported at this time uncommented
+  m_GmshElemNodes.insert(make_pair(1, 2));  // 2-node line
+  m_GmshElemNodes.insert(make_pair(2, 3));  // 3-node triangle
   //           { 3,  4},  //! 4-node quadrangle
   //           { 4,  4},  //! 4-node tetrahedron
   //           { 5,  8},  //! 8-node hexahedron
@@ -134,7 +137,9 @@ GmshTxtMeshReader::readMeshFormat()
   real version;
   int type, datasize;
   m_inMesh >> version >> type >> datasize;
-  if ((version!=2.2 && version!=2.0) || type!=0 || datasize!=sizeof(real))
+  if ((fabs(version-2.2) < numeric_limits<real>::epsilon() &&
+       fabs(version-2.0) < numeric_limits<real>::epsilon()) ||
+      type!=0 || datasize!=sizeof(real))
     throw MeshException(FATAL, BAD_FORMAT, m_filename);
   getline(m_inMesh, s);  // finish reading the line
   // Save version, type, datasize

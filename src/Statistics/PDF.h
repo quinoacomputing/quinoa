@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 11:45:41 AM MDT
+  \date      Fri 09 Nov 2012 06:45:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -23,7 +23,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Univariate PDF estimator
-class PDF : Distribution {
+class PDF : private Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
     //!                                  mapped value: sample counter
@@ -35,16 +35,16 @@ class PDF : Distribution {
     PDF(const real& binsize) : m_binsize(binsize) {}
 
     //! Destructor: Clear univariate PDF container
-    ~PDF() { m_pdf.clear(); }
+    virtual ~PDF() { m_pdf.clear(); }
 
     //! Insert new value into univariate PDF
     //! \param[in]   value    Value to insert
-    void insert(const real& value) {
+    virtual void insert(const real& value) {
       ++m_nsample;
       ++m_pdf[floor(value/m_binsize+0.5)];
     }
     //! Throw exception if vector sample is given
-    void insert(const vector<real>& value) {
+    virtual void insert(const vector<real>& value) {
       throw StatException(WARNING, STATEXCEPT_UNIMPLEMENTED);
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.h
   \author    J. Bakosi
-  \date      Thu 01 Nov 2012 07:31:17 PM MDT
+  \date      Fri 09 Nov 2012 06:50:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -22,7 +22,7 @@ using namespace std;
 namespace Quinoa {
 
 //! MKL-based random number generator from leap-frog streams
-class MKLRndStream : public MKL {
+class MKLRndStream : private MKL {
 
   public:
     //! Constructor: Create random number generator leap-frog stream

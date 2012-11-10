@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 08:48:38 PM MST
+  \date      Fri 09 Nov 2012 06:56:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -27,7 +27,7 @@ class Driver {
     ~Driver();
 
     //! Setup
-    void setup(int argc, char* argv[]);
+    void setup();
 
     //! Solve
     void solve();

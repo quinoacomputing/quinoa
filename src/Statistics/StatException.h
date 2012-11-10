@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:52:16 AM MST
+  \date      Fri 09 Nov 2012 06:19:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -42,7 +42,7 @@ class StatException : public Exception {
     StatException(StatException&&) = default;
 
     //! Destructor
-    ~StatException() = default;
+    virtual ~StatException() {}
 
     //! Handle StatException
     virtual ErrCode handleException(Driver* driver);

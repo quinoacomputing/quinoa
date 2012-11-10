@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 08:54:35 PM MST
+  \date      Fri 09 Nov 2012 07:16:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup
@@ -16,7 +16,7 @@
 namespace Quinoa {
 
 //! Select model; see Control.h for available models
-const ModelType MODEL = DIRICHLET;
+ModelType g_model = DIRICHLET;
 
 } // namespace Quinoa
 

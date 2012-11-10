@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:38:03 AM MST
+  \date      Fri 09 Nov 2012 06:18:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -53,7 +53,7 @@ class MemoryException : public Exception {
     MemoryException(MemoryException&&) = default;
 
     //! Destructor
-    ~MemoryException() = default;
+    virtual ~MemoryException() {}
 
     //! Handle MemoryException
     virtual ErrCode handleException(Driver* driver);

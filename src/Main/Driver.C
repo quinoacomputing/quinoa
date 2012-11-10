@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu 08 Nov 2012 08:53:05 PM MST
+  \date      Fri 09 Nov 2012 07:14:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -34,15 +34,16 @@ Driver::~Driver()
 }
 
 void
-Driver::setup(int argc, char* argv[])
+Driver::setup()
 //******************************************************************************
 //  Setup
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Select model
-  switch (MODEL) {
-    case DIRICHLET : m_model = new Dirichlet;
+  switch (g_model) {
+    case DIRICHLET: m_model = new Dirichlet; break;
+    default: throw Exception(FATAL, "No such model");
   }
 }
 

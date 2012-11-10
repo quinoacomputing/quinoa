@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:41:59 AM MST
+  \date      Fri 09 Nov 2012 07:14:50 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -42,18 +42,19 @@ class Exception {
   public:
     //! Constructor
     Exception(ExceptType except) : m_except(except) {}
+    Exception(ExceptType except, const string& msg) :
+      m_message(msg), m_except(except) {}
+
+    //! Move constructor, necessary for throws, default compiler generated
+    Exception(Exception&&) = default;
 
     //! Destructor
-    ~Exception() = default;
+    virtual ~Exception() {}
 
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* driver);
 
   protected:
-    //! Move constructor, necessary for throws, default compiler generated,
-    //! Can only be thrown from within derived Exception classes
-    Exception(Exception&&) = default;
-
     //! Don't permit copy constructor
     // ICC: should be deleted and private
     Exception(const Exception&);

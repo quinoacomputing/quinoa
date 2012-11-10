@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:50:49 AM MST
+  \date      Fri 09 Nov 2012 06:18:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -21,9 +21,9 @@ using namespace std;
 namespace Quinoa {
 
 //! IOException types
-enum IOExceptType { FAILED_OPEN=0,  //!< failed to open file
-                    FAILED_CLOSE,   //!< failed to close file
-                    FAILED_WRITE,   //!< failed to write to file
+enum IOExceptType { IO_FAILED_OPEN=0,  //!< failed to open file
+                    IO_FAILED_CLOSE,   //!< failed to close file
+                    IO_FAILED_WRITE,   //!< failed to write to file
                     NUM_IO_EXCEPT
 };
 
@@ -51,7 +51,7 @@ class IOException : public Exception {
     IOException(IOException&&) = default;
 
     //! Destructor
-    ~IOException() = default;
+    virtual ~IOException() {}
 
     //! Handle IOException
     virtual ErrCode handleException(Driver* driver);
@@ -68,7 +68,7 @@ class IOException : public Exception {
     //! Don't permit move assignment
     IOException& operator=(IOException&&) = delete;
 
-    //! IO exception type (FAILED_OPEN, FAILED_CLOSE, etc.)
+    //! IO exception type (IO_FAILED_OPEN, IO_FAILED_CLOSE, etc.)
     IOExceptType m_except;
 };
 
