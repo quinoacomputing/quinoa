@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:49:10 PM MST
+  \date      Sun 11 Nov 2012 11:42:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -323,8 +323,8 @@ GmshTxtMeshReader::countPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(false, MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
-         "$PhysicalNames--$EndPhysicalNames");
+  Throw(MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
+        "$PhysicalNames--$EndPhysicalNames");
 }
 
 void
@@ -334,8 +334,8 @@ GmshTxtMeshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(false, MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
-         "$PhysicalNames--$EndPhysicalNames");
+  Throw(MeshException,WARNING,MESHEXCEPT_UNIMPLEMENTED,
+        "$PhysicalNames--$EndPhysicalNames");
 }
 
 void
@@ -350,7 +350,7 @@ GmshTxtMeshReader::addElem(int type, vector<int>& nodes)
   switch (type) {
     case 1: m_mesh->addLine(nodes); break;
     case 2: m_mesh->addTriangle(nodes); break;
-    default: Assert(false, MeshException,FATAL,BAD_ELEMENT,m_filename);
+    default: Throw(MeshException,FATAL,BAD_ELEMENT,m_filename);
   }
 }
 
@@ -366,6 +366,6 @@ GmshTxtMeshReader::addElemTags(int type, vector<int>& tags)
   switch (type) {
     case 1: m_mesh->addLineTags(tags); break;
     case 2: m_mesh->addTriangleTags(tags); break;
-    default: Assert(false, MeshException,FATAL,BAD_ELEMENT,m_filename);
+    default: Throw(MeshException,FATAL,BAD_ELEMENT,m_filename);
   }
 }

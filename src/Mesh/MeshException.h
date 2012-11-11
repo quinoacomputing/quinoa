@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:38:34 PM MST
+  \date      Sat 10 Nov 2012 06:56:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -48,6 +48,7 @@ class MeshException : public Exception {
                   const unsigned int& line) :
       Exception(except, file, func, line), m_except(mshExcept) {}
 
+    //! Constructor without message
     MeshException(ExceptType except,
                   MeshExceptType mshExcept,
                   const string throwerMsg,
@@ -56,9 +57,7 @@ class MeshException : public Exception {
                   const unsigned int& line) :
       Exception(except, file, func, line), m_throwerMsg(throwerMsg),
       m_except(mshExcept) {}
-
-    //! Constructor without message from thrower
-    // ICC: no delegate constructors
+    // ICC: the above can be done with delegate constructors, like
     //MeshException(ExceptType except, MeshExceptType meshExcept) :
     //  MeshException(except, meshExcept, 0) {}
 

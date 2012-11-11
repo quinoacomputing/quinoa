@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:37:52 AM MST
+  \date      Sat 10 Nov 2012 06:57:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -36,9 +36,13 @@ const string StatMsg[NUM_STAT_EXCEPT] = {
 class StatException : public Exception {
 
   public:
-    //! Constructor with filename
-    StatException(ExceptType except, StatExceptType statExcept) :
-      Exception(except), m_except(statExcept) {}
+    //! Constructor
+    StatException(ExceptType except,
+                  StatExceptType statExcept,
+                  const string& file,
+                  const string& func,
+                  const unsigned int& line) :
+      Exception(except, file, func, line), m_except(statExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     StatException(StatException&&) = default;

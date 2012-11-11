@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 10:04:29 AM MST
+  \date      Sat 10 Nov 2012 06:47:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -24,8 +24,7 @@ MeshReader::MeshReader(string filename, UnsMesh* mesh, Memory* memory) :
 //******************************************************************************
 {
   m_inMesh.open(m_filename, ifstream::in);
-  if (!m_inMesh.good())
-    throw IOException(FATAL, IO_FAILED_OPEN, m_filename);
+  Assert(m_inMesh.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
 MeshReader::~MeshReader()

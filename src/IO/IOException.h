@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:18:58 PM MST
+  \date      Sat 10 Nov 2012 06:56:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -38,14 +38,15 @@ const string IOMsg[NUM_IO_EXCEPT] = {
 class IOException : public Exception {
 
   public:
-    //! Constructor with filename
-    IOException(ExceptType except, IOExceptType ioExcept, string filename) :
-      Exception(except), m_filename(filename), m_except(ioExcept) {}
-
-    //! Constructor without filename
-    // ICC: no delegate constructors
-    //IOException(ExceptType except, IOExceptType ioExcept) :
-    //  IOException(except, ioExcept, 0) {}
+    //! Constructor
+    IOException(ExceptType except,
+                IOExceptType ioExcept,
+                const string filename,
+                const string& file,
+                const string& func,
+                const unsigned int& line) :
+      Exception(except, file, func, line), m_filename(filename),
+      m_except(ioExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     IOException(IOException&&) = default;

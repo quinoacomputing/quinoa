@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:18:27 AM MST
+  \date      Sat 10 Nov 2012 06:59:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -35,9 +35,13 @@ const string RndMsg[NUM_RND_EXCEPT] = {
 class RandomException : public Exception {
 
   public:
-    //! Constructor with message from thrower
-    RandomException(ExceptType except, RndExceptType rndExcept) :
-      Exception(except), m_except(rndExcept) {}
+    //! Constructor
+    RandomException(ExceptType except,
+                    RndExceptType rndExcept,
+                    const string& file,
+                    const string& func,
+                    const unsigned int& line) :
+      Exception(except, file, func, line), m_except(rndExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     RandomException(RandomException&&) = default;

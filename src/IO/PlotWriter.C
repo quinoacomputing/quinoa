@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 10:06:05 AM MST
+  \date      Sat 10 Nov 2012 06:51:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -24,8 +24,7 @@ PlotWriter::PlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
 //******************************************************************************
 {
   m_outPlot.open(m_filename, ofstream::out);
-  if (!m_outPlot.good())
-    throw IOException(FATAL, IO_FAILED_OPEN, m_filename);
+  Assert(m_outPlot.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
 PlotWriter::~PlotWriter()

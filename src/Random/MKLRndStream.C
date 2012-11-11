@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:53:15 PM MST
+  \date      Sun 11 Nov 2012 10:23:24 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -30,7 +30,7 @@ MKLRndStream::MKLRndStream(const int nthread,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  if (nthread <= 0) throw MKLException(FATAL, MKL_BAD_NTHREADS);
+  Assert(nthread > 0, MKLException,FATAL,MKL_BAD_NTHREADS);
 
   // Allocate memory for array of stream-pointers for several threads
   try {

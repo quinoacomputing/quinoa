@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:03:51 PM MST
+  \date      Sat 10 Nov 2012 06:52:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -44,20 +44,17 @@ GmshTxtMeshWriter::writeMeshFormat()
 
   // Write beginning of header: $MeshFormat
   m_outMesh << "$MeshFormat\n";
-  if (m_outMesh.bad())
-    throw IOException(FATAL, IO_FAILED_WRITE, m_filename);
+  Assert(!m_outMesh.bad(), IOException,FATAL,IO_FAILED_WRITE,m_filename);
 
   // Write "version-number file-type data-size"
   m_outMesh << m_mesh->getVersion() << " "
             << m_mesh->getType() << " "
             << m_mesh->getDatasize() << "\n";
-  if (m_outMesh.bad())
-    throw IOException(FATAL, IO_FAILED_WRITE,  m_filename);
+  Assert(!m_outMesh.bad(), IOException,FATAL,IO_FAILED_WRITE, m_filename);
 
   // Write end of header: $EndMeshFormat
   m_outMesh << "$EndMeshFormat" << endl;
-  if (m_outMesh.bad())
-    throw IOException(FATAL, IO_FAILED_WRITE, m_filename);
+  Assert(!m_outMesh.bad(), IOException,FATAL,IO_FAILED_WRITE,m_filename);
 }
 
 void

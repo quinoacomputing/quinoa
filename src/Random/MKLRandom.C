@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:52:34 PM MST
+  \date      Sun 11 Nov 2012 11:43:34 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -54,7 +54,7 @@ MKLRandom::addTable(const int brng,
   pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    Assert(false, MemoryException,FATAL,BAD_INSERT);
+    Throw(MemoryException,FATAL,BAD_INSERT);
   }
 
   // Return key to caller
@@ -74,7 +74,7 @@ MKLRandom::eraseTable(MKLRndTable* table)
     delete table;
     m_table.erase(it);
   } else {
-    throw MKLException(WARNING, MKL_UNKNOWN_TABLE);
+    Throw(MKLException,WARNING,MKL_UNKNOWN_TABLE);
   }
 }
 
@@ -100,7 +100,7 @@ MKLRandom::getRnd(MKLRndTable* table)
   if (it != m_table.end()) {
     return (*it)->getRnd();
   } else {
-    throw MKLException(WARNING, MKL_UNKNOWN_TABLE);
+    Throw(MKLException,WARNING,MKL_UNKNOWN_TABLE);
   }
 }
 
@@ -121,7 +121,7 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
   pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    Assert(false, MemoryException,FATAL,BAD_INSERT);
+    Throw(MemoryException,FATAL,BAD_INSERT);
   }
 
   // Return key to caller
@@ -141,7 +141,7 @@ MKLRandom::eraseStream(MKLRndStream* stream)
     delete stream;
     m_stream.erase(it);
   } else {
-    throw MKLException(WARNING, MKL_UNKNOWN_STREAM);
+    Throw(MKLException,WARNING,MKL_UNKNOWN_STREAM);
   }
 }
 
@@ -157,6 +157,6 @@ MKLRandom::getStr(MKLRndStream* stream)
   if (it != m_stream.end()) {
     return (*it)->getStr();
   } else {
-    throw MKLException(WARNING, MKL_UNKNOWN_STREAM);
+    Throw(MKLException,WARNING,MKL_UNKNOWN_STREAM);
   }
 }

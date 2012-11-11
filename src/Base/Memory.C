@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:21:34 PM MST
+  \date      Sun 11 Nov 2012 11:50:23 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -84,8 +84,7 @@ Memory::newEntry(size_t number,
       delete [] static_cast<char*>(ptr);
       ptr = nullptr;
     }
-    throw MemoryException(FATAL, BAD_ALLOC,
-                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
+    Throw(MemoryException,FATAL,BAD_ALLOC);
   }
 
   // Store memory entry
@@ -95,8 +94,7 @@ Memory::newEntry(size_t number,
        delete entry;
        entry = nullptr;
     }
-    throw MemoryException(FATAL, BAD_INSERT,
-                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
+    Throw(MemoryException,FATAL,BAD_INSERT);
   }
 
   // Map variable name to MemorySet key
@@ -106,8 +104,7 @@ Memory::newEntry(size_t number,
       delete entry;
       entry = nullptr;
     }
-    throw MemoryException(FATAL, BAD_INSERT,
-                          __FILE__, __PRETTY_FUNCTION__, __LINE__);
+    Throw(MemoryException,FATAL,BAD_INSERT);
   }
 
   // Test if name is unique
