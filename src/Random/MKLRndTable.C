@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:55:16 PM MST
+  \date      Sun 11 Nov 2012 11:44:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -44,14 +44,14 @@ MKLRndTable::MKLRndTable(Memory* memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  if (nthread <= 0) throw MKLException(FATAL, MKL_BAD_NTHREADS);
-  if (number <= 0) throw MKLException(FATAL, MKL_BAD_NUMBER);
-  Assert(name.size() != 0, MemoryException,FATAL,EMPTY_NAME);
+  Assert(nthread > 0, MKLException,FATAL,MKL_BAD_NTHREADS);
+  Assert(number > 0, MKLException,FATAL, MKL_BAD_NUMBER);
+  Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
 
   // Allocate memory for array of stream-pointers for several threads
   try {
     m_stream = new VSLStreamStatePtr [m_nthread](); // initialize all to zero
-  } catch (bad_alloc&) { Assert(false, MemoryException,FATAL,BAD_ALLOC); }
+  } catch (bad_alloc&) { Throw(MemoryException,FATAL,BAD_ALLOC); }
 
   // Initialize first thread-stream for given distribution using seed
   newStream(&m_stream[0], brng, seed);
@@ -133,6 +133,6 @@ MKLRndTable::generate()
             GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
       break;
     default:
-      throw MKLException(WARNING, MKL_UNKNOWN_METHOD);
+      Throw(MKLException,WARNING,MKL_UNKNOWN_METHOD);
   }
 }

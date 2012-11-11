@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:02:35 PM MST
+  \date      Sat 10 Nov 2012 06:53:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -25,7 +25,7 @@ PDFWriter::PDFWriter(const string filename) : m_filename(filename)
 //******************************************************************************
 {
   m_outPDF.open(m_filename, ofstream::out);
-  if (!m_outPDF.good()) throw IOException(FATAL, IO_FAILED_OPEN, m_filename);
+  Assert(m_outPDF.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
 PDFWriter::~PDFWriter()

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:50:23 PM MST
+  \date      Sun 11 Nov 2012 11:42:41 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -92,7 +92,7 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     m_lintag.reserve(nlines);
     m_tritag.reserve(ntriangles);
   } catch (bad_alloc&) {
-    Assert(false, MemoryException,FATAL,BAD_ALLOC);
+    Throw(MemoryException,FATAL,BAD_ALLOC);
   }
 }
 

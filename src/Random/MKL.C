@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 10:04:53 AM MST
+  \date      Sat 10 Nov 2012 07:13:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -37,7 +37,7 @@ MKL::uniform(const int& method,
 //******************************************************************************
 {
   int vslerr = vdRngUniform(method, stream, n, r, a, b);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -59,7 +59,7 @@ MKL::gaussian(const int& method,
 //******************************************************************************
 {
   int vslerr = vdRngGaussian(method, stream, n, r, a, b);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -83,7 +83,7 @@ MKL::gamma(const int& method,
 //******************************************************************************
 {
   int vslerr = vdRngGamma(method, stream, n, r, alpha, a, beta);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -99,7 +99,7 @@ MKL::newStream(VSLStreamStatePtr* stream,
 //******************************************************************************
 {
   int vslerr = vslNewStream(stream, brng, seed);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -113,7 +113,7 @@ MKL::copyStream(VSLStreamStatePtr* newstream,
 //******************************************************************************
 {
   int vslerr = vslCopyStream(newstream, srcstream);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -128,7 +128,7 @@ MKL::skipAheadStream(VSLStreamStatePtr& stream,
 //******************************************************************************
 {
   int vslerr = vslSkipAheadStream(stream, nskip);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }
 
 void
@@ -145,5 +145,5 @@ MKL::leapfrogStream(VSLStreamStatePtr& stream,
 //******************************************************************************
 {
   int vslerr = vslLeapfrogStream(stream, k, nstreams);
-  if (vslerr != VSL_STATUS_OK) throw VSLException(FATAL, vslerr);
+  Assert(vslerr == VSL_STATUS_OK, VSLException,FATAL,vslerr);
 }

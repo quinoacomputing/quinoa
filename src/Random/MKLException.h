@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:33:12 AM MST
+  \date      Sat 10 Nov 2012 07:01:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -44,9 +44,13 @@ const string MKLMsg[NUM_MKL_EXCEPT] = {
 class MKLException : public RandomException {
 
   public:
-    //! Constructor: fill VSLErrMap
-    MKLException(ExceptType except, MKLExceptType mklExcept) :
-      RandomException(except, RND_MKL), m_except(mklExcept) {};
+    //! Constructor
+    MKLException(ExceptType except,
+                 MKLExceptType mklExcept,
+                 const string& file,
+                 const string& func,
+                 const unsigned int& line) :
+      RandomException(except, RND_MKL, file, func, line), m_except(mklExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
     MKLException(MKLException&&) = default;

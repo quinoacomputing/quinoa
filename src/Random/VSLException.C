@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.C
   \author    J. Bakosi
-  \date      Fri Nov  9 13:49:10 2012
+  \date      Sat 10 Nov 2012 07:07:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -15,8 +15,12 @@
 
 using namespace Quinoa;
 
-VSLException::VSLException(ExceptType except, int vslerr) :
-  MKLException(except, MKL_VSL_ERROR)
+VSLException::VSLException(ExceptType except,
+                           int vslerr,
+                           const string& file,
+                           const string& func,
+                           const unsigned int& line) :
+  MKLException(except, MKL_VSL_ERROR, file, func, line)
 //******************************************************************************
 //  Constructor: zero memory entry pointers held
 //! \author J. Bakosi
