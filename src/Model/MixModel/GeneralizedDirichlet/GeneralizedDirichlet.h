@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
+  \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 08:25:28 AM MST
+  \date      Mon 12 Nov 2012 09:11:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -20,7 +20,7 @@ class GeneralizedDirichlet : public MixModel {
 
   public:
     //! Constructor
-    GeneralizedDirichlet(const int nscalar) : MixModel(nscalar) {}
+    GeneralizedDirichlet(const int& nscalar);
 
     //! Destructor
     virtual ~GeneralizedDirichlet() {}

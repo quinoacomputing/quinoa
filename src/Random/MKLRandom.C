@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 11:43:34 AM MST
+  \date      Mon 12 Nov 2012 07:49:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -101,6 +101,7 @@ MKLRandom::getRnd(MKLRndTable* table)
     return (*it)->getRnd();
   } else {
     Throw(MKLException,WARNING,MKL_UNKNOWN_TABLE);
+    return nullptr;
   }
 }
 
@@ -158,5 +159,6 @@ MKLRandom::getStr(MKLRndStream* stream)
     return (*it)->getStr();
   } else {
     Throw(MKLException,WARNING,MKL_UNKNOWN_STREAM);
+    return nullptr;
   }
 }

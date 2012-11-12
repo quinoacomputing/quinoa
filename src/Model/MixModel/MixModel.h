@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/MixModel.h
+  \file      src/Model/MixModel/MixModel.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 08:31:25 AM MST
+  \date      Mon 12 Nov 2012 09:12:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -20,7 +20,7 @@ class MixModel : public Model {
 
   public:
     //! Constructor
-    MixModel(const int nscalar);
+    MixModel(const int& nscalar);
 
     //! Destructor
     virtual ~MixModel() {}

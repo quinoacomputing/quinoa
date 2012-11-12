@@ -16,8 +16,6 @@ add_library(Base
             MemoryException.C
             MemoryEntry.C
             Memory.C
-            #Sort.C
-            #TimeStepping.C
 )
 
 INSTALL(TARGETS Base
