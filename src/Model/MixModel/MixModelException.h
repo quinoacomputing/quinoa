@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/MixModelException.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 10:06:17 AM MST
+  \date      Mon 12 Nov 2012 12:26:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler
@@ -20,7 +20,7 @@ using namespace std;
 namespace Quinoa {
 
 //! MixModel exception types
-enum MixModelExceptType { BAD_SCALARS=0,          //!< Wrong number of scalars
+enum MixModelExceptType { BAD_NSCALARS=0,          //!< Wrong number of scalars
                           NUM_MIXMODEL_EXCEPT
 };
 

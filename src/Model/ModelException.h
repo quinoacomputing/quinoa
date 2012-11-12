@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 10:07:46 AM MST
+  \date      Mon 12 Nov 2012 10:30:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -21,12 +21,14 @@ namespace Quinoa {
 
 //! Model exception types
 enum ModelExceptType { MIXMODEL_EXCEPT=0,          //!< MixModel exception
+                       NO_SUCH_MODEL,              //!< No such model
                        NUM_MODEL_EXCEPT
 };
 
 //! Model exception error messages
 const string ModelMsg[NUM_MODEL_EXCEPT] = {
   "MixModel: "
+  "No such model"
 };
 
 //! ModelException : Exception
