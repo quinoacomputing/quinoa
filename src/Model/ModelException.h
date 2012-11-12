@@ -1,0 +1,69 @@
+//******************************************************************************
+/*!
+  \file      src/Model/ModelException.h
+  \author    J. Bakosi
+  \date      Mon 12 Nov 2012 10:07:46 AM MST
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \brief     ModelException
+  \details   ModelException
+*/
+//******************************************************************************
+#ifndef ModelException_h
+#define ModelException_h
+
+#include <string>
+
+using namespace std;
+
+#include <Exception.h>
+
+namespace Quinoa {
+
+//! Model exception types
+enum ModelExceptType { MIXMODEL_EXCEPT=0,          //!< MixModel exception
+                       NUM_MODEL_EXCEPT
+};
+
+//! Model exception error messages
+const string ModelMsg[NUM_MODEL_EXCEPT] = {
+  "MixModel: "
+};
+
+//! ModelException : Exception
+class ModelException : public Exception {
+
+  public:
+    //! Constructor
+    ModelException(ExceptType except,
+                    ModelExceptType modelExcept,
+                    const string& file,
+                    const string& func,
+                    const unsigned int& line) :
+      Exception(except, file, func, line), m_except(modelExcept) {}
+
+    //! Move constructor, necessary for throws, default compiler generated
+    ModelException(ModelException&&) = default;
+
+    //! Don't permit copy constructor
+    // ICC: should be deleted and private
+    ModelException(const ModelException&);
+
+    //! Destructor
+    virtual ~ModelException() {}
+
+    //! Handle ModelException
+    virtual ErrCode handleException(Driver* driver);
+
+  private:
+    //! Don't permit copy assignment
+    ModelException& operator=(const ModelException&) = delete;
+    //! Don't permit move assignment
+    ModelException& operator=(ModelException&&) = delete;
+
+    //! Model exception type (MIXMODEL, etc.)
+    ModelExceptType m_except;
+};
+
+} // namespace Quinoa
+
+#endif // ModelException_h

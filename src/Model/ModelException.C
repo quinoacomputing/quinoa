@@ -1,25 +1,28 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/MixModel.C
+  \file      src/Model/ModelException.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 09:32:34 AM MST
+  \date      Mon 12 Nov 2012 09:23:54 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mix model base
-  \details   Mix model base
+  \brief     ModelException
+  \details   ModelException
 */
 //******************************************************************************
 
-#include <MixModel.h>
-#include <MixModelException.h>
+#include <ModelException.h>
 
 using namespace Quinoa;
 
-MixModel::MixModel(const int& nscalar) : m_nscalar(nscalar)
+ErrCode
+ModelException::handleException(Driver* driver)
 //******************************************************************************
-//  Constructor
-//! \param[in]  nscalar  Number of mixing scalars
-//! \author  J. Bakosi
+//  Handle ModelException
+//! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m_nscalar > 0, MixModelException,FATAL,BAD_SCALARS);
+  // Contribute to error message
+  m_message = ModelMsg[static_cast<int>(m_except)] + m_message;
+
+  // Handle Exception (criticality)
+  return Exception::handleException(driver);
 }
