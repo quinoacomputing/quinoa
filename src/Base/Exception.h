@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 10:57:45 AM MST
+  \date      Mon 12 Nov 2012 08:37:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -15,7 +15,7 @@
 
 namespace Quinoa {
 
-// Throw macro:
+// Throw macro that always throws an exception:
 // If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing.  If NDEBUG
 // is not defined, throw exception passed in as argument 2 with exception-
 // arguments passed in as arguments 2+. Add source filename, function name, and
@@ -23,19 +23,31 @@ namespace Quinoa {
 #ifdef NDEBUG
 #  define Throw(exception, ...) (static_cast<void>(0))
 #else  // NDEBUG
-#  define Throw(exception, ...)                                              \
-    throw exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+#  define Throw(exception, ...) \
+   throw exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 #endif // NDEBUG
 
-// Assert macro:
-// If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing.  If NDEBUG
-// is not defined, evaluate expr. If expr is true, do nothing. If expr is
-// false, throw exception passed in as argument 2 with exception-arguments
-// passed in as arguments 2+.
+// Assert macro that only throws an exception if expr fails:
+// If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing, expr is not
+// evaluated.  If NDEBUG is not defined, evaluate expr. If expr is true, do
+// nothing. If expr is false, throw exception passed in as argument 2 with
+// exception-arguments passed in as arguments 2+.
 #ifdef NDEBUG
 #  define Assert(expr, exception, ...) (static_cast<void>(0))
 #else  // NDEBUG
-#  define Assert(expr, exception, ...)                                       \
+#  define Assert(expr, exception, ...) \
+   ((expr) ? static_cast<void>(0) : Throw(exception,__VA_ARGS__))
+#endif // NDEBUG
+
+// Errchk macro that only throws an exception if expr fails:
+// If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), expr is still evaluated.
+// If NDEBUG is not defined, evaluate expr. If expr is true, do nothing. If
+// expr is false, throw exception passed in as argument 2 with exception-
+// arguments passed in as arguments 2+.
+#ifdef NDEBUG
+#  define Errchk(expr, exception, ...) (expr)
+#else  // NDEBUG
+#  define Errchk(expr, exception, ...) \
    ((expr) ? static_cast<void>(0) : Throw(exception,__VA_ARGS__))
 #endif // NDEBUG
 

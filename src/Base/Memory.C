@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 11:50:23 AM MST
+  \date      Sun 11 Nov 2012 12:43:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -162,8 +162,7 @@ Memory::freeEntry(MemoryEntry* id)
   Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
 
   // Remove variable name mapped to MemorySet key
-  MemoryNames::size_type erased = m_name.erase((*it)->m_name);
-  Assert(erased, MemoryException,WARNING,NOT_ERASED);
+  Errchk(m_name.erase((*it)->m_name), MemoryException,WARNING,NOT_ERASED);
 
   // Deallocate memory entry pointed to by m_entry[id]
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -171,8 +170,7 @@ Memory::freeEntry(MemoryEntry* id)
   delete *it;
 
   // Remove MemoryEntry from MemorySet
-  MemorySet::size_type removed = m_entry.erase(id);
-  Assert(removed, MemoryException,WARNING,NOT_ERASED);
+  Errchk(m_entry.erase(id), MemoryException,WARNING,NOT_ERASED);
 
   // Zero id, so the caller can also tell that the memory entry has been removed
   id = nullptr;

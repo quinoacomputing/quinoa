@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/MixModel.C
+  \file      src/Model/MixModel/MixModel.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 08:41:10 AM MST
+  \date      Mon 12 Nov 2012 09:12:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -15,7 +15,7 @@
 
 using namespace Quinoa;
 
-MixModel::MixModel(const int nscalar) : m_nscalar(nscalar)
+MixModel::MixModel(const int& nscalar) : m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  nscalar  Number of mixing scalars

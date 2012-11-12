@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/Dirichlet/Dirichlet.h
+  \file      src/Model/MixModel/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 08:37:22 AM MST
+  \date      Mon 12 Nov 2012 09:11:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -20,7 +20,7 @@ class Dirichlet : public MixModel {
 
   public:
     //! Constructor
-    Dirichlet(const int nscalar);
+    Dirichlet(const int& nscalar);
 
     //! Destructor
     virtual ~Dirichlet() {}
