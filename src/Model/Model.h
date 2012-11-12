@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:42:48 AM MST
+  \date      Mon 12 Nov 2012 10:02:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -18,7 +18,7 @@ class Model {
 
   public:
     //! Constructor
-    Model() = default;
+    Model();
 
     //! Destructor
     virtual ~Model() {}

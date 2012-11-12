@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 09:09:30 AM MST
+  \date      Mon 12 Nov 2012 10:08:54 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -38,16 +38,16 @@ static void echoBuildInfo()
   cout << " * Third-party prefix : " << QUINOA_THIRD_PARTY_PREFIX << endl;
   cout << " * Compiler           : " << QUINOA_COMPILER << endl;
   cout << " * Build type         : " << QUINOA_BUILD_TYPE;
-# ifdef NDEBUG
+#ifdef NDEBUG
   cout << " (no error checking, no exception handling)" << endl;
-# else
+#else  // NDEBUG
   cout << " (with error checking and exception handling)" << endl;
-# endif
+#endif // NDEBUG
   cout << " * Build date         : " << QUINOA_BUILD_DATE << endl;
   cout << endl;
 }
 
-}
+} // namespace Quinoa
 
 int main(int argc, char* argv[])
 //******************************************************************************

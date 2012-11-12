@@ -1,25 +1,23 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/MixModel.C
+  \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 09:32:34 AM MST
+  \date      Mon 12 Nov 2012 10:02:02 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mix model base
-  \details   Mix model base
+  \brief     Model base
+  \details   Model base
 */
 //******************************************************************************
 
-#include <MixModel.h>
-#include <MixModelException.h>
+#include <Model.h>
+#include <ModelException.h>
 
 using namespace Quinoa;
 
-MixModel::MixModel(const int& nscalar) : m_nscalar(nscalar)
+Model::Model()
 //******************************************************************************
 //  Constructor
-//! \param[in]  nscalar  Number of mixing scalars
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_nscalar > 0, MixModelException,FATAL,BAD_SCALARS);
 }
