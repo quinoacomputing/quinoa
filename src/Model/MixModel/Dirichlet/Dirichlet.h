@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 09:11:27 AM MST
+  \date      Mon 12 Nov 2012 12:49:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -20,13 +20,19 @@ class Dirichlet : public MixModel {
 
   public:
     //! Constructor
-    Dirichlet(const int& nscalar);
+    Dirichlet(Model* model, const int& nscalar);
 
     //! Destructor
     virtual ~Dirichlet() {}
 
+    //! Echo information on Dirichlet model
+    virtual void echo();
+
+    //! Initialize Dirichlet model
+    virtual void init();
+
     //! Set initial conditions
-    virtual void setIC() {}
+    void setIC();
 
   private:
     //! Don't permit copy constructor

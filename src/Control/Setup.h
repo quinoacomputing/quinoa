@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 10:11:48 AM MST
+  \date      Mon 12 Nov 2012 12:18:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -16,16 +16,13 @@
 namespace Quinoa {
 
 //! Select model
-const ModelType MODEL = ModelType::DIRICHLET;
-
-//! Select mix model
-const MixModelType MIX_MODEL = MixModelType::DIRICHLET;
+const ModelType MODEL_TYPE = ModelType::HOMOGENEOUS_DIRICHLET;
 
 //! Select number of scalars
-const int NUM_SCALARS = 0;
+const int NSCALAR = 3;
 
-//! Select velocity model
-const VelocityModelType VELOCITY_MODEL = VelocityModelType::NONE;
+//! Select number of particles per element
+const int NPEL = 10;
 
 } // namespace Quinoa
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 10:11:21 AM MST
+  \date      Mon 12 Nov 2012 11:06:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -12,9 +12,10 @@
 #define Driver_h
 
 #include <Memory.h>
-#include <Model.h>
 
 namespace Quinoa {
+
+class Model;
 
 //! Driver base class
 class Driver {
@@ -26,7 +27,7 @@ class Driver {
     //! Destructor
     ~Driver();
 
-    //! Setup
+    //! Setup: instantiate model, set initial conditions
     void setup();
 
     //! Solve

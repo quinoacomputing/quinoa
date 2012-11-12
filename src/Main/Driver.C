@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 10:11:24 AM MST
+  \date      Mon 12 Nov 2012 12:00:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -10,9 +10,8 @@
 //******************************************************************************
 
 #include <Driver.h>
+#include <Model.h>
 #include <Setup.h>
-#include <Dirichlet.h>
-#include <GeneralizedDirichlet.h>
 
 using namespace Quinoa;
 
@@ -37,19 +36,19 @@ Driver::~Driver()
 void
 Driver::setup()
 //******************************************************************************
-//  Setup
+//  Setup: instantiate model, set initial conditions
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Select model
-  // ICC: this could be a switch
-  if (MODEL == ModelType::DIRICHLET) {
-    m_model = new Dirichlet(NUM_SCALARS);
-  } else if (MODEL == ModelType::GENERALIZED_DIRICHLET) {
-    m_model = new GeneralizedDirichlet(NUM_SCALARS);
-  } else {
-    throw Exception(FATAL, "No such model");
-  }
+  // Instantiate model
+  m_model = new (nothrow) Model(MODEL_TYPE, NPEL);
+  Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
+  // Echo information on model selected
+  m_model->echo();
+
+  // Set initial conditions
+  m_model->init();
 }
 
 void
