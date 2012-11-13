@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 06:50:54 PM MST
+  \date      Mon 12 Nov 2012 08:39:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -42,14 +42,14 @@ class Model {
     //! Allocate array for storing the element IDs of particles
     void allocNpel();
 
-    //! Constant accessor for number of particles/element
+    //! Constant accessor to number of particles/element
     const int& npel() const { return m_npel; }
 
-    //! Constant accessor for number of particles
-    const long int& npar() const { return m_npar; }
-
-    //! Constant accessor for number of elements
+    //! Constant accessor to number of elements
     const int& nel() const { return m_nel; }
+
+    //! Accessor to memory object pointer
+    Memory* memory() const { return m_memory; }
 
   private:
     //! Don't permit copy constructor
@@ -67,7 +67,6 @@ class Model {
     string m_name;                    //!< Name of model
     int m_nel;                        //!< Number of elements
     MixModel* m_mixModel;             //!< Pointer to MixModel object
-    long int m_npar;                  //!< Number of particles
 
     MemoryEntry* m_elp;               //!< Array storing element ID of particle
 };

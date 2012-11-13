@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 12:49:03 PM MST
+  \date      Mon 12 Nov 2012 08:12:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
