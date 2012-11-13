@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 01:38:28 PM MST
+  \date      Mon 12 Nov 2012 07:48:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -32,15 +32,15 @@ Exception::handleException(Driver* driver)
 
   switch (m_except) {
     case WARNING:
-      cerr << "WARNING: " << m_message;
+      cout << "WARNING: " << m_message;
       return NONFATAL;
     case ERROR:
-      cerr << "ERROR: " << m_message;
+      cout << "ERROR: " << m_message;
       return NONFATAL;
     case UNCAUGHT:  // Warn and fall through FATAL
-      cerr << "UNCAUGHT EXCEPTION" << m_message;
+      cout << "UNCAUGHT EXCEPTION" << m_message;
     case FATAL:     // Attempt cleanup and exit
-      cerr << "FATAL ERROR: " << m_message
+      cout << "FATAL ERROR: " << m_message
            << "Attempting cleanup & graceful exit..." << endl;
       driver->finalize();
       return FATAL_ERROR;

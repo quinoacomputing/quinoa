@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 11:42:41 AM MST
+  \date      Mon 12 Nov 2012 07:49:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -37,7 +37,9 @@ UnsMesh::~UnsMesh()
 //******************************************************************************
 {
   // Free memory entries held
+#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
+#endif // NDEBUG
     m_memory->freeEntry(m_COORD);
     m_memory->freeEntry(m_NODEID);
     m_memory->freeEntry(m_LINEID);
@@ -47,7 +49,9 @@ UnsMesh::~UnsMesh()
     // is thrown, caught inside here and we only emit a warning. This ensures
     // that terminate is not called and that we finish a potentially already
     // propagating exception.
-  } catch (...) { cerr << "WARNING: Exception in UnsMesh::~UnsMesh" << endl; }
+#ifndef NDEBUG
+  } catch (...) { cout << "WARNING: Exception in UnsMesh::~UnsMesh" << endl; }
+#endif // NDEBUG
 
   // Free containers held
   m_linpoel.clear();

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:17:16 PM MST
+  \date      Mon 12 Nov 2012 07:49:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -135,7 +135,9 @@ SymCompRowMatrix::~SymCompRowMatrix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
+#endif // NDEBUG
     m_memory->freeEntry(m_ia);
     m_memory->freeEntry(m_ja);
     m_memory->freeEntry(m_a);
@@ -144,9 +146,11 @@ SymCompRowMatrix::~SymCompRowMatrix()
     // is thrown, caught inside here and we only emit a warning. This ensures
     // that terminate is not called and that we finish a potentially already
     // propagating exception.
+#ifndef NDEBUG
   } catch (...) {
-    cerr << "WARNING: Exception in SymCompRowMatrix::~SymCompRowMatrix" << endl;
+    cout << "WARNING: Exception in SymCompRowMatrix::~SymCompRowMatrix" << endl;
   }
+#endif // NDEBUG
 }
 
 void

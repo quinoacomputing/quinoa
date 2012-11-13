@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:33:54 PM MST
+  \date      Mon 12 Nov 2012 07:59:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -61,9 +61,13 @@ Model::~Model()
 {
   if (m_mixModel) { delete m_mixModel; m_mixModel = nullptr; }
 
+#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
+#endif // NDEBUG
     if (m_elp) m_memory->freeEntry(m_elp);
-  } catch (...) { cerr << "WARNING: Exception in Model::~Model" << endl; }
+#ifndef NDEBUG
+  } catch (...) { cout << "WARNING: Exception in Model::~Model" << endl; }
+#endif // NDEBUG
 }
 
 void
@@ -75,15 +79,13 @@ Model::echo()
 {
   // Echo information on selected models
   cout << "Model: " << m_name << "\n";
-  cout << " * Mix: ";
-  if (m_mixModel) cout << m_mixModel->name(); else cout << "none";
-  cout << "\n * Number of particles/element: " << m_npel;
-  cout << "\n * Number of elements: " << m_nel;
-  cout << "\n * Number of particles: " << m_npar;
-  cout << "\n" << endl;
+  cout << " * Number of particles/element: " << m_npel << "\n";
+  cout << " * Number of elements: " << m_nel << "\n";
+  cout << " * Number of particles: " << m_npar << "\n";
 
   // Echo information on mix model
-  if (m_mixModel) m_mixModel->echo();
+  cout << " * Mix: "; if (m_mixModel) m_mixModel->echo(); else cout << "none";
+  cout << endl;
 }
 
 void
