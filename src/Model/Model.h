@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 12:37:13 PM MST
+  \date      Mon 12 Nov 2012 06:50:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -11,10 +11,16 @@
 #ifndef Model_h
 #define Model_h
 
+#include <iostream>
+
 #include <Control.h>
+
+using namespace std;
 
 namespace Quinoa {
 
+class Memory;
+class MemoryEntry;
 class MixModel;
 
 //! Model base
@@ -22,7 +28,7 @@ class Model {
 
   public:
     //! Constructor
-    Model(const ModelType model, const int npel);
+    Model(const ModelType model, const int npel, Memory* memory);
 
     //! Destructor
     ~Model();
@@ -33,8 +39,17 @@ class Model {
     //! Initialize model
     void init();
 
+    //! Allocate array for storing the element IDs of particles
+    void allocNpel();
+
     //! Constant accessor for number of particles/element
-    const int& npel() { return m_npel; }
+    const int& npel() const { return m_npel; }
+
+    //! Constant accessor for number of particles
+    const long int& npar() const { return m_npar; }
+
+    //! Constant accessor for number of elements
+    const int& nel() const { return m_nel; }
 
   private:
     //! Don't permit copy constructor
@@ -48,8 +63,13 @@ class Model {
 
     const ModelType m_model;          //!< Model type
     const int m_npel;                 //!< Number of particles/element
-
+    Memory* m_memory;                 //!< Memory object pointer
+    string m_name;                    //!< Name of model
+    int m_nel;                        //!< Number of elements
     MixModel* m_mixModel;             //!< Pointer to MixModel object
+    long int m_npar;                  //!< Number of particles
+
+    MemoryEntry* m_elp;               //!< Array storing element ID of particle
 };
 
 } // namespace Quinoa

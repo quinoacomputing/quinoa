@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 12:00:52 PM MST
+  \date      Mon 12 Nov 2012 06:36:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -41,7 +41,7 @@ Driver::setup()
 //******************************************************************************
 {
   // Instantiate model
-  m_model = new (nothrow) Model(MODEL_TYPE, NPEL);
+  m_model = new (nothrow) Model(MODEL_TYPE, NPEL, m_memory);
   Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Echo information on model selected

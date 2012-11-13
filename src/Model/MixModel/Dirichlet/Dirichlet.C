@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 01:39:30 PM MST
+  \date      Mon 12 Nov 2012 06:47:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -36,8 +36,7 @@ Dirichlet::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Dirichlet model:\n";
-  //cout << " * Number of particles/element: " << m_model->npel() << "\n";
+  cout << "Dirichlet mix model:\n";
   cout << endl;
 }
 
@@ -48,7 +47,11 @@ Dirichlet::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Initialize Dirichlet model" << endl;
+  // Allocate data for the Dirichlet model
+  m_model->allocNpel();
+
+  // Set initial conditions
+  setIC();
 }
 
 void
