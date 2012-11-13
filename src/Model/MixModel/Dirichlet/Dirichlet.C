@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 06:47:37 PM MST
+  \date      Mon 12 Nov 2012 08:00:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -36,8 +36,7 @@ Dirichlet::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Dirichlet mix model:\n";
-  cout << endl;
+  cout << "Dirichlet\n";
 }
 
 void

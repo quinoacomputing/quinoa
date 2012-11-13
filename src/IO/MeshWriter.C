@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 06:50:36 PM MST
+  \date      Mon 12 Nov 2012 07:48:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
@@ -37,5 +37,5 @@ MeshWriter::~MeshWriter()
   // No exception leaves a destructor: if the above close() fails, we only emit
   // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outMesh.fail())
-    cerr << "WARNING: Failed to close file: " << m_filename << endl;
+    cout << "WARNING: Failed to close file: " << m_filename << endl;
 }

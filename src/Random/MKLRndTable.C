@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 11:44:31 AM MST
+  \date      Mon 12 Nov 2012 07:49:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -48,10 +48,10 @@ MKLRndTable::MKLRndTable(Memory* memory,
   Assert(number > 0, MKLException,FATAL, MKL_BAD_NUMBER);
   Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
 
-  // Allocate memory for array of stream-pointers for several threads
-  try {
-    m_stream = new VSLStreamStatePtr [m_nthread](); // initialize all to zero
-  } catch (bad_alloc&) { Throw(MemoryException,FATAL,BAD_ALLOC); }
+  // Allocate memory for array of stream-pointers for several threads and
+  // initialize all to zero
+  m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
+  Assert(m_stream != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Initialize first thread-stream for given distribution using seed
   newStream(&m_stream[0], brng, seed);
@@ -72,12 +72,14 @@ MKLRndTable::~MKLRndTable()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
+#endif // NDEBUG
     // Delete all thread streams
     for (int t=0; t<m_nthread; ++t) {
       if (m_stream[t] != nullptr &&
           vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
-        cerr << "WARNING: Failed to delete MKL VSL stream" << endl;
+        cout << "WARNING: Failed to delete MKL VSL stream" << endl;
       }
     }
     // Free all thread-stream pointers
@@ -85,9 +87,11 @@ MKLRndTable::~MKLRndTable()
     // Free array storing random numbers
     m_memory->freeEntry(m_rnd);
     m_rndPtr = nullptr;
+#ifndef NDEBUG
   } catch (...) {
-    cerr << "WARNING: Exception in MKLRndTable::~MKLRndTable" << endl;
+    cout << "WARNING: Exception in MKLRndTable::~MKLRndTable" << endl;
   }
+#endif // NDEBUG
 }
 
 

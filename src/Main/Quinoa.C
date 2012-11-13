@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 12:20:27 PM MST
+  \date      Mon 12 Nov 2012 07:39:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -72,16 +72,20 @@ int main(int argc, char* argv[])
   Driver driver(&memStore);
 
   ErrCode error = NO_ERROR;
+#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
+#endif // NDEBUG
 
     driver.setup();
     driver.solve();
 
+#ifndef NDEBUG
   } catch (Exception& e) { error = e.handleException(&driver); }
     catch (...) { // catch uncaught exceptions
       Exception e(UNCAUGHT);
       error = e.handleException(&driver);
     }
+#endif // NDEBUG
 
   //!< Finalize
   driver.finalize();
