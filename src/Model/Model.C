@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:59:57 PM MST
+  \date      Mon 12 Nov 2012 08:26:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -46,9 +46,6 @@ Model::Model(const ModelType model, const int npel, Memory* memory) :
     Throw(ModelException,FATAL,NO_SUCH_MODEL);
   }
 
-  // Set total number of particles
-  m_npar = m_npel * m_nel;
-
   // Zero out MemoryEntry pointers held (not all of them used)
   m_elp = nullptr;
 }
@@ -81,7 +78,7 @@ Model::echo()
   cout << "Model: " << m_name << "\n";
   cout << " * Number of particles/element: " << m_npel << "\n";
   cout << " * Number of elements: " << m_nel << "\n";
-  cout << " * Number of particles: " << m_npar << "\n";
+  cout << " * Number of particles: " << m_nel*m_npel << "\n";
 
   // Echo information on mix model
   cout << " * Mix: "; if (m_mixModel) m_mixModel->echo(); else cout << "none";
@@ -108,5 +105,5 @@ Model::allocNpel()
   Assert(m_elp == nullptr, ModelException,FATAL,ALREADY_ALLOCATED);
 
   if (m_nel > 1)  // only if inhomogeneous
-    m_elp = m_memory->newEntry(m_npar, INT, SCALAR, "npel");
+    m_elp = m_memory->newEntry(m_nel*m_npel, INT, SCALAR, "elp");
 }

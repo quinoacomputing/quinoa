@@ -26,11 +26,11 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Mesh
                       Paradigm
-                      Random
                       Statistics
                       Model
                       Dirichlet
                       GeneralizedDirichlet
+                      Random
                       MixModel
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
