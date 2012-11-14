@@ -8,6 +8,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Main
+                    ${QUINOA_SOURCE_DIR}/Paradigm
 )
 
 add_library(Base

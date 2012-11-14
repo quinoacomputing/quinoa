@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:39:35 PM MST
+  \date      Tue 13 Nov 2012 09:50:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -63,13 +63,9 @@ int main(int argc, char* argv[])
   Paradigm paradigm;
   paradigm.echo();
 
-  // Get number of OpenMP threads
-  const OpenMP* omp = paradigm.getOpenMP();
-  const int ntomp = omp->nthread();
-
   // Initialize memory manager and driver
-  Memory memStore(ntomp);
-  Driver driver(&memStore);
+  Memory memStore(&paradigm);
+  Driver driver(&memStore, &paradigm);
 
   ErrCode error = NO_ERROR;
 #ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode

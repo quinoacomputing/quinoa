@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 12:43:48 PM MST
+  \date      Tue 13 Nov 2012 10:05:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -26,8 +26,18 @@ using namespace std;
 #include <MemoryEntry.h>
 #include <Memory.h>
 #include <MemoryException.h>
+#include <Paradigm.h>
 
 using namespace Quinoa;
+
+Memory::Memory(Paradigm* paradigm) : m_paradigm(paradigm)
+//******************************************************************************
+//  Constructor
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_nOMPthreads = paradigm->getOpenMP()->nthread();
+}
 
 Memory::~Memory()
 //******************************************************************************
@@ -613,12 +623,12 @@ Memory::zero(MemoryEntry* id)
   size_t size = SizeOf[static_cast<int>(id->m_value)];
 
   // Compute chunk size
-  int i = id->m_number/m_nthreads;
+  int i = id->m_number/m_nOMPthreads;
 
   // Zero remaining portion
-  memset(static_cast<char*>(id->m_ptr) + m_nthreads*i*size,
+  memset(static_cast<char*>(id->m_ptr) + m_nOMPthreads*i*size,
          0,
-         (id->m_number%m_nthreads)*size);
+         (id->m_number%m_nOMPthreads)*size);
 
   int myid;
   #ifdef _OPENMP

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:49:53 AM MST
+  \date      Tue 13 Nov 2012 10:12:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -12,8 +12,19 @@
 #include <MKLRandom.h>
 #include <MemoryException.h>
 #include <MKLException.h>
+#include <Paradigm.h>
 
 using namespace Quinoa;
+
+MKLRandom::MKLRandom(Memory* memory, Paradigm* paradigm) :
+  m_memory(memory), m_paradigm(paradigm)
+//******************************************************************************
+//  Constructor
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_nOMPthreads = paradigm->getOpenMP()->nthread();
+}
 
 MKLRandom::~MKLRandom()
 //******************************************************************************
@@ -47,7 +58,7 @@ MKLRandom::addTable(const int brng,
 {
   // Create new table
   MKLRndTable* table = new (nothrow)
-    MKLRndTable(m_memory, m_nthread, brng, dist, method, seed, number, name);
+    MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
   Assert(table != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Store new table
@@ -115,7 +126,7 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 //******************************************************************************
 {
   // Create new stream
-  MKLRndStream* stream = new (nothrow) MKLRndStream(m_nthread, brng, seed);
+  MKLRndStream* stream = new (nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
   Assert(stream != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Store new stream
