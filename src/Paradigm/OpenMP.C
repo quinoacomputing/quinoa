@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.C
   \author    J. Bakosi
-  \date      Sun 04 Nov 2012 09:42:07 PM MST
+  \date      Tue 13 Nov 2012 09:34:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -25,12 +25,12 @@ OpenMP::OpenMP()
 //******************************************************************************
 {
   // Query number of OpenMP threads available
-  #ifdef _OPENMP
+#ifdef _OPENMP
   m_nthread = omp_get_max_threads();
   m_used = true;        // If available, OpenMP is used by default
-  #else
+#else  // _OPENMP
   m_nthread = 1;
-  #endif
+#endif // _OPENMP
 }
 
 bool
@@ -41,9 +41,9 @@ OpenMP::available() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  #ifdef _OPENMP
+#ifdef _OPENMP
   return true;
-  #else
+#else  // _OPENMP
   return false;
-  #endif
+#endif // _OPENMP
 }

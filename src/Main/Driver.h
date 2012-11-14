@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 11:06:44 AM MST
+  \date      Tue 13 Nov 2012 10:00:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -22,7 +22,7 @@ class Driver {
 
   public:
     //! Constructor
-    Driver(Memory* memory);
+    Driver(Memory* memory, Paradigm* paradigm);
 
     //! Destructor
     ~Driver();
@@ -46,8 +46,9 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
-    Memory* m_memory;           //!< Pointer to Memory object
-    Model* m_model;             //!< Pointer to Model object
+    Memory* m_memory;                 //!< Pointer to Memory object
+    Paradigm* m_paradigm;             //!< Pointer to Memory object
+    Model* m_model;                   //!< Pointer to Model object
 };
 
 } // namespace Quinoa

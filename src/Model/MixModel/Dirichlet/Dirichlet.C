@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:47:44 PM MST
+  \date      Tue 13 Nov 2012 10:19:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -51,7 +51,7 @@ Dirichlet::init()
   m_model->allocNpel();
 
   // Initialize random number stream
-  MKLRandom m_rnd(1, m_model->memory());
+  MKLRandom m_rnd(m_model->memory(), m_model->paradigm());
 
   // Set initial conditions
   setIC();

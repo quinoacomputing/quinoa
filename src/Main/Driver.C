@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 06:36:29 PM MST
+  \date      Tue 13 Nov 2012 10:20:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -15,9 +15,12 @@
 
 using namespace Quinoa;
 
-Driver::Driver(Memory* memory) : m_memory(memory)
+Driver::Driver(Memory* memory, Paradigm* paradigm) :
+  m_memory(memory), m_paradigm(paradigm)
 //******************************************************************************
 //  Constructor
+//! \param[in]  memory    Memory oject pointer
+//! \param[in]  paradigm  Parallel programming paradigm object pointer
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -41,7 +44,7 @@ Driver::setup()
 //******************************************************************************
 {
   // Instantiate model
-  m_model = new (nothrow) Model(MODEL_TYPE, NPEL, m_memory);
+  m_model = new (nothrow) Model(MODEL_TYPE, NPEL, m_memory, m_paradigm);
   Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Echo information on model selected

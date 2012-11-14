@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:39:22 PM MST
+  \date      Tue 13 Nov 2012 10:19:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -22,13 +22,17 @@ namespace Quinoa {
 class Memory;
 class MemoryEntry;
 class MixModel;
+class Paradigm;
 
 //! Model base
 class Model {
 
   public:
     //! Constructor
-    Model(const ModelType model, const int npel, Memory* memory);
+    Model(const ModelType model,
+          const int npel,
+          Memory* memory,
+          Paradigm* paradigm);
 
     //! Destructor
     ~Model();
@@ -48,8 +52,11 @@ class Model {
     //! Constant accessor to number of elements
     const int& nel() const { return m_nel; }
 
-    //! Accessor to memory object pointer
+    //! Constant accessor to memory object pointer
     Memory* memory() const { return m_memory; }
+
+    //! Constant accessor to parallel programming object pointer
+    Paradigm* paradigm() const { return m_paradigm; }
 
   private:
     //! Don't permit copy constructor
@@ -64,6 +71,7 @@ class Model {
     const ModelType m_model;          //!< Model type
     const int m_npel;                 //!< Number of particles/element
     Memory* m_memory;                 //!< Memory object pointer
+    Paradigm* m_paradigm;             //!< Parallel programming object pointer
     string m_name;                    //!< Name of model
     int m_nel;                        //!< Number of elements
     MixModel* m_mixModel;             //!< Pointer to MixModel object

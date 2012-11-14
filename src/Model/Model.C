@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:26:57 PM MST
+  \date      Tue 13 Nov 2012 10:16:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -19,13 +19,17 @@
 
 using namespace Quinoa;
 
-Model::Model(const ModelType model, const int npel, Memory* memory) :
-  m_model(model), m_npel(npel), m_memory(memory)
+Model::Model(const ModelType model,
+             const int npel,
+             Memory* memory,
+             Paradigm* paradigm) :
+  m_model(model), m_npel(npel), m_memory(memory), m_paradigm(paradigm)
 //******************************************************************************
 //  Constructor
-//! \param[in]  model  Model type (see Control/Control.h)
-//! \param[in]  npel   Number of particles/element
-//! \param[in]  memory Memory object pointer
+//! \param[in]  model    Model type (see Control/Control.h)
+//! \param[in]  npel     Number of particles/element
+//! \param[in]  memory   Memory object pointer
+//! \param[in]  paradigm Parallel programming object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {

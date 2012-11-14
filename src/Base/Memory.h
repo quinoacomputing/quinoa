@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:26:49 PM MST
+  \date      Tue 13 Nov 2012 10:09:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -20,6 +20,8 @@
 
 namespace Quinoa {
 
+class Paradigm;
+
 //! Memory store, container of memory entries
 class Memory {
 
@@ -36,7 +38,7 @@ class Memory {
 
   public:
     //! Constructor
-    Memory(const int nthreads) : m_nthreads(nthreads) {}
+    Memory(Paradigm* paradigm);
 
     //! Destructor
     ~Memory();
@@ -128,18 +130,19 @@ class Memory {
     //! Don't permit move assigment
     Memory& operator=(Memory&&) = delete;
 
-    void echo();           //!< Echo unsorted entries
-    void echoByBytes();    //!< Echo entries sorted by Bytes
-    void echoByNumber();   //!< Echo entries sorted by Number
-    void echoByValue();    //!< Echo entries sorted by Value
-    void echoByVariable(); //!< Echo entries sorted by Variable
-    void echoByName();     //!< Echo entries sorted by Name
-    void echoByPlot();     //!< Echo entries sorted by Plot
-    void echoByRestart();  //!< Echo entries sorted by Restart
+    void echo();                //!< Echo unsorted entries
+    void echoByBytes();         //!< Echo entries sorted by Bytes
+    void echoByNumber();        //!< Echo entries sorted by Number
+    void echoByValue();         //!< Echo entries sorted by Value
+    void echoByVariable();      //!< Echo entries sorted by Variable
+    void echoByName();          //!< Echo entries sorted by Name
+    void echoByPlot();          //!< Echo entries sorted by Plot
+    void echoByRestart();       //!< Echo entries sorted by Restart
 
-    int m_nthreads;        //!< Local copy of the number of threads
-    MemorySet m_entry;     //!< Memory entries
-    MemoryNames m_name;    //!< Memory entry names mapped to MemorySet keys
+    Paradigm* m_paradigm;       //!< Local reference to the parallel paradigm
+    int m_nOMPthreads;          //!< Number of OpenMP threads
+    MemorySet m_entry;          //!< Memory entries
+    MemoryNames m_name;         //!< Memory entry names mapped to MemorySet keys
 };
 
 } // namespace Quinoa
