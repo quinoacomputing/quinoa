@@ -1,58 +1,64 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Model.C
+  \file      src/Model/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 14:58:02 2012
+  \date      Thu Nov 15 15:00:58 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Model base
-  \details   Model base
+  \brief     Homogeneous Dirichlet model
+  \details   Homogeneous Dirichlet model
 */
 //******************************************************************************
 
-#include <iostream>
-
 #include <Memory.h>
-#include <Model.h>
+#include <MemoryException.h>
+#include <MKLRandom.h>
+#include <HomDirichlet.h>
 
-using namespace std;
 using namespace Quinoa;
 
-Model::Model(Memory* memory, Paradigm* paradigm, const string& name) :
-  m_memory(memory), m_paradigm(paradigm), m_name(name)
+HomDirichlet::HomDirichlet(Memory* memory,
+                           Paradigm* paradigm,
+                           const int nscalar) :
+  Model(memory, paradigm, "Homogeneous Dirichlet"),
+  m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  name     Name of model
+//! \param[in]  nscalar  Number of mixing scalars
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Instantiate random number generator
+  m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
+  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-Model::~Model()
+HomDirichlet::~HomDirichlet()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  if (m_random) { delete m_random; m_random = nullptr; }
+  //if (m_mixModel) { delete m_mixModel; m_mixModel = nullptr; }
 }
 
 void
-Model::echo()
+HomDirichlet::echo()
 //******************************************************************************
-//  Echo informaion on model
+//  Echo informaion on homogeneous Dirichlet
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Echo information on selected model
-  cout << "Model: " << m_name << "\n";
 }
 
 void
-Model::init()
+HomDirichlet::init()
 //******************************************************************************
-//  Initialize model
+//  Initialize homogeneous Dirichlet
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  //if (m_mixModel) m_mixModel->init();
 }

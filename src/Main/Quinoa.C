@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 09:50:28 PM MST
+  \date      Thu Nov 15 15:12:45 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -64,8 +64,8 @@ int main(int argc, char* argv[])
   paradigm.echo();
 
   // Initialize memory manager and driver
-  Memory memStore(&paradigm);
-  Driver driver(&memStore, &paradigm);
+  Memory memory(&paradigm);
+  Driver driver(&memory, &paradigm);
 
   ErrCode error = NO_ERROR;
 #ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode

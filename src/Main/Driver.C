@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:20:18 PM MST
+  \date      Thu Nov 15 15:08:18 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -10,8 +10,10 @@
 //******************************************************************************
 
 #include <Driver.h>
-#include <Model.h>
 #include <Setup.h>
+#include <ModelException.h>
+#include <HomDirichlet.h>
+#include <HomGenDirichlet.h>
 
 using namespace Quinoa;
 
@@ -43,9 +45,18 @@ Driver::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate model
-  m_model = new (nothrow) Model(MODEL_TYPE, NPEL, m_memory, m_paradigm);
-  Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  // Instantiate selected model
+  // ICC: this could be a switch
+  if (MODEL_TYPE == ModelType::HOMOGENEOUS_DIRICHLET) {
+    m_model = new (nothrow) HomDirichlet(m_memory, m_paradigm, NSCALAR);
+    Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  }
+  else if (MODEL_TYPE == ModelType::HOMOGENEOUS_GENDIRICHLET) {
+    m_model = new (nothrow) HomGenDirichlet(m_memory, m_paradigm, NSCALAR);
+    Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  } else {
+    Throw(ModelException,FATAL,NO_SUCH_MODEL);
+  }
 
   // Echo information on model selected
   m_model->echo();
