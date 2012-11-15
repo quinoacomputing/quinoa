@@ -9,6 +9,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 include_directories(${QUINOA_SOURCE_DIR}/Model/MixModel/GeneralizedDirichlet
                     ${QUINOA_SOURCE_DIR}/Model/MixModel
                     ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Base
 )
 
 add_library(GeneralizedDirichlet

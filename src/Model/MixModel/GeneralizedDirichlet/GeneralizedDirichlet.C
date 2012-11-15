@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 13:35:12 2012
+  \date      Thu Nov 15 15:53:34 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -17,14 +17,10 @@
 using namespace std;
 using namespace Quinoa;
 
-GeneralizedDirichlet::GeneralizedDirichlet(Model* model,
-                                           MKLRandom* random,
-                                           const int& nscalar) :
-  MixModel(model, random, "Generalized Dirichlet", nscalar)
+GeneralizedDirichlet::GeneralizedDirichlet(const int& nscalar) :
+  MixModel(nscalar, "Generalized Dirichlet")
 //******************************************************************************
 //  Constructor
-//! \param[in]  model    Model object pointer
-//! \param[in]  random   Random number generator object pointer
 //! \param[in]  nscalar  Number of mixing scalars
 //! \author  J. Bakosi
 //******************************************************************************
@@ -38,7 +34,7 @@ GeneralizedDirichlet::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Generalized Dirichlet model:" << endl;
+  cout << " * Number of mixing scalars: " << m_nscalar << endl;
 }
 
 void
@@ -48,7 +44,7 @@ GeneralizedDirichlet::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Initialize generalized Dirichlet model" << endl;
+  // Set initial conditions
 }
 
 void

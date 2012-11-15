@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Thu Nov 15 14:58:02 2012
+  \date      Thu Nov 15 15:17:52 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -32,26 +32,6 @@ Model::Model(Memory* memory, Paradigm* paradigm, const string& name) :
 Model::~Model()
 //******************************************************************************
 //  Destructor
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
-void
-Model::echo()
-//******************************************************************************
-//  Echo informaion on model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  // Echo information on selected model
-  cout << "Model: " << m_name << "\n";
-}
-
-void
-Model::init()
-//******************************************************************************
-//  Initialize model
 //! \author  J. Bakosi
 //******************************************************************************
 {
