@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:19:11 PM MST
+  \date      Thu Nov 15 13:35:28 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -19,11 +19,12 @@
 using namespace std;
 using namespace Quinoa;
 
-Dirichlet::Dirichlet(Model* model, const int& nscalar) :
-  MixModel(model, "Dirichlet", nscalar)
+Dirichlet::Dirichlet(Model* model, MKLRandom* random, const int& nscalar) :
+  MixModel(model, random, "Dirichlet", nscalar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  model    Model object pointer
+//! \param[in]  random   Random number generator object pointer
 //! \param[in]  nscalar  Number of mixing scalars
 //! \author  J. Bakosi
 //******************************************************************************
@@ -50,9 +51,6 @@ Dirichlet::init()
   // Allocate data for the Dirichlet model
   m_model->allocNpel();
 
-  // Initialize random number stream
-  MKLRandom m_rnd(m_model->memory(), m_model->paradigm());
-
   // Set initial conditions
   setIC();
 }
@@ -66,6 +64,7 @@ Dirichlet::setIC()
 {
   const int npel = m_model->npel();
   const int nel = m_model->nel();
+  //const VSLStreamStatePtr* stream = m_random->getStr(m_randomStream);
 
   int e, p;
 

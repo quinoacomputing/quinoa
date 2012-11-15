@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:19:39 PM MST
+  \date      Thu Nov 15 13:27:34 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -23,6 +23,7 @@ class Memory;
 class MemoryEntry;
 class MixModel;
 class Paradigm;
+class MKLRandom;
 
 //! Model base
 class Model {
@@ -52,11 +53,14 @@ class Model {
     //! Constant accessor to number of elements
     const int& nel() const { return m_nel; }
 
-    //! Constant accessor to memory object pointer
+    //! Accessor to memory object pointer
     Memory* memory() const { return m_memory; }
 
-    //! Constant accessor to parallel programming object pointer
+    //! Accessor to parallel programming object pointer
     Paradigm* paradigm() const { return m_paradigm; }
+
+    //! Accessor to random number generator object
+    MKLRandom* getRandom() const { return m_random; }
 
   private:
     //! Don't permit copy constructor
@@ -68,15 +72,16 @@ class Model {
     //! Don't permit move assigment
     Model& operator=(Model&&) = delete;
 
-    const ModelType m_model;          //!< Model type
-    const int m_npel;                 //!< Number of particles/element
-    Memory* m_memory;                 //!< Memory object pointer
-    Paradigm* m_paradigm;             //!< Parallel programming object pointer
-    string m_name;                    //!< Name of model
-    int m_nel;                        //!< Number of elements
-    MixModel* m_mixModel;             //!< Pointer to MixModel object
+    const ModelType m_model;      //!< Model type
+    const int m_npel;             //!< Number of particles/element
+    Memory* m_memory;             //!< Memory object pointer
+    Paradigm* m_paradigm;         //!< Parallel programming object pointer
+    string m_name;                //!< Name of model
+    int m_nel;                    //!< Number of elements
+    MKLRandom* m_random;          //!< Pointer to random number generator object
+    MixModel* m_mixModel;         //!< Pointer to MixModel object
 
-    MemoryEntry* m_elp;               //!< Array storing element ID of particle
+    MemoryEntry* m_elp;           //!< Array storing element ID of particle
 };
 
 } // namespace Quinoa
