@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:16:20 PM MST
+  \date      Thu Nov 15 13:38:16 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -16,6 +16,7 @@
 #include <GeneralizedDirichlet.h>
 #include <Setup.h>
 #include <Memory.h>
+#include <MKLRandom.h>
 
 using namespace Quinoa;
 
@@ -33,18 +34,23 @@ Model::Model(const ModelType model,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Instantiate random number generator (the same object can then be used by
+  // all models)
+  m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
+  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
   // Instantiate model
   // ICC: this could be a switch
   if (model == ModelType::HOMOGENEOUS_DIRICHLET) {
     m_name = "Homogeneous Dirichlet";
     m_nel = 1;
-    m_mixModel = new (nothrow) Dirichlet(this,NSCALAR);
+    m_mixModel = new (nothrow) Dirichlet(this, m_random, NSCALAR);
     Assert(m_mixModel != nullptr, MemoryException,FATAL,BAD_ALLOC);
   }
   else if (model == ModelType::HOMOGENEOUS_GENDIRICHLET) {
     m_name = "Homogeneous generalized Dirichlet";
     m_nel = 1;
-    m_mixModel = new (nothrow) GeneralizedDirichlet(this,NSCALAR);
+    m_mixModel = new (nothrow) GeneralizedDirichlet(this, m_random, NSCALAR);
     Assert(m_mixModel != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else {
     Throw(ModelException,FATAL,NO_SUCH_MODEL);
@@ -60,6 +66,7 @@ Model::~Model()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  if (m_random) { delete m_random; m_random = nullptr; }
   if (m_mixModel) { delete m_mixModel; m_mixModel = nullptr; }
 
 #ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:12:16 PM MST
+  \date      Thu Nov 15 13:33:43 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -20,7 +20,7 @@ class Dirichlet : public MixModel {
 
   public:
     //! Constructor
-    Dirichlet(Model* model, const int& nscalar);
+    Dirichlet(Model* model, MKLRandom* random, const int& nscalar);
 
     //! Destructor
     virtual ~Dirichlet() {}

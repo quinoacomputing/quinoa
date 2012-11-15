@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/MixModel.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 01:34:02 PM MST
+  \date      Thu Nov 15 13:39:16 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -18,13 +18,17 @@ namespace Quinoa {
 using namespace std;
 
 class Model;
+class MKLRandom;
 
 //! MixModel base
 class MixModel {
 
   public:
     //! Constructor
-    MixModel(Model* model, const string& name, const int& nscalar);
+    MixModel(Model* model,
+             MKLRandom* random,
+             const string& name,
+             const int& nscalar);
 
     //! Destructor
     virtual ~MixModel() {}
@@ -39,9 +43,10 @@ class MixModel {
     const string& name() const { return m_name; }
 
   protected:
-    Model* m_model;               //!< Model object pointer
-    const string m_name;          //!< Name of mix model
-    const int m_nscalar;          //!< Number of mixing scalars
+    Model* m_model;                //!< Model object pointer
+    MKLRandom* m_random;           //!< Random number generator object pointer
+    const string m_name;           //!< Name of mix model
+    const int m_nscalar;           //!< Number of mixing scalars
 
   private:
     //! Don't permit copy constructor
