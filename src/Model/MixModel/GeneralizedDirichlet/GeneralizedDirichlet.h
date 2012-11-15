@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 13:34:29 2012
+  \date      Thu Nov 15 15:50:11 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -20,7 +20,7 @@ class GeneralizedDirichlet : public MixModel {
 
   public:
     //! Constructor
-    GeneralizedDirichlet(Model* model, MKLRandom* random, const int& nscalar);
+    GeneralizedDirichlet(const int& nscalar);
 
     //! Destructor
     virtual ~GeneralizedDirichlet() {}

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Thu Nov 15 15:02:30 2012
+  \date      Thu Nov 15 15:33:09 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -31,10 +31,10 @@ class Model {
     virtual ~Model();
 
     //! Echo informaion on model
-    virtual void echo();
+    virtual void echo() = 0;
 
     //! Initialize model
-    virtual void init();
+    virtual void init() = 0;
 
   protected:
     Memory* m_memory;             //!< Memory object pointer

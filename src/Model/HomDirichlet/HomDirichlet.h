@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 15:07:42 2012
+  \date      Thu Nov 15 15:30:38 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -16,9 +16,9 @@
 namespace Quinoa {
 
 class Memory;
-class MixModel;
 class Paradigm;
 class MKLRandom;
+class Dirichlet;
 
 //! HomDirichlet : Model
 class HomDirichlet : public Model {
@@ -46,9 +46,8 @@ class HomDirichlet : public Model {
     //! Don't permit move assigment
     HomDirichlet& operator=(HomDirichlet&&) = delete;
 
-    const int m_nscalar;          //!< Number of mixing scalars
     MKLRandom* m_random;          //!< Pointer to random number generator object
-    MixModel* m_mixModel;         //!< Pointer to MixModel object
+    Dirichlet* m_dir;             //!< Pointer to Dirichlet mix model object
 };
 
 } // namespace Quinoa

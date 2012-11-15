@@ -31,8 +31,11 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Statistics
                       HomDirichlet
                       HomGenDirichlet
-                      Model
                       Random
+                      Dirichlet
+                      GeneralizedDirichlet
+                      MixModel
+                      Model
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
