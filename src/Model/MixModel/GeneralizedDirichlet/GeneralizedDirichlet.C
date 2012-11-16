@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:53:34 2012
+  \date      Thu Nov 15 16:34:00 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -38,7 +38,7 @@ GeneralizedDirichlet::echo()
 }
 
 void
-GeneralizedDirichlet::init()
+GeneralizedDirichlet::init(const int& npar, real* scalar)
 //******************************************************************************
 //  Initialize the generalized Dirichlet model
 //! \author  J. Bakosi
@@ -48,7 +48,7 @@ GeneralizedDirichlet::init()
 }
 
 void
-GeneralizedDirichlet::setIC()
+GeneralizedDirichlet::setIC(const int& npar, real* scalar)
 //******************************************************************************
 //  Set initial conditions for the generalized Dirichlet model
 //! \author  J. Bakosi

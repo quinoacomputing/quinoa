@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 15:30:38 2012
+  \date      Thu Nov 15 17:37:21 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -18,6 +18,7 @@ namespace Quinoa {
 class Memory;
 class Paradigm;
 class MKLRandom;
+class MKLRndStream;
 class Dirichlet;
 
 //! HomDirichlet : Model
@@ -25,7 +26,10 @@ class HomDirichlet : public Model {
 
   public:
     //! Constructor
-    HomDirichlet(Memory* memory, Paradigm* paradigm, const int nscalar);
+    HomDirichlet(Memory* memory,
+                 Paradigm* paradigm,
+                 const int& nscalar,
+                 const int& npar);
 
     //! Destructor
     virtual ~HomDirichlet();
@@ -47,7 +51,10 @@ class HomDirichlet : public Model {
     HomDirichlet& operator=(HomDirichlet&&) = delete;
 
     MKLRandom* m_random;          //!< Pointer to random number generator object
+    MKLRndStream* m_rndStream;    //!< Pointer to random number stream object
     Dirichlet* m_dir;             //!< Pointer to Dirichlet mix model object
+    const int m_npar;             //!< Number of particles
+    MemoryEntry* m_scalar;        //!< Memory entry storing the scalars
 };
 
 } // namespace Quinoa

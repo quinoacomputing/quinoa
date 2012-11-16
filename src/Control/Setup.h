@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:58:18 PM MST
+  \date      Thu Nov 15 16:19:03 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -15,14 +15,14 @@
 
 namespace Quinoa {
 
-//! Select model
+//! Model
 const ModelType MODEL_TYPE = ModelType::HOMOGENEOUS_DIRICHLET;
 
-//! Select number of scalars
+//! Number of scalars
 const int NSCALAR = 3;
 
-//! Select number of particles per element
-const int NPEL = 10;
+//! Number of particles
+const int NPAR = 1000;
 
 } // namespace Quinoa
 
