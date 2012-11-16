@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 16:34:05 2012
+  \date      Fri Nov 16 07:33:26 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -27,12 +27,6 @@ class GeneralizedDirichlet : public MixModel {
 
     //! Echo information on Generalized Dirichlet model
     virtual void echo();
-
-    //! Initialize Generalized Dirichlet model
-    virtual void init(const int& npar, real* scalar);
-
-    //! Set initial conditions
-    void setIC(const int& npar, real* scalar);
 
   private:
     //! Don't permit copy constructor

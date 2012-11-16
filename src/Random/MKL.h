@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:19:56 AM MST
+  \date      Fri Nov 16 07:56:51 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -25,7 +25,7 @@ class MKL {
     MKL() = default;
 
     //! Destructor: Default, compiler-generated
-    ~MKL() = default;
+    virtual ~MKL() {}
 
     //! Call MKL's vdRngUniform() and handle error
     void uniform(const int& method,
