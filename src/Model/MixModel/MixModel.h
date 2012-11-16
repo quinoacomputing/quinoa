@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/MixModel.h
   \author    J. Bakosi
-  \date      Thu Nov 15 15:47:11 2012
+  \date      Thu Nov 15 16:33:12 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -12,6 +12,8 @@
 #define MixModel_h
 
 #include <string>
+
+#include <QuinoaTypes.h>
 
 namespace Quinoa {
 
@@ -31,7 +33,7 @@ class MixModel {
     virtual void echo() = 0;
 
     //! Interface for mix model initialize
-    virtual void init() = 0;
+    virtual void init(const int& npar, real* scalar) = 0;
 
   protected:
     const int m_nscalar;           //!< Number of mixing scalars

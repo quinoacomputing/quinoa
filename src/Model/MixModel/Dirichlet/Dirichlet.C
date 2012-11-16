@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:52:57 2012
+  \date      Thu Nov 15 16:29:51 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -37,32 +37,26 @@ Dirichlet::echo()
 }
 
 void
-Dirichlet::init()
+Dirichlet::init(const int& npar, real* scalar)
 //******************************************************************************
 //  Initialize Dirichlet model
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Set initial conditions
-  setIC();
+  setIC(npar, scalar);
 }
 
 void
-Dirichlet::setIC()
+Dirichlet::setIC(const int& npar, real* scalar)
 //******************************************************************************
-//  Set initial conditions for the Dirichlet model
+//  Set initial conditions for an ensemble of particles
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   const int npel = m_model->npel();
-//   const int nel = m_model->nel();
-//   //const VSLStreamStatePtr* stream = m_random->getStr(m_randomStream);
-// 
-//   int e, p;
-// 
-//   for (e=0; e<nel; e++ )
-//     for (p=0; p<npel; p++ ) {
-//       // get a uniformly distributed random numer between [0...1)
-//      
-//     }
+  //const vslstreamstateptr* stream = m_random->getstr(m_randomstream);
+
+  for (int p=0; p<npar; p++ ) {
+    // get a uniformly distributed random numer between [0...1)
+  }
 }
