@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 16:31:32 2012
+  \date      Fri Nov 16 07:34:27 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -28,12 +28,6 @@ class Dirichlet : public MixModel {
 
     //! Echo information on Dirichlet model
     virtual void echo();
-
-    //! Initialize Dirichlet model
-    virtual void init(const int& npar, real* scalar);
-
-    //! Set initial conditions for an ensemble of particles
-    void setIC(const int& npar, real* scalar);
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 17:36:57 2012
+  \date      Fri Nov 16 09:07:34 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -10,6 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
+#include <limits>
+#include <cstring>
+#include <cmath>
 
 #include <Memory.h>
 #include <MemoryException.h>
@@ -24,7 +27,8 @@ HomDirichlet::HomDirichlet(Memory* memory,
                            Paradigm* paradigm,
                            const int& nscalar,
                            const int& npar) :
-  Model(memory, paradigm, "Homogeneous Dirichlet"), m_npar(npar)
+  Model(memory, paradigm, "Homogeneous Dirichlet"), m_nscalar(nscalar),
+  m_npar(npar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -39,7 +43,7 @@ HomDirichlet::HomDirichlet(Memory* memory,
   Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Create random number leapfrog stream
-  m_rndStream = m_random->addStream(VSL_BRNG_MCG59, 0);
+  m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
 
   // Instantiate Dirichlet mix model
   m_dir = new (nothrow) Dirichlet(nscalar);
@@ -91,6 +95,55 @@ HomDirichlet::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Initialize the Dirichlet mix model
-  m_dir->init(m_npar, m_memory->getPtr<real>(m_scalar));
+  // Initialize the Dirichlet mix model with N-peak delta
+  initNpeakDelta();
+}
+
+void
+HomDirichlet::initNpeakDelta()
+//******************************************************************************
+//  Initialize with N-peak delta
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Get MKL VSL stream state pointers
+  const VSLStreamStatePtr* str = m_random->getStr(m_rndStr);
+  // Get pointer to scalars
+  real* scalar = m_memory->getPtr<real>(m_scalar);
+  // Precompute number of non-constrained scalars
+  int n = m_nscalar-1;
+
+  // Generate initial values for all scalars for all particles
+  for (int p=0; p<m_npar; ++p) {
+
+    bool accept = false;
+    while (!accept) {
+      // Generate non-constrained scalars
+      real r[n];
+      m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD, str[0], n, r, 0.0, 1.0);
+
+      // Compute their sum
+      real sum = r[0];
+      for (int i=1; i<n; ++i) sum += r[i];
+
+      // Accept if sum is less then 1.0
+      if (sum < 1.0) {
+        int pN = p*m_nscalar;
+        memcpy(scalar+pN, r, n*sizeof(real));   // put in non-constrained ones
+        scalar[pN+n] = 1.0-sum;         // the last one is 1.0-(sum of the rest)
+        accept = true;
+      }
+    }
+
+  }
+
+  // Check if sample space is valid
+  for (int p=0; p<m_npar; ++p) {
+    int pN = p*m_nscalar;
+    real sum = scalar[pN];
+    for (int i=1; i<m_nscalar; ++i) sum += scalar[pN+i];
+    if (fabs(sum-1.0) > numeric_limits<real>::epsilon()) {
+      cout << "!";
+    }
+  }
 }

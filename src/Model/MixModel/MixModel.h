@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/MixModel/MixModel.h
   \author    J. Bakosi
-  \date      Thu Nov 15 16:33:12 2012
+  \date      Fri Nov 16 07:33:01 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MixModel base
   \details   MixModel base
@@ -31,9 +31,6 @@ class MixModel {
 
     //! Interface for echo information on mix model
     virtual void echo() = 0;
-
-    //! Interface for mix model initialize
-    virtual void init(const int& npar, real* scalar) = 0;
 
   protected:
     const int m_nscalar;           //!< Number of mixing scalars

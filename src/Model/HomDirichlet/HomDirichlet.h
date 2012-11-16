@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 17:37:21 2012
+  \date      Fri Nov 16 08:23:16 2012
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -50,9 +50,13 @@ class HomDirichlet : public Model {
     //! Don't permit move assigment
     HomDirichlet& operator=(HomDirichlet&&) = delete;
 
+    //! Initialize with N-leak delta
+    void initNpeakDelta();
+
     MKLRandom* m_random;          //!< Pointer to random number generator object
-    MKLRndStream* m_rndStream;    //!< Pointer to random number stream object
+    MKLRndStream* m_rndStr;       //!< Pointer to random number stream object
     Dirichlet* m_dir;             //!< Pointer to Dirichlet mix model object
+    const int m_nscalar;          //!< Number of mixing scalars
     const int m_npar;             //!< Number of particles
     MemoryEntry* m_scalar;        //!< Memory entry storing the scalars
 };
