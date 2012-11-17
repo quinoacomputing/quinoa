@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 09:57:12 PM MST
+  \date      Sat 17 Nov 2012 06:48:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -54,13 +54,17 @@ HomDirichlet::HomDirichlet(Memory* memory,
 
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
+  // Get array of MKL VSL stream state pointers right away
+  m_str = m_random->getStr(m_rndStr);
 
   // Instantiate Dirichlet mix model
   m_dir = new (nothrow) Dirichlet(nscalar);
   Assert(m_dir != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Allocate memory entry to store the scalars
-  m_scalar = m_memory->newEntry(npar*nscalar, REAL, SCALAR, "scalar");
+  m_MEscalar = m_memory->newEntry(npar*nscalar, REAL, SCALAR, "scalar");
+  // Get pointer to scalars right away
+  m_scalar = m_memory->getPtr<real>(m_MEscalar);
 }
 
 HomDirichlet::~HomDirichlet()
@@ -73,7 +77,7 @@ HomDirichlet::~HomDirichlet()
 #ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_scalar);
+    m_memory->freeEntry(m_MEscalar);
 #ifndef NDEBUG
   } catch (...)
     { cout << "WARNING: Exception in HomDirichlet::~HomDirichlet" << endl; }
@@ -109,13 +113,12 @@ HomDirichlet::init()
   initUniform();
 
 //   // Output joint PDF
-//   real* scalar = m_memory->getPtr<real>(m_scalar);
 //   JPDF jpdf(2, 0.1);
 //   for (int p=0; p<m_npar; ++p) {
 //     int pN = p*m_nscalar;
 //     vector<real> v(2,0);
-//     v[0] = scalar[pN];
-//     v[1] = scalar[pN+1];
+//     v[0] = m_scalar[pN];
+//     v[1] = m_scalar[pN+1];
 //     jpdf.insert(v);
 //   }
 //   PDFWriter jpw("../../tmp/jpdf");
@@ -129,10 +132,6 @@ HomDirichlet::initUniform()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Get MKL VSL stream state pointers
-  const VSLStreamStatePtr* str = m_random->getStr(m_rndStr);
-  // Get pointer to scalars
-  real* scalar = m_memory->getPtr<real>(m_scalar);
   // Precompute number of non-constrained scalars
   int n = m_nscalar-1;
 
@@ -143,7 +142,7 @@ HomDirichlet::initUniform()
     while (!accept) {
       // Generate non-constrained scalars
       real r[n];
-      m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD, str[0], n, r, 0.0, 1.0);
+      m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD, m_str[0], n, r, 0.0, 1.0);
 
       // Compute their sum
       real sum = r[0];
@@ -152,8 +151,8 @@ HomDirichlet::initUniform()
       // Accept if sum is less then 1.0
       if (sum < 1.0) {
         int pN = p*m_nscalar;
-        memcpy(scalar+pN, r, n*sizeof(real));   // put in non-constrained ones
-        scalar[pN+n] = 1.0-sum;         // the last one is 1.0-(sum of the rest)
+        memcpy(m_scalar+pN, r, n*sizeof(real));   // put in non-constrained ones
+        m_scalar[pN+n] = 1.0-sum;       // the last one is 1.0-(sum of the rest)
         accept = true;
       }
     }
@@ -163,8 +162,8 @@ HomDirichlet::initUniform()
   // Check if sample space is valid
   for (int p=0; p<m_npar; ++p) {
     int pN = p*m_nscalar;
-    real sum = scalar[pN];
-    for (int i=1; i<m_nscalar; ++i) sum += scalar[pN+i];
+    real sum = m_scalar[pN];
+    for (int i=1; i<m_nscalar; ++i) sum += m_scalar[pN+i];
     if (fabs(sum-1.0) > numeric_limits<real>::epsilon()) {
       cout << "!";
     }
@@ -185,10 +184,14 @@ HomDirichlet::solve()
   // Get start time
   gettimeofday(&m_startTime, static_cast<struct timezone*>(0));
 
+  // Set initial time step size
   real dt = 0.1;
 
   // Time stepping loop
   while (fabs(t-m_time) > numeric_limits<real>::epsilon() && it < m_nstep) {
+
+    // Advance particles
+    advance();
 
     // Echo one-liner info
     report(it, t, dt, hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
@@ -197,6 +200,23 @@ HomDirichlet::solve()
     t += dt;
     ++it;
     if (t > m_time) t = m_time;
+  }
+}
+
+void
+HomDirichlet::advance()
+//******************************************************************************
+//  Advance particles
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  for (int p=0; p<m_npar; ++p) {
+
+//    d = kappa[0]*U[pP+1]*(1.0-U[pP+1]-U[pP+2])*dt;
+//      if (d > 0.0) d = sqrt(d); else d = 0;//sqrt(-d);
+//      U[pP+1] += b[0]/2.0*(S[0]*(1.0-U[pP+1]-U[pP+2]) - (1.0-S[0])*U[pP+1])*dt
+//               + d*dW[0];
+
   }
 }
 
