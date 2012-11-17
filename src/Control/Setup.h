@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 08:49:48 PM MST
+  \date      Sat 17 Nov 2012 08:30:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -20,17 +20,20 @@ namespace Quinoa {
 //! Model
 const ModelType MODEL_TYPE = ModelType::HOMOGENEOUS_DIRICHLET;
 
-//! Number of scalars
-const int NSCALAR = 3;
+//! Number of prognostic scalars
+const int NSCALAR = 2;
 
 //! Number of particles
-const int NPAR = 10000;
+const int NPAR = 100000;
 
 //! Maximum time to simulate
-const real TIME = 1.0;
+const real TIME = 160.0;
 
 //! Maximum number of time steps to take
 const int NSTEP = numeric_limits<int>::max();
+
+//! One-liner info in every few time steps
+const int ECHO = 10;
 
 } // namespace Quinoa
 
