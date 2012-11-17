@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Fri Nov 16 08:23:16 2012
+  \date      Fri 16 Nov 2012 09:49:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -29,7 +29,9 @@ class HomDirichlet : public Model {
     HomDirichlet(Memory* memory,
                  Paradigm* paradigm,
                  const int& nscalar,
-                 const int& npar);
+                 const int& npar,
+                 const real time,
+                 const int nstep = numeric_limits<int>::max());
 
     //! Destructor
     virtual ~HomDirichlet();
@@ -39,6 +41,9 @@ class HomDirichlet : public Model {
 
     //! Initialize model
     virtual void init();
+
+    //! Solve model
+    virtual void solve();
 
   private:
     //! Don't permit copy constructor
@@ -50,8 +55,13 @@ class HomDirichlet : public Model {
     //! Don't permit move assigment
     HomDirichlet& operator=(HomDirichlet&&) = delete;
 
-    //! Initialize with N-leak delta
-    void initNpeakDelta();
+    //! Initialize scalars with unirom PDF with the last constrained
+    void initUniform();
+
+    //! One-liner report
+    void report(const int it, const real t, const real dt,
+                long int& hrs2beg, long int& mins2beg, long int& secs2beg,
+                long int& hrs2end, long int& mins2end, long int& secs2end);
 
     MKLRandom* m_random;          //!< Pointer to random number generator object
     MKLRndStream* m_rndStr;       //!< Pointer to random number stream object
@@ -59,6 +69,7 @@ class HomDirichlet : public Model {
     const int m_nscalar;          //!< Number of mixing scalars
     const int m_npar;             //!< Number of particles
     MemoryEntry* m_scalar;        //!< Memory entry storing the scalars
+    struct timeval m_startTime;   //!< Date/time loop started
 };
 
 } // namespace Quinoa

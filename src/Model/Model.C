@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:17:52 2012
+  \date      Fri 16 Nov 2012 08:44:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -17,13 +17,23 @@
 using namespace std;
 using namespace Quinoa;
 
-Model::Model(Memory* memory, Paradigm* paradigm, const string& name) :
-  m_memory(memory), m_paradigm(paradigm), m_name(name)
+Model::Model(Memory* memory,
+             Paradigm* paradigm,
+             const string& name,
+             const real time,
+             const int nstep) :
+  m_memory(memory),
+  m_paradigm(paradigm),
+  m_name(name),
+  m_time(time),
+  m_nstep(nstep)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  name     Name of model
+//! \param[in]  time     Maximum time to simulate
+//! \param[in]  nstep    Maximum number of time steps to take
 //! \author  J. Bakosi
 //******************************************************************************
 {

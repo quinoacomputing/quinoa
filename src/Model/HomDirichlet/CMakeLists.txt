@@ -12,6 +12,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Model/HomDirichlet
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
 add_library(HomDirichlet

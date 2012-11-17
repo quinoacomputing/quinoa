@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomGenDirichlet/HomGenDirichlet.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:05:00 2012
+  \date      Fri 16 Nov 2012 09:49:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -18,14 +18,18 @@ using namespace Quinoa;
 
 HomGenDirichlet::HomGenDirichlet(Memory* memory,
                                  Paradigm* paradigm,
-                                 const int nscalar) :
-  Model(memory, paradigm, "Homogeneous generalized Dirichlet"),
+                                 const int nscalar,
+                                 const real time,
+                                 const int nstep) :
+  Model(memory, paradigm, "Homogeneous generalized Dirichlet", time, nstep),
   m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  nscalar  Number of mixing scalars
+//! \param[in]  time     Maximum time to simulate
+//! \param[in]  nstep    Maximum number of time steps to take
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -41,7 +45,6 @@ HomGenDirichlet::~HomGenDirichlet()
 //******************************************************************************
 {
   if (m_random) { delete m_random; m_random = nullptr; }
-  //if (m_mixModel) { delete m_mixModel; m_mixModel = nullptr; }
 }
 
 void
@@ -54,11 +57,19 @@ HomGenDirichlet::echo()
 }
 
 void
+HomGenDirichlet::solve()
+//******************************************************************************
+//  Solve
+//! \author  J. Bakosi
+//******************************************************************************
+{
+}
+
+void
 HomGenDirichlet::init()
 //******************************************************************************
 //  Initialize homogeneous Dirichlet
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //if (m_mixModel) m_mixModel->init();
 }

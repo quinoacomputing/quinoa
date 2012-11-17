@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomGenDirichlet/HomGenDirichlet.h
   \author    J. Bakosi
-  \date      Thu Nov 15 15:07:51 2012
+  \date      Fri 16 Nov 2012 09:49:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -25,7 +25,11 @@ class HomGenDirichlet : public Model {
 
   public:
     //! Constructor
-    HomGenDirichlet(Memory* memory, Paradigm* paradigm, const int nscalar);
+    HomGenDirichlet(Memory* memory,
+                    Paradigm* paradigm,
+                    const int nscalar,
+                    const real time,
+                    const int nstep = numeric_limits<int>::max());
 
     //! Destructor
     virtual ~HomGenDirichlet();
@@ -35,6 +39,9 @@ class HomGenDirichlet : public Model {
 
     //! Initialize model
     virtual void init();
+
+    //! Solve model
+    virtual void solve();
 
   private:
     //! Don't permit copy constructor

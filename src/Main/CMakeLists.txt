@@ -24,13 +24,13 @@ add_executable(${QUINOA_EXECUTABLE}
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
-                      IO
                       LinearAlgebra
                       Mesh
                       Paradigm
-                      Statistics
                       HomDirichlet
+                      IO
                       HomGenDirichlet
+                      Statistics
                       Random
                       Dirichlet
                       GeneralizedDirichlet
