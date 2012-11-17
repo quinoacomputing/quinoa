@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 09:49:32 PM MST
+  \date      Sat 17 Nov 2012 06:50:50 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef HomDirichlet_h
 #define HomDirichlet_h
+
+#include <mkl_vsl.h>
 
 #include <Model.h>
 
@@ -63,13 +65,18 @@ class HomDirichlet : public Model {
                 long int& hrs2beg, long int& mins2beg, long int& secs2beg,
                 long int& hrs2end, long int& mins2end, long int& secs2end);
 
-    MKLRandom* m_random;          //!< Pointer to random number generator object
-    MKLRndStream* m_rndStr;       //!< Pointer to random number stream object
-    Dirichlet* m_dir;             //!< Pointer to Dirichlet mix model object
-    const int m_nscalar;          //!< Number of mixing scalars
-    const int m_npar;             //!< Number of particles
-    MemoryEntry* m_scalar;        //!< Memory entry storing the scalars
-    struct timeval m_startTime;   //!< Date/time loop started
+    //! Advance particles
+    void advance();
+
+    MKLRandom* m_random;            //!< Ptr to random number generator object
+    MKLRndStream* m_rndStr;         //!< Ptr to random number stream object
+    Dirichlet* m_dir;               //!< Ptr to Dirichlet mix model object
+    const int m_nscalar;            //!< Number of mixing scalars
+    const int m_npar;               //!< Number of particles
+    MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars
+    real* m_scalar;                 //!< Raw pointer to scalars
+    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+    struct timeval m_startTime;     //!< Date/time when time-adv loop started
 };
 
 } // namespace Quinoa
