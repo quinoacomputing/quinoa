@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 09:48:04 PM MST
+  \date      Sat 17 Nov 2012 08:12:21 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -12,7 +12,6 @@
 #define Model_h
 
 #include <string>
-#include <limits>
 
 using namespace std;
 
@@ -30,7 +29,8 @@ class Model {
           Paradigm* paradigm,
           const string& name,
           const real time,
-          const int nstep = numeric_limits<int>::max());
+          const int echo,
+          const int nstep);
 
     //! Destructor
     virtual ~Model();
@@ -49,6 +49,7 @@ class Model {
     Paradigm* m_paradigm;         //!< Parallel programming object pointer
     const string m_name;          //!< Name of model
     const real m_time;            //!< Maximum time to simulate
+    const int m_echo;             //!< One-line info in every few time step
     const int m_nstep;            //!< Maximum number of time steps to take
 
   private:

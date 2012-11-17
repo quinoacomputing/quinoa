@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 08:47:46 PM MST
+  \date      Sat 17 Nov 2012 08:10:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -53,6 +53,7 @@ Driver::setup()
                                          NSCALAR,
                                          NPAR,
                                          TIME,
+                                         ECHO,
                                          NSTEP);
     Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
   }

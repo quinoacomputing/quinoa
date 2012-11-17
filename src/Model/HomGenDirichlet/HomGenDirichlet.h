@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomGenDirichlet/HomGenDirichlet.h
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 09:49:03 PM MST
+  \date      Sat 17 Nov 2012 08:15:15 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef HomGenDirichlet_h
 #define HomGenDirichlet_h
+
+#include <limits>
 
 #include <Model.h>
 
@@ -29,6 +31,7 @@ class HomGenDirichlet : public Model {
                     Paradigm* paradigm,
                     const int nscalar,
                     const real time,
+                    const int echo = 1,
                     const int nstep = numeric_limits<int>::max());
 
     //! Destructor

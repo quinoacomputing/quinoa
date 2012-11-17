@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomGenDirichlet/HomGenDirichlet.C
   \author    J. Bakosi
-  \date      Fri 16 Nov 2012 09:49:15 PM MST
+  \date      Sat 17 Nov 2012 08:16:00 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -20,8 +20,10 @@ HomGenDirichlet::HomGenDirichlet(Memory* memory,
                                  Paradigm* paradigm,
                                  const int nscalar,
                                  const real time,
+                                 const int echo,
                                  const int nstep) :
-  Model(memory, paradigm, "Homogeneous generalized Dirichlet", time, nstep),
+  Model(memory, paradigm, "Homogeneous generalized Dirichlet", time, echo,
+        nstep),
   m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor
@@ -29,6 +31,7 @@ HomGenDirichlet::HomGenDirichlet(Memory* memory,
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  nscalar  Number of mixing scalars
 //! \param[in]  time     Maximum time to simulate
+//! \param[in]  echo     One-line info in every few time step
 //! \param[in]  nstep    Maximum number of time steps to take
 //! \author  J. Bakosi
 //******************************************************************************
