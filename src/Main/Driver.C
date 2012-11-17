@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu Nov 15 16:19:20 2012
+  \date      Fri 16 Nov 2012 08:47:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -48,11 +48,20 @@ Driver::setup()
   // Instantiate selected model
   // ICC: this could be a switch
   if (MODEL_TYPE == ModelType::HOMOGENEOUS_DIRICHLET) {
-    m_model = new (nothrow) HomDirichlet(m_memory, m_paradigm, NSCALAR, NPAR);
+    m_model = new (nothrow) HomDirichlet(m_memory,
+                                         m_paradigm,
+                                         NSCALAR,
+                                         NPAR,
+                                         TIME,
+                                         NSTEP);
     Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
   }
   else if (MODEL_TYPE == ModelType::HOMOGENEOUS_GENDIRICHLET) {
-    m_model = new (nothrow) HomGenDirichlet(m_memory, m_paradigm, NSCALAR);
+    m_model = new (nothrow) HomGenDirichlet(m_memory,
+                                            m_paradigm,
+                                            NSCALAR,
+                                            TIME,
+                                            NSTEP);
     Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else {
     Throw(ModelException,FATAL,NO_SUCH_MODEL);
@@ -72,6 +81,7 @@ Driver::solve()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  m_model->solve();
 }
 
 void
