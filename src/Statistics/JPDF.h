@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 08:00:56 PM MST
+  \date      Sun 18 Nov 2012 07:17:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <map>
 #include <algorithm>
 
 #include <QuinoaTypes.h>
@@ -26,7 +27,7 @@ namespace Quinoa {
 //! Joint PDF estimator
 class JPDF : private Distribution {
 
-  private:
+  public:
     //! Key type
     using key_type = vector<int>;
 
@@ -42,9 +43,10 @@ class JPDF : private Distribution {
     //! Joint PDF as unordered_map: key: bin ids,
     //                              mapped value: sample counter,
     //                              hasher: XORed hash of all bin ids
-    using Pdf = unordered_map<key_type,real,key_hash>;
+    using pdf = unordered_map<key_type, real, key_hash>;
+    //! Ordered counterpart
+    using ordered_pdf = map<key_type, real, key_hash>;
 
-  public:
     //! Constructor: Initialize joint PDF container
     JPDF(const int dim, const real binsize);
 
@@ -60,7 +62,7 @@ class JPDF : private Distribution {
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
-    const Pdf* getMap() const { return &m_pdf; }
+    const pdf* getMap() const { return &m_pdf; }
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
@@ -79,7 +81,7 @@ class JPDF : private Distribution {
     key_type m_key;         //!< Temporary key for finding the sample space bin
     const int m_dim;        //!< Sample space dimension
     const real m_binsize;   //!< Sample space bin size
-    Pdf m_pdf;              //!< Probability density function
+    pdf m_pdf;              //!< Probability density function
 };
 
 } // namespace Quinoa

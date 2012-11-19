@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:30:12 AM MST
+  \date      Sun 18 Nov 2012 08:32:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -27,7 +27,7 @@ const int NSCALAR = 2;
 const int NPAR = 100000;
 
 //! Maximum time to simulate
-const real TIME = 160.0;
+const real TIME = 1.0;
 
 //! Maximum number of time steps to take
 const int NSTEP = numeric_limits<int>::max();

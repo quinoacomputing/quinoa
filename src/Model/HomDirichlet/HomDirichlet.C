@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:37:32 AM MST
+  \date      Sun 18 Nov 2012 08:20:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -207,7 +207,7 @@ HomDirichlet::init()
 //******************************************************************************
 {
   // Initialize the Dirichlet mix model with N-peak delta
-  //initUniform();
+  initUniform();
 }
 
 void
@@ -249,7 +249,7 @@ HomDirichlet::outJPDF()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  JPDF jpdf(2, 0.1);
+  JPDF jpdf(2, 0.01);
 
   for (int p=0; p<m_npar; ++p) {
     real* y = m_scalar + p*m_N;
@@ -257,8 +257,10 @@ HomDirichlet::outJPDF()
     jpdf.insert(v);
   }
 
-  PDFWriter jpw("../../tmp/jpdf");
-  jpw.write(&jpdf);
+  PDFWriter jpwt(m_memory,"../../tmp/jpdf.txt");
+  jpwt.writeTxt(&jpdf);
+  PDFWriter jpwg(m_memory,"../../tmp/jpdf.msh");
+  jpwg.writeGmsh(&jpdf);
 }
 
 void
