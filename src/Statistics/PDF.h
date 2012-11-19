@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 09:43:58 AM MST
+  \date      Sun 18 Nov 2012 07:16:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -27,7 +27,7 @@ class PDF : private Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
     //!                                  mapped value: sample counter
-    using Pdf = unordered_map<int,real>;
+    using pdf = unordered_map<int,real>;
 
   public:
     //! Constructor: Initialize univariate PDF container
@@ -41,7 +41,7 @@ class PDF : private Distribution {
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
-    const Pdf* getMap() const { return &m_pdf; }
+    const pdf* getMap() const { return &m_pdf; }
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
@@ -62,7 +62,7 @@ class PDF : private Distribution {
     PDF& operator=(PDF&&) = delete;
 
     const real m_binsize;   //!< Sample space bin size
-    Pdf m_pdf;              //!< Probability density function
+    pdf m_pdf;              //!< Probability density function
 };
 
 } // namespace Quinoa

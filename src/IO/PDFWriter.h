@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Sat 27 Oct 2012 02:23:51 PM MDT
+  \date      Sun 18 Nov 2012 06:44:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -19,6 +19,8 @@
 
 using namespace std;
 
+class Memory;
+
 namespace Quinoa {
 
 //! PDFWriter base class
@@ -26,7 +28,7 @@ class PDFWriter {
 
   public:
     //! Constructor: Acquire PDF file handle
-    PDFWriter(const string filename);
+    PDFWriter(Memory* memory, const string filename);
 
     //! Destructor: Release PDF file handle
     ~PDFWriter();
@@ -34,14 +36,11 @@ class PDFWriter {
     //! Write PDF to file
     void write(const PDF* pdf);
 
-    //! Write joint PDF to file
-    void write(const JPDF* jpdf);
+    //! Write joint PDF to text file
+    void writeTxt(const JPDF* jpdf);
 
-    //! PDF file name
-    const string m_filename;
-
-    //! PDF file output stream
-    ofstream m_outPDF;
+    //! Write joint PDF to gmsh (text) file format
+    void writeGmsh(const JPDF* jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -52,6 +51,10 @@ class PDFWriter {
     PDFWriter(PDFWriter&&) = delete;
     //! Don't permit move assigment
     PDFWriter& operator=(PDFWriter&&) = delete;
+
+    Memory* m_memory;                   //!< Memory object pointer 
+    const string m_filename;            //!< PDF file name
+    ofstream m_outPDF;                  //!< PDF file output stream
 };
 
 } // namespace Quinoa
