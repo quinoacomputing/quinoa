@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:14:24 AM MST
+  \date      Fri 23 Nov 2012 05:03:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -62,6 +62,9 @@ class HomDirichlet : public Model {
 
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();
+
+    //! Initialize scalars with Gaussian PDF
+    void initGaussian();
 
     //! One-liner report
     void report(const int it, const real t, const real dt,

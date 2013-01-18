@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:49:21 PM MST
+  \date      Sat 22 Dec 2012 01:41:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -37,7 +37,7 @@ UnsMesh::~UnsMesh()
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
     m_memory->freeEntry(m_COORD);

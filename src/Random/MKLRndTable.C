@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:49:39 PM MST
+  \date      Sat 22 Dec 2012 01:40:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -72,7 +72,7 @@ MKLRndTable::~MKLRndTable()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
     // Delete all thread streams
