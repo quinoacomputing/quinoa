@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Sun 18 Nov 2012 08:32:18 PM MST
+  \date      Thu 17 Jan 2013 11:26:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -24,7 +24,7 @@ const ModelType MODEL_TYPE = ModelType::HOMOGENEOUS_DIRICHLET;
 const int NSCALAR = 2;
 
 //! Number of particles
-const int NPAR = 100000;
+const int NPAR = 400000;
 
 //! Maximum time to simulate
 const real TIME = 1.0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:12:45 2012
+  \date      Sat 22 Dec 2012 01:40:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
   Driver driver(&memory, &paradigm);
 
   ErrCode error = NO_ERROR;
-#ifndef NDEBUG  // No error checking done and no exceptions thrown in debug mode
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
 

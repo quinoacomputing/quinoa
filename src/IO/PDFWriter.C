@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sun 18 Nov 2012 08:37:09 PM MST
+  \date      Thu 17 Jan 2013 10:02:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -93,18 +93,18 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   const real sp = jpdf->getNsample()*binsize*binsize;
 
   // Find sample space extents
-  int xmin = numeric_limits<int>::max();
-  int xmax = numeric_limits<int>::min();
-  int ymin = numeric_limits<int>::max();
-  int ymax = numeric_limits<int>::min();
+  real xmin = numeric_limits<real>::max();
+  real xmax = numeric_limits<real>::min();
+  real ymin = numeric_limits<real>::max();
+  real ymax = numeric_limits<real>::min();
   for (auto& p : *f) {
-    if (p.first[0] < xmin) xmin = p.first[0];
-    if (p.first[0] > xmax) xmax = p.first[0];
-    if (p.first[1] < ymin) ymin = p.first[1];
-    if (p.first[1] > ymax) ymax = p.first[1];
+    if (binsize*p.first[0] < xmin) xmin = binsize*p.first[0];
+    if (binsize*p.first[0] > xmax) xmax = binsize*p.first[0];
+    if (binsize*p.first[1] < ymin) ymin = binsize*p.first[1];
+    if (binsize*p.first[1] > ymax) ymax = binsize*p.first[1];
   }
-  int nbix = xmax-xmin+1;
-  int nbiy = ymax-ymin+1;
+  int nbix = static_cast<int>((xmax - xmin)/binsize + 1);
+  int nbiy = static_cast<int>((ymax - ymin)/binsize + 1);
 
 //   // Interpolate function values of joint PDF to points
 //   JPDF::pdf ijpdf;
@@ -116,17 +116,19 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
 //     sjpdf[i+i/nbiy] += 
 //   }
 
-  // Output points
+  // Output points of discretized sample space
   m_outPDF << "$Nodes\n" << nbix*nbiy << endl;
   int k=0;
-  for (int i=0; i<nbix; i++ )
+  for (int i=0; i<nbix; i++ ) {
+    real x = xmin + i*binsize;
     for (int j=0; j<nbiy; j++ ) {
-      real x = xmin + i*binsize;
       real y = ymin + j*binsize;
       m_outPDF << k++ << " " << x << " " << y << " 0\n";
     }
+  }
   m_outPDF << "$EndNodes\n";
 
+  // Output elements of discretized sample space
   --nbix;  --nbiy;
   m_outPDF << "$Elements\n" << nbix*nbiy << "\n";
   for (int i=0; i<nbix*nbiy; ++i) {
@@ -136,10 +138,23 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   m_outPDF << "$EndElements\n";
 
   // Output function values
+  int size = (nbix+1)*(nbiy+1);
+  bool nz[size];
+  for (int i=0; i<size; ++i) nz[i] = false;
+
   m_outPDF << "$ElementData\n1\n\"Computed\"\n1\n0.0\n3\n0\n1\n" << f->size()
            << "\n";
+
   for (auto& p : *f) {
-    m_outPDF << p.first[0]*nbiy + p.first[1] << " " << p.second/sp << endl;
+    int bin = static_cast<int>(
+                (binsize*p.first[0] - xmin)/(xmax - xmin)*nbix*nbiy +
+                (binsize*p.first[1] - ymin)/(ymax - ymin)*nbiy );
+    m_outPDF << bin << " " << p.second/sp << endl;
+    nz[bin] = true;  // flag those bins that have nonzero probability
   }
+
+  // output zero-probability bins
+  for (int i=0; i<size; ++i) if (!nz[i]) m_outPDF << i << " 0.0\n";
+
   m_outPDF << "$ElementData\n";
 }

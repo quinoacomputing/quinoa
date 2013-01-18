@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 06:57:54 PM MST
+  \date      Sat 22 Dec 2012 01:54:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -47,7 +47,7 @@ JPDF::insert(const vector<real>& value)
 {
   // Make sure sample has the same dimension as the joint PDF
   Assert(value.size() == m_key.size(),
-    StatException,FATAL,STATEXCEPT_BAD_SAMPLE);
+         StatException,FATAL,STATEXCEPT_BAD_SAMPLE);
 
   // Find bin ids in all dimensions
   transform(value.begin(), value.end(), m_key.begin(),
