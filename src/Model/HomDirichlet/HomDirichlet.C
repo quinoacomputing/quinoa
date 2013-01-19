@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Thu 17 Jan 2013 11:23:11 PM MST
+  \date      Fri 18 Jan 2013 06:49:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -99,33 +99,33 @@ HomDirichlet::solve()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   int it=0;
-//   real t=0.0;
-//   long int hrs2end=0, mins2end=0, secs2end=0, hrs2beg=0, mins2beg=0, secs2beg=0;  
-// 
-//   // Get start time
-//   gettimeofday(&m_startTime, static_cast<struct timezone*>(0));
-// 
-//   // Set initial time step size
-//   real dt = 0.05;
-// 
-//   // Time stepping loop
-//   while (fabs(t-m_time) > numeric_limits<real>::epsilon() && it < m_nstep) {
-// 
-//     // Advance particles
-//     advance(dt);
-// 
-//     // Echo one-liner info
-//     if (!(it % m_echo)) {
-//       report(it, t, dt,
-//              hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
-//     }
-// 
-//     // Increase timestep and iteration counter
-//     t += dt;
-//     ++it;
-//     if (t > m_time) t = m_time;
-//   }
+  int it=0;
+  real t=0.0;
+  long int hrs2end=0, mins2end=0, secs2end=0, hrs2beg=0, mins2beg=0, secs2beg=0;
+
+  // Get start time
+  gettimeofday(&m_startTime, static_cast<struct timezone*>(0));
+
+  // Set initial time step size
+  real dt = 0.05;
+
+  // Time stepping loop
+  while (fabs(t-m_time) > numeric_limits<real>::epsilon() && it < m_nstep) {
+
+    // Advance particles
+    advance(dt);
+
+    // Echo one-liner info
+    if (!(it % m_echo)) {
+      report(it, t, dt,
+             hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
+    }
+
+    // Increase timestep and iteration counter
+    t += dt;
+    ++it;
+    if (t > m_time) t = m_time;
+  }
 
   outJPDF();
 }
@@ -206,7 +206,7 @@ HomDirichlet::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  initGaussian();
+  initUniform();
 }
 
 void
@@ -268,7 +268,7 @@ HomDirichlet::outJPDF()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  JPDF jpdf(2, 0.12);
+  JPDF jpdf(2, 0.01);
 
   for (int p=0; p<m_npar; ++p) {
     real* y = m_scalar + p*m_N;
