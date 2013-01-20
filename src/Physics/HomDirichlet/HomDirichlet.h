@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HomDirichlet/HomDirichlet.h
+  \file      src/Physics/HomDirichlet/HomDirichlet.h
   \author    J. Bakosi
-  \date      Fri 23 Nov 2012 05:03:42 PM MST
+  \date      Sat 19 Jan 2013 05:56:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -15,7 +15,7 @@
 
 #include <mkl_vsl.h>
 
-#include <Model.h>
+#include <Physics.h>
 
 namespace Quinoa {
 
@@ -26,7 +26,7 @@ class MKLRndStream;
 class Dirichlet;
 
 //! HomDirichlet : Model
-class HomDirichlet : public Model {
+class HomDirichlet : public Physics {
 
   public:
     //! Constructor

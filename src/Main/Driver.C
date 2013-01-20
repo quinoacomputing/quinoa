@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:10:22 AM MST
+  \date      Sun 20 Jan 2013 07:50:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -11,7 +11,7 @@
 
 #include <Driver.h>
 #include <Setup.h>
-#include <ModelException.h>
+#include <PhysicsException.h>
 #include <HomDirichlet.h>
 #include <HomGenDirichlet.h>
 
@@ -26,7 +26,7 @@ Driver::Driver(Memory* memory, Paradigm* paradigm) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_model = nullptr;
+  m_physics = nullptr;
 }
 
 Driver::~Driver()
@@ -41,38 +41,38 @@ Driver::~Driver()
 void
 Driver::setup()
 //******************************************************************************
-//  Setup: instantiate model, set initial conditions
+//  Setup: instantiate physics, set initial conditions
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate selected model
+  // Instantiate selected physics
   // ICC: this could be a switch
-  if (MODEL_TYPE == ModelType::HOMOGENEOUS_DIRICHLET) {
-    m_model = new (nothrow) HomDirichlet(m_memory,
-                                         m_paradigm,
-                                         NSCALAR,
-                                         NPAR,
-                                         TIME,
-                                         ECHO,
-                                         NSTEP);
-    Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_DIRICHLET) {
+    m_physics = new (nothrow) HomDirichlet(m_memory,
+                                           m_paradigm,
+                                           NSCALAR,
+                                           NPAR,
+                                           TIME,
+                                           ECHO,
+                                           NSTEP);
+    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
   }
-  else if (MODEL_TYPE == ModelType::HOMOGENEOUS_GENDIRICHLET) {
-    m_model = new (nothrow) HomGenDirichlet(m_memory,
-                                            m_paradigm,
-                                            NSCALAR,
-                                            TIME,
-                                            NSTEP);
-    Assert(m_model != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENDIRICHLET) {
+    m_physics = new (nothrow) HomGenDirichlet(m_memory,
+                                              m_paradigm,
+                                              NSCALAR,
+                                              TIME,
+                                              NSTEP);
+    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else {
-    Throw(ModelException,FATAL,NO_SUCH_MODEL);
+    Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
   }
 
-  // Echo information on model selected
-  m_model->echo();
+  // Echo information on physics selected
+  m_physics->echo();
 
   // Set initial conditions
-  m_model->init();
+  m_physics->init();
 }
 
 void
@@ -82,7 +82,7 @@ Driver::solve()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_model->solve();
+  m_physics->solve();
 }
 
 void
@@ -94,6 +94,6 @@ Driver::finalize()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_model) { delete m_model; m_model = nullptr; }
+  if (m_physics) { delete m_physics; m_physics = nullptr; }
   m_memory->freeAllEntries();
 }

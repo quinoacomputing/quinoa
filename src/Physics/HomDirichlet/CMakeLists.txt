@@ -6,12 +6,12 @@ project(HomDirichlet CXX)
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
-include_directories(${QUINOA_SOURCE_DIR}/Model/HomDirichlet
-                    ${QUINOA_SOURCE_DIR}/Model/MixModel/Dirichlet
-                    ${QUINOA_SOURCE_DIR}/Model/MixModel
-                    ${QUINOA_SOURCE_DIR}/Model
-                    ${QUINOA_SOURCE_DIR}/Random
+include_directories(${QUINOA_SOURCE_DIR}/Physics/HomDirichlet
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Random
+                    ${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel/Dirichlet
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/IO
 )

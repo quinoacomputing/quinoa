@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Fri 18 Jan 2013 06:47:11 PM MST
+  \date      Sun 20 Jan 2013 07:45:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -17,8 +17,8 @@
 
 namespace Quinoa {
 
-//! Model
-const ModelType MODEL_TYPE = ModelType::HOMOGENEOUS_DIRICHLET;
+//! Physics
+const PhysicsType PHYSICS_TYPE = PhysicsType::HOMOGENEOUS_DIRICHLET;
 
 //! Number of prognostic scalars
 const int NSCALAR = 2;

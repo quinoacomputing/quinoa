@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HomDirichlet/HomDirichlet.C
+  \file      src/Physics/HomDirichlet/HomDirichlet.C
   \author    J. Bakosi
-  \date      Fri 18 Jan 2013 06:49:03 PM MST
+  \date      Sat 19 Jan 2013 05:58:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -39,7 +39,7 @@ HomDirichlet::HomDirichlet(Memory* memory,
                            const real time,
                            const int echo,
                            const int nstep) :
-  Model(memory, paradigm, "Homogeneous Dirichlet", time, echo, nstep),
+  Physics(memory, paradigm, "Homogeneous Dirichlet", time, echo, nstep),
   m_N(nscalar), m_npar(npar)
 //******************************************************************************
 //  Constructor
