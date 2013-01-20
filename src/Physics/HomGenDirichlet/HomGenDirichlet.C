@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HomGenDirichlet/HomGenDirichlet.C
+  \file      src/Physics/HomGenDirichlet/HomGenDirichlet.C
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:16:00 AM MST
+  \date      Sat 19 Jan 2013 05:59:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -22,8 +22,8 @@ HomGenDirichlet::HomGenDirichlet(Memory* memory,
                                  const real time,
                                  const int echo,
                                  const int nstep) :
-  Model(memory, paradigm, "Homogeneous generalized Dirichlet", time, echo,
-        nstep),
+  Physics(memory, paradigm, "Homogeneous generalized Dirichlet", time, echo,
+          nstep),
   m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:00:59 PM MST
+  \date      Sun 20 Jan 2013 07:47:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -15,7 +15,7 @@
 
 namespace Quinoa {
 
-class Model;
+class Physics;
 
 //! Driver base class
 class Driver {
@@ -48,7 +48,7 @@ class Driver {
 
     Memory* m_memory;                 //!< Pointer to Memory object
     Paradigm* m_paradigm;             //!< Pointer to Memory object
-    Model* m_model;                   //!< Pointer to Model object
+    Physics* m_physics;               //!< Pointer to Physics object
 };
 
 } // namespace Quinoa

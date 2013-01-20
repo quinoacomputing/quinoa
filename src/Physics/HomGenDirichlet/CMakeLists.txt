@@ -6,10 +6,10 @@ project(HomGenDirichlet CXX)
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
-include_directories(${QUINOA_SOURCE_DIR}/Model/HomGenDirichlet
-                    ${QUINOA_SOURCE_DIR}/Model
-                    ${QUINOA_SOURCE_DIR}/Random
+include_directories(${QUINOA_SOURCE_DIR}/Physics/HomGenDirichlet
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Random
+                    ${QUINOA_SOURCE_DIR}/Physics
 )
 
 add_library(HomGenDirichlet

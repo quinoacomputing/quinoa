@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HomGenDirichlet/HomGenDirichlet.h
+  \file      src/Physics/HomGenDirichlet/HomGenDirichlet.h
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:15:15 AM MST
+  \date      Sat 19 Jan 2013 05:56:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -13,7 +13,7 @@
 
 #include <limits>
 
-#include <Model.h>
+#include <Physics.h>
 
 namespace Quinoa {
 
@@ -23,7 +23,7 @@ class Paradigm;
 class MKLRandom;
 
 //! HomGenDirichlet : Model
-class HomGenDirichlet : public Model {
+class HomGenDirichlet : public Physics {
 
   public:
     //! Constructor
