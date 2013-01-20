@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 07:50:22 AM MST
+  \date      Sun 20 Jan 2013 12:12:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -67,6 +67,7 @@ Driver::setup()
   } else {
     Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
   }
+    Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
 
   // Echo information on physics selected
   m_physics->echo();

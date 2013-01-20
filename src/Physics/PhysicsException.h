@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 07:44:14 AM MST
+  \date      Sun 20 Jan 2013 12:13:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -26,7 +26,7 @@ enum PhysicsExceptType { NO_SUCH_PHYSICS=0,            //!< No such physics
 
 //! Physics exception error messages
 const string PhysicsMsg[NUM_PHYSICS_EXCEPT] = {
-  "Physics exception 1"
+  "Selected physics not implemented"
 };
 
 //! PhysicsException : Exception
