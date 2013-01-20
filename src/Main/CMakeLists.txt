@@ -14,8 +14,9 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Physics
-                    ${QUINOA_SOURCE_DIR}/Physics/HomDirichlet
-                    ${QUINOA_SOURCE_DIR}/Physics/HomGenDirichlet
+                    ${QUINOA_SOURCE_DIR}/Physics/HomogeneousDirichlet
+                    ${QUINOA_SOURCE_DIR}/Physics/HomogeneousGeneralizedDirichlet
+                    ${QUINOA_SOURCE_DIR}/Physics/SimplifiedLangevin
 )
 
 add_executable(${QUINOA_EXECUTABLE}
@@ -28,9 +29,10 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Mesh
                       Paradigm
-                      HomDirichlet
+                      HomogeneousDirichlet
                       IO
-                      HomGenDirichlet
+                      HomogeneousGeneralizedDirichlet
+                      SimplifiedLangevin
                       Statistics
                       Random
                       Dirichlet

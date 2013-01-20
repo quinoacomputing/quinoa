@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomGenDirichlet/HomGenDirichlet.C
+  \file      HomogeneousGeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sat 19 Jan 2013 05:59:09 PM MST
+  \date      Sun 20 Jan 2013 01:54:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous generalized Dirichlet model
   \details   Homogeneous generalized Dirichlet model
@@ -12,16 +12,17 @@
 #include <Memory.h>
 #include <MemoryException.h>
 #include <MKLRandom.h>
-#include <HomGenDirichlet.h>
+#include <HomogeneousGeneralizedDirichlet.h>
 
 using namespace Quinoa;
 
-HomGenDirichlet::HomGenDirichlet(Memory* memory,
-                                 Paradigm* paradigm,
-                                 const int nscalar,
-                                 const real time,
-                                 const int echo,
-                                 const int nstep) :
+HomogeneousGeneralizedDirichlet::HomogeneousGeneralizedDirichlet(
+                                   Memory* memory,
+                                   Paradigm* paradigm,
+                                   const int nscalar,
+                                   const real time,
+                                   const int echo,
+                                   const int nstep) :
   Physics(memory, paradigm, "Homogeneous generalized Dirichlet", time, echo,
           nstep),
   m_nscalar(nscalar)
@@ -41,7 +42,7 @@ HomGenDirichlet::HomGenDirichlet(Memory* memory,
   Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-HomGenDirichlet::~HomGenDirichlet()
+HomogeneousGeneralizedDirichlet::~HomogeneousGeneralizedDirichlet()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -51,7 +52,7 @@ HomGenDirichlet::~HomGenDirichlet()
 }
 
 void
-HomGenDirichlet::echo()
+HomogeneousGeneralizedDirichlet::echo()
 //******************************************************************************
 //  Echo informaion on homogeneous Dirichlet
 //! \author  J. Bakosi
@@ -60,7 +61,7 @@ HomGenDirichlet::echo()
 }
 
 void
-HomGenDirichlet::solve()
+HomogeneousGeneralizedDirichlet::solve()
 //******************************************************************************
 //  Solve
 //! \author  J. Bakosi
@@ -69,7 +70,7 @@ HomGenDirichlet::solve()
 }
 
 void
-HomGenDirichlet::init()
+HomogeneousGeneralizedDirichlet::init()
 //******************************************************************************
 //  Initialize homogeneous Dirichlet
 //! \author  J. Bakosi
