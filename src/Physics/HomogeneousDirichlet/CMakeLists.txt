@@ -1,22 +1,26 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(HomGenDirichlet CXX)
+project(HomogeneousDirichlet CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
-include_directories(${QUINOA_SOURCE_DIR}/Physics/HomGenDirichlet
+include_directories(${QUINOA_SOURCE_DIR}/Physics/HomogeneousDirichlet
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel
+                    ${QUINOA_SOURCE_DIR}/Model/MixModel/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
-add_library(HomGenDirichlet
-            HomGenDirichlet.C
+add_library(HomogeneousDirichlet
+            HomogeneousDirichlet.C
 )
 
-INSTALL(TARGETS HomGenDirichlet
+INSTALL(TARGETS HomogeneousDirichlet
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

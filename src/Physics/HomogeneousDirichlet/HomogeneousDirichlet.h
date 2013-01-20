@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomDirichlet/HomDirichlet.h
+  \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.h
   \author    J. Bakosi
-  \date      Sat 19 Jan 2013 05:56:42 PM MST
+  \date      Sun 20 Jan 2013 01:22:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
 */
 //******************************************************************************
-#ifndef HomDirichlet_h
-#define HomDirichlet_h
+#ifndef HomogeneousDirichlet_h
+#define HomogeneousDirichlet_h
 
 #include <limits>
 
@@ -25,21 +25,21 @@ class MKLRandom;
 class MKLRndStream;
 class Dirichlet;
 
-//! HomDirichlet : Model
-class HomDirichlet : public Physics {
+//! HomogeneousDirichlet : Physics
+class HomogeneousDirichlet : public Physics {
 
   public:
     //! Constructor
-    HomDirichlet(Memory* memory,
-                 Paradigm* paradigm,
-                 const int& nscalar,
-                 const int& npar,
-                 const real time,
-                 const int echo = 1,
-                 const int nstep = numeric_limits<int>::max());
+    HomogeneousDirichlet(Memory* memory,
+                         Paradigm* paradigm,
+                         const int& nscalar,
+                         const int& npar,
+                         const real time,
+                         const int echo = 1,
+                         const int nstep = numeric_limits<int>::max());
 
     //! Destructor
-    virtual ~HomDirichlet();
+    virtual ~HomogeneousDirichlet();
 
     //! Echo informaion on model
     virtual void echo();
@@ -52,24 +52,19 @@ class HomDirichlet : public Physics {
 
   private:
     //! Don't permit copy constructor
-    HomDirichlet(const HomDirichlet&) = delete;
+    HomogeneousDirichlet(const HomogeneousDirichlet&) = delete;
     //! Don't permit copy assigment
-    HomDirichlet& operator=(const HomDirichlet&) = delete;
+    HomogeneousDirichlet& operator=(const HomogeneousDirichlet&) = delete;
     //! Don't permit move constructor
-    HomDirichlet(HomDirichlet&&) = delete;
+    HomogeneousDirichlet(HomogeneousDirichlet&&) = delete;
     //! Don't permit move assigment
-    HomDirichlet& operator=(HomDirichlet&&) = delete;
+    HomogeneousDirichlet& operator=(HomogeneousDirichlet&&) = delete;
 
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();
 
     //! Initialize scalars with Gaussian PDF
     void initGaussian();
-
-    //! One-liner report
-    void report(const int it, const real t, const real dt,
-                long int& hrs2beg, long int& mins2beg, long int& secs2beg,
-                long int& hrs2end, long int& mins2end, long int& secs2end);
 
     //! Advance particles
     void advance(const real dt);
@@ -85,9 +80,8 @@ class HomDirichlet : public Physics {
     MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars
     real* m_scalar;                 //!< Raw pointer to scalars
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    struct timeval m_startTime;     //!< Date/time when time-adv loop started
 };
 
 } // namespace Quinoa
 
-#endif // HomDirichlet_h
+#endif // HomogeneousDirichlet_h

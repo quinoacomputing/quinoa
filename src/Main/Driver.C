@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 12:12:47 PM MST
+  \date      Sun 20 Jan 2013 01:31:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -12,8 +12,9 @@
 #include <Driver.h>
 #include <Setup.h>
 #include <PhysicsException.h>
-#include <HomDirichlet.h>
-#include <HomGenDirichlet.h>
+#include <HomogeneousDirichlet.h>
+#include <HomogeneousGeneralizedDirichlet.h>
+#include <SimplifiedLangevin.h>
 
 using namespace Quinoa;
 
@@ -46,28 +47,32 @@ Driver::setup()
 //******************************************************************************
 {
   // Instantiate selected physics
-  // ICC: this could be a switch
+  // ICC: this could be a switch once ICC supports scoped enums in switch
   if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_DIRICHLET) {
-    m_physics = new (nothrow) HomDirichlet(m_memory,
-                                           m_paradigm,
-                                           NSCALAR,
-                                           NPAR,
-                                           TIME,
-                                           ECHO,
-                                           NSTEP);
+    m_physics = new (nothrow) HomogeneousDirichlet(m_memory,
+                                                   m_paradigm,
+                                                   NSCALAR,
+                                                   NPAR,
+                                                   TIME,
+                                                   ECHO,
+                                                   NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  }
-  else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENDIRICHLET) {
-    m_physics = new (nothrow) HomGenDirichlet(m_memory,
-                                              m_paradigm,
-                                              NSCALAR,
-                                              TIME,
-                                              NSTEP);
+  } else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENDIRICHLET) {
+    m_physics = new (nothrow) HomogeneousGeneralizedDirichlet(m_memory,
+                                                              m_paradigm,
+                                                              NSCALAR,
+                                                              TIME,
+                                                              NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  } else if (PHYSICS_TYPE == PhysicsType::SIMPLIFIED_LANGEVIN) {
+    m_physics = new (nothrow) SimplifiedLangevin(m_memory,
+                                                 m_paradigm,
+                                                 TIME,
+                                                 NSTEP);
+    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC); 
   } else {
     Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
   }
-    Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
 
   // Echo information on physics selected
   m_physics->echo();
@@ -83,7 +88,7 @@ Driver::solve()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_physics->solve();
+//  m_physics->solve();
 }
 
 void
