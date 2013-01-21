@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 05:47:26 PM MST
+  \date      Mon 21 Jan 2013 08:51:50 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -23,6 +23,7 @@ class Memory;
 class Paradigm;
 class MKLRandom;
 class MKLRndStream;
+class UnsMesh;
 
 //! SPINSFlow : Physics
 class SPINSFlow : public Physics {
@@ -32,6 +33,7 @@ class SPINSFlow : public Physics {
     SPINSFlow(Memory* memory,
               Paradigm* paradigm,
               const int& npar,
+              const string& filename,
               const real time,
               const int echo = 1,
               const int nstep = numeric_limits<int>::max());
@@ -61,10 +63,12 @@ class SPINSFlow : public Physics {
     //! Advance particles
     void advance(const real dt);
 
-    MKLRandom* m_random;            //!< Ptr to random number generator object
-    MKLRndStream* m_rndStr;         //!< Ptr to random number stream object
+    MKLRandom* m_random;            //!< Random number generator object
+    MKLRndStream* m_rndStr;         //!< Random number stream object
     const int m_npar;               //!< Number of particles
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+    UnsMesh* m_mesh;                //!< Unstructured mesh object
+    const string m_filename;        //!< Unstructured mesh object
 };
 
 } // namespace Quinoa

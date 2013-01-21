@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 05:53:44 PM MST
+  \date      Mon 21 Jan 2013 08:56:13 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -20,6 +20,9 @@ namespace Quinoa {
 //! Physics
 const PhysicsType PHYSICS_TYPE = PhysicsType::SPINSFLOW;
 
+//! Mesh filename
+const string MESH_FILENAME = "cylinder.msh";
+
 //! Number of prognostic scalars
 const int NSCALAR = 2;
 
@@ -33,7 +36,7 @@ const real TIME = 1.0;
 const int NSTEP = numeric_limits<int>::max();
 
 //! One-liner info in every few time steps
-const int ECHO = 10;
+const int ECHO = 1;
 
 } // namespace Quinoa
 

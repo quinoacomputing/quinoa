@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 05:48:42 PM MST
+  \date      Mon 21 Jan 2013 09:13:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -20,6 +20,8 @@
 #include <MemoryException.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
+#include <UnsMesh.h>
+#include <GmshTxtMeshReader.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
@@ -27,6 +29,7 @@ using namespace Quinoa;
 SPINSFlow::SPINSFlow(Memory* memory,
                      Paradigm* paradigm,
                      const int& npar,
+                     const string& filename,
                      const real time,
                      const int echo,
                      const int nstep) :
@@ -36,12 +39,13 @@ SPINSFlow::SPINSFlow(Memory* memory,
           time,
           echo,
           nstep),
-  m_npar(npar)
+  m_npar(npar), m_filename(filename)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  npar     Number of particles
+//! \param[in]  filename Mesh filename
 //! \param[in]  time     Maximum time to simulate
 //! \param[in]  echo     One-line info in every few time step
 //! \param[in]  nstep    Maximum number of time steps to take
@@ -51,11 +55,14 @@ SPINSFlow::SPINSFlow(Memory* memory,
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
   Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
-
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
+
+  // Instantiate Eulerian mesh
+  m_mesh = new (nothrow) UnsMesh(m_memory);
+  Assert(m_mesh != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
 SPINSFlow::~SPINSFlow()
@@ -74,6 +81,7 @@ SPINSFlow::~SPINSFlow()
     { cout << "WARNING: Exception in SPINSFlow destructor" << endl; }
 #endif // NDEBUG
 
+  if (m_mesh) { delete m_mesh; m_mesh = nullptr; }
   if (m_random) { delete m_random; m_random = nullptr; }
 }
 
@@ -94,6 +102,7 @@ SPINSFlow::echo()
 //******************************************************************************
 {
   cout << "Physics: " << m_name << endl;
+  cout << " * Mesh: " << m_filename << endl;
 
   cout << endl;
 }
@@ -105,4 +114,6 @@ SPINSFlow::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  GmshTxtMeshReader inMesh(m_filename, m_mesh, m_memory);
+  inMesh.read();
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:05:32 PM MST
+  \date      Mon 21 Jan 2013 08:40:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -161,8 +161,12 @@ Memory::freeEntry(MemoryEntry* id)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is already deallocated
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
+  // Return silently if entry is not yet allocated or already deallocated
+  if (id == nullptr) return;
+  // The above is such a mild error, we don't even throw a warning, but for
+  // debugging the assert below can be uncommented to check if there are
+  // unnecessary calls for freeing memory entries
+  //Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Return and throw warning if memory store is empty
   Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
