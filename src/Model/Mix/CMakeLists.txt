@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(HydroModel CXX)
+project(Mix CXX)
 
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
-include_directories(${QUINOA_SOURCE_DIR}/Model/HydroModel
+include_directories(${QUINOA_SOURCE_DIR}/Model/Mix
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Base
 )
 
-add_library(HydroModel
-            HydroModel.C
-            HydroModelException.C
+add_library(Mix
+            Mix.C
+            MixException.C
 )
 
-INSTALL(TARGETS HydroModel
+INSTALL(TARGETS Mix
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

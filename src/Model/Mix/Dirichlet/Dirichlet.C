@@ -1,35 +1,37 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HydroModel/GeneralizedLangevin/GeneralizedLangevin.C
+  \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:46:14 AM MST
+  \date      Mon 21 Jan 2013 11:28:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Generalized Langevin hydrodynamics model
-  \details   Generalized Langevin hydrodynamics model
+  \brief     Dirichlet mix model
+  \details   Dirichlet mix model
 */
 //******************************************************************************
 
 #include <iostream>
 
-#include <GeneralizedLangevin.h>
-#include <HydroModel.h>
+#include <Dirichlet.h>
+#include <Mix.h>
 
 using namespace std;
 using namespace Quinoa;
 
-GeneralizedLangevin::GeneralizedLangevin() : HydroModel("Generalized Langevin")
+Dirichlet::Dirichlet(const int& nscalar) : Mix(nscalar, "Dirichlet")
 //******************************************************************************
 //  Constructor
+//! \param[in]  nscalar  Number of mixing scalars
 //! \author  J. Bakosi
 //******************************************************************************
 {
 }
 
 void
-GeneralizedLangevin::echo()
+Dirichlet::echo()
 //******************************************************************************
-//  Echo information on the generalized Langevin model
+//  Echo information on Dirichlet model
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << " * Number of mixing scalars: " << m_nscalar << endl;
 }

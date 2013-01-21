@@ -1,51 +1,52 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HydroModel/HydroModel.h
+  \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:31:16 AM MST
+  \date      Mon 21 Jan 2013 11:58:36 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     HydroModel base
-  \details   HydroModel base
+  \brief     Hydro base
+  \details   Hydro base
 */
 //******************************************************************************
-#ifndef HydroModel_h
-#define HydroModel_h
+#ifndef Hydro_h
+#define Hydro_h
 
 #include <string>
 
 #include <QuinoaTypes.h>
+#include <Model.h>
 
 namespace Quinoa {
 
 using namespace std;
 
-//! HydroModel base
-class HydroModel {
+//! Hydro model base
+class Hydro : public Model {
 
   public:
     //! Constructor
-    HydroModel(const string& name);
+    Hydro(const string& name);
 
     //! Destructor
-    virtual ~HydroModel() {}
+    virtual ~Hydro() {}
 
     //! Interface for echo information on mix model
     virtual void echo() = 0;
 
   protected:
-    const string m_name;           //!< Name of mix model
+    const string m_name;           //!< Name of hydro model
 
   private:
     //! Don't permit copy constructor
-    HydroModel(const HydroModel&) = delete;
+    Hydro(const Hydro&) = delete;
     //! Don't permit copy assigment
-    HydroModel& operator=(const HydroModel&) = delete;
+    Hydro& operator=(const Hydro&) = delete;
     //! Don't permit move constructor
-    HydroModel(HydroModel&&) = delete;
+    Hydro(Hydro&&) = delete;
     //! Don't permit move assigment
-    HydroModel& operator=(HydroModel&&) = delete;
+    Hydro& operator=(Hydro&&) = delete;
 };
 
 } // namespace Quinoa
 
-#endif // HydroModel_h
+#endif // Hydro_h

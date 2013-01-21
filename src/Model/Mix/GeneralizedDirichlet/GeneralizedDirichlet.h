@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/GeneralizedDirichlet/GeneralizedDirichlet.h
+  \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri Nov 16 07:33:26 2012
+  \date      Mon 21 Jan 2013 11:28:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -11,12 +11,12 @@
 #ifndef GeneralizedDirichlet_h
 #define GeneralizedDirichlet_h
 
-#include <MixModel.h>
+#include <Mix.h>
 
 namespace Quinoa {
 
-//! GeneralizedDirichlet : MixModel
-class GeneralizedDirichlet : public MixModel {
+//! GeneralizedDirichlet : Mix
+class GeneralizedDirichlet : public Mix {
 
   public:
     //! Constructor

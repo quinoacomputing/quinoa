@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:35:34 AM MST
+  \date      Mon 21 Jan 2013 11:27:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -20,7 +20,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Model exception types
-enum ModelExceptType { MIXMODEL_EXCEPT=0,          //!< MixModel exception
+enum ModelExceptType { MIX_EXCEPT=0,               //!< Mix model exception
                        HYDROMODEL_EXCEPT,          //!< HydroModel exception
                        NO_SUCH_MODEL,              //!< No such model
                        ALREADY_ALLOCATED,          //!< Entry alread allocated

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:51:50 AM MST
+  \date      Mon 21 Jan 2013 11:44:38 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -15,6 +15,7 @@
 
 #include <mkl_vsl.h>
 
+#include <Control.h>
 #include <Physics.h>
 
 namespace Quinoa {
@@ -24,6 +25,7 @@ class Paradigm;
 class MKLRandom;
 class MKLRndStream;
 class UnsMesh;
+class Hydro;
 
 //! SPINSFlow : Physics
 class SPINSFlow : public Physics {
@@ -32,6 +34,7 @@ class SPINSFlow : public Physics {
     //! Constructor
     SPINSFlow(Memory* memory,
               Paradigm* paradigm,
+              HydroType hydro,
               const int& npar,
               const string& filename,
               const real time,
@@ -65,9 +68,10 @@ class SPINSFlow : public Physics {
 
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
+    Hydro* m_hydro;                 //!< Hydro model object
+    UnsMesh* m_mesh;                //!< Unstructured mesh object
     const int m_npar;               //!< Number of particles
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    UnsMesh* m_mesh;                //!< Unstructured mesh object
     const string m_filename;        //!< Unstructured mesh object
 };
 

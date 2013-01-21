@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:22:44 PM MST
+  \date      Mon 21 Jan 2013 10:53:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -72,9 +72,9 @@ class HomogeneousDirichlet : public Physics {
     //! Output joint scalar PDF
     void outJPDF();
 
-    MKLRandom* m_random;            //!< Ptr to random number generator object
-    MKLRndStream* m_rndStr;         //!< Ptr to random number stream object
-    Dirichlet* m_dir;               //!< Ptr to Dirichlet mix model object
+    MKLRandom* m_random;            //!< Random number generator object
+    MKLRndStream* m_rndStr;         //!< Random number stream object
+    Dirichlet* m_dir;               //!< Dirichlet mix model object
     const int m_N;                  //!< Number of mixing scalars
     const int m_npar;               //!< Number of particles
     MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars

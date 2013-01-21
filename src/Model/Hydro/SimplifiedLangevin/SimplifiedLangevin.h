@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HydroModel/SimplifiedLangevin/SimplifiedLangevin.h
+  \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:48:21 AM MST
+  \date      Mon 21 Jan 2013 11:32:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -12,12 +12,12 @@
 #define SimplifiedLangevin_h
 
 #include <QuinoaTypes.h>
-#include <HydroModel.h>
+#include <Hydro.h>
 
 namespace Quinoa {
 
-//! SimplifiedLangevin : HydroModel
-class SimplifiedLangevin : public HydroModel {
+//! SimplifiedLangevin : Hydro
+class SimplifiedLangevin : public Hydro {
 
   public:
     //! Constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:57:37 AM MST
+  \date      Mon 21 Jan 2013 11:05:14 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -67,6 +67,7 @@ Driver::setup()
   } else if (PHYSICS_TYPE == PhysicsType::SPINSFLOW) {
     m_physics = new (nothrow) SPINSFlow(m_memory,
                                         m_paradigm,
+                                        HYDRO_TYPE,
                                         NPAR,
                                         MESH_FILENAME,
                                         TIME,
