@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:20:16 AM MST
+  \date      Mon 21 Jan 2013 12:14:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -20,6 +20,17 @@ using namespace std;
 using namespace Quinoa;
 
 namespace Quinoa {
+
+static void echoName()
+//******************************************************************************
+//  Echo Name
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << "===============================================\n";
+  cout << "Quinoa: Lagrangian-particle-based hydrodynamics\n";
+  cout << "===============================================" << endl;
+}
 
 static void echoBuildInfo()
 //******************************************************************************
@@ -56,6 +67,9 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Echo name
+  echoName();
+
   // Echo build environment
   echoBuildInfo();
 
