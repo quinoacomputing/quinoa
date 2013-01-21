@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 05:53:16 PM MST
+  \date      Mon 21 Jan 2013 08:54:55 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base, select model
@@ -17,7 +17,7 @@ namespace Quinoa {
 enum class PhysicsType {
   HOMOGENEOUS_DIRICHLET,     //!< Homogeneous Dirichlet
   HOMOGENEOUS_GENDIRICHLET,  //!< Homogeneous Generalized Dirichlet
-  SPINSFLOW                  //!< Standalone-Particle Incompressible Navier-Stokes Flow
+  SPINSFLOW           //!< Standalone-Particle Incompressible Navier-Stokes Flow
 };
 
 } // namespace Quinoa

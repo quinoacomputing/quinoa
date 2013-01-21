@@ -10,6 +10,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Random
+                    ${QUINOA_SOURCE_DIR}/Mesh
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
 add_library(SPINSFlow

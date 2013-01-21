@@ -27,12 +27,12 @@ add_executable(${QUINOA_EXECUTABLE}
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
                       LinearAlgebra
-                      Mesh
                       Paradigm
                       HomogeneousDirichlet
-                      IO
                       HomogeneousGeneralizedDirichlet
                       SPINSFlow
+                      IO
+                      Mesh
                       Statistics
                       Random
                       Dirichlet

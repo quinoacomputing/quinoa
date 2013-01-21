@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sat 22 Dec 2012 01:41:15 PM MST
+  \date      Mon 21 Jan 2013 08:29:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -23,7 +23,7 @@ UnsMesh::UnsMesh(Memory* memory) : m_memory(memory)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
+  // Zero memory entriy pointers
   m_COORD = nullptr;
   m_NODEID = nullptr;
   m_LINEID = nullptr;
@@ -50,7 +50,7 @@ UnsMesh::~UnsMesh()
     // that terminate is not called and that we finish a potentially already
     // propagating exception.
 #ifndef NDEBUG
-  } catch (...) { cout << "WARNING: Exception in UnsMesh::~UnsMesh" << endl; }
+  } catch (...) { cout << "WARNING: Exception in UnsMesh destructor" << endl; }
 #endif // NDEBUG
 
   // Free containers held
