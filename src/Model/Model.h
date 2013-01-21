@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Sat 17 Nov 2012 08:12:21 AM MST
+  \date      Mon 21 Jan 2013 11:51:06 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -17,40 +17,18 @@ using namespace std;
 
 namespace Quinoa {
 
-class Memory;
-class Paradigm;
-
 //! Model base
 class Model {
 
   public:
     //! Constructor
-    Model(Memory* memory,
-          Paradigm* paradigm,
-          const string& name,
-          const real time,
-          const int echo,
-          const int nstep);
+    Model(const string& name);
 
     //! Destructor
     virtual ~Model();
 
-    //! Echo informaion on model
-    virtual void echo() = 0;
-
-    //! Initialize model
-    virtual void init() = 0;
-
-    //! Solve model
-    virtual void solve() = 0;
-
-  protected:
-    Memory* m_memory;             //!< Memory object pointer
-    Paradigm* m_paradigm;         //!< Parallel programming object pointer
-    const string m_name;          //!< Name of model
-    const real m_time;            //!< Maximum time to simulate
-    const int m_echo;             //!< One-line info in every few time step
-    const int m_nstep;            //!< Maximum number of time steps to take
+    //! Name accessor
+    const string& name() { return m_name; }
 
   private:
     //! Don't permit copy constructor
@@ -61,6 +39,8 @@ class Model {
     Model(Model&&) = delete;
     //! Don't permit move assigment
     Model& operator=(Model&&) = delete;
+
+    const string m_name;          //!< Name of model
 };
 
 } // namespace Quinoa

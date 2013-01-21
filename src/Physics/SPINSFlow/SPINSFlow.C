@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:49:17 AM MST
+  \date      Mon 21 Jan 2013 12:02:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -22,12 +22,16 @@
 #include <MKLRndStream.h>
 #include <UnsMesh.h>
 #include <GmshTxtMeshReader.h>
+#include <SimplifiedLangevin.h>
+#include <GeneralizedLangevin.h>
+#include <HydroException.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
 
 SPINSFlow::SPINSFlow(Memory* memory,
                      Paradigm* paradigm,
+                     HydroType hydro,
                      const int& npar,
                      const string& filename,
                      const real time,
@@ -44,6 +48,7 @@ SPINSFlow::SPINSFlow(Memory* memory,
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
+//! \param[in]  hydro    Hydrodynamics model type
 //! \param[in]  npar     Number of particles
 //! \param[in]  filename Mesh filename
 //! \param[in]  time     Maximum time to simulate
@@ -59,6 +64,17 @@ SPINSFlow::SPINSFlow(Memory* memory,
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
+
+  // Instantiate hydrodynamics model
+  if (hydro == HydroType::SLM) {
+    m_hydro = new (nothrow) SimplifiedLangevin();
+    Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  } else if (hydro == HydroType::GLM) {
+    m_hydro = new (nothrow) GeneralizedLangevin();
+    Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  } else {
+    Throw(HydroException,FATAL,NO_SUCH_HYDRO);
+  }
 
   // Instantiate Eulerian mesh
   m_mesh = new (nothrow) UnsMesh(m_memory);
@@ -82,6 +98,7 @@ SPINSFlow::~SPINSFlow()
 #endif // NDEBUG
 
   if (m_mesh) { delete m_mesh; m_mesh = nullptr; }
+  if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
   if (m_random) { delete m_random; m_random = nullptr; }
 }
 
@@ -102,10 +119,10 @@ SPINSFlow::echo()
 //******************************************************************************
 {
   cout << "Physics: " << m_name << endl;
-  cout << " * Mesh               : " << m_filename << endl;
-
-  // Echo information on the hydrodynamics model
-  //m_hydro->echo();
+  cout << " * Mesh : " << m_filename << endl;
+  cout << " * Hydro: " << m_hydro->name() << endl;
+  // Echo info on the hydro model
+  m_hydro->echo();
 
   cout << endl;
 }

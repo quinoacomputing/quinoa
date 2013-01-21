@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/Dirichlet/Dirichlet.h
+  \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri Nov 16 07:34:27 2012
+  \date      Mon 21 Jan 2013 11:28:21 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -12,12 +12,12 @@
 #define Dirichlet_h
 
 #include <QuinoaTypes.h>
-#include <MixModel.h>
+#include <Mix.h>
 
 namespace Quinoa {
 
-//! Dirichlet : MixModel
-class Dirichlet : public MixModel {
+//! Dirichlet : Mix
+class Dirichlet : public Mix {
 
   public:
     //! Constructor

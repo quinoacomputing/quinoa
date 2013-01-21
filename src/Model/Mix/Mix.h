@@ -1,52 +1,52 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/MixModel.h
+  \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Fri Nov 16 07:33:01 2012
+  \date      Mon 21 Jan 2013 11:58:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     MixModel base
-  \details   MixModel base
+  \brief     Mix model base
+  \details   Mix mode lbase
 */
 //******************************************************************************
-#ifndef MixModel_h
-#define MixModel_h
+#ifndef Mix_h
+#define Mix_h
 
 #include <string>
 
 #include <QuinoaTypes.h>
+#include <Model.h>
 
 namespace Quinoa {
 
 using namespace std;
 
-//! MixModel base
-class MixModel {
+//! Mix model base
+class Mix : public Model {
 
   public:
     //! Constructor
-    MixModel(const int& nscalar, const string& name);
+    Mix(const int& nscalar, const string& name);
 
     //! Destructor
-    virtual ~MixModel() {}
+    virtual ~Mix() {}
 
     //! Interface for echo information on mix model
     virtual void echo() = 0;
 
   protected:
     const int m_nscalar;           //!< Number of mixing scalars
-    const string m_name;           //!< Name of mix model
 
   private:
     //! Don't permit copy constructor
-    MixModel(const MixModel&) = delete;
+    Mix(const Mix&) = delete;
     //! Don't permit copy assigment
-    MixModel& operator=(const MixModel&) = delete;
+    Mix& operator=(const Mix&) = delete;
     //! Don't permit move constructor
-    MixModel(MixModel&&) = delete;
+    Mix(Mix&&) = delete;
     //! Don't permit move assigment
-    MixModel& operator=(MixModel&&) = delete;
+    Mix& operator=(Mix&&) = delete;
 };
 
 } // namespace Quinoa
 
-#endif // MixModel_h
+#endif // Mix_h

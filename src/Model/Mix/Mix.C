@@ -1,22 +1,22 @@
 //******************************************************************************
 /*!
-  \file      src/Model/MixModel/MixModel.C
+  \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Thu Nov 15 15:44:18 2012
+  \date      Mon 21 Jan 2013 11:52:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
 */
 //******************************************************************************
 
-#include <MixModel.h>
-#include <MixModelException.h>
-#include <MemoryException.h>
+#include <Mix.h>
+#include <MixException.h>
 
 using namespace Quinoa;
 
-MixModel::MixModel(const int& nscalar, const string& name) :
-  m_nscalar(nscalar), m_name(name)
+Mix::Mix(const int& nscalar, const string& name) :
+  Model(name),
+  m_nscalar(nscalar)
 //******************************************************************************
 //  Constructor
 //! \param[in]  nscalar  Number of mixing scalars
@@ -24,6 +24,5 @@ MixModel::MixModel(const int& nscalar, const string& name) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_nscalar > 0, MixModelException,FATAL,BAD_NSCALARS);
-  Assert(m_name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
+  Assert(m_nscalar > 0, MixException,FATAL,BAD_NSCALARS);
 }

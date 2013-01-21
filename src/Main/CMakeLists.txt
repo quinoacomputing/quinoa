@@ -37,7 +37,10 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Random
                       Dirichlet
                       GeneralizedDirichlet
-                      MixModel
+                      Mix
+                      SimplifiedLangevin
+                      GeneralizedLangevin
+                      Hydro
                       Model
                       Physics
                       ${MKL_LIBRARY}

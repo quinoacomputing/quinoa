@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/HydroModel/GeneralizedLangevin/GeneralizedLangevin.h
+  \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:48:47 AM MST
+  \date      Mon 21 Jan 2013 11:32:57 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -12,12 +12,12 @@
 #define GeneralizedLangevin_h
 
 #include <QuinoaTypes.h>
-#include <HydroModel.h>
+#include <Hydro.h>
 
 namespace Quinoa {
 
-//! GeneralizedLangevin : HydroModel
-class GeneralizedLangevin : public HydroModel {
+//! GeneralizedLangevin : Hydro
+class GeneralizedLangevin : public Hydro {
 
   public:
     //! Constructor

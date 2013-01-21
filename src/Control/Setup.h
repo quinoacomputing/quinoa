@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:56:13 AM MST
+  \date      Mon 21 Jan 2013 12:01:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -19,6 +19,9 @@ namespace Quinoa {
 
 //! Physics
 const PhysicsType PHYSICS_TYPE = PhysicsType::SPINSFLOW;
+
+//! Hydrodynamics model
+const HydroType HYDRO_TYPE = HydroType::SLM;
 
 //! Mesh filename
 const string MESH_FILENAME = "cylinder.msh";
