@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 09:13:45 AM MST
+  \date      Mon 21 Jan 2013 10:49:17 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -102,7 +102,10 @@ SPINSFlow::echo()
 //******************************************************************************
 {
   cout << "Physics: " << m_name << endl;
-  cout << " * Mesh: " << m_filename << endl;
+  cout << " * Mesh               : " << m_filename << endl;
+
+  // Echo information on the hydrodynamics model
+  //m_hydro->echo();
 
   cout << endl;
 }
@@ -114,6 +117,9 @@ SPINSFlow::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Read in mesh
   GmshTxtMeshReader inMesh(m_filename, m_mesh, m_memory);
   inMesh.read();
+
+  
 }

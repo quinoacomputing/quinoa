@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 05:56:17 PM MST
+  \date      Mon 21 Jan 2013 10:20:16 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -30,20 +30,20 @@ static void echoBuildInfo()
 //******************************************************************************
 {
   cout << "\nBuild environment:\n";
-  cout << " * Executable         : " << QUINOA_EXECUTABLE << "\n";
-  cout << " * Version            : " << QUINOA_VERSION << "\n";
-  cout << " * Release            : " << QUINOA_RELEASE << "\n";
-  cout << " * Revision           : " << QUINOA_GIT_COMMIT << "\n";
-  cout << " * Configuration      : " << QUINOA_CONFIGURATION << "\n";
-  cout << " * Third-party prefix : " << QUINOA_THIRD_PARTY_PREFIX << "\n";
-  cout << " * Compiler           : " << QUINOA_COMPILER << "\n";
-  cout << " * Build type         : " << QUINOA_BUILD_TYPE;
+  cout << " * Executable        : " << QUINOA_EXECUTABLE << "\n";
+  cout << " * Version           : " << QUINOA_VERSION << "\n";
+  cout << " * Release           : " << QUINOA_RELEASE << "\n";
+  cout << " * Revision          : " << QUINOA_GIT_COMMIT << "\n";
+  cout << " * Configuration     : " << QUINOA_CONFIGURATION << "\n";
+  cout << " * Third-party prefix: " << QUINOA_THIRD_PARTY_PREFIX << "\n";
+  cout << " * Compiler          : " << QUINOA_COMPILER << "\n";
+  cout << " * Build type        : " << QUINOA_BUILD_TYPE;
 #ifdef NDEBUG
   cout << " (no error checking, no exception handling)" << "\n";
 #else  // NDEBUG
   cout << " (with error checking and exception handling)" << "\n";
 #endif // NDEBUG
-  cout << " * Build date         : " << QUINOA_BUILD_DATE << "\n";
+  cout << " * Build date        : " << QUINOA_BUILD_DATE << "\n";
   cout << endl;
 }
 
