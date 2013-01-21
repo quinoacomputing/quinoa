@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/SimplifiedLangevin/SimplifiedLangevin.h
+  \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:19:34 PM MST
+  \date      Sun 20 Jan 2013 05:47:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     The simplified Langevin model
-  \details   The simplified Langevin model
+  \brief     Standalone-Particle Incompressible Navier-Stokes Flow
+  \details   Standalone-Particle Incompressible Navier-Stokes Flow
 */
 //******************************************************************************
-#ifndef SimplifiedLangevin_h
-#define SimplifiedLangevin_h
+#ifndef SPINSFlow_h
+#define SPINSFlow_h
 
 #include <limits>
 
@@ -24,20 +24,20 @@ class Paradigm;
 class MKLRandom;
 class MKLRndStream;
 
-//! SimplifiedLangevin : Physics
-class SimplifiedLangevin : public Physics {
+//! SPINSFlow : Physics
+class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    SimplifiedLangevin(Memory* memory,
-                       Paradigm* paradigm,
-                       const int& npar,
-                       const real time,
-                       const int echo = 1,
-                       const int nstep = numeric_limits<int>::max());
+    SPINSFlow(Memory* memory,
+              Paradigm* paradigm,
+              const int& npar,
+              const real time,
+              const int echo = 1,
+              const int nstep = numeric_limits<int>::max());
 
     //! Destructor
-    virtual ~SimplifiedLangevin();
+    virtual ~SPINSFlow();
 
     //! Echo informaion on model
     virtual void echo();
@@ -50,13 +50,13 @@ class SimplifiedLangevin : public Physics {
 
   private:
     //! Don't permit copy constructor
-    SimplifiedLangevin(const SimplifiedLangevin&) = delete;
+    SPINSFlow(const SPINSFlow&) = delete;
     //! Don't permit copy assigment
-    SimplifiedLangevin& operator=(const SimplifiedLangevin&) = delete;
+    SPINSFlow& operator=(const SPINSFlow&) = delete;
     //! Don't permit move constructor
-    SimplifiedLangevin(SimplifiedLangevin&&) = delete;
+    SPINSFlow(SPINSFlow&&) = delete;
     //! Don't permit move assigment
-    SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
+    SPINSFlow& operator=(SPINSFlow&&) = delete;
 
     //! Advance particles
     void advance(const real dt);
@@ -69,4 +69,4 @@ class SimplifiedLangevin : public Physics {
 
 } // namespace Quinoa
 
-#endif // SimplifiedLangevin_h
+#endif // SPINSFlow_h

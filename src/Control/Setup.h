@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Setup.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:06:23 PM MST
+  \date      Sun 20 Jan 2013 05:53:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model setup
   \details   Model setup, see Control.h for available choices
@@ -18,7 +18,7 @@
 namespace Quinoa {
 
 //! Physics
-const PhysicsType PHYSICS_TYPE = PhysicsType::SIMPLIFIED_LANGEVIN;
+const PhysicsType PHYSICS_TYPE = PhysicsType::SPINSFLOW;
 
 //! Number of prognostic scalars
 const int NSCALAR = 2;

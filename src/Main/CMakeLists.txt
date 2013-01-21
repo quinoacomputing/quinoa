@@ -16,7 +16,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Physics/HomogeneousDirichlet
                     ${QUINOA_SOURCE_DIR}/Physics/HomogeneousGeneralizedDirichlet
-                    ${QUINOA_SOURCE_DIR}/Physics/SimplifiedLangevin
+                    ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
 )
 
 add_executable(${QUINOA_EXECUTABLE}
@@ -32,7 +32,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       HomogeneousDirichlet
                       IO
                       HomogeneousGeneralizedDirichlet
-                      SimplifiedLangevin
+                      SPINSFlow
                       Statistics
                       Random
                       Dirichlet
