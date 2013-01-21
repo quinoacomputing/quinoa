@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 22 Dec 2012 01:40:30 PM MST
+  \date      Sun 20 Jan 2013 05:56:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -33,7 +33,7 @@ static void echoBuildInfo()
   cout << " * Executable         : " << QUINOA_EXECUTABLE << "\n";
   cout << " * Version            : " << QUINOA_VERSION << "\n";
   cout << " * Release            : " << QUINOA_RELEASE << "\n";
-  cout << " * Git commit         : " << QUINOA_GIT_COMMIT << "\n";
+  cout << " * Revision           : " << QUINOA_GIT_COMMIT << "\n";
   cout << " * Configuration      : " << QUINOA_CONFIGURATION << "\n";
   cout << " * Third-party prefix : " << QUINOA_THIRD_PARTY_PREFIX << "\n";
   cout << " * Compiler           : " << QUINOA_COMPILER << "\n";

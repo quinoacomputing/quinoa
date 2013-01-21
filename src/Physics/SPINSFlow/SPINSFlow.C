@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/SimplifiedLangevin/SimplifiedLangevin.C
+  \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:15:52 PM MST
+  \date      Sun 20 Jan 2013 05:48:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous Dirichlet model
-  \details   Homogeneous Dirichlet model
+  \brief     Standalone-Particle Incompressible Navier-Stokes Flow
+  \details   Standalone-Particle Incompressible Navier-Stokes Flow
 */
 //******************************************************************************
 
@@ -20,17 +20,22 @@
 #include <MemoryException.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
-#include <SimplifiedLangevin.h>
+#include <SPINSFlow.h>
 
 using namespace Quinoa;
 
-SimplifiedLangevin::SimplifiedLangevin(Memory* memory,
-                           Paradigm* paradigm,
-                           const int& npar,
-                           const real time,
-                           const int echo,
-                           const int nstep) :
-  Physics(memory, paradigm, "Simplified Langevin", time, echo, nstep),
+SPINSFlow::SPINSFlow(Memory* memory,
+                     Paradigm* paradigm,
+                     const int& npar,
+                     const real time,
+                     const int echo,
+                     const int nstep) :
+  Physics(memory,
+          paradigm,
+          "Standalone-Particle Incompressible Navier-Stokes Flow",
+          time,
+          echo,
+          nstep),
   m_npar(npar)
 //******************************************************************************
 //  Constructor
@@ -53,7 +58,7 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* memory,
   m_str = m_random->getStr(m_rndStr);
 }
 
-SimplifiedLangevin::~SimplifiedLangevin()
+SPINSFlow::~SPINSFlow()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -66,14 +71,14 @@ SimplifiedLangevin::~SimplifiedLangevin()
     //m_memory->freeEntry(m_MEscalar);
 #ifndef NDEBUG
   } catch (...)
-    { cout << "WARNING: Exception in SimplifiedLangevin destructor" << endl; }
+    { cout << "WARNING: Exception in SPINSFlow destructor" << endl; }
 #endif // NDEBUG
 
   if (m_random) { delete m_random; m_random = nullptr; }
 }
 
 void
-SimplifiedLangevin::solve()
+SPINSFlow::solve()
 //******************************************************************************
 //  Solve
 //! \author  J. Bakosi
@@ -82,9 +87,9 @@ SimplifiedLangevin::solve()
 }
 
 void
-SimplifiedLangevin::echo()
+SPINSFlow::echo()
 //******************************************************************************
-//  Echo informaion on the physics
+//  Echo information on the physics
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -94,7 +99,7 @@ SimplifiedLangevin::echo()
 }
 
 void
-SimplifiedLangevin::init()
+SPINSFlow::init()
 //******************************************************************************
 //  Initialize the physics
 //! \author  J. Bakosi

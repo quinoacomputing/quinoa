@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:23:20 PM MST
+  \date      Sun 20 Jan 2013 01:58:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -191,7 +191,7 @@ HomogeneousDirichlet::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Model: " << m_name << endl;
+  cout << "Physics: " << m_name << endl;
 
   // Echo information on Dirichlet mix model
   m_dir->echo();

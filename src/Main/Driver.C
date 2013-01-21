@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:31:06 PM MST
+  \date      Sun 20 Jan 2013 05:53:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -14,7 +14,7 @@
 #include <PhysicsException.h>
 #include <HomogeneousDirichlet.h>
 #include <HomogeneousGeneralizedDirichlet.h>
-#include <SimplifiedLangevin.h>
+#include <SPINSFlow.h>
 
 using namespace Quinoa;
 
@@ -64,11 +64,11 @@ Driver::setup()
                                                               TIME,
                                                               NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == PhysicsType::SIMPLIFIED_LANGEVIN) {
-    m_physics = new (nothrow) SimplifiedLangevin(m_memory,
-                                                 m_paradigm,
-                                                 TIME,
-                                                 NSTEP);
+  } else if (PHYSICS_TYPE == PhysicsType::SPINSFLOW) {
+    m_physics = new (nothrow) SPINSFlow(m_memory,
+                                        m_paradigm,
+                                        TIME,
+                                        NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC); 
   } else {
     Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
@@ -88,7 +88,7 @@ Driver::solve()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//  m_physics->solve();
+  m_physics->solve();
 }
 
 void
