@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 06:53:50 PM MST
+  \date      Mon 21 Jan 2013 10:35:34 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -21,6 +21,7 @@ namespace Quinoa {
 
 //! Model exception types
 enum ModelExceptType { MIXMODEL_EXCEPT=0,          //!< MixModel exception
+                       HYDROMODEL_EXCEPT,          //!< HydroModel exception
                        NO_SUCH_MODEL,              //!< No such model
                        ALREADY_ALLOCATED,          //!< Entry alread allocated
                        NUM_MODEL_EXCEPT
@@ -29,6 +30,7 @@ enum ModelExceptType { MIXMODEL_EXCEPT=0,          //!< MixModel exception
 //! Model exception error messages
 const string ModelMsg[NUM_MODEL_EXCEPT] = {
   "MixModel: ",
+  "HydroModel: ",
   "No such model",
   "Memory entry already allocated"
 };

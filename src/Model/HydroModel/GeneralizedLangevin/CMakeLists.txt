@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 2.8.5)
+
+project(GeneralizedLangevin CXX)
+
+# Include configuration/headers/libraries common to all code
+INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
+
+
+include_directories(${QUINOA_SOURCE_DIR}/Model/HydroModel/GeneralizedLangevin
+                    ${QUINOA_SOURCE_DIR}/Model/HydroModel
+                    ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Base
+)
+
+add_library(GeneralizedLangevin
+            GeneralizedLangevin.C
+)
+
+INSTALL(TARGETS GeneralizedLangevin
+  	RUNTIME DESTINATION bin COMPONENT Runtime
+  	LIBRARY DESTINATION lib COMPONENT Runtime
+ 	ARCHIVE DESTINATION lib COMPONENT Development
+)
