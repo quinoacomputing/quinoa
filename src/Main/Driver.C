@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:05:14 AM MST
+  \date      Mon 21 Jan 2013 08:40:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -11,6 +11,8 @@
 
 #include <Driver.h>
 #include <Setup.h>
+#include <Parser.h>
+#include <ParserException.h>
 #include <PhysicsException.h>
 #include <HomogeneousDirichlet.h>
 #include <HomogeneousGeneralizedDirichlet.h>
@@ -18,10 +20,12 @@
 
 using namespace Quinoa;
 
-Driver::Driver(Memory* memory, Paradigm* paradigm) :
-  m_memory(memory), m_paradigm(paradigm)
+Driver::Driver(int argc, char** argv, Memory* memory, Paradigm* paradigm) :
+  m_memory(memory), m_paradigm(paradigm), m_argc(argc), m_argv(argv)
 //******************************************************************************
 //  Constructor
+//! \param[in]  argc      Argument count from command line
+//! \param[in]  argv      Argument vector from command line
 //! \param[in]  memory    Memory oject pointer
 //! \param[in]  paradigm  Parallel programming paradigm object pointer
 //! \author J. Bakosi
@@ -46,6 +50,13 @@ Driver::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Take exactly one filename argument for now
+  // Will need to be extended with a more elaborate command line parser
+  if (m_argc != 2) Throw(ParserException,FATAL,CMDLINE_EXCEPT);
+
+  // Instantiate control file parser
+  Parser parser(m_argv[1]);
+
   // Instantiate selected physics
   // ICC: this could be a switch once ICC supports scoped enums in switch
   if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_DIRICHLET) {

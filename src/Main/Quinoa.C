@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 12:14:31 PM MST
+  \date      Mon 21 Jan 2013 08:16:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
   // Initialize memory manager and driver
   Memory memory(&paradigm);
-  Driver driver(&memory, &paradigm);
+  Driver driver(argc, argv, &memory, &paradigm);
 
   ErrCode error = NO_ERROR;
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode

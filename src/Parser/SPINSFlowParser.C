@@ -1,41 +1,30 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Parser.C
+  \file      src/Parser/SPINSFlowParser.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:25:56 PM MST
+  \date      Mon 21 Jan 2013 07:47:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Parser base
-  \details   Parser base
+  \brief     SPINSFlow parser
+  \details   SPINSFlow parser
 */
 //******************************************************************************
 
-#include <iostream>
-
-#include <Parser.h>
-#include <IOException.h>
+#include <SPINSFlowParser.h>
 
 using namespace Quinoa;
 
-Parser::Parser(const string& filename) : m_filename(filename)
+SPINSFlowParser::SPINSFlowParser()
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_q.open(m_filename, ifstream::in);
-  Assert(m_q.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);  
 }
 
-Parser::~Parser()
+SPINSFlowParser::~SPINSFlowParser()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_q.close();
-
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
-  if (m_q.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
 }

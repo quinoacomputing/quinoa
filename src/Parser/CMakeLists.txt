@@ -7,10 +7,13 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Parser
+                    ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
 add_library(Parser
             Parser.C
+            ParserException.C
 )
 
 INSTALL(TARGETS Parser
