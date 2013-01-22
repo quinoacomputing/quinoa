@@ -1,55 +1,48 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Parser.h
+  \file      src/Parser/SPINSFlowParser.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 09:14:37 PM MST
+  \date      Mon 21 Jan 2013 09:10:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Parser base
-  \details   Parser base
+  \brief     SPINSFlow parser
+  \details   SPINSFlow parser
 */
 //******************************************************************************
-#ifndef Parser_h
-#define Parser_h
-
-#include <fstream>
-
-#include <boost/spirit/include/lex_lexertl.hpp>
+#ifndef SPINSFlowParser_h
+#define SPINSFlowParser_h
 
 using namespace std;
 
 namespace Quinoa {
 
-//! Parser base
-class Parser {
+//! SPINSFlowParser : Parser
+class SPINSFlow : private Parser {
 
   public:
     //! Constructor
-    Parser(const string& filename);
+    SPINSFlowParser();
 
     //! Destructor
-    virtual ~Parser();
+    virtual ~SPINSFlowParser();
 
   private:
     //! Don't permit copy constructor
-    Parser(const Parser&) = delete;
+    SPINSFlowParser(const SPINSFlowParser&) = delete;
     //! Don't permit copy assigment
-    Parser& operator=(const Parser&) = delete;
+    SPINSFlowParser& operator=(const SPINSFlowParser&) = delete;
     //! Don't permit move constructor
-    Parser(Parser&&) = delete;
+    SPINSFlowParser(SPINSFlowParser&&) = delete;
     //! Don't permit move assigment
-    Parser& operator=(Parser&&) = delete;
-
-    const string m_filename;            //!< Name of file to parse
-    ifstream m_q;                       //!< Q (control) file input stream
+    SPINSFlowParser& operator=(SPINSFlowParser&&) = delete;
 
     // Include token IDs
-    #include <Parser.def.h>
+    #include <SPINSFlow.def.h>
 
 //     template <typename Lexer>
 //     struct word_count_tokens : lex::lexer<Lexer> {
 //       word_count_tokens() {
 //           // define tokens (the regular expression to match and the corresponding
-//           // token id) and add them to the lexer
+//           // token id) and add them to the lexer 
 //           this->self.add
 //             ("[^ \t\n]+", ID_WORD) // words (anything except ' ', '\t' or '\n')
 //             ("\n", ID_EOL)         // newline characters
@@ -57,9 +50,8 @@ class Parser {
 //           ;
 //       }
 //     };
-
 };
 
 } // namespace Quinoa
 
-#endif // Parser_h
+#endif // SPINSFlowParser_h

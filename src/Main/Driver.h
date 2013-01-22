@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 07:47:35 AM MST
+  \date      Mon 21 Jan 2013 08:18:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -22,7 +22,7 @@ class Driver {
 
   public:
     //! Constructor
-    Driver(Memory* memory, Paradigm* paradigm);
+    Driver(int argc, char** argv, Memory* memory, Paradigm* paradigm);
 
     //! Destructor
     ~Driver();
@@ -49,6 +49,9 @@ class Driver {
     Memory* m_memory;                 //!< Pointer to Memory object
     Paradigm* m_paradigm;             //!< Pointer to Memory object
     Physics* m_physics;               //!< Pointer to Physics object
+
+    int m_argc;                       //!< Argument count from command line
+    char** m_argv;                    //!< Argument vector from command line
 };
 
 } // namespace Quinoa

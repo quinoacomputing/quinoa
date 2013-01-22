@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 10:22:47 PM MDT
+  \date      Mon 21 Jan 2013 08:25:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -11,7 +11,6 @@
 #ifndef MeshReader_h
 #define MeshReader_h
 
-#include <string>
 #include <fstream>
 
 using namespace std;

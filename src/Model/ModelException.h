@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:27:20 AM MST
+  \date      Mon 21 Jan 2013 08:35:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -41,10 +41,10 @@ class ModelException : public Exception {
   public:
     //! Constructor
     ModelException(ExceptType except,
-                    ModelExceptType modelExcept,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+                   ModelExceptType modelExcept,
+                   const string& file,
+                   const string& func,
+                   const unsigned int& line) :
       Exception(except, file, func, line), m_except(modelExcept) {}
 
     //! Move constructor, necessary for throws, default compiler generated
