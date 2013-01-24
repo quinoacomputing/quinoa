@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed 23 Jan 2013 10:44:55 PM MST
+  \date      Wed 23 Jan 2013 11:02:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -26,8 +26,14 @@ namespace grammar {
 
   // Keywords
 
-  typedef pegtl::string<t,i,t,l,e> keyword_title;
-  typedef pegtl::string<S,P,I,N,S,F,l,o,w> keyword_SPINSFlow;
+  //typedef pegtl::string<t,i,t,l,e> keyword_title;
+  struct keyword_title :
+         seq< one<'T','t'>,
+              one<'I','i'>,
+              one<'T','t'>,
+              one<'L','l'>,
+              one<'E','e'> > {};
+  //typedef pegtl::string<S,P,I,N,S,F,l,o,w> keyword_SPINSFlow;
 
   // Actions
 
