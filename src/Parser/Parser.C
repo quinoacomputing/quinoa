@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed 23 Jan 2013 11:02:39 PM MST
+  \date      Fri 25 Jan 2013 10:36:15 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -21,19 +21,9 @@ namespace grammar {
 
   // State
 
-  typedef int value_type;
-  typedef vector< value_type > stack_type;
-
   // Keywords
 
-  //typedef pegtl::string<t,i,t,l,e> keyword_title;
-  struct keyword_title :
-         seq< one<'T','t'>,
-              one<'I','i'>,
-              one<'T','t'>,
-              one<'L','l'>,
-              one<'E','e'> > {};
-  //typedef pegtl::string<S,P,I,N,S,F,l,o,w> keyword_SPINSFlow;
+  #include <Keywords.def.h>
 
   // Actions
 
@@ -64,7 +54,7 @@ namespace grammar {
 	 ifapply< seq< until<alpha>, until<eol> >, rule_action > {};
 
   struct read_title :
-	 ifapply< seq< until<keyword_title>, until<eol> >, title_action > {};
+	 ifapply< seq< until<keyword::title>, until<eol> >, title_action > {};
 
   struct read_line :
          sor< read_comment, read_title, read_rule > {};
@@ -88,6 +78,8 @@ Parser::Parser(const string& filename) : m_filename(filename)
   cout << "==== PARSING START ====" << endl;
   pegtl::basic_parse_file< grammar::read_file >( m_filename );
   cout << "==== PARSING END ====" << endl << endl;
+
+  //cout << CH(ab) << endl;
 }
 
 Parser::~Parser()
