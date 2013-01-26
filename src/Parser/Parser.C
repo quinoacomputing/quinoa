@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 25 Jan 2013 08:33:14 PM MST
+  \date      Fri 25 Jan 2013 08:55:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -45,28 +45,22 @@ namespace grammar {
     }
   };
 
+  // Utilities
+
+  template< class what, class erased >
+  struct trim :
+         seq< what, until< at<erased> > > {};
+
   // Grammar
 
-  //template< >
-  //struct trim
-
-  struct trim_keyw :
-         seq< keyword::any, until< at<space> > > {};
-
-  struct trim_input :
-         seq< alnum, until< at<space> > > {};
-
-  struct trim_comment :
-         seq< one<'#'>, until< at<eol> > > {};
-
   struct keyw :
-         seq< star<blank>, ifapply< trim_keyw, do_keyword>, space > {};
+         seq< star<blank>, ifapply< trim<keyword::any,space>, do_keyword>, space > {};
 
   struct input :
-         seq< star<blank>, ifapply< trim_input, do_input>, space > {};
+         seq< star<blank>, ifapply< trim<alnum,space>, do_input>, space > {};
 
   struct comment :
-         seq< star<blank>, ifapply< trim_comment, do_comment >, eol> {};
+         seq< star<blank>, ifapply< trim<one<'#'>,eol>, do_comment >, eol> {};
          //seq< one<'#'>, until<at<eol>>, eol> {};
 
   struct read_file :
