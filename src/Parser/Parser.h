@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 09:37:44 AM MST
+  \date      Sat 26 Jan 2013 09:59:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -24,7 +24,7 @@ class Parser {
 
   public:
     //! Constructor
-    Parser(const string& filename, const Control* control);
+    Parser(const string& filename, Control* const control);
 
     //! Destructor
     virtual ~Parser();
@@ -43,7 +43,7 @@ class Parser {
     Parser& operator=(Parser&&) = delete;
 
     const string m_filename;            //!< Name of file to parse
-    const Control* m_control;           //!< Main control category
+    Control* const m_control;           //!< Main control category
     ifstream m_q;                       //!< Q (control) file input stream
 };
 

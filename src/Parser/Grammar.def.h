@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 09:48:04 AM MST
+  \date      Sat 26 Jan 2013 10:04:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -13,6 +13,7 @@
 
 namespace grammar {
 
+  using namespace std;
   using namespace pegtl;
   using namespace pegtl::ascii;
 
@@ -21,6 +22,8 @@ namespace grammar {
   #include <Keywords.def.h>
 
   // State
+
+  std::string title;
 
   // Actions
 
@@ -37,9 +40,9 @@ namespace grammar {
   };
 
   struct parse_title : action_base< parse_title > {
-    static void apply(const std::string& title) {
-      //m_control->setTitle( title );
-      std::cout << "TITLE  : \"" << title << "\"" << endl;
+    static void apply(const std::string& s) {
+      //std::cout << "TITLE  : \"" << title << "\"" << endl;
+      title = s;
     }
   };
 
