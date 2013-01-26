@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 25 Jan 2013 10:36:15 AM MST
+  \date      Fri 25 Jan 2013 08:11:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -19,48 +19,61 @@ namespace grammar {
   using namespace pegtl;
   using namespace pegtl::ascii;
 
-  // State
-
   // Keywords
 
   #include <Keywords.def.h>
 
+  // State
+
   // Actions
 
-  struct comment_action : action_base< comment_action > {
+  struct do_comment : action_base< do_comment > {
     static void apply(const std::string& m) {
-      std::cout << "COMMENT: " << m;
+      std::cout << "COMMENT: \"" << m << "\"" << endl;
     }
   };
 
-  struct rule_action : action_base< rule_action > {
+  struct do_keyword : action_base< do_keyword > {
     static void apply(const std::string& m) {
-      std::cout << "RULE   : " << m;
+      std::cout << "KEYWORD: \"" << m << "\"" << endl;
     }
   };
 
-  struct title_action : action_base< title_action > {
+  struct do_input : action_base< do_input > {
     static void apply(const std::string& m) {
-      std::cout << "TITLE  : " << m;
+      std::cout << "INPUT  : \"" << m << "\"" << endl;
     }
   };
 
   // Grammar
 
-  struct read_comment :
-         ifapply< seq< until<one<'#'>>, until<eol> >, comment_action > {};
+//   struct title :
+// 	 ifapply< seq< until<keyword::title>, until<eol> >, do_title > {};
+// 
+//   struct rule :
+// 	 ifapply< seq< until<alpha>, until<eol> >, do_rule > {};
 
-  struct read_rule :
-	 ifapply< seq< until<alpha>, until<eol> >, rule_action > {};
+  struct trim_input :
+         seq< alnum, until< at<space> > > {};
 
-  struct read_title :
-	 ifapply< seq< until<keyword::title>, until<eol> >, title_action > {};
+  struct input :
+         seq< ifapply< trim_input, do_input>, space > {};
 
-  struct read_line :
-         sor< read_comment, read_title, read_rule > {};
+  struct trim_keyw :
+         seq< keyword::any, until< at<space> > > {};
+
+  struct keyw :
+         seq< ifapply< trim_keyw, do_keyword>, space > {};
+
+  struct token :
+         sor< keyw, input > {};
+
+  struct comment :
+         //seq< ifapply< seq< one<'#'>, until<at<eol>> >, do_comment >, eol> {};
+         seq< one<'#'>, until<at<eol>>, eol> {};
 
   struct read_file :
-         until< eof, read_line > {};
+         until< eof, sor<token, comment> > {};
 
 } // namespace grammar
 
@@ -75,11 +88,9 @@ Parser::Parser(const string& filename) : m_filename(filename)
 //  m_q.open(m_filename, ifstream::in);
 //  Assert(m_q.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 
-  cout << "==== PARSING START ====" << endl;
+  cout << "==== PARSE START ====" << endl;
   pegtl::basic_parse_file< grammar::read_file >( m_filename );
-  cout << "==== PARSING END ====" << endl << endl;
-
-  //cout << CH(ab) << endl;
+  cout << "==== PARSE END ====" << endl << endl;
 }
 
 Parser::~Parser()
