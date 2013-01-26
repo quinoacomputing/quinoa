@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 09:45:05 AM MST
+  \date      Sat 26 Jan 2013 10:03:28 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -11,13 +11,14 @@
 
 #include <pegtl.hh>
 
-#include <Parser.h>
-#include <IOException.h>
 #include <Grammar.def.h>
+#include <Parser.h>
+#include <Control.h>
+#include <IOException.h>
 
 using namespace Quinoa;
 
-Parser::Parser(const string& filename, const Control* control) :
+Parser::Parser(const string& filename, Control* const control) :
   m_filename(filename), m_control(control)
 //******************************************************************************
 //  Constructor
@@ -54,4 +55,8 @@ Parser::Parse()
   cout << "==== PARSE START ====" << endl;
   pegtl::basic_parse_file< grammar::read_file >( m_filename );
   cout << "==== PARSE END ====" << endl << endl;
+
+  m_control->setTitle( grammar::title );
+
+  cout << "Title: " << m_control->title() << endl << endl;
 }

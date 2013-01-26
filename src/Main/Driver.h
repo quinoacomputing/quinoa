@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 08:04:29 AM MST
+  \date      Sat 26 Jan 2013 10:00:16 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -23,7 +23,10 @@ class Driver {
 
   public:
     //! Constructor
-    Driver(int argc, char** argv, Memory* memory, Paradigm* paradigm);
+    Driver(int argc,
+           char** argv,
+           Memory* const memory,
+           Paradigm* const paradigm);
 
     //! Destructor
     ~Driver();
@@ -47,8 +50,8 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
-    Memory* m_memory;                 //!< Memory object
-    Paradigm* m_paradigm;             //!< Parallel paradigm object
+    Memory* const m_memory;           //!< Memory object
+    Paradigm* const m_paradigm;       //!< Parallel paradigm object
     Physics* m_physics;               //!< Physics object
     Control* m_control;               //!< Control object
 
