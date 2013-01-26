@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:18:07 PM MST
+  \date      Sat 26 Jan 2013 08:04:29 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -16,6 +16,7 @@
 namespace Quinoa {
 
 class Physics;
+class Control;
 
 //! Driver base class
 class Driver {
@@ -46,9 +47,10 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
-    Memory* m_memory;                 //!< Pointer to Memory object
-    Paradigm* m_paradigm;             //!< Pointer to Memory object
-    Physics* m_physics;               //!< Pointer to Physics object
+    Memory* m_memory;                 //!< Memory object
+    Paradigm* m_paradigm;             //!< Parallel paradigm object
+    Physics* m_physics;               //!< Physics object
+    Control* m_control;               //!< Control object
 
     int m_argc;                       //!< Argument count from command line
     char** m_argv;                    //!< Argument vector from command line
