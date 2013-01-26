@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Fri 25 Jan 2013 04:29:46 PM MST
+  \date      Sat 26 Jan 2013 09:37:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -17,15 +17,20 @@ using namespace std;
 
 namespace Quinoa {
 
+class Control;
+
 //! Parser base
 class Parser {
 
   public:
     //! Constructor
-    Parser(const string& filename);
+    Parser(const string& filename, const Control* control);
 
     //! Destructor
     virtual ~Parser();
+
+    //! Parse
+    void Parse();
 
   private:
     //! Don't permit copy constructor
@@ -38,6 +43,7 @@ class Parser {
     Parser& operator=(Parser&&) = delete;
 
     const string m_filename;            //!< Name of file to parse
+    const Control* m_control;           //!< Main control category
     ifstream m_q;                       //!< Q (control) file input stream
 };
 

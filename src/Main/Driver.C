@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:40:56 PM MST
+  \date      Sat 26 Jan 2013 09:46:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -11,6 +11,7 @@
 
 #include <Driver.h>
 #include <Setup.h>
+#include <Control.h>
 #include <Parser.h>
 #include <ParserException.h>
 #include <PhysicsException.h>
@@ -31,6 +32,7 @@ Driver::Driver(int argc, char** argv, Memory* memory, Paradigm* paradigm) :
 //! \author J. Bakosi
 //******************************************************************************
 {
+  m_control = nullptr;
   m_physics = nullptr;
 }
 
@@ -50,12 +52,19 @@ Driver::setup()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Instantiate main control category
+  m_control = new (nothrow) Control;
+  Assert(m_control != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
   // Take exactly one filename argument for now
   // Will need to be extended with a more elaborate command line parser
   if (m_argc != 2) Throw(ParserException,FATAL,CMDLINE_EXCEPT);
 
   // Instantiate control file parser
-  Parser parser(m_argv[1]);
+  Parser parser(m_argv[1], m_control);
+
+  // Parse control file
+  parser.Parse();
 
   // Instantiate selected physics
   // ICC: this could be a switch once ICC supports scoped enums in switch
@@ -115,6 +124,7 @@ Driver::finalize()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  if (m_control) { delete m_control; m_control = nullptr; }
   if (m_physics) { delete m_physics; m_physics = nullptr; }
   m_memory->freeAllEntries();
 }

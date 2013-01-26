@@ -8,6 +8,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Parser
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/ThirdParty/PEGTL/include
 )
