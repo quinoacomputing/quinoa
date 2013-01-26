@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 25 Jan 2013 09:07:35 PM MST
+  \date      Fri 25 Jan 2013 11:15:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -33,15 +33,15 @@ namespace grammar {
     }
   };
 
-  struct do_keyword : action_base< do_keyword > {
-    static void apply(const std::string& m) {
-      std::cout << "KEYWORD: \"" << m << "\"" << endl;
-    }
-  };
-
   struct do_input : action_base< do_input > {
     static void apply(const std::string& m) {
       std::cout << "INPUT  : \"" << m << "\"" << endl;
+    }
+  };
+
+  struct parse_title : action_base< parse_title > {
+    static void apply(const std::string& m) {
+      std::cout << "TITLE  : \"" << m << "\"" << endl;
     }
   };
 
@@ -51,20 +51,46 @@ namespace grammar {
   struct trim :
          seq< what, until< at<erased> > > {};
 
+  template< class what >
+  struct read :
+         pad< trim<what, space>, blank, space > {};
+
   // Grammar
 
-  struct keyw :
-         pad< ifapply< trim<keyword::any,space>, do_keyword>, blank, space > {};
+  struct quoted :
+         trim< not_one<'"'>, one<'"'> > {};
+
+  struct read_title :
+         ifmust< one<'"'>, ifapply< quoted, parse_title >, one<'"'>, space > {};
+
+  struct process_title :
+         ifmust< read<keyword::title>, read_title > {};
+
+  struct keyword_main :
+         sor< process_title,
+              read< keyword::end > > {};
+
+  struct keyword_physics :
+         sor< read< keyword::HomogeneousDirichlet >,
+              read< keyword::HomogeneousGeneralizedDirichlet >,
+              read< keyword::SPINSFlow > > {};
+
+  struct keyword_any :
+         sor< keyword_main,
+              keyword_physics > {};
 
   struct input :
-         pad< ifapply< trim<alnum,space>, do_input>, blank, space > {};
+         pad< ifapply< trim<alnum, space>, do_input >, blank, space > {};
 
   struct comment :
          //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
+  struct ignore :
+         sor< comment, eol > {};
+
   struct read_file :
-         until< eof, sor<keyw, input, comment> > {};
+         until< eof, sor<keyword_any, input, ignore> > {};
 
 } // namespace grammar
 
