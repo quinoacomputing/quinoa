@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 25 Jan 2013 08:55:25 PM MST
+  \date      Fri 25 Jan 2013 09:07:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -54,14 +54,14 @@ namespace grammar {
   // Grammar
 
   struct keyw :
-         seq< star<blank>, ifapply< trim<keyword::any,space>, do_keyword>, space > {};
+         pad< ifapply< trim<keyword::any,space>, do_keyword>, blank, space > {};
 
   struct input :
-         seq< star<blank>, ifapply< trim<alnum,space>, do_input>, space > {};
+         pad< ifapply< trim<alnum,space>, do_input>, blank, space > {};
 
   struct comment :
-         seq< star<blank>, ifapply< trim<one<'#'>,eol>, do_comment >, eol> {};
-         //seq< one<'#'>, until<at<eol>>, eol> {};
+         //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
+         pad< trim<one<'#'>,eol>, blank, eol> {};
 
   struct read_file :
          until< eof, sor<keyw, input, comment> > {};
