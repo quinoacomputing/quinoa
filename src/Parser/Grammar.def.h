@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 10:04:27 AM MST
+  \date      Sat 26 Jan 2013 08:07:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -24,6 +24,8 @@ namespace grammar {
   // State
 
   std::string title;
+  std::string hydro;
+  std::string mix;
 
   // Actions
 
@@ -41,20 +43,33 @@ namespace grammar {
 
   struct parse_title : action_base< parse_title > {
     static void apply(const std::string& s) {
-      //std::cout << "TITLE  : \"" << title << "\"" << endl;
       title = s;
+    }
+  };
+
+  struct parse_hydro : action_base< parse_hydro > {
+    static void apply(const std::string& s) {
+      hydro = s;
+    }
+  };
+
+  struct parse_mix : action_base< parse_mix > {
+    static void apply(const std::string& s) {
+      mix = s;
     }
   };
 
   // Utilities
 
-  template< class what, class erased >
+  // read 'token' until 'erased' trimming 'erased'
+  template< class token, class erased >
   struct trim :
-         seq< what, until< at<erased> > > {};
+         seq< token, until< at<erased> > > {};
 
-  template< class what >
+  // read 'token' padded by blank at left and space at right
+  template< class token >
   struct read :
-         pad< trim<what, space>, blank, space > {};
+         pad< trim<token, space>, blank, space > {};
 
   // Grammar
 
@@ -63,18 +78,35 @@ namespace grammar {
 
   struct read_title :
          ifmust< one<'"'>, ifapply< quoted, parse_title >, one<'"'>, space > {};
+  
+  struct read_hydro :
+         pad< ifapply< trim<alnum, space>, parse_hydro >, blank, space > {};
+
+  struct read_mix :
+         pad< ifapply< trim<alnum, space>, parse_mix >, blank, space > {};
+
+  struct process_hydro :
+         ifmust< read<keyword::hydro>, read_hydro > {};
+
+  struct process_mix :
+         ifmust< read<keyword::mix>, read_mix > {};
+
+  struct read_spinsflow :
+         until< read<keyword::end>, sor< process_hydro, process_mix > > {};
 
   struct process_title :
          ifmust< read<keyword::title>, read_title > {};
 
+  struct process_spinsflow :
+         ifmust< read<keyword::spinsflow>, read_spinsflow > {};
+
   struct keyword_main :
-         sor< process_title,
-              read< keyword::end > > {};
+         process_title {};
 
   struct keyword_physics :
-         sor< read< keyword::HomogeneousDirichlet >,
-              read< keyword::HomogeneousGeneralizedDirichlet >,
-              read< keyword::SPINSFlow > > {};
+         sor< read< keyword::homdir >,
+              read< keyword::homgendir >,
+              process_spinsflow > {};
 
   struct keyword_any :
          sor< keyword_main,
