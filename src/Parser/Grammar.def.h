@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 09:58:29 AM MST
+  \date      Sun 27 Jan 2013 11:07:21 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -13,11 +13,14 @@
 
 #include <unordered_map>
 
+#include <ParserException.h>
+
 namespace grammar {
 
   using namespace std;
   using namespace pegtl;
   using namespace pegtl::ascii;
+  using namespace Quinoa;
 
   // Keywords
 
@@ -37,9 +40,10 @@ namespace grammar {
     }
   };
 
-  struct do_input : action_base< do_input > {
+  struct unknown : action_base< unknown > {
     static void apply(const std::string& m, stack_type& stack) {
-      std::cout << "INPUT  : \"" << m << "\"" << endl;
+      Throw(ParserException, FATAL, UNKNOWN_KEYWORD);
+      //std::cout << "UNKNOWN: \"" << m << "\"" << endl;
     }
   };
 
@@ -83,47 +87,52 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<tokens ...> > {};
 
+  // read 'keyword' and call its 'insert' action
+  template< class keyword, class insert >
+  struct process :
+         ifmust< read<keyword>, parse<insert> > {};
+
   // Grammar
 
-  // title
+  // title: within double quotes
   struct quoted :
          trim< not_one<'"'>, one<'"'> > {};
 
   struct parse_title :
-         ifmust< one<'"'>, ifapply< quoted, insert_title >, one<'"'>, space > {};
+         ifmust< one<'"'>, ifapply<quoted, insert_title>, one<'"'>, space > {};
 
   struct process_title :
          ifmust< read<keyword::title>, parse_title > {};
 
-  // spinsflow
-  struct process_hydro :
-         ifmust< read<keyword::hydro>, parse<insert_hydro> > {};
+  // spinsflow block
+  struct spinsflow :
+         ifmust< read<keyword::spinsflow>,
+                 block< process<keyword::hydro, insert_hydro>,
+                        process<keyword::mix, insert_mix> > > {};
 
-  struct process_mix :
-         ifmust< read<keyword::mix>, parse<insert_mix> > {};
-
-  struct process_spinsflow :
-         ifmust< read<keyword::spinsflow>, block<process_hydro,process_mix> > {};
-
-  // physics
+  // physics keywords
   struct physics :
          sor< read< keyword::homdir >,
               read< keyword::homgendir >,
-              process_spinsflow > {};
+              spinsflow > {};
 
+  // keywords
   struct keywords :
          sor< process_title,
               physics > {};
 
+  // comment: start with '#' until eol
   struct comment :
          //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
+  // ignore comments and empty lines
   struct ignore :
          sor< comment, eol > {};
 
+  // parser entry point: parse keywords and ignores until eof
   struct read_file :
-         until< eof, sor<keywords, parse<do_input>, ignore> > {};
+         until< eof, sor<keywords, parse<unknown>, ignore> > {};
 
 } // namespace grammar
 

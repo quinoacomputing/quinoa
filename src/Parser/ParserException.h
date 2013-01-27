@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:39:58 PM MST
+  \date      Sun 27 Jan 2013 11:14:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -21,12 +21,14 @@ namespace Quinoa {
 
 //! Parser exception types
 enum ParserExceptType { CMDLINE_EXCEPT=0,           //!< Command line exception
+                        UNKNOWN_KEYWORD,            //!< Unknown keyword
                         NUM_PARSER_EXCEPT
 };
 
 //! Parser exception error messages
 const string ParserMsg[NUM_PARSER_EXCEPT] = {
-  "Exactly one command line argument required: filename.q"
+  "Exactly one command line argument required: filename.q",
+  "Unknown keyword"
 };
 
 //! ParserException : Exception
