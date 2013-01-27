@@ -101,6 +101,11 @@ if(HAS_WALL)
   add_definitions("-Wall")
 endif()
 
+#check_cxx_compiler_flag(-opt-report HAS_PEDANTIC)
+#if(HAS_PEDANTIC)
+#  add_definitions("-pedantic")
+#endif()
+
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
 if(HAS_WREMARKS)
   # Turn on remarks
