@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 08:07:17 PM MST
+  \date      Sat 26 Jan 2013 08:45:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Grammar_def_h
 #define Grammar_def_h
+
+#include <unordered_map>
 
 namespace grammar {
 
@@ -23,39 +25,39 @@ namespace grammar {
 
   // State
 
-  std::string title;
-  std::string hydro;
-  std::string mix;
+  using key_type = std::string;
+  using value_type = std::string;
+  using stack_type = std::unordered_map< key_type, value_type >;
 
   // Actions
 
   struct do_comment : action_base< do_comment > {
-    static void apply(const std::string& m) {
+    static void apply(const std::string& m, stack_type& stack) {
       std::cout << "COMMENT: \"" << m << "\"" << endl;
     }
   };
 
   struct do_input : action_base< do_input > {
-    static void apply(const std::string& m) {
+    static void apply(const std::string& m, stack_type& stack) {
       std::cout << "INPUT  : \"" << m << "\"" << endl;
     }
   };
 
-  struct parse_title : action_base< parse_title > {
-    static void apply(const std::string& s) {
-      title = s;
+  struct insert_title : action_base< insert_title > {
+    static void apply(const std::string& value, stack_type& stack) {
+      stack["title"] = value;
     }
   };
 
-  struct parse_hydro : action_base< parse_hydro > {
-    static void apply(const std::string& s) {
-      hydro = s;
+  struct insert_hydro : action_base< insert_hydro > {
+    static void apply(const std::string& value, stack_type& stack) {
+      stack["hydro"] = value;
     }
   };
 
-  struct parse_mix : action_base< parse_mix > {
-    static void apply(const std::string& s) {
-      mix = s;
+  struct insert_mix : action_base< insert_mix > {
+    static void apply(const std::string& value, stack_type& stack) {
+      stack["mix"] = value;
     }
   };
 
@@ -77,13 +79,13 @@ namespace grammar {
          trim< not_one<'"'>, one<'"'> > {};
 
   struct read_title :
-         ifmust< one<'"'>, ifapply< quoted, parse_title >, one<'"'>, space > {};
+         ifmust< one<'"'>, ifapply< quoted, insert_title >, one<'"'>, space > {};
   
   struct read_hydro :
-         pad< ifapply< trim<alnum, space>, parse_hydro >, blank, space > {};
+         pad< ifapply< trim<alnum, space>, insert_hydro >, blank, space > {};
 
   struct read_mix :
-         pad< ifapply< trim<alnum, space>, parse_mix >, blank, space > {};
+         pad< ifapply< trim<alnum, space>, insert_mix >, blank, space > {};
 
   struct process_hydro :
          ifmust< read<keyword::hydro>, read_hydro > {};

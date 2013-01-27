@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 07:57:52 PM MST
+  \date      Sat 26 Jan 2013 08:46:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -53,13 +53,16 @@ Parser::Parse()
 //******************************************************************************
 {
   cout << "==== PARSE START ====" << endl;
-  pegtl::basic_parse_file< grammar::read_file >( m_filename );
+  grammar::stack_type stack;
+  pegtl::basic_parse_file< grammar::read_file >( m_filename, stack );
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  m_control->setTitle( grammar::title );
+  //m_control->setTitle( grammar::title );
 
-  cout << "Title: " << m_control->title() << endl << endl;
-  cout << "Hydro: " << grammar::hydro << endl << endl;
-  cout << "Mix: " << grammar::mix << endl << endl;
+  for (auto& s : stack) {
+    cout << s.first << ": " << s.second << endl;
+  }
+
+  cout << endl;
 }
