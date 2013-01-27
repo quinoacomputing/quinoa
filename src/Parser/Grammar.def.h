@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 11:07:21 AM MST
+  \date      Sun 27 Jan 2013 11:18:16 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -132,7 +132,7 @@ namespace grammar {
 
   // parser entry point: parse keywords and ignores until eof
   struct read_file :
-         until< eof, sor<keywords, parse<unknown>, ignore> > {};
+         until< eof, sor<keywords, ignore> > {};
 
 } // namespace grammar
 
