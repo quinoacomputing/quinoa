@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 11:06:10 AM MST
+  \date      Sun 27 Jan 2013 11:27:38 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -54,7 +54,11 @@ Parser::Parse()
 {
   cout << "==== PARSE START ====" << endl;
   grammar::stack_type stack;
+#ifdef NDEBUG
+  pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack );
+#else  // NDEBUG
   pegtl::basic_parse_file< grammar::read_file >( m_filename, stack );
+#endif // NDEBUG
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
