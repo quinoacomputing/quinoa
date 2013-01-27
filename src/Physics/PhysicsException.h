@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 12:13:38 PM MST
+  \date      Sun 27 Jan 2013 12:19:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -49,7 +49,7 @@ class PhysicsException : public Exception {
     PhysicsException(const PhysicsException&);
 
     //! Destructor
-    virtual ~PhysicsException() {}
+    //virtual ~PhysicsException() {}
 
     //! Handle PhysicsException
     virtual ErrCode handleException(Driver* driver);

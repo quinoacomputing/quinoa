@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 07:06:03 PM MST
+  \date      Sun 27 Jan 2013 12:19:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -265,7 +265,7 @@ class VSLException : public MKLException {
     VSLException(VSLException&&) = default;
 
     //! Destructor
-    virtual ~VSLException() {}
+    //virtual ~VSLException() {}
 
     //! Handle VSLException
     virtual ErrCode handleException(Driver* driver);

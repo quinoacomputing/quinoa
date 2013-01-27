@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:16:31 PM MST
+  \date      Sun 27 Jan 2013 01:30:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
   Memory memory(&paradigm);
   Driver driver(argc, argv, &memory, &paradigm);
 
-  ErrCode error = NO_ERROR;
+  ErrCode error = HAPPY;
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
@@ -90,15 +90,25 @@ int main(int argc, char* argv[])
     driver.solve();
 
 #ifndef NDEBUG
-  } catch (Exception& e) { error = e.handleException(&driver); }
-    catch (...) { // catch uncaught exceptions
-      Exception e(UNCAUGHT);
-      error = e.handleException(&driver);
+  } // Catch and handle Quina::Exceptions
+    catch (Exception& qe) {
+      error = qe.handleException(&driver);
+    }
+    // Catch std::exceptions and transform them into Quinoa::Exceptions
+    catch (exception& se) {
+      Exception qe(RUNTIME, se.what());
+      error = qe.handleException(&driver);
+    }
+    // Catch uncaught exceptions and still do cleanup
+    catch (...) {
+      Exception qe(UNCAUGHT);
+      error = qe.handleException(&driver);
     }
 #endif // NDEBUG
 
   //!< Finalize
   driver.finalize();
 
-  if (error != FATAL_ERROR) cout << "Normal finish." << endl;
+  // Return the error code
+  return error;
 }

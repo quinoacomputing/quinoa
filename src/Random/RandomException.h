@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 06:59:37 PM MST
+  \date      Sun 27 Jan 2013 12:19:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -51,7 +51,7 @@ class RandomException : public Exception {
     RandomException(const RandomException&);
 
     //! Destructor
-    virtual ~RandomException() {}
+    //virtual ~RandomException() {}
 
     //! Handle RandomException
     virtual ErrCode handleException(Driver* driver);

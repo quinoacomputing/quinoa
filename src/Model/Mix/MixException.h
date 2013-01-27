@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:27:42 AM MST
+  \date      Sun 27 Jan 2013 12:18:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler
@@ -50,7 +50,7 @@ class MixException : public ModelException {
     MixException(const MixException&);
 
     //! Destructor
-    virtual ~MixException() {}
+    //virtual ~MixException() {}
 
     //! Handle MixException
     virtual ErrCode handleException(Driver* driver);

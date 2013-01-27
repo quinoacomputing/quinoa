@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:37:39 AM MST
+  \date      Sun 27 Jan 2013 01:24:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -53,31 +53,30 @@ namespace Quinoa {
 
 //! Exception types
 // ICC: no strongly typed enums yet
-enum ExceptType { CUMULATIVE=0,  //!< Only several will produce a warning
-                  WARNING,       //!< Warning: output message
-                  ERROR,         //!< Error: output but will not interrupt
-                  FATAL,         //!< Fatal error: will interrupt
-                  UNCAUGHT,      //!< Uncaught: will interrupt
+enum ExceptType { WARNING=0,     //!< produces a warning
+                  CUMULATIVE,    //!< only several will produce a warning
+                  ERROR,         //!< produce error but will not interrupt
+                  FATAL,         //!< fatal error, will interrupt
+                  RUNTIME,       //!< std::runtime_error, will interrupt
+                  UNCAUGHT,      //!< uncaught: will interrupt
                   NUM_EXCEPT
 };
 
 //! Error codes for the OS (or whatever calls Quinoa)
-enum ErrCode { NO_ERROR=0,       //!< Everything went fine
-               NONFATAL,         //!< Exception occurred but continue
-               FATAL_ERROR,      //!< Fatal error occurred
+enum ErrCode { HAPPY=0,          //!< Everything went fine
+               NONFATAL,         //!< Non-fatal exceptions occurred
+               FATAL_ERROR,      //!< Fatal error occurred, had to terminate
                NUM_ERR_CODE
 };
 
 class Driver;
 
-//! Exception base class
+//! Quinoa::Exception base
 class Exception {
 
   public:
-    //! Constructor
-    Exception(ExceptType except) : m_except(except) {}
-
-    Exception(ExceptType except, const string& msg) :
+    //! Constructors
+    Exception(ExceptType except, const string& msg = "") :
       m_message(msg), m_except(except) {}
 
     Exception(const ExceptType except,
@@ -90,9 +89,6 @@ class Exception {
 
     //! Move constructor, necessary for throws, default compiler generated
     Exception(Exception&&) = default;
-
-    //! Destructor
-    virtual ~Exception() {}
 
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* driver);
@@ -113,8 +109,14 @@ class Exception {
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
 
-    //! Exception type (CUMULATIVE, WARNING, ERROR, etc.)
+    //! Exception type (WARNING, CUMULATIVE, ERROR, etc.)
     ExceptType m_except;
+
+    //! Generate generic exception message
+    string genericWhat();
+
+    //! Generate std::runtime_error exception message
+    string runtimeWhat();
 };
 
 } // namespace Quinoa
