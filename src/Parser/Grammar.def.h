@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 08:45:39 PM MST
+  \date      Sat 26 Jan 2013 09:08:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -73,31 +73,30 @@ namespace grammar {
   struct read :
          pad< trim<token, space>, blank, space > {};
 
+  // parse input padded by blank at left and space at right and apply 'action'
+  template< class action >
+  struct parse :
+         pad< ifapply< trim<alnum, space>, action >, blank, space > {};
+
   // Grammar
 
   struct quoted :
          trim< not_one<'"'>, one<'"'> > {};
 
-  struct read_title :
+  struct parse_title :
          ifmust< one<'"'>, ifapply< quoted, insert_title >, one<'"'>, space > {};
-  
-  struct read_hydro :
-         pad< ifapply< trim<alnum, space>, insert_hydro >, blank, space > {};
-
-  struct read_mix :
-         pad< ifapply< trim<alnum, space>, insert_mix >, blank, space > {};
 
   struct process_hydro :
-         ifmust< read<keyword::hydro>, read_hydro > {};
+         ifmust< read<keyword::hydro>, parse<insert_hydro> > {};
 
   struct process_mix :
-         ifmust< read<keyword::mix>, read_mix > {};
+         ifmust< read<keyword::mix>, parse<insert_mix> > {};
 
   struct read_spinsflow :
          until< read<keyword::end>, sor< process_hydro, process_mix > > {};
 
   struct process_title :
-         ifmust< read<keyword::title>, read_title > {};
+         ifmust< read<keyword::title>, parse_title > {};
 
   struct process_spinsflow :
          ifmust< read<keyword::spinsflow>, read_spinsflow > {};
