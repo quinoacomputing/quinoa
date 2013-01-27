@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 11:14:44 PM MST
+  \date      Sun 27 Jan 2013 09:58:29 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -78,6 +78,11 @@ namespace grammar {
   struct parse :
          pad< ifapply< trim<alnum, space>, action >, blank, space > {};
 
+  // parse block of 'tokens' until 'end' keyword
+  template< typename ... tokens >
+  struct block :
+         until< read<keyword::end>, sor<tokens ...> > {};
+
   // Grammar
 
   // title
@@ -97,11 +102,8 @@ namespace grammar {
   struct process_mix :
          ifmust< read<keyword::mix>, parse<insert_mix> > {};
 
-  struct read_spinsflow :
-         until< read<keyword::end>, sor< process_hydro, process_mix > > {};
-
   struct process_spinsflow :
-         ifmust< read<keyword::spinsflow>, read_spinsflow > {};
+         ifmust< read<keyword::spinsflow>, block<process_hydro,process_mix> > {};
 
   // physics
   struct physics :
