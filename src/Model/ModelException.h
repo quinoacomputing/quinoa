@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:35:12 PM MST
+  \date      Sun 27 Jan 2013 12:18:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -55,7 +55,7 @@ class ModelException : public Exception {
     ModelException(const ModelException&);
 
     //! Destructor
-    virtual ~ModelException() {}
+    //virtual ~ModelException() {}
 
     //! Handle ModelException
     virtual ErrCode handleException(Driver* driver);

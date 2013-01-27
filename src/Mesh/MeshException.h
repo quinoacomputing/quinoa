@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 06:56:55 PM MST
+  \date      Sun 27 Jan 2013 12:17:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -65,7 +65,7 @@ class MeshException : public Exception {
     MeshException(MeshException&&) = default;
 
     //! Destructor
-    virtual ~MeshException() {}
+    //virtual ~MeshException() {}
 
     //! Handle MeshException
     virtual ErrCode handleException(Driver* driver);

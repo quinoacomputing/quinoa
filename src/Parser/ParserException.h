@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 11:14:52 AM MST
+  \date      Sun 27 Jan 2013 12:18:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -51,7 +51,7 @@ class ParserException : public Exception {
     ParserException(const ParserException&);
 
     //! Destructor
-    virtual ~ParserException() {}
+    //virtual ~ParserException() {}
 
     //! Handle ParserException
     virtual ErrCode handleException(Driver* driver);

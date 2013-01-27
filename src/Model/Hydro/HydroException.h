@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/HydroException.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:32:09 AM MST
+  \date      Sun 27 Jan 2013 12:18:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model exception handler
   \details   Hydro model exception handler
@@ -50,7 +50,7 @@ class HydroException : public ModelException {
     HydroException(const HydroException&);
 
     //! Destructor
-    virtual ~HydroException() {}
+    //virtual ~HydroException() {}
 
     //! Handle HydroException
     virtual ErrCode handleException(Driver* driver);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 07:01:55 PM MST
+  \date      Sun 27 Jan 2013 12:19:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -60,7 +60,7 @@ class MKLException : public RandomException {
     MKLException(const MKLException&);
 
     //! Destructor
-    virtual ~MKLException() {}
+    //virtual ~MKLException() {}
 
     //! Handle MKLException
     virtual ErrCode handleException(Driver* driver);
