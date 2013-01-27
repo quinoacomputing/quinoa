@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 09:08:33 PM MST
+  \date      Sat 26 Jan 2013 11:14:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -80,12 +80,17 @@ namespace grammar {
 
   // Grammar
 
+  // title
   struct quoted :
          trim< not_one<'"'>, one<'"'> > {};
 
   struct parse_title :
          ifmust< one<'"'>, ifapply< quoted, insert_title >, one<'"'>, space > {};
 
+  struct process_title :
+         ifmust< read<keyword::title>, parse_title > {};
+
+  // spinsflow
   struct process_hydro :
          ifmust< read<keyword::hydro>, parse<insert_hydro> > {};
 
@@ -95,26 +100,18 @@ namespace grammar {
   struct read_spinsflow :
          until< read<keyword::end>, sor< process_hydro, process_mix > > {};
 
-  struct process_title :
-         ifmust< read<keyword::title>, parse_title > {};
-
   struct process_spinsflow :
          ifmust< read<keyword::spinsflow>, read_spinsflow > {};
 
-  struct keyword_main :
-         process_title {};
-
-  struct keyword_physics :
+  // physics
+  struct physics :
          sor< read< keyword::homdir >,
               read< keyword::homgendir >,
               process_spinsflow > {};
 
-  struct keyword_any :
-         sor< keyword_main,
-              keyword_physics > {};
-
-  struct input :
-         pad< ifapply< trim<alnum, space>, do_input >, blank, space > {};
+  struct keywords :
+         sor< process_title,
+              physics > {};
 
   struct comment :
          //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
@@ -124,7 +121,7 @@ namespace grammar {
          sor< comment, eol > {};
 
   struct read_file :
-         until< eof, sor<keyword_any, input, ignore> > {};
+         until< eof, sor<keywords, parse<do_input>, ignore> > {};
 
 } // namespace grammar
 
