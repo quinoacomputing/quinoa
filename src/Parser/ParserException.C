@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:37:49 PM MST
+  \date      Sun 27 Jan 2013 11:10:06 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -20,8 +20,8 @@ ParserException::handleException(Driver* driver)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Contribute to error message
-  m_message = ParserMsg[static_cast<int>(m_except)] + m_message;
+  // Start error message
+  m_message = ParserMsg[static_cast<int>(m_except)];
 
   // Handle Exception (criticality)
   return Exception::handleException(driver);
