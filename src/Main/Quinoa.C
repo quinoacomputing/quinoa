@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 07:42:46 PM MST
+  \date      Sun 27 Jan 2013 07:59:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
       error = qe.handleException(&driver);
     }
 
-  //!< Finalize
+  // Finalize
   driver.finalize();
 
   // Return the error code
