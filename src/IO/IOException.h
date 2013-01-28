@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:17:32 PM MST
+  \date      Sun 27 Jan 2013 07:55:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -52,7 +52,7 @@ class IOException : public Exception {
     IOException(IOException&&) = default;
 
     //! Destructor
-    //virtual ~IOException() {}
+    virtual ~IOException() {}
 
     //! Handle IOException
     virtual ErrCode handleException(Driver* driver);
