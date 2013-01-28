@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 11:18:16 AM MST
+  \date      Sun 27 Jan 2013 08:02:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -128,7 +128,7 @@ namespace grammar {
 
   // ignore comments and empty lines
   struct ignore :
-         sor< comment, eol > {};
+         sor< comment, until<eol, space> > {};
 
   // parser entry point: parse keywords and ignores until eof
   struct read_file :
