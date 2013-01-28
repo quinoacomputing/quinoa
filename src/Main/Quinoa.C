@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 01:30:05 PM MST
+  \date      Sun 27 Jan 2013 07:42:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -82,14 +82,13 @@ int main(int argc, char* argv[])
   Driver driver(argc, argv, &memory, &paradigm);
 
   ErrCode error = HAPPY;
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
+  // This main try-catch block is executed even in NDEBUG mode, otherwise
+  // memory may leak
   try {
-#endif // NDEBUG
 
     driver.setup();
     driver.solve();
 
-#ifndef NDEBUG
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
       error = qe.handleException(&driver);
@@ -104,7 +103,6 @@ int main(int argc, char* argv[])
       Exception qe(UNCAUGHT);
       error = qe.handleException(&driver);
     }
-#endif // NDEBUG
 
   //!< Finalize
   driver.finalize();
