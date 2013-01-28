@@ -23,13 +23,21 @@ set(LINK_STRATEGY ${LINK_STRATEGY}
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
-# Make sure ICC uses gcc-4.7 compatibililty
-#if(PLATFORM MATCHES "linux-intel")
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
-#endif()
+# Intel-specific compiler arguments on linux
+if(PLATFORM MATCHES "linux-intel")
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
+  # Disregard the following remarks:
+  #   111: statement is unreachable
+  #   177: variable was declared but never referenced
+  #   304: access control not specified ("public" by default)
+  #   383: value copied to temporary, reference to temporary used
+  #   981: operands are evaluated in unspecified order
+  #  1418: external function definition with no prior declaration
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,177,304,383,981,1418")
+endif()
 
-# Make sure ICC finds the gcc-4.7 libs, installed in custom location on darwin
+# Intel-specific compiler arguments on darwin
 #if(PLATFORM MATCHES "darwin-intel")
 #  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc -cxxlib=/home/opt/gcc/4.7.1")
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++ -cxxlib=/home/opt/gcc/4.7.1")
@@ -108,13 +116,7 @@ endif()
 
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
 if(HAS_WREMARKS)
-  # Turn on remarks
   add_definitions("-Wremarks")
-  # Disregard the following remarks:
-  #   981: operands are evaluated in unspecified order
-  #   383: value copied to temporary, reference to temporary used
-  add_definitions("-diag-disable 981")
-  add_definitions("-diag-disable 383")
 endif()
 
 check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)

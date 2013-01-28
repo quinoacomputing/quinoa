@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 08:02:36 PM MST
+  \date      Sun 27 Jan 2013 08:31:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -34,18 +34,18 @@ namespace grammar {
 
   // Actions
 
-  struct do_comment : action_base< do_comment > {
-    static void apply(const std::string& m, stack_type& stack) {
-      std::cout << "COMMENT: \"" << m << "\"" << endl;
-    }
-  };
-
-  struct unknown : action_base< unknown > {
-    static void apply(const std::string& m, stack_type& stack) {
-      Throw(ParserException, FATAL, UNKNOWN_KEYWORD);
-      //std::cout << "UNKNOWN: \"" << m << "\"" << endl;
-    }
-  };
+//   struct do_comment : action_base< do_comment > {
+//     static void apply(const std::string& m, stack_type& stack) {
+//       std::cout << "COMMENT: \"" << m << "\"" << endl;
+//     }
+//   };
+//
+//   struct unknown : action_base< unknown > {
+//     static void apply(const std::string& m, stack_type& stack) {
+//       Throw(ParserException, FATAL, UNKNOWN_KEYWORD);
+//       //std::cout << "UNKNOWN: \"" << m << "\"" << endl;
+//     }
+//   };
 
   struct insert_title : action_base< insert_title > {
     static void apply(const std::string& value, stack_type& stack) {
