@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Jan 28 08:03:33 2013
+  \date      Mon Jan 28 15:08:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -27,9 +27,9 @@ static void echoName()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "===============================================\n";
+  cout << "=========================================\n";
   cout << "Quinoa: Lagrangian particle hydrodynamics\n";
-  cout << "===============================================" << endl;
+  cout << "=========================================" << endl;
 }
 
 static void echoBuildInfo()
