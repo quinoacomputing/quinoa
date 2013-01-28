@@ -18,8 +18,15 @@ namespace pegtl
       // Unless Debug is broken, the return value is always true [because the Debug
       // must convert a local failure (return false) into a global failure (exception)
       // when Must == true, as is the case here].
+      //
+      // Conditional on NDEBUG to avoid compiler warning 'variable was declared
+      // but never referenced'
+      #ifdef NDEBUG
+      de.template match< true, TopRule >( in, std::forward< States >( st ) ... );
+      #else  // NDEBUG
       const bool b = de.template match< true, TopRule >( in, std::forward< States >( st ) ... );
       assert( b );
+      #endif // NDEBUG
    }
 
    // The next functions add one convenience layer: they take care of instantiating

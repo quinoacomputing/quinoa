@@ -29,12 +29,11 @@ if(PLATFORM MATCHES "linux-intel")
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
   # Disregard the following remarks:
   #   111: statement is unreachable
-  #   177: variable was declared but never referenced
   #   304: access control not specified ("public" by default)
   #   383: value copied to temporary, reference to temporary used
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,177,304,383,981,1418")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,304,383,981,1418")
 endif()
 
 # Intel-specific compiler arguments on darwin
