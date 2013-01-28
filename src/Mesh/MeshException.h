@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:17:54 PM MST
+  \date      Sun 27 Jan 2013 07:55:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -57,6 +57,7 @@ class MeshException : public Exception {
                   const unsigned int& line) :
       Exception(except, file, func, line), m_throwerMsg(throwerMsg),
       m_except(mshExcept) {}
+
     // ICC: the above can be done with delegate constructors, like
     //MeshException(ExceptType except, MeshExceptType meshExcept) :
     //  MeshException(except, meshExcept, 0) {}
@@ -65,7 +66,7 @@ class MeshException : public Exception {
     MeshException(MeshException&&) = default;
 
     //! Destructor
-    //virtual ~MeshException() {}
+    virtual ~MeshException() {}
 
     //! Handle MeshException
     virtual ErrCode handleException(Driver* driver);

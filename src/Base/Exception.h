@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 01:24:00 PM MST
+  \date      Sun 27 Jan 2013 07:53:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -89,6 +89,9 @@ class Exception {
 
     //! Move constructor, necessary for throws, default compiler generated
     Exception(Exception&&) = default;
+
+    //! Destructor
+    virtual ~Exception() {}
 
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* driver);
