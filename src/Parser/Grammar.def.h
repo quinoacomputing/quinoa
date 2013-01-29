@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Mon 28 Jan 2013 10:14:19 PM MST
+  \date      Tue 29 Jan 2013 06:39:46 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -30,7 +30,12 @@ namespace grammar {
 
   enum key_type { TITLE=0,
                   HYDRO,
-                  MIX
+                  MIX,
+                  NSCALAR,
+                  NPAR,
+                  TERM,
+                  NSTEP,
+                  ECHO,
   };
 
   using value_type = std::string;
@@ -104,9 +109,18 @@ namespace grammar {
                  block< process<keyword::hydro, insert<HYDRO>>,
                         process<keyword::mix, insert<MIX>> > > {};
 
+  // homdir block
+  struct homdir :
+         ifmust< read<keyword::homdir>,
+                 block< process<keyword::nscalar, insert<NSCALAR>>,
+                        process<keyword::npar, insert<NPAR>>,
+                        process<keyword::term, insert<TERM>>,
+                        process<keyword::nstep, insert<NSTEP>>,
+                        process<keyword::echo, insert<ECHO>> > > {};
+
   // physics keywords
   struct physics :
-         sor< read< keyword::homdir >,
+         sor< homdir,
               read< keyword::homgendir >,
               spinsflow > {};
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.def.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 08:07:55 PM MST
+  \date      Tue 29 Jan 2013 06:40:26 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -35,8 +35,15 @@ namespace keyword {
   using term   = pegtl::string< t, e, r, m >;
   using dt     = pegtl::string< d,t >;
 
-  // SPINSFlow keywords
+  // Physics::SPINSFlow keywords
   using hydro = pegtl::string< h,y,d,r,o >;
   using mix   = pegtl::string< m,i,x >;
+
+  // Physics::HomogeneousDirichlet keywords
+  using nscalar = pegtl::string< n,s,c,a,l,a,r >;
+  using npar = pegtl::string< n,p,a,r >;
+  using term = pegtl::string< t,e,r,m >;
+  using nstep = pegtl::string< n,s,t,e,p >;
+  using echo = pegtl::string< e,c,h,o >;
 
 } // namespace keyword
