@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.def.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 08:31:51 PM MST
+  \date      Mon 28 Jan 2013 10:14:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -28,9 +28,13 @@ namespace grammar {
 
   // State
 
-  using key_type = std::string;
+  enum key_type { TITLE=0,
+                  HYDRO,
+                  MIX
+  };
+
   using value_type = std::string;
-  using stack_type = std::unordered_map< key_type, value_type >;
+  using stack_type = std::unordered_map< key_type, value_type, hash<int> >;
 
   // Actions
 
@@ -47,21 +51,11 @@ namespace grammar {
 //     }
 //   };
 
-  struct insert_title : action_base< insert_title > {
+  // insert value to stack at 'key'
+  template< key_type key >
+  struct insert : action_base< insert<key> > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack["title"] = value;
-    }
-  };
-
-  struct insert_hydro : action_base< insert_hydro > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack["hydro"] = value;
-    }
-  };
-
-  struct insert_mix : action_base< insert_mix > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack["mix"] = value;
+      stack[key] = value;
     }
   };
 
@@ -99,7 +93,7 @@ namespace grammar {
          trim< not_one<'"'>, one<'"'> > {};
 
   struct parse_title :
-         ifmust< one<'"'>, ifapply<quoted, insert_title>, one<'"'>, space > {};
+         ifmust< one<'"'>, ifapply<quoted, insert<TITLE>>, one<'"'>, space > {};
 
   struct process_title :
          ifmust< read<keyword::title>, parse_title > {};
@@ -107,8 +101,8 @@ namespace grammar {
   // spinsflow block
   struct spinsflow :
          ifmust< read<keyword::spinsflow>,
-                 block< process<keyword::hydro, insert_hydro>,
-                        process<keyword::mix, insert_mix> > > {};
+                 block< process<keyword::hydro, insert<HYDRO>>,
+                        process<keyword::mix, insert<MIX>> > > {};
 
   // physics keywords
   struct physics :
