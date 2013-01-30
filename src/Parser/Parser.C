@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 10:42:44 PM MST
+  \date      Wed 30 Jan 2013 06:26:17 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -56,7 +56,7 @@ Parser::parse()
       case grammar::TITLE : m_control->setTitle(s.second); break;
       case grammar::HYDRO :
         try {
-          pegtl::basic_parse_string< store::match_hydro >( s.second );
+          pegtl::basic_parse_string< grammar::match_hydro >( s.second );
         } catch (exception& se) {
           cout << "Didn't find hydro!" << endl;
         }
