@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 09:05:14 PM MST
+  \date      Tue 29 Jan 2013 10:42:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -51,13 +51,24 @@ Parser::parse()
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  //m_control->setTitle( stack[TITLE] );
-
   for (auto& s : stack) {
-    cout << s.first << ": " << s.second << endl;
+    switch (s.first) {
+      case grammar::TITLE : m_control->setTitle(s.second); break;
+      case grammar::HYDRO :
+        try {
+          pegtl::basic_parse_string< store::match_hydro >( s.second );
+        } catch (exception& se) {
+          cout << "Didn't find hydro!" << endl;
+        }
+        //m_control->setHydro(s.second);
+        break;
+    }
   }
 
-  cout << endl;
+  //for (auto& s : stack) {
+  //  cout << s.first << ": " << s.second << endl;
+  //}
+  //cout << endl;
 }
 
 void

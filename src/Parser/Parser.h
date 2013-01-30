@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 09:04:59 PM MST
+  \date      Tue 29 Jan 2013 09:55:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -44,6 +44,27 @@ class Parser {
     Parser(Parser&&) = delete;
     //! Don't permit move assigment
     Parser& operator=(Parser&&) = delete;
+
+//     //! Store problem title
+//     void storeTitle(const string& title);
+//     //! Convert physics
+//     void convertPhysics(const string& physics);
+//     //! Convert hydrodynamics model
+//     void convertHydro(const string& hydro);
+//     //! Convert material mix model
+//     void convertMix(const string& mix);
+//     //! Convert number of time steps to take
+//     void convertNstep(const string& nstep);
+//     //! Convert value at which to stop simulation
+//     void convertTerm(const string& term);
+//     //! Convert size of time step
+//     void convertDt(const string& dt);
+//     //! Convert number of mixing scalars
+//     void convertNscalar(const string& nscalar);
+//     //! Convert total number of particles
+//     void convertNpar(const string& npar);
+//     //! Convert echo interval
+//     void convertEcho(const string& echo);
 
     const string m_filename;            //!< Name of file to parse
     Control* const m_control;           //!< Main control category

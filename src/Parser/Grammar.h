@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 08:15:52 PM MST
+  \date      Tue 29 Jan 2013 10:42:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -64,7 +64,7 @@ namespace grammar {
     }
   };
 
-  // Utilities
+  // Grammar
 
   // read 'token' until 'erased' trimming 'erased'
   template< class token, class erased >
@@ -81,17 +81,20 @@ namespace grammar {
   struct parse :
          pad< ifapply< trim<alnum, space>, action >, blank, space > {};
 
+  // comment: start with '#' until eol
+  struct comment :
+         //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
+         pad< trim<one<'#'>,eol>, blank, eol> {};
+
   // parse block of 'tokens' until 'end' keyword
   template< typename ... tokens >
   struct block :
-         until< read<keyword::end>, sor<tokens ...> > {};
+         until< read<keyword::end>, sor<comment, tokens ...> > {};
 
   // read 'keyword' and call its 'insert' action
   template< class keyword, class insert >
   struct process :
          ifmust< read<keyword>, parse<insert> > {};
-
-  // Grammar
 
   // title: within double quotes
   struct quoted :
@@ -129,19 +132,39 @@ namespace grammar {
          sor< process_title,
               physics > {};
 
-  // comment: start with '#' until eol
-  struct comment :
-         //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
-         pad< trim<one<'#'>,eol>, blank, eol> {};
-
   // ignore comments and empty lines
   struct ignore :
          sor< comment, until<eol, space> > {};
 
-  // parser entry point: parse keywords and ignores until eof
+  // Entry point
+
+  // parse keywords and ignores until eof
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
 
 } // namespace grammar
+
+
+namespace store {
+
+  using namespace pegtl;
+  using namespace pegtl::ascii;
+
+  // Keywords
+
+  #include <Keywords.h>
+
+  using namespace keyword;
+
+  // parser entry points:
+
+  // All accepted as physics
+  struct match_physics : sor< homdir, homgendir, spinsflow > {};
+  // All accepted as hydro
+  struct match_hydro : sor< slm, glm > {};
+  // All accepted as mix
+  struct match_mix : sor< iem, iecm, dir, gendir > {};
+
+} // namespace keyword_match
 
 #endif // Grammar_def_h

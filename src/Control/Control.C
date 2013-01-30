@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.C
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 09:15:46 PM MST
+  \date      Tue 29 Jan 2013 09:48:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control category
@@ -32,18 +32,4 @@ Control::Control() :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-}
-
-void
-Control::setPhysics(const string& physics)
-//******************************************************************************
-//  setPhysics
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if (physics.empty()) {
-    m_physics = PhysicsType::NO_PHYSICS;
-  } //else if (physics == grammar::keyword::homdir) {
-    //m_physics = PhysicsType::HOMOGENEOUS_DIRICHLET;
-  //}
 }
