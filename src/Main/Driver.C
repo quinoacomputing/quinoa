@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 10:01:02 AM MST
+  \date      Tue 29 Jan 2013 09:05:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -66,7 +66,10 @@ Driver::setup()
   Parser parser(m_argv[1], m_control);
 
   // Parse control file
-  parser.Parse();
+  parser.parse();
+
+  // Echo information of stuff parsed
+  parser.echo();
 
   // Instantiate selected physics
   // ICC: this could be a switch once ICC supports scoped enums in switch
@@ -79,7 +82,7 @@ Driver::setup()
                                                    ECHO,
                                                    NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENDIRICHLET) {
+  } else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET) {
     m_physics = new (nothrow) HomogeneousGeneralizedDirichlet(m_memory,
                                                               m_paradigm,
                                                               NSCALAR,

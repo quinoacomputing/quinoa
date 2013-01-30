@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 10:13:28 PM MST
+  \date      Tue 29 Jan 2013 09:05:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -11,8 +11,7 @@
 
 #include <pegtl.hh>
 
-#include <Grammar.def.h>
-
+#include <Grammar.h>
 #include <Parser.h>
 #include <Control.h>
 #include <IOException.h>
@@ -28,26 +27,15 @@ Parser::Parser(const string& filename, Control* const control) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//  m_q.open(m_filename, ifstream::in);
-//  Assert(m_q.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
-}
-
-Parser::~Parser()
-//******************************************************************************
-//  Destructor
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//  m_q.close();
-
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
-//  if (m_q.fail())
-//    cout << "WARNING: Failed to close file: " << m_filename << endl;
+  // Check if control file exists, throw exception if not
+  m_q.open(m_filename, ifstream::in);
+  Assert(m_q.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+  m_q.close();
+  Assert(!m_q.fail(), IOException,FATAL,IO_FAILED_CLOSE,m_filename);
 }
 
 void
-Parser::Parse()
+Parser::parse()
 //******************************************************************************
 //  Parse
 //! \author  J. Bakosi
@@ -63,11 +51,20 @@ Parser::Parse()
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  //m_control->setTitle( grammar::title );
+  //m_control->setTitle( stack[TITLE] );
 
   for (auto& s : stack) {
     cout << s.first << ": " << s.second << endl;
   }
 
   cout << endl;
+}
+
+void
+Parser::echo()
+//******************************************************************************
+//  Echo information on stuff parsed
+//! \author  J. Bakosi
+//******************************************************************************
+{
 }
