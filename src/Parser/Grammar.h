@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 10:42:37 PM MST
+  \date      Wed 30 Jan 2013 06:33:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -17,10 +17,8 @@
 
 namespace grammar {
 
-  using namespace std;
   using namespace pegtl;
   using namespace pegtl::ascii;
-  using namespace Quinoa;
 
   // Keywords
 
@@ -136,35 +134,25 @@ namespace grammar {
   struct ignore :
          sor< comment, until<eol, space> > {};
 
-  // Entry point
+  // Entry points
 
   // parse keywords and ignores until eof
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
 
+  // match all accepted as physics
+  struct match_physics : sor< keyword::homdir,
+                              keyword::homgendir,
+                              keyword::spinsflow > {};
+  // match all accepted as hydro
+  struct match_hydro : sor< keyword::slm,
+                            keyword::glm > {};
+  // match all accepted as mix
+  struct match_mix : sor< keyword::iem,
+                          keyword::iecm,
+                          keyword::dir,
+                          keyword::gendir > {};
+
 } // namespace grammar
-
-
-namespace store {
-
-  using namespace pegtl;
-  using namespace pegtl::ascii;
-
-  // Keywords
-
-  #include <Keywords.h>
-
-  using namespace keyword;
-
-  // parser entry points:
-
-  // All accepted as physics
-  struct match_physics : sor< homdir, homgendir, spinsflow > {};
-  // All accepted as hydro
-  struct match_hydro : sor< slm, glm > {};
-  // All accepted as mix
-  struct match_mix : sor< iem, iecm, dir, gendir > {};
-
-} // namespace keyword_match
 
 #endif // Grammar_def_h
