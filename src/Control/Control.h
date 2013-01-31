@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 10:07:45 PM MST
+  \date      Thu 31 Jan 2013 06:57:00 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -36,7 +36,7 @@ enum class HydroType { NO_HYDRO,
 enum class MixType { NO_MIX,
                      IEM,
                      IECM,
-                     DIRICLET,
+                     DIRICHLET,
                      GENERALIZED_DIRICHLET
 };
 
@@ -53,7 +53,7 @@ class Control {
     //! Set problem title
     void setTitle(const string& title) { m_title = title; }
     //! Set physics
-    void setPhysics(const PhysicsType& physics);
+    void setPhysics(const PhysicsType& physics) { m_physics = physics; }
     //! Set hydrodynamics model
     void setHydro(const HydroType& hydro) { m_hydro = hydro; }
     //! Set material mix model
