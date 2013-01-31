@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 07:55:46 PM MST
+  \date      Wed 30 Jan 2013 07:00:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -40,7 +40,7 @@ const string MeshMsg[NUM_MESH_EXCEPT] = {
 class MeshException : public Exception {
 
   public:
-    //! Constructor with message from thrower
+    //! Constructor without message
     MeshException(ExceptType except,
                   MeshExceptType mshExcept,
                   const string& file,
@@ -48,7 +48,7 @@ class MeshException : public Exception {
                   const unsigned int& line) :
       Exception(except, file, func, line), m_except(mshExcept) {}
 
-    //! Constructor without message
+    //! Constructor with message from thrower
     MeshException(ExceptType except,
                   MeshExceptType mshExcept,
                   const string throwerMsg,

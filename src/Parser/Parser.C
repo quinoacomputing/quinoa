@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed 30 Jan 2013 06:26:17 AM MST
+  \date      Wed 30 Jan 2013 07:06:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -15,6 +15,7 @@
 #include <Parser.h>
 #include <Control.h>
 #include <IOException.h>
+#include <ParserException.h>
 
 using namespace Quinoa;
 
@@ -57,8 +58,8 @@ Parser::parse()
       case grammar::HYDRO :
         try {
           pegtl::basic_parse_string< grammar::match_hydro >( s.second );
-        } catch (exception& se) {
-          cout << "Didn't find hydro!" << endl;
+        } catch (exception&) {
+          Throw(ParserException,FATAL,UNKNOWN_HYDRO,s.second);
         }
         //m_control->setHydro(s.second);
         break;
