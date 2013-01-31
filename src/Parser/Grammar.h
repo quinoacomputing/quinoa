@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Wed 30 Jan 2013 06:54:06 PM MST
+  \date      Thu 31 Jan 2013 07:11:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -19,6 +19,7 @@ namespace grammar {
 
   using namespace pegtl;
   using namespace pegtl::ascii;
+  using namespace Quinoa;
 
   // Keywords
 
@@ -26,39 +27,99 @@ namespace grammar {
 
   // State
 
-  enum key_type { TITLE=0,
-                  HYDRO,
-                  MIX,
-                  NSCALAR,
-                  NPAR,
-                  TERM,
-                  NSTEP,
-                  ECHO,
-  };
-
-  using value_type = std::string;
-  using stack_type = std::unordered_map< key_type, value_type, hash<int> >;
+  using stack_type = tuple< std::string,     //!< 0: title
+                            PhysicsType,     //!< 1: physics
+                            HydroType,       //!< 2: hydro
+                            MixType,         //!< 3: mix
+                            int,             //!< 4: nstep
+                            real,            //!< 5: term
+                            real,            //!< 6: dt
+                            int,             //!< 7: nscalar
+                            int,             //!< 8: npar
+                            int >;           //!< 9: echo
 
   // Actions
 
 //   struct do_comment : action_base< do_comment > {
 //     static void apply(const std::string& m, stack_type& stack) {
-//       std::cout << "COMMENT: \"" << m << "\"" << endl;
+//       cout << "COMMENT: \"" << m << "\"" << endl;
 //     }
 //   };
 //
 //   struct unknown : action_base< unknown > {
 //     static void apply(const std::string& m, stack_type& stack) {
 //       Throw(ParserException, FATAL, UNKNOWN_KEYWORD);
-//       //std::cout << "UNKNOWN: \"" << m << "\"" << endl;
+//       //cout << "UNKNOWN: \"" << m << "\"" << endl;
 //     }
 //   };
 
-  // insert value to stack at 'key'
-  template< key_type key >
-  struct insert : action_base< insert<key> > {
+  // store selected title
+  struct store_title : action_base< store_title > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack[key] = value;
+      get<0>(stack) = value;
+    }
+  };
+
+  // store selected physics
+  struct store_physics : action_base< store_physics > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<1>(stack) = associate::Physics[value];
+    }
+  };
+
+  // store selected hydrodynamics model
+  struct store_hydro : action_base< store_hydro > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<2>(stack) = associate::Hydro[value];
+    }
+  };
+
+  // store selected material mix model
+  struct store_mix : action_base< store_mix > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<3>(stack) = associate::Mix[value];
+    }
+  };
+
+  // store selected number of time steps
+  struct store_nstep : action_base< store_nstep > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<4>(stack) = 0;
+    }
+  };
+
+  // store selected terminate time
+  struct store_term : action_base< store_term > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<5>(stack) = 0.0;
+    }
+  };
+
+  // store selected time step size
+  struct store_dt : action_base< store_dt > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<6>(stack) = 0.0;
+    }
+  };
+
+  // store selected number of mixing scalars
+  struct store_nscalar : action_base< store_nscalar > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<7>(stack) = 0;
+    }
+  };
+
+  // store selected number of particles
+  struct store_npar : action_base< store_npar > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<8>(stack) = 0.0;
+    }
+  };
+
+  // store selected one-liner info frequency
+  struct store_echo : action_base< store_echo > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<9>(stack) = 0;
     }
   };
 
@@ -74,52 +135,63 @@ namespace grammar {
   struct read :
          pad< trim<token, space>, blank, space > {};
 
-  // parse input padded by blank at left and space at right and apply 'action'
-  template< class action >
+  // match all accepted as hydro
+  struct hydro : sor< keyword::slm,
+                      keyword::glm > {};
+
+  // match all accepted as mix
+  struct mix : sor< keyword::iem,
+                    keyword::iecm,
+                    keyword::dir,
+                    keyword::gendir > {};
+
+  // parse input padded by blank at left and space at right and if it matches
+  // 'keywords', apply 'action'
+  template< class action, class keywords >
   struct parse :
-         pad< ifapply< trim<alnum, space>, action >, blank, space > {};
+         pad< ifapply< trim<keywords, space>, action >, blank, space > {};
 
   // comment: start with '#' until eol
   struct comment :
          //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
-  // parse block of 'tokens' until 'end' keyword
+  // plow through block of 'tokens' until 'end' keyword
   template< typename ... tokens >
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
-  // read 'keyword' and call its 'insert' action
-  template< class keyword, class insert >
+  // process 'keyword' and call its 'insert' action if matches 'keywords'
+  template< class keyword, class insert, class keywords = alnum >
   struct process :
-         ifmust< read<keyword>, parse<insert> > {};
+         ifmust< read<keyword>, parse<insert, keywords> > {};
 
   // title: within double quotes
   struct quoted :
          trim< not_one<'"'>, one<'"'> > {};
 
   struct parse_title :
-         ifmust< one<'"'>, ifapply<quoted, insert<TITLE>>, one<'"'>, space > {};
+         ifmust< one<'"'>, ifapply<quoted, store_title>, one<'"'>, space > {};
 
-  struct process_title :
+  struct title :
          ifmust< read<keyword::title>, parse_title > {};
 
   // spinsflow block
   struct spinsflow :
-         ifmust< read<keyword::spinsflow>,
-                 block< process<keyword::hydro, insert<HYDRO>>,
-                        process<keyword::mix, insert<MIX>> > > {};
+         ifmust< parse<store_physics, keyword::spinsflow>,
+                 block< process<keyword::hydro, store_hydro, hydro>,
+                        process<keyword::mix, store_mix, mix> > > {};
 
   // homdir block
   struct homdir :
-         ifmust< read<keyword::homdir>,
-                 block< process<keyword::nscalar, insert<NSCALAR>>,
-                        process<keyword::npar, insert<NPAR>>,
-                        process<keyword::term, insert<TERM>>,
-                        process<keyword::nstep, insert<NSTEP>>,
-                        process<keyword::echo, insert<ECHO>> > > {};
+         ifmust< parse<store_physics, keyword::homdir>,
+                 block< process<keyword::nstep, store_nstep>,
+                        process<keyword::term, store_term>,
+                        process<keyword::nscalar, store_nscalar>,
+                        process<keyword::npar, store_npar>,
+                        process<keyword::echo, store_echo> > > {};
 
-  // physics keywords
+  // physics block
   struct physics :
          sor< homdir,
               read< keyword::homgendir >,
@@ -127,31 +199,16 @@ namespace grammar {
 
   // keywords
   struct keywords :
-         sor< process_title,
+         sor< title,
               physics > {};
 
   // ignore comments and empty lines
   struct ignore :
          sor< comment, until<eol, space> > {};
 
-  // Entry points
-
-  // parse keywords and ignores until eof
+  // Entry point: parse keywords and ignores until eof
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
-
-  // match all accepted as physics
-  struct match_physics : sor< keyword::homdir,
-                              keyword::homgendir,
-                              keyword::spinsflow > {};
-  // match all accepted as hydro
-  struct match_hydro : sor< keyword::slm,
-                            keyword::glm > {};
-  // match all accepted as mix
-  struct match_mix : sor< keyword::iem,
-                          keyword::iecm,
-                          keyword::dir,
-                          keyword::gendir > {};
 
 } // namespace grammar
 
