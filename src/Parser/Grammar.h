@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu 31 Jan 2013 07:11:19 AM MST
+  \date      Fri 01 Feb 2013 06:06:55 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -27,17 +27,19 @@ namespace grammar {
 
   // State
 
-  using stack_type = tuple< std::string,     //!< 0: title
-                            PhysicsType,     //!< 1: physics
-                            HydroType,       //!< 2: hydro
-                            MixType,         //!< 3: mix
-                            int,             //!< 4: nstep
-                            real,            //!< 5: term
-                            real,            //!< 6: dt
-                            int,             //!< 7: nscalar
-                            int,             //!< 8: npar
-                            int >;           //!< 9: echo
-
+  struct stack_type {
+    std::string title;
+    PhysicsType physics;
+    HydroType hydro;
+    MixType mix;
+    int nstep;
+    real term;
+    real dt;
+    int nscalar;
+    int npar;
+    int echo;
+  };
+ 
   // Actions
 
 //   struct do_comment : action_base< do_comment > {
@@ -56,70 +58,70 @@ namespace grammar {
   // store selected title
   struct store_title : action_base< store_title > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<0>(stack) = value;
+      stack.title = value;
     }
   };
 
   // store selected physics
   struct store_physics : action_base< store_physics > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<1>(stack) = associate::Physics[value];
+      stack.physics = associate::Physics[value];
     }
   };
 
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<2>(stack) = associate::Hydro[value];
+      stack.hydro = associate::Hydro[value];
     }
   };
 
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<3>(stack) = associate::Mix[value];
+      stack.mix = associate::Mix[value];
     }
   };
 
   // store selected number of time steps
   struct store_nstep : action_base< store_nstep > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<4>(stack) = 0;
+      stack.nstep = 0;
     }
   };
 
   // store selected terminate time
   struct store_term : action_base< store_term > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<5>(stack) = 0.0;
+      stack.term = 0.0;
     }
   };
 
   // store selected time step size
   struct store_dt : action_base< store_dt > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<6>(stack) = 0.0;
+      stack.dt = 0.0;
     }
   };
 
   // store selected number of mixing scalars
   struct store_nscalar : action_base< store_nscalar > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<7>(stack) = 0;
+      stack.nscalar = 0;
     }
   };
 
   // store selected number of particles
   struct store_npar : action_base< store_npar > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<8>(stack) = 0.0;
+      stack.npar = 0.0;
     }
   };
 
   // store selected one-liner info frequency
   struct store_echo : action_base< store_echo > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<9>(stack) = 0;
+      stack.echo = 0;
     }
   };
 

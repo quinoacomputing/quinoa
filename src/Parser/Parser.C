@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Thu 31 Jan 2013 06:57:27 AM MST
+  \date      Fri 01 Feb 2013 06:06:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -52,30 +52,15 @@ Parser::parse()
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  m_control->setPhysics(get<1>(stack));
-  m_control->setHydro(get<2>(stack));
+  m_control->setTitle(stack.title);
+  m_control->setPhysics(stack.physics);
+  m_control->setHydro(stack.hydro);
+  m_control->setMix(stack.mix);
 
-//   for (auto& s : stack) {
-//     switch (s.first) {
-//       case grammar::TITLE : m_control->setTitle(s.second); break;
-//       case grammar::HYDRO :
-//         try {
-//           //pegtl::basic_parse_string< grammar::match_hydro >( s.second );
-//         } catch (exception&) {
-//           Throw(ParserException,FATAL,UNKNOWN_HYDRO,s.second);
-//         }
-//         //m_control->setHydro(s.second);
-//         break;
-//     }
-//   }
-
+  cout << m_control->title() << endl;
   cout << static_cast<int>(m_control->physics()) << endl;
   cout << static_cast<int>(m_control->hydro()) << endl;
-
-//   for (auto& s : stack) {
-//     cout << s.first << ": " << s.second << endl;
-//   }
-//   cout << endl;
+  cout << static_cast<int>(m_control->mix()) << endl;
 }
 
 void
