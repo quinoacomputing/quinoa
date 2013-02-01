@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 31 Jan 2013 06:57:00 AM MST
+  \date      Fri 01 Feb 2013 06:05:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -57,7 +57,7 @@ class Control {
     //! Set hydrodynamics model
     void setHydro(const HydroType& hydro) { m_hydro = hydro; }
     //! Set material mix model
-    void setMix(const MixType& mix);
+    void setMix(const MixType& mix) { m_mix = mix; }
     //! Set number of time steps to take
     void setNstep(const int& nstep);
     //! Set value at which to stop simulation
