@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.C
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 07:35:07 AM MST
+  \date      Sat 02 Feb 2013 01:18:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control category
@@ -10,21 +10,23 @@
 //******************************************************************************
 
 #include <limits>
+#include <tuple>
 
 #include <Control.h>
 
 using namespace Quinoa;
 
-Control::Control() //:
-//   m_physics(PhysicsType::NO_PHYSICS),
-//   m_hydro(HydroType::NO_HYDRO),
-//   m_mix(MixType::NO_MIX),
-//   m_nstep(numeric_limits<int>::max()),
-//   m_term(0.0),
-//   m_dt(1.0),
-//   m_nscalar(1),
-//   m_npar(1),
-//   m_echo(1)
+Control::Control() :      // defaults
+  m_data( std::make_tuple(static_cast<string>(""),           // title
+                          control::PhysicsType::NO_PHYSICS,  // physics
+                          control::HydroType::NO_HYDRO,      // hydro
+                          control::MixType::NO_MIX,          // mix
+                          numeric_limits<int>::max(),        // nstep
+                          0.0,                               // term
+                          1.0,                               // dt
+                          1,                                 // nscalar
+                          1,                                 // npar
+                          1))                                // echo
 //******************************************************************************
 //  Constructor
 //  \details Initialize defaults of everything held in Control, some of these

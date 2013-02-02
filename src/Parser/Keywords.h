@@ -2,12 +2,16 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 11:58:30 AM MST
+  \date      Sat 02 Feb 2013 12:57:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
 */
 //******************************************************************************
+#ifndef Grammar_h
+#error "Keywords.h should only be included within Grammar.h"
+#endif
+
 #ifndef Keywords_h
 #define Keywords_h
 

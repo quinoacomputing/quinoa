@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 12:43:24 PM MST
+  \date      Sat 02 Feb 2013 01:01:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -29,7 +29,7 @@ namespace grammar {
   // State
 
   using stack_type = control::Bundle;
-  stack_type dummy_stack;       // dummy instant for decltype in store()
+  static stack_type dummy_stack;       // dummy instant for decltype in store()
 
   // Actions
 
