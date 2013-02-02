@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 12:02:35 PM MST
+  \date      Sat 02 Feb 2013 08:11:56 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -31,7 +31,7 @@ using namespace Quinoa;
 
 SPINSFlow::SPINSFlow(Memory* memory,
                      Paradigm* paradigm,
-                     HydroType hydro,
+                     control::HydroType hydro,
                      const int& npar,
                      const string& filename,
                      const real time,
@@ -66,10 +66,10 @@ SPINSFlow::SPINSFlow(Memory* memory,
   m_str = m_random->getStr(m_rndStr);
 
   // Instantiate hydrodynamics model
-  if (hydro == HydroType::SLM) {
+  if (hydro == control::HydroType::SLM) {
     m_hydro = new (nothrow) SimplifiedLangevin();
     Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (hydro == HydroType::GLM) {
+  } else if (hydro == control::HydroType::GLM) {
     m_hydro = new (nothrow) GeneralizedLangevin();
     Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else {

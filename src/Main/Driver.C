@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue 29 Jan 2013 09:05:27 PM MST
+  \date      Sat 02 Feb 2013 08:12:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -73,7 +73,7 @@ Driver::setup()
 
   // Instantiate selected physics
   // ICC: this could be a switch once ICC supports scoped enums in switch
-  if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_DIRICHLET) {
+  if (PHYSICS_TYPE == control::PhysicsType::HOMOGENEOUS_DIRICHLET) {
     m_physics = new (nothrow) HomogeneousDirichlet(m_memory,
                                                    m_paradigm,
                                                    NSCALAR,
@@ -82,14 +82,14 @@ Driver::setup()
                                                    ECHO,
                                                    NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET) {
+  } else if (PHYSICS_TYPE == control::PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET) {
     m_physics = new (nothrow) HomogeneousGeneralizedDirichlet(m_memory,
                                                               m_paradigm,
                                                               NSCALAR,
                                                               TIME,
                                                               NSTEP);
     Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == PhysicsType::SPINSFLOW) {
+  } else if (PHYSICS_TYPE == control::PhysicsType::SPINSFLOW) {
     m_physics = new (nothrow) SPINSFlow(m_memory,
                                         m_paradigm,
                                         HYDRO_TYPE,

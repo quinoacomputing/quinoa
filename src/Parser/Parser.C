@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 01 Feb 2013 06:22:25 AM MST
+  \date      Sat 02 Feb 2013 08:27:26 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -11,8 +11,8 @@
 
 #include <pegtl.hh>
 
-#include <Control.h>
 #include <Grammar.h>
+#include <Control.h>
 #include <Parser.h>
 #include <IOException.h>
 #include <ParserException.h>
@@ -43,7 +43,7 @@ Parser::parse()
 //******************************************************************************
 {
   cout << "==== PARSE START ====" << endl;
-  grammar::stack_type stack;
+  control::Bundle stack;
 #ifdef NDEBUG
   pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack );
 #else  // NDEBUG
@@ -52,15 +52,16 @@ Parser::parse()
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  m_control->setTitle(get<0>(stack));
-  m_control->setPhysics(get<1>(stack));
-  m_control->setHydro(get<2>(stack));
-  m_control->setMix(get<3>(stack));
-
-  cout << m_control->title() << endl;
-  cout << static_cast<int>(m_control->physics()) << endl;
-  cout << static_cast<int>(m_control->hydro()) << endl;
-  cout << static_cast<int>(m_control->mix()) << endl;
+  m_control->set(stack);
+//   m_control->setTitle(get<0>(stack));
+//   m_control->setPhysics(get<1>(stack));
+//   m_control->setHydro(get<2>(stack));
+//   m_control->setMix(get<3>(stack));
+// 
+  cout << m_control->get<control::TITLE>() << endl;
+//   cout << static_cast<int>(m_control->physics()) << endl;
+//   cout << static_cast<int>(m_control->hydro()) << endl;
+//   cout << static_cast<int>(m_control->mix()) << endl;
 }
 
 void
