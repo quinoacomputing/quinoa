@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri 01 Feb 2013 06:06:55 AM MST
+  \date      Sat 02 Feb 2013 06:55:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -27,19 +27,16 @@ namespace grammar {
 
   // State
 
-  struct stack_type {
-    std::string title;
-    PhysicsType physics;
-    HydroType hydro;
-    MixType mix;
-    int nstep;
-    real term;
-    real dt;
-    int nscalar;
-    int npar;
-    int echo;
-  };
- 
+  using stack_type = tuple< std::string,     //!< 0: title
+                            PhysicsType,     //!< 1: physics
+                            HydroType,       //!< 2: hydro
+                            MixType,         //!< 3: mix
+                            int,             //!< 4: nstep
+                            real,            //!< 5: term
+                            real,            //!< 6: dt
+                            int,             //!< 7: nscalar
+                            int,             //!< 8: npar
+                            int >;           //!< 9: echo
   // Actions
 
 //   struct do_comment : action_base< do_comment > {
@@ -55,73 +52,48 @@ namespace grammar {
 //     }
 //   };
 
+  // convert string to 'type'
+  template< class type >
+  static type convert(const std::string& str) {
+    stringstream ss(str);
+    type num;
+    ss >> num;
+    return num;
+  }
+
+  // store value in state at 'position'
+  template< class type, size_t position >
+  struct store : action_base< store<type, position> > {
+    static void apply(const std::string& value, stack_type& stack) {
+      get<position>(stack) = convert<type>(value);
+    }
+  };
+
   // store selected title
   struct store_title : action_base< store_title > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack.title = value;
+      get<0>(stack) = value;
     }
   };
 
   // store selected physics
   struct store_physics : action_base< store_physics > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack.physics = associate::Physics[value];
+      get<1>(stack) = associate::Physics[value];
     }
   };
 
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack.hydro = associate::Hydro[value];
+      get<2>(stack) = associate::Hydro[value];
     }
   };
 
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
     static void apply(const std::string& value, stack_type& stack) {
-      stack.mix = associate::Mix[value];
-    }
-  };
-
-  // store selected number of time steps
-  struct store_nstep : action_base< store_nstep > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.nstep = 0;
-    }
-  };
-
-  // store selected terminate time
-  struct store_term : action_base< store_term > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.term = 0.0;
-    }
-  };
-
-  // store selected time step size
-  struct store_dt : action_base< store_dt > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.dt = 0.0;
-    }
-  };
-
-  // store selected number of mixing scalars
-  struct store_nscalar : action_base< store_nscalar > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.nscalar = 0;
-    }
-  };
-
-  // store selected number of particles
-  struct store_npar : action_base< store_npar > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.npar = 0.0;
-    }
-  };
-
-  // store selected one-liner info frequency
-  struct store_echo : action_base< store_echo > {
-    static void apply(const std::string& value, stack_type& stack) {
-      stack.echo = 0;
+      get<3>(stack) = associate::Mix[value];
     }
   };
 
@@ -173,7 +145,9 @@ namespace grammar {
          trim< not_one<'"'>, one<'"'> > {};
 
   struct parse_title :
-         ifmust< one<'"'>, ifapply<quoted, store_title>, one<'"'>, space > {};
+         ifmust< one<'"'>,
+                 ifapply< quoted, store_title >,
+                 one<'"'>, space > {};
 
   struct title :
          ifmust< read<keyword::title>, parse_title > {};
@@ -187,11 +161,12 @@ namespace grammar {
   // homdir block
   struct homdir :
          ifmust< parse<store_physics, keyword::homdir>,
-                 block< process<keyword::nstep, store_nstep>,
-                        process<keyword::term, store_term>,
-                        process<keyword::nscalar, store_nscalar>,
-                        process<keyword::npar, store_npar>,
-                        process<keyword::echo, store_echo> > > {};
+                 block< process<keyword::nstep, store<int,4>>,
+                        process<keyword::term, store<real,5>>,
+                        process<keyword::dt, store<real,6>>,
+                        process<keyword::nscalar, store<int,7>>,
+                        process<keyword::npar, store<int,8>>,
+                        process<keyword::echo, store<int,9>> > > {};
 
   // physics block
   struct physics :
