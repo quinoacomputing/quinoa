@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 09:07:41 AM MST
+  \date      Sat 02 Feb 2013 12:43:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -11,9 +11,8 @@
 #ifndef Grammar_h
 #define Grammar_h
 
-#include <unordered_map>
-
 #include <Type.h>
+#include <FwdAssociate.h>
 #include <ParserException.h>
 
 namespace Quinoa {
@@ -75,21 +74,21 @@ namespace grammar {
   // store selected physics
   struct store_physics : action_base< store_physics > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<control::PHYSICS>(stack) = associate::Physics[value];
+      get<control::PHYSICS>(stack) = associate::PhysicsEnum[value];
     }
   };
 
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<control::HYDRO>(stack) = associate::Hydro[value];
+      get<control::HYDRO>(stack) = associate::HydroEnum[value];
     }
   };
 
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<control::MIX>(stack) = associate::Mix[value];
+      get<control::MIX>(stack) = associate::MixEnum[value];
     }
   };
 

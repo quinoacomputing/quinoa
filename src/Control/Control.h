@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 08:32:22 AM MST
+  \date      Sat 02 Feb 2013 12:45:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -15,6 +15,7 @@
 
 #include<QuinoaTypes.h>
 #include<Type.h>
+#include<BackAssociate.h>
 
 namespace Quinoa {
 
@@ -39,6 +40,11 @@ class Control {
     template< control::BundlePosition at >
     const typename std::tuple_element<at, decltype(m_data)>::type& get() {
       return std::get<at>(m_data);
+    }
+
+    //! Get single element name at position
+    const std::string& physics() {
+      return associate::PhysicsName[std::get<1>(m_data)];
     }
 
   private:
