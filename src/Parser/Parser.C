@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 01 Feb 2013 06:06:39 AM MST
+  \date      Fri 01 Feb 2013 06:22:25 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -52,10 +52,10 @@ Parser::parse()
   cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
-  m_control->setTitle(stack.title);
-  m_control->setPhysics(stack.physics);
-  m_control->setHydro(stack.hydro);
-  m_control->setMix(stack.mix);
+  m_control->setTitle(get<0>(stack));
+  m_control->setPhysics(get<1>(stack));
+  m_control->setHydro(get<2>(stack));
+  m_control->setMix(get<3>(stack));
 
   cout << m_control->title() << endl;
   cout << static_cast<int>(m_control->physics()) << endl;
