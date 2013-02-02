@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 12:45:11 PM MST
+  \date      Sat 02 Feb 2013 01:02:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -11,11 +11,11 @@
 #ifndef Control_h
 #define Control_h
 
-#include<string>
+#include <string>
 
-#include<QuinoaTypes.h>
-#include<Type.h>
-#include<BackAssociate.h>
+#include <QuinoaTypes.h>
+#include <Type.h>
+#include <BackAssociate.h>
 
 namespace Quinoa {
 
@@ -42,9 +42,19 @@ class Control {
       return std::get<at>(m_data);
     }
 
-    //! Get single element name at position
+    //! Get physics name
     const std::string& physics() {
-      return associate::PhysicsName[std::get<1>(m_data)];
+      return associate::PhysicsName[ std::get<control::PHYSICS>(m_data) ];
+    }
+
+    //! Get hydrodynamics model name
+    const std::string& hydro() {
+      return associate::HydroName[ std::get<control::HYDRO>(m_data) ];
+    }
+
+    //! Get material mix model name
+    const std::string& mix() {
+      return associate::MixName[ std::get<control::MIX>(m_data) ];
     }
 
   private:
