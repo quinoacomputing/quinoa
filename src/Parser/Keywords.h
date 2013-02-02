@@ -2,12 +2,14 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Thu 31 Jan 2013 06:52:51 AM MST
+  \date      Sat 02 Feb 2013 08:09:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
 */
 //******************************************************************************
+#ifndef Keywords_h
+#define Keywords_h
 
 // Keywords accepted by the parser
 namespace keyword {
@@ -72,6 +74,8 @@ namespace keyword {
 // Associations between parsed strings and Quinoa enums
 namespace associate {
 
+  using namespace control;
+
   struct PhysicsMap {
     static unordered_map< std::string, PhysicsType > make() {
       unordered_map< std::string, PhysicsType > m;
@@ -124,3 +128,5 @@ namespace associate {
 //   };
 
 } // namespace associate
+
+#endif // Keywords_h

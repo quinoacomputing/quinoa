@@ -2,24 +2,26 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 06:55:09 AM MST
+  \date      Sat 02 Feb 2013 09:07:41 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
 */
 //******************************************************************************
-#ifndef Grammar_def_h
-#define Grammar_def_h
+#ifndef Grammar_h
+#define Grammar_h
 
 #include <unordered_map>
 
+#include <Type.h>
 #include <ParserException.h>
+
+namespace Quinoa {
 
 namespace grammar {
 
   using namespace pegtl;
   using namespace pegtl::ascii;
-  using namespace Quinoa;
 
   // Keywords
 
@@ -27,16 +29,9 @@ namespace grammar {
 
   // State
 
-  using stack_type = tuple< std::string,     //!< 0: title
-                            PhysicsType,     //!< 1: physics
-                            HydroType,       //!< 2: hydro
-                            MixType,         //!< 3: mix
-                            int,             //!< 4: nstep
-                            real,            //!< 5: term
-                            real,            //!< 6: dt
-                            int,             //!< 7: nscalar
-                            int,             //!< 8: npar
-                            int >;           //!< 9: echo
+  using stack_type = control::Bundle;
+  stack_type dummy_stack;       // dummy instant for decltype in store()
+
   // Actions
 
 //   struct do_comment : action_base< do_comment > {
@@ -62,38 +57,39 @@ namespace grammar {
   }
 
   // store value in state at 'position'
-  template< class type, size_t position >
-  struct store : action_base< store<type, position> > {
+  template< control::BundlePosition at >
+  struct store : action_base< store<at> > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<position>(stack) = convert<type>(value);
+      using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
+      get<at>(stack) = convert<type>(value);
     }
   };
 
   // store selected title
   struct store_title : action_base< store_title > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<0>(stack) = value;
+      get<control::TITLE>(stack) = value;
     }
   };
 
   // store selected physics
   struct store_physics : action_base< store_physics > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<1>(stack) = associate::Physics[value];
+      get<control::PHYSICS>(stack) = associate::Physics[value];
     }
   };
 
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<2>(stack) = associate::Hydro[value];
+      get<control::HYDRO>(stack) = associate::Hydro[value];
     }
   };
 
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
     static void apply(const std::string& value, stack_type& stack) {
-      get<3>(stack) = associate::Mix[value];
+      get<control::MIX>(stack) = associate::Mix[value];
     }
   };
 
@@ -161,12 +157,12 @@ namespace grammar {
   // homdir block
   struct homdir :
          ifmust< parse<store_physics, keyword::homdir>,
-                 block< process<keyword::nstep, store<int,4>>,
-                        process<keyword::term, store<real,5>>,
-                        process<keyword::dt, store<real,6>>,
-                        process<keyword::nscalar, store<int,7>>,
-                        process<keyword::npar, store<int,8>>,
-                        process<keyword::echo, store<int,9>> > > {};
+                 block< process<keyword::nstep, store<control::NSTEP>>,
+                        process<keyword::term, store<control::TERM>>,
+                        process<keyword::dt, store<control::DT>>,
+                        process<keyword::nscalar, store<control::NSCALAR>>,
+                        process<keyword::npar, store<control::NPAR>>,
+                        process<keyword::echo, store<control::ECHO>> > > {};
 
   // physics block
   struct physics :
@@ -189,4 +185,6 @@ namespace grammar {
 
 } // namespace grammar
 
-#endif // Grammar_def_h
+} // namespace Quinoa
+
+#endif // Grammar_h
