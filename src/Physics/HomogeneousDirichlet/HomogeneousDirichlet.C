@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:58:12 PM MST
+  \date      Mon Feb  4 15:33:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model

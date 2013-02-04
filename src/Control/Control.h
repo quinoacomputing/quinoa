@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 01:02:26 PM MST
+  \date      Mon Feb  4 16:29:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -42,18 +42,30 @@ class Control {
       return std::get<at>(m_data);
     }
 
+    //! Get physics keyword
+    const std::string& physicsKeyword() {
+      return associate::PhysicsKeyword[ std::get<control::PHYSICS>(m_data) ];
+    }
     //! Get physics name
-    const std::string& physics() {
+    const std::string& physicsName() {
       return associate::PhysicsName[ std::get<control::PHYSICS>(m_data) ];
     }
 
+    //! Get hydrodynamics model keyword
+    const std::string& hydroKeyword() {
+      return associate::HydroKeyword[ std::get<control::HYDRO>(m_data) ];
+    }
     //! Get hydrodynamics model name
-    const std::string& hydro() {
+    const std::string& hydroName() {
       return associate::HydroName[ std::get<control::HYDRO>(m_data) ];
     }
 
+    //! Get material mix model keyword
+    const std::string& mixKeyword() {
+      return associate::MixKeyword[ std::get<control::MIX>(m_data) ];
+    }
     //! Get material mix model name
-    const std::string& mix() {
+    const std::string& mixName() {
       return associate::MixName[ std::get<control::MIX>(m_data) ];
     }
 

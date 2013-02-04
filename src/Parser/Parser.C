@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 01:03:25 PM MST
+  \date      Mon Feb  4 16:28:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -42,25 +42,17 @@ Parser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "==== PARSE START ====" << endl;
+  //cout << "==== PARSE START ====" << endl;
   control::Bundle stack;
 #ifdef NDEBUG
   pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack );
 #else  // NDEBUG
   pegtl::basic_parse_file< grammar::read_file >( m_filename, stack );
 #endif // NDEBUG
-  cout << "==== PARSE END ====" << endl << endl;
+  //cout << "==== PARSE END ====" << endl << endl;
 
   // Store off stuff parsed
   m_control->set(stack);
-
-  cout << m_control->get<control::TITLE>() << endl;
-  cout << static_cast<int>(m_control->get<control::PHYSICS>())
-       << ": " << m_control->physics() << endl;
-  cout << static_cast<int>(m_control->get<control::HYDRO>())
-       << ": " << m_control->hydro() << endl;
-  cout << static_cast<int>(m_control->get<control::MIX>())
-       << ": " << m_control->mix() << endl;
 }
 
 void
@@ -70,4 +62,15 @@ Parser::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << "Parsed from " << m_filename << endl;
+
+  cout << m_control->get<control::TITLE>() << endl;
+  cout << static_cast<int>(m_control->get<control::PHYSICS>())
+       << ": " << m_control->physicsKeyword() << endl;
+  cout << static_cast<int>(m_control->get<control::HYDRO>())
+       << ": " << m_control->hydroKeyword() << endl;
+  cout << static_cast<int>(m_control->get<control::MIX>())
+       << ": " << m_control->mixKeyword() << endl;
+
+  cout << endl;
 }
