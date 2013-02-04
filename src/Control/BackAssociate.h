@@ -2,16 +2,14 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 12:49:31 PM MST
+  \date      Mon Feb  4 16:29:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Backward, data to name (string) associations
-  \details   Backward, data to name (string) associations
+  \brief     Backward, data to keyword/name associations
+  \details   Backward, data to keyword/name associations
 */
 //******************************************************************************
 #ifndef BackAssociate_h
 #define BackAssociate_h
-
-#include <map>
 
 namespace Quinoa {
 
@@ -22,50 +20,50 @@ namespace associate {
 
   using namespace control;
 
-  // PhysicsType -> string
-  using physics_name = map< PhysicsType, std::string >;
-  struct PhysicsNameStruct {
-    static physics_name make() {
-      physics_name m;
-      m[PhysicsType::HOMOGENEOUS_DIRICHLET] = "homdir";
-      m[PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET] = "homgendir";
-      m[PhysicsType::SPINSFLOW] = "spinsflow";
-      return m;
-    }
+  // PhysicsType -> keyword
+  const string PhysicsKeyword[NUM_PHYSICS] = {
+    "no_physics",
+    "homdir",
+    "homgendir",
+    "spinsflow"
   };
-  static physics_name PhysicsName = PhysicsNameStruct::make();
-//   // ICC: The above struct and definition can be replaced by
-//   static physics_name PhysicsName = {
-//     { PhysicsType::HOMOGENEOUS_DIRICHLET, "homdir" },
-//     { PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET, "homgendir" },
-//     { PhysicsType::SPINSFLOW, "spinsflow" }
-//   };
+  // PhysicsType -> name
+  const string PhysicsName[NUM_PHYSICS] = {
+    "No physics selected",
+    "Homogeneous Dirichlet",
+    "Homogeneous generalized Dirichlet",
+    "Standalone-Particle Incompressible Navier-Stokes Flow"
+  };
 
-  // HydroType -> string
-  using hydro_name = map< HydroType, std::string >;
-  struct HydroNameStruct {
-    static hydro_name make() {
-      hydro_name m;
-      m[HydroType::SLM] = "slm";
-      m[HydroType::GLM] = "glm";
-      return m;
-    }
+  // HydroType -> keyword
+  const string HydroKeyword[NUM_HYDRO] = {
+    "no_hydro",
+    "slm",
+    "glm"
   };
-  static hydro_name HydroName = HydroNameStruct::make();
+  // HydroType -> name
+  const string HydroName[NUM_HYDRO] = {
+    "No hydrodynamics model selected",
+    "Simplified Langevin model",
+    "Generalized Langevin model"
+  };
 
-  // MixType -> string
-  using mix_name = map< MixType, std::string >;
-  struct MixNameStruct {
-    static mix_name make() {
-      mix_name m;
-      m[MixType::IEM] = "iem";
-      m[MixType::IECM] = "iecm";
-      m[MixType::DIRICHLET] = "dir";
-      m[MixType::GENERALIZED_DIRICHLET] = "gendir";
-      return m;
-    }
+  // MixType -> keyword
+  const string MixKeyword[NUM_MIX] = {
+    "no_mix",
+    "iem",
+    "iecm",
+    "dir",
+    "gendir"
   };
-  static mix_name MixName = MixNameStruct::make();
+  // MixType -> name
+  const string MixName[NUM_MIX] = {
+    "No material mix model",
+    "Interaction by exchange with the mean",
+    "Interaction by exchange with the conditional mean",
+    "Dirichlet",
+    "Generalized Dirichlet"
+  };
 
 } // namespace associate
 

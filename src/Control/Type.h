@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Type.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 07:55:11 AM MST
+  \date      Mon Feb  4 16:24:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -23,24 +23,27 @@ namespace Quinoa {
 namespace control {
 
 //! Physics (methods: collection of models) types
-enum class PhysicsType { NO_PHYSICS,
-                         HOMOGENEOUS_DIRICHLET,
-                         HOMOGENEOUS_GENERALIZED_DIRICHLET,
-                         SPINSFLOW
+enum PhysicsType { NO_PHYSICS=0,
+                   HOMOGENEOUS_DIRICHLET,
+                   HOMOGENEOUS_GENERALIZED_DIRICHLET,
+                   SPINSFLOW,
+                   NUM_PHYSICS
 };
 
 //! Hydrodynamics model types
-enum class HydroType { NO_HYDRO,
-                       SLM,
-                       GLM
+enum HydroType { NO_HYDRO=0,
+                 SLM,
+                 GLM,
+                 NUM_HYDRO
 };
 
 //! Material mix model types
-enum class MixType { NO_MIX,
-                     IEM,
-                     IECM,
-                     DIRICHLET,
-                     GENERALIZED_DIRICHLET
+enum MixType { NO_MIX=0,
+               IEM,
+               IECM,
+               DIRICHLET,
+               GENERALIZED_DIRICHLET,
+               NUM_MIX
 };
 
 enum BundlePosition { TITLE=0,
