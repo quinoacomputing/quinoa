@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 12:57:37 PM MST
+  \date      Mon 04 Feb 2013 06:19:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -17,6 +17,9 @@
 
 // Keywords accepted by the parser
 namespace keyword {
+
+  // Editing anything below should be accompanied by the corresponding changes
+  // in FwdAssociate.h and BackAssociate.h in src/Control.
 
   // Problem title
   using title = pegtl::string<t,i,t,l,e>;
