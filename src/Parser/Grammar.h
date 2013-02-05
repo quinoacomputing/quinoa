@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 08:34:51 PM MST
+  \date      Mon 04 Feb 2013 09:42:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -152,9 +152,9 @@ namespace grammar {
          ifmust< parse<store_mix, keyword::dir>,
                  block< process<keyword::nscalar, store<control::NSCALAR>> > > {};
 
-  // homdir block
-  struct homdir :
-         ifmust< parse<store_physics, keyword::homdir>,
+  // hommix block
+  struct hommix :
+         ifmust< parse<store_physics, keyword::hommix>,
                  block< process<keyword::nstep, store<control::NSTEP>>,
                         process<keyword::term, store<control::TERM>>,
                         process<keyword::dt, store<control::DT>>,
@@ -170,8 +170,7 @@ namespace grammar {
 
   // physics block
   struct physics :
-         sor< homdir,
-              read< keyword::homgendir >,
+         sor< hommix,
               spinsflow > {};
 
   // keywords

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:19:02 PM MST
+  \date      Mon 04 Feb 2013 09:54:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -20,13 +20,15 @@ using namespace std;
 namespace Quinoa {
 
 //! Physics exception types
-enum PhysicsExceptType { NO_SUCH_PHYSICS=0,            //!< No such physics
+enum PhysicsExceptType { PHYSICS_UNIMPLEMENTED=0,    //!< Physics unimplemented
+                         NO_PHYSICS,                 //!< No physics selected
                          NUM_PHYSICS_EXCEPT
 };
 
 //! Physics exception error messages
 const string PhysicsMsg[NUM_PHYSICS_EXCEPT] = {
-  "Selected physics not implemented"
+  "Selected physics not implemented",
+  "No physics selected"
 };
 
 //! PhysicsException : Exception

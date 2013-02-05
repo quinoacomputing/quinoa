@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 06:19:45 AM MST
+  \date      Mon 04 Feb 2013 09:42:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -28,10 +28,8 @@ namespace keyword {
   using end = pegtl::string< e,n,d >;
 
   // Select physics:
-  //   * Homogeneous Dirichlet
-  using homdir = pegtl::string< h,o,m,d,i,r >;
-  //   * Homogeneous generalized Dirichlet
-  using homgendir = pegtl::string< h,o,m,g,e,n,d,i,r >;
+  //   * Homogeneous material mixing
+  using hommix = pegtl::string< h,o,m,m,i,x >;
   //   * Standalone-particle incompressible Navier-Stokes flow
   using spinsflow = pegtl::string< s,p,i,n,s,f,l,o,w >;
 

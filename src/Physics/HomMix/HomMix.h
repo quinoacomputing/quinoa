@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.h
+  \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 10:53:11 AM MST
+  \date      Mon 04 Feb 2013 09:30:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous Dirichlet model
-  \details   Homogeneous Dirichlet model
+  \brief     Homogeneous material mix model
+  \details   Homogeneous material mix model
 */
 //******************************************************************************
-#ifndef HomogeneousDirichlet_h
-#define HomogeneousDirichlet_h
+#ifndef HomMix_h
+#define HomMix_h
 
 #include <limits>
 
@@ -25,21 +25,21 @@ class MKLRandom;
 class MKLRndStream;
 class Dirichlet;
 
-//! HomogeneousDirichlet : Physics
-class HomogeneousDirichlet : public Physics {
+//! HomMix : Physics
+class HomMix : public Physics {
 
   public:
     //! Constructor
-    HomogeneousDirichlet(Memory* memory,
-                         Paradigm* paradigm,
-                         const int& nscalar,
-                         const int& npar,
-                         const real time,
-                         const int echo = 1,
-                         const int nstep = numeric_limits<int>::max());
+    HomMix(Memory* memory,
+           Paradigm* paradigm,
+           const int& nscalar,
+           const int& npar,
+           const real time,
+           const int echo = 1,
+           const int nstep = numeric_limits<int>::max());
 
     //! Destructor
-    virtual ~HomogeneousDirichlet();
+    virtual ~HomMix();
 
     //! Echo informaion on model
     virtual void echo();
@@ -52,13 +52,13 @@ class HomogeneousDirichlet : public Physics {
 
   private:
     //! Don't permit copy constructor
-    HomogeneousDirichlet(const HomogeneousDirichlet&) = delete;
+    HomMix(const HomMix&) = delete;
     //! Don't permit copy assigment
-    HomogeneousDirichlet& operator=(const HomogeneousDirichlet&) = delete;
+    HomMix& operator=(const HomMix&) = delete;
     //! Don't permit move constructor
-    HomogeneousDirichlet(HomogeneousDirichlet&&) = delete;
+    HomMix(HomMix&&) = delete;
     //! Don't permit move assigment
-    HomogeneousDirichlet& operator=(HomogeneousDirichlet&&) = delete;
+    HomMix& operator=(HomMix&&) = delete;
 
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();
@@ -84,4 +84,4 @@ class HomogeneousDirichlet : public Physics {
 
 } // namespace Quinoa
 
-#endif // HomogeneousDirichlet_h
+#endif // HomMix_h
