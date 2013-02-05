@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Mon Feb  4 16:29:01 2013
+  \date      Mon 04 Feb 2013 08:41:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Backward, data to keyword/name associations
   \details   Backward, data to keyword/name associations
@@ -29,7 +29,7 @@ namespace associate {
   };
   // PhysicsType -> name
   const string PhysicsName[NUM_PHYSICS] = {
-    "No physics selected",
+    "No physics",
     "Homogeneous Dirichlet",
     "Homogeneous generalized Dirichlet",
     "Standalone-Particle Incompressible Navier-Stokes Flow"
@@ -43,9 +43,9 @@ namespace associate {
   };
   // HydroType -> name
   const string HydroName[NUM_HYDRO] = {
-    "No hydrodynamics model selected",
-    "Simplified Langevin model",
-    "Generalized Langevin model"
+    "No model",
+    "Simplified Langevin",
+    "Generalized Langevin"
   };
 
   // MixType -> keyword
@@ -58,7 +58,7 @@ namespace associate {
   };
   // MixType -> name
   const string MixName[NUM_MIX] = {
-    "No material mix model",
+    "No model",
     "Interaction by exchange with the mean",
     "Interaction by exchange with the conditional mean",
     "Dirichlet",

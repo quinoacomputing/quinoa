@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.C
   \author    J. Bakosi
-  \date      Mon Feb  4 15:33:49 2013
+  \date      Mon 04 Feb 2013 09:21:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -276,8 +276,8 @@ HomogeneousDirichlet::outJPDF()
     jpdf.insert(v);
   }
 
-  PDFWriter jpwt(m_memory,"../../tmp/jpdf.txt");
+  PDFWriter jpwt(m_memory,"jpdf.txt");
   jpwt.writeTxt(&jpdf);
-  PDFWriter jpwg(m_memory,"../../tmp/jpdf.msh");
+  PDFWriter jpwg(m_memory,"jpdf.msh");
   jpwg.writeGmsh(&jpdf);
 }

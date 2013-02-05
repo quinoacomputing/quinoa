@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon Feb  4 16:28:52 2013
+  \date      Mon 04 Feb 2013 09:04:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -62,15 +62,34 @@ Parser::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Parsed from " << m_filename << endl;
+  cout << "Parsed from " << m_filename << ":\n" << setfill('-')
+       << setw(13+m_filename.length()) << "-" << endl;
 
-  cout << m_control->get<control::TITLE>() << endl;
-  cout << static_cast<int>(m_control->get<control::PHYSICS>())
-       << ": " << m_control->physicsKeyword() << endl;
-  cout << static_cast<int>(m_control->get<control::HYDRO>())
-       << ": " << m_control->hydroKeyword() << endl;
-  cout << static_cast<int>(m_control->get<control::MIX>())
-       << ": " << m_control->mixKeyword() << endl;
+  cout << " * Title: " << m_control->get<control::TITLE>() << endl;
+
+  if (m_control->get<control::PHYSICS>() > control::NO_PHYSICS) {
+    cout << " * Physics: " << m_control->physicsName() << endl;
+  }
+
+  if (m_control->get<control::HYDRO>() > control::NO_HYDRO) {
+    cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
+  }
+
+  if (m_control->get<control::MIX>() > control::NO_MIX) {
+    cout << " * Material mixing: " << m_control->mixName() << endl;
+    cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
+         << endl;
+    cout << "   - Terminate at time: " << m_control->get<control::TERM>()
+         << endl;
+    cout << "   - Size of time step: " << m_control->get<control::DT>()
+         << endl;
+    cout << "   - Number of mixing scalars: "
+         << m_control->get<control::NSCALAR>() << endl;
+    cout << "   - Number of particles: " << m_control->get<control::NPAR>()
+         << endl;
+    cout << "   - Screen-output at every " << m_control->get<control::ECHO>()
+         << " step" << endl;
+  }
 
   cout << endl;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 08:12:59 AM MST
+  \date      Mon 04 Feb 2013 09:22:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <Driver.h>
-#include <Setup.h>
 #include <Control.h>
 #include <Parser.h>
 #include <ParserException.h>
@@ -20,6 +19,7 @@
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
+using namespace control;
 
 Driver::Driver(int argc,
                char** argv,
@@ -72,35 +72,45 @@ Driver::setup()
   parser.echo();
 
   // Instantiate selected physics
-  // ICC: this could be a switch once ICC supports scoped enums in switch
-  if (PHYSICS_TYPE == control::PhysicsType::HOMOGENEOUS_DIRICHLET) {
-    m_physics = new (nothrow) HomogeneousDirichlet(m_memory,
-                                                   m_paradigm,
-                                                   NSCALAR,
-                                                   NPAR,
-                                                   TIME,
-                                                   ECHO,
-                                                   NSTEP);
-    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == control::PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET) {
-    m_physics = new (nothrow) HomogeneousGeneralizedDirichlet(m_memory,
-                                                              m_paradigm,
-                                                              NSCALAR,
-                                                              TIME,
-                                                              NSTEP);
-    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (PHYSICS_TYPE == control::PhysicsType::SPINSFLOW) {
-    m_physics = new (nothrow) SPINSFlow(m_memory,
-                                        m_paradigm,
-                                        HYDRO_TYPE,
-                                        NPAR,
-                                        MESH_FILENAME,
-                                        TIME,
-                                        ECHO,
-                                        NSTEP);
-    Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC); 
-  } else {
-    Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
+  switch (m_control->get<PHYSICS>()) {
+
+    case PhysicsType::HOMOGENEOUS_DIRICHLET :
+      m_physics = new (nothrow)
+                  HomogeneousDirichlet(m_memory,
+                                       m_paradigm,
+                                       m_control->get<NSCALAR>(),
+                                       m_control->get<NPAR>(),
+                                       m_control->get<TERM>(),
+                                       m_control->get<ECHO>(),
+                                       m_control->get<NSTEP>());
+      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    case PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET :
+      m_physics = new (nothrow)
+                  HomogeneousGeneralizedDirichlet(m_memory,
+                                                  m_paradigm,
+                                                  m_control->get<NSCALAR>(),
+                                                  m_control->get<TERM>(),
+                                                  m_control->get<NSTEP>());
+      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    case PhysicsType::SPINSFLOW :
+      m_physics = new (nothrow)
+                  SPINSFlow(m_memory,
+                            m_paradigm,
+                            m_control->get<HYDRO>(),
+                            m_control->get<NPAR>(),
+                            "cylinder.msh",
+                            m_control->get<TERM>(),
+                            m_control->get<ECHO>(),
+                            m_control->get<NSTEP>());
+      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    default :
+      Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
   }
 
   // Echo information on physics selected
