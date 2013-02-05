@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:22:40 PM MST
+  \date      Mon 04 Feb 2013 09:59:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -14,8 +14,7 @@
 #include <Parser.h>
 #include <ParserException.h>
 #include <PhysicsException.h>
-#include <HomogeneousDirichlet.h>
-#include <HomogeneousGeneralizedDirichlet.h>
+#include <HomMix.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
@@ -74,25 +73,19 @@ Driver::setup()
   // Instantiate selected physics
   switch (m_control->get<PHYSICS>()) {
 
-    case PhysicsType::HOMOGENEOUS_DIRICHLET :
-      m_physics = new (nothrow)
-                  HomogeneousDirichlet(m_memory,
-                                       m_paradigm,
-                                       m_control->get<NSCALAR>(),
-                                       m_control->get<NPAR>(),
-                                       m_control->get<TERM>(),
-                                       m_control->get<ECHO>(),
-                                       m_control->get<NSTEP>());
-      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+    case PhysicsType::NO_PHYSICS :
+      Throw(PhysicsException,FATAL,NO_PHYSICS);
       break;
 
-    case PhysicsType::HOMOGENEOUS_GENERALIZED_DIRICHLET :
+    case PhysicsType::HOMOGENEOUS_MIX :
       m_physics = new (nothrow)
-                  HomogeneousGeneralizedDirichlet(m_memory,
-                                                  m_paradigm,
-                                                  m_control->get<NSCALAR>(),
-                                                  m_control->get<TERM>(),
-                                                  m_control->get<NSTEP>());
+                  HomMix(m_memory,
+                         m_paradigm,
+                         m_control->get<NSCALAR>(),
+                         m_control->get<NPAR>(),
+                         m_control->get<TERM>(),
+                         m_control->get<ECHO>(),
+                         m_control->get<NSTEP>());
       Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
@@ -110,7 +103,7 @@ Driver::setup()
       break;
 
     default :
-      Throw(PhysicsException,FATAL,NO_SUCH_PHYSICS);
+      Throw(PhysicsException,FATAL,PHYSICS_UNIMPLEMENTED);
   }
 
   // Echo information on physics selected
@@ -139,7 +132,7 @@ Driver::finalize()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_control) { delete m_control; m_control = nullptr; }
   if (m_physics) { delete m_physics; m_physics = nullptr; }
+  if (m_control) { delete m_control; m_control = nullptr; }
   m_memory->freeAllEntries();
 }

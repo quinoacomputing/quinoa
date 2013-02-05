@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomogeneousDirichlet/HomogeneousDirichlet.C
+  \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:21:42 PM MST
+  \date      Mon 04 Feb 2013 10:02:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Dirichlet model
   \details   Homogeneous Dirichlet model
@@ -23,7 +23,7 @@
 #include <MemoryException.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
-#include <HomogeneousDirichlet.h>
+#include <HomMix.h>
 #include <Dirichlet.h>
 
 #include <vector>
@@ -32,14 +32,14 @@
 
 using namespace Quinoa;
 
-HomogeneousDirichlet::HomogeneousDirichlet(Memory* memory,
-                                           Paradigm* paradigm,
-                                           const int& nscalar,
-                                           const int& npar,
-                                           const real time,
-                                           const int echo,
-                                           const int nstep) :
-  Physics(memory, paradigm, "Homogeneous Dirichlet", time, echo, nstep),
+HomMix::HomMix(Memory* memory,
+               Paradigm* paradigm,
+               const int& nscalar,
+               const int& npar,
+               const real time,
+               const int echo,
+               const int nstep) :
+  Physics(memory, paradigm, "Homogeneous material mix", time, echo, nstep),
   m_N(nscalar), m_npar(npar)
 //******************************************************************************
 //  Constructor
@@ -72,7 +72,7 @@ HomogeneousDirichlet::HomogeneousDirichlet(Memory* memory,
   m_scalar = m_memory->getPtr<real>(m_MEscalar);
 }
 
-HomogeneousDirichlet::~HomogeneousDirichlet()
+HomMix::~HomMix()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -85,7 +85,7 @@ HomogeneousDirichlet::~HomogeneousDirichlet()
     m_memory->freeEntry(m_MEscalar);
 #ifndef NDEBUG
   } catch (...)
-    { cout << "WARNING: Exception in HomogeneousDirichlet destructor" << endl; }
+    { cout << "WARNING: Exception in HomMix destructor" << endl; }
 #endif // NDEBUG
 
   if (m_dir) { delete m_dir; m_dir = nullptr; }
@@ -93,7 +93,7 @@ HomogeneousDirichlet::~HomogeneousDirichlet()
 }
 
 void
-HomogeneousDirichlet::solve()
+HomMix::solve()
 //******************************************************************************
 //  Solve
 //! \author  J. Bakosi
@@ -131,7 +131,7 @@ HomogeneousDirichlet::solve()
 }
 
 void
-HomogeneousDirichlet::advance(const real dt)
+HomMix::advance(const real dt)
 //******************************************************************************
 //  Advance particles
 //! \author  J. Bakosi
@@ -185,7 +185,7 @@ HomogeneousDirichlet::advance(const real dt)
 }
 
 void
-HomogeneousDirichlet::echo()
+HomMix::echo()
 //******************************************************************************
 //  Echo informaion on homogeneous Dirichlet
 //! \author  J. Bakosi
@@ -200,7 +200,7 @@ HomogeneousDirichlet::echo()
 }
 
 void
-HomogeneousDirichlet::init()
+HomMix::init()
 //******************************************************************************
 //  Initialize homogeneous Dirichlet
 //! \author  J. Bakosi
@@ -210,7 +210,7 @@ HomogeneousDirichlet::init()
 }
 
 void
-HomogeneousDirichlet::initUniform()
+HomMix::initUniform()
 //******************************************************************************
 //  Initialize scalars with uniform PDF with the last constrained
 //! \author  J. Bakosi
@@ -242,7 +242,7 @@ HomogeneousDirichlet::initUniform()
 }
 
 void
-HomogeneousDirichlet::initGaussian()
+HomMix::initGaussian()
 //******************************************************************************
 //  Initialize scalars with Gaussian PDF
 //! \author  J. Bakosi
@@ -262,7 +262,7 @@ HomogeneousDirichlet::initGaussian()
 }
 
 void
-HomogeneousDirichlet::outJPDF()
+HomMix::outJPDF()
 //******************************************************************************
 //  Output joint scalar PDF
 //! \author  J. Bakosi

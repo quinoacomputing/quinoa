@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 08:53:03 PM MST
+  \date      Mon 04 Feb 2013 09:48:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -60,6 +60,7 @@ static void echoBuildInfo()
 }
 
 } // namespace Quinoa
+
 
 int main(int argc, char* argv[])
 //******************************************************************************
