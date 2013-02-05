@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 01:01:01 PM MST
+  \date      Mon 04 Feb 2013 08:34:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -147,11 +147,10 @@ namespace grammar {
   struct title :
          ifmust< read<keyword::title>, parse_title > {};
 
-  // spinsflow block
-  struct spinsflow :
-         ifmust< parse<store_physics, keyword::spinsflow>,
-                 block< process<keyword::hydro, store_hydro, hydro>,
-                        process<keyword::mix, store_mix, mix> > > {};
+  // dir block
+  struct dir :
+         ifmust< parse<store_mix, keyword::dir>,
+                 block< process<keyword::nscalar, store<control::NSCALAR>> > > {};
 
   // homdir block
   struct homdir :
@@ -159,9 +158,15 @@ namespace grammar {
                  block< process<keyword::nstep, store<control::NSTEP>>,
                         process<keyword::term, store<control::TERM>>,
                         process<keyword::dt, store<control::DT>>,
-                        process<keyword::nscalar, store<control::NSCALAR>>,
                         process<keyword::npar, store<control::NPAR>>,
-                        process<keyword::echo, store<control::ECHO>> > > {};
+                        process<keyword::echo, store<control::ECHO>>,
+                        dir > > {};
+
+  // spinsflow block
+  struct spinsflow :
+         ifmust< parse<store_physics, keyword::spinsflow>,
+                 block< process<keyword::hydro, store_hydro, hydro>,
+                        process<keyword::mix, store_mix, mix> > > {};
 
   // physics block
   struct physics :

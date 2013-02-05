@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 31 Jan 2013 07:13:10 AM MST
+  \date      Mon 04 Feb 2013 08:53:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -40,7 +40,8 @@ static void echoBuildInfo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "\nBuild environment:\n";
+  cout << "\nBuild environment:"
+          "\n------------------\n";
   cout << " * Executable        : " << QUINOA_EXECUTABLE << "\n";
   cout << " * Version           : " << QUINOA_VERSION << "\n";
   cout << " * Release           : " << QUINOA_RELEASE << "\n";
