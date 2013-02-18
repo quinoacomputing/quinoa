@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:51:06 AM MST
+  \date      Mon 18 Feb 2013 09:47:46 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -17,18 +17,25 @@ using namespace std;
 
 namespace Quinoa {
 
+class Memory;
+class Paradigm;
+
 //! Model base
 class Model {
 
   public:
     //! Constructor
-    Model(const string& name);
+    Model(Memory* memory, Paradigm* paradigm, const string& name);
 
     //! Destructor
     virtual ~Model();
 
     //! Name accessor
     const string& name() { return m_name; }
+
+  protected:
+    Memory* m_memory;             //!< Memory object pointer
+    Paradigm* m_paradigm;         //!< Parallel programming object pointer
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:30:20 PM MST
+  \date      Mon 18 Feb 2013 10:23:02 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -13,17 +13,14 @@
 
 #include <limits>
 
-#include <mkl_vsl.h>
-
 #include <Physics.h>
+#include <Type.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class MKLRandom;
-class MKLRndStream;
-class Dirichlet;
+class Mix;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -32,6 +29,8 @@ class HomMix : public Physics {
     //! Constructor
     HomMix(Memory* memory,
            Paradigm* paradigm,
+           const string& name,
+           const control::MixType mix,
            const int& nscalar,
            const int& npar,
            const real time,
@@ -60,26 +59,10 @@ class HomMix : public Physics {
     //! Don't permit move assigment
     HomMix& operator=(HomMix&&) = delete;
 
-    //! Initialize scalars with unirom PDF with the last constrained
-    void initUniform();
-
-    //! Initialize scalars with Gaussian PDF
-    void initGaussian();
-
-    //! Advance particles
-    void advance(const real dt);
-
     //! Output joint scalar PDF
     void outJPDF();
 
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
-    Dirichlet* m_dir;               //!< Dirichlet mix model object
-    const int m_N;                  //!< Number of mixing scalars
-    const int m_npar;               //!< Number of particles
-    MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars
-    real* m_scalar;                 //!< Raw pointer to scalars
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+    Mix* m_mix;                     //!< Mix model object
 };
 
 } // namespace Quinoa

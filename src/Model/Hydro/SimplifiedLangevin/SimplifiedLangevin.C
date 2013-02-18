@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 12:02:03 PM MST
+  \date      Mon 18 Feb 2013 10:10:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -17,9 +17,13 @@
 using namespace std;
 using namespace Quinoa;
 
-SimplifiedLangevin::SimplifiedLangevin() : Hydro("Simplified Langevin")
+SimplifiedLangevin::SimplifiedLangevin(Memory* memory,
+                                       Paradigm* paradigm) :
+  Hydro(memory, paradigm, "Simplified Langevin")
 //******************************************************************************
 //  Constructor
+//! \param[in]  memory   Memory object pointer
+//! \param[in]  paradigm Parallel programming object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {
