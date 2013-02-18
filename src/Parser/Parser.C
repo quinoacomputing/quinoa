@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 08:15:18 AM MST
+  \date      Mon 18 Feb 2013 12:32:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -42,8 +42,9 @@ Parser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //cout << "==== PARSE START ====" << endl;
   control::Bundle stack;
+
+  //cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
   pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack );
 #else  // NDEBUG

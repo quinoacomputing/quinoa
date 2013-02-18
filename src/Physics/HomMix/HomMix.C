@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:38:46 AM MST
+  \date      Mon 18 Feb 2013 12:34:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -16,7 +16,7 @@
 #include <HomMix.h>
 #include <MixException.h>
 #include <PDFWriter.h>
-#include <Type.h>
+#include <ControlTypes.h>
 #include <Dirichlet.h>
 
 using namespace Quinoa;
