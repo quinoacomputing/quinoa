@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:34:08 PM MST
+  \date      Mon 18 Feb 2013 04:10:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -29,7 +29,8 @@ namespace grammar {
   // State
 
   using stack_type = control::Bundle;
-  static stack_type dummy_stack;       // dummy instant for decltype in store()
+  using boolstack_type = control::BoolBundle;
+  static stack_type dummy_stack; // dummy Bundle instant for decltype in store()
 
   // Actions
 
@@ -58,37 +59,55 @@ namespace grammar {
   // store value in state at 'position'
   template< control::BundlePosition at >
   struct store : action_base< store<at> > {
-    static void apply(const std::string& value, stack_type& stack) {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      // Figure out element type at position 'at'
       using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
+      // Convert to correct type and store element at position 'at'
       get<at>(stack) = convert<type>(value);
+      // Flip set bit indicating that element was set
+      boolstack[at] = true;
     }
   };
 
   // store selected title
   struct store_title : action_base< store_title > {
-    static void apply(const std::string& value, stack_type& stack) {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
       get<control::TITLE>(stack) = value;
+      boolstack[control::TITLE] = true;
     }
   };
 
   // store selected physics
   struct store_physics : action_base< store_physics > {
-    static void apply(const std::string& value, stack_type& stack) {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
       get<control::PHYSICS>(stack) = associate::PhysicsEnum[value];
+      boolstack[control::PHYSICS] = true;
     }
   };
 
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
-    static void apply(const std::string& value, stack_type& stack) {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
       get<control::HYDRO>(stack) = associate::HydroEnum[value];
+      boolstack[control::HYDRO] = true;
     }
   };
 
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
-    static void apply(const std::string& value, stack_type& stack) {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
       get<control::MIX>(stack) = associate::MixEnum[value];
+      boolstack[control::MIX] = true;
     }
   };
 

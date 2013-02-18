@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:47:26 PM MST
+  \date      Mon 18 Feb 2013 03:54:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -12,6 +12,7 @@
 #define Type_h
 
 #include <string>
+#include <vector>
 #include <tuple>
 
 #include <QuinoaTypes.h>
@@ -69,6 +70,9 @@ using Bundle = tuple< string,        //!< 0: Title
                       int,           //!< 7: Number of mixing scalars
                       int,           //!< 8: Total number of particles
                       int >;         //!< 9: One-liner info every few time steps
+
+//! Vector of bools indicating whether data is set in Bundle during parsing
+using BoolBundle = vector<bool>;
 
 } // namespace control
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:49:01 PM MST
+  \date      Mon 18 Feb 2013 03:54:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control

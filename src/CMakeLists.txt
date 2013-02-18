@@ -33,7 +33,8 @@ if(PLATFORM MATCHES "linux-intel")
   #   383: value copied to temporary, reference to temporary used
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,304,383,981,1418")
+  #  1599: declaration hides parameter
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,304,383,981,1418,1599")
 endif()
 
 # Intel-specific compiler arguments on darwin

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 02:22:58 PM MST
+  \date      Mon 18 Feb 2013 04:27:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -26,8 +26,8 @@ using namespace control;
 class Control {
 
   private:
-    // Data parsed
-    Bundle m_data;
+    Bundle m_data;              //! Data parsed
+    BoolBundle m_booldata;      //! Flags indicating if data was parsed
 
   public:
     //! Constructor
@@ -36,45 +36,46 @@ class Control {
     //! Destructor
     ~Control() = default;
 
-    // Set all data in one step by deep-move of whole tuple
+    // Set all data in one step by deep-move of whole bundle
     void set(const Bundle& stack) { m_data = move(stack); }
+
+    // Set all flags in one step by deep-move of whole bool bundle
+    void set(const BoolBundle& boolstack) { m_booldata = move(boolstack); }
 
     //! Get single element at position
     template< BundlePosition at >
-    const typename std::tuple_element<at, decltype(m_data)>::type& get() {
+    const typename std::tuple_element<at, decltype(m_data)>::type& get() const {
       return std::get<at>(m_data);
     }
 
-    // Check if an element is different than its default value
+    // Check if an element is set during parse
     template< BundlePosition at >
-    const bool set() {
-      return std::get<at>(m_data) != std::get<at>(Defaults);
-    }
+    bool set() const { return m_booldata[at]; }
 
     //! Get physics keyword
-    const std::string& physicsKeyword() {
+    const std::string& physicsKeyword() const {
       return associate::PhysicsKeyword[ std::get<PHYSICS>(m_data) ];
     }
     //! Get physics name
-    const std::string& physicsName() {
+    const std::string& physicsName() const {
       return associate::PhysicsName[ std::get<PHYSICS>(m_data) ];
     }
 
     //! Get hydrodynamics model keyword
-    const std::string& hydroKeyword() {
+    const std::string& hydroKeyword() const {
       return associate::HydroKeyword[ std::get<HYDRO>(m_data) ];
     }
     //! Get hydrodynamics model name
-    const std::string& hydroName() {
+    const std::string& hydroName() const {
       return associate::HydroName[ std::get<HYDRO>(m_data) ];
     }
 
     //! Get material mix model keyword
-    const std::string& mixKeyword() {
+    const std::string& mixKeyword() const {
       return associate::MixKeyword[ std::get<MIX>(m_data) ];
     }
     //! Get material mix model name
-    const std::string& mixName() {
+    const std::string& mixName() const {
       return associate::MixName[ std::get<MIX>(m_data) ];
     }
 
