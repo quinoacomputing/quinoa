@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 02:26:35 PM MST
+  \date      Mon 18 Feb 2013 04:14:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -44,19 +44,22 @@ Parser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Initialize new bundle for sparsed data with defaults
+  // Initialize new bundle for parsed data with defaults
   Bundle stack(Defaults);
+  // Initialize new bool bundle for indicating what data is set in bundle
+  BoolBundle boolstack(tuple_size<decltype(Defaults)>::value, false);
 
   //cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
-  pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack );
+  pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack, boolstack );
 #else  // NDEBUG
-  pegtl::basic_parse_file< grammar::read_file >( m_filename, stack );
+  pegtl::basic_parse_file< grammar::read_file >( m_filename, stack, boolstack );
 #endif // NDEBUG
   //cout << "==== PARSE END ====" << endl << endl;
 
-  // Store off stuff parsed
+  // Store off parsed bundles
   m_control->set(stack);
+  m_control->set(boolstack);
 }
 
 void
