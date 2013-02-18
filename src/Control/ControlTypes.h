@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Type.h
+  \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:35:02 PM MST
+  \date      Mon 18 Feb 2013 12:47:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -11,10 +11,10 @@
 #ifndef Type_h
 #define Type_h
 
-#include<string>
-#include<tuple>
+#include <string>
+#include <tuple>
 
-#include<QuinoaTypes.h>
+#include <QuinoaTypes.h>
 
 using namespace std;
 
@@ -45,6 +45,7 @@ enum MixType { NO_MIX=0,
                NUM_MIX
 };
 
+//! Position enum for accessing fields of tuple Bundle
 enum BundlePosition { TITLE=0,
                       PHYSICS,
                       HYDRO,
@@ -57,7 +58,7 @@ enum BundlePosition { TITLE=0,
                       ECHO
 };
 
-// Storage bundle for parsed data
+//! Storage bundle for parsed data
 using Bundle = tuple< string,        //!< 0: Title
                       PhysicsType,   //!< 1: Physics
                       HydroType,     //!< 2: Hydrodynamics model

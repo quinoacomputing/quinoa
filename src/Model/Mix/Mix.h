@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 11:08:54 AM MST
+  \date      Mon 18 Feb 2013 01:14:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -26,10 +26,9 @@ class Mix : public Model {
 
   public:
     //! Constructor
-    Mix(Memory* memory,
-        Paradigm* paradigm,
-        const int& nscalar,
-        const int& npar,
+    Mix(Memory* const memory,
+        Paradigm* const paradigm,
+        Control* const control,
         const string& name);
 
     //! Destructor

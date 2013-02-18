@@ -7,6 +7,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Base
 )
 

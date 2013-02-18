@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:32:05 PM MST
+  \date      Mon 18 Feb 2013 12:51:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -13,11 +13,13 @@
 
 #include <Grammar.h>
 #include <Control.h>
+#include <Defaults.h>
 #include <Parser.h>
 #include <IOException.h>
 #include <ParserException.h>
 
 using namespace Quinoa;
+using namespace control;
 
 Parser::Parser(const string& filename, Control* const control) :
   m_filename(filename), m_control(control)
@@ -42,7 +44,8 @@ Parser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  control::Bundle stack;
+  // Initialize new bundle for sparsed data with defaults
+  Bundle stack(Defaults);
 
   //cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
@@ -66,30 +69,26 @@ Parser::echo()
   cout << "Parsed from " << m_filename << ":\n" << setfill('-')
        << setw(13+m_filename.length()) << "-" << endl;
 
-  cout << " * Title: " << m_control->get<control::TITLE>() << endl;
+  cout << " * Title: " << m_control->get<TITLE>() << endl;
 
-  if (m_control->get<control::PHYSICS>() > control::NO_PHYSICS) {
+  if (m_control->get<PHYSICS>() > NO_PHYSICS) {
     cout << " * Physics: " << m_control->physicsName() << endl;
   }
 
-  if (m_control->get<control::HYDRO>() > control::NO_HYDRO) {
+  if (m_control->get<HYDRO>() > NO_HYDRO) {
     cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
   }
 
-  if (m_control->get<control::MIX>() > control::NO_MIX) {
+  if (m_control->get<MIX>() > NO_MIX) {
     cout << " * Material mixing: " << m_control->mixName() << endl;
-    cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
+    cout << "   - Number of time steps: " << m_control->get<NSTEP>() << endl;
+    cout << "   - Terminate time: " << m_control->get<TERM>() << endl;
+    cout << "   - Time step size: " << m_control->get<DT>() << endl;
+    cout << "   - Number of mixing scalars: " << m_control->get<NSCALAR>()
          << endl;
-    cout << "   - Terminate time: " << m_control->get<control::TERM>()
+    cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
+    cout << "   - Screen-output every " << m_control->get<ECHO>() << " step"
          << endl;
-    cout << "   - Time step size: " << m_control->get<control::DT>()
-         << endl;
-    cout << "   - Number of mixing scalars: "
-         << m_control->get<control::NSCALAR>() << endl;
-    cout << "   - Number of particles: " << m_control->get<control::NPAR>()
-         << endl;
-    cout << "   - Screen-output every " << m_control->get<control::ECHO>()
-         << " step" << endl;
   }
 
   cout << endl;

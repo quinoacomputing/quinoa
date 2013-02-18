@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:35:01 PM MST
+  \date      Mon 18 Feb 2013 01:54:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -25,15 +25,9 @@ class HomMix : public Physics {
 
   public:
     //! Constructor
-    HomMix(Memory* memory,
-           Paradigm* paradigm,
-           const string& name,
-           const control::MixType mix,
-           const int& nscalar,
-           const int& npar,
-           const real time,
-           const int echo,
-           const int nstep);
+    HomMix(Memory* const memory,
+           Paradigm* const paradigm,
+           Control* const control);
 
     //! Destructor
     virtual ~HomMix();
