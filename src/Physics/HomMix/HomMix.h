@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:23:02 AM MST
+  \date      Mon 18 Feb 2013 12:35:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -11,10 +11,8 @@
 #ifndef HomMix_h
 #define HomMix_h
 
-#include <limits>
-
 #include <Physics.h>
-#include <Type.h>
+#include <ControlTypes.h>
 
 namespace Quinoa {
 
@@ -34,8 +32,8 @@ class HomMix : public Physics {
            const int& nscalar,
            const int& npar,
            const real time,
-           const int echo = 1,
-           const int nstep = numeric_limits<int>::max());
+           const int echo,
+           const int nstep);
 
     //! Destructor
     virtual ~HomMix();

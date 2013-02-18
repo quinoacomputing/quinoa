@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon Feb  4 16:29:30 2013
+  \date      Mon 18 Feb 2013 12:34:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -14,7 +14,7 @@
 #include <string>
 
 #include <QuinoaTypes.h>
-#include <Type.h>
+#include <ControlTypes.h>
 #include <BackAssociate.h>
 
 namespace Quinoa {

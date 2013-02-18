@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:42:32 PM MST
+  \date      Mon 18 Feb 2013 12:34:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -11,7 +11,7 @@
 #ifndef Grammar_h
 #define Grammar_h
 
-#include <Type.h>
+#include <ControlTypes.h>
 #include <FwdAssociate.h>
 #include <ParserException.h>
 
