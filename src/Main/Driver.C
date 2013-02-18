@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:52:14 PM MST
+  \date      Mon 18 Feb 2013 02:16:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -74,7 +74,7 @@ Driver::setup()
   switch (m_control->get<PHYSICS>()) {
 
     case PhysicsType::NO_PHYSICS :
-      Throw(PhysicsException,FATAL,NO_PHYSICS);
+      Throw(PhysicsException,FATAL,PhysicsExceptType::NO_PHYSICS);
       break;
 
     case PhysicsType::HOMOGENEOUS_MIX :
