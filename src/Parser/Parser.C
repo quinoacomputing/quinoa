@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:43:05 PM MST
+  \date      Mon 18 Feb 2013 08:15:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -79,15 +79,15 @@ Parser::echo()
     cout << " * Material mixing: " << m_control->mixName() << endl;
     cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
          << endl;
-    cout << "   - Terminate at time: " << m_control->get<control::TERM>()
+    cout << "   - Terminate time: " << m_control->get<control::TERM>()
          << endl;
-    cout << "   - Size of time step: " << m_control->get<control::DT>()
+    cout << "   - Time step size: " << m_control->get<control::DT>()
          << endl;
     cout << "   - Number of mixing scalars: "
          << m_control->get<control::NSCALAR>() << endl;
     cout << "   - Number of particles: " << m_control->get<control::NPAR>()
          << endl;
-    cout << "   - Screen-output at every " << m_control->get<control::ECHO>()
+    cout << "   - Screen-output every " << m_control->get<control::ECHO>()
          << " step" << endl;
   }
 

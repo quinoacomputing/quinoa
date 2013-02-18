@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:29:04 AM MST
+  \date      Mon 18 Feb 2013 10:05:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -17,11 +17,17 @@
 using namespace std;
 using namespace Quinoa;
 
-GeneralizedDirichlet::GeneralizedDirichlet(const int& nscalar) :
-  Mix(nscalar, "Generalized Dirichlet")
+GeneralizedDirichlet::GeneralizedDirichlet(Memory* memory,
+                                           Paradigm* paradigm,
+                                           const int& nscalar,
+                                           const int& npar) :
+  Mix(memory, paradigm, nscalar, npar, "Generalized Dirichlet")
 //******************************************************************************
 //  Constructor
+//! \param[in]  memory   Memory object pointer
+//! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  nscalar  Number of mixing scalars
+//! \param[in]  npar     Number of particles
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -34,5 +40,4 @@ GeneralizedDirichlet::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Number of mixing scalars: " << m_nscalar << endl;
 }

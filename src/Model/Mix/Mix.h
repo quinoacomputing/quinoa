@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:58:59 AM MST
+  \date      Mon 18 Feb 2013 11:08:54 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -15,6 +15,7 @@
 
 #include <QuinoaTypes.h>
 #include <Model.h>
+#include <JPDF.h>
 
 namespace Quinoa {
 
@@ -25,16 +26,30 @@ class Mix : public Model {
 
   public:
     //! Constructor
-    Mix(const int& nscalar, const string& name);
+    Mix(Memory* memory,
+        Paradigm* paradigm,
+        const int& nscalar,
+        const int& npar,
+        const string& name);
 
     //! Destructor
     virtual ~Mix() {}
 
+    //! Interface for initializing particles
+    virtual void init() = 0;
+
+    //! Interface for advancing particles in mix model
+    virtual void advance(const real dt) = 0;
+
     //! Interface for echo information on mix model
     virtual void echo() = 0;
 
+    //! Interface for estimate joint scalar PDF
+    virtual void jpdf(JPDF& jpdf) = 0;
+
   protected:
-    const int m_nscalar;           //!< Number of mixing scalars
+    const int m_nscalar;            //!< Number of mixing scalars
+    const int m_npar;               //!< Number of particles
 
   private:
     //! Don't permit copy constructor

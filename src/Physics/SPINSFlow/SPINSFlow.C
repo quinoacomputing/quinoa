@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 08:11:56 AM MST
+  \date      Mon 18 Feb 2013 10:40:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -67,10 +67,10 @@ SPINSFlow::SPINSFlow(Memory* memory,
 
   // Instantiate hydrodynamics model
   if (hydro == control::HydroType::SLM) {
-    m_hydro = new (nothrow) SimplifiedLangevin();
+    m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm);
     Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else if (hydro == control::HydroType::GLM) {
-    m_hydro = new (nothrow) GeneralizedLangevin();
+    m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm);
     Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
   } else {
     Throw(HydroException,FATAL,NO_SUCH_HYDRO);

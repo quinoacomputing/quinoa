@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:59:05 PM MST
+  \date      Mon 18 Feb 2013 10:41:26 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -81,6 +81,8 @@ Driver::setup()
       m_physics = new (nothrow)
                   HomMix(m_memory,
                          m_paradigm,
+                         m_control->physicsName(),
+                         m_control->get<MIX>(),
                          m_control->get<NSCALAR>(),
                          m_control->get<NPAR>(),
                          m_control->get<TERM>(),

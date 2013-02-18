@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 11:32:35 AM MST
+  \date      Mon 18 Feb 2013 10:09:16 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -21,7 +21,8 @@ class SimplifiedLangevin : public Hydro {
 
   public:
     //! Constructor
-    SimplifiedLangevin();
+    SimplifiedLangevin(Memory* memory,
+                       Paradigm* paradigm);
 
     //! Destructor
     virtual ~SimplifiedLangevin() {}
