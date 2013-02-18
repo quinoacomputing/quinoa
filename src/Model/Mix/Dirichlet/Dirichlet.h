@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:38:22 AM MST
+  \date      Mon 18 Feb 2013 01:13:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -30,10 +30,9 @@ class Dirichlet : public Mix {
 
   public:
     //! Constructor
-    Dirichlet(Memory* memory,
-              Paradigm* paradigm,
-              const int& nscalar,
-              const int& npar);
+    Dirichlet(Memory* const memory,
+              Paradigm* const paradigm,
+              Control* const control);
 
     //! Destructor
     virtual ~Dirichlet();

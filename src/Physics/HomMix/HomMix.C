@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:34:51 PM MST
+  \date      Mon 18 Feb 2013 01:51:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -13,48 +13,37 @@
 
 #include <Memory.h>
 #include <MemoryException.h>
+#include <ControlTypes.h>
+#include <Control.h>
 #include <HomMix.h>
 #include <MixException.h>
 #include <PDFWriter.h>
-#include <ControlTypes.h>
 #include <Dirichlet.h>
 
 using namespace Quinoa;
 using namespace control;
 
-HomMix::HomMix(Memory* memory,
-               Paradigm* paradigm,
-               const string& name,
-               const MixType mix,
-               const int& nscalar,
-               const int& npar,
-               const real time,
-               const int echo,
-               const int nstep) :
-  Physics(memory, paradigm, name, time, echo, nstep)
+HomMix::HomMix(Memory* const memory,
+               Paradigm* const paradigm,
+               Control* const control) :
+  Physics(memory, paradigm, control)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  name     Physics name
-//! \param[in]  mix      Mix model
-//! \param[in]  nscalar  Number of mixing scalars
-//! \param[in]  npar     Number of particles
-//! \param[in]  time     Maximum time to simulate
-//! \param[in]  echo     One-line info in every few time step
-//! \param[in]  nstep    Maximum number of time steps to take
+//! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Instantiate selected mix model
-  switch (mix) {
+  switch (control->get<MIX>()) {
 
     case MixType::NO_MIX :
       Throw(MixException,FATAL,NO_MIX);
       break;
 
     case MixType::DIRICHLET :
-      m_mix = new (nothrow) Dirichlet(memory, paradigm, nscalar, npar);
+      m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
       Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
@@ -90,7 +79,7 @@ HomMix::solve()
   real dt = 0.05;
 
   // Time stepping loop
-  while (fabs(t-m_time) > numeric_limits<real>::epsilon() && it < m_nstep) {
+  while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < m_nstep) {
 
     // Advance particles
     m_mix->advance(dt);
@@ -104,7 +93,7 @@ HomMix::solve()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > m_time) t = m_time;
+    if (t > m_term) t = m_term;
   }
 
   outJPDF();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:10:36 AM MST
+  \date      Mon 18 Feb 2013 01:28:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -21,8 +21,9 @@ class GeneralizedLangevin : public Hydro {
 
   public:
     //! Constructor
-    GeneralizedLangevin(Memory* memory,
-                        Paradigm* paradigm);
+    GeneralizedLangevin(Memory* const memory,
+                        Paradigm* const paradigm,
+                        Control* const control);
 
     //! Destructor
     virtual ~GeneralizedLangevin() {}

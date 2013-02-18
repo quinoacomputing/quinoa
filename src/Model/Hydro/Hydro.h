@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:07:37 AM MST
+  \date      Mon 18 Feb 2013 01:26:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -25,8 +25,9 @@ class Hydro : public Model {
 
   public:
     //! Constructor
-    Hydro(Memory* memory,
-          Paradigm* paradigm,
+    Hydro(Memory* const memory,
+          Paradigm* const paradigm,
+          Control* const control,
           const string& name);
 
     //! Destructor

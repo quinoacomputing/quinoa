@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:39:24 AM MST
+  \date      Mon 18 Feb 2013 01:24:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -24,17 +24,14 @@
 using namespace std;
 using namespace Quinoa;
 
-Dirichlet::Dirichlet(Memory* memory,
-                     Paradigm* paradigm,
-                     const int& nscalar,
-                     const int& npar) :
-  Mix(memory, paradigm, nscalar, npar, "Dirichlet")
+Dirichlet::Dirichlet(Memory* const memory,
+                     Paradigm* const paradigm,
+                     Control* const control) :
+  Mix(memory, paradigm, control, "Dirichlet")
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  nscalar  Number of mixing scalars
-//! \param[in]  npar     Number of particles
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -48,7 +45,7 @@ Dirichlet::Dirichlet(Memory* memory,
   m_str = m_random->getStr(m_rndStr);
 
   // Allocate memory entry to store the scalars
-  m_MEscalar = m_memory->newEntry(npar*m_nscalar, REAL, SCALAR, "scalar");
+  m_MEscalar = m_memory->newEntry(m_npar*m_nscalar, REAL, SCALAR, "scalar");
   // Get pointer to scalars right away
   m_scalar = m_memory->getPtr<real>(m_MEscalar);
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 09:57:14 AM MST
+  \date      Mon 18 Feb 2013 01:41:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -11,22 +11,23 @@
 
 #include <Mix.h>
 #include <MixException.h>
+#include <Control.h>
 
 using namespace Quinoa;
+using namespace control;
 
-Mix::Mix(Memory* memory,
-         Paradigm* paradigm,
-         const int& nscalar,
-         const int& npar,
+Mix::Mix(Memory* const memory,
+         Paradigm* const paradigm,
+         Control* const control,
          const string& name) :
-  Model(memory, paradigm, name),
-  m_nscalar(nscalar), m_npar(npar)
+  Model(memory, paradigm, control, name),
+  m_nscalar(control->get<NSCALAR>()),
+  m_npar(control->get<NPAR>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  npar     Number of particles
-//! \param[in]  nscalar  Number of mixing scalars
+//! \param[in]  control  Control object pointer
 //! \param[in]  name     Mix model name
 //! \author  J. Bakosi
 //******************************************************************************

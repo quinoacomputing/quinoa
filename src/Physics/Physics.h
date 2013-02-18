@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:03:44 PM MST
+  \date      Mon 18 Feb 2013 01:52:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -19,21 +19,19 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
+class Control;
 
 //! Physics base
 class Physics {
 
   public:
     //! Constructor
-    Physics(Memory* memory,
-            Paradigm* paradigm,
-            const string& name,
-            const real time,
-            const int echo,
-            const int nstep);
+    Physics(Memory* const memory,
+            Paradigm* const paradigm,
+            Control* const control);
 
     //! Destructor
-    virtual ~Physics();
+    virtual ~Physics() {};
 
     //! Echo informaion on physics
     virtual void echo() = 0;
@@ -56,10 +54,10 @@ class Physics {
                         long int& secs2end);
 
   protected:
-    Memory* m_memory;             //!< Memory object pointer
-    Paradigm* m_paradigm;         //!< Parallel programming object pointer
-    const string m_name;          //!< Name of physics
-    const real m_time;            //!< Maximum time to simulate
+    Memory* const m_memory;       //!< Memory object pointer
+    Paradigm* const m_paradigm;   //!< Parallel programming object pointer
+    Control* const m_control;     //!< Control object pointer
+    const real m_term;            //!< Maximum time to simulate
     const int m_echo;             //!< One-liner info in every few time step
     const int m_nstep;            //!< Maximum number of time steps to take
     struct timeval m_startTime;   //!< Date/time when time-adv loop started

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Sat 02 Feb 2013 08:10:29 AM MST
+  \date      Mon 18 Feb 2013 01:37:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -15,13 +15,13 @@
 
 #include <mkl_vsl.h>
 
-#include <Control.h>
 #include <Physics.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
+class Control;
 class MKLRandom;
 class MKLRndStream;
 class UnsMesh;
@@ -32,14 +32,10 @@ class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    SPINSFlow(Memory* memory,
-              Paradigm* paradigm,
-              control::HydroType hydro,
-              const int& npar,
-              const string& filename,
-              const real time,
-              const int echo = 1,
-              const int nstep = numeric_limits<int>::max());
+    SPINSFlow(Memory* const memory,
+              Paradigm* const paradigm,
+              Control* const control,
+              const string& filename);
 
     //! Destructor
     virtual ~SPINSFlow();

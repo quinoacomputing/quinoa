@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 20 Jan 2013 01:01:40 PM MST
+  \date      Mon 18 Feb 2013 01:53:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -15,38 +15,26 @@
 
 #include <Memory.h>
 #include <Physics.h>
+#include <Control.h>
 
 using namespace std;
 using namespace Quinoa;
+using namespace control;
 
-Physics::Physics(Memory* memory,
-                 Paradigm* paradigm,
-                 const string& name,
-                 const real time,
-                 const int echo,
-                 const int nstep) :
+Physics::Physics(Memory* const memory,
+                 Paradigm* const paradigm,
+                 Control* const control) :
   m_memory(memory),
   m_paradigm(paradigm),
-  m_name(name),
-  m_time(time),
-  m_echo(echo),
-  m_nstep(nstep)
+  m_control(control),
+  m_term(control->get<TERM>()),
+  m_echo(control->get<ECHO>()),
+  m_nstep(control->get<NSTEP>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  name     Name of model
-//! \param[in]  time     Maximum time to simulate
-//! \param[in]  echo     One-line info in every few time step
-//! \param[in]  nstep    Maximum number of time steps to take
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
-Physics::~Physics()
-//******************************************************************************
-//  Destructor
+//! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -93,7 +81,7 @@ Physics::report(const int it,
   if (mins2beg >= 60) mins2beg %= 60;
 
   // Estimate time remaining
-  if (it) secs2end = static_cast<long int>(secs_elapsed*(m_time-t)/(dt*it));
+  if (it) secs2end = static_cast<long int>(secs_elapsed*(m_term-t)/(dt*it));
   else secs2end = 0;
   mins2end = secs2end/60;
   hrs2end = mins2end/60;

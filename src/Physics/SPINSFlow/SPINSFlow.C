@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:40:08 AM MST
+  \date      Mon 18 Feb 2013 01:54:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -18,6 +18,7 @@
 
 #include <Memory.h>
 #include <MemoryException.h>
+#include <Control.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 #include <UnsMesh.h>
@@ -28,32 +29,21 @@
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
+using namespace control;
 
-SPINSFlow::SPINSFlow(Memory* memory,
-                     Paradigm* paradigm,
-                     control::HydroType hydro,
-                     const int& npar,
-                     const string& filename,
-                     const real time,
-                     const int echo,
-                     const int nstep) :
-  Physics(memory,
-          paradigm,
-          "Standalone-Particle Incompressible Navier-Stokes Flow",
-          time,
-          echo,
-          nstep),
-  m_npar(npar), m_filename(filename)
+SPINSFlow::SPINSFlow(Memory* const memory,
+                     Paradigm* const paradigm,
+                     Control* const control,
+                     const string& filename) :
+  Physics(memory, paradigm, control),
+  m_npar(control->get<NPAR>()),
+  m_filename(filename)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  hydro    Hydrodynamics model type
-//! \param[in]  npar     Number of particles
+//! \param[in]  control  Control object pointer
 //! \param[in]  filename Mesh filename
-//! \param[in]  time     Maximum time to simulate
-//! \param[in]  echo     One-line info in every few time step
-//! \param[in]  nstep    Maximum number of time steps to take
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -66,14 +56,20 @@ SPINSFlow::SPINSFlow(Memory* memory,
   m_str = m_random->getStr(m_rndStr);
 
   // Instantiate hydrodynamics model
-  if (hydro == control::HydroType::SLM) {
-    m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm);
-    Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else if (hydro == control::HydroType::GLM) {
-    m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm);
-    Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
-  } else {
-    Throw(HydroException,FATAL,NO_SUCH_HYDRO);
+  switch (control->get<HYDRO>()) {
+
+    case HydroType::SLM :
+      m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
+      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    case HydroType::GLM :
+      m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
+      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    default:
+      Throw(HydroException,FATAL,NO_SUCH_HYDRO);
   }
 
   // Instantiate Eulerian mesh
@@ -118,13 +114,6 @@ SPINSFlow::echo()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Physics: " << m_name << endl;
-  cout << " * Mesh : " << m_filename << endl;
-  cout << " * Hydro: " << m_hydro->name() << endl;
-  // Echo info on the hydro model
-  m_hydro->echo();
-
-  cout << endl;
 }
 
 void
@@ -137,6 +126,4 @@ SPINSFlow::init()
   // Read in mesh
   GmshTxtMeshReader inMesh(m_filename, m_mesh, m_memory);
   inMesh.read();
-
-  
 }
