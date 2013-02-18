@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 12:51:21 PM MST
+  \date      Mon 18 Feb 2013 02:26:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -69,26 +69,48 @@ Parser::echo()
   cout << "Parsed from " << m_filename << ":\n" << setfill('-')
        << setw(13+m_filename.length()) << "-" << endl;
 
-  cout << " * Title: " << m_control->get<TITLE>() << endl;
+  if (m_control->set<TITLE>()) {
+    cout << " * Title: " << m_control->get<TITLE>() << endl;
+  }
 
-  if (m_control->get<PHYSICS>() > NO_PHYSICS) {
+  if (m_control->set<PHYSICS>()) {
     cout << " * Physics: " << m_control->physicsName() << endl;
   }
 
-  if (m_control->get<HYDRO>() > NO_HYDRO) {
+  if (m_control->set<HYDRO>()) {
     cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
   }
 
-  if (m_control->get<MIX>() > NO_MIX) {
+  if (m_control->set<MIX>()) {
+
     cout << " * Material mixing: " << m_control->mixName() << endl;
-    cout << "   - Number of time steps: " << m_control->get<NSTEP>() << endl;
-    cout << "   - Terminate time: " << m_control->get<TERM>() << endl;
-    cout << "   - Time step size: " << m_control->get<DT>() << endl;
-    cout << "   - Number of mixing scalars: " << m_control->get<NSCALAR>()
-         << endl;
-    cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
-    cout << "   - Screen-output every " << m_control->get<ECHO>() << " step"
-         << endl;
+
+    if (m_control->set<NSTEP>()) {
+      cout << "   - Number of time steps: " << m_control->get<NSTEP>() << endl;
+    }
+
+    if (m_control->set<TERM>()) {
+      cout << "   - Terminate time: " << m_control->get<TERM>() << endl;
+    }
+
+    if (m_control->set<DT>()) {
+      cout << "   - Time step size: " << m_control->get<DT>() << endl;
+    }
+
+    if (m_control->set<NSCALAR>()) {
+      cout << "   - Number of mixing scalars: " << m_control->get<NSCALAR>()
+           << endl;
+    }
+
+    if (m_control->set<NPAR>()) {
+      cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
+    }
+
+    if (m_control->set<ECHO>()) {
+      cout << "   - Screen-output every " << m_control->get<ECHO>() << " step"
+           << endl;
+    }
+
   }
 
   cout << endl;

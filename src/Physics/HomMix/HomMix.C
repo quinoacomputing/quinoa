@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:51:35 PM MST
+  \date      Mon 18 Feb 2013 02:16:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -39,7 +39,7 @@ HomMix::HomMix(Memory* const memory,
   switch (control->get<MIX>()) {
 
     case MixType::NO_MIX :
-      Throw(MixException,FATAL,NO_MIX);
+      Throw(MixException,FATAL,MixExceptType::NO_MIX);
       break;
 
     case MixType::DIRICHLET :
@@ -76,7 +76,7 @@ HomMix::solve()
   gettimeofday(&m_startTime, static_cast<struct timezone*>(0));
 
   // Set initial time step size
-  real dt = 0.05;
+  real dt = m_control->get<DT>();
 
   // Time stepping loop
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < m_nstep) {
