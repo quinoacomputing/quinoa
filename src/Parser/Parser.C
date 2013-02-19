@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 04:14:36 PM MST
+  \date      Mon 18 Feb 2013 06:44:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -114,6 +114,21 @@ Parser::echo()
            << endl;
     }
 
+    if (m_control->set<B>()) {
+      cout << "   - Parameter vector b = {";
+      for (auto& v : m_control->get<B>()) cout << " " << v;
+      cout << " }" << endl;
+    }
+    if (m_control->set<S>()) {
+      cout << "   - Parameter vector S = {";
+      for (auto& v : m_control->get<S>()) cout << " " << v;
+      cout << " }" << endl;
+    }
+    if (m_control->set<KAPPA>()) {
+      cout << "   - Parameter vector kappa = {";
+      for (auto& v : m_control->get<KAPPA>()) cout << " " << v;
+      cout << " }" << endl;
+    }
   }
 
   cout << endl;

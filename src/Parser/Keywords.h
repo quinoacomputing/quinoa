@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:42:10 PM MST
+  \date      Mon 18 Feb 2013 04:39:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -66,6 +66,11 @@ namespace keyword {
 
   // Number of mixing scalars
   using nscalar = pegtl::string< n,s,c,a,l,a,r >;
+
+  // Dirichlet and generalized Dirichlet parameters
+  using b = pegtl::string< b >;
+  using S = pegtl::string< S >;
+  using kappa = pegtl::string< k,a,p,p,a >;
 
   // Total number of particles
   using npar = pegtl::string< n,p,a,r >;

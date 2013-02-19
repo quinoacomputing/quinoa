@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 04:10:37 PM MST
+  \date      Mon 18 Feb 2013 06:48:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -66,6 +66,21 @@ namespace grammar {
       using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
       // Convert to correct type and store element at position 'at'
       get<at>(stack) = convert<type>(value);
+      // Flip set bit indicating that element was set
+      boolstack[at] = true;
+    }
+  };
+
+  // push value in state at 'position'
+  template< control::BundlePosition at >
+  struct push : action_base< push<at> > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      // Figure out element type of vector at position 'at'
+      //using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
+      // Convert to correct type and push element to vector at position 'at'
+      get<at>(stack).push_back(convert<real>(value));
       // Flip set bit indicating that element was set
       boolstack[at] = true;
     }
@@ -149,6 +164,12 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
+  // parse through values between 'key' and "end" calling 'insert' for each
+  template< class key, class insert, class value = digit >
+  struct list :
+         ifmust< read<key>,
+                 until< read<keyword::end>, parse<insert, value> > > {};
+
   // process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
   struct process :
@@ -169,7 +190,12 @@ namespace grammar {
   // dir block
   struct dir :
          ifmust< parse<store_mix, keyword::dir>,
-                 block< process<keyword::nscalar, store<control::NSCALAR>> > > {};
+                 block< process<keyword::nscalar, store<control::NSCALAR>>,
+                        list<keyword::b, push<control::B>>,
+                        list<keyword::S, push<control::S>>,
+                        list<keyword::kappa, push<control::KAPPA>>
+                      >
+               > {};
 
   // hommix block
   struct hommix :
