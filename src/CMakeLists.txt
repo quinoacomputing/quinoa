@@ -120,7 +120,7 @@ if(HAS_WREMARKS)
 endif()
 
 check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)
-if(HAS_OPTREPORT)
+if(HAS_OPTREPORT AND NOT PLATFORM MATCHES "clang")
   add_definitions("-opt-report=0")
 endif()
 
