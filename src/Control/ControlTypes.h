@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 03:54:22 PM MST
+  \date      Mon 18 Feb 2013 04:48:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -56,20 +56,27 @@ enum BundlePosition { TITLE=0,
                       DT,
                       NSCALAR,
                       NPAR,
-                      ECHO
+                      ECHO,
+                      B,
+                      S,
+                      KAPPA
 };
 
 //! Storage bundle for parsed data
-using Bundle = tuple< string,        //!< 0: Title
-                      PhysicsType,   //!< 1: Physics
-                      HydroType,     //!< 2: Hydrodynamics model
-                      MixType,       //!< 3: Material mix model
-                      int,           //!< 4: Number of time steps to take
-                      real,          //!< 5: Time to terminate time stepping
-                      real,          //!< 6: Size of time step
-                      int,           //!< 7: Number of mixing scalars
-                      int,           //!< 8: Total number of particles
-                      int >;         //!< 9: One-liner info every few time steps
+using Bundle = tuple< string,       //!<  0: Title
+                      PhysicsType,  //!<  1: Physics
+                      HydroType,    //!<  2: Hydrodynamics model
+                      MixType,      //!<  3: Material mix model
+                      int,          //!<  4: Number of time steps to take
+                      real,         //!<  5: Time to terminate time stepping
+                      real,         //!<  6: Size of time step
+                      int,          //!<  7: Number of mixing scalars
+                      int,          //!<  8: Total number of particles
+                      int,          //!<  9: One-liner info every few time steps
+                      vector<real>, //!< 10: Vector if parameters 'b'
+                      vector<real>, //!< 11: Vector if parameters 'S'
+                      vector<real>  //!< 12: Vector if parameters 'kappa'
+>;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing
 using BoolBundle = vector<bool>;
