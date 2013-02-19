@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 06:48:58 PM MST
+  \date      Mon 18 Feb 2013 06:59:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -164,11 +164,13 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
-  // parse through values between 'key' and "end" calling 'insert' for each
+  // parse through list of values between keywords 'key' and "end", calling
+  // 'insert' for each if matches and allowing comments between values
   template< class key, class insert, class value = digit >
   struct list :
          ifmust< read<key>,
-                 until< read<keyword::end>, parse<insert, value> > > {};
+                 until< read<keyword::end>, sor<comment, parse<insert,value>> >
+               > {};
 
   // process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
