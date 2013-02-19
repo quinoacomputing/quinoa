@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 05:33:01 PM MST
+  \date      Mon 18 Feb 2013 07:34:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -37,9 +37,10 @@ const Bundle Defaults(
   1,                          //!<  7: Number of mixing scalars
   1,                          //!<  8: Total number of particles
   1,                          //!<  9: One-liner info every few time steps
-  zerovec,
-  zerovec,
-  zerovec
+  zerovec,                    //!< 10: PDF output times
+  zerovec,                    //!< 11: Vector of parameters 'b'
+  zerovec,                    //!< 12: Vector of paramaters 'S'
+  zerovec                     //!< 13: Vector of parameters 'kappa'
 );
 
 } // namespace control

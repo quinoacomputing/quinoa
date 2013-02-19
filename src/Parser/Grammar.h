@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:22:02 PM MST
+  \date      Mon 18 Feb 2013 07:34:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -207,6 +207,7 @@ namespace grammar {
                         process<keyword::dt, store<control::DT>>,
                         process<keyword::npar, store<control::NPAR>>,
                         process<keyword::ttyi, store<control::TTYI>>,
+                        list<keyword::pdftimes, push<control::PDFTIMES>>,
                         dir > > {};
 
   // spinsflow block
