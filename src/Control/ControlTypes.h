@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 04:48:54 PM MST
+  \date      Mon 18 Feb 2013 07:24:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -56,7 +56,7 @@ enum BundlePosition { TITLE=0,
                       DT,
                       NSCALAR,
                       NPAR,
-                      ECHO,
+                      TTYI,
                       B,
                       S,
                       KAPPA
