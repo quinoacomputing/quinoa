@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:21:52 PM MST
+  \date      Mon 18 Feb 2013 07:31:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -77,6 +77,9 @@ namespace keyword {
 
   // One-line screen output every few time step
   using ttyi = pegtl::string< t,t,y,i >;
+
+  // PDF output times
+  using pdftimes = pegtl::string< p,d,f,t,i,m,e,s >;
 
 } // namespace keyword
 

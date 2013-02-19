@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:22:18 PM MST
+  \date      Mon 18 Feb 2013 07:35:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -112,6 +112,12 @@ Parser::echo()
     if (m_control->set<TTYI>()) {
       cout << "   - Screen-output every " << m_control->get<TTYI>() << " step"
            << endl;
+    }
+
+    if (m_control->set<B>()) {
+      cout << "   - PDF output times = {";
+      for (auto& v : m_control->get<PDFTIMES>()) cout << " " << v;
+      cout << " }" << endl;
     }
 
     if (m_control->set<B>()) {
