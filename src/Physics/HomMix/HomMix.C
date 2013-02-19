@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 02:16:05 PM MST
+  \date      Mon 18 Feb 2013 07:24:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -85,7 +85,7 @@ HomMix::solve()
     m_mix->advance(dt);
 
     // Echo one-liner info
-    if (!(it % m_echo)) {
+    if (!(it % m_ttyi)) {
       report(it, t, dt,
              hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
     }

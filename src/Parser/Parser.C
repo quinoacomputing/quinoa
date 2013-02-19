@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 06:44:48 PM MST
+  \date      Mon 18 Feb 2013 07:22:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -109,8 +109,8 @@ Parser::echo()
       cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
     }
 
-    if (m_control->set<ECHO>()) {
-      cout << "   - Screen-output every " << m_control->get<ECHO>() << " step"
+    if (m_control->set<TTYI>()) {
+      cout << "   - Screen-output every " << m_control->get<TTYI>() << " step"
            << endl;
     }
 

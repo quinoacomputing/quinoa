@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:53:10 PM MST
+  \date      Mon 18 Feb 2013 07:22:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -28,7 +28,7 @@ Physics::Physics(Memory* const memory,
   m_paradigm(paradigm),
   m_control(control),
   m_term(control->get<TERM>()),
-  m_echo(control->get<ECHO>()),
+  m_ttyi(control->get<TTYI>()),
   m_nstep(control->get<NSTEP>())
 //******************************************************************************
 //  Constructor

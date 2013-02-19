@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 04:39:13 PM MST
+  \date      Mon 18 Feb 2013 07:21:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -76,7 +76,7 @@ namespace keyword {
   using npar = pegtl::string< n,p,a,r >;
 
   // One-line screen output every few time step
-  using echo = pegtl::string< e,c,h,o >;
+  using ttyi = pegtl::string< t,t,y,i >;
 
 } // namespace keyword
 
