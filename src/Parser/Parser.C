@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:35:25 PM MST
+  \date      Tue 19 Feb 2013 07:40:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -45,9 +45,9 @@ Parser::parse()
 //******************************************************************************
 {
   // Initialize new bundle for parsed data with defaults
-  Bundle stack(Defaults);
+  Bundle stack(DEFAULTS);
   // Initialize new bool bundle for indicating what data is set in bundle
-  BoolBundle boolstack(tuple_size<decltype(Defaults)>::value, false);
+  BoolBundle boolstack(tuple_size<decltype(DEFAULTS)>::value, false);
 
   //cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
@@ -60,6 +60,7 @@ Parser::parse()
   // Store off parsed bundles
   m_control->set(stack);
   m_control->set(boolstack);
+  m_control->set(JPDF_FILENAME_BASE);
 }
 
 void
@@ -115,8 +116,8 @@ Parser::echo()
     }
 
     if (m_control->set<B>()) {
-      cout << "   - PDF output times = {";
-      for (auto& v : m_control->get<PDFTIMES>()) cout << " " << v;
+      cout << "   - Joint PDF output times = {";
+      for (auto& v : m_control->get<JPDFTIMES>()) cout << " " << v;
       cout << " }" << endl;
     }
 

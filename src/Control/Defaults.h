@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:34:09 PM MST
+  \date      Tue 19 Feb 2013 07:17:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -23,10 +23,10 @@ namespace control {
 
 // ICC: This could be inserted below once initializer lists are properly
 // supported
-const vector<real> zerovec;
+const vector<real> ZEROVEC;
 
 //! Default bundle for parsed data
-const Bundle Defaults(
+const Bundle DEFAULTS(
   "",                         //!<  0: Title
   NO_PHYSICS,                 //!<  1: Physics
   NO_HYDRO,                   //!<  2: Hydrodynamics model
@@ -37,11 +37,14 @@ const Bundle Defaults(
   1,                          //!<  7: Number of mixing scalars
   1,                          //!<  8: Total number of particles
   1,                          //!<  9: One-liner info every few time steps
-  zerovec,                    //!< 10: PDF output times
-  zerovec,                    //!< 11: Vector of parameters 'b'
-  zerovec,                    //!< 12: Vector of paramaters 'S'
-  zerovec                     //!< 13: Vector of parameters 'kappa'
+  ZEROVEC,                    //!< 10: PDF output times
+  ZEROVEC,                    //!< 11: Vector of parameters 'b'
+  ZEROVEC,                    //!< 12: Vector of paramaters 'S'
+  ZEROVEC                     //!< 13: Vector of parameters 'kappa'
 );
+
+//! Default basefilenames for output
+const string JPDF_FILENAME_BASE = "jpdf";
 
 } // namespace control
 
