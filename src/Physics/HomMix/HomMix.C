@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:24:49 PM MST
+  \date      Tue 19 Feb 2013 09:45:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -26,7 +26,9 @@ using namespace control;
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
                Control* const control) :
-  Physics(memory, paradigm, control)
+  Physics(memory, paradigm, control),
+  m_JPDFHistory( history(control->get<JPDFTIMES>(),
+                 control->get_jpdf_filename_base()))
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -90,13 +92,20 @@ HomMix::solve()
              hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
     }
 
+    // Output pdf at selected times
+    for (auto& p : m_JPDFHistory) {
+      if ((fabs(t-p.first) < dt) && (!p.second.written)) {
+        //outJPDF();
+        cout << p.second.filename << ", " << t << endl;
+        p.second.written = true;
+      }
+    }
+
     // Increase timestep and iteration counter
     t += dt;
     ++it;
     if (t > m_term) t = m_term;
   }
-
-  outJPDF();
 }
 
 void

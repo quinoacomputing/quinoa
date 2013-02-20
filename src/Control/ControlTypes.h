@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:33:03 PM MST
+  \date      Tue 19 Feb 2013 07:19:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -57,7 +57,7 @@ enum BundlePosition { TITLE=0,
                       NSCALAR,
                       NPAR,
                       TTYI,
-                      PDFTIMES,
+                      JPDFTIMES,
                       B,
                       S,
                       KAPPA

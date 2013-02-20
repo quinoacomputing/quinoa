@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 04:27:48 PM MST
+  \date      Tue 19 Feb 2013 07:43:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -28,6 +28,7 @@ class Control {
   private:
     Bundle m_data;              //! Data parsed
     BoolBundle m_booldata;      //! Flags indicating if data was parsed
+    string m_jpdf_filename_base;//! This will be a bundle from cmd line parse
 
   public:
     //! Constructor
@@ -36,11 +37,19 @@ class Control {
     //! Destructor
     ~Control() = default;
 
-    // Set all data in one step by deep-move of whole bundle
+    //! Set all data in one step by deep-move of whole bundle
     void set(const Bundle& stack) { m_data = move(stack); }
 
-    // Set all flags in one step by deep-move of whole bool bundle
+    //! Set all flags in one step by deep-move of whole bool bundle
     void set(const BoolBundle& boolstack) { m_booldata = move(boolstack); }
+
+    //! Set jpdf filename base
+    void set(const string& jpdf_filename_base) {
+      m_jpdf_filename_base = move(jpdf_filename_base);
+    }
+
+    //! Get jpdf filename base
+    const string& get_jpdf_filename_base() const { return m_jpdf_filename_base; }
 
     //! Get single element at position
     template< BundlePosition at >
@@ -48,7 +57,7 @@ class Control {
       return std::get<at>(m_data);
     }
 
-    // Check if an element is set during parse
+    //! Check if an element is set during parse
     template< BundlePosition at >
     bool set() const { return m_booldata[at]; }
 
