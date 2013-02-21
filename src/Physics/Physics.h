@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 07:23:25 PM MST
+  \date      Wed 20 Feb 2013 09:21:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef Physics_h
 #define Physics_h
-
-#include <string>
 
 using namespace std;
 
@@ -58,8 +56,6 @@ class Physics {
     Paradigm* const m_paradigm;   //!< Parallel programming object pointer
     Control* const m_control;     //!< Control object pointer
     const real m_term;            //!< Maximum time to simulate
-    const int m_ttyi;             //!< One-liner info in every few time step
-    const int m_nstep;            //!< Maximum number of time steps to take
     struct timeval m_startTime;   //!< Date/time when time-adv loop started
 
   private:

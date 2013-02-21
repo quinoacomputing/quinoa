@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 19 Feb 2013 07:40:15 PM MST
+  \date      Wed 20 Feb 2013 08:57:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -73,53 +73,46 @@ Parser::echo()
   cout << "Parsed from " << m_filename << ":\n" << setfill('-')
        << setw(13+m_filename.length()) << "-" << endl;
 
-  if (m_control->set<TITLE>()) {
+  if (m_control->set<TITLE>())
     cout << " * Title: " << m_control->get<TITLE>() << endl;
-  }
 
-  if (m_control->set<PHYSICS>()) {
+  if (m_control->set<PHYSICS>())
     cout << " * Physics: " << m_control->physicsName() << endl;
-  }
 
-  if (m_control->set<HYDRO>()) {
+  if (m_control->set<HYDRO>())
     cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
-  }
 
   if (m_control->set<MIX>()) {
 
     cout << " * Material mixing: " << m_control->mixName() << endl;
 
-    if (m_control->set<NSTEP>()) {
+    if (m_control->set<NSTEP>())
       cout << "   - Number of time steps: " << m_control->get<NSTEP>() << endl;
-    }
 
-    if (m_control->set<TERM>()) {
+    if (m_control->set<TERM>())
       cout << "   - Terminate time: " << m_control->get<TERM>() << endl;
-    }
 
-    if (m_control->set<DT>()) {
+    if (m_control->set<DT>())
       cout << "   - Time step size: " << m_control->get<DT>() << endl;
-    }
 
-    if (m_control->set<NSCALAR>()) {
+    if (m_control->set<NSCALAR>())
       cout << "   - Number of mixing scalars: " << m_control->get<NSCALAR>()
            << endl;
-    }
 
-    if (m_control->set<NPAR>()) {
+    if (m_control->set<NPAR>())
       cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
-    }
 
-    if (m_control->set<TTYI>()) {
-      cout << "   - Screen-output every " << m_control->get<TTYI>() << " step"
-           << endl;
-    }
+    if (m_control->set<TTYI>())
+      cout << "   - TTY output interval: " << m_control->get<TTYI>() << endl;
 
-    if (m_control->set<B>()) {
-      cout << "   - Joint PDF output times = {";
-      for (auto& v : m_control->get<JPDFTIMES>()) cout << " " << v;
-      cout << " }" << endl;
-    }
+    if (m_control->set<DUMP>())
+      cout << "   - Dump output interval = " << m_control->get<DUMP>() << endl;
+
+    if (m_control->set<PLTI>())
+      cout << "   - Plot output interval = " << m_control->get<PLTI>() << endl;
+
+    if (m_control->set<PDFI>())
+      cout << "   - PDF output interval = " << m_control->get<PDFI>() << endl;
 
     if (m_control->set<B>()) {
       cout << "   - Parameter vector b = {";

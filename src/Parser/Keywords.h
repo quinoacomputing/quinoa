@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Tue 19 Feb 2013 07:19:25 PM MST
+  \date      Wed 20 Feb 2013 08:45:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -75,11 +75,17 @@ namespace keyword {
   // Total number of particles
   using npar = pegtl::string< n,p,a,r >;
 
-  // One-line screen output every few time step
+  // TTY (screen) output interval
   using ttyi = pegtl::string< t,t,y,i >;
 
-  // Joint PDF output times
-  using jpdftimes = pegtl::string< j,p,d,f,t,i,m,e,s >;
+  // Dump (restart file) output interval
+  using dump = pegtl::string< d,u,m,p >;
+
+  // Plot (statistics) output interval
+  using plti = pegtl::string< p,l,t,i >;
+
+  // PDF output interval
+  using pdfi = pegtl::string< p,d,f,i >;
 
 } // namespace keyword
 
