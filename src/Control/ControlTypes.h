@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Tue 19 Feb 2013 07:19:57 PM MST
+  \date      Wed 20 Feb 2013 08:49:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -57,7 +57,9 @@ enum BundlePosition { TITLE=0,
                       NSCALAR,
                       NPAR,
                       TTYI,
-                      JPDFTIMES,
+                      DUMP,
+                      PLTI,
+                      PDFI,
                       B,
                       S,
                       KAPPA
@@ -73,11 +75,13 @@ using Bundle = tuple< string,       //!<  0: Title
                       real,         //!<  6: Size of time step
                       int,          //!<  7: Number of mixing scalars
                       int,          //!<  8: Total number of particles
-                      int,          //!<  9: One-liner info every few time steps
-                      vector<real>, //!< 10: PDF output times
-                      vector<real>, //!< 11: Vector of parameters 'b'
-                      vector<real>, //!< 12: Vector of parameters 'S'
-                      vector<real>  //!< 13: Vector of parameters 'kappa'
+                      int,          //!<  9: TTY output interval
+                      int,          //!< 10: Dump output interval
+                      int,          //!< 11: Plot output interval
+                      int,          //!< 12: PDF output interval
+                      vector<real>, //!< 13: Vector of parameters 'b'
+                      vector<real>, //!< 14: Vector of parameters 'S'
+                      vector<real>  //!< 15: Vector of parameters 'kappa'
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

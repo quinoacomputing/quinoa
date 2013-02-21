@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:24:32 PM MST
+  \date      Thu 21 Feb 2013 06:23:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -145,6 +145,7 @@ void
 Dirichlet::advance(const real dt)
 //******************************************************************************
 //  Advance particles with the Dirichlet model
+//! \param[in]  dt   Time step size
 //! \author  J. Bakosi
 //******************************************************************************
 {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue 19 Feb 2013 07:19:42 PM MST
+  \date      Wed 20 Feb 2013 09:13:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -203,11 +203,13 @@ namespace grammar {
   struct hommix :
          ifmust< parse<store_physics, keyword::hommix>,
                  block< process<keyword::nstep, store<control::NSTEP>>,
-                        process<keyword::term, store<control::TERM>>,
-                        process<keyword::dt, store<control::DT>>,
-                        process<keyword::npar, store<control::NPAR>>,
-                        process<keyword::ttyi, store<control::TTYI>>,
-                        list<keyword::jpdftimes, push<control::JPDFTIMES>>,
+                        process<keyword::term,  store<control::TERM>>,
+                        process<keyword::dt,    store<control::DT>>,
+                        process<keyword::npar,  store<control::NPAR>>,
+                        process<keyword::ttyi,  store<control::TTYI>>,
+                        process<keyword::dump,  store<control::DUMP>>,
+                        process<keyword::plti,  store<control::PLTI>>,
+                        process<keyword::pdfi,  store<control::PDFI>>,
                         dir > > {};
 
   // spinsflow block

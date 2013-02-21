@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Tue 19 Feb 2013 07:17:30 PM MST
+  \date      Wed 20 Feb 2013 08:51:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -36,11 +36,13 @@ const Bundle DEFAULTS(
   0.5,                        //!<  6: Size of time step
   1,                          //!<  7: Number of mixing scalars
   1,                          //!<  8: Total number of particles
-  1,                          //!<  9: One-liner info every few time steps
-  ZEROVEC,                    //!< 10: PDF output times
-  ZEROVEC,                    //!< 11: Vector of parameters 'b'
-  ZEROVEC,                    //!< 12: Vector of paramaters 'S'
-  ZEROVEC                     //!< 13: Vector of parameters 'kappa'
+  1,                          //!<  9: TTY output interval
+  0,                          //!< 10: Dump output interval
+  0,                          //!< 11: Plot output interval
+  1,                          //!< 12: PDF output interval
+  ZEROVEC,                    //!< 13: Vector of parameters 'b'
+  ZEROVEC,                    //!< 14: Vector of paramaters 'S'
+  ZEROVEC                     //!< 15: Vector of parameters 'kappa'
 );
 
 //! Default basefilenames for output
