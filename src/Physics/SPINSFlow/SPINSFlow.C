@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:54:26 PM MST
+  \date      Thu 21 Feb 2013 09:28:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -34,8 +34,9 @@ using namespace control;
 SPINSFlow::SPINSFlow(Memory* const memory,
                      Paradigm* const paradigm,
                      Control* const control,
+                     Timer* const timer,
                      const string& filename) :
-  Physics(memory, paradigm, control),
+  Physics(memory, paradigm, control, timer),
   m_npar(control->get<NPAR>()),
   m_filename(filename)
 //******************************************************************************

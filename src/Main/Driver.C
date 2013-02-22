@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 02:16:51 PM MST
+  \date      Thu 21 Feb 2013 09:41:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -11,6 +11,7 @@
 
 #include <Driver.h>
 #include <Control.h>
+#include <Timer.h>
 #include <Parser.h>
 #include <ParserException.h>
 #include <PhysicsException.h>
@@ -34,6 +35,7 @@ Driver::Driver(int argc,
 //******************************************************************************
 {
   m_control = nullptr;
+  m_timer   = nullptr;
   m_physics = nullptr;
 }
 
@@ -70,6 +72,10 @@ Driver::setup()
   // Echo information of stuff parsed
   parser.echo();
 
+  // Instantiate timer object
+  m_timer = new (nothrow) Timer;
+  Assert(m_timer != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
   // Instantiate selected physics
   switch (m_control->get<PHYSICS>()) {
 
@@ -78,13 +84,14 @@ Driver::setup()
       break;
 
     case PhysicsType::HOMOGENEOUS_MIX :
-      m_physics = new (nothrow) HomMix(m_memory, m_paradigm, m_control);
+      m_physics = new (nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
       Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
     case PhysicsType::SPINSFLOW :
       m_physics = new (nothrow)
-                  SPINSFlow(m_memory, m_paradigm, m_control, "cylinder.msh");
+                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
+                            "cylinder.msh");
       Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
@@ -119,6 +126,7 @@ Driver::finalize()
 //******************************************************************************
 {
   if (m_physics) { delete m_physics; m_physics = nullptr; }
+  if (m_timer)   { delete m_timer;   m_timer   = nullptr; }
   if (m_control) { delete m_control; m_control = nullptr; }
   m_memory->freeAllEntries();
 }

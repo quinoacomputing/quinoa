@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed 20 Feb 2013 09:21:09 PM MST
+  \date      Thu 21 Feb 2013 09:27:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -18,6 +18,7 @@ namespace Quinoa {
 class Memory;
 class Paradigm;
 class Control;
+class Timer;
 
 //! Physics base
 class Physics {
@@ -26,7 +27,8 @@ class Physics {
     //! Constructor
     Physics(Memory* const memory,
             Paradigm* const paradigm,
-            Control* const control);
+            Control* const control,
+            Timer* const timer);
 
     //! Destructor
     virtual ~Physics() {};
@@ -40,23 +42,11 @@ class Physics {
     //! Solve physics
     virtual void solve() = 0;
 
-    //! One-liner report
-    virtual void report(const int it,
-                        const real t,
-                        const real dt,
-                        long int& hrs2beg,
-                        long int& mins2beg,
-                        long int& secs2beg,
-                        long int& hrs2end,
-                        long int& mins2end,
-                        long int& secs2end);
-
   protected:
-    Memory* const m_memory;       //!< Memory object pointer
-    Paradigm* const m_paradigm;   //!< Parallel programming object pointer
-    Control* const m_control;     //!< Control object pointer
-    const real m_term;            //!< Maximum time to simulate
-    struct timeval m_startTime;   //!< Date/time when time-adv loop started
+    Memory* const m_memory;       //!< Memory object
+    Paradigm* const m_paradigm;   //!< Parallel programming object
+    Control* const m_control;     //!< Control object
+    Timer* const m_timer;         //!< Timer object
 
   private:
     //! Don't permit copy constructor

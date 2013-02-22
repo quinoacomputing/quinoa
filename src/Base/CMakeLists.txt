@@ -16,6 +16,8 @@ add_library(Base
             MemoryException.C
             MemoryEntry.C
             Memory.C
+            Timer.C
+            TimerException.C
 )
 
 INSTALL(TARGETS Base

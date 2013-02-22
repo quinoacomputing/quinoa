@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 06:31:52 AM MST
+  \date      Thu 21 Feb 2013 10:35:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -11,7 +11,7 @@
 
 #include <sstream>
 
-#include <sys/time.h>
+//#include <sys/time.h>
 
 #include <Memory.h>
 #include <MemoryException.h>
@@ -27,9 +27,12 @@ using namespace control;
 
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
-               Control* const control) :
-  Physics(memory, paradigm, control),
-  m_jpdf_filename_base(control->get_jpdf_filename_base())
+               Control* const control,
+               Timer* const timer) :
+  Physics(memory, paradigm, control, timer),
+  m_term(control->get<TERM>()),
+  m_jpdf_filename_base(control->get_jpdf_filename_base()),
+  m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -73,14 +76,13 @@ HomMix::solve()
 {
   int it=0;
   real t=0.0;
-  long int hrs2end=0, mins2end=0, secs2end=0, hrs2beg=0, mins2beg=0, secs2beg=0;
 
   const auto nstep = m_control->get<NSTEP>();
   const auto ttyi  = m_control->get<TTYI>();
   const auto pdfi  = m_control->get<PDFI>();
   const auto dt    = m_control->get<DT>();
 
-  gettimeofday(&m_startTime, static_cast<struct timezone*>(0));
+  m_timer->start(m_totalTime);
 
   // Time stepping loop
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
@@ -90,8 +92,7 @@ HomMix::solve()
 
     // Echo one-liner info
     if (!(it % ttyi)) {
-      report(it, t, dt,
-             hrs2beg, mins2beg, secs2beg, hrs2end, mins2end, secs2end);
+      report(it, t, dt);
     }
 
     // Output pdf at selected times
@@ -104,6 +105,20 @@ HomMix::solve()
     ++it;
     if (t > m_term) t = m_term;
   }
+}
+
+void
+HomMix::report(const int it, const real t, const real dt)
+//******************************************************************************
+//  One-liner report
+//! \param[in]  it        Iteration counter
+//! \param[in]  t         Time counter
+//! \param[in]  dt        Time step size
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << "it = " << it << ", t = " << t << "\t dt = " << dt << ", "
+       << m_timer->query(m_totalTime) << endl;
 }
 
 void

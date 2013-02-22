@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Wed 20 Feb 2013 09:32:23 PM MST
+  \date      Thu 21 Feb 2013 10:32:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -15,12 +15,14 @@
 
 #include <Physics.h>
 #include <ControlTypes.h>
+#include <Timer.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
 class Mix;
+class Timer;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -29,7 +31,8 @@ class HomMix : public Physics {
     //! Constructor
     HomMix(Memory* const memory,
            Paradigm* const paradigm,
-           Control* const control);
+           Control* const control,
+           Timer* const timer);
 
     //! Destructor
     virtual ~HomMix();
@@ -56,8 +59,13 @@ class HomMix : public Physics {
     //! Output joint scalar PDF
     void outJPDF(const real t);
 
-    Mix* m_mix;                         //!< Mix model object
+    //! One-liner report
+    void report(const int it, const real t, const real dt);
+
+    const real m_term;                  //!< Maximum time to simulate
     const string m_jpdf_filename_base;  //!< Joint PDF filename base
+    const TimerIndex m_totalTime;       //!< Timer measuring the total run
+    Mix* m_mix;                         //!< Mix model object
 };
 
 } // namespace Quinoa
