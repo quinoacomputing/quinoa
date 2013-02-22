@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 10:35:48 PM MST
+  \date      Fri Feb 22 16:30:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -21,6 +21,7 @@
 #include <MixException.h>
 #include <PDFWriter.h>
 #include <Dirichlet.h>
+#include <Timer.h>
 
 using namespace Quinoa;
 using namespace control;
@@ -92,7 +93,7 @@ HomMix::solve()
 
     // Echo one-liner info
     if (!(it % ttyi)) {
-      report(it, t, dt);
+      report(it, nstep, t, dt);
     }
 
     // Output pdf at selected times
@@ -108,7 +109,7 @@ HomMix::solve()
 }
 
 void
-HomMix::report(const int it, const real t, const real dt)
+HomMix::report(const int it, const int nstep, const real t, const real dt)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it        Iteration counter
@@ -117,8 +118,17 @@ HomMix::report(const int it, const real t, const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  HMS elapsed, estimated;
+  m_timer->query(m_totalTime, elapsed);
+  m_timer->eta(m_totalTime, m_term, t, dt, nstep, it, estimated);
+
   cout << "it = " << it << ", t = " << t << "\t dt = " << dt << ", "
-       << m_timer->query(m_totalTime) << endl;
+       << elapsed.h.count() << ":"
+       << elapsed.m.count() << ":"
+       << elapsed.s.count() << " "
+       << estimated.h.count() << ":"
+       << estimated.m.count() << ":"
+       << estimated.s.count() << endl;
 }
 
 void
