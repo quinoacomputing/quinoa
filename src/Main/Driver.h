@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 26 Jan 2013 10:00:16 AM MST
+  \date      Thu 21 Feb 2013 09:42:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -16,6 +16,7 @@
 namespace Quinoa {
 
 class Physics;
+class Timer;
 class Control;
 
 //! Driver base class
@@ -54,6 +55,7 @@ class Driver {
     Paradigm* const m_paradigm;       //!< Parallel paradigm object
     Physics* m_physics;               //!< Physics object
     Control* m_control;               //!< Control object
+    Timer* m_timer;                   //!< Timer object
 
     int m_argc;                       //!< Argument count from command line
     char** m_argv;                    //!< Argument vector from command line

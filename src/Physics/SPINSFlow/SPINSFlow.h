@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:37:15 PM MST
+  \date      Thu 21 Feb 2013 09:28:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -26,6 +26,7 @@ class MKLRandom;
 class MKLRndStream;
 class UnsMesh;
 class Hydro;
+class Timer;
 
 //! SPINSFlow : Physics
 class SPINSFlow : public Physics {
@@ -35,6 +36,7 @@ class SPINSFlow : public Physics {
     SPINSFlow(Memory* const memory,
               Paradigm* const paradigm,
               Control* const control,
+              Timer* const timer,
               const string& filename);
 
     //! Destructor
