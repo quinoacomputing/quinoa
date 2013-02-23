@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Fri Feb 22 15:49:33 2013
+  \date      Fri 22 Feb 2013 10:18:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -18,40 +18,36 @@
 
 namespace Quinoa {
 
-using TimerIndex = int;
+using TimerIdx = int;
 
-const TimerIndex MAX_TIMERS = 32;
+const TimerIdx MAX_TIMERS = 32;
 
 using namespace std;
 
-// Shorthands for durations
-using hours = chrono::hours;
-using minutes = chrono::minutes;
-using seconds = chrono::seconds;
-
-//! Time representation in hours : minutess : seconds
-struct HMS {
-  hours h;
-  minutes m;
-  seconds s;
+//! Watch stores time in hours:minutes:seconds
+struct Watch {
+  chrono::hours h;
+  chrono::minutes m;
+  chrono::seconds s;
 };
 
 //! Quinoa::Timer
 class Timer {
 
-  // Shorthand for clock
-  using clock = chrono::high_resolution_clock;
+  private:
+    // Shorthand for clock, set clock type
+    using clock = chrono::high_resolution_clock;
 
-  // Shorthand for float seconds
-  using dsec = chrono::duration<real>;
+    // Shorthand for float seconds
+    using dsec = chrono::duration<real>;
 
-  //! Timer struct
-  struct Clock {
-    string name;
-    bool used;
-    clock::time_point start;
-    clock::time_point now;
-  };
+    //! Timer struct
+    struct Clock {
+      string name;              //!< Timer name
+      bool used;                //!< In use or not
+      clock::time_point start;  //!< Time stamp at start
+      clock::time_point now;    //!< Time stamp at a later time
+    };
 
   public:
     //! Constructor
@@ -61,25 +57,24 @@ class Timer {
     virtual ~Timer() {}
 
     //! Create new timer
-    TimerIndex create(const string& label);
+    TimerIdx create(const string& label);
 
     //! Start timer
-    void start(const TimerIndex id);
+    void start(const TimerIdx id);
 
     //! Return time elapsed between start and stop
-    real query(const TimerIndex id);
+    real query(const TimerIdx id);
 
     //! Return time elapsed between start and stop
-    void query(const TimerIndex id, HMS& hms);
+    void query(const TimerIdx id, Watch& watch);
 
     //! Estimate time for accomplishment
-    void eta(const TimerIndex id,
+    void eta(const TimerIdx id,
              const real term,
              const real time,
-             const real dt,
              const int nstep,
              const int it,
-             HMS& hms);
+             Watch& watch);
 
   private:
     //! Don't permit copy constructor
