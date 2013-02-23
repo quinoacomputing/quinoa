@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Fri 22 Feb 2013 10:18:49 PM MST
+  \date      Fri 22 Feb 2013 11:07:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
