@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Wed 20 Feb 2013 08:51:24 PM MST
+  \date      Sat 23 Feb 2013 11:46:01 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -42,7 +42,8 @@ const Bundle DEFAULTS(
   1,                          //!< 12: PDF output interval
   ZEROVEC,                    //!< 13: Vector of parameters 'b'
   ZEROVEC,                    //!< 14: Vector of paramaters 'S'
-  ZEROVEC                     //!< 15: Vector of parameters 'kappa'
+  ZEROVEC,                    //!< 15: Vector of parameters 'kappa'
+  ZEROVEC                     //!< 16: Vector of parameters 'c_ij'
 );
 
 //! Default basefilenames for output
