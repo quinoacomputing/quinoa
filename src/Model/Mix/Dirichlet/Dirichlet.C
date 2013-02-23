@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 06:23:53 AM MST
+  \date      Sat 23 Feb 2013 08:10:38 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -20,6 +20,7 @@
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 #include <JPDF.h>
+#include <Control.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -27,7 +28,10 @@ using namespace Quinoa;
 Dirichlet::Dirichlet(Memory* const memory,
                      Paradigm* const paradigm,
                      Control* const control) :
-  Mix(memory, paradigm, control, "Dirichlet")
+  Mix(memory, paradigm, control, "Dirichlet"),
+  m_b(control->get<B>()),
+  m_S(control->get<S>()),
+  m_k(control->get<KAPPA>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -149,10 +153,6 @@ Dirichlet::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  real S[m_nscalar];  S[0] = 5.0/8.0;   S[1] = 2.0/5.0;
-  real b[m_nscalar];  b[0] = 0.1;       b[1] = 3.0/2.0;
-  real k[m_nscalar];  k[0] = 1.0/80.0;  k[1] = 3.0/10.0;
-
   int myid, p, i;
   real yn, d;
   real* y;
@@ -188,9 +188,9 @@ Dirichlet::advance(const real dt)
 
       // Advance prognostic scalars
       for (i=0; i<m_nscalar; ++i) {
-        d = k[i]*y[i]*yn*dt;
+        d = m_k[i]*y[i]*yn*dt;
         if (d > 0.0) d = sqrt(d); else d = 0.0;
-        y[i] += b[i]/2.0*(S[i]*yn - (1.0-S[i])*y[i])*dt + d*dW[i];
+        y[i] += m_b[i]/2.0*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
       }
     } // m_npar
   } // omp parallel

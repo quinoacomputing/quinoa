@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri 22 Feb 2013 11:03:03 PM MST
+  \date      Sat 23 Feb 2013 08:27:02 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -113,7 +113,7 @@ HomMix::solve()
     if (t > m_term) t = m_term;
   }
 
-  report(it, nstep, t, dt, wroteJPDF);
+  //report(it, nstep, t, dt, wroteJPDF);
 }
 
 void
@@ -123,8 +123,10 @@ HomMix::reportHeader()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "      it               t              dt        ETA    out\n"
-       << "----------------------------------------------------------" << endl;
+  cout << "      it             t            dt"
+          "        ETE        ETA   out\n"
+       << "------------------------------------"
+          "----------------------------" << endl;
 }
 
 void
@@ -143,15 +145,17 @@ HomMix::report(const int it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Watch eta;
-  m_timer->query(m_totalTime, eta);
-  m_timer->eta(m_totalTime, m_term, t, nstep, it, eta);
+  Watch ete, eta;
+  m_timer->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   cout << setfill(' ') << setw(8) << it << "  "
-       << scientific << setprecision(8) << setw(14) << t << "  " << dt << "  "
-       << setfill('0') << setw(3) << eta.h.count() << ":"
-       << setw(2) << eta.m.count() << ":"
-       << setw(2) << eta.s.count() << "  ";
+       << scientific << setprecision(6) << setw(12) << t << "  " << dt << "  "
+       << setfill('0') << setw(3) << ete.h.count() << ":"
+                       << setw(2) << ete.m.count() << ":"
+                       << setw(2) << ete.s.count() << "  "
+                       << setw(3) << eta.h.count() << ":"
+                       << setw(2) << eta.m.count() << ":"
+                       << setw(2) << eta.s.count() << "  ";
 
   if (wroteJPDF) cout << "J";
 
