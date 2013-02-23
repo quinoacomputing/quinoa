@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 08:10:38 AM MST
+  \date      Sat 23 Feb 2013 09:20:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -21,6 +21,7 @@
 #include <MKLRndStream.h>
 #include <JPDF.h>
 #include <Control.h>
+#include <MixException.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -39,6 +40,13 @@ Dirichlet::Dirichlet(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  Assert(m_b.size() == static_cast<unsigned int>(m_nscalar),
+         MixException, FATAL, BAD_MODEL_PARAMETERS);
+  Assert(m_S.size() == static_cast<unsigned int>(m_nscalar),
+         MixException, FATAL, BAD_MODEL_PARAMETERS);
+  Assert(m_k.size() == static_cast<unsigned int>(m_nscalar),
+         MixException, FATAL, BAD_MODEL_PARAMETERS);
+
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
   Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);

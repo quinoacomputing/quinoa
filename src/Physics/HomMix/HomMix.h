@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Fri 22 Feb 2013 10:54:26 PM MST
+  \date      Sat 23 Feb 2013 08:37:51 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -67,6 +67,7 @@ class HomMix : public Physics {
                 const real dt,
                 const bool wroteJPDF);
 
+    const int m_nscalar;                //!< Number of mixing scalars
     const real m_term;                  //!< Maximum time to simulate
     const string m_jpdf_filename_base;  //!< Joint PDF filename base
     const TimerIdx m_totalTime;         //!< Timer measuring the total run

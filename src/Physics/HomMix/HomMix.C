@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 08:27:02 AM MST
+  \date      Sat 23 Feb 2013 09:13:24 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -32,6 +32,7 @@ HomMix::HomMix(Memory* const memory,
                Control* const control,
                Timer* const timer) :
   Physics(memory, paradigm, control, timer),
+  m_nscalar(control->get<NSCALAR>()),
   m_term(control->get<TERM>()),
   m_jpdf_filename_base(control->get_jpdf_filename_base()),
   m_totalTime(timer->create("Total solution"))
@@ -112,8 +113,6 @@ HomMix::solve()
     ++it;
     if (t > m_term) t = m_term;
   }
-
-  //report(it, nstep, t, dt, wroteJPDF);
 }
 
 void
@@ -176,7 +175,7 @@ HomMix::outJPDF(const real t)
   string filename = ss.str();
 
   // Create joint PDF
-  JPDF jpdf(2, 0.02);
+  JPDF jpdf(m_nscalar, 0.02);
 
   // Estimate joint PDF
   m_mix->jpdf(jpdf);

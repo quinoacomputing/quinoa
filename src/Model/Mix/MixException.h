@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixException.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 10:27:59 AM MST
+  \date      Sat 23 Feb 2013 08:57:37 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler
@@ -22,6 +22,7 @@ namespace Quinoa {
 //! Mix exception types
 enum MixExceptType { BAD_NSCALAR=0,          //!< Wrong number of scalars
                      BAD_NPAR,               //!< Wrong number of particles
+                     BAD_MODEL_PARAMETERS,   //!< Wrong number of model params
                      NO_MIX,                 //!< No mix model selected
                      MIX_UNIMPLEMENTED,      //!< Mix model unimplemented
                      NUM_MIX_EXCEPT
@@ -31,6 +32,7 @@ enum MixExceptType { BAD_NSCALAR=0,          //!< Wrong number of scalars
 const string MixMsg[NUM_MIX_EXCEPT] = {
   "Wrong number of scalars",
   "Wrong number of particles",
+  "Wrong number of model parameters",
   "No mix model selected",
   "Mix model not implemented"
 };
