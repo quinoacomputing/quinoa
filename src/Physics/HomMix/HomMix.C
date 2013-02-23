@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 09:13:24 AM MST
+  \date      Sat 23 Feb 2013 12:05:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -12,8 +12,6 @@
 #include <sstream>
 #include <iomanip>
 
-//#include <sys/time.h>
-
 #include <Memory.h>
 #include <MemoryException.h>
 #include <ControlTypes.h>
@@ -22,6 +20,7 @@
 #include <MixException.h>
 #include <PDFWriter.h>
 #include <Dirichlet.h>
+#include <GeneralizedDirichlet.h>
 #include <Timer.h>
 
 using namespace Quinoa;
@@ -41,6 +40,7 @@ HomMix::HomMix(Memory* const memory,
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  control  Control object pointer
+//! \param[in]  timer    Timer object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -49,6 +49,11 @@ HomMix::HomMix(Memory* const memory,
 
     case MixType::NO_MIX :
       Throw(MixException,FATAL,MixExceptType::NO_MIX);
+      break;
+
+    case MixType::GENERALIZED_DIRICHLET :
+      m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
+      Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
     case MixType::DIRICHLET :
@@ -88,7 +93,7 @@ HomMix::solve()
 
   m_timer->start(m_totalTime);
 
-  reportHeader();
+  if (nstep) reportHeader();
 
   // Time stepping loop
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {

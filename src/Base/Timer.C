@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 08:25:31 AM MST
+  \date      Sat 23 Feb 2013 11:50:36 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -129,7 +129,7 @@ Timer::eta(const TimerIdx id,
 //! \param[in]  nstep           Number time steps to take
 //! \param[in]  it              Current iteration
 //! \param[out] elapsedWatch    Elapsed time in h:m:s
-//! \param[out] etimatedWatch   Estimated time for accomplishmet in h:m:s
+//! \param[out] estimatedWatch  Estimated time for accomplishmet in h:m:s
 //! \author J. Bakosi
 //******************************************************************************
 {

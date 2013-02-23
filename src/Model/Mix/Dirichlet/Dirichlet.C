@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 09:20:08 AM MST
+  \date      Sat 23 Feb 2013 11:57:23 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -37,6 +37,7 @@ Dirichlet::Dirichlet(Memory* const memory,
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
+//! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {

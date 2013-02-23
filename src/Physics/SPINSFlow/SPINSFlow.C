@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:28:33 PM MST
+  \date      Sat 23 Feb 2013 11:49:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -44,6 +44,7 @@ SPINSFlow::SPINSFlow(Memory* const memory,
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  control  Control object pointer
+//! \param[in]  timer    Timer object pointer
 //! \param[in]  filename Mesh filename
 //! \author  J. Bakosi
 //******************************************************************************

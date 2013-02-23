@@ -13,6 +13,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics/HomMix
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Model/Mix
                     ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/GeneralizedDirichlet
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Control
