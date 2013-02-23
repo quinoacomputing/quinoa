@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:13:46 PM MST
+  \date      Sat 23 Feb 2013 08:04:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -65,11 +65,14 @@ class Dirichlet : public Mix {
     //! Initialize scalars with Gaussian PDF
     void initGaussian();
 
+    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
     MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars
     real* m_scalar;                 //!< Raw pointer to scalars
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+    const vector<real> m_b;               //!< SDE coefficients
+    const vector<real> m_S;
+    const vector<real> m_k;
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Fri 22 Feb 2013 11:08:36 PM MST
+  \date      Sat 23 Feb 2013 08:25:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -119,30 +119,33 @@ Timer::eta(const TimerIdx id,
            const real time,
            const int nstep,
            const int it,
-           Watch& watch)
+           Watch& elapsedWatch,
+           Watch& estimatedWatch)
 //******************************************************************************
 //  Estimate time for accomplishment
-//! \param[in]  id     Timer index
-//! \param[in]  term   Time to terminate time stepping
-//! \param[in]  time   Current time
-//! \param[in]  nstep  Number time steps to take
-//! \param[in]  it     Current iteration
+//! \param[in]  id              Timer index
+//! \param[in]  term            Time to terminate time stepping
+//! \param[in]  time            Current time
+//! \param[in]  nstep           Number time steps to take
+//! \param[in]  it              Current iteration
+//! \param[out] elapsedWatch    Elapsed time in h:m:s
+//! \param[out] etimatedWatch   Estimated time for accomplishmet in h:m:s
 //! \author J. Bakosi
 //******************************************************************************
 {
   using namespace std::chrono;
 
-  dsec estimated;
+  dsec elapsed, estimated;
 
   if (it == 0) {
     // First iteration, just return zero
-    estimated = clock::duration::zero();
+    elapsed = estimated = clock::duration::zero();
   } else {
     // Get time stamp
     m_timer[id].now = clock::now();
 
     // Compute time difference between start and now
-    dsec elapsed = m_timer[id].now - m_timer[id].start;
+    elapsed = m_timer[id].now - m_timer[id].start;
 
     // Estimate time until term in seconds
     dsec est_term = elapsed * (term-time) / time;
@@ -153,8 +156,12 @@ Timer::eta(const TimerIdx id,
     estimated = min(est_term, est_nstep);
   }
 
+  // Put elapsed time in watch as hours:minutes:seconds
+  estimatedWatch.h = duration_cast<hours>(estimated);
+  estimatedWatch.m = duration_cast<minutes>(estimated);
+  estimatedWatch.s = duration_cast<seconds>(estimated);
   // Put estimated time in watch as hours:minutes:seconds
-  watch.h = duration_cast<hours>(estimated);
-  watch.m = duration_cast<minutes>(estimated);
-  watch.s = duration_cast<seconds>(estimated);
+  elapsedWatch.h = duration_cast<hours>(elapsed);
+  elapsedWatch.m = duration_cast<minutes>(elapsed);
+  elapsedWatch.s = duration_cast<seconds>(elapsed);
 }

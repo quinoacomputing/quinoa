@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Fri 22 Feb 2013 11:07:49 PM MST
+  \date      Sat 23 Feb 2013 08:16:06 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -74,7 +74,8 @@ class Timer {
              const real time,
              const int nstep,
              const int it,
-             Watch& watch);
+             Watch& elapsedWatch,
+             Watch& estimatedWatch);
 
   private:
     //! Don't permit copy constructor
