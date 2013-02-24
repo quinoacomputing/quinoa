@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Wed 20 Feb 2013 08:45:04 PM MST
+  \date      Sat 23 Feb 2013 12:13:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -71,6 +71,7 @@ namespace keyword {
   using b = pegtl::string< b >;
   using S = pegtl::string< S >;
   using kappa = pegtl::string< k,a,p,p,a >;
+  using c = pegtl::string< c >;
 
   // Total number of particles
   using npar = pegtl::string< n,p,a,r >;
