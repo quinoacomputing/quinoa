@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 09:03:11 AM MST
+  \date      Sat 23 Feb 2013 12:15:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -127,6 +127,11 @@ Parser::echo()
     if (m_control->set<KAPPA>()) {
       cout << "   - Parameter vector kappa = {";
       for (auto& v : m_control->get<KAPPA>()) cout << " " << v;
+      cout << " }" << endl;
+    }
+    if (m_control->set<C>()) {
+      cout << "   - Parameter vector c = {";
+      for (auto& v : m_control->get<C>()) cout << " " << v;
       cout << " }" << endl;
     }
   }

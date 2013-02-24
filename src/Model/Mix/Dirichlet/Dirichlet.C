@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:57:23 AM MST
+  \date      Sun 24 Feb 2013 12:43:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -168,7 +168,7 @@ Dirichlet::advance(const real dt)
   real dW[m_nscalar];
 
   #ifdef _OPENMP
-  #pragma omp parallel private(myid, p, y, yn, i, dW, d)
+  #pragma omp parallel private(myid, p, i, y, yn, dW, d)
   #endif // _OPENMP
   {
     #ifdef _OPENMP
@@ -184,7 +184,7 @@ Dirichlet::advance(const real dt)
       // Get access to particle scalars
       y = m_scalar + p*m_nscalar;
 
-      // Compute diagnostic scalar
+      // Compute Nth scalar
       yn = 1.0 - y[0];
       #ifdef __INTEL_COMPILER
       #pragma vector always
@@ -195,7 +195,7 @@ Dirichlet::advance(const real dt)
       m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
                          m_str[myid], m_nscalar, dW, 0.0, 1.0);
 
-      // Advance prognostic scalars
+      // Advance first m_nscalar (K=N-1) scalars
       for (i=0; i<m_nscalar; ++i) {
         d = m_k[i]*y[i]*yn*dt;
         if (d > 0.0) d = sqrt(d); else d = 0.0;

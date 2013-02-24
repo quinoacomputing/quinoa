@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:42:05 AM MST
+  \date      Sat 23 Feb 2013 12:14:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -205,7 +205,8 @@ namespace grammar {
                  block< process<keyword::nscalar, store<control::NSCALAR>>,
                         list<keyword::b, push<control::B>>,
                         list<keyword::S, push<control::S>>,
-                        list<keyword::kappa, push<control::KAPPA>>
+                        list<keyword::kappa, push<control::KAPPA>>,
+                        list<keyword::c, push<control::C>>
                       >
                > {};
 

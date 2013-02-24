@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 12:11:13 PM MST
+  \date      Sun 24 Feb 2013 12:52:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -10,6 +10,10 @@
 //******************************************************************************
 
 #include <cstring>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
 
 #include <GeneralizedDirichlet.h>
 #include <Mix.h>
@@ -28,7 +32,8 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
   Mix(memory, paradigm, control, "Generalized Dirichlet"),
   m_b(control->get<B>()),
   m_S(control->get<S>()),
-  m_k(control->get<KAPPA>())
+  m_k(control->get<KAPPA>()),
+  m_c(control->get<C>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -42,6 +47,8 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
   Assert(m_S.size() == static_cast<unsigned int>(m_nscalar),
          MixException, FATAL, BAD_MODEL_PARAMETERS);
   Assert(m_k.size() == static_cast<unsigned int>(m_nscalar),
+         MixException, FATAL, BAD_MODEL_PARAMETERS);
+  Assert(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
          MixException, FATAL, BAD_MODEL_PARAMETERS);
 
   // Instantiate random number generator
@@ -137,13 +144,15 @@ GeneralizedDirichlet::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int myid, p, i;
-  real yn, d;
+  int myid, p, i, j, k;
+  real d, a;
   real* y;
+  real Y[m_nscalar];    //!< Y_i = 1 - sum_{k=1}^{i} y_k
+  real U[m_nscalar];    //!< U_i = prod_{j=1}^{m_nscalar-i} 1/sY_{m_nscalar-j}
   real dW[m_nscalar];
 
   #ifdef _OPENMP
-  #pragma omp parallel private(myid, p, y, yn, i, dW, d)
+  #pragma omp parallel private(myid, p, i, j, k, d, a, y, Y, U, dW)
   #endif // _OPENMP
   {
     #ifdef _OPENMP
@@ -159,22 +168,32 @@ GeneralizedDirichlet::advance(const real dt)
       // Get access to particle scalars
       y = m_scalar + p*m_nscalar;
 
-      // Compute diagnostic scalar
-      yn = 1.0 - y[0];
+      Y[0] = 1.0 - y[0];
       #ifdef __INTEL_COMPILER
       #pragma vector always
       #endif
-      for (i=1; i<m_nscalar; ++i) yn -= y[i];
+      for (i=1; i<m_nscalar; ++i) Y[i] = Y[i-1] - y[i];
+
+      U[m_nscalar-1] = 1.0;
+      #ifdef __INTEL_COMPILER
+      #pragma vector always
+      #endif
+      for (i=m_nscalar-2; i>=0; --i) U[i] = U[i+1]/Y[i];
 
       // Generate Gaussian random numbers with zero mean and unit variance
       m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
                          m_str[myid], m_nscalar, dW, 0.0, 1.0);
 
-      // Advance prognostic scalars
+      // Advance first m_nscalar (K=N-1) scalars
+      k=0;
+      a=0.0;
       for (i=0; i<m_nscalar; ++i) {
-        d = m_k[i]*y[i]*yn*dt;
+        d = m_k[i]*y[i]*Y[m_nscalar-1]*U[i]*dt;
         if (d > 0.0) d = sqrt(d); else d = 0.0;
-        y[i] += m_b[i]/2.0*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
+        for (j=i; j<m_nscalar-1; ++j) a += m_c[k++]/Y[j];
+        y[i] += U[i]/2.0*m_b[i]*
+             ((m_S[i]*Y[m_nscalar-1] - (1.0-m_S[i])*y[i]) +
+               y[i]*Y[m_nscalar-1]*a)*dt + d*dW[i];
       }
     } // m_npar
   } // omp parallel
