@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:45:04 AM MST
+  \date      Sun 24 Feb 2013 08:01:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -63,7 +63,8 @@ enum BundlePosition { TITLE=0,
                       B,
                       S,
                       KAPPA,
-                      C
+                      C,
+                      STATISTICS
 };
 
 //! Storage bundle for parsed data
@@ -83,7 +84,8 @@ using Bundle = tuple< string,       //!<  0: Title
                       vector<real>, //!< 13: Vector of parameters 'b'
                       vector<real>, //!< 14: Vector of parameters 'S'
                       vector<real>, //!< 15: Vector of parameters 'kappa'
-                      vector<real>  //!< 16: Vector of parameters 'c_ij'
+                      vector<real>, //!< 16: Vector of parameters 'c_ij'
+                      vector<string>//!< 17: Vector of statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

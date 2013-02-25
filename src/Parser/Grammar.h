@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 12:14:13 PM MST
+  \date      Sun 24 Feb 2013 08:15:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -83,6 +83,16 @@ namespace grammar {
       get<at>(stack).push_back(convert<real>(value));
       // Flip set bit indicating that element was set
       boolstack[at] = true;
+    }
+  };
+
+  // push stat[istic]
+  struct push_stat : action_base< push_stat > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      get<control::STATISTICS>(stack).push_back(value);
+      boolstack[control::STATISTICS] = true;
     }
   };
 
@@ -177,15 +187,27 @@ namespace grammar {
   struct process :
          ifmust< read<keyword>, parse<insert, keywords> > {};
 
+  // (mathematical) expectation: within angled brackets, <...>
+  struct expectation :
+         trim< not_one<'<'>, one<'>'> > {};
+
+  // parse expectation
+  struct parse_expectation :
+         read< ifmust< one<'<'>,
+                       ifapply< expectation, push_stat >,
+                       one<'>'>, space > > {};
+
   // title: within double quotes
   struct quoted :
          trim< not_one<'"'>, one<'"'> > {};
 
+  // parse title
   struct parse_title :
          ifmust< one<'"'>,
                  ifapply< quoted, store_title >,
                  one<'"'>, space > {};
 
+  // title
   struct title :
          ifmust< read<keyword::title>, parse_title > {};
 
@@ -206,9 +228,13 @@ namespace grammar {
                         list<keyword::b, push<control::B>>,
                         list<keyword::S, push<control::S>>,
                         list<keyword::kappa, push<control::KAPPA>>,
-                        list<keyword::c, push<control::C>>
+                        list<keyword::C, push<control::C>>
                       >
                > {};
+
+  // statistics block
+  struct statistics :
+         ifmust< read<keyword::statistics>, block<parse_expectation> > {};
 
   // hommix block
   struct hommix :
@@ -221,7 +247,7 @@ namespace grammar {
                         process<keyword::dump,  store<control::DUMP>>,
                         process<keyword::plti,  store<control::PLTI>>,
                         process<keyword::pdfi,  store<control::PDFI>>,
-                        dir, gendir
+                        dir, gendir, statistics
                       >
                > {};
 

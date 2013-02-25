@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:46:01 AM MST
+  \date      Sun 24 Feb 2013 08:02:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -24,6 +24,7 @@ namespace control {
 // ICC: This could be inserted below once initializer lists are properly
 // supported
 const vector<real> ZEROVEC;
+const vector<string> ZEROSTRVEC;
 
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
@@ -43,7 +44,8 @@ const Bundle DEFAULTS(
   ZEROVEC,                    //!< 13: Vector of parameters 'b'
   ZEROVEC,                    //!< 14: Vector of paramaters 'S'
   ZEROVEC,                    //!< 15: Vector of parameters 'kappa'
-  ZEROVEC                     //!< 16: Vector of parameters 'c_ij'
+  ZEROVEC,                    //!< 16: Vector of parameters 'c_ij'
+  ZEROSTRVEC                  //!< 17: Vector of statistics
 );
 
 //! Default basefilenames for output
