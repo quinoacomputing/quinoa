@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 08:53:44 AM MST
+  \date      Sat 02 Mar 2013 10:37:13 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -11,6 +11,7 @@
 #ifndef Grammar_h
 #define Grammar_h
 
+#include <Macro.h>
 #include <ControlTypes.h>
 #include <FwdAssociate.h>
 #include <ParserException.h>
@@ -73,7 +74,6 @@ namespace grammar {
       using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
       // Convert to correct type and store element at position 'at'
       get<at>(stack) = convert<type>(value);
-      // Flip set bit indicating that element was set
       boolstack[at] = true;
     }
   };
@@ -88,7 +88,6 @@ namespace grammar {
       //using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
       // Convert to correct type and push element to vector at position 'at'
       get<at>(stack).push_back(convert<real>(value));
-      // Flip set bit indicating that element was set
       boolstack[at] = true;
     }
   };
@@ -99,8 +98,8 @@ namespace grammar {
                       stack_type& stack,
                       boolstack_type& boolstack) {
       get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
-      // Flip set bit indicating that element was set
       boolstack[control::STATISTICS] = true;
+      IGNORE(value);   // suppress compiler warning on unused variable
     }
   };
 
@@ -112,6 +111,7 @@ namespace grammar {
                       boolstack_type& boolstack) {
       control::Term term = { field, quantity, moment, value };
       get<control::STATISTICS>(stack).back().push_back(term);
+      IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
 
@@ -121,6 +121,8 @@ namespace grammar {
                       stack_type& stack,
                       boolstack_type& boolstack) {
       field = convert<int>(value);
+      IGNORE(stack);        // suppress compiler warning on unused variable
+      IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
 

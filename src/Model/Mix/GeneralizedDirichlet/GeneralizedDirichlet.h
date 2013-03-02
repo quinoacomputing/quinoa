@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 04:45:08 PM MST
+  \date      Sat 02 Mar 2013 10:21:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -64,8 +64,16 @@ class GeneralizedDirichlet : public Mix {
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
-    MemoryEntry* m_MEscalar;        //!< Memory entry storing the scalars
-    real* m_scalar;                 //!< Raw pointer to scalars
+
+    MemoryEntry* m_allScalars;      //!< Memory entry storing all the scalars
+    MemoryEntry* m_parScalars;      //!< Memory entry storing particle scalars
+    MemoryEntry* m_Y;               //!< Memory entry storing particle scalars
+    MemoryEntry* m_U;               //!< Memory entry storing particle scalars
+    real* m_rawAllScalars;          //!< Raw pointer to all scalars
+    real* m_rawParScalars;          //!< Raw pointer to particle scalars
+    real* m_rawY;                   //!< Raw pointer to particle scalars
+    real* m_rawU;                   //!< Raw pointer to particle scalars
+
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;
