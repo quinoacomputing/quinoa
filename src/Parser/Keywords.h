@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sun 24 Feb 2013 07:23:39 PM MST
+  \date      Fri 01 Mar 2013 07:57:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -73,6 +73,23 @@ namespace keyword {
   using kappa = pegtl::string< k,a,p,p,a >;
   using C = pegtl::string< C >;
 
+  // Quantities
+  using transported_scalar = pegtl::string< Y >;
+  using transported_scalar_fluctuation = pegtl::string< y >;
+
+  using velocity_x = pegtl::string< U >;
+  using velocity_fluctuation_x = pegtl::string< u >;
+  using velocity_y = pegtl::string< V >;
+  using velocity_fluctuation_y = pegtl::string< v >;
+  using velocity_z = pegtl::string< W >;
+  using velocity_fluctuation_z = pegtl::string< w >;
+
+  using pressure = pegtl::string< P >;
+  using pressure_fluctuation = pegtl::string< p >;
+  
+  using density = pegtl::string< R >;
+  using density_fluctuation = pegtl::string< r >;
+  
   // Total number of particles
   using npar = pegtl::string< n,p,a,r >;
 

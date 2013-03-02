@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sun 24 Feb 2013 08:15:11 PM MST
+  \date      Fri 01 Mar 2013 09:50:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -31,6 +31,8 @@ namespace grammar {
   using stack_type = control::Bundle;
   using boolstack_type = control::BoolBundle;
   static stack_type dummy_stack; // dummy Bundle instant for decltype in store()
+
+  const vector<control::Term> ZERO_TERM_VEC;
 
   // Actions
 
@@ -86,13 +88,23 @@ namespace grammar {
     }
   };
 
-  // push stat[istic]
-  struct push_stat : action_base< push_stat > {
+  // start new product in vector of statistics
+  struct start_product : action_base< start_product > {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      get<control::STATISTICS>(stack).push_back(value);
-      boolstack[control::STATISTICS] = true;
+       get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
+    }
+  };
+
+  // push term into vector of Product in vector of statistics
+  struct push_term : action_base< push_term > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      control::Term term = { control::TRANSPORTED_SCALAR, control::ORDINARY };
+      get<control::STATISTICS>(stack).back().push_back(term);
+      //boolstack[control::STATISTICS] = true;
     }
   };
 
@@ -187,29 +199,39 @@ namespace grammar {
   struct process :
          ifmust< read<keyword>, parse<insert, keywords> > {};
 
-  // (mathematical) expectation: within angled brackets, <...>
+  // moment: 'keyword' followed by a digit, pushed to vector of terms
+  template< class keyword >
+  struct moment :
+         ifapply< seq<keyword, digit>, push_term> {};
+
+  // terms recognized within an expectation
+  struct terms :
+         sor< moment<keyword::transported_scalar>,
+              moment<keyword::transported_scalar_fluctuation>
+            > {};
+
+  // plow through terms in expectation until character 'rbound'
+  template< char rbound >
   struct expectation :
-         trim< not_one<'<'>, one<'>'> > {};
+         until< one<rbound>, terms > {};
 
-  // parse expectation
-  struct parse_expectation :
-         read< ifmust< one<'<'>,
-                       ifapply< expectation, push_stat >,
-                       one<'>'>, space > > {};
+  // parse expectations between characters 'lbound' and 'rbound'
+  template< char lbound, char rbound >
+  struct parse_expectations :
+         read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
+             > {};
 
-  // title: within double quotes
-  struct quoted :
-         trim< not_one<'"'>, one<'"'> > {};
-
-  // parse title
+  // parse title between characters 'lbound' and 'rbound'
+  template< char lbound, char rbound >
   struct parse_title :
-         ifmust< one<'"'>,
-                 ifapply< quoted, store_title >,
-                 one<'"'>, space > {};
+         ifmust< one<lbound>,
+                 ifapply< trim<not_one<lbound>, one<rbound>>, store_title >,
+                 one<rbound>
+               > {};
 
   // title
   struct title :
-         ifmust< read<keyword::title>, parse_title > {};
+         ifmust< read<keyword::title>, parse_title<'"','"'> > {};
 
   // dir block
   struct dir :
@@ -234,7 +256,9 @@ namespace grammar {
 
   // statistics block
   struct statistics :
-         ifmust< read<keyword::statistics>, block<parse_expectation> > {};
+         ifmust< read< keyword::statistics >,
+                 block< parse_expectations<'<','>'> >
+               > {};
 
   // hommix block
   struct hommix :
@@ -257,7 +281,7 @@ namespace grammar {
                  block< process<keyword::hydro, store_hydro, hydro>,
                         process<keyword::mix, store_mix, mix> > > {};
 
-  // physics block
+  // physics
   struct physics :
          sor< hommix,
               spinsflow > {};
@@ -267,11 +291,11 @@ namespace grammar {
          sor< title,
               physics > {};
 
-  // ignore comments and empty lines
+  // ignore: comments and empty lines
   struct ignore :
          sor< comment, until<eol, space> > {};
 
-  // Entry point: parse keywords and ignores until eof
+  // entry point: parse keywords and ignores until eof
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sun 24 Feb 2013 08:10:19 PM MST
+  \date      Fri 01 Mar 2013 08:26:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -49,13 +49,13 @@ Parser::parse()
   // Initialize new bool bundle for indicating what data is set in bundle
   BoolBundle boolstack(tuple_size<decltype(DEFAULTS)>::value, false);
 
-  //cout << "==== PARSE START ====" << endl;
+  cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
-  pegtl::dummy_parse_file< grammar::read_file >( m_filename, stack, boolstack );
+  pegtl::dummy_parse_file<grammar::read_file>(m_filename, stack, boolstack);
 #else  // NDEBUG
-  pegtl::basic_parse_file< grammar::read_file >( m_filename, stack, boolstack );
+  pegtl::basic_parse_file<grammar::read_file>(m_filename, stack, boolstack);
 #endif // NDEBUG
-  //cout << "==== PARSE END ====" << endl << endl;
+  cout << "==== PARSE END ====" << endl << endl;
 
   // Store off parsed bundles
   m_control->set(stack);
@@ -134,11 +134,11 @@ Parser::echo()
       for (auto& v : m_control->get<C>()) cout << " " << v;
       cout << " }" << endl;
     }
-    if (m_control->set<STATISTICS>()) {
-      cout << "   - Requested statistics = {";
-      for (auto& v : m_control->get<STATISTICS>()) cout << " " << v;
-      cout << " }" << endl;
-    }
+//     if (m_control->set<STATISTICS>()) {
+//       cout << "   - Requested statistics = {";
+//       for (auto& v : m_control->get<STATISTICS>()) cout << " " << v;
+//       cout << " }" << endl;
+//     }
   }
 
   cout << endl;
