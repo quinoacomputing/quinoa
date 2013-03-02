@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri 01 Mar 2013 09:50:59 PM MST
+  \date      Sat 02 Mar 2013 08:29:47 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -93,18 +93,20 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-       get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
+      get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
+      // Flip set bit indicating that element was set
+      boolstack[control::STATISTICS] = true;
     }
   };
 
-  // push term into vector of Product in vector of statistics
-  struct push_term : action_base< push_term > {
+  // push Term into vector of Product in vector of statistics
+  template< control::Quantity quantity, control::Moment moment >
+  struct push_term : action_base< push_term<quantity, moment> > {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      control::Term term = { control::TRANSPORTED_SCALAR, control::ORDINARY };
+      control::Term term = { quantity, moment };
       get<control::STATISTICS>(stack).back().push_back(term);
-      //boolstack[control::STATISTICS] = true;
     }
   };
 
@@ -200,14 +202,18 @@ namespace grammar {
          ifmust< read<keyword>, parse<insert, keywords> > {};
 
   // moment: 'keyword' followed by a digit, pushed to vector of terms
-  template< class keyword >
+  template< class keyword, control::Quantity q, control::Moment m >
   struct moment :
-         ifapply< seq<keyword, digit>, push_term> {};
+         ifapply< seq<keyword, digit>, push_term<q, m> > {};
 
   // terms recognized within an expectation
   struct terms :
-         sor< moment<keyword::transported_scalar>,
-              moment<keyword::transported_scalar_fluctuation>
+         sor< moment<keyword::transported_scalar,
+                     control::TRANSPORTED_SCALAR,
+                     control::ORDINARY>,
+              moment<keyword::transported_scalar_fluctuation,
+                     control::TRANSPORTED_SCALAR,
+                     control::CENTRAL>
             > {};
 
   // plow through terms in expectation until character 'rbound'

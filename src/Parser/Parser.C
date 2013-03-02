@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 01 Mar 2013 08:26:53 PM MST
+  \date      Sat 02 Mar 2013 08:28:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -134,11 +134,17 @@ Parser::echo()
       for (auto& v : m_control->get<C>()) cout << " " << v;
       cout << " }" << endl;
     }
-//     if (m_control->set<STATISTICS>()) {
-//       cout << "   - Requested statistics = {";
-//       for (auto& v : m_control->get<STATISTICS>()) cout << " " << v;
-//       cout << " }" << endl;
-//     }
+    if (m_control->set<STATISTICS>()) {
+      cout << "   - Requested statistics = {";
+      for (auto& product : m_control->get<STATISTICS>()) {
+        cout << " (";
+        for (auto& term : product) {
+          cout << " " << term.quantity << " " << term.moment;
+        }
+        cout << " )";
+      }
+      cout << " }" << endl;
+    }
   }
 
   cout << endl;
