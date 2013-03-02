@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 08:29:47 AM MST
+  \date      Sat 02 Mar 2013 08:53:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -28,11 +28,16 @@ namespace grammar {
 
   // State
 
+  //! Bundles is where everything is stored during parsing
   using stack_type = control::Bundle;
+  //! BoolBundle indicates stored fields (true or false)
   using boolstack_type = control::BoolBundle;
-  static stack_type dummy_stack; // dummy Bundle instant for decltype in store()
-
+  //! Dummy Bundle instant for decltype in store()
+  static stack_type dummy_stack;
+  //! Zero vector of Term for pushing (starting) a new Product in statistics
   const vector<control::Term> ZERO_TERM_VEC;
+  //! Field ID for statistics
+  static int field;
 
   // Actions
 
@@ -105,8 +110,17 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      control::Term term = { quantity, moment };
+      control::Term term = { field, quantity, moment, value };
       get<control::STATISTICS>(stack).back().push_back(term);
+    }
+  };
+
+  // save field ID so push_term can pick it up
+  struct save_field : action_base< save_field > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      field = convert<int>(value);
     }
   };
 
@@ -204,9 +218,9 @@ namespace grammar {
   // moment: 'keyword' followed by a digit, pushed to vector of terms
   template< class keyword, control::Quantity q, control::Moment m >
   struct moment :
-         ifapply< seq<keyword, digit>, push_term<q, m> > {};
+         ifapply< seq<keyword, ifapply<digit,save_field>>, push_term<q, m> > {};
 
-  // terms recognized within an expectation
+  // terms recognized within an expectation and their mapping
   struct terms :
          sor< moment<keyword::transported_scalar,
                      control::TRANSPORTED_SCALAR,

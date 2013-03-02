@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri Mar  1 13:47:46 2013
+  \date      Sat 02 Mar 2013 08:55:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -58,12 +58,16 @@ enum Moment { ORDINARY=0,      //!< Full variable, e.g. Y
               CENTRAL          //!< Fluctuation, e.g. y = Y - <Y>
 };
 
-//! Term is a Moment of a Quantity to be ensemble averaged
-//! E.g. pressure fluctuation: {PRESSURE, CENTRAL},
-//! Eg. mean scalar: {TRANSPORTED_SCALAR, ORDINARY}
+//! Term is a Moment of a Quantity with a field ID to be ensemble averaged
+//! The Numbering of field IDs start from 0
+//! E.g. 1st pressure fluctuation: {0, PRESSURE, CENTRAL},
+//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY}
+//! readable stores the same information in a more human-readable form
 struct Term {
+  int field;
   Quantity quantity;
   Moment moment;
+  string readable;
 };
 
 //! Products are N Terms to be multiplied and ensemble averaged
