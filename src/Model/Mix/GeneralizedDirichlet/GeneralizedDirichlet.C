@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sun 24 Feb 2013 12:52:36 PM MST
+  \date      Sat 02 Mar 2013 10:25:54 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -60,10 +60,25 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
 
-  // Allocate memory entry to store the scalars
-  m_MEscalar = m_memory->newEntry(m_npar*m_nscalar, REAL, SCALAR, "scalar");
-  // Get pointer to scalars right away
-  m_scalar = m_memory->getPtr<real>(m_MEscalar);
+  // Allocate memory entry to store all the scalars
+  m_allScalars = m_memory->newEntry(m_npar*m_nscalar, REAL, SCALAR, "allScalars");
+  // Get raw pointer to scalars
+  m_rawAllScalars = m_memory->getPtr<real>(m_allScalars);
+
+  // Allocate memory entry to store particle scalars
+  m_parScalars = m_memory->newEntry(m_nscalar, REAL, SCALAR, "parScalars");
+  // Get raw pointer to particle scalars
+  m_rawParScalars = m_memory->getPtr<real>(m_parScalars);
+
+  // Allocate memory entry to store particle scalars
+  m_Y = m_memory->newEntry(m_nscalar, REAL, SCALAR, "Y");
+  // Get raw pointer to particle scalars
+  m_rawY = m_memory->getPtr<real>(m_Y);
+
+  // Allocate memory entry to store particle scalars
+  m_U = m_memory->newEntry(m_nscalar, REAL, SCALAR, "U");
+  // Get raw pointer to particle scalars
+  m_rawU = m_memory->getPtr<real>(m_U);
 }
 
 GeneralizedDirichlet::~GeneralizedDirichlet()
@@ -76,7 +91,10 @@ GeneralizedDirichlet::~GeneralizedDirichlet()
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_MEscalar);
+    m_memory->freeEntry(m_U);
+    m_memory->freeEntry(m_Y);
+    m_memory->freeEntry(m_parScalars);
+    m_memory->freeEntry(m_allScalars);
 #ifndef NDEBUG
   } catch (...)
     { cout << "WARNING: Exception in HomMix destructor" << endl; }
@@ -117,18 +135,18 @@ GeneralizedDirichlet::initUniform()
     bool accept = false;
     while (!accept) {
       // Generate scalars
-      real r[m_nscalar];
       m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD,
-                        m_str[0], m_nscalar, r, 0.0, 1.0);
+                        m_str[0], m_nscalar, m_rawParScalars, 0.0, 1.0);
 
       // Compute their sum
-      real sum = r[0];
-      for (int i=1; i<m_nscalar; ++i) sum += r[i];
+      real sum = m_rawParScalars[0];
+      for (int i=1; i<m_nscalar; ++i) sum += m_rawParScalars[i];
 
       // Accept if sum is less then 1.0
       if (sum < 1.0) {
-        int pN = p*m_nscalar;
-        memcpy(m_scalar+pN, r, m_nscalar*sizeof(real));   // put in scalars
+        memcpy(p*m_nscalar + m_rawAllScalars,
+               m_rawParScalars,
+               m_nscalar*sizeof(real));
         accept = true;
       }
     }
@@ -147,9 +165,9 @@ GeneralizedDirichlet::advance(const real dt)
   int myid, p, i, j, k;
   real d, a;
   real* y;
-  real Y[m_nscalar];    //!< Y_i = 1 - sum_{k=1}^{i} y_k
-  real U[m_nscalar];    //!< U_i = prod_{j=1}^{m_nscalar-i} 1/sY_{m_nscalar-j}
-  real dW[m_nscalar];
+  real* Y = m_rawY;      //!< Y_i = 1 - sum_{k=1}^{i} y_k
+  real* U = m_rawU;      //!< U_i = prod_{j=1}^{m_nscalar-i} 1/sY_{m_nscalar-j}
+  real* dW = m_rawParScalars;
 
   #ifdef _OPENMP
   #pragma omp parallel private(myid, p, i, j, k, d, a, y, Y, U, dW)
@@ -166,7 +184,7 @@ GeneralizedDirichlet::advance(const real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
       // Get access to particle scalars
-      y = m_scalar + p*m_nscalar;
+      y = m_rawAllScalars + p*m_nscalar;
 
       Y[0] = 1.0 - y[0];
       #ifdef __INTEL_COMPILER
@@ -207,7 +225,7 @@ GeneralizedDirichlet::jpdf(JPDF& jpdf)
 //******************************************************************************
 {
   for (int p=0; p<m_npar; ++p) {
-    real* y = m_scalar + p*m_nscalar;
+    real* y = m_rawAllScalars + p*m_nscalar;
     vector<real> v(y, y+m_nscalar);
     jpdf.insert(v);
   }
