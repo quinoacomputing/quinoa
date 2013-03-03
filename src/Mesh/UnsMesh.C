@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Mon 21 Jan 2013 08:29:20 AM MST
+  \date      Sun 03 Mar 2013 10:56:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -23,11 +23,6 @@ UnsMesh::UnsMesh(Memory* memory) : m_memory(memory)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Zero memory entriy pointers
-  m_COORD = nullptr;
-  m_NODEID = nullptr;
-  m_LINEID = nullptr;
-  m_TRIANGLEID = nullptr;
 }
 
 UnsMesh::~UnsMesh()
@@ -40,15 +35,15 @@ UnsMesh::~UnsMesh()
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_COORD);
-    m_memory->freeEntry(m_NODEID);
-    m_memory->freeEntry(m_LINEID);
-    m_memory->freeEntry(m_TRIANGLEID);
+    m_memory->freeEntry(m_coord);
+    m_memory->freeEntry(m_nodeId);
+    m_memory->freeEntry(m_lineId);
+    m_memory->freeEntry(m_triangleId);
     // No exception leaves a destructor: if any of the above calls throws and
-    // exception, e.g. m_COORD points to an unallocated entry, a MemoryException
-    // is thrown, caught inside here and we only emit a warning. This ensures
-    // that terminate is not called and that we finish a potentially already
-    // propagating exception.
+    // exception, e.g. m_coord.id points to an unallocated entry, a
+    // MemoryException is thrown, caught inside here and we only emit a warning.
+    // This ensures that terminate is not called and that we finish a
+    // potentially already propagating exception.
 #ifndef NDEBUG
   } catch (...) { cout << "WARNING: Exception in UnsMesh destructor" << endl; }
 #endif // NDEBUG
@@ -68,16 +63,16 @@ UnsMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 //******************************************************************************
 {
   // Allocate new memory entry to store the coordinates
-  m_COORD = m_memory->newEntry(nnodes, REAL, VECTOR, COORDS_NAME);
+  m_coord = m_memory->newEntry<real>(nnodes, REAL, VECTOR, COORDS_NAME);
 
   // Allocate new memory entry to store the node Ids
-  m_NODEID = m_memory->newEntry(nnodes, INT, SCALAR, NODES_NAME);
+  m_nodeId = m_memory->newEntry<int>(nnodes, INT, SCALAR, NODES_NAME);
 
   // Allocate new memory entry to store the line element Ids
-  m_LINEID = m_memory->newEntry(nlines, INT, SCALAR, LINES_NAME);
+  m_lineId = m_memory->newEntry<int>(nlines, INT, SCALAR, LINES_NAME);
 
   // Allocate new memory entry to store the triangle element Ids
-  m_TRIANGLEID = m_memory->newEntry(ntriangles, INT, SCALAR, TRIANGLES_NAME);
+  m_triangleId = m_memory->newEntry<int>(ntriangles,INT,SCALAR,TRIANGLES_NAME);
 
   // Reserve capacity to store element connectivities and tags
   reserveElem(nlines, ntriangles);

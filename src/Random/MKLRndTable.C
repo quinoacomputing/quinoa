@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sat 22 Dec 2012 01:40:54 PM MST
+  \date      Sun 03 Mar 2013 11:18:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -62,8 +62,7 @@ MKLRndTable::MKLRndTable(Memory* memory,
   }
 
   // Allocate array to store random numbers
-  m_rnd = m_memory->newEntry(number, REAL, SCALAR, name);
-  m_rndPtr = m_memory->getPtr<real>(m_rnd);
+  m_rnd = m_memory->newEntry<real>(number, REAL, SCALAR, name);
 }
 
 MKLRndTable::~MKLRndTable()
@@ -86,7 +85,6 @@ MKLRndTable::~MKLRndTable()
     delete [] m_stream;
     // Free array storing random numbers
     m_memory->freeEntry(m_rnd);
-    m_rndPtr = nullptr;
 #ifndef NDEBUG
   } catch (...) {
     cout << "WARNING: Exception in MKLRndTable::~MKLRndTable" << endl;
@@ -108,10 +106,10 @@ MKLRndTable::generate()
       #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
-        uniform(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
+        uniform(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
                 UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
       }
-      uniform(m_method, m_stream[0], m_remainder, m_rndPtr + m_nthread*m_chunk,
+      uniform(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
               UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
       break;
     case GAUSSIAN:
@@ -119,10 +117,10 @@ MKLRndTable::generate()
       #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
-        gaussian(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
+        gaussian(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
                  GAUSSIAN_MEAN, GAUSSIAN_STD);
       }
-      gaussian(m_method, m_stream[0], m_remainder, m_rndPtr + m_nthread*m_chunk,
+      gaussian(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
                GAUSSIAN_MEAN, GAUSSIAN_STD);
       break;
     case GAMMA:
@@ -130,10 +128,10 @@ MKLRndTable::generate()
       #pragma omp parallel for
       #endif
       for (int t=0; t<m_nthread; ++t) {
-        gamma(m_method, m_stream[t], m_chunk, m_rndPtr + t*m_chunk,
+        gamma(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
               GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
       }
-      gamma(m_method, m_stream[0], m_remainder, m_rndPtr + m_nthread*m_chunk,
+      gamma(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
             GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
       break;
     default:

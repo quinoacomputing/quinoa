@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:48:40 PM MST
+  \date      Sun 03 Mar 2013 10:51:00 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -61,7 +61,7 @@ class MKLRndTable : private MKL {
     void generate();
 
     //! Constant accessor to random number table
-    const real* getRnd() { return m_rndPtr; }
+    const real* getRnd() { return m_rnd.ptr; }
 
   private:
     //! Don't permit copy constructor
@@ -80,8 +80,7 @@ class MKLRndTable : private MKL {
     const long long int m_chunk;     //!< Number of numbers generated per thread
     const long long int m_remainder; //!< Leftover
     VSLStreamStatePtr* m_stream;     //!< Array of pointers to thread-streams
-    MemoryEntry* m_rnd;              //!< MemoryEntry Pointer to random numbers
-    real* m_rndPtr;                  //!< Raw pointer to random numbers
+    Data<real> m_rnd;                //!< Random numbers
 };
 
 } // namespace Quinoa

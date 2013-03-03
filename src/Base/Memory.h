@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 10:09:17 PM MST
+  \date      Sun 03 Mar 2013 12:17:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -21,6 +21,21 @@
 namespace Quinoa {
 
 class Paradigm;
+
+//! Data provides an interface to both Memory Entry ID and its raw pointer
+template< class V >
+struct Data {
+  MemoryEntry* id;
+  V* ptr;
+  //! Null constructor
+  Data() : id(nullptr), ptr(nullptr) {}
+  //! Data constructor
+  Data(MemoryEntry* Id, V* Ptr) : id(Id), ptr(Ptr) {}
+  //! Operator [] is overloaded to access the elements behind ptr
+  constexpr V& operator[] (const size_t index) const { return ptr[index]; }
+  //! Operator + is overloaded to ease pointer arithmetic behind ptr
+  constexpr V* operator+ (const size_t offset) const { return ptr + offset; }
+};
 
 //! Memory store, container of memory entries
 class Memory {
@@ -43,24 +58,38 @@ class Memory {
     //! Destructor
     ~Memory();
 
-    //! Allocate memory entry
-    MemoryEntry* newEntry(size_t number,
-                          ValType value,
-                          VarType variable,
-                          string name,
-                          bool plot = false,
-                          bool restart = false);
+    //! Allocate memory entry and return both MemoryEntry* ID and raw pointer,
+    //! template V specifies return pointer type
+    template<class V>
+    Data<V> newEntry(size_t number,
+                     ValType value,
+                     VarType variable,
+                     string name,
+                     bool plot = false,
+                     bool restart = false) {
+      MemoryEntry* me = newEntry(number,value,variable,name,plot,restart);
+      return Data<V>(me, getPtr<V>(me));
+    }
 
-    //! Allocate and zero memory entry
-    MemoryEntry* newZeroEntry(size_t number,
-                              ValType value,
-                              VarType variable,
-                              string name,
-                              bool plot = false,
-                              bool restart = false);
+    //! Allocate and zero memory entry and return both MemoryEntry* ID and raw
+    //! pointer, template V specifies return pointer type
+    template<class V>
+    Data<V> newZeroEntry(size_t number,
+                         ValType value,
+                         VarType variable,
+                         string name,
+                         bool plot = false,
+                         bool restart = false) {
+      MemoryEntry* me = newZeroEntry(number,value,variable,name,plot,restart);
+      return Data<V>(me, getPtr<V>(me));
+    }
 
     //! Deallocate a memory entry
-    void freeEntry(MemoryEntry* id);
+    template< class V >
+    void freeEntry(Data<V>& data) {
+      freeEntry(data.id);
+      data.ptr = nullptr;
+    }
 
     //! Deallocate all memory entries
     void freeAllEntries() noexcept;
@@ -129,6 +158,25 @@ class Memory {
     Memory(Memory&&) = delete;
     //! Don't permit move assigment
     Memory& operator=(Memory&&) = delete;
+
+    //! Allocate memory entry
+    MemoryEntry* newEntry(size_t number,
+                          ValType value,
+                          VarType variable,
+                          string name,
+                          bool plot = false,
+                          bool restart = false);
+
+    //! Allocate and zero memory entry
+    MemoryEntry* newZeroEntry(size_t number,
+                              ValType value,
+                              VarType variable,
+                              string name,
+                              bool plot = false,
+                              bool restart = false);
+
+    //! Deallocate a memory entry
+    void freeEntry(MemoryEntry* id);
 
     void echo();                //!< Echo unsorted entries
     void echoByBytes();         //!< Echo entries sorted by Bytes
