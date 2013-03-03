@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:50:36 AM MST
+  \date      Sun 03 Mar 2013 01:37:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -109,8 +109,8 @@ Timer::query(const TimerIdx id, Watch& watch)
 
   // Put elapsed time in watch as hours:minutes:seconds
   watch.h = duration_cast<hours>(elapsed);
-  watch.m = duration_cast<minutes>(elapsed);
-  watch.s = duration_cast<seconds>(elapsed);
+  watch.m = duration_cast<minutes>(elapsed) % 60;
+  watch.s = duration_cast<seconds>(elapsed) % 60;
 }
 
 void
@@ -158,10 +158,10 @@ Timer::eta(const TimerIdx id,
 
   // Put elapsed time in watch as hours:minutes:seconds
   estimatedWatch.h = duration_cast<hours>(estimated);
-  estimatedWatch.m = duration_cast<minutes>(estimated);
-  estimatedWatch.s = duration_cast<seconds>(estimated);
+  estimatedWatch.m = duration_cast<minutes>(estimated) % 60;
+  estimatedWatch.s = duration_cast<seconds>(estimated) % 60;
   // Put estimated time in watch as hours:minutes:seconds
   elapsedWatch.h = duration_cast<hours>(elapsed);
-  elapsedWatch.m = duration_cast<minutes>(elapsed);
-  elapsedWatch.s = duration_cast<seconds>(elapsed);
+  elapsedWatch.m = duration_cast<minutes>(elapsed) % 60;
+  elapsedWatch.s = duration_cast<seconds>(elapsed) % 60;
 }
