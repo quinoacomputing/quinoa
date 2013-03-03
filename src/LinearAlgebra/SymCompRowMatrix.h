@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 06:47:11 PM MST
+  \date      Sun 03 Mar 2013 06:55:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -68,13 +68,9 @@ class SymCompRowMatrix : private SparseMatrix {
     //! Don't permit move assigment
     SymCompRowMatrix& operator=(SymCompRowMatrix&&) = delete;
 
-    MemoryEntry* m_ia;   //!< Row pointers, vector size: size*dof+1
-    MemoryEntry* m_ja;   //!< Column indices, vector size: nnz
-    MemoryEntry* m_a;    //!< Nonzero values, vector size: nnz
-
-    int* m_pia;  //!< Data pointer to row indices
-    int* m_pja;  //!< Data pointer to column indices
-    real* m_pa;  //!< Data pointer to matrix values
+    Data<int> m_ia;   //!< Row indices, vector size: size*dof+1
+    Data<int> m_ja;   //!< Column indices, vector size: nnz
+    Data<real> m_a;   //!< Nonzero matrix values, vector size: nnz
 };
 
 } // namespace Quinoa

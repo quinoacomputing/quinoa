@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 10:25:42 AM MST
+  \date      Sun 03 Mar 2013 12:43:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -57,15 +57,11 @@ Dirichlet::Dirichlet(Memory* const memory,
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
 
-  // Allocate memory entry to store all the scalars
-  m_allScalars = m_memory->newEntry(m_npar*m_nscalar, REAL, SCALAR, "allScalars");
-  // Get raw pointer to scalars
-  m_rawAllScalars = m_memory->getPtr<real>(m_allScalars);
-
-  // Allocate memory entry to store particle scalars
-  m_parScalars = m_memory->newEntry(m_nscalar, REAL, SCALAR, "parScalars");
-  // Get raw pointer to particle scalars
-  m_rawParScalars = m_memory->getPtr<real>(m_parScalars);
+  // Allocate memory to store all the scalars
+  m_allScalars = m_memory->newEntry<real>(m_npar*m_nscalar,
+                                          REAL,
+                                          SCALAR,
+                                          "allScalars");
 }
 
 Dirichlet::~Dirichlet()
@@ -78,7 +74,6 @@ Dirichlet::~Dirichlet()
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_parScalars);
     m_memory->freeEntry(m_allScalars);
 #ifndef NDEBUG
   } catch (...)
@@ -114,6 +109,8 @@ Dirichlet::initUniform()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  real r[m_nscalar];
+
   // Generate initial values for all scalars for all particles
   for (int p=0; p<m_npar; ++p) {
 
@@ -121,17 +118,15 @@ Dirichlet::initUniform()
     while (!accept) {
       // Generate scalars
       m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD,
-                        m_str[0], m_nscalar, m_rawParScalars, 0.0, 1.0);
+                        m_str[0], m_nscalar, r, 0.0, 1.0);
 
       // Compute their sum
-      real sum = m_rawParScalars[0];
-      for (int i=1; i<m_nscalar; ++i) sum += m_rawParScalars[i];
+      real sum = r[0];
+      for (int i=1; i<m_nscalar; ++i) sum += r[i];
 
       // Accept if sum is less then 1.0
       if (sum < 1.0) {
-        memcpy(p*m_nscalar + m_rawAllScalars,
-               m_rawParScalars,
-               m_nscalar*sizeof(real));
+        memcpy(m_allScalars + p*m_nscalar, r, m_nscalar*sizeof(real));
         accept = true;
       }
     }
@@ -146,14 +141,13 @@ Dirichlet::initGaussian()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  real r[m_nscalar];
+
   // Generate initial values for all scalars for all particles
   for (int p=0; p<m_npar; ++p) {
     m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                       m_str[0], m_nscalar, m_rawParScalars, 0.0, 1.0);
-
-    memcpy(p*m_nscalar + m_rawAllScalars,
-           m_rawParScalars,
-           m_nscalar*sizeof(real));
+                       m_str[0], m_nscalar, r, 0.0, 1.0);
+    memcpy(m_allScalars + p*m_nscalar, r, m_nscalar*sizeof(real));
   }
 }
 
@@ -169,7 +163,7 @@ Dirichlet::advance(const real dt)
   int myid, p, i;
   real yn, d;
   real* y;
-  real* dW = m_rawParScalars;
+  real dW[m_nscalar];
 
   #ifdef _OPENMP
   #pragma omp parallel private(myid, p, i, y, yn, dW, d)
@@ -186,7 +180,7 @@ Dirichlet::advance(const real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
       // Get access to particle scalars
-      y = m_rawAllScalars + p*m_nscalar;
+      y = m_allScalars + p*m_nscalar;
 
       // Compute Nth scalar
       yn = 1.0 - y[0];
@@ -217,7 +211,7 @@ Dirichlet::jpdf(JPDF& jpdf)
 //******************************************************************************
 {
   for (int p=0; p<m_npar; ++p) {
-    real* y = m_rawAllScalars + p*m_nscalar;
+    real* y = m_allScalars + p*m_nscalar;
     vector<real> v(y, y+m_nscalar);
     jpdf.insert(v);
   }

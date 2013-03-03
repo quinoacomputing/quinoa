@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 02:27:30 PM MST
+  \date      Sun 03 Mar 2013 10:30:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -71,19 +71,19 @@ class UnsMesh : private Mesh {
     void addTriangleTags(const vector<int>& tags) { m_tritag.push_back(tags); }
 
     //! Coords accessor
-    real* getCoord() const { return m_memory->getPtr<real>(m_COORD); }
+    real* getCoord() const { return m_coord.ptr; }
 
     //! NodeId accessor
-    int* getNodeId() const { return m_memory->getPtr<int>(m_NODEID); }
+    int* getNodeId() const { return m_nodeId.ptr; }
 
     //! Line element id accessor
-    int* getLineId() const { return m_memory->getPtr<int>(m_LINEID); }
+    int* getLineId() const { return m_lineId.ptr; }
 
     //! Triangle element id accessor
-    int* getTriangleId() const { return m_memory->getPtr<int>(m_TRIANGLEID); }
+    int* getTriangleId() const { return m_triangleId.ptr; }
 
     //! Number of nodes accessor
-    int getNnodes() const { return m_memory->getNumber(m_NODEID); }
+    int getNnodes() const { return m_memory->getNumber(m_nodeId.id); }
 
     //! Line elements connectivity accessor
     const vector<vector<int>> getLinpoel() { return m_linpoel; }
@@ -116,10 +116,10 @@ class UnsMesh : private Mesh {
     int m_type;                            //!< File type in mesh file
     int m_datasize;                        //!< Data size in mesh file
 
-    MemoryEntry* m_COORD;                  //!< Node coordinates
-    MemoryEntry* m_NODEID;                 //!< Node Ids
-    MemoryEntry* m_LINEID;                 //!< Line element Ids
-    MemoryEntry* m_TRIANGLEID;             //!< Triangle element Ids
+    Data<real> m_coord;                     //!< Node coordinates
+    Data<int> m_nodeId;                    //!< Node Ids
+    Data<int> m_lineId;                    //!< Line element Ids
+    Data<int> m_triangleId;                //!< Triangle element Ids
 
     vector<vector<int>> m_linpoel;         //!< Line elements connectivity
     vector<vector<int>> m_tinpoel;         //!< Triangle elements connectivity
