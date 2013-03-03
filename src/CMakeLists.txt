@@ -27,7 +27,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 if(PLATFORM MATCHES "linux-intel")
   #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
-  # Disregard the following remarks:
+  # Suppress the following remarks:
   #   111: statement is unreachable
   #   304: access control not specified ("public" by default)
   #   383: value copied to temporary, reference to temporary used
@@ -112,6 +112,8 @@ endif()
 check_cxx_compiler_flag(-pedantic HAS_PEDANTIC)
 if(HAS_PEDANTIC)
   add_definitions("-pedantic")
+  # suppress warning: ISO C++ forbids variable length array
+  add_definitions("-Wno-vla")
 endif()
 
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
