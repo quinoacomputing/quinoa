@@ -2,14 +2,14 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 04 Mar 2013 06:51:25 AM MST
+  \date      Mon Mar  4 14:41:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
 */
 //******************************************************************************
-#ifndef Type_h
-#define Type_h
+#ifndef ControlTypes_h
+#define ControlTypes_h
 
 #include <string>
 #include <vector>
@@ -162,4 +162,4 @@ using BoolBundle = vector<bool>;
 
 } // namespace Quinoa
 
-#endif // Type_h
+#endif // ControlTypes_h
