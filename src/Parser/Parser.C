@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 04 Mar 2013 06:41:22 AM MST
+  \date      Mon Mar  4 12:13:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -99,7 +99,6 @@ Parser::echo()
     cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
 
   if (m_control->set<MIX>()) {
-
     cout << " * Material mixing: " << m_control->mixName() << endl;
 
     if (m_control->set<NSTEP>())
@@ -153,12 +152,11 @@ Parser::echo()
     if (m_control->set<STATISTICS>()) {
       cout << "   - Requested statistics = {";
       for (auto& product : m_control->get<STATISTICS>()) {
-        cout << " <";
-        for (auto& term : product) {
-          //cout << " " << term.field << " " << term.quantity << " " << term.moment;
-          if (term.plot) cout << term.name;
+        if (product[0].plot) {  // only output user-requested stats
+          cout << " <";
+          for (auto& term : product) cout << term.name;
+          cout << ">";
         }
-        cout << ">";
       }
       cout << " }" << endl;
     }
