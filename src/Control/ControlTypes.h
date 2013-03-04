@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 10:00:17 PM MST
+  \date      Mon 04 Mar 2013 06:51:25 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -58,16 +58,24 @@ enum Moment { ORDINARY=0,      //!< Full variable, e.g. Y
               CENTRAL          //!< Fluctuation, e.g. y = Y - <Y>
 };
 
-//! Term is a Moment of a Quantity with a field ID to be ensemble averaged
-//! The Numbering of field IDs start from 0
+//! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
+//! The Numbering of field IDs starts from 0.
 //! E.g. 1st pressure fluctuation: {0, PRESSURE, CENTRAL},
-//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY}
-//! readable stores the same information in a more human-readable form
+//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY}.
+//! 'name' stores the same information in a more human-readable form.
+//! 'plot' shows whether the variable will be plotted.
+//! Conceptually, plot should be in Product, since plot will only be false for
+//! a mean that was triggered by a central moment by one of the Terms of a
+//! Product, requesting the mean. However, that would require Product to be a
+//! vector<struct>, which then would need custom comparitors for std::sort()
+//! and std::unique() in Parser::unique(). Since this is not a performance
+//! issue, plot is here in Term.
 struct Term {
   int field;
   Quantity quantity;
   Moment moment;
   string name;
+  bool plot;
 
   // Equal operator for finding unique elements
   bool operator== (const Term& term) const {

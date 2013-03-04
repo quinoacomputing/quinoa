@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 09:55:56 PM MST
+  \date      Mon 04 Mar 2013 06:41:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -156,7 +156,7 @@ Parser::echo()
         cout << " <";
         for (auto& term : product) {
           //cout << " " << term.field << " " << term.quantity << " " << term.moment;
-          cout << term.name;
+          if (term.plot) cout << term.name;
         }
         cout << ">";
       }
