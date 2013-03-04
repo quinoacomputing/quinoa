@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 10:38:20 AM MST
+  \date      Sun 03 Mar 2013 09:55:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -57,10 +57,26 @@ Parser::parse()
 #endif // NDEBUG
   //cout << "==== PARSE END ====" << endl << endl;
 
+  // Filter out repeated statistics
+  unique(get<control::STATISTICS>(stack));
+
   // Store off parsed bundles
   m_control->set(stack);
   m_control->set(boolstack);
   m_control->set(JPDF_FILENAME_BASE);
+}
+
+void
+Parser::unique(vector<Product>& statistics)
+//******************************************************************************
+//  Unique: Make requested statistics unique
+//! \param[in,out]  statistics  Vector of statistics
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::sort(statistics.begin(), statistics.end());
+  auto it = std::unique(statistics.begin(), statistics.end());
+  statistics.resize( std::distance(statistics.begin(), it) );
 }
 
 void
@@ -140,7 +156,7 @@ Parser::echo()
         cout << " <";
         for (auto& term : product) {
           //cout << " " << term.field << " " << term.quantity << " " << term.moment;
-          cout << term.readable;
+          cout << term.name;
         }
         cout << ">";
       }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 08:37:51 AM MST
+  \date      Sun 03 Mar 2013 03:03:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
