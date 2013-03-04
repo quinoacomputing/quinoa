@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 08:55:18 AM MST
+  \date      Sun 03 Mar 2013 10:00:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -67,7 +67,34 @@ struct Term {
   int field;
   Quantity quantity;
   Moment moment;
-  string readable;
+  string name;
+
+  // Equal operator for finding unique elements
+  bool operator== (const Term& term) const {
+    // test on everything except name
+    if (field == term.field &&
+        quantity == term.quantity &&
+        moment == term.moment) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // Less than operator for ordering
+  bool operator< (const Term& term) const {
+    // test on everything except name
+    if (field < term.field) {
+      return true;
+    } else if (field == term.field && quantity < term.quantity) {
+      return true;
+    } else if (field == term.field && quantity == term.quantity &&
+               moment < term.moment) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 };
 
 //! Products are N Terms to be multiplied and ensemble averaged
@@ -113,11 +140,11 @@ using Bundle = tuple< string,         //!<  0: Title
                       int,            //!< 10: Dump output interval
                       int,            //!< 11: Plot output interval
                       int,            //!< 12: PDF output interval
-                      vector<real>,   //!< 13: Vector of parameters 'b'
-                      vector<real>,   //!< 14: Vector of parameters 'S'
-                      vector<real>,   //!< 15: Vector of parameters 'kappa'
-                      vector<real>,   //!< 16: Vector of parameters 'c_ij'
-                      vector<Product> //!< 17: Vector of statistics
+                      vector<real>,   //!< 13: Parameters 'b'
+                      vector<real>,   //!< 14: Parameters 'S'
+                      vector<real>,   //!< 15: Parameters 'kappa'
+                      vector<real>,   //!< 16: Parameters 'c_ij'
+                      vector<Product>    //!< 17: Statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri 01 Mar 2013 09:31:18 PM MST
+  \date      Sun 03 Mar 2013 07:41:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -41,11 +41,11 @@ const Bundle DEFAULTS(
   0,                          //!< 10: Dump output interval
   0,                          //!< 11: Plot output interval
   1,                          //!< 12: PDF output interval
-  ZERO_REAL_VEC,              //!< 13: Vector of parameters 'b'
-  ZERO_REAL_VEC,              //!< 14: Vector of paramaters 'S'
-  ZERO_REAL_VEC,              //!< 15: Vector of parameters 'kappa'
-  ZERO_REAL_VEC,              //!< 16: Vector of parameters 'c_ij'
-  ZERO_PRODUCT_VEC            //!< 17: Vector of statistics
+  ZERO_REAL_VEC,              //!< 13: Parameters 'b'
+  ZERO_REAL_VEC,              //!< 14: Paramaters 'S'
+  ZERO_REAL_VEC,              //!< 15: Parameters 'kappa'
+  ZERO_REAL_VEC,              //!< 16: Parameters 'c_ij'
+  ZERO_PRODUCT_VEC            //!< 17: Statistics
 );
 
 //! Default basefilenames for output

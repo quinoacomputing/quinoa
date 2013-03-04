@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 02 Mar 2013 10:37:13 AM MST
+  \date      Sun 03 Mar 2013 09:32:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Grammar_h
 #define Grammar_h
+
+#include <algorithm>
 
 #include <Macro.h>
 #include <ControlTypes.h>
@@ -99,7 +101,7 @@ namespace grammar {
                       boolstack_type& boolstack) {
       get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
       boolstack[control::STATISTICS] = true;
-      IGNORE(value);   // suppress compiler warning on unused variable
+      IGNORE(value);        // suppress compiler warning on unused variable
     }
   };
 
@@ -110,7 +112,20 @@ namespace grammar {
                       stack_type& stack,
                       boolstack_type& boolstack) {
       control::Term term = { field, quantity, moment, value };
-      get<control::STATISTICS>(stack).back().push_back(term);
+      vector<control::Product>& stats = get<control::STATISTICS>(stack);
+      // Push term into current product
+      stats.back().push_back(term);
+      // If central moment, trigger mean
+      if (moment == control::CENTRAL) {
+        // Convert name to upper-case for human-readable name
+        std::string upper(value);
+        std::for_each(upper.begin(), upper.end(),
+                      [](char& c){ c = static_cast<char>(std::toupper(c)); } );
+        // Put in request for mean
+        control::Term term = { field, quantity, control::ORDINARY, upper };
+        control::Product mean(1,term);
+        stats.insert(stats.end()-1, mean);
+      }
       IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
