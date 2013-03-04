@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 09:32:22 PM MST
+  \date      Mon 04 Mar 2013 06:40:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -38,7 +38,7 @@ namespace grammar {
   //! Dummy Bundle instant for decltype in store()
   static stack_type dummy_stack;
   //! Zero vector of Term for pushing (starting) a new Product in statistics
-  const vector<control::Term> ZERO_TERM_VEC;
+  static const vector<control::Term> ZERO_TERM_VEC;
   //! Field ID for statistics
   static int field;
 
@@ -111,7 +111,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      control::Term term = { field, quantity, moment, value };
+      control::Term term = {field, quantity, moment, value, true};
       vector<control::Product>& stats = get<control::STATISTICS>(stack);
       // Push term into current product
       stats.back().push_back(term);
@@ -122,7 +122,7 @@ namespace grammar {
         std::for_each(upper.begin(), upper.end(),
                       [](char& c){ c = static_cast<char>(std::toupper(c)); } );
         // Put in request for mean
-        control::Term term = { field, quantity, control::ORDINARY, upper };
+        control::Term term = {field, quantity, control::ORDINARY, upper, false};
         control::Product mean(1,term);
         stats.insert(stats.end()-1, mean);
       }
