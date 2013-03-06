@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 12:43:37 PM MST
+  \date      Wed 06 Mar 2013 07:58:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -77,7 +77,7 @@ Dirichlet::~Dirichlet()
     m_memory->freeEntry(m_allScalars);
 #ifndef NDEBUG
   } catch (...)
-    { cout << "WARNING: Exception in HomMix destructor" << endl; }
+    { cout << "WARNING: Exception in Dirichlet destructor" << endl; }
 #endif // NDEBUG
 
   if (m_random) { delete m_random; m_random = nullptr; }  

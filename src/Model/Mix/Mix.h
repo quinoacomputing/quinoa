@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 11:31:30 AM MST
+  \date      Wed 06 Mar 2013 08:00:04 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -45,6 +45,9 @@ class Mix : public Model {
 
     //! Interface for estimate joint scalar PDF
     virtual void jpdf(JPDF& jpdf) = 0;
+
+    //! Constant accessor to particle scalar pointer
+    virtual const real* scalars() const = 0;
 
   protected:
     const int m_nscalar;            //!< Number of mixing scalars

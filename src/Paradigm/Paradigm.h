@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 09:35:53 PM MST
+  \date      Wed 06 Mar 2013 06:38:44 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -36,6 +36,9 @@ class Paradigm {
 
     //! Const accessor to OpenMP object
     const OpenMP* getOpenMP() const { return &m_omp; }
+
+    //! Accessor to number of OpenMP threads
+    int nthread() const { return m_omp.nthread(); }
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 12:44:53 PM MST
+  \date      Wed 06 Mar 2013 07:30:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -48,6 +48,9 @@ class Dirichlet : public Mix {
 
     //! Estimate joint scalar PDF
     virtual void jpdf(JPDF& jpdf);
+
+    //! Constant accessor to particle scalar pointer
+    virtual const real* scalars() const { return m_allScalars.ptr; }
 
   private:
     //! Don't permit copy constructor

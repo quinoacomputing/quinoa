@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 11:18:35 AM MST
+  \date      Wed 06 Mar 2013 06:23:10 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -17,7 +17,7 @@
 
 using namespace Quinoa;
 
-MKLRndTable::MKLRndTable(Memory* memory,
+MKLRndTable::MKLRndTable(Memory* const memory,
                          const int nthread,
                          const int brng,
                          const RndDist dist,
@@ -33,7 +33,7 @@ MKLRndTable::MKLRndTable(Memory* memory,
   m_remainder(number % nthread)
 //******************************************************************************
 //  Constructor: Create random number table
-//! \param[in]  memory   Pointer to memory store
+//! \param[in]  memory   Memory object pointer
 //! \param[in]  nthread  Number of threads to use
 //! \param[in]  brng     Basic VSL generator type
 //! \param[in]  dist     Type of distribution

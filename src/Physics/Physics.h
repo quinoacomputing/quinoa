@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:27:46 PM MST
+  \date      Wed 06 Mar 2013 06:41:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -47,6 +47,7 @@ class Physics {
     Paradigm* const m_paradigm;   //!< Parallel programming object
     Control* const m_control;     //!< Control object
     Timer* const m_timer;         //!< Timer object
+    const int m_nthread;          //!< Number of threads
 
   private:
     //! Don't permit copy constructor

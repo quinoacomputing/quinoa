@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 04 Mar 2013 06:40:35 AM MST
+  \date      Wed 06 Mar 2013 07:42:56 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -135,7 +135,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      field = convert<int>(value);
+      field = convert<int>(value) - 1;  // numbering of field IDs start from 0
       IGNORE(stack);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
