@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 03:03:21 PM MST
+  \date      Wed 06 Mar 2013 07:53:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -56,6 +56,9 @@ class HomMix : public Physics {
     //! Don't permit move assigment
     HomMix& operator=(HomMix&&) = delete;
 
+    //! Setup statistics
+    void setupStatistics();
+
     //! Output joint scalar PDF
     void outJPDF(const real t);
 
@@ -67,11 +70,15 @@ class HomMix : public Physics {
                 const real dt,
                 const bool wroteJPDF);
 
-    const int m_nscalar;                //!< Number of mixing scalars
-    const real m_term;                  //!< Maximum time to simulate
-    const string m_jpdf_filename_base;  //!< Joint PDF filename base
-    const TimerIdx m_totalTime;         //!< Timer measuring the total run
-    Mix* m_mix;                         //!< Mix model object
+    const int m_nscalar;                  //!< Number of mixing scalars
+    const real m_term;                    //!< Maximum time to simulate
+    const string m_jpdf_filename_base;    //!< Joint PDF filename base
+    const TimerIdx m_totalTime;           //!< Timer measuring the total run
+    const vector<Product> m_statistics;   //!< Requested tatistics
+
+    Mix* m_mix;                           //!< Mix model object
+    vector<const real*> m_instantaneous;  //!< Instantaneous variable pointers
+    Data<real> m_ordinary_moments;        //!< Ordinary moments
 };
 
 } // namespace Quinoa

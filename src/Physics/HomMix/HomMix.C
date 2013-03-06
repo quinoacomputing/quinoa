@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 24 Feb 2013 07:14:37 PM MST
+  \date      Wed 06 Mar 2013 07:58:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -34,7 +34,8 @@ HomMix::HomMix(Memory* const memory,
   m_nscalar(control->get<NSCALAR>()),
   m_term(control->get<TERM>()),
   m_jpdf_filename_base(control->get_jpdf_filename_base()),
-  m_totalTime(timer->create("Total solution"))
+  m_totalTime(timer->create("Total solution")),
+  m_statistics(control->get<STATISTICS>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -51,19 +52,22 @@ HomMix::HomMix(Memory* const memory,
       Throw(MixException,FATAL,MixExceptType::NO_MIX);
       break;
 
-    case MixType::GENERALIZED_DIRICHLET :
-      m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
+    case MixType::DIRICHLET :
+      m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
       Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
-    case MixType::DIRICHLET :
-      m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
+    case MixType::GENERALIZED_DIRICHLET :
+      m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
       Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
     default :
       Throw(MixException,FATAL,MIX_UNIMPLEMENTED);
   }
+
+  // Setup statistics
+  setupStatistics();
 }
 
 HomMix::~HomMix()
@@ -72,7 +76,43 @@ HomMix::~HomMix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Free memory entries held
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
+  try {
+#endif // NDEBUG
+    m_memory->freeEntry(m_ordinary_moments);
+#ifndef NDEBUG
+  } catch (...)
+    { cout << "WARNING: Exception in HomMix destructor" << endl; }
+#endif // NDEBUG
+
   if (m_mix) { delete m_mix; m_mix = nullptr; }
+}
+
+void
+HomMix::setupStatistics()
+//******************************************************************************
+//  Setup statistics
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  for (auto& product : m_statistics) {
+    if (product.size() == 1 && product[0].moment == ORDINARY) {
+      Term term = product[0];
+      if (term.quantity == TRANSPORTED_SCALAR) {
+        //cout << term.name << ", " << term.field << endl;
+        m_instantaneous.push_back(m_mix->scalars() + term.field);
+      }
+    }
+  }
+  //for (auto& inst : m_instantaneous) cout << inst << endl;
+
+  // Allocate memory to store all the required ordinary scalar moments
+  m_ordinary_moments =
+    m_memory->newEntry<real>(m_nthread*m_instantaneous.size(),
+                             REAL,
+                             SCALAR,
+                             "ordinary scalar moments");
 }
 
 void
@@ -82,9 +122,9 @@ HomMix::solve()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int it=0;
-  real t=0.0;
-  bool wroteJPDF=false;
+  int it = 0;
+  real t = 0.0;
+  bool wroteJPDF = false;
 
   const auto nstep = m_control->get<NSTEP>();
   const auto ttyi  = m_control->get<TTYI>();

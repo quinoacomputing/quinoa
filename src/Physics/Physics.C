@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:28:58 PM MST
+  \date      Wed 06 Mar 2013 06:42:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -11,11 +11,10 @@
 
 #include <iostream>
 
-//#include <sys/time.h>
-
 #include <Memory.h>
-#include <Physics.h>
+#include <Paradigm.h>
 #include <Control.h>
+#include <Physics.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -28,7 +27,8 @@ Physics::Physics(Memory* const memory,
   m_memory(memory),
   m_paradigm(paradigm),
   m_control(control),
-  m_timer(timer)
+  m_timer(timer),
+  m_nthread(paradigm->nthread())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
