@@ -50,11 +50,13 @@ set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Find OpenMP and set its compiler flag
-find_package(OpenMP)
-if(OPENMP_FOUND AND NOT PLATFORM MATCHES "clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+if(NOT PLATFORM MATCHES "clang")
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+  endif()
 endif()
 
 # Grab info about the compiler to stick into the binary
@@ -110,7 +112,7 @@ if(HAS_WALL)
 endif()
 
 check_cxx_compiler_flag(-pedantic HAS_PEDANTIC)
-if(HAS_PEDANTIC)
+if(HAS_PEDANTIC AND NOT PLATFORM MATCHES "clang")
   add_definitions("-pedantic")
   # suppress warning: ISO C++ forbids variable length array
   add_definitions("-Wno-vla")
