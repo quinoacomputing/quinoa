@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 06:42:19 AM MST
+  \date      Fri Mar  8 15:19:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace Quinoa;
-using namespace control;
 
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,

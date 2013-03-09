@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 09:17:31 AM MST
+  \date      Sat 09 Mar 2013 11:16:57 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -14,15 +14,14 @@
 #include <Control.h>
 
 using namespace Quinoa;
-using namespace control;
 
 Mix::Mix(Memory* const memory,
          Paradigm* const paradigm,
          Control* const control,
          const string& name) :
   Model(memory, paradigm, control, name),
-  m_nscalar(control->get<NSCALAR>()),
-  m_npar(control->get<NPAR>())
+  m_nscalar(control->get<control::NSCALAR>()),
+  m_npar(control->get<control::NPAR>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer

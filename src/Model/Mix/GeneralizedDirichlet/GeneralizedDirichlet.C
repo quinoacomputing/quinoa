@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 12:47:10 PM MST
+  \date      Sat 09 Mar 2013 11:27:02 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -30,10 +30,10 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
                                            Paradigm* const paradigm,
                                            Control* const control) :
   Mix(memory, paradigm, control, "Generalized Dirichlet"),
-  m_b(control->get<B>()),
-  m_S(control->get<S>()),
-  m_k(control->get<KAPPA>()),
-  m_c(control->get<C>())
+  m_b(control->get<control::B>()),
+  m_S(control->get<control::S>()),
+  m_k(control->get<control::KAPPA>()),
+  m_c(control->get<control::C>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 07:58:20 AM MST
+  \date      Sat 09 Mar 2013 11:38:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -24,18 +24,17 @@
 #include <Timer.h>
 
 using namespace Quinoa;
-using namespace control;
 
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
                Control* const control,
                Timer* const timer) :
   Physics(memory, paradigm, control, timer),
-  m_nscalar(control->get<NSCALAR>()),
-  m_term(control->get<TERM>()),
+  m_nscalar(control->get<control::NSCALAR>()),
+  m_term(control->get<control::TERM>()),
   m_jpdf_filename_base(control->get_jpdf_filename_base()),
   m_totalTime(timer->create("Total solution")),
-  m_statistics(control->get<STATISTICS>())
+  m_statistics(control->get<control::STATISTICS>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -46,18 +45,18 @@ HomMix::HomMix(Memory* const memory,
 //******************************************************************************
 {
   // Instantiate selected mix model
-  switch (control->get<MIX>()) {
+  switch (control->get<control::MIX>()) {
 
-    case MixType::NO_MIX :
+    case control::MixType::NO_MIX :
       Throw(MixException,FATAL,MixExceptType::NO_MIX);
       break;
 
-    case MixType::DIRICHLET :
+    case control::MixType::DIRICHLET :
       m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
       Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
-    case MixType::GENERALIZED_DIRICHLET :
+    case control::MixType::GENERALIZED_DIRICHLET :
       m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
       Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
@@ -80,7 +79,7 @@ HomMix::~HomMix()
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_ordinary_moments);
+    m_memory->freeEntry(m_ordinary);
 #ifndef NDEBUG
   } catch (...)
     { cout << "WARNING: Exception in HomMix destructor" << endl; }
@@ -97,9 +96,9 @@ HomMix::setupStatistics()
 //******************************************************************************
 {
   for (auto& product : m_statistics) {
-    if (product.size() == 1 && product[0].moment == ORDINARY) {
-      Term term = product[0];
-      if (term.quantity == TRANSPORTED_SCALAR) {
+    if (product.size() == 1 && product[0].moment == control::ORDINARY) {
+      control::Term term = product[0];
+      if (term.quantity == control::TRANSPORTED_SCALAR) {
         //cout << term.name << ", " << term.field << endl;
         m_instantaneous.push_back(m_mix->scalars() + term.field);
       }
@@ -108,7 +107,7 @@ HomMix::setupStatistics()
   //for (auto& inst : m_instantaneous) cout << inst << endl;
 
   // Allocate memory to store all the required ordinary scalar moments
-  m_ordinary_moments =
+  m_ordinary =
     m_memory->newEntry<real>(m_nthread*m_instantaneous.size(),
                              REAL,
                              SCALAR,
@@ -126,10 +125,10 @@ HomMix::solve()
   real t = 0.0;
   bool wroteJPDF = false;
 
-  const auto nstep = m_control->get<NSTEP>();
-  const auto ttyi  = m_control->get<TTYI>();
-  const auto pdfi  = m_control->get<PDFI>();
-  const auto dt    = m_control->get<DT>();
+  const auto nstep = m_control->get<control::NSTEP>();
+  const auto ttyi  = m_control->get<control::TTYI>();
+  const auto pdfi  = m_control->get<control::PDFI>();
+  const auto dt    = m_control->get<control::DT>();
 
   m_timer->start(m_totalTime);
 

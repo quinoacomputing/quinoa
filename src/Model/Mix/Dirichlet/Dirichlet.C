@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 07:58:18 AM MST
+  \date      Sat 09 Mar 2013 11:26:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -30,9 +30,9 @@ Dirichlet::Dirichlet(Memory* const memory,
                      Paradigm* const paradigm,
                      Control* const control) :
   Mix(memory, paradigm, control, "Dirichlet"),
-  m_b(control->get<B>()),
-  m_S(control->get<S>()),
-  m_k(control->get<KAPPA>())
+  m_b(control->get<control::B>()),
+  m_S(control->get<control::S>()),
+  m_k(control->get<control::KAPPA>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 09:02:33 AM MST
+  \date      Sat 09 Mar 2013 11:38:57 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control category
@@ -15,9 +15,8 @@
 #include <Control.h>
 
 using namespace Quinoa;
-using namespace control;
 
-Control::Control() : m_data(DEFAULTS)
+Control::Control() : m_data(control::DEFAULTS)
 //******************************************************************************
 //  Constructor
 //  \details Initialize defaults of everything held in Control, some of these

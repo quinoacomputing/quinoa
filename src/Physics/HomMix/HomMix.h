@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 07:53:32 AM MST
+  \date      Sat 09 Mar 2013 11:15:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -74,11 +74,11 @@ class HomMix : public Physics {
     const real m_term;                    //!< Maximum time to simulate
     const string m_jpdf_filename_base;    //!< Joint PDF filename base
     const TimerIdx m_totalTime;           //!< Timer measuring the total run
-    const vector<Product> m_statistics;   //!< Requested tatistics
+    const vector<control::Product> m_statistics;   //!< Requested tatistics
 
     Mix* m_mix;                           //!< Mix model object
     vector<const real*> m_instantaneous;  //!< Instantaneous variable pointers
-    Data<real> m_ordinary_moments;        //!< Ordinary moments
+    Data<real> m_ordinary;                //!< Ordinary moments
 };
 
 } // namespace Quinoa

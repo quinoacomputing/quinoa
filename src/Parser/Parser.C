@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 06:50:50 AM MST
+  \date      Sat 09 Mar 2013 11:36:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -19,7 +19,6 @@
 #include <ParserException.h>
 
 using namespace Quinoa;
-using namespace control;
 
 Parser::Parser(const string& filename, Control* const control) :
   m_filename(filename), m_control(control)
@@ -45,9 +44,10 @@ Parser::parse()
 //******************************************************************************
 {
   // Initialize new bundle for parsed data with defaults
-  Bundle stack(DEFAULTS);
+  control::Bundle stack(control::DEFAULTS);
   // Initialize new bool bundle for indicating what data is set in bundle
-  BoolBundle boolstack(tuple_size<decltype(DEFAULTS)>::value, false);
+  control::BoolBundle
+    boolstack(tuple_size<decltype(control::DEFAULTS)>::value, false);
 
   //cout << "==== PARSE START ====" << endl;
 #ifdef NDEBUG
@@ -63,11 +63,11 @@ Parser::parse()
   // Store off parsed bundles
   m_control->set(stack);
   m_control->set(boolstack);
-  m_control->set(JPDF_FILENAME_BASE);
+  m_control->set(control::JPDF_FILENAME_BASE);
 }
 
 void
-Parser::unique(vector<Product>& statistics)
+Parser::unique(vector<control::Product>& statistics)
 //******************************************************************************
 //  Unique: Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics
@@ -89,69 +89,69 @@ Parser::echo()
   cout << "Parsed from " << m_filename << ":\n" << setfill('-')
        << setw(13+m_filename.length()) << "-" << endl;
 
-  if (m_control->set<TITLE>())
-    cout << " * Title: " << m_control->get<TITLE>() << endl;
+  if (m_control->set<control::TITLE>())
+    cout << " * Title: " << m_control->get<control::TITLE>() << endl;
 
-  if (m_control->set<PHYSICS>())
+  if (m_control->set<control::PHYSICS>())
     cout << " * Physics: " << m_control->physicsName() << endl;
 
-  if (m_control->set<HYDRO>())
+  if (m_control->set<control::HYDRO>())
     cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
 
-  if (m_control->set<MIX>()) {
+  if (m_control->set<control::MIX>()) {
     cout << " * Material mixing: " << m_control->mixName() << endl;
 
-    if (m_control->set<NSTEP>())
-      cout << "   - Number of time steps: " << m_control->get<NSTEP>() << endl;
+    if (m_control->set<control::NSTEP>())
+      cout << "   - Number of time steps: " << m_control->get<control::NSTEP>() << endl;
 
-    if (m_control->set<TERM>())
-      cout << "   - Terminate time: " << m_control->get<TERM>() << endl;
+    if (m_control->set<control::TERM>())
+      cout << "   - Terminate time: " << m_control->get<control::TERM>() << endl;
 
-    if (m_control->set<DT>())
-      cout << "   - Time step size: " << m_control->get<DT>() << endl;
+    if (m_control->set<control::DT>())
+      cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
 
-    if (m_control->set<NSCALAR>())
-      cout << "   - Number of mixing scalars: " << m_control->get<NSCALAR>()
+    if (m_control->set<control::NSCALAR>())
+      cout << "   - Number of mixing scalars: " << m_control->get<control::NSCALAR>()
            << endl;
 
-    if (m_control->set<NPAR>())
-      cout << "   - Number of particles: " << m_control->get<NPAR>() << endl;
+    if (m_control->set<control::NPAR>())
+      cout << "   - Number of particles: " << m_control->get<control::NPAR>() << endl;
 
-    if (m_control->set<TTYI>())
-      cout << "   - TTY output interval: " << m_control->get<TTYI>() << endl;
+    if (m_control->set<control::TTYI>())
+      cout << "   - TTY output interval: " << m_control->get<control::TTYI>() << endl;
 
-    if (m_control->set<DUMP>())
-      cout << "   - Dump output interval = " << m_control->get<DUMP>() << endl;
+    if (m_control->set<control::DUMP>())
+      cout << "   - Dump output interval = " << m_control->get<control::DUMP>() << endl;
 
-    if (m_control->set<PLTI>())
-      cout << "   - Plot output interval = " << m_control->get<PLTI>() << endl;
+    if (m_control->set<control::PLTI>())
+      cout << "   - Plot output interval = " << m_control->get<control::PLTI>() << endl;
 
-    if (m_control->set<PDFI>())
-      cout << "   - PDF output interval = " << m_control->get<PDFI>() << endl;
+    if (m_control->set<control::PDFI>())
+      cout << "   - PDF output interval = " << m_control->get<control::PDFI>() << endl;
 
-    if (m_control->set<B>()) {
+    if (m_control->set<control::B>()) {
       cout << "   - Parameter vector b = {";
-      for (auto& v : m_control->get<B>()) cout << " " << v;
+      for (auto& v : m_control->get<control::B>()) cout << " " << v;
       cout << " }" << endl;
     }
-    if (m_control->set<S>()) {
+    if (m_control->set<control::S>()) {
       cout << "   - Parameter vector S = {";
-      for (auto& v : m_control->get<S>()) cout << " " << v;
+      for (auto& v : m_control->get<control::S>()) cout << " " << v;
       cout << " }" << endl;
     }
-    if (m_control->set<KAPPA>()) {
+    if (m_control->set<control::KAPPA>()) {
       cout << "   - Parameter vector kappa = {";
-      for (auto& v : m_control->get<KAPPA>()) cout << " " << v;
+      for (auto& v : m_control->get<control::KAPPA>()) cout << " " << v;
       cout << " }" << endl;
     }
-    if (m_control->set<C>()) {
+    if (m_control->set<control::C>()) {
       cout << "   - Parameter vector c = {";
-      for (auto& v : m_control->get<C>()) cout << " " << v;
+      for (auto& v : m_control->get<control::C>()) cout << " " << v;
       cout << " }" << endl;
     }
-    if (m_control->set<STATISTICS>()) {
+    if (m_control->set<control::STATISTICS>()) {
       cout << "   - Requested statistics = {";
-      for (auto& product : m_control->get<STATISTICS>()) {
+      for (auto& product : m_control->get<control::STATISTICS>()) {
         //if (product[0].plot) {  // only output user-requested stats
           cout << " <";
           for (auto& term : product) cout << term.name;
