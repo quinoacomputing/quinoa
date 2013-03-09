@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FwdAssociate.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:36:17 PM MST
+  \date      Fri Mar  8 15:34:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Forward, keyword (string) to data associations
   \details   Forward, keyword (string) to data associations
@@ -20,15 +20,13 @@ namespace associate {
   // Editing anything below should be accompanied by the corresponding changes
   // in BackAssociate.h as well.
 
-  using namespace control;
-
   // string -> PhysicsType
-  using physics_enum = unordered_map< std::string, PhysicsType >;
+  using physics_enum = unordered_map< std::string, control::PhysicsType >;
   struct PhysicsEnumStruct {
     static physics_enum make() {
       physics_enum m;
-      m["hommix"] = PhysicsType::HOMOGENEOUS_MIX;
-      m["spinsflow"] = PhysicsType::SPINSFLOW;
+      m["hommix"] = control::PhysicsType::HOMOGENEOUS_MIX;
+      m["spinsflow"] = control::PhysicsType::SPINSFLOW;
       return m;
     }
   };
@@ -40,26 +38,26 @@ namespace associate {
 //   };
 
   // string -> HydroType
-  using hydro_enum = unordered_map< std::string, HydroType >;
+  using hydro_enum = unordered_map< std::string, control::HydroType >;
   struct HydroEnumStruct {
     static hydro_enum make() {
       hydro_enum m;
-      m["slm"] = HydroType::SLM;
-      m["glm"] = HydroType::GLM;
+      m["slm"] = control::HydroType::SLM;
+      m["glm"] = control::HydroType::GLM;
       return m;
     }
   };
   static hydro_enum HydroEnum = HydroEnumStruct::make();
 
   // string -> MixType
-  using mix_enum = unordered_map< std::string, MixType >;
+  using mix_enum = unordered_map< std::string, control::MixType >;
   struct MixEnumStruct {
     static mix_enum make() {
       mix_enum m;
-      m["iem"] = MixType::IEM;
-      m["iecm"] = MixType::IECM;
-      m["dir"] = MixType::DIRICHLET;
-      m["gendir"] = MixType::GENERALIZED_DIRICHLET;
+      m["iem"] = control::MixType::IEM;
+      m["iecm"] = control::MixType::IECM;
+      m["dir"] = control::MixType::DIRICHLET;
+      m["gendir"] = control::MixType::GENERALIZED_DIRICHLET;
       return m;
     }
   };

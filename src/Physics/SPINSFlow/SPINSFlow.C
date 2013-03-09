@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sat 23 Feb 2013 11:49:45 AM MST
+  \date      Fri Mar  8 15:29:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -29,7 +29,6 @@
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
-using namespace control;
 
 SPINSFlow::SPINSFlow(Memory* const memory,
                      Paradigm* const paradigm,
@@ -37,7 +36,7 @@ SPINSFlow::SPINSFlow(Memory* const memory,
                      Timer* const timer,
                      const string& filename) :
   Physics(memory, paradigm, control, timer),
-  m_npar(control->get<NPAR>()),
+  m_npar(control->get<control::NPAR>()),
   m_filename(filename)
 //******************************************************************************
 //  Constructor
@@ -58,14 +57,14 @@ SPINSFlow::SPINSFlow(Memory* const memory,
   m_str = m_random->getStr(m_rndStr);
 
   // Instantiate hydrodynamics model
-  switch (control->get<HYDRO>()) {
+  switch (control->get<control::HYDRO>()) {
 
-    case HydroType::SLM :
+    case control::HydroType::SLM :
       m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
       Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
-    case HydroType::GLM :
+    case control::HydroType::GLM :
       m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
       Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:41:48 PM MST
+  \date      Fri Mar  8 15:27:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -19,7 +19,6 @@
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
-using namespace control;
 
 Driver::Driver(int argc,
                char** argv,
@@ -77,18 +76,18 @@ Driver::setup()
   Assert(m_timer != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Instantiate selected physics
-  switch (m_control->get<PHYSICS>()) {
+  switch (m_control->get<control::PHYSICS>()) {
 
-    case PhysicsType::NO_PHYSICS :
+    case control::PhysicsType::NO_PHYSICS :
       Throw(PhysicsException,FATAL,PhysicsExceptType::NO_PHYSICS);
       break;
 
-    case PhysicsType::HOMOGENEOUS_MIX :
+    case control::PhysicsType::HOMOGENEOUS_MIX :
       m_physics = new (nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
       Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
-    case PhysicsType::SPINSFLOW :
+    case control::PhysicsType::SPINSFLOW :
       m_physics = new (nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");

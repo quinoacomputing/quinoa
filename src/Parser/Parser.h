@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 08:02:25 PM MST
+  \date      Sat 09 Mar 2013 11:27:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -46,7 +46,7 @@ class Parser {
     Parser& operator=(Parser&&) = delete;
 
     //! Make requested statistics unique
-    void unique(vector<Product>& statistics);
+    void unique(vector<control::Product>& statistics);
 
     const string m_filename;            //!< Name of file to parse
     Control* const m_control;           //!< Main control category

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:35:45 PM MST
+  \date      Fri Mar  8 15:35:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Backward, data to keyword/name associations
   \details   Backward, data to keyword/name associations
@@ -18,36 +18,34 @@ namespace associate {
   // Editing anything below should be accompanied by the corresponding changes
   // in FwdAssociate.h as well.
 
-  using namespace control;
-
   // PhysicsType -> keyword
-  const string PhysicsKeyword[NUM_PHYSICS] = {
+  const string PhysicsKeyword[control::NUM_PHYSICS] = {
     "no_physics",
     "hommix",
     "spinsflow"
   };
   // PhysicsType -> name
-  const string PhysicsName[NUM_PHYSICS] = {
+  const string PhysicsName[control::NUM_PHYSICS] = {
     "No physics",
     "Homogeneous material mixing",
     "Standalone-Particle Incompressible Navier-Stokes Flow"
   };
 
   // HydroType -> keyword
-  const string HydroKeyword[NUM_HYDRO] = {
+  const string HydroKeyword[control::NUM_HYDRO] = {
     "no_hydro",
     "slm",
     "glm"
   };
   // HydroType -> name
-  const string HydroName[NUM_HYDRO] = {
+  const string HydroName[control::NUM_HYDRO] = {
     "No model",
     "Simplified Langevin",
     "Generalized Langevin"
   };
 
   // MixType -> keyword
-  const string MixKeyword[NUM_MIX] = {
+  const string MixKeyword[control::NUM_MIX] = {
     "no_mix",
     "iem",
     "iecm",
@@ -55,7 +53,7 @@ namespace associate {
     "gendir"
   };
   // MixType -> name
-  const string MixName[NUM_MIX] = {
+  const string MixName[control::NUM_MIX] = {
     "No model",
     "Interaction by exchange with the mean",
     "Interaction by exchange with the conditional mean",
