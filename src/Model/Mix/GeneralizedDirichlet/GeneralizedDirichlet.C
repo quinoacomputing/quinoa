@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:27:02 AM MST
+  \date      Sun 10 Mar 2013 01:07:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -145,7 +145,7 @@ GeneralizedDirichlet::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int myid, p, i, j, k;
+  int tid, p, i, j, k;
   real d, a;
   real* y;
   real dW[m_nscalar];
@@ -153,13 +153,13 @@ GeneralizedDirichlet::advance(const real dt)
   real U[m_nscalar];    //!< U_i = prod_{j=1}^{m_nscalar-i} 1/sY_{m_nscalar-j}
 
   #ifdef _OPENMP
-  #pragma omp parallel private(myid, p, i, j, k, d, a, y, Y, U, dW)
+  #pragma omp parallel private(tid, p, i, j, k, d, a, y, Y, U, dW)
   #endif // _OPENMP
   {
     #ifdef _OPENMP
-    myid = omp_get_thread_num();
+    tid = omp_get_thread_num();
     #else
-    myid = 0;
+    tid = 0;
     #endif
 
     #ifdef _OPENMP
@@ -183,7 +183,7 @@ GeneralizedDirichlet::advance(const real dt)
 
       // Generate Gaussian random numbers with zero mean and unit variance
       m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                         m_str[myid], m_nscalar, dW, 0.0, 1.0);
+                         m_str[tid], m_nscalar, dW, 0.0, 1.0);
 
       // Advance first m_nscalar (K=N-1) scalars
       k=0;

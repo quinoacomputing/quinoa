@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:26:32 AM MST
+  \date      Sun 10 Mar 2013 01:07:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -160,19 +160,19 @@ Dirichlet::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int myid, p, i;
+  int tid, p, i;
   real yn, d;
   real* y;
   real dW[m_nscalar];
 
   #ifdef _OPENMP
-  #pragma omp parallel private(myid, p, i, y, yn, dW, d)
+  #pragma omp parallel private(tid, p, i, y, yn, dW, d)
   #endif // _OPENMP
   {
     #ifdef _OPENMP
-    myid = omp_get_thread_num();
+    tid = omp_get_thread_num();
     #else
-    myid = 0;
+    tid = 0;
     #endif
 
     #ifdef _OPENMP
@@ -191,7 +191,7 @@ Dirichlet::advance(const real dt)
 
       // Generate Gaussian random numbers with zero mean and unit variance
       m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                         m_str[myid], m_nscalar, dW, 0.0, 1.0);
+                         m_str[tid], m_nscalar, dW, 0.0, 1.0);
 
       // Advance first m_nscalar (K=N-1) scalars
       for (i=0; i<m_nscalar; ++i) {

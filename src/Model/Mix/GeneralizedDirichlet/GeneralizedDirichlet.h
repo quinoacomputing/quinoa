@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 07:29:56 AM MST
+  \date      Sun 10 Mar 2013 01:07:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
