@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 12:11:34 PM MST
+  \date      Sun 10 Mar 2013 11:49:42 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -113,7 +113,7 @@ struct Term {
 //! <y1y2y3> = <(Y1-<Y1>)(Y2-<Y2>)(Y3-<Y3>)>
 using Product = vector<Term>;
 
-//! Position enum for accessing fields of tuple Bundle
+//! Position enum for accessing fields of tuple Bundle using names as in struct
 enum BundlePosition { TITLE=0,
                       PHYSICS,
                       HYDRO,
@@ -135,24 +135,25 @@ enum BundlePosition { TITLE=0,
 };
 
 //! Storage bundle for parsed data
-using Bundle = tuple< string,         //!<  0: Title
-                      PhysicsType,    //!<  1: Physics
-                      HydroType,      //!<  2: Hydrodynamics model
-                      MixType,        //!<  3: Material mix model
-                      int,            //!<  4: Number of time steps to take
-                      real,           //!<  5: Time to terminate time stepping
-                      real,           //!<  6: Size of time step
-                      int,            //!<  7: Number of mixing scalars
-                      int,            //!<  8: Total number of particles
-                      int,            //!<  9: TTY output interval
-                      int,            //!< 10: Dump output interval
-                      int,            //!< 11: Plot output interval
-                      int,            //!< 12: PDF output interval
-                      vector<real>,   //!< 13: Parameters 'b'
-                      vector<real>,   //!< 14: Parameters 'S'
-                      vector<real>,   //!< 15: Parameters 'kappa'
-                      vector<real>,   //!< 16: Parameters 'c_ij'
-                      vector<Product>    //!< 17: Statistics
+using Bundle = tuple<
+  string,               //!<  0: Problem Title
+  PhysicsType,          //!<  1: Selected physics
+  HydroType,            //!<  2: Selected hydrodynamics model
+  MixType,              //!<  3: Selected material mix model
+  int,                  //!<  4: Number of time steps to take
+  real,                 //!<  5: Time to terminate time stepping
+  real,                 //!<  6: Size of time step
+  int,                  //!<  7: Number of mixing scalars in material mix model
+  int,                  //!<  8: Total number of particles
+  int,                  //!<  9: TTY output interval
+  int,                  //!< 10: Dump output interval
+  int,                  //!< 11: Plot output interval
+  int,                  //!< 12: PDF output interval
+  vector<real>,         //!< 13: Parameters 'b' in Dirichlet mix models
+  vector<real>,         //!< 14: Parameters 'S' in Dirichlet mix models
+  vector<real>,         //!< 15: Parameters 'kappa' in Dirichlet mix models
+  vector<real>,         //!< 16: Parameters 'c_ij' in GenDirichlet mix models
+  vector<Product>       //!< 17: Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:38:19 AM MST
+  \date      Sun 10 Mar 2013 01:47:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -22,6 +22,7 @@
 #include <Dirichlet.h>
 #include <GeneralizedDirichlet.h>
 #include <Timer.h>
+#include <Statistics.h>
 
 using namespace Quinoa;
 
@@ -33,8 +34,7 @@ HomMix::HomMix(Memory* const memory,
   m_nscalar(control->get<control::NSCALAR>()),
   m_term(control->get<control::TERM>()),
   m_jpdf_filename_base(control->get_jpdf_filename_base()),
-  m_totalTime(timer->create("Total solution")),
-  m_statistics(control->get<control::STATISTICS>())
+  m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -65,8 +65,9 @@ HomMix::HomMix(Memory* const memory,
       Throw(MixException,FATAL,MIX_UNIMPLEMENTED);
   }
 
-  // Setup statistics
-  setupStatistics();
+  // Instantiate statistics estimator
+  m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
+  Assert(m_statistics != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
 HomMix::~HomMix()
@@ -75,43 +76,8 @@ HomMix::~HomMix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_ordinary);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in HomMix destructor" << endl; }
-#endif // NDEBUG
-
+  if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
-}
-
-void
-HomMix::setupStatistics()
-//******************************************************************************
-//  Setup statistics
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  for (auto& product : m_statistics) {
-    if (product.size() == 1 && product[0].moment == control::ORDINARY) {
-      control::Term term = product[0];
-      if (term.quantity == control::TRANSPORTED_SCALAR) {
-        //cout << term.name << ", " << term.field << endl;
-        m_instantaneous.push_back(m_mix->scalars() + term.field);
-      }
-    }
-  }
-  //for (auto& inst : m_instantaneous) cout << inst << endl;
-
-  // Allocate memory to store all the required ordinary scalar moments
-  m_ordinary =
-    m_memory->newEntry<real>(m_nthread*m_instantaneous.size(),
-                             REAL,
-                             SCALAR,
-                             "ordinary scalar moments");
 }
 
 void
@@ -139,6 +105,9 @@ HomMix::solve()
 
     // Advance particles
     m_mix->advance(dt);
+
+    // Accumulate statistics
+    m_statistics->accumulate();
 
     // Output pdf at selected times
     if (!(it % pdfi)) {
