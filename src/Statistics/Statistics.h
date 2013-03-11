@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:46:07 PM MDT
+  \date      Sun 10 Mar 2013 06:50:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -42,11 +42,11 @@ class Statistics {
     //! Accumulate statistics
     void accumulate();
 
-  protected:
-    Memory* const m_memory;       //!< Memory object
-    Paradigm* const m_paradigm;   //!< Parallel programming object
-    Control* const m_control;     //!< Control object
-    const int m_nthread;          //!< Number of threads
+    //! Number of ordinary moments accessor
+    int nord() const { return m_nord; }
+
+    //! Ordinary moments accessor
+    const real* ordinary() const { return m_ordinary.ptr; }
 
   private:
     //! Don't permit copy constructor
@@ -58,12 +58,16 @@ class Statistics {
     //! Don't permit move assigment
     Statistics& operator=(Statistics&&) = delete;
 
-    Mix* const m_mix;                     //!< Mix model object
-    const vector<control::Product> m_statistics;   //!< Requested tatistics
+    Memory* const m_memory;                     //!< Memory object
+    Paradigm* const m_paradigm;                 //!< Parallel programming object
+    Control* const m_control;                   //!< Control object
+    const int m_nthread;                        //!< Number of threads
+    const int m_npar;                           //!< Number of particles
+    Mix* const m_mix;                           //!< Mix model object
+    const vector<control::Product> m_statistics;//!< Requested tatistics
 
     vector<const real*> m_instantaneous;  //!< Instantaneous variable pointers
     Data<real> m_ordinary;                //!< Ordinary moments
-    vector<const real*> m_ordinaryThread; //!< Ordinary moments for threads
     int m_nord;                           //!< Number of ordinary moments
 };
 

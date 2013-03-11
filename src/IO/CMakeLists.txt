@@ -21,6 +21,7 @@ add_library(IO
             GmshTxtMeshWriter.C
             GmshTxtPlotWriter.C
             PDFWriter.C
+            GlobWriter.C
 )
 
 INSTALL(TARGETS IO

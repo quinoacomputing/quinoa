@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:24:21 PM MDT
+  \date      Sun 10 Mar 2013 04:21:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -24,6 +24,7 @@ class Paradigm;
 class Mix;
 class Timer;
 class Statistics;
+class GlobWriter;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -60,21 +61,25 @@ class HomMix : public Physics {
     //! Output joint scalar PDF
     void outJPDF(const real t);
 
+    //! Output glob (domain-average statistics)
+    void outGlob(const int it, const real t);
+
     //! One-liner report
     void reportHeader();
     void report(const int it,
                 const int nstep,
                 const real t,
                 const real dt,
-                const bool wroteJPDF);
+                const bool wroteJPDF,
+                const bool wroteGlob);
 
     const int m_nscalar;                  //!< Number of mixing scalars
     const real m_term;                    //!< Maximum time to simulate
-    const string m_jpdf_filename_base;    //!< Joint PDF filename base
     const TimerIdx m_totalTime;           //!< Timer measuring the total run
 
     Mix* m_mix;                           //!< Mix model object
     Statistics* m_statistics;             //!< Statistics estimator object
+    GlobWriter* m_glob;                   //!< Glob file writer
 };
 
 } // namespace Quinoa

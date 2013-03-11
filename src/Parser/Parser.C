@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:36:30 AM MST
+  \date      Sun 10 Mar 2013 03:10:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -63,7 +63,6 @@ Parser::parse()
   // Store off parsed bundles
   m_control->set(stack);
   m_control->set(boolstack);
-  m_control->set(control::JPDF_FILENAME_BASE);
 }
 
 void
@@ -102,32 +101,43 @@ Parser::echo()
     cout << " * Material mixing: " << m_control->mixName() << endl;
 
     if (m_control->set<control::NSTEP>())
-      cout << "   - Number of time steps: " << m_control->get<control::NSTEP>() << endl;
+      cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
+           << endl;
 
     if (m_control->set<control::TERM>())
-      cout << "   - Terminate time: " << m_control->get<control::TERM>() << endl;
+      cout << "   - Terminate time: " << m_control->get<control::TERM>()
+           << endl;
 
     if (m_control->set<control::DT>())
       cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
 
     if (m_control->set<control::NSCALAR>())
-      cout << "   - Number of mixing scalars: " << m_control->get<control::NSCALAR>()
-           << endl;
+      cout << "   - Number of mixing scalars: "
+           << m_control->get<control::NSCALAR>() << endl;
 
     if (m_control->set<control::NPAR>())
-      cout << "   - Number of particles: " << m_control->get<control::NPAR>() << endl;
+      cout << "   - Number of particles: " << m_control->get<control::NPAR>()
+           << endl;
 
     if (m_control->set<control::TTYI>())
-      cout << "   - TTY output interval: " << m_control->get<control::TTYI>() << endl;
+      cout << "   - TTY output interval: " << m_control->get<control::TTYI>()
+           << endl;
 
     if (m_control->set<control::DUMP>())
-      cout << "   - Dump output interval = " << m_control->get<control::DUMP>() << endl;
+      cout << "   - Dump output interval = " << m_control->get<control::DUMP>()
+           << endl;
 
     if (m_control->set<control::PLTI>())
-      cout << "   - Plot output interval = " << m_control->get<control::PLTI>() << endl;
+      cout << "   - Plot output interval = " << m_control->get<control::PLTI>()
+           << endl;
 
     if (m_control->set<control::PDFI>())
-      cout << "   - PDF output interval = " << m_control->get<control::PDFI>() << endl;
+      cout << "   - PDF output interval = " << m_control->get<control::PDFI>()
+           << endl;
+
+    if (m_control->set<control::GLOB>())
+      cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
+           << endl;
 
     if (m_control->set<control::B>()) {
       cout << "   - Parameter vector b = {";

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:12:49 AM MST
+  \date      Sun 10 Mar 2013 03:10:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -35,7 +35,7 @@ namespace grammar {
   using stack_type = control::Bundle;
   //! BoolBundle indicates stored fields (true or false)
   using boolstack_type = control::BoolBundle;
-  //! Dummy Bundle instant for decltype in store()
+  //! Dummy Bundle instant for decltype in cstore()
   static stack_type dummy_stack;
   //! Zero vector of Term for pushing (starting) a new Product in statistics
   static const vector<control::Term> ZERO_TERM_VEC;
@@ -66,9 +66,9 @@ namespace grammar {
     return num;
   }
 
-  // store value in state at 'position'
+  // convert & store value in state 'at' position
   template< control::BundlePosition at >
-  struct store : action_base< store<at> > {
+  struct cstore : action_base< cstore<at> > {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
@@ -80,14 +80,23 @@ namespace grammar {
     }
   };
 
-  // push value in state at 'position'
+  // store value in state 'at' position
+  template< control::BundlePosition at >
+  struct store : action_base< store<at> > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      get<at>(stack) = value;
+      boolstack[at] = true;
+    }
+  };
+
+  // push value in state 'at' position
   template< control::BundlePosition at >
   struct push : action_base< push<at> > {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      // Figure out element type of vector at position 'at'
-      //using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
       // Convert to correct type and push element to vector at position 'at'
       get<at>(stack).push_back(convert<real>(value));
       boolstack[at] = true;
@@ -105,7 +114,7 @@ namespace grammar {
     }
   };
 
-  // push Term into vector of Product in vector of statistics
+  // add Term into vector of Product in vector of statistics
   template< control::Quantity quantity, control::Moment moment >
   struct push_term : action_base< push_term<quantity, moment> > {
     static void apply(const std::string& value,
@@ -138,16 +147,6 @@ namespace grammar {
       field = convert<int>(value) - 1;  // numbering of field IDs start from 0
       IGNORE(stack);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
-    }
-  };
-
-  // store selected title
-  struct store_title : action_base< store_title > {
-    static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
-      get<control::TITLE>(stack) = value;
-      boolstack[control::TITLE] = true;
     }
   };
 
@@ -219,7 +218,7 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
-  // parse through list of values between keywords 'key' and "end", calling
+  // plow through list of values between keywords 'key' and "end", calling
   // 'insert' for each if matches and allowing comments between values
   template< class key, class insert, class value = digit >
   struct list :
@@ -252,17 +251,18 @@ namespace grammar {
   struct expectation :
          until< one<rbound>, terms > {};
 
-  // parse expectations between characters 'lbound' and 'rbound'
+  // plow through expectations between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_expectations :
          read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
              > {};
 
-  // parse title between characters 'lbound' and 'rbound'
+  // scan title between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_title :
          ifmust< one<lbound>,
-                 ifapply< trim<not_one<lbound>, one<rbound>>, store_title >,
+                 ifapply< trim<not_one<lbound>, one<rbound>>,
+                          store<control::TITLE> >,
                  one<rbound>
                > {};
 
@@ -273,8 +273,8 @@ namespace grammar {
   // dir block
   struct dir :
          ifmust< parse<store_mix, keyword::dir>,
-                 block< process<keyword::nscalar, store<control::NSCALAR>>,
-                        list<keyword::b, push<control::B>>,
+                 block< process<keyword::nscalar, cstore<control::NSCALAR>>,
+                        list<keyword::B, push<control::B>>,
                         list<keyword::S, push<control::S>>,
                         list<keyword::kappa, push<control::KAPPA>>
                       >
@@ -283,8 +283,8 @@ namespace grammar {
   // gendir block
   struct gendir :
          ifmust< parse<store_mix, keyword::gendir>,
-                 block< process<keyword::nscalar, store<control::NSCALAR>>,
-                        list<keyword::b, push<control::B>>,
+                 block< process<keyword::nscalar, cstore<control::NSCALAR>>,
+                        list<keyword::B, push<control::B>>,
                         list<keyword::S, push<control::S>>,
                         list<keyword::kappa, push<control::KAPPA>>,
                         list<keyword::C, push<control::C>>
@@ -300,14 +300,17 @@ namespace grammar {
   // hommix block
   struct hommix :
          ifmust< parse<store_physics, keyword::hommix>,
-                 block< process<keyword::nstep, store<control::NSTEP>>,
-                        process<keyword::term,  store<control::TERM>>,
-                        process<keyword::dt,    store<control::DT>>,
-                        process<keyword::npar,  store<control::NPAR>>,
-                        process<keyword::ttyi,  store<control::TTYI>>,
-                        process<keyword::dump,  store<control::DUMP>>,
-                        process<keyword::plti,  store<control::PLTI>>,
-                        process<keyword::pdfi,  store<control::PDFI>>,
+                 block< process<keyword::nstep, cstore<control::NSTEP>>,
+                        process<keyword::term, cstore<control::TERM>>,
+                        process<keyword::dt, cstore<control::DT>>,
+                        process<keyword::npar, cstore<control::NPAR>>,
+                        process<keyword::ttyi, cstore<control::TTYI>>,
+                        process<keyword::dump, cstore<control::DUMP>>,
+                        process<keyword::plti, cstore<control::PLTI>>,
+                        process<keyword::pdfi, cstore<control::PDFI>>,
+                        process<keyword::glob, cstore<control::GLOB>>,
+                        process<keyword::jpdfname, store<control::JPDFNAME>>,
+                        process<keyword::globname, store<control::GLOBNAME>>,
                         dir, gendir, statistics
                       >
                > {};

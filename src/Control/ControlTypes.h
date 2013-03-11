@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 11:49:42 AM MDT
+  \date      Sun 10 Mar 2013 03:03:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -127,6 +127,9 @@ enum BundlePosition { TITLE=0,
                       DUMP,
                       PLTI,
                       PDFI,
+                      GLOB,
+                      JPDFNAME,
+                      GLOBNAME,
                       B,
                       S,
                       KAPPA,
@@ -149,11 +152,14 @@ using Bundle = tuple<
   int,                  //!< 10: Dump output interval
   int,                  //!< 11: Plot output interval
   int,                  //!< 12: PDF output interval
-  vector<real>,         //!< 13: Parameters 'b' in Dirichlet mix models
-  vector<real>,         //!< 14: Parameters 'S' in Dirichlet mix models
-  vector<real>,         //!< 15: Parameters 'kappa' in Dirichlet mix models
-  vector<real>,         //!< 16: Parameters 'c_ij' in GenDirichlet mix models
-  vector<Product>       //!< 17: Requested (and triggered) statistics
+  int,                  //!< 13: Glob output interval
+  string,               //!< 14: Joint PDF base filename
+  string,               //!< 15: Glob (domain-average statistics) filename
+  vector<real>,         //!< 16: Parameters 'b' in Dirichlet mix models
+  vector<real>,         //!< 17: Parameters 'S' in Dirichlet mix models
+  vector<real>,         //!< 18: Parameters 'kappa' in Dirichlet mix models
+  vector<real>,         //!< 19: Parameters 'c_ij' in GenDirichlet mix models
+  vector<Product>       //!< 20: Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 07:41:03 PM MST
+  \date      Sun 10 Mar 2013 03:03:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -41,15 +41,15 @@ const Bundle DEFAULTS(
   0,                          //!< 10: Dump output interval
   0,                          //!< 11: Plot output interval
   1,                          //!< 12: PDF output interval
-  ZERO_REAL_VEC,              //!< 13: Parameters 'b'
-  ZERO_REAL_VEC,              //!< 14: Paramaters 'S'
-  ZERO_REAL_VEC,              //!< 15: Parameters 'kappa'
-  ZERO_REAL_VEC,              //!< 16: Parameters 'c_ij'
-  ZERO_PRODUCT_VEC            //!< 17: Statistics
+  1,                          //!< 13: Glob output interval
+  "jpdf",                     //!< 14: Default jpdf base filename
+  "glob",                     //!< 15: Default glob filename
+  ZERO_REAL_VEC,              //!< 16: Parameters 'b'
+  ZERO_REAL_VEC,              //!< 17: Paramaters 'S'
+  ZERO_REAL_VEC,              //!< 18: Parameters 'kappa'
+  ZERO_REAL_VEC,              //!< 19: Parameters 'c_ij'
+  ZERO_PRODUCT_VEC            //!< 20: Statistics
 );
-
-//! Default basefilenames for output
-const string JPDF_FILENAME_BASE = "jpdf";
 
 } // namespace control
 
