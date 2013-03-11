@@ -2,12 +2,18 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:46:34 PM MDT
+  \date      Sun 10 Mar 2013 07:40:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
 */
 //******************************************************************************
+
+#include <cstring>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
 
 #include <Statistics.h>
 #include <StatException.h>
@@ -25,6 +31,7 @@ Statistics::Statistics(Memory* const memory,
   m_paradigm(paradigm),
   m_control(control),
   m_nthread(paradigm->nthread()),
+  m_npar(control->get<control::NPAR>()),
   m_mix(mix),
   m_statistics(control->get<control::STATISTICS>())
 //******************************************************************************
@@ -36,17 +43,15 @@ Statistics::Statistics(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Setup means
+  // Setup ordinary moments
   for (auto& product : m_statistics) {
     if (product.size() == 1 && product[0].moment == control::ORDINARY) {
       control::Term term = product[0];
       if (term.quantity == control::TRANSPORTED_SCALAR) {
-        cout << term.name << ", " << term.field << endl;
         m_instantaneous.push_back(m_mix->scalars() + term.field);
       }
     }
   }
-  for (auto& inst : m_instantaneous) cout << inst << endl;
 
   // Store number of ordinary moments
   m_nord = m_instantaneous.size();
@@ -57,11 +62,6 @@ Statistics::Statistics(Memory* const memory,
                              REAL,
                              SCALAR,
                              "ordinary scalar moments");
-
-  // Setup ordinary moment accumulators for each thread
-  for (int i=0; i<m_nthread; ++i) {
-    m_ordinaryThread.push_back(m_ordinary.ptr + i*m_nord);
-  }
 }
 
 Statistics::~Statistics()
@@ -88,4 +88,41 @@ Statistics::accumulate()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  int tid, p, i;
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p, i)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    // zero ordinary moment accumulators
+    memset(m_ordinary + tid*m_nord, 0, m_nord*sizeof(real));
+
+    // accumulate ordinary moments
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<m_npar; ++p) {
+      for (i=0; i<m_nord; ++i) {
+        m_ordinary[tid*m_nord+i] += *(m_instantaneous[i]+p*2);
+      }
+    }
+  } // omp parallel
+
+  // collect ordinary moments from all threads
+  for (p=1; p<m_nthread; ++p) {
+    for (i=0; i<m_nord; ++i) {
+      m_ordinary[i] += m_ordinary[p*m_nord+i];
+    }
+  }
+
+  // finish computing ordinary moments
+  for (i=0; i<m_nord; ++i) {
+    m_ordinary[i] /= m_npar;
+  }
 }

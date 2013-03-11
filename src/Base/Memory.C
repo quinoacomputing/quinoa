@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed Jan 23 16:46:57 2013
+  \date      Sun 10 Mar 2013 03:47:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -30,13 +30,15 @@ using namespace std;
 
 using namespace Quinoa;
 
-Memory::Memory(Paradigm* paradigm) : m_paradigm(paradigm)
+Memory::Memory(Paradigm* paradigm) :
+  m_paradigm(paradigm),
+  m_nOMPthreads(paradigm->getOpenMP()->nthread())
 //******************************************************************************
 //  Constructor
+//! \param[in]  paradigm Parallel programming object pointer
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_nOMPthreads = paradigm->getOpenMP()->nthread();
 }
 
 Memory::~Memory()

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 12:12:24 PM MST
+  \date      Sun 10 Mar 2013 03:12:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -26,7 +26,6 @@ class Control {
   private:
     control::Bundle m_data;        //! Data parsed
     control::BoolBundle m_booldata;//! Flags indicating if data was parsed
-    string m_jpdf_filename_base;   //! This will be a bundle from cmd line parse
 
   public:
     //! Constructor
@@ -42,14 +41,6 @@ class Control {
     void set(const control::BoolBundle& boolstack) {
       m_booldata = move(boolstack);
     }
-
-    //! Set jpdf filename base
-    void set(const string& jpdf_filename_base) {
-      m_jpdf_filename_base = move(jpdf_filename_base);
-    }
-
-    //! Get jpdf filename base
-    const string& get_jpdf_filename_base() const { return m_jpdf_filename_base; }
 
     //! Get single element at position
     template< control::BundlePosition at >

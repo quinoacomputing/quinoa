@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:13:03 AM MST
+  \date      Sun 10 Mar 2013 03:02:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -68,7 +68,7 @@ namespace keyword {
   using nscalar = pegtl::string< n,s,c,a,l,a,r >;
 
   // Dirichlet and generalized Dirichlet parameters
-  using b = pegtl::string< b >;
+  using B = pegtl::string< b >;
   using S = pegtl::string< S >;
   using kappa = pegtl::string< k,a,p,p,a >;
   using C = pegtl::string< C >;
@@ -105,8 +105,17 @@ namespace keyword {
   // PDF output interval
   using pdfi = pegtl::string< p,d,f,i >;
 
+  // Glob (domain-average statistics) output interval
+  using glob = pegtl::string< g,l,o,b >;
+
   // Statistics
   using statistics = pegtl::string< s,t,a,t,i,s,t,i,c,s >;
+
+  // Joint PDF base filename
+  using jpdfname = pegtl::string< j,p,d,f,n,a,m,e >;
+
+  // Glob (i.e. domain-average statistics) filename
+  using globname = pegtl::string< g,l,o,b,n,a,m,e >;
 
 } // namespace keyword
 

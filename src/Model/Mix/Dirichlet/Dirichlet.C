@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:07:24 PM MDT
+  \date      Sun 10 Mar 2013 07:23:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -167,7 +167,7 @@ Dirichlet::advance(const real dt)
 
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p, i, y, yn, dW, d)
-  #endif // _OPENMP
+  #endif
   {
     #ifdef _OPENMP
     tid = omp_get_thread_num();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:47:45 PM MDT
+  \date      Sun 10 Mar 2013 07:23:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -19,6 +19,7 @@
 #include <HomMix.h>
 #include <MixException.h>
 #include <PDFWriter.h>
+#include <GlobWriter.h>
 #include <Dirichlet.h>
 #include <GeneralizedDirichlet.h>
 #include <Timer.h>
@@ -33,7 +34,6 @@ HomMix::HomMix(Memory* const memory,
   Physics(memory, paradigm, control, timer),
   m_nscalar(control->get<control::NSCALAR>()),
   m_term(control->get<control::TERM>()),
-  m_jpdf_filename_base(control->get_jpdf_filename_base()),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor
@@ -68,6 +68,10 @@ HomMix::HomMix(Memory* const memory,
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
   Assert(m_statistics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
+  // Instantiate glob file writer
+  m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
+  Assert(m_glob != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
 HomMix::~HomMix()
@@ -76,6 +80,7 @@ HomMix::~HomMix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  if (m_glob) { delete m_glob; m_glob = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
 }
@@ -90,14 +95,17 @@ HomMix::solve()
   int it = 0;
   real t = 0.0;
   bool wroteJPDF = false;
+  bool wroteGlob = false;
 
   const auto nstep = m_control->get<control::NSTEP>();
   const auto ttyi  = m_control->get<control::TTYI>();
   const auto pdfi  = m_control->get<control::PDFI>();
+  const auto glob  = m_control->get<control::GLOB>();
   const auto dt    = m_control->get<control::DT>();
 
   m_timer->start(m_totalTime);
 
+  // Echo header
   if (nstep) reportHeader();
 
   // Time stepping loop
@@ -115,17 +123,23 @@ HomMix::solve()
       wroteJPDF = true;
     }
 
+    // Output domain-average statistics at selected times
+    if (!(it % glob)) {
+      outGlob(it,t);
+      wroteGlob = true;
+    }
+
     // Echo one-liner info
     if (!(it % ttyi)) {
-      report(it, nstep, t, dt, wroteJPDF);
-      wroteJPDF = false;
+      report(it, nstep, t, dt, wroteJPDF, wroteGlob);
+      wroteJPDF = wroteGlob = false;
     }
 
     // Increase timestep and iteration counter
     t += dt;
     ++it;
     if (t > m_term) t = m_term;
-  }
+  } // Time stepping loop
 }
 
 void
@@ -146,18 +160,20 @@ HomMix::report(const int it,
                const int nstep,
                const real t,
                const real dt,
-               const bool wroteJPDF)
+               const bool wroteJPDF,
+               const bool wroteGlob)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
 //! \param[in]  nstep      Terminate time
 //! \param[in]  t          Time
 //! \param[in]  dt         Time step size
-//! \param[in]  wroteJPDF  True if joint PDF was written
+//! \param[in]  wroteJPDF  True if joint PDF was output
+//! \param[in]  wroteGlob  True if domain-average statistics were output
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Watch ete, eta;
+  Watch ete, eta;       // estimated time elapsed and to accomplishment
   m_timer->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   cout << setfill(' ') << setw(8) << it << "  "
@@ -169,6 +185,7 @@ HomMix::report(const int it,
                        << setw(2) << eta.m.count() << ":"
                        << setw(2) << eta.s.count() << "  ";
 
+  if (wroteGlob) cout << "G";
   if (wroteJPDF) cout << "J";
 
   cout << endl;
@@ -184,7 +201,7 @@ HomMix::outJPDF(const real t)
 {
   // Contruct filename
   stringstream ss;
-  ss << m_jpdf_filename_base << "." << t << ".msh";
+  ss << m_control->get<control::JPDFNAME>() << "." << t << ".msh";
   string filename = ss.str();
 
   // Create joint PDF
@@ -196,6 +213,17 @@ HomMix::outJPDF(const real t)
   // Output joint PDF
   PDFWriter jpdfFile(m_memory, filename);
   jpdfFile.writeGmsh(&jpdf);
+}
+
+void
+HomMix::outGlob(const int it, const real t)
+//******************************************************************************
+//  Output domain-average statistics
+//! \param[in]  t    Time stamp
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_glob->write(it, t, m_statistics->nord(), m_statistics->ordinary());
 }
 
 void
