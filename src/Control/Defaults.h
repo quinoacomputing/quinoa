@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:03:12 PM MDT
+  \date      Sun 10 Mar 2013 08:21:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -44,11 +44,12 @@ const Bundle DEFAULTS(
   1,                          //!< 13: Glob output interval
   "jpdf",                     //!< 14: Default jpdf base filename
   "glob",                     //!< 15: Default glob filename
-  ZERO_REAL_VEC,              //!< 16: Parameters 'b'
-  ZERO_REAL_VEC,              //!< 17: Paramaters 'S'
-  ZERO_REAL_VEC,              //!< 18: Parameters 'kappa'
-  ZERO_REAL_VEC,              //!< 19: Parameters 'c_ij'
-  ZERO_PRODUCT_VEC            //!< 20: Statistics
+  "plot",                     //!< 16: Default plot base filename
+  ZERO_REAL_VEC,              //!< 17: Parameters 'b'
+  ZERO_REAL_VEC,              //!< 18: Paramaters 'S'
+  ZERO_REAL_VEC,              //!< 19: Parameters 'kappa'
+  ZERO_REAL_VEC,              //!< 20: Parameters 'c_ij'
+  ZERO_PRODUCT_VEC            //!< 21: Statistics
 );
 
 } // namespace control

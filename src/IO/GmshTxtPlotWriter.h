@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:55:05 PM MST
+  \date      Sun 10 Mar 2013 08:16:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -27,10 +27,17 @@ class GmshTxtPlotWriter : private PlotWriter {
   public:
     //! Constructor: Acquire plot file handle
     GmshTxtPlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
-      PlotWriter(filename, mesh, memory) {}
+      PlotWriter(filename) {}
 
     //! Destructor: Release plot file handle
     ~GmshTxtPlotWriter() = default;
+
+  protected:
+    //! Mesh object pointer
+    UnsMesh* m_mesh;
+
+    //! Memory object pointer
+    Memory* m_memory;
 
   private:
     //! Don't permit copy constructor

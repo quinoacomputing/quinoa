@@ -1,32 +1,35 @@
 //******************************************************************************
 /*!
-  \file      src/IO/PlotWriter.h
+  \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:26:47 PM MDT
+  \date      Sun 10 Mar 2013 08:50:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     PlotWriter base class declaration
-  \details   PlotWriter base class declaration
+  \brief     Text plot writer
+  \details   Text plot writer
 */
 //******************************************************************************
-#ifndef PlotWriter_h
-#define PlotWriter_h
+#ifndef TxtPlotWriter_h
+#define TxtPlotWriter_h
 
 #include <string>
 #include <fstream>
+
+#include <QuinoaTypes.h>
+#include <PlotWriter.h>
 
 using namespace std;
 
 namespace Quinoa {
 
-//! PlotWriter base class
-class PlotWriter {
+//! TxtPlotWriter : PlotWriter
+class TxtPlotWriter : public PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    PlotWriter(string filename);
+    TxtPlotWriter(string filename);
 
     //! Destructor: Release plot file handle
-    virtual ~PlotWriter();
+    ~TxtPlotWriter() = default;
 
     //! Plot file name
     string m_filename;
@@ -34,20 +37,20 @@ class PlotWriter {
     //! Plot file output stream
     ofstream m_outPlot;
 
-    //! Interface for plot write
-    virtual void write() = 0;
+    //! Write plot file
+    virtual void write();
 
   private:
     //! Don't permit copy constructor
-    PlotWriter(const PlotWriter&) = delete;
+    TxtPlotWriter(const TxtPlotWriter&) = delete;
     //! Don't permit copy assigment
-    PlotWriter& operator=(const PlotWriter&) = delete;
+    TxtPlotWriter& operator=(const TxtPlotWriter&) = delete;
     //! Don't permit move constructor
-    PlotWriter(PlotWriter&&) = delete;
+    TxtPlotWriter(TxtPlotWriter&&) = delete;
     //! Don't permit move assigment
-    PlotWriter& operator=(PlotWriter&&) = delete;
+    TxtPlotWriter& operator=(TxtPlotWriter&&) = delete;
 };
 
 } // namespace Quinoa
 
-#endif // PlotWriter_h
+#endif // TxtPlotWriter_h

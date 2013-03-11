@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:02:19 PM MDT
+  \date      Sun 10 Mar 2013 08:31:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -99,13 +99,13 @@ namespace keyword {
   // Dump (restart file) output interval
   using dump = pegtl::string< d,u,m,p >;
 
-  // Plot (statistics) output interval
+  // Plot output interval
   using plti = pegtl::string< p,l,t,i >;
 
   // PDF output interval
   using pdfi = pegtl::string< p,d,f,i >;
 
-  // Glob (domain-average statistics) output interval
+  // Glob output interval
   using glob = pegtl::string< g,l,o,b >;
 
   // Statistics
