@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 04:21:39 PM MDT
+  \date      Sun 10 Mar 2013 08:45:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -25,6 +25,7 @@ class Mix;
 class Timer;
 class Statistics;
 class GlobWriter;
+class TxtPlotWriter;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -59,10 +60,13 @@ class HomMix : public Physics {
     HomMix& operator=(HomMix&&) = delete;
 
     //! Output joint scalar PDF
-    void outJPDF(const real t);
+    void outJpdf(const real t);
 
-    //! Output glob (domain-average statistics)
+    //! Output global info, i.e. domain-average kinetic energy
     void outGlob(const int it, const real t);
+
+    //! Output plot
+    void outPlot(const int it, const real t);
 
     //! One-liner report
     void reportHeader();
@@ -70,8 +74,9 @@ class HomMix : public Physics {
                 const int nstep,
                 const real t,
                 const real dt,
-                const bool wroteJPDF,
-                const bool wroteGlob);
+                const bool wroteJpdf,
+                const bool wroteGlob,
+                const bool wrotePlot);
 
     const int m_nscalar;                  //!< Number of mixing scalars
     const real m_term;                    //!< Maximum time to simulate
@@ -80,6 +85,7 @@ class HomMix : public Physics {
     Mix* m_mix;                           //!< Mix model object
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
+    TxtPlotWriter* m_plot;                //!< Plot file writer
 };
 
 } // namespace Quinoa

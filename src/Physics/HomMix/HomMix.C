@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 07:23:49 PM MDT
+  \date      Sun 10 Mar 2013 08:46:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -20,6 +20,7 @@
 #include <MixException.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
+#include <TxtPlotWriter.h>
 #include <Dirichlet.h>
 #include <GeneralizedDirichlet.h>
 #include <Timer.h>
@@ -72,6 +73,10 @@ HomMix::HomMix(Memory* const memory,
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
   Assert(m_glob != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
+  // Instantiate plot file writer
+  m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>());
+  Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
 HomMix::~HomMix()
@@ -80,6 +85,7 @@ HomMix::~HomMix()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  if (m_plot) { delete m_plot; m_plot = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
@@ -94,13 +100,15 @@ HomMix::solve()
 {
   int it = 0;
   real t = 0.0;
-  bool wroteJPDF = false;
+  bool wroteJpdf = false;
   bool wroteGlob = false;
+  bool wrotePlot = false;
 
   const auto nstep = m_control->get<control::NSTEP>();
   const auto ttyi  = m_control->get<control::TTYI>();
   const auto pdfi  = m_control->get<control::PDFI>();
   const auto glob  = m_control->get<control::GLOB>();
+  const auto plti  = m_control->get<control::PLTI>();
   const auto dt    = m_control->get<control::DT>();
 
   m_timer->start(m_totalTime);
@@ -118,21 +126,18 @@ HomMix::solve()
     m_statistics->accumulate();
 
     // Output pdf at selected times
-    if (!(it % pdfi)) {
-      outJPDF(t);
-      wroteJPDF = true;
-    }
+    if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
-    // Output domain-average statistics at selected times
-    if (!(it % glob)) {
-      outGlob(it,t);
-      wroteGlob = true;
-    }
+    // Append glob file at selected times
+    if (!(it % glob)) { outGlob(it,t); wroteGlob = true; }
+
+    // Append plot file at selected times
+    if (!(it % plti)) { outPlot(it,t); wrotePlot = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {
-      report(it, nstep, t, dt, wroteJPDF, wroteGlob);
-      wroteJPDF = wroteGlob = false;
+      report(it, nstep, t, dt, wroteJpdf, wroteGlob, wrotePlot);
+      wroteJpdf = wroteGlob = wrotePlot = false;
     }
 
     // Increase timestep and iteration counter
@@ -160,16 +165,18 @@ HomMix::report(const int it,
                const int nstep,
                const real t,
                const real dt,
-               const bool wroteJPDF,
-               const bool wroteGlob)
+               const bool wroteJpdf,
+               const bool wroteGlob,
+               const bool wrotePlot)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
 //! \param[in]  nstep      Terminate time
 //! \param[in]  t          Time
 //! \param[in]  dt         Time step size
-//! \param[in]  wroteJPDF  True if joint PDF was output
-//! \param[in]  wroteGlob  True if domain-average statistics were output
+//! \param[in]  wroteJpdf  True if joint PDF was output
+//! \param[in]  wroteGlob  True if glob was output
+//! \param[in]  wrotePlot  True if plot was output
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -186,13 +193,14 @@ HomMix::report(const int it,
                        << setw(2) << eta.s.count() << "  ";
 
   if (wroteGlob) cout << "G";
-  if (wroteJPDF) cout << "J";
+  if (wroteJpdf) cout << "J";
+  if (wrotePlot) cout << "P";
 
   cout << endl;
 }
 
 void
-HomMix::outJPDF(const real t)
+HomMix::outJpdf(const real t)
 //******************************************************************************
 //  Output joint scalar PDF
 //! \param[in]  t    Time stamp
@@ -218,12 +226,25 @@ HomMix::outJPDF(const real t)
 void
 HomMix::outGlob(const int it, const real t)
 //******************************************************************************
-//  Output domain-average statistics
+//  Output global info
+//! \param[in]  it   Iteration counter
 //! \param[in]  t    Time stamp
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_glob->write(it, t, m_statistics->nord(), m_statistics->ordinary());
+  //m_glob->write(it, t, m_statistics->nord(), m_statistics->ordinary());
+}
+
+void
+HomMix::outPlot(const int it, const real t)
+//******************************************************************************
+//  Output plot
+//! \param[in]  it   Iteration counter
+//! \param[in]  t    Time stamp
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  //m_plot->write(it, t, m_statistics->nord(), m_statistics->ordinary());
 }
 
 void

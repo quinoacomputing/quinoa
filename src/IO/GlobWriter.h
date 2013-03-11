@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 04:10:20 PM MDT
+  \date      Sun 10 Mar 2013 08:44:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -30,11 +30,8 @@ class GlobWriter {
     //! Destructor: Release glob file handle
     ~GlobWriter();
 
-    //! Write domain-average statistics to file
-    void write(const int it,
-               const real t,
-               const int nord,
-               const real* const ordinary);
+    //! Write glob file
+    void write();
 
   private:
     //! Don't permit copy constructor

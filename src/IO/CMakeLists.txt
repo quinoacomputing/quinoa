@@ -17,6 +17,7 @@ add_library(IO
             MeshReader.C
             MeshWriter.C
             PlotWriter.C
+            TxtPlotWriter.C
             GmshTxtMeshReader.C
             GmshTxtMeshWriter.C
             GmshTxtPlotWriter.C
