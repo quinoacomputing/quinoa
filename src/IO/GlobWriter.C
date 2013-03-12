@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:47:08 PM MDT
+  \date      Mon 11 Mar 2013 07:00:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include <Macro.h>
 #include <GlobWriter.h>
 #include <IOException.h>
 
@@ -38,4 +39,17 @@ GlobWriter::~GlobWriter()
   // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outGlob.fail())
     cout << "WARNING: Failed to close file: " << m_filename << endl;
+}
+
+void
+GlobWriter::write(const int it, const real t)
+//******************************************************************************
+//  Write out glob file
+//! \param[in]  it         Iteration counter
+//! \param[in]  t          Time
+//! \author J. Bakosi
+//******************************************************************************
+{
+  IGNORE(it);
+  IGNORE(t);
 }
