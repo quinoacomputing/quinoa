@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:26:47 PM MDT
+  \date      Mon 11 Mar 2013 06:59:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PlotWriter base class declaration
   \details   PlotWriter base class declaration
@@ -14,6 +14,8 @@
 #include <string>
 #include <fstream>
 
+#include <QuinoaTypes.h>
+
 using namespace std;
 
 namespace Quinoa {
@@ -23,19 +25,17 @@ class PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    PlotWriter(string filename);
+    PlotWriter(const string& filename);
 
     //! Destructor: Release plot file handle
     virtual ~PlotWriter();
 
-    //! Plot file name
-    string m_filename;
-
-    //! Plot file output stream
-    ofstream m_outPlot;
-
+  protected:
     //! Interface for plot write
-    virtual void write() = 0;
+    virtual void write(const int it, const real t) = 0;
+
+    const string m_filename;    //!< Plot file name
+    ofstream m_outPlot;         //!< Plot file output stream
 
   private:
     //! Don't permit copy constructor

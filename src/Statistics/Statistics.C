@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 07:40:24 PM MDT
+  \date      Mon 11 Mar 2013 06:37:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -109,7 +109,7 @@ Statistics::accumulate()
     #endif
     for (p=0; p<m_npar; ++p) {
       for (i=0; i<m_nord; ++i) {
-        m_ordinary[tid*m_nord+i] += *(m_instantaneous[i]+p*2);
+        m_ordinary[tid*m_nord + i] += *(m_instantaneous[i] + p*m_nord);
       }
     }
   } // omp parallel
@@ -117,7 +117,7 @@ Statistics::accumulate()
   // collect ordinary moments from all threads
   for (p=1; p<m_nthread; ++p) {
     for (i=0; i<m_nord; ++i) {
-      m_ordinary[i] += m_ordinary[p*m_nord+i];
+      m_ordinary[i] += m_ordinary[p*m_nord + i];
     }
   }
 

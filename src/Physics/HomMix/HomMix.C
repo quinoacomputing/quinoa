@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:46:21 PM MDT
+  \date      Mon 11 Mar 2013 06:58:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -75,7 +75,8 @@ HomMix::HomMix(Memory* const memory,
   Assert(m_glob != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Instantiate plot file writer
-  m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>());
+  m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
+                                       m_statistics);
   Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
@@ -129,10 +130,10 @@ HomMix::solve()
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glob)) { outGlob(it,t); wroteGlob = true; }
+    if (!(it % glob)) { m_glob->write(it,t); wroteGlob = true; }
 
     // Append plot file at selected times
-    if (!(it % plti)) { outPlot(it,t); wrotePlot = true; }
+    if (!(it % plti)) { m_plot->write(it,t); wrotePlot = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {
@@ -221,30 +222,6 @@ HomMix::outJpdf(const real t)
   // Output joint PDF
   PDFWriter jpdfFile(m_memory, filename);
   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomMix::outGlob(const int it, const real t)
-//******************************************************************************
-//  Output global info
-//! \param[in]  it   Iteration counter
-//! \param[in]  t    Time stamp
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  //m_glob->write(it, t, m_statistics->nord(), m_statistics->ordinary());
-}
-
-void
-HomMix::outPlot(const int it, const real t)
-//******************************************************************************
-//  Output plot
-//! \param[in]  it   Iteration counter
-//! \param[in]  t    Time stamp
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  //m_plot->write(it, t, m_statistics->nord(), m_statistics->ordinary());
 }
 
 void

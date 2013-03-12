@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:45:23 PM MDT
+  \date      Mon 11 Mar 2013 06:57:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mix model
   \details   Homogeneous material mix model
@@ -61,12 +61,6 @@ class HomMix : public Physics {
 
     //! Output joint scalar PDF
     void outJpdf(const real t);
-
-    //! Output global info, i.e. domain-average kinetic energy
-    void outGlob(const int it, const real t);
-
-    //! Output plot
-    void outPlot(const int it, const real t);
 
     //! One-liner report
     void reportHeader();

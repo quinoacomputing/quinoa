@@ -100,9 +100,9 @@ configure_file(
 # Add compiler flags
 include(CheckCXXCompilerFlag)
 
-check_cxx_compiler_flag(-std=c++0x HAS_CPP0X)
+check_cxx_compiler_flag(-std=c++11 HAS_CPP0X)
 if(HAS_CPP0X)
-  add_definitions("-std=c++0x")
+  add_definitions("-std=c++11")
   set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
 endif()
 

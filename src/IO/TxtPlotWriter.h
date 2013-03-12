@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:50:33 PM MDT
+  \date      Mon 11 Mar 2013 06:57:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -21,24 +21,21 @@ using namespace std;
 
 namespace Quinoa {
 
+class Statistics;
+
 //! TxtPlotWriter : PlotWriter
 class TxtPlotWriter : public PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    TxtPlotWriter(string filename);
+    TxtPlotWriter(const string& filename,
+                  Statistics* const statistics);
 
     //! Destructor: Release plot file handle
     ~TxtPlotWriter() = default;
 
-    //! Plot file name
-    string m_filename;
-
-    //! Plot file output stream
-    ofstream m_outPlot;
-
     //! Write plot file
-    virtual void write();
+    virtual void write(const int it, const real t);
 
   private:
     //! Don't permit copy constructor
@@ -49,6 +46,10 @@ class TxtPlotWriter : public PlotWriter {
     TxtPlotWriter(TxtPlotWriter&&) = delete;
     //! Don't permit move assigment
     TxtPlotWriter& operator=(TxtPlotWriter&&) = delete;
+
+    Statistics* const m_statistics;     //!< Statistics estimator
+    const int m_nord;                   //!< Number of ordinary moments
+    const real* const m_ordinary;       //!< Ordinary moments
 };
 
 } // namespace Quinoa
