@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:10:46 PM MDT
+  \date      Tue 12 Mar 2013 10:18:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -162,11 +162,20 @@ Parser::echo()
     if (m_control->set<control::STATISTICS>()) {
       cout << "   - Requested statistics = {";
       for (auto& product : m_control->get<control::STATISTICS>()) {
-        //if (product[0].plot) {  // only output user-requested stats
+        if (product[0].plot) {  // only output user-requested stats
           cout << " <";
           for (auto& term : product) cout << term.name;
           cout << ">";
-        //}
+        }
+      }
+      cout << " }" << endl;
+    }
+    if (m_control->set<control::STATISTICS>()) {
+      cout << "   - Estimated statistics = {";
+      for (auto& product : m_control->get<control::STATISTICS>()) {
+        cout << " <";
+        for (auto& term : product) cout << term.name;
+        cout << ">";
       }
       cout << " }" << endl;
     }

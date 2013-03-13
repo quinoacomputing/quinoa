@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:07:55 PM MDT
+  \date      Tue 12 Mar 2013 11:17:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -48,6 +48,9 @@ class Mix : public Model {
 
     //! Constant accessor to particle scalar pointer
     virtual const real* scalars() const = 0;
+
+    //! Accessor to number of particle scalars
+    int nscalar() const { return m_nscalar; }
 
   protected:
     const int m_nscalar;            //!< Number of mixing scalars

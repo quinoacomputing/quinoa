@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:37:43 PM MDT
+  \date      Tue 12 Mar 2013 11:18:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -33,6 +33,7 @@ Statistics::Statistics(Memory* const memory,
   m_nthread(paradigm->nthread()),
   m_npar(control->get<control::NPAR>()),
   m_mix(mix),
+  m_nscalar(mix->nscalar()),
   m_statistics(control->get<control::STATISTICS>())
 //******************************************************************************
 //  Constructor
@@ -44,17 +45,16 @@ Statistics::Statistics(Memory* const memory,
 //******************************************************************************
 {
   // Setup ordinary moments
+  m_nord = 0;
   for (auto& product : m_statistics) {
-    if (product.size() == 1 && product[0].moment == control::ORDINARY) {
-      control::Term term = product[0];
-      if (term.quantity == control::TRANSPORTED_SCALAR) {
-        m_instantaneous.push_back(m_mix->scalars() + term.field);
+    if (isOrdinary(product)) {
+      m_instantaneous.push_back(vector<const real*>());
+      for (auto& term : product) {
+        m_instantaneous[m_nord].push_back(m_mix->scalars() + term.field);
       }
+      ++m_nord;
     }
   }
-
-  // Store number of ordinary moments
-  m_nord = m_instantaneous.size();
 
   // Allocate memory to store all the required ordinary scalar moments
   m_ordinary =
@@ -62,6 +62,22 @@ Statistics::Statistics(Memory* const memory,
                              REAL,
                              SCALAR,
                              "ordinary scalar moments");
+}
+
+bool
+Statistics::isOrdinary(const vector<control::Term>& product)
+//******************************************************************************
+//  Find out whether product only contains ordinary moment terms
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // If and only if all terms are ordinary, the product is ordinary
+  bool ordinary = true;
+  for (auto& term : product) {
+    if (term.moment == control::CENTRAL)
+      ordinary = false;
+  }
+  return ordinary;
 }
 
 Statistics::~Statistics()
@@ -89,9 +105,11 @@ Statistics::accumulate()
 //******************************************************************************
 {
   int tid, p, i;
+  size_t s, j;
+  real prod;
 
   #ifdef _OPENMP
-  #pragma omp parallel private(tid, p, i)
+  #pragma omp parallel private(tid, p, i, s, j, prod)
   #endif
   {
     #ifdef _OPENMP
@@ -109,7 +127,10 @@ Statistics::accumulate()
     #endif
     for (p=0; p<m_npar; ++p) {
       for (i=0; i<m_nord; ++i) {
-        m_ordinary[tid*m_nord + i] += *(m_instantaneous[i] + p*m_nord);
+        prod = *(m_instantaneous[i][0] + p*m_nscalar);
+        s = m_instantaneous[i].size();
+        for (j=1; j<s; ++j) prod *= *(m_instantaneous[i][j] + p*m_nscalar);
+        m_ordinary[tid*m_nord + i] += prod;
       }
     }
   } // omp parallel
