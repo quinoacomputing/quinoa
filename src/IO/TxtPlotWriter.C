@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.C
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:57:36 PM MDT
+  \date      Tue 12 Mar 2013 10:51:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtPlot writer base class definition
   \details   TxtPlot writer base class definition
