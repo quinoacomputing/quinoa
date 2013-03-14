@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.C
   \author    J. Bakosi
-  \date      Tue 12 Mar 2013 10:51:12 PM MDT
+  \date      Wed 13 Mar 2013 08:48:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtPlot writer base class definition
   \details   TxtPlot writer base class definition
@@ -33,6 +33,23 @@ TxtPlotWriter::TxtPlotWriter(const string& filename,
 }
 
 void
+TxtPlotWriter::header()
+//******************************************************************************
+//  Write out plot header
+//! \author J. Bakosi
+//******************************************************************************
+{
+  m_outPlot << "      it             t";
+
+  for (int i=0; i<m_nord; ++i) {
+    if (m_statistics->plotOrdinary(i))
+      m_outPlot << setw(11) << '<' << m_statistics->nameOrdinary(i) << ">";
+  }
+
+  m_outPlot << endl;
+}
+
+void
 TxtPlotWriter::write(const int it, const real t)
 //******************************************************************************
 //  Write out plot
@@ -45,7 +62,8 @@ TxtPlotWriter::write(const int it, const real t)
             << setprecision(6) << setw(12) << t << "  ";
 
   for (int i=0; i<m_nord; ++i) {
-    m_outPlot << m_ordinary[i] << "  ";
+    if (m_statistics->plotOrdinary(i))
+      m_outPlot << m_ordinary[i] << "  ";
   }
 
   m_outPlot << endl;

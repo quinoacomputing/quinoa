@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:58:22 PM MDT
+  \date      Wed 13 Mar 2013 08:33:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -114,8 +114,11 @@ HomMix::solve()
 
   m_timer->start(m_totalTime);
 
-  // Echo header
-  if (nstep) reportHeader();
+  // Echo headers
+  if (nstep) {
+    reportHeader();
+    m_plot->header();
+  }
 
   // Time stepping loop
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {

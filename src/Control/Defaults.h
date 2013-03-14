@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:21:35 PM MDT
+  \date      Wed 13 Mar 2013 07:55:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -20,11 +20,6 @@ using namespace std;
 namespace Quinoa {
 
 namespace control {
-
-// ICC: This could be inserted below once initializer lists are properly
-// supported
-const vector<real> ZERO_REAL_VEC;
-const vector<Product> ZERO_PRODUCT_VEC;
 
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
@@ -45,11 +40,11 @@ const Bundle DEFAULTS(
   "jpdf",                     //!< 14: Default jpdf base filename
   "glob",                     //!< 15: Default glob filename
   "plot",                     //!< 16: Default plot base filename
-  ZERO_REAL_VEC,              //!< 17: Parameters 'b'
-  ZERO_REAL_VEC,              //!< 18: Paramaters 'S'
-  ZERO_REAL_VEC,              //!< 19: Parameters 'kappa'
-  ZERO_REAL_VEC,              //!< 20: Parameters 'c_ij'
-  ZERO_PRODUCT_VEC            //!< 21: Statistics
+  vector<real>(),             //!< 17: Parameters 'b'
+  vector<real>(),             //!< 18: Paramaters 'S'
+  vector<real>(),             //!< 19: Parameters 'kappa'
+  vector<real>(),             //!< 20: Parameters 'c_ij'
+  vector<Product>()           //!< 21: Statistics
 );
 
 } // namespace control

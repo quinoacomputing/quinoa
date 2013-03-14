@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:57:08 PM MDT
+  \date      Wed 13 Mar 2013 08:32:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -36,6 +36,9 @@ class TxtPlotWriter : public PlotWriter {
 
     //! Write plot file
     virtual void write(const int it, const real t);
+
+    //! Write out plot header
+    void header();
 
   private:
     //! Don't permit copy constructor
