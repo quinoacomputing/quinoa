@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue 12 Mar 2013 11:15:34 PM MDT
+  \date      Wed 13 Mar 2013 08:27:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -51,6 +51,12 @@ class Statistics {
     //! Find out whether product only contains ordinary moment terms
     bool isOrdinary(const vector<control::Term>& product);
 
+    //! Find out whether ordinary moment is to be plotted
+    bool plotOrdinary(const int m) const;
+
+    //! Return the name of ordinary moment
+    string nameOrdinary(const int m) const;
+
   private:
     //! Don't permit copy constructor
     Statistics(const Statistics&) = delete;
@@ -72,6 +78,8 @@ class Statistics {
 
     vector<vector<const real*>> m_instantaneous;//!< Instantaneous variables
     Data<real> m_ordinary;                      //!< Ordinary moments
+    vector<bool> m_plotOrdinary;                //!< Whether to plot ord moments
+    vector<string> m_nameOrdinary;              //!< Names of ordinary moments
     int m_nord;                                 //!< Number of ordinary moments
 };
 

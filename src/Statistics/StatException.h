@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:18:06 PM MST
+  \date      Wed 13 Mar 2013 08:23:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -21,15 +21,18 @@ using namespace std;
 namespace Quinoa {
 
 //! StatException types
-enum StatExceptType { STATEXCEPT_UNIMPLEMENTED=0,  //!< function unimplemented
-                      STATEXCEPT_BAD_SAMPLE,       //!< Wrong sample space dimension
-                      NUM_STAT_EXCEPT
+enum StatExceptType {
+  STATEXCEPT_UNIMPLEMENTED=0,  //!< function unimplemented
+  STATEXCEPT_BAD_SAMPLE,       //!< Wrong sample space dimension
+  STATEXCEPT_NO_SUCH_MOMENT,   //!< Wrong moment index
+  NUM_STAT_EXCEPT
 };
 
 //! StatException error messages
 const string StatMsg[NUM_STAT_EXCEPT] = {
-  "Method unimplemented"
-  "Sample incompatible with sample space"
+  "Method unimplemented",
+  "Sample incompatible with sample space",
+  "No such moment"
 };
 
 //! StatException : Exception

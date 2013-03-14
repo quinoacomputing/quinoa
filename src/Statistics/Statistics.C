@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue 12 Mar 2013 11:18:58 PM MDT
+  \date      Wed 13 Mar 2013 08:29:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -49,19 +49,42 @@ Statistics::Statistics(Memory* const memory,
   for (auto& product : m_statistics) {
     if (isOrdinary(product)) {
       m_instantaneous.push_back(vector<const real*>());
+      m_plotOrdinary.push_back(false);
+      m_nameOrdinary.push_back("");
       for (auto& term : product) {
         m_instantaneous[m_nord].push_back(m_mix->scalars() + term.field);
+        if (term.plot) {
+          m_plotOrdinary.back() = true;
+          m_nameOrdinary.back() = term.name;
+        }
       }
       ++m_nord;
     }
   }
 
-  // Allocate memory to store all the required ordinary scalar moments
+  // Storage fo all the required ordinary scalar moments
   m_ordinary =
     m_memory->newEntry<real>(m_nthread*m_nord,
                              REAL,
                              SCALAR,
-                             "ordinary scalar moments");
+                             "ordinary moments");
+}
+
+Statistics::~Statistics()
+//******************************************************************************
+//  Destructor
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Free memory entries held
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
+  try {
+#endif // NDEBUG
+    m_memory->freeEntry(m_ordinary);
+#ifndef NDEBUG
+  } catch (...)
+    { cout << "WARNING: Exception in Statistics destructor" << endl; }
+#endif // NDEBUG
 }
 
 bool
@@ -80,21 +103,28 @@ Statistics::isOrdinary(const vector<control::Term>& product)
   return ordinary;
 }
 
-Statistics::~Statistics()
+bool
+Statistics::plotOrdinary(const int m) const
 //******************************************************************************
-//  Destructor
+//  Find out whether ordinary moment is to be plotted
+//! \param[in]  m         Moment index
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_ordinary);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in Statistics destructor" << endl; }
-#endif // NDEBUG
+  Assert(m < m_nord, StatException,FATAL,STATEXCEPT_NO_SUCH_MOMENT);
+  return m_plotOrdinary[m];
+}
+
+string
+Statistics::nameOrdinary(const int m) const
+//******************************************************************************
+//  Return the name of ordinary moment
+//! \param[in]  m         Moment index
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert(m < m_nord, StatException,FATAL,STATEXCEPT_NO_SUCH_MOMENT);
+  return m_nameOrdinary[m];
 }
 
 void

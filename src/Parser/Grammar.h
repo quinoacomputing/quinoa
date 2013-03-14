@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:10:21 PM MDT
+  \date      Wed 13 Mar 2013 07:54:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -37,8 +37,6 @@ namespace grammar {
   using boolstack_type = control::BoolBundle;
   //! Dummy Bundle instant for decltype in cstore()
   static stack_type dummy_stack;
-  //! Zero vector of Term for pushing (starting) a new Product in statistics
-  static const vector<control::Term> ZERO_TERM_VEC;
   //! Field ID for statistics
   static int field;
 
@@ -108,7 +106,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      get<control::STATISTICS>(stack).push_back(ZERO_TERM_VEC);
+      get<control::STATISTICS>(stack).push_back(vector<control::Term>());
       boolstack[control::STATISTICS] = true;
       IGNORE(value);        // suppress compiler warning on unused variable
     }
