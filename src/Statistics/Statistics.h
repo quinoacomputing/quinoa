@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed 13 Mar 2013 08:27:33 PM MDT
+  \date      Sat 16 Mar 2013 11:05:03 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -45,17 +45,23 @@ class Statistics {
     //! Number of ordinary moments accessor
     int nord() const { return m_nord; }
 
+    //! Number of central moments accessor
+    int ncen() const { return m_ncen; }
+
     //! Ordinary moments accessor
     const real* ordinary() const { return m_ordinary.ptr; }
 
-    //! Find out whether product only contains ordinary moment terms
-    bool isOrdinary(const vector<control::Term>& product);
+    //! Central moments accessor
+    const real* central() const { return m_central.ptr; }
 
     //! Find out whether ordinary moment is to be plotted
     bool plotOrdinary(const int m) const;
 
     //! Return the name of ordinary moment
-    string nameOrdinary(const int m) const;
+    const string& nameOrdinary(const int m) const;
+
+    //! Return the name of central moment
+    const string& nameCentral(const int m) const;
 
   private:
     //! Don't permit copy constructor
@@ -67,6 +73,18 @@ class Statistics {
     //! Don't permit move assigment
     Statistics& operator=(Statistics&&) = delete;
 
+    //! Find out whether product only contains ordinary moment terms
+    bool ordinary(const vector<control::Term>& product);
+
+    //! Return mean for fluctuation
+    int mean(const string name) const;
+
+    //! Convert string to upper case
+    string toUpper(const string s) const;
+
+    //! Return true if string is all lower case
+    bool isLower(const string s) const;
+
     Memory* const m_memory;                     //!< Memory object
     Paradigm* const m_paradigm;                 //!< Parallel programming object
     Control* const m_control;                   //!< Control object
@@ -76,11 +94,20 @@ class Statistics {
     const int m_nscalar;                        //!< Number of mixing scalars
     const vector<control::Product> m_statistics;//!< Requested tatistics
 
-    vector<vector<const real*>> m_instantaneous;//!< Instantaneous variables
+    //! Instantaneous variable pointers for computing ordinary moments
+    vector<vector<const real*>> m_instOrd;
     Data<real> m_ordinary;                      //!< Ordinary moments
     vector<bool> m_plotOrdinary;                //!< Whether to plot ord moments
     vector<string> m_nameOrdinary;              //!< Names of ordinary moments
     int m_nord;                                 //!< Number of ordinary moments
+
+    //! Instantaneous variable pointers for computing central moments
+    vector<vector<const real*>> m_instCen;
+    Data<real> m_central;                       //!< Central moments
+    //! Ordinary moments about which to compute central moments
+    vector<vector<const real*>> m_center;
+    vector<string> m_nameCentral;               //!< Names of central moments
+    int m_ncen;                                 //!< Number of central moments
 };
 
 } // namespace Quinoa

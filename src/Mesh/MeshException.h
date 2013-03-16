@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Wed 30 Jan 2013 07:00:36 PM MST
+  \date      Sat 16 Mar 2013 09:43:20 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -55,7 +55,8 @@ class MeshException : public Exception {
                   const string& file,
                   const string& func,
                   const unsigned int& line) :
-      Exception(except, file, func, line), m_throwerMsg(throwerMsg),
+      Exception(except, file, func, line),
+      m_throwerMsg(throwerMsg),
       m_except(mshExcept) {}
 
     // ICC: the above can be done with delegate constructors, like
