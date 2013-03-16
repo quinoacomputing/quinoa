@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Wed 13 Mar 2013 08:32:57 PM MDT
+  \date      Sat 16 Mar 2013 09:35:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -52,7 +52,9 @@ class TxtPlotWriter : public PlotWriter {
 
     Statistics* const m_statistics;     //!< Statistics estimator
     const int m_nord;                   //!< Number of ordinary moments
+    const int m_ncen;                   //!< Number of central moments
     const real* const m_ordinary;       //!< Ordinary moments
+    const real* const m_central;        //!< Central moments
 };
 
 } // namespace Quinoa
