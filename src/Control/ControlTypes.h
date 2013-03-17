@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:21:01 PM MDT
+  \date      Sat 16 Mar 2013 09:36:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -54,8 +54,8 @@ enum Quantity { TRANSPORTED_SCALAR=0,
 };
 
 //! Moment specifies which type of moment is computed for a Quantity in a Term
-enum Moment { ORDINARY=0,      //!< Full variable, e.g. Y
-              CENTRAL          //!< Fluctuation, e.g. y = Y - <Y>
+enum Moment { ORDINARY=0,      //!< Full variable
+              CENTRAL          //!< Fluctuation
 };
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
