@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 11:23:07 AM MDT
+  \date      Mon Mar 18 08:09:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -59,7 +59,6 @@ Statistics::Statistics(Memory* const memory,
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name
         m_nameOrdinary.back() += term.name;
-//cout << term.name << ": " << m_instOrd[m_nord].back() << ", " << term.plot << endl;
       }
 
       ++m_nord;
@@ -91,7 +90,6 @@ Statistics::Statistics(Memory* const memory,
         // Put in index of center for central, m_nord for ordinary moment
         m_center[m_ncen].push_back(
          m_ordinary + (isLower(term.name) ? mean(toUpper(term.name)) : m_nord));
-//cout << term.name << ": " << m_center[m_ncen].back() << endl;
         m_nameCentral.back() += term.name;
       }
 
