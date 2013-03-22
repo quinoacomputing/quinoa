@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 09:36:15 PM MDT
+  \date      Fri 22 Mar 2013 08:14:20 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -60,8 +60,8 @@ enum Moment { ORDINARY=0,      //!< Full variable
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
 //! The Numbering of field IDs starts from 0.
-//! E.g. 1st pressure fluctuation: {0, PRESSURE, CENTRAL},
-//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY}.
+//! E.g. 1st pressure fluctuation: {0, PRESSURE, CENTRAL, ...},
+//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY, ...}.
 //! 'name' stores the same information in a more human-readable form.
 //! 'plot' shows whether the variable will be plotted.
 //! Conceptually, plot should be in Product, since plot will only be false for
