@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:27:27 AM MST
+  \date      Sat 30 Mar 2013 10:57:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -47,6 +47,12 @@ class Parser {
 
     //! Make requested statistics unique
     void unique(vector<control::Product>& statistics);
+
+    //! Echo material mix block
+    void echoMix();
+
+    //! Echo hydrodynamics block
+    void echoHydro();
 
     const string m_filename;            //!< Name of file to parse
     Control* const m_control;           //!< Main control category

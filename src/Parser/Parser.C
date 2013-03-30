@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 12 Mar 2013 10:18:48 PM MDT
+  \date      Sat 30 Mar 2013 11:10:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -68,7 +68,7 @@ Parser::parse()
 void
 Parser::unique(vector<control::Product>& statistics)
 //******************************************************************************
-//  Unique: Make requested statistics unique
+//  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics
 //! \author  J. Bakosi
 //******************************************************************************
@@ -76,6 +76,126 @@ Parser::unique(vector<control::Product>& statistics)
   std::sort(statistics.begin(), statistics.end());
   auto it = std::unique(statistics.begin(), statistics.end());
   statistics.resize( std::distance(statistics.begin(), it) );
+}
+
+void
+Parser::echoMix()
+//******************************************************************************
+//  Echo parsed data from material mix block
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Material mixing: " << m_control->mixName() << endl;
+
+  if (m_control->set<control::NSTEP>())
+    cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
+         << endl;
+
+  if (m_control->set<control::TERM>())
+    cout << "   - Terminate time: " << m_control->get<control::TERM>()
+         << endl;
+
+  if (m_control->set<control::DT>())
+    cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
+
+  if (m_control->set<control::NSCALAR>())
+    cout << "   - Number of mixing scalars: "
+         << m_control->get<control::NSCALAR>() << endl;
+
+  if (m_control->set<control::NPAR>())
+    cout << "   - Number of particles: " << m_control->get<control::NPAR>()
+         << endl;
+
+  if (m_control->set<control::TTYI>())
+    cout << "   - TTY output interval: " << m_control->get<control::TTYI>()
+         << endl;
+
+  if (m_control->set<control::DUMP>())
+    cout << "   - Dump output interval = " << m_control->get<control::DUMP>()
+         << endl;
+
+  if (m_control->set<control::PLTI>())
+    cout << "   - Plot output interval = " << m_control->get<control::PLTI>()
+         << endl;
+
+  if (m_control->set<control::PDFI>())
+    cout << "   - PDF output interval = " << m_control->get<control::PDFI>()
+         << endl;
+
+  if (m_control->set<control::GLOB>())
+    cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
+         << endl;
+
+  if (m_control->set<control::B>()) {
+    cout << "   - Parameter vector b = {";
+    for (auto& v : m_control->get<control::B>()) cout << " " << v;
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::S>()) {
+    cout << "   - Parameter vector S = {";
+    for (auto& v : m_control->get<control::S>()) cout << " " << v;
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::KAPPA>()) {
+    cout << "   - Parameter vector kappa = {";
+    for (auto& v : m_control->get<control::KAPPA>()) cout << " " << v;
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::C>()) {
+    cout << "   - Parameter vector c = {";
+    for (auto& v : m_control->get<control::C>()) cout << " " << v;
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::STATISTICS>()) {
+    cout << "   - Requested statistics = {";
+    for (auto& product : m_control->get<control::STATISTICS>()) {
+      if (product[0].plot) {  // only output user-requested stats
+        cout << " <";
+        for (auto& term : product) cout << term.name;
+        cout << ">";
+      }
+    }
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::STATISTICS>()) {
+    cout << "   - Estimated statistics = {";
+    for (auto& product : m_control->get<control::STATISTICS>()) {
+      cout << " <";
+      for (auto& term : product) cout << term.name;
+      cout << ">";
+    }
+    cout << " }" << endl;
+  }
+
+  if (m_control->set<control::PDFNAME>()) {
+    cout << "   - PDF base filename = "
+         << m_control->get<control::PDFNAME>() << endl;
+  }
+
+  if (m_control->set<control::GLOBNAME>()) {
+    cout << "   - Glob filename = "
+         << m_control->get<control::GLOBNAME>() << endl;
+  }
+
+  if (m_control->set<control::PLOTNAME>()) {
+    cout << "   - Plot base filename = "
+         << m_control->get<control::PLOTNAME>() << endl;
+  }
+}
+
+void
+Parser::echoHydro()
+//******************************************************************************
+//  Echo parsed data from hydrodynamics block
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
 }
 
 void
@@ -94,92 +214,9 @@ Parser::echo()
   if (m_control->set<control::PHYSICS>())
     cout << " * Physics: " << m_control->physicsName() << endl;
 
-  if (m_control->set<control::HYDRO>())
-    cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
+  if (m_control->set<control::HYDRO>()) echoHydro();
 
-  if (m_control->set<control::MIX>()) {
-    cout << " * Material mixing: " << m_control->mixName() << endl;
-
-    if (m_control->set<control::NSTEP>())
-      cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
-           << endl;
-
-    if (m_control->set<control::TERM>())
-      cout << "   - Terminate time: " << m_control->get<control::TERM>()
-           << endl;
-
-    if (m_control->set<control::DT>())
-      cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
-
-    if (m_control->set<control::NSCALAR>())
-      cout << "   - Number of mixing scalars: "
-           << m_control->get<control::NSCALAR>() << endl;
-
-    if (m_control->set<control::NPAR>())
-      cout << "   - Number of particles: " << m_control->get<control::NPAR>()
-           << endl;
-
-    if (m_control->set<control::TTYI>())
-      cout << "   - TTY output interval: " << m_control->get<control::TTYI>()
-           << endl;
-
-    if (m_control->set<control::DUMP>())
-      cout << "   - Dump output interval = " << m_control->get<control::DUMP>()
-           << endl;
-
-    if (m_control->set<control::PLTI>())
-      cout << "   - Plot output interval = " << m_control->get<control::PLTI>()
-           << endl;
-
-    if (m_control->set<control::PDFI>())
-      cout << "   - PDF output interval = " << m_control->get<control::PDFI>()
-           << endl;
-
-    if (m_control->set<control::GLOB>())
-      cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
-           << endl;
-
-    if (m_control->set<control::B>()) {
-      cout << "   - Parameter vector b = {";
-      for (auto& v : m_control->get<control::B>()) cout << " " << v;
-      cout << " }" << endl;
-    }
-    if (m_control->set<control::S>()) {
-      cout << "   - Parameter vector S = {";
-      for (auto& v : m_control->get<control::S>()) cout << " " << v;
-      cout << " }" << endl;
-    }
-    if (m_control->set<control::KAPPA>()) {
-      cout << "   - Parameter vector kappa = {";
-      for (auto& v : m_control->get<control::KAPPA>()) cout << " " << v;
-      cout << " }" << endl;
-    }
-    if (m_control->set<control::C>()) {
-      cout << "   - Parameter vector c = {";
-      for (auto& v : m_control->get<control::C>()) cout << " " << v;
-      cout << " }" << endl;
-    }
-    if (m_control->set<control::STATISTICS>()) {
-      cout << "   - Requested statistics = {";
-      for (auto& product : m_control->get<control::STATISTICS>()) {
-        if (product[0].plot) {  // only output user-requested stats
-          cout << " <";
-          for (auto& term : product) cout << term.name;
-          cout << ">";
-        }
-      }
-      cout << " }" << endl;
-    }
-    if (m_control->set<control::STATISTICS>()) {
-      cout << "   - Estimated statistics = {";
-      for (auto& product : m_control->get<control::STATISTICS>()) {
-        cout << " <";
-        for (auto& term : product) cout << term.name;
-        cout << ">";
-      }
-      cout << " }" << endl;
-    }
-  }
+  if (m_control->set<control::MIX>()) echoMix();
 
   cout << endl;
 }
