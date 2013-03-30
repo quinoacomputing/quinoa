@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:40:41 AM MDT
+  \date      Sat 30 Mar 2013 10:41:47 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -72,6 +72,12 @@ class Statistics {
     Statistics(Statistics&&) = delete;
     //! Don't permit move assigment
     Statistics& operator=(Statistics&&) = delete;
+
+    //! Estimate ordinary moments
+    void estimateOrdinary();
+
+    //! Estimate central moments
+    void estimateCentral();
 
     //! Find out whether product only contains ordinary moment terms
     bool ordinary(const vector<control::Term>& product);

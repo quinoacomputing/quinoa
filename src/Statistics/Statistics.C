@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:40:53 AM MDT
+  \date      Sat 30 Mar 2013 10:45:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -63,43 +63,47 @@ Statistics::Statistics(Memory* const memory,
     }
   }
 
-  // Storage for all the required ordinary moments
-  // +1 for each thread's 0 as center for ordinary moments
-  m_ordinary = m_memory->newEntry<real>(m_nthread*(m_nord+1),
-                                        REAL,
-                                        SCALAR,
-                                        "ordinary moments");
+  if (m_nord) {
+    // Storage for all the required ordinary moments
+    // +1 for each thread's 0 as center for ordinary moments
+    m_ordinary = m_memory->newEntry<real>(m_nthread*(m_nord+1),
+                                          REAL,
+                                          SCALAR,
+                                          "ordinary moments");
 
-  // Put in zero as index of center for ordinary moments in central products
-  m_ordinary[m_nord] = 0.0;
+    // Put in zero as index of center for ordinary moments in central products
+    m_ordinary[m_nord] = 0.0;
 
-  // Prepare for computing central moments
-  m_ncen = 0;
-  for (auto& product : m_statistics) {
-    if (!ordinary(product)) {
+    // Prepare for computing central moments
+    m_ncen = 0;
+    for (auto& product : m_statistics) {
+      if (!ordinary(product)) {
 
-      m_instCen.push_back(vector<const real*>());
-      m_center.push_back(vector<const real*>());
-      m_nameCentral.push_back("");
+        m_instCen.push_back(vector<const real*>());
+        m_center.push_back(vector<const real*>());
+        m_nameCentral.push_back("");
 
-      for (auto& term : product) {
-        // Put in starting address of instantaneous variable
-        m_instCen[m_ncen].push_back(m_mix->scalars() + term.field);
-        // Put in index of center for central, m_nord for ordinary moment
-        m_center[m_ncen].push_back(
-         m_ordinary + (isLower(term.name) ? mean(toUpper(term.name)) : m_nord));
-        m_nameCentral.back() += term.name;
+        for (auto& term : product) {
+          // Put in starting address of instantaneous variable
+          m_instCen[m_ncen].push_back(m_mix->scalars() + term.field);
+          // Put in index of center for central, m_nord for ordinary moment
+          m_center[m_ncen].push_back(
+           m_ordinary + (isLower(term.name) ? mean(toUpper(term.name)) : m_nord));
+          m_nameCentral.back() += term.name;
+        }
+
+        ++m_ncen;
       }
-
-      ++m_ncen;
     }
-  }
 
-  // Storage for all the required central moments
-  m_central = m_memory->newEntry<real>(m_nthread*m_ncen,
-                                       REAL,
-                                       SCALAR,
-                                       "central moments");
+    if (m_ncen) {
+      // Storage for all the required central moments
+      m_central = m_memory->newEntry<real>(m_nthread*m_ncen,
+                                           REAL,
+                                           SCALAR,
+                                           "central moments");
+    } // if (m_ncen)
+  } // if (m_nord)
 }
 
 Statistics::~Statistics()
@@ -112,8 +116,8 @@ Statistics::~Statistics()
 #ifndef NDEBUG  // Error checking and exceptions only in debug mode
   try {
 #endif // NDEBUG
-    m_memory->freeEntry(m_central);
-    m_memory->freeEntry(m_ordinary);
+    if (m_ncen) m_memory->freeEntry(m_central);
+    if (m_nord) m_memory->freeEntry(m_ordinary);
 #ifndef NDEBUG
   } catch (...)
     { cout << "WARNING: Exception in Statistics destructor" << endl; }
@@ -217,9 +221,9 @@ Statistics::nameCentral(const int m) const
 }
 
 void
-Statistics::accumulate()
+Statistics::estimateOrdinary()
 //******************************************************************************
-//  Acumulate statistics
+//  Estimate ordinary moments
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -227,7 +231,6 @@ Statistics::accumulate()
   size_t s, j;
   real prod;
 
-  // Estimate ordinary moments
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p, i, s, j, prod)
   #endif
@@ -266,8 +269,19 @@ Statistics::accumulate()
   for (i=0; i<m_nord; ++i) {
     m_ordinary[i] /= m_npar;
   }
+}
 
-  // Estimate central moments
+void
+Statistics::estimateCentral()
+//******************************************************************************
+//  Estimate central moments
+//! \author J. Bakosi
+//******************************************************************************
+{
+  int tid, p, i;
+  size_t s, j;
+  real prod;
+
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p, i, s, j, prod)
   #endif
@@ -307,5 +321,21 @@ Statistics::accumulate()
   // Finish computing central moments
   for (i=0; i<m_ncen; ++i) {
     m_central[i] /= m_npar;
+  }
+}
+
+void
+Statistics::accumulate()
+//******************************************************************************
+//  Acumulate statistics
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if (m_nord) {
+    // Estimate ordinary moments
+    estimateOrdinary();
+
+    // Estimate central moments
+    if (m_ncen) estimateCentral();
   }
 }
