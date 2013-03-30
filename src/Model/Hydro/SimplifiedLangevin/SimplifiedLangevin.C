@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:01:02 PM MDT
+  \date      Sat 30 Mar 2013 05:31:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -10,9 +10,16 @@
 //******************************************************************************
 
 #include <iostream>
+#include <cstring>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
 
 #include <SimplifiedLangevin.h>
 #include <Hydro.h>
+#include <MKLRandom.h>
+#include <MKLRndStream.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -29,6 +36,39 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Instantiate random number generator
+  m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
+  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
+
+  // Create random number leapfrog stream
+  m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
+  // Get array of MKL VSL stream state pointers right away
+  m_str = m_random->getStr(m_rndStr);
+
+  // Allocate memory to store all the particle properties
+  m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
+                                         REAL,
+                                         SCALAR,
+                                         "hydro properties");
+}
+
+SimplifiedLangevin::~SimplifiedLangevin()
+//******************************************************************************
+//  Destructor
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Free memory entries held
+#ifndef NDEBUG  // Error checking and exceptions only in debug mode
+  try {
+#endif // NDEBUG
+    m_memory->freeEntry(m_particles);
+#ifndef NDEBUG
+  } catch (...)
+    { cout << "WARNING: Exception in SimplifiedLangevin destructor" << endl; }
+#endif // NDEBUG
+
+  if (m_random) { delete m_random; m_random = nullptr; }
 }
 
 void
@@ -43,10 +83,18 @@ SimplifiedLangevin::echo()
 void
 SimplifiedLangevin::init()
 //******************************************************************************
-//  Initialize scalars
+//  Initialize particle properties
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  real r[m_nprop];
+
+  // Generate initial values for all scalars for all particles
+  for (int p=0; p<m_npar; ++p) {
+    m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+                       m_str[0], m_nprop, r, 0.0, 1.0);
+    memcpy(m_particles + p*m_nprop, r, m_nprop*sizeof(real));
+  }
 }
 
 void
