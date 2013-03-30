@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:29:11 PM MST
+  \date      Sat 30 Mar 2013 12:00:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -35,6 +35,25 @@ void
 GeneralizedLangevin::echo()
 //******************************************************************************
 //  Echo information on the generalized Langevin model
+//! \author  J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+GeneralizedLangevin::init()
+//******************************************************************************
+//  Initialize scalars
+//! \author  J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+GeneralizedLangevin::advance(const real dt)
+//******************************************************************************
+//  Advance particles with the generalized Langevin model
+//! \param[in]  dt   Time step size
 //! \author  J. Bakosi
 //******************************************************************************
 {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 10:45:11 AM MDT
+  \date      Sat 30 Mar 2013 01:33:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <cstring>
+#include <algorithm>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -19,31 +20,33 @@
 #include <StatException.h>
 #include <Paradigm.h>
 #include <Control.h>
-#include <Mix.h>
+#include <Model.h>
 
 using namespace Quinoa;
 
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,
                        Control* const control,
-                       Mix* const mix) :
+                       Model* const model) :
   m_memory(memory),
   m_nthread(paradigm->nthread()),
   m_npar(control->get<control::NPAR>()),
-  m_mix(mix),
-  m_nscalar(mix->nscalar()),
+  m_model(model),
+  m_nprop(model->nprop()),
   m_statistics(control->get<control::STATISTICS>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
 //! \param[in]  paradigm Parallel programming object
 //! \param[in]  control  Control object
-//! \param[in]  mix      Mix model object
+//! \param[in]  model    Model objects
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Prepare for computing ordinary moments
   m_nord = 0;
+  m_ncen = 0;
+
+  // Prepare for computing ordinary moments
   for (auto& product : m_statistics) {
     if (ordinary(product)) {
 
@@ -53,7 +56,7 @@ Statistics::Statistics(Memory* const memory,
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(m_mix->scalars() + term.field);
+        m_instOrd[m_nord].push_back(m_model->particles() + term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name
         m_nameOrdinary.back() += term.name;
@@ -75,7 +78,6 @@ Statistics::Statistics(Memory* const memory,
     m_ordinary[m_nord] = 0.0;
 
     // Prepare for computing central moments
-    m_ncen = 0;
     for (auto& product : m_statistics) {
       if (!ordinary(product)) {
 
@@ -85,7 +87,7 @@ Statistics::Statistics(Memory* const memory,
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(m_mix->scalars() + term.field);
+          m_instCen[m_ncen].push_back(m_model->particles() + term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
            m_ordinary + (isLower(term.name) ? mean(toUpper(term.name)) : m_nord));
@@ -250,9 +252,9 @@ Statistics::estimateOrdinary()
     #endif
     for (p=0; p<m_npar; ++p) {
       for (i=0; i<m_nord; ++i) {
-        prod = *(m_instOrd[i][0] + p*m_nscalar);
+        prod = *(m_instOrd[i][0] + p*m_nprop);
         s = m_instOrd[i].size();
-        for (j=1; j<s; ++j) prod *= *(m_instOrd[i][j] + p*m_nscalar);
+        for (j=1; j<s; ++j) prod *= *(m_instOrd[i][j] + p*m_nprop);
         m_ordinary[tid*(m_nord+1) + i] += prod;
       }
     }
@@ -301,10 +303,10 @@ Statistics::estimateCentral()
     #endif
     for (p=0; p<m_npar; ++p) {
       for (i=0; i<m_ncen; ++i) {
-        prod = *(m_instCen[i][0] + p*m_nscalar);
+        prod = *(m_instCen[i][0] + p*m_nprop);
         s = m_instCen[i].size();
         for (j=1; j<s; ++j) {
-          prod *= *(m_instCen[i][j] + p*m_nscalar) - *(m_center[i][j]);
+          prod *= *(m_instCen[i][j] + p*m_nprop) - *(m_center[i][j]);
         }
         m_central[tid*m_ncen + i] += prod;
       }

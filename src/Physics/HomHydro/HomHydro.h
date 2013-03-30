@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomMix/HomMix.h
+  \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:42:07 AM MDT
+  \date      Sat 30 Mar 2013 11:43:14 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous material mixing
-  \details   Homogeneous material mixing
+  \brief     Homogeneous hydrodynamics
+  \details   Homogeneous hydrodynamics
 */
 //******************************************************************************
-#ifndef HomMix_h
-#define HomMix_h
+#ifndef HomHydro_h
+#define HomHydro_h
 
 #include <map>
 
@@ -21,24 +21,24 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Mix;
+class Hydro;
 class Timer;
 class Statistics;
 class GlobWriter;
 class TxtPlotWriter;
 
-//! HomMix : Physics
-class HomMix : public Physics {
+//! HomHydro : Physics
+class HomHydro : public Physics {
 
   public:
     //! Constructor
-    HomMix(Memory* const memory,
-           Paradigm* const paradigm,
-           Control* const control,
-           Timer* const timer);
+    HomHydro(Memory* const memory,
+             Paradigm* const paradigm,
+             Control* const control,
+             Timer* const timer);
 
     //! Destructor
-    virtual ~HomMix();
+    virtual ~HomHydro();
 
     //! Echo informaion on model
     virtual void echo();
@@ -51,15 +51,15 @@ class HomMix : public Physics {
 
   private:
     //! Don't permit copy constructor
-    HomMix(const HomMix&) = delete;
+    HomHydro(const HomHydro&) = delete;
     //! Don't permit copy assigment
-    HomMix& operator=(const HomMix&) = delete;
+    HomHydro& operator=(const HomHydro&) = delete;
     //! Don't permit move constructor
-    HomMix(HomMix&&) = delete;
+    HomHydro(HomHydro&&) = delete;
     //! Don't permit move assigment
-    HomMix& operator=(HomMix&&) = delete;
+    HomHydro& operator=(HomHydro&&) = delete;
 
-    //! Output joint scalar PDF
+    //! Output joint PDF
     void outJpdf(const real t);
 
     //! One-liner report
@@ -72,11 +72,10 @@ class HomMix : public Physics {
                 const bool wroteGlob,
                 const bool wrotePlot);
 
-    const int m_nscalar;                  //!< Number of mixing scalars
     const real m_term;                    //!< Maximum time to simulate
     const TimerIdx m_totalTime;           //!< Timer measuring the total run
 
-    Mix* m_mix;                           //!< Mix model object
+    Hydro* m_hydro;                       //!< Hydro model object
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
     TxtPlotWriter* m_plot;                //!< Plot file writer
@@ -84,4 +83,4 @@ class HomMix : public Physics {
 
 } // namespace Quinoa
 
-#endif // HomMix_h
+#endif // HomHydro_h

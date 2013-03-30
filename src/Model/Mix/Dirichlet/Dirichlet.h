@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:07:46 PM MDT
+  \date      Sat 30 Mar 2013 01:03:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -37,20 +37,20 @@ class Dirichlet : public Mix {
     //! Destructor
     virtual ~Dirichlet();
 
-    //! Echo information on Dirichlet model
-    virtual void echo();
-
     //! Initialize particles
     virtual void init();
 
     //! Advance particles
     virtual void advance(const real dt);
 
+    //! Echo information on Dirichlet model
+    virtual void echo();
+
     //! Estimate joint scalar PDF
     virtual void jpdf(JPDF& jpdf);
 
-    //! Constant accessor to particle scalar pointer
-    virtual const real* scalars() const { return m_allScalars.ptr; }
+    //! Constant accessor to particle properties (scalars) pointer
+    virtual const real* particles() const { return m_allScalars.ptr; }
 
   private:
     //! Don't permit copy constructor

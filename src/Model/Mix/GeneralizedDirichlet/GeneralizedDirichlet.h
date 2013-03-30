@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:07:40 PM MDT
+  \date      Sat 30 Mar 2013 01:06:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -49,8 +49,8 @@ class GeneralizedDirichlet : public Mix {
     //! Estimate joint scalar PDF
     virtual void jpdf(JPDF& jpdf);
 
-    //! Constant accessor to particle scalar pointer
-    virtual const real* scalars() const { return m_allScalars.ptr; }
+    //! Constant accessor to particle properties (scalars) pointer
+    virtual const real* particles() const { return m_allScalars.ptr; }
 
   private:
     //! Don't permit copy constructor
@@ -68,7 +68,7 @@ class GeneralizedDirichlet : public Mix {
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
-    Data<real> m_allScalars;        //!< Memory entry storing all the scalars
+    Data<real> m_allScalars;        //!< Particle scalars
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;

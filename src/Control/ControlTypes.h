@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:11:15 AM MDT
+  \date      Sat 30 Mar 2013 12:03:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -26,6 +26,7 @@ namespace control {
 //! Physics (methods: collection of models) types
 enum PhysicsType { NO_PHYSICS=0,
                    HOMOGENEOUS_MIX,
+                   HOMOGENEOUS_HYDRO,
                    SPINSFLOW,
                    NUM_PHYSICS
 };

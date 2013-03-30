@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:20:47 PM MST
+  \date      Sat 30 Mar 2013 01:03:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -32,10 +32,16 @@ class Model {
           const string& name);
 
     //! Destructor
-    virtual ~Model() {};
+    virtual ~Model() {}
 
     //! Name accessor
     const string& name() { return m_name; }
+
+    //! Interface to accessor to number of particle properties
+    virtual int nprop() const = 0;
+
+    //! Constant accessor to particle properties pointer
+    virtual const real* particles() const = 0;
 
   protected:
     Memory* const m_memory;           //!< Memory object pointer

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:28:14 PM MST
+  \date      Sat 30 Mar 2013 12:01:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -35,6 +35,25 @@ void
 SimplifiedLangevin::echo()
 //******************************************************************************
 //  Echo information on the simplified Langevin model
+//! \author  J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+SimplifiedLangevin::init()
+//******************************************************************************
+//  Initialize scalars
+//! \author  J. Bakosi
+//******************************************************************************
+{
+}
+
+void
+SimplifiedLangevin::advance(const real dt)
+//******************************************************************************
+//  Advance particles with the simplified Langevin model
+//! \param[in]  dt   Time step size
 //! \author  J. Bakosi
 //******************************************************************************
 {
