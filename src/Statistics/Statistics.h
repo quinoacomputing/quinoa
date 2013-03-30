@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 11:05:03 AM MDT
+  \date      Sat 30 Mar 2013 06:40:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -86,8 +86,6 @@ class Statistics {
     bool isLower(const string s) const;
 
     Memory* const m_memory;                     //!< Memory object
-    Paradigm* const m_paradigm;                 //!< Parallel programming object
-    Control* const m_control;                   //!< Control object
     const int m_nthread;                        //!< Number of threads
     const int m_npar;                           //!< Number of particles
     Mix* const m_mix;                           //!< Mix model object

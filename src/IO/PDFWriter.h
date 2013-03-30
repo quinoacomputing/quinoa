@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Sun 18 Nov 2012 06:44:27 PM MST
+  \date      Sat 30 Mar 2013 06:26:23 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -28,7 +28,7 @@ class PDFWriter {
 
   public:
     //! Constructor: Acquire PDF file handle
-    PDFWriter(Memory* memory, const string filename);
+    PDFWriter(const string filename);
 
     //! Destructor: Release PDF file handle
     ~PDFWriter();
@@ -52,7 +52,6 @@ class PDFWriter {
     //! Don't permit move assigment
     PDFWriter& operator=(PDFWriter&&) = delete;
 
-    Memory* m_memory;                   //!< Memory object pointer 
     const string m_filename;            //!< PDF file name
     ofstream m_outPDF;                  //!< PDF file output stream
 };
