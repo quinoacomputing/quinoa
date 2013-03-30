@@ -47,7 +47,7 @@ OPENMPI_CONF_CMD=" \
   ./configure --prefix=${TPL_INSTALL_DIR} \
               --enable-static CC=clang CXX=clang"
 
-export CXX=clang
+export CXX=${HOME}/tools/clang/bin/clang
 QUINOA_CONF_CMD=" \
   cmake \
     -D PLATFORM:STRING=$PLATFORM \

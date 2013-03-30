@@ -112,7 +112,7 @@ if(HAS_WALL)
 endif()
 
 check_cxx_compiler_flag(-pedantic HAS_PEDANTIC)
-if(HAS_PEDANTIC AND NOT PLATFORM MATCHES "clang")
+if(HAS_PEDANTIC)
   add_definitions("-pedantic")
   # suppress warning: ISO C++ forbids variable length array
   add_definitions("-Wno-vla")
