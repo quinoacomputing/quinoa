@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon Mar 18 08:09:02 2013
+  \date      Sat 30 Mar 2013 06:40:53 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -28,8 +28,6 @@ Statistics::Statistics(Memory* const memory,
                        Control* const control,
                        Mix* const mix) :
   m_memory(memory),
-  m_paradigm(paradigm),
-  m_control(control),
   m_nthread(paradigm->nthread()),
   m_npar(control->get<control::NPAR>()),
   m_mix(mix),

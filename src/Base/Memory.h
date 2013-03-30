@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:47:29 PM MDT
+  \date      Sat 30 Mar 2013 06:25:02 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -187,7 +187,6 @@ class Memory {
     void echoByPlot();          //!< Echo entries sorted by Plot
     void echoByRestart();       //!< Echo entries sorted by Restart
 
-    Paradigm* const m_paradigm; //!< Local reference to the parallel paradigm
     const int m_nOMPthreads;    //!< Number of OpenMP threads
 
     MemorySet m_entry;          //!< Memory entries

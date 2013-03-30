@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Sun 18 Nov 2012 07:17:39 PM MST
+  \date      Sat 30 Mar 2013 06:40:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -79,7 +79,6 @@ class JPDF : private Distribution {
     JPDF& operator=(JPDF&&) = delete;
 
     key_type m_key;         //!< Temporary key for finding the sample space bin
-    const int m_dim;        //!< Sample space dimension
     const real m_binsize;   //!< Sample space bin size
     pdf m_pdf;              //!< Probability density function
 };
