@@ -116,6 +116,7 @@ if(HAS_PEDANTIC)
   add_definitions("-pedantic")
   # suppress warning: ISO C++ forbids variable length array
   add_definitions("-Wno-vla")
+  add_definitions("-Wno-vla-extension") # clang
 endif()
 
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
