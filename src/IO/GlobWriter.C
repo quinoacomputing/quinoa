@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 07:00:31 PM MDT
+  \date      Sat 30 Mar 2013 11:16:22 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -38,7 +38,7 @@ GlobWriter::~GlobWriter()
   // No exception leaves a destructor: if the above close() fails, we only emit
   // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outGlob.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
+    cout << "WARNING: Failed to close glob file: " << m_filename << endl;
 }
 
 void

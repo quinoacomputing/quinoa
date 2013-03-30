@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:48:02 PM MDT
+  \date      Sat 30 Mar 2013 11:16:43 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -36,5 +36,5 @@ PlotWriter::~PlotWriter()
   // No exception leaves a destructor: if the above close() fails, we only emit
   // a warning, thus we avoid terminate if an exception is propagating through.
   if (m_outPlot.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
+    cout << "WARNING: Failed to close plot file: " << m_filename << endl;
 }

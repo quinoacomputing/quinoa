@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Wed 13 Mar 2013 07:54:22 PM MDT
+  \date      Sat 30 Mar 2013 11:14:19 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -41,19 +41,6 @@ namespace grammar {
   static int field;
 
   // Actions
-
-//   struct do_comment : action_base< do_comment > {
-//     static void apply(const std::string& m, stack_type& stack) {
-//       cout << "COMMENT: \"" << m << "\"" << endl;
-//     }
-//   };
-//
-//   struct unknown : action_base< unknown > {
-//     static void apply(const std::string& m, stack_type& stack) {
-//       Throw(ParserException, FATAL, UNKNOWN_KEYWORD);
-//       //cout << "UNKNOWN: \"" << m << "\"" << endl;
-//     }
-//   };
 
   // convert string to 'type'
   template< class type >
@@ -208,7 +195,6 @@ namespace grammar {
 
   // comment: start with '#' until eol
   struct comment :
-         //pad< ifapply< trim<one<'#'>,eol>, do_comment >, blank, eol > {};
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
   // plow through block of 'tokens' until 'end' keyword
@@ -302,13 +288,14 @@ namespace grammar {
                         process<keyword::term, cstore<control::TERM>>,
                         process<keyword::dt, cstore<control::DT>>,
                         process<keyword::npar, cstore<control::NPAR>>,
+                        process<keyword::pdfname, store<control::PDFNAME>>,
+                        process<keyword::globname, store<control::GLOBNAME>>,
+                        process<keyword::plotname, store<control::PLOTNAME>>,
+                        process<keyword::glob, cstore<control::GLOB>>,
+                        process<keyword::pdfi, cstore<control::PDFI>>,
+                        process<keyword::plti, cstore<control::PLTI>>,
                         process<keyword::ttyi, cstore<control::TTYI>>,
                         process<keyword::dump, cstore<control::DUMP>>,
-                        process<keyword::plti, cstore<control::PLTI>>,
-                        process<keyword::pdfi, cstore<control::PDFI>>,
-                        process<keyword::glob, cstore<control::GLOB>>,
-                        process<keyword::jpdfname, store<control::JPDFNAME>>,
-                        process<keyword::globname, store<control::GLOBNAME>>,
                         dir, gendir, statistics
                       >
                > {};

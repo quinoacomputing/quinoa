@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:31:06 PM MDT
+  \date      Sat 30 Mar 2013 11:13:08 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -111,11 +111,14 @@ namespace keyword {
   // Statistics
   using statistics = pegtl::string< s,t,a,t,i,s,t,i,c,s >;
 
-  // Joint PDF base filename
-  using jpdfname = pegtl::string< j,p,d,f,n,a,m,e >;
+  // PDF base filename
+  using pdfname = pegtl::string< p,d,f,n,a,m,e >;
 
   // Glob (i.e. domain-average statistics) filename
   using globname = pegtl::string< g,l,o,b,n,a,m,e >;
+
+  // Plot base filename
+  using plotname = pegtl::string< p,l,o,t,n,a,m,e >;
 
 } // namespace keyword
 

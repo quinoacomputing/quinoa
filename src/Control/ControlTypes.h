@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri 22 Mar 2013 08:14:20 AM MDT
+  \date      Sat 30 Mar 2013 11:11:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -128,7 +128,7 @@ enum BundlePosition { TITLE=0,
                       PLTI,
                       PDFI,
                       GLOB,
-                      JPDFNAME,
+                      PDFNAME,
                       GLOBNAME,
                       PLOTNAME,
                       B,
@@ -154,7 +154,7 @@ using Bundle = tuple<
   int,                  //!< 11: Plot output interval
   int,                  //!< 12: PDF output interval
   int,                  //!< 13: Glob output interval
-  string,               //!< 14: Joint PDF base filename
+  string,               //!< 14: PDF base filename
   string,               //!< 15: Glob filename
   string,               //!< 16: Plot base filename
   vector<real>,         //!< 17: Parameters 'b' in Dirichlet mix models
