@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri Mar  8 15:27:39 2013
+  \date      Sat 30 Mar 2013 12:23:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -16,6 +16,7 @@
 #include <ParserException.h>
 #include <PhysicsException.h>
 #include <HomMix.h>
+#include <HomHydro.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
@@ -83,7 +84,14 @@ Driver::setup()
       break;
 
     case control::PhysicsType::HOMOGENEOUS_MIX :
-      m_physics = new (nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
+      m_physics = new (nothrow)
+                  HomMix(m_memory, m_paradigm, m_control, m_timer);
+      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      break;
+
+    case control::PhysicsType::HOMOGENEOUS_HYDRO :
+      m_physics = new (nothrow)
+                  HomHydro(m_memory, m_paradigm, m_control, m_timer);
       Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 

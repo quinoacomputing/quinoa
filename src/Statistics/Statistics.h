@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 10:41:47 AM MDT
+  \date      Sat 30 Mar 2013 01:09:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -24,7 +24,7 @@ namespace Quinoa {
 class Memory;
 class Paradigm;
 class Control;
-class Mix;
+class Model;
 
 //! Statistics estimator
 class Statistics {
@@ -34,7 +34,7 @@ class Statistics {
     Statistics(Memory* const memory,
                Paradigm* const paradigm,
                Control* const control,
-               Mix* const mix);
+               Model* const model);
 
     //! Destructor
     virtual ~Statistics();
@@ -91,27 +91,27 @@ class Statistics {
     //! Return true if string is all lower case
     bool isLower(const string s) const;
 
-    Memory* const m_memory;                     //!< Memory object
-    const int m_nthread;                        //!< Number of threads
-    const int m_npar;                           //!< Number of particles
-    Mix* const m_mix;                           //!< Mix model object
-    const int m_nscalar;                        //!< Number of mixing scalars
+    Memory* const m_memory;                  //!< Memory object
+    const int m_nthread;                     //!< Number of threads
+    const int m_npar;                        //!< Number of particles
+    Model* const m_model;                    //!< Model objects
+    const int m_nprop;                       //!< Number of particle properties
     const vector<control::Product> m_statistics;//!< Requested tatistics
 
     //! Instantaneous variable pointers for computing ordinary moments
     vector<vector<const real*>> m_instOrd;
-    Data<real> m_ordinary;                      //!< Ordinary moments
-    vector<bool> m_plotOrdinary;                //!< Whether to plot ord moments
-    vector<string> m_nameOrdinary;              //!< Names of ordinary moments
-    int m_nord;                                 //!< Number of ordinary moments
+    Data<real> m_ordinary;                   //!< Ordinary moments
+    vector<bool> m_plotOrdinary;             //!< Whether to plot ord moments
+    vector<string> m_nameOrdinary;           //!< Names of ordinary moments
+    int m_nord;                              //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
     vector<vector<const real*>> m_instCen;
-    Data<real> m_central;                       //!< Central moments
+    Data<real> m_central;                    //!< Central moments
     //! Ordinary moments about which to compute central moments
     vector<vector<const real*>> m_center;
-    vector<string> m_nameCentral;               //!< Names of central moments
-    int m_ncen;                                 //!< Number of central moments
+    vector<string> m_nameCentral;            //!< Names of central moments
+    int m_ncen;                              //!< Number of central moments
 };
 
 } // namespace Quinoa

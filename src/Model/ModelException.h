@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:18:19 PM MST
+  \date      Sat 30 Mar 2013 01:14:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -20,10 +20,11 @@ using namespace std;
 namespace Quinoa {
 
 //! Model exception types
-enum ModelExceptType { MIX_EXCEPT=0,               //!< Mix model exception
-                       HYDROMODEL_EXCEPT,          //!< HydroModel exception
-                       NO_SUCH_MODEL,              //!< No such model
-                       ALREADY_ALLOCATED,          //!< Entry alread allocated
+enum ModelExceptType { MIX_EXCEPT=0,           //!< Mix model exception
+                       HYDROMODEL_EXCEPT,      //!< HydroModel exception
+                       NO_SUCH_MODEL,          //!< No such model
+                       BAD_NPAR,               //!< Wrong number of particles
+                       ALREADY_ALLOCATED,      //!< Entry alread allocated
                        NUM_MODEL_EXCEPT
 };
 
@@ -32,6 +33,7 @@ const string ModelMsg[NUM_MODEL_EXCEPT] = {
   "MixModel: ",
   "HydroModel: ",
   "No such model",
+  "Wrong number of particles",
   "Memory entry already allocated"
 };
 

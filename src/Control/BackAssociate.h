@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Fri Mar  8 15:35:06 2013
+  \date      Sat 30 Mar 2013 12:04:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Backward, data to keyword/name associations
   \details   Backward, data to keyword/name associations
@@ -22,12 +22,14 @@ namespace associate {
   const string PhysicsKeyword[control::NUM_PHYSICS] = {
     "no_physics",
     "hommix",
+    "homhydro",
     "spinsflow"
   };
   // PhysicsType -> name
   const string PhysicsName[control::NUM_PHYSICS] = {
     "No physics",
     "Homogeneous material mixing",
+    "Homogeneous hydrodynamics",
     "Standalone-Particle Incompressible Navier-Stokes Flow"
   };
 

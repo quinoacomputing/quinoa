@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Sat 09 Mar 2013 11:16:57 AM MST
+  \date      Sat 30 Mar 2013 01:13:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -32,5 +32,5 @@ Mix::Mix(Memory* const memory,
 //******************************************************************************
 {
   Assert(m_nscalar > 0, MixException,FATAL,BAD_NSCALAR);
-  Assert(m_npar > 0, MixException,FATAL,BAD_NPAR);
+  Assert(m_npar > 0, ModelException,FATAL,BAD_NPAR);
 }

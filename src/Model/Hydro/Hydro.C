@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:27:19 PM MST
+  \date      Sat 30 Mar 2013 01:19:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model base
   \details   Hydro model base
@@ -11,6 +11,7 @@
 
 #include <Hydro.h>
 #include <HydroException.h>
+#include <Control.h>
 
 using namespace Quinoa;
 
@@ -18,7 +19,9 @@ Hydro::Hydro(Memory* const memory,
              Paradigm* const paradigm,
              Control* const control,
              const string& name) :
-  Model(memory, paradigm, control, name)
+  Model(memory, paradigm, control, name),
+  m_nprop(NPROP),
+  m_npar(control->get<control::NPAR>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -28,4 +31,5 @@ Hydro::Hydro(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  Assert(m_npar > 0, ModelException,FATAL,BAD_NPAR);
 }

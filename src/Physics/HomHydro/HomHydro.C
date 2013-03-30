@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomMix/HomMix.C
+  \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:46:19 AM MDT
+  \date      Sat 30 Mar 2013 12:53:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous material mixing
-  \details   Homogeneous material mixing
+  \brief     Homogeneous hydrodynamics
+  \details   Homogeneous hydrodynamics
 */
 //******************************************************************************
 
@@ -16,24 +16,23 @@
 #include <MemoryException.h>
 #include <ControlTypes.h>
 #include <Control.h>
-#include <HomMix.h>
-#include <MixException.h>
+#include <HomHydro.h>
+#include <HydroException.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
-#include <Dirichlet.h>
-#include <GeneralizedDirichlet.h>
+#include <SimplifiedLangevin.h>
+#include <GeneralizedLangevin.h>
 #include <Timer.h>
 #include <Statistics.h>
 
 using namespace Quinoa;
 
-HomMix::HomMix(Memory* const memory,
-               Paradigm* const paradigm,
-               Control* const control,
-               Timer* const timer) :
+HomHydro::HomHydro(Memory* const memory,
+                   Paradigm* const paradigm,
+                   Control* const control,
+                   Timer* const timer) :
   Physics(memory, paradigm, control, timer),
-  m_nscalar(control->get<control::NSCALAR>()),
   m_term(control->get<control::TERM>()),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
@@ -45,29 +44,29 @@ HomMix::HomMix(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Instantiate selected mix model
-  switch (control->get<control::MIX>()) {
+  // Instantiate selected hydrodynamics model
+  switch (control->get<control::HYDRO>()) {
 
-    case control::MixType::NO_MIX :
-      Throw(MixException,FATAL,MixExceptType::NO_SUCH_MIX);
+    case control::HydroType::NO_HYDRO :
+      Throw(HydroException,FATAL,HydroExceptType::NO_SUCH_HYDRO);
       break;
 
-    case control::MixType::DIRICHLET :
-      m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
-      Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
+    case control::HydroType::SLM :
+      m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
+      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
-    case control::MixType::GENERALIZED_DIRICHLET :
-      m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
-      Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
+    case control::HydroType::GLM :
+      m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
+      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
       break;
 
     default :
-      Throw(MixException,FATAL,MIX_UNIMPLEMENTED);
+      Throw(HydroException,FATAL,HYDRO_UNIMPLEMENTED);
   }
 
   // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
+  m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_hydro);
   Assert(m_statistics != nullptr, MemoryException,FATAL,BAD_ALLOC);
 
   // Instantiate glob file writer
@@ -80,7 +79,7 @@ HomMix::HomMix(Memory* const memory,
   Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-HomMix::~HomMix()
+HomHydro::~HomHydro()
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -89,11 +88,11 @@ HomMix::~HomMix()
   if (m_plot) { delete m_plot; m_plot = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
-  if (m_mix) { delete m_mix; m_mix = nullptr; }
+  if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
 }
 
 void
-HomMix::solve()
+HomHydro::solve()
 //******************************************************************************
 //  Solve
 //! \author  J. Bakosi
@@ -124,7 +123,7 @@ HomMix::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    m_mix->advance(dt);
+    m_hydro->advance(dt);
 
     // Accumulate statistics
     m_statistics->accumulate();
@@ -152,7 +151,7 @@ HomMix::solve()
 }
 
 void
-HomMix::reportHeader()
+HomHydro::reportHeader()
 //******************************************************************************
 //  Echo report header
 //! \author  J. Bakosi
@@ -165,13 +164,13 @@ HomMix::reportHeader()
 }
 
 void
-HomMix::report(const int it,
-               const int nstep,
-               const real t,
-               const real dt,
-               const bool wroteJpdf,
-               const bool wroteGlob,
-               const bool wrotePlot)
+HomHydro::report(const int it,
+                 const int nstep,
+                 const real t,
+                 const real dt,
+                 const bool wroteJpdf,
+                 const bool wroteGlob,
+                 const bool wrotePlot)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
@@ -204,44 +203,44 @@ HomMix::report(const int it,
 }
 
 void
-HomMix::outJpdf(const real t)
+HomHydro::outJpdf(const real t)
 //******************************************************************************
-//  Output joint scalar PDF
+//  Output joint PDF
 //! \param[in]  t    Time stamp
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Contruct filename
-  stringstream ss;
-  ss << m_control->get<control::PDFNAME>() << "." << t << ".msh";
-  string filename = ss.str();
-
-  // Create joint PDF
-  JPDF jpdf(m_nscalar, 0.02);
-
-  // Estimate joint PDF
-  m_mix->jpdf(jpdf);
-
-  // Output joint PDF
-  PDFWriter jpdfFile(filename);
-  jpdfFile.writeGmsh(&jpdf);
+//   // Contruct filename
+//   stringstream ss;
+//   ss << m_control->get<control::PDFNAME>() << "." << t << ".msh";
+//   string filename = ss.str();
+// 
+//   // Create joint PDF
+//   JPDF jpdf(m_nscalar, 0.02);
+// 
+//   // Estimate joint PDF
+//   m_mix->jpdf(jpdf);
+// 
+//   // Output joint PDF
+//   PDFWriter jpdfFile(filename);
+//   jpdfFile.writeGmsh(&jpdf);
 }
 
 void
-HomMix::echo()
+HomHydro::echo()
 //******************************************************************************
-//  Echo informaion on homogeneous material mix
+//  Echo informaion on homogeneous hydrodynamics
 //! \author  J. Bakosi
 //******************************************************************************
 {
 }
 
 void
-HomMix::init()
+HomHydro::init()
 //******************************************************************************
-//  Initialize homogeneous material mix
+//  Initialize homogeneous hydrodynamics
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_mix->init();
+  m_hydro->init();
 }

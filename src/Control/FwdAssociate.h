@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FwdAssociate.h
   \author    J. Bakosi
-  \date      Fri Mar  8 15:34:03 2013
+  \date      Sat 30 Mar 2013 12:04:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Forward, keyword (string) to data associations
   \details   Forward, keyword (string) to data associations
@@ -26,6 +26,7 @@ namespace associate {
     static physics_enum make() {
       physics_enum m;
       m["hommix"] = control::PhysicsType::HOMOGENEOUS_MIX;
+      m["homhydro"] = control::PhysicsType::HOMOGENEOUS_HYDRO;
       m["spinsflow"] = control::PhysicsType::SPINSFLOW;
       return m;
     }
@@ -34,6 +35,7 @@ namespace associate {
 //   // ICC: The above struct and definition can be replaced by
 //   static physics_enum PhysicsEnum = {
 //     { "hommix", PhysicsType::HOMOGENEOUS_MIX },
+//     { "homhydro", PhysicsType::HOMOGENEOUS_HYDRO },
 //     { "spinsflow", PhysicsType::SPINSFLOW }
 //   };
 

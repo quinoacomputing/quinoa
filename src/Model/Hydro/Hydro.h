@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:26:41 PM MST
+  \date      Sat 30 Mar 2013 01:18:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -23,6 +23,9 @@ using namespace std;
 //! Hydro model base
 class Hydro : public Model {
 
+  //! Number of particle properties for hydrodynamics: position + velocity
+  const int NPROP = 6;
+
   public:
     //! Constructor
     Hydro(Memory* const memory,
@@ -33,11 +36,21 @@ class Hydro : public Model {
     //! Destructor
     virtual ~Hydro() {}
 
-    //! Interface for echo information on mix model
+    //! Interface for initializing particles
+    virtual void init() = 0;
+
+    //! Interface for advancing particles in hydro model
+    virtual void advance(const real dt) = 0;
+
+    //! Interface for echo information on hydro model
     virtual void echo() = 0;
 
+    //! Accessor to number of particle properties
+    virtual int nprop() const { return m_nprop; }
+
   protected:
-    const string m_name;           //!< Name of hydro model
+    const int m_nprop;              //!< Number of hydrodynamics properties
+    const int m_npar;               //!< Number of particles
 
   private:
     //! Don't permit copy constructor

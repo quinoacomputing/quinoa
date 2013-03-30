@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/HydroException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:18:39 PM MST
+  \date      Sat 30 Mar 2013 11:48:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model exception handler
   \details   Hydro model exception handler
@@ -21,12 +21,14 @@ namespace Quinoa {
 
 //! Hydro exception types
 enum HydroExceptType { NO_SUCH_HYDRO=0,          //!< No such hydro model
+                       HYDRO_UNIMPLEMENTED,      //!< Hydro model unimplemented
                        NUM_HYDRO_EXCEPT
 };
 
 //! Hydro exception error messages
 const string HydroMsg[NUM_HYDRO_EXCEPT] = {
-  "No such hydrodynamics model"
+  "No such hydrodynamics model",
+  "Hydro model not implemented"
 };
 
 //! HydroException : ModelException

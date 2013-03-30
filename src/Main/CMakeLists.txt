@@ -16,6 +16,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Physics/HomMix
+                    ${QUINOA_SOURCE_DIR}/Physics/HomHydro
                     ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
 )
 
@@ -30,6 +31,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Paradigm
                       HomMix
+                      HomHydro
                       SPINSFlow
                       IO
                       Mesh

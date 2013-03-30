@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:14:19 AM MDT
+  \date      Sat 30 Mar 2013 01:28:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -300,6 +300,26 @@ namespace grammar {
                       >
                > {};
 
+  // homhydro block
+  struct homhydro :
+         ifmust< parse<store_physics, keyword::homhydro>,
+                 block< process<keyword::nstep, cstore<control::NSTEP>>,
+                        process<keyword::term, cstore<control::TERM>>,
+                        process<keyword::dt, cstore<control::DT>>,
+                        process<keyword::npar, cstore<control::NPAR>>,
+                        process<keyword::pdfname, store<control::PDFNAME>>,
+                        process<keyword::globname, store<control::GLOBNAME>>,
+                        process<keyword::plotname, store<control::PLOTNAME>>,
+                        process<keyword::glob, cstore<control::GLOB>>,
+                        process<keyword::pdfi, cstore<control::PDFI>>,
+                        process<keyword::plti, cstore<control::PLTI>>,
+                        process<keyword::ttyi, cstore<control::TTYI>>,
+                        process<keyword::dump, cstore<control::DUMP>>,
+                        process<keyword::hydro, store_hydro, hydro>,
+                        statistics
+                      >
+               > {};
+
   // spinsflow block
   struct spinsflow :
          ifmust< parse<store_physics, keyword::spinsflow>,
@@ -309,6 +329,7 @@ namespace grammar {
   // physics
   struct physics :
          sor< hommix,
+              homhydro,
               spinsflow > {};
 
   // keywords

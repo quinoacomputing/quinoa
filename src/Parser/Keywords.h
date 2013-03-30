@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:13:08 AM MDT
+  \date      Sat 30 Mar 2013 12:16:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -30,6 +30,8 @@ namespace keyword {
   // Select physics:
   //   * Homogeneous material mixing
   using hommix = pegtl::string< h,o,m,m,i,x >;
+  //   * Homogeneous hydrodinamics
+  using homhydro = pegtl::string< h,o,m,h,y,d,r,o >;
   //   * Standalone-particle incompressible Navier-Stokes flow
   using spinsflow = pegtl::string< s,p,i,n,s,f,l,o,w >;
 
