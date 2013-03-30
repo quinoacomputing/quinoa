@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:19:03 PM MDT
+  \date      Sat 30 Mar 2013 04:30:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model base
   \details   Hydro model base
@@ -31,5 +31,6 @@ Hydro::Hydro(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  Assert(m_nprop > 0, HydroException,FATAL,BAD_NPROP);
   Assert(m_npar > 0, ModelException,FATAL,BAD_NPAR);
 }

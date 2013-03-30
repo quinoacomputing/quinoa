@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/HydroException.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:48:15 AM MDT
+  \date      Sat 30 Mar 2013 04:32:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model exception handler
   \details   Hydro model exception handler
@@ -20,14 +20,16 @@ using namespace std;
 namespace Quinoa {
 
 //! Hydro exception types
-enum HydroExceptType { NO_SUCH_HYDRO=0,          //!< No such hydro model
-                       HYDRO_UNIMPLEMENTED,      //!< Hydro model unimplemented
+enum HydroExceptType { NO_SUCH_HYDRO=0,        //!< No such hydro model
+                       BAD_NPROP,              //!< Wrong number of properties
+                       HYDRO_UNIMPLEMENTED,    //!< Hydro model unimplemented
                        NUM_HYDRO_EXCEPT
 };
 
 //! Hydro exception error messages
 const string HydroMsg[NUM_HYDRO_EXCEPT] = {
   "No such hydrodynamics model",
+  "Wrong number of particle properties",
   "Hydro model not implemented"
 };
 

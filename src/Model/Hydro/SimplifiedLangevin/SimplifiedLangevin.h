@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:20:51 PM MDT
+  \date      Sat 30 Mar 2013 04:21:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef SimplifiedLangevin_h
 #define SimplifiedLangevin_h
+
+#include <mkl_vsl.h>
 
 #include <Memory.h>
 #include <Hydro.h>
@@ -33,7 +35,7 @@ class SimplifiedLangevin : public Hydro {
                        Control* const control);
 
     //! Destructor
-    virtual ~SimplifiedLangevin() {}
+    virtual ~SimplifiedLangevin();
 
     //! Initialize particles
     virtual void init();
@@ -57,7 +59,10 @@ class SimplifiedLangevin : public Hydro {
     //! Don't permit move assigment
     SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
 
-    Data<real> m_particles;        //!< Particle properties
+    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+    MKLRandom* m_random;            //!< Random number generator object
+    MKLRndStream* m_rndStr;         //!< Random number stream object
+    Data<real> m_particles;         //!< Particle properties
 };
 
 } // namespace Quinoa
