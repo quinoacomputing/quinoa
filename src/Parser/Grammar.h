@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:28:35 PM MDT
+  \date      Mon 01 Apr 2013 10:20:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -37,7 +37,7 @@ namespace grammar {
   using boolstack_type = control::BoolBundle;
   //! Dummy Bundle instant for decltype in cstore()
   static stack_type dummy_stack;
-  //! Field ID for statistics
+  //! Out-of-struct storage of field ID for push_term
   static int field;
 
   // Actions
@@ -49,6 +49,14 @@ namespace grammar {
     type num;
     ss >> num;
     return num;
+  }
+
+  // convert 'type' to string
+  template< class type >
+  static std::string convert(const type& val) {
+    stringstream ss;
+    ss << val;
+    return ss.str();
   }
 
   // convert & store value in state 'at' position
@@ -99,7 +107,7 @@ namespace grammar {
     }
   };
 
-  // add Term into vector of Product in vector of statistics
+  // add matched value as Term into vector of Product in vector of statistics
   template< control::Quantity quantity, control::Moment moment >
   struct push_term : action_base< push_term<quantity, moment> > {
     static void apply(const std::string& value,
@@ -120,6 +128,33 @@ namespace grammar {
         control::Product mean(1,term);
         stats.insert(stats.end()-1, mean);
       }
+      IGNORE(boolstack);    // suppress compiler warning on unused variable
+    }
+  };
+
+  // add (trigger) name as Term into vector of Product in vector of statistics
+  template< char name, control::Quantity quantity, control::Moment moment >
+  struct trigger : action_base< trigger<name, quantity, moment> > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      std::string n = convert<char>(name);
+      control::Term term = {field, quantity, moment, n, true};
+      vector<control::Product>& stats = get<control::STATISTICS>(stack);
+      // Push term into current product
+      stats.back().push_back(term);
+      // If central moment, trigger mean
+      if (moment == control::CENTRAL) {
+        // Convert name to upper-case for human-readable name
+        std::string upper(n);
+        std::for_each(upper.begin(), upper.end(),
+                      [](char& c){ c = static_cast<char>(std::toupper(c)); } );
+        // Put in request for mean
+        control::Term term = {field, quantity, control::ORDINARY, upper, false};
+        control::Product mean(1,term);
+        stats.insert(stats.end()-1, mean);
+      }
+      IGNORE(value);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
@@ -188,10 +223,10 @@ namespace grammar {
                     keyword::gendir > {};
 
   // parse input padded by blank at left and space at right and if it matches
-  // 'keywords', apply 'action'
-  template< class action, class keywords >
+  // 'keywords', apply 'actions'
+  template< class keywords, typename ... actions >
   struct parse :
-         pad< ifapply< trim<keywords, space>, action >, blank, space > {};
+         pad< ifapply< trim<keywords, space>, actions ... >, blank, space > {};
 
   // comment: start with '#' until eol
   struct comment :
@@ -207,13 +242,13 @@ namespace grammar {
   template< class key, class insert, class value = digit >
   struct list :
          ifmust< read<key>,
-                 until< read<keyword::end>, sor<comment, parse<insert,value>> >
+                 until< read<keyword::end>, sor<comment, parse<value,insert>> >
                > {};
 
   // process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
   struct process :
-         ifmust< read<keyword>, parse<insert, keywords> > {};
+         ifmust< read<keyword>, parse<keywords,insert> > {};
 
   // moment: 'keyword' followed by a digit, pushed to vector of terms
   template< class keyword, control::Quantity q, control::Moment m >
@@ -256,22 +291,22 @@ namespace grammar {
 
   // dir block
   struct dir :
-         ifmust< parse<store_mix, keyword::dir>,
+         ifmust< parse<keyword::dir, store_mix>,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
-                        list<keyword::B, push<control::B>>,
-                        list<keyword::S, push<control::S>>,
-                        list<keyword::kappa, push<control::KAPPA>>
+                        list<keyword::dir_B, push<control::B>>,
+                        list<keyword::dir_S, push<control::S>>,
+                        list<keyword::dir_kappa, push<control::KAPPA>>
                       >
                > {};
 
   // gendir block
   struct gendir :
-         ifmust< parse<store_mix, keyword::gendir>,
+         ifmust< parse<keyword::gendir, store_mix>,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
-                        list<keyword::B, push<control::B>>,
-                        list<keyword::S, push<control::S>>,
-                        list<keyword::kappa, push<control::KAPPA>>,
-                        list<keyword::C, push<control::C>>
+                        list<keyword::dir_B, push<control::B>>,
+                        list<keyword::dir_S, push<control::S>>,
+                        list<keyword::dir_kappa, push<control::KAPPA>>,
+                        list<keyword::gendir_C, push<control::C>>
                       >
                > {};
 
@@ -281,9 +316,26 @@ namespace grammar {
                  block< parse_expectations<'<','>'> >
                > {};
 
+  // slm block
+  struct slm :
+         ifmust< parse< keyword::slm, store_hydro,
+                        // trigger estimating the diagonal of Reynolds-stress
+                        start_product,
+                        trigger<'u', control::VELOCITY_X, control::CENTRAL>,
+                        trigger<'u', control::VELOCITY_X, control::CENTRAL>,
+                        start_product,
+                        trigger<'v', control::VELOCITY_Y, control::CENTRAL>,
+                        trigger<'v', control::VELOCITY_Y, control::CENTRAL>,
+                        start_product,
+                        trigger<'w', control::VELOCITY_Z, control::CENTRAL>,
+                        trigger<'w', control::VELOCITY_Z, control::CENTRAL>
+                      >,
+                 block< process<keyword::SLM_C0, cstore<control::C0>> >
+               > {};
+
   // hommix block
   struct hommix :
-         ifmust< parse<store_physics, keyword::hommix>,
+         ifmust< parse<keyword::hommix, store_physics>,
                  block< process<keyword::nstep, cstore<control::NSTEP>>,
                         process<keyword::term, cstore<control::TERM>>,
                         process<keyword::dt, cstore<control::DT>>,
@@ -302,7 +354,7 @@ namespace grammar {
 
   // homhydro block
   struct homhydro :
-         ifmust< parse<store_physics, keyword::homhydro>,
+         ifmust< parse<keyword::homhydro, store_physics>,
                  block< process<keyword::nstep, cstore<control::NSTEP>>,
                         process<keyword::term, cstore<control::TERM>>,
                         process<keyword::dt, cstore<control::DT>>,
@@ -315,14 +367,13 @@ namespace grammar {
                         process<keyword::plti, cstore<control::PLTI>>,
                         process<keyword::ttyi, cstore<control::TTYI>>,
                         process<keyword::dump, cstore<control::DUMP>>,
-                        process<keyword::hydro, store_hydro, hydro>,
-                        statistics
+                        slm, statistics
                       >
                > {};
 
   // spinsflow block
   struct spinsflow :
-         ifmust< parse<store_physics, keyword::spinsflow>,
+         ifmust< parse<keyword::spinsflow, store_physics>,
                  block< process<keyword::hydro, store_hydro, hydro>,
                         process<keyword::mix, store_mix, mix> > > {};
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:03:00 PM MDT
+  \date      Mon 01 Apr 2013 09:11:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -49,7 +49,9 @@ enum MixType { NO_MIX=0,
 
 //! Quantities whose statistics can be estimated
 enum Quantity { TRANSPORTED_SCALAR=0,
-                VELOCITY,
+                VELOCITY_X,
+                VELOCITY_Y,
+                VELOCITY_Z,
                 PRESSURE,
                 DENSITY
 };
@@ -136,6 +138,7 @@ enum BundlePosition { TITLE=0,
                       S,
                       KAPPA,
                       C,
+                      C0,
                       STATISTICS
 };
 
@@ -162,7 +165,8 @@ using Bundle = tuple<
   vector<real>,         //!< 18: Parameters 'S' in Dirichlet mix models
   vector<real>,         //!< 19: Parameters 'kappa' in Dirichlet mix models
   vector<real>,         //!< 20: Parameters 'c_ij' in GenDirichlet mix models
-  vector<Product>       //!< 21: Requested (and triggered) statistics
+  real,                 //!< 21: Parameter C0 in the simplified Langevin model
+  vector<Product>       //!< 22: Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

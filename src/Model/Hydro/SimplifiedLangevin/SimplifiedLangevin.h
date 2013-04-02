@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 04:21:56 PM MDT
+  \date      Mon 01 Apr 2013 08:34:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -58,6 +58,8 @@ class SimplifiedLangevin : public Hydro {
     SimplifiedLangevin(SimplifiedLangevin&&) = delete;
     //! Don't permit move assigment
     SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
+
+    const real m_C0;                //!< Parameter C0 in SLM
 
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:26:06 PM MDT
+  \date      Mon 01 Apr 2013 08:39:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -231,6 +231,9 @@ Parser::echoHydro()
   if (m_control->set<control::GLOB>())
     cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
          << endl;
+
+  if (m_control->set<control::C0>())
+    cout << "   - C0 = " << m_control->get<control::C0>() << endl;
 
   if (m_control->set<control::STATISTICS>()) {
     cout << "   - Requested statistics = {";

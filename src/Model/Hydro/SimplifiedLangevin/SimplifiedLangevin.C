@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 05:31:45 PM MDT
+  \date      Mon 01 Apr 2013 08:42:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <cmath>
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -18,6 +19,7 @@
 
 #include <SimplifiedLangevin.h>
 #include <Hydro.h>
+#include <Control.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 
@@ -27,7 +29,8 @@ using namespace Quinoa;
 SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
                                        Paradigm* const paradigm,
                                        Control* const control) :
-  Hydro(memory, paradigm, control, "Simplified Langevin")
+  Hydro(memory, paradigm, control, "Simplified Langevin"),
+  m_C0(control->get<control::C0>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -105,4 +108,41 @@ SimplifiedLangevin::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+//   int tid, p, i;
+//   real d, tke, eps, S=1.0;
+//   real* X;
+//   real* U;
+//   real dW[3], rs[6];
+// 
+//   #ifdef _OPENMP
+//   //#pragma omp parallel private(tid, p, i, y, yn, dW, d)
+//   #endif
+//   {
+//     #ifdef _OPENMP
+//     tid = omp_get_thread_num();
+//     #else
+//     tid = 0;
+//     #endif
+// 
+//     #ifdef _OPENMP
+//     #pragma omp for
+//     #endif
+//     for (p=0; p<m_npar; ++p) {
+//       // Get access to particle position, velocity
+//       X = m_particles + p*m_nprop;
+//       U = X + 3;
+// 
+//       // Generate Gaussian random numbers with zero mean and unit variance
+//       m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+//                          m_str[tid], 3, dW, 0.0, 1.0);
+// 
+//       tke = 0.5*(rs[0] + rs[1] + rs[2]);
+//       eps = S*tke/2.36;
+// 
+//       // Advance velocity
+//       d = m_C0*eps*dt;
+//       if (d > 0.0) d = sqrt(d); else d = 0.0;
+//       //U[0] += ()*dt + d*dW[i];
+//     } // m_npar
+//   } // omp parallel
 }
