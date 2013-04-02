@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:16:09 PM MDT
+  \date      Mon 01 Apr 2013 08:37:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -70,10 +70,13 @@ namespace keyword {
   using nscalar = pegtl::string< n,s,c,a,l,a,r >;
 
   // Dirichlet and generalized Dirichlet parameters
-  using B = pegtl::string< b >;
-  using S = pegtl::string< S >;
-  using kappa = pegtl::string< k,a,p,p,a >;
-  using C = pegtl::string< C >;
+  using dir_B = pegtl::string< b >;
+  using dir_S = pegtl::string< S >;
+  using dir_kappa = pegtl::string< k,a,p,p,a >;
+  using gendir_C = pegtl::string< C >;
+
+  // Langevin model parameters
+  using SLM_C0 = pegtl::string< C,'0' >;
 
   // Quantities
   using transported_scalar = pegtl::string< Y >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Wed 13 Mar 2013 07:55:39 PM MDT
+  \date      Sat 30 Mar 2013 06:06:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -44,7 +44,8 @@ const Bundle DEFAULTS(
   vector<real>(),             //!< 18: Paramaters 'S'
   vector<real>(),             //!< 19: Parameters 'kappa'
   vector<real>(),             //!< 20: Parameters 'c_ij'
-  vector<Product>()           //!< 21: Statistics
+  2.1,                        //!< 21: Parameter C0
+  vector<Product>()           //!< 22: Statistics
 );
 
 } // namespace control
