@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:40:15 AM MDT
+  \date      Wed 24 Apr 2013 11:24:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -25,7 +25,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Joint PDF estimator
-class JPDF : private Distribution {
+class JPDF : Distribution {
 
   public:
     //! Key type
@@ -48,7 +48,7 @@ class JPDF : private Distribution {
     using ordered_pdf = map<key_type, real, key_hash>;
 
     //! Constructor: Initialize joint PDF container
-    JPDF(const int dim, const real binsize);
+    explicit JPDF(const int dim, const real binsize);
 
     //! Destructor: Clear joint PDF container
     virtual ~JPDF();
