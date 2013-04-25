@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 03:12:55 PM MDT
+  \date      Wed 24 Apr 2013 10:02:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -29,7 +29,7 @@ class Control {
 
   public:
     //! Constructor
-    Control();
+    explicit Control() : m_data(control::DEFAULTS) {};
 
     //! Destructor
     ~Control() = default;
