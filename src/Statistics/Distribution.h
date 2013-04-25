@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 08:00:29 PM MST
+  \date      Wed 24 Apr 2013 11:20:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -25,10 +25,10 @@ class Distribution {
 
   public:
     //! Constructor
-    Distribution() : m_nsample(0) {}
+    explicit Distribution() : m_nsample(0) {}
 
     //! Destructor
-    virtual ~Distribution() {}
+    virtual ~Distribution() {};
 
     //! Constant accessor to PDF map
     virtual const int& getNsample() const = 0;
