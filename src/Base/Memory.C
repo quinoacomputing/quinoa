@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:24:43 AM MDT
+  \date      Wed 24 Apr 2013 11:04:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -30,7 +30,7 @@ using namespace std;
 
 using namespace Quinoa;
 
-Memory::Memory(Paradigm* paradigm) :
+Memory::Memory(Paradigm* const paradigm) :
   m_nOMPthreads(paradigm->getOpenMP()->nthread())
 //******************************************************************************
 //  Constructor
@@ -51,12 +51,12 @@ Memory::~Memory()
 }
 
 MemoryEntry*
-Memory::newEntry(size_t number,
-                 ValType value,
-                 VarType variable,
-                 string name,
-                 bool plot,
-                 bool restart)
+Memory::newEntry(const size_t number,
+                 const ValType value,
+                 const VarType variable,
+                 const string name,
+                 const bool plot,
+                 const bool restart)
 //******************************************************************************
 //  Allocate memory entry
 //! \param[in]  number    Number of items to allocate
@@ -73,9 +73,9 @@ Memory::newEntry(size_t number,
   Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
 
   // Compute total number of bytes to be allocated
-  size_t nbytes = number *
-                  VarComp[static_cast<int>(variable)] *
-                  SizeOf[static_cast<int>(value)];
+  const size_t nbytes = number *
+                        VarComp[static_cast<int>(variable)] *
+                        SizeOf[static_cast<int>(value)];
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
@@ -130,12 +130,12 @@ Memory::newEntry(size_t number,
 }
 
 MemoryEntry*
-Memory::newZeroEntry(size_t number,
-                     ValType value,
-                     VarType variable,
-                     string name,
-                     bool plot,
-                     bool restart)
+Memory::newZeroEntry(const size_t number,
+                     const ValType value,
+                     const VarType variable,
+                     const string name,
+                     const bool plot,
+                     const bool restart)
 //******************************************************************************
 //  Allocate and zero memory entry
 //! \param[in]  number    Number of items to allocate
@@ -149,7 +149,8 @@ Memory::newZeroEntry(size_t number,
 //******************************************************************************
 {
   // Allocate new entry
-  MemoryEntry* entry = newEntry(number, value, variable, name, plot, restart);
+  MemoryEntry* const entry =
+    newEntry(number, value, variable, name, plot, restart);
 
   // Zero new entry
   zero(entry);
@@ -218,7 +219,7 @@ Memory::freeAllEntries() noexcept
 }
 
 void
-Memory::echoAllEntries(MemoryEntryField crit)
+Memory::echoAllEntries(const MemoryEntryField crit) const
 //******************************************************************************
 //  Echo all memory entries
 //! \param[in]  crit    Sort items by memory entry field criteria
@@ -276,7 +277,7 @@ Memory::echoAllEntries(MemoryEntryField crit)
 }
 
 void
-Memory::echo()
+Memory::echo() const
 //******************************************************************************
 //  Echo unsorted memory entries
 //! \author J. Bakosi
@@ -286,7 +287,7 @@ Memory::echo()
 }
 
 void
-Memory::echoByBytes()
+Memory::echoByBytes() const
 //******************************************************************************
 //  Echo memory entries sorted by Bytes
 //! \author J. Bakosi
@@ -307,7 +308,7 @@ Memory::echoByBytes()
 }
 
 void
-Memory::echoByNumber()
+Memory::echoByNumber() const
 //******************************************************************************
 //  Echo memory entries sorted by Number
 //! \author J. Bakosi
@@ -329,7 +330,7 @@ Memory::echoByNumber()
 
 
 void
-Memory::echoByValue()
+Memory::echoByValue() const
 //******************************************************************************
 //  Echo memory entries sorted by Value
 //! \author J. Bakosi
@@ -350,7 +351,7 @@ Memory::echoByValue()
 }
 
 void
-Memory::echoByVariable()
+Memory::echoByVariable() const
 //******************************************************************************
 //  Echo memory entries sorted by Variable
 //! \author J. Bakosi
@@ -371,7 +372,7 @@ Memory::echoByVariable()
 }
 
 void
-Memory::echoByName()
+Memory::echoByName() const
 //******************************************************************************
 //  Echo memory entries sorted by Name
 //! \author J. Bakosi
@@ -392,7 +393,7 @@ Memory::echoByName()
 }
 
 void
-Memory::echoByPlot()
+Memory::echoByPlot() const
 //******************************************************************************
 //  Echo memory entries sorted by Plot
 //! \author J. Bakosi
@@ -413,7 +414,7 @@ Memory::echoByPlot()
 }
 
 void
-Memory::echoByRestart()
+Memory::echoByRestart() const
 //******************************************************************************
 //  Echo memory entries sorted by Restart
 //! \author J. Bakosi
@@ -434,7 +435,7 @@ Memory::echoByRestart()
 }
 
 size_t
-Memory::getNumber(MemoryEntry* id)
+Memory::getNumber(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the number of items based on the ID
 //! \param[in]  id  ID of the entry
@@ -455,7 +456,7 @@ Memory::getNumber(MemoryEntry* id)
 }
 
 size_t
-Memory::getNumber(const string& name)
+Memory::getNumber(const string& name) const
 //******************************************************************************
 //  Return the number of items based on the variable name
 //! \param[in]  name  name of the variable
@@ -468,7 +469,7 @@ Memory::getNumber(const string& name)
 }
 
 ValType
-Memory::getValue(MemoryEntry* id)
+Memory::getValue(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the value type based on the ID
 //! \param[in]  id  ID of the entry
@@ -489,7 +490,7 @@ Memory::getValue(MemoryEntry* id)
 }
 
 VarType
-Memory::getVariable(MemoryEntry* id)
+Memory::getVariable(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the variable type based on the ID
 //! \param[in]  id  ID of the entry
@@ -510,7 +511,7 @@ Memory::getVariable(MemoryEntry* id)
 }
 
 string
-Memory::getName(MemoryEntry* id)
+Memory::getName(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the variable name based on the ID
 //! \param[in]  id  ID of the entry
@@ -531,7 +532,7 @@ Memory::getName(MemoryEntry* id)
 }
 
 bool
-Memory::getPlot(MemoryEntry* id)
+Memory::getPlot(MemoryEntry* const id) const
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
 //! \param[in]  id  ID of the entry
@@ -552,7 +553,7 @@ Memory::getPlot(MemoryEntry* id)
 }
 
 bool
-Memory::getRestart(MemoryEntry* id)
+Memory::getRestart(MemoryEntry* const id) const
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
 //! \param[in]  id  ID of the entry
@@ -573,7 +574,7 @@ Memory::getRestart(MemoryEntry* id)
 }
 
 const MemoryEntry*
-Memory::getID(const string& name)
+Memory::getID(const string& name) const
 //******************************************************************************
 //  Return the MemorySet key based on the variable name
 //! \param[in]  name  Name of the variable
@@ -593,7 +594,7 @@ Memory::getID(const string& name)
 }
 
 size_t
-Memory::getBytes()
+Memory::getBytes() const
 //******************************************************************************
 //  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
@@ -619,7 +620,7 @@ Memory::getBytes()
 }
 
 void
-Memory::zero(MemoryEntry* id)
+Memory::zero(MemoryEntry* const id) const
 //******************************************************************************
 //  Zero entry using multiple threads
 //! \author J. Bakosi
@@ -629,10 +630,10 @@ Memory::zero(MemoryEntry* id)
   Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
   // Get size of value type
-  size_t size = SizeOf[static_cast<int>(id->m_value)];
+  const size_t size = SizeOf[static_cast<int>(id->m_value)];
 
   // Compute chunk size
-  int i = id->m_number/m_nOMPthreads;
+  const int i = id->m_number/m_nOMPthreads;
 
   // Zero remaining portion
   memset(static_cast<char*>(id->m_ptr) + m_nOMPthreads*i*size,

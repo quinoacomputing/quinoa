@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:25:02 AM MDT
+  \date      Wed 24 Apr 2013 11:05:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -27,10 +27,12 @@ template< class V >
 struct Data {
   MemoryEntry* id;
   V* ptr;
+
   //! Null constructor
-  Data() : id(nullptr), ptr(nullptr) {}
+  explicit Data() : id(nullptr), ptr(nullptr) {}
   //! Data constructor
-  Data(MemoryEntry* Id, V* Ptr) : id(Id), ptr(Ptr) {}
+  explicit Data(MemoryEntry* const Id, V* const Ptr) : id(Id), ptr(Ptr) {}
+
   //! Operator [] is overloaded to access the elements behind ptr
   constexpr V& operator[] (const size_t index) const { return ptr[index]; }
   //! Operator + is overloaded to ease pointer arithmetic behind ptr
@@ -53,7 +55,7 @@ class Memory {
 
   public:
     //! Constructor
-    Memory(Paradigm* paradigm);
+    explicit Memory(Paradigm* const paradigm);
 
     //! Destructor
     ~Memory();
@@ -61,26 +63,28 @@ class Memory {
     //! Allocate memory entry and return both MemoryEntry* ID and raw pointer,
     //! template V specifies return pointer type
     template<class V>
-    Data<V> newEntry(size_t number,
-                     ValType value,
-                     VarType variable,
-                     string name,
-                     bool plot = false,
-                     bool restart = false) {
-      MemoryEntry* me = newEntry(number,value,variable,name,plot,restart);
+    Data<V> newEntry(const size_t number,
+                     const ValType value,
+                     const VarType variable,
+                     const string name,
+                     const bool plot = false,
+                     const bool restart = false) {
+      MemoryEntry* const me =
+        newEntry(number, value, variable, name, plot, restart);
       return Data<V>(me, getPtr<V>(me));
     }
 
     //! Allocate and zero memory entry and return both MemoryEntry* ID and raw
     //! pointer, template V specifies return pointer type
     template<class V>
-    Data<V> newZeroEntry(size_t number,
-                         ValType value,
-                         VarType variable,
-                         string name,
-                         bool plot = false,
-                         bool restart = false) {
-      MemoryEntry* me = newZeroEntry(number,value,variable,name,plot,restart);
+    Data<V> newZeroEntry(const size_t number,
+                         const ValType value,
+                         const VarType variable,
+                         const string name,
+                         const bool plot = false,
+                         const bool restart = false) {
+      MemoryEntry* const me =
+        newZeroEntry(number, value, variable, name, plot, restart);
       return Data<V>(me, getPtr<V>(me));
     }
 
@@ -95,32 +99,32 @@ class Memory {
     void freeAllEntries() noexcept;
 
     //! Echo all (optionally sorted) memory entries
-    void echoAllEntries(MemoryEntryField crit = UNSPECIFIED);
+    void echoAllEntries(const MemoryEntryField crit = UNSPECIFIED) const;
 
     //! Return the number of items based on the ID
-    size_t getNumber(MemoryEntry* id);
+    size_t getNumber(MemoryEntry* const id) const;
 
     //! Return the number of items based on the variable name
-    size_t getNumber(const string& name);
+    size_t getNumber(const string& name) const;
 
     //! Return the value type based on the ID
-    ValType getValue(MemoryEntry* id);
+    ValType getValue(MemoryEntry* const id) const;
 
     //! Return the variable type based on the ID
-    VarType getVariable(MemoryEntry* id);
+    VarType getVariable(MemoryEntry* const id) const;
 
     //! Return the variable name based on the ID
-    string getName(MemoryEntry* id);
+    string getName(MemoryEntry* const id) const;
 
     //! Return true if the variable can be plotted based on the ID
-    bool getPlot(MemoryEntry* id);
+    bool getPlot(MemoryEntry* const id) const;
 
     //! Return true if the variable is written to restart file based on the ID
-    bool getRestart(MemoryEntry* id);
+    bool getRestart(MemoryEntry* const id) const;
 
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
-    template<class V> V* getPtr(MemoryEntry* id) {
+    template<class V> V* getPtr(MemoryEntry* id) const {
       Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
       auto it = m_entry.find(id);
       Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
@@ -129,25 +133,25 @@ class Memory {
 
     //! Return the data pointer for memory entry based on the variable name,
     //! template V specifies return pointer type
-    template<class V> V* getPtr(const string& name) {
+    template<class V> V* getPtr(const string& name) const {
       return static_cast<V*>(getID(name)->m_ptr);
     }
 
     //! Return the pair of data pointer and number of variables for memory entry
     //! based on the variable name, template V specifies return pointer type
-    template<class V> pair<size_t,V*> getNumPtr(const string& name) {
-      const MemoryEntry* entry = getID(name);
+    template<class V> pair<size_t,V*> getNumPtr(const string& name) const {
+      const MemoryEntry* const entry = getID(name);
       return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
     }
 
     //! Return the MemorySet key based on the variable name
-    const MemoryEntry* getID(const string& name);
+    const MemoryEntry* getID(const string& name) const;
 
     //! Return the number of allocated bytes
-    size_t getBytes();
+    size_t getBytes() const;
 
     //! Zero entry using multiple threads
-    void zero(MemoryEntry* id);
+    void zero(MemoryEntry* const id) const;
 
   private:
     //! Don't permit copy constructor
@@ -160,32 +164,32 @@ class Memory {
     Memory& operator=(Memory&&) = delete;
 
     //! Allocate memory entry
-    MemoryEntry* newEntry(size_t number,
-                          ValType value,
-                          VarType variable,
-                          string name,
-                          bool plot = false,
-                          bool restart = false);
+    MemoryEntry* newEntry(const size_t number,
+                          const ValType value,
+                          const VarType variable,
+                          const string name,
+                          const bool plot = false,
+                          const bool restart = false);
 
     //! Allocate and zero memory entry
-    MemoryEntry* newZeroEntry(size_t number,
-                              ValType value,
-                              VarType variable,
-                              string name,
-                              bool plot = false,
-                              bool restart = false);
+    MemoryEntry* newZeroEntry(const size_t number,
+                              const ValType value,
+                              const VarType variable,
+                              const string name,
+                              const bool plot = false,
+                              const bool restart = false);
 
     //! Deallocate a memory entry
     void freeEntry(MemoryEntry* id);
 
-    void echo();                //!< Echo unsorted entries
-    void echoByBytes();         //!< Echo entries sorted by Bytes
-    void echoByNumber();        //!< Echo entries sorted by Number
-    void echoByValue();         //!< Echo entries sorted by Value
-    void echoByVariable();      //!< Echo entries sorted by Variable
-    void echoByName();          //!< Echo entries sorted by Name
-    void echoByPlot();          //!< Echo entries sorted by Plot
-    void echoByRestart();       //!< Echo entries sorted by Restart
+    void echo() const;          //!< Echo unsorted entries
+    void echoByBytes() const;   //!< Echo entries sorted by Bytes
+    void echoByNumber() const;  //!< Echo entries sorted by Number
+    void echoByValue() const;   //!< Echo entries sorted by Value
+    void echoByVariable() const;//!< Echo entries sorted by Variable
+    void echoByName() const;    //!< Echo entries sorted by Name
+    void echoByPlot() const;    //!< Echo entries sorted by Plot
+    void echoByRestart() const; //!< Echo entries sorted by Restart
 
     const int m_nOMPthreads;    //!< Number of OpenMP threads
 
