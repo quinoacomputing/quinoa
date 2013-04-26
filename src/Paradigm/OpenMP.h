@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Tue 13 Nov 2012 09:34:27 PM MST
+  \date      Fri Apr 26 16:44:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -18,14 +18,14 @@ class OpenMP {
 
   public:
     //! Constructor
-    OpenMP();
+    explicit OpenMP();
 
     //! Destructor
-    ~OpenMP() = default;
+    ~OpenMP() noexcept = default;
 
     //! Return true if compiled with OpenMP
     //! \return true if compiled with OpenMP enabled
-    bool available() const;
+    bool available() const { return m_available; }
 
     //! Query if OpenMP is used
     //! \return true if OpenMP is used
@@ -44,8 +44,9 @@ class OpenMP {
     //! Don't permit move assigment
     OpenMP& operator=(OpenMP&&) = delete;
 
-    bool m_used;                //!< True if OpenMP is used
-    int m_nthread;              //!< Number of OpenMP threads
+    const bool m_available;           //!< True if OpenMP is available
+    const bool m_used;                //!< True if OpenMP is used
+    const int m_nthread;              //!< Number of OpenMP threads
 };
 
 } // namespace Quinoa

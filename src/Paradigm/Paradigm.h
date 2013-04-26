@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 06:38:44 AM MST
+  \date      Fri Apr 26 16:47:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -20,13 +20,13 @@ class Paradigm {
 
   public:
     //! Constructor
-    Paradigm() = default;
+    explicit Paradigm() = default;
 
     //! Destructor
-    ~Paradigm() = default;
+    ~Paradigm() noexcept = default;
 
     //! Echo paradigm and configuration
-    void echo();
+    void echo() const;
 
     //! Query if OpenMP is available
     bool availOpenMP() const { return m_omp.available(); }
@@ -50,7 +50,7 @@ class Paradigm {
     //! Don't permit move assigment
     Paradigm& operator=(Paradigm&&) = delete;
 
-    OpenMP m_omp;       //!< OpenMP
+    const OpenMP m_omp;       //!< OpenMP
 };
 
 } // namespace Quinoa
