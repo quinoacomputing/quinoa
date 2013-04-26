@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Wed 24 Apr 2013 11:26:08 PM MDT
+  \date      Fri Apr 26 15:15:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -29,7 +29,7 @@ JPDF::JPDF(const int dim, const real binsize) :
   m_key.resize(dim);
 }
 
-JPDF::~JPDF()
+JPDF::~JPDF() noexcept
 //******************************************************************************
 //  Destructor: Clear joint PDF container
 //! \author J. Bakosi
@@ -39,19 +39,19 @@ JPDF::~JPDF()
 }
 
 void
-JPDF::insert(const vector<real>& value)
+JPDF::insert(const vector<real>& sample)
 //******************************************************************************
-//  Insert new value into joint PDF
-//! \param[in]   value    Value to insert
+//  Insert new sample into joint PDF
+//! \param[in]   sample    Sample to insert
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Make sure sample has the same dimension as the joint PDF
-  Assert(value.size() == m_key.size(),
+  Assert(sample.size() == m_key.size(),
          StatException,FATAL,STATEXCEPT_BAD_SAMPLE);
 
   // Find bin ids in all dimensions
-  transform(value.begin(), value.end(), m_key.begin(),
+  transform(sample.begin(), sample.end(), m_key.begin(),
             [&](const real& val)->int {
                return static_cast<int>(floor(val/m_binsize+0.5)); } );
 

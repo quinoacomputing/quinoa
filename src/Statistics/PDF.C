@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.C
   \author    J. Bakosi
-  \date      Wed 24 Apr 2013 11:22:15 PM MDT
+  \date      Fri Apr 26 15:16:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -26,7 +26,7 @@ PDF::PDF(const real& binsize) :
 {
 }
 
-PDF::~PDF()
+PDF::~PDF() noexcept
 //******************************************************************************
 //  Destructor: Clear joint PDF container
 //! \author J. Bakosi
@@ -36,10 +36,10 @@ PDF::~PDF()
 }
 
 void
-PDF::insert(const real& value)
+PDF::insert(const real& sample)
 //******************************************************************************
-//  Insert new value into joint PDF
-//! \param[in]   value    Value to insert
+//  Insert new sample into joint PDF
+//! \param[in]   sample    Value to insert
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -47,5 +47,5 @@ PDF::insert(const real& value)
   ++m_nsample;
 
   // Add sample to joint PDF
-  ++m_pdf[floor(value/m_binsize+0.5)];
+  ++m_pdf[floor(sample/m_binsize+0.5)];
 }
