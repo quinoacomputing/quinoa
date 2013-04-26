@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 09:23:54 AM MST
+  \date      Fri Apr 26 12:57:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-ModelException::handleException(Driver* driver)
+ModelException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle ModelException
 //! \author J. Bakosi

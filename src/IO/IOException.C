@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:20:50 AM MST
+  \date      Fri Apr 26 12:55:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class definition
   \details   IOException class definition
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-IOException::handleException(Driver* driver)
+IOException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle IOException
 //! \author J. Bakosi

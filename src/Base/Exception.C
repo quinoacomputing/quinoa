@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:57:10 PM MST
+  \date      Fri Apr 26 12:55:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -18,7 +18,7 @@
 using namespace Quinoa;
 
 string
-Exception::genericWhat()
+Exception::genericWhat() const
 //******************************************************************************
 //  Generate generic exception message
 //! \author J. Bakosi
@@ -32,7 +32,7 @@ Exception::genericWhat()
 }
 
 string
-Exception::runtimeWhat()
+Exception::runtimeWhat() const
 //******************************************************************************
 //  Generate std::runtime_error exception message
 //! \author J. Bakosi
@@ -45,7 +45,7 @@ Exception::runtimeWhat()
 }
 
 ErrCode
-Exception::handleException(Driver* driver)
+Exception::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle Exception: Print cumulative message and handle criticality
 //! \author J. Bakosi

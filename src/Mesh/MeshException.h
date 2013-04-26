@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 09:43:20 AM MDT
+  \date      Fri Apr 26 14:53:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -41,36 +41,32 @@ class MeshException : public Exception {
 
   public:
     //! Constructor without message
-    MeshException(ExceptType except,
-                  MeshExceptType mshExcept,
-                  const string& file,
-                  const string& func,
-                  const unsigned int& line) :
+    explicit MeshException(const ExceptType except,
+                           const MeshExceptType mshExcept,
+                           const string& file,
+                           const string& func,
+                           const unsigned int& line) :
       Exception(except, file, func, line), m_except(mshExcept) {}
 
     //! Constructor with message from thrower
-    MeshException(ExceptType except,
-                  MeshExceptType mshExcept,
-                  const string throwerMsg,
-                  const string& file,
-                  const string& func,
-                  const unsigned int& line) :
+    explicit MeshException(const ExceptType except,
+                           const MeshExceptType mshExcept,
+                           const string throwerMsg,
+                           const string& file,
+                           const string& func,
+                           const unsigned int& line) :
       Exception(except, file, func, line),
       m_throwerMsg(throwerMsg),
       m_except(mshExcept) {}
 
-    // ICC: the above can be done with delegate constructors, like
-    //MeshException(ExceptType except, MeshExceptType meshExcept) :
-    //  MeshException(except, meshExcept, 0) {}
-
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     MeshException(MeshException&&) = default;
 
     //! Destructor
-    virtual ~MeshException() {}
+    virtual ~MeshException() noexcept = default;
 
     //! Handle MeshException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! Message from thrower
@@ -85,7 +81,7 @@ class MeshException : public Exception {
     MeshException& operator=(MeshException&&) = delete;
 
     //! Mesh exception type (BAD_FORMAT, BAD_ELEMENT, etc.)
-    MeshExceptType m_except;
+    const MeshExceptType m_except;
 };
 
 } // namespace Quinoa

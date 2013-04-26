@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.C
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 09:44:17 AM MDT
+  \date      Fri Apr 26 12:58:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics exception
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-StatException::handleException(Driver* driver)
+StatException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle StatException
 //! \author J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:16:55 PM MST
+  \date      Fri Apr 26 14:48:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -50,21 +50,21 @@ class MemoryException : public Exception {
 
   public:
     //! Constructor
-    MemoryException(ExceptType except,
-                    MemExceptType memExcept,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+    explicit MemoryException(const ExceptType except,
+                             const MemExceptType memExcept,
+                             const string& file,
+                             const string& func,
+                             const unsigned int& line) :
       Exception(except, file, func, line), m_except(memExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     MemoryException(MemoryException&&) = default;
 
     //! Destructor
-    //virtual ~MemoryException() {}
+    virtual ~MemoryException() noexcept = default;
 
     //! Handle MemoryException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   private:
     //! Don't permit copy constructor
@@ -75,7 +75,7 @@ class MemoryException : public Exception {
     MemoryException& operator=(MemoryException&&) = delete;
 
     //! Memory exception type (BAD_ALLOC, BAD_INSERT, BAD_NAME, etc.)
-    MemExceptType m_except;
+    const MemExceptType m_except;
 };
 
 } // namespace Quinoa

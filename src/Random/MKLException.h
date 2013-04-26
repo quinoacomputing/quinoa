@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:19:26 PM MST
+  \date      Fri Apr 26 15:02:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -45,25 +45,25 @@ class MKLException : public RandomException {
 
   public:
     //! Constructor
-    MKLException(ExceptType except,
-                 MKLExceptType mklExcept,
-                 const string& file,
-                 const string& func,
-                 const unsigned int& line) :
+    explicit MKLException(const ExceptType except,
+                          const MKLExceptType mklExcept,
+                          const string& file,
+                          const string& func,
+                          const unsigned int& line) :
       RandomException(except, RND_MKL, file, func, line), m_except(mklExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     MKLException(MKLException&&) = default;
 
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    MKLException(const MKLException&);
-
     //! Destructor
-    //virtual ~MKLException() {}
+    virtual ~MKLException() noexcept = default;
 
     //! Handle MKLException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
+
+  protected:
+    //! Permit copy constructor only for children
+    MKLException(const MKLException&) = default;
 
   private:
     //! Don't permit copy assignment
@@ -72,7 +72,7 @@ class MKLException : public RandomException {
     MKLException& operator=(MKLException&&) = delete;
 
     //! MKL exception type (MKL_UNIMPLEMENTED, MKL_UNKNOWN_METHOD, etc.)
-    MKLExceptType m_except;
+    const MKLExceptType m_except;
 };
 
 } // namespace Quinoa

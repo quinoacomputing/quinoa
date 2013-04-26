@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.C
   \author    J. Bakosi
-  \date      Wed 30 Jan 2013 07:02:52 PM MST
+  \date      Fri Apr 26 12:57:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-ParserException::handleException(Driver* driver)
+ParserException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle ParserException
 //! \author J. Bakosi

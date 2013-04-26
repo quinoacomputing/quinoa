@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:21:01 AM MST
+  \date      Fri Apr 26 12:57:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class definition
   \details   MeshException class definition
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-MeshException::handleException(Driver* driver)
+MeshException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle MeshException
 //! \author J. Bakosi

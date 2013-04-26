@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:21:11 AM MST
+  \date      Fri Apr 26 12:58:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class definition
   \details   RandomException class definition
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-RandomException::handleException(Driver* driver)
+RandomException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle RandomException
 //! \author J. Bakosi
