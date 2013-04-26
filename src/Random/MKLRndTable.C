@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 06:23:10 AM MST
+  \date      Fri Apr 26 16:04:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -65,7 +65,7 @@ MKLRndTable::MKLRndTable(Memory* const memory,
   m_rnd = m_memory->newEntry<real>(number, REAL, SCALAR, name);
 }
 
-MKLRndTable::~MKLRndTable()
+MKLRndTable::~MKLRndTable() noexcept
 //******************************************************************************
 //  Destructor: Destroy random number table
 //! \author  J. Bakosi
@@ -94,7 +94,7 @@ MKLRndTable::~MKLRndTable()
 
 
 void
-MKLRndTable::generate()
+MKLRndTable::generate() const
 //******************************************************************************
 //  Regenerate random numbers in a table
 //! \author  J. Bakosi

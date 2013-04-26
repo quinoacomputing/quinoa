@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 05:16:41 PM MDT
+  \date      Fri Apr 26 16:02:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -44,7 +44,7 @@ MKLRndStream::MKLRndStream(const int nthread,
   }
 }
 
-MKLRndStream::~MKLRndStream()
+MKLRndStream::~MKLRndStream() noexcept
 //******************************************************************************
 //  Destructor: Destroy random number generator leap-frog stream
 //! \author  J. Bakosi
