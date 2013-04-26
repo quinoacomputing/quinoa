@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 07:23:37 PM MDT
+  \date      Fri Apr 26 16:30:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -64,7 +64,7 @@ Dirichlet::Dirichlet(Memory* const memory,
                                           "allScalars");
 }
 
-Dirichlet::~Dirichlet()
+Dirichlet::~Dirichlet() noexcept
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -84,7 +84,7 @@ Dirichlet::~Dirichlet()
 }
 
 void
-Dirichlet::echo()
+Dirichlet::echo() const
 //******************************************************************************
 //  Echo information on Dirichlet model
 //! \author  J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:03:02 PM MDT
+  \date      Fri Apr 26 16:21:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -26,16 +26,16 @@ class Model {
 
   public:
     //! Constructor
-    Model(Memory* const memory,
-          Paradigm* const paradigm,
-          Control* const control,
-          const string& name);
+    explicit Model(Memory* const memory,
+                   Paradigm* const paradigm,
+                   Control* const control,
+                   const string& name);
 
     //! Destructor
-    virtual ~Model() {}
+    virtual ~Model() noexcept = default;
 
     //! Name accessor
-    const string& name() { return m_name; }
+    const string& name() const { return m_name; }
 
     //! Interface to accessor to number of particle properties
     virtual int nprop() const = 0;
