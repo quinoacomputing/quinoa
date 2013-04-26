@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 10:57:35 AM MDT
+  \date      Fri Apr 26 17:00:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -24,7 +24,7 @@ class Parser {
 
   public:
     //! Constructor
-    Parser(const string& filename, Control* const control);
+    explicit Parser(const string& filename, Control* const control);
 
     //! Destructor
     ~Parser() = default;
@@ -33,7 +33,7 @@ class Parser {
     void parse();
 
     //! Echo information on stuff parsed
-    void echo();
+    void echo() const;
 
   private:
     //! Don't permit copy constructor
@@ -49,10 +49,10 @@ class Parser {
     void unique(vector<control::Product>& statistics);
 
     //! Echo material mix block
-    void echoMix();
+    void echoMix() const;
 
     //! Echo hydrodynamics block
-    void echoHydro();
+    void echoHydro() const;
 
     const string m_filename;            //!< Name of file to parse
     Control* const m_control;           //!< Main control category

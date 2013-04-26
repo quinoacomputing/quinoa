@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 01 Apr 2013 08:39:11 PM MDT
+  \date      Fri Apr 26 17:00:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -79,7 +79,7 @@ Parser::unique(vector<control::Product>& statistics)
 }
 
 void
-Parser::echoMix()
+Parser::echoMix() const
 //******************************************************************************
 //  Echo parsed data from material mix block
 //! \author  J. Bakosi
@@ -189,7 +189,7 @@ Parser::echoMix()
 }
 
 void
-Parser::echoHydro()
+Parser::echoHydro() const
 //******************************************************************************
 //  Echo parsed data from hydrodynamics block
 //! \author  J. Bakosi
@@ -274,7 +274,7 @@ Parser::echoHydro()
 }
 
 void
-Parser::echo()
+Parser::echo() const
 //******************************************************************************
 //  Echo information on stuff parsed
 //! \author  J. Bakosi
