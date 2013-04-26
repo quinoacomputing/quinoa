@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 01:07:32 PM MDT
+  \date      Fri Apr 26 16:32:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -67,7 +67,7 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
                                           "allScalars");
 }
 
-GeneralizedDirichlet::~GeneralizedDirichlet()
+GeneralizedDirichlet::~GeneralizedDirichlet() noexcept
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -87,7 +87,7 @@ GeneralizedDirichlet::~GeneralizedDirichlet()
 }
 
 void
-GeneralizedDirichlet::echo()
+GeneralizedDirichlet::echo() const
 //******************************************************************************
 //  Echo information on the generalized Dirichlet model
 //! \author  J. Bakosi

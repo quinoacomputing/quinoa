@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:06:35 PM MDT
+  \date      Fri Apr 26 16:32:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -30,15 +30,15 @@ class GeneralizedDirichlet : public Mix {
 
   public:
     //! Constructor
-    GeneralizedDirichlet(Memory* const memory,
-                         Paradigm* const paradigm,
-                         Control* const control);
+    explicit GeneralizedDirichlet(Memory* const memory,
+                                  Paradigm* const paradigm,
+                                  Control* const control);
 
     //! Destructor
-    virtual ~GeneralizedDirichlet();
+    virtual ~GeneralizedDirichlet() noexcept;
 
     //! Echo information on Generalized Dirichlet model
-    virtual void echo();
+    virtual void echo() const;
 
     //! Initialize particles
     virtual void init();
@@ -50,6 +50,7 @@ class GeneralizedDirichlet : public Mix {
     virtual void jpdf(JPDF& jpdf);
 
     //! Constant accessor to particle properties (scalars) pointer
+    //! \return Number of particle scalars
     virtual const real* particles() const { return m_allScalars.ptr; }
 
   private:

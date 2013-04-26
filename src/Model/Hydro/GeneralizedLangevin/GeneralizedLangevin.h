@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:21:47 PM MDT
+  \date      Fri Apr 26 16:25:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -28,12 +28,12 @@ class GeneralizedLangevin : public Hydro {
 
   public:
     //! Constructor
-    GeneralizedLangevin(Memory* const memory,
-                        Paradigm* const paradigm,
-                        Control* const control);
+    explicit GeneralizedLangevin(Memory* const memory,
+                                 Paradigm* const paradigm,
+                                 Control* const control);
 
     //! Destructor
-    virtual ~GeneralizedLangevin() {}
+    virtual ~GeneralizedLangevin() noexcept = default;
 
     //! Initialize particles
     virtual void init();
@@ -42,9 +42,10 @@ class GeneralizedLangevin : public Hydro {
     virtual void advance(const real dt);
 
     //! Echo information on the generalized Langevin model
-    virtual void echo();
+    virtual void echo() const;
 
     //! Constant accessor to particle properties pointer
+    //! \return Particle pointer
     virtual const real* particles() const { return m_particles.ptr; }    
 
   private:

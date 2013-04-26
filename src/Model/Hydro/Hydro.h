@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:18:22 PM MDT
+  \date      Fri Apr 26 16:24:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -23,18 +23,15 @@ using namespace std;
 //! Hydro model base
 class Hydro : public Model {
 
-  //! Number of particle properties for hydrodynamics: position + velocity
-  const int NPROP = 6;
-
   public:
     //! Constructor
-    Hydro(Memory* const memory,
-          Paradigm* const paradigm,
-          Control* const control,
-          const string& name);
+    explicit Hydro(Memory* const memory,
+                   Paradigm* const paradigm,
+                   Control* const control,
+                   const string& name);
 
     //! Destructor
-    virtual ~Hydro() {}
+    virtual ~Hydro() noexcept = default;
 
     //! Interface for initializing particles
     virtual void init() = 0;
@@ -43,7 +40,7 @@ class Hydro : public Model {
     virtual void advance(const real dt) = 0;
 
     //! Interface for echo information on hydro model
-    virtual void echo() = 0;
+    virtual void echo() const = 0;
 
     //! Accessor to number of particle properties
     virtual int nprop() const { return m_nprop; }

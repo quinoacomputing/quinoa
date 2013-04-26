@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:03:58 PM MDT
+  \date      Fri Apr 26 16:30:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -30,12 +30,12 @@ class Dirichlet : public Mix {
 
   public:
     //! Constructor
-    Dirichlet(Memory* const memory,
-              Paradigm* const paradigm,
-              Control* const control);
+    explicit Dirichlet(Memory* const memory,
+                       Paradigm* const paradigm,
+                       Control* const control);
 
     //! Destructor
-    virtual ~Dirichlet();
+    virtual ~Dirichlet() noexcept;
 
     //! Initialize particles
     virtual void init();
@@ -44,12 +44,13 @@ class Dirichlet : public Mix {
     virtual void advance(const real dt);
 
     //! Echo information on Dirichlet model
-    virtual void echo();
+    virtual void echo() const;
 
     //! Estimate joint scalar PDF
     virtual void jpdf(JPDF& jpdf);
 
     //! Constant accessor to particle properties (scalars) pointer
+    //! \return Number of particle scalars
     virtual const real* particles() const { return m_allScalars.ptr; }
 
   private:

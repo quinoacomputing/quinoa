@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Mon 01 Apr 2013 08:38:19 PM MDT
+  \date      Fri Apr 26 16:35:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iomanip>
 
+#include <Macro.h>
 #include <Memory.h>
 #include <MemoryException.h>
 #include <ControlTypes.h>
@@ -210,6 +211,7 @@ HomHydro::outJpdf(const real t)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  IGNORE(t);
 //   // Contruct filename
 //   stringstream ss;
 //   ss << m_control->get<control::PDFNAME>() << "." << t << ".msh";

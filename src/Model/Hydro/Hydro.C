@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 04:30:48 PM MDT
+  \date      Fri Apr 26 16:23:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model base
   \details   Hydro model base
@@ -20,7 +20,7 @@ Hydro::Hydro(Memory* const memory,
              Control* const control,
              const string& name) :
   Model(memory, paradigm, control, name),
-  m_nprop(NPROP),
+  m_nprop(6),
   m_npar(control->get<control::NPAR>())
 //******************************************************************************
 //  Constructor

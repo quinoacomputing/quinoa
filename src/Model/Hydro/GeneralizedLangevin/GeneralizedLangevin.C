@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:00:58 PM MDT
+  \date      Fri Apr 26 16:36:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+#include <Macro.h>
 #include <GeneralizedLangevin.h>
 #include <Hydro.h>
 
@@ -32,7 +33,7 @@ GeneralizedLangevin::GeneralizedLangevin(Memory* const memory,
 }
 
 void
-GeneralizedLangevin::echo()
+GeneralizedLangevin::echo() const
 //******************************************************************************
 //  Echo information on the generalized Langevin model
 //! \author  J. Bakosi
@@ -57,4 +58,5 @@ GeneralizedLangevin::advance(const real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  IGNORE(dt);
 }

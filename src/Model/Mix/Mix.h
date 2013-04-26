@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:03:22 PM MDT
+  \date      Fri Apr 26 16:29:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -26,13 +26,13 @@ class Mix : public Model {
 
   public:
     //! Constructor
-    Mix(Memory* const memory,
-        Paradigm* const paradigm,
-        Control* const control,
-        const string& name);
+    explicit Mix(Memory* const memory,
+                 Paradigm* const paradigm,
+                 Control* const control,
+                 const string& name);
 
     //! Destructor
-    virtual ~Mix() {}
+    virtual ~Mix() noexcept = default;
 
     //! Interface for initializing particles
     virtual void init() = 0;
@@ -41,12 +41,13 @@ class Mix : public Model {
     virtual void advance(const real dt) = 0;
 
     //! Interface for echo information on mix model
-    virtual void echo() = 0;
+    virtual void echo() const = 0;
 
-    //! Interface for estimate joint scalar PDF
+    //! Interface for estimating the joint scalar PDF
     virtual void jpdf(JPDF& jpdf) = 0;
 
     //! Accessor to number of particle properties (scalars)
+    //! \return Number of particle scalars
     virtual int nprop() const { return m_nscalar; }
 
   protected:
