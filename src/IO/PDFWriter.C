@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:26:11 AM MDT
+  \date      Fri Apr 26 16:56:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -31,7 +31,7 @@ PDFWriter::PDFWriter(const string filename) :
   Assert(m_outPDF.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
-PDFWriter::~PDFWriter()
+PDFWriter::~PDFWriter() noexcept
 //******************************************************************************
 //  Destructor: Release PDF file handle
 //! \author J. Bakosi
