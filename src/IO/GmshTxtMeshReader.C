@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 11 Nov 2012 11:42:09 AM MST
+  \date      Fri Apr 26 15:53:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -17,9 +17,9 @@
 
 using namespace Quinoa;
 
-GmshTxtMeshReader::GmshTxtMeshReader(string filename,
-                                     UnsMesh* mesh,
-                                     Memory* memory) :
+GmshTxtMeshReader::GmshTxtMeshReader(const string filename,
+                                     UnsMesh* const mesh,
+                                     Memory* const memory) :
   MeshReader(filename, mesh, memory),
   m_nnodes(0), m_nLins(0), m_nTris(0), m_nodeCnt(0), m_linCnt(0), m_triCnt(0)
 //******************************************************************************

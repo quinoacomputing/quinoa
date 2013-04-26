@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:12:10 PM MDT
+  \date      Fri Apr 26 15:50:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -16,7 +16,9 @@
 
 using namespace Quinoa;
 
-MeshReader::MeshReader(string filename, UnsMesh* mesh, Memory* memory) :
+MeshReader::MeshReader(const string filename,
+                       UnsMesh* const mesh,
+                       Memory* const memory) :
   m_filename(filename), m_mesh(mesh), m_memory(memory)
 //******************************************************************************
 //  Constructor: Acquire mesh file handle
@@ -27,7 +29,7 @@ MeshReader::MeshReader(string filename, UnsMesh* mesh, Memory* memory) :
   Assert(m_inMesh.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
-MeshReader::~MeshReader()
+MeshReader::~MeshReader() noexcept
 //******************************************************************************
 //  Destructor: Release mesh file handle
 //! \author J. Bakosi
