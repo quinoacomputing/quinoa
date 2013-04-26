@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:33:15 PM MDT
+  \date      Fri Apr 26 17:32:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -108,7 +108,7 @@ Statistics::Statistics(Memory* const memory,
   } // if (m_nord)
 }
 
-Statistics::~Statistics()
+Statistics::~Statistics() noexcept
 //******************************************************************************
 //  Destructor
 //! \author J. Bakosi
