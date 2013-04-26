@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:10:21 PM MDT
+  \date      Fri Apr 26 15:22:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -88,14 +88,14 @@ class MemoryEntry {
     friend class Memory;
 
     //! Constructor: fill in all fields
-    MemoryEntry(size_t bytes,
-                size_t number,
-                ValType value,
-                VarType variable,
-                string name,
-                bool plot,
-                bool restart,
-                void* ptr) :
+    explicit MemoryEntry(const size_t bytes,
+                         const size_t number,
+                         const ValType value,
+                         const VarType variable,
+                         const string name,
+                         const bool plot,
+                         const bool restart,
+                         void* ptr) :
       m_bytes(bytes),
       m_number(number),
       m_value(value),
@@ -120,16 +120,17 @@ class MemoryEntry {
     MemoryEntry& operator=(MemoryEntry&&) = delete;
 
     //! One-liner accessor for all fields
-    string line();
+    string line() const;
  
-    size_t m_bytes;           //!< Size in bytes (number of chars) allocated
-    size_t m_number;          //!< Number of items
-    ValType m_value;          //!< Value type (BOOL, INT, etc.)
-    VarType m_variable;       //!< Variable type (SCALAR, VECTOR, etc.)
-    string m_name;            //!< Variable name
-    bool m_plot;              //!< Variable can be plotted
-    bool m_restart;           //!< Write to restart file
-    void* m_ptr;              //!< Pointer to data
+    const size_t m_bytes;       //!< Size in bytes (number of chars) allocated
+    const size_t m_number;      //!< Number of items
+    const ValType m_value;      //!< Value type (BOOL, INT, etc.)
+    const VarType m_variable;   //!< Variable type (SCALAR, VECTOR, etc.)
+    const string m_name;        //!< Variable name
+    const bool m_plot;          //!< Variable can be plotted
+    const bool m_restart;       //!< Write to restart file
+
+    void* m_ptr;                //!< Pointer to data
 };
 
 } // namespace Quinoa
