@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:09:24 PM MDT
+  \date      Fri Apr 26 17:32:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -31,13 +31,13 @@ class Statistics {
 
   public:
     //! Constructor
-    Statistics(Memory* const memory,
-               Paradigm* const paradigm,
-               Control* const control,
-               Model* const model);
+    explicit Statistics(Memory* const memory,
+                        Paradigm* const paradigm,
+                        Control* const control,
+                        Model* const model);
 
     //! Destructor
-    virtual ~Statistics();
+    virtual ~Statistics() noexcept;
 
     //! Accumulate statistics
     void accumulate();
