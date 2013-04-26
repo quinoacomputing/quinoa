@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Sun 10 Mar 2013 08:16:45 PM MDT
+  \date      Fri Apr 26 17:18:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -22,22 +22,21 @@ using namespace std;
 namespace Quinoa {
 
 //! GmshTxtPlotWriter : PlotWriter
-class GmshTxtPlotWriter : private PlotWriter {
+class GmshTxtPlotWriter : PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    GmshTxtPlotWriter(string filename, UnsMesh* mesh, Memory* memory) :
-      PlotWriter(filename) {}
+    explicit GmshTxtPlotWriter(const string filename,
+                               UnsMesh* const mesh,
+                               Memory* const memory) :
+      PlotWriter(filename), m_mesh(mesh), m_memory(memory) {}
 
     //! Destructor: Release plot file handle
-    ~GmshTxtPlotWriter() = default;
+    ~GmshTxtPlotWriter() noexcept = default;
 
   protected:
-    //! Mesh object pointer
-    UnsMesh* m_mesh;
-
-    //! Memory object pointer
-    Memory* m_memory;
+    UnsMesh* const m_mesh;              //!< Mesh object pointer
+    Memory* const m_memory;             //!< Memory object pointer
 
   private:
     //! Don't permit copy constructor

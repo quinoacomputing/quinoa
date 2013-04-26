@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:16:43 AM MDT
+  \date      Fri Apr 26 17:11:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -26,7 +26,7 @@ PlotWriter::PlotWriter(const string& filename) : m_filename(filename)
   Assert(m_outPlot.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
-PlotWriter::~PlotWriter()
+PlotWriter::~PlotWriter() noexcept
 //******************************************************************************
 //  Destructor: Release plot file handle
 //! \author J. Bakosi
