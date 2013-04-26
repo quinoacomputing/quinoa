@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/Random.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:31:52 PM MDT
+  \date      Fri Apr 26 17:19:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -20,10 +20,10 @@ class Random {
 
   public:
     //! Constructor: Default, compiler generated
-    Random() = default;
+    explicit Random() = default;
 
     //! Destructor: Default, compiler generated
-    ~Random() = default;
+    virtual ~Random() noexcept = default;
 
   private:
     //! Don't permit copy constructor

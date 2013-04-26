@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Fri Apr 26 14:35:55 2013
+  \date      Fri Apr 26 17:20:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -28,7 +28,7 @@ MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) :
 {
 }
 
-MKLRandom::~MKLRandom()
+MKLRandom::~MKLRandom() noexcept
 //******************************************************************************
 //  Destructor: Free all random number tables and streams
 //! \author  J. Bakosi
