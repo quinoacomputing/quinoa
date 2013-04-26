@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed 24 Apr 2013 11:05:02 PM MDT
+  \date      Fri Apr 26 15:28:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -122,28 +122,6 @@ class Memory {
     //! Return true if the variable is written to restart file based on the ID
     bool getRestart(MemoryEntry* const id) const;
 
-    //! Return data pointer for memory entry based on ID,
-    //! template V specifies return pointer type
-    template<class V> V* getPtr(MemoryEntry* id) const {
-      Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-      auto it = m_entry.find(id);
-      Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
-      return static_cast<V*>((*it)->m_ptr);
-    }
-
-    //! Return the data pointer for memory entry based on the variable name,
-    //! template V specifies return pointer type
-    template<class V> V* getPtr(const string& name) const {
-      return static_cast<V*>(getID(name)->m_ptr);
-    }
-
-    //! Return the pair of data pointer and number of variables for memory entry
-    //! based on the variable name, template V specifies return pointer type
-    template<class V> pair<size_t,V*> getNumPtr(const string& name) const {
-      const MemoryEntry* const entry = getID(name);
-      return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
-    }
-
     //! Return the MemorySet key based on the variable name
     const MemoryEntry* getID(const string& name) const;
 
@@ -178,6 +156,28 @@ class Memory {
                               const string name,
                               const bool plot = false,
                               const bool restart = false);
+
+    //! Return data pointer for memory entry based on ID,
+    //! template V specifies return pointer type
+    template<class V> V* getPtr(MemoryEntry* id) const {
+      Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
+      auto it = m_entry.find(id);
+      Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+      return static_cast<V*>((*it)->m_ptr);
+    }
+
+    //! Return the data pointer for memory entry based on the variable name,
+    //! template V specifies return pointer type
+    template<class V> V* getPtr(const string& name) const {
+      return static_cast<V*>(getID(name)->m_ptr);
+    }
+
+    //! Return the pair of data pointer and number of variables for memory entry
+    //! based on the variable name, template V specifies return pointer type
+    template<class V> pair<size_t,V*> getNumPtr(const string& name) const {
+      const MemoryEntry* const entry = getID(name);
+      return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
+    }
 
     //! Deallocate a memory entry
     void freeEntry(MemoryEntry* id);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.C
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:11:38 PM MDT
+  \date      Fri Apr 26 15:21:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryEntry base class definition
   \details   Memoryentry base class definition
@@ -19,7 +19,7 @@ using namespace std;
 using namespace Quinoa;
 
 string
-MemoryEntry::line()
+MemoryEntry::line() const
 //******************************************************************************
 //  One-liner returning all fields
 //  \return  One line info of a memory entry
