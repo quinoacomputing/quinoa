@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/StrMesh.h
   \author    J. Bakosi
-  \date      Wed 17 Oct 2012 07:28:58 PM MDT
+  \date      Fri Apr 26 15:40:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Structured mesh class declaration
   \details   Structured mesh class declaration
@@ -20,10 +20,10 @@ class StrMesh : Mesh {
 
   public:
     //! Constructor, default compiler generated
-    StrMesh() = default;
+    explicit StrMesh() = default;
 
     //! Destructor, default compiler generated
-    ~StrMesh() = default;
+    virtual ~StrMesh() noexcept = default;
 
   private:
     //! Don't permit copy constructor

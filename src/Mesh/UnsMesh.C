@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 10:56:27 AM MST
+  \date      Fri Apr 26 15:42:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -17,7 +17,7 @@
 
 using namespace Quinoa;
 
-UnsMesh::UnsMesh(Memory* memory) : m_memory(memory)
+UnsMesh::UnsMesh(Memory* const memory) : m_memory(memory)
 //******************************************************************************
 //  Constructor: zero memory entry pointers held
 //! \author J. Bakosi
@@ -25,7 +25,7 @@ UnsMesh::UnsMesh(Memory* memory) : m_memory(memory)
 {
 }
 
-UnsMesh::~UnsMesh()
+UnsMesh::~UnsMesh() noexcept
 //******************************************************************************
 //  Destructor: free memory mesh entries held and containers
 //! \author J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 10:30:30 AM MST
+  \date      Fri Apr 26 15:46:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -29,10 +29,10 @@ class UnsMesh : private Mesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    UnsMesh(Memory* memory);
+    explicit UnsMesh(Memory* const memory);
 
     //! Destructor: free memory entries held
-    ~UnsMesh();
+    virtual ~UnsMesh() noexcept;
 
     //! Set mesh version
     void setVersion(const real version) { m_version = version; }
@@ -110,7 +110,7 @@ class UnsMesh : private Mesh {
     //! Don't permit move assignment
     UnsMesh& operator=(UnsMesh&&) = delete;
 
-    Memory* m_memory;                      //!< Memory object pointer
+    Memory* const m_memory;                //!< Memory object pointer
 
     real m_version;                        //!< Mesh version in mesh file
     int m_type;                            //!< File type in mesh file

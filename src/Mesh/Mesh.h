@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Fri 19 Oct 2012 04:12:50 PM MDT
+  \date      Fri Apr 26 15:48:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -16,8 +16,8 @@
 namespace Quinoa {
 
 //! Mesh dimension
-enum class MeshDim { TWOD=0,
-                     THREED,
+enum class MeshDim { TWO=0,
+                     THREE,
                      NUM_MESH_DIM
 };
 //! Number of mesh dimensions
@@ -26,17 +26,15 @@ const int NUM_MESH_DIM = static_cast<int>(MeshDim::NUM_MESH_DIM);
 //! Mesh base class
 class Mesh {
 
-  public:
-    //! Constructor, default compiler generated
-    // ICC wants it public
-    Mesh() = default;
-
   protected:
+    //! Constructor, default compiler generated
+    explicit Mesh() : m_dim(MeshDim::THREE) {}
+
     //! Destructor, default compiler generated
-    ~Mesh() = default;
+    virtual ~Mesh() noexcept = default;
 
     //! Set mesh dimension
-    void setDim(MeshDim dim);
+    void setDim(const MeshDim dim);
 
   private:
     //! Don't permit copy constructor
