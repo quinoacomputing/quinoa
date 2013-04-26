@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:42:07 AM MDT
+  \date      Fri Apr 26 17:06:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -32,16 +32,16 @@ class HomMix : public Physics {
 
   public:
     //! Constructor
-    HomMix(Memory* const memory,
-           Paradigm* const paradigm,
-           Control* const control,
-           Timer* const timer);
+    explicit HomMix(Memory* const memory,
+                    Paradigm* const paradigm,
+                    Control* const control,
+                    Timer* const timer);
 
     //! Destructor
-    virtual ~HomMix();
+    virtual ~HomMix() noexcept;
 
     //! Echo informaion on model
-    virtual void echo();
+    virtual void echo() const;
 
     //! Initialize model
     virtual void init();
@@ -63,7 +63,7 @@ class HomMix : public Physics {
     void outJpdf(const real t);
 
     //! One-liner report
-    void reportHeader();
+    void reportHeader() const;
     void report(const int it,
                 const int nstep,
                 const real t,

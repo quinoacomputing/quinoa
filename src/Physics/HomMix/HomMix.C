@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:46:19 AM MDT
+  \date      Fri Apr 26 17:05:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -80,7 +80,7 @@ HomMix::HomMix(Memory* const memory,
   Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-HomMix::~HomMix()
+HomMix::~HomMix() noexcept
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -152,7 +152,7 @@ HomMix::solve()
 }
 
 void
-HomMix::reportHeader()
+HomMix::reportHeader() const
 //******************************************************************************
 //  Echo report header
 //! \author  J. Bakosi
@@ -228,7 +228,7 @@ HomMix::outJpdf(const real t)
 }
 
 void
-HomMix::echo()
+HomMix::echo() const
 //******************************************************************************
 //  Echo informaion on homogeneous material mix
 //! \author  J. Bakosi
