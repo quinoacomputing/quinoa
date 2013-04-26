@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Wed 24 Apr 2013 11:24:46 PM MDT
+  \date      Fri Apr 26 15:16:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -51,10 +51,10 @@ class JPDF : Distribution {
     explicit JPDF(const int dim, const real binsize);
 
     //! Destructor: Clear joint PDF container
-    virtual ~JPDF();
+    virtual ~JPDF() noexcept;
 
-    //! Insert new value into joint PDF
-    virtual void insert(const vector<real>& value);
+    //! Insert new sample into joint PDF
+    virtual void insert(const vector<real>& sample);
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
