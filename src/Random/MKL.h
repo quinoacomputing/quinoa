@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Fri Nov 16 07:56:51 2012
+  \date      Fri Apr 26 16:00:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -22,10 +22,10 @@ class MKL {
 
   public:
     //! Constructor: Default, compiler-generated
-    MKL() = default;
+    explicit MKL() = default;
 
     //! Destructor: Default, compiler-generated
-    virtual ~MKL() {}
+    virtual ~MKL() noexcept = default;
 
     //! Call MKL's vdRngUniform() and handle error
     void uniform(const int& method,
@@ -33,7 +33,7 @@ class MKL {
                  const int& n,
                  real* r,
                  const real& a,
-                 const real& b);
+                 const real& b) const;
 
     //! Call MKL's vdRngGaussian() and handle error
     void gaussian(const int& method,
@@ -41,7 +41,7 @@ class MKL {
                   const int& n,
                   real* r,
                   const real& a,
-                  const real& b);
+                  const real& b) const;
 
     //! Call MKL's vdRngGamma() and handle error
     void gamma(const int& method,
@@ -50,26 +50,26 @@ class MKL {
                real* r,
                const real& alpha,
                const real& a,
-               const real& beta);
+               const real& beta) const;
 
   protected:
     //! Call MKL's vslNewStream() and handle error
-    void newStream(VSLStreamStatePtr* stream,
+    void newStream(VSLStreamStatePtr* const stream,
                    const int& brng,
-                   const unsigned int& seed);
+                   const unsigned int& seed) const;
 
     //! Call MKL's vslCopyStream() and handle error
-    void copyStream(VSLStreamStatePtr* newstream,
-                    const VSLStreamStatePtr& srcstream);
+    void copyStream(VSLStreamStatePtr* const newstream,
+                    const VSLStreamStatePtr& srcstream) const;
 
     //! Call MKL's vslSkipaheadStream() and handle error
     void skipAheadStream(VSLStreamStatePtr& stream,
-                         const long long int& nskip);
+                         const long long int& nskip) const;
 
     //! Call MKL's vslLeapfrogStream() and handle error
     void leapfrogStream(VSLStreamStatePtr& stream,
                         const int& k,
-                        const int& nstreams);
+                        const int& nstreams) const;
 
   private:
     //! Don't permit copy constructor

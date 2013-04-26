@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 08:13:01 AM MST
+  \date      Fri Apr 26 16:01:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -22,7 +22,7 @@ MKL::uniform(const int& method,
              const int& n,
              real* r,
              const real& a,
-             const real& b)
+             const real& b) const
 //******************************************************************************
 //  Call MKL's vdRngUniform() and handle error
 //! \param[in]  method   Generation method
@@ -48,7 +48,7 @@ MKL::gaussian(const int& method,
               const int& n,
               real* r,
               const real& a,
-              const real& b)
+              const real& b) const
 //******************************************************************************
 //  Call MKL's vdRngGaussian() and handle error
 //! \param[in]  method   Generation method
@@ -75,7 +75,7 @@ MKL::gamma(const int& method,
            real* r,
            const real& alpha,
            const real& a,
-           const real& beta)
+           const real& beta) const
 //******************************************************************************
 //  Call MKL's vdRngGamma() and handle error
 //! \param[in]  method   Generation method
@@ -97,9 +97,9 @@ MKL::gamma(const int& method,
 }
 
 void
-MKL::newStream(VSLStreamStatePtr* stream,
+MKL::newStream(VSLStreamStatePtr* const stream,
                const int& brng,
-               const unsigned int& seed)
+               const unsigned int& seed) const
 //******************************************************************************
 //  Call MKL's vslNewStream() and handle error
 //! \param[out]  stream  VSL stream state descriptor
@@ -117,8 +117,8 @@ MKL::newStream(VSLStreamStatePtr* stream,
 }
 
 void
-MKL::copyStream(VSLStreamStatePtr* newstream,
-                const VSLStreamStatePtr& srcstream)
+MKL::copyStream(VSLStreamStatePtr* const newstream,
+                const VSLStreamStatePtr& srcstream) const
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[out]  newstream  Copied random stream descriptor
@@ -136,7 +136,7 @@ MKL::copyStream(VSLStreamStatePtr* newstream,
 
 void
 MKL::skipAheadStream(VSLStreamStatePtr& stream,
-                     const long long int& nskip)
+                     const long long int& nskip) const
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[in]  stream  Pointer to the stream state structure to which the
@@ -156,7 +156,7 @@ MKL::skipAheadStream(VSLStreamStatePtr& stream,
 void
 MKL::leapfrogStream(VSLStreamStatePtr& stream,
                     const int& k,
-                    const int& nstreams)
+                    const int& nstreams) const
 //******************************************************************************
 //  Call MKL's vslCopyStream() and handle error
 //! \param[in]  stream   Pointer to the stream state structure to which leapfrog
