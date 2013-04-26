@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Mon 12 Nov 2012 07:48:54 PM MST
+  \date      Fri Apr 26 16:08:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
@@ -27,7 +27,7 @@ MeshWriter::MeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
   Assert(m_outMesh.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
 }
 
-MeshWriter::~MeshWriter()
+MeshWriter::~MeshWriter() noexcept
 //******************************************************************************
 //  Destructor: Release mesh file handle
 //! \author J. Bakosi

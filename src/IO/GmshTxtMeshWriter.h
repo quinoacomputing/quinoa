@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Fri 09 Nov 2012 05:53:49 PM MST
+  \date      Fri Apr 26 15:56:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -20,15 +20,17 @@ using namespace std;
 namespace Quinoa {
 
 //! GmshTxtMeshWriter : MeshWriter
-class GmshTxtMeshWriter : private MeshWriter {
+class GmshTxtMeshWriter : MeshWriter {
 
   public:
     //! Constructor
-    GmshTxtMeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
+    explicit GmshTxtMeshWriter(const string filename,
+                              UnsMesh* const mesh,
+                              Memory* const memory) :
       MeshWriter(filename, mesh, memory) {}
 
     //! Destructor, default compiler generated
-    ~GmshTxtMeshWriter() = default;
+    virtual ~GmshTxtMeshWriter() noexcept = default;
 
     //! Write Gmsh mesh to file
     void write();
