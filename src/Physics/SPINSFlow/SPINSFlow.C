@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Fri Mar  8 15:29:46 2013
+  \date      Fri Apr 26 17:06:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -78,7 +78,7 @@ SPINSFlow::SPINSFlow(Memory* const memory,
   Assert(m_mesh != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-SPINSFlow::~SPINSFlow()
+SPINSFlow::~SPINSFlow() noexcept
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -109,7 +109,7 @@ SPINSFlow::solve()
 }
 
 void
-SPINSFlow::echo()
+SPINSFlow::echo() const
 //******************************************************************************
 //  Echo information on the physics
 //! \author  J. Bakosi

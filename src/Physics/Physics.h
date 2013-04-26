@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed 06 Mar 2013 06:41:20 AM MST
+  \date      Fri Apr 26 17:02:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -25,16 +25,16 @@ class Physics {
 
   public:
     //! Constructor
-    Physics(Memory* const memory,
-            Paradigm* const paradigm,
-            Control* const control,
-            Timer* const timer);
+    explicit Physics(Memory* const memory,
+                     Paradigm* const paradigm,
+                     Control* const control,
+                     Timer* const timer);
 
     //! Destructor
-    virtual ~Physics() {};
+    virtual ~Physics() noexcept = default;
 
     //! Echo informaion on physics
-    virtual void echo() = 0;
+    virtual void echo() const = 0;
 
     //! Initialize physics
     virtual void init() = 0;

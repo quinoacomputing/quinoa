@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:35:41 2013
+  \date      Fri Apr 26 17:04:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -80,7 +80,7 @@ HomHydro::HomHydro(Memory* const memory,
   Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
 }
 
-HomHydro::~HomHydro()
+HomHydro::~HomHydro() noexcept
 //******************************************************************************
 //  Destructor
 //! \author  J. Bakosi
@@ -229,7 +229,7 @@ HomHydro::outJpdf(const real t)
 }
 
 void
-HomHydro::echo()
+HomHydro::echo() const
 //******************************************************************************
 //  Echo informaion on homogeneous hydrodynamics
 //! \author  J. Bakosi

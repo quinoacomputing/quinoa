@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:28:05 PM MST
+  \date      Fri Apr 26 17:05:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -33,17 +33,17 @@ class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    SPINSFlow(Memory* const memory,
-              Paradigm* const paradigm,
-              Control* const control,
-              Timer* const timer,
-              const string& filename);
+    explicit SPINSFlow(Memory* const memory,
+                       Paradigm* const paradigm,
+                       Control* const control,
+                       Timer* const timer,
+                       const string& filename);
 
     //! Destructor
-    virtual ~SPINSFlow();
+    virtual ~SPINSFlow() noexcept;
 
     //! Echo informaion on model
-    virtual void echo();
+    virtual void echo() const;
 
     //! Initialize model
     virtual void init();
