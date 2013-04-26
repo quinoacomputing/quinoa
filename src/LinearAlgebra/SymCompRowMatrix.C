@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 10:56:06 AM MST
+  \date      Fri Apr 26 17:31:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -23,13 +23,13 @@
 
 using namespace Quinoa;
 
-SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
-                                   string name,
-                                   int size,
-                                   int dof,
-                                   int *psup1,
-                                   int *psup2) :
-  SparseMatrix(name, size, dof)
+SymCompRowMatrix::SymCompRowMatrix(Memory* const memory,
+                                   const string name,
+                                   const int size,
+                                   const int dof,
+                                   const int *psup1,
+                                   const int *psup2) :
+  SparseMatrix(memory, name, size, dof)
 //******************************************************************************
 //  Constructor
 //! \details Creates a size x size compressed row sparse matrix with dof degrees
@@ -44,9 +44,6 @@ SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
 //! \author    J. Bakosi
 //******************************************************************************
 {
-  // Store memory store pointer
-  m_memory = memory;
-
   // Allocate array for storing the nonzeros in each row
   Data<int> rnz =
     memory->newZeroEntry<int>(size, ValType::INT, VarType::SCALAR, name+"_rnz");
@@ -124,10 +121,10 @@ SymCompRowMatrix::SymCompRowMatrix(Memory* memory,
   }
 
   // Free array for storing the nonzeros in each row
-  m_memory->freeEntry(rnz);
+  memory->freeEntry(rnz);
 }
 
-SymCompRowMatrix::~SymCompRowMatrix()
+SymCompRowMatrix::~SymCompRowMatrix() noexcept
 //******************************************************************************
 //  Destructor
 //! \details Free all memory allocated by SymCompRowMatrix in the
@@ -248,7 +245,7 @@ SymCompRowMatrix::ins(int row, int column, real value)
 }
 
 real
-SymCompRowMatrix::get(int row, int column, int i)
+SymCompRowMatrix::get(int row, int column, int i) const
 //******************************************************************************
 //  Get value from matrix from specified position using relative indexing
 //! \param[in]  row     block row
@@ -271,7 +268,7 @@ SymCompRowMatrix::get(int row, int column, int i)
 }
 
 real
-SymCompRowMatrix::get(int row, int column)
+SymCompRowMatrix::get(int row, int column) const
 //******************************************************************************
 //  Get value from matrix from specified position using absolute indexing
 //! \param[in]  row     block row
@@ -292,7 +289,7 @@ SymCompRowMatrix::get(int row, int column)
 }
 
 void
-SymCompRowMatrix::echoAsStored(ostream& ofs)
+SymCompRowMatrix::echoAsStored(ostream& ofs) const
 //******************************************************************************
 //  Print out matrix entries as stored
 //! \param[in]  ofs  output stream
@@ -320,7 +317,7 @@ SymCompRowMatrix::echoAsStored(ostream& ofs)
 }
 
 void
-SymCompRowMatrix::echoNonzeroStructure(ostream& ofs)
+SymCompRowMatrix::echoNonzeroStructure(ostream& ofs) const
 //******************************************************************************
 //  Print out nonzero structure of matrix
 //! \param[in]  ofs  output stream
@@ -347,7 +344,7 @@ SymCompRowMatrix::echoNonzeroStructure(ostream& ofs)
 }
 
 void
-SymCompRowMatrix::echoAsMatrix(ostream& ofs)
+SymCompRowMatrix::echoAsMatrix(ostream& ofs) const
 //******************************************************************************
 //  Print out matrix as a real matrix
 //! \param[in]  ofs  output stream
@@ -374,7 +371,7 @@ SymCompRowMatrix::echoAsMatrix(ostream& ofs)
 }
 
 void
-SymCompRowMatrix::echoAsMatlab(ostream& ofs)
+SymCompRowMatrix::echoAsMatlab(ostream& ofs) const
 //******************************************************************************
 //  Print out matrix as a maltab matrix
 //! \param[in]  ofs  output stream
