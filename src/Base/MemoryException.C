@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.C
   \author    J. Bakosi
-  \date      Wed 07 Nov 2012 05:20:40 AM MST
+  \date      Fri Apr 26 12:56:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class definition
   \details   MemoryException class definition
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-MemoryException::handleException(Driver* driver)
+MemoryException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle MemoryException
 //! \author J. Bakosi

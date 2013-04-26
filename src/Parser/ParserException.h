@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.h
   \author    J. Bakosi
-  \date      Wed 30 Jan 2013 07:02:22 PM MST
+  \date      Fri Apr 26 15:00:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -38,48 +38,46 @@ class ParserException : public Exception {
 
   public:
     //! Constructor without message
-    ParserException(ExceptType except,
-                    ParserExceptType parserExcept,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+    explicit ParserException(const ExceptType except,
+                             const ParserExceptType parserExcept,
+                             const string& file,
+                             const string& func,
+                             const unsigned int& line) :
       Exception(except, file, func, line), m_except(parserExcept) {}
 
     //! Constructor with message from thrower
-    ParserException(ExceptType except,
-                    ParserExceptType parserExcept,
-                    const string throwerMsg,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+    explicit ParserException(const ExceptType except,
+                             const ParserExceptType parserExcept,
+                             const string throwerMsg,
+                             const string& file,
+                             const string& func,
+                             const unsigned int& line) :
       Exception(except, file, func, line), m_throwerMsg(throwerMsg),
       m_except(parserExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     ParserException(ParserException&&) = default;
 
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    ParserException(const ParserException&);
-
     //! Destructor
-    virtual ~ParserException() {}
+    virtual ~ParserException() noexcept = default;
 
     //! Handle ParserException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! Message from thrower
     string m_throwerMsg;
 
   private:
+    //! Don't permit copy constructor
+    ParserException(const ParserException&) = delete;
     //! Don't permit copy assignment
     ParserException& operator=(const ParserException&) = delete;
     //! Don't permit move assignment
     ParserException& operator=(ParserException&&) = delete;
 
     //! Parser exception type (MIXMODEL, etc.)
-    ParserExceptType m_except;
+    const ParserExceptType m_except;
 };
 
 } // namespace Quinoa

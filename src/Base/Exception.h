@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 07:53:52 PM MST
+  \date      Fri Apr 26 13:58:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -76,10 +76,14 @@ class Exception {
 
   public:
     //! Constructors
-    Exception(ExceptType except, const string& msg = "") :
-      m_message(msg), m_except(except) {}
+    explicit Exception(const ExceptType except, const string& msg = "") :
+      m_message(msg),
+      m_file(""),
+      m_func(""),
+      m_line(0),
+      m_except(except) {}
 
-    Exception(const ExceptType except,
+    explicit Exception(const ExceptType except,
               const string& file,
               const string& func,
               const unsigned int& line) : m_file(file),
@@ -87,24 +91,22 @@ class Exception {
                                           m_line(line),
                                           m_except(except) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
-    Exception(Exception&&) = default;
-
     //! Destructor
-    virtual ~Exception() {}
+    virtual ~Exception() noexcept = default;
 
     //! Handle Exception passing pointer to driver
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   protected:
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    Exception(const Exception&);
+    //! Permit copy constructor only for children
+    Exception(const Exception&) = default;
+    //! Permit move constructor only for children
+    Exception(Exception&&) = default;
 
     string m_message;     //!< Error message (constructed along the tree)
-    string m_file;        //!< Source file where the exception is occurred
-    string m_func;        //!< Functionn name in which the exception is occurred
-    unsigned int m_line;  //!< Source line where the exception is occurred
+    const string m_file;  //!< Source file where the exception is occurred
+    const string m_func;  //!< Functionn name in which the exception is occurred
+    const int m_line;     //!< Source line where the exception is occurred
 
   private:
     //! Don't permit copy assignment
@@ -112,14 +114,14 @@ class Exception {
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
 
-    //! Exception type (WARNING, CUMULATIVE, ERROR, etc.)
-    ExceptType m_except;
-
     //! Generate generic exception message
-    string genericWhat();
+    string genericWhat() const;
 
     //! Generate std::runtime_error exception message
-    string runtimeWhat();
+    string runtimeWhat() const;
+
+    //! Exception type (WARNING, CUMULATIVE, ERROR, etc.)
+    const ExceptType m_except;
 };
 
 } // namespace Quinoa

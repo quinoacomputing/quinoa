@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Sat 16 Mar 2013 09:47:41 AM MDT
+  \date      Fri Apr 26 15:01:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -42,32 +42,32 @@ class StatException : public Exception {
 
   public:
     //! Constructor without message
-    StatException(ExceptType except,
-                  StatExceptType statExcept,
-                  const string& file,
-                  const string& func,
-                  const unsigned int& line) :
+    explicit StatException(const ExceptType except,
+                           const StatExceptType statExcept,
+                           const string& file,
+                           const string& func,
+                           const unsigned int& line) :
       Exception(except, file, func, line), m_except(statExcept) {}
 
     //! Constructor with message from thrower
-    StatException(ExceptType except,
-                  StatExceptType statExcept,
-                  const string throwerMsg,
-                  const string& file,
-                  const string& func,
-                  const unsigned int& line) :
+    explicit StatException(const ExceptType except,
+                           const StatExceptType statExcept,
+                           const string throwerMsg,
+                           const string& file,
+                           const string& func,
+                           const unsigned int& line) :
       Exception(except, file, func, line),
       m_throwerMsg(throwerMsg),
       m_except(statExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     StatException(StatException&&) = default;
 
     //! Destructor
-    //virtual ~StatException() {}
+    virtual ~StatException() noexcept = default;
 
     //! Handle StatException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! Message from thrower
@@ -82,7 +82,7 @@ class StatException : public Exception {
     StatException& operator=(StatException&&) = delete;
 
     //! Statistrics exception type (UNIMPLEMENTED, etc.)
-    StatExceptType m_except;
+    const StatExceptType m_except;
 };
 
 } // namespace Quinoa

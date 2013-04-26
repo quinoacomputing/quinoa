@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:23:34 PM MDT
+  \date      Fri Apr 26 12:42:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -23,8 +23,15 @@ using namespace Quinoa;
 
 Driver::Driver(int argc,
                char** argv,
-               Memory* const memory, Paradigm* const paradigm) :
-  m_memory(memory), m_paradigm(paradigm), m_argc(argc), m_argv(argv)
+               Memory* const memory,
+               Paradigm* const paradigm) :
+  m_memory(memory),
+  m_paradigm(paradigm),
+  m_argc(argc),
+  m_argv(argv),
+  m_physics(nullptr),
+  m_control(nullptr),
+  m_timer(nullptr)
 //******************************************************************************
 //  Constructor
 //! \param[in]  argc      Argument count from command line
@@ -34,9 +41,6 @@ Driver::Driver(int argc,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_control = nullptr;
-  m_timer   = nullptr;
-  m_physics = nullptr;
 }
 
 Driver::~Driver()

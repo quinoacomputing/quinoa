@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:14:28 PM MDT
+  \date      Fri Apr 26 15:00:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -42,25 +42,25 @@ class ModelException : public Exception {
 
   public:
     //! Constructor
-    ModelException(ExceptType except,
-                   ModelExceptType modelExcept,
-                   const string& file,
-                   const string& func,
-                   const unsigned int& line) :
+    explicit ModelException(const ExceptType except,
+                            const ModelExceptType modelExcept,
+                            const string& file,
+                            const string& func,
+                            const unsigned int& line) :
       Exception(except, file, func, line), m_except(modelExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
-    ModelException(ModelException&&) = default;
-
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    ModelException(const ModelException&);
-
     //! Destructor
-    //virtual ~ModelException() {}
+    virtual ~ModelException() noexcept = default;
 
     //! Handle ModelException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
+
+    //! Move constructor for throws, default compiler generated
+    ModelException(ModelException&&) = default;
+
+  protected:
+    //! Permit copy constructor only for children
+    ModelException(const ModelException&) = default;
 
   private:
     //! Don't permit copy assignment
@@ -69,7 +69,7 @@ class ModelException : public Exception {
     ModelException& operator=(ModelException&&) = delete;
 
     //! Model exception type (MIXMODEL, etc.)
-    ModelExceptType m_except;
+    const ModelExceptType m_except;
 };
 
 } // namespace Quinoa

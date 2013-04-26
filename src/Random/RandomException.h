@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 12:19:11 PM MST
+  \date      Fri Apr 26 15:01:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -36,25 +36,24 @@ class RandomException : public Exception {
 
   public:
     //! Constructor
-    RandomException(ExceptType except,
-                    RndExceptType rndExcept,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+    explicit RandomException(const ExceptType except,
+                             const RndExceptType rndExcept,
+                             const string& file,
+                             const string& func,
+                             const unsigned int& line) :
       Exception(except, file, func, line), m_except(rndExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
-    RandomException(RandomException&&) = default;
-
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    RandomException(const RandomException&);
-
     //! Destructor
-    //virtual ~RandomException() {}
+    virtual ~RandomException() noexcept = default;
 
     //! Handle RandomException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
+
+  protected:
+    //! Permit copy constructor only for children
+    RandomException(const RandomException&) = default;
+    //! Permit move constructor only for children
+    RandomException(RandomException&&) = default;
 
   private:
     //! Don't permit copy assignment
@@ -63,7 +62,7 @@ class RandomException : public Exception {
     RandomException& operator=(RandomException&&) = delete;
 
     //! Random exception type (RND_UNIMPLEMENTED, etc.)
-    RndExceptType m_except;
+    const RndExceptType m_except;
 };
 
 } // namespace Quinoa

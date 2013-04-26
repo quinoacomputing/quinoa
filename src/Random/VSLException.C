@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.C
   \author    J. Bakosi
-  \date      Sat 10 Nov 2012 07:07:02 PM MST
+  \date      Fri Apr 26 14:46:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -15,8 +15,8 @@
 
 using namespace Quinoa;
 
-VSLException::VSLException(ExceptType except,
-                           int vslerr,
+VSLException::VSLException(const ExceptType except,
+                           const int vslerr,
                            const string& file,
                            const string& func,
                            const unsigned int& line) :

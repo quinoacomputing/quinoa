@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixException.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:14:31 PM MDT
+  \date      Fri Apr 26 15:02:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler
@@ -40,35 +40,33 @@ class MixException : public ModelException {
 
   public:
     //! Constructor
-    MixException(ExceptType except,
-                      MixExceptType mixExcept,
-                      const string& file,
-                      const string& func,
-                      const unsigned int& line) :
+    explicit MixException(const ExceptType except,
+                          const MixExceptType mixExcept,
+                          const string& file,
+                          const string& func,
+                          const unsigned int& line) :
       ModelException(except, MIX_EXCEPT, file, func, line),
       m_except(mixExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     MixException(MixException&&) = default;
 
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    MixException(const MixException&);
-
     //! Destructor
-    //virtual ~MixException() {}
+    virtual ~MixException() noexcept = default;
 
     //! Handle MixException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   private:
+    //! Don't permit copy constructor
+    MixException(const MixException&) = delete;
     //! Don't permit copy assignment
     MixException& operator=(const MixException&) = delete;
     //! Don't permit move assignment
     MixException& operator=(MixException&&) = delete;
 
     //! Mix exception type (BAD_SCALARS, etc.)
-    MixExceptType m_except;
+    const MixExceptType m_except;
 };
 
 } // namespace Quinoa

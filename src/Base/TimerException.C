@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TimerException.C
   \author    J. Bakosi
-  \date      Thu 21 Feb 2013 09:43:11 PM MST
+  \date      Fri Apr 26 12:58:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TimerException class definition
   \details   TimerException class definition
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-TimerException::handleException(Driver* driver)
+TimerException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle TimerException
 //! \author J. Bakosi

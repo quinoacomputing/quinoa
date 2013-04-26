@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Mon 04 Feb 2013 09:54:05 PM MST
+  \date      Fri Apr 26 15:00:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -36,34 +36,32 @@ class PhysicsException : public Exception {
 
   public:
     //! Constructor
-    PhysicsException(ExceptType except,
-                    PhysicsExceptType physicsExcept,
-                    const string& file,
-                    const string& func,
-                    const unsigned int& line) :
+    explicit PhysicsException(const ExceptType except,
+                              const PhysicsExceptType physicsExcept,
+                              const string& file,
+                              const string& func,
+                              const unsigned int& line) :
       Exception(except, file, func, line), m_except(physicsExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     PhysicsException(PhysicsException&&) = default;
 
-    //! Don't permit copy constructor
-    // ICC: should be deleted and private
-    PhysicsException(const PhysicsException&);
-
     //! Destructor
-    //virtual ~PhysicsException() {}
+    virtual ~PhysicsException() noexcept = default;
 
     //! Handle PhysicsException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   private:
+    //! Don't permit copy constructor
+    PhysicsException(const PhysicsException&) = default;
     //! Don't permit copy assignment
     PhysicsException& operator=(const PhysicsException&) = delete;
     //! Don't permit move assignment
     PhysicsException& operator=(PhysicsException&&) = delete;
 
     //! Physics exception type
-    PhysicsExceptType m_except;
+    const PhysicsExceptType m_except;
 };
 
 } // namespace Quinoa

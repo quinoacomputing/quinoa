@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Sun 27 Jan 2013 07:55:15 PM MST
+  \date      Fri Apr 26 14:48:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -39,23 +39,23 @@ class IOException : public Exception {
 
   public:
     //! Constructor
-    IOException(ExceptType except,
-                IOExceptType ioExcept,
-                const string filename,
-                const string& file,
-                const string& func,
-                const unsigned int& line) :
+    explicit IOException(const ExceptType except,
+                         const IOExceptType ioExcept,
+                         const string filename,
+                         const string& file,
+                         const string& func,
+                         const unsigned int& line) :
       Exception(except, file, func, line), m_filename(filename),
       m_except(ioExcept) {}
 
-    //! Move constructor, necessary for throws, default compiler generated
+    //! Move constructor for throws, default compiler generated
     IOException(IOException&&) = default;
 
     //! Destructor
-    virtual ~IOException() {}
+    virtual ~IOException() noexcept = default;
 
     //! Handle IOException
-    virtual ErrCode handleException(Driver* driver);
+    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! File name
@@ -70,7 +70,7 @@ class IOException : public Exception {
     IOException& operator=(IOException&&) = delete;
 
     //! IO exception type (IO_FAILED_OPEN, IO_FAILED_CLOSE, etc.)
-    IOExceptType m_except;
+    const IOExceptType m_except;
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.C
   \author    J. Bakosi
-  \date      Sat 19 Jan 2013 11:29:41 AM MST
+  \date      Fri Apr 26 12:57:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PhysicsException
   \details   PhysicsException
@@ -14,7 +14,7 @@
 using namespace Quinoa;
 
 ErrCode
-PhysicsException::handleException(Driver* driver)
+PhysicsException::handleException(Driver* const driver)
 //******************************************************************************
 //  Handle PhysicsException
 //! \author J. Bakosi
