@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Sun 03 Mar 2013 06:55:58 AM MST
+  \date      Fri Apr 26 17:31:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -22,14 +22,14 @@ class SymCompRowMatrix : private SparseMatrix {
 
   public:
     //! Constructor
-    SymCompRowMatrix(Memory* memory,
-                     string name,
-                     int size,
-                     int dof,
-                     int *psup1,
-                     int* psup2);
+    explicit SymCompRowMatrix(Memory* const memory,
+                              const string name,
+                              const int size,
+                              const int dof,
+                              const int *psup1,
+                              const int* psup2);
     //! Destructor
-    ~SymCompRowMatrix();
+    virtual ~SymCompRowMatrix() noexcept;
 
     //! Add value to matrix in specified position using relative indexing
     void add(int row, int column, int i, real value);
@@ -42,21 +42,21 @@ class SymCompRowMatrix : private SparseMatrix {
     void ins(int row, int column, real value);
 
     //! Get value from matrix from specified position using relative indexing
-    real get(int row, int column, int i);
+    real get(int row, int column, int i) const;
     //! Get value from matrix from specified position using absolute indexing
-    real get(int row, int column);
+    real get(int row, int column) const;
 
     //! Print out matrix entries as stored
-    void echoAsStored(ostream& ofs);
+    void echoAsStored(ostream& ofs) const;
 
     //! Print out nonzero structure of matrix
-    void echoNonzeroStructure(ostream& ofs);
+    void echoNonzeroStructure(ostream& ofs) const;
 
     //! Print out matrix as a real matrix
-    void echoAsMatrix(ostream& ofs);
+    void echoAsMatrix(ostream& ofs) const;
 
     //! Print out matrix as a matlab matrix
-    void echoAsMatlab(ostream& ofs);
+    void echoAsMatlab(ostream& ofs) const;
 
   private:
     //! Don't permit copy constructor
