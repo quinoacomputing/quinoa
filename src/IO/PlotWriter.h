@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.h
   \author    J. Bakosi
-  \date      Mon 11 Mar 2013 06:59:07 PM MDT
+  \date      Fri Apr 26 17:11:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PlotWriter base class declaration
   \details   PlotWriter base class declaration
@@ -25,10 +25,10 @@ class PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    PlotWriter(const string& filename);
+    explicit PlotWriter(const string& filename);
 
     //! Destructor: Release plot file handle
-    virtual ~PlotWriter();
+    virtual ~PlotWriter() noexcept;
 
   protected:
     //! Interface for plot write
