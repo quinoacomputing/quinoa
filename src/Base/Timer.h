@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Wed 27 Mar 2013 10:03:10 PM MDT
+  \date      Fri Apr 26 17:33:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -51,10 +51,10 @@ class Timer {
 
   public:
     //! Constructor
-    Timer();
+    explicit Timer();
 
     //! Destructor
-    virtual ~Timer() {}
+    virtual ~Timer() noexcept = default;
 
     //! Create new timer
     TimerIdx create(const string& label);
