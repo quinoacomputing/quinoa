@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.C
   \author    J. Bakosi
-  \date      Fri Apr 26 14:46:12 2013
+  \date      Sat 27 Apr 2013 08:22:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -20,7 +20,11 @@ VSLException::VSLException(const ExceptType except,
                            const string& file,
                            const string& func,
                            const unsigned int& line) :
-  MKLException(except, MKL_VSL_ERROR, file, func, line)
+  MKLException(except,
+               MKL_VSL_ERROR,
+               file,
+               func,
+               line)
 //******************************************************************************
 //  Constructor: zero memory entry pointers held
 //! \author J. Bakosi
@@ -332,8 +336,8 @@ VSLException::VSLException(const ExceptType except,
     make_pair<int,VSLExceptType>(VSL_SS_ERROR_BAD_PARTIAL_COV_IDX,
                                           VSL_BAD_PARTIAL_COV_IDX));
 
-  // Set VSL exception type based on VSL error
-  m_except = getException(vslerr);
+  // Set VSL exception type based on VSL error and augment error message
+  augment(VSLMsg[static_cast<int>(getException(vslerr))]);
 }
 
 VSLExceptType
@@ -348,18 +352,4 @@ VSLException::getException(int vslerr)
     return VSL_UNIMPLEMENTED;
   else
     return it->second;
-}
-
-ErrCode
-VSLException::handleException(Driver* driver)
-//******************************************************************************
-//  Handle VSLException
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Start error message
-  m_message = VSLMsg[static_cast<int>(m_except)];
-
-  // Handle Exception (criticality)
-  return MKLException::handleException(driver);
 }

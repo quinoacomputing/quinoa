@@ -14,7 +14,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics
 
 add_library(Physics
             Physics.C
-            PhysicsException.C
 )
 
 INSTALL(TARGETS Physics

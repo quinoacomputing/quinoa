@@ -12,7 +12,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Control
 )
 
 add_library(Control
-            Control.C
 )
 
 INSTALL(TARGETS Control

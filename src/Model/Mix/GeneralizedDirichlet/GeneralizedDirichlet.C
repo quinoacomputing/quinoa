@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:32:50 2013
+  \date      Sat 27 Apr 2013 08:45:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -74,14 +74,7 @@ GeneralizedDirichlet::~GeneralizedDirichlet() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_allScalars);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in HomMix destructor" << endl; }
-#endif // NDEBUG
+  m_memory->freeEntry(m_allScalars);
 
   if (m_random) { delete m_random; m_random = nullptr; }  
 }

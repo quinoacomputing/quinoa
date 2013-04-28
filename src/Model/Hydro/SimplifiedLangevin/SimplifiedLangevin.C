@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:36:05 2013
+  \date      Sat 27 Apr 2013 08:45:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -63,14 +63,7 @@ SimplifiedLangevin::~SimplifiedLangevin() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_particles);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in SimplifiedLangevin destructor" << endl; }
-#endif // NDEBUG
+  m_memory->freeEntry(m_particles);
 
   if (m_random) { delete m_random; m_random = nullptr; }
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:01:31 2013
+  \date      Sat 27 Apr 2013 08:25:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -46,8 +46,12 @@ class StatException : public Exception {
                            const StatExceptType statExcept,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) :
-      Exception(except, file, func, line), m_except(statExcept) {}
+                           const unsigned int& line) noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                StatMsg[static_cast<int>(statExcept)]) {}
 
     //! Constructor with message from thrower
     explicit StatException(const ExceptType except,
@@ -55,23 +59,18 @@ class StatException : public Exception {
                            const string throwerMsg,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) :
-      Exception(except, file, func, line),
-      m_throwerMsg(throwerMsg),
-      m_except(statExcept) {}
+                           const unsigned int& line) noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                StatMsg[static_cast<int>(statExcept)] + throwerMsg) {}
 
     //! Move constructor for throws, default compiler generated
     StatException(StatException&&) = default;
 
     //! Destructor
     virtual ~StatException() noexcept = default;
-
-    //! Handle StatException
-    virtual ErrCode handleException(Driver* const driver);
-
-  protected:
-    //! Message from thrower
-    string m_throwerMsg;
 
   private:
     //! Don't permit copy constructor
@@ -80,9 +79,6 @@ class StatException : public Exception {
     StatException& operator=(const StatException&) = delete;
     //! Don't permit move assignment
     StatException& operator=(StatException&&) = delete;
-
-    //! Statistrics exception type (UNIMPLEMENTED, etc.)
-    const StatExceptType m_except;
 };
 
 } // namespace Quinoa

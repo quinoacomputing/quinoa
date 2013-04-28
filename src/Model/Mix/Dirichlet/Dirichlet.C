@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:30:17 2013
+  \date      Sat 27 Apr 2013 08:45:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -71,14 +71,7 @@ Dirichlet::~Dirichlet() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_allScalars);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in Dirichlet destructor" << endl; }
-#endif // NDEBUG
+  m_memory->freeEntry(m_allScalars);
 
   if (m_random) { delete m_random; m_random = nullptr; }  
 }

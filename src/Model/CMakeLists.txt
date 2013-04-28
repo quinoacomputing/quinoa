@@ -12,7 +12,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Model
 
 add_library(Model
             Model.C
-            ModelException.C
 )
 
 INSTALL(TARGETS Model

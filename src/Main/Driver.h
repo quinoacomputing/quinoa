@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Fri Apr 26 12:43:23 2013
+  \date      Sat 27 Apr 2013 05:43:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -27,7 +27,7 @@ class Driver {
     Driver(int argc,
            char** argv,
            Memory* const memory,
-           Paradigm* const paradigm);
+           Paradigm* const paradigm) noexcept;
 
     //! Destructor
     ~Driver();

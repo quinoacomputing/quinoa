@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:04:41 2013
+  \date      Sat 27 Apr 2013 08:47:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -71,25 +71,17 @@ MKLRndTable::~MKLRndTable() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    // Delete all thread streams
-    for (int t=0; t<m_nthread; ++t) {
-      if (m_stream[t] != nullptr &&
-          vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
-        cout << "WARNING: Failed to delete MKL VSL stream" << endl;
-      }
+  // Delete all thread streams
+  for (int t=0; t<m_nthread; ++t) {
+    if (m_stream[t] != nullptr &&
+        vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
+      cout << "WARNING: Failed to delete MKL VSL stream" << endl;
     }
-    // Free all thread-stream pointers
-    delete [] m_stream;
-    // Free array storing random numbers
-    m_memory->freeEntry(m_rnd);
-#ifndef NDEBUG
-  } catch (...) {
-    cout << "WARNING: Exception in MKLRndTable::~MKLRndTable" << endl;
   }
-#endif // NDEBUG
+  // Free all thread-stream pointers
+  delete [] m_stream;
+  // Free array storing random numbers
+  m_memory->freeEntry(m_rnd);
 }
 
 

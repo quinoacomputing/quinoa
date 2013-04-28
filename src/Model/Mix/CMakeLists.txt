@@ -15,7 +15,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Model/Mix
 
 add_library(Mix
             Mix.C
-            MixException.C
 )
 
 INSTALL(TARGETS Mix

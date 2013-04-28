@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:02:20 2013
+  \date      Sat 27 Apr 2013 08:27:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler
@@ -44,18 +44,19 @@ class MixException : public ModelException {
                           const MixExceptType mixExcept,
                           const string& file,
                           const string& func,
-                          const unsigned int& line) :
-      ModelException(except, MIX_EXCEPT, file, func, line),
-      m_except(mixExcept) {}
+                          const unsigned int& line) noexcept :
+      ModelException(except,
+                     MIX_EXCEPT,
+                     file,
+                     func,
+                     line,
+                     MixMsg[static_cast<int>(mixExcept)]) {}
 
     //! Move constructor for throws, default compiler generated
     MixException(MixException&&) = default;
 
     //! Destructor
     virtual ~MixException() noexcept = default;
-
-    //! Handle MixException
-    virtual ErrCode handleException(Driver* const driver);
 
   private:
     //! Don't permit copy constructor
@@ -64,9 +65,6 @@ class MixException : public ModelException {
     MixException& operator=(const MixException&) = delete;
     //! Don't permit move assignment
     MixException& operator=(MixException&&) = delete;
-
-    //! Mix exception type (BAD_SCALARS, etc.)
-    const MixExceptType m_except;
 };
 
 } // namespace Quinoa

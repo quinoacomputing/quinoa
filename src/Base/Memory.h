@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:28:20 2013
+  \date      Sat 27 Apr 2013 05:43:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -42,20 +42,9 @@ struct Data {
 //! Memory store, container of memory entries
 class Memory {
 
-  //! Memory entries are stored in an STL unordered_set.
-  //! The keys of the set are pointers to (dynamically allocated) MemoryEntry
-  //! class instances that store basic metadata on the memory entry allocated.
-  //! Compared to O(log n) in standard sets, the cost of searches, insertions,
-  //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
-  //! and deallocating memory entries) is amortized to O(1).
-  using MemorySet = unordered_set<MemoryEntry*>;
-
-  //! Map of memory entry names to MemorySet keys
-  using MemoryNames = unordered_map<string,MemoryEntry*>;
-
   public:
     //! Constructor
-    explicit Memory(Paradigm* const paradigm);
+    explicit Memory(Paradigm* const paradigm) noexcept;
 
     //! Destructor
     ~Memory();
@@ -90,7 +79,7 @@ class Memory {
 
     //! Deallocate a memory entry
     template< class V >
-    void freeEntry(Data<V>& data) {
+    void freeEntry(Data<V>& data) noexcept {
       freeEntry(data.id);
       data.ptr = nullptr;
     }
@@ -132,6 +121,17 @@ class Memory {
     void zero(MemoryEntry* const id) const;
 
   private:
+    //! Memory entries are stored in an STL unordered_set.
+    //! The keys of the set are pointers to (dynamically allocated) MemoryEntry
+    //! class instances that store basic metadata on the memory entry allocated.
+    //! Compared to O(log n) in standard sets, the cost of searches, insertions,
+    //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
+    //! and deallocating memory entries) is amortized to O(1).
+    using MemorySet = unordered_set<MemoryEntry*>;
+
+    //! Map of memory entry names to MemorySet keys
+    using MemoryNames = unordered_map<string,MemoryEntry*>;
+
     //! Don't permit copy constructor
     Memory(const Memory&) = delete;
     //! Don't permit copy assigment
@@ -180,7 +180,7 @@ class Memory {
     }
 
     //! Deallocate a memory entry
-    void freeEntry(MemoryEntry* id);
+    void freeEntry(MemoryEntry* id) noexcept;
 
     void echo() const;          //!< Echo unsorted entries
     void echoByBytes() const;   //!< Echo entries sorted by Bytes

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 14:53:56 2013
+  \date      Sat 27 Apr 2013 08:28:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -40,37 +40,24 @@ const string MeshMsg[NUM_MESH_EXCEPT] = {
 class MeshException : public Exception {
 
   public:
-    //! Constructor without message
-    explicit MeshException(const ExceptType except,
-                           const MeshExceptType mshExcept,
-                           const string& file,
-                           const string& func,
-                           const unsigned int& line) :
-      Exception(except, file, func, line), m_except(mshExcept) {}
-
     //! Constructor with message from thrower
     explicit MeshException(const ExceptType except,
                            const MeshExceptType mshExcept,
                            const string throwerMsg,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) :
-      Exception(except, file, func, line),
-      m_throwerMsg(throwerMsg),
-      m_except(mshExcept) {}
+                           const unsigned int& line) noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                MeshMsg[static_cast<int>(mshExcept)] + throwerMsg) {}
 
     //! Move constructor for throws, default compiler generated
     MeshException(MeshException&&) = default;
 
     //! Destructor
     virtual ~MeshException() noexcept = default;
-
-    //! Handle MeshException
-    virtual ErrCode handleException(Driver* const driver);
-
-  protected:
-    //! Message from thrower
-    string m_throwerMsg;
 
   private:
     //! Don't permit copy constructor
@@ -79,9 +66,6 @@ class MeshException : public Exception {
     MeshException& operator=(const MeshException&) = delete;
     //! Don't permit move assignment
     MeshException& operator=(MeshException&&) = delete;
-
-    //! Mesh exception type (BAD_FORMAT, BAD_ELEMENT, etc.)
-    const MeshExceptType m_except;
 };
 
 } // namespace Quinoa

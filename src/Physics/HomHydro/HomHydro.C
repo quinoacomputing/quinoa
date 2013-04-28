@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:04:01 2013
+  \date      Sat 27 Apr 2013 07:29:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
