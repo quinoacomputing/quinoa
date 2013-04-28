@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:02:33 2013
+  \date      Sat 27 Apr 2013 08:34:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -36,7 +36,7 @@ const string MKLMsg[NUM_MKL_EXCEPT] = {
   "Random number table not found",
   "Random number stream not found",
   "Wrong number of threads",
-  "Bad number of items"
+  "Bad number of items",
   "VSL ",
 };
 
@@ -49,17 +49,20 @@ class MKLException : public RandomException {
                           const MKLExceptType mklExcept,
                           const string& file,
                           const string& func,
-                          const unsigned int& line) :
-      RandomException(except, RND_MKL, file, func, line), m_except(mklExcept) {}
+                          const unsigned int& line,
+                          const string& message = "") noexcept :
+      RandomException(except,
+                      RND_MKL,
+                      file,
+                      func,
+                      line,
+                      MKLMsg[static_cast<int>(mklExcept)] + message) {}
 
     //! Move constructor for throws, default compiler generated
     MKLException(MKLException&&) = default;
 
     //! Destructor
     virtual ~MKLException() noexcept = default;
-
-    //! Handle MKLException
-    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! Permit copy constructor only for children
@@ -70,9 +73,6 @@ class MKLException : public RandomException {
     MKLException& operator=(const MKLException&) = delete;
     //! Don't permit move assignment
     MKLException& operator=(MKLException&&) = delete;
-
-    //! MKL exception type (MKL_UNIMPLEMENTED, MKL_UNKNOWN_METHOD, etc.)
-    const MKLExceptType m_except;
 };
 
 } // namespace Quinoa

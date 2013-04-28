@@ -13,11 +13,9 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_library(Base
             Exception.C
-            MemoryException.C
             MemoryEntry.C
             Memory.C
             Timer.C
-            TimerException.C
 )
 
 INSTALL(TARGETS Base

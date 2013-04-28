@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Fri Apr 26 14:56:05 2013
+  \date      Sat 27 Apr 2013 08:49:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -30,7 +30,7 @@ using namespace std;
 
 using namespace Quinoa;
 
-Memory::Memory(Paradigm* const paradigm) :
+Memory::Memory(Paradigm* const paradigm) noexcept :
   m_nOMPthreads(paradigm->getOpenMP()->nthread())
 //******************************************************************************
 //  Constructor
@@ -157,40 +157,59 @@ Memory::newZeroEntry(const size_t number,
 }
 
 void
-Memory::freeEntry(MemoryEntry* id)
+Memory::freeEntry(MemoryEntry* id) noexcept
 //******************************************************************************
 //  Deallocate a memory entry
 //! \param[in]  id  ID of the entry to be freed
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return silently if entry is not yet allocated or already deallocated
-  if (id == nullptr) return;
-  // The above is such a mild error, we don't even throw a warning, but for
-  // debugging the assert below can be uncommented to check if there are
-  // unnecessary calls for freeing memory entries
-  //Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
+  try {
 
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+    // Return silently if entry is not yet allocated or already deallocated
+    if (id == nullptr) return;
+    // The above is such a mild error, we don't even throw a warning, but for
+    // debugging the assert below can be uncommented to check if there are
+    // unnecessary calls for freeing memory entries
+    Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
 
-  // Find memory entry
-  auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+    // Return and throw warning if memory store is empty
+    Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
-  // Remove variable name mapped to MemorySet key
-  Errchk(m_name.erase((*it)->m_name), MemoryException,WARNING,NOT_ERASED);
+    // Find memory entry
+    auto it = m_entry.find(id);
+    Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
 
-  // Deallocate memory entry pointed to by m_entry[id]
-  // This also automatically calls MemoryEntry::~MemoryEntry(), which
-  // deallocates the memory pointed to by MemoryEntry::m_ptr
-  delete *it;
+    // Remove variable name mapped to MemorySet key
+    Errchk(m_name.erase((*it)->m_name), MemoryException,WARNING,NOT_ERASED);
 
-  // Remove MemoryEntry from MemorySet
-  Errchk(m_entry.erase(id), MemoryException,WARNING,NOT_ERASED);
+    // Deallocate memory entry pointed to by m_entry[id]
+    // This also automatically calls MemoryEntry::~MemoryEntry(), which
+    // deallocates the memory pointed to by MemoryEntry::m_ptr
+    delete *it;
 
-  // Zero id, so the caller can also tell that the memory entry has been removed
-  id = nullptr;
+    // Remove MemoryEntry from MemorySet
+    Errchk(m_entry.erase(id), MemoryException,WARNING,NOT_ERASED);
+
+    // Zero id, so the caller can also tell that the memory entry has been removed
+    id = nullptr;
+
+  } // Catch Quina::Exception (including MemoryException)
+    catch (Exception& qe) {
+      // Emit warning and continue
+      cout << "WARNING: " << qe.genericWhat();
+    }
+    // Catch std::exception
+    catch (exception& se) {
+      // Emit warning and continue
+      cout << "RUNTIME ERROR: " << se.what() << "\nContinuing anyway..."
+           << endl;
+    }
+    // Catch uncaught exceptions
+    catch (...) {
+      // Emit warning and continue
+      cout << "UNKNOWN EXCEPTION\nContinuing anyway..." << endl;
+    }
 }
 
 void

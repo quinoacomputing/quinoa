@@ -16,7 +16,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Statistics
 
 add_library(Statistics
             Statistics.C
-            StatException.C
             PDF.C
             JPDF.C
 )

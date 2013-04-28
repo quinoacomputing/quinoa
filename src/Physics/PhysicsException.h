@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:00:46 2013
+  \date      Sat 27 Apr 2013 08:24:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -40,17 +40,18 @@ class PhysicsException : public Exception {
                               const PhysicsExceptType physicsExcept,
                               const string& file,
                               const string& func,
-                              const unsigned int& line) :
-      Exception(except, file, func, line), m_except(physicsExcept) {}
+                              const unsigned int& line) noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                PhysicsMsg[static_cast<int>(physicsExcept)]) {}
 
     //! Move constructor for throws, default compiler generated
     PhysicsException(PhysicsException&&) = default;
 
     //! Destructor
     virtual ~PhysicsException() noexcept = default;
-
-    //! Handle PhysicsException
-    virtual ErrCode handleException(Driver* const driver);
 
   private:
     //! Don't permit copy constructor
@@ -59,9 +60,6 @@ class PhysicsException : public Exception {
     PhysicsException& operator=(const PhysicsException&) = delete;
     //! Don't permit move assignment
     PhysicsException& operator=(PhysicsException&&) = delete;
-
-    //! Physics exception type
-    const PhysicsExceptType m_except;
 };
 
 } // namespace Quinoa

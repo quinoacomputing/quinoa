@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:06:00 2013
+  \date      Sat 27 Apr 2013 08:46:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -85,14 +85,7 @@ SPINSFlow::~SPINSFlow() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    //m_memory->freeEntry(m_MEscalar);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in SPINSFlow destructor" << endl; }
-#endif // NDEBUG
+  //m_memory->freeEntry(m_MEscalar);
 
   if (m_mesh) { delete m_mesh; m_mesh = nullptr; }
   if (m_hydro) { delete m_hydro; m_hydro = nullptr; }

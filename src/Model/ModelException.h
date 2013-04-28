@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:00:09 2013
+  \date      Sat 27 Apr 2013 08:28:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -46,14 +46,16 @@ class ModelException : public Exception {
                             const ModelExceptType modelExcept,
                             const string& file,
                             const string& func,
-                            const unsigned int& line) :
-      Exception(except, file, func, line), m_except(modelExcept) {}
+                            const unsigned int& line,
+                            const string& message = "") noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                ModelMsg[static_cast<int>(modelExcept)] + message) {}
 
     //! Destructor
     virtual ~ModelException() noexcept = default;
-
-    //! Handle ModelException
-    virtual ErrCode handleException(Driver* const driver);
 
     //! Move constructor for throws, default compiler generated
     ModelException(ModelException&&) = default;
@@ -67,9 +69,6 @@ class ModelException : public Exception {
     ModelException& operator=(const ModelException&) = delete;
     //! Don't permit move assignment
     ModelException& operator=(ModelException&&) = delete;
-
-    //! Model exception type (MIXMODEL, etc.)
-    const ModelExceptType m_except;
 };
 
 } // namespace Quinoa

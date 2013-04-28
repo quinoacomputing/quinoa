@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri Apr 26 13:58:41 2013
+  \date      Sat 27 Apr 2013 08:33:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -75,21 +75,13 @@ class Driver;
 class Exception {
 
   public:
-    //! Constructors
+    //! Constructor: empty with defaults
     explicit Exception(const ExceptType except, const string& msg = "") :
-      m_message(msg),
       m_file(""),
       m_func(""),
       m_line(0),
+      m_message(msg),
       m_except(except) {}
-
-    explicit Exception(const ExceptType except,
-              const string& file,
-              const string& func,
-              const unsigned int& line) : m_file(file),
-                                          m_func(func),
-                                          m_line(line),
-                                          m_except(except) {}
 
     //! Destructor
     virtual ~Exception() noexcept = default;
@@ -97,13 +89,34 @@ class Exception {
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* const driver);
 
+    //! Generate generic exception message
+    string genericWhat() const;
+
+    //! Generate std::runtime_error exception message
+    string runtimeWhat() const;
+
   protected:
+    //! Constructor: initialized from children
+    explicit Exception(const ExceptType except,
+                       const string& file,
+                       const string& func,
+                       const unsigned int& line,
+                       const string& message) noexcept :
+      m_file(file),
+      m_func(func),
+      m_line(line),
+      m_message(message),
+      m_except(except) {}
+
     //! Permit copy constructor only for children
     Exception(const Exception&) = default;
     //! Permit move constructor only for children
     Exception(Exception&&) = default;
 
-    string m_message;     //!< Error message (constructed along the tree)
+    //! Augment message after its construction
+    //! \param[in]  message  Message to add to end of message
+    void augment(const string& message) { m_message += message; }
+
     const string m_file;  //!< Source file where the exception is occurred
     const string m_func;  //!< Functionn name in which the exception is occurred
     const int m_line;     //!< Source line where the exception is occurred
@@ -114,11 +127,7 @@ class Exception {
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
 
-    //! Generate generic exception message
-    string genericWhat() const;
-
-    //! Generate std::runtime_error exception message
-    string runtimeWhat() const;
+    string m_message;     //!< Error message (constructed along the tree)
 
     //! Exception type (WARNING, CUMULATIVE, ERROR, etc.)
     const ExceptType m_except;

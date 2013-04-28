@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TimerException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:01:45 2013
+  \date      Sat 27 Apr 2013 08:33:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TimerException class declaration
   \details   TimerException class declaration
@@ -40,17 +40,18 @@ class TimerException : public Exception {
                             const TimerExceptType timerExcept,
                             const string& file,
                             const string& func,
-                            const unsigned int& line) :
-      Exception(except, file, func, line), m_except(timerExcept) {}
+                            const unsigned int& line) noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                TimerMsg[static_cast<int>(timerExcept)]) {}
 
     //! Move constructor for throws, default compiler generated
     TimerException(TimerException&&) = default;
 
     //! Destructor
     virtual ~TimerException() noexcept = default;
-
-    //! Handle TimerException
-    virtual ErrCode handleException(Driver* const driver);
 
   private:
     //! Don't permit copy constructor
@@ -59,9 +60,6 @@ class TimerException : public Exception {
     TimerException& operator=(const TimerException&) = delete;
     //! Don't permit move assignment
     TimerException& operator=(TimerException&&) = delete;
-
-    //! Timer exception type (BAD_ALLOC, BAD_INSERT, BAD_NAME, etc.)
-    const TimerExceptType m_except;
 };
 
 } // namespace Quinoa

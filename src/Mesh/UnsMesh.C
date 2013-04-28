@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Fri Apr 26 15:42:58 2013
+  \date      Sat 27 Apr 2013 08:45:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -32,21 +32,10 @@ UnsMesh::~UnsMesh() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_coord);
-    m_memory->freeEntry(m_nodeId);
-    m_memory->freeEntry(m_lineId);
-    m_memory->freeEntry(m_triangleId);
-    // No exception leaves a destructor: if any of the above calls throws and
-    // exception, e.g. m_coord.id points to an unallocated entry, a
-    // MemoryException is thrown, caught inside here and we only emit a warning.
-    // This ensures that terminate is not called and that we finish a
-    // potentially already propagating exception.
-#ifndef NDEBUG
-  } catch (...) { cout << "WARNING: Exception in UnsMesh destructor" << endl; }
-#endif // NDEBUG
+  m_memory->freeEntry(m_coord);
+  m_memory->freeEntry(m_nodeId);
+  m_memory->freeEntry(m_lineId);
+  m_memory->freeEntry(m_triangleId);
 
   // Free containers held
   m_linpoel.clear();

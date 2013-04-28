@@ -15,7 +15,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Parser
 
 add_library(Parser
             Parser.C
-            ParserException.C
 )
 
 INSTALL(TARGETS Parser

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri Apr 26 12:42:23 2013
+  \date      Sat 27 Apr 2013 06:10:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -24,7 +24,7 @@ using namespace Quinoa;
 Driver::Driver(int argc,
                char** argv,
                Memory* const memory,
-               Paradigm* const paradigm) :
+               Paradigm* const paradigm) noexcept :
   m_memory(memory),
   m_paradigm(paradigm),
   m_argc(argc),

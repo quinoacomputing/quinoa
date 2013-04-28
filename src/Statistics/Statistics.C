@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:32:34 2013
+  \date      Sat 27 Apr 2013 08:48:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -115,15 +115,8 @@ Statistics::~Statistics() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    if (m_ncen) m_memory->freeEntry(m_central);
-    if (m_nord) m_memory->freeEntry(m_ordinary);
-#ifndef NDEBUG
-  } catch (...)
-    { cout << "WARNING: Exception in Statistics destructor" << endl; }
-#endif // NDEBUG
+  if (m_ncen) m_memory->freeEntry(m_central);
+  if (m_nord) m_memory->freeEntry(m_ordinary);
 }
 
 bool

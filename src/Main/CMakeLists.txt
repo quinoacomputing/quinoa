@@ -27,7 +27,7 @@ add_executable(${QUINOA_EXECUTABLE}
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
-                      Control
+                      #Control
                       LinearAlgebra
                       Paradigm
                       HomMix

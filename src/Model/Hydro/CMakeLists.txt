@@ -15,7 +15,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Model/Hydro
 
 add_library(Hydro
             Hydro.C
-            HydroException.C
 )
 
 INSTALL(TARGETS Hydro

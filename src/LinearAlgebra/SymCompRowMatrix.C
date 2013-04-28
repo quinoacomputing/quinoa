@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:31:15 2013
+  \date      Sat 27 Apr 2013 08:44:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -132,22 +132,9 @@ SymCompRowMatrix::~SymCompRowMatrix() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-#ifndef NDEBUG  // Error checking and exceptions only in debug mode
-  try {
-#endif // NDEBUG
-    m_memory->freeEntry(m_ia);
-    m_memory->freeEntry(m_ja);
-    m_memory->freeEntry(m_a);
-    // No exception leaves a destructor: if any of the above calls throws and
-    // exception, e.g. m_ia points to an unallocated entry, a MemoryException
-    // is thrown, caught inside here and we only emit a warning. This ensures
-    // that terminate is not called and that we finish a potentially already
-    // propagating exception.
-#ifndef NDEBUG
-  } catch (...) {
-    cout << "WARNING: Exception in SymCompRowMatrix::~SymCompRowMatrix" << endl;
-  }
-#endif // NDEBUG
+  m_memory->freeEntry(m_ia);
+  m_memory->freeEntry(m_ja);
+  m_memory->freeEntry(m_a);
 }
 
 void

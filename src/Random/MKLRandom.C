@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:20:27 2013
+  \date      Sat 27 Apr 2013 08:36:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator

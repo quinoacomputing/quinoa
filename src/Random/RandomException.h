@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:01:01 2013
+  \date      Sat 27 Apr 2013 08:25:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -40,14 +40,16 @@ class RandomException : public Exception {
                              const RndExceptType rndExcept,
                              const string& file,
                              const string& func,
-                             const unsigned int& line) :
-      Exception(except, file, func, line), m_except(rndExcept) {}
+                             const unsigned int& line,
+                             const string& message = "") noexcept :
+      Exception(except,
+                file,
+                func,
+                line,
+                RndMsg[static_cast<int>(rndExcept)] + message) {}
 
     //! Destructor
     virtual ~RandomException() noexcept = default;
-
-    //! Handle RandomException
-    virtual ErrCode handleException(Driver* const driver);
 
   protected:
     //! Permit copy constructor only for children
@@ -60,9 +62,6 @@ class RandomException : public Exception {
     RandomException& operator=(const RandomException&) = delete;
     //! Don't permit move assignment
     RandomException& operator=(RandomException&&) = delete;
-
-    //! Random exception type (RND_UNIMPLEMENTED, etc.)
-    const RndExceptType m_except;
 };
 
 } // namespace Quinoa

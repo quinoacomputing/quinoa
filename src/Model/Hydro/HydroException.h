@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/HydroException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:02:03 2013
+  \date      Sat 27 Apr 2013 08:27:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model exception handler
   \details   Hydro model exception handler
@@ -39,21 +39,22 @@ class HydroException : public ModelException {
   public:
     //! Constructor
     explicit HydroException(const ExceptType except,
-                            const HydroExceptType mixExcept,
+                            const HydroExceptType hydroExcept,
                             const string& file,
                             const string& func,
-                            const unsigned int& line) :
-      ModelException(except, HYDROMODEL_EXCEPT, file, func, line),
-      m_except(mixExcept) {}
+                            const unsigned int& line) noexcept :
+      ModelException(except,
+                     HYDROMODEL_EXCEPT,
+                     file,
+                     func,
+                     line,
+                     HydroMsg[static_cast<int>(hydroExcept)]) {}
 
     //! Move constructor for throws, default compiler generated
     HydroException(HydroException&&) = default;
 
     //! Destructor
     virtual ~HydroException() noexcept = default;
-
-    //! Handle HydroException
-    virtual ErrCode handleException(Driver* const driver);
 
   private:
     //! Don't permit copy constructor
@@ -62,9 +63,6 @@ class HydroException : public ModelException {
     HydroException& operator=(const HydroException&) = delete;
     //! Don't permit move assignment
     HydroException& operator=(HydroException&&) = delete;
-
-    //! Hydro exception type
-    const HydroExceptType m_except;
 };
 
 } // namespace Quinoa

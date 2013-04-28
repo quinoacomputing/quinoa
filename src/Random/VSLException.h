@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:02:56 2013
+  \date      Sat 27 Apr 2013 08:22:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -267,12 +267,6 @@ class VSLException : public MKLException {
     //! Destructor
     virtual ~VSLException() noexcept = default;
 
-    //! Handle VSLException
-    virtual ErrCode handleException(Driver* const driver);
-
-    //! Get VSLException based on VSLError
-    VSLExceptType getException(int vslerr);
-
   private:
     //! Don't permit copy constructor
     VSLException(const VSLException&) = delete;
@@ -281,11 +275,11 @@ class VSLException : public MKLException {
     //! Don't permit move assignment
     VSLException& operator=(VSLException&&) = delete;
 
-    //! VSL exception type (VSL_UNIMPLEMENTED, VSL_UNKNOWN, etc.)
-    VSLExceptType m_except;
+    //! Get VSLException based on VSLError
+    VSLExceptType getException(int vslerr);
 
-    //! VSLError -> VSLExceptType map
-    map<int,VSLExceptType> m_VSLErrMap;
+    map<int,VSLExceptType> m_VSLErrMap;    //!< VSLError -> VSLExceptType map
+    string m_message;                      //!< VSL error message
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 01:13:15 PM MDT
+  \date      Sat 27 Apr 2013 07:27:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
