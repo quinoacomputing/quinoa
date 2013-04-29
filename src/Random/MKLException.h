@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:34:11 PM MDT
+  \date      Mon Apr 29 15:27:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKLException class declaration
   \details   MKLException class declaration
@@ -49,7 +49,7 @@ class MKLException : public RandomException {
                           const MKLExceptType mklExcept,
                           const string& file,
                           const string& func,
-                          const unsigned int& line,
+                          unsigned int line,
                           const string& message = "") noexcept :
       RandomException(except,
                       RND_MKL,

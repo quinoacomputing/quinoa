@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/VSLException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:22:51 PM MDT
+  \date      Mon Apr 29 15:28:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel's Vector Statistical Library exception
   \details   Intel's Vector Statistical Library exception
@@ -259,7 +259,7 @@ class VSLException : public MKLException {
                           const int vslerr,
                           const string& file,
                           const string& func,
-                          const unsigned int& line);
+                          unsigned int line);
 
     //! Move constructor for throws, default compiler generated
     VSLException(VSLException&&) = default;

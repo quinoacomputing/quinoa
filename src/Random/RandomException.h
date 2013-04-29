@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/RandomException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:25:17 PM MDT
+  \date      Mon Apr 29 15:56:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RandomException class declaration
   \details   RandomException class declaration
@@ -40,13 +40,13 @@ class RandomException : public Exception {
                              const RndExceptType rndExcept,
                              const string& file,
                              const string& func,
-                             const unsigned int& line,
+                             unsigned int line,
                              const string& message = "") noexcept :
       Exception(except,
+                RndMsg[static_cast<int>(rndExcept)] + message,
                 file,
                 func,
-                line,
-                RndMsg[static_cast<int>(rndExcept)] + message) {}
+                line) {}
 
     //! Destructor
     virtual ~RandomException() noexcept = default;

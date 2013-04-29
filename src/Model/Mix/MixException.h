@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/MixException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:27:26 PM MDT
+  \date      Mon Apr 29 15:54:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model exception handler
   \details   Mix model exception handler

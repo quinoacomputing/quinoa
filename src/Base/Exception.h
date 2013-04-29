@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:33:05 PM MDT
+  \date      Mon Apr 29 16:00:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -72,42 +72,26 @@ enum ErrCode { HAPPY=0,          //!< Everything went fine
 class Driver;
 
 //! Quinoa::Exception base
-class Exception {
+class Exception : public std::exception {
 
   public:
-    //! Constructor: empty with defaults
-    explicit Exception(const ExceptType except, const string& msg = "") :
-      m_file(""),
-      m_func(""),
-      m_line(0),
-      m_message(msg),
-      m_except(except) {}
+    //! Constructor
+    explicit Exception(const ExceptType except,
+                       const string& message = "",
+                       const string& file = "",
+                       const string& func = "",
+                       unsigned int line = 0) noexcept;
 
     //! Destructor
     virtual ~Exception() noexcept = default;
 
+    //! Redefine std::exception's what()
+    virtual const char* what() const noexcept { return m_message.c_str(); }
+
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* const driver);
 
-    //! Generate generic exception message
-    string genericWhat() const;
-
-    //! Generate std::runtime_error exception message
-    string runtimeWhat() const;
-
   protected:
-    //! Constructor: initialized from children
-    explicit Exception(const ExceptType except,
-                       const string& file,
-                       const string& func,
-                       const unsigned int& line,
-                       const string& message) noexcept :
-      m_file(file),
-      m_func(func),
-      m_line(line),
-      m_message(message),
-      m_except(except) {}
-
     //! Permit copy constructor only for children
     Exception(const Exception&) = default;
     //! Permit move constructor only for children

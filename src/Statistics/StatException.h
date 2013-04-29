@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/StatException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:25:24 PM MDT
+  \date      Mon Apr 29 15:56:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics exception
   \details   Statistics Exception
@@ -46,12 +46,12 @@ class StatException : public Exception {
                            const StatExceptType statExcept,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) noexcept :
+                           unsigned int line) noexcept :
       Exception(except,
+                StatMsg[static_cast<int>(statExcept)],
                 file,
                 func,
-                line,
-                StatMsg[static_cast<int>(statExcept)]) {}
+                line) {}
 
     //! Constructor with message from thrower
     explicit StatException(const ExceptType except,
@@ -59,12 +59,12 @@ class StatException : public Exception {
                            const string throwerMsg,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) noexcept :
+                           unsigned int line) noexcept :
       Exception(except,
+                StatMsg[static_cast<int>(statExcept)] + throwerMsg,
                 file,
                 func,
-                line,
-                StatMsg[static_cast<int>(statExcept)] + throwerMsg) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     StatException(StatException&&) = default;

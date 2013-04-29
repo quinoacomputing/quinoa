@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/MeshException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:28:22 PM MDT
+  \date      Mon Apr 29 15:51:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshException class declaration
   \details   MeshException class declaration
@@ -46,12 +46,12 @@ class MeshException : public Exception {
                            const string throwerMsg,
                            const string& file,
                            const string& func,
-                           const unsigned int& line) noexcept :
+                           unsigned int line) noexcept :
       Exception(except,
+                MeshMsg[static_cast<int>(mshExcept)] + throwerMsg,
                 file,
                 func,
-                line,
-                MeshMsg[static_cast<int>(mshExcept)] + throwerMsg) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     MeshException(MeshException&&) = default;
