@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/PhysicsException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:24:55 PM MDT
+  \date      Mon Apr 29 15:55:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics Exception handling
   \details   Physics Exception handling
@@ -40,12 +40,12 @@ class PhysicsException : public Exception {
                               const PhysicsExceptType physicsExcept,
                               const string& file,
                               const string& func,
-                              const unsigned int& line) noexcept :
+                              unsigned int line) noexcept :
       Exception(except,
+                PhysicsMsg[static_cast<int>(physicsExcept)],
                 file,
                 func,
-                line,
-                PhysicsMsg[static_cast<int>(physicsExcept)]) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     PhysicsException(PhysicsException&&) = default;

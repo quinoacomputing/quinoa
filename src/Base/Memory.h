@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 05:43:24 PM MDT
+  \date      Mon Apr 29 13:17:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -47,7 +47,7 @@ class Memory {
     explicit Memory(Paradigm* const paradigm) noexcept;
 
     //! Destructor
-    ~Memory();
+    ~Memory() noexcept;
 
     //! Allocate memory entry and return both MemoryEntry* ID and raw pointer,
     //! template V specifies return pointer type

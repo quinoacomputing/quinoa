@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:28:43 PM MDT
+  \date      Mon Apr 29 15:51:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryException class declaration
   \details   MemoryException class declaration
@@ -54,12 +54,12 @@ class MemoryException : public Exception {
                              const MemExceptType memExcept,
                              const string& file,
                              const string& func,
-                             const unsigned int& line) noexcept :
+                             unsigned int line) noexcept :
       Exception(except,
+                MemMsg[static_cast<int>(memExcept)],
                 file,
                 func,
-                line,
-                MemMsg[static_cast<int>(memExcept)]) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     MemoryException(MemoryException&&) = default;

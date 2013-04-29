@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/IOException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:29:00 PM MDT
+  \date      Mon Apr 29 15:51:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     IOException class declaration
   \details   IOException class declaration
@@ -44,12 +44,12 @@ class IOException : public Exception {
                          const string filename,
                          const string& file,
                          const string& func,
-                         const unsigned int& line) noexcept :
+                         unsigned int line) noexcept :
       Exception(except,
+                IOMsg[static_cast<int>(ioExcept)] + filename,
                 file,
                 func,
-                line,
-                IOMsg[static_cast<int>(ioExcept)] + filename) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     IOException(IOException&&) = default;

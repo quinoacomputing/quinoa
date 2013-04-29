@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 05:43:30 PM MDT
+  \date      Mon Apr 29 09:32:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -39,7 +39,7 @@ class Driver {
     void solve();
 
     //! Finalize (either at normal exit, or due to exception)
-    void finalize();
+    void finalize() noexcept;
 
   private:
     //! Don't permit copy constructor

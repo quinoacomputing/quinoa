@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/ParserException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:27:04 PM MDT
+  \date      Mon Apr 29 15:55:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ParserException
   \details   ParserException
@@ -42,12 +42,12 @@ class ParserException : public Exception {
                              const ParserExceptType parserExcept,
                              const string& file,
                              const string& func,
-                             const unsigned int& line) noexcept :
+                             unsigned int line) noexcept :
       Exception(except,
+                ParserMsg[static_cast<int>(parserExcept)],
                 file,
                 func,
-                line,
-                ParserMsg[static_cast<int>(parserExcept)]) {}
+                line) {}
 
     //! Constructor with message from thrower
     explicit ParserException(const ExceptType except,
@@ -55,12 +55,12 @@ class ParserException : public Exception {
                              const string throwerMsg,
                              const string& file,
                              const string& func,
-                             const unsigned int& line) noexcept :
+                             unsigned int line) noexcept :
       Exception(except,
+                ParserMsg[static_cast<int>(parserExcept)] + throwerMsg,
                 file,
                 func,
-                line,
-                ParserMsg[static_cast<int>(parserExcept)] + throwerMsg) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     ParserException(ParserException&&) = default;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 06:10:00 PM MDT
+  \date      Mon Apr 29 09:34:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -128,11 +128,12 @@ Driver::solve()
 }
 
 void
-Driver::finalize()
+Driver::finalize() noexcept
 //******************************************************************************
 //  Finalize
 //! \details Cleanup either at the end of business as usual or due to an
-//!          exception
+//!          exception. No-throw guarantee: this member function never throws
+//!          exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {

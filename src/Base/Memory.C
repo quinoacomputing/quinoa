@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:49:11 PM MDT
+  \date      Mon Apr 29 16:02:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -40,7 +40,7 @@ Memory::Memory(Paradigm* const paradigm) noexcept :
 {
 }
 
-Memory::~Memory()
+Memory::~Memory() noexcept
 //******************************************************************************
 //  Destructor
 //! \details Free all allocated memory when leaving scope (just in case)
@@ -122,6 +122,8 @@ Memory::newEntry(const size_t number,
   // Test if name is unique
   Assert(m_entry.size()==m_name.size(), MemoryException,WARNING,NONUNIQUE_NAME);
 
+Throw(MemoryException,FATAL,BAD_INSERT);
+
   // Return key to caller
   return entry;
 }
@@ -197,18 +199,18 @@ Memory::freeEntry(MemoryEntry* id) noexcept
   } // Catch Quina::Exception (including MemoryException)
     catch (Exception& qe) {
       // Emit warning and continue
-      cout << "WARNING: " << qe.genericWhat();
+      cout << "WARNING: " << qe.what() << endl;
     }
     // Catch std::exception
     catch (exception& se) {
       // Emit warning and continue
-      cout << "RUNTIME ERROR: " << se.what() << "\nContinuing anyway..."
+      cout << "RUNTIME ERROR: " << se.what() << endl << "Continuing anyway..."
            << endl;
     }
     // Catch uncaught exceptions
     catch (...) {
       // Emit warning and continue
-      cout << "UNKNOWN EXCEPTION\nContinuing anyway..." << endl;
+      cout << "UNKNOWN EXCEPTION" << endl << "Continuing anyway..." << endl;
     }
 }
 

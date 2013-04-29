@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:35:37 PM MDT
+  \date      Mon Apr 29 15:49:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -95,7 +95,8 @@ int main(int argc, char* argv[])
     catch (Exception& qe) {
       error = qe.handleException(&driver);
     }
-    // Catch std::exceptions and transform them into Quinoa::Exceptions
+    // Catch std::exceptions and transform them into Quinoa::Exceptions without
+    // file:line:func information
     catch (exception& se) {
       Exception qe(RUNTIME, se.what());
       error = qe.handleException(&driver);

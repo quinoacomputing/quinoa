@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TimerException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:33:44 PM MDT
+  \date      Mon Apr 29 15:57:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TimerException class declaration
   \details   TimerException class declaration
@@ -40,12 +40,12 @@ class TimerException : public Exception {
                             const TimerExceptType timerExcept,
                             const string& file,
                             const string& func,
-                            const unsigned int& line) noexcept :
+                            unsigned int line) noexcept :
       Exception(except,
+                TimerMsg[static_cast<int>(timerExcept)],
                 file,
                 func,
-                line,
-                TimerMsg[static_cast<int>(timerExcept)]) {}
+                line) {}
 
     //! Move constructor for throws, default compiler generated
     TimerException(TimerException&&) = default;

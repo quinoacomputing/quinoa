@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/ModelException.h
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:28:02 PM MDT
+  \date      Mon Apr 29 15:51:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ModelException
   \details   ModelException
@@ -46,13 +46,13 @@ class ModelException : public Exception {
                             const ModelExceptType modelExcept,
                             const string& file,
                             const string& func,
-                            const unsigned int& line,
+                            unsigned int line,
                             const string& message = "") noexcept :
       Exception(except,
+                ModelMsg[static_cast<int>(modelExcept)] + message,
                 file,
                 func,
-                line,
-                ModelMsg[static_cast<int>(modelExcept)] + message) {}
+                line) {}
 
     //! Destructor
     virtual ~ModelException() noexcept = default;
