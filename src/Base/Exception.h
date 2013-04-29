@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Mon Apr 29 16:00:25 2013
+  \date      Mon Apr 29 16:04:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -101,15 +101,15 @@ class Exception : public std::exception {
     //! \param[in]  message  Message to add to end of message
     void augment(const string& message) { m_message += message; }
 
-    const string m_file;  //!< Source file where the exception is occurred
-    const string m_func;  //!< Functionn name in which the exception is occurred
-    const int m_line;     //!< Source line where the exception is occurred
-
   private:
     //! Don't permit copy assignment
     Exception& operator=(const Exception&) = delete;
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
+
+    const string m_file;  //!< Source file where the exception is occurred
+    const string m_func;  //!< Functionn name in which the exception is occurred
+    const int m_line;     //!< Source line where the exception is occurred
 
     string m_message;     //!< Error message (constructed along the tree)
 
