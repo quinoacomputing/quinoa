@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 07:47:46 AM MDT
+  \date      Sat 04 May 2013 07:51:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -79,7 +79,7 @@ void
 Exception::echo(const char* msg) noexcept
 //******************************************************************************
 //  Echo message
-//! No-throw guarantee: this member function never throws exceptions.
+//! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -88,9 +88,10 @@ Exception::echo(const char* msg) noexcept
 }
 
 ErrCode
-Exception::handleException(Driver* const driver)
+Exception::handleException(Driver* const driver) noexcept
 //******************************************************************************
 //  Handle Exception: Print cumulative message and handle criticality
+//! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -110,19 +111,19 @@ Exception::handleException(Driver* const driver)
 
     case FATAL:
       echo("FATAL ERROR");
-      cout << ">>> Attempting cleanup & graceful exit..." << endl;
+      printf(">>> Attempting cleanup & graceful exit...\n");
       driver->finalize();
       return FATAL_ERROR;
 
     case RUNTIME:
       echo("RUNTIME ERROR");
-      cout << ">>> Attempting cleanup & graceful exit..." << endl;
+      printf(">>> Attempting cleanup & graceful exit...\n");
       driver->finalize();
       return FATAL_ERROR;
 
     case UNCAUGHT:
       echo("UNKNOWN ERROR");
-      cout << ">>> Attempting cleanup & graceful exit..." << endl;
+      printf(">>> Attempting cleanup & graceful exit...\n");
       driver->finalize();
       return FATAL_ERROR;
 
