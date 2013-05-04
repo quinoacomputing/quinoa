@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Mon 18 Feb 2013 01:17:14 PM MST
+  \date      Fri 03 May 2013 06:17:13 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -10,8 +10,8 @@
 //******************************************************************************
 
 #include <iostream>
+#include <cassert>
 
-#include <MemoryException.h>
 #include <Model.h>
 
 using namespace std;
@@ -31,5 +31,5 @@ Model::Model(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
+  assert(m_name.size() > 0);
 }

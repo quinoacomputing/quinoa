@@ -2,16 +2,17 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:36:59 PM MDT
+  \date      Fri 03 May 2013 07:05:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */
 //******************************************************************************
 
+#include <cassert>
+#include <iostream>
+
 #include <MKLRandom.h>
-#include <MemoryException.h>
-#include <MKLException.h>
 #include <Paradigm.h>
 
 using namespace Quinoa;
@@ -31,6 +32,7 @@ MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) :
 MKLRandom::~MKLRandom() noexcept
 //******************************************************************************
 //  Destructor: Free all random number tables and streams
+//! \details No-throw guarantee: this member function never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -61,13 +63,13 @@ MKLRandom::addTable(const int brng,
   // Create new table
   MKLRndTable* table = new (nothrow)
     MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
-  Assert(table != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (table == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 
   // Store new table
   pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    Throw(MemoryException,FATAL,BAD_INSERT);
+    throw Exception(FATAL, "Cannot store random number table");
   }
 
   // Return key to caller
@@ -75,20 +77,30 @@ MKLRandom::addTable(const int brng,
 }
 
 void
-MKLRandom::eraseTable(MKLRndTable* table)
+MKLRandom::eraseTable(MKLRndTable* table) noexcept
 //******************************************************************************
 //  Erase a random number table
 //! \param[in]  table    Pointer to table to erase
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  auto it = m_table.find(table);
-  if (it != m_table.end()) {
+  try {
+
+    auto it = m_table.find(table);
+    assert(it != m_table.end());
+
     delete table;
     m_table.erase(it);
-  } else {
-    Throw(MKLException,WARNING,MKL_UNKNOWN_TABLE);
-  }
+
+  } // emit only a warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
+    }
+    catch (...) {
+      cout << "UNKNOWN EXCEPTION in MKLRandom::eraseTable()" << endl
+           << "Continuing anyway..." << endl;
+    }
 }
 
 void
@@ -110,12 +122,8 @@ MKLRandom::getRnd(MKLRndTable* table)
 //******************************************************************************
 {
   auto it = m_table.find(table);
-  if (it != m_table.end()) {
-    return (*it)->getRnd();
-  } else {
-    Throw(MKLException,WARNING,MKL_UNKNOWN_TABLE);
-    return nullptr;
-  }
+  assert(it != m_table.end());
+  return (*it)->getRnd();
 }
 
 MKLRndStream*
@@ -129,13 +137,13 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 {
   // Create new stream
   MKLRndStream* stream = new (nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
-  Assert(stream != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (stream == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 
   // Store new stream
   pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    Throw(MemoryException,FATAL,BAD_INSERT);
+    throw Exception(FATAL, "Cannot store random number stream");
   }
 
   // Return key to caller
@@ -143,20 +151,30 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 }
 
 void
-MKLRandom::eraseStream(MKLRndStream* stream)
+MKLRandom::eraseStream(MKLRndStream* stream) noexcept
 //******************************************************************************
 //  Erase a random number stream
 //! \param[in]  stream    Pointer to stream to erase
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  auto it = m_stream.find(stream);
-  if (it != m_stream.end()) {
+  try {
+
+    auto it = m_stream.find(stream);
+    assert(it != m_stream.end());
+
     delete stream;
     m_stream.erase(it);
-  } else {
-    Throw(MKLException,WARNING,MKL_UNKNOWN_STREAM);
-  }
+
+  } // emit only a warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
+    }
+    catch (...) {
+      cout << "UNKNOWN EXCEPTION in MKLRandom::eraseStream()" << endl
+           << "Continuing anyway..." << endl;
+    }
 }
 
 const VSLStreamStatePtr*
@@ -168,10 +186,6 @@ MKLRandom::getStr(MKLRndStream* stream)
 //******************************************************************************
 {
   auto it = m_stream.find(stream);
-  if (it != m_stream.end()) {
-    return (*it)->getStr();
-  } else {
-    Throw(MKLException,WARNING,MKL_UNKNOWN_STREAM);
-    return nullptr;
-  }
+  assert(it != m_stream.end());
+  return (*it)->getStr();
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:32:31 2013
+  \date      Fri 03 May 2013 07:20:48 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -14,7 +14,6 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 #include <Distribution.h>
-#include <StatException.h>
 #include <ControlTypes.h>
 
 using namespace std;

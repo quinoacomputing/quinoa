@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:56:27 2013
+  \date      Fri 03 May 2013 06:22:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -15,7 +15,6 @@
 
 #include <Memory.h>
 #include <PDFWriter.h>
-#include <IOException.h>
 
 using namespace Quinoa;
 
@@ -24,24 +23,39 @@ PDFWriter::PDFWriter(const string filename) :
 //******************************************************************************
 //  Constructor: Acquire PDF file handle
 //! \param[in]  filename  File name to open for writing
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream is in a valid state.
 //! \author J. Bakosi
 //******************************************************************************
 {
   m_outPDF.open(m_filename, ofstream::out);
-  Assert(m_outPDF.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+
+  if (!m_outPDF.good())
+    throw Exception(FATAL, "Failed to open file: " + m_filename);
 }
 
 PDFWriter::~PDFWriter() noexcept
 //******************************************************************************
 //  Destructor: Release PDF file handle
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outPDF.close();
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through
-  if (m_outPDF.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
+  try {
+
+    m_outPDF.close();
+
+    if (m_outPDF.fail())
+      cout << "WARNING: Failed to close file: " << m_filename << endl;
+
+  } // emit only a warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
+    }
+    catch (...) {
+      cout << "UNKNOWN EXCEPTION in PDFWriter destructor" << endl
+           << "Continuing anyway..." << endl;
+    }
 }
 
 void
@@ -85,7 +99,8 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
 {
   // Output mesh header: mesh version, file type, data size
   m_outPDF << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
-  Assert(!m_outPDF.bad(), IOException,FATAL,IO_FAILED_WRITE,m_filename);
+  if (m_outPDF.bad())
+     throw Exception(FATAL, "Failed to write to file: " + m_filename);
 
   auto f = jpdf->getMap();
   real binsize = jpdf->getBinsize();

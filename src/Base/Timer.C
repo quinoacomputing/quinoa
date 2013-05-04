@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Wed 27 Mar 2013 10:04:21 PM MDT
+  \date      Wed 01 May 2013 09:29:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -10,9 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
+#include <cassert>
 
 #include <Timer.h>
-#include <TimerException.h>
 
 using namespace Quinoa;
 
@@ -38,7 +38,7 @@ Timer::create(const string& label)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(label.size() > 0, TimerException,FATAL,EMPTY_CLOCK_NAME);
+  assert(label.size() > 0);
 
   // Find an unused timer
   bool found = false;
@@ -51,7 +51,7 @@ Timer::create(const string& label)
     ++i;
   }
 
-  Assert(found, TimerException,FATAL,TOO_MANY_TIMERS);
+  assert(found);
 
   m_timer[id].name = label;
   m_timer[id].used = true;

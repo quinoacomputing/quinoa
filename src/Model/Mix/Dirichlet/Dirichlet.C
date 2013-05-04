@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:45:40 PM MDT
+  \date      Sat 04 May 2013 06:58:54 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -21,7 +21,6 @@
 #include <MKLRndStream.h>
 #include <JPDF.h>
 #include <Control.h>
-#include <MixException.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -41,16 +40,18 @@ Dirichlet::Dirichlet(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_b.size() == static_cast<unsigned int>(m_nscalar),
-         MixException, FATAL, BAD_MODEL_PARAMETERS);
-  Assert(m_S.size() == static_cast<unsigned int>(m_nscalar),
-         MixException, FATAL, BAD_MODEL_PARAMETERS);
-  Assert(m_k.size() == static_cast<unsigned int>(m_nscalar),
-         MixException, FATAL, BAD_MODEL_PARAMETERS);
+  if (m_b.size() != static_cast<unsigned int>(m_nscalar))
+    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'b'");
+  if (m_S.size() != static_cast<unsigned int>(m_nscalar))
+    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'S'");
+  if (m_k.size() != static_cast<unsigned int>(m_nscalar))
+    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'k'");
 
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_random == nullptr)
+    throw Exception(FATAL, "Cannot allocate memory for random number generator "
+                           "in Dirichlet constructor");
 
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
@@ -61,7 +62,7 @@ Dirichlet::Dirichlet(Memory* const memory,
   m_allScalars = m_memory->newEntry<real>(m_npar*m_nscalar,
                                           REAL,
                                           SCALAR,
-                                          "allScalars");
+                                          "Dirichlet scalars");
 }
 
 Dirichlet::~Dirichlet() noexcept

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:22:34 2013
+  \date      Sat 04 May 2013 06:49:19 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -57,7 +57,7 @@ const string VarTypeName[NUM_VAR_TYPES] = { "scalar",
 };
 
 //! Output width of MemoryEntry fields
-const int EntryWidth[] = { 10,  //! Width of Name field
+const int EntryWidth[] = { 30,  //! Width of Name field
                            10,  //! Width of Number field
                             5,  //! Width of Value field
                             9,  //! Width of Value size field
@@ -65,7 +65,7 @@ const int EntryWidth[] = { 10,  //! Width of Name field
                            10,  //! Width of Bytes field
                             6,  //! Width of Plot field
                             7,  //! Width of Restart field
-                           10   //! Width of Ptr field
+                           20   //! Width of Ptr field
 };
 
 //! Memory entry field designators

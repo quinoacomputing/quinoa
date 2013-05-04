@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Mon Apr 29 13:17:31 2013
+  \date      Wed 01 May 2013 08:45:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -12,11 +12,12 @@
 #define Memory_h
 
 #include <string>
+#include <cassert>
 #include <unordered_set>
 #include <unordered_map>
 
 #include <MemoryEntry.h>
-#include <MemoryException.h>
+#include <Exception.h>
 
 namespace Quinoa {
 
@@ -88,7 +89,7 @@ class Memory {
     void freeAllEntries() noexcept;
 
     //! Echo all (optionally sorted) memory entries
-    void echoAllEntries(const MemoryEntryField crit = UNSPECIFIED) const;
+    void echoAllEntries(MemoryEntryField crit = UNSPECIFIED) const;
 
     //! Return the number of items based on the ID
     size_t getNumber(MemoryEntry* const id) const;
@@ -111,14 +112,11 @@ class Memory {
     //! Return true if the variable is written to restart file based on the ID
     bool getRestart(MemoryEntry* const id) const;
 
-    //! Return the MemorySet key based on the variable name
-    const MemoryEntry* getID(const string& name) const;
-
     //! Return the number of allocated bytes
-    size_t getBytes() const;
+    size_t getBytes() const noexcept;
 
     //! Zero entry using multiple threads
-    void zero(MemoryEntry* const id) const;
+    void zero(MemoryEntry* const id) const noexcept;
 
   private:
     //! Memory entries are stored in an STL unordered_set.
@@ -128,9 +126,6 @@ class Memory {
     //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
     //! and deallocating memory entries) is amortized to O(1).
     using MemorySet = unordered_set<MemoryEntry*>;
-
-    //! Map of memory entry names to MemorySet keys
-    using MemoryNames = unordered_map<string,MemoryEntry*>;
 
     //! Don't permit copy constructor
     Memory(const Memory&) = delete;
@@ -160,23 +155,10 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) const {
-      Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
+      assert(id != nullptr);
       auto it = m_entry.find(id);
-      Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+      assert(it!=m_entry.end());
       return static_cast<V*>((*it)->m_ptr);
-    }
-
-    //! Return the data pointer for memory entry based on the variable name,
-    //! template V specifies return pointer type
-    template<class V> V* getPtr(const string& name) const {
-      return static_cast<V*>(getID(name)->m_ptr);
-    }
-
-    //! Return the pair of data pointer and number of variables for memory entry
-    //! based on the variable name, template V specifies return pointer type
-    template<class V> pair<size_t,V*> getNumPtr(const string& name) const {
-      const MemoryEntry* const entry = getID(name);
-      return pair<size_t,V*>(entry->m_number, static_cast<V*>(entry->m_ptr));
     }
 
     //! Deallocate a memory entry
@@ -194,7 +176,6 @@ class Memory {
     const int m_nOMPthreads;    //!< Number of OpenMP threads
 
     MemorySet m_entry;          //!< Memory entries
-    MemoryNames m_name;         //!< Memory entry names mapped to MemorySet keys
 };
 
 } // namespace Quinoa

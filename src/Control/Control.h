@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed 24 Apr 2013 10:02:03 PM MDT
+  \date      Wed 01 May 2013 08:54:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -44,7 +44,8 @@ class Control {
 
     //! Get single element at position
     template< control::BundlePosition at >
-    const typename std::tuple_element<at, decltype(m_data)>::type& get() const {
+    const typename std::tuple_element<at, decltype(m_data)>::type& get()
+    const noexcept {
       return std::get<at>(m_data);
     }
 
@@ -53,29 +54,29 @@ class Control {
     bool set() const { return m_booldata[at]; }
 
     //! Get physics keyword
-    const std::string& physicsKeyword() const {
+    const std::string& physicsKeyword() const noexcept {
       return associate::PhysicsKeyword[ std::get<control::PHYSICS>(m_data) ];
     }
     //! Get physics name
-    const std::string& physicsName() const {
+    const std::string& physicsName() const noexcept {
       return associate::PhysicsName[ std::get<control::PHYSICS>(m_data) ];
     }
 
     //! Get hydrodynamics model keyword
-    const std::string& hydroKeyword() const {
+    const std::string& hydroKeyword() const noexcept {
       return associate::HydroKeyword[ std::get<control::HYDRO>(m_data) ];
     }
     //! Get hydrodynamics model name
-    const std::string& hydroName() const {
+    const std::string& hydroName() const noexcept {
       return associate::HydroName[ std::get<control::HYDRO>(m_data) ];
     }
 
     //! Get material mix model keyword
-    const std::string& mixKeyword() const {
+    const std::string& mixKeyword() const noexcept {
       return associate::MixKeyword[ std::get<control::MIX>(m_data) ];
     }
     //! Get material mix model name
-    const std::string& mixName() const {
+    const std::string& mixName() const noexcept {
       return associate::MixName[ std::get<control::MIX>(m_data) ];
     }
 

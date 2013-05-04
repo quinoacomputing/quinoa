@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 07:27:02 PM MDT
+  \date      Sat 04 May 2013 06:31:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -10,8 +10,8 @@
 //******************************************************************************
 
 #include <Mix.h>
-#include <MixException.h>
 #include <Control.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
@@ -31,6 +31,9 @@ Mix::Mix(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_nscalar > 0, MixException,FATAL,BAD_NSCALAR);
-  Assert(m_npar > 0, ModelException,FATAL,BAD_NPAR);
+  if (m_nscalar <= 0)
+    throw Exception(FATAL, "Wrong number of scalars: ", m_nscalar);
+
+  if (m_npar <= 0)
+    throw Exception(FATAL, "Wrong number of particles: ", m_npar);
 }

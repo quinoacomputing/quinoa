@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:20:23 2013
+  \date      Fri 03 May 2013 06:58:24 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -40,7 +40,7 @@ class MKLRandom : Random {
                           const string name);
 
     //! Erase a random number table
-    void eraseTable(MKLRndTable* table);
+    void eraseTable(MKLRndTable* table) noexcept;
 
     //! Regenerate random numbers in all tables
     void regenTables();
@@ -52,7 +52,7 @@ class MKLRandom : Random {
     MKLRndStream* addStream(const int brng, const unsigned int seed);
 
     //! Erase a random number stream
-    void eraseStream(MKLRndStream* stream);
+    void eraseStream(MKLRndStream* stream) noexcept;
 
     //! Constant accessor to random number VSL stream
     const VSLStreamStatePtr* getStr(MKLRndStream* stream);

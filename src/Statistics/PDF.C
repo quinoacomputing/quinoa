@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.C
   \author    J. Bakosi
-  \date      Fri Apr 26 15:16:43 2013
+  \date      Fri 03 May 2013 07:23:57 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include <PDF.h>
-#include <StatException.h>
 
 using namespace Quinoa;
 

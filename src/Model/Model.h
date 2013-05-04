@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:21:30 2013
+  \date      Fri 03 May 2013 06:16:59 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -14,6 +14,8 @@
 #include <string>
 
 using namespace std;
+
+#include <QuinoaTypes.h>
 
 namespace Quinoa {
 

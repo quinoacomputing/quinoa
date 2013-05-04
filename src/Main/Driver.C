@@ -2,19 +2,19 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon Apr 29 09:34:03 2013
+  \date      Fri 03 May 2013 07:42:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
 */
 //******************************************************************************
 
+#include <iostream>
+
 #include <Driver.h>
 #include <Control.h>
 #include <Timer.h>
 #include <Parser.h>
-#include <ParserException.h>
-#include <PhysicsException.h>
 #include <HomMix.h>
 #include <HomHydro.h>
 #include <SPINSFlow.h>
@@ -38,14 +38,16 @@ Driver::Driver(int argc,
 //! \param[in]  argv      Argument vector from command line
 //! \param[in]  memory    Memory oject pointer
 //! \param[in]  paradigm  Parallel programming paradigm object pointer
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
 }
 
-Driver::~Driver()
+Driver::~Driver() noexcept
 //******************************************************************************
 //  Destructor
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -61,11 +63,15 @@ Driver::setup()
 {
   // Instantiate main control category
   m_control = new (nothrow) Control;
-  Assert(m_control != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_control == nullptr)
+    throw Exception(FATAL,
+            "Cannot allocate memory for control object in Driver::setup()");
 
   // Take exactly one filename argument for now
   // Will need to be extended with a more elaborate command line parser
-  if (m_argc != 2) Throw(ParserException,FATAL,CMDLINE_EXCEPT);
+  if (m_argc != 2)
+    throw Exception(FATAL,
+            "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
   Parser parser(m_argv[1], m_control);
@@ -78,36 +84,44 @@ Driver::setup()
 
   // Instantiate timer object
   m_timer = new (nothrow) Timer;
-  Assert(m_timer != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_timer == nullptr)
+    throw Exception(FATAL,
+            "Cannot allocate memory for timer object in Driver::setup()");
 
   // Instantiate selected physics
   switch (m_control->get<control::PHYSICS>()) {
 
     case control::PhysicsType::NO_PHYSICS :
-      Throw(PhysicsException,FATAL,PhysicsExceptType::NO_PHYSICS);
+      throw Exception(FATAL, "No physics selected");
       break;
 
     case control::PhysicsType::HOMOGENEOUS_MIX :
       m_physics = new (nothrow)
                   HomMix(m_memory, m_paradigm, m_control, m_timer);
-      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_physics == nullptr)
+        throw Exception(FATAL,
+                "Cannot allocate memory for physics object in Driver::setup()");
       break;
 
     case control::PhysicsType::HOMOGENEOUS_HYDRO :
       m_physics = new (nothrow)
                   HomHydro(m_memory, m_paradigm, m_control, m_timer);
-      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_physics == nullptr)
+        throw Exception(FATAL,
+                "Cannot allocate memory for physics object in Driver::setup()");
       break;
 
     case control::PhysicsType::SPINSFLOW :
       m_physics = new (nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");
-      Assert(m_physics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_physics == nullptr)
+        throw Exception(FATAL,
+                "Cannot allocate memory for physics object in Driver::setup()");
       break;
 
     default :
-      Throw(PhysicsException,FATAL,PHYSICS_UNIMPLEMENTED);
+      throw Exception(FATAL, "Selected physics not implemented");
   }
 
   // Echo information on physics selected
@@ -118,7 +132,7 @@ Driver::setup()
 }
 
 void
-Driver::solve()
+Driver::solve() const
 //******************************************************************************
 //  Solve
 //! \author J. Bakosi

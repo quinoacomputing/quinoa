@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:46:57 PM MDT
+  \date      Fri 03 May 2013 06:38:32 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -17,7 +17,6 @@
 #endif // _OPENMP
 
 #include <Memory.h>
-#include <MemoryException.h>
 #include <Control.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
@@ -25,7 +24,6 @@
 #include <GmshTxtMeshReader.h>
 #include <SimplifiedLangevin.h>
 #include <GeneralizedLangevin.h>
-#include <HydroException.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
@@ -50,7 +48,7 @@ SPINSFlow::SPINSFlow(Memory* const memory,
 {
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_random == nullptr) throw Exception(FATAL, "Cannot allocate memory");
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
   // Get array of MKL VSL stream state pointers right away
@@ -61,21 +59,21 @@ SPINSFlow::SPINSFlow(Memory* const memory,
 
     case control::HydroType::SLM :
       m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
-      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
       break;
 
     case control::HydroType::GLM :
       m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
-      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
       break;
 
     default:
-      Throw(HydroException,FATAL,NO_SUCH_HYDRO);
+      throw Exception(FATAL, "No such hydrodynamics model");
   }
 
   // Instantiate Eulerian mesh
   m_mesh = new (nothrow) UnsMesh(m_memory);
-  Assert(m_mesh != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_mesh == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 }
 
 SPINSFlow::~SPINSFlow() noexcept

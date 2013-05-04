@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:23:11 2013
+  \date      Sat 04 May 2013 06:33:50 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model base
   \details   Hydro model base
@@ -10,8 +10,8 @@
 //******************************************************************************
 
 #include <Hydro.h>
-#include <HydroException.h>
 #include <Control.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
@@ -31,6 +31,9 @@ Hydro::Hydro(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(m_nprop > 0, HydroException,FATAL,BAD_NPROP);
-  Assert(m_npar > 0, ModelException,FATAL,BAD_NPAR);
+  if (m_nprop <= 0)
+    throw Exception(FATAL, "Wrong number of particle properties: ", m_nprop);
+
+  if (m_npar <= 0)
+    throw Exception(FATAL, "Wrong number of particles: ", m_npar);
 }

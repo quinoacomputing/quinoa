@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:48:18 PM MDT
+  \date      Fri 03 May 2013 07:10:19 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -17,7 +17,6 @@
 #endif // _OPENMP
 
 #include <Statistics.h>
-#include <StatException.h>
 #include <Paradigm.h>
 #include <Control.h>
 #include <Model.h>
@@ -111,6 +110,7 @@ Statistics::Statistics(Memory* const memory,
 Statistics::~Statistics() noexcept
 //******************************************************************************
 //  Destructor
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -148,8 +148,8 @@ Statistics::mean(const string name) const
   for (int i=0; i<size; ++i) {
     if (m_nameOrdinary[i] == name) return i;
   }
-  Throw(StatException,FATAL,STATEXCEPT_NO_SUCH_MEAN,name);
-  return 0;     // never executed, just to avoid compiler warning
+
+  throw Exception(FATAL, "Cannot find mean: " + name);
 }
 
 string
@@ -187,7 +187,7 @@ Statistics::plotOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, StatException,FATAL,STATEXCEPT_NO_SUCH_MOMENT);
+  assert(m < m_nord);
   return m_plotOrdinary[m];
 }
 
@@ -199,7 +199,7 @@ Statistics::nameOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, StatException,FATAL,STATEXCEPT_NO_SUCH_MOMENT);
+  assert(m < m_nord);
   return m_nameOrdinary[m];
 }
 
@@ -211,7 +211,7 @@ Statistics::nameCentral(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_ncen, StatException,FATAL,STATEXCEPT_NO_SUCH_MOMENT);
+  assert(m < m_ncen);
   return m_nameCentral[m];
 }
 

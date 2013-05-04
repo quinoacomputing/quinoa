@@ -2,12 +2,14 @@
 /*!
   \file      src/Paradigm/OpenMP.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:45:37 2013
+  \date      Wed 01 May 2013 09:04:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
 */
 //******************************************************************************
+
+#include <cassert>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -33,4 +35,5 @@ OpenMP::OpenMP() :
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  assert(m_nthread > 0);
 }

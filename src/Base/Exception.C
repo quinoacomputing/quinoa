@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Mon Apr 29 16:15:34 2013
+  \date      Sat 04 May 2013 06:56:21 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -18,42 +18,63 @@
 using namespace Quinoa;
 
 Exception::Exception(const ExceptType except,
-                     const string& message,
-                     const string& file,
-                     const string& func,
-                     unsigned int line) noexcept :
-  m_file(file),
-  m_func(func),
-  m_line(line),
-  m_message(message),
-  m_except(except)
+                     const std::string& message,
+                     int number) noexcept
 //******************************************************************************
 //  Constructor: generate error message
 //! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
+try :
+  m_except(move(except)),
+  m_message(move(message))
 {
-  if (m_line) {         // append information on file:line:func if available
-    try {
 
-      stringstream s;
-      s << m_message << endl
-        << ">>> Exception in " << m_file << ":" << m_line << ": " << m_func;
-      m_message = s.str();
+  stringstream s;
+  s << m_message;
+  if (number) s << number;
+  m_message = s.str();
+
+} // Catch std::exception
+  catch (exception& se) {
+    // Emit warning and continue
+    cout << "RUNTIME ERROR in Exception constructor: " << se.what() << endl
+         << "Continuing anyway..." << endl;
+  }
+  // Catch uncaught exceptions
+  catch (...) {
+    // Emit warning and continue
+    cout << "UNKNOWN EXCEPTION in Exception constructor" << endl
+         << "Continuing anyway..." << endl;
+  }
+
+void
+Exception::augment(const std::string& message) noexcept
+//******************************************************************************
+//  Augment message after its construction
+//! \details ICC: in C++11 after initializer lists are properly supported,
+//! VSLException's constructor can be made empty, invalidating this function.
+//! No-throw guarantee: this member function never throws exceptions.
+//! \param[in]  message  Message to add to end of message
+//! \author J. Bakosi
+//******************************************************************************
+{
+  try {
+
+    m_message += message;
 
     } // Catch std::exception
       catch (exception& se) {
         // Emit warning and continue
-        cout << "RUNTIME ERROR in Exception constructor: " << se.what() << endl
+        cout << "RUNTIME ERROR in Exception::augment(): " << se.what() << endl
              << "Continuing anyway..." << endl;
       }
       // Catch uncaught exceptions
       catch (...) {
         // Emit warning and continue
-        cout << "UNKNOWN EXCEPTION in Exception constructor" << endl
+        cout << "UNKNOWN EXCEPTION in Exception::augment()" << endl
              << "Continuing anyway..." << endl;
       }
-  }
 }
 
 ErrCode

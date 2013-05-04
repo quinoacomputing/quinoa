@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 11:16:22 AM MDT
+  \date      Sat 04 May 2013 06:42:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -13,7 +13,7 @@
 
 #include <Macro.h>
 #include <GlobWriter.h>
-#include <IOException.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
@@ -25,20 +25,33 @@ GlobWriter::GlobWriter(string filename) : m_filename(filename)
 //******************************************************************************
 {
   m_outGlob.open(m_filename, ofstream::out);
-  Assert(m_outGlob.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+
+  if (!m_outGlob.good())
+    throw Exception(FATAL, "Failed to open file: " + m_filename);
 }
 
-GlobWriter::~GlobWriter()
+GlobWriter::~GlobWriter() noexcept
 //******************************************************************************
 //  Destructor: Release glob file handle
+//! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outGlob.close();
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
-  if (m_outGlob.fail())
-    cout << "WARNING: Failed to close glob file: " << m_filename << endl;
+  try {
+
+    m_outGlob.close();
+
+    if (m_outGlob.fail())
+      cout << "WARNING: Failed to close file: " << m_filename << endl;
+
+  } // emit only a warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
+    }
+    catch (...) {
+      cout << "UNKNOWN EXCEPTION in GlobWriter destructor" << endl
+           << "Continuing anyway..." << endl;
+    }
 }
 
 void

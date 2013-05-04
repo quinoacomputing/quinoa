@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 07:29:37 PM MDT
+  \date      Fri 03 May 2013 06:36:12 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -14,11 +14,9 @@
 
 #include <Macro.h>
 #include <Memory.h>
-#include <MemoryException.h>
 #include <ControlTypes.h>
 #include <Control.h>
 #include <HomHydro.h>
-#include <HydroException.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
@@ -49,35 +47,35 @@ HomHydro::HomHydro(Memory* const memory,
   switch (control->get<control::HYDRO>()) {
 
     case control::HydroType::NO_HYDRO :
-      Throw(HydroException,FATAL,HydroExceptType::NO_SUCH_HYDRO);
+      throw Exception(FATAL, "No hydro model selected");
       break;
 
     case control::HydroType::SLM :
       m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
-      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
       break;
 
     case control::HydroType::GLM :
       m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
-      Assert(m_hydro != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
       break;
 
     default :
-      Throw(HydroException,FATAL,HYDRO_UNIMPLEMENTED);
+      throw Exception(FATAL, "Hydro model not implemented");
   }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_hydro);
-  Assert(m_statistics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_statistics == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  Assert(m_glob != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_glob == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 
   // Instantiate plot file writer
   m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
                                        m_statistics);
-  Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_plot == nullptr) throw Exception(FATAL, "Cannot allocate memory");
 }
 
 HomHydro::~HomHydro() noexcept
