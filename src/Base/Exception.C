@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:56:21 AM MDT
+  \date      Sat 04 May 2013 07:47:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -11,6 +11,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdio>
+
+#include <execinfo.h>
 
 #include <Driver.h>
 #include <Exception.h>
@@ -49,32 +52,39 @@ try :
   }
 
 void
-Exception::augment(const std::string& message) noexcept
+Exception::trace() noexcept
 //******************************************************************************
-//  Augment message after its construction
-//! \details ICC: in C++11 after initializer lists are properly supported,
-//! VSLException's constructor can be made empty, invalidating this function.
-//! No-throw guarantee: this member function never throws exceptions.
-//! \param[in]  message  Message to add to end of message
+//  Echo call trace
+//! \details No-throw guarantee: this member function never throws exceptions.
+//!          For more information see the libc manual at
+//!          http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
 //! \author J. Bakosi
 //******************************************************************************
 {
-  try {
+  // Obtain trace, requires stdio.h, execinfo.h
+  void* callstack[128];
+  int frames = backtrace(callstack, 128);
+  char** strs = backtrace_symbols(callstack, frames);
 
-    m_message += message;
+  // Echo trace
+  for (int i=0; i<frames; ++i) {
+    printf("%s\n", strs[i]);
+  }
 
-    } // Catch std::exception
-      catch (exception& se) {
-        // Emit warning and continue
-        cout << "RUNTIME ERROR in Exception::augment(): " << se.what() << endl
-             << "Continuing anyway..." << endl;
-      }
-      // Catch uncaught exceptions
-      catch (...) {
-        // Emit warning and continue
-        cout << "UNKNOWN EXCEPTION in Exception::augment()" << endl
-             << "Continuing anyway..." << endl;
-      }
+  // allocated by backtrace_symbols()
+  free(strs);
+}
+
+void
+Exception::echo(const char* msg) noexcept
+//******************************************************************************
+//  Echo message
+//! No-throw guarantee: this member function never throws exceptions.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  printf(">>> %s: %s\n>>> TRACE:\n", msg, what());
+  trace();
 }
 
 ErrCode
@@ -87,32 +97,32 @@ Exception::handleException(Driver* const driver)
   switch (m_except) {
 
     case WARNING:
-      cout << ">>> WARNING: " << what() << endl;
+      echo("WARNING");
       return NONFATAL;
 
     case CUMULATIVE:
-      cout << ">>> CUMULATIVE ERROR: " << what() << endl;
+      echo("CUMULATIVE ERROR");
       return NONFATAL;
 
     case ERROR:
-      cout << ">>> ERROR: " << what() << endl;
+      echo("ERROR");
       return NONFATAL;
 
     case FATAL:
-      cout << ">>> FATAL ERROR: " << what() << endl
-           << ">>> Attempting cleanup & graceful exit..." << endl;
+      echo("FATAL ERROR");
+      cout << ">>> Attempting cleanup & graceful exit..." << endl;
       driver->finalize();
       return FATAL_ERROR;
 
     case RUNTIME:
-      cout << ">>> RUNTIME ERROR: " << what() << endl
-           << ">>> Attempting cleanup & graceful exit..." << endl;
+      echo("RUNTIME ERROR");
+      cout << ">>> Attempting cleanup & graceful exit..." << endl;
       driver->finalize();
       return FATAL_ERROR;
 
     case UNCAUGHT:
-      cout << ">>> UNKNOWN ERROR\n"
-           << ">>> Attempting cleanup & graceful exit..." << endl;
+      echo("UNKNOWN ERROR");
+      cout << ">>> Attempting cleanup & graceful exit..." << endl;
       driver->finalize();
       return FATAL_ERROR;
 
