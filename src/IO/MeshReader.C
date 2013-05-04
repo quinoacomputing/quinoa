@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Fri Apr 26 15:50:06 2013
+  \date      Wed 01 May 2013 09:30:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include <MeshReader.h>
-#include <IOException.h>
 
 using namespace Quinoa;
 
@@ -26,7 +25,8 @@ MeshReader::MeshReader(const string filename,
 //******************************************************************************
 {
   m_inMesh.open(m_filename, ifstream::in);
-  Assert(m_inMesh.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+  if (!m_inMesh.good())
+    throw Exception( FATAL, "Failed to open file: " + m_filename);
 }
 
 MeshReader::~MeshReader() noexcept

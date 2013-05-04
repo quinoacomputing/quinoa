@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 01 Apr 2013 10:20:26 PM MDT
+  \date      Fri 03 May 2013 07:23:04 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -16,7 +16,6 @@
 #include <Macro.h>
 #include <ControlTypes.h>
 #include <FwdAssociate.h>
-#include <ParserException.h>
 
 namespace Quinoa {
 

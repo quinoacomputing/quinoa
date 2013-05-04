@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Mon Apr 29 16:02:01 2013
+  \date      Sat 04 May 2013 07:00:55 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -25,7 +25,6 @@ using namespace std;
 
 #include <MemoryEntry.h>
 #include <Memory.h>
-#include <MemoryException.h>
 #include <Paradigm.h>
 
 using namespace Quinoa;
@@ -65,12 +64,14 @@ Memory::newEntry(const size_t number,
 //! \param[in]  name      Given variable name
 //! \param[in]  plot      True if variable can be plotted
 //! \param[in]  restart   True if variable will be written to restart file
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the objects modified.
 //! \return               ID for the allocated entry
 //! \author     J. Bakosi
 //******************************************************************************
 {
-  Assert(number > 0, MemoryException,FATAL,BAD_NUMBER);
-  Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
+  assert(number > 0);
+  assert(name.size() > 0);
 
   // Compute total number of bytes to be allocated
   const size_t nbytes = number *
@@ -79,7 +80,9 @@ Memory::newEntry(const size_t number,
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
-  Assert(ptr != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (ptr == nullptr)
+    throw Exception(FATAL,
+            "Cannot allocate memory for ptr in Memory::newEntry()");
 
   // Allocate memory entry metadata
   MemoryEntry* entry = new (nothrow) MemoryEntry(nbytes,
@@ -90,39 +93,27 @@ Memory::newEntry(const size_t number,
                                                  plot,
                                                  restart,
                                                  ptr);
-  if (entry == nullptr) {
-    if (ptr) {
-      delete [] static_cast<char*>(ptr);
-      ptr = nullptr;
-    }
-    Throw(MemoryException,FATAL,BAD_ALLOC);
+  if (entry == nullptr) {     // roll back changes and throw exception on error
+    if (ptr) { delete [] static_cast<char*>(ptr); ptr = nullptr; }
+    throw Exception(FATAL,
+            "Cannot allocate memory for MemoryEntry in Memory::newEntry()");
   }
 
   // Store memory entry
-  pair<MemorySet::iterator,bool> e = m_entry.insert(entry);
-  if (!e.second) {
-    if (entry) {
-       delete entry;
-       entry = nullptr;
+  try {
+
+    pair<MemorySet::iterator,bool> e = m_entry.insert(entry);
+    if (!e.second) throw Exception(FATAL, "Cannot insert new memory entry");
+
+  } // roll back changes and rethrow on error
+    catch (exception&) {
+      if (entry) { delete entry; entry = nullptr; }
+      throw;
     }
-    Throw(MemoryException,FATAL,BAD_INSERT);
-  }
-
-  // Map variable name to MemorySet key
-  pair<MemoryNames::iterator,bool> n = m_name.emplace(name,entry);
-
-  if (!n.second) {
-    if (entry) {
-      delete entry;
-      entry = nullptr;
+    catch (...) {
+      if (entry) { delete entry; entry = nullptr; }
+      throw Exception(UNCAUGHT);
     }
-    Throw(MemoryException,FATAL,BAD_INSERT);
-  }
-
-  // Test if name is unique
-  Assert(m_entry.size()==m_name.size(), MemoryException,WARNING,NONUNIQUE_NAME);
-
-Throw(MemoryException,FATAL,BAD_INSERT);
 
   // Return key to caller
   return entry;
@@ -144,6 +135,8 @@ Memory::newZeroEntry(const size_t number,
 //! \param[in]  plot      True if variable can be plotted
 //! \param[in]  restart   True if variable will be written to restart file
 //! \return               ID for the allocated entry
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the objects modified.
 //! \author     J. Bakosi
 //******************************************************************************
 {
@@ -163,27 +156,20 @@ Memory::freeEntry(MemoryEntry* id) noexcept
 //******************************************************************************
 //  Deallocate a memory entry
 //! \param[in]  id  ID of the entry to be freed
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
   try {
 
+    assert(m_entry.size() != 0);
+
     // Return silently if entry is not yet allocated or already deallocated
     if (id == nullptr) return;
-    // The above is such a mild error, we don't even throw a warning, but for
-    // debugging the assert below can be uncommented to check if there are
-    // unnecessary calls for freeing memory entries
-    Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-    // Return and throw warning if memory store is empty
-    Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
 
     // Find memory entry
     auto it = m_entry.find(id);
-    Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
-
-    // Remove variable name mapped to MemorySet key
-    Errchk(m_name.erase((*it)->m_name), MemoryException,WARNING,NOT_ERASED);
+    assert(it != m_entry.end());
 
     // Deallocate memory entry pointed to by m_entry[id]
     // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -191,26 +177,20 @@ Memory::freeEntry(MemoryEntry* id) noexcept
     delete *it;
 
     // Remove MemoryEntry from MemorySet
-    Errchk(m_entry.erase(id), MemoryException,WARNING,NOT_ERASED);
+    if (!m_entry.erase(id)) {
+      throw Exception(WARNING, "Attempt to erase unavailable memory entry");
+    }
 
-    // Zero id, so the caller can also tell that the memory entry has been removed
+    // Zero id, so the caller can tell the entry has been removed
     id = nullptr;
 
-  } // Catch Quina::Exception (including MemoryException)
-    catch (Exception& qe) {
-      // Emit warning and continue
-      cout << "WARNING: " << qe.what() << endl;
+  } // emit only a warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
     }
-    // Catch std::exception
-    catch (exception& se) {
-      // Emit warning and continue
-      cout << "RUNTIME ERROR: " << se.what() << endl << "Continuing anyway..."
-           << endl;
-    }
-    // Catch uncaught exceptions
     catch (...) {
-      // Emit warning and continue
-      cout << "UNKNOWN EXCEPTION" << endl << "Continuing anyway..." << endl;
+      cout << "UNKNOWN EXCEPTION in Memory::freeEntry()" << endl
+           << "Continuing anyway..." << endl;
     }
 }
 
@@ -223,7 +203,8 @@ Memory::freeAllEntries() noexcept
 //!          via its destructor. Additionally, the Exception::handleException()
 //!          may also call it (through Driver::finalize()) at any time if a
 //!          FATAL error is encountered. Because of this we do not throw an
-//!          exception here.
+//!          exception here. Exception safety: no-throw guarantee: never throws
+//!          exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -231,24 +212,25 @@ Memory::freeAllEntries() noexcept
   // This also automatically calls MemoryEntry::~MemoryEntry(), which
   // deallocates the memory pointed to by MemoryEntry::m_ptr
   for (auto& e : m_entry) { delete e; }
-  // Clear containers
-  m_name.clear();
+  // Clear container
   m_entry.clear();
 }
 
 void
-Memory::echoAllEntries(const MemoryEntryField crit) const
+Memory::echoAllEntries(MemoryEntryField crit) const
 //******************************************************************************
 //  Echo all memory entries
 //! \param[in]  crit    Sort items by memory entry field criteria
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(m_entry.size() != 0);
 
   // Echo AllEntries-header
-  cout << "* Dynamically allocated memory entries ";
+  cout << "* Dynamically allocated memory entries " << setfill(' ');
   switch (crit) {
     case MemoryEntryField::BYTES:    cout << "(sorted by Bytes)\n";    break;
     case MemoryEntryField::NUMBER:   cout << "(sorted by Number)\n";   break;
@@ -298,9 +280,13 @@ void
 Memory::echo() const
 //******************************************************************************
 //  Echo unsorted memory entries
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   for (auto* e : m_entry) cout << e->line();
 }
 
@@ -308,9 +294,13 @@ void
 Memory::echoByBytes() const
 //******************************************************************************
 //  Echo memory entries sorted by Bytes
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -329,9 +319,13 @@ void
 Memory::echoByNumber() const
 //******************************************************************************
 //  Echo memory entries sorted by Number
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -351,9 +345,13 @@ void
 Memory::echoByValue() const
 //******************************************************************************
 //  Echo memory entries sorted by Value
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -372,9 +370,13 @@ void
 Memory::echoByVariable() const
 //******************************************************************************
 //  Echo memory entries sorted by Variable
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -393,9 +395,13 @@ void
 Memory::echoByName() const
 //******************************************************************************
 //  Echo memory entries sorted by Name
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -414,9 +420,13 @@ void
 Memory::echoByPlot() const
 //******************************************************************************
 //  Echo memory entries sorted by Plot
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -435,9 +445,13 @@ void
 Memory::echoByRestart() const
 //******************************************************************************
 //  Echo memory entries sorted by Restart
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream remains in a valid state
 //! \author J. Bakosi
 //******************************************************************************
 {
+  assert(m_entry.size() != 0);
+
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
   copy(m_entry.begin(), m_entry.end(), back_inserter(srt));
@@ -457,33 +471,19 @@ Memory::getNumber(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the number of items based on the ID
 //! \param[in]  id  ID of the entry
-//! \return Number of items
+//! \return     Number of items
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its number of variables
   auto it = m_entry.find(id);
-  Assert(it!=m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_number;
-}
-
-size_t
-Memory::getNumber(const string& name) const
-//******************************************************************************
-//  Return the number of items based on the variable name
-//! \param[in]  name  name of the variable
-//! \return Number of items
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Find memory entry and return its number of variables
-  return getID(name)->m_number;
 }
 
 ValType
@@ -491,19 +491,18 @@ Memory::getValue(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the value type based on the ID
 //! \param[in]  id  ID of the entry
-//! \return The value type
+//! \return     The value type
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_value;
 }
 
@@ -512,19 +511,18 @@ Memory::getVariable(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the variable type based on the ID
 //! \param[in]  id  ID of the entry
-//! \return The variable type
+//! \return     The variable type
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_variable;
 }
 
@@ -533,19 +531,18 @@ Memory::getName(MemoryEntry* const id) const
 //******************************************************************************
 //  Return the variable name based on the ID
 //! \param[in]  id  ID of the entry
-//! \return The variable name
+//! \return     The variable name
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_name;
 }
 
@@ -554,19 +551,18 @@ Memory::getPlot(MemoryEntry* const id) const
 //******************************************************************************
 //  Return true if the variable can be plotted based on the ID
 //! \param[in]  id  ID of the entry
-//! \return True if the variable can be plotted
+//! \return     True if the variable can be plotted
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_plot;
 }
 
@@ -575,44 +571,23 @@ Memory::getRestart(MemoryEntry* const id) const
 //******************************************************************************
 //  Return true if the variable is writted to restart file based on the ID
 //! \param[in]  id  ID of the entry
-//! \return True if the variable is written to restart file
+//! \return     True if the variable is written to restart file
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the memory entry container.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(id != nullptr);
+  assert(m_entry.size() != 0);
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  Assert(it != m_entry.end(), MemoryException,WARNING,NOT_FOUND);
+  assert(it != m_entry.end());
   return (*it)->m_restart;
 }
 
-const MemoryEntry*
-Memory::getID(const string& name) const
-//******************************************************************************
-//  Return the MemorySet key based on the variable name
-//! \param[in]  name  Name of the variable
-//! \return MemorySet key (used as ID)
-//! \author J. Bakosi
-//******************************************************************************
-{
-  Assert(name.size() != 0, MemoryException,FATAL,EMPTY_NAME);
-
-  // Return and throw warning if memory store is empty
-  Assert(m_name.size() != 0, MemoryException,WARNING,EMPTY_STORE);
-
-  // Find memory entry and return its value type
-  auto it = m_name.find(name);
-  Assert(it != m_name.end(), MemoryException,WARNING,NOT_FOUND);
-  return it->second;
-}
-
 size_t
-Memory::getBytes() const
+Memory::getBytes() const noexcept
 //******************************************************************************
 //  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
@@ -621,12 +596,12 @@ Memory::getBytes() const
 //!          overhead of the STL container, therefore we will always
 //!          underestimate the actual memory usage, though by only a very small
 //!          fraction, i.e. <1e-4% for memory allocated in the range of MBytes.
-//! \return Number of allocated bytes in the memory store
+//! \return  Number of allocated bytes in the memory store
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if memory store is empty
-  Assert(m_entry.size() != 0, MemoryException,WARNING,EMPTY_STORE);
+  assert(m_entry.size() != 0);
 
   size_t bytes = 0;
   for (auto& e : m_entry) {
@@ -638,14 +613,14 @@ Memory::getBytes() const
 }
 
 void
-Memory::zero(MemoryEntry* const id) const
+Memory::zero(MemoryEntry* const id) const noexcept
 //******************************************************************************
 //  Zero entry using multiple threads
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if entry is invalid
-  Assert(id != nullptr, MemoryException,WARNING,UNDEFINED);
+  assert(id != nullptr);
 
   // Get size of value type
   const size_t size = SizeOf[static_cast<int>(id->m_value)];

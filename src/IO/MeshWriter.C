@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:08:43 2013
+  \date      Wed 01 May 2013 09:31:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include <MeshWriter.h>
-#include <IOException.h>
 
 using namespace Quinoa;
 
@@ -24,7 +23,8 @@ MeshWriter::MeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
 //******************************************************************************
 {
   m_outMesh.open(m_filename, ofstream::out);
-  Assert(m_outMesh.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+  if (!m_outMesh.good())
+    throw Exception(FATAL, "Failed to open file: " + m_filename);
 }
 
 MeshWriter::~MeshWriter() noexcept

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon Apr 29 15:45:07 2013
+  \date      Fri 03 May 2013 07:23:33 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -15,8 +15,7 @@
 #include <Control.h>
 #include <Defaults.h>
 #include <Parser.h>
-#include <IOException.h>
-#include <ParserException.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
@@ -26,14 +25,19 @@ Parser::Parser(const string& filename, Control* const control) :
 //  Constructor
 //! \param[in]  filename      File to parse
 //! \param[in]  control       Control category where parsed data are stored
+//! \details    Exception safety: basic guarantee: if an exception is thrown,
+//!             the stream is in a valid state.
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Check if control file exists, throw exception if not
   m_q.open(m_filename, ifstream::in);
-  Assert(m_q.good(), IOException,FATAL,IO_FAILED_OPEN,m_filename);
+  if (!m_q.good())
+    throw Exception(FATAL, "Failed to open file: " + m_filename);
+
   m_q.close();
-  Assert(!m_q.fail(), IOException,FATAL,IO_FAILED_CLOSE,m_filename);
+  if (m_q.fail())
+    throw Exception(FATAL, "Failed to close file: " + m_filename);
 }
 
 void

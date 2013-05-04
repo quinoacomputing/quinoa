@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:16:08 2013
+  \date      Fri 03 May 2013 07:21:43 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -18,7 +18,6 @@
 
 #include <QuinoaTypes.h>
 #include <Distribution.h>
-#include <StatException.h>
 
 using namespace std;
 

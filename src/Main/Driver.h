@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon Apr 29 09:32:55 2013
+  \date      Wed 01 May 2013 09:26:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -30,13 +30,13 @@ class Driver {
            Paradigm* const paradigm) noexcept;
 
     //! Destructor
-    ~Driver();
+    ~Driver() noexcept;
 
     //! Setup: instantiate model, set initial conditions
     void setup();
 
     //! Solve
-    void solve();
+    void solve() const;
 
     //! Finalize (either at normal exit, or due to exception)
     void finalize() noexcept;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Fri Apr 26 15:15:54 2013
+  \date      Fri 03 May 2013 07:10:59 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -10,9 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
+#include <cassert>
 
 #include <JPDF.h>
-#include <StatException.h>
 
 using namespace Quinoa;
 
@@ -47,8 +47,7 @@ JPDF::insert(const vector<real>& sample)
 //******************************************************************************
 {
   // Make sure sample has the same dimension as the joint PDF
-  Assert(sample.size() == m_key.size(),
-         StatException,FATAL,STATEXCEPT_BAD_SAMPLE);
+  assert(sample.size() == m_key.size());
 
   // Find bin ids in all dimensions
   transform(sample.begin(), sample.end(), m_key.begin(),

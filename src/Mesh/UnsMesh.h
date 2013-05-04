@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:46:26 2013
+  \date      Wed 01 May 2013 08:48:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -29,7 +29,7 @@ class UnsMesh : private Mesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit UnsMesh(Memory* const memory);
+    explicit UnsMesh(Memory* const memory) noexcept;
 
     //! Destructor: free memory entries held
     virtual ~UnsMesh() noexcept;

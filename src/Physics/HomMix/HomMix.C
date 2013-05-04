@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri Apr 26 17:05:17 2013
+  \date      Fri 03 May 2013 06:33:52 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -13,11 +13,9 @@
 #include <iomanip>
 
 #include <Memory.h>
-#include <MemoryException.h>
 #include <ControlTypes.h>
 #include <Control.h>
 #include <HomMix.h>
-#include <MixException.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
@@ -49,35 +47,35 @@ HomMix::HomMix(Memory* const memory,
   switch (control->get<control::MIX>()) {
 
     case control::MixType::NO_MIX :
-      Throw(MixException,FATAL,MixExceptType::NO_SUCH_MIX);
+      throw Exception(FATAL, "No mix model selected");
       break;
 
     case control::MixType::DIRICHLET :
       m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
-      Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_mix == nullptr) Exception(FATAL, "Cannot allocate memory");
       break;
 
     case control::MixType::GENERALIZED_DIRICHLET :
       m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
-      Assert(m_mix != nullptr, MemoryException,FATAL,BAD_ALLOC);
+      if (m_mix == nullptr) Exception(FATAL, "Cannot allocate memory");
       break;
 
     default :
-      Throw(MixException,FATAL,MIX_UNIMPLEMENTED);
+      throw Exception(FATAL, "Mix model not implemented");
   }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
-  Assert(m_statistics != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_statistics == nullptr) throw Exception(FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  Assert(m_glob != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_glob == nullptr) throw Exception(FATAL,"Cannot allocate memory");
 
   // Instantiate plot file writer
   m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
                                        m_statistics);
-  Assert(m_plot != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_plot == nullptr) throw Exception(FATAL,"Cannot allocate memory");
 }
 
 HomMix::~HomMix() noexcept

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:47:31 PM MDT
+  \date      Wed 01 May 2013 09:19:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -13,18 +13,17 @@
 #include <iostream>
 
 #include <MKLRndTable.h>
-#include <MKLException.h>
 
 using namespace Quinoa;
 
 MKLRndTable::MKLRndTable(Memory* const memory,
-                         const int nthread,
-                         const int brng,
-                         const RndDist dist,
-                         const int method,
-                         const unsigned int seed,
-                         const long long int number,
-                         const string name) :
+                         int nthread,
+                         int brng,
+                         RndDist dist,
+                         int method,
+                         unsigned int seed,
+                         long long int number,
+                         const string& name) :
   m_memory(memory),
   m_nthread(nthread),
   m_dist(dist),
@@ -41,17 +40,19 @@ MKLRndTable::MKLRndTable(Memory* const memory,
 //! \param[in]  seed     Random number generator seed
 //! \param[in]  number   Total number of random numbers in table
 //! \param[in]  name     MemoryEntry name of the random number table
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the object.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Assert(nthread > 0, MKLException,FATAL,MKL_BAD_NTHREADS);
-  Assert(number > 0, MKLException,FATAL, MKL_BAD_NUMBER);
-  Assert(name.size() > 0, MemoryException,FATAL,EMPTY_NAME);
+  assert(nthread > 0);
+  assert(number > 0);
+  assert(name.size() > 0);
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero
   m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
-  Assert(m_stream != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_stream == nullptr) Exception(FATAL, "Cannot allocate memory");
 
   // Initialize first thread-stream for given distribution using seed
   newStream(&m_stream[0], brng, seed);
@@ -68,16 +69,29 @@ MKLRndTable::MKLRndTable(Memory* const memory,
 MKLRndTable::~MKLRndTable() noexcept
 //******************************************************************************
 //  Destructor: Destroy random number table
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Delete all thread streams
-  for (int t=0; t<m_nthread; ++t) {
-    if (m_stream[t] != nullptr &&
-        vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
-      cout << "WARNING: Failed to delete MKL VSL stream" << endl;
+  try {
+
+    // Delete all thread streams
+    for (int t=0; t<m_nthread; ++t) {
+      if (m_stream[t] != nullptr &&
+          vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
+        cout << "WARNING: Failed to delete MKL VSL stream" << endl;
+      }
     }
-  }
+
+  } // emit warning on error
+    catch (exception& e) {
+      cout << "WARNING: " << e.what() << endl;
+    }
+    catch (...) {
+      cout << "UNKNOWN EXCEPTION in MKLRndTable's destructor" << endl
+           << "Continuing anyway..." << endl;
+    }
+
   // Free all thread-stream pointers
   delete [] m_stream;
   // Free array storing random numbers
@@ -89,10 +103,13 @@ void
 MKLRndTable::generate() const
 //******************************************************************************
 //  Regenerate random numbers in a table
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the object.
 //! \author  J. Bakosi
 //******************************************************************************
 {
   switch (m_dist) {
+
     case UNIFORM:
       #ifdef _OPENMP
       #pragma omp parallel for
@@ -104,6 +121,7 @@ MKLRndTable::generate() const
       uniform(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
               UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
       break;
+
     case GAUSSIAN:
       #ifdef _OPENMP
       #pragma omp parallel for
@@ -115,6 +133,7 @@ MKLRndTable::generate() const
       gaussian(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
                GAUSSIAN_MEAN, GAUSSIAN_STD);
       break;
+
     case GAMMA:
       #ifdef _OPENMP
       #pragma omp parallel for
@@ -126,7 +145,9 @@ MKLRndTable::generate() const
       gamma(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
             GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
       break;
+
     default:
-      Throw(MKLException,WARNING,MKL_UNKNOWN_METHOD);
+      throw Exception(WARNING, "Unknown random number distribution");
+
   }
 }

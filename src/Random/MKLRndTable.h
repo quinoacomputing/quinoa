@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:17:58 2013
+  \date      Wed 01 May 2013 09:14:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -46,13 +46,13 @@ class MKLRndTable : MKL {
   public:
     //! Constructor: Create random number skip-ahead table
     explicit MKLRndTable(Memory* const memory,
-                         const int nthread,
-                         const int brng,
-                         const RndDist dist,
-                         const int method,
-                         const unsigned int seed,
-                         const long long int number,
-                         const string name);
+                         int nthread,
+                         int brng,
+                         RndDist dist,
+                         int method,
+                         unsigned int seed,
+                         long long int number,
+                         const string& name);
 
     //! Destructor: Destroy random number skip-ahead table
     virtual ~MKLRndTable() noexcept;
@@ -61,7 +61,7 @@ class MKLRndTable : MKL {
     void generate() const;
 
     //! Constant accessor to random number table
-    const real* getRnd() const { return m_rnd.ptr; }
+    const real* getRnd() const noexcept { return m_rnd.ptr; }
 
   private:
     //! Don't permit copy constructor

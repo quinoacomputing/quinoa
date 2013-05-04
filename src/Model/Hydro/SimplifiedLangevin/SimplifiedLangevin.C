@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Sat 27 Apr 2013 08:45:24 PM MDT
+  \date      Sat 04 May 2013 06:58:22 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -42,7 +42,9 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
 {
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  Assert(m_random != nullptr, MemoryException,FATAL,BAD_ALLOC);
+  if (m_random == nullptr)
+    throw Exception(FATAL, "Cannot allocate memory for random number generator "
+                           "in SimplifiedLangevin constructor");
 
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
@@ -53,7 +55,7 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
   m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
                                          REAL,
                                          SCALAR,
-                                         "hydro properties");
+                                         "SLM particles");
 }
 
 SimplifiedLangevin::~SimplifiedLangevin() noexcept
