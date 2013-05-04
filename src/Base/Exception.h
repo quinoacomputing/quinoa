@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:56:18 AM MDT
+  \date      Sat 04 May 2013 07:45:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -59,19 +59,22 @@ class Exception : public std::exception {
     //! Handle Exception passing pointer to driver
     virtual ErrCode handleException(Driver* const driver);
 
+    //! Echo message
+    void echo(const char* msg) noexcept;
+
   protected:
     //! Force copy constructor for children
     // ICC: in C++11 this should be deleted and private
     Exception(const Exception&) = default;
-
-    //! Augment message after its construction
-    void augment(const std::string& message) noexcept;
 
   private:
     //! Don't permit copy assignment
     Exception& operator=(const Exception&) = delete;
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
+
+    //! Echo call trace
+    void trace() noexcept;
 
     const ExceptType m_except; //! Exception type (WARNING, CUMULATIVE, etc.)
     std::string m_message;     //!< Error message

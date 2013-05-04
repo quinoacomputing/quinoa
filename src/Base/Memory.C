@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 07:00:55 AM MDT
+  \date      Sat 04 May 2013 07:45:54 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -178,19 +178,21 @@ Memory::freeEntry(MemoryEntry* id) noexcept
 
     // Remove MemoryEntry from MemorySet
     if (!m_entry.erase(id)) {
-      throw Exception(WARNING, "Attempt to erase unavailable memory entry");
+      throw Exception(WARNING, "Attempt to erase non-existent memory entry");
     }
 
     // Zero id, so the caller can tell the entry has been removed
     id = nullptr;
 
   } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
     catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+      cout << ">>> std::exception in Memory::freeEntry(): " << e.what() << endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in Memory::freeEntry()" << endl
-           << "Continuing anyway..." << endl;
+      cout << ">>> UNKNOWN EXCEPTION in Memory::freeEntry()" << endl;
     }
 }
 
