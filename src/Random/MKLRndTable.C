@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:19:59 PM MDT
+  \date      Mon May  6 11:51:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -45,9 +45,9 @@ MKLRndTable::MKLRndTable(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  assert(nthread > 0);
-  assert(number > 0);
-  assert(name.size() > 0);
+  Assert(nthread > 0, FATAL, "Need at least one thread");
+  Assert(number > 0, FATAL, "Number of random numbers must be positive");
+  Assert(name.size() > 0, FATAL, "MKLRndTable's name must be nonempty");
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:17:13 AM MDT
+  \date      Mon May  6 13:19:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -10,9 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
-#include <cassert>
 
 #include <Model.h>
+#include <Exception.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -31,5 +31,5 @@ Model::Model(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  assert(m_name.size() > 0);
+  Assert(m_name.size() > 0, FATAL, "Need a nonempty string as Model::name");
 }

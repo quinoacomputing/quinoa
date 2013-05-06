@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sun 05 May 2013 09:37:38 PM MDT
+  \date      Mon May  6 13:32:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -22,8 +22,10 @@
 using namespace Quinoa;
 
 Exception::Exception(const ExceptType except,
-                     const std::string& message,
-                     int number) noexcept
+                     const string& message,
+                     const string& file,
+                     const string& func,
+                     const unsigned int line) noexcept
 //******************************************************************************
 //  Constructor: generate error message
 //! \details No-throw guarantee: this member function never throws exceptions.
@@ -31,13 +33,20 @@ Exception::Exception(const ExceptType except,
 //******************************************************************************
 try :
   m_except(move(except)),
+  m_file(move(file)),
+  m_func(move(func)),
+  m_line(move(line)),
   m_message(move(message))
 {
 
   // Construct exception message
   stringstream s;
-  s << m_message;
-  if (number) s << number;
+  s << m_message << endl;
+  if (line) {
+    s << ">>> Exception in " << m_file << ":" << m_line << ": " << m_func;
+  } else {
+    s << ">>> No file:line:func information from exception";
+  }
   m_message = s.str();
 
   // Save call-trace
@@ -122,9 +131,9 @@ Exception::echoTrace() noexcept
   size_t funcnamesize = 256;
   char* funcname = (char*)malloc(funcnamesize);
 
-  // Iterate over the returned symbol lines. skip the first, it is the
-  // address of this function
-  for (int i=1; i<m_addrLength; ++i) {
+  // Iterate over the returned symbol lines. skip the first two, these are the
+  // addresses of Exception::saveTrace() and the Exception constructor
+  for (int i=2; i<m_addrLength; ++i) {
     char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
 
     // Find parentheses and +address offset surrounding the mangled name:
@@ -176,8 +185,11 @@ Exception::echo(const char* msg) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf(">>> %s: %s\n>>> CALL TRACE:\n", msg, what());
+  printf(">>> %s %s\n>>> CALL TRACE: ========================================"
+         "=============\n", msg, what());
   echoTrace();
+  printf(">>> ==============================================================="
+         "==\n");
 }
 
 ErrCode
@@ -191,33 +203,33 @@ Exception::handleException(Driver* const driver) noexcept
   switch (m_except) {
 
     case WARNING:
-      echo("WARNING");
+      echo("WARNING:");
       return NONFATAL;
 
     case CUMULATIVE:
-      echo("CUMULATIVE ERROR");
+      echo("CUMULATIVE ERROR:");
       return NONFATAL;
 
     case ERROR:
-      echo("ERROR");
+      echo("ERROR:");
       return NONFATAL;
 
     case FATAL:
-      echo("FATAL ERROR");
+      echo("FATAL ERROR:");
       printf(">>> Attempting cleanup & graceful exit...\n");
-      driver->finalize();
+      if (driver) driver->finalize();
       return FATAL_ERROR;
 
     case RUNTIME:
-      echo("RUNTIME ERROR");
+      echo("RUNTIME ERROR:");
       printf(">>> Attempting cleanup & graceful exit...\n");
-      driver->finalize();
+      if (driver) driver->finalize();
       return FATAL_ERROR;
 
     case UNCAUGHT:
       echo("UNKNOWN ERROR");
       printf(">>> Attempting cleanup & graceful exit...\n");
-      driver->finalize();
+      if (driver) driver->finalize();
       return FATAL_ERROR;
 
     default:

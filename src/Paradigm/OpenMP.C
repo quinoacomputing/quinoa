@@ -2,14 +2,14 @@
 /*!
   \file      src/Paradigm/OpenMP.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:04:13 PM MDT
+  \date      Mon May  6 15:06:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
 */
 //******************************************************************************
 
-#include <cassert>
+#include <Exception.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -35,5 +35,5 @@ OpenMP::OpenMP() :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  assert(m_nthread > 0);
+  Assert(m_nthread != 0, FATAL, "Need at least one thread");
 }

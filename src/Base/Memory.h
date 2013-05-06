@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed 01 May 2013 08:45:49 PM MDT
+  \date      Mon May  6 13:18:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -12,7 +12,6 @@
 #define Memory_h
 
 #include <string>
-#include <cassert>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -113,10 +112,10 @@ class Memory {
     bool getRestart(MemoryEntry* const id) const;
 
     //! Return the number of allocated bytes
-    size_t getBytes() const noexcept;
+    size_t getBytes() const;
 
     //! Zero entry using multiple threads
-    void zero(MemoryEntry* const id) const noexcept;
+    void zero(MemoryEntry* const id) const;
 
   private:
     //! Memory entries are stored in an STL unordered_set.
@@ -155,9 +154,10 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) const {
-      assert(id != nullptr);
+      Assert(id != nullptr, FATAL,
+             "Cannot return a raw pointer for a nullptr MemoryEntry");
       auto it = m_entry.find(id);
-      assert(it!=m_entry.end());
+      Assert(it!=m_entry.end(), FATAL, "Cannot find memory entry");
       return static_cast<V*>((*it)->m_ptr);
     }
 

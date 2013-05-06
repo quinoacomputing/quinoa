@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Apr 29 15:49:32 2013
+  \date      Mon May  6 15:01:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -69,47 +69,59 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Echo name
-  echoName();
-
-  // Echo build environment
-  echoBuildInfo();
-
-  // Query and echo parallel enviroment
-  Paradigm paradigm;
-  paradigm.echo();
-
-  // Initialize memory manager and driver
-  Memory memory(&paradigm);
-  Driver driver(argc, argv, &memory, &paradigm);
+  Driver* driver = nullptr;
+  Memory* memory = nullptr;
 
   ErrCode error = HAPPY;
-  // This main try-catch block is executed even in NDEBUG mode, otherwise
-  // memory may leak
   try {
 
-    driver.setup();
-    driver.solve();
+    // Echo program name
+    echoName();
+    // Echo build environment
+    echoBuildInfo();
+
+    // Query, setup, and echo parallel enviroment
+    Paradigm paradigm;
+    paradigm.echo();
+
+    // Initialize memory manager
+    memory = new (nothrow) Memory(&paradigm);
+    Errchk(memory != nullptr, FATAL, "No memory for a memory manager?");
+
+    // Allocate and initialize driver
+    driver = new (nothrow) Driver(argc, argv, memory, &paradigm);
+    Errchk(driver != nullptr, FATAL, "Cannot allocate memory for driver");
+
+    // Setup and solve
+    driver->setup();
+    driver->solve();
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
-      error = qe.handleException(&driver);
+      if (driver) { delete driver; driver = nullptr; }
+      if (memory) { delete memory; memory = nullptr; }
+      error = qe.handleException(driver);
     }
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (exception& se) {
+      if (driver) { delete driver; driver = nullptr; }
+      if (memory) { delete memory; memory = nullptr; }
       Exception qe(RUNTIME, se.what());
-      error = qe.handleException(&driver);
+      error = qe.handleException(driver);
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
+      if (driver) { delete driver; driver = nullptr; }
+      if (memory) { delete memory; memory = nullptr; }
       Exception qe(UNCAUGHT);
-      error = qe.handleException(&driver);
+      error = qe.handleException(driver);
     }
 
-  // Finalize
-  driver.finalize();
+  // Finalize and deallocate driver and memory manager
+  if (driver) { delete driver; driver = nullptr; }
+  if (memory) { delete memory; memory = nullptr; }
 
-  // Return the error code
+  // Return error code
   return error;
 }

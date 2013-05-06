@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:44:55 2013
+  \date      Mon May  6 13:22:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -21,7 +21,7 @@ class OpenMP {
     explicit OpenMP();
 
     //! Destructor
-    ~OpenMP() noexcept = default;
+    ~OpenMP() = default;
 
     //! Return true if compiled with OpenMP
     //! \return true if compiled with OpenMP enabled
@@ -32,7 +32,7 @@ class OpenMP {
     bool used() const { return m_used; }
 
     //! Constant accessor to number of OpenMP threads
-    int nthread() const { return m_nthread; }
+    int nthread() const noexcept { return m_nthread; }
 
   private:
     //! Don't permit copy constructor

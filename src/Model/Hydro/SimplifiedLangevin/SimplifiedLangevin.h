@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:27:07 2013
+  \date      Mon May  6 13:04:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -59,6 +59,10 @@ class SimplifiedLangevin : public Hydro {
     SimplifiedLangevin(SimplifiedLangevin&&) = delete;
     //! Don't permit move assigment
     SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     const real m_C0;                //!< Parameter C0 in SLM
 
