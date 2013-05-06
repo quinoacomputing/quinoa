@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 07:51:00 AM MDT
+  \date      Sun 05 May 2013 09:37:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <cstdio>
+#include <cxxabi.h>
 
 #include <execinfo.h>
 
@@ -33,10 +34,14 @@ try :
   m_message(move(message))
 {
 
+  // Construct exception message
   stringstream s;
   s << m_message;
   if (number) s << number;
   m_message = s.str();
+
+  // Save call-trace
+  saveTrace();
 
 } // Catch std::exception
   catch (exception& se) {
@@ -51,28 +56,116 @@ try :
          << "Continuing anyway..." << endl;
   }
 
-void
-Exception::trace() noexcept
+Exception::~Exception() noexcept
 //******************************************************************************
-//  Echo call trace
+//  Destructor
+//! \details No-throw guarantee: this member function never throws exceptions.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // allocated by execinfo.h's backtrace_symbols() in Exception::saveTrace()
+  free(m_symbolList);
+}
+
+void
+Exception::saveTrace() noexcept
+//******************************************************************************
+//  Save call-trace
+//! \details No-throw guarantee: this member function never throws exceptions.
+//!          For more information see the libc manual at
+//!          http://www.gnu.org/software/libc/manual/html_node/Backtraces.html.
+//!          Requires stdio.h, execinfo.h.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Retrieve current stack addresses
+  m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
+
+  if (m_addrLength == 0) {
+     printf(">>> Call stack is empty, possibly corrupt.\n");
+  }
+
+  // Resolve addresses into strings containing "filename(function+address)"
+  m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
+}
+
+void
+Exception::echoSymbols() noexcept
+//******************************************************************************
+//  Echo call trace as symbol list
 //! \details No-throw guarantee: this member function never throws exceptions.
 //!          For more information see the libc manual at
 //!          http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Obtain trace, requires stdio.h, execinfo.h
-  void* callstack[128];
-  int frames = backtrace(callstack, 128);
-  char** strs = backtrace_symbols(callstack, frames);
-
   // Echo trace
-  for (int i=0; i<frames; ++i) {
-    printf("%s\n", strs[i]);
+  for (int i=0; i<m_addrLength; ++i) {
+    printf("%s\n", m_symbolList[i]);
+  }
+}
+
+void
+Exception::echoTrace() noexcept
+//******************************************************************************
+//  Demangle and echo call trace
+//! \details No-throw guarantee: this member function never throws exceptions.
+//!   Credit goes to Timo Bingmann at http://idlebox.net, published under the
+//!   WTFPL v2.0. For more information see
+//!   http://panthema.net/2008/0901-stacktrace-demangled 
+//!   http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
+//!   http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Allocate string which will be filled with the demangled function name
+  size_t funcnamesize = 256;
+  char* funcname = (char*)malloc(funcnamesize);
+
+  // Iterate over the returned symbol lines. skip the first, it is the
+  // address of this function
+  for (int i=1; i<m_addrLength; ++i) {
+    char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
+
+    // Find parentheses and +address offset surrounding the mangled name:
+    // ./module(function+0x15c) [0x8048a6d]
+    for (char *p = m_symbolList[i]; *p; ++p) {
+      if (*p == '(')
+        begin_name = p;
+      else if (*p == '+')
+        begin_offset = p;
+      else if (*p == ')' && begin_offset) {
+        end_offset = p;
+        break;
+      }
+    }
+
+    if (begin_name && begin_offset && end_offset && begin_name < begin_offset) {
+      *begin_name++ = '\0';
+      *begin_offset++ = '\0';
+      *end_offset = '\0';
+
+      // Mangled name is now in [begin_name, begin_offset) and caller
+      // offset in [begin_offset, end_offset). now apply __cxa_demangle()
+      int status;
+      char* ret = abi::__cxa_demangle(begin_name,
+                                      funcname, &funcnamesize, &status);
+
+      if (status == 0) {
+        funcname = ret; // use possibly realloc()-ed string
+        printf(">>> %s : %s+%s\n", m_symbolList[i], funcname, begin_offset);
+      } else {
+        // Demangling failed. Output function name as a C function with no
+        // arguments
+        printf(">>> %s : %s()+%s\n", m_symbolList[i], begin_name, begin_offset);
+      }
+    } else {
+      // Couldn't parse the line? Print the whole line
+      printf(">>> %s\n", m_symbolList[i]);
+    }
   }
 
-  // allocated by backtrace_symbols()
-  free(strs);
+  free(funcname);
 }
 
 void
@@ -83,8 +176,8 @@ Exception::echo(const char* msg) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf(">>> %s: %s\n>>> TRACE:\n", msg, what());
-  trace();
+  printf(">>> %s: %s\n>>> CALL TRACE:\n", msg, what());
+  echoTrace();
 }
 
 ErrCode
