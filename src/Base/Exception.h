@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 04 May 2013 07:50:36 AM MDT
+  \date      Sun 05 May 2013 09:37:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -48,7 +48,7 @@ class Exception : public std::exception {
                        int number = 0) noexcept;
 
     //! Destructor
-    virtual ~Exception() noexcept = default;
+    virtual ~Exception() noexcept;
 
     //! Force move constructor for throws
     Exception(Exception&&) = default;
@@ -73,11 +73,21 @@ class Exception : public std::exception {
     //! Don't permit move assignment
     Exception& operator=(Exception&&) = delete;
 
-    //! Echo call trace
-    void trace() noexcept;
+    //! Save call trace
+    void saveTrace() noexcept;
 
-    const ExceptType m_except; //! Exception type (WARNING, CUMULATIVE, etc.)
-    std::string m_message;     //!< Error message
+    //! Echo call trace as symbols
+    void echoSymbols() noexcept;
+
+    //! Demangle and Echo call trace
+    void echoTrace() noexcept;
+
+    const ExceptType m_except;            //!< Exception type (WARNING, etc.)
+
+    std::string m_message;                //!< Error message
+    void* m_addrList[128];                //!< Call-stack before exception
+    int m_addrLength;                     //!< Number of stack frames
+    char** m_symbolList;                  //!< Symbol list of stack entries
 };
 
 } // namespace Quinoa
