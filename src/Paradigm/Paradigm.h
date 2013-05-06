@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:47:24 2013
+  \date      Mon May  6 13:20:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -23,7 +23,7 @@ class Paradigm {
     explicit Paradigm() = default;
 
     //! Destructor
-    ~Paradigm() noexcept = default;
+    ~Paradigm() = default;
 
     //! Echo paradigm and configuration
     void echo() const;

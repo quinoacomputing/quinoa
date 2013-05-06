@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:10:19 AM MDT
+  \date      Mon May  6 15:12:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -187,7 +187,7 @@ Statistics::plotOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m < m_nord);
+  Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
   return m_plotOrdinary[m];
 }
 
@@ -199,7 +199,7 @@ Statistics::nameOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m < m_nord);
+  Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
   return m_nameOrdinary[m];
 }
 
@@ -211,7 +211,7 @@ Statistics::nameCentral(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m < m_ncen);
+  Assert(m < m_ncen, FATAL, "Request for an unavailable central moment");
   return m_nameCentral[m];
 }
 

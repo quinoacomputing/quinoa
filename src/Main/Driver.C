@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:42:51 AM MDT
+  \date      Mon May  6 13:28:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -47,7 +47,7 @@ Driver::Driver(int argc,
 Driver::~Driver() noexcept
 //******************************************************************************
 //  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {

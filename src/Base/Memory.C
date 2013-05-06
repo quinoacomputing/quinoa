@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Sun 05 May 2013 09:38:09 PM MDT
+  \date      Mon May  6 14:07:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -70,8 +70,8 @@ Memory::newEntry(const size_t number,
 //! \author     J. Bakosi
 //******************************************************************************
 {
-  assert(number > 0);
-  assert(name.size() > 0);
+  Assert(number > 0, FATAL, "Number of items must be greater than zero");
+  Assert(name.size() > 0, FATAL, "Empty string as MemoryEntry::name");
 
   // Compute total number of bytes to be allocated
   const size_t nbytes = number *
@@ -162,14 +162,15 @@ Memory::freeEntry(MemoryEntry* id) noexcept
 {
   try {
 
-    assert(m_entry.size() != 0);
-
     // Return silently if entry is not yet allocated or already deallocated
     if (id == nullptr) return;
 
+    // Throw error if memory store is empty
+    Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
+
     // Find memory entry
     auto it = m_entry.find(id);
-    assert(it != m_entry.end());
+    Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
 
     // Deallocate memory entry pointed to by m_entry[id]
     // This also automatically calls MemoryEntry::~MemoryEntry(), which
@@ -228,8 +229,8 @@ Memory::echoAllEntries(MemoryEntryField crit) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Return and throw warning if memory store is empty
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Echo AllEntries-header
   cout << "* Dynamically allocated memory entries " << setfill(' ');
@@ -287,7 +288,8 @@ Memory::echo() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   for (auto* e : m_entry) cout << e->line();
 }
@@ -301,7 +303,8 @@ Memory::echoByBytes() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -326,7 +329,8 @@ Memory::echoByNumber() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -352,7 +356,8 @@ Memory::echoByValue() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -377,7 +382,8 @@ Memory::echoByVariable() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -402,7 +408,8 @@ Memory::echoByName() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -427,7 +434,8 @@ Memory::echoByPlot() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -452,7 +460,8 @@ Memory::echoByRestart() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Copy unordered memory entry keys to vector
   vector<MemoryEntry*> srt;
@@ -479,12 +488,14 @@ Memory::getNumber(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its number of variables
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_number;
 }
 
@@ -499,12 +510,14 @@ Memory::getValue(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_value;
 }
 
@@ -519,12 +532,14 @@ Memory::getVariable(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_variable;
 }
 
@@ -539,12 +554,14 @@ Memory::getName(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_name;
 }
 
@@ -559,12 +576,14 @@ Memory::getPlot(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_plot;
 }
 
@@ -579,17 +598,19 @@ Memory::getRestart(MemoryEntry* const id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
-  assert(m_entry.size() != 0);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   // Find memory entry and return its value type
   auto it = m_entry.find(id);
-  assert(it != m_entry.end());
+  Assert(it != m_entry.end(), FATAL, "Cannot find memory entry");
   return (*it)->m_restart;
 }
 
 size_t
-Memory::getBytes() const noexcept
+Memory::getBytes() const
 //******************************************************************************
 //  Return the number of allocated bytes
 //! \details Return the number of bytes allocated in newEntry(). We account for
@@ -599,11 +620,13 @@ Memory::getBytes() const noexcept
 //!          underestimate the actual memory usage, though by only a very small
 //!          fraction, i.e. <1e-4% for memory allocated in the range of MBytes.
 //! \return  Number of allocated bytes in the memory store
-//! \details Exception safety: no-throw guarantee: never throws exceptions.
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the objects modified.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(m_entry.size() != 0);
+  // Throw error if memory store is empty
+  Assert(m_entry.size() != 0, FATAL, "Memory store is empty");
 
   size_t bytes = 0;
   for (auto& e : m_entry) {
@@ -615,25 +638,22 @@ Memory::getBytes() const noexcept
 }
 
 void
-Memory::zero(MemoryEntry* const id) const noexcept
+Memory::zero(MemoryEntry* const id) const
 //******************************************************************************
 //  Zero entry using multiple threads
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \details    Exception safety: strong guarantee: if an exception is thrown,
+//!             there are no changes to the objects modified.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  assert(id != nullptr);
+  // Throw error if MemoryEntry is invalid (e.g. deallocated)
+  Assert(id != nullptr, FATAL, "MemoryEntry is not valid");
 
   // Get size of value type
   const size_t size = SizeOf[static_cast<int>(id->m_value)];
 
   // Compute chunk size
   const int i = id->m_number/m_nOMPthreads;
-
-  // Zero remaining portion
-  memset(static_cast<char*>(id->m_ptr) + m_nOMPthreads*i*size,
-         0,
-         (id->m_number%m_nOMPthreads)*size);
 
   int myid;
   #ifdef _OPENMP
@@ -649,4 +669,9 @@ Memory::zero(MemoryEntry* const id) const noexcept
     // each processor zeros its own portion
     memset(static_cast<char*>(id->m_ptr) + myid*i*size, 0, i*size);
   }
+
+  // Zero remaining portion
+  memset(static_cast<char*>(id->m_ptr) + m_nOMPthreads*i*size,
+         0,
+         (id->m_number%m_nOMPthreads)*size);
 }

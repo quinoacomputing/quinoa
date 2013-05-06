@@ -2,18 +2,18 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:05:49 AM MDT
+  \date      Mon May  6 15:10:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */
 //******************************************************************************
 
-#include <cassert>
 #include <iostream>
 
 #include <MKLRandom.h>
 #include <Paradigm.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
@@ -88,7 +88,8 @@ MKLRandom::eraseTable(MKLRndTable* table) noexcept
   try {
 
     auto it = m_table.find(table);
-    assert(it != m_table.end());
+    Assert(it != m_table.end(), FATAL,
+           "Cannot find random number table in MKLRandom::eraseTable()");
 
     delete table;
     m_table.erase(it);
@@ -122,7 +123,7 @@ MKLRandom::getRnd(MKLRndTable* table)
 //******************************************************************************
 {
   auto it = m_table.find(table);
-  assert(it != m_table.end());
+  Assert(it != m_table.end(), FATAL, "Cannot find random number table");
   return (*it)->getRnd();
 }
 
@@ -162,7 +163,8 @@ MKLRandom::eraseStream(MKLRndStream* stream) noexcept
   try {
 
     auto it = m_stream.find(stream);
-    assert(it != m_stream.end());
+    Assert(it != m_stream.end(), FATAL,
+           "Cannot find random number stream in MKLRandom::eraseStream()");
 
     delete stream;
     m_stream.erase(it);
@@ -186,6 +188,6 @@ MKLRandom::getStr(MKLRndStream* stream)
 //******************************************************************************
 {
   auto it = m_stream.find(stream);
-  assert(it != m_stream.end());
+  Assert(it != m_stream.end(), FATAL, "Cannot find random number stream");
   return (*it)->getStr();
 }

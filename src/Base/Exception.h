@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 05 May 2013 09:37:05 PM MDT
+  \date      Mon May  6 13:32:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -17,6 +17,38 @@
 #include <QuinoaTypes.h>
 
 namespace Quinoa {
+
+//! Throw macro that always throws an exception:
+//! Throw Exception with arguments passed in. Add source filename,
+//! function name, and line number where exception waprogrammer s occurred.
+//! This macro facilitates a throw of Quinoa::Exception that is somehwat cleaner
+//! at the point of invocation than direct a throw of Exception, as it hides the
+//! file:func:line arguments. Whenever is possible, it should be used via the
+//! Assert and Errchk macros defined below.
+#define Throw(...) \
+   throw Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+
+//! Assert macro that only throws an exception if expr fails:
+//! If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing, expr is not
+//! evaluated. If NDEBUG is not defined, evaluate expr. If expr is true, do
+//! nothing. If expr is false, throw Exception with arguments passed in.
+//! The behavior is similar to libc's assert macro, but throwing an Exception
+//! instead will also generate a nice call-trace and will attempt to free
+//! memory. This macro should be used to detect programmer errors.
+#ifdef NDEBUG
+#  define Assert(expr, ...) (static_cast<void>(0))
+#else  // NDEBUG
+#  define Assert(expr, ...) \
+   ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
+#endif // NDEBUG
+
+//! Errchk macro that only throws an exception if expr fails:
+//! The behavior is the same whether NDEBUG is defined or not: expr is always
+//! evaluated. If expr is true, do nothing. If expr is false, throw Exception
+//! with arguments passed in. This macro should be used to detect user/runtime
+//! errors.
+#define Errchk(expr, ...) \
+   ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
 //! Exception types
 // ICC: no strongly typed enums yet
@@ -45,7 +77,9 @@ class Exception : public std::exception {
     //! Constructor
     explicit Exception(const ExceptType except,
                        const std::string& message = "",
-                       int number = 0) noexcept;
+                       const std::string& file = "",
+                       const std::string& func = "",
+                       const unsigned int line = 0) noexcept;
 
     //! Destructor
     virtual ~Exception() noexcept;
@@ -56,8 +90,8 @@ class Exception : public std::exception {
     //! Redefine std::exception's what()
     virtual const char* what() const noexcept { return m_message.c_str(); }
 
-    //! Handle Exception passing pointer to driver
-    virtual ErrCode handleException(Driver* const driver) noexcept;
+    //! Handle Exception passing pointer to driver whose finalize() is called
+    virtual ErrCode handleException(Driver* const driver = nullptr) noexcept;
 
     //! Echo message
     void echo(const char* msg) noexcept;
@@ -82,12 +116,15 @@ class Exception : public std::exception {
     //! Demangle and Echo call trace
     void echoTrace() noexcept;
 
-    const ExceptType m_except;            //!< Exception type (WARNING, etc.)
+    const ExceptType m_except;  //!< Exception type (WARNING, etc.)
+    const std::string m_file;   //!< Source file where exception is occurred
+    const std::string m_func;   //!< Function name where exception is occurred
+    const unsigned int m_line;  //!< Source line where exception is occurred
 
-    std::string m_message;                //!< Error message
-    void* m_addrList[128];                //!< Call-stack before exception
-    int m_addrLength;                     //!< Number of stack frames
-    char** m_symbolList;                  //!< Symbol list of stack entries
+    std::string m_message;      //!< Error message
+    void* m_addrList[128];      //!< Call-stack before exception
+    int m_addrLength;           //!< Number of stack frames
+    char** m_symbolList;        //!< Symbol list of stack entries
 };
 
 } // namespace Quinoa

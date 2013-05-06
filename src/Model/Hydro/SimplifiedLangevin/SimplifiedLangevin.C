@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:58:22 AM MDT
+  \date      Mon May  6 13:06:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -46,21 +46,44 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
     throw Exception(FATAL, "Cannot allocate memory for random number generator "
                            "in SimplifiedLangevin constructor");
 
-  // Create random number leapfrog stream
-  m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
-  // Get array of MKL VSL stream state pointers right away
-  m_str = m_random->getStr(m_rndStr);
+  try {
 
-  // Allocate memory to store all the particle properties
-  m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
-                                         REAL,
-                                         SCALAR,
-                                         "SLM particles");
+    // Create random number leapfrog stream
+    m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
+    // Get array of MKL VSL stream state pointers right away
+    m_str = m_random->getStr(m_rndStr);
+
+    // Allocate memory to store all the particle properties
+    m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
+                                           REAL,
+                                           SCALAR,
+                                           "SLM particles");
+
+  } // roll back changes and rethrow on error
+    catch (exception&) {
+      finalize();
+      throw;
+    }
+    catch (...) {
+      finalize();
+      throw Exception(UNCAUGHT);
+    }
 }
 
 SimplifiedLangevin::~SimplifiedLangevin() noexcept
 //******************************************************************************
 //  Destructor
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  finalize();
+}
+
+void
+SimplifiedLangevin::finalize() noexcept
+//******************************************************************************
+//  Finalize, single exit point called from the destructor
 //! \author  J. Bakosi
 //******************************************************************************
 {

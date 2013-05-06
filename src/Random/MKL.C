@@ -2,12 +2,14 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:34:55 AM MDT
+  \date      Mon May  6 11:31:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
 */
 //******************************************************************************
+
+#include <sstream>
 
 #include <mkl_vsl.h>
 
@@ -37,9 +39,7 @@ MKL::uniform(const int& method,
 #ifdef NDEBUG
   vdRngUniform(method, stream, n, r, a, b);
 #else  // NDEBUG
-  int vslerr = vdRngUniform(method, stream, n, r, a, b);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vdRngUniform(method, stream, n, r, a, b));
 #endif // NDEBUG
 }
 
@@ -64,9 +64,7 @@ MKL::gaussian(const int& method,
 #ifdef NDEBUG
   vdRngGaussian(method, stream, n, r, a, b);
 #else  // NDEBUG
-  int vslerr = vdRngGaussian(method, stream, n, r, a, b);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vdRngGaussian(method, stream, n, r, a, b));
 #endif // NDEBUG
 }
 
@@ -93,9 +91,7 @@ MKL::gamma(const int& method,
 #ifdef NDEBUG
   vdRngGamma(method, stream, n, r, alpha, a, beta);
 #else  // NDEBUG
-  int vslerr = vdRngGamma(method, stream, n, r, alpha, a, beta);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vdRngGamma(method, stream, n, r, alpha, a, beta));
 #endif // NDEBUG
 }
 
@@ -114,9 +110,7 @@ MKL::newStream(VSLStreamStatePtr* const stream,
 #ifdef NDEBUG
   vslNewStream(stream, brng, seed);
 #else  // NDEBUG
-  int vslerr = vslNewStream(stream, brng, seed);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vslNewStream(stream, brng, seed));
 #endif // NDEBUG
 }
 
@@ -133,9 +127,7 @@ MKL::copyStream(VSLStreamStatePtr* const newstream,
 #ifdef NDEBUG
   vslCopyStream(newstream, srcstream);
 #else  // NDEBUG
-  int vslerr = vslCopyStream(newstream, srcstream);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vslCopyStream(newstream, srcstream));
 #endif // NDEBUG
 }
 
@@ -153,9 +145,7 @@ MKL::skipAheadStream(VSLStreamStatePtr& stream,
 #ifdef NDEBUG
   vslSkipAheadStream(stream, nskip);
 #else  // NDEBUG
-  int vslerr = vslSkipAheadStream(stream, nskip);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vslSkipAheadStream(stream, nskip));
 #endif // NDEBUG
 }
 
@@ -175,8 +165,21 @@ MKL::leapfrogStream(VSLStreamStatePtr& stream,
 #ifdef NDEBUG
   vslLeapfrogStream(stream, k, nstreams);
 #else  // NDEBUG
-  int vslerr = vslLeapfrogStream(stream, k, nstreams);
-  if (vslerr != VSL_STATUS_OK)
-    throw Exception(FATAL, "MKL VSL Error : code", vslerr);
+  MKLErrchk(vslLeapfrogStream(stream, k, nstreams));
 #endif // NDEBUG
+}
+
+void
+MKL::MKLErrchk(int vslerr) const
+//******************************************************************************
+//  Special error handler for MKL
+//! \param[in]  vslerr     Error code
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  if (vslerr != VSL_STATUS_OK) {
+    std::stringstream s;
+    s << "MKL VSL Error: code " << vslerr;
+    Throw(FATAL, s.str());
+  }
 }
