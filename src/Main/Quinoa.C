@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon May  6 15:01:12 2013
+  \date      Mon May  6 15:20:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -51,9 +51,9 @@ static void echoBuildInfo()
   cout << " * Compiler          : " << QUINOA_COMPILER << "\n";
   cout << " * Build type        : " << QUINOA_BUILD_TYPE;
 #ifdef NDEBUG
-  cout << " (no error checking, no exception handling)" << "\n";
+  cout << " (no asserts)" << "\n";
 #else  // NDEBUG
-  cout << " (with error checking and exception handling)" << "\n";
+  cout << " (with asserts)" << "\n";
 #endif // NDEBUG
   cout << " * Build date        : " << QUINOA_BUILD_DATE << "\n";
   cout << endl;
@@ -61,6 +61,18 @@ static void echoBuildInfo()
 
 } // namespace Quinoa
 
+static void finalize(const Driver* driver, const Memory* memory) noexcept
+//******************************************************************************
+//  Finalize for main()
+//! \details This is to avoid code-duplication in main() due to exception
+//!          handling.
+//!          Exception safety: no-throw guarantee: never throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+ if (driver) { delete driver; driver = nullptr; }
+ if (memory) { delete memory; memory = nullptr; }
+}
 
 int main(int argc, char* argv[])
 //******************************************************************************
@@ -98,29 +110,25 @@ int main(int argc, char* argv[])
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
-      if (driver) { delete driver; driver = nullptr; }
-      if (memory) { delete memory; memory = nullptr; }
+      finalize(driver, memory);
       error = qe.handleException(driver);
     }
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (exception& se) {
-      if (driver) { delete driver; driver = nullptr; }
-      if (memory) { delete memory; memory = nullptr; }
+      finalize(driver, memory);
       Exception qe(RUNTIME, se.what());
       error = qe.handleException(driver);
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
-      if (driver) { delete driver; driver = nullptr; }
-      if (memory) { delete memory; memory = nullptr; }
+      finalize(driver, memory);
       Exception qe(UNCAUGHT);
       error = qe.handleException(driver);
     }
 
   // Finalize and deallocate driver and memory manager
-  if (driver) { delete driver; driver = nullptr; }
-  if (memory) { delete memory; memory = nullptr; }
+  finalize(driver, memory);
 
   // Return error code
   return error;
