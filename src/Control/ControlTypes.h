@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Tue 23 Apr 2013 07:14:51 PM MDT
+  \date      Tue May  7 17:14:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -80,9 +80,9 @@ struct Term {
   string name;
   bool plot;
 
-  // Equal operator for finding unique elements
+  //! Equal operator for finding unique elements, used by e.g., std::unique()
+  //! Test only on field, quantity, and moment
   bool operator== (const Term& term) const {
-    // test on everything except name
     if (field == term.field &&
         quantity == term.quantity &&
         moment == term.moment) {
@@ -92,7 +92,11 @@ struct Term {
     }
   }
 
-  // Less than operator for ordering
+  //! Less than operator for ordering, used by e.g., std::sort().
+  //! Test on field, quantity, term, moment, and !plot.
+  //! Using operator >, instead of operator <, on plot ensures that if a Term is
+  //! user-requested, i.e., plotted, and also triggered by e.g., a model, the
+  //! user-requested Term will take precendence.
   bool operator< (const Term& term) const {
     // test on everything except name
     if (field < term.field) {
@@ -101,6 +105,9 @@ struct Term {
       return true;
     } else if (field == term.field && quantity == term.quantity &&
                moment < term.moment) {
+      return true;
+    } else if (field == term.field && quantity == term.quantity &&
+               moment == term.moment && plot > term.plot) {
       return true;
     } else {
       return false;
