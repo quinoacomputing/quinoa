@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue May  7 14:55:18 2013
+  \date      Tue May  7 15:06:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -242,7 +242,10 @@ namespace grammar {
                      control::ORDINARY>,
               moment<keyword::transported_scalar_fluctuation,
                      control::TRANSPORTED_SCALAR,
-                     control::CENTRAL>
+                     control::CENTRAL>,
+              moment<keyword::velocity_x,
+                     control::VELOCITY_X,
+                     control::ORDINARY>
             > {};
 
   // plow through terms in expectation until character 'rbound'
