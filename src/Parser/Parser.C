@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue May  7 13:05:30 2013
+  \date      Tue May  7 16:01:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -91,105 +91,26 @@ Parser::echoMix() const
 {
   cout << " * Material mixing: " << m_control->mixName() << endl;
 
-  if (m_control->set<control::NSTEP>())
-    cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
-         << endl;
-
-  if (m_control->set<control::TERM>())
-    cout << "   - Terminate time: " << m_control->get<control::TERM>()
-         << endl;
-
-  if (m_control->set<control::DT>())
-    cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
-
-  if (m_control->set<control::NSCALAR>())
-    cout << "   - Number of mixing scalars: "
-         << m_control->get<control::NSCALAR>() << endl;
-
-  if (m_control->set<control::NPAR>())
-    cout << "   - Number of particles: " << m_control->get<control::NPAR>()
-         << endl;
-
-  if (m_control->set<control::TTYI>())
-    cout << "   - TTY output interval: " << m_control->get<control::TTYI>()
-         << endl;
-
-  if (m_control->set<control::DUMP>())
-    cout << "   - Dump output interval = " << m_control->get<control::DUMP>()
-         << endl;
-
-  if (m_control->set<control::PLTI>())
-    cout << "   - Plot output interval = " << m_control->get<control::PLTI>()
-         << endl;
-
-  if (m_control->set<control::PDFI>())
-    cout << "   - PDF output interval = " << m_control->get<control::PDFI>()
-         << endl;
-
-  if (m_control->set<control::GLOB>())
-    cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
-         << endl;
-
-  if (m_control->set<control::B>()) {
-    cout << "   - Parameter vector b = {";
-    for (auto& v : m_control->get<control::B>()) cout << " " << v;
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::S>()) {
-    cout << "   - Parameter vector S = {";
-    for (auto& v : m_control->get<control::S>()) cout << " " << v;
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::KAPPA>()) {
-    cout << "   - Parameter vector kappa = {";
-    for (auto& v : m_control->get<control::KAPPA>()) cout << " " << v;
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::C>()) {
-    cout << "   - Parameter vector c = {";
-    for (auto& v : m_control->get<control::C>()) cout << " " << v;
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::STATISTICS>()) {
-    cout << "   - Requested statistics = {";
-    for (auto& product : m_control->get<control::STATISTICS>()) {
-      if (product[0].plot) {  // only output user-requested stats
-        cout << " <";
-        for (auto& term : product) cout << term.name;
-        cout << ">";
-      }
-    }
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::STATISTICS>()) {
-    cout << "   - Estimated statistics = {";
-    for (auto& product : m_control->get<control::STATISTICS>()) {
-      cout << " <";
-      for (auto& term : product) cout << term.name;
-      cout << ">";
-    }
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::PDFNAME>()) {
-    cout << "   - PDF base filename = "
-         << m_control->get<control::PDFNAME>() << endl;
-  }
-
-  if (m_control->set<control::GLOBNAME>()) {
-    cout << "   - Glob filename = "
-         << m_control->get<control::GLOBNAME>() << endl;
-  }
-
-  if (m_control->set<control::PLOTNAME>()) {
-    cout << "   - Plot base filename = "
-         << m_control->get<control::PLOTNAME>() << endl;
-  }
+  m_control->echo<control::NSTEP>("Number of time steps");
+  m_control->echo<control::TERM>("Terminate time");
+  m_control->echo<control::DT>("Time step size");
+  m_control->echo<control::NSCALAR>("Number of mixing scalars");
+  m_control->echo<control::NPAR>("Number of particles");
+  m_control->echo<control::TTYI>("TTY output interval");
+  m_control->echo<control::DUMP>("Dump output interval");
+  m_control->echo<control::PLTI>("Plot output interval");
+  m_control->echo<control::PDFI>("PDF output interval");
+  m_control->echo<control::GLOB>("Glob output interval");
+  m_control->echo<control::C0>("C0");
+  m_control->echoVec<control::B>("Parameter vector b");
+  m_control->echoVec<control::S>("Parameter vector S");
+  m_control->echoVec<control::KAPPA>("Parameter vector kappa");
+  m_control->echoVec<control::C>("Parameter vector c");
+  m_control->echoVecVecNames<control::STATISTICS>("Requested statistics",true);
+  m_control->echoVecVecNames<control::STATISTICS>("Estimated statistics");
+  m_control->echo<control::PDFNAME>("PDF base filename");
+  m_control->echo<control::GLOBNAME>("Glob filename");
+  m_control->echo<control::PLOTNAME>("Plot base filename");
 }
 
 void
@@ -201,80 +122,21 @@ Parser::echoHydro() const
 {
   cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
 
-  if (m_control->set<control::NSTEP>())
-    cout << "   - Number of time steps: " << m_control->get<control::NSTEP>()
-         << endl;
-
-  if (m_control->set<control::TERM>())
-    cout << "   - Terminate time: " << m_control->get<control::TERM>()
-         << endl;
-
-  if (m_control->set<control::DT>())
-    cout << "   - Time step size: " << m_control->get<control::DT>() << endl;
-
-  if (m_control->set<control::NPAR>())
-    cout << "   - Number of particles: " << m_control->get<control::NPAR>()
-         << endl;
-
-  if (m_control->set<control::TTYI>())
-    cout << "   - TTY output interval: " << m_control->get<control::TTYI>()
-         << endl;
-
-  if (m_control->set<control::DUMP>())
-    cout << "   - Dump output interval = " << m_control->get<control::DUMP>()
-         << endl;
-
-  if (m_control->set<control::PLTI>())
-    cout << "   - Plot output interval = " << m_control->get<control::PLTI>()
-         << endl;
-
-  if (m_control->set<control::PDFI>())
-    cout << "   - PDF output interval = " << m_control->get<control::PDFI>()
-         << endl;
-
-  if (m_control->set<control::GLOB>())
-    cout << "   - Glob output interval = " << m_control->get<control::GLOB>()
-         << endl;
-
-  if (m_control->set<control::C0>())
-    cout << "   - C0 = " << m_control->get<control::C0>() << endl;
-
-  if (m_control->set<control::STATISTICS>()) {
-    cout << "   - Requested statistics = {";
-    for (auto& product : m_control->get<control::STATISTICS>()) {
-      if (product[0].plot) {  // only output user-requested stats
-        cout << " <";
-        for (auto& term : product) cout << term.name;
-        cout << ">";
-      }
-    }
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::STATISTICS>()) {
-    cout << "   - Estimated statistics = {";
-    for (auto& product : m_control->get<control::STATISTICS>()) {
-      cout << " <";
-      for (auto& term : product) cout << term.name;
-      cout << ">";
-    }
-    cout << " }" << endl;
-  }
-
-  if (m_control->set<control::PDFNAME>()) {
-    cout << "   - PDF base filename = "
-         << m_control->get<control::PDFNAME>() << endl;
-  }
-
-  if (m_control->set<control::GLOBNAME>()) {
-    cout << "   - Glob filename = "
-         << m_control->get<control::GLOBNAME>() << endl;
-  }
-
-  if (m_control->set<control::PLOTNAME>()) {
-    cout << "   - Plot base filename = "
-         << m_control->get<control::PLOTNAME>() << endl;
-  }
+  m_control->echo<control::NSTEP>("Number of time steps");
+  m_control->echo<control::TERM>("Terminate time");
+  m_control->echo<control::DT>("Time step size");
+  m_control->echo<control::NPAR>("Number of particles");
+  m_control->echo<control::TTYI>("TTY output interval");
+  m_control->echo<control::DUMP>("Dump output interval");
+  m_control->echo<control::PLTI>("Plot output interval");
+  m_control->echo<control::PDFI>("PDF output interval");
+  m_control->echo<control::GLOB>("Glob output interval");
+  m_control->echo<control::C0>("C0");
+  m_control->echoVecVecNames<control::STATISTICS>("Requested statistics",true);
+  m_control->echoVecVecNames<control::STATISTICS>("Estimated statistics");
+  m_control->echo<control::PDFNAME>("PDF base filename");
+  m_control->echo<control::GLOBNAME>("Glob filename");
+  m_control->echo<control::PLOTNAME>("Plot base filename");
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue May  7 12:11:04 2013
+  \date      Tue May  7 15:59:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -12,6 +12,7 @@
 #define Control_h
 
 #include <string>
+#include <iostream>
 
 #include <QuinoaTypes.h>
 #include <ControlTypes.h>
@@ -52,6 +53,46 @@ class Control {
     //! Check if an element is set during parse
     template< control::BundlePosition at >
     bool set() const noexcept { return m_booldata[at]; }
+
+    //! Echo element if set
+    template< control::BundlePosition at >
+    void echo(const std::string& msg) const {
+      if (set<at>()) cout << "   - " << msg << ": " << get<at>() << endl;
+    }
+
+    //! Echo vector of elements if set
+    template< control::BundlePosition at >
+    void echoVec(const std::string& msg) const {
+      if (set<at>()) {
+        cout << "   - " << msg << ": {";
+        for (auto& v : get<at>()) cout << " " << v;
+        cout << " }" << endl;
+      }
+    }
+
+    //! Echo vector of vector of element names if set
+    //! fields vector<vector< struct{name,plot} >> must exist
+    template< control::BundlePosition at >
+    void echoVecVecNames(const std::string& msg, bool req = false) const {
+      if (set<at>()) {
+        cout << "   - " << msg << ": {";
+        if (req) {
+          for (auto& v : get<at>())
+            if (v[0].plot) {
+              cout << " <";
+              for (auto& w : v) cout << w.name;
+              cout << ">";
+            }
+        } else {
+          for (auto& v : get<at>()) {
+            cout << " <";
+            for (auto& w : v) cout << w.name;
+            cout << ">";
+          }
+        }
+        cout << " }" << endl;
+      }
+    }
 
     //! Get physics keyword
     const std::string& physicsKeyword() const noexcept {
