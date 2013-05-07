@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:36:12 AM MDT
+  \date      Tue May  7 11:02:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -30,10 +30,7 @@ using namespace Quinoa;
 HomHydro::HomHydro(Memory* const memory,
                    Paradigm* const paradigm,
                    Control* const control,
-                   Timer* const timer) :
-  Physics(memory, paradigm, control, timer),
-  m_term(control->get<control::TERM>()),
-  m_totalTime(timer->create("Total solution"))
+                   Timer* const timer)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -42,45 +39,78 @@ HomHydro::HomHydro(Memory* const memory,
 //! \param[in]  timer    Timer object pointer
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  Physics(memory, paradigm, control, timer),
+  m_term(control->get<control::TERM>()),
+  m_totalTime(timer->create("Total solution")),
+  m_hydro(nullptr),
+  m_statistics(nullptr),
+  m_glob(nullptr),
+  m_plot(nullptr)
 {
+
   // Instantiate selected hydrodynamics model
   switch (control->get<control::HYDRO>()) {
 
     case control::HydroType::NO_HYDRO :
-      throw Exception(FATAL, "No hydro model selected");
+      Throw(FATAL, "No hydro model selected");
       break;
 
     case control::HydroType::SLM :
       m_hydro = new (nothrow) SimplifiedLangevin(memory, paradigm, control);
-      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+      ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
       break;
 
     case control::HydroType::GLM :
       m_hydro = new (nothrow) GeneralizedLangevin(memory, paradigm, control);
-      if (m_hydro == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+      ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
       break;
 
     default :
-      throw Exception(FATAL, "Hydro model not implemented");
+      Throw(FATAL, "Hydro model not implemented");
   }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_hydro);
-  if (m_statistics == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+  ErrChk(m_statistics != nullptr, FATAL, "Cannot allocate memory");
 
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  if (m_glob == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+  ErrChk(m_glob != nullptr, FATAL, "Cannot allocate memory");
 
   // Instantiate plot file writer
   m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
                                        m_statistics);
-  if (m_plot == nullptr) throw Exception(FATAL, "Cannot allocate memory");
-}
+  ErrChk(m_plot != nullptr, FATAL, "Cannot allocate memory");
+
+} // Roll back changes and rethrow on error
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  // Catch uncaught exceptions
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 HomHydro::~HomHydro() noexcept
 //******************************************************************************
 //  Destructor
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  finalize();
+}
+
+void
+HomHydro::finalize() noexcept
+//******************************************************************************
+//  Finalize
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {

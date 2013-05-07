@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:22:26 AM MDT
+  \date      Mon 06 May 2013 10:38:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -29,9 +29,7 @@ PDFWriter::PDFWriter(const string filename) :
 //******************************************************************************
 {
   m_outPDF.open(m_filename, ofstream::out);
-
-  if (!m_outPDF.good())
-    throw Exception(FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outPDF.good(), FATAL, "Failed to open file: " + m_filename);
 }
 
 PDFWriter::~PDFWriter() noexcept
@@ -44,17 +42,18 @@ PDFWriter::~PDFWriter() noexcept
   try {
 
     m_outPDF.close();
-
-    if (m_outPDF.fail())
-      cout << "WARNING: Failed to close file: " << m_filename << endl;
+    ErrChk(!m_outPDF.fail(), WARNING, "Failed to close file: " + m_filename);
 
   } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
     catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+      cout << ">>> std::exception in PDFWriter destructor: " << e.what()
+           << endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in PDFWriter destructor" << endl
-           << "Continuing anyway..." << endl;
+      cout << "UNKNOWN EXCEPTION in PDFWriter destructor" << endl;
     }
 }
 
@@ -99,8 +98,7 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
 {
   // Output mesh header: mesh version, file type, data size
   m_outPDF << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
-  if (m_outPDF.bad())
-     throw Exception(FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outPDF.bad(), FATAL, "Failed to write to file: " + m_filename);
 
   auto f = jpdf->getMap();
   real binsize = jpdf->getBinsize();
@@ -153,4 +151,5 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   }
 
   m_outPDF << "$NodetData\n";
+  ErrChk(!m_outPDF.bad(), FATAL, "Failed to write to file: " + m_filename);
 }

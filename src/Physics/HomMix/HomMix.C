@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:33:52 AM MDT
+  \date      Tue May  7 10:47:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -29,11 +29,7 @@ using namespace Quinoa;
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
                Control* const control,
-               Timer* const timer) :
-  Physics(memory, paradigm, control, timer),
-  m_nscalar(control->get<control::NSCALAR>()),
-  m_term(control->get<control::TERM>()),
-  m_totalTime(timer->create("Total solution"))
+               Timer* const timer)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -42,45 +38,78 @@ HomMix::HomMix(Memory* const memory,
 //! \param[in]  timer    Timer object pointer
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  Physics(memory, paradigm, control, timer),
+  m_nscalar(control->get<control::NSCALAR>()),
+  m_term(control->get<control::TERM>()),
+  m_totalTime(timer->create("Total solution")),
+  m_mix(nullptr),
+  m_statistics(nullptr),
+  m_glob(nullptr),
+  m_plot(nullptr)
 {
+
   // Instantiate selected mix model
   switch (control->get<control::MIX>()) {
 
     case control::MixType::NO_MIX :
-      throw Exception(FATAL, "No mix model selected");
+      Throw(FATAL, "No mix model selected");
       break;
 
     case control::MixType::DIRICHLET :
       m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
-      if (m_mix == nullptr) Exception(FATAL, "Cannot allocate memory");
+      ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
       break;
 
     case control::MixType::GENERALIZED_DIRICHLET :
       m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
-      if (m_mix == nullptr) Exception(FATAL, "Cannot allocate memory");
+      ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
       break;
 
     default :
-      throw Exception(FATAL, "Mix model not implemented");
+      Throw(FATAL, "Mix model not implemented");
   }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
-  if (m_statistics == nullptr) throw Exception(FATAL,"Cannot allocate memory");
+  ErrChk(m_statistics != nullptr, FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  if (m_glob == nullptr) throw Exception(FATAL,"Cannot allocate memory");
+  ErrChk(m_glob != nullptr, FATAL,"Cannot allocate memory");
 
   // Instantiate plot file writer
   m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
                                        m_statistics);
-  if (m_plot == nullptr) throw Exception(FATAL,"Cannot allocate memory");
-}
+  ErrChk(m_plot != nullptr, FATAL,"Cannot allocate memory");
+
+} // Roll back changes and rethrow on error
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  // Catch uncaught exceptions
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 HomMix::~HomMix() noexcept
 //******************************************************************************
 //  Destructor
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  finalize();
+}
+
+void
+HomMix::finalize() noexcept
+//******************************************************************************
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {

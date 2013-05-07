@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Mon May  6 13:32:30 2013
+  \date      Tue May  7 10:28:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -19,12 +19,12 @@
 namespace Quinoa {
 
 //! Throw macro that always throws an exception:
-//! Throw Exception with arguments passed in. Add source filename,
-//! function name, and line number where exception waprogrammer s occurred.
-//! This macro facilitates a throw of Quinoa::Exception that is somehwat cleaner
-//! at the point of invocation than direct a throw of Exception, as it hides the
-//! file:func:line arguments. Whenever is possible, it should be used via the
-//! Assert and Errchk macros defined below.
+//! Throw Exception with arguments passed in. Add source filename, function
+//! name, and line number where exception occurred. This macro facilitates a
+//! throw of Quinoa::Exception that is somehwat cleaner at the point of
+//! invocation than a direct throw of Exception, as it hides the file:func:line
+//! arguments. Whenever is possible, it should be used via the Assert and ErrChk
+//! macros defined below.
 #define Throw(...) \
    throw Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
@@ -42,12 +42,12 @@ namespace Quinoa {
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 #endif // NDEBUG
 
-//! Errchk macro that only throws an exception if expr fails:
+//! ErrChk macro that only throws an exception if expr fails:
 //! The behavior is the same whether NDEBUG is defined or not: expr is always
 //! evaluated. If expr is true, do nothing. If expr is false, throw Exception
 //! with arguments passed in. This macro should be used to detect user/runtime
 //! errors.
-#define Errchk(expr, ...) \
+#define ErrChk(expr, ...) \
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
 //! Exception types
@@ -76,7 +76,7 @@ class Exception : public std::exception {
   public:
     //! Constructor
     explicit Exception(const ExceptType except,
-                       const std::string& message = "",
+                       const std::string& message,
                        const std::string& file = "",
                        const std::string& func = "",
                        const unsigned int line = 0) noexcept;
@@ -95,6 +95,9 @@ class Exception : public std::exception {
 
     //! Echo message
     void echo(const char* msg) noexcept;
+
+    //! Accessor to function name
+    const std::string& func() const noexcept { return m_func; }
 
   protected:
     //! Force copy constructor for children

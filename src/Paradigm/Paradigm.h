@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Mon May  6 13:20:56 2013
+  \date      Tue May  7 10:52:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -29,16 +29,16 @@ class Paradigm {
     void echo() const;
 
     //! Query if OpenMP is available
-    bool availOpenMP() const { return m_omp.available(); }
+    bool availOpenMP() const noexcept { return m_omp.available(); }
 
     //! Query if OpenMP is used
-    bool usedOpenMP() const { return m_omp.used(); }
+    bool usedOpenMP() const noexcept { return m_omp.used(); }
 
     //! Const accessor to OpenMP object
-    const OpenMP* getOpenMP() const { return &m_omp; }
+    const OpenMP* getOpenMP() const noexcept { return &m_omp; }
 
     //! Accessor to number of OpenMP threads
-    int nthread() const { return m_omp.nthread(); }
+    int nthread() const noexcept { return m_omp.nthread(); }
 
   private:
     //! Don't permit copy constructor

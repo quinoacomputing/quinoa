@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:43:12 PM MDT
+  \date      Mon 06 May 2013 06:58:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -39,24 +39,19 @@ GmshTxtMeshWriter::writeMeshFormat()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  string s;
-
   // Write beginning of header: $MeshFormat
   m_outMesh << "$MeshFormat\n";
-  if (m_outMesh.bad())
-    throw Exception(FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outMesh.bad(), FATAL, "Failed to write to file: " + m_filename);
 
   // Write "version-number file-type data-size"
   m_outMesh << m_mesh->getVersion() << " "
             << m_mesh->getType() << " "
             << m_mesh->getDatasize() << "\n";
-  if (m_outMesh.bad())
-    throw Exception(FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outMesh.bad(), FATAL, "Failed to write to file: " + m_filename);
 
   // Write end of header: $EndMeshFormat
   m_outMesh << "$EndMeshFormat" << endl;
-  if (m_outMesh.bad())
-    throw Exception(FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outMesh.bad(), FATAL, "Failed to write to file: " + m_filename);
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Mon May  6 14:07:21 2013
+  \date      Tue May  7 10:45:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -34,6 +34,7 @@ Memory::Memory(Paradigm* const paradigm) noexcept :
 //******************************************************************************
 //  Constructor
 //! \param[in]  paradigm Parallel programming object pointer
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -43,6 +44,7 @@ Memory::~Memory() noexcept
 //******************************************************************************
 //  Destructor
 //! \details Free all allocated memory when leaving scope (just in case)
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -80,9 +82,7 @@ Memory::newEntry(const size_t number,
 
   // Allocate memory
   void* ptr = static_cast<void*>(new (nothrow) char [nbytes]);
-  if (ptr == nullptr)
-    throw Exception(FATAL,
-            "Cannot allocate memory for ptr in Memory::newEntry()");
+  ErrChk(ptr != nullptr, FATAL, "Cannot allocate memory");
 
   // Allocate memory entry metadata
   MemoryEntry* entry = new (nothrow) MemoryEntry(nbytes,
@@ -95,15 +95,14 @@ Memory::newEntry(const size_t number,
                                                  ptr);
   if (entry == nullptr) {     // roll back changes and throw exception on error
     if (ptr) { delete [] static_cast<char*>(ptr); ptr = nullptr; }
-    throw Exception(FATAL,
-            "Cannot allocate memory for MemoryEntry in Memory::newEntry()");
+    Throw(FATAL, "Cannot allocate memory");
   }
 
   // Store memory entry
   try {
 
     pair<MemorySet::iterator,bool> e = m_entry.insert(entry);
-    if (!e.second) throw Exception(FATAL, "Cannot insert new memory entry");
+    ErrChk(e.second, FATAL, "Cannot insert new memory entry");
 
   } // roll back changes and rethrow on error
     catch (exception&) {
@@ -112,7 +111,7 @@ Memory::newEntry(const size_t number,
     }
     catch (...) {
       if (entry) { delete entry; entry = nullptr; }
-      throw Exception(UNCAUGHT);
+      Throw(UNCAUGHT, "Non-standard exception");
     }
 
   // Return key to caller
@@ -178,9 +177,8 @@ Memory::freeEntry(MemoryEntry* id) noexcept
     delete *it;
 
     // Remove MemoryEntry from MemorySet
-    if (!m_entry.erase(id)) {
-      throw Exception(WARNING, "Attempt to erase non-existent memory entry");
-    }
+    ErrChk(m_entry.erase(id),
+           WARNING, "Attempt to erase non-existent memory entry");
 
     // Zero id, so the caller can tell the entry has been removed
     id = nullptr;

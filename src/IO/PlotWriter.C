@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:23:48 AM MDT
+  \date      Tue May  7 07:58:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -23,9 +23,7 @@ PlotWriter::PlotWriter(const string& filename) : m_filename(filename)
 //******************************************************************************
 {
   m_outPlot.open(m_filename, ofstream::out);
-
-  if (!m_outPlot.good())
-    throw Exception(FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outPlot.good(), FATAL, "Failed to open file: " + m_filename);
 }
 
 PlotWriter::~PlotWriter() noexcept
@@ -43,11 +41,14 @@ PlotWriter::~PlotWriter() noexcept
       cout << "WARNING: Failed to close file: " << m_filename << endl;
 
   } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
     catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+      cout << ">>> std::exception in PlotWriter destructor: " << e.what()
+           << endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in PlotWriter destructor" << endl
-           << "Continuing anyway..." << endl;
+      cout << "UNKNOWN EXCEPTION in PlotWriter destructor" << endl;
     }
 }

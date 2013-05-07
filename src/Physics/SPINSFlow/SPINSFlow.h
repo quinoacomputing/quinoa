@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:05:48 2013
+  \date      Tue May  7 10:49:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -60,6 +60,10 @@ class SPINSFlow : public Physics {
     SPINSFlow(SPINSFlow&&) = delete;
     //! Don't permit move assigment
     SPINSFlow& operator=(SPINSFlow&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Advance particles
     void advance(const real dt);

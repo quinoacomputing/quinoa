@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Mon May  6 11:31:48 2013
+  \date      Tue May  7 11:20:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -22,7 +22,7 @@ class MKL {
 
   public:
     //! Constructor: Default, compiler-generated
-    explicit MKL() = default;
+    explicit MKL() noexcept = default;
 
     //! Destructor: Default, compiler-generated
     virtual ~MKL() noexcept = default;
@@ -82,7 +82,7 @@ class MKL {
     MKL& operator=(MKL&&) = delete;
 
     //! Special error handler for MKL calls
-    void MKLErrchk(int vslerr) const;
+    void MKLErrChk(int vslerr) const;
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:41:20 PM MDT
+  \date      Mon May  6 17:12:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -130,17 +130,16 @@ GmshTxtMeshReader::readMeshFormat()
 
   // Read in beginning of header: $MeshFormat
   getline(m_inMesh, s);
-  if (s != "$MeshFormat")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$MeshFormat", FATAL, "Unsupported mesh format: " + m_filename);
 
   // Read in "version-number file-type data-size"
   real version;
   int type, datasize;
   m_inMesh >> version >> type >> datasize;
-  if ((fabs(version-2.2) > numeric_limits<real>::epsilon() &&
-       fabs(version-2.0) > numeric_limits<real>::epsilon()) ||
-     (type != 0) || (datasize != sizeof(real)))
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk((fabs(version-2.2) < numeric_limits<real>::epsilon() ||
+         fabs(version-2.0) < numeric_limits<real>::epsilon()) &&
+         type == 0 && datasize == sizeof(real),
+         FATAL, "Unsupported mesh format: " + m_filename);
   getline(m_inMesh, s);  // finish reading the line
   // Save version, type, datasize
   m_mesh->setVersion(version);
@@ -149,8 +148,8 @@ GmshTxtMeshReader::readMeshFormat()
 
   // Read in end of header: $EndMeshFormat
   getline(m_inMesh, s);
-  if (s != "$EndMeshFormat")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$EndMeshFormat", FATAL,
+         "Unsupported mesh format: " + m_filename);
 }
 
 void
@@ -179,8 +178,7 @@ GmshTxtMeshReader::countNodes()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s != "$EndNodes")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$EndNodes", FATAL, "Unsupported mesh format: " + m_filename);
 }
 
 void
@@ -210,8 +208,7 @@ GmshTxtMeshReader::readNodes()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s != "$EndNodes")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$EndNodes", FATAL, "Unsupported mesh format: " + m_filename);
 }
 
 void
@@ -233,9 +230,8 @@ GmshTxtMeshReader::countElements()
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
-    if (it == m_GmshElemNodes.end())
-      throw Exception(FATAL,
-              "Unsupported element type in mesh file: " + m_filename);
+    ErrChk(it != m_GmshElemNodes.end(), FATAL,
+           "Unsupported element type in mesh file: " + m_filename);
 
     // Read tags and throw all away
     for (int j=0; j<ntags; j++) {
@@ -261,8 +257,7 @@ GmshTxtMeshReader::countElements()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s != "$EndElements")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$EndElements", FATAL, "Unsupported mesh format: " + m_filename);
 }
 
 void
@@ -288,9 +283,8 @@ GmshTxtMeshReader::readElements()
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
-    if (it == m_GmshElemNodes.end())
-      throw Exception(FATAL,
-              "Unsupported element type in mesh file: " + m_filename);
+    ErrChk(it != m_GmshElemNodes.end(), FATAL,
+           "Unsupported element type in mesh file: " + m_filename);
 
     // Read and add element tags
     vector<int> tags(ntags,0);
@@ -318,8 +312,7 @@ GmshTxtMeshReader::readElements()
 
   // Read in end of header: $EndNodes
   getline(m_inMesh, s);
-  if (s != "$EndElements")
-    throw Exception(FATAL, "Unsupported mesh format: " + m_filename);
+  ErrChk(s == "$EndElements", FATAL, "Unsupported mesh format: " + m_filename);
 }
 
 void
@@ -329,8 +322,8 @@ GmshTxtMeshReader::countPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw Exception(WARNING, "Mesh section '$PhysicalNames -- $EndPhysicalNames'"
-                           "not yet implemented");
+  Throw(WARNING, "Mesh section '$PhysicalNames -- $EndPhysicalNames'"
+                 "not yet implemented");
 }
 
 void
@@ -340,8 +333,8 @@ GmshTxtMeshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  throw Exception(WARNING, "Mesh section '$PhysicalNames -- $EndPhysicalNames'"
-                           "not yet implemented");
+  Throw(WARNING, "Mesh section '$PhysicalNames -- $EndPhysicalNames'"
+                 "not yet implemented");
 }
 
 void
@@ -356,8 +349,8 @@ GmshTxtMeshReader::addElem(int type, vector<int>& nodes)
   switch (type) {
     case 1: m_mesh->addLine(nodes); break;
     case 2: m_mesh->addTriangle(nodes); break;
-    default: throw Exception(FATAL,
-                     "Unsupported element type in mesh file: " + m_filename);
+    default: Throw(FATAL,
+                   "Unsupported element type in mesh file: " + m_filename);
   }
 }
 
@@ -373,7 +366,7 @@ GmshTxtMeshReader::addElemTags(int type, vector<int>& tags)
   switch (type) {
     case 1: m_mesh->addLineTags(tags); break;
     case 2: m_mesh->addTriangleTags(tags); break;
-    default: throw Exception(FATAL,
-                     "Unsupported element type in mesh file: " + m_filename);
+    default: Throw(FATAL,
+                   "Unsupported element type in mesh file: " + m_filename);
   }
 }

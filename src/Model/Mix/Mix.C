@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.C
   \author    J. Bakosi
-  \date      Mon May  6 11:07:47 2013
+  \date      Tue May  7 10:36:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -31,6 +31,6 @@ Mix::Mix(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Errchk(m_nscalar > 0, FATAL, "Wrong number of scalars");
-  Errchk(m_npar > 0, FATAL, "Wrong number of particles");
+  ErrChk(m_nscalar > 0, FATAL, "Wrong number of scalars");
+  ErrChk(m_npar > 0, FATAL, "Wrong number of particles");
 }

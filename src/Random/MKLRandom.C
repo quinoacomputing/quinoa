@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Mon May  6 15:10:54 2013
+  \date      Tue May  7 11:16:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -17,13 +17,14 @@
 
 using namespace Quinoa;
 
-MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) :
+MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) noexcept :
   m_memory(memory),
   m_nOMPthreads(paradigm->getOpenMP()->nthread())
 //******************************************************************************
 //  Constructor
-//! \param[in]  memory   Memory object pointer
-//! \param[in]  paradigm Parallel programming object pointer
+//! \param[in] memory   Memory object pointer
+//! \param[in] paradigm Parallel programming object pointer
+//! \details   No-throw guarantee: this member function never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -63,13 +64,13 @@ MKLRandom::addTable(const int brng,
   // Create new table
   MKLRndTable* table = new (nothrow)
     MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
-  if (table == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+  ErrChk(table != nullptr, FATAL, "Cannot allocate memory");
 
   // Store new table
   pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    throw Exception(FATAL, "Cannot store random number table");
+    Throw(FATAL, "Cannot store random number table");
   }
 
   // Return key to caller
@@ -95,12 +96,15 @@ MKLRandom::eraseTable(MKLRndTable* table) noexcept
     m_table.erase(it);
 
   } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
     catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+      cout << ">>> std::exception in MKLRandom::eraseTable(): " << e.what()
+           << endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in MKLRandom::eraseTable()" << endl
-           << "Continuing anyway..." << endl;
+      cout << ">>> UNKNOWN EXCEPTION in MKLRandom::eraseTable()" << endl;
     }
 }
 
@@ -138,13 +142,13 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 {
   // Create new stream
   MKLRndStream* stream = new (nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
-  if (stream == nullptr) throw Exception(FATAL, "Cannot allocate memory");
+  ErrChk(stream != nullptr, FATAL, "Cannot allocate memory");
 
   // Store new stream
   pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    throw Exception(FATAL, "Cannot store random number stream");
+    Throw(FATAL, "Cannot store random number stream");
   }
 
   // Return key to caller

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:31:11 PM MDT
+  \date      Mon May  6 17:25:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh writer class definition
   \details   Mesh writer class definition
@@ -23,19 +23,30 @@ MeshWriter::MeshWriter(string filename, UnsMesh* mesh, Memory* memory) :
 //******************************************************************************
 {
   m_outMesh.open(m_filename, ofstream::out);
-  if (!m_outMesh.good())
-    throw Exception(FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outMesh.good(), FATAL, "Failed to open file: " + m_filename);
 }
 
 MeshWriter::~MeshWriter() noexcept
 //******************************************************************************
 //  Destructor: Release mesh file handle
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outMesh.close();
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
-  if (m_outMesh.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
+  try {
+
+    m_outMesh.close();
+    ErrChk(!m_outMesh.fail(), WARNING, "Failed to close file: " + m_filename);
+
+  } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
+    catch (exception& e) {
+      cout << ">>> std::exception in MeshWriter destructor: " << e.what()
+           << endl;
+    }
+    catch (...) {
+      cout << ">>> UNKNOWN EXCEPTION in MeshWriter destructor" << endl;
+    }
 }

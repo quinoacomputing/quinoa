@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon May  6 13:28:08 2013
+  \date      Tue May  7 08:12:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -24,57 +24,36 @@ using namespace Quinoa;
 Driver::Driver(int argc,
                char** argv,
                Memory* const memory,
-               Paradigm* const paradigm) noexcept :
+               Paradigm* const paradigm)
+//******************************************************************************
+//  Constructor
+//! \param[in] argc      Argument count from command line
+//! \param[in] argv      Argument vector from command line
+//! \param[in] memory    Memory oject pointer
+//! \param[in] paradigm  Parallel programming paradigm object pointer
+//! \details   Instantiate physics, set initial conditions.
+//! \author J. Bakosi
+//******************************************************************************
+try :
   m_memory(memory),
   m_paradigm(paradigm),
-  m_argc(argc),
-  m_argv(argv),
   m_physics(nullptr),
   m_control(nullptr),
   m_timer(nullptr)
-//******************************************************************************
-//  Constructor
-//! \param[in]  argc      Argument count from command line
-//! \param[in]  argv      Argument vector from command line
-//! \param[in]  memory    Memory oject pointer
-//! \param[in]  paradigm  Parallel programming paradigm object pointer
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
 {
-}
 
-Driver::~Driver() noexcept
-//******************************************************************************
-//  Destructor
-//! \details Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-Driver::setup()
-//******************************************************************************
-//  Setup: instantiate physics, set initial conditions
-//! \author J. Bakosi
-//******************************************************************************
-{
   // Instantiate main control category
   m_control = new (nothrow) Control;
-  if (m_control == nullptr)
-    throw Exception(FATAL,
-            "Cannot allocate memory for control object in Driver::setup()");
+  ErrChk(m_control != nullptr, FATAL,
+         "Cannot allocate memory for control object");
 
   // Take exactly one filename argument for now
   // Will need to be extended with a more elaborate command line parser
-  if (m_argc != 2)
-    throw Exception(FATAL,
-            "Exactly one command line argument required: filename.q");
+  ErrChk(argc == 2, FATAL,
+         "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
-  Parser parser(m_argv[1], m_control);
+  Parser parser(argv[1], m_control);
 
   // Parse control file
   parser.parse();
@@ -84,44 +63,39 @@ Driver::setup()
 
   // Instantiate timer object
   m_timer = new (nothrow) Timer;
-  if (m_timer == nullptr)
-    throw Exception(FATAL,
-            "Cannot allocate memory for timer object in Driver::setup()");
+  ErrChk(m_timer != nullptr, FATAL, "Cannot allocate memory for timer object");
 
   // Instantiate selected physics
   switch (m_control->get<control::PHYSICS>()) {
 
     case control::PhysicsType::NO_PHYSICS :
-      throw Exception(FATAL, "No physics selected");
+      Throw(FATAL, "No physics selected");
       break;
 
     case control::PhysicsType::HOMOGENEOUS_MIX :
       m_physics = new (nothrow)
                   HomMix(m_memory, m_paradigm, m_control, m_timer);
-      if (m_physics == nullptr)
-        throw Exception(FATAL,
-                "Cannot allocate memory for physics object in Driver::setup()");
+      ErrChk(m_physics != nullptr, FATAL,
+             "Cannot allocate memory for physics object");
       break;
 
     case control::PhysicsType::HOMOGENEOUS_HYDRO :
       m_physics = new (nothrow)
                   HomHydro(m_memory, m_paradigm, m_control, m_timer);
-      if (m_physics == nullptr)
-        throw Exception(FATAL,
-                "Cannot allocate memory for physics object in Driver::setup()");
+      ErrChk(m_physics != nullptr, FATAL,
+             "Cannot allocate memory for physics object");
       break;
 
     case control::PhysicsType::SPINSFLOW :
       m_physics = new (nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");
-      if (m_physics == nullptr)
-        throw Exception(FATAL,
-                "Cannot allocate memory for physics object in Driver::setup()");
+      ErrChk(m_physics != nullptr, FATAL,
+             "Cannot allocate memory for physics object");
       break;
 
     default :
-      throw Exception(FATAL, "Selected physics not implemented");
+      Throw(FATAL, "Selected physics not implemented");
   }
 
   // Echo information on physics selected
@@ -129,16 +103,27 @@ Driver::setup()
 
   // Set initial conditions
   m_physics->init();
-}
 
-void
-Driver::solve() const
+} // Roll back changes and rethrow on error
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  // Catch uncaught exceptions
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
+
+
+Driver::~Driver() noexcept
 //******************************************************************************
-//  Solve
+//  Destructor
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_physics->solve();
+  finalize();
 }
 
 void
@@ -156,3 +141,15 @@ Driver::finalize() noexcept
   if (m_control) { delete m_control; m_control = nullptr; }
   m_memory->freeAllEntries();
 }
+
+void
+Driver::solve() const
+//******************************************************************************
+//  Solve
+//! \author J. Bakosi
+//******************************************************************************
+{
+  m_physics->solve();
+}
+
+

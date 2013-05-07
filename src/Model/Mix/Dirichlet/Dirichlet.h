@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:30:57 2013
+  \date      Tue May  7 08:23:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -62,6 +62,10 @@ class Dirichlet : public Mix {
     Dirichlet(Dirichlet&&) = delete;
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();
