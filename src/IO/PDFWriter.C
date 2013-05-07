@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Mon 06 May 2013 10:38:01 PM MDT
+  \date      Tue May  7 13:06:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -19,7 +19,8 @@
 using namespace Quinoa;
 
 PDFWriter::PDFWriter(const string filename) :
-  m_filename(filename)
+  m_filename(filename),
+  m_outPDF()
 //******************************************************************************
 //  Constructor: Acquire PDF file handle
 //! \param[in]  filename  File name to open for writing

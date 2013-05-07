@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Tue May  7 08:08:56 2013
+  \date      Tue May  7 12:24:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -31,9 +31,6 @@ class Driver {
 
     //! Destructor
     ~Driver() noexcept;
-
-    //! Setup: instantiate model, set initial conditions
-    void setup();
 
     //! Solve
     void solve() const;

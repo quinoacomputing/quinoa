@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:21:43 AM MDT
+  \date      Tue May  7 12:22:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -24,7 +24,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Joint PDF estimator
-class JPDF : Distribution {
+class JPDF : public Distribution {
 
   public:
     //! Key type
@@ -57,15 +57,15 @@ class JPDF : Distribution {
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
-    const int& getNsample() const { return m_nsample; }
+    const int& getNsample() const noexcept { return m_nsample; }
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
-    const pdf* getMap() const { return &m_pdf; }
+    const pdf* getMap() const noexcept { return &m_pdf; }
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
-    const real& getBinsize() const { return m_binsize; }
+    const real& getBinsize() const noexcept { return m_binsize; }
 
   private:
     //! Don't permit copy constructor
@@ -77,8 +77,8 @@ class JPDF : Distribution {
     //! Don't permit move assigment
     JPDF& operator=(JPDF&&) = delete;
 
-    key_type m_key;         //!< Temporary key for finding the sample space bin
     const real m_binsize;   //!< Sample space bin size
+    key_type m_key;         //!< Temporary key for finding the sample space bin
     pdf m_pdf;              //!< Probability density function
 };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Mon May  6 17:38:56 2013
+  \date      Tue May  7 12:43:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -16,8 +16,18 @@
 
 using namespace Quinoa;
 
-UnsMesh::UnsMesh(Memory* const memory) noexcept :
-  m_memory(memory)
+UnsMesh::UnsMesh(Memory* const memory) :
+  m_memory(memory),
+  m_type(0),
+  m_datasize(0),
+  m_coord(),
+  m_nodeId(),
+  m_lineId(),
+  m_triangleId(),
+  m_linpoel(),
+  m_tinpoel(),
+  m_lintag(),
+  m_tritag()
 //******************************************************************************
 //  Constructor: zero memory entry pointers held
 //! \author J. Bakosi
@@ -82,8 +92,11 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     m_tritag.reserve(ntriangles);
 
   } catch (exception&) {
-    Throw(FATAL, "Cannot allocate memory for mesh");
-  }
+      Throw(FATAL, "Cannot allocate memory for mesh");
+    }
+    catch (...) {
+      Throw(UNCAUGHT, "non-standard exception in UnsMesh::reserveElem()");
+    }
 }
 
 void

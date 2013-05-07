@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:20:48 AM MDT
+  \date      Tue May  7 13:32:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -72,6 +72,10 @@ class Statistics {
     //! Don't permit move assigment
     Statistics& operator=(Statistics&&) = delete;
 
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
+
     //! Estimate ordinary moments
     void estimateOrdinary();
 
@@ -79,7 +83,7 @@ class Statistics {
     void estimateCentral();
 
     //! Find out whether product only contains ordinary moment terms
-    bool ordinary(const vector<control::Term>& product);
+    bool ordinary(const vector<control::Term>& product) const;
 
     //! Return mean for fluctuation
     int mean(const string name) const;

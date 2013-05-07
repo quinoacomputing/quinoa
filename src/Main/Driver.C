@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue May  7 08:12:23 2013
+  \date      Tue May  7 12:23:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -151,5 +151,3 @@ Driver::solve() const
 {
   m_physics->solve();
 }
-
-

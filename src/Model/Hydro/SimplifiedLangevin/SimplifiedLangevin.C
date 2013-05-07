@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Tue May  7 08:21:17 2013
+  \date      Tue May  7 13:03:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -63,6 +63,11 @@ try :
                                          "SLM particles");
 
 } // Roll back changes and rethrow on error
+  catch (Exception& e) {
+    // No need to clean up if exception thrown from base constructor
+    if (e.func() == __PRETTY_FUNCTION__) finalize();
+    throw;
+  }
   catch (exception&) {
     finalize();
     throw;

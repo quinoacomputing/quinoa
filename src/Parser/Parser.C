@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue May  7 10:58:13 2013
+  \date      Tue May  7 13:05:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -20,7 +20,9 @@
 using namespace Quinoa;
 
 Parser::Parser(const string& filename, Control* const control) :
-  m_filename(filename), m_control(control)
+  m_filename(filename),
+  m_control(control),
+  m_q()
 //******************************************************************************
 //  Constructor
 //! \param[in]  filename      File to parse

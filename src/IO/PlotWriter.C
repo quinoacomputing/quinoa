@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Tue May  7 07:58:01 2013
+  \date      Tue May  7 13:07:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -16,7 +16,9 @@
 
 using namespace Quinoa;
 
-PlotWriter::PlotWriter(const string& filename) : m_filename(filename)
+PlotWriter::PlotWriter(const string& filename) :
+  m_filename(filename),
+  m_outPlot()
 //******************************************************************************
 //  Constructor: Acquire plot file handle
 //! \author J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Tue May  7 10:28:49 2013
+  \date      Tue May  7 12:29:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -36,7 +36,9 @@ try :
   m_file(move(file)),
   m_func(move(func)),
   m_line(move(line)),
-  m_message(move(message))
+  m_message(move(message)),
+  m_addrLength(0),
+  m_symbolList(nullptr)
 {
 
   // Construct exception message
@@ -55,14 +57,12 @@ try :
 } // Catch std::exception
   catch (exception& se) {
     // Emit warning and continue
-    cout << "RUNTIME ERROR in Exception constructor: " << se.what() << endl
-         << "Continuing anyway..." << endl;
+    cout << "RUNTIME ERROR in Exception constructor: " << se.what() << endl;
   }
   // Catch uncaught exceptions
   catch (...) {
     // Emit warning and continue
-    cout << "UNKNOWN EXCEPTION in Exception constructor" << endl
-         << "Continuing anyway..." << endl;
+    cout << "UNKNOWN EXCEPTION in Exception constructor" << endl;
   }
 
 Exception::~Exception() noexcept

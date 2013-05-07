@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/StrMesh.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:40:33 2013
+  \date      Tue May  7 12:37:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Structured mesh class declaration
   \details   Structured mesh class declaration
@@ -16,7 +16,7 @@
 namespace Quinoa {
 
 //! StrMesh : Mesh
-class StrMesh : Mesh {
+class StrMesh : public Mesh {
 
   public:
     //! Constructor, default compiler generated

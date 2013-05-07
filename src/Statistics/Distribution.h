@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:10:01 2013
+  \date      Tue May  7 12:14:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -25,7 +25,7 @@ class Distribution {
 
   public:
     //! Constructor
-    explicit Distribution() : m_nsample(0) {}
+    explicit Distribution() noexcept : m_nsample(0) {}
 
     //! Destructor
     virtual ~Distribution() noexcept = default;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Mon May  6 17:52:26 2013
+  \date      Tue May  7 13:00:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -23,13 +23,7 @@ MKLRndTable::MKLRndTable(Memory* const memory,
                          int method,
                          unsigned int seed,
                          long long int number,
-                         const string& name) :
-  m_memory(memory),
-  m_nthread(nthread),
-  m_dist(dist),
-  m_method(method),
-  m_chunk(number / nthread),
-  m_remainder(number % nthread)
+                         const string& name)
 //******************************************************************************
 //  Constructor: Create random number table
 //! \param[in]  memory   Memory object pointer
@@ -44,7 +38,17 @@ MKLRndTable::MKLRndTable(Memory* const memory,
 //!             there are no changes to the object.
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  m_memory(memory),
+  m_nthread(nthread),
+  m_dist(dist),
+  m_method(method),
+  m_chunk(number / nthread),
+  m_remainder(number % nthread),
+  m_stream(nullptr),
+  m_rnd()
 {
+
   Assert(nthread > 0, FATAL, "Need at least one thread");
   Assert(number > 0, FATAL, "Number of random numbers must be positive");
   Assert(name.size() > 0, FATAL, "MKLRndTable's name must be nonempty");
@@ -64,12 +68,36 @@ MKLRndTable::MKLRndTable(Memory* const memory,
 
   // Allocate array to store random numbers
   m_rnd = m_memory->newEntry<real>(number, REAL, SCALAR, name);
-}
+
+} // Roll back changes and rethrow on error
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
+
+
 
 MKLRndTable::~MKLRndTable() noexcept
 //******************************************************************************
-//  Destructor: Destroy random number table
+//  Destructor
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  finalize();
+}
+
+void
+MKLRndTable::finalize() noexcept
+//******************************************************************************
+//  Finalize: Destroy random number table
+//! \details  Single exit point, called implicitly from destructor or explicitly
+//!           from anywhere else. Exception safety: no-throw guarantee: never
+//!           throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {

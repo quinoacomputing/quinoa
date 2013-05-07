@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:23:57 AM MDT
+  \date      Tue May  7 12:16:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -16,7 +16,8 @@
 using namespace Quinoa;
 
 PDF::PDF(const real& binsize) :
-  m_binsize(binsize)
+  m_binsize(binsize),
+  m_pdf()
 //******************************************************************************
 //  Constructor: Initialize joint PDF container
 //! \param[in]   binsize    Sample space bin size

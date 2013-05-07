@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:21:30 AM MDT
+  \date      Tue May  7 12:17:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -22,7 +22,7 @@ using namespace std;
 namespace Quinoa {
 
 //! Univariate PDF estimator
-class PDF : Distribution {
+class PDF : public Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
     //!                                  mapped value: sample counter
@@ -40,15 +40,15 @@ class PDF : Distribution {
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
-    const pdf* getMap() const { return &m_pdf; }
+    const pdf* getMap() const noexcept { return &m_pdf; }
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
-    const real& getBinsize() const { return m_binsize; }
+    const real& getBinsize() const noexcept { return m_binsize; }
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
-    const int& getNsample() const { return m_nsample; }
+    const int& getNsample() const noexcept { return m_nsample; }
 
   private:
     //! Don't permit copy constructor
