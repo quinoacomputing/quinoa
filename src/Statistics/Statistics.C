@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon May  6 17:52:45 2013
+  \date      Tue May  7 13:32:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -26,13 +26,7 @@ using namespace Quinoa;
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,
                        Control* const control,
-                       Model* const model) :
-  m_memory(memory),
-  m_nthread(paradigm->nthread()),
-  m_npar(control->get<control::NPAR>()),
-  m_model(model),
-  m_nprop(model->nprop()),
-  m_statistics(control->get<control::STATISTICS>())
+                       Model* const model)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
@@ -41,9 +35,22 @@ Statistics::Statistics(Memory* const memory,
 //! \param[in]  model    Model objects
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  m_memory(memory),
+  m_nthread(paradigm->nthread()),
+  m_npar(control->get<control::NPAR>()),
+  m_model(model),
+  m_nprop(model->nprop()),
+  m_statistics(control->get<control::STATISTICS>()),
+  m_instOrd(),
+  m_ordinary(),
+  m_nameOrdinary(),
+  m_nord(0),
+  m_instCen(),
+  m_central(),
+  m_nameCentral(),
+  m_ncen(0)
 {
-  m_nord = 0;
-  m_ncen = 0;
 
   // Prepare for computing ordinary moments
   for (auto& product : m_statistics) {
@@ -105,7 +112,21 @@ Statistics::Statistics(Memory* const memory,
                                            "central moments");
     } // if (m_ncen)
   } // if (m_nord)
-}
+
+} // Roll back changes and rethrow on error
+  catch (Exception& e) {
+    // No need to clean up if exception thrown from base constructor
+    if (e.func() == __PRETTY_FUNCTION__) finalize();
+    throw;
+  }
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 Statistics::~Statistics() noexcept
 //******************************************************************************
@@ -114,13 +135,25 @@ Statistics::~Statistics() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
+  finalize();
+}
+
+void
+Statistics::finalize() noexcept
+//******************************************************************************
+//  Finalize
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
   if (m_ncen) m_memory->freeEntry(m_central);
   if (m_nord) m_memory->freeEntry(m_ordinary);
 }
 
 bool
-Statistics::ordinary(const vector<control::Term>& product)
+Statistics::ordinary(const vector<control::Term>& product) const
 //******************************************************************************
 //  Find out whether product only contains ordinary moment terms
 //! \param[in]  product   Vector of terms

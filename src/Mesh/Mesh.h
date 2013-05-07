@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/Mesh.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:48:26 2013
+  \date      Tue May  7 12:36:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh base class declaration
   \details   Mesh base class declaration
@@ -28,13 +28,13 @@ class Mesh {
 
   protected:
     //! Constructor, default compiler generated
-    explicit Mesh() : m_dim(MeshDim::THREE) {}
+    explicit Mesh() noexcept : m_dim(MeshDim::THREE) {}
 
     //! Destructor, default compiler generated
     virtual ~Mesh() noexcept = default;
 
     //! Set mesh dimension
-    void setDim(const MeshDim dim);
+    void setDim(const MeshDim dim) noexcept { m_dim = dim; }
 
   private:
     //! Don't permit copy constructor

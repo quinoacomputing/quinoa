@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:31:05 2013
+  \date      Tue May  7 13:24:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -18,7 +18,7 @@
 namespace Quinoa {
 
 //! Symmetric compressed row sparse matrix
-class SymCompRowMatrix : private SparseMatrix {
+class SymCompRowMatrix : public SparseMatrix {
 
   public:
     //! Constructor
@@ -68,6 +68,11 @@ class SymCompRowMatrix : private SparseMatrix {
     //! Don't permit move assigment
     SymCompRowMatrix& operator=(SymCompRowMatrix&&) = delete;
 
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
+
+    Data<int> m_rnz;  //!< Nonzeros in each row (only in constructor)
     Data<int> m_ia;   //!< Row indices, vector size: size*dof+1
     Data<int> m_ja;   //!< Column indices, vector size: nnz
     Data<real> m_a;   //!< Nonzero matrix values, vector size: nnz

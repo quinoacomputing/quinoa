@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Mon May  6 17:12:45 2013
+  \date      Tue May  7 12:51:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -20,7 +20,13 @@ GmshTxtMeshReader::GmshTxtMeshReader(const string filename,
                                      UnsMesh* const mesh,
                                      Memory* const memory) :
   MeshReader(filename, mesh, memory),
-  m_nnodes(0), m_nLins(0), m_nTris(0), m_nodeCnt(0), m_linCnt(0), m_triCnt(0)
+  m_GmshElemNodes(),
+  m_nnodes(0),
+  m_nLins(0),
+  m_nTris(0),
+  m_nodeCnt(0),
+  m_linCnt(0),
+  m_triCnt(0)
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -349,8 +355,8 @@ GmshTxtMeshReader::addElem(int type, vector<int>& nodes)
   switch (type) {
     case 1: m_mesh->addLine(nodes); break;
     case 2: m_mesh->addTriangle(nodes); break;
-    default: Throw(FATAL,
-                   "Unsupported element type in mesh file: " + m_filename);
+    default:
+      Throw(FATAL, "Unsupported element type in mesh file: " + m_filename);
   }
 }
 
@@ -366,7 +372,7 @@ GmshTxtMeshReader::addElemTags(int type, vector<int>& tags)
   switch (type) {
     case 1: m_mesh->addLineTags(tags); break;
     case 2: m_mesh->addTriangleTags(tags); break;
-    default: Throw(FATAL,
-                   "Unsupported element type in mesh file: " + m_filename);
+    default:
+      Throw(FATAL, "Unsupported element type in mesh file: " + m_filename);
   }
 }

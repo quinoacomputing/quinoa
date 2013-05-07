@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:14:26 2013
+  \date      Tue May  7 13:08:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -24,7 +24,7 @@ namespace Quinoa {
 class Statistics;
 
 //! TxtPlotWriter : PlotWriter
-class TxtPlotWriter : PlotWriter {
+class TxtPlotWriter : public PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle

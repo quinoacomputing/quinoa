@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 01 May 2013 08:48:16 PM MDT
+  \date      Tue May  7 12:41:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class declaration
   \details   Unstructured mesh class declaration
@@ -25,11 +25,11 @@ const string     LINES_NAME = "lines";
 const string TRIANGLES_NAME = "triangles";
 
 //! UnsMesh : Mesh
-class UnsMesh : private Mesh {
+class UnsMesh : public Mesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit UnsMesh(Memory* const memory) noexcept;
+    explicit UnsMesh(Memory* const memory);
 
     //! Destructor: free memory entries held
     virtual ~UnsMesh() noexcept;
@@ -86,16 +86,16 @@ class UnsMesh : private Mesh {
     int getNnodes() const { return m_memory->getNumber(m_nodeId.id); }
 
     //! Line elements connectivity accessor
-    const vector<vector<int>> getLinpoel() { return m_linpoel; }
+    const vector<vector<int>> getLinpoel() const { return m_linpoel; }
 
     //! Line element tags accessor
-    const vector<vector<int>> getLintag() { return m_lintag; }
+    const vector<vector<int>> getLintag() const { return m_lintag; }
 
     //! Triangles elements connectivity accessor
-    const vector<vector<int>> getTinpoel() { return m_tinpoel; }
+    const vector<vector<int>> getTinpoel() const { return m_tinpoel; }
 
     //! Triangle element tags accessor
-    const vector<vector<int>> getTritag() { return m_tritag; }
+    const vector<vector<int>> getTritag() const { return m_tritag; }
 
     //! Echo element tags and connectivity in all element sets
     void echoElemSets() const;

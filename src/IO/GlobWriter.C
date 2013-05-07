@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Mon 06 May 2013 07:26:45 PM MDT
+  \date      Tue May  7 12:34:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -17,7 +17,9 @@
 
 using namespace Quinoa;
 
-GlobWriter::GlobWriter(string filename) : m_filename(filename)
+GlobWriter::GlobWriter(string filename) :
+  m_filename(filename),
+  m_outGlob()
 //******************************************************************************
 //  Constructor: Acquire glob file handle
 //! \param[in]  filename  File name to append to
@@ -34,24 +36,22 @@ GlobWriter::~GlobWriter() noexcept
 //! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
-{
-  try {
+try {
 
-    m_outGlob.close();
-    ErrChk(!m_outGlob.fail(), WARNING, "Failed to close file: " + m_filename);
+  m_outGlob.close();
+  ErrChk(!m_outGlob.fail(), WARNING, "Failed to close file: " + m_filename);
 
-  } // emit only a warning on error
-    catch (Exception& e) {
-      e.echo("WARNING");
-    }
-    catch (exception& e) {
-      cout << ">>> std::exception in GlobWriter destructor: " << e.what()
-           << endl;
-    }
-    catch (...) {
-      cout << ">>> UNKNOWN EXCEPTION in GlobWriter destructor" << endl;
-    }
-}
+} // emit only a warning on error
+  catch (Exception& e) {
+    e.echo("WARNING");
+  }
+  catch (exception& e) {
+    cout << ">>> std::exception in GlobWriter destructor: " << e.what()
+         << endl;
+  }
+  catch (...) {
+    cout << ">>> UNKNOWN EXCEPTION in GlobWriter destructor" << endl;
+  }
 
 void
 GlobWriter::write(const int it, const real t)

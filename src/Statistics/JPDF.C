@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Mon May  6 15:13:28 2013
+  \date      Tue May  7 12:23:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -17,7 +17,9 @@
 using namespace Quinoa;
 
 JPDF::JPDF(const int dim, const real binsize) :
-  m_binsize(binsize)
+  m_binsize(binsize),
+  m_key(dim),
+  m_pdf()
 //******************************************************************************
 //  Constructor: Initialize joint PDF container
 //! \param[in]   dim        Dimension of sample space
@@ -25,8 +27,6 @@ JPDF::JPDF(const int dim, const real binsize) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Grow temporary key vector size in advance
-  m_key.resize(dim);
 }
 
 JPDF::~JPDF() noexcept
