@@ -2,10 +2,13 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue May  7 15:06:50 2013
+  \date      Tue May  7 17:23:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
-  \details   Grammar definition
+  \details   Grammar definition. We use the Parsing Expression Grammar Template
+             Library (PEGTL) to create the grammar and the associated parser.
+             Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. See
+             src/ThirdParty/PEGTL/documentation.wiki for more details.
 */
 //******************************************************************************
 #ifndef Grammar_h
@@ -37,7 +40,7 @@ namespace grammar {
   //! Dummy Bundle instant for decltype in cstore()
   static stack_type dummy_stack;
   //! Out-of-struct storage of field ID for push_term
-  static int field;
+  static int field = 0;
 
   // Actions
 
@@ -135,6 +138,8 @@ namespace grammar {
         control::Product mean(1,term);
         stats.insert(stats.end()-1, mean);
       }
+
+      field = 0;            // reset default field
       IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
@@ -230,10 +235,13 @@ namespace grammar {
   struct process :
          ifmust< read<keyword>, parse<keywords,insert> > {};
 
-  // moment: 'keyword' followed by a digit, pushed to vector of terms
+  // moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, control::Quantity q, control::Moment m >
   struct moment :
-         ifapply< seq<keyword, ifapply<digit,save_field>>, push_term<q, m> > {};
+         sor < ifapply< seq<keyword, ifapply<digit,save_field>>,
+                        push_term<q, m> >,
+               ifapply< keyword, push_term<q, m> >
+             > {};
 
   // terms recognized within an expectation and their mapping
   struct terms :
@@ -366,7 +374,7 @@ namespace grammar {
               homhydro,
               spinsflow > {};
 
-  // keywords
+  // main keywords
   struct keywords :
          sor< title,
               physics > {};
