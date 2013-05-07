@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue May  7 14:46:33 2013
+  \date      Tue May  7 14:55:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -112,11 +112,18 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+
+      // if name is given, will push name
       std::string n(name ? convert<char>(name) : value);
-      control::Term term = {field, quantity, moment, n, true};
+      // if name is given, it is triggerd, not user-requested
+      bool plot(name ? false : true);
+      // create Term to push
+      control::Term term = {field, quantity, moment, n, plot};
+      // Use stats for shorthand of reference in bundle
       vector<control::Product>& stats = get<control::STATISTICS>(stack);
       // Push term into current product
       stats.back().push_back(term);
+
       // If central moment, trigger mean
       if (moment == control::CENTRAL) {
         // Convert name to upper-case for human-readable name
