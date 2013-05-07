@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:23:04 AM MDT
+  \date      Tue May  7 14:46:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition
@@ -107,37 +107,12 @@ namespace grammar {
   };
 
   // add matched value as Term into vector of Product in vector of statistics
-  template< control::Quantity quantity, control::Moment moment >
-  struct push_term : action_base< push_term<quantity, moment> > {
+  template< control::Quantity quantity, control::Moment moment, char name='\0' >
+  struct push_term : action_base< push_term<quantity, moment, name> > {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      control::Term term = {field, quantity, moment, value, true};
-      vector<control::Product>& stats = get<control::STATISTICS>(stack);
-      // Push term into current product
-      stats.back().push_back(term);
-      // If central moment, trigger mean
-      if (moment == control::CENTRAL) {
-        // Convert name to upper-case for human-readable name
-        std::string upper(value);
-        std::for_each(upper.begin(), upper.end(),
-                      [](char& c){ c = static_cast<char>(std::toupper(c)); } );
-        // Put in request for mean
-        control::Term term = {field, quantity, control::ORDINARY, upper, false};
-        control::Product mean(1,term);
-        stats.insert(stats.end()-1, mean);
-      }
-      IGNORE(boolstack);    // suppress compiler warning on unused variable
-    }
-  };
-
-  // add (trigger) name as Term into vector of Product in vector of statistics
-  template< char name, control::Quantity quantity, control::Moment moment >
-  struct trigger : action_base< trigger<name, quantity, moment> > {
-    static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
-      std::string n = convert<char>(name);
+      std::string n(name ? convert<char>(name) : value);
       control::Term term = {field, quantity, moment, n, true};
       vector<control::Product>& stats = get<control::STATISTICS>(stack);
       // Push term into current product
@@ -153,7 +128,6 @@ namespace grammar {
         control::Product mean(1,term);
         stats.insert(stats.end()-1, mean);
       }
-      IGNORE(value);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
     }
   };
@@ -320,14 +294,14 @@ namespace grammar {
          ifmust< parse< keyword::slm, store_hydro,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
-                        trigger<'u', control::VELOCITY_X, control::CENTRAL>,
-                        trigger<'u', control::VELOCITY_X, control::CENTRAL>,
+                        push_term<control::VELOCITY_X, control::CENTRAL, 'u'>,
+                        push_term<control::VELOCITY_X, control::CENTRAL, 'u'>,
                         start_product,
-                        trigger<'v', control::VELOCITY_Y, control::CENTRAL>,
-                        trigger<'v', control::VELOCITY_Y, control::CENTRAL>,
+                        push_term<control::VELOCITY_Y, control::CENTRAL, 'v'>,
+                        push_term<control::VELOCITY_Y, control::CENTRAL, 'v'>,
                         start_product,
-                        trigger<'w', control::VELOCITY_Z, control::CENTRAL>,
-                        trigger<'w', control::VELOCITY_Z, control::CENTRAL>
+                        push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>,
+                        push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>
                       >,
                  block< process<keyword::SLM_C0, cstore<control::C0>> >
                > {};
