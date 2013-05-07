@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 01 Apr 2013 08:37:59 PM MDT
+  \date      Tue May  7 14:18:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -18,14 +18,15 @@
 // Keywords accepted by the parser
 namespace keyword {
 
-  // Editing anything below should be accompanied by the corresponding changes
-  // in FwdAssociate.h and BackAssociate.h in src/Control.
-
   // Problem title
   using title = pegtl::string<t,i,t,l,e>;
 
   // End of block
   using end = pegtl::string< e,n,d >;
+
+  //****************************************************************************
+  // Editing anything in this section should be accompanied by the corresponding
+  // changes in FwdAssociate.h and BackAssociate.h in src/Control.
 
   // Select physics:
   //   * Homogeneous material mixing
@@ -50,6 +51,7 @@ namespace keyword {
   using dir = pegtl::string< d,i,r >;
   //   * generalized Dirichlet
   using gendir = pegtl::string< g,e,n,d,i,r >;
+  //****************************************************************************
 
   // Number of time steps to take
   using nstep = pegtl::string< n,s,t,e,p >;
