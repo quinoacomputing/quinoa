@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed 01 May 2013 08:54:56 PM MDT
+  \date      Tue May  7 12:11:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -29,10 +29,10 @@ class Control {
 
   public:
     //! Constructor
-    explicit Control() : m_data(control::DEFAULTS) {};
+    explicit Control() noexcept : m_data(control::DEFAULTS) {}
 
     //! Destructor
-    ~Control() = default;
+    ~Control() noexcept = default;
 
     //! Set all data in one step by deep-move of whole bundle
     void set(const control::Bundle& stack) { m_data = move(stack); }
@@ -51,7 +51,7 @@ class Control {
 
     //! Check if an element is set during parse
     template< control::BundlePosition at >
-    bool set() const { return m_booldata[at]; }
+    bool set() const noexcept { return m_booldata[at]; }
 
     //! Get physics keyword
     const std::string& physicsKeyword() const noexcept {
