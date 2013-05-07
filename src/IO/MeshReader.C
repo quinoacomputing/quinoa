@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:30:36 PM MDT
+  \date      Mon May  6 17:24:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -25,20 +25,30 @@ MeshReader::MeshReader(const string filename,
 //******************************************************************************
 {
   m_inMesh.open(m_filename, ifstream::in);
-  if (!m_inMesh.good())
-    throw Exception( FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_inMesh.good(), FATAL, "Failed to open file: " + m_filename);
 }
 
 MeshReader::~MeshReader() noexcept
 //******************************************************************************
 //  Destructor: Release mesh file handle
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_inMesh.close();
+  try {
 
-  // No exception leaves a destructor: if the above close() fails, we only emit
-  // a warning, thus we avoid terminate if an exception is propagating through.
-  if (m_inMesh.fail())
-    cout << "WARNING: Failed to close file: " << m_filename << endl;
+    m_inMesh.close();
+    ErrChk(!m_inMesh.fail(), WARNING, "Failed to close file: " + m_filename);
+
+  } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
+    catch (exception& e) {
+      cout << ">>> std::exception in MeshReader destructor: " << e.what()
+           << endl;
+    }
+    catch (...) {
+      cout << ">>> UNKNOWN EXCEPTION in MeshReader destructor" << endl;
+    }
 }

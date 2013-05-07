@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:59:13 AM MDT
+  \date      Tue May  7 10:37:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -27,12 +27,7 @@ using namespace Quinoa;
 
 GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
                                            Paradigm* const paradigm,
-                                           Control* const control) :
-  Mix(memory, paradigm, control, "Generalized Dirichlet"),
-  m_b(control->get<control::B>()),
-  m_S(control->get<control::S>()),
-  m_k(control->get<control::KAPPA>()),
-  m_c(control->get<control::C>())
+                                           Control* const control)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -40,25 +35,31 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
 //! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  Mix(memory, paradigm, control, "Generalized Dirichlet"),
+  m_str(nullptr),
+  m_random(nullptr),
+  m_rndStr(nullptr),
+  m_allScalars(),
+  m_b(control->get<control::B>()),
+  m_S(control->get<control::S>()),
+  m_k(control->get<control::KAPPA>()),
+  m_c(control->get<control::C>())
 {
-  if (m_b.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL,
+
+  ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
             "Wrong number of generalized Dirichlet model parameters 'b'");
-  if (m_S.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL, 
+  ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL, 
             "Wrong number of generalized Dirichlet model parameters 'S'");
-  if (m_k.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL,
+  ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
             "Wrong number of generalized Dirichlet model parameters 'k'");
-  if (m_c.size() != static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2))
-    throw Exception(FATAL,
-            "Wrong number of generalized Dirichlet model parameters 'c'");
+  ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
+          FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
 
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  if (m_random == nullptr)
-    throw Exception(FATAL, "Cannot allocate memory for random number "
-                           "generator in GeneralizedDirichlet constructor");
+  ErrChk(m_random == nullptr, FATAL,
+         "Cannot allocate memory for random number generator");
 
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
@@ -70,17 +71,43 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
                                           REAL,
                                           SCALAR,
                                           "generalized Dirichlet scalars");
-}
+
+} // Roll back changes and rethrow on error
+  catch (Exception& e) {
+    // No need to clean up if exception thrown from base constructor
+    if (e.func() == __PRETTY_FUNCTION__) finalize();
+    throw;
+  }
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 GeneralizedDirichlet::~GeneralizedDirichlet() noexcept
 //******************************************************************************
 //  Destructor
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
-  m_memory->freeEntry(m_allScalars);
+  finalize();
+}
 
+void
+GeneralizedDirichlet::finalize() noexcept
+//******************************************************************************
+//  Finalize
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_memory->freeEntry(m_allScalars);
   if (m_random) { delete m_random; m_random = nullptr; }  
 }
 
@@ -191,8 +218,8 @@ GeneralizedDirichlet::advance(const real dt)
         if (d > 0.0) d = sqrt(d); else d = 0.0;
         for (j=i; j<m_nscalar-1; ++j) a += m_c[k++]/Y[j];
         y[i] += U[i]/2.0*m_b[i]*
-             ((m_S[i]*Y[m_nscalar-1] - (1.0-m_S[i])*y[i]) +
-               y[i]*Y[m_nscalar-1]*a)*dt + d*dW[i];
+                ((m_S[i]*Y[m_nscalar-1] - (1.0-m_S[i])*y[i]) +
+                  y[i]*Y[m_nscalar-1]*a)*dt + d*dW[i];
       }
     } // m_npar
   } // omp parallel

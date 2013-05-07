@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:03:42 2013
+  \date      Mon 06 May 2013 07:19:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -58,6 +58,10 @@ class HomHydro : public Physics {
     HomHydro(HomHydro&&) = delete;
     //! Don't permit move assigment
     HomHydro& operator=(HomHydro&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Output joint PDF
     void outJpdf(const real t);

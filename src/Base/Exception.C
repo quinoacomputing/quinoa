@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Mon May  6 13:32:53 2013
+  \date      Tue May  7 10:28:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -185,8 +185,8 @@ Exception::echo(const char* msg) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf(">>> %s %s\n>>> CALL TRACE: ========================================"
-         "=============\n", msg, what());
+  printf(">>> %s: %s\n>>> CALL TRACE: ======================================="
+         "==============\n", msg, what());
   echoTrace();
   printf(">>> ==============================================================="
          "==\n");
@@ -203,25 +203,25 @@ Exception::handleException(Driver* const driver) noexcept
   switch (m_except) {
 
     case WARNING:
-      echo("WARNING:");
+      echo("WARNING");
       return NONFATAL;
 
     case CUMULATIVE:
-      echo("CUMULATIVE ERROR:");
+      echo("CUMULATIVE ERROR");
       return NONFATAL;
 
     case ERROR:
-      echo("ERROR:");
+      echo("ERROR");
       return NONFATAL;
 
     case FATAL:
-      echo("FATAL ERROR:");
+      echo("FATAL ERROR");
       printf(">>> Attempting cleanup & graceful exit...\n");
       if (driver) driver->finalize();
       return FATAL_ERROR;
 
     case RUNTIME:
-      echo("RUNTIME ERROR:");
+      echo("RUNTIME ERROR");
       printf(">>> Attempting cleanup & graceful exit...\n");
       if (driver) driver->finalize();
       return FATAL_ERROR;

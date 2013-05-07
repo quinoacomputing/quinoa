@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:32:28 2013
+  \date      Tue May  7 08:30:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -62,6 +62,10 @@ class GeneralizedDirichlet : public Mix {
     GeneralizedDirichlet(GeneralizedDirichlet&&) = delete;
     //! Don't permit move assigment
     GeneralizedDirichlet& operator=(GeneralizedDirichlet&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();

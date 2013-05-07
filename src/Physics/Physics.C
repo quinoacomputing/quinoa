@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri Mar  8 15:19:45 2013
+  \date      Tue May  7 10:45:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -22,7 +22,7 @@ using namespace Quinoa;
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,
                  Control* const control,
-                 Timer* const timer) :
+                 Timer* const timer) noexcept :
   m_memory(memory),
   m_paradigm(paradigm),
   m_control(control),
@@ -34,6 +34,7 @@ Physics::Physics(Memory* const memory,
 //! \param[in]  paradigm Parallel programming object
 //! \param[in]  control  Control object
 //! \param[in]  timer    Timer object
+//! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {

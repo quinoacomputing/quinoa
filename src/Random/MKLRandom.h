@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:58:24 AM MDT
+  \date      Tue May  7 11:03:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -26,7 +26,7 @@ class MKLRandom : Random {
 
   public:
     //! Constructor
-    MKLRandom(Memory* const memory, Paradigm* const paradigm);
+    MKLRandom(Memory* const memory, Paradigm* const paradigm) noexcept;
 
     //! Destructor: Free all random number tables and streams
     virtual ~MKLRandom() noexcept;

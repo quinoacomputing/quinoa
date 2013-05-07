@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon May  6 15:12:35 2013
+  \date      Mon May  6 17:52:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -149,7 +149,7 @@ Statistics::mean(const string name) const
     if (m_nameOrdinary[i] == name) return i;
   }
 
-  throw Exception(FATAL, "Cannot find mean: " + name);
+  Throw(FATAL, "Cannot find mean: " + name);
 }
 
 string

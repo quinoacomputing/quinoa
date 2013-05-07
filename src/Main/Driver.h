@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:26:41 PM MDT
+  \date      Tue May  7 08:08:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -27,7 +27,7 @@ class Driver {
     Driver(int argc,
            char** argv,
            Memory* const memory,
-           Paradigm* const paradigm) noexcept;
+           Paradigm* const paradigm);
 
     //! Destructor
     ~Driver() noexcept;
@@ -38,7 +38,8 @@ class Driver {
     //! Solve
     void solve() const;
 
-    //! Finalize (either at normal exit, or due to exception)
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
     void finalize() noexcept;
 
   private:
@@ -54,8 +55,6 @@ class Driver {
     Memory* const m_memory;           //!< Memory object
     Paradigm* const m_paradigm;       //!< Parallel paradigm object
 
-    int m_argc;                       //!< Argument count from command line
-    char** m_argv;                    //!< Argument vector from command line
     Physics* m_physics;               //!< Physics object
     Control* m_control;               //!< Control object
     Timer* m_timer;                   //!< Timer object

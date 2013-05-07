@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Mon May  6 13:06:39 2013
+  \date      Tue May  7 08:21:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -29,9 +29,7 @@ using namespace Quinoa;
 
 SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
                                        Paradigm* const paradigm,
-                                       Control* const control) :
-  Hydro(memory, paradigm, control, "Simplified Langevin"),
-  m_C0(control->get<control::C0>())
+                                       Control* const control)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -39,36 +37,40 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
 //! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  Hydro(memory, paradigm, control, "Simplified Langevin"),
+  m_C0(control->get<control::C0>()),
+  m_str(nullptr),
+  m_random(nullptr),
+  m_rndStr(nullptr),
+  m_particles()
 {
+
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  if (m_random == nullptr)
-    throw Exception(FATAL, "Cannot allocate memory for random number generator "
-                           "in SimplifiedLangevin constructor");
+  ErrChk(m_random != nullptr, FATAL,
+         "Cannot allocate memory for random number generator");
 
-  try {
+  // Create random number leapfrog stream
+  m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
+  // Get array of MKL VSL stream state pointers right away
+  m_str = m_random->getStr(m_rndStr);
 
-    // Create random number leapfrog stream
-    m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
-    // Get array of MKL VSL stream state pointers right away
-    m_str = m_random->getStr(m_rndStr);
+  // Allocate memory to store all the particle properties
+  m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
+                                         REAL,
+                                         SCALAR,
+                                         "SLM particles");
 
-    // Allocate memory to store all the particle properties
-    m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
-                                           REAL,
-                                           SCALAR,
-                                           "SLM particles");
-
-  } // roll back changes and rethrow on error
-    catch (exception&) {
-      finalize();
-      throw;
-    }
-    catch (...) {
-      finalize();
-      throw Exception(UNCAUGHT);
-    }
-}
+} // Roll back changes and rethrow on error
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 SimplifiedLangevin::~SimplifiedLangevin() noexcept
 //******************************************************************************
@@ -83,13 +85,14 @@ SimplifiedLangevin::~SimplifiedLangevin() noexcept
 void
 SimplifiedLangevin::finalize() noexcept
 //******************************************************************************
-//  Finalize, single exit point called from the destructor
+//  Finalize
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
   m_memory->freeEntry(m_particles);
-
   if (m_random) { delete m_random; m_random = nullptr; }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:42:41 AM MDT
+  \date      Mon 06 May 2013 07:26:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -25,9 +25,7 @@ GlobWriter::GlobWriter(string filename) : m_filename(filename)
 //******************************************************************************
 {
   m_outGlob.open(m_filename, ofstream::out);
-
-  if (!m_outGlob.good())
-    throw Exception(FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outGlob.good(), FATAL, "Failed to open file: " + m_filename);
 }
 
 GlobWriter::~GlobWriter() noexcept
@@ -40,17 +38,18 @@ GlobWriter::~GlobWriter() noexcept
   try {
 
     m_outGlob.close();
-
-    if (m_outGlob.fail())
-      cout << "WARNING: Failed to close file: " << m_filename << endl;
+    ErrChk(!m_outGlob.fail(), WARNING, "Failed to close file: " + m_filename);
 
   } // emit only a warning on error
+    catch (Exception& e) {
+      e.echo("WARNING");
+    }
     catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+      cout << ">>> std::exception in GlobWriter destructor: " << e.what()
+           << endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in GlobWriter destructor" << endl
-           << "Continuing anyway..." << endl;
+      cout << ">>> UNKNOWN EXCEPTION in GlobWriter destructor" << endl;
     }
 }
 

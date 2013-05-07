@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:06:28 2013
+  \date      Tue May  7 07:55:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -58,6 +58,10 @@ class HomMix : public Physics {
     HomMix(HomMix&&) = delete;
     //! Don't permit move assigment
     HomMix& operator=(HomMix&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Output joint scalar PDF
     void outJpdf(const real t);

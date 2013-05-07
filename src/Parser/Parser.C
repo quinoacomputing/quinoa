@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri 03 May 2013 07:23:33 AM MDT
+  \date      Tue May  7 10:58:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -32,12 +32,10 @@ Parser::Parser(const string& filename, Control* const control) :
 {
   // Check if control file exists, throw exception if not
   m_q.open(m_filename, ifstream::in);
-  if (!m_q.good())
-    throw Exception(FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_q.good(), FATAL, "Failed to open file: " + m_filename);
 
   m_q.close();
-  if (m_q.fail())
-    throw Exception(FATAL, "Failed to close file: " + m_filename);
+  ErrChk(!m_q.fail(), FATAL, "Failed to close file: " + m_filename);
 }
 
 void

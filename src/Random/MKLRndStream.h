@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.h
   \author    J. Bakosi
-  \date      Wed 01 May 2013 09:13:38 PM MDT
+  \date      Tue May  7 11:21:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -45,6 +45,10 @@ class MKLRndStream : public MKL {
     MKLRndStream(MKLRndStream&&) = delete;
     //! Don't permit move assigment
     MKLRndStream& operator=(MKLRndStream&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     const int m_nthread;             //!< Number of threads to use
     VSLStreamStatePtr* m_stream;     //!< Array of pointers to thread-streams

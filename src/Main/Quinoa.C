@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon May  6 15:20:44 2013
+  \date      Tue May  7 08:09:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -61,19 +61,6 @@ static void echoBuildInfo()
 
 } // namespace Quinoa
 
-static void finalize(const Driver* driver, const Memory* memory) noexcept
-//******************************************************************************
-//  Finalize for main()
-//! \details This is to avoid code-duplication in main() due to exception
-//!          handling.
-//!          Exception safety: no-throw guarantee: never throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
- if (driver) { delete driver; driver = nullptr; }
- if (memory) { delete memory; memory = nullptr; }
-}
-
 int main(int argc, char* argv[])
 //******************************************************************************
 //  Quinoa main
@@ -81,8 +68,8 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Driver* driver = nullptr;
   Memory* memory = nullptr;
+  Driver* driver = nullptr;
 
   ErrCode error = HAPPY;
   try {
@@ -98,37 +85,34 @@ int main(int argc, char* argv[])
 
     // Initialize memory manager
     memory = new (nothrow) Memory(&paradigm);
-    Errchk(memory != nullptr, FATAL, "No memory for a memory manager?");
+    ErrChk(memory != nullptr, FATAL, "No memory for a memory manager?");
 
     // Allocate and initialize driver
     driver = new (nothrow) Driver(argc, argv, memory, &paradigm);
-    Errchk(driver != nullptr, FATAL, "Cannot allocate memory for driver");
+    ErrChk(driver != nullptr, FATAL, "Cannot allocate memory for driver");
 
-    // Setup and solve
-    driver->setup();
+    // Solve
     driver->solve();
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
-      finalize(driver, memory);
       error = qe.handleException(driver);
     }
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (exception& se) {
-      finalize(driver, memory);
       Exception qe(RUNTIME, se.what());
       error = qe.handleException(driver);
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
-      finalize(driver, memory);
-      Exception qe(UNCAUGHT);
+      Exception qe(UNCAUGHT, "Non-standard exception");
       error = qe.handleException(driver);
     }
 
   // Finalize and deallocate driver and memory manager
-  finalize(driver, memory);
+  if (driver) { delete driver; driver = nullptr; }
+  if (memory) { delete memory; memory = nullptr; }
 
   // Return error code
   return error;

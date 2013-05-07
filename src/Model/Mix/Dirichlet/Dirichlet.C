@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sat 04 May 2013 06:58:54 AM MDT
+  \date      Tue May  7 10:35:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -27,11 +27,7 @@ using namespace Quinoa;
 
 Dirichlet::Dirichlet(Memory* const memory,
                      Paradigm* const paradigm,
-                     Control* const control) :
-  Mix(memory, paradigm, control, "Dirichlet"),
-  m_b(control->get<control::B>()),
-  m_S(control->get<control::S>()),
-  m_k(control->get<control::KAPPA>())
+                     Control* const control)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -39,19 +35,27 @@ Dirichlet::Dirichlet(Memory* const memory,
 //! \param[in]  control  Control object pointer
 //! \author  J. Bakosi
 //******************************************************************************
+try :
+  Mix(memory, paradigm, control, "Dirichlet"),
+  m_random(nullptr),
+  m_rndStr(nullptr),
+  m_allScalars(),
+  m_b(control->get<control::B>()),
+  m_S(control->get<control::S>()),
+  m_k(control->get<control::KAPPA>())
 {
-  if (m_b.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'b'");
-  if (m_S.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'S'");
-  if (m_k.size() != static_cast<unsigned int>(m_nscalar))
-    throw Exception(FATAL, "Wrong number of Dirichlet model parameters 'k'");
+
+  ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+         "Wrong number of Dirichlet model parameters 'b'");
+  ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+         "Wrong number of Dirichlet model parameters 'S'");
+  ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+         "Wrong number of Dirichlet model parameters 'k'");
 
   // Instantiate random number generator
   m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  if (m_random == nullptr)
-    throw Exception(FATAL, "Cannot allocate memory for random number generator "
-                           "in Dirichlet constructor");
+  ErrChk(m_random != nullptr, FATAL,
+         "Cannot allocate memory for random number generator");
 
   // Create random number leapfrog stream
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
@@ -63,17 +67,43 @@ Dirichlet::Dirichlet(Memory* const memory,
                                           REAL,
                                           SCALAR,
                                           "Dirichlet scalars");
-}
+
+} // Roll back changes and rethrow on error
+  catch (Exception& e) {
+    // No need to clean up if exception thrown from base constructor
+    if (e.func() == __PRETTY_FUNCTION__) finalize();
+    throw;
+  }
+  catch (exception&) {
+    finalize();
+    throw;
+  }
+  catch (...) {
+    finalize();
+    Throw(UNCAUGHT, "Non-standard exception");
+  }
 
 Dirichlet::~Dirichlet() noexcept
 //******************************************************************************
 //  Destructor
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Free memory entries held
-  m_memory->freeEntry(m_allScalars);
+  finalize();
+}
 
+void
+Dirichlet::finalize() noexcept
+//******************************************************************************
+//  Finalize
+//! \details Single exit point, called implicitly from destructor or explicitly
+//!          from anywhere else. Exception safety: no-throw guarantee: never
+//!          throws exceptions.
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_memory->freeEntry(m_allScalars);
   if (m_random) { delete m_random; m_random = nullptr; }  
 }
 
