@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Mon May  6 13:18:24 2013
+  \date      Tue May  7 11:40:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -34,9 +34,11 @@ struct Data {
   explicit Data(MemoryEntry* const Id, V* const Ptr) : id(Id), ptr(Ptr) {}
 
   //! Operator [] is overloaded to access the elements behind ptr
-  constexpr V& operator[] (const size_t index) const { return ptr[index]; }
+  constexpr V&
+  operator[] (const size_t index) const noexcept { return ptr[index]; }
   //! Operator + is overloaded to ease pointer arithmetic behind ptr
-  constexpr V* operator+ (const size_t offset) const { return ptr + offset; }
+  constexpr V*
+  operator+ (const size_t offset) const noexcept { return ptr + offset; }
 };
 
 //! Memory store, container of memory entries
