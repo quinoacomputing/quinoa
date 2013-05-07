@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Tue May  7 11:40:51 2013
+  \date      Tue May  7 11:43:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -177,7 +177,7 @@ MKL::MKLErrChk(int vslerr) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  if (vslerr == VSL_STATUS_OK)
+  if (vslerr != VSL_STATUS_OK)
     try {
 
       std::stringstream s;
