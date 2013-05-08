@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue May  7 13:32:48 2013
+  \date      Wed May  8 09:44:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -42,25 +42,25 @@ class Statistics {
     void accumulate();
 
     //! Number of ordinary moments accessor
-    int nord() const { return m_nord; }
+    int nord() const noexcept { return m_nord; }
 
     //! Number of central moments accessor
-    int ncen() const { return m_ncen; }
+    int ncen() const noexcept { return m_ncen; }
 
     //! Ordinary moments accessor
-    const real* ordinary() const { return m_ordinary.ptr; }
+    const real* ordinary() const noexcept { return m_ordinary.ptr; }
 
     //! Central moments accessor
-    const real* central() const { return m_central.ptr; }
+    const real* central() const noexcept { return m_central.ptr; }
 
     //! Find out whether ordinary moment is to be plotted
     bool plotOrdinary(const int m) const;
 
     //! Return the name of ordinary moment
-    const string& nameOrdinary(const int m) const;
+    int nameOrdinary(const int m) const;
 
     //! Return the name of central moment
-    const string& nameCentral(const int m) const;
+    int nameCentral(const int m) const;
 
   private:
     //! Don't permit copy constructor
@@ -86,13 +86,13 @@ class Statistics {
     bool ordinary(const vector<control::Term>& product) const;
 
     //! Return mean for fluctuation
-    int mean(const string name) const;
+    int mean(const int name) const;
 
     //! Convert string to upper case
-    string toUpper(const string s) const;
+    string toUpper(const string& s) const;
 
     //! Return true if string is all lower case
-    bool isLower(const string s) const;
+    bool isLower(const string&s) const;
 
     Memory* const m_memory;                  //!< Memory object
     const int m_nthread;                     //!< Number of threads
@@ -105,7 +105,7 @@ class Statistics {
     vector<vector<const real*>> m_instOrd;
     Data<real> m_ordinary;                   //!< Ordinary moments
     vector<bool> m_plotOrdinary;             //!< Whether to plot ord moments
-    vector<string> m_nameOrdinary;           //!< Names of ordinary moments
+    vector<int> m_nameOrdinary;              //!< Names of ordinary moments
     int m_nord;                              //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
@@ -113,7 +113,7 @@ class Statistics {
     Data<real> m_central;                    //!< Central moments
     //! Ordinary moments about which to compute central moments
     vector<vector<const real*>> m_center;
-    vector<string> m_nameCentral;            //!< Names of central moments
+    vector<int> m_nameCentral;               //!< Names of central moments
     int m_ncen;                              //!< Number of central moments
 };
 

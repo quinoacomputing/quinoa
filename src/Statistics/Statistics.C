@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue May  7 13:32:49 2013
+  \date      Wed May  8 09:44:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -58,14 +58,14 @@ try :
 
       m_instOrd.push_back(vector<const real*>());
       m_plotOrdinary.push_back(false);
-      m_nameOrdinary.push_back("");
+      m_nameOrdinary.push_back('\0');
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(m_model->particles() + term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name
-        m_nameOrdinary.back() += term.name;
+        m_nameOrdinary.back() = term.name;
       }
 
       ++m_nord;
@@ -89,15 +89,15 @@ try :
 
         m_instCen.push_back(vector<const real*>());
         m_center.push_back(vector<const real*>());
-        m_nameCentral.push_back("");
+        m_nameCentral.push_back('\0');
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(m_model->particles() + term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
-           m_ordinary + (isLower(term.name) ? mean(toUpper(term.name)) : m_nord));
-          m_nameCentral.back() += term.name;
+           m_ordinary + (!isupper(term.name) ? mean(toupper(term.name)) : m_nord));
+          m_nameCentral.back() = term.name;
         }
 
         ++m_ncen;
@@ -170,7 +170,7 @@ Statistics::ordinary(const vector<control::Term>& product) const
 }
 
 int
-Statistics::mean(const string name) const
+Statistics::mean(const int name) const
 //******************************************************************************
 //  Return mean for fluctuation
 //! \param[in]  name      Name of fluctuation whose mean to search for
@@ -182,34 +182,7 @@ Statistics::mean(const string name) const
     if (m_nameOrdinary[i] == name) return i;
   }
 
-  Throw(FATAL, "Cannot find mean: " + name);
-}
-
-string
-Statistics::toUpper(const string s) const
-//******************************************************************************
-//  Convert string to upper case
-//! \param[in]  s         String to convert
-//! \author J. Bakosi
-//******************************************************************************
-{
-  string upper(s);
-  for_each(upper.begin(), upper.end(),
-           [](char& c){ c = static_cast<char>(std::toupper(c)); } );
-  return upper;
-}
-
-bool
-Statistics::isLower(const string s) const
-//******************************************************************************
-//  Return true if string is all lower case
-//! \param[in]  s         String to check
-//! \author J. Bakosi
-//******************************************************************************
-{
-  bool lower = true;
-  for_each(s.begin(), s.end(), [&](char c){ if (isupper(c)) lower = false; } );
-  return lower;
+  Throw(FATAL, "Cannot find mean: " + string(1,name));
 }
 
 bool
@@ -224,7 +197,7 @@ Statistics::plotOrdinary(const int m) const
   return m_plotOrdinary[m];
 }
 
-const string&
+int
 Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 //  Return the name of ordinary moment
@@ -236,7 +209,7 @@ Statistics::nameOrdinary(const int m) const
   return m_nameOrdinary[m];
 }
 
-const string&
+int
 Statistics::nameCentral(const int m) const
 //******************************************************************************
 //  Return the name of central moment
@@ -360,10 +333,7 @@ Statistics::accumulate()
 //******************************************************************************
 {
   if (m_nord) {
-    // Estimate ordinary moments
-    estimateOrdinary();
-
-    // Estimate central moments
-    if (m_ncen) estimateCentral();
+    estimateOrdinary();                 // Estimate ordinary moments
+    if (m_ncen) estimateCentral();      // Estimate central moments
   }
 }
