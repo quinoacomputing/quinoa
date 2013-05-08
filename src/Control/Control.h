@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue May  7 15:59:48 2013
+  \date      Wed May  8 09:36:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -70,26 +70,17 @@ class Control {
       }
     }
 
-    //! Echo vector of vector of element names if set
-    //! fields vector<vector< struct{name,plot} >> must exist
+    //! Echo vector of vector of element names if set.
+    //! Fields of vector<vector< struct{field,name,plot} >> must exist.
+    //! See src/Control/ControlTypes.h for the definitions of operator << for
+    //! outputing Term and vector<Term>, and operator <<= for outputing
+    //! requested (i.e., plotted) Term.
     template< control::BundlePosition at >
     void echoVecVecNames(const std::string& msg, bool req = false) const {
       if (set<at>()) {
         cout << "   - " << msg << ": {";
-        if (req) {
-          for (auto& v : get<at>())
-            if (v[0].plot) {
-              cout << " <";
-              for (auto& w : v) cout << w.name;
-              cout << ">";
-            }
-        } else {
-          for (auto& v : get<at>()) {
-            cout << " <";
-            for (auto& w : v) cout << w.name;
-            cout << ">";
-          }
-        }
+        if (req) for (auto& v : get<at>()) cout <<= v;
+        else for (auto& v : get<at>()) cout << v;
         cout << " }" << endl;
       }
     }

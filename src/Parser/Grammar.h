@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue May  7 17:23:42 2013
+  \date      Wed May  8 08:12:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -116,27 +116,20 @@ namespace grammar {
                       stack_type& stack,
                       boolstack_type& boolstack) {
 
-      // if name is given, will push name
-      std::string n(name ? convert<char>(name) : value);
-      // if name is given, it is triggerd, not user-requested
+      // if name is given, push name, otherwise push first char of value
+      char n(name ? name : value[0]);
+      // if name is given, it is triggered not user-requested
       bool plot(name ? false : true);
-      // create Term to push
-      control::Term term = {field, quantity, moment, n, plot};
       // Use stats for shorthand of reference in bundle
       vector<control::Product>& stats = get<control::STATISTICS>(stack);
       // Push term into current product
-      stats.back().push_back(term);
+      stats.back().push_back(control::Term(field, quantity, moment, n, plot));
 
       // If central moment, trigger mean
       if (moment == control::CENTRAL) {
-        // Convert name to upper-case for human-readable name
-        std::string upper(n);
-        std::for_each(upper.begin(), upper.end(),
-                      [](char& c){ c = static_cast<char>(std::toupper(c)); } );
-        // Put in request for mean
-        control::Term term = {field, quantity, control::ORDINARY, upper, false};
-        control::Product mean(1,term);
-        stats.insert(stats.end()-1, mean);
+        control::Term term(field, quantity, control::ORDINARY, toupper(n),
+                           false);
+        stats.insert(stats.end()-1, control::Product(1,term));
       }
 
       field = 0;            // reset default field
@@ -238,9 +231,8 @@ namespace grammar {
   // moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, control::Quantity q, control::Moment m >
   struct moment :
-         sor < ifapply< seq<keyword, ifapply<digit,save_field>>,
-                        push_term<q, m> >,
-               ifapply< keyword, push_term<q, m> >
+         sor < ifapply<seq<keyword, ifapply<digit,save_field>>, push_term<q,m>>,
+               ifapply<keyword, push_term<q,m>>
              > {};
 
   // terms recognized within an expectation and their mapping

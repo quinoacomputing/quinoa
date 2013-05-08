@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Tue May  7 17:14:53 2013
+  \date      Wed May  8 09:55:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -62,23 +62,29 @@ enum Moment { ORDINARY=0,      //!< Full variable
 };
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
-//! The Numbering of field IDs starts from 0.
-//! E.g. 1st pressure fluctuation: {0, PRESSURE, CENTRAL, ...},
-//! E.g. mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY, ...}.
-//! 'name' stores the same information in a more human-readable form.
-//! 'plot' shows whether the variable will be plotted.
-//! Conceptually, plot should be in Product, since plot will only be false for
-//! a mean that was triggered by a central moment by one of the Terms of a
-//! Product, requesting the mean. However, that would require Product to be a
-//! vector<struct>, which then would need custom comparitors for std::sort()
-//! and std::unique() in Parser::unique(). Since this is not a performance
-//! issue, plot is here in Term.
+//! Internally the Numbering of field IDs starts from 0, but presented to the
+//! user as starting from 1. Examples: 1st pressure fluctuation: {0, PRESSURE,
+//! CENTRAL, ...}, mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY, ...}.
 struct Term {
   int field;
   Quantity quantity;
   Moment moment;
-  string name;
-  bool plot;
+  int name;    //! Integer, stores the character code, converted only for output
+  bool plot;   //! Shows whether the variable will be plotted
+               //! Conceptually, plot should be in Product, since plot will only
+               //! be false for a mean that was triggered by a central moment by
+               //! one of the Terms of a Product requesting the mean or a model.
+               //! However, that would require Product to be a vector<struct>,
+               //! which then would need custom comparitors for std::sort() and
+               //! std::unique() in Parser::unique(). Since this is not a
+               //! performance issue, plot is here in Term.
+
+  //! Constructor
+  Term(const int f,
+       const Quantity q,
+       const Moment m,
+       const char n,
+       const bool p) : field(f), quantity(q), moment(m), name(n), plot(p) {}
 
   //! Equal operator for finding unique elements, used by e.g., std::unique()
   //! Test only on field, quantity, and moment
@@ -112,6 +118,31 @@ struct Term {
     } else {
       return false;
     }
+  }
+
+  //! Operator << for writing Term to output streams
+  friend ostream& operator<< (ostream& os, const Term& term) {
+    os << char(term.name);
+    if (term.field > 0) os << term.field+1;
+    return os;
+  }
+
+  //! Operator << for writing vector<Term> to output streams
+  friend ostream& operator<< (ostream& os, const vector<Term>& vec) {
+    os << " <";
+    for (auto& w : vec) os << w;
+    os << ">";
+    return os;
+  }
+
+  //! Operator <<= for writing requested vector<Term> to output streams
+  friend ostream& operator<<= (ostream& os, const vector<Term>& vec) {
+    if (vec[0].plot) {
+      os << " <";
+      for (auto& w : vec) os << w;
+      os << ">";
+    }
+    return os;
   }
 };
 
