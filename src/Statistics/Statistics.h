@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed May  8 09:44:42 2013
+  \date      Thu May  9 12:15:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -97,7 +97,7 @@ class Statistics {
     Memory* const m_memory;                  //!< Memory object
     const int m_nthread;                     //!< Number of threads
     const int m_npar;                        //!< Number of particles
-    Model* const m_model;                    //!< Model objects
+    Model* const m_model;                    //!< Model object
     const int m_nprop;                       //!< Number of particle properties
     const vector<control::Product> m_statistics;//!< Requested tatistics
 
