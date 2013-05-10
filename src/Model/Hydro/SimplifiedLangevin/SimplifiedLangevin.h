@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Thu May  9 22:09:42 2013
+  \date      Fri May 10 17:52:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -25,8 +25,9 @@ class MKLRndStream;
 class MemoryEntry;
 class JPDF;
 
-//! SimplifiedLangevin : Hydro
-class SimplifiedLangevin : public Hydro {
+//! SimplifiedLangevin : Hydro<SimplifiedLangevin> child for CRTP
+//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
 
   public:
     //! Constructor
@@ -39,13 +40,13 @@ class SimplifiedLangevin : public Hydro {
     virtual ~SimplifiedLangevin() noexcept;
 
     //! Initialize particles
-    virtual void init();
+    void init();
 
     //! Advance particles
-    virtual void advance(const real dt);
+    void advance(const real& dt);
 
     //! Echo information on the simplified Langevin model
-    virtual void echo() const;
+    void echo() const;
 
   private:
     //! Don't permit copy constructor
@@ -66,7 +67,6 @@ class SimplifiedLangevin : public Hydro {
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
-    real* const m_velocities;       //!< Raw pointer to particle velocities
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.C
   \author    J. Bakosi
-  \date      Fri May 10 17:23:08 2013
+  \date      Fri May 10 17:55:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -22,8 +22,11 @@ GeneralizedLangevin::GeneralizedLangevin(Memory* const memory,
                                          Paradigm* const paradigm,
                                          Control* const control,
                                          real* const velocities) :
-  Hydro(memory, paradigm, control),
-  m_velocities(velocities)
+  Hydro<GeneralizedLangevin>(memory,
+                             paradigm,
+                             control,
+                             control->get<control::NVELOCITY>(),
+                             velocities)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -43,6 +46,7 @@ GeneralizedLangevin::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << "Generalized Langevin" << endl;
 }
 
 void
@@ -55,7 +59,7 @@ GeneralizedLangevin::init()
 }
 
 void
-GeneralizedLangevin::advance(const real dt)
+GeneralizedLangevin::advance(const real& dt)
 //******************************************************************************
 //  Advance particles with the generalized Langevin model
 //! \param[in]  dt   Time step size

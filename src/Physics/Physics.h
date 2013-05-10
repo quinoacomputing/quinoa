@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri May 10 16:20:19 2013
+  \date      Fri May 10 17:58:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -13,6 +13,7 @@
 
 #include <QuinoaConfig.h>
 #include <Mix.h>
+#include <Hydro.h>
 
 using namespace std;
 
@@ -22,12 +23,13 @@ class Memory;
 class Paradigm;
 class Control;
 class Timer;
-class Hydro;
 class Statistics;
 class GlobWriter;
 class TxtPlotWriter;
 class Dirichlet;
 class GeneralizedDirichlet;
+class SimplifiedLangevin;
+class GeneralizedLangevin;
 
 //! Physics base
 class Physics {
@@ -61,7 +63,7 @@ class Physics {
 
     //! Constant accessor to hydro model
     //! \return Pointer to hydro model
-    Hydro* hydro() const noexcept { return m_hydro; }
+    //Hydro* hydro() const noexcept { return m_hydro; }
 
     //! Constant accessor to mix model
     //! \return Pointer to mix model
@@ -114,8 +116,17 @@ class Physics {
     Timer* const m_timer;                 //!< Timer object
 
 
-  //! Select mix model type based on <build>/Base/QuinoaConfig.h filled by CMake
-  //! based on src/MainQuinoaConfig.h.in
+  //! Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
+  //! on src/MainQuinoaConfig.h.in
+  // Hydrodynamics models
+  #ifdef QUINOA_SLM
+    using HydroType = SimplifiedLangevin;
+  #elif QUINOA_GLM
+    using HydroType = GeneralizedLangevin;
+  #else
+    #error "No hydrodynamics model defined in Base/QuinaConfig.h"
+  #endif
+  // Mix models
   #ifdef QUINOA_DIRICHLET
     using MixType = Dirichlet;
   #elif QUINOA_GENERALIZED_DIRICHLET
@@ -125,7 +136,7 @@ class Physics {
   #endif
 
     Mix<MixType>* m_mix;                  //!< Mix model object
-    Hydro* m_hydro;                       //!< Hydro model object    
+    Hydro<HydroType>* m_hydro;            //!< Hydro model object    
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
     TxtPlotWriter* m_plot;                //!< Plot file writer
