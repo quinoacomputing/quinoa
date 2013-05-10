@@ -87,6 +87,32 @@ else()
 endif()
 
 
+# Hydro model options
+
+# Available hydrodyanmics models
+SET (HYDRO_VALUES "SLM" "GLM")
+
+# Initialize all to off
+SET (QUINOA_SLM off)  # 0
+SET (QUINOA_GLM off)  # 1
+
+# Set default and select from list
+SET (QUINOA_MODEL_HYDRO "SLM"
+     CACHE STRING "Select hydrodynamics model. Default: SLM (Simplified Langevin model). Available options: ${HYDRO_VALUES}")
+SET_PROPERTY (CACHE QUINOA_MODEL_HYDRO PROPERTY STRINGS ${HYDRO_VALUES})
+STRING (TOUPPER ${QUINOA_MODEL_HYDRO} QUINOA_MODEL_HYDRO)
+LIST (FIND HYDRO_VALUES ${QUINOA_MODEL_HYDRO} HYDRO_INDEX)
+
+# Evaluate selected model and put in define for it
+IF (${HYDRO_INDEX} EQUAL 0)
+  SET (QUINOA_SLM on)
+ELSEIF (${HYDRO_INDEX} EQUAL 1)
+  SET(QUINOA_GLM on)
+ELSEIF (${HYDRO_INDEX} EQUAL -1)
+  MESSAGE(FATAL_ERROR "Hydrodynamics model ${QUINOA_MODEL_HYDRO} not supported, valid entries are ${HYDRO_VALUES}")
+ENDIF()
+
+
 # Mix model options
 
 # Available mix models
@@ -98,7 +124,7 @@ SET (QUINOA_GENERALIZED_DIRICHLET off)  # 1
 
 # Set default and select from list
 SET (QUINOA_MODEL_MIX "DIR"
-     CACHE STRING "Select mixing model. Default: dir (Dirichlet model). Available options: ${MIX_VALUES}")
+     CACHE STRING "Select mixing model. Default: DIR (Dirichlet model). Available options: ${MIX_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_MIX PROPERTY STRINGS ${MIX_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_MIX} QUINOA_MODEL_MIX)
 LIST (FIND MIX_VALUES ${QUINOA_MODEL_MIX} MIX_INDEX)
@@ -109,7 +135,7 @@ IF (${MIX_INDEX} EQUAL 0)
 ELSEIF (${MIX_INDEX} EQUAL 1)
   SET(QUINOA_GENERALIZED_DIRICHLET on)
 ELSEIF (${MIX_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Mix model option ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
+  MESSAGE(FATAL_ERROR "Mix model ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
 ENDIF()
 
 

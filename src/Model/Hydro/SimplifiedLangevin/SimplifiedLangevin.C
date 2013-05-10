@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Fri May 10 17:22:52 2013
+  \date      Fri May 10 17:54:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -40,12 +40,15 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  Hydro(memory, paradigm, control),
+  Hydro<SimplifiedLangevin>(memory,
+                            paradigm,
+                            control,
+                            control->get<control::NVELOCITY>(),
+                            velocities),
   m_C0(control->get<control::C0>()),
   m_str(nullptr),
   m_random(nullptr),
-  m_rndStr(nullptr),
-  m_velocities(velocities)
+  m_rndStr(nullptr)
 {
 
   // Instantiate random number generator
@@ -103,6 +106,7 @@ SimplifiedLangevin::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << "Simplified Langevin" << endl;
 }
 
 void
@@ -123,7 +127,7 @@ SimplifiedLangevin::init()
 }
 
 void
-SimplifiedLangevin::advance(const real dt)
+SimplifiedLangevin::advance(const real& dt)
 //******************************************************************************
 //  Advance particles with the simplified Langevin model
 //! \param[in]  dt   Time step size

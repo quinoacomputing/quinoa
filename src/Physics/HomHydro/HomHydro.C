@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Thu May  9 21:27:09 2013
+  \date      Fri May 10 17:57:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -72,7 +72,7 @@ HomHydro::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    hydro()->advance(dt);
+    //hydro()->advance(dt);
 
     // Accumulate statistics
     statistics()->accumulate();
@@ -192,5 +192,5 @@ HomHydro::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  hydro()->init();
+  //hydro()->init();
 }

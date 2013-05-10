@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Fri May 10 17:29:00 2013
+  \date      Fri May 10 17:44:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -43,13 +43,13 @@ class Mix : public Model {
     //! Destructor
     virtual ~Mix() noexcept = default;
 
-    //! Interface for initializing particles
+    //! Initialize particles
     void init() { static_cast<MixType*>(this)->init(); }
 
-    //! Interface for advancing particles in mix model
+    //! Advance particles in mix model
     void advance(const real& dt) { static_cast<MixType*>(this)->advance(dt); }
 
-    //! Interface for echo information on mix model
+    //! Echo information on mix model
     void echo() { static_cast<MixType*>(this)->echo(); }
 
   protected:

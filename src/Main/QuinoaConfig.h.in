@@ -25,9 +25,11 @@ namespace Quinoa {
 #define QUINOA_BUILD_DATE            "@QUINOA_BUILD_DATE@"
 #cmakedefine DEBUG 1
 
-// Selected models:
-#define QUINOA_MODEL_HYDRO           "@QUINOA_MODEL_HYDRO@"
+// Selected hydrodynamics model:
+#cmakedefine QUINOA_SLM 1
+#cmakedefine QUINOA_GLM 1
 
+// Selected mix model:
 #cmakedefine QUINOA_DIRICHLET 1
 #cmakedefine QUINOA_GENERALIZED_DIRICHLET 1
 

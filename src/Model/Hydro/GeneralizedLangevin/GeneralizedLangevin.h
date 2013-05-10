@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Thu May  9 19:05:22 2013
+  \date      Fri May 10 17:48:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -23,8 +23,9 @@ class MKLRndStream;
 class MemoryEntry;
 class JPDF;
 
-//! GeneralizedLangevin : Hydro
-class GeneralizedLangevin : public Hydro {
+//! GeneralizedLangevin : Hydro<GeneralizedLangevin> child for CRTP
+//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+class GeneralizedLangevin : public Hydro<GeneralizedLangevin> {
 
   public:
     //! Constructor
@@ -37,13 +38,13 @@ class GeneralizedLangevin : public Hydro {
     virtual ~GeneralizedLangevin() noexcept = default;
 
     //! Initialize particles
-    virtual void init();
+    void init();
 
     //! Advance particles
-    virtual void advance(const real dt);
+    void advance(const real& dt);
 
     //! Echo information on the generalized Langevin model
-    virtual void echo() const;
+    void echo() const;
 
   private:
     //! Don't permit copy constructor
@@ -54,8 +55,6 @@ class GeneralizedLangevin : public Hydro {
     GeneralizedLangevin(GeneralizedLangevin&&) = delete;
     //! Don't permit move assigment
     GeneralizedLangevin& operator=(GeneralizedLangevin&&) = delete;
-
-    real* const m_velocities;        //!< Raw pointer to particle velocities
 };
 
 } // namespace Quinoa
