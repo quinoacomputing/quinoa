@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri 03 May 2013 06:16:59 AM MDT
+  \date      Fri May 10 17:22:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -11,11 +11,10 @@
 #ifndef Model_h
 #define Model_h
 
-#include <string>
+#include <QuinoaTypes.h>
+#include <Exception.h>
 
 using namespace std;
-
-#include <QuinoaTypes.h>
 
 namespace Quinoa {
 
@@ -31,24 +30,21 @@ class Model {
     explicit Model(Memory* const memory,
                    Paradigm* const paradigm,
                    Control* const control,
-                   const string& name);
+                   const int npar) : m_memory(memory),
+                                     m_paradigm(paradigm),
+                                     m_control(control),
+                                     m_npar(npar) {
+      ErrChk(m_npar > 0, FATAL, "Wrong number of particles");
+    }
 
     //! Destructor
     virtual ~Model() noexcept = default;
-
-    //! Name accessor
-    const string& name() const { return m_name; }
-
-    //! Interface to accessor to number of particle properties
-    virtual int nprop() const = 0;
-
-    //! Constant accessor to particle properties pointer
-    virtual const real* particles() const = 0;
 
   protected:
     Memory* const m_memory;           //!< Memory object pointer
     Paradigm* const m_paradigm;       //!< Parallel programming object pointer
     Control* const m_control;         //!< Parallel programming object pointer
+    const int m_npar;                 //!< Number of particles
 
   private:
     //! Don't permit copy constructor
@@ -59,8 +55,6 @@ class Model {
     Model(Model&&) = delete;
     //! Don't permit move assigment
     Model& operator=(Model&&) = delete;
-
-    const string m_name;          //!< Name of model
 };
 
 } // namespace Quinoa

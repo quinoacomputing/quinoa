@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Tue May  7 10:44:49 2013
+  \date      Fri May 10 16:20:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -10,6 +10,9 @@
 //******************************************************************************
 #ifndef Physics_h
 #define Physics_h
+
+#include <QuinoaConfig.h>
+#include <Mix.h>
 
 using namespace std;
 
@@ -19,6 +22,12 @@ class Memory;
 class Paradigm;
 class Control;
 class Timer;
+class Hydro;
+class Statistics;
+class GlobWriter;
+class TxtPlotWriter;
+class Dirichlet;
+class GeneralizedDirichlet;
 
 //! Physics base
 class Physics {
@@ -28,10 +37,10 @@ class Physics {
     explicit Physics(Memory* const memory,
                      Paradigm* const paradigm,
                      Control* const control,
-                     Timer* const timer) noexcept;
+                     Timer* const timer);
 
     //! Destructor
-    virtual ~Physics() noexcept = default;
+    virtual ~Physics() noexcept;
 
     //! Echo informaion on physics
     virtual void echo() const = 0;
@@ -42,12 +51,48 @@ class Physics {
     //! Solve physics
     virtual void solve() = 0;
 
+    //! Constant accessor to control object pointer
+    //! \return Pointer to control object
+    const Control* control() const noexcept { return m_control; }
+
+    //! Constant accessor to timer object pointer
+    //! \return Pointer to timer object
+    Timer* timer() const noexcept { return m_timer; }
+
+    //! Constant accessor to hydro model
+    //! \return Pointer to hydro model
+    Hydro* hydro() const noexcept { return m_hydro; }
+
+    //! Constant accessor to mix model
+    //! \return Pointer to mix model
+    //Mix* mix() const noexcept { return m_mix; }
+
+    //! Constant accessor to statistics estimator
+    //! \return Pointer to statistics estimator
+    Statistics* statistics() const noexcept { return m_statistics; }
+
+    //! Constant accessor to glob file writer
+    //! \return Pointer to glob file writer
+    GlobWriter* globWriter() const noexcept { return m_glob; }
+
+    //! Constant accessor to plot file writer
+    //! \return Pointer to plot file writer
+    TxtPlotWriter* plotWriter() const noexcept { return m_plot; }
+
+    //! Constant accessor to particle properties pointer
+    //! \return Raw pointer to particle properties array
+    const real* particles() const noexcept { return m_particles.ptr; }
+
+    //! Accessor to number of particle (velocity+scalar) properties
+    //! \return Number of particle (velocity+scalar) components
+    int nprop() const noexcept { return m_nvelocity + m_nscalar; }
+
   protected:
-    Memory* const m_memory;       //!< Memory object
-    Paradigm* const m_paradigm;   //!< Parallel programming object
-    Control* const m_control;     //!< Control object
-    Timer* const m_timer;         //!< Timer object
-    const int m_nthread;          //!< Number of threads
+    const int m_nthread;                  //!< Number of threads
+    const int m_nvelocity;                //!< Number of velocity components
+    const int m_nscalar;                  //!< Number of scalar components
+    const int m_npar;                     //!< Numer of particles
+    const real m_term;                    //!< Maximum time to simulate
 
   private:
     //! Don't permit copy constructor
@@ -58,6 +103,33 @@ class Physics {
     Physics(Physics&&) = delete;
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
+
+    Memory* const m_memory;               //!< Memory object
+    Paradigm* const m_paradigm;           //!< Parallel programming object
+    Control* const m_control;             //!< Control object
+    Timer* const m_timer;                 //!< Timer object
+
+
+  //! Select mix model type based on <build>/Base/QuinoaConfig.h filled by CMake
+  //! based on src/MainQuinoaConfig.h.in
+  #ifdef QUINOA_DIRICHLET
+    using MixType = Dirichlet;
+  #elif QUINOA_GENERALIZED_DIRICHLET
+    using MixType = GeneralizedDirichlet;
+  #else
+    #error "No mix model defined in Base/QuinaConfig.h"
+  #endif
+
+    Mix<MixType>* m_mix;                  //!< Mix model object
+    Hydro* m_hydro;                       //!< Hydro model object    
+    Statistics* m_statistics;             //!< Statistics estimator object
+    GlobWriter* m_glob;                   //!< Glob file writer
+    TxtPlotWriter* m_plot;                //!< Plot file writer
+    Data<real> m_particles;               //!< Particle properties
 };
 
 } // namespace Quinoa

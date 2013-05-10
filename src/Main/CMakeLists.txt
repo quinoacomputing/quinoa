@@ -14,9 +14,12 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Parser
                     ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro
+                    ${QUINOA_SOURCE_DIR}/Model/Mix
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Physics/HomMix
                     ${QUINOA_SOURCE_DIR}/Physics/HomHydro
+                    ${QUINOA_SOURCE_DIR}/Physics/HomRT
                     ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
 )
 
@@ -28,23 +31,24 @@ add_executable(${QUINOA_EXECUTABLE}
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
                       #Control
-                      LinearAlgebra
                       Paradigm
+                      LinearAlgebra
                       HomMix
                       HomHydro
+                      HomRT
                       SPINSFlow
                       IO
                       Mesh
                       Statistics
-                      Random
+                      Physics
                       Dirichlet
                       GeneralizedDirichlet
-                      Mix
                       SimplifiedLangevin
                       GeneralizedLangevin
+                      Random
+                      Mix
                       Hydro
                       Model
-                      Physics
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}

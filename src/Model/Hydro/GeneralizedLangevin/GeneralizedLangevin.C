@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:36:21 2013
+  \date      Fri May 10 17:23:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -20,16 +20,20 @@ using namespace Quinoa;
 
 GeneralizedLangevin::GeneralizedLangevin(Memory* const memory,
                                          Paradigm* const paradigm,
-                                         Control* const control) :
-  Hydro(memory, paradigm, control, "Generalized Langevin")
+                                         Control* const control,
+                                         real* const velocities) :
+  Hydro(memory, paradigm, control),
+  m_velocities(velocities)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  control  Control object pointer
+//! \param[in]  velocities Pointer to particle velocities
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  IGNORE(m_velocities);
 }
 
 void

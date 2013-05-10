@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue May  7 08:23:13 2013
+  \date      Fri May 10 17:11:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Dirichlet_h
 #define Dirichlet_h
+
+#include <vector>
 
 #include <mkl_vsl.h>
 
@@ -25,33 +27,31 @@ class MKLRndStream;
 class MemoryEntry;
 class JPDF;
 
-//! Dirichlet : Mix
-class Dirichlet : public Mix {
+//! Dirichlet : Mix<Dirichlet> child for CRTP
+//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+class Dirichlet : public Mix<Dirichlet> {
 
   public:
     //! Constructor
     explicit Dirichlet(Memory* const memory,
                        Paradigm* const paradigm,
-                       Control* const control);
+                       Control* const control,
+                       real* const scalars);
 
     //! Destructor
     virtual ~Dirichlet() noexcept;
 
     //! Initialize particles
-    virtual void init();
+    void init();
 
     //! Advance particles
-    virtual void advance(const real dt);
+    void advance(const real& dt);
 
     //! Echo information on Dirichlet model
-    virtual void echo() const;
+    void echo() const;
 
     //! Estimate joint scalar PDF
-    virtual void jpdf(JPDF& jpdf);
-
-    //! Constant accessor to particle properties (scalars) pointer
-    //! \return Number of particle scalars
-    virtual const real* particles() const { return m_allScalars.ptr; }
+    void jpdf(JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -73,13 +73,13 @@ class Dirichlet : public Mix {
     //! Initialize scalars with Gaussian PDF
     void initGaussian();
 
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
-    Data<real> m_allScalars;        //!< All particle scalars
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;
+    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+
+    MKLRandom* m_random;            //!< Random number generator object
+    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

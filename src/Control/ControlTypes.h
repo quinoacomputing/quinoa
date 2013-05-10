@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Wed May  8 09:55:41 2013
+  \date      Thu May  9 21:19:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <ostream>
 
 #include <QuinoaTypes.h>
 
@@ -29,6 +30,13 @@ enum PhysicsType { NO_PHYSICS=0,
                    HOMOGENEOUS_HYDRO,
                    SPINSFLOW,
                    NUM_PHYSICS
+};
+
+//! Position model types
+enum PositionType { NO_POSITION=0,
+                    INVISCID,
+                    VISCOUS,
+                    NUM_POSITION
 };
 
 //! Hydrodynamics model types
@@ -157,11 +165,14 @@ using Product = vector<Term>;
 //! Position enum for accessing fields of tuple Bundle using names as in struct
 enum BundlePosition { TITLE=0,
                       PHYSICS,
+                      POSITION,
                       HYDRO,
                       MIX,
                       NSTEP,
                       TERM,
                       DT,
+                      NPOSITION,
+                      NVELOCITY,
                       NSCALAR,
                       NPAR,
                       TTYI,
@@ -182,29 +193,32 @@ enum BundlePosition { TITLE=0,
 
 //! Storage bundle for parsed data
 using Bundle = tuple<
-  string,               //!<  0: Problem Title
-  PhysicsType,          //!<  1: Selected physics
-  HydroType,            //!<  2: Selected hydrodynamics model
-  MixType,              //!<  3: Selected material mix model
-  int,                  //!<  4: Number of time steps to take
-  real,                 //!<  5: Time to terminate time stepping
-  real,                 //!<  6: Size of time step
-  int,                  //!<  7: Number of mixing scalars in material mix model
-  int,                  //!<  8: Total number of particles
-  int,                  //!<  9: TTY output interval
-  int,                  //!< 10: Dump output interval
-  int,                  //!< 11: Plot output interval
-  int,                  //!< 12: PDF output interval
-  int,                  //!< 13: Glob output interval
-  string,               //!< 14: PDF base filename
-  string,               //!< 15: Glob filename
-  string,               //!< 16: Plot base filename
-  vector<real>,         //!< 17: Parameters 'b' in Dirichlet mix models
-  vector<real>,         //!< 18: Parameters 'S' in Dirichlet mix models
-  vector<real>,         //!< 19: Parameters 'kappa' in Dirichlet mix models
-  vector<real>,         //!< 20: Parameters 'c_ij' in GenDirichlet mix models
-  real,                 //!< 21: Parameter C0 in the simplified Langevin model
-  vector<Product>       //!< 22: Requested (and triggered) statistics
+  string,               //!< Problem Title
+  PhysicsType,          //!< Selected physics
+  PositionType,         //!< Selected position model
+  HydroType,            //!< Selected hydrodynamics model
+  MixType,              //!< Selected material mix model
+  int,                  //!< Number of time steps to take
+  real,                 //!< Time to terminate time stepping
+  real,                 //!< Size of time step
+  int,                  //!< Number of position components in position model
+  int,                  //!< Number of velocity components in hydro model
+  int,                  //!< Number of mixing scalars in material mix model
+  int,                  //!< Total number of particles
+  int,                  //!< TTY output interval
+  int,                  //!< Dump output interval
+  int,                  //!< Plot output interval
+  int,                  //!< PDF output interval
+  int,                  //!< Glob output interval
+  string,               //!< PDF base filename
+  string,               //!< Glob filename
+  string,               //!< Plot base filename
+  vector<real>,         //!< Parameters 'b' in Dirichlet mix models
+  vector<real>,         //!< Parameters 'S' in Dirichlet mix models
+  vector<real>,         //!< Parameters 'kappa' in Dirichlet mix models
+  vector<real>,         //!< Parameters 'c_ij' in GenDirichlet mix models
+  real,                 //!< Parameter C0 in the simplified Langevin model
+  vector<Product>       //!< Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

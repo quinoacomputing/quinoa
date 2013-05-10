@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 06:06:16 PM MDT
+  \date      Thu May  9 19:12:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -23,29 +23,32 @@ namespace control {
 
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
-  "",                         //!<  0: Title
-  NO_PHYSICS,                 //!<  1: Physics
-  NO_HYDRO,                   //!<  2: Hydrodynamics model
-  NO_MIX,                     //!<  3: Material mix model
-  numeric_limits<int>::max(), //!<  4: Number of time steps to take
-  1.0,                        //!<  5: Time to terminate time stepping
-  0.5,                        //!<  6: Size of time step
-  1,                          //!<  7: Number of mixing scalars
-  1,                          //!<  8: Total number of particles
-  1,                          //!<  9: TTY output interval
-  0,                          //!< 10: Dump output interval
-  0,                          //!< 11: Plot output interval
-  1,                          //!< 12: PDF output interval
-  1,                          //!< 13: Glob output interval
-  "jpdf",                     //!< 14: Default jpdf base filename
-  "glob",                     //!< 15: Default glob filename
-  "plot",                     //!< 16: Default plot base filename
-  vector<real>(),             //!< 17: Parameters 'b'
-  vector<real>(),             //!< 18: Paramaters 'S'
-  vector<real>(),             //!< 19: Parameters 'kappa'
-  vector<real>(),             //!< 20: Parameters 'c_ij'
-  2.1,                        //!< 21: Parameter C0
-  vector<Product>()           //!< 22: Statistics
+  "",                         //!< Title
+  NO_PHYSICS,                 //!< Physics
+  NO_POSITION,                //!< Position
+  NO_HYDRO,                   //!< Hydrodynamics model
+  NO_MIX,                     //!< Material mix model
+  numeric_limits<int>::max(), //!< Number of time steps to take
+  1.0,                        //!< Time to terminate time stepping
+  0.5,                        //!< Size of time step
+  3,                          //!< Number of position components
+  3,                          //!< Number of velocity components
+  1,                          //!< Number of scalar components
+  1,                          //!< Total number of particles
+  1,                          //!< TTY output interval
+  0,                          //!< Dump output interval
+  0,                          //!< Plot output interval
+  1,                          //!< PDF output interval
+  1,                          //!< Glob output interval
+  "jpdf",                     //!< Default jpdf base filename
+  "glob",                     //!< Default glob filename
+  "plot",                     //!< Default plot base filename
+  vector<real>(),             //!< Parameters 'b'
+  vector<real>(),             //!< Paramaters 'S'
+  vector<real>(),             //!< Parameters 'kappa'
+  vector<real>(),             //!< Parameters 'c_ij'
+  2.1,                        //!< Parameter C0
+  vector<Product>()           //!< Statistics
 );
 
 } // namespace control

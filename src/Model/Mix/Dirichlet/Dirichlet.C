@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Tue May  7 10:35:02 2013
+  \date      Fri May 10 17:25:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -27,22 +27,28 @@ using namespace Quinoa;
 
 Dirichlet::Dirichlet(Memory* const memory,
                      Paradigm* const paradigm,
-                     Control* const control)
+                     Control* const control,
+                     real* const scalars)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
 //! \param[in]  control  Control object pointer
+//! \param[in]  scalars  Pointer to particle scalars
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  Mix(memory, paradigm, control, "Dirichlet"),
-  m_random(nullptr),
-  m_rndStr(nullptr),
-  m_allScalars(),
+  Mix<Dirichlet>(memory,
+                 paradigm,
+                 control,
+                 control->get<control::NSCALAR>(),
+                 scalars),
   m_b(control->get<control::B>()),
   m_S(control->get<control::S>()),
-  m_k(control->get<control::KAPPA>())
+  m_k(control->get<control::KAPPA>()),
+  m_str(nullptr),
+  m_random(nullptr),
+  m_rndStr(nullptr)
 {
 
   ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
@@ -53,7 +59,7 @@ try :
          "Wrong number of Dirichlet model parameters 'k'");
 
   // Instantiate random number generator
-  m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
+  m_random = new (nothrow) MKLRandom(memory, paradigm);
   ErrChk(m_random != nullptr, FATAL,
          "Cannot allocate memory for random number generator");
 
@@ -61,12 +67,6 @@ try :
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
-
-  // Allocate memory to store all the scalars
-  m_allScalars = m_memory->newEntry<real>(m_npar*m_nscalar,
-                                          REAL,
-                                          SCALAR,
-                                          "Dirichlet scalars");
 
 } // Roll back changes and rethrow on error
   catch (Exception& e) {
@@ -103,7 +103,6 @@ Dirichlet::finalize() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_memory->freeEntry(m_allScalars);
   if (m_random) { delete m_random; m_random = nullptr; }  
 }
 
@@ -114,6 +113,7 @@ Dirichlet::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << "Dirichlet" << endl;
 }
 
 void
@@ -150,7 +150,7 @@ Dirichlet::initUniform()
 
       // Accept if sum is less then 1.0
       if (sum < 1.0) {
-        memcpy(m_allScalars + p*m_nscalar, r, m_nscalar*sizeof(real));
+        memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
         accept = true;
       }
     }
@@ -171,13 +171,13 @@ Dirichlet::initGaussian()
   for (int p=0; p<m_npar; ++p) {
     m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
                        m_str[0], m_nscalar, r, 0.0, 1.0);
-    memcpy(m_allScalars + p*m_nscalar, r, m_nscalar*sizeof(real));
+    memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
   }
 }
 
 
 void
-Dirichlet::advance(const real dt)
+Dirichlet::advance(const real& dt)
 //******************************************************************************
 //  Advance particles with the Dirichlet model
 //! \param[in]  dt   Time step size
@@ -204,7 +204,7 @@ Dirichlet::advance(const real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
       // Get access to particle scalars
-      y = m_allScalars + p*m_nscalar;
+      y = m_scalars + p*m_nscalar;
 
       // Compute Nth scalar
       yn = 1.0 - y[0];
@@ -235,7 +235,7 @@ Dirichlet::jpdf(JPDF& jpdf)
 //******************************************************************************
 {
   for (int p=0; p<m_npar; ++p) {
-    real* y = m_allScalars + p*m_nscalar;
+    real* y = m_scalars + p*m_nscalar;
     vector<real> v(y, y+m_nscalar);
     jpdf.insert(v);
   }

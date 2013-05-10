@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Mon May  6 13:04:09 2013
+  \date      Thu May  9 22:09:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -32,7 +32,8 @@ class SimplifiedLangevin : public Hydro {
     //! Constructor
     explicit SimplifiedLangevin(Memory* const memory,
                                 Paradigm* const paradigm,
-                                Control* const control);
+                                Control* const control,
+                                real* const velocities);
 
     //! Destructor
     virtual ~SimplifiedLangevin() noexcept;
@@ -45,10 +46,6 @@ class SimplifiedLangevin : public Hydro {
 
     //! Echo information on the simplified Langevin model
     virtual void echo() const;
-
-    //! Constant accessor to particle properties pointer
-    //! \return Particle pointer
-    virtual const real* particles() const { return m_particles.ptr; }    
 
   private:
     //! Don't permit copy constructor
@@ -69,7 +66,7 @@ class SimplifiedLangevin : public Hydro {
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
     MKLRandom* m_random;            //!< Random number generator object
     MKLRndStream* m_rndStr;         //!< Random number stream object
-    Data<real> m_particles;         //!< Particle properties
+    real* const m_velocities;       //!< Raw pointer to particle velocities
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Wed May  8 08:12:55 2013
+  \date      Thu May  9 19:13:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -158,6 +158,16 @@ namespace grammar {
     }
   };
 
+  // store selected position model
+  struct store_position : action_base< store_position > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      get<control::POSITION>(stack) = associate::PositionEnum[value];
+      boolstack[control::POSITION] = true;
+    }
+  };
+
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value,
@@ -190,11 +200,15 @@ namespace grammar {
   struct read :
          pad< trim<token, space>, blank, space > {};
 
-  // match all accepted as hydro
+  // match all accepted as position models
+  struct position : sor< keyword::invpos,
+                         keyword::vispos > {};
+
+  // match all accepted as hydro models
   struct hydro : sor< keyword::slm,
                       keyword::glm > {};
 
-  // match all accepted as mix
+  // match all accepted as mix models
   struct mix : sor< keyword::iem,
                     keyword::iecm,
                     keyword::dir,
@@ -335,6 +349,25 @@ namespace grammar {
                       >
                > {};
 
+  // homrt block
+  struct homrt :
+         ifmust< parse<keyword::homrt, store_physics>,
+                 block< process<keyword::nstep, cstore<control::NSTEP>>,
+                        process<keyword::term, cstore<control::TERM>>,
+                        process<keyword::dt, cstore<control::DT>>,
+                        process<keyword::npar, cstore<control::NPAR>>,
+                        process<keyword::pdfname, store<control::PDFNAME>>,
+                        process<keyword::globname, store<control::GLOBNAME>>,
+                        process<keyword::plotname, store<control::PLOTNAME>>,
+                        process<keyword::glob, cstore<control::GLOB>>,
+                        process<keyword::pdfi, cstore<control::PDFI>>,
+                        process<keyword::plti, cstore<control::PLTI>>,
+                        process<keyword::ttyi, cstore<control::TTYI>>,
+                        process<keyword::dump, cstore<control::DUMP>>,
+                        dir, gendir, slm, statistics
+                      >
+               > {};
+
   // homhydro block
   struct homhydro :
          ifmust< parse<keyword::homhydro, store_physics>,
@@ -357,13 +390,15 @@ namespace grammar {
   // spinsflow block
   struct spinsflow :
          ifmust< parse<keyword::spinsflow, store_physics>,
-                 block< process<keyword::hydro, store_hydro, hydro>,
+                 block< process<keyword::position, store_position, position>,
+                        process<keyword::hydro, store_hydro, hydro>,
                         process<keyword::mix, store_mix, mix> > > {};
 
   // physics
   struct physics :
          sor< hommix,
               homhydro,
+              homrt,
               spinsflow > {};
 
   // main keywords

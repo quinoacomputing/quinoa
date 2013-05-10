@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Tue May  7 13:03:56 2013
+  \date      Fri May 10 17:22:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -29,21 +29,23 @@ using namespace Quinoa;
 
 SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
                                        Paradigm* const paradigm,
-                                       Control* const control)
+                                       Control* const control,
+                                       real* const velocities)
 //******************************************************************************
 //  Constructor
-//! \param[in]  memory   Memory object pointer
-//! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  control  Control object pointer
+//! \param[in]  memory     Memory object pointer
+//! \param[in]  paradigm   Parallel programming object pointer
+//! \param[in]  control    Control object pointer
+//! \param[in]  velocities Pointer to particle velocities
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  Hydro(memory, paradigm, control, "Simplified Langevin"),
+  Hydro(memory, paradigm, control),
   m_C0(control->get<control::C0>()),
   m_str(nullptr),
   m_random(nullptr),
   m_rndStr(nullptr),
-  m_particles()
+  m_velocities(velocities)
 {
 
   // Instantiate random number generator
@@ -55,12 +57,6 @@ try :
   m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
   // Get array of MKL VSL stream state pointers right away
   m_str = m_random->getStr(m_rndStr);
-
-  // Allocate memory to store all the particle properties
-  m_particles = m_memory->newEntry<real>(m_npar*m_nprop,
-                                         REAL,
-                                         SCALAR,
-                                         "SLM particles");
 
 } // Roll back changes and rethrow on error
   catch (Exception& e) {
@@ -97,7 +93,6 @@ SimplifiedLangevin::finalize() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_memory->freeEntry(m_particles);
   if (m_random) { delete m_random; m_random = nullptr; }
 }
 
@@ -117,13 +112,13 @@ SimplifiedLangevin::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  real r[m_nprop];
+  real r[m_nvelocity];
 
   // Generate initial values for all scalars for all particles
   for (int p=0; p<m_npar; ++p) {
     m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                       m_str[0], m_nprop, r, 0.0, 1.0);
-    memcpy(m_particles + p*m_nprop, r, m_nprop*sizeof(real));
+                       m_str[0], m_nvelocity, r, 0.0, 1.0);
+    memcpy(m_velocities + p*m_nvelocity, r, m_nvelocity*sizeof(real));
   }
 }
 
@@ -157,7 +152,7 @@ SimplifiedLangevin::advance(const real dt)
 //     #endif
 //     for (p=0; p<m_npar; ++p) {
 //       // Get access to particle position, velocity
-//       X = m_particles + p*m_nprop;
+//       X = m_velocities + p*m_nvelocity;
 //       U = X + 3;
 // 
 //       // Generate Gaussian random numbers with zero mean and unit variance

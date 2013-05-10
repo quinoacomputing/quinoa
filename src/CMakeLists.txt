@@ -5,8 +5,8 @@ project(QUINOA CXX)
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Set Quinoa version number: major.minor
-set(QUINOA_MAJOR_VERSION 0)
-set(QUINOA_MINOR_VERSION 1)
+set(QUINOA_MAJOR_VER 0)
+set(QUINOA_MINOR_VER 1)
 
 # Set Quinoa release number
 set(QUINOA_RELEASE "LA-CC-XX-XXX")
@@ -85,6 +85,33 @@ if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
 else()
   set (DEBUG on)
 endif()
+
+
+# Mix model options
+
+# Available mix models
+SET (MIX_VALUES "DIR" "GENDIR")
+
+# Initialize all to off
+SET (QUINOA_DIRICHLET off)              # 0
+SET (QUINOA_GENERALIZED_DIRICHLET off)  # 1
+
+# Set default and select from list
+SET (QUINOA_MODEL_MIX "DIR"
+     CACHE STRING "Select mixing model. Default: dir (Dirichlet model). Available options: ${MIX_VALUES}")
+SET_PROPERTY (CACHE QUINOA_MODEL_MIX PROPERTY STRINGS ${MIX_VALUES})
+STRING (TOUPPER ${QUINOA_MODEL_MIX} QUINOA_MODEL_MIX)
+LIST (FIND MIX_VALUES ${QUINOA_MODEL_MIX} MIX_INDEX)
+
+# Evaluate selected model and put in define for it
+IF (${MIX_INDEX} EQUAL 0)
+  SET (QUINOA_DIRICHLET on)
+ELSEIF (${MIX_INDEX} EQUAL 1)
+  SET(QUINOA_GENERALIZED_DIRICHLET on)
+ELSEIF (${MIX_INDEX} EQUAL -1)
+  MESSAGE(FATAL_ERROR "Mix model option ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
+ENDIF()
+
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModule/")
 include(GetGitRevisionDescription)
@@ -171,6 +198,7 @@ add_subdirectory(Parser)
 add_subdirectory(Physics)
 add_subdirectory(Physics/HomMix)
 add_subdirectory(Physics/HomHydro)
+add_subdirectory(Physics/HomRT)
 add_subdirectory(Physics/SPINSFlow)
 add_subdirectory(Random)
 add_subdirectory(Statistics)

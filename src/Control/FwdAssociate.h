@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FwdAssociate.h
   \author    J. Bakosi
-  \date      Fri Apr 26 14:59:06 2013
+  \date      Thu May  9 19:15:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Forward, keyword (string) to data associations
   \details   Forward, keyword (string) to data associations
@@ -38,6 +38,18 @@ namespace associate {
 //     { "homhydro", control::PhysicsType::HOMOGENEOUS_HYDRO },
 //     { "spinsflow", control::PhysicsType::SPINSFLOW }
 //   };
+
+  // string -> PositionType
+  using position_enum = unordered_map< std::string, control::PositionType >;
+  struct PositionEnumStruct {
+    static position_enum make() {
+      position_enum m;
+      m["invpos"] = control::PositionType::INVISCID;
+      m["vispos"] = control::PositionType::VISCOUS;
+      return m;
+    }
+  };
+  static position_enum PositionEnum = PositionEnumStruct::make();
 
   // string -> HydroType
   using hydro_enum = unordered_map< std::string, control::HydroType >;

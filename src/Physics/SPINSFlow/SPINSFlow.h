@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Tue May  7 10:49:49 2013
+  \date      Thu May  9 22:23:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -11,22 +11,14 @@
 #ifndef SPINSFlow_h
 #define SPINSFlow_h
 
-#include <limits>
-
-#include <mkl_vsl.h>
-
 #include <Physics.h>
+#include <Hydro.h>
+#include <Timer.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Control;
-class MKLRandom;
-class MKLRndStream;
-class UnsMesh;
-class Hydro;
-class Timer;
 
 //! SPINSFlow : Physics
 class SPINSFlow : public Physics {
@@ -40,7 +32,7 @@ class SPINSFlow : public Physics {
                        const string& filename);
 
     //! Destructor
-    virtual ~SPINSFlow() noexcept;
+    virtual ~SPINSFlow() noexcept = default;
 
     //! Echo informaion on model
     virtual void echo() const;
@@ -61,20 +53,7 @@ class SPINSFlow : public Physics {
     //! Don't permit move assigment
     SPINSFlow& operator=(SPINSFlow&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
-    //! Advance particles
-    void advance(const real dt);
-
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
-    Hydro* m_hydro;                 //!< Hydro model object
-    UnsMesh* m_mesh;                //!< Unstructured mesh object
-    const int m_npar;               //!< Number of particles
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    const string m_filename;        //!< Unstructured mesh object
+    const string m_filename;        //!< Unstructured mesh file name
 };
 
 } // namespace Quinoa
