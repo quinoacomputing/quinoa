@@ -1,40 +1,40 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomHydro/HomHydro.h
+  \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Thu May  9 21:39:28 2013
+  \date      Thu May  9 21:37:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous hydrodynamics
-  \details   Homogeneous hydrodynamics
+  \brief     Homogeneous Rayleigh-Taylor
+  \details   Homogeneous Rayleigh-Taylor
 */
 //******************************************************************************
-#ifndef HomHydro_h
-#define HomHydro_h
+#ifndef HomRT_h
+#define HomRT_h
+
+#include <map>
 
 #include <Physics.h>
-#include <Hydro.h>
+#include <Mix.h>
 #include <Timer.h>
+#include <ControlTypes.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Statistics;
-class GlobWriter;
-class TxtPlotWriter;
 
-//! HomHydro : Physics
-class HomHydro : public Physics {
+//! HomRT : Physics
+class HomRT : public Physics {
 
   public:
     //! Constructor
-    explicit HomHydro(Memory* const memory,
-                      Paradigm* const paradigm,
-                      Control* const control,
-                      Timer* const timer);
+    explicit HomRT(Memory* const memory,
+                   Paradigm* const paradigm,
+                   Control* const control,
+                   Timer* const timer);
 
     //! Destructor
-    virtual ~HomHydro() noexcept = default;
+    virtual ~HomRT() noexcept = default;
 
     //! Echo informaion on model
     virtual void echo() const;
@@ -47,16 +47,16 @@ class HomHydro : public Physics {
 
   private:
     //! Don't permit copy constructor
-    HomHydro(const HomHydro&) = delete;
+    HomRT(const HomRT&) = delete;
     //! Don't permit copy assigment
-    HomHydro& operator=(const HomHydro&) = delete;
+    HomRT& operator=(const HomRT&) = delete;
     //! Don't permit move constructor
-    HomHydro(HomHydro&&) = delete;
+    HomRT(HomRT&&) = delete;
     //! Don't permit move assigment
-    HomHydro& operator=(HomHydro&&) = delete;
+    HomRT& operator=(HomRT&&) = delete;
 
     //! One-liner report
-    void reportHeader();
+    void reportHeader() const;
     void report(const int it,
                 const int nstep,
                 const real t,
@@ -65,12 +65,12 @@ class HomHydro : public Physics {
                 const bool wroteGlob,
                 const bool wrotePlot);
 
-    //! Output joint PDF
+    //! Output joint scalar PDF
     void outJpdf(const real t);
 
-    const TimerIdx m_totalTime;           //!< Timer measuring the total run
+    const TimerIdx m_totalTime;           //!< Timer measuring the total run    
 };
 
 } // namespace Quinoa
 
-#endif // HomHydro_h
+#endif // HomRT_h

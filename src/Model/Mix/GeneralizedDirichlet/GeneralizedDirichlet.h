@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Tue May  7 08:30:10 2013
+  \date      Fri May 10 16:59:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef GeneralizedDirichlet_h
 #define GeneralizedDirichlet_h
+
+#include <vector>
 
 #include <mkl_vsl.h>
 
@@ -25,33 +27,31 @@ class MKLRndStream;
 class MemoryEntry;
 class JPDF;
 
-//! GeneralizedDirichlet : Mix
-class GeneralizedDirichlet : public Mix {
+//! GeneralizedDirichlet : Mix<GeneralizedDirichlet> child for CRTP
+//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
 
   public:
     //! Constructor
     explicit GeneralizedDirichlet(Memory* const memory,
                                   Paradigm* const paradigm,
-                                  Control* const control);
+                                  Control* const control,
+                                  real* const scalars);
 
     //! Destructor
     virtual ~GeneralizedDirichlet() noexcept;
 
-    //! Echo information on Generalized Dirichlet model
-    virtual void echo() const;
-
     //! Initialize particles
-    virtual void init();
+    void init();
 
     //! Advance particles
-    virtual void advance(const real dt);
+    void advance(const real& dt);
+
+    //! Echo information on Dirichlet model
+    void echo() const;
 
     //! Estimate joint scalar PDF
-    virtual void jpdf(JPDF& jpdf);
-
-    //! Constant accessor to particle properties (scalars) pointer
-    //! \return Number of particle scalars
-    virtual const real* particles() const { return m_allScalars.ptr; }
+    void jpdf(JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -70,14 +70,14 @@ class GeneralizedDirichlet : public Mix {
     //! Initialize scalars with unirom PDF with the last constrained
     void initUniform();
 
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
-    Data<real> m_allScalars;        //!< Particle scalars
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;
     const vector<real> m_c;
+    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
+
+    MKLRandom* m_random;            //!< Random number generator object
+    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

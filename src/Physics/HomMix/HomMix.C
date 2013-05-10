@@ -2,26 +2,24 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Tue May  7 10:47:42 2013
+  \date      Fri May 10 11:27:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
 */
 //******************************************************************************
 
-#include <sstream>
+#include <cmath>
 #include <iomanip>
+#include <sstream>
 
 #include <Memory.h>
-#include <ControlTypes.h>
 #include <Control.h>
+#include <Mix.h>
 #include <HomMix.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
-#include <Dirichlet.h>
-#include <GeneralizedDirichlet.h>
-#include <Timer.h>
 #include <Statistics.h>
 
 using namespace Quinoa;
@@ -29,7 +27,9 @@ using namespace Quinoa;
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
                Control* const control,
-               Timer* const timer)
+               Timer* const timer) :
+  Physics(memory, paradigm, control, timer),
+  m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object pointer
@@ -38,85 +38,7 @@ HomMix::HomMix(Memory* const memory,
 //! \param[in]  timer    Timer object pointer
 //! \author  J. Bakosi
 //******************************************************************************
-try :
-  Physics(memory, paradigm, control, timer),
-  m_nscalar(control->get<control::NSCALAR>()),
-  m_term(control->get<control::TERM>()),
-  m_totalTime(timer->create("Total solution")),
-  m_mix(nullptr),
-  m_statistics(nullptr),
-  m_glob(nullptr),
-  m_plot(nullptr)
 {
-
-  // Instantiate selected mix model
-  switch (control->get<control::MIX>()) {
-
-    case control::MixType::NO_MIX :
-      Throw(FATAL, "No mix model selected");
-      break;
-
-    case control::MixType::DIRICHLET :
-      m_mix = new (nothrow) Dirichlet(memory, paradigm, control);
-      ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
-      break;
-
-    case control::MixType::GENERALIZED_DIRICHLET :
-      m_mix = new (nothrow) GeneralizedDirichlet(memory, paradigm, control);
-      ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
-      break;
-
-    default :
-      Throw(FATAL, "Mix model not implemented");
-  }
-
-  // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(memory, paradigm, control, m_mix);
-  ErrChk(m_statistics != nullptr, FATAL,"Cannot allocate memory");
-
-  // Instantiate glob file writer
-  m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  ErrChk(m_glob != nullptr, FATAL,"Cannot allocate memory");
-
-  // Instantiate plot file writer
-  m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
-                                       m_statistics);
-  ErrChk(m_plot != nullptr, FATAL,"Cannot allocate memory");
-
-} // Roll back changes and rethrow on error
-  catch (exception&) {
-    finalize();
-    throw;
-  }
-  // Catch uncaught exceptions
-  catch (...) {
-    finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
-  }
-
-HomMix::~HomMix() noexcept
-//******************************************************************************
-//  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-HomMix::finalize() noexcept
-//******************************************************************************
-//! \details Single exit point, called implicitly from destructor or explicitly
-//!          from anywhere else. Exception safety: no-throw guarantee: never
-//!          throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  if (m_plot) { delete m_plot; m_plot = nullptr; }
-  if (m_glob) { delete m_glob; m_glob = nullptr; }
-  if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
-  if (m_mix) { delete m_mix; m_mix = nullptr; }
 }
 
 void
@@ -132,38 +54,38 @@ HomMix::solve()
   bool wroteGlob = false;
   bool wrotePlot = false;
 
-  const auto nstep = m_control->get<control::NSTEP>();
-  const auto ttyi  = m_control->get<control::TTYI>();
-  const auto pdfi  = m_control->get<control::PDFI>();
-  const auto glob  = m_control->get<control::GLOB>();
-  const auto plti  = m_control->get<control::PLTI>();
-  const auto dt    = m_control->get<control::DT>();
+  const auto nstep = control()->get<control::NSTEP>();
+  const auto ttyi  = control()->get<control::TTYI>();
+  const auto pdfi  = control()->get<control::PDFI>();
+  const auto glob  = control()->get<control::GLOB>();
+  const auto plti  = control()->get<control::PLTI>();
+  const auto dt    = control()->get<control::DT>();
 
-  m_timer->start(m_totalTime);
+  timer()->start(m_totalTime);
 
   // Echo headers
   if (nstep) {
     reportHeader();
-    m_plot->header();
+    plotWriter()->header();
   }
 
   // Time stepping loop
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    m_mix->advance(dt);
+    //mix()->advance(dt);
 
     // Accumulate statistics
-    m_statistics->accumulate();
+    statistics()->accumulate();
 
     // Output pdf at selected times
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glob)) { m_glob->write(it,t); wroteGlob = true; }
+    if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
 
     // Append plot file at selected times
-    if (!(it % plti)) { m_plot->write(it,t); wrotePlot = true; }
+    if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {
@@ -212,7 +134,7 @@ HomMix::report(const int it,
 //******************************************************************************
 {
   Watch ete, eta;       // estimated time elapsed and to accomplishment
-  m_timer->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
+  timer()->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   cout << setfill(' ') << setw(8) << it << "  "
        << scientific << setprecision(6) << setw(12) << t << "  " << dt << "  "
@@ -240,14 +162,14 @@ HomMix::outJpdf(const real t)
 {
   // Contruct filename
   stringstream ss;
-  ss << m_control->get<control::PDFNAME>() << "." << t << ".msh";
+  ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
   string filename = ss.str();
 
   // Create joint PDF
   JPDF jpdf(m_nscalar, 0.02);
 
   // Estimate joint PDF
-  m_mix->jpdf(jpdf);
+  //mix()->jpdf(jpdf);
 
   // Output joint PDF
   PDFWriter jpdfFile(filename);
@@ -270,5 +192,5 @@ HomMix::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_mix->init();
+  //mix()->init();
 }

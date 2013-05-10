@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Sat 30 Mar 2013 12:04:43 PM MDT
+  \date      Thu May  9 19:17:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Backward, data to keyword/name associations
   \details   Backward, data to keyword/name associations
@@ -31,6 +31,19 @@ namespace associate {
     "Homogeneous material mixing",
     "Homogeneous hydrodynamics",
     "Standalone-Particle Incompressible Navier-Stokes Flow"
+  };
+
+  // PositionType -> keyword
+  const string PositionKeyword[control::NUM_POSITION] = {
+    "no_position",
+    "invpos",
+    "vispos"
+  };
+  // PositionType -> name
+  const string PositionName[control::NUM_POSITION] = {
+    "No model",
+    "Inviscid",
+    "Viscous"
   };
 
   // HydroType -> keyword

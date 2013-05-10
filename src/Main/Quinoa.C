@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue May  7 08:09:42 2013
+  \date      Fri May 10 15:44:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -35,8 +35,8 @@ static void echoName()
 static void echoBuildInfo()
 //******************************************************************************
 //  Echo build environment
-//! \details Echo information read from \<build\>/Base/QuinoaConfig.h filled by
-//!          CMake based on \<source\>/MainQuinoaConfig.h.in
+//! \details Echo information read from <build>/Base/QuinoaConfig.h filled by
+//!          CMake based on src/MainQuinoaConfig.h.in
 //! \author  J. Bakosi
 //******************************************************************************
 {

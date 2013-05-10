@@ -10,6 +10,15 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Model/Mix
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/GeneralizedDirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro/SimplifiedLangevin
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro/GeneralizedLangevin
+                    ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/IO
 )
 
 add_library(Physics

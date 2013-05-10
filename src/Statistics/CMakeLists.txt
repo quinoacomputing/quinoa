@@ -9,9 +9,11 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 include_directories(${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
+                    ${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Model/Mix
-                    ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro
 )
 
 add_library(Statistics

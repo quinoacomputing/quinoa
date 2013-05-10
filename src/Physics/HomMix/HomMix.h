@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Tue May  7 07:55:01 2013
+  \date      Thu May  9 21:29:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -21,8 +21,6 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Mix;
-class Timer;
 class Statistics;
 class GlobWriter;
 class TxtPlotWriter;
@@ -38,7 +36,7 @@ class HomMix : public Physics {
                     Timer* const timer);
 
     //! Destructor
-    virtual ~HomMix() noexcept;
+    virtual ~HomMix() noexcept = default;
 
     //! Echo informaion on model
     virtual void echo() const;
@@ -59,13 +57,6 @@ class HomMix : public Physics {
     //! Don't permit move assigment
     HomMix& operator=(HomMix&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
-    //! Output joint scalar PDF
-    void outJpdf(const real t);
-
     //! One-liner report
     void reportHeader() const;
     void report(const int it,
@@ -76,14 +67,10 @@ class HomMix : public Physics {
                 const bool wroteGlob,
                 const bool wrotePlot);
 
-    const int m_nscalar;                  //!< Number of mixing scalars
-    const real m_term;                    //!< Maximum time to simulate
-    const TimerIdx m_totalTime;           //!< Timer measuring the total run
+    //! Output joint scalar PDF
+    void outJpdf(const real t);
 
-    Mix* m_mix;                           //!< Mix model object
-    Statistics* m_statistics;             //!< Statistics estimator object
-    GlobWriter* m_glob;                   //!< Glob file writer
-    TxtPlotWriter* m_plot;                //!< Plot file writer
+    const TimerIdx m_totalTime;           //!< Timer measuring the total run    
 };
 
 } // namespace Quinoa

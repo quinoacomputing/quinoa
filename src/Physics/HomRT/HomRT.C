@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomHydro/HomHydro.C
+  \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Thu May  9 21:27:09 2013
+  \date      Fri May 10 11:28:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous hydrodynamics
-  \details   Homogeneous hydrodynamics
+  \brief     Homogeneous material mixing
+  \details   Homogeneous material mixing
 */
 //******************************************************************************
 
 #include <sstream>
 #include <iomanip>
 
-#include <Macro.h>
 #include <Memory.h>
+#include <ControlTypes.h>
 #include <Control.h>
-#include <HomHydro.h>
+#include <HomRT.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
@@ -23,10 +23,10 @@
 
 using namespace Quinoa;
 
-HomHydro::HomHydro(Memory* const memory,
-                   Paradigm* const paradigm,
-                   Control* const control,
-                   Timer* const timer) :
+HomRT::HomRT(Memory* const memory,
+             Paradigm* const paradigm,
+             Control* const control,
+             Timer* const timer) :
   Physics(memory, paradigm, control, timer),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
@@ -41,7 +41,7 @@ HomHydro::HomHydro(Memory* const memory,
 }
 
 void
-HomHydro::solve()
+HomRT::solve()
 //******************************************************************************
 //  Solve
 //! \author  J. Bakosi
@@ -72,7 +72,7 @@ HomHydro::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    hydro()->advance(dt);
+    //mix()->advance(dt);
 
     // Accumulate statistics
     statistics()->accumulate();
@@ -100,7 +100,7 @@ HomHydro::solve()
 }
 
 void
-HomHydro::reportHeader()
+HomRT::reportHeader() const
 //******************************************************************************
 //  Echo report header
 //! \author  J. Bakosi
@@ -113,13 +113,13 @@ HomHydro::reportHeader()
 }
 
 void
-HomHydro::report(const int it,
-                 const int nstep,
-                 const real t,
-                 const real dt,
-                 const bool wroteJpdf,
-                 const bool wroteGlob,
-                 const bool wrotePlot)
+HomRT::report(const int it,
+              const int nstep,
+              const real t,
+              const real dt,
+              const bool wroteJpdf,
+              const bool wroteGlob,
+              const bool wrotePlot)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
@@ -152,45 +152,44 @@ HomHydro::report(const int it,
 }
 
 void
-HomHydro::outJpdf(const real t)
+HomRT::outJpdf(const real t)
 //******************************************************************************
-//  Output joint PDF
+//  Output joint scalar PDF
 //! \param[in]  t    Time stamp
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  IGNORE(t);
-//   // Contruct filename
-//   stringstream ss;
-//   ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
-//   string filename = ss.str();
-// 
-//   // Create joint PDF
-//   JPDF jpdf(m_nscalar, 0.02);
-// 
-//   // Estimate joint PDF
-//   m_mix->jpdf(jpdf);
-// 
-//   // Output joint PDF
-//   PDFWriter jpdfFile(filename);
-//   jpdfFile.writeGmsh(&jpdf);
+  // Contruct filename
+  stringstream ss;
+  ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
+  string filename = ss.str();
+
+  // Create joint PDF
+  JPDF jpdf(m_nscalar, 0.02);
+
+  // Estimate joint PDF
+  //mix()->jpdf(jpdf);
+
+  // Output joint PDF
+  PDFWriter jpdfFile(filename);
+  jpdfFile.writeGmsh(&jpdf);
 }
 
 void
-HomHydro::echo() const
+HomRT::echo() const
 //******************************************************************************
-//  Echo informaion on homogeneous hydrodynamics
+//  Echo informaion on homogeneous material mix
 //! \author  J. Bakosi
 //******************************************************************************
 {
 }
 
 void
-HomHydro::init()
+HomRT::init()
 //******************************************************************************
-//  Initialize homogeneous hydrodynamics
+//  Initialize homogeneous material mix
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  hydro()->init();
+  //mix()->init();
 }

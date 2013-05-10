@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed May  8 09:44:28 2013
+  \date      Thu May  9 19:28:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -19,28 +19,28 @@
 #include <Statistics.h>
 #include <Paradigm.h>
 #include <Control.h>
-#include <Model.h>
+#include <Physics.h>
 
 using namespace Quinoa;
 
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,
                        Control* const control,
-                       Model* const model)
+                       Physics* const physics)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
 //! \param[in]  paradigm Parallel programming object
 //! \param[in]  control  Control object
-//! \param[in]  model    Model objects
+//! \param[in]  physics  Physics object
 //! \author  J. Bakosi
 //******************************************************************************
 try :
   m_memory(memory),
   m_nthread(paradigm->nthread()),
   m_npar(control->get<control::NPAR>()),
-  m_model(model),
-  m_nprop(model->nprop()),
+  m_physics(physics),
+  m_nprop(physics->nprop()),
   m_statistics(control->get<control::STATISTICS>()),
   m_instOrd(),
   m_ordinary(),
@@ -62,7 +62,7 @@ try :
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(m_model->particles() + term.field);
+        m_instOrd[m_nord].push_back(m_physics->particles() + term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name
         m_nameOrdinary.back() = term.name;
@@ -93,7 +93,7 @@ try :
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(m_model->particles() + term.field);
+          m_instCen[m_ncen].push_back(m_physics->particles() + term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
            m_ordinary + (!isupper(term.name) ? mean(toupper(term.name)) : m_nord));

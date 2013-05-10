@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Tue May  7 14:18:31 2013
+  \date      Thu May  9 18:45:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -33,8 +33,16 @@ namespace keyword {
   using hommix = pegtl::string< h,o,m,m,i,x >;
   //   * Homogeneous hydrodinamics
   using homhydro = pegtl::string< h,o,m,h,y,d,r,o >;
+  //   * Homogeneous Rayleigh-Taylor
+  using homrt = pegtl::string< h,o,m,r,t >;
   //   * Standalone-particle incompressible Navier-Stokes flow
   using spinsflow = pegtl::string< s,p,i,n,s,f,l,o,w >;
+
+  // Select position model:
+  //   * Insviscid model
+  using invpos = pegtl::string< i,n,v,p,o,s >;
+  //   * Viscous model
+  using vispos = pegtl::string< v,i,s,p,o,s >;
 
   // Select hydrodynamics model:
   //   * Simplified Langevin model
@@ -62,13 +70,20 @@ namespace keyword {
   // Size of time step
   using dt = pegtl::string< d,t >;
 
+  // Start of position model specification block
+  using position = pegtl::string< p,o,s,i,t,i,o,n >;
+
   // Start of hydrodynamics model specification block
   using hydro = pegtl::string< h,y,d,r,o >;
 
   // Start of material mix model specification block
   using mix = pegtl::string< m,i,x >;
 
-  // Number of mixing scalars
+  // Number of particle position components
+  using nposition = pegtl::string< n,p,o,s,i,t,i,o,n >;
+  // Number of particle velocity components
+  using nvelocity = pegtl::string< n,v,e,l,o,c,i,t,y >;
+  // Number of particle scalar components
   using nscalar = pegtl::string< n,s,c,a,l,a,r >;
 
   // Dirichlet and generalized Dirichlet parameters
