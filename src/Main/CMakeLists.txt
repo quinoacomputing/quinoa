@@ -30,7 +30,6 @@ add_executable(${QUINOA_EXECUTABLE}
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
-                      #Control
                       Paradigm
                       LinearAlgebra
                       HomMix
@@ -46,9 +45,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       SimplifiedLangevin
                       GeneralizedLangevin
                       Random
-                      Mix
-                      Hydro
-                      Model
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
