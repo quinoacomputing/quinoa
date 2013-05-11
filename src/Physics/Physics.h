@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri May 10 17:58:03 2013
+  \date      Fri May 10 18:00:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -116,8 +116,8 @@ class Physics {
     Timer* const m_timer;                 //!< Timer object
 
 
-  //! Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
-  //! on src/MainQuinoaConfig.h.in
+  // Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
+  // on src/MainQuinoaConfig.h.in
   // Hydrodynamics models
   #ifdef QUINOA_SLM
     using HydroType = SimplifiedLangevin;
