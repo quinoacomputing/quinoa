@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:34:14 PM MDT
+  \date      Sun 12 May 2013 03:40:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -80,9 +80,6 @@ class Mix : public Model {
 
     //! CRTP interface: Advance particles in mix model
     void advance(const real& dt) { static_cast<MixType*>(this)->advance(dt); }
-
-    //! CRTP interface: Echo information on mix model
-    void echo() { static_cast<MixType*>(this)->echo(); }
 
   protected:
     const int m_nscalar;            //!< Number of mixing scalars

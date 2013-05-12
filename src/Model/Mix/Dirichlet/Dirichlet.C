@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:33:33 PM MDT
+  \date      Sun 12 May 2013 03:41:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -48,16 +48,6 @@ Dirichlet::Dirichlet(Memory* const memory,
          "Wrong number of Dirichlet model parameters 'S'");
   ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
          "Wrong number of Dirichlet model parameters 'k'");
-}
-
-void
-Dirichlet::echo() const
-//******************************************************************************
-//  Echo information on Dirichlet model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  cout << "Dirichlet" << endl;
 }
 
 void
