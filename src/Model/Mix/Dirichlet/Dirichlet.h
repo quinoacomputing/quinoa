@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sat 11 May 2013 12:14:50 PM MDT
+  \date      Sun 12 May 2013 03:39:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -13,18 +13,12 @@
 
 #include <vector>
 
-#include <mkl_vsl.h>
-
-#include <Memory.h>
 #include <Mix.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class MKLRandom;
-class MKLRndStream;
-class MemoryEntry;
 class JPDF;
 
 //! Dirichlet : Mix<Dirichlet> child for CRTP
@@ -39,7 +33,7 @@ class Dirichlet : public Mix<Dirichlet> {
                        real* const scalars);
 
     //! Destructor
-    virtual ~Dirichlet() noexcept;
+    virtual ~Dirichlet() noexcept = default;
 
     //! Initialize particles
     void init();
@@ -63,23 +57,9 @@ class Dirichlet : public Mix<Dirichlet> {
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
-    //! Initialize scalars with unirom PDF with the last constrained
-    void initUniform();
-
-    //! Initialize scalars with Gaussian PDF
-    void initGaussian();
-
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

@@ -13,6 +13,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Parser
+                    ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Model/Hydro
                     ${QUINOA_SOURCE_DIR}/Model/Mix
