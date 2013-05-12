@@ -17,6 +17,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics/HomMix
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Control
+                    ${QUINOA_SOURCE_DIR}/Random
 )
 
 add_library(HomMix

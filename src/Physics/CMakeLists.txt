@@ -19,6 +19,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Model/Hydro/GeneralizedLangevin
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/IO
+                    ${QUINOA_SOURCE_DIR}/Random
 )
 
 add_library(Physics

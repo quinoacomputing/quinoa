@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri May 10 16:59:47 2013
+  \date      Sun 12 May 2013 03:39:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -13,18 +13,12 @@
 
 #include <vector>
 
-#include <mkl_vsl.h>
-
-#include <Memory.h>
 #include <Mix.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class MKLRandom;
-class MKLRndStream;
-class MemoryEntry;
 class JPDF;
 
 //! GeneralizedDirichlet : Mix<GeneralizedDirichlet> child for CRTP
@@ -39,7 +33,7 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
                                   real* const scalars);
 
     //! Destructor
-    virtual ~GeneralizedDirichlet() noexcept;
+    virtual ~GeneralizedDirichlet() noexcept = default;
 
     //! Initialize particles
     void init();
@@ -63,21 +57,10 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     //! Don't permit move assigment
     GeneralizedDirichlet& operator=(GeneralizedDirichlet&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
-    //! Initialize scalars with unirom PDF with the last constrained
-    void initUniform();
-
     const vector<real> m_b;         //!< SDE coefficients
     const vector<real> m_S;
     const vector<real> m_k;
     const vector<real> m_c;
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa
