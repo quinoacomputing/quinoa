@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Thu May  9 19:12:43 2013
+  \date      Sat 11 May 2013 08:22:20 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -31,9 +31,9 @@ const Bundle DEFAULTS(
   numeric_limits<int>::max(), //!< Number of time steps to take
   1.0,                        //!< Time to terminate time stepping
   0.5,                        //!< Size of time step
-  3,                          //!< Number of position components
-  3,                          //!< Number of velocity components
-  1,                          //!< Number of scalar components
+  0,                          //!< Number of position components
+  0,                          //!< Number of velocity components
+  0,                          //!< Number of scalar components
   1,                          //!< Total number of particles
   1,                          //!< TTY output interval
   0,                          //!< Dump output interval

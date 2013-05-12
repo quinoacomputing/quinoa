@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri May 10 17:22:21 2013
+  \date      Sat 11 May 2013 12:07:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -30,10 +30,11 @@ class Model {
     explicit Model(Memory* const memory,
                    Paradigm* const paradigm,
                    Control* const control,
-                   const int npar) : m_memory(memory),
-                                     m_paradigm(paradigm),
-                                     m_control(control),
-                                     m_npar(npar) {
+                   const int npar) :
+      m_memory(memory),
+      m_paradigm(paradigm),
+      m_control(control),
+      m_npar(npar) {
       ErrChk(m_npar > 0, FATAL, "Wrong number of particles");
     }
 

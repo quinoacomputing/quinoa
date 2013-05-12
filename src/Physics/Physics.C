@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri May 10 17:28:44 2013
+  \date      Sun 12 May 2013 02:32:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -49,7 +49,7 @@ try :
   m_paradigm(paradigm),
   m_control(control),
   m_timer(timer),
-  //m_mix(nullptr),
+  m_mix(nullptr),
   m_hydro(nullptr),
   m_statistics(nullptr),
   m_glob(nullptr),
@@ -60,43 +60,25 @@ try :
   // Compute number of particle properties
   int nprop = m_nvelocity + m_nscalar;
   // Compute offset where scalars start
-  int offset = m_npar * m_nvelocity;
+  int offset = m_nvelocity * m_npar;
 
   // Allocate memory to store all particle properties
   m_particles =
     m_memory->newEntry<real>(m_npar*nprop, REAL, SCALAR, "Particles");  
 
-//   // Instantiate selected hydrodynamics model
-//   switch (control->get<control::HYDRO>()) {
-// 
-//     case control::HydroType::NO_HYDRO :
-//       Throw(FATAL, "No hydro model selected");
-//       break;
-// 
-//     case control::HydroType::SLM :
-//       m_hydro = new (nothrow) SimplifiedLangevin(memory,
-//                                                  paradigm,
-//                                                  control,
-//                                                  m_particles + 0);
-//       ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
-//       break;
-// 
-//     case control::HydroType::GLM :
-//       m_hydro = new (nothrow) GeneralizedLangevin(memory,
-//                                                   paradigm,
-//                                                   control,
-//                                                   m_particles + 0);
-//       ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
-//       break;
-// 
-//     default :
-//       Throw(FATAL, "Hydro model not implemented");
-//   }
+  // Instantiate hydrodynamics model
+  if (m_nvelocity) {
+    m_hydro = new (nothrow)
+      HydroType(memory, paradigm, control, m_particles + 0);
+    ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
+  }
 
-  // Instantiate selected mix model
-  m_mix = new (nothrow)
-    Mix<MixType>(memory, paradigm, control, m_nscalar, m_particles + offset);
-  ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
+  // Instantiate mix model
+  if (m_nscalar) {
+    m_mix = new (nothrow)
+      MixType(memory, paradigm, control, m_particles + offset);
+    ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
+  }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, this);
@@ -142,7 +124,7 @@ Physics::finalize() noexcept
 //******************************************************************************
 {
   m_memory->freeEntry(m_particles);  
-  //if (m_mix) { delete m_mix; m_mix = nullptr; }
+  if (m_mix) { delete m_mix; m_mix = nullptr; }
   if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_plot) { delete m_plot; m_plot = nullptr; }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri May 10 18:00:28 2013
+  \date      Sun 12 May 2013 02:30:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -34,6 +34,26 @@ class GeneralizedLangevin;
 //! Physics base
 class Physics {
 
+  private:
+  // Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
+  // on src/MainQuinoaConfig.h.in
+  // Hydrodynamics models
+  #ifdef QUINOA_SLM
+    using HydroType = SimplifiedLangevin;
+  #elif QUINOA_GLM
+    using HydroType = GeneralizedLangevin;
+  #else
+    #error "No hydrodynamics model defined in Base/QuinaConfig.h"
+  #endif
+  // Mix models
+  #ifdef QUINOA_DIRICHLET
+    using MixType = Dirichlet;
+  #elif QUINOA_GENERALIZED_DIRICHLET
+    using MixType = GeneralizedDirichlet;
+  #else
+    #error "No mix model defined in Base/QuinaConfig.h"
+  #endif
+
   public:
     //! Constructor
     explicit Physics(Memory* const memory,
@@ -63,11 +83,11 @@ class Physics {
 
     //! Constant accessor to hydro model
     //! \return Pointer to hydro model
-    //Hydro* hydro() const noexcept { return m_hydro; }
+    Hydro<HydroType>* hydro() const noexcept { return m_hydro; }
 
     //! Constant accessor to mix model
     //! \return Pointer to mix model
-    //Mix* mix() const noexcept { return m_mix; }
+    Mix<MixType>* mix() const noexcept { return m_mix; }
 
     //! Constant accessor to statistics estimator
     //! \return Pointer to statistics estimator
@@ -114,26 +134,6 @@ class Physics {
     Paradigm* const m_paradigm;           //!< Parallel programming object
     Control* const m_control;             //!< Control object
     Timer* const m_timer;                 //!< Timer object
-
-
-  // Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
-  // on src/MainQuinoaConfig.h.in
-  // Hydrodynamics models
-  #ifdef QUINOA_SLM
-    using HydroType = SimplifiedLangevin;
-  #elif QUINOA_GLM
-    using HydroType = GeneralizedLangevin;
-  #else
-    #error "No hydrodynamics model defined in Base/QuinaConfig.h"
-  #endif
-  // Mix models
-  #ifdef QUINOA_DIRICHLET
-    using MixType = Dirichlet;
-  #elif QUINOA_GENERALIZED_DIRICHLET
-    using MixType = GeneralizedDirichlet;
-  #else
-    #error "No mix model defined in Base/QuinaConfig.h"
-  #endif
 
     Mix<MixType>* m_mix;                  //!< Mix model object
     Hydro<HydroType>* m_hydro;            //!< Hydro model object    
