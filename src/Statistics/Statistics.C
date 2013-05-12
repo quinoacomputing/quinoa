@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu May  9 19:28:38 2013
+  \date      Sun 12 May 2013 05:22:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -58,14 +58,14 @@ try :
 
       m_instOrd.push_back(vector<const real*>());
       m_plotOrdinary.push_back(false);
-      m_nameOrdinary.push_back('\0');
+      m_nameOrdinary.push_back(FieldName());
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(m_physics->particles() + term.field);
         if (term.plot) m_plotOrdinary.back() = true;
-        // Put in term name
-        m_nameOrdinary.back() = term.name;
+        // Put in term name+field
+        m_nameOrdinary.back() = FieldName(term.name, term.field);
       }
 
       ++m_nord;
@@ -96,7 +96,7 @@ try :
           m_instCen[m_ncen].push_back(m_physics->particles() + term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
-           m_ordinary + (!isupper(term.name) ? mean(toupper(term.name)) : m_nord));
+            m_ordinary + (!isupper(term.name) ? mean(term) : m_nord));
           m_nameCentral.back() = term.name;
         }
 
@@ -170,19 +170,22 @@ Statistics::ordinary(const vector<control::Term>& product) const
 }
 
 int
-Statistics::mean(const int name) const
+Statistics::mean(const control::Term& term) const
 //******************************************************************************
 //  Return mean for fluctuation
-//! \param[in]  name      Name of fluctuation whose mean to search for
+//! \param[in]  term      Term (a fluctuation) whose mean to search for
 //! \author J. Bakosi
 //******************************************************************************
 {
   int size = m_nameOrdinary.size();
   for (int i=0; i<size; ++i) {
-    if (m_nameOrdinary[i] == name) return i;
+    if (m_nameOrdinary[i].name == toupper(term.name) &&
+        m_nameOrdinary[i].field == term.field) {
+       return i;
+    }
   }
 
-  Throw(FATAL, "Cannot find mean: " + string(1,name));
+  Throw(FATAL, string("Cannot find mean for variable ") + term);
 }
 
 bool
@@ -206,7 +209,7 @@ Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 {
   Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
-  return m_nameOrdinary[m];
+  return m_nameOrdinary[m].name;
 }
 
 int
