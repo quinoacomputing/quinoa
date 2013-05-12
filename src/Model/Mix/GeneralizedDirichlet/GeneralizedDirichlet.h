@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:39:00 PM MDT
+  \date      Sun 12 May 2013 03:40:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -40,9 +40,6 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
 
     //! Advance particles
     void advance(const real& dt);
-
-    //! Echo information on Dirichlet model
-    void echo() const;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);

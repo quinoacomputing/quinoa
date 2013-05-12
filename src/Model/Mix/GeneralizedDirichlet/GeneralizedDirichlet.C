@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:35:27 PM MDT
+  \date      Sun 12 May 2013 03:41:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -51,16 +51,6 @@ GeneralizedDirichlet::GeneralizedDirichlet(Memory* const memory,
             "Wrong number of generalized Dirichlet model parameters 'k'");
 //  ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
 //          FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
-}
-
-void
-GeneralizedDirichlet::echo() const
-//******************************************************************************
-//  Echo information on the generalized Dirichlet model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  cout << "Generalized Dirichlet" << endl;
 }
 
 void
