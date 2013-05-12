@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu May  9 19:26:04 2013
+  \date      Sun 12 May 2013 04:41:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -86,7 +86,7 @@ class Statistics {
     bool ordinary(const vector<control::Term>& product) const;
 
     //! Return mean for fluctuation
-    int mean(const int name) const;
+    int mean(const control::Term& term) const;
 
     //! Convert string to upper case
     string toUpper(const string& s) const;
@@ -101,12 +101,27 @@ class Statistics {
     const int m_nprop;                       //!< Number of particle properties
     const vector<control::Product> m_statistics;//!< Requested tatistics
 
+    struct FieldName {
+      int name;
+      int field;
+
+      //! Constructor
+      explicit FieldName(const int n = 0, const int f = 0) :
+        name(n), field(f) {}
+
+      //! Operator << for writing FieldName to output streams
+      friend ostream& operator<< (ostream& os, const FieldName& fn) {
+         os << char(fn.name) << fn.field+1;
+         return os;
+      }
+    };
+
     //! Instantaneous variable pointers for computing ordinary moments
     vector<vector<const real*>> m_instOrd;
-    Data<real> m_ordinary;                   //!< Ordinary moments
-    vector<bool> m_plotOrdinary;             //!< Whether to plot ord moments
-    vector<int> m_nameOrdinary;              //!< Names of ordinary moments
-    int m_nord;                              //!< Number of ordinary moments
+    Data<real> m_ordinary;                 //!< Ordinary moments
+    vector<bool> m_plotOrdinary;           //!< Whether to plot ord moments
+    vector<FieldName> m_nameOrdinary;      //!< FieldNames of ordinary moments
+    int m_nord;                            //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
     vector<vector<const real*>> m_instCen;

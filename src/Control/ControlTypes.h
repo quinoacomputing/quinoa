@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Thu May  9 21:19:24 2013
+  \date      Sun 12 May 2013 05:22:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -15,6 +15,7 @@
 #include <vector>
 #include <tuple>
 #include <ostream>
+#include <sstream>
 
 #include <QuinoaTypes.h>
 
@@ -88,11 +89,15 @@ struct Term {
                //! performance issue, plot is here in Term.
 
   //! Constructor
-  Term(const int f,
-       const Quantity q,
-       const Moment m,
-       const char n,
-       const bool p) : field(f), quantity(q), moment(m), name(n), plot(p) {}
+  explicit Term(const int f,
+                const Quantity q,
+                const Moment m,
+                const char n,
+                const bool p) : field(f),
+                                quantity(q),
+                                moment(m),
+                                name(n),
+                                plot(p) {}
 
   //! Equal operator for finding unique elements, used by e.g., std::unique()
   //! Test only on field, quantity, and moment
@@ -128,10 +133,17 @@ struct Term {
     }
   }
 
+  //! Operator + for adding Term (name+field ID) to a std::string
+  friend string operator+ (const string& lhs, const control::Term& term) {
+    stringstream ss;
+    ss << lhs << char(term.name) << term.field+1;
+    string rhs = ss.str();
+    return rhs;
+  }
+
   //! Operator << for writing Term to output streams
   friend ostream& operator<< (ostream& os, const Term& term) {
-    os << char(term.name);
-    if (term.field > 0) os << term.field+1;
+    os << char(term.name) << term.field+1;
     return os;
   }
 
