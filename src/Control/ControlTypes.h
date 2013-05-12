@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 05:22:37 PM MDT
+  \date      Sun 12 May 2013 05:30:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -75,18 +75,17 @@ enum Moment { ORDINARY=0,      //!< Full variable
 //! user as starting from 1. Examples: 1st pressure fluctuation: {0, PRESSURE,
 //! CENTRAL, ...}, mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY, ...}.
 struct Term {
-  int field;
-  Quantity quantity;
-  Moment moment;
-  int name;    //! Integer, stores the character code, converted only for output
-  bool plot;   //! Shows whether the variable will be plotted
-               //! Conceptually, plot should be in Product, since plot will only
-               //! be false for a mean that was triggered by a central moment by
-               //! one of the Terms of a Product requesting the mean or a model.
-               //! However, that would require Product to be a vector<struct>,
-               //! which then would need custom comparitors for std::sort() and
-               //! std::unique() in Parser::unique(). Since this is not a
-               //! performance issue, plot is here in Term.
+  int field;         //!< Field ID
+  Quantity quantity; //!< Physical quantity
+  Moment moment;     //!< Moment type: ordinary, central
+  int name;          //!< Character code as name, converted only for output
+  bool plot;   //!< Shows whether the variable will be plotted
+  // Conceptually, plot should be in Product, since plot will only be false for
+  // a mean that was triggered by a central moment by one of the Terms of a
+  // Product requesting the mean or a model. However, that would require
+  // Product to be a vector<struct>, which then would need custom comparitors
+  // for std::sort() and std::unique() in Parser::unique(). Since this is not a
+  // performance issue, plot is here in Term.
 
   //! Constructor
   explicit Term(const int f,
