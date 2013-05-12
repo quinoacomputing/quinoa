@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Tue May  7 12:54:28 2013
+  \date      Sat 11 May 2013 12:19:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <sstream>
+#include <iostream>
 
 #include <mkl_vsl.h>
 

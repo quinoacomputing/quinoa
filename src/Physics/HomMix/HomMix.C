@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri May 10 11:27:48 2013
+  \date      Sat 11 May 2013 12:14:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -21,6 +21,8 @@
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
 #include <Statistics.h>
+#include <Dirichlet.h>
+#include <GeneralizedDirichlet.h>
 
 using namespace Quinoa;
 
@@ -73,7 +75,7 @@ HomMix::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    //mix()->advance(dt);
+    mix()->advance(dt);
 
     // Accumulate statistics
     statistics()->accumulate();
@@ -160,20 +162,20 @@ HomMix::outJpdf(const real t)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Contruct filename
-  stringstream ss;
-  ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
-  string filename = ss.str();
-
-  // Create joint PDF
-  JPDF jpdf(m_nscalar, 0.02);
-
-  // Estimate joint PDF
-  //mix()->jpdf(jpdf);
-
-  // Output joint PDF
-  PDFWriter jpdfFile(filename);
-  jpdfFile.writeGmsh(&jpdf);
+//   // Contruct filename
+//   stringstream ss;
+//   ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
+//   string filename = ss.str();
+// 
+//   // Create joint PDF
+//   JPDF jpdf(m_nscalar, 0.02);
+// 
+//   // Estimate joint PDF
+//   m_mix->jpdf(jpdf);
+// 
+//   // Output joint PDF
+//   PDFWriter jpdfFile(filename);
+//   jpdfFile.writeGmsh(&jpdf);
 }
 
 void
@@ -192,5 +194,5 @@ HomMix::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //mix()->init();
+  mix()->init();
 }
