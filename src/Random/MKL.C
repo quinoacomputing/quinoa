@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Sat 11 May 2013 12:19:59 PM MDT
+  \date      Sun 12 May 2013 09:12:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -93,6 +93,35 @@ MKL::gamma(const int& method,
   vdRngGamma(method, stream, n, r, alpha, a, beta);
 #else  // NDEBUG
   MKLErrChk(vdRngGamma(method, stream, n, r, alpha, a, beta));
+#endif // NDEBUG
+}
+
+void
+MKL::beta(const int& method,
+          const VSLStreamStatePtr& stream,
+          const int& n,
+          real* r,
+          const real& alpha,
+          const real& beta,
+          const real& disp,
+          const real& scale) const
+//******************************************************************************
+//  Call MKL's vdRngBeta() and handle error
+//! \param[in]  method   Generation method
+//! \param[in]  stream   Pointer to the stream state structure
+//! \param[in]  n        Number of random values to be generated
+//! \param[out] r        Vector of n beta-distributed random numbers
+//! \param[in] alpha     First shape parameter
+//! \param[in] beta      Second shape parameter
+//! \param[in] disp      Displacement (i.e., shift) parameter
+//! \param[in] scale     Scale parameter
+//! \author  J. Bakosi
+//******************************************************************************
+{
+#ifdef NDEBUG
+  vdRngBeta(method, stream, n, r, alpha, beta, disp, scale);
+#else  // NDEBUG
+  MKLErrChk(vdRngBeta(method, stream, n, r, alpha, beta, disp, scale));
 #endif // NDEBUG
 }
 

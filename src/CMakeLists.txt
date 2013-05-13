@@ -87,6 +87,29 @@ else()
 endif()
 
 
+# Mass model options
+
+# Available mass models
+SET (MASS_VALUES "BETA")
+
+# Initialize all to off
+SET (QUINOA_BETA off)              # 0
+
+# Set default and select from list
+SET (QUINOA_MODEL_MASS "BETA"
+     CACHE STRING "Select mass model. Default: BETA (Beta distribution model). Available options: ${MASS_VALUES}")
+SET_PROPERTY (CACHE QUINOA_MODEL_MASS PROPERTY STRINGS ${MASS_VALUES})
+STRING (TOUPPER ${QUINOA_MODEL_MASS} QUINOA_MODEL_MASS)
+LIST (FIND MASS_VALUES ${QUINOA_MODEL_MASS} MASS_INDEX)
+
+# Evaluate selected model and put in define for it
+IF (${MASS_INDEX} EQUAL 0)
+  SET (QUINOA_BETA on)
+ELSEIF (${MASS_INDEX} EQUAL -1)
+  MESSAGE(FATAL_ERROR "Mass model ${QUINOA_MODEL_MASS} not supported, valid entries are ${MASS_VALUES}")
+ENDIF()
+
+
 # Hydro model options
 
 # Available hydrodyanmics models
@@ -211,6 +234,7 @@ add_subdirectory(Base)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
+add_subdirectory(Model/Mass/Beta)
 add_subdirectory(Model/Mix/Dirichlet)
 add_subdirectory(Model/Mix/GeneralizedDirichlet)
 add_subdirectory(Model/Hydro/SimplifiedLangevin)

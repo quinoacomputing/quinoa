@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Thu May  9 21:37:23 2013
+  \date      Sun 12 May 2013 08:15:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -35,9 +35,6 @@ class HomRT : public Physics {
 
     //! Destructor
     virtual ~HomRT() noexcept = default;
-
-    //! Echo informaion on model
-    virtual void echo() const;
 
     //! Initialize model
     virtual void init();
