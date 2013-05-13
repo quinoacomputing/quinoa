@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sat 11 May 2013 08:22:20 AM MDT
+  \date      Sun 12 May 2013 09:38:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -25,13 +25,15 @@ namespace control {
 const Bundle DEFAULTS(
   "",                         //!< Title
   NO_PHYSICS,                 //!< Physics
-  NO_POSITION,                //!< Position
+  NO_POSITION,                //!< Position model
+  NO_MASS,                    //!< Mass model
   NO_HYDRO,                   //!< Hydrodynamics model
   NO_MIX,                     //!< Material mix model
   numeric_limits<int>::max(), //!< Number of time steps to take
   1.0,                        //!< Time to terminate time stepping
   0.5,                        //!< Size of time step
   0,                          //!< Number of position components
+  0,                          //!< Number of density components
   0,                          //!< Number of velocity components
   0,                          //!< Number of scalar components
   1,                          //!< Total number of particles

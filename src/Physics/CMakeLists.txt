@@ -11,6 +11,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Model/Mass
+                    ${QUINOA_SOURCE_DIR}/Model/Mass/Beta
                     ${QUINOA_SOURCE_DIR}/Model/Mix
                     ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
                     ${QUINOA_SOURCE_DIR}/Model/Mix/GeneralizedDirichlet

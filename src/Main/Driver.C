@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue May  7 12:23:52 2013
+  \date      Sun 12 May 2013 08:20:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -17,6 +17,7 @@
 #include <Parser.h>
 #include <HomMix.h>
 #include <HomHydro.h>
+#include <HomRT.h>
 #include <SPINSFlow.h>
 
 using namespace Quinoa;
@@ -86,6 +87,13 @@ try :
              "Cannot allocate memory for physics object");
       break;
 
+    case control::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR :
+      m_physics = new (nothrow)
+                  HomRT(m_memory, m_paradigm, m_control, m_timer);
+      ErrChk(m_physics != nullptr, FATAL,
+             "Cannot allocate memory for physics object");
+      break;
+
     case control::PhysicsType::SPINSFLOW :
       m_physics = new (nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
@@ -97,9 +105,6 @@ try :
     default :
       Throw(FATAL, "Selected physics not implemented");
   }
-
-  // Echo information on physics selected
-  m_physics->echo();
 
   // Set initial conditions
   m_physics->init();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 02:30:35 PM MDT
+  \date      Sun 12 May 2013 09:34:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,6 +12,7 @@
 #define Physics_h
 
 #include <QuinoaConfig.h>
+#include <Mass.h>
 #include <Mix.h>
 #include <Hydro.h>
 
@@ -30,6 +31,7 @@ class Dirichlet;
 class GeneralizedDirichlet;
 class SimplifiedLangevin;
 class GeneralizedLangevin;
+class Beta;
 
 //! Physics base
 class Physics {
@@ -37,6 +39,14 @@ class Physics {
   private:
   // Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
   // on src/MainQuinoaConfig.h.in
+
+  // Mass models
+  #ifdef QUINOA_BETA
+    using MassType = Beta;
+  #else
+    #error "No mass model defined in Base/QuinaConfig.h"
+  #endif
+
   // Hydrodynamics models
   #ifdef QUINOA_SLM
     using HydroType = SimplifiedLangevin;
@@ -45,6 +55,7 @@ class Physics {
   #else
     #error "No hydrodynamics model defined in Base/QuinaConfig.h"
   #endif
+
   // Mix models
   #ifdef QUINOA_DIRICHLET
     using MixType = Dirichlet;
@@ -64,9 +75,6 @@ class Physics {
     //! Destructor
     virtual ~Physics() noexcept;
 
-    //! Echo informaion on physics
-    virtual void echo() const = 0;
-
     //! Initialize physics
     virtual void init() = 0;
 
@@ -80,6 +88,10 @@ class Physics {
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
     Timer* timer() const noexcept { return m_timer; }
+
+    //! Constant accessor to mass model
+    //! \return Pointer to mass model
+    Mass<MassType>* mass() const noexcept { return m_mass; }
 
     //! Constant accessor to hydro model
     //! \return Pointer to hydro model
@@ -107,10 +119,11 @@ class Physics {
 
     //! Accessor to number of particle (velocity+scalar) properties
     //! \return Number of particle (velocity+scalar) components
-    int nprop() const noexcept { return m_nvelocity + m_nscalar; }
+    int nprop() const noexcept { return m_ndensity + m_nvelocity + m_nscalar; }
 
   protected:
     const int m_nthread;                  //!< Number of threads
+    const int m_ndensity;                 //!< Number of density components
     const int m_nvelocity;                //!< Number of velocity components
     const int m_nscalar;                  //!< Number of scalar components
     const int m_npar;                     //!< Numer of particles
@@ -135,8 +148,9 @@ class Physics {
     Control* const m_control;             //!< Control object
     Timer* const m_timer;                 //!< Timer object
 
-    Mix<MixType>* m_mix;                  //!< Mix model object
+    Mass<MassType>* m_mass;               //!< Mass model object    
     Hydro<HydroType>* m_hydro;            //!< Hydro model object    
+    Mix<MixType>* m_mix;                  //!< Mix model object
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
     TxtPlotWriter* m_plot;                //!< Plot file writer

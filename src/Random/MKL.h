@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Tue May  7 11:20:14 2013
+  \date      Sun 12 May 2013 09:19:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -51,6 +51,16 @@ class MKL {
                const real& alpha,
                const real& a,
                const real& beta) const;
+
+    //! Call MKL's vdRngBeta() and handle error
+    void beta(const int& method,
+              const VSLStreamStatePtr& stream,
+              const int& n,
+              real* r,
+              const real& alpha,
+              const real& beta,
+              const real& disp,
+              const real& scale) const;
 
   protected:
     //! Call MKL's vslNewStream() and handle error

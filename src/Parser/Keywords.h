@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Thu May  9 18:45:10 2013
+  \date      Sun 12 May 2013 09:42:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -43,6 +43,10 @@ namespace keyword {
   using invpos = pegtl::string< i,n,v,p,o,s >;
   //   * Viscous model
   using vispos = pegtl::string< v,i,s,p,o,s >;
+
+  // Select mass model:
+  //   * Beta model
+  using beta = pegtl::string< b,e,t,a >;
 
   // Select hydrodynamics model:
   //   * Simplified Langevin model

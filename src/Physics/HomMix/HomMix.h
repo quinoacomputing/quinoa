@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Thu May  9 21:29:55 2013
+  \date      Sun 12 May 2013 08:14:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -21,9 +21,6 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Statistics;
-class GlobWriter;
-class TxtPlotWriter;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -37,9 +34,6 @@ class HomMix : public Physics {
 
     //! Destructor
     virtual ~HomMix() noexcept = default;
-
-    //! Echo informaion on model
-    virtual void echo() const;
 
     //! Initialize model
     virtual void init();

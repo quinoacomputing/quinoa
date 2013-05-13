@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sat 11 May 2013 12:14:59 PM MDT
+  \date      Sun 12 May 2013 08:14:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -176,15 +176,6 @@ HomMix::outJpdf(const real t)
 //   // Output joint PDF
 //   PDFWriter jpdfFile(filename);
 //   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomMix::echo() const
-//******************************************************************************
-//  Echo informaion on homogeneous material mix
-//! \author  J. Bakosi
-//******************************************************************************
-{
 }
 
 void

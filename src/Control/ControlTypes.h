@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 05:30:28 PM MDT
+  \date      Sun 12 May 2013 09:37:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -29,6 +29,7 @@ namespace control {
 enum PhysicsType { NO_PHYSICS=0,
                    HOMOGENEOUS_MIX,
                    HOMOGENEOUS_HYDRO,
+                   HOMOGENEOUS_RAYLEIGH_TAYLOR,
                    SPINSFLOW,
                    NUM_PHYSICS
 };
@@ -38,6 +39,12 @@ enum PositionType { NO_POSITION=0,
                     INVISCID,
                     VISCOUS,
                     NUM_POSITION
+};
+
+//! Mass model types
+enum MassType { NO_MASS=0,
+                BETA,
+                NUM_MASS
 };
 
 //! Hydrodynamics model types
@@ -177,12 +184,14 @@ using Product = vector<Term>;
 enum BundlePosition { TITLE=0,
                       PHYSICS,
                       POSITION,
+                      MASS,
                       HYDRO,
                       MIX,
                       NSTEP,
                       TERM,
                       DT,
                       NPOSITION,
+                      NDENSITY,
                       NVELOCITY,
                       NSCALAR,
                       NPAR,
@@ -207,12 +216,14 @@ using Bundle = tuple<
   string,               //!< Problem Title
   PhysicsType,          //!< Selected physics
   PositionType,         //!< Selected position model
+  MassType,             //!< Selected mass model
   HydroType,            //!< Selected hydrodynamics model
   MixType,              //!< Selected material mix model
   int,                  //!< Number of time steps to take
   real,                 //!< Time to terminate time stepping
   real,                 //!< Size of time step
   int,                  //!< Number of position components in position model
+  int,                  //!< Number of density components in mass model
   int,                  //!< Number of velocity components in hydro model
   int,                  //!< Number of mixing scalars in material mix model
   int,                  //!< Total number of particles

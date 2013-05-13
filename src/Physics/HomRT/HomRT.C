@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Fri May 10 11:28:58 2013
+  \date      Sun 12 May 2013 08:16:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -173,15 +173,6 @@ HomRT::outJpdf(const real t)
   // Output joint PDF
   PDFWriter jpdfFile(filename);
   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomRT::echo() const
-//******************************************************************************
-//  Echo informaion on homogeneous material mix
-//! \author  J. Bakosi
-//******************************************************************************
-{
 }
 
 void

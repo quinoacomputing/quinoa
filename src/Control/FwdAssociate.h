@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FwdAssociate.h
   \author    J. Bakosi
-  \date      Thu May  9 19:15:23 2013
+  \date      Sun 12 May 2013 08:18:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Forward, keyword (string) to data associations
   \details   Forward, keyword (string) to data associations
@@ -25,8 +25,9 @@ namespace associate {
   struct PhysicsEnumStruct {
     static physics_enum make() {
       physics_enum m;
-      m["hommix"] = control::PhysicsType::HOMOGENEOUS_MIX;
-      m["homhydro"] = control::PhysicsType::HOMOGENEOUS_HYDRO;
+      m["hommix"]    = control::PhysicsType::HOMOGENEOUS_MIX;
+      m["homhydro"]  = control::PhysicsType::HOMOGENEOUS_HYDRO;
+      m["homrt"]     = control::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR;
       m["spinsflow"] = control::PhysicsType::SPINSFLOW;
       return m;
     }
@@ -68,9 +69,9 @@ namespace associate {
   struct MixEnumStruct {
     static mix_enum make() {
       mix_enum m;
-      m["iem"] = control::MixType::IEM;
-      m["iecm"] = control::MixType::IECM;
-      m["dir"] = control::MixType::DIRICHLET;
+      m["iem"]    = control::MixType::IEM;
+      m["iecm"]   = control::MixType::IECM;
+      m["dir"]    = control::MixType::DIRICHLET;
       m["gendir"] = control::MixType::GENERALIZED_DIRICHLET;
       return m;
     }
