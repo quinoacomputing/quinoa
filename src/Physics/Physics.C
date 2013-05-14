@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:39:11 PM MDT
+  \date      Mon 13 May 2013 09:06:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -49,6 +49,7 @@ try :
   m_paradigm(paradigm),
   m_control(control),
   m_timer(timer),
+  m_mass(nullptr),
   m_hydro(nullptr),
   m_mix(nullptr),
   m_statistics(nullptr),
@@ -56,6 +57,10 @@ try :
   m_plot(nullptr),
   m_particles()
 {
+
+  ErrChk( m_ndensity != 0 ||
+          m_nvelocity != 0 ||
+          m_nscalar != 0, FATAL, "No need for physics?");
 
   // Allocate memory to store all particle properties
   m_particles =
@@ -68,7 +73,7 @@ try :
   if (m_ndensity) {
     m_mass = new (nothrow)
       MassType(memory, paradigm, control, m_particles + 0);
-    ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
+    ErrChk(m_mass != nullptr, FATAL, "Cannot allocate memory");
   }
 
   // Instantiate hydrodynamics model
@@ -139,6 +144,6 @@ Physics::finalize() noexcept
   if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
-  if (m_plot) { delete m_plot; m_plot = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
+  if (m_plot) { delete m_plot; m_plot = nullptr; }
 }

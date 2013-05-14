@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:42:52 PM MDT
+  \date      Mon 13 May 2013 08:58:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -85,6 +85,8 @@ namespace keyword {
 
   // Number of particle position components
   using nposition = pegtl::string< n,p,o,s,i,t,i,o,n >;
+  // Number of particle density components
+  using ndensity = pegtl::string< n,d,e,n,s,i,t,y >;
   // Number of particle velocity components
   using nvelocity = pegtl::string< n,v,e,l,o,c,i,t,y >;
   // Number of particle scalar components
@@ -98,6 +100,9 @@ namespace keyword {
 
   // Langevin model parameters
   using SLM_C0 = pegtl::string< C,'0' >;
+
+  // Beta model parameters
+  using Beta_At = pegtl::string< A,t >;
 
   // Quantities
   using transported_scalar = pegtl::string< Y >;

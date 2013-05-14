@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BackAssociate.h
   \author    J. Bakosi
-  \date      Thu May  9 19:17:04 2013
+  \date      Mon 13 May 2013 08:19:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Backward, data to keyword/name associations
   \details   Backward, data to keyword/name associations
@@ -44,6 +44,17 @@ namespace associate {
     "No model",
     "Inviscid",
     "Viscous"
+  };
+
+  // MassType -> keyword
+  const string MassKeyword[control::NUM_MASS] = {
+    "no_mass",
+    "beta"
+  };
+  // MassType -> name
+  const string MassName[control::NUM_MASS] = {
+    "No model",
+    "Beta"
   };
 
   // HydroType -> keyword

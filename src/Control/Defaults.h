@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:38:03 PM MDT
+  \date      Mon 13 May 2013 08:11:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -50,6 +50,7 @@ const Bundle DEFAULTS(
   vector<real>(),             //!< Parameters 'kappa'
   vector<real>(),             //!< Parameters 'c_ij'
   2.1,                        //!< Parameter C0
+  0.5,                        //!< Parameter Atwood number
   vector<Product>()           //!< Statistics
 );
 

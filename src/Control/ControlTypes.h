@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:37:14 PM MDT
+  \date      Mon 13 May 2013 08:11:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -208,6 +208,7 @@ enum BundlePosition { TITLE=0,
                       KAPPA,
                       C,
                       C0,
+                      AT,
                       STATISTICS
 };
 
@@ -240,6 +241,7 @@ using Bundle = tuple<
   vector<real>,         //!< Parameters 'kappa' in Dirichlet mix models
   vector<real>,         //!< Parameters 'c_ij' in GenDirichlet mix models
   real,                 //!< Parameter C0 in the simplified Langevin model
+  real,                 //!< Atwood number in beta model
   vector<Product>       //!< Requested (and triggered) statistics
 >;
 

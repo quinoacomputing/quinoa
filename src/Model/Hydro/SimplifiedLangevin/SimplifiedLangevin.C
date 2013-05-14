@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Fri May 10 17:54:56 2013
+  \date      Mon 13 May 2013 09:23:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -17,7 +17,6 @@
 #include "omp.h"
 #endif // _OPENMP
 
-#include <Macro.h>
 #include <SimplifiedLangevin.h>
 #include <Hydro.h>
 #include <Control.h>
@@ -134,7 +133,6 @@ SimplifiedLangevin::advance(const real& dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  IGNORE(dt);
 //   int tid, p, i;
 //   real d, tke, eps, S=1.0;
 //   real* X;
