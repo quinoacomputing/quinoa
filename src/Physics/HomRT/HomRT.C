@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 08:16:19 PM MDT
+  \date      Mon 13 May 2013 09:19:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -20,6 +20,8 @@
 #include <GlobWriter.h>
 #include <TxtPlotWriter.h>
 #include <Statistics.h>
+#include <Beta.h>
+#include <SimplifiedLangevin.h>
 
 using namespace Quinoa;
 
@@ -72,19 +74,20 @@ HomRT::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    //mix()->advance(dt);
+    mass()->advance(dt);
+    hydro()->advance(dt);
 
     // Accumulate statistics
     statistics()->accumulate();
 
-    // Output pdf at selected times
-    if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
-
-    // Append glob file at selected times
-    if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
-
-    // Append plot file at selected times
-    if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
+//     // Output pdf at selected times
+//     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
+// 
+//     // Append glob file at selected times
+//     if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
+// 
+//     // Append plot file at selected times
+//     if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

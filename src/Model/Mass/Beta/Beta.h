@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 08:34:31 PM MDT
+  \date      Mon 13 May 2013 08:21:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -51,6 +51,8 @@ class Beta : public Mass<Beta> {
     Beta(Beta&&) = delete;
     //! Don't permit move assigment
     Beta& operator=(Beta&&) = delete;
+
+    const real m_At;            //!< Atwood-number
 };
 
 } // namespace Quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue May  7 17:17:06 2013
+  \date      Mon 13 May 2013 09:08:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -83,29 +83,21 @@ Parser::unique(vector<control::Product>& statistics)
 }
 
 void
-Parser::echoMix() const
+Parser::echoPhysicsCommon() const
 //******************************************************************************
-//  Echo parsed data from material mix block
+//  Echo parsed data common to all physics
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Material mixing: " << m_control->mixName() << endl;
-
   m_control->echo<control::NSTEP>("Number of time steps");
   m_control->echo<control::TERM>("Terminate time");
   m_control->echo<control::DT>("Time step size");
-  m_control->echo<control::NSCALAR>("Number of mixing scalars");
   m_control->echo<control::NPAR>("Number of particles");
   m_control->echo<control::TTYI>("TTY output interval");
   m_control->echo<control::DUMP>("Dump output interval");
   m_control->echo<control::PLTI>("Plot output interval");
   m_control->echo<control::PDFI>("PDF output interval");
   m_control->echo<control::GLOB>("Glob output interval");
-  m_control->echo<control::C0>("C0");
-  m_control->echoVec<control::B>("Parameter vector b");
-  m_control->echoVec<control::S>("Parameter vector S");
-  m_control->echoVec<control::KAPPA>("Parameter vector kappa");
-  m_control->echoVec<control::C>("Parameter vector c");
   m_control->echoVecVecNames<control::STATISTICS>("Requested statistics",true);
   m_control->echoVecVecNames<control::STATISTICS>("Estimated statistics");
   m_control->echo<control::PDFNAME>("PDF base filename");
@@ -114,29 +106,45 @@ Parser::echoMix() const
 }
 
 void
-Parser::echoHydro() const
+Parser::echoMass() const
 //******************************************************************************
-//  Echo parsed data from hydrodynamics block
+//  Echo parsed data specific to mass model
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Hydrodynamics: " << m_control->hydroName() << endl;
+  cout << " * Mass model: " << m_control->massName() << endl;
 
-  m_control->echo<control::NSTEP>("Number of time steps");
-  m_control->echo<control::TERM>("Terminate time");
-  m_control->echo<control::DT>("Time step size");
-  m_control->echo<control::NPAR>("Number of particles");
-  m_control->echo<control::TTYI>("TTY output interval");
-  m_control->echo<control::DUMP>("Dump output interval");
-  m_control->echo<control::PLTI>("Plot output interval");
-  m_control->echo<control::PDFI>("PDF output interval");
-  m_control->echo<control::GLOB>("Glob output interval");
+  m_control->echo<control::NDENSITY>("Number of density components");
+  m_control->echo<control::AT>("At");
+}
+
+void
+Parser::echoHydro() const
+//******************************************************************************
+//  Echo parsed data specific to hydrodynamics model
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Hydrodynamics model: " << m_control->hydroName() << endl;
+
+  m_control->echo<control::NVELOCITY>("Number of velocity components");
   m_control->echo<control::C0>("C0");
-  m_control->echoVecVecNames<control::STATISTICS>("Requested statistics",true);
-  m_control->echoVecVecNames<control::STATISTICS>("Estimated statistics");
-  m_control->echo<control::PDFNAME>("PDF base filename");
-  m_control->echo<control::GLOBNAME>("Glob filename");
-  m_control->echo<control::PLOTNAME>("Plot base filename");
+}
+
+void
+Parser::echoMix() const
+//******************************************************************************
+//  Echo parsed data specific to mix model
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Material mix model: " << m_control->mixName() << endl;
+
+  m_control->echo<control::NSCALAR>("Number of scalar components");
+  m_control->echoVec<control::B>("Parameter vector b");
+  m_control->echoVec<control::S>("Parameter vector S");
+  m_control->echoVec<control::KAPPA>("Parameter vector kappa");
+  m_control->echoVec<control::C>("Parameter vector c");
 }
 
 void
@@ -152,8 +160,12 @@ Parser::echo() const
   if (m_control->set<control::TITLE>())
     cout << " * Title: " << m_control->get<control::TITLE>() << endl;
 
-  if (m_control->set<control::PHYSICS>())
+  if (m_control->set<control::PHYSICS>()) {
     cout << " * Physics: " << m_control->physicsName() << endl;
+    echoPhysicsCommon();
+  }
+
+  if (m_control->set<control::MASS>()) echoMass();
 
   if (m_control->set<control::HYDRO>()) echoHydro();
 

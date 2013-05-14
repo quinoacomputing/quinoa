@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu May  9 19:13:36 2013
+  \date      Mon 13 May 2013 09:11:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -168,6 +168,16 @@ namespace grammar {
     }
   };
 
+  // store selected mass model
+  struct store_mass : action_base< store_mass > {
+    static void apply(const std::string& value,
+                      stack_type& stack,
+                      boolstack_type& boolstack) {
+      get<control::MASS>(stack) = associate::MassEnum[value];
+      boolstack[control::MASS] = true;
+    }
+  };
+
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value,
@@ -327,72 +337,57 @@ namespace grammar {
                         push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>,
                         push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>
                       >,
-                 block< process<keyword::SLM_C0, cstore<control::C0>> >
+                 block< process<keyword::SLM_C0, cstore<control::C0>>,
+                        process<keyword::nvelocity, cstore<control::NVELOCITY>>
+                      >
                > {};
+
+  // beta block
+  struct beta :
+         ifmust< parse< keyword::beta, store_mass >,
+                 block< process<keyword::ndensity, cstore<control::NDENSITY>>,
+                        process<keyword::Beta_At, cstore<control::AT>> >
+               > {};
+
+  // common to all physics
+  struct physics_common :
+         sor< process<keyword::nstep, cstore<control::NSTEP>>,
+              process<keyword::term, cstore<control::TERM>>,
+              process<keyword::dt, cstore<control::DT>>,
+              process<keyword::npar, cstore<control::NPAR>>,
+              process<keyword::pdfname, store<control::PDFNAME>>,
+              process<keyword::globname, store<control::GLOBNAME>>,
+              process<keyword::plotname, store<control::PLOTNAME>>,
+              process<keyword::glob, cstore<control::GLOB>>,
+              process<keyword::pdfi, cstore<control::PDFI>>,
+              process<keyword::plti, cstore<control::PLTI>>,
+              process<keyword::ttyi, cstore<control::TTYI>>,
+              process<keyword::dump, cstore<control::DUMP>>
+            > {};
 
   // hommix block
   struct hommix :
          ifmust< parse<keyword::hommix, store_physics>,
-                 block< process<keyword::nstep, cstore<control::NSTEP>>,
-                        process<keyword::term, cstore<control::TERM>>,
-                        process<keyword::dt, cstore<control::DT>>,
-                        process<keyword::npar, cstore<control::NPAR>>,
-                        process<keyword::pdfname, store<control::PDFNAME>>,
-                        process<keyword::globname, store<control::GLOBNAME>>,
-                        process<keyword::plotname, store<control::PLOTNAME>>,
-                        process<keyword::glob, cstore<control::GLOB>>,
-                        process<keyword::pdfi, cstore<control::PDFI>>,
-                        process<keyword::plti, cstore<control::PLTI>>,
-                        process<keyword::ttyi, cstore<control::TTYI>>,
-                        process<keyword::dump, cstore<control::DUMP>>,
-                        dir, gendir, statistics
-                      >
-               > {};
+                 block< physics_common,
+                        dir, gendir, statistics > > {};
 
   // homrt block
   struct homrt :
          ifmust< parse<keyword::homrt, store_physics>,
-                 block< process<keyword::nstep, cstore<control::NSTEP>>,
-                        process<keyword::term, cstore<control::TERM>>,
-                        process<keyword::dt, cstore<control::DT>>,
-                        process<keyword::npar, cstore<control::NPAR>>,
-                        process<keyword::pdfname, store<control::PDFNAME>>,
-                        process<keyword::globname, store<control::GLOBNAME>>,
-                        process<keyword::plotname, store<control::PLOTNAME>>,
-                        process<keyword::glob, cstore<control::GLOB>>,
-                        process<keyword::pdfi, cstore<control::PDFI>>,
-                        process<keyword::plti, cstore<control::PLTI>>,
-                        process<keyword::ttyi, cstore<control::TTYI>>,
-                        process<keyword::dump, cstore<control::DUMP>>,
-                        dir, gendir, slm, statistics
-                      >
-               > {};
+                 block< physics_common,
+                        dir, gendir, slm, beta, statistics > > {};
 
   // homhydro block
   struct homhydro :
          ifmust< parse<keyword::homhydro, store_physics>,
-                 block< process<keyword::nstep, cstore<control::NSTEP>>,
-                        process<keyword::term, cstore<control::TERM>>,
-                        process<keyword::dt, cstore<control::DT>>,
-                        process<keyword::npar, cstore<control::NPAR>>,
-                        process<keyword::pdfname, store<control::PDFNAME>>,
-                        process<keyword::globname, store<control::GLOBNAME>>,
-                        process<keyword::plotname, store<control::PLOTNAME>>,
-                        process<keyword::glob, cstore<control::GLOB>>,
-                        process<keyword::pdfi, cstore<control::PDFI>>,
-                        process<keyword::plti, cstore<control::PLTI>>,
-                        process<keyword::ttyi, cstore<control::TTYI>>,
-                        process<keyword::dump, cstore<control::DUMP>>,
-                        slm, statistics
-                      >
-               > {};
+                 block< physics_common,
+                        slm, statistics > > {};
 
   // spinsflow block
   struct spinsflow :
          ifmust< parse<keyword::spinsflow, store_physics>,
-                 block< process<keyword::position, store_position, position>,
-                        process<keyword::hydro, store_hydro, hydro>,
-                        process<keyword::mix, store_mix, mix> > > {};
+                 block< physics_common,
+                        slm, dir, gendir, beta > > {};
 
   // physics
   struct physics :

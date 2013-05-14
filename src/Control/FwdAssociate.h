@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FwdAssociate.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 08:18:38 PM MDT
+  \date      Mon 13 May 2013 08:18:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Forward, keyword (string) to data associations
   \details   Forward, keyword (string) to data associations
@@ -51,6 +51,17 @@ namespace associate {
     }
   };
   static position_enum PositionEnum = PositionEnumStruct::make();
+
+  // string -> MassType
+  using mass_enum = unordered_map< std::string, control::MassType >;
+  struct MassEnumStruct {
+    static mass_enum make() {
+      mass_enum m;
+      m["beta"] = control::MassType::BETA;
+      return m;
+    }
+  };
+  static mass_enum MassEnum = MassEnumStruct::make();
 
   // string -> HydroType
   using hydro_enum = unordered_map< std::string, control::HydroType >;

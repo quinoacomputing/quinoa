@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed May  8 09:36:35 2013
+  \date      Mon 13 May 2013 08:45:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -92,6 +92,15 @@ class Control {
     //! Get physics name
     const std::string& physicsName() const noexcept {
       return associate::PhysicsName[ std::get<control::PHYSICS>(m_data) ];
+    }
+
+    //! Get mass model keyword
+    const std::string& massKeyword() const noexcept {
+      return associate::MassKeyword[ std::get<control::MASS>(m_data) ];
+    }
+    //! Get mass model name
+    const std::string& massName() const noexcept {
+      return associate::MassName[ std::get<control::MASS>(m_data) ];
     }
 
     //! Get hydrodynamics model keyword
