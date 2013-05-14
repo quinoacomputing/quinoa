@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Fri May 10 17:52:48 2013
+  \date      Mon 13 May 2013 10:35:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -11,8 +11,6 @@
 #ifndef SimplifiedLangevin_h
 #define SimplifiedLangevin_h
 
-#include <mkl_vsl.h>
-
 #include <Memory.h>
 #include <Hydro.h>
 
@@ -20,9 +18,6 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class MKLRandom;
-class MKLRndStream;
-class MemoryEntry;
 class JPDF;
 
 //! SimplifiedLangevin : Hydro<SimplifiedLangevin> child for CRTP
@@ -37,16 +32,13 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
                                 real* const velocities);
 
     //! Destructor
-    virtual ~SimplifiedLangevin() noexcept;
+    virtual ~SimplifiedLangevin() noexcept = default;
 
     //! Initialize particles
     void init();
 
     //! Advance particles
     void advance(const real& dt);
-
-    //! Echo information on the simplified Langevin model
-    void echo() const;
 
   private:
     //! Don't permit copy constructor
@@ -58,15 +50,7 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
     //! Don't permit move assigment
     SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
     const real m_C0;                //!< Parameter C0 in SLM
-
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

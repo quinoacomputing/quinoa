@@ -10,6 +10,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Model/Hydro/GeneralizedLangevin
                     ${QUINOA_SOURCE_DIR}/Model/Hydro
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Control
+                    ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Base
 )
 
