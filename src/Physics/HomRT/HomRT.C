@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:19:20 PM MDT
+  \date      Mon 13 May 2013 10:29:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -181,9 +181,10 @@ HomRT::outJpdf(const real t)
 void
 HomRT::init()
 //******************************************************************************
-//  Initialize homogeneous material mix
+//  Initialize homogeneous Rayleigh-Taylor
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //mix()->init();
+  mass()->init();
+  hydro()->init();
 }

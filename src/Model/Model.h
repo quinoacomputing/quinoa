@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Sat 11 May 2013 12:07:03 PM MDT
+  \date      Mon 13 May 2013 10:17:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -13,6 +13,8 @@
 
 #include <QuinoaTypes.h>
 #include <Exception.h>
+#include <MKLRandom.h>
+#include <MKLRndStream.h>
 
 using namespace std;
 
@@ -46,6 +48,14 @@ class Model {
     Paradigm* const m_paradigm;       //!< Parallel programming object pointer
     Control* const m_control;         //!< Parallel programming object pointer
     const int m_npar;                 //!< Number of particles
+
+    //! Initialize with uncorrelated joint Gaussian
+    void initGaussian(real* const particles,
+                      int numvar,
+                      MKLRndStream* const rndstr,
+                      const VSLStreamStatePtr& str,
+                      real mean = 0.0,
+                      real rms = 1.0);
 
   private:
     //! Don't permit copy constructor

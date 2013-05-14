@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:08:30 PM MDT
+  \date      Mon 13 May 2013 10:17:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -16,8 +16,6 @@
 #include <QuinoaTypes.h>
 #include <Model.h>
 #include <Control.h>
-#include <MKLRandom.h>
-#include <MKLRndStream.h>
 
 namespace Quinoa {
 
@@ -33,16 +31,19 @@ class Mass : public Model {
     explicit Mass(Memory* const memory,
                   Paradigm* const paradigm,
                   Control* const control,
-                  const int nscalar,
+                  int ndensity,
                   real* const densities)
       try :
         Model(memory, paradigm, control, control->get<control::NPAR>()),
+        m_ndensity(ndensity),
         m_densities(densities),
         m_str(nullptr),
         m_random(nullptr),
         m_rndStr(nullptr)
       {
 
+        ErrChk(m_ndensity > 0, FATAL,
+             "Wrong number of particle density components");
         Assert(m_densities != nullptr, FATAL, "Density pointer null?");
 
         // Instantiate random number generator
@@ -76,10 +77,11 @@ class Mass : public Model {
     //! CRTP interface: Initialize particles
     void init() { static_cast<MassType*>(this)->init(); }
 
-    //! CRTP interface: Advance particles in mix model
+    //! CRTP interface: Advance particles in mass model
     void advance(const real& dt) { static_cast<MassType*>(this)->advance(dt); }
 
   protected:
+    const int m_ndensity;           //!< Number of density components
     real* const m_densities;        //!< Raw pointer to particle densities
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
 

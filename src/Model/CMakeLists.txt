@@ -8,6 +8,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Random
 )
 
 add_library(Model

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:42:30 PM MDT
+  \date      Mon 13 May 2013 09:57:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -33,7 +33,7 @@ class Mix : public Model {
     explicit Mix(Memory* const memory,
                  Paradigm* const paradigm,
                  Control* const control,
-                 const int nscalar,
+                 int nscalar,
                  real* const scalars)
       try :
         Model(memory, paradigm, control, control->get<control::NPAR>()),
@@ -111,17 +111,17 @@ class Mix : public Model {
       }
     }
 
-    //! Initialize scalars with Gaussian PDF
-    void initGaussian() {
-      real r[m_nscalar];
-
-      // Generate initial values for all scalars for all particles
-      for (int p=0; p<m_npar; ++p) {
-        m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                           m_str[0], m_nscalar, r, 0.0, 1.0);
-        memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
-      }
-    }
+//     //! Initialize scalars with Gaussian PDF
+//     void initGaussian() {
+//       real r[m_nscalar];
+// 
+//       // Generate initial values for all scalars for all particles
+//       for (int p=0; p<m_npar; ++p) {
+//         m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+//                            m_str[0], m_nscalar, r, 0.0, 1.0);
+//         memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
+//       }
+//     }
 
     //! Constant accessor to random number stream object pointer
     //! \return Pointer to random number stream

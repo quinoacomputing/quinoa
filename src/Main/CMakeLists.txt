@@ -47,6 +47,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       GeneralizedDirichlet
                       SimplifiedLangevin
                       GeneralizedLangevin
+                      Model
                       Random
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}

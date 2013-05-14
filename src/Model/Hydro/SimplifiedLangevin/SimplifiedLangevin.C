@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:23:35 PM MDT
+  \date      Mon 13 May 2013 10:41:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -13,15 +13,9 @@
 #include <cstring>
 #include <cmath>
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif // _OPENMP
-
-#include <SimplifiedLangevin.h>
-#include <Hydro.h>
 #include <Control.h>
-#include <MKLRandom.h>
-#include <MKLRndStream.h>
+#include <Hydro.h>
+#include <SimplifiedLangevin.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -29,7 +23,13 @@ using namespace Quinoa;
 SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
                                        Paradigm* const paradigm,
                                        Control* const control,
-                                       real* const velocities)
+                                       real* const velocities) :
+  Hydro<SimplifiedLangevin>(memory,
+                            paradigm,
+                            control,
+                            control->get<control::NVELOCITY>(),
+                            velocities),
+  m_C0(control->get<control::C0>())
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory     Memory object pointer
@@ -38,74 +38,7 @@ SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
 //! \param[in]  velocities Pointer to particle velocities
 //! \author  J. Bakosi
 //******************************************************************************
-try :
-  Hydro<SimplifiedLangevin>(memory,
-                            paradigm,
-                            control,
-                            control->get<control::NVELOCITY>(),
-                            velocities),
-  m_C0(control->get<control::C0>()),
-  m_str(nullptr),
-  m_random(nullptr),
-  m_rndStr(nullptr)
 {
-
-  // Instantiate random number generator
-  m_random = new (nothrow) MKLRandom(m_memory, m_paradigm);
-  ErrChk(m_random != nullptr, FATAL,
-         "Cannot allocate memory for random number generator");
-
-  // Create random number leapfrog stream
-  m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
-  // Get array of MKL VSL stream state pointers right away
-  m_str = m_random->getStr(m_rndStr);
-
-} // Roll back changes and rethrow on error
-  catch (Exception& e) {
-    // No need to clean up if exception thrown from base constructor
-    if (e.func() == __PRETTY_FUNCTION__) finalize();
-    throw;
-  }
-  catch (exception&) {
-    finalize();
-    throw;
-  }
-  catch (...) {
-    finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
-  }
-
-SimplifiedLangevin::~SimplifiedLangevin() noexcept
-//******************************************************************************
-//  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-SimplifiedLangevin::finalize() noexcept
-//******************************************************************************
-//  Finalize
-//! \details Single exit point, called implicitly from destructor or explicitly
-//!          from anywhere else. Exception safety: no-throw guarantee: never
-//!          throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  if (m_random) { delete m_random; m_random = nullptr; }
-}
-
-void
-SimplifiedLangevin::echo() const
-//******************************************************************************
-//  Echo information on the simplified Langevin model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  cout << "Simplified Langevin" << endl;
 }
 
 void
@@ -115,14 +48,15 @@ SimplifiedLangevin::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  real r[m_nvelocity];
-
-  // Generate initial values for all scalars for all particles
-  for (int p=0; p<m_npar; ++p) {
-    m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                       m_str[0], m_nvelocity, r, 0.0, 1.0);
-    memcpy(m_velocities + p*m_nvelocity, r, m_nvelocity*sizeof(real));
-  }
+  initGaussian(m_velocities, m_nvelocity, rndstr(), m_str[0], 0.0, 1.0);
+//   real r[m_nvelocity];
+// 
+//   // Generate initial values for all scalars for all particles
+//   for (int p=0; p<m_npar; ++p) {
+//     m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+//                        m_str[0], m_nvelocity, r, 0.0, 1.0);
+//     memcpy(m_velocities + p*m_nvelocity, r, m_nvelocity*sizeof(real));
+//   }
 }
 
 void
