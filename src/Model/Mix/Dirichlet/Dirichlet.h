@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:40:52 PM MDT
+  \date      Sun 19 May 2013 06:10:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -13,6 +13,7 @@
 
 #include <vector>
 
+#include <Macro.h>
 #include <Mix.h>
 
 namespace Quinoa {
@@ -30,16 +31,27 @@ class Dirichlet : public Mix<Dirichlet> {
     explicit Dirichlet(Memory* const memory,
                        Paradigm* const paradigm,
                        Control* const control,
-                       real* const scalars);
+                       real* const particles) :
+      Mix<Dirichlet>(memory, paradigm, control, particles),
+      m_b(control->get<control::B>()),
+      m_S(control->get<control::S>()),
+      m_k(control->get<control::KAPPA>()) {
+      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+             "Wrong number of Dirichlet model parameters 'b'");
+      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+             "Wrong number of Dirichlet model parameters 'S'");
+      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+             "Wrong number of Dirichlet model parameters 'k'");
+    }
 
     //! Destructor
     virtual ~Dirichlet() noexcept = default;
 
     //! Initialize particles
-    void init();
+    void init(int p, int tid) { initZero(p); IGNORE(tid); }
 
     //! Advance particles
-    void advance(const real& dt);
+    void advance(int p, int tid, real dt);
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);

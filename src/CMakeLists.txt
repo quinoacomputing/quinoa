@@ -24,7 +24,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
 # Intel-specific compiler arguments on linux
-if(PLATFORM MATCHES "linux-intel")
+if(PLATFORM MATCHES "intel")
   #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
   #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
   # Suppress the following remarks:
@@ -39,8 +39,8 @@ endif()
 
 # Intel-specific compiler arguments on darwin
 #if(PLATFORM MATCHES "darwin-intel")
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc -cxxlib=/home/opt/gcc/4.7.1")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++ -cxxlib=/home/opt/gcc/4.7.1")
+#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-name=gcc -cxxlib=/projects/opt/centos6/gcc/gcc-4.7.2")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gxx-name=g++ -cxxlib=/projects/opt/centos6/gcc/gcc-4.7.2")
 #endif()
 
 # Set third party prefix (from build script)
@@ -234,7 +234,6 @@ add_subdirectory(Base)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
-add_subdirectory(Model)
 add_subdirectory(Model/Mass/Beta)
 add_subdirectory(Model/Mix/Dirichlet)
 add_subdirectory(Model/Mix/GeneralizedDirichlet)

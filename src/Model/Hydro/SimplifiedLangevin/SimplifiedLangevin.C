@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 10:41:23 PM MDT
+  \date      Sun 19 May 2013 06:12:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -13,33 +13,13 @@
 #include <cstring>
 #include <cmath>
 
+#include <Macro.h>
 #include <Control.h>
 #include <Hydro.h>
 #include <SimplifiedLangevin.h>
 
 using namespace std;
 using namespace Quinoa;
-
-SimplifiedLangevin::SimplifiedLangevin(Memory* const memory,
-                                       Paradigm* const paradigm,
-                                       Control* const control,
-                                       real* const velocities) :
-  Hydro<SimplifiedLangevin>(memory,
-                            paradigm,
-                            control,
-                            control->get<control::NVELOCITY>(),
-                            velocities),
-  m_C0(control->get<control::C0>())
-//******************************************************************************
-//  Constructor
-//! \param[in]  memory     Memory object pointer
-//! \param[in]  paradigm   Parallel programming object pointer
-//! \param[in]  control    Control object pointer
-//! \param[in]  velocities Pointer to particle velocities
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
 
 void
 SimplifiedLangevin::init()
@@ -48,7 +28,7 @@ SimplifiedLangevin::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  initGaussian(m_velocities, m_nvelocity, rndstr(), m_str[0], 0.0, 1.0);
+//  initGaussian(m_velocities, m_nvelocity, rndstr(), m_str[0], 0.0, 1.0);
 //   real r[m_nvelocity];
 // 
 //   // Generate initial values for all scalars for all particles
@@ -67,6 +47,7 @@ SimplifiedLangevin::advance(const real& dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+IGNORE(dt);
 //   int tid, p, i;
 //   real d, tke, eps, S=1.0;
 //   real* X;

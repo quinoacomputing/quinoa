@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 10:29:45 PM MDT
+  \date      Sun 19 May 2013 06:11:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -80,14 +80,14 @@ HomRT::solve()
     // Accumulate statistics
     statistics()->accumulate();
 
-//     // Output pdf at selected times
-//     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
-// 
-//     // Append glob file at selected times
-//     if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
-// 
-//     // Append plot file at selected times
-//     if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
+    // Output pdf at selected times
+    if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
+
+    // Append glob file at selected times
+    if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
+
+    // Append plot file at selected times
+    if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

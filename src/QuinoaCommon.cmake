@@ -31,11 +31,13 @@ endif()
 find_library(MKL_LIBRARY
              NAMES mkl_intel_ilp64
              PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{INTEL}/mkl/lib/intel64
 )
 
 find_library(MKL_THREAD_LIBRARY
              NAMES mkl_intel_thread
              PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{INTEL}/mkl/lib/intel64
 )
 
 # Linking MKL/OpenMP with clang needs explicit linking to openmp
@@ -49,6 +51,7 @@ endif()
 find_library(MKL_CORE_LIBRARY
              NAMES mkl_core
              PATHS $ENV{MKLROOT}/lib/intel64
+             PATHS $ENV{INTEL}/mkl/lib/intel64
 )
 
 find_library(PTHREAD_LIBRARY

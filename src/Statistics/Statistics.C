@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 05:22:57 PM MDT
+  \date      Sat 18 May 2013 10:18:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -40,7 +40,7 @@ try :
   m_nthread(paradigm->nthread()),
   m_npar(control->get<control::NPAR>()),
   m_physics(physics),
-  m_nprop(physics->nprop()),
+  m_nprop(control->nprop()),
   m_statistics(control->get<control::STATISTICS>()),
   m_instOrd(),
   m_ordinary(),
