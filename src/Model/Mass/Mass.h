@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 10:17:27 PM MDT
+  \date      Sun 19 May 2013 05:51:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -31,48 +31,20 @@ class Mass : public Model {
     explicit Mass(Memory* const memory,
                   Paradigm* const paradigm,
                   Control* const control,
-                  int ndensity,
-                  real* const densities)
-      try :
-        Model(memory, paradigm, control, control->get<control::NPAR>()),
-        m_ndensity(ndensity),
-        m_densities(densities),
-        m_str(nullptr),
-        m_random(nullptr),
-        m_rndStr(nullptr)
-      {
-
-        ErrChk(m_ndensity > 0, FATAL,
-             "Wrong number of particle density components");
-        Assert(m_densities != nullptr, FATAL, "Density pointer null?");
-
-        // Instantiate random number generator
-        m_random = new (nothrow) MKLRandom(memory, paradigm);
-        ErrChk(m_random != nullptr, FATAL,
-               "Cannot allocate memory for random number generator");
-
-        // Create random number leapfrog stream
-        m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
-        // Get array of MKL VSL stream state pointers right away
-        m_str = m_random->getStr(m_rndStr);
-
-      } // Roll back changes and rethrow on error
-        catch (Exception& e) {
-          // No need to clean up if exception thrown from base constructor
-          if (e.func() == __PRETTY_FUNCTION__) finalize();
-          throw;
-        }
-        catch (exception&) {
-          finalize();
-          throw;
-        }
-        catch (...) {
-          finalize();
-          Throw(UNCAUGHT, "Non-standard exception");
-        }
+                  real* const particles) :
+      Model(memory,
+            paradigm,
+            control,
+            particles,
+            control->get<control::NPAR>(),
+            control->nprop()),
+      m_offset(0),
+      m_ndensity(control->get<control::NDENSITY>()) {
+      ErrChk(m_ndensity > 0, FATAL, "Wrong number of particle densities");
+    }
 
     //! Destructor
-    virtual ~Mass() noexcept { finalize(); }
+    virtual ~Mass() noexcept = default;
 
     //! CRTP interface: Initialize particles
     void init() { static_cast<MassType*>(this)->init(); }
@@ -81,28 +53,23 @@ class Mass : public Model {
     void advance(const real& dt) { static_cast<MassType*>(this)->advance(dt); }
 
   protected:
+    const int m_offset;             //!< Mass-offset relative to base
     const int m_ndensity;           //!< Number of density components
-    real* const m_densities;        //!< Raw pointer to particle densities
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
 
-    //! Initialize densities with beta symmetric PDF
-    //! \param[in] alpha  First shape parameter
-    //! \param[in] beta   Second shape parameter
-    //! \param[in] disp   Displacement (i.e., shift) parameter
-    //! \param[in] scale  Scale parameter
-    void initBeta(const real alpha,
-                  const real beta,
-                  const real disp,
-                  const real scale) {
-      for (int p=0; p<m_npar; ++p) {
-        m_rndStr->beta(VSL_RNG_METHOD_BETA_CJA,
-                       m_str[0], 1, m_densities+p, alpha, beta, disp, scale);
-      }
-    }
-
-    //! Constant accessor to random number stream object pointer
-    //! \return Pointer to random number stream
-    MKLRndStream* rndstr() const noexcept { return m_rndStr; }
+//     //! Initialize densities with beta symmetric PDF
+//     //! \param[in] alpha  First shape parameter
+//     //! \param[in] beta   Second shape parameter
+//     //! \param[in] disp   Displacement (i.e., shift) parameter
+//     //! \param[in] scale  Scale parameter
+//     void initBeta(const real alpha,
+//                   const real beta,
+//                   const real disp,
+//                   const real scale) {
+//       for (int p=0; p<m_npar; ++p) {
+//         m_rndStr->beta(VSL_RNG_METHOD_BETA_CJA,
+//                        m_str[0], 1, m_densities+p, alpha, beta, disp, scale);
+//       }
+//     }
 
   private:
     //! Don't permit copy constructor
@@ -113,15 +80,6 @@ class Mass : public Model {
     Mass(Mass&&) = delete;
     //! Don't permit move assigment
     Mass& operator=(Mass&&) = delete;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept {
-      if (m_random) { delete m_random; m_random = nullptr; }  
-    }
-
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

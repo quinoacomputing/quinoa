@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 10:35:01 PM MDT
+  \date      Sat 18 May 2013 12:15:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -29,7 +29,11 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
     explicit SimplifiedLangevin(Memory* const memory,
                                 Paradigm* const paradigm,
                                 Control* const control,
-                                real* const velocities);
+                                real* const particles) :
+      Hydro<SimplifiedLangevin>(memory, paradigm, control, particles),
+      m_C0(control->get<control::C0>()) {
+      //ErrChk on m_C0
+    }
 
     //! Destructor
     virtual ~SimplifiedLangevin() noexcept = default;

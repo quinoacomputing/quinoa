@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 08:21:29 PM MDT
+  \date      Sat 18 May 2013 12:10:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -28,7 +28,11 @@ class Beta : public Mass<Beta> {
     explicit Beta(Memory* const memory,
                   Paradigm* const paradigm,
                   Control* const control,
-                  real* const scalars);
+                  real* const particles) :
+      Mass<Beta>(memory, paradigm, control, particles),
+      m_At(control->get<control::AT>()) {
+      // ErrChk on m_At
+    }
 
     //! Destructor
     virtual ~Beta() noexcept = default;

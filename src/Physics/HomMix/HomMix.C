@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 08:14:25 PM MDT
+  \date      Sun 19 May 2013 06:13:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -13,6 +13,11 @@
 #include <iomanip>
 #include <sstream>
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
+
+#include <Macro.h>
 #include <Memory.h>
 #include <Control.h>
 #include <Mix.h>
@@ -75,10 +80,10 @@ HomMix::solve()
   while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    mix()->advance(dt);
+    advance(dt);
 
     // Accumulate statistics
-    statistics()->accumulate();
+    //statistics()->accumulate();
 
     // Output pdf at selected times
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
@@ -100,6 +105,36 @@ HomMix::solve()
     ++it;
     if (t > m_term) t = m_term;
   } // Time stepping loop
+}
+
+void
+HomMix::advance(real dt)
+//******************************************************************************
+//  Advance particles
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  int tid, p;
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<m_npar; ++p) {
+
+      mix()->advance(p, tid, dt);
+
+    } // m_npar
+  } // omp parallel
 }
 
 void
@@ -162,6 +197,7 @@ HomMix::outJpdf(const real t)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+IGNORE(t);
 //   // Contruct filename
 //   stringstream ss;
 //   ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
@@ -185,5 +221,26 @@ HomMix::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  mix()->init();
+  int tid, p;
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<m_npar; ++p) {
+
+      mix()->init(p, tid);
+
+    } // m_npar
+  } // omp parallel
+
 }

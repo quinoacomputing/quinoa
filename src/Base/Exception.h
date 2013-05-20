@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Tue May  7 12:26:38 2013
+  \date      Sun 19 May 2013 06:18:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -102,7 +102,7 @@ class Exception : public std::exception {
   protected:
     //! Force copy constructor for children
     // ICC: in C++11 this should be deleted and private
-    Exception(const Exception&) = default;
+    //Exception(const Exception&) = default;
 
   private:
     //! Don't permit copy assignment

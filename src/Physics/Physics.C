@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:06:31 PM MDT
+  \date      Sun 19 May 2013 06:15:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -39,7 +39,7 @@ Physics::Physics(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_nthread(paradigm->nthread()),
+  m_nposition(control->get<control::NPOSITION>()),
   m_ndensity(control->get<control::NDENSITY>()),
   m_nvelocity(control->get<control::NVELOCITY>()),
   m_nscalar(control->get<control::NSCALAR>()),
@@ -57,14 +57,13 @@ try :
   m_plot(nullptr),
   m_particles()
 {
+IGNORE(m_paradigm);
 
-  ErrChk( m_ndensity != 0 ||
-          m_nvelocity != 0 ||
-          m_nscalar != 0, FATAL, "No need for physics?");
+  ErrChk( control->nprop() != 0, FATAL, "No need for physics?");
 
   // Allocate memory to store all particle properties
   m_particles =
-    m_memory->newEntry<real>((m_ndensity + m_nvelocity + m_nscalar) * m_npar,
+    m_memory->newEntry<real>(control->nprop() * m_npar,
                              REAL,
                              SCALAR,
                              "Particles");
@@ -72,27 +71,21 @@ try :
   // Instantiate mass model
   if (m_ndensity) {
     m_mass = new (nothrow)
-      MassType(memory, paradigm, control, m_particles + 0);
+             MassType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mass != nullptr, FATAL, "Cannot allocate memory");
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
     m_hydro = new (nothrow)
-      HydroType(memory,
-                paradigm,
-                control,
-                m_particles + m_ndensity * m_npar);
+              HydroType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
   }
 
   // Instantiate mix model
   if (m_nscalar) {
     m_mix = new (nothrow)
-      MixType(memory,
-              paradigm,
-              control,
-              m_particles + (m_ndensity + m_nvelocity) * m_npar);
+            MixType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
   }
 

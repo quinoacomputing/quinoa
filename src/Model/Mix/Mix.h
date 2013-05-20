@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:57:07 PM MDT
+  \date      Sun 19 May 2013 06:07:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -33,99 +33,41 @@ class Mix : public Model {
     explicit Mix(Memory* const memory,
                  Paradigm* const paradigm,
                  Control* const control,
-                 int nscalar,
-                 real* const scalars)
-      try :
-        Model(memory, paradigm, control, control->get<control::NPAR>()),
-        m_nscalar(nscalar),
-        m_scalars(scalars),
-        m_str(nullptr),
-        m_random(nullptr),
-        m_rndStr(nullptr)
-      {
-
-        ErrChk(m_nscalar > 0, FATAL, "Wrong number of scalars");
-        Assert(m_scalars != nullptr, FATAL, "Scalar pointer null?");
-
-        // Instantiate random number generator
-        m_random = new (nothrow) MKLRandom(memory, paradigm);
-        ErrChk(m_random != nullptr, FATAL,
-               "Cannot allocate memory for random number generator");
-
-        // Create random number leapfrog stream
-        m_rndStr = m_random->addStream(VSL_BRNG_MCG59, 0);
-        // Get array of MKL VSL stream state pointers right away
-        m_str = m_random->getStr(m_rndStr);
-
-      } // Roll back changes and rethrow on error
-        catch (Exception& e) {
-          // No need to clean up if exception thrown from base constructor
-          if (e.func() == __PRETTY_FUNCTION__) finalize();
-          throw;
-        }
-        catch (exception&) {
-          finalize();
-          throw;
-        }
-        catch (...) {
-          finalize();
-          Throw(UNCAUGHT, "Non-standard exception");
-        }
-
-    //! Destructor
-    virtual ~Mix() noexcept { finalize(); }
-
-    //! CRTP interface: Initialize particles
-    void init() { static_cast<MixType*>(this)->init(); }
-
-    //! CRTP interface: Advance particles in mix model
-    void advance(const real& dt) { static_cast<MixType*>(this)->advance(dt); }
-
-  protected:
-    const int m_nscalar;            //!< Number of mixing scalars
-    real* const m_scalars;          //!< Raw pointer to particle scalars
-    const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
-
-    //! Initialize scalars with uniform PDF with the last one constrained
-    void initUniform() {
-      real r[m_nscalar];
-
-      // Generate initial values for all scalars for all particles
-      for (int p=0; p<m_npar; ++p) {
-        bool accept = false;
-        while (!accept) {
-          // Generate scalars
-          m_rndStr->uniform(VSL_RNG_METHOD_UNIFORM_STD,
-                            m_str[0], m_nscalar, r, 0.0, 1.0);
-
-          // Compute their sum
-          real sum = r[0];
-          for (int i=1; i<m_nscalar; ++i) sum += r[i];
-
-          // Accept if sum is less then 1.0
-          if (sum < 1.0) {
-            memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
-            accept = true;
-          }
-        }
-      }
+                 real* const particles) :
+      Model(memory,
+            paradigm,
+            control,
+            particles,
+            control->get<control::NPAR>(),
+            control->nprop()),
+      m_offset(control->scalarOffset()),
+      m_nscalar(control->get<control::NSCALAR>()) {
+      ErrChk(m_nscalar > 0, FATAL, "Wrong number of scalars");
     }
 
-//     //! Initialize scalars with Gaussian PDF
-//     void initGaussian() {
-//       real r[m_nscalar];
-// 
-//       // Generate initial values for all scalars for all particles
-//       for (int p=0; p<m_npar; ++p) {
-//         m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-//                            m_str[0], m_nscalar, r, 0.0, 1.0);
-//         memcpy(m_scalars + p*m_nscalar, r, m_nscalar*sizeof(real));
-//       }
-//     }
+    //! Destructor
+    virtual ~Mix() noexcept = default;
+
+    //! CRTP interface: Initialize particles
+    void init(int p, int tid) { static_cast<MixType*>(this)->init(p, tid); }
+
+    //! CRTP interface: Advance particles in mix model
+    void advance(int p, int tid, real dt) {
+      static_cast<MixType*>(this)->advance(p, tid, dt);
+    }
+
+  protected:
+    const int m_offset;             //!< Scalar-offset relative to base
+    const int m_nscalar;            //!< Number of mixing scalars
 
     //! Constant accessor to random number stream object pointer
     //! \return Pointer to random number stream
-    MKLRndStream* rndstr() const noexcept { return m_rndStr; }
+    //MKLRndStream* rndstr() const noexcept { return m_rndStr; }
+
+    //! Initialize scalars with zero
+    void initZero(int p) {
+      memset(m_particles + p*m_nprop + m_offset, 0, m_nscalar*sizeof(real));
+    }
 
   private:
     //! Don't permit copy constructor
@@ -136,15 +78,6 @@ class Mix : public Model {
     Mix(Mix&&) = delete;
     //! Don't permit move assigment
     Mix& operator=(Mix&&) = delete;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept {
-      if (m_random) { delete m_random; m_random = nullptr; }  
-    }
-
-    MKLRandom* m_random;            //!< Random number generator object
-    MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
 } // namespace Quinoa

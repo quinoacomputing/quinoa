@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:34:13 PM MDT
+  \date      Sat 18 May 2013 10:26:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -83,7 +83,7 @@ class Physics {
 
     //! Constant accessor to control object pointer
     //! \return Pointer to control object
-    const Control* control() const noexcept { return m_control; }
+    Control* control() const noexcept { return m_control; }
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
@@ -115,18 +115,14 @@ class Physics {
 
     //! Constant accessor to particle properties pointer
     //! \return Raw pointer to particle properties array
-    const real* particles() const noexcept { return m_particles.ptr; }
-
-    //! Accessor to number of particle (velocity+scalar) properties
-    //! \return Number of particle (velocity+scalar) components
-    int nprop() const noexcept { return m_ndensity + m_nvelocity + m_nscalar; }
+    real* particles() const noexcept { return m_particles.ptr; }
 
   protected:
-    const int m_nthread;                  //!< Number of threads
+    const int m_nposition;                //!< Number of position components
     const int m_ndensity;                 //!< Number of density components
     const int m_nvelocity;                //!< Number of velocity components
     const int m_nscalar;                  //!< Number of scalar components
-    const int m_npar;                     //!< Numer of particles
+    const int m_npar;                     //!< Number of particles
     const real m_term;                    //!< Maximum time to simulate
 
   private:

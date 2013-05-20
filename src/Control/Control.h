@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 08:45:27 PM MDT
+  \date      Sat 18 May 2013 09:58:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -119,6 +119,34 @@ class Control {
     //! Get material mix model name
     const std::string& mixName() const noexcept {
       return associate::MixName[ std::get<control::MIX>(m_data) ];
+    }
+
+    //! Return total number of particle properties
+    int nprop() const noexcept {
+      return std::get<control::NPOSITION>(m_data) +
+             std::get<control::NDENSITY>(m_data) +
+             std::get<control::NVELOCITY>(m_data) +
+             std::get<control::NSCALAR>(m_data);
+    }
+
+    //! Return position offset
+    int positionOffset() const noexcept {
+      return 0;
+    }
+    //! Return density offset
+    int densityOffset() const noexcept {
+      return std::get<control::NPOSITION>(m_data);
+    }
+    //! Return velocity offset
+    int velocityOffset() const noexcept {
+      return std::get<control::NPOSITION>(m_data) +
+             std::get<control::NDENSITY>(m_data);
+    }
+    //! Return scalar offset
+    int scalarOffset() const noexcept {
+      return std::get<control::NPOSITION>(m_data) +
+             std::get<control::NDENSITY>(m_data) +
+             std::get<control::NVELOCITY>(m_data);
     }
 
   private:

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 10:41:39 PM MDT
+  \date      Sun 19 May 2013 06:06:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -13,6 +13,7 @@
 #include "omp.h"
 #endif // _OPENMP
 
+#include <Macro.h>
 #include <Control.h>
 #include <Mass.h>
 #include <Beta.h>
@@ -21,27 +22,6 @@
 using namespace std;
 using namespace Quinoa;
 
-Beta::Beta(Memory* const memory,
-                     Paradigm* const paradigm,
-                     Control* const control,
-                     real* const densities) :
-  Mass<Beta>(memory,
-             paradigm,
-             control,
-             control->get<control::NDENSITY>(),
-             densities),
-  m_At(control->get<control::AT>())
-//******************************************************************************
-//  Constructor
-//! \param[in]  memory     Memory object pointer
-//! \param[in]  paradigm   Parallel programming object pointer
-//! \param[in]  control    Control object pointer
-//! \param[in]  densities  Pointer to particle densities
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
 void
 Beta::init()
 //******************************************************************************
@@ -49,11 +29,11 @@ Beta::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const real a = 0.075;    // At = 0.5
+  //const real a = 0.075;    // At = 0.5
   //const real a = 0.06;     // At = 0.25
   //const real a = 0.039;    // At = 0.05
 
-  initBeta(a, a, 0.0, 1.0);
+  //initBeta(a, a, 0.0, 1.0);
   //U[pP+9] = 2.0*At*x[0] + 1.0-At;
 }
 
@@ -65,6 +45,7 @@ Beta::advance(const real& dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+IGNORE(dt);
 //   int tid, p, i;
 //   real yn, d;
 //   real* y;
@@ -115,6 +96,7 @@ Beta::jpdf(JPDF& jpdf)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+IGNORE(jpdf);
 //   for (int p=0; p<m_npar; ++p) {
 //     real* y = m_scalars + p*m_nscalar;
 //     vector<real> v(y, y+m_nscalar);

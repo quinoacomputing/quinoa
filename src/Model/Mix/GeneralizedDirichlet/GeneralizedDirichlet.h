@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 03:40:49 PM MDT
+  \date      Sun 19 May 2013 06:10:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -13,6 +13,7 @@
 
 #include <vector>
 
+#include <Macro.h>
 #include <Mix.h>
 
 namespace Quinoa {
@@ -30,13 +31,28 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     explicit GeneralizedDirichlet(Memory* const memory,
                                   Paradigm* const paradigm,
                                   Control* const control,
-                                  real* const scalars);
+                                  real* const particles) :
+      Mix<GeneralizedDirichlet>(memory, paradigm, control, particles),
+      m_b(control->get<control::B>()),
+      m_S(control->get<control::S>()),
+      m_k(control->get<control::KAPPA>()),
+      m_c(control->get<control::C>()) {
+      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+             "Wrong number of generalized Dirichlet model parameters 'b'");
+      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL, 
+             "Wrong number of generalized Dirichlet model parameters 'S'");
+      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+             "Wrong number of generalized Dirichlet model parameters 'k'");
+      //ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
+      //       FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
+    }
+
 
     //! Destructor
     virtual ~GeneralizedDirichlet() noexcept = default;
 
     //! Initialize particles
-    void init();
+    void init(int p, int tid) { initZero(p); IGNORE(tid); }
 
     //! Advance particles
     void advance(const real& dt);
