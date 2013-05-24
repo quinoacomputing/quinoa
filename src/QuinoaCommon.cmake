@@ -23,8 +23,8 @@ endif()
 #          ${INTEL_INCLUDE_GUESS}
 #)
 
-#include_directories($ENV{MKLROOT}/include
-#)
+include_directories($ENV{INTEL}/mkl/include
+)
 
 ### Libraries ###
 

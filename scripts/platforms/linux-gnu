@@ -47,7 +47,7 @@ OPENMPI_CONF_CMD=" \
   ./configure --prefix=${TPL_INSTALL_DIR} \
               --enable-static CC=icc CXX=icpc F77=ifort FC=ifort"
 
-export CXX=g++-4.7
+export CXX=g++
 QUINOA_CONF_CMD=" \
   cmake \
     -D PLATFORM:STRING=$PLATFORM \
