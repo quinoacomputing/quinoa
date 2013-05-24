@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu May 23 15:10:16 2013
+  \date      Fri May 24 13:04:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -19,6 +19,7 @@
 #include <Macro.h>
 #include <ControlTypes.h>
 #include <FwdAssociate.h>
+#include <BackAssociate.h>
 
 namespace Quinoa {
 
@@ -153,6 +154,15 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::PHYSICS]) {
+        cout << ">>> PARSER WARNING: Multiple physics defined in input file"
+             << endl << ">>> Overwriting \""
+             << associate::PhysicsName[ std::get<control::PHYSICS>(stack) ]
+             << "\" with \""
+             << associate::PhysicsName[ associate::PhysicsEnum[value] ] << "\""
+             << endl;
+      }
       get<control::PHYSICS>(stack) = associate::PhysicsEnum[value];
       boolstack[control::PHYSICS] = true;
     }
@@ -163,6 +173,15 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::POSITION]) {
+        cout << ">>> PARSER WARNING: Multiple position models defined in input"
+                " file" << endl << ">>> Overwriting \""
+             << associate::PositionName[ std::get<control::POSITION>(stack) ]
+             << "\" with \""
+             << associate::PositionName[ associate::PositionEnum[value] ]
+             << "\"" << endl;
+      }
       get<control::POSITION>(stack) = associate::PositionEnum[value];
       boolstack[control::POSITION] = true;
     }
@@ -173,6 +192,15 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::MASS]) {
+        cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
+             << endl << ">>> Overwriting \""
+             << associate::MassName[ std::get<control::MASS>(stack) ]
+             << "\" with \""
+             << associate::MassName[ associate::MassEnum[value] ] << "\""
+             << endl;
+      }
       get<control::MASS>(stack) = associate::MassEnum[value];
       boolstack[control::MASS] = true;
     }
@@ -183,6 +211,15 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::HYDRO]) {
+        cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
+                "file" << endl << ">>> Overwriting \""
+             << associate::HydroName[ std::get<control::HYDRO>(stack) ]
+             << "\" with \""
+             << associate::HydroName[ associate::HydroEnum[value] ] << "\""
+             << endl;
+      }
       get<control::HYDRO>(stack) = associate::HydroEnum[value];
       boolstack[control::HYDRO] = true;
     }
@@ -193,6 +230,14 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::MIX]) {
+        cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
+             << endl << ">>> Overwriting \""
+             << associate::MixName[ std::get<control::MIX>(stack) ]
+             << "\" with \""
+             << associate::MixName[ associate::MixEnum[value] ] << "\"" << endl;
+      }
       get<control::MIX>(stack) = associate::MixEnum[value];
       boolstack[control::MIX] = true;
     }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Sat 18 May 2013 12:10:14 PM MDT
+  \date      Fri May 24 13:38:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -36,6 +36,9 @@ class Beta : public Mass<Beta> {
 
     //! Destructor
     virtual ~Beta() noexcept = default;
+
+    //! Return mass model identification
+    control::MassType id() noexcept { return control::BETA; }
 
     //! Initialize particles
     void init();

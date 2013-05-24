@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:07:54 PM MDT
+  \date      Fri May 24 13:31:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -48,6 +48,9 @@ class Mix : public Model {
     //! Destructor
     virtual ~Mix() noexcept = default;
 
+    //! CRTP interface: Return mix model identification
+    control::MixType id() noexcept { return static_cast<MixType*>(this)->id(); }
+
     //! CRTP interface: Initialize particles
     void init(int p, int tid) { static_cast<MixType*>(this)->init(p, tid); }
 
@@ -59,10 +62,6 @@ class Mix : public Model {
   protected:
     const int m_offset;             //!< Scalar-offset relative to base
     const int m_nscalar;            //!< Number of mixing scalars
-
-    //! Constant accessor to random number stream object pointer
-    //! \return Pointer to random number stream
-    //MKLRndStream* rndstr() const noexcept { return m_rndStr; }
 
     //! Initialize scalars with zero
     void initZero(int p) {

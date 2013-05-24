@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:01:48 PM MDT
+  \date      Fri May 24 13:37:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -45,6 +45,11 @@ class Hydro : public Model {
 
     //! Destructor
     virtual ~Hydro() noexcept = default;
+
+    //! CRTP interface: Return hydro model identification
+    control::HydroType id() noexcept {
+      return static_cast<HydroType*>(this)->id();
+    }
 
     //! CRTP interface: Initialize particles
     void init() { static_cast<HydroType*>(this)->init(); }
