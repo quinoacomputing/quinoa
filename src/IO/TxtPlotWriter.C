@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.C
   \author    J. Bakosi
-  \date      Wed May  8 10:00:27 2013
+  \date      Thu May 23 17:09:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtPlot writer base class definition
   \details   TxtPlot writer base class definition
@@ -41,15 +41,14 @@ TxtPlotWriter::header()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outPlot << "      it             t";
+  m_outPlot << "#     it             t";
 
   for (int i=0; i<m_nord; ++i)
     if (m_statistics->plotOrdinary(i))
-      m_outPlot << setw(13) << '<' << char(m_statistics->nameOrdinary(i))
-                << ">";
+      m_outPlot << setw(12) << '<' << m_statistics->nameOrdinary(i) << ">";
 
   for (int i=0; i<m_ncen; ++i)
-    m_outPlot << setw(13) << '<' << char(m_statistics->nameCentral(i)) << ">";
+    m_outPlot << setw(10) << '<' << m_statistics->nameCentral(i) << ">";
 
   m_outPlot << endl;
 }

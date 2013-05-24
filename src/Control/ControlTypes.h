@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 08:11:14 PM MDT
+  \date      Thu May 23 16:57:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -24,6 +24,8 @@ using namespace std;
 namespace Quinoa {
 
 namespace control {
+
+const int NCOMP_POS = 3;        //!< Number of position components for a field
 
 //! Physics (methods: collection of models) types
 enum PhysicsType { NO_PHYSICS=0,
@@ -63,13 +65,14 @@ enum MixType { NO_MIX=0,
                NUM_MIX
 };
 
-//! Quantities whose statistics can be estimated
-enum Quantity { TRANSPORTED_SCALAR=0,
-                VELOCITY_X,
-                VELOCITY_Y,
-                VELOCITY_Z,
-                PRESSURE,
-                DENSITY
+//! Quantities whose statistics can be estimated. If you change this, make sure
+//! you change Control::termOffset() as well.
+enum class Quantity { POSITION=0,
+                      DENSITY,
+                      VELOCITY_X,
+                      VELOCITY_Y,
+                      VELOCITY_Z,
+                      SCALAR
 };
 
 //! Moment specifies which type of moment is computed for a Quantity in a Term
@@ -169,6 +172,30 @@ struct Term {
       os << ">";
     }
     return os;
+  }
+};
+
+//! Lighter-weight structure for field names
+struct FieldName {
+  int name;
+  int field;
+
+  //! Constructor
+  explicit FieldName(const int n = 0, const int f = 0) :
+    name(n), field(f) {}
+
+  //! Operator << for writing FieldName to output streams
+  friend ostream& operator<< (ostream& os, const FieldName& fn) {
+     os << char(fn.name) << fn.field+1;
+     return os;
+  }
+
+  //! Operator += for adding FieldName to std::string
+  friend string& operator+= (string& os, const FieldName& fn) {
+     stringstream ss;
+     ss << os << char(fn.name) << fn.field+1;
+     os = ss.str();
+     return os;
   }
 };
 

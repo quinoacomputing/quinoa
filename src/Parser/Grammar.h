@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:11:36 PM MDT
+  \date      Thu May 23 15:10:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -262,13 +262,13 @@ namespace grammar {
   // terms recognized within an expectation and their mapping
   struct terms :
          sor< moment<keyword::transported_scalar,
-                     control::TRANSPORTED_SCALAR,
+                     control::Quantity::SCALAR,
                      control::ORDINARY>,
               moment<keyword::transported_scalar_fluctuation,
-                     control::TRANSPORTED_SCALAR,
+                     control::Quantity::SCALAR,
                      control::CENTRAL>,
               moment<keyword::velocity_x,
-                     control::VELOCITY_X,
+                     control::Quantity::VELOCITY_X,
                      control::ORDINARY>
             > {};
 
@@ -328,14 +328,20 @@ namespace grammar {
          ifmust< parse< keyword::slm, store_hydro,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
-                        push_term<control::VELOCITY_X, control::CENTRAL, 'u'>,
-                        push_term<control::VELOCITY_X, control::CENTRAL, 'u'>,
+                        push_term<control::Quantity::VELOCITY_X,
+                                  control::CENTRAL, 'u'>,
+                        push_term<control::Quantity::VELOCITY_X,
+                                  control::CENTRAL, 'u'>,
                         start_product,
-                        push_term<control::VELOCITY_Y, control::CENTRAL, 'v'>,
-                        push_term<control::VELOCITY_Y, control::CENTRAL, 'v'>,
+                        push_term<control::Quantity::VELOCITY_Y,
+                                  control::CENTRAL, 'v'>,
+                        push_term<control::Quantity::VELOCITY_Y,
+                                  control::CENTRAL, 'v'>,
                         start_product,
-                        push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>,
-                        push_term<control::VELOCITY_Z, control::CENTRAL, 'w'>
+                        push_term<control::Quantity::VELOCITY_Z,
+                                  control::CENTRAL, 'w'>,
+                        push_term<control::Quantity::VELOCITY_Z,
+                                  control::CENTRAL, 'w'>
                       >,
                  block< process<keyword::SLM_C0, cstore<control::C0>>,
                         process<keyword::nvelocity, cstore<control::NVELOCITY>>

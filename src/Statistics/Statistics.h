@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sun 12 May 2013 04:41:24 PM MDT
+  \date      Thu May 23 17:05:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -57,10 +57,10 @@ class Statistics {
     bool plotOrdinary(const int m) const;
 
     //! Return the name of ordinary moment
-    int nameOrdinary(const int m) const;
+    const string& nameOrdinary(const int m) const;
 
     //! Return the name of central moment
-    int nameCentral(const int m) const;
+    const string& nameCentral(const int m) const;
 
   private:
     //! Don't permit copy constructor
@@ -94,42 +94,28 @@ class Statistics {
     //! Return true if string is all lower case
     bool isLower(const string&s) const;
 
-    Memory* const m_memory;                  //!< Memory object
-    const int m_nthread;                     //!< Number of threads
-    const int m_npar;                        //!< Number of particles
-    Physics* const m_physics;                //!< Physics object
-    const int m_nprop;                       //!< Number of particle properties
+    Memory* const m_memory;                   //!< Memory object
+    const int m_nthread;                      //!< Number of threads
+    const int m_npar;                         //!< Number of particles
+    Physics* const m_physics;                 //!< Physics object
+    const int m_nprop;                        //!< Number of particle properties
     const vector<control::Product> m_statistics;//!< Requested tatistics
-
-    struct FieldName {
-      int name;
-      int field;
-
-      //! Constructor
-      explicit FieldName(const int n = 0, const int f = 0) :
-        name(n), field(f) {}
-
-      //! Operator << for writing FieldName to output streams
-      friend ostream& operator<< (ostream& os, const FieldName& fn) {
-         os << char(fn.name) << fn.field+1;
-         return os;
-      }
-    };
 
     //! Instantaneous variable pointers for computing ordinary moments
     vector<vector<const real*>> m_instOrd;
-    Data<real> m_ordinary;                 //!< Ordinary moments
-    vector<bool> m_plotOrdinary;           //!< Whether to plot ord moments
-    vector<FieldName> m_nameOrdinary;      //!< FieldNames of ordinary moments
-    int m_nord;                            //!< Number of ordinary moments
+    Data<real> m_ordinary;                    //!< Ordinary moments
+    vector<bool> m_plotOrdinary;              //!< Whether to plot ord moments
+    vector<control::FieldName> m_ordFieldName;//!< Ordinary moment field names
+    vector<string> m_nameOrdinary;            //!< Ordinary moment names
+    int m_nord;                               //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
     vector<vector<const real*>> m_instCen;
-    Data<real> m_central;                    //!< Central moments
+    Data<real> m_central;                     //!< Central moments
     //! Ordinary moments about which to compute central moments
     vector<vector<const real*>> m_center;
-    vector<int> m_nameCentral;               //!< Names of central moments
-    int m_ncen;                              //!< Number of central moments
+    vector<string> m_nameCentral;             //!< Central moment names
+    int m_ncen;                               //!< Number of central moments
 };
 
 } // namespace Quinoa

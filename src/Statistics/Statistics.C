@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 18 May 2013 10:18:14 PM MDT
+  \date      Thu May 23 17:07:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -44,6 +44,7 @@ try :
   m_statistics(control->get<control::STATISTICS>()),
   m_instOrd(),
   m_ordinary(),
+  m_ordFieldName(),
   m_nameOrdinary(),
   m_nord(0),
   m_instCen(),
@@ -58,14 +59,18 @@ try :
 
       m_instOrd.push_back(vector<const real*>());
       m_plotOrdinary.push_back(false);
-      m_nameOrdinary.push_back(FieldName());
+      m_nameOrdinary.push_back(string());
+      m_ordFieldName.push_back(control::FieldName());
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(m_physics->particles() + term.field);
+        m_instOrd[m_nord].push_back(m_physics->particles() +
+                                    control->termOffset(term.quantity) +
+                                    term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
-        m_nameOrdinary.back() = FieldName(term.name, term.field);
+        m_nameOrdinary.back() += m_ordFieldName.back()
+                               = control::FieldName(term.name, term.field);
       }
 
       ++m_nord;
@@ -89,15 +94,17 @@ try :
 
         m_instCen.push_back(vector<const real*>());
         m_center.push_back(vector<const real*>());
-        m_nameCentral.push_back('\0');
+        m_nameCentral.push_back(string());
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(m_physics->particles() + term.field);
+          m_instCen[m_ncen].push_back(m_physics->particles() +
+                                      control->termOffset(term.quantity) +
+                                      term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
             m_ordinary + (!isupper(term.name) ? mean(term) : m_nord));
-          m_nameCentral.back() = term.name;
+          m_nameCentral.back() += control::FieldName(term.name, term.field);
         }
 
         ++m_ncen;
@@ -177,10 +184,10 @@ Statistics::mean(const control::Term& term) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int size = m_nameOrdinary.size();
+  int size = m_ordFieldName.size();
   for (int i=0; i<size; ++i) {
-    if (m_nameOrdinary[i].name == toupper(term.name) &&
-        m_nameOrdinary[i].field == term.field) {
+    if (m_ordFieldName[i].name == toupper(term.name) &&
+        m_ordFieldName[i].field == term.field) {
        return i;
     }
   }
@@ -200,7 +207,7 @@ Statistics::plotOrdinary(const int m) const
   return m_plotOrdinary[m];
 }
 
-int
+const string&
 Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 //  Return the name of ordinary moment
@@ -209,10 +216,10 @@ Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 {
   Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
-  return m_nameOrdinary[m].name;
+  return m_nameOrdinary[m];
 }
 
-int
+const string&
 Statistics::nameCentral(const int m) const
 //******************************************************************************
 //  Return the name of central moment

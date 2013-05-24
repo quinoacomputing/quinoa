@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 18 May 2013 09:58:12 PM MDT
+  \date      Thu May 23 16:17:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -18,6 +18,7 @@
 #include <ControlTypes.h>
 #include <BackAssociate.h>
 #include <Defaults.h>
+#include <Exception.h>
 
 namespace Quinoa {
 
@@ -147,6 +148,19 @@ class Control {
       return std::get<control::NPOSITION>(m_data) +
              std::get<control::NDENSITY>(m_data) +
              std::get<control::NVELOCITY>(m_data);
+    }
+
+    //! Return offset for term::quantity
+    int termOffset(control::Quantity q) const noexcept {
+      using namespace control;
+      int offset = 0;
+      if (q == Quantity::SCALAR)     offset += std::get<NVELOCITY>(m_data);
+      if (q == Quantity::VELOCITY_Z) offset += std::get<NVELOCITY>(m_data);
+      if (q == Quantity::VELOCITY_Y) offset += std::get<NVELOCITY>(m_data);
+      if (q == Quantity::VELOCITY_X) offset += std::get<NDENSITY>(m_data);
+      if (q == Quantity::DENSITY)
+        offset += NCOMP_POS * std::get<NPOSITION>(m_data);
+      return offset;
     }
 
   private:
