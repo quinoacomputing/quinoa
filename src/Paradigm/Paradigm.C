@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Fri Apr 26 16:47:33 2013
+  \date      Thu May 23 10:30:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -23,8 +23,8 @@ Paradigm::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Parallel environment:"
-        "\n---------------------" << endl;
+  cout << "Compute environment:"
+        "\n--------------------" << endl;
 
   // OpenMP
   cout << " * OpenMP: ";

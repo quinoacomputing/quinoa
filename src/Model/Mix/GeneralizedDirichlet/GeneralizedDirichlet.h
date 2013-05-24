@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:10:23 PM MDT
+  \date      Thu May 23 17:23:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -43,8 +43,8 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
              "Wrong number of generalized Dirichlet model parameters 'S'");
       ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
              "Wrong number of generalized Dirichlet model parameters 'k'");
-      //ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
-      //       FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
+      ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
+             FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
     }
 
 
@@ -55,7 +55,7 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     void init(int p, int tid) { initZero(p); IGNORE(tid); }
 
     //! Advance particles
-    void advance(const real& dt);
+    void advance(int p, int tid, real dt);
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);
