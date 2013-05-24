@@ -93,7 +93,7 @@ endif()
 SET (MASS_VALUES "BETA")
 
 # Initialize all to off
-SET (QUINOA_BETA off)              # 0
+SET (QUINOA_BETA off)  # 0
 
 # Set default and select from list
 SET (QUINOA_MODEL_MASS "BETA"
@@ -166,13 +166,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModule/")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
-# Make sure that the config file is in the search path
-# Configure a header file to pass info to the code
-configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-  "${PROJECT_BINARY_DIR}/Base/QuinoaConfig.h"
-)
-
 # Add compiler flags
 include(CheckCXXCompilerFlag)
 
@@ -204,6 +197,13 @@ check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)
 if(HAS_OPTREPORT AND NOT PLATFORM MATCHES "clang")
   add_definitions("-opt-report=0")
 endif()
+
+# Make sure that the config file is in the search path
+# Configure a header file to pass info to the code
+configure_file(
+  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
+  "${PROJECT_BINARY_DIR}/Base/QuinoaConfig.h"
+)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
