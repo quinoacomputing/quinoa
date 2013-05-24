@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:15:57 PM MDT
+  \date      Fri May 24 13:39:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -73,6 +73,11 @@ IGNORE(m_paradigm);
     m_mass = new (nothrow)
              MassType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mass != nullptr, FATAL, "Cannot allocate memory");
+
+    // Error out if mass model selected at compile time does not match that
+    // whose options are given in control file
+    ErrChk(m_mass->id() == control->get<control::MASS>(), FATAL,
+        "Compile-time-selected mass model does not match that in input file.");
   }
 
   // Instantiate hydrodynamics model
@@ -80,6 +85,11 @@ IGNORE(m_paradigm);
     m_hydro = new (nothrow)
               HydroType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
+
+    // Error out if hydro model selected at compile time does not match that
+    // whose options are given in control file
+    ErrChk(m_hydro->id() == control->get<control::HYDRO>(), FATAL,
+        "Compile-time-selected hydro model does not match that in input file.");
   }
 
   // Instantiate mix model
@@ -87,6 +97,11 @@ IGNORE(m_paradigm);
     m_mix = new (nothrow)
             MixType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
+
+    // Error out if mix model selected at compile time does not match that whose
+    // options are given in control file
+    ErrChk(m_mix->id() == control->get<control::MIX>(), FATAL,
+           "Compile-time-selected mix model does not match that in input file.");
   }
 
   // Instantiate statistics estimator

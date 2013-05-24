@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Sat 18 May 2013 12:16:37 PM MDT
+  \date      Fri May 24 13:36:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -37,6 +37,9 @@ class GeneralizedLangevin : public Hydro<GeneralizedLangevin> {
 
     //! Destructor
     virtual ~GeneralizedLangevin() noexcept = default;
+
+    //! Return hydro model identification
+    control::HydroType id() noexcept { return control::GLM; }
 
     //! Initialize particles
     void init();
