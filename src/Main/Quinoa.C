@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu May 23 10:29:53 2013
+  \date      Fri May 24 18:04:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -48,7 +48,6 @@ static void echoBuildInfo()
   cout << " * Revision          : " << QUINOA_GIT_COMMIT << "\n";
   cout << " * Configuration     : " << QUINOA_CONFIGURATION << "\n";
   cout << " * Third-party prefix: " << QUINOA_THIRD_PARTY_PREFIX << "\n";
-  cout << " * Compiler          : " << QUINOA_COMPILER << "\n";
   cout << " * Build type        : " << QUINOA_BUILD_TYPE;
 #ifdef NDEBUG
   cout << " (no asserts)" << "\n";
