@@ -37,12 +37,6 @@ if(PLATFORM MATCHES "intel")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,304,383,981,1418,1599")
 endif()
 
-# Intel-specific compiler arguments on darwin
-#if(PLATFORM MATCHES "darwin-intel")
-#  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-name=gcc -cxxlib=/projects/opt/centos6/gcc/gcc-4.7.2")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gxx-name=g++ -cxxlib=/projects/opt/centos6/gcc/gcc-4.7.2")
-#endif()
-
 # Set third party prefix (from build script)
 set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 
