@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri May 24 13:04:34 2013
+  \date      Sun 26 May 2013 05:37:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -127,8 +127,11 @@ namespace grammar {
       stats.back().push_back(control::Term(field, quantity, moment, n, plot));
 
       // If central moment, trigger mean
-      if (moment == control::CENTRAL) {
-        control::Term term(field, quantity, control::ORDINARY, toupper(n),
+      if (moment == control::Moment::CENTRAL) {
+        control::Term term(field,
+                           quantity,
+                           control::Moment::ORDINARY,
+                           toupper(n),
                            false);
         stats.insert(stats.end()-1, control::Product(1,term));
       }
@@ -308,13 +311,13 @@ namespace grammar {
   struct terms :
          sor< moment<keyword::transported_scalar,
                      control::Quantity::SCALAR,
-                     control::ORDINARY>,
+                     control::Moment::ORDINARY>,
               moment<keyword::transported_scalar_fluctuation,
                      control::Quantity::SCALAR,
-                     control::CENTRAL>,
+                     control::Moment::CENTRAL>,
               moment<keyword::velocity_x,
                      control::Quantity::VELOCITY_X,
-                     control::ORDINARY>
+                     control::Moment::ORDINARY>
             > {};
 
   // plow through terms in expectation until character 'rbound'
@@ -374,19 +377,19 @@ namespace grammar {
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
                         push_term<control::Quantity::VELOCITY_X,
-                                  control::CENTRAL, 'u'>,
+                                  control::Moment::CENTRAL, 'u'>,
                         push_term<control::Quantity::VELOCITY_X,
-                                  control::CENTRAL, 'u'>,
+                                  control::Moment::CENTRAL, 'u'>,
                         start_product,
                         push_term<control::Quantity::VELOCITY_Y,
-                                  control::CENTRAL, 'v'>,
+                                  control::Moment::CENTRAL, 'v'>,
                         push_term<control::Quantity::VELOCITY_Y,
-                                  control::CENTRAL, 'v'>,
+                                  control::Moment::CENTRAL, 'v'>,
                         start_product,
                         push_term<control::Quantity::VELOCITY_Z,
-                                  control::CENTRAL, 'w'>,
+                                  control::Moment::CENTRAL, 'w'>,
                         push_term<control::Quantity::VELOCITY_Z,
-                                  control::CENTRAL, 'w'>
+                                  control::Moment::CENTRAL, 'w'>
                       >,
                  block< process<keyword::SLM_C0, cstore<control::C0>>,
                         process<keyword::nvelocity, cstore<control::NVELOCITY>>

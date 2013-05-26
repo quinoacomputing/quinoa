@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Thu May 23 16:57:16 2013
+  \date      Sun 26 May 2013 05:35:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -67,17 +67,17 @@ enum MixType { NO_MIX=0,
 
 //! Quantities whose statistics can be estimated. If you change this, make sure
 //! you change Control::termOffset() as well.
-enum class Quantity { POSITION=0,
-                      DENSITY,
-                      VELOCITY_X,
-                      VELOCITY_Y,
-                      VELOCITY_Z,
-                      SCALAR
+enum class Quantity : uint8_t { POSITION=0,
+                                DENSITY,
+                                VELOCITY_X,
+                                VELOCITY_Y,
+                                VELOCITY_Z,
+                                SCALAR
 };
 
 //! Moment specifies which type of moment is computed for a Quantity in a Term
-enum Moment { ORDINARY=0,      //!< Full variable
-              CENTRAL          //!< Fluctuation
+enum class Moment { ORDINARY=0,      //!< Full variable
+                    CENTRAL          //!< Fluctuation
 };
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.

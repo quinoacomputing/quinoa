@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu May 23 16:17:14 2013
+  \date      Sun 26 May 2013 05:33:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -44,7 +44,7 @@ class Control {
       m_booldata = move(boolstack);
     }
 
-    //! Get single element at position
+    //! Get single element 'at' position
     template< control::BundlePosition at >
     const typename std::tuple_element<at, decltype(m_data)>::type& get()
     const noexcept {
