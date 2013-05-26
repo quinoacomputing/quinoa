@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu May 23 17:07:55 2013
+  \date      Sun 26 May 2013 05:37:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -170,7 +170,7 @@ Statistics::ordinary(const vector<control::Term>& product) const
   // If and only if all terms are ordinary, the product is ordinary
   bool ordinary = true;
   for (auto& term : product) {
-    if (term.moment == control::CENTRAL)
+    if (term.moment == control::Moment::CENTRAL)
       ordinary = false;
   }
   return ordinary;
