@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Sun 26 May 2013 05:35:24 PM MDT
+  \date      Mon 27 May 2013 01:13:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -18,6 +18,11 @@
 #include <sstream>
 
 #include <QuinoaTypes.h>
+#include <PhysicsOptions.h>
+#include <PositionOptions.h>
+#include <MassOptions.h>
+#include <HydroOptions.h>
+#include <MixOptions.h>
 
 using namespace std;
 
@@ -26,44 +31,6 @@ namespace Quinoa {
 namespace control {
 
 const int NCOMP_POS = 3;        //!< Number of position components for a field
-
-//! Physics (methods: collection of models) types
-enum PhysicsType { NO_PHYSICS=0,
-                   HOMOGENEOUS_MIX,
-                   HOMOGENEOUS_HYDRO,
-                   HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                   SPINSFLOW,
-                   NUM_PHYSICS
-};
-
-//! Position model types
-enum PositionType { NO_POSITION=0,
-                    INVISCID,
-                    VISCOUS,
-                    NUM_POSITION
-};
-
-//! Mass model types
-enum MassType { NO_MASS=0,
-                BETA,
-                NUM_MASS
-};
-
-//! Hydrodynamics model types
-enum HydroType { NO_HYDRO=0,
-                 SLM,
-                 GLM,
-                 NUM_HYDRO
-};
-
-//! Material mix model types
-enum MixType { NO_MIX=0,
-               IEM,
-               IECM,
-               DIRICHLET,
-               GENERALIZED_DIRICHLET,
-               NUM_MIX
-};
 
 //! Quantities whose statistics can be estimated. If you change this, make sure
 //! you change Control::termOffset() as well.
@@ -241,35 +208,35 @@ enum BundlePosition { TITLE=0,
 
 //! Storage bundle for parsed data
 using Bundle = tuple<
-  string,               //!< Problem Title
-  PhysicsType,          //!< Selected physics
-  PositionType,         //!< Selected position model
-  MassType,             //!< Selected mass model
-  HydroType,            //!< Selected hydrodynamics model
-  MixType,              //!< Selected material mix model
-  int,                  //!< Number of time steps to take
-  real,                 //!< Time to terminate time stepping
-  real,                 //!< Size of time step
-  int,                  //!< Number of position components in position model
-  int,                  //!< Number of density components in mass model
-  int,                  //!< Number of velocity components in hydro model
-  int,                  //!< Number of mixing scalars in material mix model
-  int,                  //!< Total number of particles
-  int,                  //!< TTY output interval
-  int,                  //!< Dump output interval
-  int,                  //!< Plot output interval
-  int,                  //!< PDF output interval
-  int,                  //!< Glob output interval
-  string,               //!< PDF base filename
-  string,               //!< Glob filename
-  string,               //!< Plot base filename
-  vector<real>,         //!< Parameters 'b' in Dirichlet mix models
-  vector<real>,         //!< Parameters 'S' in Dirichlet mix models
-  vector<real>,         //!< Parameters 'kappa' in Dirichlet mix models
-  vector<real>,         //!< Parameters 'c_ij' in GenDirichlet mix models
-  real,                 //!< Parameter C0 in the simplified Langevin model
-  real,                 //!< Atwood number in beta model
-  vector<Product>       //!< Requested (and triggered) statistics
+  string,                  //!< Problem Title
+  select::Physics::Enum,   //!< Selected physics
+  select::Position::Enum,  //!< Selected position model
+  select::Mass::Enum,      //!< Selected mass model
+  select::Hydro::Enum,     //!< Selected hydrodynamics model
+  select::Mix::Enum,       //!< Selected material mix model
+  int,                     //!< Number of time steps to take
+  real,                    //!< Time to terminate time stepping
+  real,                    //!< Size of time step
+  int,                     //!< Number of position components in position model
+  int,                     //!< Number of density components in mass model
+  int,                     //!< Number of velocity components in hydro model
+  int,                     //!< Number of mixing scalars in material mix model
+  int,                     //!< Total number of particles
+  int,                     //!< TTY output interval
+  int,                     //!< Dump output interval
+  int,                     //!< Plot output interval
+  int,                     //!< PDF output interval
+  int,                     //!< Glob output interval
+  string,                  //!< PDF base filename
+  string,                  //!< Glob filename
+  string,                  //!< Plot base filename
+  vector<real>,            //!< Parameters 'b' in Dirichlet mix models
+  vector<real>,            //!< Parameters 'S' in Dirichlet mix models
+  vector<real>,            //!< Parameters 'kappa' in Dirichlet mix models
+  vector<real>,            //!< Parameters 'c_ij' in GenDirichlet mix models
+  real,                    //!< Parameter C0 in the simplified Langevin model
+  real,                    //!< Atwood number in beta model
+  vector<Product>          //!< Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing

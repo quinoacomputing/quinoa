@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 08:39:34 PM MDT
+  \date      Mon 27 May 2013 11:43:55 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -12,6 +12,10 @@
 #define Parser_h
 
 #include <fstream>
+
+#include <Option.h>
+#include <PhysicsOptions.h>
+#include <PositionOptions.h>
 
 using namespace std;
 
@@ -60,9 +64,9 @@ class Parser {
     //! Echo parsed data specific to mix model
     void echoMix() const;
 
-    const string m_filename;            //!< Name of file to parse
-    Control* const m_control;           //!< Main control category
-    ifstream m_q;                       //!< Control file input stream
+    const string m_filename;                    //!< Name of file to parse
+    Control* const m_control;                   //!< Control category
+    ifstream m_q;                               //!< Control file input stream
 };
 
 } // namespace Quinoa
