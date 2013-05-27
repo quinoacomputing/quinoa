@@ -11,46 +11,19 @@ set(QUINOA_MINOR_VER 1)
 # Set Quinoa release number
 set(QUINOA_RELEASE "LA-CC-XX-XXX")
 
-# Set platform string (from build script)
-set(QUINOA_PLATFORM ${PLATFORM})
-
-# Set link strategy (from build script)
-set(LINK_STRATEGY ${LINK_STRATEGY}
-    CACHE STRING "DYNAMIC, STATIC (Set this at the command line)"
-    FORCE)
-
 # Add compiler options needed for MKL
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
-
-# Intel-specific compiler arguments on linux
-if(PLATFORM MATCHES "intel")
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcc-version=470 -gcc-name=gcc-4.7")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-version=470 -gxx-name=g++-4.7")
-  # Suppress the following remarks:
-  #   111: statement is unreachable
-  #   304: access control not specified ("public" by default)
-  #   383: value copied to temporary, reference to temporary used
-  #   981: operands are evaluated in unspecified order
-  #  1418: external function definition with no prior declaration
-  #  1599: declaration hides parameter
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,304,383,981,1418,1599")
-endif()
-
-# Set third party prefix (from build script)
-set(QUINOA_THIRD_PARTY_PREFIX ${THIRD_PARTY_PREFIX})
 
 # Set build type
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Find OpenMP and set its compiler flag
-if(NOT PLATFORM MATCHES "clang")
-  find_package(OpenMP)
-  if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-  endif()
+find_package(OpenMP)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
 # Grab info about the compiler to stick into the binary
@@ -73,29 +46,17 @@ string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
 
 set (QUINOA_EXECUTABLE "quinoa")
 
-# Set DEBUG bool depending on CMAKE_BUILD_TYPE
-if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-  set (DEBUG off)
-else()
-  set (DEBUG on)
-endif()
-
-
 # Mass model options
-
 # Available mass models
 SET (MASS_VALUES "BETA")
-
 # Initialize all to off
 SET (QUINOA_BETA off)  # 0
-
 # Set default and select from list
 SET (QUINOA_MODEL_MASS "BETA"
      CACHE STRING "Select mass model. Default: BETA (Beta distribution model). Available options: ${MASS_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_MASS PROPERTY STRINGS ${MASS_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_MASS} QUINOA_MODEL_MASS)
 LIST (FIND MASS_VALUES ${QUINOA_MODEL_MASS} MASS_INDEX)
-
 # Evaluate selected model and put in define for it
 IF (${MASS_INDEX} EQUAL 0)
   SET (QUINOA_BETA on)
@@ -103,23 +64,18 @@ ELSEIF (${MASS_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Mass model ${QUINOA_MODEL_MASS} not supported, valid entries are ${MASS_VALUES}")
 ENDIF()
 
-
 # Hydro model options
-
 # Available hydrodyanmics models
 SET (HYDRO_VALUES "SLM" "GLM")
-
 # Initialize all to off
 SET (QUINOA_SLM off)  # 0
 SET (QUINOA_GLM off)  # 1
-
 # Set default and select from list
 SET (QUINOA_MODEL_HYDRO "SLM"
      CACHE STRING "Select hydrodynamics model. Default: SLM (Simplified Langevin model). Available options: ${HYDRO_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_HYDRO PROPERTY STRINGS ${HYDRO_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_HYDRO} QUINOA_MODEL_HYDRO)
 LIST (FIND HYDRO_VALUES ${QUINOA_MODEL_HYDRO} HYDRO_INDEX)
-
 # Evaluate selected model and put in define for it
 IF (${HYDRO_INDEX} EQUAL 0)
   SET (QUINOA_SLM on)
@@ -129,23 +85,18 @@ ELSEIF (${HYDRO_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Hydrodynamics model ${QUINOA_MODEL_HYDRO} not supported, valid entries are ${HYDRO_VALUES}")
 ENDIF()
 
-
 # Mix model options
-
 # Available mix models
 SET (MIX_VALUES "DIR" "GENDIR")
-
 # Initialize all to off
 SET (QUINOA_DIRICHLET off)              # 0
 SET (QUINOA_GENERALIZED_DIRICHLET off)  # 1
-
 # Set default and select from list
 SET (QUINOA_MODEL_MIX "DIR"
      CACHE STRING "Select mixing model. Default: DIR (Dirichlet model). Available options: ${MIX_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_MIX PROPERTY STRINGS ${MIX_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_MIX} QUINOA_MODEL_MIX)
 LIST (FIND MIX_VALUES ${QUINOA_MODEL_MIX} MIX_INDEX)
-
 # Evaluate selected model and put in define for it
 IF (${MIX_INDEX} EQUAL 0)
   SET (QUINOA_DIRICHLET on)
@@ -155,7 +106,7 @@ ELSEIF (${MIX_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Mix model ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
 ENDIF()
 
-
+# Get git revision
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModule/")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
@@ -187,8 +138,21 @@ if(HAS_WREMARKS)
   add_definitions("-Wremarks")
 endif()
 
-check_cxx_compiler_flag(-opt-report HAS_OPTREPORT)
-if(HAS_OPTREPORT AND NOT PLATFORM MATCHES "clang")
+# Compiler-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  # using GCC
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  # Intel-specific compiler arguments:
+  # Suppress the following Intel compiler remarks:
+  #   111: statement is unreachable
+  #   304: access control not specified ("public" by default)
+  #   383: value copied to temporary, reference to temporary used
+  #   981: operands are evaluated in unspecified order
+  #  1418: external function definition with no prior declaration
+  #  1599: declaration hides parameter
+  add_definitions("-diag-disable 111,304,383,981,1418,1599")
   add_definitions("-opt-report=0")
 endif()
 
