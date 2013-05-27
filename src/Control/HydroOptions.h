@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 02:45:30 PM MDT
+  \date      Mon 27 May 2013 05:32:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -42,15 +42,17 @@ class Hydro {
     }
 
     //! Constructor initializing associations
-    Hydro() :
+    // ICC: use initializer lists
+    Hydro() {
       //! Enums -> names
-      names{ { Enum::NO_HYDRO, "No hydro" },
-             { Enum::SLM, "Simplified Langevin"},
-             { Enum::GLM, "Generalized Langevin" } },
+      names[Enum::NO_HYDRO] = "No hydro";
+      names[Enum::SLM] = "Simplified Langevin";
+      names[Enum::GLM] = "Generalized Langevin";
       //! keywords -> Enums
-      values{ { "no_hydro",  Enum::NO_HYDRO},
-              { "slm",       Enum::SLM},
-              { "glm",       Enum::GLM} } {}
+      values["no_hydro"] = Enum::NO_HYDRO;
+      values["slm"] = Enum::SLM;
+      values["glm"] = Enum::GLM;
+    }
 
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {
