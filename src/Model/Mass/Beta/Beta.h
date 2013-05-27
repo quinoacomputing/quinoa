@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Fri May 24 13:38:45 2013
+  \date      Mon 27 May 2013 12:48:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -38,7 +38,7 @@ class Beta : public Mass<Beta> {
     virtual ~Beta() noexcept = default;
 
     //! Return mass model identification
-    control::MassType id() noexcept { return control::BETA; }
+    select::Mass::Enum id() noexcept { return select::Mass::Enum::BETA; }
 
     //! Initialize particles
     void init();

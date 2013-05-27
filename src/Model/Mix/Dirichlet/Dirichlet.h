@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri May 24 13:31:03 2013
+  \date      Mon 27 May 2013 01:09:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -48,7 +48,7 @@ class Dirichlet : public Mix<Dirichlet> {
     virtual ~Dirichlet() noexcept = default;
 
     //! Return mix model identification
-    control::MixType id() noexcept { return control::DIRICHLET; }
+    select::Mix::Enum id() noexcept { return select::Mix::Enum::DIRICHLET; }
 
     //! Initialize particles
     void init(int p, int tid) { initZero(p); IGNORE(tid); }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri May 24 13:30:45 2013
+  \date      Mon 27 May 2013 01:09:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -52,7 +52,9 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     virtual ~GeneralizedDirichlet() noexcept = default;
 
     //! Return mix model identification
-    control::MixType id() noexcept { return control::GENERALIZED_DIRICHLET; }
+    select::Mix::Enum id() noexcept {
+      return select::Mix::Enum::GENERALIZED_DIRICHLET;
+    }
 
     //! Initialize particles
     void init(int p, int tid) { initZero(p); IGNORE(tid); }

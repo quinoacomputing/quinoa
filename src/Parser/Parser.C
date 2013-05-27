@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Mon 13 May 2013 09:08:05 PM MDT
+  \date      Mon 27 May 2013 02:49:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -32,7 +32,7 @@ Parser::Parser(const string& filename, Control* const control) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Check if control file exists, throw exception if not
+  // Check if control file exists, throw exception if it does not
   m_q.open(m_filename, ifstream::in);
   ErrChk(m_q.good(), FATAL, "Failed to open file: " + m_filename);
 
@@ -112,7 +112,9 @@ Parser::echoMass() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Mass model: " << m_control->massName() << endl;
+  cout << " * Mass model: "
+       << grammar::Mass.name(m_control->get<control::MASS>())
+       << endl;
 
   m_control->echo<control::NDENSITY>("Number of density components");
   m_control->echo<control::AT>("At");
@@ -125,7 +127,9 @@ Parser::echoHydro() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Hydrodynamics model: " << m_control->hydroName() << endl;
+  cout << " * Hydrodynamics model: "
+       << grammar::Hydro.name(m_control->get<control::HYDRO>())
+       << endl;
 
   m_control->echo<control::NVELOCITY>("Number of velocity components");
   m_control->echo<control::C0>("C0");
@@ -138,7 +142,9 @@ Parser::echoMix() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Material mix model: " << m_control->mixName() << endl;
+  cout << " * Material mix model: "
+       << grammar::Mix.name(m_control->get<control::MIX>())
+       << endl;
 
   m_control->echo<control::NSCALAR>("Number of scalar components");
   m_control->echoVec<control::B>("Parameter vector b");
@@ -161,7 +167,9 @@ Parser::echo() const
     cout << " * Title: " << m_control->get<control::TITLE>() << endl;
 
   if (m_control->set<control::PHYSICS>()) {
-    cout << " * Physics: " << m_control->physicsName() << endl;
+    cout << " * Physics: "
+         << grammar::Physics.name(m_control->get<control::PHYSICS>())
+         << endl;
     echoPhysicsCommon();
   }
 

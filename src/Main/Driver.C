@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 08:20:35 PM MDT
+  \date      Mon 27 May 2013 12:17:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -69,32 +69,32 @@ try :
   // Instantiate selected physics
   switch (m_control->get<control::PHYSICS>()) {
 
-    case control::PhysicsType::NO_PHYSICS :
+    case select::Physics::Enum::NO_PHYSICS :
       Throw(FATAL, "No physics selected");
       break;
 
-    case control::PhysicsType::HOMOGENEOUS_MIX :
+    case select::Physics::Enum::HOMOGENEOUS_MIX :
       m_physics = new (nothrow)
                   HomMix(m_memory, m_paradigm, m_control, m_timer);
       ErrChk(m_physics != nullptr, FATAL,
              "Cannot allocate memory for physics object");
       break;
 
-    case control::PhysicsType::HOMOGENEOUS_HYDRO :
+    case select::Physics::Enum::HOMOGENEOUS_HYDRO :
       m_physics = new (nothrow)
                   HomHydro(m_memory, m_paradigm, m_control, m_timer);
       ErrChk(m_physics != nullptr, FATAL,
              "Cannot allocate memory for physics object");
       break;
 
-    case control::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR :
+    case select::Physics::Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR :
       m_physics = new (nothrow)
                   HomRT(m_memory, m_paradigm, m_control, m_timer);
       ErrChk(m_physics != nullptr, FATAL,
              "Cannot allocate memory for physics object");
       break;
 
-    case control::PhysicsType::SPINSFLOW :
+    case select::Physics::Enum::SPINSFLOW :
       m_physics = new (nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Fri May 24 13:36:12 2013
+  \date      Mon 27 May 2013 01:07:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -39,7 +39,7 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
     virtual ~SimplifiedLangevin() noexcept = default;
 
     //! Return hydro model identification
-    control::HydroType id() noexcept { return control::SLM; }
+    select::Hydro::Enum id() noexcept { return select::Hydro::Enum::SLM; }
 
     //! Initialize particles
     void init();

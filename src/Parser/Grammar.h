@@ -2,13 +2,14 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sun 26 May 2013 05:37:12 PM MDT
+  \date      Mon 27 May 2013 02:38:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
              Library (PEGTL) to create the grammar and the associated parser.
              Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. See
-             src/ThirdParty/PEGTL/documentation.wiki for more details.
+             src/ThirdParty/PEGTL/documentation.wiki for more details. Word of
+             advice: read from the bottom up.
 */
 //******************************************************************************
 #ifndef Grammar_h
@@ -18,8 +19,12 @@
 
 #include <Macro.h>
 #include <ControlTypes.h>
-#include <FwdAssociate.h>
-#include <BackAssociate.h>
+#include <Option.h>
+#include <PhysicsOptions.h>
+#include <PositionOptions.h>
+#include <MassOptions.h>
+#include <HydroOptions.h>
+#include <MixOptions.h>
 
 namespace Quinoa {
 
@@ -34,7 +39,7 @@ namespace grammar {
 
   // State
 
-  //! Bundles is where everything is stored during parsing
+  //! Bundle is where everything is stored during parsing
   using stack_type = control::Bundle;
   //! BoolBundle indicates stored fields (true or false)
   using boolstack_type = control::BoolBundle;
@@ -42,6 +47,16 @@ namespace grammar {
   static stack_type dummy_stack;
   //! Out-of-struct storage of field ID for push_term
   static int field = 0;
+  //! Physics options
+  static control::Option<select::Physics> Physics;
+  //! Position options
+  static control::Option<select::Position> Position;
+  //! Mass options
+  static control::Option<select::Mass> Mass;
+  //! Hydro options
+  static control::Option<select::Hydro> Hydro;
+  //! Mix options
+  static control::Option<select::Mix> Mix;
 
   // Actions
 
@@ -161,12 +176,12 @@ namespace grammar {
       if (boolstack[control::PHYSICS]) {
         cout << ">>> PARSER WARNING: Multiple physics defined in input file"
              << endl << ">>> Overwriting \""
-             << associate::PhysicsName[ std::get<control::PHYSICS>(stack) ]
+             << Physics.name(std::get<control::PHYSICS>(stack))
              << "\" with \""
-             << associate::PhysicsName[ associate::PhysicsEnum[value] ] << "\""
+             << Physics.name(Physics.option(value)) << "\""
              << endl;
       }
-      get<control::PHYSICS>(stack) = associate::PhysicsEnum[value];
+      get<control::PHYSICS>(stack) = Physics.option(value);
       boolstack[control::PHYSICS] = true;
     }
   };
@@ -180,12 +195,12 @@ namespace grammar {
       if (boolstack[control::POSITION]) {
         cout << ">>> PARSER WARNING: Multiple position models defined in input"
                 " file" << endl << ">>> Overwriting \""
-             << associate::PositionName[ std::get<control::POSITION>(stack) ]
+             << Position.name(std::get<control::POSITION>(stack))
              << "\" with \""
-             << associate::PositionName[ associate::PositionEnum[value] ]
+             << Position.name(Position.option(value))
              << "\"" << endl;
       }
-      get<control::POSITION>(stack) = associate::PositionEnum[value];
+      get<control::POSITION>(stack) = Position.option(value);
       boolstack[control::POSITION] = true;
     }
   };
@@ -199,12 +214,12 @@ namespace grammar {
       if (boolstack[control::MASS]) {
         cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
              << endl << ">>> Overwriting \""
-             << associate::MassName[ std::get<control::MASS>(stack) ]
+             << Mass.name(std::get<control::MASS>(stack))
              << "\" with \""
-             << associate::MassName[ associate::MassEnum[value] ] << "\""
+             << Mass.name(Mass.option(value)) << "\""
              << endl;
       }
-      get<control::MASS>(stack) = associate::MassEnum[value];
+      get<control::MASS>(stack) = Mass.option(value);
       boolstack[control::MASS] = true;
     }
   };
@@ -218,12 +233,12 @@ namespace grammar {
       if (boolstack[control::HYDRO]) {
         cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
                 "file" << endl << ">>> Overwriting \""
-             << associate::HydroName[ std::get<control::HYDRO>(stack) ]
+             << Hydro.name(std::get<control::HYDRO>(stack))
              << "\" with \""
-             << associate::HydroName[ associate::HydroEnum[value] ] << "\""
+             << Hydro.name(Hydro.option(value)) << "\""
              << endl;
       }
-      get<control::HYDRO>(stack) = associate::HydroEnum[value];
+      get<control::HYDRO>(stack) = Hydro.option(value);
       boolstack[control::HYDRO] = true;
     }
   };
@@ -237,11 +252,11 @@ namespace grammar {
       if (boolstack[control::MIX]) {
         cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
              << endl << ">>> Overwriting \""
-             << associate::MixName[ std::get<control::MIX>(stack) ]
+             << Mix.name(std::get<control::MIX>(stack))
              << "\" with \""
-             << associate::MixName[ associate::MixEnum[value] ] << "\"" << endl;
+             << Mix.name(Mix.option(value)) << "\"" << endl;
       }
-      get<control::MIX>(stack) = associate::MixEnum[value];
+      get<control::MIX>(stack) = Mix.option(value);
       boolstack[control::MIX] = true;
     }
   };

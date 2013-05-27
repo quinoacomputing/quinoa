@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri May 24 18:04:43 2013
+  \date      Mon 27 May 2013 12:19:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -54,7 +54,6 @@ static void echoBuildInfo()
 #else  // NDEBUG
   cout << " (with asserts)" << "\n";
 #endif // NDEBUG
-  cout << " * Compiler flags    : " << ">> COMPILER FLAGS WOULD BE NICE <<<\n";
   cout << " * Build date        : " << QUINOA_BUILD_DATE << "\n";
   cout << endl;
 }
