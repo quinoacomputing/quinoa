@@ -18,12 +18,9 @@ namespace Quinoa {
 #define QUINOA_VERSION               "@QUINOA_MAJOR_VER@.@QUINOA_MINOR_VER@"
 #define QUINOA_RELEASE               "@QUINOA_RELEASE@"
 #define QUINOA_GIT_COMMIT            "@GIT_SHA1@"
-#define QUINOA_CONFIGURATION         "@QUINOA_PLATFORM@"
-#define QUINOA_THIRD_PARTY_PREFIX    "@QUINOA_THIRD_PARTY_PREFIX@"
 #define QUINOA_COMPILER              "@QUINOA_COMPILER@"
 #define QUINOA_BUILD_TYPE            "@QUINOA_BUILD_TYPE@"
 #define QUINOA_BUILD_DATE            "@QUINOA_BUILD_DATE@"
-#cmakedefine DEBUG 1
 
 // Selected mass model:
 #cmakedefine QUINOA_BETA 1
