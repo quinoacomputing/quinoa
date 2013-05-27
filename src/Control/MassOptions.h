@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 02:46:38 PM MDT
+  \date      Mon 27 May 2013 05:30:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -41,13 +41,15 @@ class Mass {
     }
 
     //! Constructor initializing associations
-    Mass() :
+    // ICC: use initializer lists
+    Mass() {
       //! Enums -> names
-      names{ { Enum::NO_MASS, "No mass" },
-             { Enum::BETA, "Beta"} },
+      names[Enum::NO_MASS] = "No mass";
+      names[Enum::BETA] = "Beta";
       //! keywords -> Enums
-      values{ { "no_mass",   Enum::NO_MASS},
-              { "beta",      Enum::BETA} } {}
+      values["no_mass"] = Enum::NO_MASS;
+      values["beta"] = Enum::BETA;
+    }
 
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {

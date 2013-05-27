@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 02:44:02 PM MDT
+  \date      Mon 27 May 2013 05:28:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -42,15 +42,17 @@ class Position {
     }
 
     //! Constructor initializing associations
-    Position() :
+    // ICC: use initializer lists
+    Position() {
       //! Enums -> names
-      names{ { Enum::NO_POSITION, "No position" },
-             { Enum::INVISCID, "Inviscid"},
-             { Enum::VISCOUS, "Viscous"} },
+      names[Enum::NO_POSITION] = "No position";
+      names[Enum::INVISCID] = "Inviscid";
+      names[Enum::VISCOUS] = "Viscous";
       //! keywords -> Enums
-      values{ { "no_position", Enum::NO_POSITION},
-              { "invpos",      Enum::INVISCID},
-              { "vispos",      Enum::INVISCID } } {}
+      values["no_position"] = Enum::NO_POSITION;
+      values["invpos"] = Enum::INVISCID;
+      values["vispos"] = Enum::INVISCID;
+    }
 
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {

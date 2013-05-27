@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 02:41:33 PM MDT
+  \date      Mon 27 May 2013 05:31:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -45,20 +45,21 @@ class Mix {
     }
 
     //! Constructor initializing associations
-    Mix() :
+    // ICC: use initializer lists
+    Mix() {
       //! Enums -> names
-      names{ { Enum::NO_MIX, "No mix" },
-             { Enum::IEM, "Interaction by exchange with the mean"},
-             { Enum::IECM,
-               "Interaction by exchange with the conditional mean" },
-             { Enum::DIRICHLET, "Dirichlet"},
-             { Enum::GENERALIZED_DIRICHLET, "Dirichlet"} },
+      names[Enum::NO_MIX] = "No mix";
+      names[Enum::IEM] = "Interaction by exchange with the mean";
+      names[Enum::IECM] = "Interaction by exchange with the conditional mean";
+      names[Enum::DIRICHLET] = "Dirichlet";
+      names[Enum::GENERALIZED_DIRICHLET] = "Dirichlet";
       //! keywords -> Enums
-      values{ { "no_mix",    Enum::NO_MIX},
-              { "iem",       Enum::IEM},
-              { "iecm",      Enum::IECM},
-              { "dir",       Enum::DIRICHLET},
-              { "gendir",    Enum::GENERALIZED_DIRICHLET} } {}
+      values["no_mix"] = Enum::NO_MIX;
+      values["iem"] = Enum::IEM;
+      values["iecm"] = Enum::IECM;
+      values["dir"] = Enum::DIRICHLET;
+      values["gendir"] = Enum::GENERALIZED_DIRICHLET;
+    }
 
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {

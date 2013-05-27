@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 27 May 2013 12:17:49 PM MDT
+  \date      Mon 27 May 2013 05:38:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -44,7 +44,7 @@ try :
 {
 
   // Instantiate main control category
-  m_control = new (nothrow) Control;
+  m_control = new(nothrow) Control;
   ErrChk(m_control != nullptr, FATAL,
          "Cannot allocate memory for control object");
 
@@ -63,48 +63,32 @@ try :
   parser.echo();
 
   // Instantiate timer object
-  m_timer = new (nothrow) Timer;
+  m_timer = new(nothrow) Timer;
   ErrChk(m_timer != nullptr, FATAL, "Cannot allocate memory for timer object");
 
   // Instantiate selected physics
-  switch (m_control->get<control::PHYSICS>()) {
+  // ICC: use switch
+  if (m_control->get<control::PHYSICS>() == select::Physics::Enum::NO_PHYSICS)
+    Throw(FATAL, "No physics selected");
 
-    case select::Physics::Enum::NO_PHYSICS :
-      Throw(FATAL, "No physics selected");
-      break;
+  if (m_control->get<control::PHYSICS>() ==
+        select::Physics::Enum::HOMOGENEOUS_MIX)
+    m_physics = new(nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
 
-    case select::Physics::Enum::HOMOGENEOUS_MIX :
-      m_physics = new (nothrow)
-                  HomMix(m_memory, m_paradigm, m_control, m_timer);
-      ErrChk(m_physics != nullptr, FATAL,
-             "Cannot allocate memory for physics object");
-      break;
+  if (m_control->get<control::PHYSICS>() ==
+        select::Physics::Enum::HOMOGENEOUS_HYDRO)
+    m_physics = new(nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
 
-    case select::Physics::Enum::HOMOGENEOUS_HYDRO :
-      m_physics = new (nothrow)
-                  HomHydro(m_memory, m_paradigm, m_control, m_timer);
-      ErrChk(m_physics != nullptr, FATAL,
-             "Cannot allocate memory for physics object");
-      break;
+  if (m_control->get<control::PHYSICS>() ==
+        select::Physics::Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR)
+    m_physics = new(nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
 
-    case select::Physics::Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR :
-      m_physics = new (nothrow)
-                  HomRT(m_memory, m_paradigm, m_control, m_timer);
-      ErrChk(m_physics != nullptr, FATAL,
-             "Cannot allocate memory for physics object");
-      break;
-
-    case select::Physics::Enum::SPINSFLOW :
-      m_physics = new (nothrow)
-                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
+  if (m_control->get<control::PHYSICS>() == select::Physics::Enum::SPINSFLOW)
+    m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");
-      ErrChk(m_physics != nullptr, FATAL,
-             "Cannot allocate memory for physics object");
-      break;
 
-    default :
-      Throw(FATAL, "Selected physics not implemented");
-  }
+  ErrChk(m_physics != nullptr, FATAL,
+         "Cannot allocate memory for physics object");
 
   // Set initial conditions
   m_physics->init();

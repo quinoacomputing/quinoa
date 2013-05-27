@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 02:42:38 PM MDT
+  \date      Mon 27 May 2013 05:25:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -45,21 +45,22 @@ class Physics {
     }
 
     //! Constructor initializing associations
-    Physics() :
+    // ICC: use initializer lists
+    Physics() {
       //! Enums -> names
-      names{ { Enum::NO_PHYSICS, "No physics" },
-             { Enum::HOMOGENEOUS_MIX, "Homogeneous material mixing"},
-             { Enum::HOMOGENEOUS_HYDRO, "Homogeneous hydrodynamics"},
-             { Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR,
-               "Homogeneous Rayleigh-Taylor"},
-             { Enum::SPINSFLOW,
-               "Standalone-Particle Incompressible Navier-Stokes Flow"} },
+      names[Enum::NO_PHYSICS] = "No physics";
+      names[Enum::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
+      names[Enum::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
+      names[Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR] = "Homogeneous Rayleigh-Taylor";
+      names[Enum::SPINSFLOW] =
+        "Standalone-Particle Incompressible Navier-Stokes Flow";
       //! keywords -> Enums
-      values{ { "no_physics", Enum::NO_PHYSICS },
-              { "hommix",     Enum::HOMOGENEOUS_MIX },
-              { "homhydro",   Enum::HOMOGENEOUS_HYDRO },
-              { "homrt",      Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR },
-              { "spinsflow",  Enum::SPINSFLOW } } {}
+      values["no_physics"] = Enum::NO_PHYSICS;
+      values["hommix"] = Enum::HOMOGENEOUS_MIX;
+      values["homhydro"] = Enum::HOMOGENEOUS_HYDRO;
+      values["homrt"] = Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR;
+      values["spinsflow"] = Enum::SPINSFLOW;
+    }
 
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {
