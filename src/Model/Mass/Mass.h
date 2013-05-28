@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 12:48:34 PM MDT
+  \date      Mon 27 May 2013 06:48:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -47,7 +47,7 @@ class Mass : public Model {
     virtual ~Mass() noexcept = default;
 
     //! CRTP interface: Return mass model identification
-    select::Mass::Enum id() noexcept {
+    select::MassTypes id() noexcept {
       return static_cast<MassType*>(this)->id();
     }
 

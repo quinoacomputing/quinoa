@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 01:08:48 PM MDT
+  \date      Mon 27 May 2013 06:47:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -49,7 +49,7 @@ class Mix : public Model {
     virtual ~Mix() noexcept = default;
 
     //! CRTP interface: Return mix model identification
-    select::Mix::Enum id() noexcept {
+    select::MixTypes id() noexcept {
       return static_cast<MixType*>(this)->id();
     }
 

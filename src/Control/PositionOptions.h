@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:28:04 PM MDT
+  \date      Mon 27 May 2013 07:12:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -14,60 +14,32 @@
 #include <map>
 
 #include <Exception.h>
+#include <Toggle.h>
 
 namespace Quinoa {
 
 namespace select {
 
-class Position {
+//! Position model types
+enum class PositionTypes { NO_POSITION=0,
+                           INVISCID,
+                           VISCOUS };
+
+//! Class with base templated on the above enum class with associations
+class Position : public Toggle<PositionTypes> {
 
   public:
-    //! Position model types
-    enum class Enum { NO_POSITION=0,
-                      INVISCID,
-                      VISCOUS };
-
-    //! Operator << for writing Enum to output streams
-    friend std::ostream& operator<< (std::ostream& os, const Enum& e) {
-      os << static_cast<std::underlying_type<Enum>::type>(e);
-      return os;
-    }
-
-    //! Operator + for adding Enum to a std::string
-    friend std::string operator+ (const std::string& lhs, Enum e) {
-      std::stringstream ss;
-      ss << lhs << e ;
-      std::string rhs = ss.str();
-      return rhs;
-    }
-
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Position() {
+    Position() : Toggle<PositionTypes>(names, values) {
       //! Enums -> names
-      names[Enum::NO_POSITION] = "No position";
-      names[Enum::INVISCID] = "Inviscid";
-      names[Enum::VISCOUS] = "Viscous";
+      names[PositionTypes::NO_POSITION] = "No position";
+      names[PositionTypes::INVISCID] = "Inviscid";
+      names[PositionTypes::VISCOUS] = "Viscous";
       //! keywords -> Enums
-      values["no_position"] = Enum::NO_POSITION;
-      values["invpos"] = Enum::INVISCID;
-      values["vispos"] = Enum::INVISCID;
-    }
-
-    //! Lookup Enum value based on keyword
-    Enum value(const std::string keyword) const {
-      auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
-             "Cannot find value for keyword \"" + keyword + "\"");
-      return it->second;
-    }
-
-    //! Lookup option name based on Enum
-    const std::string& name(Enum value) const {
-      auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
-             std::string("Cannot find name for value \"") + value + "\"");
-      return it->second;
+      values["no_position"] = PositionTypes::NO_POSITION;
+      values["invpos"] = PositionTypes::INVISCID;
+      values["vispos"] = PositionTypes::INVISCID;
     }
 
   private:
@@ -80,8 +52,8 @@ class Position {
     //! Don't permit move assigment
     Position& operator=(Position&&) = delete;
 
-    std::map<Enum, std::string> names;
-    std::map<std::string, Enum> values;
+    std::map<PositionTypes, std::string> names;
+    std::map<std::string, PositionTypes> values;
 };
 
 } // namespace select

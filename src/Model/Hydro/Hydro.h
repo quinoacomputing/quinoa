@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 01:12:10 PM MDT
+  \date      Mon 27 May 2013 06:46:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -47,7 +47,7 @@ class Hydro : public Model {
     virtual ~Hydro() noexcept = default;
 
     //! CRTP interface: Return hydro model identification
-    select::Hydro::Enum id() noexcept {
+    select::HydroTypes id() noexcept {
       return static_cast<HydroType*>(this)->id();
     }
 

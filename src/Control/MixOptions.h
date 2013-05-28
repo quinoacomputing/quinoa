@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:31:58 PM MDT
+  \date      Mon 27 May 2013 07:41:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -12,69 +12,41 @@
 #define MixOptions_h
 
 #include <map>
-#include <sstream>
 
 #include <Exception.h>
+#include <Toggle.h>
 
 namespace Quinoa {
 
 namespace select {
 
-class Mix {
-
-  public:
-    //! Mix model types
-    enum class Enum { NO_MIX=0,
+//! Mix model types
+enum class MixTypes { NO_MIX=0,
                       IEM,
                       IECM,
                       DIRICHLET,
                       GENERALIZED_DIRICHLET };
 
-    //! Operator << for writing Enum to output streams
-    friend std::ostream& operator<< (std::ostream& os, const Enum& e) {
-      os << static_cast<std::underlying_type<Enum>::type>(e);
-      return os;
-    }
+//! Class with base templated on the above enum class with associations
+class Mix : public Toggle<MixTypes> {
 
-    //! Operator + for adding Enum to a std::string
-    friend std::string operator+ (const std::string& lhs, Enum e) {
-      std::stringstream ss;
-      ss << lhs << e ;
-      std::string rhs = ss.str();
-      return rhs;
-    }
-
+  public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Mix() {
+    Mix() : Toggle<MixTypes>(names, values){
       //! Enums -> names
-      names[Enum::NO_MIX] = "No mix";
-      names[Enum::IEM] = "Interaction by exchange with the mean";
-      names[Enum::IECM] = "Interaction by exchange with the conditional mean";
-      names[Enum::DIRICHLET] = "Dirichlet";
-      names[Enum::GENERALIZED_DIRICHLET] = "Dirichlet";
+      names[MixTypes::NO_MIX] = "No mix";
+      names[MixTypes::IEM] = "Interaction by exchange with the mean";
+      names[MixTypes::IECM] =
+        "Interaction by exchange with the conditional mean";
+      names[MixTypes::DIRICHLET] = "Dirichlet";
+      names[MixTypes::GENERALIZED_DIRICHLET] = "Dirichlet";
       //! keywords -> Enums
-      values["no_mix"] = Enum::NO_MIX;
-      values["iem"] = Enum::IEM;
-      values["iecm"] = Enum::IECM;
-      values["dir"] = Enum::DIRICHLET;
-      values["gendir"] = Enum::GENERALIZED_DIRICHLET;
-    }
-
-    //! Lookup Enum value based on keyword
-    Enum value(const std::string keyword) const {
-      auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
-             "Cannot find value for keyword \"" + keyword + "\"");
-      return it->second;
-    }
-
-    //! Lookup option name based on Enum
-    const std::string& name(Enum value) const {
-      auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
-             std::string("Cannot find name for value \"") + value + "\"");
-      return it->second;
+      values["no_mix"] = MixTypes::NO_MIX;
+      values["iem"] = MixTypes::IEM;
+      values["iecm"] = MixTypes::IECM;
+      values["dir"] = MixTypes::DIRICHLET;
+      values["gendir"] = MixTypes::GENERALIZED_DIRICHLET;
     }
 
   private:
@@ -87,8 +59,8 @@ class Mix {
     //! Don't permit move assigment
     Mix& operator=(Mix&&) = delete;
 
-    std::map<Enum, std::string> names;
-    std::map<std::string, Enum> values;
+    std::map<MixTypes, std::string> names;
+    std::map<std::string, MixTypes> values;
 };
 
 } // namespace select
