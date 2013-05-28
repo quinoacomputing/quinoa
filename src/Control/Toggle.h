@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 08:04:07 PM MDT
+  \date      Mon 27 May 2013 08:27:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -71,7 +71,9 @@ class Toggle {
 template< typename Enum >
 std::string operator+ (const std::string& lhs, Enum e) {
   std::stringstream ss;
-  ss << lhs << e ;
+  // Explicit operator call instead of 'ss << lhs', to avoid gcc's 'ambiguous
+  // overload'
+  operator<<(ss,lhs) << e;
   std::string rhs = ss.str();
   return rhs;
 }
