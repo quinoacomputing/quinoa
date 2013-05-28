@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:30:20 PM MDT
+  \date      Mon 27 May 2013 07:13:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -14,57 +14,29 @@
 #include <map>
 
 #include <Exception.h>
+#include <Toggle.h>
 
 namespace Quinoa {
 
 namespace select {
 
-class Mass {
+//! Mass model types
+enum class MassTypes { NO_MASS=0,
+                       BETA };
+
+//! Class with base templated on the above enum class with associations
+class Mass : public Toggle<MassTypes> {
 
   public:
-    //! Mass model types
-    enum class Enum { NO_MASS=0,
-                      BETA };
-
-    //! Operator << for writing Enum to output streams
-    friend std::ostream& operator<< (std::ostream& os, const Enum& e) {
-      os << static_cast<std::underlying_type<Enum>::type>(e);
-      return os;
-    }
-
-    //! Operator + for adding Enum to a std::string
-    friend std::string operator+ (const std::string& lhs, Enum e) {
-      std::stringstream ss;
-      ss << lhs << e ;
-      std::string rhs = ss.str();
-      return rhs;
-    }
-
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Mass() {
+    Mass() : Toggle<MassTypes>(names, values) {
       //! Enums -> names
-      names[Enum::NO_MASS] = "No mass";
-      names[Enum::BETA] = "Beta";
+      names[MassTypes::NO_MASS] = "No mass";
+      names[MassTypes::BETA] = "Beta";
       //! keywords -> Enums
-      values["no_mass"] = Enum::NO_MASS;
-      values["beta"] = Enum::BETA;
-    }
-
-    //! Lookup Enum value based on keyword
-    Enum value(const std::string keyword) const {
-      auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
-             "Cannot find value for keyword \"" + keyword + "\"");
-      return it->second;
-    }
-
-    //! Lookup option name based on Enum
-    const std::string& name(Enum value) const {
-      auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
-             std::string("Cannot find name for value \"") + value + "\"");
-      return it->second;
+      values["no_mass"] = MassTypes::NO_MASS;
+      values["beta"] = MassTypes::BETA;
     }
 
   private:
@@ -77,8 +49,8 @@ class Mass {
     //! Don't permit move assigment
     Mass& operator=(Mass&&) = delete;
 
-    std::map<Enum, std::string> names;
-    std::map<std::string, Enum> values;
+    std::map<MassTypes, std::string> names;
+    std::map<std::string, MassTypes> values;
 };
 
 } // namespace select

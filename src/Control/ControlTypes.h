@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 01:13:01 PM MDT
+  \date      Mon 27 May 2013 06:40:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -209,11 +209,11 @@ enum BundlePosition { TITLE=0,
 //! Storage bundle for parsed data
 using Bundle = tuple<
   string,                  //!< Problem Title
-  select::Physics::Enum,   //!< Selected physics
-  select::Position::Enum,  //!< Selected position model
-  select::Mass::Enum,      //!< Selected mass model
-  select::Hydro::Enum,     //!< Selected hydrodynamics model
-  select::Mix::Enum,       //!< Selected material mix model
+  select::PhysicsTypes,    //!< Selected physics
+  select::PositionTypes,   //!< Selected position model
+  select::MassTypes,       //!< Selected mass model
+  select::HydroTypes,      //!< Selected hydrodynamics model
+  select::MixTypes,        //!< Selected material mix model
   int,                     //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step

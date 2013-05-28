@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:25:31 PM MDT
+  \date      Mon 27 May 2013 07:12:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -12,70 +12,42 @@
 #define PhysicsOptions_h
 
 #include <map>
-#include <sstream>
 
 #include <Exception.h>
+#include <Toggle.h>
 
 namespace Quinoa {
 
 namespace select {
 
-class Physics {
+//! Physics types
+enum class PhysicsTypes { NO_PHYSICS=0,
+                          HOMOGENEOUS_MIX,
+                          HOMOGENEOUS_HYDRO,
+                          HOMOGENEOUS_RAYLEIGH_TAYLOR,
+                          SPINSFLOW };
+
+//! Class with base templated on the above enum class with associations
+class Physics : public Toggle<PhysicsTypes> {
 
   public:
-    //! Physics types
-    enum class Enum { NO_PHYSICS=0,
-                      HOMOGENEOUS_MIX,
-                      HOMOGENEOUS_HYDRO,
-                      HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                      SPINSFLOW };
-
-    //! Operator << for writing Enum to output streams
-    friend std::ostream& operator<< (std::ostream& os, const Enum& e) {
-      os << static_cast<std::underlying_type<Enum>::type>(e);
-      return os;
-    }
-
-    //! Operator + for adding Enum to a std::string
-    friend std::string operator+ (const std::string& lhs, Enum e) {
-      std::stringstream ss;
-      ss << lhs << e ;
-      std::string rhs = ss.str();
-      return rhs;
-    }
-
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Physics() {
+    explicit Physics() : Toggle<PhysicsTypes>(names, values) {
       //! Enums -> names
-      names[Enum::NO_PHYSICS] = "No physics";
-      names[Enum::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
-      names[Enum::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
-      names[Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR] = "Homogeneous Rayleigh-Taylor";
-      names[Enum::SPINSFLOW] =
+      names[PhysicsTypes::NO_PHYSICS] = "No physics";
+      names[PhysicsTypes::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
+      names[PhysicsTypes::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
+      names[PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
+        "Homogeneous Rayleigh-Taylor";
+      names[PhysicsTypes::SPINSFLOW] =
         "Standalone-Particle Incompressible Navier-Stokes Flow";
       //! keywords -> Enums
-      values["no_physics"] = Enum::NO_PHYSICS;
-      values["hommix"] = Enum::HOMOGENEOUS_MIX;
-      values["homhydro"] = Enum::HOMOGENEOUS_HYDRO;
-      values["homrt"] = Enum::HOMOGENEOUS_RAYLEIGH_TAYLOR;
-      values["spinsflow"] = Enum::SPINSFLOW;
-    }
-
-    //! Lookup Enum value based on keyword
-    Enum value(const std::string keyword) const {
-      auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
-            "Cannot find value for keyword \"" + keyword + "\"");
-      return it->second;
-    }
-
-    //! Lookup option name based on Enum
-    const std::string& name(Enum value) const {
-      auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
-             std::string("Cannot find name for value \"") + value + "\"");
-      return it->second;
+      values["no_physics"] = PhysicsTypes::NO_PHYSICS;
+      values["hommix"] = PhysicsTypes::HOMOGENEOUS_MIX;
+      values["homhydro"] = PhysicsTypes::HOMOGENEOUS_HYDRO;
+      values["homrt"] = PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR;
+      values["spinsflow"] = PhysicsTypes::SPINSFLOW;
     }
 
   private:
@@ -88,8 +60,8 @@ class Physics {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    std::map<Enum, std::string> names;
-    std::map<std::string, Enum> values;
+    std::map<PhysicsTypes, std::string> names;
+    std::map<std::string, PhysicsTypes> values;
 };
 
 } // namespace select

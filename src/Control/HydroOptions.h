@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:32:48 PM MDT
+  \date      Mon 27 May 2013 07:14:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -14,60 +14,32 @@
 #include <map>
 
 #include <Exception.h>
+#include <Toggle.h>
 
 namespace Quinoa {
 
 namespace select {
 
-class Hydro {
+//! Hydro model types
+enum class HydroTypes { NO_HYDRO=0,
+                        SLM,
+                        GLM };
+
+//! Class with base templated on the above enum class with associations
+class Hydro : public Toggle<HydroTypes> {
 
   public:
-    //! Hydro model types
-    enum class Enum { NO_HYDRO=0,
-                      SLM,
-                      GLM };
-
-    //! Operator << for writing Enum to output streams
-    friend std::ostream& operator<< (std::ostream& os, const Enum& e) {
-      os << static_cast<std::underlying_type<Enum>::type>(e);
-      return os;
-    }
-
-    //! Operator + for adding Enum to a std::string
-    friend std::string operator+ (const std::string& lhs, Enum e) {
-      std::stringstream ss;
-      ss << lhs << e ;
-      std::string rhs = ss.str();
-      return rhs;
-    }
-
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Hydro() {
+    Hydro() : Toggle<HydroTypes>(names, values) {
       //! Enums -> names
-      names[Enum::NO_HYDRO] = "No hydro";
-      names[Enum::SLM] = "Simplified Langevin";
-      names[Enum::GLM] = "Generalized Langevin";
+      names[HydroTypes::NO_HYDRO] = "No hydro";
+      names[HydroTypes::SLM] = "Simplified Langevin";
+      names[HydroTypes::GLM] = "Generalized Langevin";
       //! keywords -> Enums
-      values["no_hydro"] = Enum::NO_HYDRO;
-      values["slm"] = Enum::SLM;
-      values["glm"] = Enum::GLM;
-    }
-
-    //! Lookup Enum value based on keyword
-    Enum value(const std::string keyword) const {
-      auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
-             "Cannot find value for keyword \"" + keyword + "\"");
-      return it->second;
-    }
-
-    //! Lookup option name based on Enum
-    const std::string& name(Enum value) const {
-      auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
-             std::string("Cannot find name for value \"") + value + "\"");
-      return it->second;
+      values["no_hydro"] = HydroTypes::NO_HYDRO;
+      values["slm"] = HydroTypes::SLM;
+      values["glm"] = HydroTypes::GLM;
     }
 
   private:
@@ -80,8 +52,8 @@ class Hydro {
     //! Don't permit move assigment
     Hydro& operator=(Hydro&&) = delete;
 
-    std::map<Enum, std::string> names;
-    std::map<std::string, Enum> values;
+    std::map<HydroTypes, std::string> names;
+    std::map<std::string, HydroTypes> values;
 };
 
 } // namespace select

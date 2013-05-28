@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 12:50:55 PM MDT
+  \date      Mon 27 May 2013 06:39:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -24,11 +24,11 @@ namespace control {
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
   "",                                  //!< Title
-  select::Physics::Enum::NO_PHYSICS,   //!< Physics
-  select::Position::Enum::NO_POSITION, //!< Position model
-  select::Mass::Enum::NO_MASS,         //!< Mass model
-  select::Hydro::Enum::NO_HYDRO,       //!< Hydrodynamics model
-  select::Mix::Enum::NO_MIX,           //!< Material mix model
+  select::PhysicsTypes::NO_PHYSICS,    //!< Physics
+  select::PositionTypes::NO_POSITION,  //!< Position model
+  select::MassTypes::NO_MASS,          //!< Mass model
+  select::HydroTypes::NO_HYDRO,        //!< Hydrodynamics model
+  select::MixTypes::NO_MIX,            //!< Material mix model
   numeric_limits<int>::max(),          //!< Number of time steps to take
   1.0,                                 //!< Time to terminate time stepping
   0.5,                                 //!< Size of time step

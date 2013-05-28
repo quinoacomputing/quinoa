@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 27 May 2013 12:45:49 PM MDT
+  \date      Mon 27 May 2013 08:01:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -70,8 +70,7 @@ IGNORE(m_paradigm);
 
   // Instantiate mass model
   if (m_ndensity) {
-    m_mass = new (nothrow)
-             MassType(memory, paradigm, control, m_particles.ptr);
+    m_mass = new (nothrow) MassType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mass != nullptr, FATAL, "Cannot allocate memory");
 
     // Error out if mass model selected at compile time does not match that
@@ -94,8 +93,7 @@ IGNORE(m_paradigm);
 
   // Instantiate mix model
   if (m_nscalar) {
-    m_mix = new (nothrow)
-            MixType(memory, paradigm, control, m_particles.ptr);
+    m_mix = new (nothrow) MixType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
 
     // Error out if mix model selected at compile time does not match that whose
