@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:41:23 PM MDT
+  \date      Wed May 29 07:34:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -21,11 +21,11 @@ namespace Quinoa {
 namespace select {
 
 //! Mix model types
-enum class MixTypes { NO_MIX=0,
-                      IEM,
-                      IECM,
-                      DIRICHLET,
-                      GENERALIZED_DIRICHLET };
+enum class MixTypes : uint8_t { NO_MIX=0,
+                                IEM,
+                                IECM,
+                                DIRICHLET,
+                                GENERALIZED_DIRICHLET };
 
 //! Class with base templated on the above enum class with associations
 class Mix : public Toggle<MixTypes> {

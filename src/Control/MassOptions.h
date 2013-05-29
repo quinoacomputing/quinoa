@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:13:16 PM MDT
+  \date      Wed May 29 07:33:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -21,8 +21,8 @@ namespace Quinoa {
 namespace select {
 
 //! Mass model types
-enum class MassTypes { NO_MASS=0,
-                       BETA };
+enum class MassTypes : uint8_t { NO_MASS=0,
+                                 BETA };
 
 //! Class with base templated on the above enum class with associations
 class Mass : public Toggle<MassTypes> {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:12:28 PM MDT
+  \date      Wed May 29 07:33:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -21,9 +21,9 @@ namespace Quinoa {
 namespace select {
 
 //! Position model types
-enum class PositionTypes { NO_POSITION=0,
-                           INVISCID,
-                           VISCOUS };
+enum class PositionTypes : uint8_t { NO_POSITION=0,
+                                     INVISCID,
+                                     VISCOUS };
 
 //! Class with base templated on the above enum class with associations
 class Position : public Toggle<PositionTypes> {
