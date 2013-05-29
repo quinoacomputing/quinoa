@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Wed May 29 07:24:15 2013
+  \date      Wed May 29 07:30:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -46,8 +46,8 @@ enum class Quantity : uint8_t { POSITION=0,
 };
 
 //! Moment specifies which type of moment is computed for a Quantity in a Term
-enum class Moment { ORDINARY=0,      //!< Full variable
-                    CENTRAL          //!< Fluctuation
+enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
+                              CENTRAL          //!< Fluctuation
 };
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
