@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/FrequencyOptions.h
+  \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:26:14 2013
+  \date      Wed May 29 07:27:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
 */
 //******************************************************************************
-#ifndef FrequencyOptions_h
-#define FrequencyOptions_h
+#ifndef MixRateOptions_h
+#define MixRateOptions_h
 
 #include <map>
 
@@ -20,41 +20,41 @@ namespace Quinoa {
 
 namespace select {
 
-//! Frequency model types
-enum class FrequencyTypes { NO_FREQUENCY=0,
-                            GAMMA };
+//! Material mix rate model types
+enum class MixRateTypes { NO_MIXRATE=0,
+                          GAMMA };
 
 //! Class with base templated on the above enum class with associations
-class Frequency : public Toggle<FrequencyTypes> {
+class MixRate : public Toggle<MixRateTypes> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Frequency() : Toggle<FrequencyTypes>(names, values) {
+    MixRate() : Toggle<MixRateTypes>(names, values) {
       //! Enums -> names
-      names[FrequencyTypes::NO_FREQUENCY] = "No frequency";
-      names[FrequencyTypes::GAMMA] = "Gamma";
+      names[MixRateTypes::NO_MIXRATE] = "No mix rate";
+      names[MixRateTypes::GAMMA] = "Gamma";
       //! keywords -> Enums
-      values["no_frequency"] = FrequencyTypes::NO_FREQUENCY;
-      values["gamma"] = FrequencyTypes::GAMMA;
+      values["no_mixrate"] = MixRateTypes::NO_MIXRATE;
+      values["gamma"] = MixRateTypes::GAMMA;
     }
 
   private:
     //! Don't permit copy constructor
-    Frequency(const Frequency&) = delete;
+    MixRate(const MixRate&) = delete;
     //! Don't permit copy assigment
-    Frequency& operator=(const Frequency&) = delete;
+    MixRate& operator=(const MixRate&) = delete;
     //! Don't permit move constructor
-    Frequency(Frequency&&) = delete;
+    MixRate(MixRate&&) = delete;
     //! Don't permit move assigment
-    Frequency& operator=(Frequency&&) = delete;
+    MixRate& operator=(MixRate&&) = delete;
 
-    std::map<FrequencyTypes, std::string> names;
-    std::map<std::string, FrequencyTypes> values;
+    std::map<MixRateTypes, std::string> names;
+    std::map<std::string, MixRateTypes> values;
 };
 
 } // namespace select
 
 } // namespace Quinoa
 
-#endif // FrequencyOptions_h
+#endif // MixRateOptions_h
