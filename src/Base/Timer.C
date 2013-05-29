@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Tue May  7 13:38:05 2013
+  \date      Wed May 29 08:09:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -38,7 +38,8 @@ Timer::create(const string& label)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(label.size() > 0, FATAL, "Must give a nonempty string as timer name");
+  Assert(label.size() > 0, ExceptType::FATAL,
+         "Must give a nonempty string as timer name");
 
   // Find an unused timer
   bool found = false;
@@ -51,7 +52,7 @@ Timer::create(const string& label)
     ++i;
   }
 
-  Assert(found, FATAL, "Cannot find an unused timer");
+  Assert(found, ExceptType::FATAL, "Cannot find an unused timer");
 
   m_timer[id].name = label;
   m_timer[id].used = true;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Tue May  7 12:29:00 2013
+  \date      Wed May 29 09:06:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -200,39 +200,43 @@ Exception::handleException(Driver* const driver) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  switch (m_except) {
+  if (m_except == ExceptType::WARNING) {
 
-    case WARNING:
-      echo("WARNING");
-      return NONFATAL;
+    echo("WARNING");
+    return ErrCode::NONFATAL;
 
-    case CUMULATIVE:
-      echo("CUMULATIVE ERROR");
-      return NONFATAL;
+  } else if (m_except == ExceptType::CUMULATIVE) {
 
-    case ERROR:
-      echo("ERROR");
-      return NONFATAL;
+    echo("CUMULATIVE ERROR");
+    return ErrCode::NONFATAL;
 
-    case FATAL:
-      echo("FATAL ERROR");
-      printf(">>> Attempting cleanup & graceful exit...\n");
-      if (driver) driver->finalize();
-      return FATAL_ERROR;
+  } else if (m_except == ExceptType::ERROR) {
 
-    case RUNTIME:
-      echo("RUNTIME ERROR");
-      printf(">>> Attempting cleanup & graceful exit...\n");
-      if (driver) driver->finalize();
-      return FATAL_ERROR;
+    echo("ERROR");
+    return ErrCode::NONFATAL;
 
-    case UNCAUGHT:
-      echo("UNKNOWN ERROR");
-      printf(">>> Attempting cleanup & graceful exit...\n");
-      if (driver) driver->finalize();
-      return FATAL_ERROR;
+  } else if (m_except == ExceptType::FATAL) {
 
-    default:
-      return NONFATAL;
+    echo("FATAL ERROR");
+    printf(">>> Attempting cleanup & graceful exit...\n");
+    if (driver) driver->finalize();
+    return ErrCode::FATAL_ERROR;
+
+  } else if (m_except == ExceptType::RUNTIME) {
+
+    echo("RUNTIME ERROR");
+    printf(">>> Attempting cleanup & graceful exit...\n");
+    if (driver) driver->finalize();
+    return ErrCode::FATAL_ERROR;
+
+  } else if (m_except == ExceptType::UNCAUGHT) {
+
+    echo("UNKNOWN ERROR");
+    printf(">>> Attempting cleanup & graceful exit...\n");
+    if (driver) driver->finalize();
+    return ErrCode::FATAL_ERROR;
+
+  } else {
+    return ErrCode::NONFATAL;
   }
 }

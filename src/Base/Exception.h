@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:18:26 PM MDT
+  \date      Wed May 29 09:00:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -52,20 +52,20 @@ namespace Quinoa {
 
 //! Exception types
 // ICC: no strongly typed enums yet
-enum ExceptType { WARNING=0,     //!< produces a warning
-                  CUMULATIVE,    //!< only several will produce a warning
-                  ERROR,         //!< produce error but will not interrupt
-                  FATAL,         //!< fatal error, will interrupt
-                  RUNTIME,       //!< std::runtime_error, will interrupt
-                  UNCAUGHT,      //!< uncaught: will interrupt
-                  NUM_EXCEPT
+enum class ExceptType : uint8_t {
+                        WARNING=0,   //!< produces a warning
+                        CUMULATIVE,  //!< only several will produce a warning
+                        ERROR,       //!< produce error but will not interrupt
+                        FATAL,       //!< fatal error, will interrupt
+                        RUNTIME,     //!< std::runtime_error, will interrupt
+                        UNCAUGHT     //!< uncaught: will interrupt
 };
 
 //! Error codes for the OS (or whatever calls Quinoa)
-enum ErrCode { HAPPY=0,          //!< Everything went fine
-               NONFATAL,         //!< Non-fatal exceptions occurred
-               FATAL_ERROR,      //!< Fatal error occurred, had to terminate
-               NUM_ERR_CODE
+enum class ErrCode : uint8_t {
+                     HAPPY=0,        //!< Everything went fine
+                     NONFATAL,       //!< Non-fatal exceptions occurred
+                     FATAL_ERROR     //!< Fatal error occurred, had to terminate
 };
 
 class Driver;

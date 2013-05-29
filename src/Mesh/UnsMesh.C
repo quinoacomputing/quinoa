@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Tue May  7 12:43:11 2013
+  \date      Wed May 29 08:13:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -92,10 +92,11 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     m_tritag.reserve(ntriangles);
 
   } catch (exception&) {
-      Throw(FATAL, "Cannot allocate memory for mesh");
+      Throw(ExceptType::FATAL, "Cannot allocate memory for mesh");
     }
     catch (...) {
-      Throw(UNCAUGHT, "non-standard exception in UnsMesh::reserveElem()");
+      Throw(ExceptType::UNCAUGHT,
+            "non-standard exception in UnsMesh::reserveElem()");
     }
 }
 

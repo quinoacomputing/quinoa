@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Tue May  7 13:25:35 2013
+  \date      Wed May 29 08:12:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -142,7 +142,7 @@ try :
   catch (...) {
     memory->freeEntry(m_rnz);
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 

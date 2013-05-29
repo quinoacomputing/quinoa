@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 26 May 2013 05:37:28 PM MDT
+  \date      Wed May 29 08:56:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -132,7 +132,7 @@ try :
   }
   catch (...) {
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 Statistics::~Statistics() noexcept
@@ -192,7 +192,7 @@ Statistics::mean(const control::Term& term) const
     }
   }
 
-  Throw(FATAL, string("Cannot find mean for variable ") + term);
+  Throw(ExceptType::FATAL, string("Cannot find mean for variable ") + term);
 }
 
 bool
@@ -203,7 +203,8 @@ Statistics::plotOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
+  Assert(m < m_nord, ExceptType::FATAL,
+         "Request for an unavailable ordinary moment");
   return m_plotOrdinary[m];
 }
 
@@ -215,7 +216,8 @@ Statistics::nameOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, FATAL, "Request for an unavailable ordinary moment");
+  Assert(m < m_nord, ExceptType::FATAL,
+         "Request for an unavailable ordinary moment");
   return m_nameOrdinary[m];
 }
 
@@ -227,7 +229,8 @@ Statistics::nameCentral(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_ncen, FATAL, "Request for an unavailable central moment");
+  Assert(m < m_ncen, ExceptType::FATAL,
+         "Request for an unavailable central moment");
   return m_nameCentral[m];
 }
 

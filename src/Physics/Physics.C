@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 27 May 2013 08:01:45 PM MDT
+  \date      Wed May 29 08:55:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -59,7 +59,7 @@ try :
 {
 IGNORE(m_paradigm);
 
-  ErrChk( control->nprop() != 0, FATAL, "No need for physics?");
+  ErrChk(control->nprop() != 0, ExceptType::FATAL, "No need for physics?");
 
   // Allocate memory to store all particle properties
   m_particles =
@@ -71,11 +71,11 @@ IGNORE(m_paradigm);
   // Instantiate mass model
   if (m_ndensity) {
     m_mass = new (nothrow) MassType(memory, paradigm, control, m_particles.ptr);
-    ErrChk(m_mass != nullptr, FATAL, "Cannot allocate memory");
+    ErrChk(m_mass != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
     // Error out if mass model selected at compile time does not match that
     // whose options are given in control file
-    ErrChk(m_mass->id() == control->get<control::MASS>(), FATAL,
+    ErrChk(m_mass->id() == control->get<control::MASS>(), ExceptType::FATAL,
         "Compile-time-selected mass model does not match that in input file.");
   }
 
@@ -83,37 +83,37 @@ IGNORE(m_paradigm);
   if (m_nvelocity) {
     m_hydro = new (nothrow)
               HydroType(memory, paradigm, control, m_particles.ptr);
-    ErrChk(m_hydro != nullptr, FATAL, "Cannot allocate memory");
+    ErrChk(m_hydro != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
     // Error out if hydro model selected at compile time does not match that
     // whose options are given in control file
-    ErrChk(m_hydro->id() == control->get<control::HYDRO>(), FATAL,
+    ErrChk(m_hydro->id() == control->get<control::HYDRO>(), ExceptType::FATAL,
         "Compile-time-selected hydro model does not match that in input file.");
   }
 
   // Instantiate mix model
   if (m_nscalar) {
     m_mix = new (nothrow) MixType(memory, paradigm, control, m_particles.ptr);
-    ErrChk(m_mix != nullptr, FATAL, "Cannot allocate memory");
+    ErrChk(m_mix != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
     // Error out if mix model selected at compile time does not match that whose
     // options are given in control file
-    ErrChk(m_mix->id() == control->get<control::MIX>(), FATAL,
+    ErrChk(m_mix->id() == control->get<control::MIX>(), ExceptType::FATAL,
            "Compile-time-selected mix model does not match that in input file.");
   }
 
   // Instantiate statistics estimator
   m_statistics = new (nothrow) Statistics(memory, paradigm, control, this);
-  ErrChk(m_statistics != nullptr, FATAL,"Cannot allocate memory");
+  ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
-  ErrChk(m_glob != nullptr, FATAL,"Cannot allocate memory");
+  ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate plot file writer
   m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
                                        m_statistics);
-  ErrChk(m_plot != nullptr, FATAL,"Cannot allocate memory");
+  ErrChk(m_plot != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
 } // Roll back changes and rethrow on error
   catch (exception&) {
@@ -123,7 +123,7 @@ IGNORE(m_paradigm);
   // Catch uncaught exceptions
   catch (...) {
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 Physics::~Physics() noexcept

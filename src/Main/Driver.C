@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:23:13 PM MDT
+  \date      Wed May 29 08:59:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -45,12 +45,12 @@ try :
 
   // Instantiate main control category
   m_control = new(nothrow) Control;
-  ErrChk(m_control != nullptr, FATAL,
+  ErrChk(m_control != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for control object");
 
   // Take exactly one filename argument for now
   // Will need to be extended with a more elaborate command line parser
-  ErrChk(argc == 2, FATAL,
+  ErrChk(argc == 2, ExceptType::FATAL,
          "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
@@ -64,12 +64,13 @@ try :
 
   // Instantiate timer object
   m_timer = new(nothrow) Timer;
-  ErrChk(m_timer != nullptr, FATAL, "Cannot allocate memory for timer object");
+  ErrChk(m_timer != nullptr, ExceptType::FATAL,
+         "Cannot allocate memory for timer object");
 
   // Instantiate selected physics
   // ICC: use switch
   if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::NO_PHYSICS)
-    Throw(FATAL, "No physics selected");
+    Throw(ExceptType::FATAL, "No physics selected");
 
   if (m_control->get<control::PHYSICS>() ==
        select::PhysicsTypes::HOMOGENEOUS_MIX)
@@ -87,7 +88,7 @@ try :
     m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");
 
-  ErrChk(m_physics != nullptr, FATAL,
+  ErrChk(m_physics != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for physics object");
 
   // Set initial conditions
@@ -101,7 +102,7 @@ try :
   // Catch uncaught exceptions
   catch (...) {
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 

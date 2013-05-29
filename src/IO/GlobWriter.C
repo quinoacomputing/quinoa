@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Tue May  7 12:34:06 2013
+  \date      Wed May 29 08:11:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -27,7 +27,8 @@ GlobWriter::GlobWriter(string filename) :
 //******************************************************************************
 {
   m_outGlob.open(m_filename, ofstream::out);
-  ErrChk(m_outGlob.good(), FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outGlob.good(), ExceptType::FATAL,
+         "Failed to open file: " + m_filename);
 }
 
 GlobWriter::~GlobWriter() noexcept
@@ -39,7 +40,8 @@ GlobWriter::~GlobWriter() noexcept
 try {
 
   m_outGlob.close();
-  ErrChk(!m_outGlob.fail(), WARNING, "Failed to close file: " + m_filename);
+  ErrChk(!m_outGlob.fail(), ExceptType::WARNING,
+         "Failed to close file: " + m_filename);
 
 } // emit only a warning on error
   catch (Exception& e) {

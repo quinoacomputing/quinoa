@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Tue May  7 11:23:58 2013
+  \date      Wed May 29 08:34:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -35,12 +35,12 @@ try :
   m_stream(nullptr)
 {
 
-  Assert(nthread > 0, FATAL, "Need at least one thread");
+  Assert(nthread > 0, ExceptType::FATAL, "Need at least one thread");
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero
   m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
-  ErrChk(m_stream != nullptr, FATAL, "Cannot allocate memory");
+  ErrChk(m_stream != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Initialize thread-streams for block-splitting
   for (int t=0; t<m_nthread; ++t) {
@@ -55,7 +55,7 @@ try :
   }
   catch (...) {
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 

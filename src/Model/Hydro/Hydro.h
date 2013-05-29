@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 06:46:18 PM MDT
+  \date      Wed May 29 08:20:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -40,7 +40,8 @@ class Hydro : public Model {
               control->nprop()),
         m_offset(control->velocityOffset()),
         m_nvelocity(control->get<control::NVELOCITY>()) {
-        ErrChk(m_nvelocity > 0, FATAL, "Wrong number of velocities");
+        ErrChk(m_nvelocity > 0, ExceptType::FATAL,
+               "Wrong number of velocities");
       }
 
     //! Destructor

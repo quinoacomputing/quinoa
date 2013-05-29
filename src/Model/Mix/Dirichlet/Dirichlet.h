@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:32:38 PM MDT
+  \date      Wed May 29 08:54:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -36,11 +36,14 @@ class Dirichlet : public Mix<Dirichlet> {
       m_b(control->get<control::B>()),
       m_S(control->get<control::S>()),
       m_k(control->get<control::KAPPA>()) {
-      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'b'");
-      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'S'");
-      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'k'");
     }
 

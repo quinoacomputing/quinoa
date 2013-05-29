@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed May 29 08:00:32 2013
+  \date      Wed May 29 08:17:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -37,7 +37,7 @@ class Toggle {
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {
       auto it = values.find(keyword);
-      Assert(it != values.end(), FATAL,
+      Assert(it != values.end(), ExceptType::FATAL,
             "Cannot find value for keyword \"" + keyword + "\"");
       return it->second;
     }
@@ -45,7 +45,7 @@ class Toggle {
     //! Lookup option name based on Enum
     const std::string& name(Enum value) const {
       auto it = names.find(value);
-      Assert(it != names.end(), FATAL,
+      Assert(it != names.end(), ExceptType::FATAL,
              std::string("Cannot find name for value \"") + value + "\"");
       return it->second;
     }
