@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Tue May  7 12:57:43 2013
+  \date      Wed May 29 09:09:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -19,10 +19,9 @@
 namespace Quinoa {
 
 //! Probability distributions for sampling into tables
-enum RndDist { UNIFORM=0,        //!< Uniform
-               GAUSSIAN,         //!< Gaussian
-               GAMMA,            //!< Gamma
-               NUM_DIST_TYPES
+enum class RndDist : uint8_t { UNIFORM=0,        //!< Uniform
+                               GAUSSIAN,         //!< Gaussian
+                               GAMMA             //!< Gamma
 };
 
 //! Constants for sampling the uniform distribution in tables
