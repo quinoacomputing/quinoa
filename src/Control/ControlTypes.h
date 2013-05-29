@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Wed May 29 07:13:18 2013
+  \date      Wed May 29 07:19:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -24,6 +24,7 @@
 #include <HydroOptions.h>
 #include <EnergyOptions.h>
 #include <MixOptions.h>
+#include <FrequencyOptions.h>
 
 using namespace std;
 
@@ -183,6 +184,7 @@ enum BundlePosition { TITLE=0,
                       HYDRO,
                       ENERGY,
                       MIX,
+                      FREQUENCY,
                       NSTEP,
                       TERM,
                       DT,
@@ -217,6 +219,7 @@ using Bundle = tuple<
   select::HydroTypes,      //!< Selected hydrodynamics model
   select::EnergyTypes,     //!< Selected internal energy model
   select::MixTypes,        //!< Selected material mix model
+  select::FrequencyTypes,  //!< Selected turbulence frequency model
   int,                     //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step
