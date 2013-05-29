@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Tue May  7 13:06:18 2013
+  \date      Wed May 29 08:15:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -30,7 +30,8 @@ PDFWriter::PDFWriter(const string filename) :
 //******************************************************************************
 {
   m_outPDF.open(m_filename, ofstream::out);
-  ErrChk(m_outPDF.good(), FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outPDF.good(), ExceptType::FATAL,
+         "Failed to open file: " + m_filename);
 }
 
 PDFWriter::~PDFWriter() noexcept
@@ -43,7 +44,8 @@ PDFWriter::~PDFWriter() noexcept
   try {
 
     m_outPDF.close();
-    ErrChk(!m_outPDF.fail(), WARNING, "Failed to close file: " + m_filename);
+    ErrChk(!m_outPDF.fail(), ExceptType::WARNING,
+           "Failed to close file: " + m_filename);
 
   } // emit only a warning on error
     catch (Exception& e) {
@@ -99,7 +101,8 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
 {
   // Output mesh header: mesh version, file type, data size
   m_outPDF << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
-  ErrChk(!m_outPDF.bad(), FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outPDF.bad(), ExceptType::FATAL,
+         "Failed to write to file: " + m_filename);
 
   auto f = jpdf->getMap();
   real binsize = jpdf->getBinsize();
@@ -152,5 +155,6 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   }
 
   m_outPDF << "$NodetData\n";
-  ErrChk(!m_outPDF.bad(), FATAL, "Failed to write to file: " + m_filename);
+  ErrChk(!m_outPDF.bad(), ExceptType::FATAL,
+         "Failed to write to file: " + m_filename);
 }

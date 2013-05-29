@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Tue May  7 13:00:12 2013
+  \date      Wed May 29 08:46:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -49,14 +49,17 @@ try :
   m_rnd()
 {
 
-  Assert(nthread > 0, FATAL, "Need at least one thread");
-  Assert(number > 0, FATAL, "Number of random numbers must be positive");
-  Assert(name.size() > 0, FATAL, "MKLRndTable's name must be nonempty");
+  Assert(nthread > 0, ExceptType::FATAL, "Need at least one thread");
+  Assert(number > 0, ExceptType::FATAL,
+         "Number of random numbers must be positive");
+  Assert(name.size() > 0, ExceptType::FATAL,
+         "MKLRndTable's name must be nonempty");
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero
   m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
-  if (m_stream == nullptr) Exception(FATAL, "Cannot allocate memory");
+  if (m_stream == nullptr)
+    Exception(ExceptType::FATAL, "Cannot allocate memory");
 
   // Initialize first thread-stream for given distribution using seed
   newStream(&m_stream[0], brng, seed);
@@ -76,7 +79,7 @@ try :
   }
   catch (...) {
     finalize();
-    Throw(UNCAUGHT, "Non-standard exception");
+    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 
@@ -175,7 +178,7 @@ MKLRndTable::generate() const
       break;
 
     default:
-      Throw(WARNING, "Unknown random number distribution");
+      Throw(ExceptType::WARNING, "Unknown random number distribution");
 
   }
 }

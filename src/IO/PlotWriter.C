@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PlotWriter.C
   \author    J. Bakosi
-  \date      Tue May  7 13:07:49 2013
+  \date      Wed May 29 08:09:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Plot writer base class definition
   \details   Plot writer base class definition
@@ -25,7 +25,8 @@ PlotWriter::PlotWriter(const string& filename) :
 //******************************************************************************
 {
   m_outPlot.open(m_filename, ofstream::out);
-  ErrChk(m_outPlot.good(), FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_outPlot.good(), ExceptType::FATAL,
+         "Failed to open file: " + m_filename);
 }
 
 PlotWriter::~PlotWriter() noexcept

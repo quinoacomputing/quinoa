@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sat 11 May 2013 08:06:10 AM MDT
+  \date      Wed May 29 08:33:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -66,13 +66,13 @@ MKLRandom::addTable(const int brng,
   // Create new table
   MKLRndTable* table = new (nothrow)
     MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
-  ErrChk(table != nullptr, FATAL, "Cannot allocate memory");
+  ErrChk(table != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new table
   pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    Throw(FATAL, "Cannot store random number table");
+    Throw(ExceptType::FATAL, "Cannot store random number table");
   }
 
   // Return key to caller
@@ -91,7 +91,7 @@ MKLRandom::eraseTable(MKLRndTable* table) noexcept
   try {
 
     auto it = m_table.find(table);
-    Assert(it != m_table.end(), FATAL,
+    Assert(it != m_table.end(), ExceptType::FATAL,
            "Cannot find random number table in MKLRandom::eraseTable()");
 
     delete table;
@@ -129,7 +129,8 @@ MKLRandom::getRnd(MKLRndTable* table)
 //******************************************************************************
 {
   auto it = m_table.find(table);
-  Assert(it != m_table.end(), FATAL, "Cannot find random number table");
+  Assert(it != m_table.end(), ExceptType::FATAL,
+         "Cannot find random number table");
   return (*it)->getRnd();
 }
 
@@ -144,13 +145,13 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 {
   // Create new stream
   MKLRndStream* stream = new (nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
-  ErrChk(stream != nullptr, FATAL, "Cannot allocate memory");
+  ErrChk(stream != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new stream
   pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    Throw(FATAL, "Cannot store random number stream");
+    Throw(ExceptType::FATAL, "Cannot store random number stream");
   }
 
   // Return key to caller
@@ -169,7 +170,7 @@ MKLRandom::eraseStream(MKLRndStream* stream) noexcept
   try {
 
     auto it = m_stream.find(stream);
-    Assert(it != m_stream.end(), FATAL,
+    Assert(it != m_stream.end(), ExceptType::FATAL,
            "Cannot find random number stream in MKLRandom::eraseStream()");
 
     delete stream;
@@ -194,6 +195,7 @@ MKLRandom::getStr(MKLRndStream* stream)
 //******************************************************************************
 {
   auto it = m_stream.find(stream);
-  Assert(it != m_stream.end(), FATAL, "Cannot find random number stream");
+  Assert(it != m_stream.end(), ExceptType::FATAL,
+         "Cannot find random number stream");
   return (*it)->getStr();
 }

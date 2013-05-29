@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:32:51 PM MDT
+  \date      Wed May 29 08:54:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -37,14 +37,18 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
       m_S(control->get<control::S>()),
       m_k(control->get<control::KAPPA>()),
       m_c(control->get<control::C>()) {
-      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+      ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL,
              "Wrong number of generalized Dirichlet model parameters 'b'");
-      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar), FATAL, 
+      ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL, 
              "Wrong number of generalized Dirichlet model parameters 'S'");
-      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar), FATAL,
+      ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar),
+             ExceptType::FATAL,
              "Wrong number of generalized Dirichlet model parameters 'k'");
       ErrChk(m_c.size() == static_cast<unsigned int>(m_nscalar*(m_nscalar-1)/2),
-             FATAL, "Wrong number of generalized Dirichlet model parameters 'c'");
+             ExceptType::FATAL,
+             "Wrong number of generalized Dirichlet model parameters 'c'");
     }
 
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 06:47:23 PM MDT
+  \date      Wed May 29 08:46:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -42,7 +42,7 @@ class Mix : public Model {
             control->nprop()),
       m_offset(control->scalarOffset()),
       m_nscalar(control->get<control::NSCALAR>()) {
-      ErrChk(m_nscalar > 0, FATAL, "Wrong number of scalars");
+      ErrChk(m_nscalar > 0, ExceptType::FATAL, "Wrong number of scalars");
     }
 
     //! Destructor

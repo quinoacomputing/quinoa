@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Tue May  7 12:12:46 2013
+  \date      Wed May 29 08:10:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -157,10 +157,10 @@ class Memory {
     //! Return data pointer for memory entry based on ID,
     //! template V specifies return pointer type
     template<class V> V* getPtr(MemoryEntry* id) const {
-      Assert(id != nullptr, FATAL,
+      Assert(id != nullptr, ExceptType::FATAL,
              "Cannot return a raw pointer for a nullptr MemoryEntry");
       auto it = m_entry.find(id);
-      Assert(it!=m_entry.end(), FATAL, "Cannot find memory entry");
+      Assert(it!=m_entry.end(), ExceptType::FATAL, "Cannot find memory entry");
       return static_cast<V*>((*it)->m_ptr);
     }
 

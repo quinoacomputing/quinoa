@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 27 May 2013 05:49:46 PM MDT
+  \date      Wed May 29 09:03:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
   Memory* memory = nullptr;
   Driver* driver = nullptr;
 
-  ErrCode error = HAPPY;
+  ErrCode error = ErrCode::HAPPY;
   try {
 
     // Echo program name
@@ -82,11 +82,13 @@ int main(int argc, char* argv[])
 
     // Initialize memory manager
     memory = new (nothrow) Memory(&paradigm);
-    ErrChk(memory != nullptr, FATAL, "No memory for a memory manager?");
+    ErrChk(memory != nullptr, ExceptType::FATAL,
+           "No memory for a memory manager?");
 
     // Allocate and initialize driver
     driver = new (nothrow) Driver(argc, argv, memory, &paradigm);
-    ErrChk(driver != nullptr, FATAL, "Cannot allocate memory for driver");
+    ErrChk(driver != nullptr, ExceptType::FATAL,
+           "Cannot allocate memory for driver");
 
     // Solve
     driver->solve();
@@ -98,12 +100,12 @@ int main(int argc, char* argv[])
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (exception& se) {
-      Exception qe(RUNTIME, se.what());
+      Exception qe(ExceptType::RUNTIME, se.what());
       error = qe.handleException(driver);
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
-      Exception qe(UNCAUGHT, "Non-standard exception");
+      Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
       error = qe.handleException(driver);
     }
 
@@ -112,5 +114,5 @@ int main(int argc, char* argv[])
   if (memory) { delete memory; memory = nullptr; }
 
   // Return error code
-  return error;
+  return static_cast<int>(error);
 }

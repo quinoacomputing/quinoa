@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Tue May  7 12:49:23 2013
+  \date      Wed May 29 08:10:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -28,7 +28,8 @@ MeshReader::MeshReader(const string filename,
 //******************************************************************************
 {
   m_inMesh.open(m_filename, ifstream::in);
-  ErrChk(m_inMesh.good(), FATAL, "Failed to open file: " + m_filename);
+  ErrChk(m_inMesh.good(), ExceptType::FATAL,
+         "Failed to open file: " + m_filename);
 }
 
 MeshReader::~MeshReader() noexcept
@@ -41,7 +42,8 @@ MeshReader::~MeshReader() noexcept
   try {
 
     m_inMesh.close();
-    ErrChk(!m_inMesh.fail(), WARNING, "Failed to close file: " + m_filename);
+    ErrChk(!m_inMesh.fail(), ExceptType::WARNING,
+           "Failed to close file: " + m_filename);
 
   } // emit only a warning on error
     catch (Exception& e) {

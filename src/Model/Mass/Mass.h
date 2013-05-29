@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 06:48:10 PM MDT
+  \date      Wed May 29 08:31:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -40,7 +40,8 @@ class Mass : public Model {
             control->nprop()),
       m_offset(0),
       m_ndensity(control->get<control::NDENSITY>()) {
-      ErrChk(m_ndensity > 0, FATAL, "Wrong number of particle densities");
+      ErrChk(m_ndensity > 0, ExceptType::FATAL,
+             "Wrong number of particle densities");
     }
 
     //! Destructor

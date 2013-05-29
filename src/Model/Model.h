@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Sun 19 May 2013 05:52:21 PM MDT
+  \date      Wed May 29 08:20:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -46,13 +46,16 @@ class Model {
       m_random(nullptr),
       m_rndStr(nullptr) {
 
-      Assert(m_nprop != 0, FATAL, "Number of particle properties zero?");
-      Assert(m_particles != nullptr, FATAL, "Particles pointer null?");
-      ErrChk(m_npar > 0, FATAL, "Wrong number of particles");
+      Assert(m_nprop != 0, ExceptType::FATAL,
+             "Number of particle properties zero?");
+      Assert(m_particles != nullptr, ExceptType::FATAL,
+             "Particles pointer null?");
+      ErrChk(m_npar > 0, ExceptType::FATAL,
+             "Wrong number of particles");
 
       // Instantiate random number generator
       m_random = new (nothrow) MKLRandom(memory, paradigm);
-      ErrChk(m_random != nullptr, FATAL,
+      ErrChk(m_random != nullptr, ExceptType::FATAL,
              "Cannot allocate memory for random number generator");
 
       // Create random number leapfrog stream
@@ -72,7 +75,7 @@ class Model {
       }
       catch (...) {
         finalize();
-        Throw(UNCAUGHT, "Non-standard exception");
+        Throw(ExceptType::UNCAUGHT, "Non-standard exception");
       }
 
     //! Destructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Sun 12 May 2013 09:12:22 PM MDT
+  \date      Wed May 29 08:32:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -212,15 +212,15 @@ MKL::MKLErrChk(int vslerr) const
 
       std::stringstream s;
       s << "MKL VSL Error: code " << vslerr;
-      Throw(FATAL, s.str());
+      Throw(ExceptType::FATAL, s.str());
 
     } catch (Exception&) {
         throw;
       }
       catch (std::exception& e) {
-        Throw(FATAL, e.what());
+        Throw(ExceptType::FATAL, e.what());
       }
       catch (...) {
-        Throw(UNCAUGHT, "non-standard exception");
+        Throw(ExceptType::UNCAUGHT, "non-standard exception");
       }
 }
