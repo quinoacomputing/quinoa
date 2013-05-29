@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Wed May 29 08:46:15 2013
+  \date      Wed May 29 09:11:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -139,46 +139,43 @@ MKLRndTable::generate() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  switch (m_dist) {
+  if (m_dist == RndDist::UNIFORM) {
 
-    case UNIFORM:
-      #ifdef _OPENMP
-      #pragma omp parallel for
-      #endif
-      for (int t=0; t<m_nthread; ++t) {
-        uniform(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
-                UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
-      }
-      uniform(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int t=0; t<m_nthread; ++t) {
+      uniform(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
               UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
-      break;
+    }
+    uniform(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+            UNIFORM_LEFT_BOUND, UNIFORM_RIGHT_BOUND);
 
-    case GAUSSIAN:
-      #ifdef _OPENMP
-      #pragma omp parallel for
-      #endif
-      for (int t=0; t<m_nthread; ++t) {
-        gaussian(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
-                 GAUSSIAN_MEAN, GAUSSIAN_STD);
-      }
-      gaussian(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+  } else if (m_dist == RndDist::GAUSSIAN) {
+
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int t=0; t<m_nthread; ++t) {
+      gaussian(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
                GAUSSIAN_MEAN, GAUSSIAN_STD);
-      break;
+    }
+    gaussian(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+             GAUSSIAN_MEAN, GAUSSIAN_STD);
 
-    case GAMMA:
-      #ifdef _OPENMP
-      #pragma omp parallel for
-      #endif
-      for (int t=0; t<m_nthread; ++t) {
-        gamma(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
-              GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
-      }
-      gamma(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+  } else if (m_dist == RndDist::GAMMA) {
+
+    #ifdef _OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int t=0; t<m_nthread; ++t) {
+      gamma(m_method, m_stream[t], m_chunk, m_rnd + t*m_chunk,
             GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
-      break;
+    }
+    gamma(m_method, m_stream[0], m_remainder, m_rnd + m_nthread*m_chunk,
+          GAMMA_SHAPE, GAMMA_DISPLACEMENT, GAMMA_SCALE);
 
-    default:
-      Throw(ExceptType::WARNING, "Unknown random number distribution");
-
+  } else {
+    Throw(ExceptType::WARNING, "Unknown random number distribution");
   }
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed May 29 09:00:44 2013
+  \date      Wed May 29 09:07:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -51,7 +51,6 @@ namespace Quinoa {
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
 //! Exception types
-// ICC: no strongly typed enums yet
 enum class ExceptType : uint8_t {
                         WARNING=0,   //!< produces a warning
                         CUMULATIVE,  //!< only several will produce a warning
