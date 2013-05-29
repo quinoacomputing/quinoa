@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 06:40:00 PM MDT
+  \date      Wed May 29 07:13:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -22,6 +22,7 @@
 #include <PositionOptions.h>
 #include <MassOptions.h>
 #include <HydroOptions.h>
+#include <EnergyOptions.h>
 #include <MixOptions.h>
 
 using namespace std;
@@ -180,6 +181,7 @@ enum BundlePosition { TITLE=0,
                       POSITION,
                       MASS,
                       HYDRO,
+                      ENERGY,
                       MIX,
                       NSTEP,
                       TERM,
@@ -213,6 +215,7 @@ using Bundle = tuple<
   select::PositionTypes,   //!< Selected position model
   select::MassTypes,       //!< Selected mass model
   select::HydroTypes,      //!< Selected hydrodynamics model
+  select::EnergyTypes,     //!< Selected internal energy model
   select::MixTypes,        //!< Selected material mix model
   int,                     //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
