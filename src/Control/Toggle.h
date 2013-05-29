@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 08:27:58 PM MDT
+  \date      Wed May 29 08:00:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -81,7 +81,7 @@ std::string operator+ (const std::string& lhs, Enum e) {
 //! Operator << for writing Enum to output streams
 template< typename Enum >
 std::ostream& operator<< (std::ostream& os, const Enum& e) {
-  os << static_cast<typename std::underlying_type<Enum>::type>(e);
+  os << static_cast<unsigned int>(e);
   return os;
 }
 

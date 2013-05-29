@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 07:12:15 PM MDT
+  \date      Wed May 29 07:33:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -21,11 +21,11 @@ namespace Quinoa {
 namespace select {
 
 //! Physics types
-enum class PhysicsTypes { NO_PHYSICS=0,
-                          HOMOGENEOUS_MIX,
-                          HOMOGENEOUS_HYDRO,
-                          HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                          SPINSFLOW };
+enum class PhysicsTypes : uint8_t { NO_PHYSICS=0,
+                                    HOMOGENEOUS_MIX,
+                                    HOMOGENEOUS_HYDRO,
+                                    HOMOGENEOUS_RAYLEIGH_TAYLOR,
+                                    SPINSFLOW };
 
 //! Class with base templated on the above enum class with associations
 class Physics : public Toggle<PhysicsTypes> {
