@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Wed May 29 07:30:31 2013
+  \date      Thu May 30 08:14:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -26,8 +26,6 @@
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -113,21 +111,23 @@ struct Term {
   }
 
   //! Operator + for adding Term (name+field ID) to a std::string
-  friend string operator+ (const string& lhs, const control::Term& term) {
-    stringstream ss;
+  friend std::string operator+ (const std::string& lhs,
+                                const control::Term& term) {
+    std::stringstream ss;
     ss << lhs << char(term.name) << term.field+1;
-    string rhs = ss.str();
+    std::string rhs = ss.str();
     return rhs;
   }
 
   //! Operator << for writing Term to output streams
-  friend ostream& operator<< (ostream& os, const Term& term) {
+  friend std::ostream& operator<< (std::ostream& os, const Term& term) {
     os << char(term.name) << term.field+1;
     return os;
   }
 
   //! Operator << for writing vector<Term> to output streams
-  friend ostream& operator<< (ostream& os, const vector<Term>& vec) {
+  friend std::ostream& operator<< (std::ostream& os,
+                                   const std::vector<Term>& vec) {
     os << " <";
     for (auto& w : vec) os << w;
     os << ">";
@@ -135,7 +135,8 @@ struct Term {
   }
 
   //! Operator <<= for writing requested vector<Term> to output streams
-  friend ostream& operator<<= (ostream& os, const vector<Term>& vec) {
+  friend std::ostream& operator<<= (std::ostream& os,
+                                    const std::vector<Term>& vec) {
     if (vec[0].plot) {
       os << " <";
       for (auto& w : vec) os << w;
@@ -155,14 +156,14 @@ struct FieldName {
     name(n), field(f) {}
 
   //! Operator << for writing FieldName to output streams
-  friend ostream& operator<< (ostream& os, const FieldName& fn) {
+  friend std::ostream& operator<< (std::ostream& os, const FieldName& fn) {
      os << char(fn.name) << fn.field+1;
      return os;
   }
 
   //! Operator += for adding FieldName to std::string
-  friend string& operator+= (string& os, const FieldName& fn) {
-     stringstream ss;
+  friend std::string& operator+= (std::string& os, const FieldName& fn) {
+     std::stringstream ss;
      ss << os << char(fn.name) << fn.field+1;
      os = ss.str();
      return os;
@@ -175,7 +176,7 @@ struct FieldName {
 //! E.g the third mixed central moment of three scalars needs three terms for
 //! ensemble averaging: (Y1-<Y1>), (Y2-<Y2>), and (Y3-<Y3>), then the moment is
 //! <y1y2y3> = <(Y1-<Y1>)(Y2-<Y2>)(Y3-<Y3>)>
-using Product = vector<Term>;
+using Product = std::vector<Term>;
 
 //! Position enum for accessing fields of tuple Bundle using names as in struct
 enum BundlePosition { TITLE=0,
@@ -213,8 +214,8 @@ enum BundlePosition { TITLE=0,
 };
 
 //! Storage bundle for parsed data
-using Bundle = tuple<
-  string,                  //!< Problem Title
+using Bundle = std::tuple<
+  std::string,             //!< Problem Title
   select::PhysicsTypes,    //!< Selected physics
   select::PositionTypes,   //!< Selected position model
   select::MassTypes,       //!< Selected mass model
@@ -236,20 +237,20 @@ using Bundle = tuple<
   int,                     //!< Plot output interval
   int,                     //!< PDF output interval
   int,                     //!< Glob output interval
-  string,                  //!< PDF base filename
-  string,                  //!< Glob filename
-  string,                  //!< Plot base filename
-  vector<real>,            //!< Parameters 'b' in Dirichlet mix models
-  vector<real>,            //!< Parameters 'S' in Dirichlet mix models
-  vector<real>,            //!< Parameters 'kappa' in Dirichlet mix models
-  vector<real>,            //!< Parameters 'c_ij' in GenDirichlet mix models
+  std::string,             //!< PDF base filename
+  std::string,             //!< Glob filename
+  std::string,             //!< Plot base filename
+  std::vector<real>,       //!< Parameters 'b' in Dirichlet mix models
+  std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
+  std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models
+  std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
   real,                    //!< Parameter C0 in the simplified Langevin model
   real,                    //!< Atwood number in beta model
-  vector<Product>          //!< Requested (and triggered) statistics
+  std::vector<Product>     //!< Requested (and triggered) statistics
 >;
 
 //! Vector of bools indicating whether data is set in Bundle during parsing
-using BoolBundle = vector<bool>;
+using BoolBundle = std::vector<bool>;
 
 } // namespace control
 
