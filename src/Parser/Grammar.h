@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 08:25:03 PM MDT
+  \date      Thu May 30 08:14:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -63,7 +63,7 @@ namespace grammar {
   // convert string to 'type'
   template< class type >
   static type convert(const std::string& str) {
-    stringstream ss(str);
+    std::stringstream ss(str);
     type num;
     ss >> num;
     return num;
@@ -72,7 +72,7 @@ namespace grammar {
   // convert 'type' to string
   template< class type >
   static std::string convert(const type& val) {
-    stringstream ss;
+    std::stringstream ss;
     ss << val;
     return ss.str();
   }
@@ -86,7 +86,7 @@ namespace grammar {
       // Figure out element type at position 'at'
       using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
       // Convert to correct type and store element at position 'at'
-      get<at>(stack) = convert<type>(value);
+      std::get<at>(stack) = convert<type>(value);
       boolstack[at] = true;
     }
   };
@@ -97,7 +97,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      get<at>(stack) = value;
+      std::get<at>(stack) = value;
       boolstack[at] = true;
     }
   };
@@ -109,7 +109,7 @@ namespace grammar {
                       stack_type& stack,
                       boolstack_type& boolstack) {
       // Convert to correct type and push element to vector at position 'at'
-      get<at>(stack).push_back(convert<real>(value));
+      std::get<at>(stack).push_back(convert<real>(value));
       boolstack[at] = true;
     }
   };
@@ -119,7 +119,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       stack_type& stack,
                       boolstack_type& boolstack) {
-      get<control::STATISTICS>(stack).push_back(vector<control::Term>());
+      std::get<control::STATISTICS>(stack).push_back(std::vector<control::Term>());
       boolstack[control::STATISTICS] = true;
       IGNORE(value);        // suppress compiler warning on unused variable
     }
@@ -137,7 +137,7 @@ namespace grammar {
       // if name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference in bundle
-      vector<control::Product>& stats = get<control::STATISTICS>(stack);
+      std::vector<control::Product>& stats = std::get<control::STATISTICS>(stack);
       // Push term into current product
       stats.back().push_back(control::Term(field, quantity, moment, n, plot));
 
@@ -174,14 +174,14 @@ namespace grammar {
                       boolstack_type& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::PHYSICS]) {
-        cout << ">>> PARSER WARNING: Multiple physics defined in input file"
-             << endl << ">>> Overwriting \""
-             << Physics.name(std::get<control::PHYSICS>(stack))
-             << "\" with \""
-             << Physics.name(Physics.option(value)) << "\""
-             << endl;
+        std::cout << ">>> PARSER WARNING: Multiple physics defined in input file"
+                  << std::endl << ">>> Overwriting \""
+                  << Physics.name(std::get<control::PHYSICS>(stack))
+                  << "\" with \""
+                  << Physics.name(Physics.option(value)) << "\""
+                  << std::endl;
       }
-      get<control::PHYSICS>(stack) = Physics.option(value);
+      std::get<control::PHYSICS>(stack) = Physics.option(value);
       boolstack[control::PHYSICS] = true;
     }
   };
@@ -193,14 +193,14 @@ namespace grammar {
                       boolstack_type& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::POSITION]) {
-        cout << ">>> PARSER WARNING: Multiple position models defined in input"
-                " file" << endl << ">>> Overwriting \""
+        std::cout << ">>> PARSER WARNING: Multiple position models defined in input"
+                " file" << std::endl << ">>> Overwriting \""
              << Position.name(std::get<control::POSITION>(stack))
              << "\" with \""
              << Position.name(Position.option(value))
-             << "\"" << endl;
+             << "\"" << std::endl;
       }
-      get<control::POSITION>(stack) = Position.option(value);
+      std::get<control::POSITION>(stack) = Position.option(value);
       boolstack[control::POSITION] = true;
     }
   };
@@ -212,14 +212,14 @@ namespace grammar {
                       boolstack_type& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MASS]) {
-        cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
-             << endl << ">>> Overwriting \""
+        std::cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
+             << std::endl << ">>> Overwriting \""
              << Mass.name(std::get<control::MASS>(stack))
              << "\" with \""
              << Mass.name(Mass.option(value)) << "\""
-             << endl;
+             << std::endl;
       }
-      get<control::MASS>(stack) = Mass.option(value);
+      std::get<control::MASS>(stack) = Mass.option(value);
       boolstack[control::MASS] = true;
     }
   };
@@ -231,14 +231,14 @@ namespace grammar {
                       boolstack_type& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::HYDRO]) {
-        cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
-                "file" << endl << ">>> Overwriting \""
+        std::cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
+                "file" << std::endl << ">>> Overwriting \""
              << Hydro.name(std::get<control::HYDRO>(stack))
              << "\" with \""
              << Hydro.name(Hydro.option(value)) << "\""
-             << endl;
+             << std::endl;
       }
-      get<control::HYDRO>(stack) = Hydro.option(value);
+      std::get<control::HYDRO>(stack) = Hydro.option(value);
       boolstack[control::HYDRO] = true;
     }
   };
@@ -250,13 +250,13 @@ namespace grammar {
                       boolstack_type& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MIX]) {
-        cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
-             << endl << ">>> Overwriting \""
+        std::cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
+             << std::endl << ">>> Overwriting \""
              << Mix.name(std::get<control::MIX>(stack))
              << "\" with \""
-             << Mix.name(Mix.option(value)) << "\"" << endl;
+             << Mix.name(Mix.option(value)) << "\"" << std::endl;
       }
-      get<control::MIX>(stack) = Mix.option(value);
+      std::get<control::MIX>(stack) = Mix.option(value);
       boolstack[control::MIX] = true;
     }
   };
