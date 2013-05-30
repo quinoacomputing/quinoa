@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu May 30 08:27:42 2013
+  \date      Thu May 30 12:19:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -88,7 +88,7 @@ namespace grammar {
     }
   };
 
-  // store value in state 'at' position
+  // store value in state 'at' position (no conversion)
   template< control::BundlePosition at >
   struct store : action_base< store<at> > {
     static void apply(const std::string& value,
@@ -116,7 +116,8 @@ namespace grammar {
     static void apply(const std::string& value,
                       Stack& stack,
                       BoolStack& boolstack) {
-      std::get<control::STATISTICS>(stack).push_back(std::vector<control::Term>());
+      std::get<control::STATISTICS>(stack).push_back(
+        std::vector<control::Term>());
       boolstack[control::STATISTICS] = true;
       IGNORE(value);        // suppress compiler warning on unused variable
     }
@@ -134,7 +135,8 @@ namespace grammar {
       // if name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference in bundle
-      std::vector<control::Product>& stats = std::get<control::STATISTICS>(stack);
+      std::vector<control::Product>& stats =
+        std::get<control::STATISTICS>(stack);
       // Push term into current product
       stats.back().push_back(control::Term(field, quantity, moment, n, plot));
 
@@ -171,8 +173,8 @@ namespace grammar {
                       BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::PHYSICS]) {
-        std::cout << ">>> PARSER WARNING: Multiple physics defined in input file"
-                  << std::endl << ">>> Overwriting \""
+        std::cout << ">>> PARSER WARNING: Multiple physics defined in input "
+                     "file" << std::endl << ">>> Overwriting \""
                   << Physics.name(std::get<control::PHYSICS>(stack))
                   << "\" with \""
                   << Physics.name(Physics.option(value)) << "\""
@@ -190,12 +192,12 @@ namespace grammar {
                       BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::POSITION]) {
-        std::cout << ">>> PARSER WARNING: Multiple position models defined in input"
-                " file" << std::endl << ">>> Overwriting \""
-             << Position.name(std::get<control::POSITION>(stack))
-             << "\" with \""
-             << Position.name(Position.option(value))
-             << "\"" << std::endl;
+        std::cout << ">>> PARSER WARNING: Multiple position models defined in "
+                     "input file" << std::endl << ">>> Overwriting \""
+                  << Position.name(std::get<control::POSITION>(stack))
+                  << "\" with \""
+                  << Position.name(Position.option(value))
+                  << "\"" << std::endl;
       }
       std::get<control::POSITION>(stack) = Position.option(value);
       boolstack[control::POSITION] = true;
@@ -209,12 +211,12 @@ namespace grammar {
                       BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MASS]) {
-        std::cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
-             << std::endl << ">>> Overwriting \""
-             << Mass.name(std::get<control::MASS>(stack))
-             << "\" with \""
-             << Mass.name(Mass.option(value)) << "\""
-             << std::endl;
+        std::cout << ">>> PARSER WARNING: Multiple mass models defined in "
+                     "input file" << std::endl << ">>> Overwriting \""
+                  << Mass.name(std::get<control::MASS>(stack))
+                  << "\" with \""
+                  << Mass.name(Mass.option(value)) << "\""
+                  << std::endl;
       }
       std::get<control::MASS>(stack) = Mass.option(value);
       boolstack[control::MASS] = true;
@@ -228,12 +230,12 @@ namespace grammar {
                       BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::HYDRO]) {
-        std::cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
-                "file" << std::endl << ">>> Overwriting \""
-             << Hydro.name(std::get<control::HYDRO>(stack))
-             << "\" with \""
-             << Hydro.name(Hydro.option(value)) << "\""
-             << std::endl;
+        std::cout << ">>> PARSER WARNING: Multiple hydro models defined in "
+                     "input file" << std::endl << ">>> Overwriting \""
+                  << Hydro.name(std::get<control::HYDRO>(stack))
+                  << "\" with \""
+                  << Hydro.name(Hydro.option(value)) << "\""
+                  << std::endl;
       }
       std::get<control::HYDRO>(stack) = Hydro.option(value);
       boolstack[control::HYDRO] = true;
@@ -247,11 +249,11 @@ namespace grammar {
                       BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MIX]) {
-        std::cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
-             << std::endl << ">>> Overwriting \""
-             << Mix.name(std::get<control::MIX>(stack))
-             << "\" with \""
-             << Mix.name(Mix.option(value)) << "\"" << std::endl;
+        std::cout << ">>> PARSER WARNING: Multiple mix models defined in input "
+                     "file" << std::endl << ">>> Overwriting \""
+                  << Mix.name(std::get<control::MIX>(stack))
+                  << "\" with \""
+                  << Mix.name(Mix.option(value)) << "\"" << std::endl;
       }
       std::get<control::MIX>(stack) = Mix.option(value);
       boolstack[control::MIX] = true;
