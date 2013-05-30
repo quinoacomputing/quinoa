@@ -130,7 +130,6 @@ if(HAS_PEDANTIC)
   add_definitions("-pedantic")
   # suppress warning: ISO C++ forbids variable length array
   add_definitions("-Wno-vla")
-  add_definitions("-Wno-vla-extension") # clang
 endif()
 
 check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
@@ -141,6 +140,7 @@ endif()
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
+  add_definitions("-Wno-vla-extension")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   # using GCC
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
