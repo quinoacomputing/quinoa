@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu May 30 08:14:17 2013
+  \date      Thu May 30 08:27:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -40,11 +40,9 @@ namespace grammar {
   // State
 
   //! Bundle is where everything is stored during parsing
-  using stack_type = control::Bundle;
+  using Stack = control::Bundle;
   //! BoolBundle indicates stored fields (true or false)
-  using boolstack_type = control::BoolBundle;
-  //! Dummy Bundle instant for decltype in cstore()
-  static stack_type dummy_stack;
+  using BoolStack = control::BoolBundle;
   //! Out-of-struct storage of field ID for push_term
   static int field = 0;
   //! Physics options
@@ -81,12 +79,11 @@ namespace grammar {
   template< control::BundlePosition at >
   struct cstore : action_base< cstore<at> > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
-      // Figure out element type at position 'at'
-      using type = typename std::tuple_element<at, decltype(dummy_stack)>::type;
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Convert to correct type and store element at position 'at'
-      std::get<at>(stack) = convert<type>(value);
+      std::get<at>(stack) =
+        convert< typename std::tuple_element<at,Stack>::type >(value);
       boolstack[at] = true;
     }
   };
@@ -95,8 +92,8 @@ namespace grammar {
   template< control::BundlePosition at >
   struct store : action_base< store<at> > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       std::get<at>(stack) = value;
       boolstack[at] = true;
     }
@@ -106,8 +103,8 @@ namespace grammar {
   template< control::BundlePosition at >
   struct push : action_base< push<at> > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Convert to correct type and push element to vector at position 'at'
       std::get<at>(stack).push_back(convert<real>(value));
       boolstack[at] = true;
@@ -117,8 +114,8 @@ namespace grammar {
   // start new product in vector of statistics
   struct start_product : action_base< start_product > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       std::get<control::STATISTICS>(stack).push_back(std::vector<control::Term>());
       boolstack[control::STATISTICS] = true;
       IGNORE(value);        // suppress compiler warning on unused variable
@@ -129,8 +126,8 @@ namespace grammar {
   template< control::Quantity quantity, control::Moment moment, char name='\0' >
   struct push_term : action_base< push_term<quantity, moment, name> > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
 
       // if name is given, push name, otherwise push first char of value
       char n(name ? name : value[0]);
@@ -159,8 +156,8 @@ namespace grammar {
   // save field ID so push_term can pick it up
   struct save_field : action_base< save_field > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       field = convert<int>(value) - 1;  // numbering of field IDs start from 0
       IGNORE(stack);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
@@ -170,8 +167,8 @@ namespace grammar {
   // store selected physics
   struct store_physics : action_base< store_physics > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::PHYSICS]) {
         std::cout << ">>> PARSER WARNING: Multiple physics defined in input file"
@@ -189,8 +186,8 @@ namespace grammar {
   // store selected position model
   struct store_position : action_base< store_position > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::POSITION]) {
         std::cout << ">>> PARSER WARNING: Multiple position models defined in input"
@@ -208,8 +205,8 @@ namespace grammar {
   // store selected mass model
   struct store_mass : action_base< store_mass > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MASS]) {
         std::cout << ">>> PARSER WARNING: Multiple mass models defined in input file"
@@ -227,8 +224,8 @@ namespace grammar {
   // store selected hydrodynamics model
   struct store_hydro : action_base< store_hydro > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::HYDRO]) {
         std::cout << ">>> PARSER WARNING: Multiple hydro models defined in input "
@@ -246,8 +243,8 @@ namespace grammar {
   // store selected material mix model
   struct store_mix : action_base< store_mix > {
     static void apply(const std::string& value,
-                      stack_type& stack,
-                      boolstack_type& boolstack) {
+                      Stack& stack,
+                      BoolStack& boolstack) {
       // Issue warning if overwrite
       if (boolstack[control::MIX]) {
         std::cout << ">>> PARSER WARNING: Multiple mix models defined in input file"
