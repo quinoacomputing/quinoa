@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 01:14:07 PM MDT
+  \date      Thu May 30 07:52:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -45,14 +45,14 @@ class Control {
 
     //! Get single element 'at' position
     template< control::BundlePosition at >
-    const typename std::tuple_element<at, decltype(m_data)>::type& get()
-    const noexcept {
+    constexpr const typename std::tuple_element<at, decltype(m_data)>::type&
+    get() const noexcept {
       return std::get<at>(m_data);
     }
 
     //! Check if an element is set during parse
     template< control::BundlePosition at >
-    bool set() const noexcept { return m_booldata[at]; }
+    constexpr bool set() const noexcept { return m_booldata[at]; }
 
     //! Echo element if set
     template< control::BundlePosition at >
