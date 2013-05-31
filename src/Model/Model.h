@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Wed May 29 08:20:26 2013
+  \date      Fri May 31 12:10:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -33,7 +33,7 @@ class Model {
                    Paradigm* const paradigm,
                    Control* const control,
                    real* const particles,
-                   const int npar,
+                   const uint64_t npar,
                    int nprop)
     try :
       m_memory(memory),
@@ -86,7 +86,7 @@ class Model {
     Paradigm* const m_paradigm;     //!< Parallel programming object pointer
     Control* const m_control;       //!< Parallel programming object pointer
     real* const m_particles;        //!< Particles
-    const int m_npar;               //!< Number of particles
+    const uint64_t m_npar;          //!< Number of particles
     const int m_nprop;              //!< Number of particle properties
     const VSLStreamStatePtr* m_str; //!< Array of MKL VSL stream state pointers
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:12:16 PM MDT
+  \date      Fri May 31 12:10:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -32,7 +32,7 @@ SimplifiedLangevin::init()
 //   real r[m_nvelocity];
 // 
 //   // Generate initial values for all scalars for all particles
-//   for (int p=0; p<m_npar; ++p) {
+//   for (uint64_t p=0; p<m_npar; ++p) {
 //     m_rndStr->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
 //                        m_str[0], m_nvelocity, r, 0.0, 1.0);
 //     memcpy(m_velocities + p*m_nvelocity, r, m_nvelocity*sizeof(real));
@@ -48,7 +48,8 @@ SimplifiedLangevin::advance(const real& dt)
 //******************************************************************************
 {
 IGNORE(dt);
-//   int tid, p, i;
+//   uint64_t p;
+//   int tid, i;
 //   real d, tke, eps, S=1.0;
 //   real* X;
 //   real* U;

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Wed May 29 08:11:10 2013
+  \date      Fri May 31 11:14:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -56,7 +56,7 @@ try {
   }
 
 void
-GlobWriter::write(const int it, const real t)
+GlobWriter::write(const uint64_t it, const real t)
 //******************************************************************************
 //  Write out glob file
 //! \param[in]  it         Iteration counter

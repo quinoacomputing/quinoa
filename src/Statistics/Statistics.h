@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu May 23 17:05:11 2013
+  \date      Fri May 31 12:43:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -95,8 +95,8 @@ class Statistics {
     bool isLower(const string&s) const;
 
     Memory* const m_memory;                   //!< Memory object
-    const int m_nthread;                      //!< Number of threads
-    const int m_npar;                         //!< Number of particles
+    const uint64_t m_nthread;                 //!< Number of threads
+    const uint64_t m_npar;                    //!< Number of particles
     Physics* const m_physics;                 //!< Physics object
     const int m_nprop;                        //!< Number of particle properties
     const vector<control::Product> m_statistics;//!< Requested tatistics

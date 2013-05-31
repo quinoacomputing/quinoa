@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Wed May 29 08:31:11 2013
+  \date      Fri May 31 12:38:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -71,7 +71,7 @@ class Mass : public Model {
 //                   const real beta,
 //                   const real disp,
 //                   const real scale) {
-//       for (int p=0; p<m_npar; ++p) {
+//       for (uint64_t p=0; p<m_npar; ++p) {
 //         m_rndStr->beta(VSL_RNG_METHOD_BETA_CJA,
 //                        m_str[0], 1, m_densities+p, alpha, beta, disp, scale);
 //       }

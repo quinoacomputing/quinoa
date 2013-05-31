@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:11:38 PM MDT
+  \date      Fri May 31 11:18:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -49,7 +49,7 @@ HomRT::solve()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int it = 0;
+  uint64_t it = 0;
   real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
@@ -116,8 +116,8 @@ HomRT::reportHeader() const
 }
 
 void
-HomRT::report(const int it,
-              const int nstep,
+HomRT::report(const uint64_t it,
+              const uint64_t nstep,
               const real t,
               const real dt,
               const bool wroteJpdf,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Thu May  9 21:39:28 2013
+  \date      Fri May 31 11:17:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -57,8 +57,8 @@ class HomHydro : public Physics {
 
     //! One-liner report
     void reportHeader();
-    void report(const int it,
-                const int nstep,
+    void report(const uint64_t it,
+                const uint64_t nstep,
                 const real t,
                 const real dt,
                 const bool wroteJpdf,

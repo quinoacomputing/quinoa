@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Tue May  7 10:43:06 2013
+  \date      Fri May 31 12:21:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics

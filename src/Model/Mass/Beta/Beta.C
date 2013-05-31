@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:06:37 PM MDT
+  \date      Fri May 31 12:09:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -46,7 +46,8 @@ Beta::advance(const real& dt)
 //******************************************************************************
 {
 IGNORE(dt);
-//   int tid, p, i;
+//   uint64_t p;
+//   int tid, i;
 //   real yn, d;
 //   real* y;
 //   real dW[m_nscalar];
