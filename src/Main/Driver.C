@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Wed May 29 08:59:26 2013
+  \date      Fri May 31 10:53:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -68,25 +68,31 @@ try :
          "Cannot allocate memory for timer object");
 
   // Instantiate selected physics
-  // ICC: use switch
-  if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::NO_PHYSICS)
+  if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::NO_PHYSICS) {
+
     Throw(ExceptType::FATAL, "No physics selected");
 
-  if (m_control->get<control::PHYSICS>() ==
-       select::PhysicsTypes::HOMOGENEOUS_MIX)
+  } else if (m_control->get<control::PHYSICS>() ==
+               select::PhysicsTypes::HOMOGENEOUS_MIX) {
+
     m_physics = new(nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
 
-  if (m_control->get<control::PHYSICS>() ==
-        select::PhysicsTypes::HOMOGENEOUS_HYDRO)
+  } else if (m_control->get<control::PHYSICS>() ==
+               select::PhysicsTypes::HOMOGENEOUS_HYDRO) {
+
     m_physics = new(nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
 
-  if (m_control->get<control::PHYSICS>() ==
-        select::PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR)
+  } else if (m_control->get<control::PHYSICS>() ==
+               select::PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
+
     m_physics = new(nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
 
-  if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::SPINSFLOW)
+  } if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::SPINSFLOW) {
+
     m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
                             "cylinder.msh");
+
+  }
 
   ErrChk(m_physics != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for physics object");
