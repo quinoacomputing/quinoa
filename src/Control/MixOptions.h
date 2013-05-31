@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:34:24 2013
+  \date      Fri May 31 13:29:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -43,10 +43,10 @@ class Mix : public Toggle<MixTypes> {
       names[MixTypes::GENERALIZED_DIRICHLET] = "Dirichlet";
       //! keywords -> Enums
       values["no_mix"] = MixTypes::NO_MIX;
-      values["iem"] = MixTypes::IEM;
-      values["iecm"] = MixTypes::IECM;
-      values["dir"] = MixTypes::DIRICHLET;
-      values["gendir"] = MixTypes::GENERALIZED_DIRICHLET;
+      values["mix_iem"] = MixTypes::IEM;
+      values["mix_iecm"] = MixTypes::IECM;
+      values["mix_dir"] = MixTypes::DIRICHLET;
+      values["mix_gendir"] = MixTypes::GENERALIZED_DIRICHLET;
     }
 
   private:

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:33:20 2013
+  \date      Fri May 31 13:27:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -38,8 +38,8 @@ class Position : public Toggle<PositionTypes> {
       names[PositionTypes::VISCOUS] = "Viscous";
       //! keywords -> Enums
       values["no_position"] = PositionTypes::NO_POSITION;
-      values["invpos"] = PositionTypes::INVISCID;
-      values["vispos"] = PositionTypes::INVISCID;
+      values["pos_inviscid"] = PositionTypes::INVISCID;
+      values["pos_viscous"] = PositionTypes::INVISCID;
     }
 
   private:
