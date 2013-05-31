@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Thu May 30 08:14:49 2013
+  \date      Fri May 31 12:36:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -224,14 +224,14 @@ using Bundle = std::tuple<
   select::MixTypes,        //!< Selected material mix model
   select::FrequencyTypes,  //!< Selected turbulence frequency model
   select::MixRateTypes,    //!< Selected material mix rate model
-  int,                     //!< Number of time steps to take
+  uint64_t,                //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step
   int,                     //!< Number of position components in position model
   int,                     //!< Number of density components in mass model
   int,                     //!< Number of velocity components in hydro model
   int,                     //!< Number of mixing scalars in material mix model
-  int,                     //!< Total number of particles
+  uint64_t,                //!< Total number of particles
   int,                     //!< TTY output interval
   int,                     //!< Dump output interval
   int,                     //!< Plot output interval

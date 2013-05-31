@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Wed May 29 07:23:36 2013
+  \date      Fri May 31 10:59:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -32,7 +32,7 @@ const Bundle DEFAULTS(
   select::MixTypes::NO_MIX,            //!< Material mix model
   select::FrequencyTypes::NO_FREQUENCY,//!< Turbulence frequency model
   select::MixRateTypes::NO_MIXRATE,    //!< Material mix rate model
-  numeric_limits<int>::max(),          //!< Number of time steps to take
+  numeric_limits<uint64_t>::max(),     //!< Number of time steps to take
   1.0,                                 //!< Time to terminate time stepping
   0.5,                                 //!< Size of time step
   0,                                   //!< Number of position components

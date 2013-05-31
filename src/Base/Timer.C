@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Wed May 29 08:09:54 2013
+  \date      Fri May 31 11:16:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -118,8 +118,8 @@ void
 Timer::eta(const TimerIdx id,
            const real term,
            const real time,
-           const int nstep,
-           const int it,
+           const uint64_t nstep,
+           const uint64_t it,
            Watch& elapsedWatch,
            Watch& estimatedWatch)
 //******************************************************************************

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed May 29 08:55:56 2013
+  \date      Fri May 31 12:13:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -63,7 +63,7 @@ IGNORE(m_paradigm);
 
   // Allocate memory to store all particle properties
   m_particles =
-    m_memory->newEntry<real>(control->nprop() * m_npar,
+    m_memory->newEntry<real>(m_npar * control->nprop(),
                              REAL,
                              SCALAR,
                              "Particles");

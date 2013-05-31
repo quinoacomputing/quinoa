@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 19 May 2013 06:06:53 PM MDT
+  \date      Fri May 31 12:08:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -64,7 +64,7 @@ Dirichlet::jpdf(JPDF& jpdf)
 //******************************************************************************
 {
 IGNORE(jpdf);
-//   for (int p=0; p<m_npar; ++p) {
+//   for (uint64_t p=0; p<m_npar; ++p) {
 //     real* y = m_scalars + p*m_nscalar;
 //     vector<real> v(y, y+m_nscalar);
 //     jpdf.insert(v);

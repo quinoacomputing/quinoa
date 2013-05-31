@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed May 29 08:56:40 2013
+  \date      Fri May 31 12:17:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -241,7 +241,8 @@ Statistics::estimateOrdinary()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int tid, p, i;
+  uint64_t p;
+  int tid, i;
   size_t s, j;
   real prod;
 
@@ -292,7 +293,8 @@ Statistics::estimateCentral()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int tid, p, i;
+  uint64_t p;
+  int tid, i;
   size_t s, j;
   real prod;
 

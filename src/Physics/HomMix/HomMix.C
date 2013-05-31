@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Tue May 21 18:09:25 2013
+  \date      Fri May 31 12:15:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -55,7 +55,7 @@ HomMix::solve()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int it = 0;
+  uint64_t it = 0;
   real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
@@ -114,7 +114,8 @@ HomMix::advance(real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int tid, p;
+  uint64_t p;
+  int tid;
 
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p)
@@ -151,8 +152,8 @@ HomMix::reportHeader() const
 }
 
 void
-HomMix::report(const int it,
-               const int nstep,
+HomMix::report(const uint64_t it,
+               const uint64_t nstep,
                const real t,
                const real dt,
                const bool wroteJpdf,
@@ -221,7 +222,8 @@ HomMix::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  int tid, p;
+  uint64_t p;
+  int tid;
 
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p)

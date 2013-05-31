@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sat 18 May 2013 10:26:05 PM MDT
+  \date      Fri May 31 12:38:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -122,7 +122,7 @@ class Physics {
     const int m_ndensity;                 //!< Number of density components
     const int m_nvelocity;                //!< Number of velocity components
     const int m_nscalar;                  //!< Number of scalar components
-    const int m_npar;                     //!< Number of particles
+    const uint64_t m_npar;                //!< Number of particles
     const real m_term;                    //!< Maximum time to simulate
 
   private:

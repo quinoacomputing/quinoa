@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Tue May  7 13:50:55 2013
+  \date      Fri May 31 11:15:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -72,8 +72,8 @@ class Timer {
     void eta(const TimerIdx id,
              const real term,
              const real time,
-             const int nstep,
-             const int it,
+             const uint64_t nstep,
+             const uint64_t it,
              Watch& elapsedWatch,
              Watch& estimatedWatch);
 

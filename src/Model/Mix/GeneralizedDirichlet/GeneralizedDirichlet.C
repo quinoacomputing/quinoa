@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Thu May 23 18:10:29 2013
+  \date      Fri May 31 12:08:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -71,7 +71,7 @@ GeneralizedDirichlet::jpdf(JPDF& jpdf)
 //******************************************************************************
 {
 IGNORE(jpdf);
-//   for (int p=0; p<m_npar; ++p) {
+//   for (uint64_t p=0; p<m_npar; ++p) {
 //     real* y = m_scalars + p*m_nscalar;
 //     vector<real> v(y, y+m_nscalar);
 //     jpdf.insert(v);
