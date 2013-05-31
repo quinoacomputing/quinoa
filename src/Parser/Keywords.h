@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Mon 13 May 2013 08:58:48 PM MDT
+  \date      Fri May 31 13:13:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -63,6 +63,11 @@ namespace keyword {
   using dir = pegtl::string< d,i,r >;
   //   * generalized Dirichlet
   using gendir = pegtl::string< g,e,n,d,i,r >;
+
+  // Select turbulence frequency model:
+  //   * Gamma distribution model
+  using freq_gamma = pegtl::string< f,r,e,q,'_',g,a,m,m,a >;
+
   //****************************************************************************
 
   // Number of time steps to take
@@ -91,6 +96,8 @@ namespace keyword {
   using nvelocity = pegtl::string< n,v,e,l,o,c,i,t,y >;
   // Number of particle scalar components
   using nscalar = pegtl::string< n,s,c,a,l,a,r >;
+  // Number of particle turbulence frequency components
+  using nfreq = pegtl::string< n,f,r,e,q >;
 
   // Dirichlet and generalized Dirichlet parameters
   using dir_B = pegtl::string< b >;
@@ -100,6 +107,12 @@ namespace keyword {
 
   // Langevin model parameters
   using SLM_C0 = pegtl::string< C,'0' >;
+
+  // Gamma frequency model parameters
+  using freq_gamma_C1 = pegtl::string< C,'1' >;
+  using freq_gamma_C2 = pegtl::string< C,'2' >;
+  using freq_gamma_C3 = pegtl::string< C,'3' >;
+  using freq_gamma_C4 = pegtl::string< C,'4' >;
 
   // Beta model parameters
   using Beta_At = pegtl::string< A,t >;

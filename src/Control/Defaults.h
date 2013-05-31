@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri May 31 10:59:11 2013
+  \date      Fri May 31 13:17:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -39,6 +39,7 @@ const Bundle DEFAULTS(
   0,                                   //!< Number of density components
   0,                                   //!< Number of velocity components
   0,                                   //!< Number of scalar components
+  0,                                   //!< Number of frequency components
   1,                                   //!< Total number of particles
   1,                                   //!< TTY output interval
   0,                                   //!< Dump output interval
@@ -54,6 +55,10 @@ const Bundle DEFAULTS(
   vector<real>(),                      //!< Parameters 'c_ij'
   2.1,                                 //!< Parameter C0
   0.5,                                 //!< Parameter Atwood number
+  0.5,                                 //!< Parameter C1 in gamma freq. model
+  0.73,                                //!< Parameter C2 in gamma freq. model
+  5.0,                                 //!< Parameter C3 in gamma freq. model
+  0.25,                                //!< Parameter C4 in gamma freq. model
   vector<Product>()                    //!< Statistics
 );
 

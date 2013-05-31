@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Mon 27 May 2013 11:43:55 AM MDT
+  \date      Fri May 31 13:19:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -63,6 +63,9 @@ class Parser {
 
     //! Echo parsed data specific to mix model
     void echoMix() const;
+
+    //! Echo parsed data specific to turbulence frequency model
+    void echoFrequency() const;
 
     const string m_filename;                    //!< Name of file to parse
     Control* const m_control;                   //!< Control category

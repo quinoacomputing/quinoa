@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu May 30 12:19:23 2013
+  \date      Fri May 31 13:21:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -25,6 +25,7 @@
 #include <MassOptions.h>
 #include <HydroOptions.h>
 #include <MixOptions.h>
+#include <FrequencyOptions.h>
 
 namespace Quinoa {
 
@@ -55,6 +56,8 @@ namespace grammar {
   static control::Option<select::Hydro> Hydro;
   //! Mix options
   static control::Option<select::Mix> Mix;
+  //! Turbulence frequency options
+  static control::Option<select::Frequency> Frequency;
 
   // Actions
 
@@ -260,6 +263,26 @@ namespace grammar {
     }
   };
 
+  // store selected turbulence frequency model
+  struct store_freq : action_base< store_freq > {
+    static void apply(const std::string& value,
+                      Stack& stack,
+                      BoolStack& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::FREQUENCY]) {
+        std::cout << ">>> PARSER WARNING: Multiple frequency models defined in "
+                     "input file" << std::endl << ">>> Overwriting \""
+                  << Frequency.name(std::get<control::FREQUENCY>(stack))
+                  << "\" with \""
+                  << Frequency.name(Frequency.option(value)) << "\""
+                  << std::endl;
+      }
+      std::get<control::FREQUENCY>(stack) = Frequency.option(value);
+      boolstack[control::FREQUENCY] = true;
+    }
+  };
+
+
   // Grammar
 
   // read 'token' until 'erased' trimming 'erased'
@@ -410,6 +433,20 @@ namespace grammar {
                       >
                > {};
 
+  // freq_gamma block
+  struct freq_gamma :
+         ifmust< parse< keyword::freq_gamma, store_freq >,
+                 block< process<keyword::nfreq, cstore<control::NFREQUENCY>>,
+                        process<keyword::freq_gamma_C1,
+                                cstore<control::FREQ_GAMMA_C1>>,
+                        process<keyword::freq_gamma_C2,
+                                cstore<control::FREQ_GAMMA_C2>>,
+                        process<keyword::freq_gamma_C3,
+                                cstore<control::FREQ_GAMMA_C3>>,
+                        process<keyword::freq_gamma_C4,
+                                cstore<control::FREQ_GAMMA_C4>> >
+               > {};
+
   // beta block
   struct beta :
          ifmust< parse< keyword::beta, store_mass >,
@@ -449,13 +486,13 @@ namespace grammar {
   struct homhydro :
          ifmust< parse<keyword::homhydro, store_physics>,
                  block< physics_common,
-                        slm, statistics > > {};
+                        slm, freq_gamma, statistics > > {};
 
   // spinsflow block
   struct spinsflow :
          ifmust< parse<keyword::spinsflow, store_physics>,
                  block< physics_common,
-                        slm, dir, gendir, beta > > {};
+                        slm, freq_gamma, dir, gendir, beta > > {};
 
   // physics
   struct physics :
