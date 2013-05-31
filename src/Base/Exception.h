@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed May 29 09:07:36 2013
+  \date      Fri May 31 10:39:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -98,12 +98,10 @@ class Exception : public std::exception {
     //! Accessor to function name
     const std::string& func() const noexcept { return m_func; }
 
-  protected:
-    //! Force copy constructor for children
-    // ICC: in C++11 this should be deleted and private
-    //Exception(const Exception&) = default;
-
   private:
+    // Use move constructor by default
+    //! Don't permit copy constructor
+    Exception(const Exception&) = delete;
     //! Don't permit copy assignment
     Exception& operator=(const Exception&) = delete;
     //! Don't permit move assignment
