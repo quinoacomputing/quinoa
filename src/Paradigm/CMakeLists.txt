@@ -12,7 +12,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Paradigm
 
 add_library(Paradigm
             Paradigm.C
-            OpenMP.C
 )
 
 INSTALL(TARGETS Paradigm
