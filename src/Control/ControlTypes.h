@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri May 31 12:36:53 2013
+  \date      Fri May 31 13:15:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -195,6 +195,7 @@ enum BundlePosition { TITLE=0,
                       NDENSITY,
                       NVELOCITY,
                       NSCALAR,
+                      NFREQUENCY,
                       NPAR,
                       TTYI,
                       DUMP,
@@ -210,6 +211,10 @@ enum BundlePosition { TITLE=0,
                       C,
                       C0,
                       AT,
+                      FREQ_GAMMA_C1,
+                      FREQ_GAMMA_C2,
+                      FREQ_GAMMA_C3,
+                      FREQ_GAMMA_C4,
                       STATISTICS
 };
 
@@ -231,6 +236,7 @@ using Bundle = std::tuple<
   int,                     //!< Number of density components in mass model
   int,                     //!< Number of velocity components in hydro model
   int,                     //!< Number of mixing scalars in material mix model
+  int,                     //!< Number of frequencies in turb. frequency model
   uint64_t,                //!< Total number of particles
   int,                     //!< TTY output interval
   int,                     //!< Dump output interval
@@ -246,6 +252,10 @@ using Bundle = std::tuple<
   std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
   real,                    //!< Parameter C0 in the simplified Langevin model
   real,                    //!< Atwood number in beta model
+  real,                    //!< C1 in gamma frequency model
+  real,                    //!< C2 in gamma frequency model
+  real,                    //!< C3 in gamma frequency model
+  real,                    //!< C4 in gamma frequency model
   std::vector<Product>     //!< Requested (and triggered) statistics
 >;
 

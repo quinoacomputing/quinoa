@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed May 29 08:57:13 2013
+  \date      Fri May 31 13:20:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -154,6 +154,25 @@ Parser::echoMix() const
 }
 
 void
+Parser::echoFrequency() const
+//******************************************************************************
+//  Echo parsed data specific to turbulence frequency model
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Turbulence frequency model: "
+       << grammar::Frequency.name(m_control->get<control::FREQUENCY>())
+       << endl;
+
+  m_control->echo<control::NFREQUENCY>("Number of turbulence frequency "
+                                       " components");
+  m_control->echo<control::FREQ_GAMMA_C1>("C1");
+  m_control->echo<control::FREQ_GAMMA_C2>("C2");
+  m_control->echo<control::FREQ_GAMMA_C3>("C3");
+  m_control->echo<control::FREQ_GAMMA_C4>("C4");
+}
+
+void
 Parser::echo() const
 //******************************************************************************
 //  Echo information on stuff parsed
@@ -178,6 +197,8 @@ Parser::echo() const
   if (m_control->set<control::HYDRO>()) echoHydro();
 
   if (m_control->set<control::MIX>()) echoMix();
+
+  if (m_control->set<control::FREQUENCY>()) echoFrequency();
 
   cout << endl;
 }
