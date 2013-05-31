@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri May 31 13:21:26 2013
+  \date      Fri May 31 13:31:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -296,18 +296,18 @@ namespace grammar {
          pad< trim<token, space>, blank, space > {};
 
   // match all accepted as position models
-  struct position : sor< keyword::invpos,
-                         keyword::vispos > {};
+  struct position : sor< keyword::pos_inviscid,
+                         keyword::pos_viscous > {};
 
   // match all accepted as hydro models
-  struct hydro : sor< keyword::slm,
-                      keyword::glm > {};
+  struct hydro : sor< keyword::hydro_slm,
+                      keyword::hydro_glm > {};
 
   // match all accepted as mix models
-  struct mix : sor< keyword::iem,
-                    keyword::iecm,
-                    keyword::dir,
-                    keyword::gendir > {};
+  struct mix : sor< keyword::mix_iem,
+                    keyword::mix_iecm,
+                    keyword::mix_dir,
+                    keyword::mix_gendir > {};
 
   // parse input padded by blank at left and space at right and if it matches
   // 'keywords', apply 'actions'
@@ -383,7 +383,7 @@ namespace grammar {
 
   // dir block
   struct dir :
-         ifmust< parse<keyword::dir, store_mix>,
+         ifmust< parse<keyword::mix_dir, store_mix>,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
                         list<keyword::dir_B, push<control::B>>,
                         list<keyword::dir_S, push<control::S>>,
@@ -393,7 +393,7 @@ namespace grammar {
 
   // gendir block
   struct gendir :
-         ifmust< parse<keyword::gendir, store_mix>,
+         ifmust< parse<keyword::mix_gendir, store_mix>,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
                         list<keyword::dir_B, push<control::B>>,
                         list<keyword::dir_S, push<control::S>>,
@@ -410,7 +410,7 @@ namespace grammar {
 
   // slm block
   struct slm :
-         ifmust< parse< keyword::slm, store_hydro,
+         ifmust< parse< keyword::hydro_slm, store_hydro,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
                         push_term<control::Quantity::VELOCITY_X,
@@ -449,7 +449,7 @@ namespace grammar {
 
   // beta block
   struct beta :
-         ifmust< parse< keyword::beta, store_mass >,
+         ifmust< parse< keyword::mass_beta, store_mass >,
                  block< process<keyword::ndensity, cstore<control::NDENSITY>>,
                         process<keyword::Beta_At, cstore<control::AT>> >
                > {};

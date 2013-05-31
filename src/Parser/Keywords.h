@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Fri May 31 13:13:10 2013
+  \date      Fri May 31 13:31:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -40,29 +40,29 @@ namespace keyword {
 
   // Select position model:
   //   * Insviscid model
-  using invpos = pegtl::string< i,n,v,p,o,s >;
+  using pos_inviscid = pegtl::string< p,o,s,'_',i,n,v,i,s,c,i,d >;
   //   * Viscous model
-  using vispos = pegtl::string< v,i,s,p,o,s >;
+  using pos_viscous = pegtl::string< p,o,s,'_',v,i,s,c,o,u,s >;
 
   // Select mass model:
   //   * Beta model
-  using beta = pegtl::string< b,e,t,a >;
+  using mass_beta = pegtl::string< m,a,s,s,'_',b,e,t,a >;
 
   // Select hydrodynamics model:
   //   * Simplified Langevin model
-  using slm = pegtl::string< s,l,m >;
+  using hydro_slm = pegtl::string< h,y,d,r,o,'_',s,l,m >;
   //   * Generalized Langevin model
-  using glm = pegtl::string< g,l,m >;
+  using hydro_glm = pegtl::string< h,y,d,r,o,'_',g,l,m >;
 
   // Select material mix model:
   //   * Interaction by exchange with the mean
-  using iem = pegtl::string< i,e,m >;
+  using mix_iem = pegtl::string< m,i,x,'_',i,e,m >;
   //   * Interaction by exchange with the conditional mean
-  using iecm = pegtl::string< i,e,c,m >;
+  using mix_iecm = pegtl::string< m,i,x,'_',i,e,c,m >;
   //   * Dirichlet
-  using dir = pegtl::string< d,i,r >;
+  using mix_dir = pegtl::string< m,i,x,'_',d,i,r >;
   //   * generalized Dirichlet
-  using gendir = pegtl::string< g,e,n,d,i,r >;
+  using mix_gendir = pegtl::string< m,i,x,'_',g,e,n,d,i,r >;
 
   // Select turbulence frequency model:
   //   * Gamma distribution model

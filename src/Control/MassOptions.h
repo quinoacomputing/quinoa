@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:33:30 2013
+  \date      Fri May 31 13:29:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -36,7 +36,7 @@ class Mass : public Toggle<MassTypes> {
       names[MassTypes::BETA] = "Beta";
       //! keywords -> Enums
       values["no_mass"] = MassTypes::NO_MASS;
-      values["beta"] = MassTypes::BETA;
+      values["mass_beta"] = MassTypes::BETA;
     }
 
   private:
