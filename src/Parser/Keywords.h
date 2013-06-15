@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Fri May 31 13:31:23 2013
+  \date      Sat 15 Jun 2013 02:08:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -23,10 +23,6 @@ namespace keyword {
 
   // End of block
   using end = pegtl::string< e,n,d >;
-
-  //****************************************************************************
-  // Editing anything in this section should be accompanied by the corresponding
-  // changes in FwdAssociate.h and BackAssociate.h in src/Control.
 
   // Select physics:
   //   * Homogeneous material mixing
@@ -67,8 +63,6 @@ namespace keyword {
   // Select turbulence frequency model:
   //   * Gamma distribution model
   using freq_gamma = pegtl::string< f,r,e,q,'_',g,a,m,m,a >;
-
-  //****************************************************************************
 
   // Number of time steps to take
   using nstep = pegtl::string< n,s,t,e,p >;
