@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 01 Jun 2013 07:17:27 AM MDT
+  \date      Wed 19 Jun 2013 08:37:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
            "Cannot allocate memory for driver");
 
     // Solve
-    driver->solve();
+    driver->execute();
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {

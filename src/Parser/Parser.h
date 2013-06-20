@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Fri May 31 13:19:57 2013
+  \date      Wed 19 Jun 2013 08:49:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -52,8 +52,11 @@ class Parser {
     //! Make requested statistics unique
     void unique(vector<control::Product>& statistics);
 
-    //! Echo parsd data common to all physics
-    void echoPhysicsCommon() const;
+    //! Echo parsed data specific to geometry
+    void echoGeometry() const;
+
+    //! Echo parsed data specific to physics
+    void echoPhysics() const;
 
     //! Echo parsed data specific to mass model
     void echoMass() const;

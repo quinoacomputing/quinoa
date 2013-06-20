@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Sat 15 Jun 2013 02:08:49 PM MDT
+  \date      Wed 19 Jun 2013 07:54:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -23,6 +23,19 @@ namespace keyword {
 
   // End of block
   using end = pegtl::string< e,n,d >;
+
+  // Select geometry definition
+  //   * Analytic
+  using analytic_geometry = pegtl::string<a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y>;
+  //   * Discrete
+  using discrete_geometry = pegtl::string<d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y>;
+
+  // Distance between generated points
+  using dist = pegtl::string<d,i,s,t>;
+
+  // Geometry primitives for analytic geometry definition
+  //   * Box
+  using box = pegtl::string<b,o,x>;
 
   // Select physics:
   //   * Homogeneous material mixing

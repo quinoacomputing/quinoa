@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri May 31 13:20:19 2013
+  \date      Wed 19 Jun 2013 08:50:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -83,12 +83,30 @@ Parser::unique(vector<control::Product>& statistics)
 }
 
 void
-Parser::echoPhysicsCommon() const
+Parser::echoGeometry() const
 //******************************************************************************
-//  Echo parsed data common to all physics
+//  Echo parsed data specific to geometry definition
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  cout << " * Geometry: "
+       << grammar::Geometry.name(m_control->get<control::GEOMETRY>())
+       << endl;
+
+  m_control->echo<control::DIST>("Average point distance");
+}
+
+void
+Parser::echoPhysics() const
+//******************************************************************************
+//  Echo parsed data specific to physics
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  cout << " * Physics: "
+       << grammar::Physics.name(m_control->get<control::PHYSICS>())
+       << endl;
+
   m_control->echo<control::NSTEP>("Number of time steps");
   m_control->echo<control::TERM>("Terminate time");
   m_control->echo<control::DT>("Time step size");
@@ -185,19 +203,11 @@ Parser::echo() const
   if (m_control->set<control::TITLE>())
     cout << " * Title: " << m_control->get<control::TITLE>() << endl;
 
-  if (m_control->set<control::PHYSICS>()) {
-    cout << " * Physics: "
-         << grammar::Physics.name(m_control->get<control::PHYSICS>())
-         << endl;
-    echoPhysicsCommon();
-  }
-
+  if (m_control->set<control::GEOMETRY>()) echoGeometry();
+  if (m_control->set<control::PHYSICS>()) echoPhysics();
   if (m_control->set<control::MASS>()) echoMass();
-
   if (m_control->set<control::HYDRO>()) echoHydro();
-
   if (m_control->set<control::MIX>()) echoMix();
-
   if (m_control->set<control::FREQUENCY>()) echoFrequency();
 
   cout << endl;
