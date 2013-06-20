@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Fri May 31 12:10:53 2013
+  \date      Wed 19 Jun 2013 08:34:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -82,9 +82,9 @@ class Model {
     virtual ~Model() noexcept { finalize(); }
 
   protected:
-    Memory* const m_memory;         //!< Memory object pointer
-    Paradigm* const m_paradigm;     //!< Parallel programming object pointer
-    Control* const m_control;       //!< Parallel programming object pointer
+    Memory* const m_memory;         //!< Memory object
+    Paradigm* const m_paradigm;     //!< Parallel programming object
+    Control* const m_control;       //!< Control object
     real* const m_particles;        //!< Particles
     const uint64_t m_npar;          //!< Number of particles
     const int m_nprop;              //!< Number of particle properties

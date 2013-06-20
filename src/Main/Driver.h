@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Tue May  7 12:24:19 2013
+  \date      Wed 19 Jun 2013 08:37:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -15,6 +15,7 @@
 
 namespace Quinoa {
 
+class Geometry;
 class Physics;
 class Timer;
 class Control;
@@ -33,7 +34,7 @@ class Driver {
     ~Driver() noexcept;
 
     //! Solve
-    void solve() const;
+    void execute() const;
 
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
@@ -49,9 +50,16 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
+    //! Instantiate geometry object
+    void initGeometry();
+
+    //! Instantiate physics object
+    void initPhysics();
+
     Memory* const m_memory;           //!< Memory object
     Paradigm* const m_paradigm;       //!< Parallel paradigm object
 
+    Geometry* m_geometry;             //!< Geometry object
     Physics* m_physics;               //!< Physics object
     Control* m_control;               //!< Control object
     Timer* m_timer;                   //!< Timer object

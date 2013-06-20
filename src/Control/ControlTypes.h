@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri May 31 13:15:42 2013
+  \date      Wed 19 Jun 2013 07:56:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include <QuinoaTypes.h>
+#include <GeometryOptions.h>
 #include <PhysicsOptions.h>
 #include <PositionOptions.h>
 #include <MassOptions.h>
@@ -180,6 +181,7 @@ using Product = std::vector<Term>;
 
 //! Position enum for accessing fields of tuple Bundle using names as in struct
 enum BundlePosition { TITLE=0,
+                      GEOMETRY,
                       PHYSICS,
                       POSITION,
                       MASS,
@@ -215,12 +217,14 @@ enum BundlePosition { TITLE=0,
                       FREQ_GAMMA_C2,
                       FREQ_GAMMA_C3,
                       FREQ_GAMMA_C4,
+                      DIST,
                       STATISTICS
 };
 
 //! Storage bundle for parsed data
 using Bundle = std::tuple<
   std::string,             //!< Problem Title
+  select::GeometryTypes,   //!< Selected geometry definition
   select::PhysicsTypes,    //!< Selected physics
   select::PositionTypes,   //!< Selected position model
   select::MassTypes,       //!< Selected mass model
@@ -256,6 +260,7 @@ using Bundle = std::tuple<
   real,                    //!< C2 in gamma frequency model
   real,                    //!< C3 in gamma frequency model
   real,                    //!< C4 in gamma frequency model
+  real,                    //!< Distance between generated points
   std::vector<Product>     //!< Requested (and triggered) statistics
 >;
 

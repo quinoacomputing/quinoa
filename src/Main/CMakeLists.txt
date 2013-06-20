@@ -18,6 +18,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Model/Mass
                     ${QUINOA_SOURCE_DIR}/Model/Hydro
                     ${QUINOA_SOURCE_DIR}/Model/Mix
+                    ${QUINOA_SOURCE_DIR}/Geometry
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Physics/HomMix
                     ${QUINOA_SOURCE_DIR}/Physics/HomHydro
@@ -34,6 +35,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
                       Paradigm
                       LinearAlgebra
+                      Geometry
                       HomMix
                       HomHydro
                       HomRT

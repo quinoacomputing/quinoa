@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri May 31 10:53:13 2013
+  \date      Wed 19 Jun 2013 08:42:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -15,6 +15,8 @@
 #include <Control.h>
 #include <Timer.h>
 #include <Parser.h>
+#include <AnalyticGeometry.h>
+#include <DiscreteGeometry.h>
 #include <HomMix.h>
 #include <HomHydro.h>
 #include <HomRT.h>
@@ -32,12 +34,13 @@ Driver::Driver(int argc,
 //! \param[in] argv      Argument vector from command line
 //! \param[in] memory    Memory oject pointer
 //! \param[in] paradigm  Parallel programming paradigm object pointer
-//! \details   Instantiate physics, set initial conditions.
+//! \details   Instantiate geometry, physics, set initial conditions, etc.
 //! \author J. Bakosi
 //******************************************************************************
 try :
   m_memory(memory),
   m_paradigm(paradigm),
+  m_geometry(nullptr),
   m_physics(nullptr),
   m_control(nullptr),
   m_timer(nullptr)
@@ -67,38 +70,11 @@ try :
   ErrChk(m_timer != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for timer object");
 
-  // Instantiate selected physics
-  if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::NO_PHYSICS) {
+  // Instantiate geometry object
+  initGeometry();
 
-    Throw(ExceptType::FATAL, "No physics selected");
-
-  } else if (m_control->get<control::PHYSICS>() ==
-               select::PhysicsTypes::HOMOGENEOUS_MIX) {
-
-    m_physics = new(nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
-
-  } else if (m_control->get<control::PHYSICS>() ==
-               select::PhysicsTypes::HOMOGENEOUS_HYDRO) {
-
-    m_physics = new(nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
-
-  } else if (m_control->get<control::PHYSICS>() ==
-               select::PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
-
-    m_physics = new(nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
-
-  } if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::SPINSFLOW) {
-
-    m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
-                            "cylinder.msh");
-
-  }
-
-  ErrChk(m_physics != nullptr, ExceptType::FATAL,
-         "Cannot allocate memory for physics object");
-
-  // Set initial conditions
-  m_physics->init();
+  // Instantiate physics object
+  initPhysics();
 
 } // Roll back changes and rethrow on error
   catch (exception&) {
@@ -132,18 +108,80 @@ Driver::finalize() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_physics) { delete m_physics; m_physics = nullptr; }
-  if (m_timer)   { delete m_timer;   m_timer   = nullptr; }
-  if (m_control) { delete m_control; m_control = nullptr; }
+  if (m_physics)  { delete m_physics;  m_physics  = nullptr; }
+  if (m_geometry) { delete m_geometry; m_geometry = nullptr; }
+  if (m_timer)    { delete m_timer;    m_timer    = nullptr; }
+  if (m_control)  { delete m_control;  m_control  = nullptr; }
   m_memory->freeAllEntries();
 }
 
 void
-Driver::solve() const
+Driver::initGeometry()
 //******************************************************************************
-//  Solve
+//  Instantiate geometry object (if any)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_physics->solve();
+  //  Instantiate geometry object (if any)
+  if (m_control->get<control::GEOMETRY>() ==
+        select::GeometryTypes::ANALYTIC) {
+
+    m_geometry = new(nothrow)
+                   AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer);
+
+  } else if (m_control->get<control::GEOMETRY>() ==
+               select::GeometryTypes::DISCRETE) {
+
+    m_geometry = new(nothrow)
+                  DiscreteGeometry(m_memory, m_paradigm, m_control, m_timer);
+
+  }
+
+  // Initialize geometry (if any)
+  if (m_geometry) m_geometry->init();
+}
+
+void
+Driver::initPhysics()
+//******************************************************************************
+//  Instantiate physics object (if any)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  //  Instantiate physics object (if any)
+  if (m_control->get<control::PHYSICS>() ==
+        select::PhysicsTypes::HOMOGENEOUS_MIX) {
+
+    m_physics = new(nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
+
+  } else if (m_control->get<control::PHYSICS>() ==
+               select::PhysicsTypes::HOMOGENEOUS_HYDRO) {
+
+    m_physics = new(nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
+
+  } else if (m_control->get<control::PHYSICS>() ==
+               select::PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
+
+    m_physics = new(nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
+
+  } if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::SPINSFLOW) {
+
+    m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
+                            "cylinder.msh");
+
+  }
+
+  // Initialize physics (if any)
+  if (m_physics) m_physics->init();
+}
+
+void
+Driver::execute() const
+//******************************************************************************
+//  Execute
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if (m_geometry) m_geometry->generate();
+  if (m_physics) m_physics->solve();
 }

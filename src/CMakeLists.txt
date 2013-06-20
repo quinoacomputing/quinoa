@@ -189,6 +189,7 @@ include_directories("${PROJECT_BINARY_DIR}/Base")
 
 # Components
 add_subdirectory(Base)
+add_subdirectory(Geometry)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri May 31 13:31:47 2013
+  \date      Wed 19 Jun 2013 07:59:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -20,6 +20,7 @@
 #include <Macro.h>
 #include <ControlTypes.h>
 #include <Option.h>
+#include <GeometryOptions.h>
 #include <PhysicsOptions.h>
 #include <PositionOptions.h>
 #include <MassOptions.h>
@@ -46,6 +47,8 @@ namespace grammar {
   using BoolStack = control::BoolBundle;
   //! Out-of-struct storage of field ID for push_term
   static int field = 0;
+  //! Geometry definition options
+  static control::Option<select::Geometry> Geometry;
   //! Physics options
   static control::Option<select::Physics> Physics;
   //! Position options
@@ -282,6 +285,25 @@ namespace grammar {
     }
   };
 
+  // store selected geometry definition
+  struct store_geometry : action_base< store_geometry > {
+    static void apply(const std::string& value,
+                      Stack& stack,
+                      BoolStack& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::GEOMETRY]) {
+        std::cout << ">>> PARSER WARNING: Multiple geometry definitions "
+                     "defined in input file" << std::endl
+                  << ">>> Overwriting \""
+                  << Geometry.name(std::get<control::GEOMETRY>(stack))
+                  << "\" with \""
+                  << Geometry.name(Geometry.option(value)) << "\"" << std::endl;
+      }
+      std::get<control::GEOMETRY>(stack) = Geometry.option(value);
+      boolstack[control::GEOMETRY] = true;
+    }
+  };
+
 
   // Grammar
 
@@ -368,7 +390,7 @@ namespace grammar {
          read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
              > {};
 
-  // scan title between characters 'lbound' and 'rbound'
+  // scan problem title between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_title :
          ifmust< one<lbound>,
@@ -380,6 +402,20 @@ namespace grammar {
   // title
   struct title :
          ifmust< read<keyword::title>, parse_title<'"','"'> > {};
+
+  // analytic_geometry block
+  struct analytic_geometry:
+         ifmust< parse<keyword::analytic_geometry, store_geometry>,
+                 block< process<keyword::dist, cstore<control::DIST>>
+                      >
+               > {};
+
+  // discrete_geometry block
+  struct discrete_geometry:
+         ifmust< parse<keyword::discrete_geometry, store_geometry>,
+                 block< process<keyword::dist, cstore<control::DIST>>
+                      >
+               > {};
 
   // dir block
   struct dir :
@@ -501,9 +537,15 @@ namespace grammar {
               homrt,
               spinsflow > {};
 
+  // geometry definition types
+  struct geometry :
+         sor< analytic_geometry,
+              discrete_geometry > {};
+
   // main keywords
   struct keywords :
          sor< title,
+              geometry,
               physics > {};
 
   // ignore: comments and empty lines

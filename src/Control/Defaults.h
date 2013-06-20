@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri May 31 13:17:06 2013
+  \date      Wed 19 Jun 2013 07:56:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -24,6 +24,7 @@ namespace control {
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
   "",                                  //!< Title
+  select::GeometryTypes::NO_GEOMETRY,  //!< Geometry definition
   select::PhysicsTypes::NO_PHYSICS,    //!< Physics
   select::PositionTypes::NO_POSITION,  //!< Position model
   select::MassTypes::NO_MASS,          //!< Mass model
@@ -59,6 +60,7 @@ const Bundle DEFAULTS(
   0.73,                                //!< Parameter C2 in gamma freq. model
   5.0,                                 //!< Parameter C3 in gamma freq. model
   0.25,                                //!< Parameter C4 in gamma freq. model
+  1.0,                                 //!< Distance between generated points
   vector<Product>()                    //!< Statistics
 );
 
