@@ -26,16 +26,8 @@ if(OPENMP_FOUND)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-# Grab info about the compiler to stick into the binary
-execute_process(
-  COMMAND           ${CMAKE_CXX_COMPILER} "-dumpversion"
-  OUTPUT_VARIABLE   CXX_COMPILER_VERSION
-)
-# Remove the newline character at the end
-string(REGEX REPLACE "[\r\n]" "" CXX_COMPILER_VERSION
-       "v${CXX_COMPILER_VERSION}")
 # Set compiler string
-set(QUINOA_COMPILER "${CMAKE_CXX_COMPILER} - ${CXX_COMPILER_VERSION}")
+set(QUINOA_COMPILER "${CMAKE_CXX_COMPILER}")
 
 # Grab current date to stick into the binary
 execute_process(
