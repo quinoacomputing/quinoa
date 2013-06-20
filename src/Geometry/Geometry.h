@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:34:59 PM MDT
+  \date      Thu Jun 20 06:48:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -42,8 +42,8 @@ class Geometry {
     //! Initialize geometry
     virtual void init() = 0;
 
-    //! Generate geometry
-    virtual void generate() = 0;
+    //! Space-fill geometry
+    virtual void fill() = 0;
 
   protected:
     Memory* const m_memory;                    //!< Memory object

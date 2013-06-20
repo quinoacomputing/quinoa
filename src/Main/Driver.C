@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:42:23 PM MDT
+  \date      Thu Jun 20 06:49:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -182,6 +182,6 @@ Driver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_geometry) m_geometry->generate();
+  if (m_geometry) m_geometry->fill();
   if (m_physics) m_physics->solve();
 }
