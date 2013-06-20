@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:40:47 PM MDT
+  \date      Thu Jun 20 06:49:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -33,8 +33,8 @@ class DiscreteGeometry : public Geometry {
     //! Initialize analytic geometry
     virtual void init() {}
 
-    //! Generate analytic geometry
-    virtual void generate() {}
+    //! Space-fill discrete geometry
+    virtual void fill() {}
 
   private:
     //! Don't permit copy constructor
