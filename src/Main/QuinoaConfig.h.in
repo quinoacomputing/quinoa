@@ -18,6 +18,7 @@ namespace Quinoa {
 #define QUINOA_VERSION               "@QUINOA_MAJOR_VER@.@QUINOA_MINOR_VER@"
 #define QUINOA_RELEASE               "@QUINOA_RELEASE@"
 #define QUINOA_GIT_COMMIT            "@GIT_SHA1@"
+#define QUINOA_MPI_COMPILER          "@QUINOA_MPI_COMPILER@"
 #define QUINOA_COMPILER              "@QUINOA_COMPILER@"
 #define QUINOA_BUILD_TYPE            "@QUINOA_BUILD_TYPE@"
 #define QUINOA_BUILD_DATE            "@QUINOA_BUILD_DATE@"
