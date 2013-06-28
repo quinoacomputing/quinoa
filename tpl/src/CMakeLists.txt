@@ -12,7 +12,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/")
 # Get underlying compiler
 include(GetUnderlyingCompiler)
 
-# Set install directory
+# Set install directory based on compiler ID
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" INSTALL_DIR)
 set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${INSTALL_DIR}")
 MESSAGE(STATUS "Install dir: " ${TPL_INSTALL_DIR})
@@ -31,6 +31,3 @@ ExternalProject_Add(
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
                -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
 )
-
-# Third-Party library dependencies
-#add_dependencies(${QUINOA_EXECUTABLE} zoltan)
