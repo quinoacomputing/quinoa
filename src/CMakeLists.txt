@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(QUINOA CXX)
+project(QUINOA C CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
+
+# Quinoa cmake modules directory
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/")
 
 # Set Quinoa version number: major.minor
 set(QUINOA_MAJOR_VER 0)
@@ -18,6 +21,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 # Set build type
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+# Get underlying compiler
+include(GetUnderlyingCompiler)
+
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
 if(OPENMP_FOUND)
@@ -26,8 +32,9 @@ if(OPENMP_FOUND)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-# Set compiler string
-set(QUINOA_COMPILER "${CMAKE_CXX_COMPILER}")
+# Set compiler
+set(QUINOA_MPI_COMPILER "${MPI_CXX_COMPILER}")
+set(QUINOA_COMPILER "${UNDERLYING_CXX_COMPILER}")
 
 # Grab current date to stick into the binary
 execute_process(
@@ -36,70 +43,69 @@ execute_process(
 )
 string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
 
-set (QUINOA_EXECUTABLE "quinoa")
+set(QUINOA_EXECUTABLE "quinoa")
 
 # Mass model options
 # Available mass models
-SET (MASS_VALUES "BETA")
+set(MASS_VALUES "BETA")
 # Initialize all to off
-SET (QUINOA_BETA off)  # 0
+set(QUINOA_BETA off)  # 0
 # Set default and select from list
-SET (QUINOA_MODEL_MASS "BETA"
-     CACHE STRING "Select mass model. Default: BETA (Beta distribution model). Available options: ${MASS_VALUES}")
+set(QUINOA_MODEL_MASS "BETA"
+    CACHE STRING "Select mass model. Default: BETA (Beta distribution model). Available options: ${MASS_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_MASS PROPERTY STRINGS ${MASS_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_MASS} QUINOA_MODEL_MASS)
 LIST (FIND MASS_VALUES ${QUINOA_MODEL_MASS} MASS_INDEX)
 # Evaluate selected model and put in define for it
 IF (${MASS_INDEX} EQUAL 0)
-  SET (QUINOA_BETA on)
+  set(QUINOA_BETA on)
 ELSEIF (${MASS_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Mass model ${QUINOA_MODEL_MASS} not supported, valid entries are ${MASS_VALUES}")
 ENDIF()
 
 # Hydro model options
 # Available hydrodyanmics models
-SET (HYDRO_VALUES "SLM" "GLM")
+set(HYDRO_VALUES "SLM" "GLM")
 # Initialize all to off
-SET (QUINOA_SLM off)  # 0
-SET (QUINOA_GLM off)  # 1
+set(QUINOA_SLM off)  # 0
+set(QUINOA_GLM off)  # 1
 # Set default and select from list
-SET (QUINOA_MODEL_HYDRO "SLM"
-     CACHE STRING "Select hydrodynamics model. Default: SLM (Simplified Langevin model). Available options: ${HYDRO_VALUES}")
+set(QUINOA_MODEL_HYDRO "SLM"
+    CACHE STRING "Select hydrodynamics model. Default: SLM (Simplified Langevin model). Available options: ${HYDRO_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_HYDRO PROPERTY STRINGS ${HYDRO_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_HYDRO} QUINOA_MODEL_HYDRO)
 LIST (FIND HYDRO_VALUES ${QUINOA_MODEL_HYDRO} HYDRO_INDEX)
 # Evaluate selected model and put in define for it
 IF (${HYDRO_INDEX} EQUAL 0)
-  SET (QUINOA_SLM on)
+  set(QUINOA_SLM on)
 ELSEIF (${HYDRO_INDEX} EQUAL 1)
-  SET(QUINOA_GLM on)
+  set(QUINOA_GLM on)
 ELSEIF (${HYDRO_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Hydrodynamics model ${QUINOA_MODEL_HYDRO} not supported, valid entries are ${HYDRO_VALUES}")
 ENDIF()
 
 # Mix model options
 # Available mix models
-SET (MIX_VALUES "DIR" "GENDIR")
+set(MIX_VALUES "DIR" "GENDIR")
 # Initialize all to off
-SET (QUINOA_DIRICHLET off)              # 0
-SET (QUINOA_GENERALIZED_DIRICHLET off)  # 1
+set(QUINOA_DIRICHLET off)              # 0
+set(QUINOA_GENERALIZED_DIRICHLET off)  # 1
 # Set default and select from list
-SET (QUINOA_MODEL_MIX "DIR"
-     CACHE STRING "Select mixing model. Default: DIR (Dirichlet model). Available options: ${MIX_VALUES}")
+set(QUINOA_MODEL_MIX "DIR"
+    CACHE STRING "Select mixing model. Default: DIR (Dirichlet model). Available options: ${MIX_VALUES}")
 SET_PROPERTY (CACHE QUINOA_MODEL_MIX PROPERTY STRINGS ${MIX_VALUES})
 STRING (TOUPPER ${QUINOA_MODEL_MIX} QUINOA_MODEL_MIX)
 LIST (FIND MIX_VALUES ${QUINOA_MODEL_MIX} MIX_INDEX)
 # Evaluate selected model and put in define for it
 IF (${MIX_INDEX} EQUAL 0)
-  SET (QUINOA_DIRICHLET on)
+  set(QUINOA_DIRICHLET on)
 ELSEIF (${MIX_INDEX} EQUAL 1)
-  SET(QUINOA_GENERALIZED_DIRICHLET on)
+  set(QUINOA_GENERALIZED_DIRICHLET on)
 ELSEIF (${MIX_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Mix model ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
 ENDIF()
 
 # Get git revision
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModule/")
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
@@ -176,8 +182,9 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-include_directories("${PROJECT_BINARY_DIR}")
-include_directories("${PROJECT_BINARY_DIR}/Base")
+include_directories(${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR}/Base)
+include_directories(${MPI_INCLUDE_PATH})
 
 # Components
 add_subdirectory(Base)
@@ -206,6 +213,7 @@ add_subdirectory(Statistics)
 #add_subdirectory(ThirdParty/exodiff)
 #add_subdirectory(Utilities/forcenorm)
 #add_subdirectory(Utilities/divset)
-
-# Main
 add_subdirectory(Main)
+
+# Third-Party library dependencies
+#add_dependencies(${QUINOA_EXECUTABLE} zoltan)

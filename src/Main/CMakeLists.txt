@@ -31,6 +31,16 @@ add_executable(${QUINOA_EXECUTABLE}
                Quinoa.C
 )
 
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${QUINOA_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${QUINOA_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
                       Paradigm
@@ -56,6 +66,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${INTEL_OMP_LIBRARY}
                       ${PTHREAD_LIBRARY}
                       ${MATH_LIBRARY}
+                      #${MPI_LIBRARIES}
                       Parser
 )
 

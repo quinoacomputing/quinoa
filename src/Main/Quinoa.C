@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:37:50 PM MDT
+  \date      Thu 27 Jun 2013 09:20:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -42,18 +42,19 @@ static void echoBuildInfo()
 {
   cout << "\nBuild environment:"
           "\n------------------\n";
-  cout << " * Executable        : " << QUINOA_EXECUTABLE << "\n";
-  cout << " * Version           : " << QUINOA_VERSION << "\n";
-  cout << " * Release           : " << QUINOA_RELEASE << "\n";
-  cout << " * Revision          : " << QUINOA_GIT_COMMIT << "\n";
-  cout << " * Build type        : " << QUINOA_BUILD_TYPE;
+  cout << " * Executable                  : " << QUINOA_EXECUTABLE << "\n";
+  cout << " * Version                     : " << QUINOA_VERSION << "\n";
+  cout << " * Release                     : " << QUINOA_RELEASE << "\n";
+  cout << " * Revision                    : " << QUINOA_GIT_COMMIT << "\n";
+  cout << " * CMake build type            : " << QUINOA_BUILD_TYPE << "\n";
+  cout << " * MPI C++ compiler            : " << QUINOA_MPI_COMPILER << "\n";
+  cout << " * MPI underlying C++ compiler : " << QUINOA_COMPILER << "\n";
+  cout << " * Build date                  : " << QUINOA_BUILD_DATE << "\n";
 #ifdef NDEBUG
-  cout << " (no asserts)" << "\n";
+  cout << " * Built without asserts" << "\n";
 #else  // NDEBUG
-  cout << " (with asserts)" << "\n";
+  cout << " * Built with asserts" << "\n";
 #endif // NDEBUG
-  cout << " * Compiler          : " << QUINOA_COMPILER << "\n";
-  cout << " * Build date        : " << QUINOA_BUILD_DATE << "\n";
   cout << endl;
 }
 
