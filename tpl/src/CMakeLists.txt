@@ -12,6 +12,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/")
 # Get underlying compiler
 include(GetUnderlyingCompiler)
 
+# Set install directory
+string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" INSTALL_DIR)
+set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${INSTALL_DIR}")
+MESSAGE(STATUS "Install dir: " ${TPL_INSTALL_DIR})
+
 ExternalProject_Add(
     zoltan
     PREFIX ${PROJECT_BINARY_DIR}
@@ -24,7 +29,7 @@ ExternalProject_Add(
                -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-               -D CMAKE_INSTALL_PREFIX:PATH=${PROJECT_BINARY_DIR}/../install/${UNDERLYING_C_COMPILER}
+               -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
 )
 
 # Third-Party library dependencies
