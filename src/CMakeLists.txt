@@ -7,7 +7,7 @@ project(QUINOA C CXX)
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Quinoa cmake modules directory
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 # Set Quinoa version number: major.minor
 set(QUINOA_MAJOR_VER 0)
@@ -23,8 +23,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 # Set build type
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
-# Get underlying compiler
-include(GetUnderlyingCompiler)
+# Get MPI & its underlying compilers
+find_package(MPI REQUIRED)
+
+# Find out underlying C compiler
+execute_process(
+  COMMAND           ${MPI_C_COMPILER} "-showme:command"
+  OUTPUT_VARIABLE   UNDERLYING_C_COMPILER 
+)
+# Remove the newline character at the end of UNDERLYING_C_COMPILER
+string(REGEX REPLACE "[\r\n]" "" UNDERLYING_C_COMPILER "${UNDERLYING_C_COMPILER}")
+
+# Find out underlying C++ compiler
+execute_process(
+  COMMAND           ${MPI_CXX_COMPILER} "-showme:command"
+  OUTPUT_VARIABLE   UNDERLYING_CXX_COMPILER 
+)
+# Remove the newline character at the end of UNDERLYING_CXX_COMPILER
+string(REGEX REPLACE "[\r\n]" "" UNDERLYING_CXX_COMPILER "${UNDERLYING_CXX_COMPILER}")
+
+# Echo compilers
+MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
+MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
+MESSAGE(STATUS "MPI underlying C compiler: " ${UNDERLYING_C_COMPILER})
+MESSAGE(STATUS "MPI underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
 
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
@@ -216,6 +238,3 @@ add_subdirectory(Statistics)
 #add_subdirectory(Utilities/forcenorm)
 #add_subdirectory(Utilities/divset)
 add_subdirectory(Main)
-
-# Third-Party library dependencies
-#add_dependencies(${QUINOA_EXECUTABLE} zoltan)
