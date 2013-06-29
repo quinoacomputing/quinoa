@@ -1,25 +1,24 @@
-# Build quinoa thirdparty Libraries
+# Build quinoa third-party Libraries
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(QUINOA_TPL C CXX)
+project(TPL C CXX)
 include(ExternalProject)
-set(CMAKE_VERBOSE_MAKEFILE 1)
 
 # Quinoa cmake modules directory
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-# Get underlying compiler
-include(GetUnderlyingCompiler)
+# Find MPI
+find_package(MPI REQUIRED)
 
 # Set install directory based on compiler ID
-string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" INSTALL_DIR)
-set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${INSTALL_DIR}")
-MESSAGE(STATUS "Install dir: " ${TPL_INSTALL_DIR})
+string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
+set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${COMP}")
+MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
 ExternalProject_Add(
-    zoltan
-    PREFIX ${PROJECT_BINARY_DIR}
+    trilinos
+    PREFIX trilinos
     URL ${PROJECT_SOURCE_DIR}/trilinos-11.2.4-Source.tar.gz
     URL_MD5 29abd4c5bd4bb39aef87e151bfe12541
     CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
@@ -30,4 +29,8 @@ ExternalProject_Add(
                -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
                -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
 )
