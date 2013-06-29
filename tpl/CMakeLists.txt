@@ -16,6 +16,7 @@ string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${COMP}")
 MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
+# Add Trilinos
 ExternalProject_Add(
     trilinos
     PREFIX trilinos
@@ -26,6 +27,22 @@ ExternalProject_Add(
                -D TPL_ENABLE_MPI:BOOL=ON
                -D Trilinos_ENABLE_Fortran:BOOL=OFF
                -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+               -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+)
+
+# Add HDF5
+ExternalProject_Add(
+    hdf5
+    PREFIX hdf5
+    URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.10.tar.gz
+    URL_MD5 710aa9fb61a51d61a7e2c09bf0052157
+    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
                -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
                -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
