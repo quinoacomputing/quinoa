@@ -1,7 +1,7 @@
 - Build tpls in empty tpl/build:
 
-  $ CC=mpicc CXX=mpic++ cmake -G Ninja ..
-  $ ninja
+  $ CC=mpicc CXX=mpic++ cmake ..
+  $ make -sj4
     
 - Build quinoa in empty build/<compiler>:
     
