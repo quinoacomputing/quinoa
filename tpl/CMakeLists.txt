@@ -16,7 +16,7 @@ string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(TPL_INSTALL_DIR "${PROJECT_BINARY_DIR}/../install/${COMP}")
 MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
-# Add Trilinos
+# Trilinos
 ExternalProject_Add(
     trilinos
     PREFIX trilinos
@@ -36,18 +36,38 @@ ExternalProject_Add(
     LOG_INSTALL 1
 )
 
-# Add HDF5
+# HDF5
 ExternalProject_Add(
     hdf5
     PREFIX hdf5
-    URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.10.tar.gz
-    URL_MD5 710aa9fb61a51d61a7e2c09bf0052157
-    CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-               -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+    URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
+    URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
+    CONFIGURE_COMMAND CC=${MPI_C_COMPILER}
+                      ${PROJECT_BINARY_DIR}/hdf5/src/hdf5/configure
+                      --prefix=${TPL_INSTALL_DIR}
+    BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
-    LOG_CONFIGURE 1
+    LOG_CONFIGURE 0
+    LOG_BUILD 1
+    LOG_INSTALL 1
+)
+
+# H5Part
+ExternalProject_Add(
+    h5part
+    DEPENDS hdf5
+    PREFIX h5part
+    URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
+    URL_MD5 327c63d198e38a12565b74cffdf1f9d7
+    CONFIGURE_COMMAND CC=${MPI_C_COMPILER}
+                      ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
+                      --enable-parallel
+                      --enable-tools
+                      --with-hdf5=${TPL_INSTALL_DIR}
+                      --prefix=${TPL_INSTALL_DIR}
+    BUILD_IN_SOURCE 1
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 0
     LOG_BUILD 1
     LOG_INSTALL 1
 )
