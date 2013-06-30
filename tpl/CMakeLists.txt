@@ -42,12 +42,12 @@ ExternalProject_Add(
     PREFIX hdf5
     URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
     URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
-    CONFIGURE_COMMAND CC=${MPI_C_COMPILER}
-                      ${PROJECT_BINARY_DIR}/hdf5/src/hdf5/configure
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5/src/hdf5/configure
+                      CC=${MPI_C_COMPILER}
                       --prefix=${TPL_INSTALL_DIR}
     BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
-    LOG_CONFIGURE 0
+    LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
 )
@@ -59,15 +59,15 @@ ExternalProject_Add(
     PREFIX h5part
     URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
     URL_MD5 327c63d198e38a12565b74cffdf1f9d7
-    CONFIGURE_COMMAND CC=${MPI_C_COMPILER}
-                      ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
+                      CC=${MPI_C_COMPILER}
                       --enable-parallel
                       --enable-tools
                       --with-hdf5=${TPL_INSTALL_DIR}
                       --prefix=${TPL_INSTALL_DIR}
     BUILD_IN_SOURCE 1
     LOG_DOWNLOAD 1
-    LOG_CONFIGURE 0
+    LOG_CONFIGURE 1
     LOG_BUILD 1
     LOG_INSTALL 1
 )
