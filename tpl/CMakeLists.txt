@@ -62,7 +62,6 @@ ExternalProject_Add(
     CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
                       CC=${MPI_C_COMPILER}
                       --enable-parallel
-                      --enable-tools
                       --with-hdf5=${TPL_INSTALL_DIR}
                       --prefix=${TPL_INSTALL_DIR}
     BUILD_IN_SOURCE 1
