@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Wed May 29 08:12:14 2013
+  \date      Tue Jul  2 15:38:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -24,7 +24,7 @@
 using namespace Quinoa;
 
 SymCompRowMatrix::SymCompRowMatrix(Memory* const memory,
-                                   const string name,
+                                   const std::string name,
                                    const int size,
                                    const int dof,
                                    const int *psup1,
@@ -134,7 +134,7 @@ try :
     if (e.func() == __PRETTY_FUNCTION__) finalize();
     throw;
   }
-  catch (exception&) {
+  catch (std::exception&) {
     memory->freeEntry(m_rnz);
     finalize();
     throw;
@@ -310,35 +310,35 @@ SymCompRowMatrix::get(int row, int column) const
 }
 
 void
-SymCompRowMatrix::echoAsStored(ostream& ofs) const
+SymCompRowMatrix::echoAsStored(std::ostream& ofs) const
 //******************************************************************************
 //  Print out matrix entries as stored
 //! \param[in]  ofs  output stream
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ofs << "name  = " << m_name << endl;
-  ofs << "size  = " << m_size << endl;
-  ofs << "rsize = " << m_rsize << endl;
-  ofs << "dof   = " << m_dof << endl;
-  ofs << "nnz   = " << m_nnz << endl;
+  ofs << "name  = " << m_name << std::endl;
+  ofs << "size  = " << m_size << std::endl;
+  ofs << "rsize = " << m_rsize << std::endl;
+  ofs << "dof   = " << m_dof << std::endl;
+  ofs << "nnz   = " << m_nnz << std::endl;
 
   int i;
   ofs << "ia[] = { ";
   for (i=0; i<m_rsize; i++) ofs << m_ia[i];
-  ofs << m_ia[i] << endl;
+  ofs << m_ia[i] << std::endl;
 
   ofs << "ja[] = { ";
   for (i=0; i<m_nnz-1; i++) ofs << m_ja[i];
-  ofs << m_ja[i] << endl;
+  ofs << m_ja[i] << std::endl;
 
   ofs << "a[] = { ";
   for (i=0; i<m_nnz-1; i++) ofs << m_a[i];
-  ofs << m_a[i] << endl;
+  ofs << m_a[i] << std::endl;
 }
 
 void
-SymCompRowMatrix::echoNonzeroStructure(ostream& ofs) const
+SymCompRowMatrix::echoNonzeroStructure(std::ostream& ofs) const
 //******************************************************************************
 //  Print out nonzero structure of matrix
 //! \param[in]  ofs  output stream
@@ -360,12 +360,12 @@ SymCompRowMatrix::echoNonzeroStructure(ostream& ofs) const
     for (int j=m_ja[m_ia[i+1]-2]; j<m_rsize; j++)
        ofs << ". ";  // trailing zeros
 
-    ofs << endl;
+    ofs << std::endl;
   }
 }
 
 void
-SymCompRowMatrix::echoAsMatrix(ostream& ofs) const
+SymCompRowMatrix::echoAsMatrix(std::ostream& ofs) const
 //******************************************************************************
 //  Print out matrix as a real matrix
 //! \param[in]  ofs  output stream
@@ -387,12 +387,12 @@ SymCompRowMatrix::echoAsMatrix(ostream& ofs) const
     for (int j=m_ja[m_ia[i+1]-2]; j<m_rsize; j++)
       ofs << "0\t";
 
-    ofs << endl;
+    ofs << std::endl;
   }
 }
 
 void
-SymCompRowMatrix::echoAsMatlab(ostream& ofs) const
+SymCompRowMatrix::echoAsMatlab(std::ostream& ofs) const
 //******************************************************************************
 //  Print out matrix as a maltab matrix
 //! \param[in]  ofs  output stream
@@ -414,7 +414,7 @@ SymCompRowMatrix::echoAsMatlab(ostream& ofs) const
     for (int j=m_ja[m_ia[i+1]-2]; j<m_rsize; j++)
       ofs << "0 ";
 
-    ofs << ";" << endl;
+    ofs << ";" << std::endl;
   }
-  ofs << "]" << endl;
+  ofs << "]" << std::endl;
 }
