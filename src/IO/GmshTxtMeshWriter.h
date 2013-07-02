@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Tue May  7 12:52:57 2013
+  \date      Tue Jul  2 15:29:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -13,8 +13,6 @@
 
 #include <string>
 
-using namespace std;
-
 #include <MeshWriter.h>
 
 namespace Quinoa {
@@ -24,7 +22,7 @@ class GmshTxtMeshWriter : public MeshWriter {
 
   public:
     //! Constructor
-    explicit GmshTxtMeshWriter(const string filename,
+    explicit GmshTxtMeshWriter(const std::string filename,
                               UnsMesh* const mesh,
                               Memory* const memory) :
       MeshWriter(filename, mesh, memory) {}
