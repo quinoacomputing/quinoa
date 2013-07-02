@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Fri May 31 11:14:21 2013
+  \date      Tue Jul  2 15:32:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -17,7 +17,7 @@
 
 using namespace Quinoa;
 
-GlobWriter::GlobWriter(string filename) :
+GlobWriter::GlobWriter(std::string filename) :
   m_filename(filename),
   m_outGlob()
 //******************************************************************************
@@ -26,7 +26,7 @@ GlobWriter::GlobWriter(string filename) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outGlob.open(m_filename, ofstream::out);
+  m_outGlob.open(m_filename, std::ofstream::out);
   ErrChk(m_outGlob.good(), ExceptType::FATAL,
          "Failed to open file: " + m_filename);
 }
@@ -47,12 +47,12 @@ try {
   catch (Exception& e) {
     e.echo("WARNING");
   }
-  catch (exception& e) {
-    cout << ">>> std::exception in GlobWriter destructor: " << e.what()
-         << endl;
+  catch (std::exception& e) {
+    std::cout << ">>> std::exception in GlobWriter destructor: " << e.what()
+              << std::endl;
   }
   catch (...) {
-    cout << ">>> UNKNOWN EXCEPTION in GlobWriter destructor" << endl;
+    std::cout << ">>> UNKNOWN EXCEPTION in GlobWriter destructor" << std::endl;
   }
 
 void
