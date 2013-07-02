@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Wed May 29 08:13:09 2013
+  \date      Tue Jul  2 15:14:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Unstructured mesh class definition
   \details   Unstructured mesh class definition
@@ -91,7 +91,7 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     m_lintag.reserve(nlines);
     m_tritag.reserve(ntriangles);
 
-  } catch (exception&) {
+  } catch (std::exception&) {
       Throw(ExceptType::FATAL, "Cannot allocate memory for mesh");
     }
     catch (...) {
@@ -107,41 +107,41 @@ UnsMesh::echoElemSets() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using ST = vector<vector<int>>::size_type;
+  using ST = std::vector<std::vector<int>>::size_type;
 
   // Get pointers to the element ids
   int* linId = getLineId();
   int* triId = getTriangleId();
 
   // Echo all lines
-  cout << "* Lines: " << endl;
+  std::cout << "* Lines: " << std::endl;
   // elm-number elm-type number-of-tags < tag > ... node-number-list
   ST num = m_linpoel.size();
   for (ST i=0; i<num; i++) {
-    cout << "  " << linId[i] << " " << 1 << " {";
+    std::cout << "  " << linId[i] << " " << 1 << " {";
 
     copy(m_lintag[i].begin(), m_lintag[i].end()-1,
-         ostream_iterator<int>(cout,", "));
-    cout << m_lintag[i].back() << "} {";
+         std::ostream_iterator<int>(std::cout,", "));
+    std::cout << m_lintag[i].back() << "} {";
 
     copy(m_linpoel[i].begin(), m_linpoel[i].end()-1,
-         ostream_iterator<int>(cout,", "));
-    cout << m_linpoel[i].back() << "}" << endl;
+         std::ostream_iterator<int>(std::cout,", "));
+    std::cout << m_linpoel[i].back() << "}" << std::endl;
   }
 
   // Echo all triangles
-  cout << "* Triangles: " << endl;
+  std::cout << "* Triangles: " << std::endl;
   // elm-number elm-type number-of-tags < tag > ... node-number-list
   num = m_tinpoel.size();
   for (ST i=0; i<num; i++) {
-    cout << "  " << triId[i] << " " << 2 << " {";
+    std::cout << "  " << triId[i] << " " << 2 << " {";
 
     copy(m_tritag[i].begin(), m_tritag[i].end()-1,
-         ostream_iterator<int>(cout,", "));
-    cout << m_tritag[i].back() << "} {";
+         std::ostream_iterator<int>(std::cout,", "));
+    std::cout << m_tritag[i].back() << "} {";
 
     copy(m_tinpoel[i].begin(), m_tinpoel[i].end()-1,
-         ostream_iterator<int>(cout,", "));
-    cout << m_tinpoel[i].back() << "}" << endl;
+         std::ostream_iterator<int>(std::cout,", "));
+    std::cout << m_tinpoel[i].back() << "}" << std::endl;
   }
 }

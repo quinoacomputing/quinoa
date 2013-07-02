@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 07:54:28 PM MDT
+  \date      Tue Jul  2 13:16:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -29,9 +29,6 @@ namespace keyword {
   using analytic_geometry = pegtl::string<a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y>;
   //   * Discrete
   using discrete_geometry = pegtl::string<d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y>;
-
-  // Distance between generated points
-  using dist = pegtl::string<d,i,s,t>;
 
   // Geometry primitives for analytic geometry definition
   //   * Box

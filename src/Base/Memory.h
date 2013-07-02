@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Wed May 29 08:10:20 2013
+  \date      Tue Jul  2 15:07:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -58,7 +58,7 @@ class Memory {
     Data<V> newEntry(const size_t number,
                      const ValType value,
                      const VarType variable,
-                     const string name,
+                     const std::string name,
                      const bool plot = false,
                      const bool restart = false) {
       MemoryEntry* const me =
@@ -72,7 +72,7 @@ class Memory {
     Data<V> newZeroEntry(const size_t number,
                          const ValType value,
                          const VarType variable,
-                         const string name,
+                         const std::string name,
                          const bool plot = false,
                          const bool restart = false) {
       MemoryEntry* const me =
@@ -97,7 +97,7 @@ class Memory {
     size_t getNumber(MemoryEntry* const id) const;
 
     //! Return the number of items based on the variable name
-    size_t getNumber(const string& name) const;
+    size_t getNumber(const std::string& name) const;
 
     //! Return the value type based on the ID
     ValType getValue(MemoryEntry* const id) const;
@@ -106,7 +106,7 @@ class Memory {
     VarType getVariable(MemoryEntry* const id) const;
 
     //! Return the variable name based on the ID
-    string getName(MemoryEntry* const id) const;
+    std::string getName(MemoryEntry* const id) const;
 
     //! Return true if the variable can be plotted based on the ID
     bool getPlot(MemoryEntry* const id) const;
@@ -127,7 +127,7 @@ class Memory {
     //! Compared to O(log n) in standard sets, the cost of searches, insertions,
     //! and deletions in unordered sets (i.e. retrieving raw pointers, allocating,
     //! and deallocating memory entries) is amortized to O(1).
-    using MemorySet = unordered_set<MemoryEntry*>;
+    using MemorySet = std::unordered_set<MemoryEntry*>;
 
     //! Don't permit copy constructor
     Memory(const Memory&) = delete;
@@ -142,7 +142,7 @@ class Memory {
     MemoryEntry* newEntry(const size_t number,
                           const ValType value,
                           const VarType variable,
-                          const string name,
+                          const std::string name,
                           const bool plot = false,
                           const bool restart = false);
 
@@ -150,7 +150,7 @@ class Memory {
     MemoryEntry* newZeroEntry(const size_t number,
                               const ValType value,
                               const VarType variable,
-                              const string name,
+                              const std::string name,
                               const bool plot = false,
                               const bool restart = false);
 
