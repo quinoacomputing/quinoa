@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Tue May  7 13:08:14 2013
+  \date      Tue Jul  2 15:24:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -14,8 +14,6 @@
 #include <string>
 #include <fstream>
 
-using namespace std;
-
 #include <PlotWriter.h>
 #include <UnsMesh.h>
 
@@ -26,7 +24,7 @@ class GmshTxtPlotWriter : public PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    explicit GmshTxtPlotWriter(const string filename,
+    explicit GmshTxtPlotWriter(const std::string filename,
                                UnsMesh* const mesh,
                                Memory* const memory) :
       PlotWriter(filename), m_mesh(mesh), m_memory(memory) {}
