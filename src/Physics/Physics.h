@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri May 31 12:38:06 2013
+  \date      Tue Jul  2 15:49:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -15,8 +15,6 @@
 #include <Mass.h>
 #include <Mix.h>
 #include <Hydro.h>
-
-using namespace std;
 
 namespace Quinoa {
 
