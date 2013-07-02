@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed May 29 08:54:01 2013
+  \date      Tue Jul  2 16:07:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -72,9 +72,9 @@ class Dirichlet : public Mix<Dirichlet> {
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
 
-    const vector<real> m_b;         //!< SDE coefficients
-    const vector<real> m_S;
-    const vector<real> m_k;
+    const std::vector<real> m_b;         //!< SDE coefficients
+    const std::vector<real> m_S;
+    const std::vector<real> m_k;
 };
 
 } // namespace Quinoa
