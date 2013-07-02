@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Tue Jul  2 16:26:28 2013
+  \date      Tue Jul  2 16:47:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -15,28 +15,6 @@
 #include <Exception.h>
 
 using namespace Quinoa;
-
-JPDF::JPDF(const int dim, const real binsize) :
-  m_binsize(binsize),
-  m_key(dim),
-  m_pdf()
-//******************************************************************************
-//  Constructor: Initialize joint PDF container
-//! \param[in]   dim        Dimension of sample space
-//! \param[in]   binsize    Sample space bin size
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
-
-JPDF::~JPDF() noexcept
-//******************************************************************************
-//  Destructor: Clear joint PDF container
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_pdf.clear();
-}
 
 void
 JPDF::insert(const std::vector<real>& sample)

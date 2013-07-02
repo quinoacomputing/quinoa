@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:12:30 2013
+  \date      Tue Jul  2 16:47:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -45,10 +45,15 @@ class JPDF : public Distribution {
     using ordered_pdf = std::map<key_type, real, key_hash>;
 
     //! Constructor: Initialize joint PDF container
-    explicit JPDF(const int dim, const real binsize);
+    //! \param[in]   dim        Dimension of sample space
+    //! \param[in]   binsize    Sample space bin size
+    explicit JPDF(const int dim, const real binsize) :
+      m_binsize(binsize),
+      m_key(dim),
+      m_pdf() {}
 
     //! Destructor: Clear joint PDF container
-    virtual ~JPDF() noexcept;
+    virtual ~JPDF() noexcept { m_pdf.clear(); }
 
     //! Insert new sample into joint PDF
     virtual void insert(const std::vector<real>& sample);
