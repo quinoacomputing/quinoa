@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Tue May  7 13:14:54 2013
+  \date      Tue Jul  2 16:03:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -16,8 +16,6 @@
 #include <Random.h>
 #include <MKLRndTable.h>
 #include <MKLRndStream.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -37,7 +35,7 @@ class MKLRandom : public Random {
                           const int method,
                           const unsigned int seed,
                           const long long int number,
-                          const string name);
+                          const std::string name);
 
     //! Erase a random number table
     void eraseTable(MKLRndTable* table) noexcept;
@@ -72,11 +70,11 @@ class MKLRandom : public Random {
 
     //! Type for a set of stream-tables to generate a large (and fixed) number
     //! of random numbers with fixed properties using several threads
-    using Tables = unordered_set<MKLRndTable*>;
+    using Tables = std::unordered_set<MKLRndTable*>;
 
     //! Type for a set of streams to generate a few  random numbers with
     //! arbitrary properties using several threads with leap-frogging
-    using Streams = unordered_set<MKLRndStream*>;
+    using Streams = std::unordered_set<MKLRndStream*>;
 
     //! Stream tables to generate fixed numbers of random numbers with fixed
     //! properties using several threads
