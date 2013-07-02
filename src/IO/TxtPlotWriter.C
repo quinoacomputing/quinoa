@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.C
   \author    J. Bakosi
-  \date      Thu May 23 17:09:00 2013
+  \date      Tue Jul  2 16:30:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtPlot writer base class definition
   \details   TxtPlot writer base class definition
@@ -17,7 +17,7 @@
 
 using namespace Quinoa;
 
-TxtPlotWriter::TxtPlotWriter(const string& filename,
+TxtPlotWriter::TxtPlotWriter(const std::string& filename,
                              Statistics* const statistics) :
   PlotWriter(filename),
   m_statistics(statistics),
@@ -45,12 +45,12 @@ TxtPlotWriter::header()
 
   for (int i=0; i<m_nord; ++i)
     if (m_statistics->plotOrdinary(i))
-      m_outPlot << setw(12) << '<' << m_statistics->nameOrdinary(i) << ">";
+      m_outPlot << std::setw(12) << '<' << m_statistics->nameOrdinary(i) << ">";
 
   for (int i=0; i<m_ncen; ++i)
-    m_outPlot << setw(10) << '<' << m_statistics->nameCentral(i) << ">";
+    m_outPlot << std::setw(10) << '<' << m_statistics->nameCentral(i) << ">";
 
-  m_outPlot << endl;
+  m_outPlot << std::endl;
 }
 
 void
@@ -62,8 +62,9 @@ TxtPlotWriter::write(const int it, const real t)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outPlot << setfill(' ') << setw(8) << it << "  " << scientific
-            << setprecision(6) << setw(12) << t << "  ";
+  m_outPlot << std::setfill(' ') << std::setw(8) << it << "  "
+            << std::scientific << std::setprecision(6) << std::setw(12) << t
+            << "  ";
 
   // Plot ordinary moments
   for (int i=0; i<m_nord; ++i) {
@@ -76,5 +77,5 @@ TxtPlotWriter::write(const int it, const real t)
     m_outPlot << (m_central[i]>0 ? " " : "") << m_central[i] << "  ";
   }
 
-  m_outPlot << endl;
+  m_outPlot << std::endl;
 }

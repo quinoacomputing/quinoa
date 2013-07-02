@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri May 31 12:43:28 2013
+  \date      Tue Jul  2 16:27:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -15,8 +15,6 @@
 #include <Memory.h>
 #include <Distribution.h>
 #include <ControlTypes.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -57,10 +55,10 @@ class Statistics {
     bool plotOrdinary(const int m) const;
 
     //! Return the name of ordinary moment
-    const string& nameOrdinary(const int m) const;
+    const std::string& nameOrdinary(const int m) const;
 
     //! Return the name of central moment
-    const string& nameCentral(const int m) const;
+    const std::string& nameCentral(const int m) const;
 
   private:
     //! Don't permit copy constructor
@@ -83,38 +81,39 @@ class Statistics {
     void estimateCentral();
 
     //! Find out whether product only contains ordinary moment terms
-    bool ordinary(const vector<control::Term>& product) const;
+    bool ordinary(const std::vector<control::Term>& product) const;
 
     //! Return mean for fluctuation
     int mean(const control::Term& term) const;
 
     //! Convert string to upper case
-    string toUpper(const string& s) const;
+    std::string toUpper(const std::string& s) const;
 
     //! Return true if string is all lower case
-    bool isLower(const string&s) const;
+    bool isLower(const std::string&s) const;
 
     Memory* const m_memory;                   //!< Memory object
     const uint64_t m_nthread;                 //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
     Physics* const m_physics;                 //!< Physics object
     const int m_nprop;                        //!< Number of particle properties
-    const vector<control::Product> m_statistics;//!< Requested tatistics
+    const std::vector<control::Product> m_statistics;//!< Requested tatistics
 
     //! Instantaneous variable pointers for computing ordinary moments
-    vector<vector<const real*>> m_instOrd;
+    std::vector<std::vector<const real*>> m_instOrd;
     Data<real> m_ordinary;                    //!< Ordinary moments
-    vector<bool> m_plotOrdinary;              //!< Whether to plot ord moments
-    vector<control::FieldName> m_ordFieldName;//!< Ordinary moment field names
-    vector<string> m_nameOrdinary;            //!< Ordinary moment names
+    std::vector<bool> m_plotOrdinary;         //!< Whether to plot ord moments
+    //! Ordinary moment field names
+    std::vector<control::FieldName> m_ordFieldName;
+    std::vector<std::string> m_nameOrdinary;  //!< Ordinary moment names
     int m_nord;                               //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
-    vector<vector<const real*>> m_instCen;
+    std::vector<std::vector<const real*>> m_instCen;
     Data<real> m_central;                     //!< Central moments
     //! Ordinary moments about which to compute central moments
-    vector<vector<const real*>> m_center;
-    vector<string> m_nameCentral;             //!< Central moment names
+    std::vector<std::vector<const real*>> m_center;
+    std::vector<std::string> m_nameCentral;   //!< Central moment names
     int m_ncen;                               //!< Number of central moments
 };
 

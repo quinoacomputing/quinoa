@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Tue May  7 12:17:57 2013
+  \date      Tue Jul  2 16:37:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -17,8 +17,6 @@
 #include <QuinoaTypes.h>
 #include <Distribution.h>
 
-using namespace std;
-
 namespace Quinoa {
 
 //! Univariate PDF estimator
@@ -26,17 +24,22 @@ class PDF : public Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
     //!                                  mapped value: sample counter
-    using pdf = unordered_map<int,real>;
+    using pdf = std::unordered_map<int,real>;
 
   public:
     //! Constructor: Initialize univariate PDF container
-    explicit PDF(const real& binsize);
+    //! \param[in]   binsize    Sample space bin size
+    explicit PDF(const real& binsize) : m_binsize(binsize), m_pdf() {}
 
     //! Destructor: Clear univariate PDF container
-    virtual ~PDF() noexcept;
+    virtual ~PDF() noexcept { m_pdf.clear(); }
 
     //! Insert new sample into univariate PDF
-    virtual void insert(const real& sample);
+    //! \param[in]   sample    Value to insert
+    virtual void insert(const real& sample) {
+      ++m_nsample;                  // Increase number of samples in joint PDF
+      ++m_pdf[floor(sample/m_binsize+0.5)];         // Add sample to joint PDF
+    }
 
     //! Constant accessor to PDF map
     //! \return Pointer to map

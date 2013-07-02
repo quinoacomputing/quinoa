@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed May 29 08:15:50 2013
+  \date      Tue Jul  2 16:41:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -18,7 +18,7 @@
 
 using namespace Quinoa;
 
-PDFWriter::PDFWriter(const string filename) :
+PDFWriter::PDFWriter(const std::string filename) :
   m_filename(filename),
   m_outPDF()
 //******************************************************************************
@@ -29,7 +29,7 @@ PDFWriter::PDFWriter(const string filename) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outPDF.open(m_filename, ofstream::out);
+  m_outPDF.open(m_filename, std::ofstream::out);
   ErrChk(m_outPDF.good(), ExceptType::FATAL,
          "Failed to open file: " + m_filename);
 }
@@ -51,12 +51,12 @@ PDFWriter::~PDFWriter() noexcept
     catch (Exception& e) {
       e.echo("WARNING");
     }
-    catch (exception& e) {
-      cout << ">>> std::exception in PDFWriter destructor: " << e.what()
-           << endl;
+    catch (std::exception& e) {
+      std::cout << ">>> std::exception in PDFWriter destructor: " << e.what()
+                << std::endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in PDFWriter destructor" << endl;
+      std::cout << "UNKNOWN EXCEPTION in PDFWriter destructor" << std::endl;
     }
 }
 
@@ -71,7 +71,8 @@ PDFWriter::write(const PDF* pdf)
   auto f = pdf->getMap();
   const real binsize = pdf->getBinsize();
   const real sp = pdf->getNsample()*binsize;
-  for (auto& p : *f) m_outPDF << p.first*binsize << "\t" << p.second/sp << endl;
+  for (auto& p : *f)
+    m_outPDF << p.first*binsize << "\t" << p.second/sp << std::endl;
 }
 
 void
@@ -87,7 +88,7 @@ PDFWriter::writeTxt(const JPDF* jpdf)
   const real sp = jpdf->getNsample()*binsize*binsize;
   for (auto& p : *f) {
     m_outPDF << p.first[0]*binsize << " " << p.first[1]*binsize
-             << " " << p.second/sp << endl;
+             << " " << p.second/sp << std::endl;
   }
 }
 
@@ -109,10 +110,10 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   const real sp = jpdf->getNsample()*binsize*binsize;
 
   // Find sample space extents
-  real xmin = numeric_limits<real>::max();
-  real xmax = numeric_limits<real>::min();
-  real ymin = numeric_limits<real>::max();
-  real ymax = numeric_limits<real>::min();
+  real xmin = std::numeric_limits<real>::max();
+  real xmax = std::numeric_limits<real>::min();
+  real ymin = std::numeric_limits<real>::max();
+  real ymax = std::numeric_limits<real>::min();
   for (auto& p : *f) {
     if (binsize*p.first[0] < xmin) xmin = binsize*p.first[0];
     if (binsize*p.first[0] > xmax) xmax = binsize*p.first[0];
@@ -123,7 +124,7 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   int nbiy = static_cast<int>((ymax - ymin)/binsize + 1);
 
   // Output points of discretized sample space
-  m_outPDF << "$Nodes\n" << nbix*nbiy << endl;
+  m_outPDF << "$Nodes\n" << nbix*nbiy << std::endl;
   int k=0;
   for (int i=0; i<nbix; i++ ) {
     real x = xmin + i*binsize;
@@ -151,7 +152,7 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
     int bin = static_cast<int>(
                 (binsize*p.first[0] - xmin)/(xmax - xmin)*nbix*nbiy +
                 (binsize*p.first[1] - ymin)/(ymax - ymin)*nbiy );
-    m_outPDF << bin << " " << p.second/sp << endl;
+    m_outPDF << bin << " " << p.second/sp << std::endl;
   }
 
   m_outPDF << "$NodetData\n";
