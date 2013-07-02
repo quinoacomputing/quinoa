@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 07:56:12 PM MDT
+  \date      Tue Jul  2 15:19:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -14,8 +14,6 @@
 #include <limits>
 
 #include <ControlTypes.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -33,7 +31,7 @@ const Bundle DEFAULTS(
   select::MixTypes::NO_MIX,            //!< Material mix model
   select::FrequencyTypes::NO_FREQUENCY,//!< Turbulence frequency model
   select::MixRateTypes::NO_MIXRATE,    //!< Material mix rate model
-  numeric_limits<uint64_t>::max(),     //!< Number of time steps to take
+  std::numeric_limits<uint64_t>::max(),//!< Number of time steps to take
   1.0,                                 //!< Time to terminate time stepping
   0.5,                                 //!< Size of time step
   0,                                   //!< Number of position components
@@ -50,10 +48,10 @@ const Bundle DEFAULTS(
   "jpdf",                              //!< Default jpdf base filename
   "glob",                              //!< Default glob filename
   "plot",                              //!< Default plot base filename
-  vector<real>(),                      //!< Parameters 'b'
-  vector<real>(),                      //!< Paramaters 'S'
-  vector<real>(),                      //!< Parameters 'kappa'
-  vector<real>(),                      //!< Parameters 'c_ij'
+  std::vector<real>(),                 //!< Parameters 'b'
+  std::vector<real>(),                 //!< Paramaters 'S'
+  std::vector<real>(),                 //!< Parameters 'kappa'
+  std::vector<real>(),                 //!< Parameters 'c_ij'
   2.1,                                 //!< Parameter C0
   0.5,                                 //!< Parameter Atwood number
   0.5,                                 //!< Parameter C1 in gamma freq. model
@@ -61,7 +59,7 @@ const Bundle DEFAULTS(
   5.0,                                 //!< Parameter C3 in gamma freq. model
   0.25,                                //!< Parameter C4 in gamma freq. model
   1.0,                                 //!< Distance between generated points
-  vector<Product>()                    //!< Statistics
+  std::vector<Product>()               //!< Statistics
 );
 
 } // namespace control
