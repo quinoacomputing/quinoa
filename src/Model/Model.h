@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:34:40 PM MDT
+  \date      Tue Jul  2 15:43:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -15,8 +15,6 @@
 #include <Exception.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -69,7 +67,7 @@ class Model {
         if (e.func() == __PRETTY_FUNCTION__) finalize();
         throw;
       }
-      catch (exception&) {
+      catch (std::exception&) {
         finalize();
         throw;
       }
