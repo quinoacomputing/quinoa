@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Wed May 29 08:20:50 2013
+  \date      Tue Jul  2 15:42:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -18,8 +18,6 @@
 #include <MKLRndStream.h>
 
 namespace Quinoa {
-
-using namespace std;
 
 //! Hydro model base for CRTP
 //! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
