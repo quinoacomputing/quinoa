@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Tue May  7 13:24:55 2013
+  \date      Tue Jul  2 15:37:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -23,7 +23,7 @@ class SymCompRowMatrix : public SparseMatrix {
   public:
     //! Constructor
     explicit SymCompRowMatrix(Memory* const memory,
-                              const string name,
+                              const std::string name,
                               const int size,
                               const int dof,
                               const int *psup1,
@@ -47,16 +47,16 @@ class SymCompRowMatrix : public SparseMatrix {
     real get(int row, int column) const;
 
     //! Print out matrix entries as stored
-    void echoAsStored(ostream& ofs) const;
+    void echoAsStored(std::ostream& ofs) const;
 
     //! Print out nonzero structure of matrix
-    void echoNonzeroStructure(ostream& ofs) const;
+    void echoNonzeroStructure(std::ostream& ofs) const;
 
     //! Print out matrix as a real matrix
-    void echoAsMatrix(ostream& ofs) const;
+    void echoAsMatrix(std::ostream& ofs) const;
 
     //! Print out matrix as a matlab matrix
-    void echoAsMatlab(ostream& ofs) const;
+    void echoAsMatlab(std::ostream& ofs) const;
 
   private:
     //! Don't permit copy constructor
