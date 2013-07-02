@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:57:50 2013
+  \date      Tue Jul  2 15:35:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -17,8 +17,6 @@
 #include <PDF.h>
 #include <JPDF.h>
 
-using namespace std;
-
 class Memory;
 
 namespace Quinoa {
@@ -28,7 +26,7 @@ class PDFWriter {
 
   public:
     //! Constructor: Acquire PDF file handle
-    explicit PDFWriter(const string filename);
+    explicit PDFWriter(const std::string filename);
 
     //! Destructor: Release PDF file handle
     ~PDFWriter() noexcept;
@@ -52,8 +50,8 @@ class PDFWriter {
     //! Don't permit move assigment
     PDFWriter& operator=(PDFWriter&&) = delete;
 
-    const string m_filename;            //!< PDF file name
-    ofstream m_outPDF;                  //!< PDF file output stream
+    const std::string m_filename;            //!< PDF file name
+    std::ofstream m_outPDF;                  //!< PDF file output stream
 };
 
 } // namespace Quinoa
