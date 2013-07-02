@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:19:32 2013
+  \date      Tue Jul  2 16:59:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -58,7 +58,6 @@ const Bundle DEFAULTS(
   0.73,                                //!< Parameter C2 in gamma freq. model
   5.0,                                 //!< Parameter C3 in gamma freq. model
   0.25,                                //!< Parameter C4 in gamma freq. model
-  1.0,                                 //!< Distance between generated points
   std::vector<Product>()               //!< Statistics
 );
 
