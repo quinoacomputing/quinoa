@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Fri May 31 11:16:06 2013
+  \date      Tue Jul  2 15:18:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -30,7 +30,7 @@ Timer::Timer()
 }
 
 TimerIdx
-Timer::create(const string& label)
+Timer::create(const std::string& label)
 //******************************************************************************
 //  Create new timer
 //! \param[in]  label  Name of timer
