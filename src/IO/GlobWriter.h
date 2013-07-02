@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Fri May 31 11:14:06 2013
+  \date      Tue Jul  2 15:31:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -16,8 +16,6 @@
 
 #include <QuinoaTypes.h>
 
-using namespace std;
-
 namespace Quinoa {
 
 //! GlobWriter
@@ -25,7 +23,7 @@ class GlobWriter {
 
   public:
     //! Constructor: Acquire glob file handle
-    explicit GlobWriter(string filename);
+    explicit GlobWriter(std::string filename);
 
     //! Destructor: Release glob file handle
     ~GlobWriter() noexcept;
@@ -43,8 +41,8 @@ class GlobWriter {
     //! Don't permit move assigment
     GlobWriter& operator=(GlobWriter&&) = delete;
 
-    const string m_filename;            //!< Glob file name
-    ofstream m_outGlob;                 //!< Glob file output stream
+    const std::string m_filename;            //!< Glob file name
+    std::ofstream m_outGlob;                 //!< Glob file output stream
 };
 
 } // namespace Quinoa
