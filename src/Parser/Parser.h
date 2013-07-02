@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:49:58 PM MDT
+  \date      Tue Jul  2 15:46:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -17,8 +17,6 @@
 #include <PhysicsOptions.h>
 #include <PositionOptions.h>
 
-using namespace std;
-
 namespace Quinoa {
 
 class Control;
@@ -28,7 +26,7 @@ class Parser {
 
   public:
     //! Constructor
-    explicit Parser(const string& filename, Control* const control);
+    explicit Parser(const std::string& filename, Control* const control);
 
     //! Destructor
     ~Parser() = default;
@@ -50,7 +48,7 @@ class Parser {
     Parser& operator=(Parser&&) = delete;
 
     //! Make requested statistics unique
-    void unique(vector<control::Product>& statistics);
+    void unique(std::vector<control::Product>& statistics);
 
     //! Echo parsed data specific to geometry
     void echoGeometry() const;
@@ -70,9 +68,9 @@ class Parser {
     //! Echo parsed data specific to turbulence frequency model
     void echoFrequency() const;
 
-    const string m_filename;                    //!< Name of file to parse
+    const std::string m_filename;               //!< Name of file to parse
     Control* const m_control;                   //!< Control category
-    ifstream m_q;                               //!< Control file input stream
+    std::ifstream m_q;                          //!< Control file input stream
 };
 
 } // namespace Quinoa

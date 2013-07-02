@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 08:50:53 PM MDT
+  \date      Tue Jul  2 15:48:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -19,7 +19,7 @@
 
 using namespace Quinoa;
 
-Parser::Parser(const string& filename, Control* const control) :
+Parser::Parser(const std::string& filename, Control* const control) :
   m_filename(filename),
   m_control(control),
   m_q()
@@ -33,7 +33,7 @@ Parser::Parser(const string& filename, Control* const control) :
 //******************************************************************************
 {
   // Check if control file exists, throw exception if it does not
-  m_q.open(m_filename, ifstream::in);
+  m_q.open(m_filename, std::ifstream::in);
   ErrChk(m_q.good(), ExceptType::FATAL, "Failed to open file: " + m_filename);
 
   m_q.close();
@@ -51,18 +51,18 @@ Parser::parse()
   control::Bundle stack(control::DEFAULTS);
   // Initialize new bool bundle for indicating what data is set in bundle
   control::BoolBundle
-    boolstack(tuple_size<decltype(control::DEFAULTS)>::value, false);
+    boolstack(std::tuple_size<decltype(control::DEFAULTS)>::value, false);
 
-  //cout << "==== PARSE START ====" << endl;
+  //std::cout << "==== PARSE START ====" << std::endl;
 #ifdef NDEBUG
   pegtl::dummy_parse_file<grammar::read_file>(m_filename, stack, boolstack);
 #else  // NDEBUG
   pegtl::basic_parse_file<grammar::read_file>(m_filename, stack, boolstack);
 #endif // NDEBUG
-  //cout << "==== PARSE END ====" << endl << endl;
+  //std::cout << "==== PARSE END ====" << std::endl << std::endl;
 
   // Filter out repeated statistics
-  unique(get<control::STATISTICS>(stack));
+  unique(std::get<control::STATISTICS>(stack));
 
   // Store off parsed bundles
   m_control->set(stack);
@@ -70,7 +70,7 @@ Parser::parse()
 }
 
 void
-Parser::unique(vector<control::Product>& statistics)
+Parser::unique(std::vector<control::Product>& statistics)
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics
@@ -89,9 +89,9 @@ Parser::echoGeometry() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Geometry: "
-       << grammar::Geometry.name(m_control->get<control::GEOMETRY>())
-       << endl;
+  std::cout << " * Geometry: "
+            << grammar::Geometry.name(m_control->get<control::GEOMETRY>())
+            << std::endl;
 
   m_control->echo<control::DIST>("Average point distance");
 }
@@ -103,9 +103,9 @@ Parser::echoPhysics() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Physics: "
-       << grammar::Physics.name(m_control->get<control::PHYSICS>())
-       << endl;
+  std::cout << " * Physics: "
+            << grammar::Physics.name(m_control->get<control::PHYSICS>())
+            << std::endl;
 
   m_control->echo<control::NSTEP>("Number of time steps");
   m_control->echo<control::TERM>("Terminate time");
@@ -130,9 +130,9 @@ Parser::echoMass() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Mass model: "
-       << grammar::Mass.name(m_control->get<control::MASS>())
-       << endl;
+  std::cout << " * Mass model: "
+            << grammar::Mass.name(m_control->get<control::MASS>())
+            << std::endl;
 
   m_control->echo<control::NDENSITY>("Number of density components");
   m_control->echo<control::AT>("At");
@@ -145,9 +145,9 @@ Parser::echoHydro() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Hydrodynamics model: "
-       << grammar::Hydro.name(m_control->get<control::HYDRO>())
-       << endl;
+  std::cout << " * Hydrodynamics model: "
+            << grammar::Hydro.name(m_control->get<control::HYDRO>())
+            << std::endl;
 
   m_control->echo<control::NVELOCITY>("Number of velocity components");
   m_control->echo<control::C0>("C0");
@@ -160,9 +160,9 @@ Parser::echoMix() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Material mix model: "
-       << grammar::Mix.name(m_control->get<control::MIX>())
-       << endl;
+  std::cout << " * Material mix model: "
+            << grammar::Mix.name(m_control->get<control::MIX>())
+            << std::endl;
 
   m_control->echo<control::NSCALAR>("Number of scalar components");
   m_control->echoVec<control::B>("Parameter vector b");
@@ -178,9 +178,9 @@ Parser::echoFrequency() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << " * Turbulence frequency model: "
-       << grammar::Frequency.name(m_control->get<control::FREQUENCY>())
-       << endl;
+  std::cout << " * Turbulence frequency model: "
+            << grammar::Frequency.name(m_control->get<control::FREQUENCY>())
+            << std::endl;
 
   m_control->echo<control::NFREQUENCY>("Number of turbulence frequency "
                                        " components");
@@ -197,11 +197,11 @@ Parser::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "Parsed from " << m_filename << ":\n" << setfill('-')
-       << setw(13+m_filename.length()) << "-" << endl;
+  std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
+            << std::setw(13+m_filename.length()) << "-" << std::endl;
 
   if (m_control->set<control::TITLE>())
-    cout << " * Title: " << m_control->get<control::TITLE>() << endl;
+    std::cout << " * Title: " << m_control->get<control::TITLE>() << std::endl;
 
   if (m_control->set<control::GEOMETRY>()) echoGeometry();
   if (m_control->set<control::PHYSICS>()) echoPhysics();
@@ -210,5 +210,5 @@ Parser::echo() const
   if (m_control->set<control::MIX>()) echoMix();
   if (m_control->set<control::FREQUENCY>()) echoFrequency();
 
-  cout << endl;
+  std::cout << std::endl;
 }
