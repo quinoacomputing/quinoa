@@ -23,6 +23,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 # Set build type
 set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+# Set default third-party libraries directory
+string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
+set(TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP} CACHE STRING
+    "Third-party libraries directory")
+MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
+
 # Get MPI & its underlying compilers
 find_package(MPI REQUIRED)
 
