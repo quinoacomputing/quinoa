@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.h
   \author    J. Bakosi
-  \date      Fri Apr 26 15:51:10 2013
+  \date      Tue Jul  2 15:25:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshReader base class declaration
   \details   MeshReader base class declaration
@@ -12,8 +12,6 @@
 #define MeshReader_h
 
 #include <fstream>
-
-using namespace std;
 
 #include <UnsMesh.h>
 #include <Memory.h>
@@ -25,7 +23,7 @@ class MeshReader {
 
   protected:
     //! Constructor: Acquire mesh file handle
-    explicit MeshReader(const string filename,
+    explicit MeshReader(const std::string filename,
                         UnsMesh* const mesh,
                         Memory* const memory);
 
@@ -35,12 +33,12 @@ class MeshReader {
     //! Interface for read mesh
     virtual void read() = 0;
 
-    const string m_filename;            //!< Mesh file name
-    UnsMesh* const m_mesh;              //!< Mesh object pointer
-    Memory* const m_memory;             //!< Memory object pointer
+    const std::string m_filename;            //!< Mesh file name
+    UnsMesh* const m_mesh;                   //!< Mesh object pointer
+    Memory* const m_memory;                  //!< Memory object pointer
 
     //! Mesh file input stream
-    ifstream m_inMesh;
+    std::ifstream m_inMesh;
 
   private:
     //! Don't permit copy constructor

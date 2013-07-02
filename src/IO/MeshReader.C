@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshReader.C
   \author    J. Bakosi
-  \date      Wed May 29 08:10:49 2013
+  \date      Tue Jul  2 15:26:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mesh reader class definition
   \details   Mesh reader class definition
@@ -15,7 +15,7 @@
 
 using namespace Quinoa;
 
-MeshReader::MeshReader(const string filename,
+MeshReader::MeshReader(const std::string filename,
                        UnsMesh* const mesh,
                        Memory* const memory) :
   m_filename(filename),
@@ -27,7 +27,7 @@ MeshReader::MeshReader(const string filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_inMesh.open(m_filename, ifstream::in);
+  m_inMesh.open(m_filename, std::ifstream::in);
   ErrChk(m_inMesh.good(), ExceptType::FATAL,
          "Failed to open file: " + m_filename);
 }
@@ -49,11 +49,12 @@ MeshReader::~MeshReader() noexcept
     catch (Exception& e) {
       e.echo("WARNING");
     }
-    catch (exception& e) {
-      cout << ">>> std::exception in MeshReader destructor: " << e.what()
-           << endl;
+    catch (std::exception& e) {
+      std::cout << ">>> std::exception in MeshReader destructor: " << e.what()
+                << std::endl;
     }
     catch (...) {
-      cout << ">>> UNKNOWN EXCEPTION in MeshReader destructor" << endl;
+      std::cout << ">>> UNKNOWN EXCEPTION in MeshReader destructor"
+                << std::endl;
     }
 }
