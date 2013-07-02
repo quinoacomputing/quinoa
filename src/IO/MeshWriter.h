@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshWriter.h
   \author    J. Bakosi
-  \date      Fri Apr 26 16:08:37 2013
+  \date      Tue Jul  2 15:28:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshWriter base class declaration
   \details   MeshWriter base class declaration
@@ -14,8 +14,6 @@
 #include <string>
 #include <fstream>
 
-using namespace std;
-
 #include <UnsMesh.h>
 #include <Memory.h>
 
@@ -26,7 +24,7 @@ class MeshWriter {
 
   protected:
     //! Constructor: Acquire mesh file handle
-    MeshWriter(string filename, UnsMesh* mesh, Memory* memory);
+    MeshWriter(std::string filename, UnsMesh* mesh, Memory* memory);
 
     //! Destructor: Release mesh file handle
     virtual ~MeshWriter() noexcept;
@@ -35,10 +33,10 @@ class MeshWriter {
     virtual void write() = 0;
 
     //! Mesh file name
-    string m_filename;
+    std::string m_filename;
 
     //! Mesh file output stream
-    ofstream m_outMesh;
+    std::ofstream m_outMesh;
 
     //! Mesh object pointer
     UnsMesh* m_mesh;
