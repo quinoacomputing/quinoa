@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 07:56:19 PM MDT
+  \date      Tue Jul  2 16:59:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -217,7 +217,6 @@ enum BundlePosition { TITLE=0,
                       FREQ_GAMMA_C2,
                       FREQ_GAMMA_C3,
                       FREQ_GAMMA_C4,
-                      DIST,
                       STATISTICS
 };
 
@@ -260,7 +259,6 @@ using Bundle = std::tuple<
   real,                    //!< C2 in gamma frequency model
   real,                    //!< C3 in gamma frequency model
   real,                    //!< C4 in gamma frequency model
-  real,                    //!< Distance between generated points
   std::vector<Product>     //!< Requested (and triggered) statistics
 >;
 

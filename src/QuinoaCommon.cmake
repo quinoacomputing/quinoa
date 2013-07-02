@@ -23,6 +23,7 @@ find_library(MKL_THREAD_LIBRARY
 find_library(INTEL_OMP_LIBRARY
              NAMES iomp5
              PATHS $ENV{INTEL}/lib/intel64
+             PATHS $ENV{INTEL}/compiler/lib/intel64
 )
 
 find_library(MKL_CORE_LIBRARY
