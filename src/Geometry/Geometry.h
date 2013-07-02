@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Thu Jun 20 06:48:26 2013
+  \date      Tue Jul  2 12:57:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -13,8 +13,6 @@
 
 #include <QuinoaTypes.h>
 #include <Exception.h>
-
-using namespace std;
 
 namespace Quinoa {
 

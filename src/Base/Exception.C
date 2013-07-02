@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed May 29 09:06:06 2013
+  \date      Tue Jul  2 15:09:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -22,9 +22,9 @@
 using namespace Quinoa;
 
 Exception::Exception(const ExceptType except,
-                     const string& message,
-                     const string& file,
-                     const string& func,
+                     const std::string& message,
+                     const std::string& file,
+                     const std::string& func,
                      const unsigned int line) noexcept
 //******************************************************************************
 //  Constructor: generate error message
@@ -32,18 +32,18 @@ Exception::Exception(const ExceptType except,
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  m_except(move(except)),
-  m_file(move(file)),
-  m_func(move(func)),
-  m_line(move(line)),
-  m_message(move(message)),
+  m_except(std::move(except)),
+  m_file(std::move(file)),
+  m_func(std::move(func)),
+  m_line(std::move(line)),
+  m_message(std::move(message)),
   m_addrLength(0),
   m_symbolList(nullptr)
 {
 
   // Construct exception message
-  stringstream s;
-  s << m_message << endl;
+  std::stringstream s;
+  s << m_message << std::endl;
   if (line) {
     s << ">>> Exception in " << m_file << ":" << m_line << ": " << m_func;
   } else {
@@ -57,12 +57,13 @@ try :
 } // Catch std::exception
   catch (exception& se) {
     // Emit warning and continue
-    cout << "RUNTIME ERROR in Exception constructor: " << se.what() << endl;
+    std::cout << "RUNTIME ERROR in Exception constructor: " << se.what()
+              << std::endl;
   }
   // Catch uncaught exceptions
   catch (...) {
     // Emit warning and continue
-    cout << "UNKNOWN EXCEPTION in Exception constructor" << endl;
+    std::cout << "UNKNOWN EXCEPTION in Exception constructor" << std::endl;
   }
 
 Exception::~Exception() noexcept

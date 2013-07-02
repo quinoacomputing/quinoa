@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Wed May 29 08:07:29 2013
+  \date      Tue Jul  2 15:06:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -14,8 +14,6 @@
 #include <string>
 
 #include <QuinoaTypes.h>
-
-using namespace std;
 
 namespace Quinoa {
 
@@ -31,9 +29,9 @@ constexpr size_t SizeOf[NUM_VAL_TYPES] = { sizeof(bool),
                                            sizeof(real)
 };
 //! (Screen) names of value types
-const string ValName[NUM_VAL_TYPES] = { "bool",
-                                        "int",
-                                        "real"
+const std::string ValName[NUM_VAL_TYPES] = { "bool",
+                                             "int",
+                                             "real"
 };
 
 //! Variable types
@@ -50,10 +48,10 @@ const int VarComp[NUM_VAR_TYPES] { 1,  //!< Scalar
                                    9   //!< Tensor
 };
 //! Name of variable types
-const string VarTypeName[NUM_VAR_TYPES] = { "scalar",
-                                            "vector",
-                                            "symtensor",
-                                            "tensor"
+const std::string VarTypeName[NUM_VAR_TYPES] = { "scalar",
+                                                 "vector",
+                                                 "symtensor",
+                                                 "tensor"
 };
 
 //! Output width of MemoryEntry fields
@@ -92,7 +90,7 @@ class MemoryEntry {
                          const size_t number,
                          const ValType value,
                          const VarType variable,
-                         const string name,
+                         const std::string name,
                          const bool plot,
                          const bool restart,
                          void* ptr) :
@@ -120,13 +118,13 @@ class MemoryEntry {
     MemoryEntry& operator=(MemoryEntry&&) = delete;
 
     //! One-liner accessor for all fields
-    string line() const;
+    std::string line() const;
  
     const size_t m_bytes;       //!< Size in bytes (number of chars) allocated
     const size_t m_number;      //!< Number of items
     const ValType m_value;      //!< Value type (BOOL, INT, etc.)
     const VarType m_variable;   //!< Variable type (SCALAR, VECTOR, etc.)
-    const string m_name;        //!< Variable name
+    const std::string m_name;   //!< Variable name
     const bool m_plot;          //!< Variable can be plotted
     const bool m_restart;       //!< Write to restart file
 

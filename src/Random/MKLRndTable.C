@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.C
   \author    J. Bakosi
-  \date      Wed May 29 09:11:23 2013
+  \date      Tue Jul  2 15:13:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -23,7 +23,7 @@ MKLRndTable::MKLRndTable(Memory* const memory,
                          int method,
                          unsigned int seed,
                          long long int number,
-                         const string& name)
+                         const std::string& name)
 //******************************************************************************
 //  Constructor: Create random number table
 //! \param[in]  memory   Memory object pointer
@@ -57,7 +57,7 @@ try :
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero
-  m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
+  m_stream = new (std::nothrow) VSLStreamStatePtr [m_nthread]();
   if (m_stream == nullptr)
     Exception(ExceptType::FATAL, "Cannot allocate memory");
 
@@ -73,7 +73,7 @@ try :
   m_rnd = m_memory->newEntry<real>(number, REAL, SCALAR, name);
 
 } // Roll back changes and rethrow on error
-  catch (exception&) {
+  catch (std::exception&) {
     finalize();
     throw;
   }
@@ -110,17 +110,17 @@ MKLRndTable::finalize() noexcept
     for (int t=0; t<m_nthread; ++t) {
       if (m_stream[t] != nullptr &&
           vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
-        cout << "WARNING: Failed to delete MKL VSL stream" << endl;
+        std::cout << "WARNING: Failed to delete MKL VSL stream" << std::endl;
       }
     }
 
   } // emit warning on error
-    catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+    catch (std::exception& e) {
+      std::cout << "WARNING: " << e.what() << std::endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in MKLRndTable's destructor" << endl
-           << "Continuing anyway..." << endl;
+      std::cout << "UNKNOWN EXCEPTION in MKLRndTable's destructor" << std::endl
+                << "Continuing anyway..." << std::endl;
     }
 
   // Free all thread-stream pointers

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Wed 19 Jun 2013 07:59:01 PM MDT
+  \date      Tue Jul  2 14:45:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -27,6 +27,7 @@
 #include <HydroOptions.h>
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
+#include <Box.h>
 
 namespace Quinoa {
 
@@ -169,6 +170,15 @@ namespace grammar {
       field = convert<int>(value) - 1;  // numbering of field IDs start from 0
       IGNORE(stack);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
+    }
+  };
+
+  // add box to vector of Primitives
+  struct push_box : action_base< push_box > {
+    static void apply(const std::string& value,
+                      Stack& stack,
+                      BoolStack& boolstack) {
+      //cout <<
     }
   };
 
@@ -406,14 +416,14 @@ namespace grammar {
   // analytic_geometry block
   struct analytic_geometry:
          ifmust< parse<keyword::analytic_geometry, store_geometry>,
-                 block< process<keyword::dist, cstore<control::DIST>>
+                 block< list<keyword::box, push_box>
                       >
                > {};
 
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse<keyword::discrete_geometry, store_geometry>,
-                 block< process<keyword::dist, cstore<control::DIST>>
+                 block< list<keyword::box, push_box>
                       >
                > {};
 
