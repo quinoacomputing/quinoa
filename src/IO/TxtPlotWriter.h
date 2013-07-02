@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Tue May  7 13:08:36 2013
+  \date      Tue Jul  2 15:21:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -17,8 +17,6 @@
 #include <QuinoaTypes.h>
 #include <PlotWriter.h>
 
-using namespace std;
-
 namespace Quinoa {
 
 class Statistics;
@@ -28,7 +26,7 @@ class TxtPlotWriter : public PlotWriter {
 
   public:
     //! Constructor: Acquire plot file handle
-    explicit TxtPlotWriter(const string& filename,
+    explicit TxtPlotWriter(const std::string& filename,
                            Statistics* const statistics);
 
     //! Destructor: Release plot file handle
