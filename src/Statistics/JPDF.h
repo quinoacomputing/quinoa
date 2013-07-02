@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Tue May  7 12:22:55 2013
+  \date      Tue Jul  2 16:12:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -19,8 +19,6 @@
 #include <QuinoaTypes.h>
 #include <Distribution.h>
 
-using namespace std;
-
 namespace Quinoa {
 
 //! Joint PDF estimator
@@ -28,13 +26,13 @@ class JPDF : public Distribution {
 
   public:
     //! Key type
-    using key_type = vector<int>;
+    using key_type = std::vector<int>;
 
-    // Hash function for vector<int>
+    // Hash function for std::vector<int>
     struct key_hash {
       size_t operator()(const key_type& key) const {
         size_t h = 0;
-        for (auto& k : key) h ^= hash<int>()(k);
+        for (auto& k : key) h ^= std::hash<int>()(k);
         return h;
       }
     };
@@ -42,9 +40,9 @@ class JPDF : public Distribution {
     //! Joint PDF as unordered_map: key: bin ids,
     //                              mapped value: sample counter,
     //                              hasher: XORed hash of all bin ids
-    using pdf = unordered_map<key_type, real, key_hash>;
+    using pdf = std::unordered_map<key_type, real, key_hash>;
     //! Ordered counterpart
-    using ordered_pdf = map<key_type, real, key_hash>;
+    using ordered_pdf = std::map<key_type, real, key_hash>;
 
     //! Constructor: Initialize joint PDF container
     explicit JPDF(const int dim, const real binsize);
@@ -53,7 +51,7 @@ class JPDF : public Distribution {
     virtual ~JPDF() noexcept;
 
     //! Insert new sample into joint PDF
-    virtual void insert(const vector<real>& sample);
+    virtual void insert(const std::vector<real>& sample);
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected

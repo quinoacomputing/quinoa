@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri May 31 12:17:30 2013
+  \date      Tue Jul  2 16:30:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -57,9 +57,9 @@ try :
   for (auto& product : m_statistics) {
     if (ordinary(product)) {
 
-      m_instOrd.push_back(vector<const real*>());
+      m_instOrd.push_back(std::vector<const real*>());
       m_plotOrdinary.push_back(false);
-      m_nameOrdinary.push_back(string());
+      m_nameOrdinary.push_back(std::string());
       m_ordFieldName.push_back(control::FieldName());
 
       for (auto& term : product) {
@@ -92,9 +92,9 @@ try :
     for (auto& product : m_statistics) {
       if (!ordinary(product)) {
 
-        m_instCen.push_back(vector<const real*>());
-        m_center.push_back(vector<const real*>());
-        m_nameCentral.push_back(string());
+        m_instCen.push_back(std::vector<const real*>());
+        m_center.push_back(std::vector<const real*>());
+        m_nameCentral.push_back(std::string());
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
@@ -126,7 +126,7 @@ try :
     if (e.func() == __PRETTY_FUNCTION__) finalize();
     throw;
   }
-  catch (exception&) {
+  catch (std::exception&) {
     finalize();
     throw;
   }
@@ -160,7 +160,7 @@ Statistics::finalize() noexcept
 }
 
 bool
-Statistics::ordinary(const vector<control::Term>& product) const
+Statistics::ordinary(const std::vector<control::Term>& product) const
 //******************************************************************************
 //  Find out whether product only contains ordinary moment terms
 //! \param[in]  product   Vector of terms
@@ -192,7 +192,7 @@ Statistics::mean(const control::Term& term) const
     }
   }
 
-  Throw(ExceptType::FATAL, string("Cannot find mean for variable ") + term);
+  Throw(ExceptType::FATAL, std::string("Cannot find mean for variable ")+term);
 }
 
 bool
@@ -208,7 +208,7 @@ Statistics::plotOrdinary(const int m) const
   return m_plotOrdinary[m];
 }
 
-const string&
+const std::string&
 Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 //  Return the name of ordinary moment
@@ -221,7 +221,7 @@ Statistics::nameOrdinary(const int m) const
   return m_nameOrdinary[m];
 }
 
-const string&
+const std::string&
 Statistics::nameCentral(const int m) const
 //******************************************************************************
 //  Return the name of central moment

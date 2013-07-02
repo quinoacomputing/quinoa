@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Wed May 29 08:46:56 2013
+  \date      Tue Jul  2 16:26:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -39,7 +39,7 @@ JPDF::~JPDF() noexcept
 }
 
 void
-JPDF::insert(const vector<real>& sample)
+JPDF::insert(const std::vector<real>& sample)
 //******************************************************************************
 //  Insert new sample into joint PDF
 //! \param[in]   sample    Sample to insert
@@ -51,9 +51,9 @@ JPDF::insert(const vector<real>& sample)
          "Sample to be inserted and joint PDF have different dimensions");
 
   // Find bin ids in all dimensions
-  transform(sample.begin(), sample.end(), m_key.begin(),
-            [&](const real& val)->int {
-               return static_cast<int>(floor(val/m_binsize+0.5)); } );
+  std::transform(sample.begin(), sample.end(), m_key.begin(),
+                 [&](const real& val)->int {
+                   return static_cast<int>(floor(val/m_binsize+0.5)); } );
 
   // Increase number of samples in joint PDF
   ++m_nsample;

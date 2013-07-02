@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Tue May  7 12:14:08 2013
+  \date      Tue Jul  2 16:11:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -15,8 +15,6 @@
 #include <iostream>
 
 #include <QuinoaTypes.h>
-
-using namespace std;
 
 namespace Quinoa {
 

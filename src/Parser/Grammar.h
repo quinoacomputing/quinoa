@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue Jul  2 14:45:30 2013
+  \date      Tue Jul  2 16:44:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -178,7 +178,7 @@ namespace grammar {
     static void apply(const std::string& value,
                       Stack& stack,
                       BoolStack& boolstack) {
-      //cout <<
+      std::cout << value << std::endl;
     }
   };
 

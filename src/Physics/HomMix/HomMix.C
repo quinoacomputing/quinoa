@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri May 31 12:15:59 2013
+  \date      Tue Jul  2 16:40:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -77,7 +77,7 @@ HomMix::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > numeric_limits<real>::epsilon() && it < nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
     advance(dt);
@@ -145,10 +145,10 @@ HomMix::reportHeader() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  cout << "      it             t            dt"
-          "        ETE        ETA   out\n"
-       << "------------------------------------"
-          "----------------------------" << endl;
+  std::cout << "      it             t            dt"
+               "        ETE        ETA   out\n"
+            << "------------------------------------"
+               "----------------------------" << std::endl;
 }
 
 void
@@ -174,20 +174,21 @@ HomMix::report(const uint64_t it,
   Watch ete, eta;       // estimated time elapsed and to accomplishment
   timer()->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
-  cout << setfill(' ') << setw(8) << it << "  "
-       << scientific << setprecision(6) << setw(12) << t << "  " << dt << "  "
-       << setfill('0') << setw(3) << ete.h.count() << ":"
-                       << setw(2) << ete.m.count() << ":"
-                       << setw(2) << ete.s.count() << "  "
-                       << setw(3) << eta.h.count() << ":"
-                       << setw(2) << eta.m.count() << ":"
-                       << setw(2) << eta.s.count() << "  ";
+  std::cout << std::setfill(' ') << std::setw(8) << it << "  "
+            << std::scientific << std::setprecision(6) << std::setw(12) << t
+            << "  " << dt << "  " << std::setfill('0')
+            << std::setw(3) << ete.h.count() << ":"
+            << std::setw(2) << ete.m.count() << ":"
+            << std::setw(2) << ete.s.count() << "  "
+            << std::setw(3) << eta.h.count() << ":"
+            << std::setw(2) << eta.m.count() << ":"
+            << std::setw(2) << eta.s.count() << "  ";
 
-  if (wroteGlob) cout << "G";
-  if (wroteJpdf) cout << "J";
-  if (wrotePlot) cout << "P";
+  if (wroteGlob) std::cout << "G";
+  if (wroteJpdf) std::cout << "J";
+  if (wrotePlot) std::cout << "P";
 
-  cout << endl;
+  std::cout << std::endl;
 }
 
 void
