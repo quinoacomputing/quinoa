@@ -2,11 +2,11 @@
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
-### Include Dirs ###
+### Include directories
 
 include_directories($ENV{INTEL}/mkl/include)
 
-### Libraries ###
+### Libraries
 
 find_library(MKL_LIBRARY
              NAMES mkl_intel_ilp64

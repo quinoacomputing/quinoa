@@ -20,7 +20,30 @@ string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(TPL_INSTALL_DIR "${PROJECT_SOURCE_DIR}/install/${COMP}")
 MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
-#### Trilinos
+#### PEGTL (Parsing Expression Grammar Template Library) ######################
+# http://code.google.com/p/pegtl
+ExternalProject_Add(
+  pegtl
+  PREFIX pegtl
+  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32.tar.gz
+  URL_MD5 99488ab3fbc8566e9767cb499ee77a9a
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+)
+## Header-only, copy include dir over
+ExternalProject_Get_Property(pegtl SOURCE_DIR)
+ExternalProject_Add_Step(
+  pegtl copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/include
+          ${TPL_INSTALL_DIR}/include
+)
+
+#### Trilinos #################################################################
+# http://trilinos.sandia.gov
 ExternalProject_Add(
   trilinos
   PREFIX trilinos
@@ -49,7 +72,8 @@ ExternalProject_Add_Step(
           ${TPL_SOURCE_DIR}/trilinos/packages/zoltan
 )
 
-#### HDF5
+#### HDF5 #####################################################################
+# http://www.hdfgroup.org/HDF5
 ExternalProject_Add(
   hdf5
   PREFIX hdf5
@@ -74,7 +98,8 @@ ExternalProject_Add_Step(
           ${TPL_SOURCE_DIR}/hdf5
 )
 
-#### H5Part
+#### H5Part ###################################################################
+# http://vis.lbl.gov/Research/H5Part
 ExternalProject_Add(
   h5part
   DEPENDS hdf5
