@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:43:39 2013
+  \date      Tue Jul  2 16:05:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -52,7 +52,7 @@ class Model {
              "Wrong number of particles");
 
       // Instantiate random number generator
-      m_random = new (nothrow) MKLRandom(memory, paradigm);
+      m_random = new (std::nothrow) MKLRandom(memory, paradigm);
       ErrChk(m_random != nullptr, ExceptType::FATAL,
              "Cannot allocate memory for random number generator");
 

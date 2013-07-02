@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.C
   \author    J. Bakosi
-  \date      Wed May 29 08:34:06 2013
+  \date      Tue Jul  2 16:04:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -39,7 +39,7 @@ try :
 
   // Allocate memory for array of stream-pointers for several threads and
   // initialize all to zero
-  m_stream = new (nothrow) VSLStreamStatePtr [m_nthread]();
+  m_stream = new (std::nothrow) VSLStreamStatePtr [m_nthread]();
   ErrChk(m_stream != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Initialize thread-streams for block-splitting
@@ -49,7 +49,7 @@ try :
   }
 
 } // Roll back changes and rethrow on error
-  catch (exception&) {
+  catch (std::exception&) {
     finalize();
     throw;
   }
@@ -85,17 +85,17 @@ MKLRndStream::finalize() noexcept
     for (int t=0; t<m_nthread; ++t) {
       if (m_stream[t] != nullptr &&
           vslDeleteStream(&m_stream[t]) != VSL_STATUS_OK) {
-        cout << "WARNING: Failed to delete MKL VSL stream" << endl;
+        std::cout << "WARNING: Failed to delete MKL VSL stream" << std::endl;
       }
     }
 
   } // emit warning on error
-    catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+    catch (std::exception& e) {
+      std::cout << "WARNING: " << e.what() << std::endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in MKLRndStream's destructor" << endl
-           << "Continuing anyway..." << endl;
+      std::cout << "UNKNOWN EXCEPTION in MKLRndStream's destructor" << std::endl
+           << "Continuing anyway..." << std::endl;
     }
 
   // Free all thread-stream pointers

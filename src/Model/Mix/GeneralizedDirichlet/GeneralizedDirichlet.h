@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Wed May 29 08:54:49 2013
+  \date      Tue Jul  2 16:06:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -79,10 +79,10 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     //! Don't permit move assigment
     GeneralizedDirichlet& operator=(GeneralizedDirichlet&&) = delete;
 
-    const vector<real> m_b;         //!< SDE coefficients
-    const vector<real> m_S;
-    const vector<real> m_k;
-    const vector<real> m_c;
+    const std::vector<real> m_b;         //!< SDE coefficients
+    const std::vector<real> m_S;
+    const std::vector<real> m_k;
+    const std::vector<real> m_c;
 };
 
 } // namespace Quinoa

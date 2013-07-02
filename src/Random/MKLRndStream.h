@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.h
   \author    J. Bakosi
-  \date      Tue May  7 11:21:53 2013
+  \date      Tue Jul  2 16:04:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -16,8 +16,6 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 #include <MKL.h>
-
-using namespace std;
 
 namespace Quinoa {
 

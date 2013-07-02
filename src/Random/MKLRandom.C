@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Wed May 29 08:33:45 2013
+  \date      Tue Jul  2 16:09:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -51,7 +51,7 @@ MKLRandom::addTable(const int brng,
                     const int method,
                     const unsigned int seed,
                     const long long int number,
-                    const string name)
+                    const std::string name)
 //******************************************************************************
 //  Add a random number table
 //! \param[in]  brng     Basic VSL generator type
@@ -64,12 +64,12 @@ MKLRandom::addTable(const int brng,
 //******************************************************************************
 {
   // Create new table
-  MKLRndTable* table = new (nothrow)
+  MKLRndTable* table = new (std::nothrow)
     MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
   ErrChk(table != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new table
-  pair<Tables::iterator,bool> e = m_table.insert(table);
+  std::pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
     Throw(ExceptType::FATAL, "Cannot store random number table");
@@ -101,12 +101,13 @@ MKLRandom::eraseTable(MKLRndTable* table) noexcept
     catch (Exception& e) {
       e.echo("WARNING");
     }
-    catch (exception& e) {
-      cout << ">>> std::exception in MKLRandom::eraseTable(): " << e.what()
-           << endl;
+    catch (std::exception& e) {
+      std::cout << ">>> std::exception in MKLRandom::eraseTable(): "
+                << e.what() << std::endl;
     }
     catch (...) {
-      cout << ">>> UNKNOWN EXCEPTION in MKLRandom::eraseTable()" << endl;
+      std::cout << ">>> UNKNOWN EXCEPTION in MKLRandom::eraseTable()"
+                << std::endl;
     }
 }
 
@@ -144,11 +145,12 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 //******************************************************************************
 {
   // Create new stream
-  MKLRndStream* stream = new (nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
+  MKLRndStream* stream =
+    new (std::nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
   ErrChk(stream != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new stream
-  pair<Streams::iterator,bool> e = m_stream.insert(stream);
+  std::pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
     Throw(ExceptType::FATAL, "Cannot store random number stream");
@@ -177,12 +179,12 @@ MKLRandom::eraseStream(MKLRndStream* stream) noexcept
     m_stream.erase(it);
 
   } // emit only a warning on error
-    catch (exception& e) {
-      cout << "WARNING: " << e.what() << endl;
+    catch (std::exception& e) {
+      std::cout << "WARNING: " << e.what() << std::endl;
     }
     catch (...) {
-      cout << "UNKNOWN EXCEPTION in MKLRandom::eraseStream()" << endl
-           << "Continuing anyway..." << endl;
+      std::cout << "UNKNOWN EXCEPTION in MKLRandom::eraseStream()" << std::endl
+                << "Continuing anyway..." << std::endl;
     }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu Jun 20 06:49:47 2013
+  \date      Tue Jul  2 16:10:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -47,7 +47,7 @@ try :
 {
 
   // Instantiate main control category
-  m_control = new(nothrow) Control;
+  m_control = new(std::nothrow) Control;
   ErrChk(m_control != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for control object");
 
@@ -66,7 +66,7 @@ try :
   parser.echo();
 
   // Instantiate timer object
-  m_timer = new(nothrow) Timer;
+  m_timer = new(std::nothrow) Timer;
   ErrChk(m_timer != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for timer object");
 
@@ -77,7 +77,7 @@ try :
   initPhysics();
 
 } // Roll back changes and rethrow on error
-  catch (exception&) {
+  catch (std::exception&) {
     finalize();
     throw;
   }
@@ -126,13 +126,13 @@ Driver::initGeometry()
   if (m_control->get<control::GEOMETRY>() ==
         select::GeometryTypes::ANALYTIC) {
 
-    m_geometry = new(nothrow)
+    m_geometry = new(std::nothrow)
                    AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer);
 
   } else if (m_control->get<control::GEOMETRY>() ==
                select::GeometryTypes::DISCRETE) {
 
-    m_geometry = new(nothrow)
+    m_geometry = new(std::nothrow)
                   DiscreteGeometry(m_memory, m_paradigm, m_control, m_timer);
 
   }
@@ -152,22 +152,26 @@ Driver::initPhysics()
   if (m_control->get<control::PHYSICS>() ==
         select::PhysicsTypes::HOMOGENEOUS_MIX) {
 
-    m_physics = new(nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
+    m_physics =
+      new(std::nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
 
   } else if (m_control->get<control::PHYSICS>() ==
                select::PhysicsTypes::HOMOGENEOUS_HYDRO) {
 
-    m_physics = new(nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
+    m_physics =
+      new(std::nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
 
   } else if (m_control->get<control::PHYSICS>() ==
                select::PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
 
-    m_physics = new(nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
+    m_physics =
+      new(std::nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
 
   } if (m_control->get<control::PHYSICS>() == select::PhysicsTypes::SPINSFLOW) {
 
-    m_physics = new(nothrow) SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
-                            "cylinder.msh");
+    m_physics = new(std::nothrow)
+                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
+                  "cylinder.msh");
 
   }
 
