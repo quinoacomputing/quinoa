@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri May 31 12:37:40 2013
+  \date      Tue Jul  2 15:20:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -57,16 +57,17 @@ class Control {
     //! Echo element if set
     template< control::BundlePosition at >
     void echo(const std::string& msg) const {
-      if (set<at>()) cout << "   - " << msg << ": " << get<at>() << endl;
+      if (set<at>())
+        std::cout << "   - " << msg << ": " << get<at>() << std::endl;
     }
 
     //! Echo vector of elements if set
     template< control::BundlePosition at >
     void echoVec(const std::string& msg) const {
       if (set<at>()) {
-        cout << "   - " << msg << ": {";
-        for (auto& v : get<at>()) cout << " " << v;
-        cout << " }" << endl;
+        std::cout << "   - " << msg << ": {";
+        for (auto& v : get<at>()) std::cout << " " << v;
+        std::cout << " }" << std::endl;
       }
     }
 
@@ -78,10 +79,10 @@ class Control {
     template< control::BundlePosition at >
     void echoVecVecNames(const std::string& msg, bool req = false) const {
       if (set<at>()) {
-        cout << "   - " << msg << ": {";
-        if (req) for (auto& v : get<at>()) cout <<= v;
-        else for (auto& v : get<at>()) cout << v;
-        cout << " }" << endl;
+        std::cout << "   - " << msg << ": {";
+        if (req) for (auto& v : get<at>()) std::cout <<= v;
+        else for (auto& v : get<at>()) std::cout << v;
+        std::cout << " }" << std::endl;
       }
     }
 
