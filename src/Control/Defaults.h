@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:59:47 2013
+  \date      Thu 04 Jul 2013 09:51:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -58,6 +58,7 @@ const Bundle DEFAULTS(
   0.73,                                //!< Parameter C2 in gamma freq. model
   5.0,                                 //!< Parameter C3 in gamma freq. model
   0.25,                                //!< Parameter C4 in gamma freq. model
+  std::vector<real>(),                 //!< Sextets for boxes for anal. geom.
   std::vector<Product>()               //!< Statistics
 );
 

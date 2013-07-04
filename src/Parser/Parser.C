@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue Jul  2 17:01:20 2013
+  \date      Tue 02 Jul 2013 08:28:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -93,7 +93,7 @@ Parser::echoGeometry() const
             << grammar::Geometry.name(m_control->get<control::GEOMETRY>())
             << std::endl;
 
-  //m_control->echo<control::DIST>("Average point distance");
+  m_control->echoVec<control::BOXES>("Boxes");
 }
 
 void

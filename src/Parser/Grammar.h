@@ -2,13 +2,12 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:44:03 2013
+  \date      Tue 02 Jul 2013 08:22:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
              Library (PEGTL) to create the grammar and the associated parser.
-             Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. See
-             src/ThirdParty/PEGTL/documentation.wiki for more details. Word of
+             Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word of
              advice: read from the bottom up.
 */
 //******************************************************************************
@@ -170,15 +169,6 @@ namespace grammar {
       field = convert<int>(value) - 1;  // numbering of field IDs start from 0
       IGNORE(stack);        // suppress compiler warning on unused variable
       IGNORE(boolstack);    // suppress compiler warning on unused variable
-    }
-  };
-
-  // add box to vector of Primitives
-  struct push_box : action_base< push_box > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      std::cout << value << std::endl;
     }
   };
 
@@ -416,14 +406,14 @@ namespace grammar {
   // analytic_geometry block
   struct analytic_geometry:
          ifmust< parse<keyword::analytic_geometry, store_geometry>,
-                 block< list<keyword::box, push_box>
+                 block< list<keyword::box, push<control::BOXES>>
                       >
                > {};
 
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse<keyword::discrete_geometry, store_geometry>,
-                 block< list<keyword::box, push_box>
+                 block< list<keyword::box, push<control::BOXES>>
                       >
                > {};
 

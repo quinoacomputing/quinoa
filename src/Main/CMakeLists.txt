@@ -45,7 +45,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
                       Paradigm
                       LinearAlgebra
-                      Geometry
+                      #Geometry
                       HomMix
                       HomHydro
                       HomRT
