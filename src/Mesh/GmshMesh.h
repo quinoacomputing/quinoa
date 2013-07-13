@@ -1,20 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/UnsMesh.h
+  \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:11:05 2013
+  \date      Fri 12 Jul 2013 10:25:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Unstructured mesh class declaration
-  \details   Unstructured mesh class declaration
+  \brief     Gmsh mesh class declaration
+  \details   Gmsh mesh class declaration
 */
 //******************************************************************************
-#ifndef UnsMesh_h
-#define UnsMesh_h
+#ifndef GmshMesh_h
+#define GmshMesh_h
 
 #include <vector>
 
 #include <Memory.h>
-#include <Mesh.h>
 
 namespace Quinoa {
 
@@ -24,15 +23,15 @@ const std::string    COORDS_NAME = "coords";
 const std::string     LINES_NAME = "lines";
 const std::string TRIANGLES_NAME = "triangles";
 
-//! UnsMesh : Mesh
-class UnsMesh : public Mesh {
+//! Gmsh mesh class
+class GmshMesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit UnsMesh(Memory* const memory);
+    explicit GmshMesh(Memory* const memory) noexcept;
 
     //! Destructor: free memory entries held
-    virtual ~UnsMesh() noexcept;
+    virtual ~GmshMesh() noexcept;
 
     //! Set mesh version
     void setVersion(const real version) { m_version = version; }
@@ -56,7 +55,7 @@ class UnsMesh : public Mesh {
     void alloc(const int nnodes, const int nlins, const int ntris);
 
     //! Reserve capacity to store element connectivities and tags
-    void reserveElem(const int nlines, const int ntriangles);
+    void reserveElem(const int nlines, const int ntriangles) noexcept;
 
     //! Add a line element
     void addLine(const std::vector<int>& nodes) { m_linpoel.push_back(nodes); }
@@ -106,13 +105,13 @@ class UnsMesh : public Mesh {
 
   private:
     //! Don't permit copy constructor
-    UnsMesh(const UnsMesh&) = delete;
+    GmshMesh(const GmshMesh&) = delete;
     //! Don't permit assigment constructor
-    UnsMesh& operator=(const UnsMesh&) = delete;
+    GmshMesh& operator=(const GmshMesh&) = delete;
     //! Don't permit move constructor
-    UnsMesh(UnsMesh&&) = delete;
+    GmshMesh(GmshMesh&&) = delete;
     //! Don't permit move assignment
-    UnsMesh& operator=(UnsMesh&&) = delete;
+    GmshMesh& operator=(GmshMesh&&) = delete;
 
     Memory* const m_memory;                  //!< Memory object pointer
 
@@ -133,4 +132,4 @@ class UnsMesh : public Mesh {
 
 } // namespace Quinoa
 
-#endif // UnsMesh_h
+#endif // GmshMesh_h

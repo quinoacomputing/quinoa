@@ -1,22 +1,22 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/UnsMesh.C
+  \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Tue Jul  2 15:14:42 2013
+  \date      Fri 12 Jul 2013 10:26:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Unstructured mesh class definition
-  \details   Unstructured mesh class definition
+  \brief     Gmsh mesh class definition
+  \details   Gmsh mesh class definition
 */
 //******************************************************************************
 
 #include <iostream>
 #include <iterator>
 
-#include <UnsMesh.h>
+#include <GmshMesh.h>
 
 using namespace Quinoa;
 
-UnsMesh::UnsMesh(Memory* const memory) :
+GmshMesh::GmshMesh(Memory* const memory) noexcept :
   m_memory(memory),
   m_type(0),
   m_datasize(0),
@@ -35,7 +35,7 @@ UnsMesh::UnsMesh(Memory* const memory) :
 {
 }
 
-UnsMesh::~UnsMesh() noexcept
+GmshMesh::~GmshMesh() noexcept
 //******************************************************************************
 //  Destructor: free memory mesh entries held and containers
 //! \author J. Bakosi
@@ -55,7 +55,7 @@ UnsMesh::~UnsMesh() noexcept
 }
 
 void
-UnsMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
+GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 //******************************************************************************
 //  Allocate memory to read mesh in
 //! \author J. Bakosi
@@ -78,7 +78,7 @@ UnsMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 }
 
 void
-UnsMesh::reserveElem(const int nlines, const int ntriangles)
+GmshMesh::reserveElem(const int nlines, const int ntriangles) noexcept
 //******************************************************************************
 //  Reserve capacity to store element connectivities and tags
 //! \author J. Bakosi
@@ -96,12 +96,12 @@ UnsMesh::reserveElem(const int nlines, const int ntriangles)
     }
     catch (...) {
       Throw(ExceptType::UNCAUGHT,
-            "non-standard exception in UnsMesh::reserveElem()");
+            "non-standard exception in GmshMesh::reserveElem()");
     }
 }
 
 void
-UnsMesh::echoElemSets() const
+GmshMesh::echoElemSets() const
 //******************************************************************************
 //  Echo element tags and connectivity in all element sets
 //! \author J. Bakosi
