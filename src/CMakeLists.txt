@@ -218,7 +218,7 @@ include_directories(${MPI_INCLUDE_PATH})
 
 # Components
 add_subdirectory(Base)
-#add_subdirectory(Geometry)
+add_subdirectory(Geometry)
 add_subdirectory(IO)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)

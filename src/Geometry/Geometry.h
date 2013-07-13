@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Tue Jul  2 12:57:00 2013
+  \date      Fri 12 Jul 2013 08:36:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -19,6 +19,7 @@ namespace Quinoa {
 class Memory;
 class Paradigm;
 class Control;
+class Timer;
 
 //! Geometry base
 class Geometry {
@@ -28,14 +29,14 @@ class Geometry {
     explicit Geometry(Memory* const memory,
                       Paradigm* const paradigm,
                       Control* const control,
-                      Timer* const timer) :
+                      Timer* const timer) noexcept :
       m_memory(memory),
       m_paradigm(paradigm),
       m_control(control),
       m_timer(timer) {}
 
     //! Destructor
-    virtual ~Geometry() noexcept {}
+    virtual ~Geometry() noexcept = default;
 
     //! Initialize geometry
     virtual void init() = 0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Tue Jul  2 13:16:51 2013
+  \date      Fri 12 Jul 2013 08:10:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -33,6 +33,9 @@ namespace keyword {
   // Geometry primitives for analytic geometry definition
   //   * Box
   using box = pegtl::string<b,o,x>;
+
+  // Geometry input filename
+  using input = pegtl::string<i,n,p,u,t>;
 
   // Select physics:
   //   * Homogeneous material mixing

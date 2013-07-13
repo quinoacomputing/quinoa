@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:49:19 2013
+  \date      Fri 12 Jul 2013 08:24:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -26,7 +26,7 @@ class AnalyticGeometry : public Geometry {
     explicit AnalyticGeometry( Memory* const memory,
                                Paradigm* const paradigm,
                                Control* const control,
-                               Timer* const timer) :
+                               Timer* const timer) noexcept :
       Geometry(memory, paradigm, control, timer) {}
 
     //! Destructor

@@ -1,48 +1,44 @@
 //******************************************************************************
 /*!
-  \file      src/IO/MeshReader.C
+  \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Tue Jul  2 15:26:26 2013
+  \date      Fri 12 Jul 2013 09:50:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mesh reader class definition
-  \details   Mesh reader class definition
+  \brief      reader class definition
+  \details    reader class definition
 */
 //******************************************************************************
 
 #include <iostream>
 
-#include <MeshReader.h>
+#include <Reader.h>
 
 using namespace Quinoa;
 
-MeshReader::MeshReader(const std::string filename,
-                       UnsMesh* const mesh,
-                       Memory* const memory) :
+Reader::Reader(const std::string filename) :
   m_filename(filename),
-  m_mesh(mesh),
-  m_memory(memory),
-  m_inMesh()
+  m_inFile()
 //******************************************************************************
-//  Constructor: Acquire mesh file handle
+//  Constructor: Acquire file handle
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_inMesh.open(m_filename, std::ifstream::in);
-  ErrChk(m_inMesh.good(), ExceptType::FATAL,
+  m_inFile.open(m_filename, std::ifstream::in);
+  ErrChk(m_inFile.good(), ExceptType::FATAL,
          "Failed to open file: " + m_filename);
 }
 
-MeshReader::~MeshReader() noexcept
+Reader::~Reader() noexcept
 //******************************************************************************
-//  Destructor: Release mesh file handle
+//  Destructor: Release file handle
 //! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
   try {
 
-    m_inMesh.close();
-    ErrChk(!m_inMesh.fail(), ExceptType::WARNING,
+    m_inFile.close();
+    ErrChk(!m_inFile.fail(), ExceptType::WARNING,
            "Failed to close file: " + m_filename);
 
   } // emit only a warning on error

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Tue Jul  2 15:34:37 2013
+  \date      Fri 12 Jul 2013 09:34:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -12,14 +12,15 @@
 #include <limits>
 #include <cmath>
 
+#include <UnsMesh.h>
 #include <GmshTxtMeshReader.h>
 
 using namespace Quinoa;
 
 GmshTxtMeshReader::GmshTxtMeshReader(const std::string filename,
-                                     UnsMesh* const mesh,
-                                     Memory* const memory) :
-  MeshReader(filename, mesh, memory),
+                                     UnsMesh* const mesh) :
+  Reader(filename),
+  m_mesh(mesh),
   m_GmshElemNodes(),
   m_nnodes(0),
   m_nLins(0),
@@ -81,19 +82,19 @@ GmshTxtMeshReader::count()
   readMeshFormat();
 
   // Keep reading in sections until end of file
-  while (!m_inMesh.eof()) {
+  while (!m_inFile.eof()) {
     std::string s;
-    getline(m_inMesh, s);
+    getline(m_inFile, s);
     if (s=="$Nodes") countNodes();
     else if (s=="$Elements") countElements();
     else if (s=="$PhysicalNames") countPhysicalNames();
   }
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_inMesh.clear();
+  m_inFile.clear();
 
   // Seek to beginning of file
-  m_inMesh.seekg(0, std::ios::beg);
+  m_inFile.seekg(0, std::ios::beg);
 }
 
 void
@@ -113,16 +114,16 @@ GmshTxtMeshReader::read()
   readMeshFormat();
 
   // Keep reading in sections until end of file
-  while (!m_inMesh.eof()) {
+  while (!m_inFile.eof()) {
     std::string s;
-    getline(m_inMesh, s);
+    getline(m_inFile, s);
     if (s=="$Nodes") readNodes();
     else if (s=="$Elements") readElements();
     else if (s=="$PhysicalNames") readPhysicalNames();
   }
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
-  m_inMesh.clear();
+  m_inFile.clear();
 }
 
 void
@@ -135,26 +136,26 @@ GmshTxtMeshReader::readMeshFormat()
   std::string s;
 
   // Read in beginning of header: $MeshFormat
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$MeshFormat", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 
   // Read in "version-number file-type data-size"
   real version;
   int type, datasize;
-  m_inMesh >> version >> type >> datasize;
+  m_inFile >> version >> type >> datasize;
   ErrChk((fabs(version-2.2) < std::numeric_limits<real>::epsilon() ||
          fabs(version-2.0) < std::numeric_limits<real>::epsilon()) &&
          type == 0 && datasize == sizeof(real),
          ExceptType::FATAL, "Unsupported mesh format: " + m_filename);
-  getline(m_inMesh, s);  // finish reading the line
+  getline(m_inFile, s);  // finish reading the line
   // Save version, type, datasize
   m_mesh->setVersion(version);
   m_mesh->setType(type);
   m_mesh->setDatasize(datasize);
 
   // Read in end of header: $EndMeshFormat
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$EndMeshFormat", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 }
@@ -168,7 +169,7 @@ GmshTxtMeshReader::countNodes()
 {
   // Read in number of nodes in this node set
   int num;
-  m_inMesh >> num;
+  m_inFile >> num;
 
   // Count total number of nodes in file
   m_nnodes += num;
@@ -178,13 +179,13 @@ GmshTxtMeshReader::countNodes()
     int n;
     real r;
     // node-number x-coord y-coord z-coord
-    m_inMesh >> n >> r >> r >> r;
+    m_inFile >> n >> r >> r >> r;
   }
   std::string s;
-  getline(m_inMesh, s);  // finish reading the last line
+  getline(m_inFile, s);  // finish reading the last line
 
   // Read in end of header: $EndNodes
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$EndNodes", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 }
@@ -198,7 +199,7 @@ GmshTxtMeshReader::readNodes()
 {
   // Read in number of nodes in this node set
   int num;
-  m_inMesh >> num;
+  m_inFile >> num;
 
   // Get pointers to node ids and coordinates
   int* nodeId = m_mesh->getNodeId();
@@ -208,14 +209,14 @@ GmshTxtMeshReader::readNodes()
   for (int i=0; i<num; ++i, ++m_nodeCnt) {
     // node-number x-coord y-coord z-coord
     int n3 = 3*m_nodeCnt;
-    m_inMesh >> nodeId[m_nodeCnt]
+    m_inFile >> nodeId[m_nodeCnt]
              >> coord[n3] >> coord[n3+1] >> coord[n3+2];
   }
   std::string s;
-  getline(m_inMesh, s);  // finish reading the last line
+  getline(m_inFile, s);  // finish reading the last line
 
   // Read in end of header: $EndNodes
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$EndNodes", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 }
@@ -229,13 +230,13 @@ GmshTxtMeshReader::countElements()
 {
   // Read in number of elements in this element set
   int num;
-  m_inMesh >> num;
+  m_inFile >> num;
 
   // Read in element ids, tags, and element connectivity and throw all away
   for (int i=0; i<num; i++) {
     // elm-number elm-type number-of-tags < tag > ... node-number-list
     int e, type, ntags;
-    m_inMesh >> e >> type >> ntags;
+    m_inFile >> e >> type >> ntags;
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
@@ -245,14 +246,14 @@ GmshTxtMeshReader::countElements()
     // Read tags and throw all away
     for (int j=0; j<ntags; j++) {
       int t;
-      m_inMesh >> t;
+      m_inFile >> t;
     }
 
     // Read element node list and throw all away
     int nnodes = it->second;
     for (int j=0; j<nnodes; j++) {
       int n;
-      m_inMesh >> n;
+      m_inFile >> n;
     }
 
     // Count up different types of elements
@@ -262,10 +263,10 @@ GmshTxtMeshReader::countElements()
     }
   }
   std::string s;
-  getline(m_inMesh, s);  // finish reading the last line
+  getline(m_inFile, s);  // finish reading the last line
 
   // Read in end of header: $EndNodes
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$EndElements", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 }
@@ -279,7 +280,7 @@ GmshTxtMeshReader::readElements()
 {
   // Read in number of elements in this element set
   int num;
-  m_inMesh >> num;
+  m_inFile >> num;
 
   // Get pointers to the element ids
   int* linId = m_mesh->getLineId();
@@ -289,7 +290,7 @@ GmshTxtMeshReader::readElements()
   for (int i=0; i<num; ++i) {
     // elm-number elm-type number-of-tags < tag > ... node-number-list
     int id, type, ntags;
-    m_inMesh >> id >> type >> ntags;
+    m_inFile >> id >> type >> ntags;
 
     // Find element type, throw exception if not supported
     auto it = m_GmshElemNodes.find(type);
@@ -299,7 +300,7 @@ GmshTxtMeshReader::readElements()
     // Read and add element tags
     std::vector<int> tags(ntags,0);
     for (int j=0; j<ntags; j++) {
-      m_inMesh >> tags[j];
+      m_inFile >> tags[j];
     }
     addElemTags(type, tags);
 
@@ -307,7 +308,7 @@ GmshTxtMeshReader::readElements()
     int nnodes = it->second;
     std::vector<int> nodes(nnodes,0);
     for (int j=0; j<nnodes; j++) {
-      m_inMesh >> nodes[j];
+      m_inFile >> nodes[j];
     }
     addElem(type, nodes);
 
@@ -318,10 +319,10 @@ GmshTxtMeshReader::readElements()
     }
   }
   std::string s;
-  getline(m_inMesh, s);  // finish reading the last line
+  getline(m_inFile, s);  // finish reading the last line
 
   // Read in end of header: $EndNodes
-  getline(m_inMesh, s);
+  getline(m_inFile, s);
   ErrChk(s == "$EndElements", ExceptType::FATAL,
          "Unsupported mesh format: " + m_filename);
 }
