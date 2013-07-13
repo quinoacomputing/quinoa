@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue Jul  2 16:10:45 2013
+  \date      Fri 12 Jul 2013 08:14:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -123,8 +123,7 @@ Driver::initGeometry()
 //******************************************************************************
 {
   //  Instantiate geometry object (if any)
-  if (m_control->get<control::GEOMETRY>() ==
-        select::GeometryTypes::ANALYTIC) {
+  if (m_control->get<control::GEOMETRY>() == select::GeometryTypes::ANALYTIC) {
 
     m_geometry = new(std::nothrow)
                    AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer);

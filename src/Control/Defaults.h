@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Thu 04 Jul 2013 09:51:35 AM MDT
+  \date      Fri 12 Jul 2013 08:10:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -48,6 +48,7 @@ const Bundle DEFAULTS(
   "jpdf",                              //!< Default jpdf base filename
   "glob",                              //!< Default glob filename
   "plot",                              //!< Default plot base filename
+  "",                                  //!< Input geometry filename
   std::vector<real>(),                 //!< Parameters 'b'
   std::vector<real>(),                 //!< Paramaters 'S'
   std::vector<real>(),                 //!< Parameters 'kappa'

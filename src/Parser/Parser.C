@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 02 Jul 2013 08:28:46 PM MDT
+  \date      Fri 12 Jul 2013 08:13:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -94,6 +94,7 @@ Parser::echoGeometry() const
             << std::endl;
 
   m_control->echoVec<control::BOXES>("Boxes");
+  m_control->echo<control::GEONAME>("Geometry input file");
 }
 
 void

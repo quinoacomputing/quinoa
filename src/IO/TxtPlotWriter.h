@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtPlotWriter.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:21:39 2013
+  \date      Fri 12 Jul 2013 09:56:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text plot writer
   \details   Text plot writer
@@ -12,17 +12,16 @@
 #define TxtPlotWriter_h
 
 #include <string>
-#include <fstream>
 
 #include <QuinoaTypes.h>
-#include <PlotWriter.h>
+#include <Writer.h>
 
 namespace Quinoa {
 
 class Statistics;
 
-//! TxtPlotWriter : PlotWriter
-class TxtPlotWriter : public PlotWriter {
+//! TxtPlotWriter : Writer
+class TxtPlotWriter : public Writer {
 
   public:
     //! Constructor: Acquire plot file handle
@@ -32,11 +31,11 @@ class TxtPlotWriter : public PlotWriter {
     //! Destructor: Release plot file handle
     ~TxtPlotWriter() noexcept = default;
 
-    //! Write plot file
-    virtual void write(const int it, const real t);
-
     //! Write out plot header
     void header();
+
+    //! Write plot file
+    void write(const int it, const real t);
 
   private:
     //! Don't permit copy constructor
