@@ -13,7 +13,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 add_library(Mesh
             Mesh.C
             StrMesh.C
-            UnsMesh.C
+            GmshMesh.C
             #Overlap.C
 )
 

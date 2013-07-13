@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:38:41 PM MDT
+  \date      Fri 12 Jul 2013 10:26:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -16,7 +16,7 @@
 
 #include <Reader.h>
 
-class UnsMesh;
+class GmshMesh;
 
 namespace Quinoa {
 
@@ -26,7 +26,7 @@ class GmshTxtMeshReader : public Reader {
   public:
     //! Constructor
     explicit GmshTxtMeshReader(const std::string filename,
-                               UnsMesh* const mesh);
+                               GmshMesh* const mesh);
 
     //! Destructor, default compiler generated
     virtual ~GmshTxtMeshReader() noexcept = default;
@@ -74,7 +74,7 @@ class GmshTxtMeshReader : public Reader {
     //! Add new element tags
     void addElemTags(int type, std::vector<int>& tags);
 
-    UnsMesh* const m_mesh;         //!< Mesh object pointer
+    GmshMesh* const m_mesh;        //!< Mesh object pointer
 
     //! Element types and their number of nodes
     std::map<int,int> m_GmshElemNodes;
