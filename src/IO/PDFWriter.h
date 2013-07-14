@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:53:56 PM MDT
+  \date      Fri 12 Jul 2013 10:38:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -22,7 +22,7 @@ class Memory;
 namespace Quinoa {
 
 //! PDFWriter : Writer
-class PDFWriter : Writer {
+class PDFWriter : public Writer {
 
   public:
     //! Constructor

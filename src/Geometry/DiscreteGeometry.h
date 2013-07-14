@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:39:57 PM MDT
+  \date      Sat 13 Jul 2013 08:29:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -11,10 +11,11 @@
 #ifndef DiscreteGeometry_h
 #define DiscreteGeometry_h
 
-#include <Exception.h>
 #include <Geometry.h>
 
 namespace Quinoa {
+
+class STLMesh;
 
 //! Discrete geometry definition
 class DiscreteGeometry : public Geometry {
@@ -27,7 +28,11 @@ class DiscreteGeometry : public Geometry {
                               Timer* const timer);
 
     //! Destructor
-    ~DiscreteGeometry() noexcept = default;
+    ~DiscreteGeometry() noexcept;
+
+    //! Finalize, single exit point, called implicitly from destructor or
+    //! explicitly from anywhere else
+    void finalize() noexcept;
 
     //! Initialize analytic geometry
     virtual void init() {}
@@ -44,6 +49,8 @@ class DiscreteGeometry : public Geometry {
     DiscreteGeometry(DiscreteGeometry&&) = delete;
     //! Don't permit move assigment
     DiscreteGeometry& operator=(DiscreteGeometry&&) = delete;
+
+    STLMesh* m_mesh;                        //!< Mesh object
 };
 
 } // namespace Quinoa

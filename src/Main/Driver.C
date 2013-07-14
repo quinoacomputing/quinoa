@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:14:46 PM MDT
+  \date      Sat 13 Jul 2013 08:32:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -86,7 +86,6 @@ try :
     finalize();
     Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
-
 
 Driver::~Driver() noexcept
 //******************************************************************************
