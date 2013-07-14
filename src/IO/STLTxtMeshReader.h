@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:34:59 PM MDT
+  \date      Sat 13 Jul 2013 10:32:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -15,7 +15,7 @@
 
 #include <Reader.h>
 
-class Mesh;
+class STLMesh;
 
 namespace Quinoa {
 
@@ -25,9 +25,14 @@ class STLTxtMeshReader : public Reader {
   public:
     //! Constructor
     explicit STLTxtMeshReader(const std::string filename,
-                              Mesh* const mesh) :
+                              STLMesh* const mesh) :
       Reader(filename),
-      m_mesh(mesh) {}
+      m_mesh(mesh),
+      m_name(),
+      m_Triangles() {
+      Assert(m_mesh != nullptr, ExceptType::FATAL,
+            "Uninitialized mesh object passed to STLTxtMeshReader constructor");
+    }
 
     //! Destructor, default compiler generated
     virtual ~STLTxtMeshReader() noexcept = default;
@@ -59,10 +64,10 @@ class STLTxtMeshReader : public Reader {
       Vertex C;
     };
 
-    Mesh* const m_mesh;                         //!< Mesh object pointer    
+    STLMesh* const m_mesh;                      //!< Mesh object pointer
 
-    std::string m_name;                         //!< model name
-    std::vector<Triangle> m_Triangles;          //!< vector of triangles
+    std::string m_name;                         //!< Model name
+    std::vector<Triangle> m_Triangles;          //!< Vector of triangles
 };
 
 } // namespace Quinoa
