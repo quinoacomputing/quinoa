@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 13 Jul 2013 10:31:33 PM MDT
+  \date      Sun 14 Jul 2013 08:41:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <sstream>
+#include <iostream>
 
 #include <STLTxtMeshReader.h>
 
@@ -22,33 +23,57 @@ STLTxtMeshReader::read()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Read header
-  std::string solid;
-  m_inFile >> solid >> m_name;
-  ErrChk(solid == "solid", ExceptType::FATAL,
-         "Corrupt ASCII STL header: First line of input file '" +  m_filename +
-         "' should be 'solid <model_name>'");
+  // Define possible keywords in ASCI STL file: objects and their correct
+  // string values (for error checking)
+  STLKeyword solid("solid"), facet("facet"), normal("normal"), outer("outer"),
+             loop("loop"), vertex("vertex"), endloop("endloop"),
+             endfacet("endfacet");
 
-  // Read and store facets until line 'endsolid'
-  bool endsolid = false;
-  //while (!endsolid) {
-{
-    // possible keywords in ASCI STL file
-    std::string facet, normal, outer_loop, vertex, end_loop, end_facet;
-    // normal
-    real nx, ny, nz;
-    // three vertices of a triangle
-    Triangle t;
+  // Read in solids with their facets until eof
+  while (!m_inFile.eof()) {
+    // Start reading new solid
+    std::string solidname;
+    m_inFile >> solid >> solidname;
 
-    // Read in normal (and throw it away as it is redundant)
-    m_inFile >> facet >> normal >> nx >> ny >> nz;
-    ErrChk(facet == "facet", ExceptType::FATAL,
-           "Corruption in ASCII STL file '" + m_filename +
-           "' while parsing keyword '" + facet + "'");
-    ErrChk(normal == "normal", ExceptType::FATAL,
-           "Corruption in ASCII STL file '" + m_filename +
-           "' while parsing keyword '" + normal + "'");
+    // Read and store facets
+    bool newfacet = true;
+    while (newfacet) {
+      real nx, ny, nz;               // Normal
+      Triangle t;                    // Triangle
 
-    // Read in triangle
-  }
+      // Read in normal (and throw it away as it is redundant)
+      m_inFile >> facet >> normal >> nx >> ny >> nz;
+
+      // Read in and store off triangle
+      m_inFile >> outer >> loop;
+      m_inFile >> vertex >> t.A.x >> t.A.y >> t.A.z;
+      m_inFile >> vertex >> t.B.x >> t.B.y >> t.B.z;
+      m_inFile >> vertex >> t.C.x >> t.C.y >> t.C.z;
+      m_inFile >> endloop >> endfacet;
+      m_Triangles.push_back(t);
+
+      // Read in next keyword
+      std::streampos back = m_inFile.tellg();     // save file position
+      std::string kw;                // not an STLKeyword: no error checking
+      m_inFile >> kw;
+      if (kw == "facet") {
+        m_inFile.seekg(back);        // seek back
+        newfacet = true;             // there is more to this solid
+      } else if (kw == "endsolid") {
+        m_inFile >> solidname;       // read in solidname last time
+        newfacet = false;            // solid finished, try to read next one
+        std::streampos back = m_inFile.tellg();
+        m_inFile >> kw;              // try to read on
+        if (!m_inFile.eof()) m_inFile.seekg(back);
+      } else {
+        Throw(ExceptType::FATAL,
+              "Corruption in ASCII STL file while parsing keyword '" + kw +
+              "': keyword 'endfacet' must be followed by either 'facet' or "
+              "'endsolid'");
+      }
+    }   // while (newfacet)
+  }   // while (newsolid)
+
+  // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
+  m_inFile.clear();
 }
