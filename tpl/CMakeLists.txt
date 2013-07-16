@@ -126,3 +126,31 @@ ExternalProject_Add_Step(
           ${SOURCE_DIR}
           ${TPL_SOURCE_DIR}/h5part
 )
+
+#### Silo #####################################################################
+# https://wci.llnl.gov/codes/silo
+ExternalProject_Add(
+  silo
+  PREFIX silo
+  URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
+  URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
+                    CC=${MPI_C_COMPILER}
+                    --enable-optimization
+                    --disable-silex
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+# Keep a copy of the source
+ExternalProject_Get_Property(silo SOURCE_DIR)
+ExternalProject_Add_Step(
+  silo copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}
+          ${TPL_SOURCE_DIR}/silo
+)
