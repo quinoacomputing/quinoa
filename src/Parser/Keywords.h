@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:10:54 PM MDT
+  \date      Fri Jul 19 16:05:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -36,6 +36,8 @@ namespace keyword {
 
   // Geometry input filename
   using input = pegtl::string<i,n,p,u,t>;
+  // Geometry output filename
+  using output = pegtl::string<o,u,t,p,u,t>;
 
   // Select physics:
   //   * Homogeneous material mixing

@@ -12,7 +12,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_library(Mesh
             GmshMesh.C
-            #STLMesh.C
+            STLMesh.C
 )
 
 INSTALL(TARGETS Mesh

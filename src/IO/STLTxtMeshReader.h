@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sun 14 Jul 2013 08:42:04 PM MDT
+  \date      Sat 20 Jul 2013 07:01:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -28,10 +28,11 @@ class STLTxtMeshReader : public Reader {
     explicit STLTxtMeshReader(const std::string filename,
                               STLMesh* const mesh) :
       Reader(filename),
-      m_mesh(mesh),
-      m_Triangles() {
+      m_mesh(mesh) {
       Assert(m_mesh != nullptr, ExceptType::FATAL,
             "Uninitialized mesh object passed to STLTxtMeshReader constructor");
+      // Set mesh name as filename modulo extension
+      mesh->setName(filename.substr(0, filename.find_last_of(".")));
     }
 
     //! Destructor, default compiler generated
@@ -68,23 +69,15 @@ class STLTxtMeshReader : public Reader {
       }
     };
 
-    //! Vertex
-    struct Vertex {
-      real x;
-      real y;
-      real z;
-    };
+    //! Read (or count vertices in) ASCII STL mesh
+    size_t readFacets(const bool store,
+                      real* const x = nullptr,
+                      real* const y = nullptr,
+                      real* const z = nullptr);
 
-    // Triangle: 3 vertices: A, B, C
-    struct Triangle {
-      Vertex A;
-      Vertex B;
-      Vertex C;
-    };
-
-    STLMesh* const m_mesh;                      //!< Mesh object pointer
-
-    std::vector<Triangle> m_Triangles;          //!< Vector of triangles
+    const bool STORE = true;                 //!< Indicator to store facets
+    const bool COUNT = false;                //!< Indicator to only count facets
+    STLMesh* const m_mesh;                   //!< Mesh object pointer
 };
 
 } // namespace Quinoa

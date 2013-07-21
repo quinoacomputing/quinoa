@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:11:40 PM MDT
+  \date      Fri Jul 19 16:11:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -413,7 +413,8 @@ namespace grammar {
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse<keyword::discrete_geometry, store_geometry>,
-                 block< process<keyword::input, store<control::GEONAME>>
+                 block< process<keyword::input, store<control::INPUT_GEONAME>>,
+                        process<keyword::output, store<control::OUTPUT_GEONAME>>
                       >
                > {};
 

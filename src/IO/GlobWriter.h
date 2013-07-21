@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 10:01:22 PM MDT
+  \date      Fri Jul 19 15:56:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -23,7 +23,7 @@ class GlobWriter : public Writer {
 
   public:
     //! Constructor: Acquire glob file handle
-    explicit GlobWriter(std::string filename) :
+    explicit GlobWriter(const std::string& filename) :
       Writer(filename) {}
 
     //! Destructor: Release glob file handle

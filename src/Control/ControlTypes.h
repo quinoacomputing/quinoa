@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:10:12 PM MDT
+  \date      Fri Jul 19 16:09:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -207,7 +207,8 @@ enum BundlePosition { TITLE=0,
                       PDFNAME,
                       GLOBNAME,
                       PLOTNAME,
-                      GEONAME,
+                      INPUT_GEONAME,
+                      OUTPUT_GEONAME,
                       B,
                       S,
                       KAPPA,
@@ -252,6 +253,7 @@ using Bundle = std::tuple<
   std::string,             //!< Glob filename
   std::string,             //!< Plot base filename
   std::string,             //!< Input geometry filename
+  std::string,             //!< Output geometry filename
   std::vector<real>,       //!< Parameters 'b' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models

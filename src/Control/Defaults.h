@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 08:10:03 PM MDT
+  \date      Fri Jul 19 16:07:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -49,6 +49,7 @@ const Bundle DEFAULTS(
   "glob",                              //!< Default glob filename
   "plot",                              //!< Default plot base filename
   "",                                  //!< Input geometry filename
+  "",                                  //!< Output geometry filename
   std::vector<real>(),                 //!< Parameters 'b'
   std::vector<real>(),                 //!< Paramaters 'S'
   std::vector<real>(),                 //!< Parameters 'kappa'

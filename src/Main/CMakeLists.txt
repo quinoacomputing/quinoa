@@ -60,6 +60,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       SimplifiedLangevin
                       GeneralizedLangevin
                       Random
+                      Parser
+                      ${SILO_LIBRARY}
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
@@ -67,7 +69,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${PTHREAD_LIBRARY}
                       ${MATH_LIBRARY}
                       #${MPI_LIBRARIES}
-                      Parser
 )
 
 INSTALL(TARGETS ${QUINOA_EXECUTABLE}
