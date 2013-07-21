@@ -131,6 +131,7 @@ ExternalProject_Add_Step(
 # https://wci.llnl.gov/codes/silo
 ExternalProject_Add(
   silo
+  DEPENDS hdf5
   PREFIX silo
   URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
   URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
@@ -138,6 +139,7 @@ ExternalProject_Add(
                     CC=${MPI_C_COMPILER}
                     --enable-optimization
                     --disable-silex
+                    --with-hdf5=${TPL_INSTALL_DIR}/include,${TPL_INSTALL_DIR}/lib
                     --prefix=${TPL_INSTALL_DIR}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 06:50:00 AM MDT
+  \date      Sun 21 Jul 2013 03:20:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
