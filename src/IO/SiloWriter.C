@@ -2,18 +2,31 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 03:20:47 PM MDT
+  \date      Sun 21 Jul 2013 04:28:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
 */
 //******************************************************************************
 
-#include <iostream>
+#include <sstream>
 
 #include <Exception.h>
 #include <SiloWriter.h>
 #include <STLMesh.h>
+
+void
+Quinoa::SiloError(char* msg)
+//******************************************************************************
+//  Silo error handler
+//! \param[in]  msg  Error message
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::stringstream ss;
+  ss << "Silo error: " << msg;
+  Throw(ExceptType::FATAL, ss.str());
+}
 
 using namespace Quinoa;
 
@@ -31,23 +44,31 @@ SiloWriter::SiloWriter(const std::string& filename,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Set Silo library error level
-  DBShowErrors(errLevel, NULL);
+  // Save Silo's error handler and reporting level
+  m_errFunc = DBErrfunc();
+  m_errLevel = DBErrlvl();
+
+  // Set Silo library error level and handler
+  DBShowErrors(errLevel, &SiloError);
 
   // Create Silo file
-  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_PDB);
+  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_HDF5);
   ErrChk(m_dbfile != NULL, ExceptType::FATAL,
         "Cannot create Silo file" + filename);
 }
 
 SiloWriter::~SiloWriter() noexcept
 //******************************************************************************
-//  Destructor: Close Silo file
+//  Destructor
 //! \details    Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Close Silo file
   DBClose(m_dbfile);
+
+  // Restore Silo library error level and handler
+  DBShowErrors(m_errLevel, m_errFunc);
 }
 
 void
@@ -62,13 +83,10 @@ SiloWriter::write()
   int nfaces = nnodes/3;
   int zshapesize = 3;
   int zshapecnt = nfaces;
-  int err;
 
-  err = DBPutFacelist(m_dbfile, "facelist", nfaces, 3, m_mesh->nodelist(),
-                      nnodes, 0, 0, &zshapesize, &zshapecnt, 1, NULL, NULL, 0);
-  ErrChk(err == 0, ExceptType::FATAL, "Error in Silo::DBPutFacelist()");
+  DBPutFacelist(m_dbfile, "facelist", nfaces, 3, m_mesh->nodelist(),
+                nnodes, 0, 0, &zshapesize, &zshapecnt, 1, NULL, NULL, 0);
 
-  err = DBPutUcdmesh(m_dbfile, m_mesh->name().c_str(), 3, NULL, coords,
-                     nnodes, nfaces, NULL, "facelist", DB_DOUBLE, NULL);
-  ErrChk(err == 0, ExceptType::FATAL, "Error in Silo::DBPutUcdmesh()");
+  DBPutUcdmesh(m_dbfile, m_mesh->name().c_str(), 3, NULL, coords,
+               nnodes, nfaces, NULL, "facelist", DB_DOUBLE, NULL);
 }
