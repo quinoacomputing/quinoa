@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 04:28:07 PM MDT
+  \date      Sun 21 Jul 2013 04:40:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -84,9 +84,11 @@ SiloWriter::write()
   int zshapesize = 3;
   int zshapecnt = nfaces;
 
+  // Write out STL face connectivity
   DBPutFacelist(m_dbfile, "facelist", nfaces, 3, m_mesh->nodelist(),
                 nnodes, 0, 0, &zshapesize, &zshapecnt, 1, NULL, NULL, 0);
 
+  // Write out STL mesh: no zones, only faces with a simple face connectivity
   DBPutUcdmesh(m_dbfile, m_mesh->name().c_str(), 3, NULL, coords,
                nnodes, nfaces, NULL, "facelist", DB_DOUBLE, NULL);
 }
