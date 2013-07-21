@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
-  \date      Sat 20 Jul 2013 06:39:02 PM MDT
+  \date      Sun 21 Jul 2013 03:58:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -18,6 +18,12 @@
 #include <QuinoaTypes.h>
 
 namespace Quinoa {
+
+//! Silo error handler function type
+typedef void (*SiloErrorHandler)(char*);
+
+//! Silo error handler
+void SiloError(char* msg);
 
 class STLMesh;
 
@@ -46,10 +52,12 @@ class SiloWriter {
     //! Don't permit move assigment
     SiloWriter& operator=(SiloWriter&&) = delete;
 
-    const std::string m_filename;     //!< Silo filename
-    STLMesh* const m_mesh;            //!< Mesh object pointer
+    const std::string m_filename;       //!< Silo filename
+    STLMesh* const m_mesh;              //!< Mesh object pointer
 
-    DBfile* m_dbfile;                 //!< Silo DB file
+    SiloErrorHandler m_errFunc;         //!< Silo error handler function ptr
+    int m_errLevel;                     //!< Silo error reporting level
+    DBfile* m_dbfile;                   //!< Silo DB file
 };
 
 } // namespace Quinoa
