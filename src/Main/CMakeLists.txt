@@ -62,6 +62,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Random
                       Parser
                       ${SILO_LIBRARY}
+                      ${HDF5_LIBRARY}
+                      ${Z_LIBRARY}
                       ${MKL_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}

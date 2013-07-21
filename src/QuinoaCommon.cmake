@@ -34,7 +34,17 @@ find_library(MATH_LIBRARY
              PATHS /usr/lib/x86_64-redhat-linux5E/lib64
 )
 
+find_library(Z_LIBRARY
+             NAMES z
+             PATHS /usr/lib64
+)
+
 find_library(SILO_LIBRARY
-             NAMES silo
+             NAMES siloh5
+             PATHS ${TPL_DIR}/lib
+)
+
+find_library(HDF5_LIBRARY
+             NAMES hdf5
              PATHS ${TPL_DIR}/lib
 )
