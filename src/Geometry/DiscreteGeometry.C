@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Sat 13 Jul 2013 08:42:01 PM MDT
+  \date      Sat 20 Jul 2013 06:07:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -14,6 +14,7 @@
 #include <Control.h>
 #include <STLMesh.h>
 #include <STLTxtMeshReader.h>
+#include <SiloWriter.h>
 
 using namespace Quinoa;
 
@@ -36,15 +37,23 @@ try :
 {
 
   // Instantiate mesh object
-  m_mesh = new(std::nothrow) STLMesh;
+  m_mesh = new(std::nothrow) STLMesh(memory);
   ErrChk(m_mesh != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for STL mesh object");
 
   // Instantiate ASCII STL mesh reader object
-  STLTxtMeshReader reader(control->get<control::GEONAME>(), m_mesh);
+  STLTxtMeshReader reader(control->get<control::INPUT_GEONAME>(), m_mesh);
 
   // Read in STL mesh
   reader.read();
+
+  // Instantiate Silo writer object
+  SiloWriter writer(control->get<control::OUTPUT_GEONAME>(),
+                    m_mesh,
+                    DB_ALL_AND_DRVR);
+
+  // Write out STL geometry to Silo file
+  writer.write();
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {

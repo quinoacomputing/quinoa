@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 14 Jul 2013 08:41:43 PM MDT
+  \date      Sun 21 Jul 2013 06:52:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iostream>
 
+#include <STLMesh.h>
 #include <STLTxtMeshReader.h>
 
 using namespace Quinoa;
@@ -23,6 +24,33 @@ STLTxtMeshReader::read()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Count up number of vertices in STL mesh
+  size_t nnodes = readFacets(COUNT);
+  Assert(nnodes % 3 == 0, ExceptType::FATAL,
+         "Number of nodes in STL file must be divisible by 3");
+
+  // Allocate memory to store coordinates and face list
+  m_mesh->alloc(nnodes);
+
+  // Read and store mesh
+  readFacets(STORE, m_mesh->getx(), m_mesh->gety(), m_mesh->getz());
+}
+
+size_t
+STLTxtMeshReader::readFacets(const bool store,
+                             real* const x,
+                             real* const y,
+                             real* const z)
+//******************************************************************************
+//  Read ASCII STL mesh
+//  \param[in]  store  Whether to store the facets or not (i.e., only count)
+//  \param[in]  x      Vertex x coordinates
+//  \param[in]  y      Vertex y coordinates
+//  \param[in]  z      Vertex z coordinates
+//  \return            Number of vertices counted
+//! \author J. Bakosi
+//******************************************************************************
+{
   // Define possible keywords in ASCI STL file: objects and their correct
   // string values (for error checking)
   STLKeyword solid("solid"), facet("facet"), normal("normal"), outer("outer"),
@@ -30,6 +58,7 @@ STLTxtMeshReader::read()
              endfacet("endfacet");
 
   // Read in solids with their facets until eof
+  size_t num = 0;
   while (!m_inFile.eof()) {
     // Start reading new solid
     std::string solidname;
@@ -38,19 +67,36 @@ STLTxtMeshReader::read()
     // Read and store facets
     bool newfacet = true;
     while (newfacet) {
-      real nx, ny, nz;               // Normal
-      Triangle t;                    // Triangle
+      // Coordinates of normal, triangle vertex A, B, and C
+      real nx, ny, nz, Ax, Ay, Az, Bx, By, Bz, Cx, Cy, Cz;
 
       // Read in normal (and throw it away as it is redundant)
       m_inFile >> facet >> normal >> nx >> ny >> nz;
 
       // Read in and store off triangle
       m_inFile >> outer >> loop;
-      m_inFile >> vertex >> t.A.x >> t.A.y >> t.A.z;
-      m_inFile >> vertex >> t.B.x >> t.B.y >> t.B.z;
-      m_inFile >> vertex >> t.C.x >> t.C.y >> t.C.z;
+      m_inFile >> vertex >> Ax >> Ay >> Az;
+      m_inFile >> vertex >> Bx >> By >> Bz;
+      m_inFile >> vertex >> Cx >> Cy >> Cz;
       m_inFile >> endloop >> endfacet;
-      m_Triangles.push_back(t);
+
+      // Store coordinates of facet if requested
+      if (store) {
+        x[num] = Ax;
+        y[num] = Ay;
+        z[num] = Az;
+        ++num;
+        x[num] = Bx;
+        y[num] = By;
+        z[num] = Bz;
+        ++num;
+        x[num] = Cx;
+        y[num] = Cy;
+        z[num] = Cz;
+        ++num;
+      } else {
+        num += 3;       // only increase number of vertices
+      }
 
       // Read in next keyword
       std::streampos back = m_inFile.tellg();     // save file position
@@ -76,4 +122,9 @@ STLTxtMeshReader::read()
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_inFile.clear();
+  // Seek to beginning of file
+  m_inFile.seekg(0, std::ios::beg);
+
+  // Return number of vertices
+  return num;
 }

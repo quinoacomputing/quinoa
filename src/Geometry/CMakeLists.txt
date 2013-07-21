@@ -11,6 +11,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Geometry
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Base
+                    ${TPL_DIR}/include
 )
 
 add_library(Geometry

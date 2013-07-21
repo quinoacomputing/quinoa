@@ -11,18 +11,20 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Statistics
+                    ${TPL_DIR}/include
 )
 
 add_library(IO
-            Reader.C
+            Reader.C                    # readers
             GmshTxtMeshReader.C
             STLTxtMeshReader.C
-            Writer.C
+            Writer.C                    # writers
             PDFWriter.C
             GlobWriter.C
             TxtPlotWriter.C
             GmshTxtPlotWriter.C
             GmshTxtMeshWriter.C
+            SiloWriter.C
 )
 
 INSTALL(TARGETS IO

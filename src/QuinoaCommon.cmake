@@ -33,3 +33,8 @@ find_library(MATH_LIBRARY
              PATHS /usr/lib64
              PATHS /usr/lib/x86_64-redhat-linux5E/lib64
 )
+
+find_library(SILO_LIBRARY
+             NAMES silo
+             PATHS ${TPL_DIR}/lib
+)

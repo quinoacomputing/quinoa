@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 10:26:10 PM MDT
+  \date      Sat 20 Jul 2013 04:46:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -29,7 +29,7 @@ GmshMesh::GmshMesh(Memory* const memory) noexcept :
   m_lintag(),
   m_tritag()
 //******************************************************************************
-//  Constructor: zero memory entry pointers held
+//  Constructor
 //! \author J. Bakosi
 //******************************************************************************
 {

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:52:47 PM MDT
+  \date      Fri Jul 19 15:57:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -22,7 +22,7 @@ class GmshTxtPlotWriter : public Writer {
 
   public:
     //! Constructor: Acquire plot file handle
-    explicit GmshTxtPlotWriter(const std::string filename) :
+    explicit GmshTxtPlotWriter(const std::string& filename) :
       Writer(filename) {}
 
     //! Destructor: Release plot file handle
