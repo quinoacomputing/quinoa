@@ -2,13 +2,14 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 04:40:30 PM MDT
+  \date      Sun 21 Jul 2013 06:59:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
 */
 //******************************************************************************
 
+#include <cstring>
 #include <sstream>
 
 #include <Exception.h>
@@ -81,14 +82,15 @@ SiloWriter::write()
   real* coords[] = { m_mesh->getx(), m_mesh->gety(), m_mesh->getz() };
   int nnodes = m_mesh->nnodes();
   int nfaces = nnodes/3;
+  int zshapetype = DB_ZONETYPE_TRIANGLE;
   int zshapesize = 3;
   int zshapecnt = nfaces;
 
   // Write out STL face connectivity
-  DBPutFacelist(m_dbfile, "facelist", nfaces, 3, m_mesh->nodelist(),
-                nnodes, 0, 0, &zshapesize, &zshapecnt, 1, NULL, NULL, 0);
+  DBPutZonelist2(m_dbfile, "zonelist", nfaces, 3, m_mesh->nodelist(), nnodes,
+                 0, 0, 0, &zshapetype, &zshapesize, &zshapecnt, 1, NULL);
 
   // Write out STL mesh: no zones, only faces with a simple face connectivity
   DBPutUcdmesh(m_dbfile, m_mesh->name().c_str(), 3, NULL, coords,
-               nnodes, nfaces, NULL, "facelist", DB_DOUBLE, NULL);
+               nnodes, nfaces, "zonelist", NULL, DB_DOUBLE, NULL);
 }
