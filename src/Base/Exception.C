@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Tue Jul  2 15:09:16 2013
+  \date      Mon Jul 22 08:49:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -125,7 +125,7 @@ Exception::echoTrace() noexcept
 //!   http://panthema.net/2008/0901-stacktrace-demangled 
 //!   http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
 //!   http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
-//! \author J. Bakosi
+//! \author T. Bingmann, J. Bakosi
 //******************************************************************************
 {
   // Allocate string which will be filled with the demangled function name
