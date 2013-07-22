@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 04:32:35 PM MDT
+  \date      Sun 21 Jul 2013 07:03:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition
@@ -60,7 +60,7 @@ STLMesh::alloc(const size_t nnodes)
 
   // Allocate memory entry to store the node indices describing facets
   m_nodelist = m_memory->newEntry<int>(nnodes, INT, SCALAR, "STL nodelist");
-  // Fill nodelist with increasing integers. This serves as the face element
+  // Fill nodelist with increasing integers. This serves as the element
   // connectivity.
   for (size_t i=0; i<nnodes; ++i) m_nodelist[i] = i;
 }
