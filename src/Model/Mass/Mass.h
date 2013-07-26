@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:42:18 2013
+  \date      Fri Jul 26 13:46:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -44,11 +44,6 @@ class Mass : public Model {
 
     //! Destructor
     virtual ~Mass() noexcept = default;
-
-    //! CRTP interface: Return mass model identification
-    select::MassTypes id() noexcept {
-      return static_cast<MassType*>(this)->id();
-    }
 
     //! CRTP interface: Initialize particles
     void init() { static_cast<MassType*>(this)->init(); }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Fri May 31 13:29:34 2013
+  \date      Fri Jul 26 15:17:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -40,7 +40,7 @@ class Mix : public Toggle<MixTypes> {
       names[MixTypes::IECM] =
         "Interaction by exchange with the conditional mean";
       names[MixTypes::DIRICHLET] = "Dirichlet";
-      names[MixTypes::GENERALIZED_DIRICHLET] = "Dirichlet";
+      names[MixTypes::GENERALIZED_DIRICHLET] = "Generalized Dirichlet";
       //! keywords -> Enums
       values["no_mix"] = MixTypes::NO_MIX;
       values["mix_iem"] = MixTypes::IEM;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:49:44 2013
+  \date      Fri Jul 26 12:46:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -24,7 +24,7 @@ class Control;
 class Timer;
 class Statistics;
 class GlobWriter;
-class TxtPlotWriter;
+class TxtStatWriter;
 class Dirichlet;
 class GeneralizedDirichlet;
 class SimplifiedLangevin;
@@ -107,9 +107,9 @@ class Physics {
     //! \return Pointer to glob file writer
     GlobWriter* globWriter() const noexcept { return m_glob; }
 
-    //! Constant accessor to plot file writer
-    //! \return Pointer to plot file writer
-    TxtPlotWriter* plotWriter() const noexcept { return m_plot; }
+    //! Constant accessor to statistics file writer
+    //! \return Pointer to statistics file writer
+    TxtStatWriter* statWriter() const noexcept { return m_stat; }
 
     //! Constant accessor to particle properties pointer
     //! \return Raw pointer to particle properties array
@@ -147,7 +147,7 @@ class Physics {
     Mix<MixType>* m_mix;                  //!< Mix model object
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
-    TxtPlotWriter* m_plot;                //!< Plot file writer
+    TxtStatWriter* m_stat;                //!< Statistics file writer
     Data<real> m_particles;               //!< Particle properties
 };
 

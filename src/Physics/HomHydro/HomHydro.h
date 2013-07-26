@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Fri May 31 11:17:33 2013
+  \date      Fri Jul 26 12:49:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -21,7 +21,7 @@ class Memory;
 class Paradigm;
 class Statistics;
 class GlobWriter;
-class TxtPlotWriter;
+class TxtStatWriter;
 
 //! HomHydro : Physics
 class HomHydro : public Physics {
@@ -63,7 +63,7 @@ class HomHydro : public Physics {
                 const real dt,
                 const bool wroteJpdf,
                 const bool wroteGlob,
-                const bool wrotePlot);
+                const bool wroteStat);
 
     //! Output joint PDF
     void outJpdf(const real t);

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:59:04 PM MDT
+  \date      Fri Jul 26 13:47:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -21,7 +21,7 @@
 #include <GeneralizedLangevin.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
-#include <TxtPlotWriter.h>
+#include <TxtStatWriter.h>
 
 using namespace std;
 using namespace Quinoa;
@@ -54,7 +54,7 @@ try :
   m_mix(nullptr),
   m_statistics(nullptr),
   m_glob(nullptr),
-  m_plot(nullptr),
+  m_stat(nullptr),
   m_particles()
 {
 IGNORE(m_paradigm);
@@ -72,11 +72,6 @@ IGNORE(m_paradigm);
   if (m_ndensity) {
     m_mass = new (nothrow) MassType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mass != nullptr, ExceptType::FATAL, "Cannot allocate memory");
-
-    // Error out if mass model selected at compile time does not match that
-    // whose options are given in control file
-    ErrChk(m_mass->id() == control->get<control::MASS>(), ExceptType::FATAL,
-        "Compile-time-selected mass model does not match that in input file.");
   }
 
   // Instantiate hydrodynamics model
@@ -84,22 +79,12 @@ IGNORE(m_paradigm);
     m_hydro = new (nothrow)
               HydroType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_hydro != nullptr, ExceptType::FATAL, "Cannot allocate memory");
-
-    // Error out if hydro model selected at compile time does not match that
-    // whose options are given in control file
-    ErrChk(m_hydro->id() == control->get<control::HYDRO>(), ExceptType::FATAL,
-        "Compile-time-selected hydro model does not match that in input file.");
   }
 
   // Instantiate mix model
   if (m_nscalar) {
     m_mix = new (nothrow) MixType(memory, paradigm, control, m_particles.ptr);
     ErrChk(m_mix != nullptr, ExceptType::FATAL, "Cannot allocate memory");
-
-    // Error out if mix model selected at compile time does not match that whose
-    // options are given in control file
-    ErrChk(m_mix->id() == control->get<control::MIX>(), ExceptType::FATAL,
-           "Compile-time-selected mix model does not match that in input file.");
   }
 
   // Instantiate statistics estimator
@@ -110,10 +95,10 @@ IGNORE(m_paradigm);
   m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
   ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
-  // Instantiate plot file writer
-  m_plot = new (nothrow) TxtPlotWriter(m_control->get<control::PLOTNAME>(),
+  // Instantiate statistics plot file writer
+  m_stat = new (nothrow) TxtStatWriter(m_control->get<control::STATNAME>(),
                                        m_statistics);
-  ErrChk(m_plot != nullptr, ExceptType::FATAL,"Cannot allocate memory");
+  ErrChk(m_stat != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
 } // Roll back changes and rethrow on error
   catch (exception&) {
@@ -151,5 +136,5 @@ Physics::finalize() noexcept
   if (m_mix) { delete m_mix; m_mix = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
-  if (m_plot) { delete m_plot; m_plot = nullptr; }
+  if (m_stat) { delete m_stat; m_stat = nullptr; }
 }

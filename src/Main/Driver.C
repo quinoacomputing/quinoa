@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 13 Jul 2013 08:32:17 PM MDT
+  \date      Fri Jul 26 13:51:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -70,11 +70,11 @@ try :
   ErrChk(m_timer != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for timer object");
 
-  // Instantiate geometry object
-  initGeometry();
-
   // Instantiate physics object
   initPhysics();
+
+  // Instantiate geometry object
+  initGeometry();
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {
@@ -107,8 +107,8 @@ Driver::finalize() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_physics)  { delete m_physics;  m_physics  = nullptr; }
   if (m_geometry) { delete m_geometry; m_geometry = nullptr; }
+  if (m_physics)  { delete m_physics;  m_physics  = nullptr; }
   if (m_timer)    { delete m_timer;    m_timer    = nullptr; }
   if (m_control)  { delete m_control;  m_control  = nullptr; }
   m_memory->freeAllEntries();

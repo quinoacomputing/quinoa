@@ -21,7 +21,7 @@ add_library(IO
             Writer.C                    # writers
             PDFWriter.C
             GlobWriter.C
-            TxtPlotWriter.C
+            TxtStatWriter.C
             GmshTxtPlotWriter.C
             GmshTxtMeshWriter.C
             SiloWriter.C

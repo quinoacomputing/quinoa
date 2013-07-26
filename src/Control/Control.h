@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:20:34 2013
+  \date      Fri Jul 26 15:11:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -13,11 +13,13 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 
 #include <QuinoaTypes.h>
 #include <ControlTypes.h>
 #include <Defaults.h>
 #include <Exception.h>
+#include <Option.h>
 
 namespace Quinoa {
 
@@ -125,6 +127,21 @@ class Control {
       if (q == Quantity::DENSITY)
         offset += NCOMP_POS * std::get<NPOSITION>(m_data);
       return offset;
+    }
+
+    //! Error out on model configured at compile-time not matching that whose
+    //! coefficients have been parsed
+    template<class OptionType, class ModelType, control::BundlePosition Parsed>
+    void matchModels(const ModelType configured) {
+      bool match = configured == get<Parsed>();
+      if (!match) {
+        control::Option<OptionType> Model;
+        std::stringstream ss;
+        ss << "Compile-time-configured model (" << Model.name(configured)
+           << ") does not match that (" << Model.name(get<Parsed>())
+           << ") whose coefficients have been parsed in from the input file.";
+        Throw(ExceptType::FATAL, ss.str());
+      }
     }
 
   private:
