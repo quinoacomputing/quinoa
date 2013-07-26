@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Fri May 31 12:08:01 2013
+  \date      Wed Jul 24 09:41:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -53,10 +53,10 @@ GeneralizedDirichlet::advance(int p, int tid, const real dt)
 
   // Advance first m_nscalar (K=N-1) scalars
   k=0;
-  a=0.0;
   for (i=0; i<m_nscalar; ++i) {
     d = m_k[i]*y[i]*Y[m_nscalar-1]*U[i]*dt;
     if (d > 0.0) d = sqrt(d); else d = 0.0;
+    a=0.0;
     for (j=i; j<m_nscalar-1; ++j) a += m_c[k++]/Y[j];
     y[i] += U[i]/2.0*(m_b[i]*(m_S[i]*Y[m_nscalar-1] - (1.0-m_S[i])*y[i]) +
                       y[i]*Y[m_nscalar-1]*a)*dt + d*dW[i];
