@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Fri Jul 26 13:21:00 2013
+  \date      Fri Jul 26 16:17:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -53,7 +53,7 @@ SiloWriter::SiloWriter(const std::string& filename,
   DBShowErrors(errLevel, &SiloError);
 
   // Create Silo file
-  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_PDB);
+  m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_HDF5);
   ErrChk(m_dbfile != NULL, ExceptType::FATAL,
         "Cannot create Silo file" + filename);
 }
