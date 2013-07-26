@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri Jul 19 16:26:02 2013
+  \date      Fri Jul 26 15:35:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -94,8 +94,6 @@ Parser::echoGeometry() const
             << std::endl;
 
   m_control->echoVec<control::BOXES>("Boxes");
-  m_control->echo<control::INPUT_GEONAME>("Geometry input file");
-  m_control->echo<control::OUTPUT_GEONAME>("Geometry output file");
 }
 
 void
@@ -114,15 +112,17 @@ Parser::echoPhysics() const
   m_control->echo<control::DT>("Time step size");
   m_control->echo<control::NPAR>("Number of particles");
   m_control->echo<control::TTYI>("TTY output interval");
-  m_control->echo<control::DUMP>("Dump output interval");
-  m_control->echo<control::PLTI>("Plot output interval");
+  m_control->echo<control::DMPI>("Dump output interval");
+  m_control->echo<control::STAI>("Statistics output interval");
   m_control->echo<control::PDFI>("PDF output interval");
-  m_control->echo<control::GLOB>("Glob output interval");
+  m_control->echo<control::GLBI>("Glob output interval");
   m_control->echoVecVecNames<control::STATISTICS>("Requested statistics",true);
   m_control->echoVecVecNames<control::STATISTICS>("Estimated statistics");
-  m_control->echo<control::PDFNAME>("PDF base filename");
+  m_control->echo<control::INPUT>("Input filename");
+  m_control->echo<control::OUTPUT>("Output filename");
+  m_control->echo<control::PDFNAME>("PDF filename");
   m_control->echo<control::GLOBNAME>("Glob filename");
-  m_control->echo<control::PLOTNAME>("Plot base filename");
+  m_control->echo<control::STATNAME>("Statistics filename");
 }
 
 void

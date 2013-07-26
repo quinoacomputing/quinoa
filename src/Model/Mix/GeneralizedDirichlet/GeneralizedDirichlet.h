@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:06:07 2013
+  \date      Fri Jul 26 15:19:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -37,6 +37,10 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
       m_S(control->get<control::S>()),
       m_k(control->get<control::KAPPA>()),
       m_c(control->get<control::C>()) {
+      // Error out if mix model selected at compile time does not match that
+      // whose options are given in control file
+      control->matchModels<select::Mix, select::MixTypes, control::MIX>(
+        select::MixTypes::GENERALIZED_DIRICHLET);
       ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
              ExceptType::FATAL,
              "Wrong number of generalized Dirichlet model parameters 'b'");
@@ -54,11 +58,6 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
 
     //! Destructor
     virtual ~GeneralizedDirichlet() noexcept = default;
-
-    //! Return mix model identification
-    select::MixTypes id() const noexcept {
-      return select::MixTypes::GENERALIZED_DIRICHLET;
-    }
 
     //! Initialize particles
     void init(int p, int tid) { initZero(p); IGNORE(tid); }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Tue Jul  2 16:42:02 2013
+  \date      Fri Jul 26 15:34:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -18,7 +18,7 @@
 #include <HomRT.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
-#include <TxtPlotWriter.h>
+#include <TxtStatWriter.h>
 #include <Statistics.h>
 #include <Beta.h>
 #include <SimplifiedLangevin.h>
@@ -53,13 +53,13 @@ HomRT::solve()
   real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
-  bool wrotePlot = false;
+  bool wroteStat = false;
 
   const auto nstep = control()->get<control::NSTEP>();
   const auto ttyi  = control()->get<control::TTYI>();
   const auto pdfi  = control()->get<control::PDFI>();
-  const auto glob  = control()->get<control::GLOB>();
-  const auto plti  = control()->get<control::PLTI>();
+  const auto glbi  = control()->get<control::GLBI>();
+  const auto stai  = control()->get<control::STAI>();
   const auto dt    = control()->get<control::DT>();
 
   timer()->start(m_totalTime);
@@ -67,7 +67,7 @@ HomRT::solve()
   // Echo headers
   if (nstep) {
     reportHeader();
-    plotWriter()->header();
+    statWriter()->header();
   }
 
   // Time stepping loop
@@ -84,15 +84,15 @@ HomRT::solve()
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glob)) { globWriter()->write(it,t); wroteGlob = true; }
+    if (!(it % glbi)) { globWriter()->write(it,t); wroteGlob = true; }
 
-    // Append plot file at selected times
-    if (!(it % plti)) { plotWriter()->write(it,t); wrotePlot = true; }
+    // Append statistics file at selected times
+    if (!(it % stai)) { statWriter()->write(it,t); wroteStat = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {
-      report(it, nstep, t, dt, wroteJpdf, wroteGlob, wrotePlot);
-      wroteJpdf = wroteGlob = wrotePlot = false;
+      report(it, nstep, t, dt, wroteJpdf, wroteGlob, wroteStat);
+      wroteJpdf = wroteGlob = wroteStat = false;
     }
 
     // Increase timestep and iteration counter
@@ -122,7 +122,7 @@ HomRT::report(const uint64_t it,
               const real dt,
               const bool wroteJpdf,
               const bool wroteGlob,
-              const bool wrotePlot)
+              const bool wroteStat)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
@@ -131,7 +131,7 @@ HomRT::report(const uint64_t it,
 //! \param[in]  dt         Time step size
 //! \param[in]  wroteJpdf  True if joint PDF was output
 //! \param[in]  wroteGlob  True if glob was output
-//! \param[in]  wrotePlot  True if plot was output
+//! \param[in]  wroteStat  True if statistics was output
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -150,7 +150,7 @@ HomRT::report(const uint64_t it,
 
   if (wroteGlob) std::cout << "G";
   if (wroteJpdf) std::cout << "J";
-  if (wrotePlot) std::cout << "P";
+  if (wroteStat) std::cout << "P";
 
   std::cout << std::endl;
 }

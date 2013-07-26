@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed May 29 08:17:53 2013
+  \date      Fri Jul 26 14:49:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Physics options and associations
-  \details   Physics options and associations
+  \brief     Options and associations
+  \details   Options and associations
 */
 //******************************************************************************
 #ifndef Toggle_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri Jul 19 16:09:13 2013
+  \date      Fri Jul 26 15:31:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -200,15 +200,15 @@ enum BundlePosition { TITLE=0,
                       NFREQUENCY,
                       NPAR,
                       TTYI,
-                      DUMP,
-                      PLTI,
+                      DMPI,
+                      STAI,
                       PDFI,
-                      GLOB,
+                      GLBI,
+                      INPUT,
+                      OUTPUT,
                       PDFNAME,
                       GLOBNAME,
-                      PLOTNAME,
-                      INPUT_GEONAME,
-                      OUTPUT_GEONAME,
+                      STATNAME,
                       B,
                       S,
                       KAPPA,
@@ -249,11 +249,11 @@ using Bundle = std::tuple<
   int,                     //!< Plot output interval
   int,                     //!< PDF output interval
   int,                     //!< Glob output interval
-  std::string,             //!< PDF base filename
+  std::string,             //!< Input filename
+  std::string,             //!< Output filename
+  std::string,             //!< PDF filename
   std::string,             //!< Glob filename
-  std::string,             //!< Plot base filename
-  std::string,             //!< Input geometry filename
-  std::string,             //!< Output geometry filename
+  std::string,             //!< Statistics filename
   std::vector<real>,       //!< Parameters 'b' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models

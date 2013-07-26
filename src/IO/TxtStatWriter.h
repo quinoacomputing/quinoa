@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/IO/TxtPlotWriter.h
+  \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:56:42 PM MDT
+  \date      Fri Jul 26 12:54:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Text plot writer
-  \details   Text plot writer
+  \brief     Text statistics writer
+  \details   Text statistics writer
 */
 //******************************************************************************
-#ifndef TxtPlotWriter_h
-#define TxtPlotWriter_h
+#ifndef TxtStatWriter_h
+#define TxtStatWriter_h
 
 #include <string>
 
@@ -20,32 +20,32 @@ namespace Quinoa {
 
 class Statistics;
 
-//! TxtPlotWriter : Writer
-class TxtPlotWriter : public Writer {
+//! TxtStatWriter : Writer
+class TxtStatWriter : public Writer {
 
   public:
-    //! Constructor: Acquire plot file handle
-    explicit TxtPlotWriter(const std::string& filename,
+    //! Constructor
+    explicit TxtStatWriter(const std::string& filename,
                            Statistics* const statistics);
 
-    //! Destructor: Release plot file handle
-    ~TxtPlotWriter() noexcept = default;
+    //! Destructor
+    ~TxtStatWriter() noexcept = default;
 
-    //! Write out plot header
+    //! Write out statistics file header
     void header();
 
-    //! Write plot file
+    //! Write statistics file
     void write(const int it, const real t);
 
   private:
     //! Don't permit copy constructor
-    TxtPlotWriter(const TxtPlotWriter&) = delete;
+    TxtStatWriter(const TxtStatWriter&) = delete;
     //! Don't permit copy assigment
-    TxtPlotWriter& operator=(const TxtPlotWriter&) = delete;
+    TxtStatWriter& operator=(const TxtStatWriter&) = delete;
     //! Don't permit move constructor
-    TxtPlotWriter(TxtPlotWriter&&) = delete;
+    TxtStatWriter(TxtStatWriter&&) = delete;
     //! Don't permit move assigment
-    TxtPlotWriter& operator=(TxtPlotWriter&&) = delete;
+    TxtStatWriter& operator=(TxtStatWriter&&) = delete;
 
     Statistics* const m_statistics;     //!< Statistics estimator
     const int m_nord;                   //!< Number of ordinary moments
@@ -56,4 +56,4 @@ class TxtPlotWriter : public Writer {
 
 } // namespace Quinoa
 
-#endif // TxtPlotWriter_h
+#endif // TxtStatWriter_h

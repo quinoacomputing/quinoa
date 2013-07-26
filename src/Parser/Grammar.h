@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jul 26 12:14:59 2013
+  \date      Fri Jul 26 15:32:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -19,13 +19,6 @@
 #include <Macro.h>
 #include <ControlTypes.h>
 #include <Option.h>
-#include <GeometryOptions.h>
-#include <PhysicsOptions.h>
-#include <PositionOptions.h>
-#include <MassOptions.h>
-#include <HydroOptions.h>
-#include <MixOptions.h>
-#include <FrequencyOptions.h>
 #include <Box.h>
 
 namespace Quinoa {
@@ -417,8 +410,7 @@ namespace grammar {
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse<keyword::discrete_geometry, store_geometry>,
-                 block< process<keyword::input, store<control::INPUT_GEONAME>>,
-                        process<keyword::output, store<control::OUTPUT_GEONAME>>
+                 block< list<keyword::box, push<control::BOXES>>
                       >
                > {};
 
@@ -495,44 +487,51 @@ namespace grammar {
                         process<keyword::Beta_At, cstore<control::AT>> >
                > {};
 
+  // geometry definition types
+  struct geometry :
+         sor< analytic_geometry,
+              discrete_geometry > {};
+
   // common to all physics
   struct physics_common :
          sor< process<keyword::nstep, cstore<control::NSTEP>>,
               process<keyword::term, cstore<control::TERM>>,
               process<keyword::dt, cstore<control::DT>>,
               process<keyword::npar, cstore<control::NPAR>>,
+              process<keyword::input, store<control::INPUT>>,
+              process<keyword::output, store<control::OUTPUT>>,
               process<keyword::pdfname, store<control::PDFNAME>>,
               process<keyword::globname, store<control::GLOBNAME>>,
-              process<keyword::plotname, store<control::PLOTNAME>>,
-              process<keyword::glob, cstore<control::GLOB>>,
+              process<keyword::statname, store<control::STATNAME>>,
+              process<keyword::glbi, cstore<control::GLBI>>,
               process<keyword::pdfi, cstore<control::PDFI>>,
-              process<keyword::plti, cstore<control::PLTI>>,
+              process<keyword::stai, cstore<control::STAI>>,
               process<keyword::ttyi, cstore<control::TTYI>>,
-              process<keyword::dump, cstore<control::DUMP>>
+              process<keyword::dmpi, cstore<control::DMPI>>
             > {};
 
   // hommix block
   struct hommix :
          ifmust< parse<keyword::hommix, store_physics>,
-                 block< physics_common,
+                 block< geometry, physics_common,
                         dir, gendir, statistics > > {};
 
   // homrt block
   struct homrt :
          ifmust< parse<keyword::homrt, store_physics>,
-                 block< physics_common,
+                 block< geometry, physics_common,
                         dir, gendir, slm, beta, statistics > > {};
 
   // homhydro block
   struct homhydro :
          ifmust< parse<keyword::homhydro, store_physics>,
-                 block< physics_common,
+                 block< geometry, physics_common,
                         slm, freq_gamma, statistics > > {};
 
   // spinsflow block
   struct spinsflow :
          ifmust< parse<keyword::spinsflow, store_physics>,
-                 block< physics_common,
+                 block< geometry, physics_common,
                         slm, freq_gamma, dir, gendir, beta > > {};
 
   // physics
@@ -542,15 +541,9 @@ namespace grammar {
               homrt,
               spinsflow > {};
 
-  // geometry definition types
-  struct geometry :
-         sor< analytic_geometry,
-              discrete_geometry > {};
-
   // main keywords
   struct keywords :
          sor< title,
-              geometry,
               physics > {};
 
   // ignore: comments and empty lines

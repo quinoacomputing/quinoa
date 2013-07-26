@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri Jul 19 16:07:49 2013
+  \date      Fri Jul 26 12:40:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -45,11 +45,11 @@ const Bundle DEFAULTS(
   0,                                   //!< Plot output interval
   1,                                   //!< PDF output interval
   1,                                   //!< Glob output interval
-  "jpdf",                              //!< Default jpdf base filename
+  "",                                  //!< Input filename
+  "",                                  //!< Output filename
+  "jpdf",                              //!< Default jpdf filename
   "glob",                              //!< Default glob filename
-  "plot",                              //!< Default plot base filename
-  "",                                  //!< Input geometry filename
-  "",                                  //!< Output geometry filename
+  "stat",                              //!< Default statistics filename
   std::vector<real>(),                 //!< Parameters 'b'
   std::vector<real>(),                 //!< Paramaters 'S'
   std::vector<real>(),                 //!< Parameters 'kappa'

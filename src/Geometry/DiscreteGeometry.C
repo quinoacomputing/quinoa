@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Sat 20 Jul 2013 06:07:44 PM MDT
+  \date      Fri Jul 26 12:43:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -42,15 +42,13 @@ try :
          "Cannot allocate memory for STL mesh object");
 
   // Instantiate ASCII STL mesh reader object
-  STLTxtMeshReader reader(control->get<control::INPUT_GEONAME>(), m_mesh);
+  STLTxtMeshReader reader(control->get<control::INPUT>(), m_mesh);
 
   // Read in STL mesh
   reader.read();
 
   // Instantiate Silo writer object
-  SiloWriter writer(control->get<control::OUTPUT_GEONAME>(),
-                    m_mesh,
-                    DB_ALL_AND_DRVR);
+  SiloWriter writer(control->get<control::OUTPUT>(), m_mesh, DB_ALL_AND_DRVR);
 
   // Write out STL geometry to Silo file
   writer.write();

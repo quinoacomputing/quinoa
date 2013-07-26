@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Fri Jul 19 16:05:03 2013
+  \date      Fri Jul 26 15:30:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -34,10 +34,20 @@ namespace keyword {
   //   * Box
   using box = pegtl::string<b,o,x>;
 
-  // Geometry input filename
+  // Input filename
   using input = pegtl::string<i,n,p,u,t>;
-  // Geometry output filename
+
+  // Output filename
   using output = pegtl::string<o,u,t,p,u,t>;
+
+  // PDF filename
+  using pdfname = pegtl::string< p,d,f,n,a,m,e >;
+
+  // Glob (i.e. domain-average statistics) filename
+  using globname = pegtl::string< g,l,o,b,n,a,m,e >;
+
+  // Statistics filename
+  using statname = pegtl::string< s,t,a,t,n,a,m,e >;
 
   // Select physics:
   //   * Homogeneous material mixing
@@ -150,28 +160,19 @@ namespace keyword {
   using ttyi = pegtl::string< t,t,y,i >;
 
   // Dump (restart file) output interval
-  using dump = pegtl::string< d,u,m,p >;
+  using dmpi = pegtl::string< d,m,p,i >;
 
-  // Plot output interval
-  using plti = pegtl::string< p,l,t,i >;
+  // Statistics output interval
+  using stai = pegtl::string< s,t,a,i >;
 
   // PDF output interval
   using pdfi = pegtl::string< p,d,f,i >;
 
   // Glob output interval
-  using glob = pegtl::string< g,l,o,b >;
+  using glbi = pegtl::string< g,l,b,i >;
 
   // Statistics
   using statistics = pegtl::string< s,t,a,t,i,s,t,i,c,s >;
-
-  // PDF base filename
-  using pdfname = pegtl::string< p,d,f,n,a,m,e >;
-
-  // Glob (i.e. domain-average statistics) filename
-  using globname = pegtl::string< g,l,o,b,n,a,m,e >;
-
-  // Plot base filename
-  using plotname = pegtl::string< p,l,o,t,n,a,m,e >;
 
 } // namespace keyword
 
