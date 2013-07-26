@@ -32,7 +32,7 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
   LOG_DOWNLOAD 1
 )
-## Header-only, copy include dir over
+# Header-only, copy include dir over, also copy source dir
 ExternalProject_Get_Property(pegtl SOURCE_DIR)
 ExternalProject_Add_Step(
   pegtl copy-source
@@ -40,6 +40,9 @@ ExternalProject_Add_Step(
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}/include
           ${TPL_INSTALL_DIR}/include
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/include
+          ${TPL_SOURCE_DIR}/pegtl
 )
 
 #### Trilinos #################################################################
