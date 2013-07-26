@@ -1,0 +1,8 @@
+* Control::Bundle would be nicer with a hierarchical structure.
+
+* Need a quick switchable way of building without MKL as it is practically
+  impossible to distinguish between memory leaks in MKL and non-MKL code. May
+  need to implement another random number library.
+
+* Don't know how long I can keep going without some sort of unit and/or
+  regression testing infrastructure.
