@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jul 19 16:11:39 2013
+  \date      Fri Jul 26 12:14:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -346,9 +346,13 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
+  // number: optional sign followed by digits
+  struct number :
+         seq< opt< sor<one<'+'>, one<'-'>> >, digit> {};
+
   // plow through list of values between keywords 'key' and "end", calling
   // 'insert' for each if matches and allowing comments between values
-  template< class key, class insert, class value = digit >
+  template< class key, class insert, class value = number >
   struct list :
          ifmust< read<key>,
                  until< read<keyword::end>, sor<comment, parse<value,insert>> >
