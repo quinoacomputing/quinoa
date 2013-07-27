@@ -16,6 +16,14 @@ set(QUINOA_MINOR_VER 1)
 # Set Quinoa release number
 set(QUINOA_RELEASE "LA-CC-XX-XXX")
 
+# Optionally turn off MKL calls
+set(MKL_CALLS ON CACHE BOOL "Set to ON to call MKL functions")
+
+IF(MKL_CALLS)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_CALLS")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_CALLS")
+ENDIF(MKL_CALLS)
+
 # Add compiler options needed for MKL
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")

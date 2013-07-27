@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Fri Jul 26 12:43:41 2013
+  \date      Fri 26 Jul 2013 08:52:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -85,4 +85,13 @@ DiscreteGeometry::finalize() noexcept
 //******************************************************************************
 {
   if (m_mesh) { delete m_mesh;  m_mesh  = nullptr; }
-} 
+}
+
+void
+DiscreteGeometry::init()
+//******************************************************************************
+//  Initialize discrete geometry
+//! \author J. Bakosi
+//******************************************************************************
+{
+}
