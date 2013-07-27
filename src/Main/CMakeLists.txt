@@ -64,7 +64,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
-                      ${MKL_LIBRARY}
+                      ${MKL_INTERFACE_LIBRARY}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_LIBRARY}
