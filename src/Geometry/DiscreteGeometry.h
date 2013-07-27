@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Sat 13 Jul 2013 08:29:56 PM MDT
+  \date      Fri 26 Jul 2013 08:36:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -34,8 +34,8 @@ class DiscreteGeometry : public Geometry {
     //! explicitly from anywhere else
     void finalize() noexcept;
 
-    //! Initialize analytic geometry
-    virtual void init() {}
+    //! Initialize discrete geometry
+    virtual void init();
 
     //! Space-fill discrete geometry
     virtual void fill() {}

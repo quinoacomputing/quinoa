@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Wed May 29 08:32:17 2013
+  \date      Fri 26 Jul 2013 09:02:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -11,8 +11,6 @@
 
 #include <sstream>
 #include <iostream>
-
-#include <mkl_vsl.h>
 
 #include <MKL.h>
 #include <Exception.h>
@@ -37,11 +35,13 @@ MKL::uniform(const int& method,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vdRngUniform(method, stream, n, r, a, b);
 #else  // NDEBUG
   MKLErrChk(vdRngUniform(method, stream, n, r, a, b));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -62,11 +62,13 @@ MKL::gaussian(const int& method,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vdRngGaussian(method, stream, n, r, a, b);
 #else  // NDEBUG
   MKLErrChk(vdRngGaussian(method, stream, n, r, a, b));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -89,11 +91,13 @@ MKL::gamma(const int& method,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vdRngGamma(method, stream, n, r, alpha, a, beta);
 #else  // NDEBUG
   MKLErrChk(vdRngGamma(method, stream, n, r, alpha, a, beta));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -118,11 +122,13 @@ MKL::beta(const int& method,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vdRngBeta(method, stream, n, r, alpha, beta, disp, scale);
 #else  // NDEBUG
   MKLErrChk(vdRngBeta(method, stream, n, r, alpha, beta, disp, scale));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -137,11 +143,13 @@ MKL::newStream(VSLStreamStatePtr* const stream,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vslNewStream(stream, brng, seed);
 #else  // NDEBUG
   MKLErrChk(vslNewStream(stream, brng, seed));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -154,11 +162,13 @@ MKL::copyStream(VSLStreamStatePtr* const newstream,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vslCopyStream(newstream, srcstream);
 #else  // NDEBUG
   MKLErrChk(vslCopyStream(newstream, srcstream));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -172,11 +182,13 @@ MKL::skipAheadStream(VSLStreamStatePtr& stream,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vslSkipAheadStream(stream, nskip);
 #else  // NDEBUG
   MKLErrChk(vslSkipAheadStream(stream, nskip));
 #endif // NDEBUG
+#endif
 }
 
 void
@@ -192,11 +204,13 @@ MKL::leapfrogStream(VSLStreamStatePtr& stream,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+#ifdef MKL_CALLS
 #ifdef NDEBUG
   vslLeapfrogStream(stream, k, nstreams);
 #else  // NDEBUG
   MKLErrChk(vslLeapfrogStream(stream, k, nstreams));
 #endif // NDEBUG
+#endif
 }
 
 void
