@@ -2,15 +2,17 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Fri Jul 26 16:17:05 2013
+  \date      Fri 26 Jul 2013 08:02:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
 */
 //******************************************************************************
 
-#include <cstring>
+#include <string>
 #include <sstream>
+#include <algorithm>
+#include <cstring>
 
 #include <Exception.h>
 #include <SiloWriter.h>
@@ -24,8 +26,13 @@ Quinoa::SiloError(char* msg)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Take out newlines from error message coming from library
+  std::string str(msg);
+  std::replace(str.begin(), str.end(), '\n', ' ');
+
+  // Echo and throw
   std::stringstream ss;
-  ss << "Silo error: " << msg;
+  ss << "Silo library writer error: " << str;
   Throw(ExceptType::FATAL, ss.str());
 }
 

@@ -6,5 +6,3 @@
 
 * Don't know how long I can keep going without some sort of unit and/or
   regression testing infrastructure.
-
-* Regulate Silo/HDF5 error output so it fits nicely into our error output.
