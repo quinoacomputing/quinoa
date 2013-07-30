@@ -28,6 +28,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_executable(${QUINOA_EXECUTABLE}
                Driver.C
+               QuinoaDriver.C
                Quinoa.C
 )
 
@@ -74,6 +75,40 @@ target_link_libraries(${QUINOA_EXECUTABLE}
 )
 
 INSTALL(TARGETS ${QUINOA_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
+add_executable(${QUINOA_RNGTEST_EXECUTABLE}
+               Driver.C
+               RNGTestDriver.C
+               RNGTest.C
+)
+
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${QUINOA_RNGTEST_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${QUINOA_RNGTEST_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
+                      Base
+                      Parser
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_THREAD_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${INTEL_OMP_LIBRARY}
+                      #${PTHREAD_LIBRARY}
+                      #${MATH_LIBRARY}
+                      #${MPI_LIBRARIES}
+)
+
+INSTALL(TARGETS ${QUINOA_RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development

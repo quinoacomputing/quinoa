@@ -1,20 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Main/Quinoa.C
+  \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 10:07:42 PM MDT
+  \date      Mon 29 Jul 2013 10:26:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa main
-  \details   Quinoa main
+  \brief     Quinoa random number generator test suite
+  \details   Quinoa random number generator test suite
 */
 //******************************************************************************
 
 #include <iostream>
 
 #include <QuinoaConfig.h>
-#include <Paradigm.h>
-#include <Memory.h>
-#include <QuinoaDriver.h>
+#include <Exception.h>
+#include <RNGTestDriver.h>
 
 using namespace Quinoa;
 
@@ -26,9 +25,9 @@ static void echoName()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::cout << "=========================================\n";
-  std::cout << "Quinoa: Lagrangian particle hydrodynamics\n";
-  std::cout << "=========================================" << std::endl;
+  std::cout << "==========================================\n";
+  std::cout << "Quinoa: Random number generator test suite\n";
+  std::cout << "==========================================" << std::endl;
 }
 
 static void echoBuildInfo()
@@ -41,7 +40,8 @@ static void echoBuildInfo()
 {
   std::cout << "\nBuild environment:"
                "\n------------------\n";
-  std::cout << " * Executable                  : " << QUINOA_EXECUTABLE << "\n";
+  std::cout << " * Executable                  : " << QUINOA_RNGTEST_EXECUTABLE
+            << "\n";
   std::cout << " * Version                     : " << QUINOA_VERSION << "\n";
   std::cout << " * Release                     : " << QUINOA_RELEASE << "\n";
   std::cout << " * Revision                    : " << QUINOA_GIT_COMMIT << "\n";
@@ -61,13 +61,11 @@ static void echoBuildInfo()
 
 int main(int argc, char* argv[])
 //******************************************************************************
-//  Quinoa main
-//! \details Quinoa main -- This is where everything starts...
+//  Quinoa random number generator test main
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Memory* memory = nullptr;
-  QuinoaDriver* driver = nullptr;
+  RNGTestDriver* driver = nullptr;
 
   ErrCode error = ErrCode::HAPPY;
   try {
@@ -77,21 +75,12 @@ int main(int argc, char* argv[])
     // Echo build environment
     echoBuildInfo();
 
-    // Query, setup, and echo parallel enviroment
-    Paradigm paradigm;
-    paradigm.echo();
-
-    // Initialize memory manager
-    memory = new (std::nothrow) Memory(&paradigm);
-    ErrChk(memory != nullptr, ExceptType::FATAL,
-           "No memory for a memory manager?");
-
-    // Allocate and initialize driver
-    driver = new (std::nothrow) QuinoaDriver(argc, argv, memory, &paradigm);
+    // Allocate and initialize RNG test driver
+    driver = new (std::nothrow) RNGTestDriver(argc, argv);
     ErrChk(driver != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for driver");
 
-    // Solve
+    // Run RNG tests
     driver->execute();
 
   } // Catch and handle Quina::Exceptions
@@ -110,9 +99,8 @@ int main(int argc, char* argv[])
       error = qe.handleException(driver);
     }
 
-  // Finalize and deallocate driver and memory manager
+  // Finalize and deallocate driver
   if (driver) { delete driver; driver = nullptr; }
-  if (memory) { delete memory; memory = nullptr; }
 
   // Return error code
   return static_cast<int>(error);

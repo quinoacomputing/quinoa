@@ -82,6 +82,7 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
 
 set(QUINOA_EXECUTABLE "quinoa")
+set(QUINOA_RNGTEST_EXECUTABLE "rngtest")
 
 # Mass model options
 # Available mass models
@@ -251,4 +252,5 @@ add_subdirectory(Statistics)
 #add_subdirectory(ThirdParty/exodiff)
 #add_subdirectory(Utilities/forcenorm)
 #add_subdirectory(Utilities/divset)
+#add_subdirectory(test/rng)
 add_subdirectory(Main)

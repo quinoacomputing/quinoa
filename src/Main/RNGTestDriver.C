@@ -1,23 +1,23 @@
 //******************************************************************************
 /*!
-  \file      src/Main/Driver.C
+  \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 09:51:54 PM MDT
+  \date      Mon 29 Jul 2013 10:32:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Driver base class definition
-  \details   Driver base class definition
+  \brief     RNGTestDriver that drives the random number generator test suite
+  \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
 #include <iostream>
 
-#include <Driver.h>
-#include <Parser.h>
-#include <Control.h>
+#include <RNGTestDriver.h>
+#include <Timer.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
-Driver::Driver(int argc, char** argv)
+RNGTestDriver::RNGTestDriver(int argc, char** argv)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
@@ -25,27 +25,14 @@ Driver::Driver(int argc, char** argv)
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  m_control(nullptr)
+  Driver(argc, argv),
+  m_timer(nullptr)
 {
 
-  // Instantiate main control category
-  m_control = new(std::nothrow) Control;
-  ErrChk(m_control != nullptr, ExceptType::FATAL,
-         "Cannot allocate memory for control object");
-
-  // Take exactly one filename argument for now
-  // Will need to be extended with a more elaborate command line parser
-  ErrChk(argc == 2, ExceptType::FATAL,
-         "Exactly one command line argument required: filename.q");
-
-  // Instantiate control file parser
-  Parser parser(argv[1], m_control);
-
-  // Parse control file
-  parser.parse();
-
-  // Echo information of stuff parsed
-  parser.echo();
+  // Instantiate timer object
+  m_timer = new(std::nothrow) Timer;
+  ErrChk(m_timer != nullptr, ExceptType::FATAL,
+         "Cannot allocate memory for timer object");
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {
@@ -58,7 +45,7 @@ try :
     Throw(ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
-Driver::~Driver() noexcept
+RNGTestDriver::~RNGTestDriver() noexcept
 //******************************************************************************
 //  Destructor
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
@@ -69,7 +56,7 @@ Driver::~Driver() noexcept
 }
 
 void
-Driver::finalize() noexcept
+RNGTestDriver::finalize() noexcept
 //******************************************************************************
 //  Finalize
 //! \details Cleanup either at the end of business as usual or due to an
@@ -78,5 +65,15 @@ Driver::finalize() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_control)  { delete m_control;  m_control  = nullptr; }
+  if (m_timer) { delete m_timer; m_timer = nullptr; }
+}
+
+void
+RNGTestDriver::execute() const
+//******************************************************************************
+//  Execute
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::cout << "RNGTestDriver::execute()" << std::endl;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 13 Jul 2013 08:32:27 PM MDT
+  \date      Mon 29 Jul 2013 09:30:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class declaration
   \details   Driver base class declaration
@@ -11,13 +11,8 @@
 #ifndef Driver_h
 #define Driver_h
 
-#include <Memory.h>
-
 namespace Quinoa {
 
-class Geometry;
-class Physics;
-class Timer;
 class Control;
 
 //! Driver base class
@@ -25,20 +20,20 @@ class Driver {
 
   public:
     //! Constructor
-    Driver(int argc,
-           char** argv,
-           Memory* const memory,
-           Paradigm* const paradigm);
+    Driver(int argc, char** argv);
 
     //! Destructor
-    ~Driver() noexcept;
+    virtual ~Driver() noexcept;
 
     //! Solve
-    void execute() const;
+    virtual void execute() const = 0;
 
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
-    void finalize() noexcept;
+    virtual void finalize() noexcept;
+
+    //! Const control object accessor
+    Control* control() const noexcept { return m_control; }
 
   private:
     //! Don't permit copy constructor
@@ -50,19 +45,7 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
-    //! Instantiate geometry object
-    void initGeometry();
-
-    //! Instantiate physics object
-    void initPhysics();
-
-    Memory* const m_memory;           //!< Memory object
-    Paradigm* const m_paradigm;       //!< Parallel paradigm object
-
-    Geometry* m_geometry;             //!< Geometry object
-    Physics* m_physics;               //!< Physics object
     Control* m_control;               //!< Control object
-    Timer* m_timer;                   //!< Timer object
 };
 
 } // namespace Quinoa
