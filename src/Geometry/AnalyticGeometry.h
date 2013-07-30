@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:35:07 PM MDT
+  \date      Mon 29 Jul 2013 09:21:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef AnalyticGeometry_h
 #define AnalyticGeometry_h
+
+#include <vector>
 
 #include <Exception.h>
 #include <Geometry.h>

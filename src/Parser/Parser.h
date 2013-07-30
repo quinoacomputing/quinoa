@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:46:52 2013
+  \date      Mon 29 Jul 2013 09:16:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -12,14 +12,14 @@
 #define Parser_h
 
 #include <fstream>
+#include <vector>
 
+#include <Control.h>
 #include <Option.h>
 #include <PhysicsOptions.h>
 #include <PositionOptions.h>
 
 namespace Quinoa {
-
-class Control;
 
 //! Parser base
 class Parser {
