@@ -24,6 +24,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Physics/HomHydro
                     ${QUINOA_SOURCE_DIR}/Physics/HomRT
                     ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
+                    ${TPL_DIR}/include
 )
 
 add_executable(${QUINOA_EXECUTABLE}
@@ -99,13 +100,14 @@ endif()
 target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
                       Base
                       Parser
-                      #${MKL_INTERFACE_LIBRARY}
-                      #${MKL_THREAD_LIBRARY}
-                      #${MKL_CORE_LIBRARY}
-                      #${INTEL_OMP_LIBRARY}
-                      #${PTHREAD_LIBRARY}
+                      #${TESTU01_PROBDIST_LIBRARY}
+                      #${TESTU01_MYLIB_LIBRARY}
+                      ${TESTU01_LIBRARY}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_THREAD_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${INTEL_OMP_LIBRARY}
                       #${MATH_LIBRARY}
-                      #${MPI_LIBRARIES}
 )
 
 INSTALL(TARGETS ${QUINOA_RNGTEST_EXECUTABLE}

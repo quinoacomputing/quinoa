@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 10:30:42 PM MDT
+  \date      Wed Jul 31 09:49:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -14,6 +14,8 @@
 #include <Driver.h>
 
 namespace Quinoa {
+
+void MKLErrChk(int vslerr);
 
 class Timer;
 
@@ -43,6 +45,9 @@ class RNGTestDriver : public Driver {
     RNGTestDriver(RNGTestDriver&&) = delete;
     //! Don't permit move assignment
     RNGTestDriver& operator=(RNGTestDriver&&) = delete;
+
+    //! Special error handler for MKL calls
+    void MKLErrChk(int vslerr) const;
 
     Timer* m_timer;                   //!< Timer object
 };
