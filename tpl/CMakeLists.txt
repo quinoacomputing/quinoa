@@ -159,3 +159,30 @@ ExternalProject_Add_Step(
           ${SOURCE_DIR}
           ${TPL_SOURCE_DIR}/silo
 )
+
+#### TestU01 ##################################################################
+# http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+ExternalProject_Add(
+  testu01
+  PREFIX testu01
+  URL ${PROJECT_SOURCE_DIR}/TestU01.zip
+  URL_MD5 ff9bd5106178c1ca0665691db8e57293
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
+                    CC=${MPI_C_COMPILER}
+                    CFLAGS=-Wno-error=return-type
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+# Keep a copy of the source
+ExternalProject_Get_Property(testu01 SOURCE_DIR)
+ExternalProject_Add_Step(
+  testu01 copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}
+          ${TPL_SOURCE_DIR}/testu01
+)
