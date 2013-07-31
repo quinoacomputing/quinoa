@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:31:59 2013
+  \date      Tue 30 Jul 2013 08:08:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -27,6 +27,7 @@
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
+#include <RNGTestOptions.h>
 
 namespace Quinoa {
 
@@ -190,6 +191,7 @@ enum BundlePosition { TITLE=0,
                       MIX,
                       FREQUENCY,
                       MIXRATE,
+                      RNGTEST,
                       NSTEP,
                       TERM,
                       DT,
@@ -235,6 +237,7 @@ using Bundle = std::tuple<
   select::MixTypes,        //!< Selected material mix model
   select::FrequencyTypes,  //!< Selected turbulence frequency model
   select::MixRateTypes,    //!< Selected material mix rate model
+  select::RNGTestTypes,    //!< Selected RNG test suite
   uint64_t,                //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step

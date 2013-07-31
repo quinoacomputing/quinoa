@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.h
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 09:16:53 PM MDT
+  \date      Tue 30 Jul 2013 08:11:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -67,6 +67,9 @@ class Parser {
 
     //! Echo parsed data specific to turbulence frequency model
     void echoFrequency() const;
+
+    //! Echo parsed data specific to random number generator test suite
+    void echoRNGTest() const;
 
     const std::string m_filename;               //!< Name of file to parse
     Control* const m_control;                   //!< Control category

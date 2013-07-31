@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Fri Jul 26 15:35:28 2013
+  \date      Tue 30 Jul 2013 08:11:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -193,6 +193,18 @@ Parser::echoFrequency() const
 }
 
 void
+Parser::echoRNGTest() const
+//******************************************************************************
+//  Echo parsed data specific to RNG test suite
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::cout << " * RNG test suite: "
+            << grammar::RNGTest.name(m_control->get<control::RNGTEST>())
+            << std::endl;
+}
+
+void
 Parser::echo() const
 //******************************************************************************
 //  Echo information on stuff parsed
@@ -211,6 +223,7 @@ Parser::echo() const
   if (m_control->set<control::HYDRO>()) echoHydro();
   if (m_control->set<control::MIX>()) echoMix();
   if (m_control->set<control::FREQUENCY>()) echoFrequency();
+  if (m_control->set<control::RNGTEST>()) echoRNGTest();
 
   std::cout << std::endl;
 }

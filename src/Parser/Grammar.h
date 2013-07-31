@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:32:31 2013
+  \date      Tue 30 Jul 2013 08:09:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -54,6 +54,8 @@ namespace grammar {
   static control::Option<select::Mix> Mix;
   //! Turbulence frequency options
   static control::Option<select::Frequency> Frequency;
+  //! RNG test (suite) options
+  static control::Option<select::RNGTest> RNGTest;
 
   // Actions
 
@@ -297,6 +299,24 @@ namespace grammar {
     }
   };
 
+  // store selected RNG test suite
+  struct store_rngtest : action_base< store_rngtest > {
+    static void apply(const std::string& value,
+                      Stack& stack,
+                      BoolStack& boolstack) {
+      // Issue warning if overwrite
+      if (boolstack[control::RNGTEST]) {
+        std::cout << ">>> PARSER WARNING: Multiple RNG test suites defined in "
+                     "input file" << std::endl << ">>> Overwriting \""
+                  << RNGTest.name(std::get<control::RNGTEST>(stack))
+                  << "\" with \""
+                  << RNGTest.name(RNGTest.option(value)) << "\"" << std::endl;
+      }
+      std::get<control::RNGTEST>(stack) = RNGTest.option(value);
+      boolstack[control::RNGTEST] = true;
+    }
+  };
+
 
   // Grammar
 
@@ -510,6 +530,11 @@ namespace grammar {
               process<keyword::dmpi, cstore<control::DMPI>>
             > {};
 
+  // common to all RNG test suites
+  struct rngtest_common :
+         sor< process<keyword::suite, store_rngtest>
+            > {};
+
   // hommix block
   struct hommix :
          ifmust< parse<keyword::hommix, store_physics>,
@@ -533,13 +558,19 @@ namespace grammar {
          ifmust< parse<keyword::spinsflow, store_physics>,
                  block< geometry, physics_common,
                         slm, freq_gamma, dir, gendir, beta > > {};
+  // rngtest block
+  struct rngtest :
+         ifmust< parse<keyword::rngtest, store_physics>,
+                 block< rngtest_common >
+               > {};
 
   // physics
   struct physics :
          sor< hommix,
               homhydro,
               homrt,
-              spinsflow > {};
+              spinsflow,
+              rngtest > {};
 
   // main keywords
   struct keywords :

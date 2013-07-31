@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:33:05 2013
+  \date      Tue 30 Jul 2013 07:47:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -25,7 +25,8 @@ enum class PhysicsTypes : uint8_t { NO_PHYSICS=0,
                                     HOMOGENEOUS_MIX,
                                     HOMOGENEOUS_HYDRO,
                                     HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                                    SPINSFLOW };
+                                    SPINSFLOW,
+                                    RNGTEST };
 
 //! Class with base templated on the above enum class with associations
 class Physics : public Toggle<PhysicsTypes> {
@@ -42,12 +43,14 @@ class Physics : public Toggle<PhysicsTypes> {
         "Homogeneous Rayleigh-Taylor";
       names[PhysicsTypes::SPINSFLOW] =
         "Standalone-Particle Incompressible Navier-Stokes Flow";
+      names[PhysicsTypes::RNGTEST] = "Random number generator tests";
       //! keywords -> Enums
       values["no_physics"] = PhysicsTypes::NO_PHYSICS;
       values["hommix"] = PhysicsTypes::HOMOGENEOUS_MIX;
       values["homhydro"] = PhysicsTypes::HOMOGENEOUS_HYDRO;
       values["homrt"] = PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR;
       values["spinsflow"] = PhysicsTypes::SPINSFLOW;
+      values["rngtest"] = PhysicsTypes::RNGTEST;
     }
 
   private:

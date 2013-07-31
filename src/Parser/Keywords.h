@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:30:54 2013
+  \date      Tue 30 Jul 2013 07:41:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -173,6 +173,17 @@ namespace keyword {
 
   // Statistics
   using statistics = pegtl::string< s,t,a,t,i,s,t,i,c,s >;
+
+  // Random number generator (RNG) test suite
+  using rngtest = pegtl::string< r,n,g,t,e,s,t >;
+
+  // RNG test suite
+  using suite = pegtl::string< s,u,i,t,e >;
+
+  // RNG test suites
+  using smallcrush = pegtl::string< s,m,a,l,l,c,r,u,s,h >;
+  using crush = pegtl::string< c,r,u,s,h >;
+  using bigcrush = pegtl::string< b,i,g,c,r,u,s,h >;
 
 } // namespace keyword
 
