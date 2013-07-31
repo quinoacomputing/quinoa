@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Fri Jul 26 12:40:29 2013
+  \date      Tue 30 Jul 2013 07:56:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -31,6 +31,7 @@ const Bundle DEFAULTS(
   select::MixTypes::NO_MIX,            //!< Material mix model
   select::FrequencyTypes::NO_FREQUENCY,//!< Turbulence frequency model
   select::MixRateTypes::NO_MIXRATE,    //!< Material mix rate model
+  select::RNGTestTypes::NO_RNGTEST,    //!< RNG test suite
   std::numeric_limits<uint64_t>::max(),//!< Number of time steps to take
   1.0,                                 //!< Time to terminate time stepping
   0.5,                                 //!< Size of time step
