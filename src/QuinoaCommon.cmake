@@ -53,3 +53,17 @@ find_library(HDF5_LIBRARY
              NAMES hdf5
              PATHS ${TPL_DIR}/lib
 )
+
+#### TestU01
+find_library(TESTU01_LIBRARY
+             NAMES testu01
+             PATHS ${TPL_DIR}/lib
+)
+#find_library(TESTU01_PROBDIST_LIBRARY
+#             NAMES probdist
+#             PATHS ${TPL_DIR}/lib
+#)
+#find_library(TESTU01_MYLIB_LIBRARY
+#             NAMES mylib
+#             PATHS ${TPL_DIR}/lib
+#)

@@ -2,14 +2,15 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(TPL C CXX)
+project(TPL C CXX Fortran)
 include(ExternalProject)
 
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-# Find MPI
-find_package(MPI REQUIRED)
+# Find MPI and get its underlying compilers
+include(GetMPICompilers)
+get_mpi_compilers()
 
 # Set src directory where the source of third-party libraries will be copied
 set(TPL_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
@@ -22,6 +23,7 @@ MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
 #### PEGTL (Parsing Expression Grammar Template Library) ######################
 # http://code.google.com/p/pegtl
+# Header only library
 ExternalProject_Add(
   pegtl
   PREFIX pegtl
@@ -162,13 +164,16 @@ ExternalProject_Add_Step(
 
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+# No need for MPI, use underlying compilers
 ExternalProject_Add(
   testu01
   PREFIX testu01
   URL ${PROJECT_SOURCE_DIR}/TestU01.zip
   URL_MD5 ff9bd5106178c1ca0665691db8e57293
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
-                    CC=${MPI_C_COMPILER}
+                    CC=${UNDERLYING_C_COMPILER}
+                    CXX=${UNDERLYING_CXX_COMPILER}
+                    F77=${UNDERLYING_FORTRAN_COMPILER}
                     CFLAGS=-Wno-error=return-type
                     --prefix=${TPL_INSTALL_DIR}
   BUILD_IN_SOURCE 1

@@ -37,30 +37,9 @@ set(TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP} CACHE STRING
     "Third-party libraries directory")
 MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
 
-# Get MPI & its underlying compilers
-find_package(MPI REQUIRED)
-
-# Find out underlying C compiler
-execute_process(
-  COMMAND           ${MPI_C_COMPILER} "-showme:command"
-  OUTPUT_VARIABLE   UNDERLYING_C_COMPILER 
-)
-# Remove the newline character at the end of UNDERLYING_C_COMPILER
-string(REGEX REPLACE "[\r\n]" "" UNDERLYING_C_COMPILER "${UNDERLYING_C_COMPILER}")
-
-# Find out underlying C++ compiler
-execute_process(
-  COMMAND           ${MPI_CXX_COMPILER} "-showme:command"
-  OUTPUT_VARIABLE   UNDERLYING_CXX_COMPILER 
-)
-# Remove the newline character at the end of UNDERLYING_CXX_COMPILER
-string(REGEX REPLACE "[\r\n]" "" UNDERLYING_CXX_COMPILER "${UNDERLYING_CXX_COMPILER}")
-
-# Echo compilers
-MESSAGE(STATUS "MPI C compiler: " ${MPI_C_COMPILER})
-MESSAGE(STATUS "MPI C++ compiler: " ${MPI_CXX_COMPILER})
-MESSAGE(STATUS "MPI underlying C compiler: " ${UNDERLYING_C_COMPILER})
-MESSAGE(STATUS "MPI underlying C++ compiler: " ${UNDERLYING_CXX_COMPILER})
+# Find MPI and get its underlying compilers
+include(GetMPICompilers)
+get_mpi_compilers()
 
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
