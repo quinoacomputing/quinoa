@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Parser.C
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 08:11:03 PM MDT
+  \date      Thu Aug  1 14:29:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -202,6 +202,8 @@ Parser::echoRNGTest() const
   std::cout << " * RNG test suite: "
             << grammar::RNGTest.name(m_control->get<control::RNGTEST>())
             << std::endl;
+
+  m_control->echoVecOptName<control::RNGS, select::RNG>("Test RNGs");
 }
 
 void

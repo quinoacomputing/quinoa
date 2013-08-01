@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Wed Jul 31 09:49:45 2013
+  \date      Wed Jul 31 13:45:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -45,9 +45,6 @@ class RNGTestDriver : public Driver {
     RNGTestDriver(RNGTestDriver&&) = delete;
     //! Don't permit move assignment
     RNGTestDriver& operator=(RNGTestDriver&&) = delete;
-
-    //! Special error handler for MKL calls
-    void MKLErrChk(int vslerr) const;
 
     Timer* m_timer;                   //!< Timer object
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:11:20 2013
+  \date      Thu Aug  1 14:28:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -87,6 +87,18 @@ class Control {
         std::cout << " }" << std::endl;
       }
     }
+
+    //! Echo vector of Option.names if set
+    template< control::BundlePosition at, class OptionType >
+    void echoVecOptName(const std::string& msg) const {
+      if (set<at>()) {
+        control::Option<OptionType> opt;
+        std::cout << "   - " << msg << ": {";
+        for (auto& v : get<at>()) std::cout << " " << opt.name(v);
+        std::cout << " }" << std::endl;
+      }
+    }
+
 
     //! Return total number of particle properties
     int nprop() const noexcept {

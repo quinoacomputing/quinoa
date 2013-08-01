@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 08:07:13 PM MDT
+  \date      Thu Aug  1 11:16:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Turbulence frequency model options and associations
-  \details   Turbulence frequency model options and associations
+  \brief     Random number generator test suite options and associations
+  \details   Random number generator test suite options and associations
 */
 //******************************************************************************
 #ifndef RNGTestOptions_h
