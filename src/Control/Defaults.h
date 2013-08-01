@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 07:56:28 PM MDT
+  \date      Thu Aug  1 13:48:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -55,6 +55,7 @@ const Bundle DEFAULTS(
   std::vector<real>(),                 //!< Paramaters 'S'
   std::vector<real>(),                 //!< Parameters 'kappa'
   std::vector<real>(),                 //!< Parameters 'c_ij'
+  std::vector<select::RNGTypes>(),     //!< Random number generators
   2.1,                                 //!< Parameter C0
   0.5,                                 //!< Parameter Atwood number
   0.5,                                 //!< Parameter C1 in gamma freq. model

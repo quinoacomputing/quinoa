@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Keywords.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 07:41:53 PM MDT
+  \date      Thu Aug  1 13:57:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
@@ -184,6 +184,25 @@ namespace keyword {
   using smallcrush = pegtl::string< s,m,a,l,l,c,r,u,s,h >;
   using crush = pegtl::string< c,r,u,s,h >;
   using bigcrush = pegtl::string< b,i,g,c,r,u,s,h >;
+
+  // RNGs
+  using rngs = pegtl::string< r,n,g,s >;
+
+  // MKL RNGs
+  using mkl_mcg31 = pegtl::string< m,k,l,'_',m,c,g,'3','1' >;
+  using mkl_r250 = pegtl::string< m,k,l,'_',r,'2','5','0' >;
+  using mkl_mrg32k3a = pegtl::string< m,k,l,'_',m,r,g,'3','2',k,'3',a >;
+  using mkl_mcg59 = pegtl::string< m,k,l,'_',m,c,g,'5','9' >;
+  using mkl_wh = pegtl::string< m,k,l,'_',w,h >;
+  using mkl_mt19937 = pegtl::string< m,k,l,'_',m,t,'1','9','9','3','7' >;
+  using mkl_mt2203 = pegtl::string< m,k,l,'_',m,t,'2','2','0','3' >;
+  using mkl_sfmt19937 = pegtl::string< m,k,l,'_',s,f,m,t,'1','9','9','3','7' >;
+  using mkl_sobol = pegtl::string< m,k,l,'_',s,o,b,o,l >;
+  using mkl_niederr = pegtl::string< m,k,l,'_',n,i,e,d,e,r,r >;
+  using mkl_iabstract = pegtl::string< m,k,l,'_',i,a,b,s,t,r,a,c,t >;
+  using mkl_dabstract = pegtl::string< m,k,l,'_',d,a,b,s,t,r,a,c,t >;
+  using mkl_sabstract = pegtl::string< m,k,l,'_',s,a,b,s,t,r,a,c,t >;
+  using mkl_nondeterm = pegtl::string< m,k,l,'_',n,o,n,d,e,t,e,r,m >;
 
 } // namespace keyword
 

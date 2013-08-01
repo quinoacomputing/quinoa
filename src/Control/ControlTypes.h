@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 08:08:52 PM MDT
+  \date      Thu Aug  1 13:48:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -28,6 +28,7 @@
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
 #include <RNGTestOptions.h>
+#include <RNGOptions.h>
 
 namespace Quinoa {
 
@@ -215,6 +216,7 @@ enum BundlePosition { TITLE=0,
                       S,
                       KAPPA,
                       C,
+                      RNGS,
                       C0,
                       AT,
                       FREQ_GAMMA_C1,
@@ -261,6 +263,7 @@ using Bundle = std::tuple<
   std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
+  std::vector<select::RNGTypes>,  //!< Random number generators
   real,                    //!< Parameter C0 in the simplified Langevin model
   real,                    //!< Atwood number in beta model
   real,                    //!< C1 in gamma frequency model

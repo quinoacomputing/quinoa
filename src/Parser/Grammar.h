@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 08:09:41 PM MDT
+  \date      Thu Aug  1 14:40:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -56,10 +56,12 @@ namespace grammar {
   static control::Option<select::Frequency> Frequency;
   //! RNG test (suite) options
   static control::Option<select::RNGTest> RNGTest;
+  //! RNG options
+  static control::Option<select::RNG> RNG;
 
   // Actions
 
-  // convert string to 'type'
+  // convert string to 'type' via std::stringstream
   template< class type >
   static type convert(const std::string& str) {
     std::stringstream ss(str);
@@ -68,12 +70,18 @@ namespace grammar {
     return num;
   }
 
-  // convert 'type' to string
+  // convert 'type' to string via std::stringstream
   template< class type >
   static std::string convert(const type& val) {
     std::stringstream ss;
     ss << val;
     return ss.str();
+  }
+
+  // specialize convert to RNG
+  template<>
+  select::RNGTypes convert(const std::string& str) {
+    return RNG.option(str);
   }
 
   // convert & store value in state 'at' position
@@ -100,14 +108,14 @@ namespace grammar {
     }
   };
 
-  // push value in state 'at' position
-  template< control::BundlePosition at >
-  struct push : action_base< push<at> > {
+  // push value in state 'at' position, converting to type 'to'
+  template< control::BundlePosition at, typename to = real >
+  struct push : action_base< push<at,to> > {
     static void apply(const std::string& value,
                       Stack& stack,
                       BoolStack& boolstack) {
       // Convert to correct type and push element to vector at position 'at'
-      std::get<at>(stack).push_back(convert<real>(value));
+      std::get<at>(stack).push_back(convert<to>(value));
       boolstack[at] = true;
     }
   };
@@ -359,6 +367,23 @@ namespace grammar {
   struct block :
          until< read<keyword::end>, sor<comment, tokens ...> > {};
 
+  // rng: one of the random number generators
+  struct rng :
+         sor< keyword::mkl_mcg31,
+              keyword::mkl_r250,
+              keyword::mkl_mrg32k3a,
+              keyword::mkl_mcg59,
+              keyword::mkl_wh,
+              keyword::mkl_mt19937,
+              keyword::mkl_mt2203,
+              keyword::mkl_sfmt19937,
+              keyword::mkl_sobol,
+              keyword::mkl_niederr,
+              keyword::mkl_iabstract,
+              keyword::mkl_dabstract,
+              keyword::mkl_sabstract,
+              keyword::mkl_nondeterm > {};
+
   // number: optional sign followed by digits
   struct number :
          seq< opt< sor<one<'+'>, one<'-'>> >, digit> {};
@@ -532,7 +557,8 @@ namespace grammar {
 
   // common to all RNG test suites
   struct rngtest_common :
-         sor< process<keyword::suite, store_rngtest>
+         sor< process<keyword::suite, store_rngtest>,
+              list<keyword::rngs, push<control::RNGS, select::RNGTypes>, rng>
             > {};
 
   // hommix block

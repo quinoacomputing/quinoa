@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed Jul 31 09:50:37 2013
+  \date      Thu Aug  1 14:17:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -156,14 +156,14 @@ RNGTestDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  initMKL();
-
-  const char* name = "MKL VSL test";
-
-  unif01_Gen *gen;
-  gen = unif01_CreateExternGen01(const_cast<char*>(name), MKL_VSL);
-  bbattery_SmallCrush(gen);
-  unif01_DeleteExternGen01(gen);
-
-  finalizeMKL();
+//   initMKL();
+// 
+//   const char* name = "MKL VSL test";
+// 
+//   unif01_Gen *gen;
+//   gen = unif01_CreateExternGen01(const_cast<char*>(name), MKL_VSL);
+//   bbattery_SmallCrush(gen);
+//   unif01_DeleteExternGen01(gen);
+// 
+//   finalizeMKL();
 }
