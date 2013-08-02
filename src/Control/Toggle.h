@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Fri Jul 26 14:49:23 2013
+  \date      Fri Aug  2 13:02:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -28,8 +28,9 @@ class Toggle {
 
     //! Constructor
     Toggle(const std::map<Enum, std::string>& n,
-           const std::map<std::string, Enum>& v) :
-      names(n), values(v) {}
+           const std::map<std::string, Enum>& v,
+           const std::map<Enum, int>* const p = nullptr) :
+      names(n), values(v), params(p) {}
 
     //! Destructor
     virtual ~Toggle() noexcept = default;
@@ -50,6 +51,16 @@ class Toggle {
       return it->second;
     }
 
+    //! Lookup parameter based on Enum
+    int param(Enum value) const {
+      Assert(params != nullptr, ExceptType::FATAL,
+             "Attempt to search undefined parameter array");
+      auto it = params->find(value);
+      Assert(it != params->end(), ExceptType::FATAL,
+             std::string("Cannot find parameter for value \"") + value + "\"");
+      return it->second;
+    }
+
   private:
     //! Don't permit copy constructor
     Toggle(const Toggle&) = delete;
@@ -62,6 +73,7 @@ class Toggle {
 
     const std::map<Enum, std::string>& names;
     const std::map<std::string, Enum>& values;
+    const std::map<Enum, int>* const params;
 };
 
 // Operators defined outside of class (still in namespace select) to equate

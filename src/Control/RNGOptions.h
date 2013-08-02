@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Thu Aug  1 14:40:41 2013
+  \date      Fri Aug  2 12:52:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -12,6 +12,8 @@
 #define RNGOptions_h
 
 #include <map>
+
+#include <mkl_vsl.h>
 
 #include <Exception.h>
 #include <Toggle.h>
@@ -43,7 +45,7 @@ class RNG : public Toggle<RNGTypes> {
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    RNG() : Toggle<RNGTypes>(names, values) {
+    RNG() : Toggle<RNGTypes>(names, values, &brng) {
       //! Enums -> names
       names[RNGTypes::NO_RNG] = "No RNG";
       names[RNGTypes::MKL_MCG31] = "MKL_VSL_MCG31";
@@ -76,6 +78,22 @@ class RNG : public Toggle<RNGTypes> {
       values["mkl_dabstract"] = RNGTypes::MKL_DABSTRACT;
       values["mkl_sabstract"] = RNGTypes::MKL_SABSTRACT;
       values["mkl_nondeterm"] = RNGTypes::MKL_NONDETERM;
+      //! Enums -> MKL VSL BRNG parameter values
+      brng[RNGTypes::NO_RNG] = -1;
+      brng[RNGTypes::MKL_MCG31] = VSL_BRNG_MCG31;
+      brng[RNGTypes::MKL_R250] = VSL_BRNG_R250;
+      brng[RNGTypes::MKL_MRG32K3A] = VSL_BRNG_MRG32K3A;
+      brng[RNGTypes::MKL_MCG59] = VSL_BRNG_MCG59;
+      brng[RNGTypes::MKL_WH] = VSL_BRNG_WH;
+      brng[RNGTypes::MKL_MT19937] = VSL_BRNG_MT19937;
+      brng[RNGTypes::MKL_MT2203] = VSL_BRNG_MT2203;
+      brng[RNGTypes::MKL_SFMT19937] = VSL_BRNG_SFMT19937;
+      brng[RNGTypes::MKL_SOBOL] = VSL_BRNG_SOBOL;
+      brng[RNGTypes::MKL_NIEDERR] = VSL_BRNG_NIEDERR;
+      brng[RNGTypes::MKL_IABSTRACT] = VSL_BRNG_IABSTRACT;
+      brng[RNGTypes::MKL_DABSTRACT] = VSL_BRNG_DABSTRACT;
+      brng[RNGTypes::MKL_SABSTRACT] = VSL_BRNG_SABSTRACT;
+      brng[RNGTypes::MKL_NONDETERM] = VSL_BRNG_NONDETERM;
     }
 
   private:
@@ -90,6 +108,7 @@ class RNG : public Toggle<RNGTypes> {
 
     std::map<RNGTypes, std::string> names;
     std::map<std::string, RNGTypes> values;
+    std::map<RNGTypes, int> brng;
 };
 
 } // namespace select
