@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu Aug  1 14:17:22 2013
+  \date      Fri Aug  2 12:18:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -32,69 +32,70 @@ const double a = 0.0;
 const double b = 1.0;
 double r;
 
-void Quinoa::MKLErrChk(int vslerr)
-//******************************************************************************
-//  Special error handler for MKL
-//! \param[in]  vslerr     Error code
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  if (vslerr != VSL_STATUS_OK)
-    try {
-
-      std::stringstream s;
-      s << "MKL VSL Error: code " << vslerr;
-      Throw(ExceptType::FATAL, s.str());
-
-    } catch (Exception&) {
-        throw;
-      }
-      catch (std::exception& e) {
-        Throw(ExceptType::FATAL, e.what());
-      }
-      catch (...) {
-        Throw(ExceptType::UNCAUGHT, "non-standard exception");
-      }
-}
-
-void initMKL()
-{
-#ifdef MKL_CALLS
-#ifdef NDEBUG
-  vslNewStream(&stream, brng, seed);
-#else  // NDEBUG
-  Quinoa::MKLErrChk(vslNewStream(&stream, brng, seed));
-#endif // NDEBUG
-#endif
-}
-
-void finalizeMKL()
-{
-#ifdef MKL_CALLS
-#ifdef NDEBUG
-  vslDeleteStream(&stream);
-#else  // NDEBUG
-  Quinoa::MKLErrChk(vslDeleteStream(&stream));
-#endif // NDEBUG
-#endif
-}
-
-double MKL_VSL()
-//******************************************************************************
-//  MKL VSL test
-//! \author J. Bakosi
-//******************************************************************************
-{
-#ifdef MKL_CALLS
-#ifdef NDEBUG
-  vdRngUniform(method, stream, n, &r, a, b);
-#else  // NDEBUG
-  Quinoa::MKLErrChk(vdRngUniform(method, stream, n, &r, a, b));
-#endif // NDEBUG
-#endif
-
-  return r;
-}
+// void
+// MKLErrChk(int vslerr) 
+// //******************************************************************************
+// //  Special error handler for MKL
+// //! \param[in]  vslerr     Error code
+// //! \author  J. Bakosi
+// //******************************************************************************
+// {
+//   if (vslerr != VSL_STATUS_OK)
+//     try {
+// 
+//       std::stringstream s;
+//       s << "MKL VSL Error: code " << vslerr;
+//       Throw(Quinoa::ExceptType::FATAL, s.str());
+// 
+//     } catch (Exception&) {
+//         throw;
+//       }
+//       catch (std::exception& e) {
+//         Throw(Quinoa::ExceptType::FATAL, e.what());
+//       }
+//       catch (...) {
+//         Throw(Quinoa::ExceptType::UNCAUGHT, "non-standard exception");
+//       }
+// }
+// 
+// void initMKL()
+// {
+// #ifdef MKL_CALLS
+// #ifdef NDEBUG
+//   vslNewStream(&stream, brng, seed);
+// #else  // NDEBUG
+//   Quinoa::MKLErrChk(vslNewStream(&stream, brng, seed));
+// #endif // NDEBUG
+// #endif
+// }
+// 
+// void finalizeMKL()
+// {
+// #ifdef MKL_CALLS
+// #ifdef NDEBUG
+//   vslDeleteStream(&stream);
+// #else  // NDEBUG
+//   Quinoa::MKLErrChk(vslDeleteStream(&stream));
+// #endif // NDEBUG
+// #endif
+// }
+// 
+// double MKL_VSL()
+// //******************************************************************************
+// //  MKL VSL test
+// //! \author J. Bakosi
+// //******************************************************************************
+// {
+// #ifdef MKL_CALLS
+// #ifdef NDEBUG
+//   vdRngUniform(method, stream, n, &r, a, b);
+// #else  // NDEBUG
+//   Quinoa::MKLErrChk(vdRngUniform(method, stream, n, &r, a, b));
+// #endif // NDEBUG
+// #endif
+// 
+//   return r;
+// }
 
 using namespace Quinoa;
 
