@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Fri May 31 13:27:58 2013
+  \date      Fri Aug  2 15:42:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -21,25 +21,25 @@ namespace Quinoa {
 namespace select {
 
 //! Position model types
-enum class PositionTypes : uint8_t { NO_POSITION=0,
-                                     INVISCID,
-                                     VISCOUS };
+enum class PositionType : uint8_t { NO_POSITION=0,
+                                    INVISCID,
+                                    VISCOUS };
 
 //! Class with base templated on the above enum class with associations
-class Position : public Toggle<PositionTypes> {
+class Position : public Toggle<PositionType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Position() : Toggle<PositionTypes>(names, values) {
+    Position() : Toggle<PositionType>(names, values) {
       //! Enums -> names
-      names[PositionTypes::NO_POSITION] = "No position";
-      names[PositionTypes::INVISCID] = "Inviscid";
-      names[PositionTypes::VISCOUS] = "Viscous";
+      names[PositionType::NO_POSITION] = "No position";
+      names[PositionType::INVISCID] = "Inviscid";
+      names[PositionType::VISCOUS] = "Viscous";
       //! keywords -> Enums
-      values["no_position"] = PositionTypes::NO_POSITION;
-      values["pos_inviscid"] = PositionTypes::INVISCID;
-      values["pos_viscous"] = PositionTypes::INVISCID;
+      values["no_position"] = PositionType::NO_POSITION;
+      values["pos_inviscid"] = PositionType::INVISCID;
+      values["pos_viscous"] = PositionType::INVISCID;
     }
 
   private:
@@ -52,8 +52,8 @@ class Position : public Toggle<PositionTypes> {
     //! Don't permit move assigment
     Position& operator=(Position&&) = delete;
 
-    std::map<PositionTypes, std::string> names;
-    std::map<std::string, PositionTypes> values;
+    std::map<PositionType, std::string> names;
+    std::map<std::string, PositionType> values;
 };
 
 } // namespace select

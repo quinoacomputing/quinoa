@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 07:47:16 PM MDT
+  \date      Fri Aug  2 15:42:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -21,36 +21,36 @@ namespace Quinoa {
 namespace select {
 
 //! Physics types
-enum class PhysicsTypes : uint8_t { NO_PHYSICS=0,
-                                    HOMOGENEOUS_MIX,
-                                    HOMOGENEOUS_HYDRO,
-                                    HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                                    SPINSFLOW,
-                                    RNGTEST };
+enum class PhysicsType : uint8_t { NO_PHYSICS=0,
+                                   HOMOGENEOUS_MIX,
+                                   HOMOGENEOUS_HYDRO,
+                                   HOMOGENEOUS_RAYLEIGH_TAYLOR,
+                                   SPINSFLOW,
+                                   RNGTEST };
 
 //! Class with base templated on the above enum class with associations
-class Physics : public Toggle<PhysicsTypes> {
+class Physics : public Toggle<PhysicsType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    explicit Physics() : Toggle<PhysicsTypes>(names, values) {
+    explicit Physics() : Toggle<PhysicsType>(names, values) {
       //! Enums -> names
-      names[PhysicsTypes::NO_PHYSICS] = "No physics";
-      names[PhysicsTypes::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
-      names[PhysicsTypes::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
-      names[PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
+      names[PhysicsType::NO_PHYSICS] = "No physics";
+      names[PhysicsType::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
+      names[PhysicsType::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
+      names[PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
         "Homogeneous Rayleigh-Taylor";
-      names[PhysicsTypes::SPINSFLOW] =
+      names[PhysicsType::SPINSFLOW] =
         "Standalone-Particle Incompressible Navier-Stokes Flow";
-      names[PhysicsTypes::RNGTEST] = "Random number generator tests";
+      names[PhysicsType::RNGTEST] = "Random number generator tests";
       //! keywords -> Enums
-      values["no_physics"] = PhysicsTypes::NO_PHYSICS;
-      values["hommix"] = PhysicsTypes::HOMOGENEOUS_MIX;
-      values["homhydro"] = PhysicsTypes::HOMOGENEOUS_HYDRO;
-      values["homrt"] = PhysicsTypes::HOMOGENEOUS_RAYLEIGH_TAYLOR;
-      values["spinsflow"] = PhysicsTypes::SPINSFLOW;
-      values["rngtest"] = PhysicsTypes::RNGTEST;
+      values["no_physics"] = PhysicsType::NO_PHYSICS;
+      values["hommix"] = PhysicsType::HOMOGENEOUS_MIX;
+      values["homhydro"] = PhysicsType::HOMOGENEOUS_HYDRO;
+      values["homrt"] = PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR;
+      values["spinsflow"] = PhysicsType::SPINSFLOW;
+      values["rngtest"] = PhysicsType::RNGTEST;
     }
 
   private:
@@ -63,8 +63,8 @@ class Physics : public Toggle<PhysicsTypes> {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    std::map<PhysicsTypes, std::string> names;
-    std::map<std::string, PhysicsTypes> values;
+    std::map<PhysicsType, std::string> names;
+    std::map<std::string, PhysicsType> values;
 };
 
 } // namespace select

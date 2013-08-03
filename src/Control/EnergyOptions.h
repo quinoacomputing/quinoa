@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:34:09 2013
+  \date      Fri Aug  2 15:41:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -21,19 +21,19 @@ namespace Quinoa {
 namespace select {
 
 //! Energy model types
-enum class EnergyTypes : uint8_t { NO_ENERGY=0 };
+enum class EnergyType : uint8_t { NO_ENERGY=0 };
 
 //! Class with base templated on the above enum class with associations
-class Energy : public Toggle<EnergyTypes> {
+class Energy : public Toggle<EnergyType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Energy() : Toggle<EnergyTypes>(names, values) {
+    Energy() : Toggle<EnergyType>(names, values) {
       //! Enums -> names
-      names[EnergyTypes::NO_ENERGY] = "No energy";
+      names[EnergyType::NO_ENERGY] = "No energy";
       //! keywords -> Enums
-      values["no_energy"] = EnergyTypes::NO_ENERGY;
+      values["no_energy"] = EnergyType::NO_ENERGY;
     }
 
   private:
@@ -46,8 +46,8 @@ class Energy : public Toggle<EnergyTypes> {
     //! Don't permit move assigment
     Energy& operator=(Energy&&) = delete;
 
-    std::map<EnergyTypes, std::string> names;
-    std::map<std::string, EnergyTypes> values;
+    std::map<EnergyType, std::string> names;
+    std::map<std::string, EnergyType> values;
 };
 
 } // namespace select

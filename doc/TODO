@@ -8,3 +8,9 @@
 
 * TESTING: Don't know how long I can keep going without some sort of unit and/or
   regression testing infrastructure.
+
+* Set new handler with set_new_handler and clear allocations.
+
+* Less libraries?
+
+* Setup precompiled headers?

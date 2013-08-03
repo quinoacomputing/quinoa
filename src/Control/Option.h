@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Fri Aug  2 12:58:47 2013
+  \date      Fri 02 Aug 2013 09:57:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -11,29 +11,29 @@
 #ifndef Option_h
 #define Option_h
 
+#include <string>
+
 namespace Quinoa {
 
 namespace control {
 
-//! Generic option templated on option 'Type'
+//! Generic option interface templated on option 'Type'
 template< class Type >
 class Option {
 
   public:
     //! Lookup option value
-    typename Type::EnumType option(const std::string& keyword) const {
-      return optionType.value(keyword);
+    typename Type::EnumType value(const std::string& keyword) const {
+      return m_option.value(keyword);
     }
 
     //! Lookup option name
     const std::string& name(typename Type::EnumType value) const {
-      return optionType.name(value);
+      return m_option.name(value);
     }
 
-    //! Lookup option parameter
-    int param(typename Type::EnumType value) const {
-      return optionType.param(value);
-    }
+  protected:
+    Type m_option;                         //!< Option
 
   private:
     //! Permit compiler to generate private copy constructor
@@ -42,8 +42,6 @@ class Option {
     Option& operator=(const Option&) = delete;
     //! Don't permit move assigment
     Option& operator=(Option&&) = delete;
-
-    Type optionType;                         //!< Option type class
 };
 
 } // namespace control

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Wed May 29 07:32:19 2013
+  \date      Fri Aug  2 15:41:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -21,22 +21,22 @@ namespace Quinoa {
 namespace select {
 
 //! Material mix rate model types
-enum class MixRateTypes : uint8_t { NO_MIXRATE=0,
-                                    GAMMA };
+enum class MixRateType : uint8_t { NO_MIXRATE=0,
+                                   GAMMA };
 
 //! Class with base templated on the above enum class with associations
-class MixRate : public Toggle<MixRateTypes> {
+class MixRate : public Toggle<MixRateType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    MixRate() : Toggle<MixRateTypes>(names, values) {
+    MixRate() : Toggle<MixRateType>(names, values) {
       //! Enums -> names
-      names[MixRateTypes::NO_MIXRATE] = "No mix rate";
-      names[MixRateTypes::GAMMA] = "Gamma";
+      names[MixRateType::NO_MIXRATE] = "No mix rate";
+      names[MixRateType::GAMMA] = "Gamma";
       //! keywords -> Enums
-      values["no_mixrate"] = MixRateTypes::NO_MIXRATE;
-      values["gamma"] = MixRateTypes::GAMMA;
+      values["no_mixrate"] = MixRateType::NO_MIXRATE;
+      values["gamma"] = MixRateType::GAMMA;
     }
 
   private:
@@ -49,8 +49,8 @@ class MixRate : public Toggle<MixRateTypes> {
     //! Don't permit move assigment
     MixRate& operator=(MixRate&&) = delete;
 
-    std::map<MixRateTypes, std::string> names;
-    std::map<std::string, MixRateTypes> values;
+    std::map<MixRateType, std::string> names;
+    std::map<std::string, MixRateType> values;
 };
 
 } // namespace select

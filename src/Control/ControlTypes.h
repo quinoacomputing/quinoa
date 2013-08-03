@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/ControlTypes.h
   \author    J. Bakosi
-  \date      Thu Aug  1 13:48:54 2013
+  \date      Fri Aug  2 17:57:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -69,15 +69,15 @@ struct Term {
   // performance issue, plot is here in Term.
 
   //! Constructor
-  explicit Term(const int f,
-                const Quantity q,
-                const Moment m,
-                const char n,
-                const bool p) : field(f),
-                                quantity(q),
-                                moment(m),
-                                name(n),
-                                plot(p) {}
+  explicit Term(int f,
+                Quantity q,
+                Moment m,
+                char n,
+                bool p) : field(f),
+                          quantity(q),
+                          moment(m),
+                          name(n),
+                          plot(p) {}
 
   //! Equal operator for finding unique elements, used by e.g., std::unique()
   //! Test only on field, quantity, and moment
@@ -230,16 +230,16 @@ enum BundlePosition { TITLE=0,
 //! Storage bundle for parsed data
 using Bundle = std::tuple<
   std::string,             //!< Problem Title
-  select::GeometryTypes,   //!< Selected geometry definition
-  select::PhysicsTypes,    //!< Selected physics
-  select::PositionTypes,   //!< Selected position model
-  select::MassTypes,       //!< Selected mass model
-  select::HydroTypes,      //!< Selected hydrodynamics model
-  select::EnergyTypes,     //!< Selected internal energy model
-  select::MixTypes,        //!< Selected material mix model
-  select::FrequencyTypes,  //!< Selected turbulence frequency model
-  select::MixRateTypes,    //!< Selected material mix rate model
-  select::RNGTestTypes,    //!< Selected RNG test suite
+  select::GeometryType,    //!< Selected geometry definition
+  select::PhysicsType,     //!< Selected physics
+  select::PositionType,    //!< Selected position model
+  select::MassType,        //!< Selected mass model
+  select::HydroType,       //!< Selected hydrodynamics model
+  select::EnergyType,      //!< Selected internal energy model
+  select::MixType,         //!< Selected material mix model
+  select::FrequencyType,   //!< Selected turbulence frequency model
+  select::MixRateType,     //!< Selected material mix rate model
+  select::RNGTestType,     //!< Selected RNG test suite
   uint64_t,                //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step
@@ -263,7 +263,7 @@ using Bundle = std::tuple<
   std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
-  std::vector<select::RNGTypes>,  //!< Random number generators
+  std::vector<select::RNGType>,  //!< Random number generators
   real,                    //!< Parameter C0 in the simplified Langevin model
   real,                    //!< Atwood number in beta model
   real,                    //!< C1 in gamma frequency model

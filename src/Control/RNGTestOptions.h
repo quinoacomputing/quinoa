@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Thu Aug  1 11:16:01 2013
+  \date      Fri Aug  2 15:43:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite options and associations
   \details   Random number generator test suite options and associations
@@ -21,28 +21,28 @@ namespace Quinoa {
 namespace select {
 
 //! Random number generator test types
-enum class RNGTestTypes : uint8_t { NO_RNGTEST=0,
-                                    SMALLCRUSH,
-                                    CRUSH,
-                                    BIGCRUSH };
+enum class RNGTestType : uint8_t { NO_RNGTEST=0,
+                                   SMALLCRUSH,
+                                   CRUSH,
+                                   BIGCRUSH };
 
 //! Class with base templated on the above enum class with associations
-class RNGTest : public Toggle<RNGTestTypes> {
+class RNGTest : public Toggle<RNGTestType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    RNGTest() : Toggle<RNGTestTypes>(names, values) {
+    RNGTest() : Toggle<RNGTestType>(names, values) {
       //! Enums -> names
-      names[RNGTestTypes::NO_RNGTEST] = "No RNG test suite";
-      names[RNGTestTypes::SMALLCRUSH] = "SmallCrush";
-      names[RNGTestTypes::CRUSH] = "Crush";
-      names[RNGTestTypes::BIGCRUSH] = "BigCrush";
+      names[RNGTestType::NO_RNGTEST] = "No RNG test suite";
+      names[RNGTestType::SMALLCRUSH] = "SmallCrush";
+      names[RNGTestType::CRUSH] = "Crush";
+      names[RNGTestType::BIGCRUSH] = "BigCrush";
       //! keywords -> Enums
-      values["no_rngtest"] = RNGTestTypes::NO_RNGTEST;
-      values["smallcrush"] = RNGTestTypes::SMALLCRUSH;
-      values["crush"] = RNGTestTypes::CRUSH;
-      values["bigcrush"] = RNGTestTypes::BIGCRUSH;
+      values["no_rngtest"] = RNGTestType::NO_RNGTEST;
+      values["smallcrush"] = RNGTestType::SMALLCRUSH;
+      values["crush"] = RNGTestType::CRUSH;
+      values["bigcrush"] = RNGTestType::BIGCRUSH;
     }
 
   private:
@@ -55,8 +55,8 @@ class RNGTest : public Toggle<RNGTestTypes> {
     //! Don't permit move assigment
     RNGTest& operator=(RNGTest&&) = delete;
 
-    std::map<RNGTestTypes, std::string> names;
-    std::map<std::string, RNGTestTypes> values;
+    std::map<RNGTestType, std::string> names;
+    std::map<std::string, RNGTestType> values;
 };
 
 } // namespace select
