@@ -7,8 +7,9 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Random
+                    ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
+                    ${QUINOA_SOURCE_DIR}/Random
 )
 
 add_library(Random
@@ -17,6 +18,7 @@ add_library(Random
             MKLRandom.C
             MKLRndStream.C
             MKLRndTable.C
+            MKLTest.C
 )
 
 INSTALL(TARGETS Random

@@ -100,6 +100,7 @@ endif()
 target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
                       Base
                       Parser
+                      Random
                       #${TESTU01_PROBDIST_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}
                       ${TESTU01_LIBRARY}
@@ -107,7 +108,6 @@ target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_LIBRARY}
-                      #${MATH_LIBRARY}
 )
 
 INSTALL(TARGETS ${QUINOA_RNGTEST_EXECUTABLE}

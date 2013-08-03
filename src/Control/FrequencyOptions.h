@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Fri May 31 13:22:29 2013
+  \date      Fri Aug  2 15:41:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -21,22 +21,22 @@ namespace Quinoa {
 namespace select {
 
 //! Frequency model types
-enum class FrequencyTypes : uint8_t { NO_FREQUENCY=0,
-                                      GAMMA };
+enum class FrequencyType : uint8_t { NO_FREQUENCY=0,
+                                     GAMMA };
 
 //! Class with base templated on the above enum class with associations
-class Frequency : public Toggle<FrequencyTypes> {
+class Frequency : public Toggle<FrequencyType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Frequency() : Toggle<FrequencyTypes>(names, values) {
+    Frequency() : Toggle<FrequencyType>(names, values) {
       //! Enums -> names
-      names[FrequencyTypes::NO_FREQUENCY] = "No frequency";
-      names[FrequencyTypes::GAMMA] = "Gamma";
+      names[FrequencyType::NO_FREQUENCY] = "No frequency";
+      names[FrequencyType::GAMMA] = "Gamma";
       //! keywords -> Enums
-      values["no_frequency"] = FrequencyTypes::NO_FREQUENCY;
-      values["freq_gamma"] = FrequencyTypes::GAMMA;
+      values["no_frequency"] = FrequencyType::NO_FREQUENCY;
+      values["freq_gamma"] = FrequencyType::GAMMA;
     }
 
   private:
@@ -49,8 +49,8 @@ class Frequency : public Toggle<FrequencyTypes> {
     //! Don't permit move assigment
     Frequency& operator=(Frequency&&) = delete;
 
-    std::map<FrequencyTypes, std::string> names;
-    std::map<std::string, FrequencyTypes> values;
+    std::map<FrequencyType, std::string> names;
+    std::map<std::string, FrequencyType> values;
 };
 
 } // namespace select

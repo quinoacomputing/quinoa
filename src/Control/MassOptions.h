@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Fri May 31 13:29:16 2013
+  \date      Fri Aug  2 15:40:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -21,22 +21,22 @@ namespace Quinoa {
 namespace select {
 
 //! Mass model types
-enum class MassTypes : uint8_t { NO_MASS=0,
-                                 BETA };
+enum class MassType : uint8_t { NO_MASS=0,
+                                BETA };
 
 //! Class with base templated on the above enum class with associations
-class Mass : public Toggle<MassTypes> {
+class Mass : public Toggle<MassType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Mass() : Toggle<MassTypes>(names, values) {
+    Mass() : Toggle<MassType>(names, values) {
       //! Enums -> names
-      names[MassTypes::NO_MASS] = "No mass";
-      names[MassTypes::BETA] = "Beta";
+      names[MassType::NO_MASS] = "No mass";
+      names[MassType::BETA] = "Beta";
       //! keywords -> Enums
-      values["no_mass"] = MassTypes::NO_MASS;
-      values["mass_beta"] = MassTypes::BETA;
+      values["no_mass"] = MassType::NO_MASS;
+      values["mass_beta"] = MassType::BETA;
     }
 
   private:
@@ -49,8 +49,8 @@ class Mass : public Toggle<MassTypes> {
     //! Don't permit move assigment
     Mass& operator=(Mass&&) = delete;
 
-    std::map<MassTypes, std::string> names;
-    std::map<std::string, MassTypes> values;
+    std::map<MassType, std::string> names;
+    std::map<std::string, MassType> values;
 };
 
 } // namespace select

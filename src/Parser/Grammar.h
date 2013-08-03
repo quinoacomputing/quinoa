@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Thu Aug  1 14:40:14 2013
+  \date      Fri 02 Aug 2013 09:43:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -19,6 +19,7 @@
 #include <Macro.h>
 #include <ControlTypes.h>
 #include <Option.h>
+#include <LibOption.h>
 #include <Box.h>
 
 namespace Quinoa {
@@ -57,7 +58,7 @@ namespace grammar {
   //! RNG test (suite) options
   static control::Option<select::RNGTest> RNGTest;
   //! RNG options
-  static control::Option<select::RNG> RNG;
+  static control::LibOption<select::RNG> RNG;
 
   // Actions
 
@@ -80,8 +81,8 @@ namespace grammar {
 
   // specialize convert to RNG
   template<>
-  select::RNGTypes convert(const std::string& str) {
-    return RNG.option(str);
+  select::RNGType convert(const std::string& str) {
+    return RNG.value(str);
   }
 
   // convert & store value in state 'at' position
@@ -186,10 +187,10 @@ namespace grammar {
                      "file" << std::endl << ">>> Overwriting \""
                   << Physics.name(std::get<control::PHYSICS>(stack))
                   << "\" with \""
-                  << Physics.name(Physics.option(value)) << "\""
+                  << Physics.name(Physics.value(value)) << "\""
                   << std::endl;
       }
-      std::get<control::PHYSICS>(stack) = Physics.option(value);
+      std::get<control::PHYSICS>(stack) = Physics.value(value);
       boolstack[control::PHYSICS] = true;
     }
   };
@@ -205,10 +206,10 @@ namespace grammar {
                      "input file" << std::endl << ">>> Overwriting \""
                   << Position.name(std::get<control::POSITION>(stack))
                   << "\" with \""
-                  << Position.name(Position.option(value))
+                  << Position.name(Position.value(value))
                   << "\"" << std::endl;
       }
-      std::get<control::POSITION>(stack) = Position.option(value);
+      std::get<control::POSITION>(stack) = Position.value(value);
       boolstack[control::POSITION] = true;
     }
   };
@@ -224,10 +225,10 @@ namespace grammar {
                      "input file" << std::endl << ">>> Overwriting \""
                   << Mass.name(std::get<control::MASS>(stack))
                   << "\" with \""
-                  << Mass.name(Mass.option(value)) << "\""
+                  << Mass.name(Mass.value(value)) << "\""
                   << std::endl;
       }
-      std::get<control::MASS>(stack) = Mass.option(value);
+      std::get<control::MASS>(stack) = Mass.value(value);
       boolstack[control::MASS] = true;
     }
   };
@@ -243,10 +244,10 @@ namespace grammar {
                      "input file" << std::endl << ">>> Overwriting \""
                   << Hydro.name(std::get<control::HYDRO>(stack))
                   << "\" with \""
-                  << Hydro.name(Hydro.option(value)) << "\""
+                  << Hydro.name(Hydro.value(value)) << "\""
                   << std::endl;
       }
-      std::get<control::HYDRO>(stack) = Hydro.option(value);
+      std::get<control::HYDRO>(stack) = Hydro.value(value);
       boolstack[control::HYDRO] = true;
     }
   };
@@ -262,9 +263,9 @@ namespace grammar {
                      "file" << std::endl << ">>> Overwriting \""
                   << Mix.name(std::get<control::MIX>(stack))
                   << "\" with \""
-                  << Mix.name(Mix.option(value)) << "\"" << std::endl;
+                  << Mix.name(Mix.value(value)) << "\"" << std::endl;
       }
-      std::get<control::MIX>(stack) = Mix.option(value);
+      std::get<control::MIX>(stack) = Mix.value(value);
       boolstack[control::MIX] = true;
     }
   };
@@ -280,10 +281,10 @@ namespace grammar {
                      "input file" << std::endl << ">>> Overwriting \""
                   << Frequency.name(std::get<control::FREQUENCY>(stack))
                   << "\" with \""
-                  << Frequency.name(Frequency.option(value)) << "\""
+                  << Frequency.name(Frequency.value(value)) << "\""
                   << std::endl;
       }
-      std::get<control::FREQUENCY>(stack) = Frequency.option(value);
+      std::get<control::FREQUENCY>(stack) = Frequency.value(value);
       boolstack[control::FREQUENCY] = true;
     }
   };
@@ -300,9 +301,9 @@ namespace grammar {
                   << ">>> Overwriting \""
                   << Geometry.name(std::get<control::GEOMETRY>(stack))
                   << "\" with \""
-                  << Geometry.name(Geometry.option(value)) << "\"" << std::endl;
+                  << Geometry.name(Geometry.value(value)) << "\"" << std::endl;
       }
-      std::get<control::GEOMETRY>(stack) = Geometry.option(value);
+      std::get<control::GEOMETRY>(stack) = Geometry.value(value);
       boolstack[control::GEOMETRY] = true;
     }
   };
@@ -318,9 +319,9 @@ namespace grammar {
                      "input file" << std::endl << ">>> Overwriting \""
                   << RNGTest.name(std::get<control::RNGTEST>(stack))
                   << "\" with \""
-                  << RNGTest.name(RNGTest.option(value)) << "\"" << std::endl;
+                  << RNGTest.name(RNGTest.value(value)) << "\"" << std::endl;
       }
-      std::get<control::RNGTEST>(stack) = RNGTest.option(value);
+      std::get<control::RNGTEST>(stack) = RNGTest.value(value);
       boolstack[control::RNGTEST] = true;
     }
   };
@@ -558,7 +559,7 @@ namespace grammar {
   // common to all RNG test suites
   struct rngtest_common :
          sor< process<keyword::suite, store_rngtest>,
-              list<keyword::rngs, push<control::RNGS, select::RNGTypes>, rng>
+              list<keyword::rngs, push<control::RNGS, select::RNGType>, rng>
             > {};
 
   // hommix block

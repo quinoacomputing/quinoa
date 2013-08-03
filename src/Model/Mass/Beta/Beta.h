@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:23:24 2013
+  \date      Fri Aug  2 15:45:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -33,8 +33,8 @@ class Beta : public Mass<Beta> {
       m_At(control->get<control::AT>()) {
       // Error out if mass model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Mass, select::MassTypes, control::MASS>(
-        select::MassTypes::BETA);
+      control->matchModels<select::Mass, select::MassType, control::MASS>(
+        select::MassType::BETA);
       // ErrChk on m_At
     }
 

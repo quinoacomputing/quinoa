@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:17:37 2013
+  \date      Fri Aug  2 15:40:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -21,32 +21,32 @@ namespace Quinoa {
 namespace select {
 
 //! Mix model types
-enum class MixTypes : uint8_t { NO_MIX=0,
-                                IEM,
-                                IECM,
-                                DIRICHLET,
-                                GENERALIZED_DIRICHLET };
+enum class MixType : uint8_t { NO_MIX=0,
+                               IEM,
+                               IECM,
+                               DIRICHLET,
+                               GENERALIZED_DIRICHLET };
 
 //! Class with base templated on the above enum class with associations
-class Mix : public Toggle<MixTypes> {
+class Mix : public Toggle<MixType> {
 
   public:
     //! Constructor initializing associations
     // ICC: use initializer lists
-    Mix() : Toggle<MixTypes>(names, values){
+    Mix() : Toggle<MixType>(names, values){
       //! Enums -> names
-      names[MixTypes::NO_MIX] = "No mix";
-      names[MixTypes::IEM] = "Interaction by exchange with the mean";
-      names[MixTypes::IECM] =
+      names[MixType::NO_MIX] = "No mix";
+      names[MixType::IEM] = "Interaction by exchange with the mean";
+      names[MixType::IECM] =
         "Interaction by exchange with the conditional mean";
-      names[MixTypes::DIRICHLET] = "Dirichlet";
-      names[MixTypes::GENERALIZED_DIRICHLET] = "Generalized Dirichlet";
+      names[MixType::DIRICHLET] = "Dirichlet";
+      names[MixType::GENERALIZED_DIRICHLET] = "Generalized Dirichlet";
       //! keywords -> Enums
-      values["no_mix"] = MixTypes::NO_MIX;
-      values["mix_iem"] = MixTypes::IEM;
-      values["mix_iecm"] = MixTypes::IECM;
-      values["mix_dir"] = MixTypes::DIRICHLET;
-      values["mix_gendir"] = MixTypes::GENERALIZED_DIRICHLET;
+      values["no_mix"] = MixType::NO_MIX;
+      values["mix_iem"] = MixType::IEM;
+      values["mix_iecm"] = MixType::IECM;
+      values["mix_dir"] = MixType::DIRICHLET;
+      values["mix_gendir"] = MixType::GENERALIZED_DIRICHLET;
     }
 
   private:
@@ -59,8 +59,8 @@ class Mix : public Toggle<MixTypes> {
     //! Don't permit move assigment
     Mix& operator=(Mix&&) = delete;
 
-    std::map<MixTypes, std::string> names;
-    std::map<std::string, MixTypes> values;
+    std::map<MixType, std::string> names;
+    std::map<std::string, MixType> values;
 };
 
 } // namespace select

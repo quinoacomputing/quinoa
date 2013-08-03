@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri Aug  2 12:18:01 2013
+  \date      Fri Aug  2 16:34:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -19,9 +19,10 @@ extern "C" {
   #include <bbattery.h>
 }
 
-#include <RNGTestDriver.h>
 #include <Timer.h>
 #include <Exception.h>
+#include <RNGTestDriver.h>
+#include <MKLTest.h>
 
 VSLStreamStatePtr stream;
 const int brng = VSL_BRNG_MCG59;
@@ -157,6 +158,8 @@ RNGTestDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  MKLTest mkl(control());
+
 //   initMKL();
 // 
 //   const char* name = "MKL VSL test";

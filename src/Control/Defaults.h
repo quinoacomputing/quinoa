@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Defaults.h
   \author    J. Bakosi
-  \date      Thu Aug  1 13:48:28 2013
+  \date      Fri Aug  2 15:45:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Defaults for control
   \details   Defaults for control
@@ -22,16 +22,16 @@ namespace control {
 //! Default bundle for parsed data
 const Bundle DEFAULTS(
   "",                                  //!< Title
-  select::GeometryTypes::NO_GEOMETRY,  //!< Geometry definition
-  select::PhysicsTypes::NO_PHYSICS,    //!< Physics
-  select::PositionTypes::NO_POSITION,  //!< Position model
-  select::MassTypes::NO_MASS,          //!< Mass model
-  select::HydroTypes::NO_HYDRO,        //!< Hydrodynamics model
-  select::EnergyTypes::NO_ENERGY,      //!< Internal energy model
-  select::MixTypes::NO_MIX,            //!< Material mix model
-  select::FrequencyTypes::NO_FREQUENCY,//!< Turbulence frequency model
-  select::MixRateTypes::NO_MIXRATE,    //!< Material mix rate model
-  select::RNGTestTypes::NO_RNGTEST,    //!< RNG test suite
+  select::GeometryType::NO_GEOMETRY,   //!< Geometry definition
+  select::PhysicsType::NO_PHYSICS,     //!< Physics
+  select::PositionType::NO_POSITION,   //!< Position model
+  select::MassType::NO_MASS,           //!< Mass model
+  select::HydroType::NO_HYDRO,         //!< Hydrodynamics model
+  select::EnergyType::NO_ENERGY,       //!< Internal energy model
+  select::MixType::NO_MIX,             //!< Material mix model
+  select::FrequencyType::NO_FREQUENCY, //!< Turbulence frequency model
+  select::MixRateType::NO_MIXRATE,     //!< Material mix rate model
+  select::RNGTestType::NO_RNGTEST,     //!< RNG test suite
   std::numeric_limits<uint64_t>::max(),//!< Number of time steps to take
   1.0,                                 //!< Time to terminate time stepping
   0.5,                                 //!< Size of time step
@@ -55,7 +55,7 @@ const Bundle DEFAULTS(
   std::vector<real>(),                 //!< Paramaters 'S'
   std::vector<real>(),                 //!< Parameters 'kappa'
   std::vector<real>(),                 //!< Parameters 'c_ij'
-  std::vector<select::RNGTypes>(),     //!< Random number generators
+  std::vector<select::RNGType>(),      //!< Random number generators
   2.1,                                 //!< Parameter C0
   0.5,                                 //!< Parameter Atwood number
   0.5,                                 //!< Parameter C1 in gamma freq. model

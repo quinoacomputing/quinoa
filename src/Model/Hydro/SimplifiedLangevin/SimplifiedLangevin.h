@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:22:12 2013
+  \date      Fri Aug  2 15:45:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -34,8 +34,8 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
       m_C0(control->get<control::C0>()) {
       // Error out if hydro model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Hydro, select::HydroTypes, control::HYDRO>(
-        select::HydroTypes::SLM);
+      control->matchModels<select::Hydro, select::HydroType, control::HYDRO>(
+        select::HydroType::SLM);
       //ErrChk on m_C0
     }
 
