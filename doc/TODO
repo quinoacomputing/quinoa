@@ -23,6 +23,10 @@
 * Define own error handler for the new operator via set_new_handler(), and
   also customize set_unexpected(), set_terminate().
 
+* Automatically turn list of keywords into Keywords.h, could use constexpr
+  functions and/or classes and variadic templates? See Appendix in
+  ConcurrencyInAction.
+
 * Fix up MemoryEntry with smart pointer features: construction, assignment,
   automatic destruction as leaving scope, dereferencing, testing nullness. See
   Item 2/28.
@@ -32,12 +36,6 @@
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
-* Automatically turn list of keywords into Keywords.h, could use constexpr
-  functions and/or classes and variadic templates? See Appendix in
-  ConcurrencyInAction.
-
-* valarrays eligible for more aggressive optimizations, especially on multicore?
-
 * Use noexcept and conditional noexcept. See STL 3.1.7.
 
 * Reuse exception handling code. See STL 4.3.2.
@@ -46,7 +44,6 @@
 
 * Fix Timer. See STL 5.7. Also add clocks info. See STL 5.7.3.
 
-* Use exit codes EXIT_SUCCESS and EXIT_FAILURE at exit from main(). See STL
-  5.8.2.
+* valarrays eligible for more aggressive optimizations, especially on multicore?
 
 * Any libs for concurrent containers? Do we need any?

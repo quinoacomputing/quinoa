@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 10:26:48 PM MDT
+  \date      Sat 24 Aug 2013 10:49:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 {
   RNGTestDriver* driver = nullptr;
 
-  ErrCode error = ErrCode::HAPPY;
+  ErrCode error = ErrCode::SUCCESS;
   try {
 
     // Echo program name

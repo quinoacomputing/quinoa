@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri May 31 10:39:55 2013
+  \date      Sat 24 Aug 2013 10:52:54 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -61,10 +61,8 @@ enum class ExceptType : uint8_t {
 };
 
 //! Error codes for the OS (or whatever calls Quinoa)
-enum class ErrCode : uint8_t {
-                     HAPPY=0,        //!< Everything went fine
-                     NONFATAL,       //!< Non-fatal exceptions occurred
-                     FATAL_ERROR     //!< Fatal error occurred, had to terminate
+enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
+                     FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
 
 class Driver;
