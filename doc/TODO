@@ -1,17 +1,15 @@
-* CONTROL HIERARCHY: Control::Bundle would be nicer with a hierarchical
-  structure.
+* Control: Control::Bundle would be nicer with a hierarchical structure.
 
-* ALTERNATIVE RND LIBRARY: Need a quick switchable way of building without MKL
+* Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
   false positives) in MKL and non-MKL code. May need to implement another random
   number library.
 
-* TESTING: Don't know how long I can keep going without some sort of unit and/or
+* Testing: Don't know how long I can keep going without some sort of unit and/or
   regression testing infrastructure.
 
-* Set new handler with set_new_handler and clear allocations.
-
-* Less libraries?
+* Define own error handler for the new operator via set_new_handler(), and
+  also customize set_unexpected(), set_terminate().
 
 * Setup precompiled headers?
 
@@ -20,23 +18,35 @@
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
-* Automatically turn list of keywords into Keywords.h, could use constexpr functions and/or classes and variadic templates? See App in ConcurrencyInAction.
+* Automatically turn list of keywords into Keywords.h, could use constexpr
+  functions and/or classes and variadic templates? See Appendix in
+  ConcurrencyInAction.
 
-* Test suite for exceptions: automatically switch each potential throw location into a throw and test for clean exit (e.g. with valgrind)
+* test suite for exceptions: automatically switch each potential throw location
+  into a throw and test for clean exit (e.g. with valgrind)
 
-* Faster build: explore dynamic libs, less and larger libs, precompiled headers, reduce build  deps with ninja build dependency map
+* Faster build: explore dynamic libs, less and larger libs, precompiled headers,
+  reduce build  deps with ninja build dependency map
 
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
-* Are all base class destructors from which derived classes publicly inherit virtual? Classes designed to be only base classes should have pure virtual destructors. See Item 2/29.
+* Are all base class destructors from which derived classes publicly inherit
+  virtual? Classes designed to be only base classes should have pure virtual
+  destructors. See Item 2/29.
 
-* Classes with CRTP and the Options/Toggle classes: Shouldn't private inheritance be more suitable? Would avoid virtual destructors. Can the maps be declared static to avoid memory duplication? Disallow creation of multiple classes. See Item 2/31 end and 2/26. Is Toggle base-only? If so, should we make the destructor pure? Does this conflict with the above? See Items 2/29,31.
+* Classes with CRTP and the Options/Toggle classes: Shouldn't private
+  inheritance be more suitable? Would avoid virtual destructors. Can the maps be
+  declared static to avoid memory duplication? Disallow creation of multiple
+  classes. See Item 2/31 end and 2/26. Is Toggle base-only? If so, should we
+  make the destructor pure? Does this conflict with the above? See Items
+  2/29,31.
 
-* Define our own error handler for the new operator via set_new_handler(), and also set_unexpected(), set_terminate().
+* Fix up MemoryEntry with smart pointer features: construction, assignment,
+  automatic destruction as leaving scope, dereferencing, testing nullness. See
+  Item 2/28.
 
-* Fix up MemoryEntry with smart pointer features: construction, assignment, automatic destruction as leaving scope, dereferencing, testing nullness. See Item 2/28.
-
-* Use aggregate initializer for structs instead of having to write a fill constructor. See App in ConcurrencyInAction.
+* Use aggregate initializer for structs instead of having to write a fill
+  constructor. See App in ConcurrencyInAction.
 
 * Hunt for code duplication. E.g. Grammar.h.
 
@@ -52,6 +62,7 @@
 
 * Fix Timer. See STL 5.7. Also add clocks info. See STL 5.7.3.
 
-* Use exit codes EXIT_SUCCESS and EXIT_FAILURE at exit from main(). See STL 5.8.2.
+* Use exit codes EXIT_SUCCESS and EXIT_FAILURE at exit from main(). See STL
+  5.8.2.
 
-* Any libs for concurrent containers?
+* Any libs for concurrent containers? Do we need any?
