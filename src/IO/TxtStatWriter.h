@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Fri Jul 26 12:54:37 2013
+  \date      Sat 24 Aug 2013 08:47:02 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -29,7 +29,7 @@ class TxtStatWriter : public Writer {
                            Statistics* const statistics);
 
     //! Destructor
-    ~TxtStatWriter() noexcept = default;
+    virtual ~TxtStatWriter() noexcept = default;
 
     //! Write out statistics file header
     void header();

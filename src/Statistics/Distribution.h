@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:11:20 2013
+  \date      Sat 24 Aug 2013 09:01:43 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -22,16 +22,16 @@ namespace Quinoa {
 class Distribution {
 
   public:
-    //! Constructor
-    explicit Distribution() noexcept : m_nsample(0) {}
-
-    //! Destructor
-    virtual ~Distribution() noexcept = default;
-
     //! Constant accessor to PDF map
     virtual const int& getNsample() const = 0;
 
   protected:
+    //! Constructor: designed to be base-only
+    explicit Distribution() noexcept : m_nsample(0) {}
+
+    //! Destructor: designed to be freed via children-only
+    virtual ~Distribution() noexcept = default;
+
     int m_nsample;          //!< Number of samples collected
 
   private:

@@ -32,14 +32,6 @@
 
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
-* Are all base class destructors from which derived classes publicly inherit
-  virtual? Classes designed to be only base classes should have pure virtual
-  destructors. See Item 2/29.
-
-* Classes with CRTP: Shouldn't private inheritance be more suitable? Would avoid
-  virtual destructors. Disallow creation of multiple classes. See Item 2/31 end,
-  2/26, 2/29.
-
 * Fix up MemoryEntry with smart pointer features: construction, assignment,
   automatic destruction as leaving scope, dereferencing, testing nullness. See
   Item 2/28.
@@ -50,8 +42,6 @@
 * Hunt for code duplication. E.g. Grammar.h.
 
 * valarrays eligible for more aggressive optimizations, especially on multicore?
-
-* Redefine terminate/abort to dump trace
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
 

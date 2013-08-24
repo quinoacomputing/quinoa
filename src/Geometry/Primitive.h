@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Primitive.h
   \author    J. Bakosi
-  \date      Tue Jul  2 12:57:52 2013
+  \date      Sat 24 Aug 2013 08:43:24 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Base for geometry primitives
   \details   Base for geometry primitives
@@ -21,7 +21,7 @@ class Primitive {
     explicit Primitive() {}
 
     //! Destructor
-    virtual ~Primitive() noexcept {}
+    virtual ~Primitive() noexcept = default;
 
   private:
     //! Don't permit copy constructor

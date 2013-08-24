@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/Random.h
   \author    J. Bakosi
-  \date      Fri Apr 26 17:19:36 2013
+  \date      Sat 24 Aug 2013 08:52:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -18,7 +18,7 @@ namespace Quinoa {
 //! Random number generator base
 class Random {
 
-  public:
+  protected:
     //! Constructor: Default, compiler generated
     explicit Random() = default;
 

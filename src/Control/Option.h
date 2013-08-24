@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 06:47:41 AM MDT
+  \date      Sat 24 Aug 2013 08:33:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -22,6 +22,9 @@ template< class Type >
 class Option {
 
   public:
+    //! Destructor
+    virtual ~Option() noexcept = default;
+
     //! Lookup option value
     typename Type::EnumType value(const std::string& keyword) const {
       return m_option.value(keyword);
