@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:40:11 2013
+  \date      Sat 24 Aug 2013 07:13:39 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -28,16 +28,9 @@ enum class MassType : uint8_t { NO_MASS=0,
 class Mass : public Toggle<MassType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Mass() : Toggle<MassType>(names, values) {
-      //! Enums -> names
-      names[MassType::NO_MASS] = "No mass";
-      names[MassType::BETA] = "Beta";
-      //! keywords -> Enums
-      values["no_mass"] = MassType::NO_MASS;
-      values["mass_beta"] = MassType::BETA;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Mass() : Toggle<MassType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -49,8 +42,17 @@ class Mass : public Toggle<MassType> {
     //! Don't permit move assigment
     Mass& operator=(Mass&&) = delete;
 
-    std::map<MassType, std::string> names;
-    std::map<std::string, MassType> values;
+    //! Enums -> names
+    const std::map<MassType, std::string> names {
+      { MassType::NO_MASS, "No mass" },
+      { MassType::BETA, "Beta" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, MassType> values {
+      { "no_mass", MassType::NO_MASS },
+      { "mass_beta", MassType::BETA }
+    };
 };
 
 } // namespace select

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:41:30 2013
+  \date      Sat 24 Aug 2013 06:56:24 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -27,14 +27,9 @@ enum class EnergyType : uint8_t { NO_ENERGY=0 };
 class Energy : public Toggle<EnergyType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Energy() : Toggle<EnergyType>(names, values) {
-      //! Enums -> names
-      names[EnergyType::NO_ENERGY] = "No energy";
-      //! keywords -> Enums
-      values["no_energy"] = EnergyType::NO_ENERGY;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Energy() : Toggle<EnergyType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -46,8 +41,15 @@ class Energy : public Toggle<EnergyType> {
     //! Don't permit move assigment
     Energy& operator=(Energy&&) = delete;
 
-    std::map<EnergyType, std::string> names;
-    std::map<std::string, EnergyType> values;
+    //! Enums -> names
+    const std::map<EnergyType, std::string> names {
+      { EnergyType::NO_ENERGY, "No energy" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, EnergyType> values {
+      { "no_energy", EnergyType::NO_ENERGY }
+    };
 };
 
 } // namespace select

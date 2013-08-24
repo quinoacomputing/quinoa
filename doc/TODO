@@ -13,6 +13,8 @@
 
 * Setup precompiled headers?
 
+* Less libraries?
+
 * auto_ptr to avoid having to explicitly free pointers in destructors. See Item
   2/9.
 
@@ -34,12 +36,9 @@
   virtual? Classes designed to be only base classes should have pure virtual
   destructors. See Item 2/29.
 
-* Classes with CRTP and the Options/Toggle classes: Shouldn't private
-  inheritance be more suitable? Would avoid virtual destructors. Can the maps be
-  declared static to avoid memory duplication? Disallow creation of multiple
-  classes. See Item 2/31 end and 2/26. Is Toggle base-only? If so, should we
-  make the destructor pure? Does this conflict with the above? See Items
-  2/29,31.
+* Classes with CRTP: Shouldn't private inheritance be more suitable? Would avoid
+  virtual destructors. Disallow creation of multiple classes. See Item 2/31 end,
+  2/26, 2/29.
 
 * Fix up MemoryEntry with smart pointer features: construction, assignment,
   automatic destruction as leaving scope, dereferencing, testing nullness. See

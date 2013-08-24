@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:40:54 2013
+  \date      Sat 24 Aug 2013 06:51:16 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -31,23 +31,9 @@ enum class MixType : uint8_t { NO_MIX=0,
 class Mix : public Toggle<MixType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Mix() : Toggle<MixType>(names, values){
-      //! Enums -> names
-      names[MixType::NO_MIX] = "No mix";
-      names[MixType::IEM] = "Interaction by exchange with the mean";
-      names[MixType::IECM] =
-        "Interaction by exchange with the conditional mean";
-      names[MixType::DIRICHLET] = "Dirichlet";
-      names[MixType::GENERALIZED_DIRICHLET] = "Generalized Dirichlet";
-      //! keywords -> Enums
-      values["no_mix"] = MixType::NO_MIX;
-      values["mix_iem"] = MixType::IEM;
-      values["mix_iecm"] = MixType::IECM;
-      values["mix_dir"] = MixType::DIRICHLET;
-      values["mix_gendir"] = MixType::GENERALIZED_DIRICHLET;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Mix() : Toggle<MixType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -59,8 +45,23 @@ class Mix : public Toggle<MixType> {
     //! Don't permit move assigment
     Mix& operator=(Mix&&) = delete;
 
-    std::map<MixType, std::string> names;
-    std::map<std::string, MixType> values;
+    //! Enums -> names
+    const std::map<MixType, std::string> names {
+      { MixType::NO_MIX, "No_mix" },
+      { MixType::IEM, "Interaction by exchange with the mean" },
+      { MixType::IECM, "Interaction by exchange with the conditional mean" },
+      { MixType::DIRICHLET, "Dirichlet" },
+      { MixType::GENERALIZED_DIRICHLET, "Generalized Dirichlet" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, MixType> values {
+      { "no_mix", MixType::NO_MIX },
+      { "mix_iem", MixType::IEM },
+      { "mix_iecm", MixType::IECM },
+      { "mix_dir", MixType::DIRICHLET },
+      { "mix_gendir", MixType::GENERALIZED_DIRICHLET }
+    };
 };
 
 } // namespace select

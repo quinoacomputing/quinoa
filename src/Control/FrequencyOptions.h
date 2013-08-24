@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:41:44 2013
+  \date      Sat 24 Aug 2013 06:58:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -28,16 +28,9 @@ enum class FrequencyType : uint8_t { NO_FREQUENCY=0,
 class Frequency : public Toggle<FrequencyType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Frequency() : Toggle<FrequencyType>(names, values) {
-      //! Enums -> names
-      names[FrequencyType::NO_FREQUENCY] = "No frequency";
-      names[FrequencyType::GAMMA] = "Gamma";
-      //! keywords -> Enums
-      values["no_frequency"] = FrequencyType::NO_FREQUENCY;
-      values["freq_gamma"] = FrequencyType::GAMMA;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Frequency() : Toggle<FrequencyType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -49,8 +42,17 @@ class Frequency : public Toggle<FrequencyType> {
     //! Don't permit move assigment
     Frequency& operator=(Frequency&&) = delete;
 
-    std::map<FrequencyType, std::string> names;
-    std::map<std::string, FrequencyType> values;
+    //! Enums -> names
+    const std::map<FrequencyType, std::string> names {
+      { FrequencyType::NO_FREQUENCY, "No frequency" },
+      { FrequencyType::GAMMA, "Gamma" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, FrequencyType> values {
+      { "no_frequency", FrequencyType::NO_FREQUENCY },
+      { "freq_gamma", FrequencyType::GAMMA }
+    };
 };
 
 } // namespace select

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:43:06 2013
+  \date      Sat 24 Aug 2013 07:24:34 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite options and associations
   \details   Random number generator test suite options and associations
@@ -30,20 +30,9 @@ enum class RNGTestType : uint8_t { NO_RNGTEST=0,
 class RNGTest : public Toggle<RNGTestType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    RNGTest() : Toggle<RNGTestType>(names, values) {
-      //! Enums -> names
-      names[RNGTestType::NO_RNGTEST] = "No RNG test suite";
-      names[RNGTestType::SMALLCRUSH] = "SmallCrush";
-      names[RNGTestType::CRUSH] = "Crush";
-      names[RNGTestType::BIGCRUSH] = "BigCrush";
-      //! keywords -> Enums
-      values["no_rngtest"] = RNGTestType::NO_RNGTEST;
-      values["smallcrush"] = RNGTestType::SMALLCRUSH;
-      values["crush"] = RNGTestType::CRUSH;
-      values["bigcrush"] = RNGTestType::BIGCRUSH;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit RNGTest() : Toggle<RNGTestType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -55,8 +44,21 @@ class RNGTest : public Toggle<RNGTestType> {
     //! Don't permit move assigment
     RNGTest& operator=(RNGTest&&) = delete;
 
-    std::map<RNGTestType, std::string> names;
-    std::map<std::string, RNGTestType> values;
+    //! Enums -> names
+    const std::map<RNGTestType, std::string> names {
+      { RNGTestType::NO_RNGTEST, "No RNG test suite" },
+      { RNGTestType::SMALLCRUSH, "SmallCrush" },
+      { RNGTestType::CRUSH, "Crush" },
+      { RNGTestType::BIGCRUSH, "BigCrush" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, RNGTestType> values {
+      { "no_rngtest", RNGTestType::NO_RNGTEST },
+      { "smallcrush", RNGTestType::SMALLCRUSH },
+      { "crush", RNGTestType::CRUSH },
+      { "bigcrush", RNGTestType::BIGCRUSH }
+    };
 };
 
 } // namespace select

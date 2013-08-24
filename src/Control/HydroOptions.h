@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:40:37 2013
+  \date      Sat 24 Aug 2013 06:54:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -29,18 +29,9 @@ enum class HydroType : uint8_t { NO_HYDRO=0,
 class Hydro : public Toggle<HydroType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Hydro() : Toggle<HydroType>(names, values) {
-      //! Enums -> names
-      names[HydroType::NO_HYDRO] = "No hydro";
-      names[HydroType::SLM] = "Simplified Langevin";
-      names[HydroType::GLM] = "Generalized Langevin";
-      //! keywords -> Enums
-      values["no_hydro"] = HydroType::NO_HYDRO;
-      values["hydro_slm"] = HydroType::SLM;
-      values["hydro_glm"] = HydroType::GLM;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Hydro() : Toggle<HydroType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -52,8 +43,19 @@ class Hydro : public Toggle<HydroType> {
     //! Don't permit move assigment
     Hydro& operator=(Hydro&&) = delete;
 
-    std::map<HydroType, std::string> names;
-    std::map<std::string, HydroType> values;
+    //! Enums -> names
+    const std::map<HydroType, std::string> names {
+      { HydroType::NO_HYDRO, "No hydro" },
+      { HydroType::SLM, "Simplified Langevin" },
+      { HydroType::GLM, "Generalized Langevin"}
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, HydroType> values {
+      { "no_hydro", HydroType::NO_HYDRO },
+      { "hydro_slm", HydroType::SLM },
+      { "hydro_glm", HydroType::GLM }
+    };
 };
 
 } // namespace select

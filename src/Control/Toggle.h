@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Fri 02 Aug 2013 10:02:38 PM MDT
+  \date      Sat 24 Aug 2013 06:24:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -26,14 +26,6 @@ class Toggle {
   public:
     using EnumType = Enum;     //! Used to access template typename from outside
 
-    //! Constructor
-    Toggle(const std::map<Enum, std::string>& n,
-           const std::map<std::string, Enum>& v) :
-      names(n), values(v) {}
-
-    //! Destructor
-    virtual ~Toggle() noexcept = default;
-
     //! Lookup Enum value based on keyword
     Enum value(const std::string keyword) const {
       auto it = values.find(keyword);
@@ -49,6 +41,15 @@ class Toggle {
              std::string("Cannot find name for value \"") + value + "\"");
       return it->second;
     }
+
+  protected:
+    //! Constructor protected: designed to be used only as a base class
+    Toggle(const std::map<Enum, std::string>& n,
+           const std::map<std::string, Enum>& v) :
+      names(n), values(v) {}
+
+    //! Destructor protected: designed to be used only as a base class
+    virtual ~Toggle() noexcept = default;
 
   private:
     //! Don't permit copy constructor

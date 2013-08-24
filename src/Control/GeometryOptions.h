@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/GeometryOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:42:06 2013
+  \date      Sat 24 Aug 2013 07:00:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -29,18 +29,9 @@ enum class GeometryType : uint8_t { NO_GEOMETRY=0,
 class Geometry : public Toggle<GeometryType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    explicit Geometry() : Toggle<GeometryType>(names, values) {
-      //! Enums -> names
-      names[GeometryType::NO_GEOMETRY] = "No geometry";
-      names[GeometryType::ANALYTIC] = "Analytic";
-      names[GeometryType::DISCRETE] = "Discrete";
-      //! keywords -> Enums
-      values["no_geometry"] = GeometryType::NO_GEOMETRY;
-      values["analytic_geometry"] = GeometryType::ANALYTIC;
-      values["discrete_geometry"] = GeometryType::DISCRETE;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Geometry() : Toggle<GeometryType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -52,8 +43,19 @@ class Geometry : public Toggle<GeometryType> {
     //! Don't permit move assigment
     Geometry& operator=(Geometry&&) = delete;
 
-    std::map<GeometryType, std::string> names;
-    std::map<std::string, GeometryType> values;
+    //! Enums -> names
+    const std::map<GeometryType, std::string> names {
+      { GeometryType::NO_GEOMETRY, "No geometry" },
+      { GeometryType::ANALYTIC, "Analytic" },
+      { GeometryType::DISCRETE, "Discrete" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, GeometryType> values {
+      { "no_geometry", GeometryType::NO_GEOMETRY },
+      { "analytic_geometry", GeometryType::ANALYTIC },
+      { "discrete_geometry", GeometryType::DISCRETE }
+    };
 };
 
 } // namespace select
