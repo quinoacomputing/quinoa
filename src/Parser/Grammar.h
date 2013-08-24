@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Fri 02 Aug 2013 09:43:48 PM MDT
+  \date      Sat 24 Aug 2013 04:36:44 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -141,21 +141,21 @@ namespace grammar {
                       BoolStack& boolstack) {
 
       // if name is given, push name, otherwise push first char of value
-      char n(name ? name : value[0]);
+      char na(name ? name : value[0]);
       // if name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference in bundle
       std::vector<control::Product>& stats =
         std::get<control::STATISTICS>(stack);
       // Push term into current product
-      stats.back().push_back(control::Term(field, quantity, moment, n, plot));
+      stats.back().push_back(control::Term(field, quantity, moment, na, plot));
 
       // If central moment, trigger mean
       if (moment == control::Moment::CENTRAL) {
         control::Term term(field,
                            quantity,
                            control::Moment::ORDINARY,
-                           toupper(n),
+                           toupper(na),
                            false);
         stats.insert(stats.end()-1, control::Product(1,term));
       }

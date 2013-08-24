@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu Aug  1 14:28:00 2013
+  \date      Sat 24 Aug 2013 04:53:06 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Main control category
   \details   Main control catgeory
@@ -54,7 +54,7 @@ class Control {
 
     //! Check if an element is set during parse
     template< control::BundlePosition at >
-    constexpr bool set() const noexcept { return m_booldata[at]; }
+    bool set() const noexcept { return m_booldata[at]; }
 
     //! Echo element if set
     template< control::BundlePosition at >

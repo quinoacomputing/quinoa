@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:07:10 2013
+  \date      Sat 24 Aug 2013 04:28:07 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -29,9 +29,9 @@ struct Data {
   V* ptr;
 
   //! Null constructor
-  explicit Data() noexcept : id(nullptr), ptr(nullptr) {}
+  explicit constexpr Data() noexcept : id(nullptr), ptr(nullptr) {}
   //! Data constructor
-  explicit Data(MemoryEntry* const Id, V* const Ptr) noexcept :
+  explicit constexpr Data(MemoryEntry* const Id, V* const Ptr) noexcept :
     id(Id), ptr(Ptr) {}
 
   //! Operator [] is overloaded to access the elements behind ptr
