@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri Jul 26 12:46:03 2013
+  \date      Sat 24 Aug 2013 08:56:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -64,12 +64,6 @@ class Physics {
   #endif
 
   public:
-    //! Constructor
-    explicit Physics(Memory* const memory,
-                     Paradigm* const paradigm,
-                     Control* const control,
-                     Timer* const timer);
-
     //! Destructor
     virtual ~Physics() noexcept;
 
@@ -116,6 +110,12 @@ class Physics {
     real* particles() const noexcept { return m_particles.ptr; }
 
   protected:
+    //! Constructor: protected, designed to be base-only
+    explicit Physics(Memory* const memory,
+                     Paradigm* const paradigm,
+                     Control* const control,
+                     Timer* const timer);
+
     const int m_nposition;                //!< Number of position components
     const int m_ndensity;                 //!< Number of density components
     const int m_nvelocity;                //!< Number of velocity components

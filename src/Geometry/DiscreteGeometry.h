@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:36:06 PM MDT
+  \date      Sat 24 Aug 2013 08:38:18 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -32,7 +32,7 @@ class DiscreteGeometry : public Geometry {
 
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
-    void finalize() noexcept;
+    virtual void finalize() noexcept;
 
     //! Initialize discrete geometry
     virtual void init();

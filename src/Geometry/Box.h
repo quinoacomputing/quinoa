@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Box.h
   \author    J. Bakosi
-  \date      Tue Jul  2 14:28:31 2013
+  \date      Sat 24 Aug 2013 08:43:34 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Box primitive
   \details   Box primitive
@@ -27,7 +27,7 @@ class Box : public Primitive {
     explicit Box(const Point& p1, const Point& p2) : m_p1(p1), m_p2(p2) {}
 
     //! Destructor
-    virtual ~Box() noexcept {}
+    virtual ~Box() noexcept = default;
 
   private:
     //! Don't permit copy constructor

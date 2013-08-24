@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:05:13 2013
+  \date      Sat 24 Aug 2013 08:59:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -25,8 +25,8 @@ class Control;
 //! Model base
 class Model {
 
-  public:
-    //! Constructor
+  protected:
+    //! Constructor: protected, designed to be base-only
     explicit Model(Memory* const memory,
                    Paradigm* const paradigm,
                    Control* const control,
@@ -76,10 +76,9 @@ class Model {
         Throw(ExceptType::UNCAUGHT, "Non-standard exception");
       }
 
-    //! Destructor
+    //! Destructor: protected, designed to be freed via chlidren-only
     virtual ~Model() noexcept { finalize(); }
 
-  protected:
     Memory* const m_memory;         //!< Memory object
     Paradigm* const m_paradigm;     //!< Parallel programming object
     Control* const m_control;       //!< Control object

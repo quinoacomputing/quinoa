@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:31:35 PM MDT
+  \date      Sat 24 Aug 2013 08:50:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -22,10 +22,10 @@ namespace Quinoa {
 class Writer {
 
   protected:
-    //! Constructor: Acquire plot file handle
+    //! Constructor: Acquire file handle
     explicit Writer(const std::string& filename);
 
-    //! Destructor: Release plot file handle
+    //! Destructor: Release file handle
     virtual ~Writer() noexcept;
 
     const std::string m_filename;    //!< File name

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Fri Jul 19 15:57:13 2013
+  \date      Sat 24 Aug 2013 08:46:43 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -26,7 +26,7 @@ class GmshTxtPlotWriter : public Writer {
       Writer(filename) {}
 
     //! Destructor: Release plot file handle
-    ~GmshTxtPlotWriter() noexcept = default;
+    virtual ~GmshTxtPlotWriter() noexcept = default;
 
   private:
     //! Don't permit copy constructor
