@@ -2,7 +2,7 @@
 /*!
   \file      src/Parser/Grammar.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 04:36:44 AM MDT
+  \date      Sat 24 Aug 2013 10:36:38 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -176,156 +176,23 @@ namespace grammar {
     }
   };
 
-  // store selected physics
-  struct store_physics : action_base< store_physics > {
+  template< class OptionType, control::BundlePosition at >
+  struct store_option : action_base< store_option<OptionType, at> > {
     static void apply(const std::string& value,
                       Stack& stack,
                       BoolStack& boolstack) {
+      control::Option<OptionType> Model;
       // Issue warning if overwrite
-      if (boolstack[control::PHYSICS]) {
-        std::cout << ">>> PARSER WARNING: Multiple physics defined in input "
-                     "file" << std::endl << ">>> Overwriting \""
-                  << Physics.name(std::get<control::PHYSICS>(stack))
-                  << "\" with \""
-                  << Physics.name(Physics.value(value)) << "\""
+      if (boolstack[at]) {
+        std::cout << ">>> PARSER WARNING: Conflicting options defined in input "
+                     "file, overwriting \"" << Model.name(std::get<at>(stack))
+                  << "\" with \"" << Model.name(Model.value(value)) << "\""
                   << std::endl;
       }
-      std::get<control::PHYSICS>(stack) = Physics.value(value);
-      boolstack[control::PHYSICS] = true;
+      std::get<at>(stack) = Model.value(value);
+      boolstack[at] = true;
     }
   };
-
-  // store selected position model
-  struct store_position : action_base< store_position > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::POSITION]) {
-        std::cout << ">>> PARSER WARNING: Multiple position models defined in "
-                     "input file" << std::endl << ">>> Overwriting \""
-                  << Position.name(std::get<control::POSITION>(stack))
-                  << "\" with \""
-                  << Position.name(Position.value(value))
-                  << "\"" << std::endl;
-      }
-      std::get<control::POSITION>(stack) = Position.value(value);
-      boolstack[control::POSITION] = true;
-    }
-  };
-
-  // store selected mass model
-  struct store_mass : action_base< store_mass > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::MASS]) {
-        std::cout << ">>> PARSER WARNING: Multiple mass models defined in "
-                     "input file" << std::endl << ">>> Overwriting \""
-                  << Mass.name(std::get<control::MASS>(stack))
-                  << "\" with \""
-                  << Mass.name(Mass.value(value)) << "\""
-                  << std::endl;
-      }
-      std::get<control::MASS>(stack) = Mass.value(value);
-      boolstack[control::MASS] = true;
-    }
-  };
-
-  // store selected hydrodynamics model
-  struct store_hydro : action_base< store_hydro > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::HYDRO]) {
-        std::cout << ">>> PARSER WARNING: Multiple hydro models defined in "
-                     "input file" << std::endl << ">>> Overwriting \""
-                  << Hydro.name(std::get<control::HYDRO>(stack))
-                  << "\" with \""
-                  << Hydro.name(Hydro.value(value)) << "\""
-                  << std::endl;
-      }
-      std::get<control::HYDRO>(stack) = Hydro.value(value);
-      boolstack[control::HYDRO] = true;
-    }
-  };
-
-  // store selected material mix model
-  struct store_mix : action_base< store_mix > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::MIX]) {
-        std::cout << ">>> PARSER WARNING: Multiple mix models defined in input "
-                     "file" << std::endl << ">>> Overwriting \""
-                  << Mix.name(std::get<control::MIX>(stack))
-                  << "\" with \""
-                  << Mix.name(Mix.value(value)) << "\"" << std::endl;
-      }
-      std::get<control::MIX>(stack) = Mix.value(value);
-      boolstack[control::MIX] = true;
-    }
-  };
-
-  // store selected turbulence frequency model
-  struct store_freq : action_base< store_freq > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::FREQUENCY]) {
-        std::cout << ">>> PARSER WARNING: Multiple frequency models defined in "
-                     "input file" << std::endl << ">>> Overwriting \""
-                  << Frequency.name(std::get<control::FREQUENCY>(stack))
-                  << "\" with \""
-                  << Frequency.name(Frequency.value(value)) << "\""
-                  << std::endl;
-      }
-      std::get<control::FREQUENCY>(stack) = Frequency.value(value);
-      boolstack[control::FREQUENCY] = true;
-    }
-  };
-
-  // store selected geometry definition
-  struct store_geometry : action_base< store_geometry > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::GEOMETRY]) {
-        std::cout << ">>> PARSER WARNING: Multiple geometry definitions "
-                     "defined in input file" << std::endl
-                  << ">>> Overwriting \""
-                  << Geometry.name(std::get<control::GEOMETRY>(stack))
-                  << "\" with \""
-                  << Geometry.name(Geometry.value(value)) << "\"" << std::endl;
-      }
-      std::get<control::GEOMETRY>(stack) = Geometry.value(value);
-      boolstack[control::GEOMETRY] = true;
-    }
-  };
-
-  // store selected RNG test suite
-  struct store_rngtest : action_base< store_rngtest > {
-    static void apply(const std::string& value,
-                      Stack& stack,
-                      BoolStack& boolstack) {
-      // Issue warning if overwrite
-      if (boolstack[control::RNGTEST]) {
-        std::cout << ">>> PARSER WARNING: Multiple RNG test suites defined in "
-                     "input file" << std::endl << ">>> Overwriting \""
-                  << RNGTest.name(std::get<control::RNGTEST>(stack))
-                  << "\" with \""
-                  << RNGTest.name(RNGTest.value(value)) << "\"" << std::endl;
-      }
-      std::get<control::RNGTEST>(stack) = RNGTest.value(value);
-      boolstack[control::RNGTEST] = true;
-    }
-  };
-
 
   // Grammar
 
@@ -448,21 +315,24 @@ namespace grammar {
 
   // analytic_geometry block
   struct analytic_geometry:
-         ifmust< parse<keyword::analytic_geometry, store_geometry>,
+         ifmust< parse< keyword::analytic_geometry,
+                        store_option<select::Geometry, control::GEOMETRY> >,
                  block< list<keyword::box, push<control::BOXES>>
                       >
                > {};
 
   // discrete_geometry block
   struct discrete_geometry:
-         ifmust< parse<keyword::discrete_geometry, store_geometry>,
+         ifmust< parse< keyword::discrete_geometry,
+                        store_option<select::Geometry, control::GEOMETRY> >,
                  block< list<keyword::box, push<control::BOXES>>
                       >
                > {};
 
   // dir block
   struct dir :
-         ifmust< parse<keyword::mix_dir, store_mix>,
+         ifmust< parse< keyword::mix_dir,
+                        store_option<select::Mix,control::MIX> >,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
                         list<keyword::dir_B, push<control::B>>,
                         list<keyword::dir_S, push<control::S>>,
@@ -472,7 +342,8 @@ namespace grammar {
 
   // gendir block
   struct gendir :
-         ifmust< parse<keyword::mix_gendir, store_mix>,
+         ifmust< parse< keyword::mix_gendir,
+                        store_option<select::Mix, control::MIX> >,
                  block< process<keyword::nscalar, cstore<control::NSCALAR>>,
                         list<keyword::dir_B, push<control::B>>,
                         list<keyword::dir_S, push<control::S>>,
@@ -489,7 +360,8 @@ namespace grammar {
 
   // slm block
   struct slm :
-         ifmust< parse< keyword::hydro_slm, store_hydro,
+         ifmust< parse< keyword::hydro_slm,
+                        store_option<select::Hydro, control::HYDRO>,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
                         push_term<control::Quantity::VELOCITY_X,
@@ -514,7 +386,8 @@ namespace grammar {
 
   // freq_gamma block
   struct freq_gamma :
-         ifmust< parse< keyword::freq_gamma, store_freq >,
+         ifmust< parse< keyword::freq_gamma,
+                        store_option<select::Frequency, control::FREQUENCY> >,
                  block< process<keyword::nfreq, cstore<control::NFREQUENCY>>,
                         process<keyword::freq_gamma_C1,
                                 cstore<control::FREQ_GAMMA_C1>>,
@@ -528,7 +401,8 @@ namespace grammar {
 
   // beta block
   struct beta :
-         ifmust< parse< keyword::mass_beta, store_mass >,
+         ifmust< parse< keyword::mass_beta,
+                        store_option<select::Mass, control::MASS> >,
                  block< process<keyword::ndensity, cstore<control::NDENSITY>>,
                         process<keyword::Beta_At, cstore<control::AT>> >
                > {};
@@ -558,36 +432,42 @@ namespace grammar {
 
   // common to all RNG test suites
   struct rngtest_common :
-         sor< process<keyword::suite, store_rngtest>,
+         sor< process< keyword::suite,
+                       store_option<select::RNGTest, control::RNGTEST> >,
               list<keyword::rngs, push<control::RNGS, select::RNGType>, rng>
             > {};
 
   // hommix block
   struct hommix :
-         ifmust< parse<keyword::hommix, store_physics>,
+         ifmust< parse< keyword::hommix,
+                        store_option<select::Physics, control::PHYSICS> >,
                  block< geometry, physics_common,
                         dir, gendir, statistics > > {};
 
   // homrt block
   struct homrt :
-         ifmust< parse<keyword::homrt, store_physics>,
+         ifmust< parse< keyword::homrt,
+                        store_option<select::Physics, control::PHYSICS> >,
                  block< geometry, physics_common,
                         dir, gendir, slm, beta, statistics > > {};
 
   // homhydro block
   struct homhydro :
-         ifmust< parse<keyword::homhydro, store_physics>,
+         ifmust< parse< keyword::homhydro,
+                        store_option<select::Physics, control::PHYSICS> >,
                  block< geometry, physics_common,
                         slm, freq_gamma, statistics > > {};
 
   // spinsflow block
   struct spinsflow :
-         ifmust< parse<keyword::spinsflow, store_physics>,
+         ifmust< parse< keyword::spinsflow,
+                        store_option<select::Physics, control::PHYSICS> >,
                  block< geometry, physics_common,
                         slm, freq_gamma, dir, gendir, beta > > {};
   // rngtest block
   struct rngtest :
-         ifmust< parse<keyword::rngtest, store_physics>,
+         ifmust< parse< keyword::rngtest,
+                        store_option<select::Physics, control::PHYSICS> >,
                  block< rngtest_common >
                > {};
 
