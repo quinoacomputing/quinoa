@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:42:29 2013
+  \date      Sat 24 Aug 2013 07:17:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -32,26 +32,9 @@ enum class PhysicsType : uint8_t { NO_PHYSICS=0,
 class Physics : public Toggle<PhysicsType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    explicit Physics() : Toggle<PhysicsType>(names, values) {
-      //! Enums -> names
-      names[PhysicsType::NO_PHYSICS] = "No physics";
-      names[PhysicsType::HOMOGENEOUS_MIX] = "Homogeneous material mixing";
-      names[PhysicsType::HOMOGENEOUS_HYDRO] = "Homogeneous hydrodynamics";
-      names[PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
-        "Homogeneous Rayleigh-Taylor";
-      names[PhysicsType::SPINSFLOW] =
-        "Standalone-Particle Incompressible Navier-Stokes Flow";
-      names[PhysicsType::RNGTEST] = "Random number generator tests";
-      //! keywords -> Enums
-      values["no_physics"] = PhysicsType::NO_PHYSICS;
-      values["hommix"] = PhysicsType::HOMOGENEOUS_MIX;
-      values["homhydro"] = PhysicsType::HOMOGENEOUS_HYDRO;
-      values["homrt"] = PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR;
-      values["spinsflow"] = PhysicsType::SPINSFLOW;
-      values["rngtest"] = PhysicsType::RNGTEST;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Physics() : Toggle<PhysicsType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -63,8 +46,27 @@ class Physics : public Toggle<PhysicsType> {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    std::map<PhysicsType, std::string> names;
-    std::map<std::string, PhysicsType> values;
+    //! Enums -> names
+    const std::map<PhysicsType, std::string> names {
+      { PhysicsType::NO_PHYSICS, "No physics" },
+      { PhysicsType::HOMOGENEOUS_MIX, "Homogeneous material mixing" },
+      { PhysicsType::HOMOGENEOUS_HYDRO, "Homogeneous hydrodynamics" },
+      { PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR,
+        "Homogeneous Rayleigh-Taylor" },
+      { PhysicsType::SPINSFLOW,
+        "Standalone-Particle Incompressible Navier-Stokes Flow" },
+      { PhysicsType::RNGTEST, "Random number generator tests" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, PhysicsType> values {
+      { "no_physics", PhysicsType::NO_PHYSICS },
+      { "hommix", PhysicsType::HOMOGENEOUS_MIX },
+      { "homhydro", PhysicsType::HOMOGENEOUS_HYDRO },
+      { "homrt", PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR },
+      { "spinsflow", PhysicsType::SPINSFLOW },
+      { "rngtest", PhysicsType::RNGTEST }
+    };
 };
 
 } // namespace select

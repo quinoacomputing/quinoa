@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:42:47 2013
+  \date      Sat 24 Aug 2013 07:19:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -29,18 +29,9 @@ enum class PositionType : uint8_t { NO_POSITION=0,
 class Position : public Toggle<PositionType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    Position() : Toggle<PositionType>(names, values) {
-      //! Enums -> names
-      names[PositionType::NO_POSITION] = "No position";
-      names[PositionType::INVISCID] = "Inviscid";
-      names[PositionType::VISCOUS] = "Viscous";
-      //! keywords -> Enums
-      values["no_position"] = PositionType::NO_POSITION;
-      values["pos_inviscid"] = PositionType::INVISCID;
-      values["pos_viscous"] = PositionType::INVISCID;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit Position() : Toggle<PositionType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -52,8 +43,19 @@ class Position : public Toggle<PositionType> {
     //! Don't permit move assigment
     Position& operator=(Position&&) = delete;
 
-    std::map<PositionType, std::string> names;
-    std::map<std::string, PositionType> values;
+    //! Enums -> names
+    const std::map<PositionType, std::string> names {
+      { PositionType::NO_POSITION, "No position" },
+      { PositionType::INVISCID, "Inviscid" },
+      { PositionType::VISCOUS, "Viscous" }
+    };
+
+    //! keywords -> Enums
+    const std::map<std::string, PositionType> values {
+      { "no_position", PositionType::NO_POSITION },
+      { "pos_inviscid", PositionType::INVISCID },
+      { "pos_viscous", PositionType::INVISCID }
+    };
 };
 
 } // namespace select

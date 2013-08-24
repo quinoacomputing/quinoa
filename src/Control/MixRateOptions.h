@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:41:10 2013
+  \date      Sat 24 Aug 2013 07:15:16 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -28,16 +28,9 @@ enum class MixRateType : uint8_t { NO_MIXRATE=0,
 class MixRate : public Toggle<MixRateType> {
 
   public:
-    //! Constructor initializing associations
-    // ICC: use initializer lists
-    MixRate() : Toggle<MixRateType>(names, values) {
-      //! Enums -> names
-      names[MixRateType::NO_MIXRATE] = "No mix rate";
-      names[MixRateType::GAMMA] = "Gamma";
-      //! keywords -> Enums
-      values["no_mixrate"] = MixRateType::NO_MIXRATE;
-      values["gamma"] = MixRateType::GAMMA;
-    }
+    //! Constructor: pass associations references to base, which will handle
+    //! class-user interactions
+    explicit MixRate() : Toggle<MixRateType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -49,8 +42,16 @@ class MixRate : public Toggle<MixRateType> {
     //! Don't permit move assigment
     MixRate& operator=(MixRate&&) = delete;
 
-    std::map<MixRateType, std::string> names;
-    std::map<std::string, MixRateType> values;
+    //! Enums -> names
+    const std::map<MixRateType, std::string> names {
+      { MixRateType::NO_MIXRATE, "No mix rate" },
+      { MixRateType::GAMMA, "Gamma" }
+    };
+    //! keywords -> Enums
+    const std::map<std::string, MixRateType> values {
+      { "no_mixrate", MixRateType::NO_MIXRATE },
+      { "gamma", MixRateType::GAMMA }
+    };
 };
 
 } // namespace select
