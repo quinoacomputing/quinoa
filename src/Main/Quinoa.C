@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 10:07:42 PM MDT
+  \date      Sat 24 Aug 2013 10:46:42 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
   Memory* memory = nullptr;
   QuinoaDriver* driver = nullptr;
 
-  ErrCode error = ErrCode::HAPPY;
+  ErrCode error = ErrCode::SUCCESS;
   try {
 
     // Echo program name

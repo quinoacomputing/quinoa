@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Mon Jul 22 08:49:46 2013
+  \date      Sat 24 Aug 2013 10:48:27 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -204,40 +204,40 @@ Exception::handleException(Driver* const driver) noexcept
   if (m_except == ExceptType::WARNING) {
 
     echo("WARNING");
-    return ErrCode::NONFATAL;
+    return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::CUMULATIVE) {
 
     echo("CUMULATIVE ERROR");
-    return ErrCode::NONFATAL;
+    return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::ERROR) {
 
     echo("ERROR");
-    return ErrCode::NONFATAL;
+    return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::FATAL) {
 
     echo("FATAL ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
     if (driver) driver->finalize();
-    return ErrCode::FATAL_ERROR;
+    return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::RUNTIME) {
 
     echo("RUNTIME ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
     if (driver) driver->finalize();
-    return ErrCode::FATAL_ERROR;
+    return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::UNCAUGHT) {
 
     echo("UNKNOWN ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
     if (driver) driver->finalize();
-    return ErrCode::FATAL_ERROR;
+    return ErrCode::FAILURE;
 
   } else {
-    return ErrCode::NONFATAL;
+    return ErrCode::FAILURE;
   }
 }
