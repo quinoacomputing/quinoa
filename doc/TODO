@@ -8,12 +8,24 @@
 * Testing: Don't know how long I can keep going without some sort of unit and/or
   regression testing infrastructure.
 
-* Define own error handler for the new operator via set_new_handler(), and
-  also customize set_unexpected(), set_terminate().
+* test suite for exceptions: automatically switch each potential throw location
+  into a throw and test for clean exit (e.g. with valgrind)
+
+* Unit tests: GoogleTest, QuickTest, Template Unit Test
+
+* Faster build: explore dynamic libs, less and larger libs, precompiled headers,
+  reduce build  deps with ninja build dependency map
 
 * Setup precompiled headers?
 
 * Less libraries?
+
+* Define own error handler for the new operator via set_new_handler(), and
+  also customize set_unexpected(), set_terminate().
+
+* Fix up MemoryEntry with smart pointer features: construction, assignment,
+  automatic destruction as leaving scope, dereferencing, testing nullness. See
+  Item 2/28.
 
 * auto_ptr to avoid having to explicitly free pointers in destructors. See Item
   2/9.
@@ -23,23 +35,6 @@
 * Automatically turn list of keywords into Keywords.h, could use constexpr
   functions and/or classes and variadic templates? See Appendix in
   ConcurrencyInAction.
-
-* test suite for exceptions: automatically switch each potential throw location
-  into a throw and test for clean exit (e.g. with valgrind)
-
-* Faster build: explore dynamic libs, less and larger libs, precompiled headers,
-  reduce build  deps with ninja build dependency map
-
-* Unit tests: GoogleTest, QuickTest, Template Unit Test
-
-* Fix up MemoryEntry with smart pointer features: construction, assignment,
-  automatic destruction as leaving scope, dereferencing, testing nullness. See
-  Item 2/28.
-
-* Use aggregate initializer for structs instead of having to write a fill
-  constructor. See App in ConcurrencyInAction.
-
-* Hunt for code duplication. E.g. Grammar.h.
 
 * valarrays eligible for more aggressive optimizations, especially on multicore?
 
