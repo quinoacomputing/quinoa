@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Statistics CXX)
 
-# Include configuration/headers/libraries common to all code
-INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
-
-
 include_directories(${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm

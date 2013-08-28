@@ -1,5 +1,8 @@
 * Control: Control::Bundle would be nicer with a hierarchical structure.
 
+* Separate parser/grammar for rndtest and quinoa, e.g., QuinoaParser,
+  RndTestParser, etc.
+
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
   false positives) in MKL and non-MKL code. May need to implement another random
@@ -10,6 +13,8 @@
 
 * test suite for exceptions: automatically switch each potential throw location
   into a throw and test for clean exit (e.g. with valgrind)
+    - valgrind can return a different exit code based on errors detected using
+      the command line argument --error-exitcode= to valgrind
 
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
