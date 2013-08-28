@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(SPINSFlow CXX)
 
-# Include configuration/headers/libraries common to all code
-INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
-
-
 include_directories(${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
                     ${QUINOA_SOURCE_DIR}/Physics
                     ${QUINOA_SOURCE_DIR}/Model

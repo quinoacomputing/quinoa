@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Beta CXX)
 
-# Include configuration/headers/libraries common to all code
-INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
-
-
 include_directories(${QUINOA_SOURCE_DIR}/Model/Mass/Beta
                     ${QUINOA_SOURCE_DIR}/Model/Mass
                     ${QUINOA_SOURCE_DIR}/Model
