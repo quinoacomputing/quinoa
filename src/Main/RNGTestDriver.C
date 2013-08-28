@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri Aug  2 16:34:35 2013
+  \date      Wed Aug 28 14:53:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -108,14 +108,8 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv)
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  Driver(argc, argv),
-  m_timer(nullptr)
+  Driver()
 {
-
-  // Instantiate timer object
-  m_timer = new(std::nothrow) Timer;
-  ErrChk(m_timer != nullptr, ExceptType::FATAL,
-         "Cannot allocate memory for timer object");
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {
@@ -148,7 +142,6 @@ RNGTestDriver::finalize() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_timer) { delete m_timer; m_timer = nullptr; }
 }
 
 void
@@ -158,7 +151,7 @@ RNGTestDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  MKLTest mkl(control());
+  //MKLTest mkl(control());
 
 //   initMKL();
 // 

@@ -12,7 +12,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
-                    ${QUINOA_SOURCE_DIR}/Parser
                     ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Model/Mass
@@ -62,7 +61,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       SimplifiedLangevin
                       GeneralizedLangevin
                       Random
-                      Parser
+                      QuinoaControl
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
@@ -99,8 +98,8 @@ endif()
 
 target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
                       Base
-                      Parser
                       Random
+                      RNGTestControl
                       #${TESTU01_PROBDIST_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}
                       ${TESTU01_LIBRARY}

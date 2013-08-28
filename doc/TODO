@@ -1,7 +1,7 @@
 * Control: Control::Bundle would be nicer with a hierarchical structure.
 
-* Separate parser/grammar for rndtest and quinoa, e.g., QuinoaParser,
-  RndTestParser, etc.
+* Separate Parser, Grammar, Control for rndtest and quinoa, e.g., QuinoaParser,
+  RndTestParser, etc. Parser, Grammar done, Control is next
 
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully

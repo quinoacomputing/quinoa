@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Grammar.h
+  \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:36:38 AM MDT
+  \date      Wed Aug 28 15:52:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Grammar definition
+  \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
              Library (PEGTL) to create the grammar and the associated parser.
              Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word of
              advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef Grammar_h
-#define Grammar_h
+#ifndef QuinoaGrammar_h
+#define QuinoaGrammar_h
 
 #include <algorithm>
 
@@ -31,7 +31,7 @@ namespace grammar {
 
   // Keywords
 
-  #include <Keywords.h>
+  #include <QuinoaKeywords.h>
 
   // State
 
@@ -496,4 +496,4 @@ namespace grammar {
 
 } // namespace Quinoa
 
-#endif // Grammar_h
+#endif // QuinoaGrammar_h

@@ -1,51 +1,51 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Parser.h
+  \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Tue 30 Jul 2013 08:11:17 PM MDT
+  \date      Wed Aug 28 15:31:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Parser base
-  \details   Parser base
+  \brief     Quinoa control file parser
+  \details   Quinoa control file parser
 */
 //******************************************************************************
-#ifndef Parser_h
-#define Parser_h
+#ifndef QuinoaParser_h
+#define QuinoaParser_h
 
-#include <fstream>
 #include <vector>
 
+#include <Parser.h>
 #include <Control.h>
-#include <Option.h>
-#include <PhysicsOptions.h>
-#include <PositionOptions.h>
 
 namespace Quinoa {
 
-//! Parser base
-class Parser {
+//! QuinoaParser : Parser
+class QuinoaParser : public Parser {
 
   public:
     //! Constructor
-    explicit Parser(const std::string& filename, Control* const control);
+    //! \param[in]  filename  Control file name to read from
+    //! \param[in]  control   Control object to put parsed data in
+    explicit QuinoaParser(const std::string& filename, Control* const control)
+      : Parser(filename, control) {}
 
     //! Destructor
-    ~Parser() = default;
+    virtual ~QuinoaParser() noexcept = default;
 
-    //! Parse
-    void parse();
+    //! Parse quinoa control file
+    virtual void parse();
 
-    //! Echo information on stuff parsed
-    void echo() const;
+    //! Echo parsed information from quinoa control
+    virtual void echo() const;
 
   private:
     //! Don't permit copy constructor
-    Parser(const Parser&) = delete;
+    QuinoaParser(const QuinoaParser&) = delete;
     //! Don't permit copy assigment
-    Parser& operator=(const Parser&) = delete;
+    QuinoaParser& operator=(const QuinoaParser&) = delete;
     //! Don't permit move constructor
-    Parser(Parser&&) = delete;
+    QuinoaParser(QuinoaParser&&) = delete;
     //! Don't permit move assigment
-    Parser& operator=(Parser&&) = delete;
+    QuinoaParser& operator=(QuinoaParser&&) = delete;
 
     //! Make requested statistics unique
     void unique(std::vector<control::Product>& statistics);
@@ -67,15 +67,8 @@ class Parser {
 
     //! Echo parsed data specific to turbulence frequency model
     void echoFrequency() const;
-
-    //! Echo parsed data specific to random number generator test suite
-    void echoRNGTest() const;
-
-    const std::string m_filename;               //!< Name of file to parse
-    Control* const m_control;                   //!< Control category
-    std::ifstream m_q;                          //!< Control file input stream
 };
 
 } // namespace Quinoa
 
-#endif // Parser_h
+#endif // QuinoaParser_h

@@ -1,49 +1,27 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Parser.C
+  \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Thu Aug  1 14:29:13 2013
+  \date      Wed Aug 28 15:30:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Parser base
-  \details   Parser base
+  \brief     Quinoa control file parser
+  \details   Quinoa control file parser
 */
 //******************************************************************************
 
 #include <pegtl.hh>
 
-#include <Grammar.h>
+#include <QuinoaParser.h>
+#include <QuinoaGrammar.h>
 #include <Control.h>
 #include <Defaults.h>
-#include <Parser.h>
-#include <Exception.h>
 
 using namespace Quinoa;
 
-Parser::Parser(const std::string& filename, Control* const control) :
-  m_filename(filename),
-  m_control(control),
-  m_q()
-//******************************************************************************
-//  Constructor
-//! \param[in]  filename      File to parse
-//! \param[in]  control       Control category where parsed data are stored
-//! \details    Exception safety: basic guarantee: if an exception is thrown,
-//!             the stream is in a valid state.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  // Check if control file exists, throw exception if it does not
-  m_q.open(m_filename, std::ifstream::in);
-  ErrChk(m_q.good(), ExceptType::FATAL, "Failed to open file: " + m_filename);
-
-  m_q.close();
-  ErrChk(!m_q.fail(), ExceptType::FATAL, "Failed to close file: " + m_filename);
-}
-
 void
-Parser::parse()
+QuinoaParser::parse()
 //******************************************************************************
-//  Parse
+//  Parse quinoa control file
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -70,7 +48,7 @@ Parser::parse()
 }
 
 void
-Parser::unique(std::vector<control::Product>& statistics)
+QuinoaParser::unique(std::vector<control::Product>& statistics)
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics
@@ -83,7 +61,7 @@ Parser::unique(std::vector<control::Product>& statistics)
 }
 
 void
-Parser::echoGeometry() const
+QuinoaParser::echoGeometry() const
 //******************************************************************************
 //  Echo parsed data specific to geometry definition
 //! \author  J. Bakosi
@@ -97,7 +75,7 @@ Parser::echoGeometry() const
 }
 
 void
-Parser::echoPhysics() const
+QuinoaParser::echoPhysics() const
 //******************************************************************************
 //  Echo parsed data specific to physics
 //! \author  J. Bakosi
@@ -126,7 +104,7 @@ Parser::echoPhysics() const
 }
 
 void
-Parser::echoMass() const
+QuinoaParser::echoMass() const
 //******************************************************************************
 //  Echo parsed data specific to mass model
 //! \author  J. Bakosi
@@ -141,7 +119,7 @@ Parser::echoMass() const
 }
 
 void
-Parser::echoHydro() const
+QuinoaParser::echoHydro() const
 //******************************************************************************
 //  Echo parsed data specific to hydrodynamics model
 //! \author  J. Bakosi
@@ -156,7 +134,7 @@ Parser::echoHydro() const
 }
 
 void
-Parser::echoMix() const
+QuinoaParser::echoMix() const
 //******************************************************************************
 //  Echo parsed data specific to mix model
 //! \author  J. Bakosi
@@ -174,7 +152,7 @@ Parser::echoMix() const
 }
 
 void
-Parser::echoFrequency() const
+QuinoaParser::echoFrequency() const
 //******************************************************************************
 //  Echo parsed data specific to turbulence frequency model
 //! \author  J. Bakosi
@@ -193,23 +171,9 @@ Parser::echoFrequency() const
 }
 
 void
-Parser::echoRNGTest() const
+QuinoaParser::echo() const
 //******************************************************************************
-//  Echo parsed data specific to RNG test suite
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::cout << " * RNG test suite: "
-            << grammar::RNGTest.name(m_control->get<control::RNGTEST>())
-            << std::endl;
-
-  m_control->echoVecOptName<control::RNGS, select::RNG>("Test RNGs");
-}
-
-void
-Parser::echo() const
-//******************************************************************************
-//  Echo information on stuff parsed
+//  Echo parsed information from quinoa control
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -225,7 +189,6 @@ Parser::echo() const
   if (m_control->set<control::HYDRO>()) echoHydro();
   if (m_control->set<control::MIX>()) echoMix();
   if (m_control->set<control::FREQUENCY>()) echoFrequency();
-  if (m_control->set<control::RNGTEST>()) echoRNGTest();
 
   std::cout << std::endl;
 }

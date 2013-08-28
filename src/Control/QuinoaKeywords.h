@@ -1,19 +1,19 @@
 //******************************************************************************
 /*!
-  \file      src/Parser/Keywords.h
+  \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Thu Aug  1 13:57:04 2013
+  \date      Wed Aug 28 11:48:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Keywords
   \details   All keywords recognized by the parser
 */
 //******************************************************************************
-#ifndef Grammar_h
-#error "Keywords.h should only be included within Grammar.h"
+#ifndef QuinoaGrammar_h
+#error "QuinoaKeywords.h should only be included within QuinoaGrammar.h"
 #endif
 
-#ifndef Keywords_h
-#define Keywords_h
+#ifndef QuinoaKeywords_h
+#define QuinoaKeywords_h
 
 // Keywords accepted by the parser
 namespace keyword {
@@ -206,4 +206,4 @@ namespace keyword {
 
 } // namespace keyword
 
-#endif // Keywords_h
+#endif // QuinoaKeywords_h
