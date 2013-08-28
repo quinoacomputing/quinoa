@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:49:15 AM MDT
+  \date      Wed Aug 28 15:12:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -61,7 +61,7 @@ static void echoBuildInfo()
 
 int main(int argc, char* argv[])
 //******************************************************************************
-//  Quinoa random number generator test main
+//  Quinoa random number generator test suite
 //! \author  J. Bakosi
 //******************************************************************************
 {

@@ -2,50 +2,32 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 09:51:54 PM MDT
+  \date      Wed Aug 28 15:01:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
 */
 //******************************************************************************
 
-#include <iostream>
-
 #include <Driver.h>
-#include <Parser.h>
-#include <Control.h>
+#include <Timer.h>
+#include <Exception.h>
 
 using namespace Quinoa;
 
-Driver::Driver(int argc, char** argv)
+Driver::Driver()
 //******************************************************************************
 //  Constructor
-//! \param[in] argc      Argument count from command line
-//! \param[in] argv      Argument vector from command line
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  m_control(nullptr)
+  m_timer(nullptr)
 {
 
-  // Instantiate main control category
-  m_control = new(std::nothrow) Control;
-  ErrChk(m_control != nullptr, ExceptType::FATAL,
-         "Cannot allocate memory for control object");
-
-  // Take exactly one filename argument for now
-  // Will need to be extended with a more elaborate command line parser
-  ErrChk(argc == 2, ExceptType::FATAL,
-         "Exactly one command line argument required: filename.q");
-
-  // Instantiate control file parser
-  Parser parser(argv[1], m_control);
-
-  // Parse control file
-  parser.parse();
-
-  // Echo information of stuff parsed
-  parser.echo();
+  // Instantiate timer object
+  m_timer = new(std::nothrow) Timer;
+  ErrChk(m_timer != nullptr, ExceptType::FATAL,
+         "Cannot allocate memory for timer object");
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {
@@ -78,5 +60,5 @@ Driver::finalize() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_control)  { delete m_control;  m_control  = nullptr; }
+  if (m_timer) { delete m_timer; m_timer = nullptr; }
 }

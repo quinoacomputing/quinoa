@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Mon 29 Jul 2013 09:20:28 PM MDT
+  \date      Wed Aug 28 15:10:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that driver Quinoa
@@ -16,9 +16,9 @@
 namespace Quinoa {
 
 class Memory;
-class Timer;
 class Paradigm;
 class Geometry;
+class Control;
 class Physics;
 
 //! QuinoaDriver : Driver
@@ -26,20 +26,20 @@ class QuinoaDriver : public Driver {
 
   public:
     //! Constructor
-    QuinoaDriver(int argc,
-                 char** argv,
-                 Memory* const memory,
-                 Paradigm* const paradigm);
+    explicit QuinoaDriver(int argc,
+                          char** argv,
+                          Memory* const memory,
+                          Paradigm* const paradigm);
 
     //! Destructor
     virtual ~QuinoaDriver() noexcept;
 
-    //! Solve
-    virtual void execute() const;
-
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
-    void finalize() noexcept;
+    virtual void finalize() noexcept;
+
+    //! Solve
+    virtual void execute() const;
 
   private:
     //! Don't permit copy constructor
@@ -60,9 +60,9 @@ class QuinoaDriver : public Driver {
     Memory* const m_memory;           //!< Memory object
     Paradigm* const m_paradigm;       //!< Parallel paradigm object
 
+    Control* m_control;               //!< Control object
     Geometry* m_geometry;             //!< Geometry object
     Physics* m_physics;               //!< Physics object
-    Timer* m_timer;                   //!< Timer object
 };
 
 } // namespace Quinoa
