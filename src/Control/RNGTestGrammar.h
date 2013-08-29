@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestGrammar.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:49:11 PM MDT
+  \date      Thu Aug 29 14:50:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -14,9 +14,11 @@
 #ifndef RNGTestGrammar_h
 #define RNGTestGrammar_h
 
-namespace Quinoa {
+namespace rngtest {
 
 namespace grammar {
+
+  //using namespace pegtl;
 
   // State
 

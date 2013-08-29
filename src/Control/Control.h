@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 07:42:03 PM MDT
+  \date      Thu Aug 29 11:16:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -13,7 +13,6 @@
 
 #include <string>
 #include <iostream>
-#include <sstream>
 #include <tuple>
 
 namespace Quinoa {

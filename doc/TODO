@@ -1,7 +1,5 @@
 * Control: Control::Bundle would be nicer with a hierarchical structure.
 
-* Use shorter namespace names
-
 * Don't echo "MPI Fortran compiler:" if empty.
 
 * Alternative RND library: Need a quick switchable way of building without MKL
