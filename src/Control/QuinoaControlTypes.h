@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:45:23 PM MDT
+  \date      Thu Aug 29 15:01:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -29,7 +29,7 @@
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace control {
 
@@ -319,6 +319,6 @@ using BoolBundle = std::vector<bool>;
 
 } // namespace control
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // QuinoaControlTypes_h

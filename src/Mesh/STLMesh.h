@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 06:52:26 AM MDT
+  \date      Thu Aug 29 15:22:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration
@@ -14,7 +14,7 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! STLMesh
 class STLMesh {
@@ -65,6 +65,6 @@ class STLMesh {
     size_t m_nnodes;                         //!< Number of nodes
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // STLMesh_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:47:07 2013
+  \date      Thu Aug 29 15:26:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -19,7 +19,7 @@
 #include <QuinoaTypes.h>
 #include <Distribution.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Joint PDF estimator
 class JPDF : public Distribution {
@@ -85,6 +85,6 @@ class JPDF : public Distribution {
     pdf m_pdf;              //!< Probability density function
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // JPDF_h

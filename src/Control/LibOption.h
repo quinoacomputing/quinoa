@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:15:37 AM MDT
+  \date      Thu Aug 29 15:01:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -15,7 +15,7 @@
 
 #include <Option.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace control {
 
@@ -48,6 +48,6 @@ class LibOption : public Option<Type> {
 
 } // namespace control
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // LibOption_h

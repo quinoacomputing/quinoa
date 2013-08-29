@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:18:03 2013
+  \date      Thu Aug 29 14:53:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -16,7 +16,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 using TimerIdx = int;
 
@@ -29,7 +29,7 @@ struct Watch {
   std::chrono::seconds s;
 };
 
-//! Quinoa::Timer
+//! Timer
 class Timer {
 
   private:
@@ -88,6 +88,6 @@ class Timer {
     Clock m_timer[MAX_TIMERS];      //!< Timers
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Timer_h

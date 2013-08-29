@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 07:48:02 PM MDT
+  \date      Thu Aug 29 15:31:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -14,7 +14,7 @@
 #include <Parser.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Parser::Parser(const std::string& filename) : m_filename(filename)
 //******************************************************************************

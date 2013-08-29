@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:47:02 AM MDT
+  \date      Thu Aug 29 15:06:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -16,7 +16,7 @@
 #include <QuinoaTypes.h>
 #include <Writer.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Statistics;
 
@@ -54,6 +54,6 @@ class TxtStatWriter : public Writer {
     const real* const m_central;        //!< Central moments
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // TxtStatWriter_h

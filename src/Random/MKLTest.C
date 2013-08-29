@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:11:20 PM MDT
+  \date      Thu Aug 29 17:17:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -15,7 +15,7 @@
 #include <Exception.h>
 #include <RNGTestControl.h>
 
-using namespace Quinoa;
+using namespace rngtest;
 
 MKLTest::MKLTest(RNGTestControl* const control) :
   m_rng(),
@@ -56,6 +56,9 @@ MKLTest::MKLErrChk(int vslerr) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  using quinoa::ExceptType;
+  using quinoa::Exception;
+
   if (vslerr != VSL_STATUS_OK)
     try {
 

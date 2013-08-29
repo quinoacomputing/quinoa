@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:46:42 AM MDT
+  \date      Thu Aug 29 15:21:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -16,9 +16,9 @@
 #include <Memory.h>
 #include <QuinoaDriver.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
-namespace Quinoa {
+namespace quinoa {
 
 static void echoName()
 //******************************************************************************
@@ -57,7 +57,7 @@ static void echoBuildInfo()
   std::cout << std::endl;
 }
 
-} // namespace Quinoa
+} // namespace quinoa
 
 int main(int argc, char* argv[])
 //******************************************************************************

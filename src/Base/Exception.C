@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:48:27 AM MDT
+  \date      Thu Aug 29 15:30:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -19,7 +19,7 @@
 #include <Driver.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Exception::Exception(const ExceptType except,
                      const std::string& message,

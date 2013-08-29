@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Fri Jul 19 15:56:20 2013
+  \date      Thu Aug 29 15:06:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -16,7 +16,7 @@
 #include <QuinoaTypes.h>
 #include <Writer.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! GlobWriter : Writer
 class GlobWriter : public Writer {
@@ -43,6 +43,6 @@ class GlobWriter : public Writer {
     GlobWriter& operator=(GlobWriter&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // GlobWriter_h

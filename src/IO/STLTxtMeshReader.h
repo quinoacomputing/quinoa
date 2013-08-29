@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sat 20 Jul 2013 07:01:12 PM MDT
+  \date      Thu Aug 29 15:05:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -18,7 +18,7 @@
 
 class STLMesh;
 
-namespace Quinoa {
+namespace quinoa {
 
 //! STLTxtMeshReader : Reader
 class STLTxtMeshReader : public Reader {
@@ -80,6 +80,6 @@ class STLTxtMeshReader : public Reader {
     STLMesh* const m_mesh;                   //!< Mesh object pointer
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // STLTxtMeshReader_h

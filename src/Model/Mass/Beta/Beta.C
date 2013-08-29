@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Fri May 31 12:09:49 2013
+  \date      Thu Aug 29 15:34:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -20,7 +20,7 @@
 #include <JPDF.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 Beta::init()

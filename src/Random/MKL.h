@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:51:47 PM MDT
+  \date      Thu Aug 29 15:25:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -15,7 +15,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! MKL-call wrappers with error handling
 class MKL {
@@ -95,6 +95,6 @@ class MKL {
     void MKLErrChk(int vslerr) const;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // MKL_h

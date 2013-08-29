@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:02:28 PM MDT
+  \date      Thu Aug 29 15:23:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -14,7 +14,7 @@
 #include <Memory.h>
 #include <Hydro.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -60,6 +60,6 @@ class GeneralizedLangevin : public Hydro<GeneralizedLangevin> {
     GeneralizedLangevin& operator=(GeneralizedLangevin&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // GeneralizedLangevin_h

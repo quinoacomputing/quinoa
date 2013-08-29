@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 07:03:17 PM MDT
+  \date      Thu Aug 29 15:33:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition
@@ -11,7 +11,7 @@
 
 #include <STLMesh.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 STLMesh::STLMesh(Memory* const memory) :
   m_memory(memory),

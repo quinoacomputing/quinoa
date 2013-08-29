@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 10:52:54 AM MDT
+  \date      Thu Aug 29 14:54:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -16,7 +16,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Throw macro that always throws an exception:
 //! Throw Exception with arguments passed in. Add source filename, function
@@ -67,7 +67,7 @@ enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
 
 class Driver;
 
-//! Quinoa::Exception base
+//! Exception base
 class Exception : public std::exception {
 
   public:
@@ -125,6 +125,6 @@ class Exception : public std::exception {
     char** m_symbolList;        //!< Symbol list of stack entries
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Exception_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 06:56:24 AM MDT
+  \date      Thu Aug 29 15:01:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -16,7 +16,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace select {
 
@@ -54,6 +54,6 @@ class Energy : public Toggle<EnergyType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // EnergyOptions_h

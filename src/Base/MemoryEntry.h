@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.h
   \author    J. Bakosi
-  \date      Tue Jul  2 15:06:23 2013
+  \date      Thu Aug 29 14:53:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory entry
   \details   The memory store contains memory entries
@@ -15,7 +15,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Value types
 enum ValType { BOOL=0,        //!< Boolean value
@@ -131,6 +131,6 @@ class MemoryEntry {
     void* m_ptr;                //!< Pointer to data
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // MemoryEntry_h

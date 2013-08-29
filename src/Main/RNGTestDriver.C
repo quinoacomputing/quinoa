@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed Aug 28 14:53:00 2013
+  \date      Thu Aug 29 17:21:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -98,7 +98,7 @@ double r;
 //   return r;
 // }
 
-using namespace Quinoa;
+using namespace rngtest;
 
 RNGTestDriver::RNGTestDriver(int argc, char** argv)
 //******************************************************************************
@@ -119,7 +119,8 @@ try :
   // Catch uncaught exceptions
   catch (...) {
     finalize();
-    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
+    using quinoa::Exception;
+    Throw(quinoa::ExceptType::UNCAUGHT, "Non-standard exception");
   }
 
 RNGTestDriver::~RNGTestDriver() noexcept

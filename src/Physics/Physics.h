@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:04:13 PM MDT
+  \date      Thu Aug 29 15:24:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,7 +16,7 @@
 #include <Mix.h>
 #include <Hydro.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -151,6 +151,6 @@ class Physics {
     Data<real> m_particles;               //!< Particle properties
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Physics_h

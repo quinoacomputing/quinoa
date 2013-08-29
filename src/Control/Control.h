@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu Aug 29 11:16:33 2013
+  \date      Thu Aug 29 15:00:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <tuple>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Control base templated on a tuple, its boolean version, and their fieldnames
 template< typename Tuple, typename BoolTuple, typename Field >
@@ -77,6 +77,6 @@ class Control {
     Control& operator=(Control&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Control_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/MemoryEntry.C
   \author    J. Bakosi
-  \date      Fri Apr 26 15:21:22 2013
+  \date      Thu Aug 29 15:31:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MemoryEntry base class definition
   \details   Memoryentry base class definition
@@ -16,7 +16,7 @@ using namespace std;
 
 #include <MemoryEntry.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 string
 MemoryEntry::line() const

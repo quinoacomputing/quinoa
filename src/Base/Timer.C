@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Tue Jul  2 15:18:26 2013
+  \date      Thu Aug 29 15:27:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -14,7 +14,7 @@
 #include <Timer.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Timer::Timer()
 //******************************************************************************

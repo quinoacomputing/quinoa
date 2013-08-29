@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:54:57 PM MDT
+  \date      Thu Aug 29 15:23:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -16,7 +16,7 @@
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -118,6 +118,6 @@ class Model {
     MKLRndStream* m_rndStr;         //!< Random number stream object
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Model_h

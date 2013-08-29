@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:59:08 PM MDT
+  \date      Thu Aug 29 15:22:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -16,7 +16,7 @@
 #include <Macro.h>
 #include <Mix.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -84,6 +84,6 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     const std::vector<real> m_c;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // GeneralizedDirichlet_h

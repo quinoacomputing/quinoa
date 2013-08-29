@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Tue Jul  2 16:09:09 2013
+  \date      Thu Aug 29 15:36:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -15,7 +15,7 @@
 #include <Paradigm.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) noexcept :
   m_memory(memory),

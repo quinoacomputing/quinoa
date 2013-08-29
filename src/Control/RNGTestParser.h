@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 07:53:21 PM MDT
+  \date      Thu Aug 29 16:58:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -14,7 +14,9 @@
 #include <Parser.h>
 #include <RNGTestControl.h>
 
-namespace Quinoa {
+namespace rngtest {
+
+using quinoa::Parser;
 
 //! RNGTestParser : Parser
 class RNGTestParser : public Parser {
@@ -50,6 +52,6 @@ class RNGTestParser : public Parser {
     RNGTestControl* const m_control;    //!< Control object
 };
 
-} // namespace Quinoa
+} // namespace rngtest
 
 #endif // RNGTestParser_h

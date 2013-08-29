@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:02:21 PM MDT
+  \date      Thu Aug 29 15:32:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -19,7 +19,7 @@
 #include <STLMesh.h>
 
 void
-Quinoa::SiloError(char* msg)
+quinoa::SiloError(char* msg)
 //******************************************************************************
 //  Silo error handler
 //! \param[in]  msg  Error message
@@ -36,7 +36,7 @@ Quinoa::SiloError(char* msg)
   Throw(ExceptType::FATAL, ss.str());
 }
 
-using namespace Quinoa;
+using namespace quinoa;
 
 SiloWriter::SiloWriter(const std::string& filename,
                        STLMesh* const mesh,

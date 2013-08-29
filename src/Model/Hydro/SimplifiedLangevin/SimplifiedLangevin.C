@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.C
   \author    J. Bakosi
-  \date      Fri May 31 12:10:36 2013
+  \date      Thu Aug 29 15:34:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -19,7 +19,7 @@
 #include <SimplifiedLangevin.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 SimplifiedLangevin::init()

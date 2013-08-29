@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:53:27 PM MDT
+  \date      Thu Aug 29 15:32:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -16,7 +16,7 @@
 #include <STLTxtMeshReader.h>
 #include <SiloWriter.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 DiscreteGeometry::DiscreteGeometry(Memory* const memory,
                                    Paradigm* const paradigm,

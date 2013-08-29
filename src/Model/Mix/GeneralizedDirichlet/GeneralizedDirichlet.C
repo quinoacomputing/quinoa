@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:01:25 PM MDT
+  \date      Thu Aug 29 15:33:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -18,7 +18,7 @@
 #include <JPDF.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 GeneralizedDirichlet::advance(int p, int tid, const real dt)

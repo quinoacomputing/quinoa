@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 10:25:57 PM MDT
+  \date      Thu Aug 29 15:22:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -15,7 +15,7 @@
 
 #include <Memory.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Base names for various mesh memory entries
 const std::string     NODES_NAME = "nodes";
@@ -130,6 +130,6 @@ class GmshMesh {
     std::vector<std::vector<int>> m_tritag;  //!< Triangle element tags
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // GmshMesh_h

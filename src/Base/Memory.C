@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Wed May 29 08:31:34 2013
+  \date      Thu Aug 29 15:30:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -27,7 +27,7 @@ using namespace std;
 #include <Memory.h>
 #include <Paradigm.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Memory::Memory(Paradigm* const paradigm) noexcept :
   m_nOMPthreads(paradigm->getOpenMP()->nthread())

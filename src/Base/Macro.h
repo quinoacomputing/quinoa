@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Macro.h
   \author    J. Bakosi
-  \date      Sat 18 May 2013 10:24:15 AM MDT
+  \date      Thu Aug 29 14:54:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Macro definitions
   \details   Macro definitions
@@ -15,7 +15,7 @@
 #include <ctime>
 #include <cstdlib>
 
-namespace Quinoa {
+namespace quinoa {
 
 #define SWAP(a,b,tmp) {tmp=a; a=b; b=tmp;}
 #define IGNORE(expr) (static_cast<void>(expr))
@@ -31,6 +31,6 @@ gettimeofday(&END_TIME, (struct timezone*)0); \
 total_usecs = (END_TIME.tv_sec-START_TIME.tv_sec) * 1000000 + (END_TIME.tv_usec-START_TIME.tv_usec); \
 printf("Total time was %d uSec.\n", total_usecs);
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Macro_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:54:16 PM MDT
+  \date      Thu Aug 29 15:35:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -21,7 +21,7 @@
 #include <QuinoaControl.h>
 #include <Physics.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,

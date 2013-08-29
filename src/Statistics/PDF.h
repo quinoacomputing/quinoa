@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:37:21 2013
+  \date      Thu Aug 29 15:26:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -17,7 +17,7 @@
 #include <QuinoaTypes.h>
 #include <Distribution.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Univariate PDF estimator
 class PDF : public Distribution {
@@ -67,6 +67,6 @@ class PDF : public Distribution {
     pdf m_pdf;              //!< Probability density function
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // PDF_h
