@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 06:24:49 AM MDT
+  \date      Thu Aug 29 17:12:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -16,7 +16,7 @@
 
 #include <Exception.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace select {
 
@@ -88,6 +88,6 @@ std::ostream& operator<< (std::ostream& os, const Enum& e) {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Toggle_h

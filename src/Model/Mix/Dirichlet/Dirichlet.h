@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:58:56 PM MDT
+  \date      Thu Aug 29 15:22:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -16,7 +16,7 @@
 #include <Macro.h>
 #include <Mix.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -78,6 +78,6 @@ class Dirichlet : public Mix<Dirichlet> {
     const std::vector<real> m_k;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Dirichlet_h

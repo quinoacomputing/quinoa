@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:33:49 AM MDT
+  \date      Thu Aug 29 15:00:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -13,7 +13,7 @@
 
 #include <string>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace control {
 
@@ -50,6 +50,6 @@ class Option {
 
 } // namespace control
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Option_h

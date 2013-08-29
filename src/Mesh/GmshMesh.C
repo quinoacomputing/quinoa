@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Sat 20 Jul 2013 04:46:03 PM MDT
+  \date      Thu Aug 29 15:33:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -14,7 +14,7 @@
 
 #include <GmshMesh.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 GmshMesh::GmshMesh(Memory* const memory) noexcept :
   m_memory(memory),

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:56:11 PM MDT
+  \date      Thu Aug 29 15:36:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -15,7 +15,7 @@
 #include <GmshTxtMeshWriter.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 GmshTxtMeshWriter::write()

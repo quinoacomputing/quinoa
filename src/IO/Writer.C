@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.C
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:49:17 PM MDT
+  \date      Thu Aug 29 15:34:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class definition
   \details   Writer base class definition
@@ -14,7 +14,7 @@
 #include <Writer.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Writer::Writer(const std::string& filename) :
   m_filename(filename),

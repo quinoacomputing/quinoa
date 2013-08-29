@@ -2,19 +2,20 @@
 /*!
   \file      src/Control/RNGTestParser.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:43:26 2013
+  \date      Thu Aug 29 17:00:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
 */
 //******************************************************************************
 
-//#include <pegtl.hh>
+#include <pegtl.hh>
 
 #include <RNGTestParser.h>
 #include <RNGTestGrammar.h>
+#include <Control.h>
 
-using namespace Quinoa;
+using namespace rngtest;
 
 void
 RNGTestParser::parse()

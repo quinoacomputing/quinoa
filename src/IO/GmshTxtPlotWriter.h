@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:46:43 AM MDT
+  \date      Thu Aug 29 15:17:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
@@ -15,7 +15,7 @@
 
 #include <Writer.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! GmshTxtPlotWriter : Writer
 class GmshTxtPlotWriter : public Writer {
@@ -39,6 +39,6 @@ class GmshTxtPlotWriter : public Writer {
     GmshTxtPlotWriter& operator=(GmshTxtPlotWriter&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // GmshTxtPlotWriter_h

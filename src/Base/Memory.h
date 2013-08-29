@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 04:28:07 AM MDT
+  \date      Thu Aug 29 14:52:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -18,7 +18,7 @@
 #include <MemoryEntry.h>
 #include <Exception.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Paradigm;
 
@@ -181,6 +181,6 @@ class Memory {
     MemorySet m_entry;          //!< Memory entries
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Memory_h

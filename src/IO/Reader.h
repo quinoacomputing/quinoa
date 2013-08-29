@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.h
   \author    J. Bakosi
-  \date      Fri 12 Jul 2013 09:33:25 PM MDT
+  \date      Thu Aug 29 15:07:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -15,7 +15,7 @@
 
 #include <Memory.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Reader base
 class Reader {
@@ -45,6 +45,6 @@ class Reader {
     Reader& operator=(Reader&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Reader_h

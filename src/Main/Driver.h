@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Wed Aug 28 15:07:34 2013
+  \date      Thu Aug 29 15:17:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -11,7 +11,7 @@
 #ifndef Driver_h
 #define Driver_h
 
-namespace Quinoa {
+namespace quinoa {
 
 class Timer;
 
@@ -46,6 +46,6 @@ class Driver {
     Driver& operator=(Driver&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Driver_h

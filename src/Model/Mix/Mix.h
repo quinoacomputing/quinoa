@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:58:03 PM MDT
+  \date      Thu Aug 29 15:22:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -19,7 +19,7 @@
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Mix model base for CRTP
 //! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
@@ -74,6 +74,6 @@ class Mix : public Model {
     Mix& operator=(Mix&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Mix_h

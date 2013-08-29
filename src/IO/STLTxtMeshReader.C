@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 21 Jul 2013 06:52:15 AM MDT
+  \date      Thu Aug 29 15:32:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -15,7 +15,7 @@
 #include <STLMesh.h>
 #include <STLTxtMeshReader.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 STLTxtMeshReader::read()

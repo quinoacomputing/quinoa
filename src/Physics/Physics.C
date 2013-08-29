@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:04:40 PM MDT
+  \date      Thu Aug 29 15:35:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -24,7 +24,7 @@
 #include <TxtStatWriter.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,

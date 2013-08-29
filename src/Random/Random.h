@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/Random.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:52:40 AM MDT
+  \date      Thu Aug 29 15:24:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -13,7 +13,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Random number generator base
 class Random {
@@ -36,6 +36,6 @@ class Random {
     Random& operator=(Random&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Random_h

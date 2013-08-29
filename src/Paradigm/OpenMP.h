@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Fri May 31 12:46:08 2013
+  \date      Thu Aug 29 15:23:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -19,7 +19,7 @@
 
 #include <OpenMP.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! OpenMP programming paradigm
 class OpenMP {
@@ -67,6 +67,6 @@ class OpenMP {
     const int m_nthread;              //!< Number of OpenMP threads
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // OpenMP_h

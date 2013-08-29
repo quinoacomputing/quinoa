@@ -2,6 +2,9 @@
 
 * Don't echo "MPI Fortran compiler:" if empty.
 
+* Get rid of Exception macros (or at least simplify the throwing site regarding
+  namespaces.
+
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
   false positives) in MKL and non-MKL code. May need to implement another random

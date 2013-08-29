@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 07:24:34 AM MDT
+  \date      Thu Aug 29 16:41:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite options and associations
   \details   Random number generator test suite options and associations
@@ -16,7 +16,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace rngtest {
 
 namespace select {
 
@@ -25,6 +25,8 @@ enum class RNGTestType : uint8_t { NO_RNGTEST=0,
                                    SMALLCRUSH,
                                    CRUSH,
                                    BIGCRUSH };
+
+using quinoa::select::Toggle;
 
 //! Class with base templated on the above enum class with associations
 class RNGTest : public Toggle<RNGTestType> {
@@ -63,6 +65,6 @@ class RNGTest : public Toggle<RNGTestType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace rngtest
 
 #endif // RNGTestOptions_h

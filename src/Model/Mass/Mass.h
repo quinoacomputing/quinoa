@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:57:13 PM MDT
+  \date      Thu Aug 29 15:22:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -17,7 +17,7 @@
 #include <Model.h>
 #include <QuinoaControl.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Mass model base for CRTP
 //! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
@@ -81,6 +81,6 @@ class Mass : public Model {
     Mass& operator=(Mass&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Mass_h

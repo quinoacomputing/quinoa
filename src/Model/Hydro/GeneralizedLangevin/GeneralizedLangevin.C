@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.C
   \author    J. Bakosi
-  \date      Sat 18 May 2013 12:15:59 PM MDT
+  \date      Thu Aug 29 15:34:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -16,7 +16,7 @@
 #include <Hydro.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 GeneralizedLangevin::init()

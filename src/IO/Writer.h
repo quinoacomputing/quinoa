@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:50:30 AM MDT
+  \date      Thu Aug 29 15:06:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -16,7 +16,7 @@
 
 #include <QuinoaTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Writer base class
 class Writer {
@@ -43,6 +43,6 @@ class Writer {
     Writer& operator=(Writer&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Writer_h

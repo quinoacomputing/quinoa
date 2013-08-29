@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:12:20 2013
+  \date      Thu Aug 29 17:23:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -15,9 +15,7 @@
 #include <Exception.h>
 #include <RNGTestDriver.h>
 
-using namespace Quinoa;
-
-namespace Quinoa {
+namespace rngtest {
 
 static void echoName()
 //******************************************************************************
@@ -57,7 +55,10 @@ static void echoBuildInfo()
   std::cout << std::endl;
 }
 
-} // namespace Quinoa
+} // namespace rngtest
+
+using namespace quinoa;
+using namespace rngtest;
 
 int main(int argc, char* argv[])
 //******************************************************************************

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:51:59 PM MDT
+  \date      Thu Aug 29 15:05:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -13,7 +13,7 @@
 
 #include <Geometry.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class STLMesh;
 class QuinoaControl;
@@ -54,6 +54,6 @@ class DiscreteGeometry : public Geometry {
     STLMesh* m_mesh;                        //!< Mesh object
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // DiscreteGeometry_h

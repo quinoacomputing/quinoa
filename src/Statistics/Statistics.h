@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:53:53 PM MDT
+  \date      Thu Aug 29 15:26:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -16,7 +16,7 @@
 #include <Distribution.h>
 #include <QuinoaControlTypes.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -117,6 +117,6 @@ class Statistics {
     int m_ncen;                               //!< Number of central moments
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Statistics_h

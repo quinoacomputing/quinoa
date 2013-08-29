@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:14:42 PM MDT
+  \date      Thu Aug 29 15:01:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -21,7 +21,7 @@
 #include <Exception.h>
 #include <Option.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! QuinoaControl : Control< specialized to Quinoa's control >
 class QuinoaControl : public Control< control::Bundle,
@@ -128,6 +128,6 @@ class QuinoaControl : public Control< control::Bundle,
     QuinoaControl& operator=(QuinoaControl&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // QuinoaControl_h

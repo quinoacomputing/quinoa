@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 07:22:41 AM MDT
+  \date      Thu Aug 29 17:12:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -18,7 +18,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace rngtest {
 
 namespace select {
 
@@ -44,6 +44,12 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSELIB,
                                   PRAND };
+
+using quinoa::select::Toggle;
+using quinoa::select::operator+;
+using quinoa::select::operator<<;
+using quinoa::ExceptType;
+using quinoa::Exception;
 
 //! Class with base templated on the above enum class with associations
 class RNG : public Toggle<RNGType> {
@@ -154,6 +160,6 @@ class RNG : public Toggle<RNGType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace rngtest
 
 #endif // RNGOptions_h

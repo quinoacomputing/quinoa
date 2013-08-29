@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Fri Jul 26 12:55:28 2013
+  \date      Thu Aug 29 15:32:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -15,7 +15,7 @@
 #include <TxtStatWriter.h>
 #include <Statistics.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 TxtStatWriter::TxtStatWriter(const std::string& filename,
                              Statistics* const statistics) :

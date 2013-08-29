@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:45:49 PM MDT
+  \date      Thu Aug 29 15:31:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -15,7 +15,7 @@
 #include <QuinoaGrammar.h>
 #include <Control.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 QuinoaParser::parse()

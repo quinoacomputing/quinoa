@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:03:13 2013
+  \date      Thu Aug 29 15:26:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -17,7 +17,7 @@
 #include <MKLRndTable.h>
 #include <MKLRndStream.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! MKL-based random number generator
 class MKLRandom : public Random {
@@ -84,6 +84,6 @@ class MKLRandom : public Random {
     Streams m_stream;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // MKLRandom_h

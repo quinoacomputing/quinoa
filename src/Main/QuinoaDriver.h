@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:12:53 PM MDT
+  \date      Thu Aug 29 15:19:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that driver Quinoa
@@ -13,7 +13,7 @@
 
 #include <Driver.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -65,6 +65,6 @@ class QuinoaDriver : public Driver {
     Physics* m_physics;               //!< Physics object
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // QuinoaDriver_h

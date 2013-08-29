@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 07:07:57 PM MDT
+  \date      Thu Aug 29 15:05:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -11,7 +11,7 @@
 #ifndef Geometry_h
 #define Geometry_h
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -58,6 +58,6 @@ class Geometry {
     Geometry& operator=(Geometry&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Geometry_h

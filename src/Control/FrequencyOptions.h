@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 06:58:31 AM MDT
+  \date      Thu Aug 29 15:03:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -16,7 +16,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace select {
 
@@ -57,6 +57,6 @@ class Frequency : public Toggle<FrequencyType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // FrequencyOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Fri May 31 12:08:48 2013
+  \date      Thu Aug 29 15:33:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -20,7 +20,7 @@
 #include <JPDF.h>
 
 using namespace std;
-using namespace Quinoa;
+using namespace quinoa;
 
 void
 Dirichlet::advance(int p, int tid, real dt)

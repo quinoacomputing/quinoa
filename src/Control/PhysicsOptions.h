@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 07:17:35 AM MDT
+  \date      Thu Aug 29 15:03:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -16,7 +16,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace select {
 
@@ -71,6 +71,6 @@ class Physics : public Toggle<PhysicsType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // PhysicsOptions_h

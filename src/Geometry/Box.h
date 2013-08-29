@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Box.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:43:34 AM MDT
+  \date      Thu Aug 29 15:05:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Box primitive
   \details   Box primitive
@@ -15,7 +15,7 @@
 #include <Primitive.h>
 #include <Point.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Box primitive
 class Box : public Primitive {
@@ -43,6 +43,6 @@ class Box : public Primitive {
     Point m_p2;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Box_h

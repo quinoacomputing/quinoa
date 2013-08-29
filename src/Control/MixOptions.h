@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 06:51:16 AM MDT
+  \date      Thu Aug 29 15:03:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -16,7 +16,7 @@
 #include <Exception.h>
 #include <Toggle.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace select {
 
@@ -66,6 +66,6 @@ class Mix : public Toggle<MixType> {
 
 } // namespace select
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // MixOptions_h

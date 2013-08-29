@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:01:42 2013
+  \date      Thu Aug 29 15:34:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base class definition
   \details   Driver base class definition
@@ -13,7 +13,7 @@
 #include <Timer.h>
 #include <Exception.h>
 
-using namespace Quinoa;
+using namespace quinoa;
 
 Driver::Driver()
 //******************************************************************************

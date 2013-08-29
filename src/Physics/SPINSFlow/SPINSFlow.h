@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:09:31 PM MDT
+  \date      Thu Aug 29 15:24:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -15,7 +15,7 @@
 #include <Hydro.h>
 #include <Timer.h>
 
-namespace Quinoa {
+namespace quinoa {
 
 class Memory;
 class Paradigm;
@@ -56,6 +56,6 @@ class SPINSFlow : public Physics {
     const std::string m_filename;        //!< Unstructured mesh file name
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // SPINSFlow_h

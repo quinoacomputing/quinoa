@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestControlTypes.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 09:17:25 PM MDT
+  \date      Thu Aug 29 15:03:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for random number generator test suite control and parsing
   \details   Types for random number generator test suite control and parsing
@@ -18,7 +18,7 @@
 #include <RNGTestOptions.h>
 #include <RNGOptions.h>
 
-namespace Quinoa {
+namespace rngtest {
 
 namespace control {
 
@@ -48,6 +48,6 @@ using BoolBundle = std::vector<bool>;
 
 } // namespace control
 
-} // namespace Quinoa
+} // namespace rngtest
 
 #endif // RNGTestControlTypes_h

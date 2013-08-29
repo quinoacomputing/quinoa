@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:48:47 2013
+  \date      Thu Aug 29 15:02:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser
@@ -16,7 +16,7 @@
 //! namespace and not polluting the global one.
 #define Keywords
 
-namespace Quinoa {
+namespace quinoa {
 
 namespace grammar {
 
@@ -211,6 +211,6 @@ namespace keyword {
 
 } // namespace grammar
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // QuinoaKeywords_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Primitive.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:43:24 AM MDT
+  \date      Thu Aug 29 15:04:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Base for geometry primitives
   \details   Base for geometry primitives
@@ -11,7 +11,7 @@
 #ifndef Primitive_h
 #define Primitive_h
 
-namespace Quinoa {
+namespace quinoa {
 
 //! Primitive base
 class Primitive {
@@ -34,6 +34,6 @@ class Primitive {
     Primitive& operator=(Primitive&&) = delete;
 };
 
-} // namespace Quinoa
+} // namespace quinoa
 
 #endif // Primitive_h
