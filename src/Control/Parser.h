@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Wed Aug 28 15:20:06 2013
+  \date      Wed 28 Aug 2013 08:46:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -11,16 +11,16 @@
 #ifndef Parser_h
 #define Parser_h
 
-namespace Quinoa {
+#include <string>
 
-class Control;
+namespace Quinoa {
 
 //! Parser base
 class Parser {
 
   public:
     //! Constructor
-    explicit Parser(const std::string& filename, Control* const control);
+    explicit Parser(const std::string& filename);
 
     //! Destructor
     virtual ~Parser() noexcept = default;
@@ -32,8 +32,7 @@ class Parser {
     virtual void echo() const = 0;
 
   protected:
-    const std::string m_filename;               //!< Name of file to parse
-    Control* const m_control;                   //!< Control category
+    const std::string m_filename;                     //!< Name of file to parse
 
   private:
     //! Don't permit copy constructor

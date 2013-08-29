@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:08:19 2013
+  \date      Wed 28 Aug 2013 09:13:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -46,7 +46,7 @@ try :
 {
 
   // Instantiate main control category
-  m_control = new(std::nothrow) Control;
+  m_control = new(std::nothrow) QuinoaControl;
   ErrChk(m_control != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for control object");
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:20:44 2013
+  \date      Wed 28 Aug 2013 07:48:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -16,13 +16,10 @@
 
 using namespace Quinoa;
 
-Parser::Parser(const std::string& filename, Control* const control) :
-  m_filename(filename),
-  m_control(control)
+Parser::Parser(const std::string& filename) : m_filename(filename)
 //******************************************************************************
 //  Constructor
 //! \param[in]  filename      File to parse
-//! \param[in]  control       Control category where parsed data are stored
 //! \details    Exception safety: basic guarantee: if an exception is thrown,
 //!             the stream is in a valid state.
 //! \author  J. Bakosi

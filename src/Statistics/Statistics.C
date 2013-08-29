@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue Jul  2 16:30:47 2013
+  \date      Wed 28 Aug 2013 08:54:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -18,14 +18,14 @@
 
 #include <Statistics.h>
 #include <Paradigm.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 #include <Physics.h>
 
 using namespace Quinoa;
 
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,
-                       Control* const control,
+                       QuinoaControl* const control,
                        Physics* const physics)
 //******************************************************************************
 //  Constructor

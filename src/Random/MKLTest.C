@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.C
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 07:29:51 AM MDT
+  \date      Wed 28 Aug 2013 09:11:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -13,11 +13,11 @@
 
 #include <MKLTest.h>
 #include <Exception.h>
-#include <Control.h>
+#include <RNGTestControl.h>
 
 using namespace Quinoa;
 
-MKLTest::MKLTest(Control* const control) :
+MKLTest::MKLTest(RNGTestControl* const control) :
   m_rng(),
   m_testrng(control->get<control::RNGS>()),
   m_stream()

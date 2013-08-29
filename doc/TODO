@@ -1,7 +1,8 @@
 * Control: Control::Bundle would be nicer with a hierarchical structure.
 
-* Separate Parser, Grammar, Control for rndtest and quinoa, e.g., QuinoaParser,
-  RndTestParser, etc. Parser, Grammar done, Control is next
+* Use shorter namespace names
+
+* Don't echo "MPI Fortran compiler:" if empty.
 
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully

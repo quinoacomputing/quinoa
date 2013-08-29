@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 07:29:46 AM MDT
+  \date      Wed 28 Aug 2013 09:11:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -15,19 +15,18 @@
 
 #include <mkl_vsl.h>
 
+#include <RNGTestControl.h>
 #include <Option.h>
 #include <RNGOptions.h>
 
 namespace Quinoa {
-
-class Control;
 
 //! MKL random number generator tests
 class MKLTest {
 
   public:
     //! Constructor
-    explicit MKLTest(Control* const control);
+    explicit MKLTest(RNGTestControl* const control);
 
     //! Destructor
     ~MKLTest();

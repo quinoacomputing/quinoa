@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Sat 24 Aug 2013 08:59:35 AM MDT
+  \date      Wed 28 Aug 2013 08:54:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -20,7 +20,7 @@ namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Control;
+class QuinoaControl;
 
 //! Model base
 class Model {
@@ -29,7 +29,7 @@ class Model {
     //! Constructor: protected, designed to be base-only
     explicit Model(Memory* const memory,
                    Paradigm* const paradigm,
-                   Control* const control,
+                   QuinoaControl* const control,
                    real* const particles,
                    const uint64_t npar,
                    int nprop)
@@ -81,7 +81,7 @@ class Model {
 
     Memory* const m_memory;         //!< Memory object
     Paradigm* const m_paradigm;     //!< Parallel programming object
-    Control* const m_control;       //!< Control object
+    QuinoaControl* const m_control; //!< Control object
     real* const m_particles;        //!< Particles
     const uint64_t m_npar;          //!< Number of particles
     const int m_nprop;              //!< Number of particle properties

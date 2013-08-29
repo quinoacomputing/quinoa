@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:47:07 PM MDT
+  \date      Wed 28 Aug 2013 09:04:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,7 +12,7 @@
 #include <QuinoaConfig.h>
 #include <Memory.h>
 #include <Paradigm.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 #include <Physics.h>
 #include <Beta.h>
 #include <Dirichlet.h>
@@ -28,7 +28,7 @@ using namespace Quinoa;
 
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,
-                 Control* const control,
+                 QuinoaControl* const control,
                  Timer* const timer)
 //******************************************************************************
 //  Constructor

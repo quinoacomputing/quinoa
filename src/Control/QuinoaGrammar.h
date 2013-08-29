@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Wed Aug 28 15:52:58 2013
+  \date      Wed 28 Aug 2013 08:44:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -17,7 +17,7 @@
 #include <algorithm>
 
 #include <Macro.h>
-#include <ControlTypes.h>
+#include <QuinoaControlTypes.h>
 #include <Option.h>
 #include <LibOption.h>
 #include <Box.h>
@@ -55,10 +55,6 @@ namespace grammar {
   static control::Option<select::Mix> Mix;
   //! Turbulence frequency options
   static control::Option<select::Frequency> Frequency;
-  //! RNG test (suite) options
-  static control::Option<select::RNGTest> RNGTest;
-  //! RNG options
-  static control::LibOption<select::RNG> RNG;
 
   // Actions
 
@@ -77,12 +73,6 @@ namespace grammar {
     std::stringstream ss;
     ss << val;
     return ss.str();
-  }
-
-  // specialize convert to RNG
-  template<>
-  select::RNGType convert(const std::string& str) {
-    return RNG.value(str);
   }
 
   // convert & store value in state 'at' position
@@ -430,13 +420,6 @@ namespace grammar {
               process<keyword::dmpi, cstore<control::DMPI>>
             > {};
 
-  // common to all RNG test suites
-  struct rngtest_common :
-         sor< process< keyword::suite,
-                       store_option<select::RNGTest, control::RNGTEST> >,
-              list<keyword::rngs, push<control::RNGS, select::RNGType>, rng>
-            > {};
-
   // hommix block
   struct hommix :
          ifmust< parse< keyword::hommix,
@@ -464,20 +447,13 @@ namespace grammar {
                         store_option<select::Physics, control::PHYSICS> >,
                  block< geometry, physics_common,
                         slm, freq_gamma, dir, gendir, beta > > {};
-  // rngtest block
-  struct rngtest :
-         ifmust< parse< keyword::rngtest,
-                        store_option<select::Physics, control::PHYSICS> >,
-                 block< rngtest_common >
-               > {};
 
   // physics
   struct physics :
          sor< hommix,
               homhydro,
               homrt,
-              spinsflow,
-              rngtest > {};
+              spinsflow > {};
 
   // main keywords
   struct keywords :

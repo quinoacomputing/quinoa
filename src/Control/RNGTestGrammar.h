@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestGrammar.h
   \author    J. Bakosi
-  \date      Wed Aug 28 15:52:34 2013
+  \date      Wed 28 Aug 2013 08:49:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -18,6 +18,36 @@ namespace Quinoa {
 
 namespace grammar {
 
+  // State
+
+//   //! RNG test (suite) options
+//   static control::Option<select::RNGTest> RNGTest;
+//   //! RNG options
+//   static control::LibOption<select::RNG> RNG;
+
+//   // specialize convert to RNG
+//   template<>
+//   select::RNGType convert(const std::string& str) {
+//     return RNG.value(str);
+//   }
+
+  // Grammar
+
+//   // common to all RNG test suites
+//   struct rngtest_common :
+//          sor< process< keyword::suite,
+//                        store_option<select::RNGTest, control::RNGTEST> >,
+//               list<keyword::rngs, push<control::RNGS, select::RNGType>, rng>
+//             > {};
+//
+
+//   // rngtest block
+//   struct rngtest :
+//          ifmust< parse< keyword::rngtest,
+//                         store_option<select::Physics, control::PHYSICS> >,
+//                  block< rngtest_common >
+//                > {};
+// 
 
 } // namespace grammar
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Fri Jul 26 15:21:34 2013
+  \date      Wed 28 Aug 2013 09:00:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -13,7 +13,7 @@
 
 #include <QuinoaTypes.h>
 #include <Model.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 
@@ -28,7 +28,7 @@ class Hydro : public Model {
     //! Constructor
     explicit Hydro(Memory* const memory,
                    Paradigm* const paradigm,
-                   Control* const control,
+                   QuinoaControl* const control,
                    real* const particles) :
         Model(memory,
               paradigm,

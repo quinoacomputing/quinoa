@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Fri May 31 11:40:43 2013
+  \date      Wed 28 Aug 2013 09:05:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -14,13 +14,13 @@
 #include <map>
 
 #include <Physics.h>
-#include <ControlTypes.h>
 #include <Timer.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
+class QuinoaControl;
 
 //! HomMix : Physics
 class HomMix : public Physics {
@@ -29,7 +29,7 @@ class HomMix : public Physics {
     //! Constructor
     explicit HomMix(Memory* const memory,
                     Paradigm* const paradigm,
-                    Control* const control,
+                    QuinoaControl* const control,
                     Timer* const timer);
 
     //! Destructor

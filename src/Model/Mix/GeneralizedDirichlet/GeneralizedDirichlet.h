@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:44:42 2013
+  \date      Wed 28 Aug 2013 08:59:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -30,7 +30,7 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     //! Constructor
     explicit GeneralizedDirichlet(Memory* const memory,
                                   Paradigm* const paradigm,
-                                  Control* const control,
+                                  QuinoaControl* const control,
                                   real* const particles) :
       Mix<GeneralizedDirichlet>(memory, paradigm, control, particles),
       m_b(control->get<control::B>()),
