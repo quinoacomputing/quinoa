@@ -2,27 +2,30 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Wed Aug 28 11:48:15 2013
+  \date      Thu Aug 29 14:48:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Keywords
-  \details   All keywords recognized by the parser
+  \brief     Quinoa's keywords
+  \details   All keywords recognized by Quinoa's parser
 */
 //******************************************************************************
-#ifndef QuinoaGrammar_h
-#error "QuinoaKeywords.h should only be included within QuinoaGrammar.h"
-#endif
-
 #ifndef QuinoaKeywords_h
 #define QuinoaKeywords_h
 
-// Keywords accepted by the parser
+//! Signal to compiler that we are building a list of keywords. This is used by
+//! the inline includes below to make sure they get included in the correct
+//! namespace and not polluting the global one.
+#define Keywords
+
+namespace Quinoa {
+
+namespace grammar {
+
 namespace keyword {
 
-  // Problem title
-  using title = pegtl::string<t,i,t,l,e>;
+  using namespace pegtl::ascii;
 
-  // End of block
-  using end = pegtl::string< e,n,d >;
+  // Include base keywords recognized by all parsers
+  #include <BaseKeywords.h>
 
   // Select geometry definition
   //   * Analytic
@@ -205,5 +208,9 @@ namespace keyword {
   using mkl_nondeterm = pegtl::string< m,k,l,'_',n,o,n,d,e,t,e,r,m >;
 
 } // namespace keyword
+
+} // namespace grammar
+
+} // namespace Quinoa
 
 #endif // QuinoaKeywords_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Wed 28 Aug 2013 08:44:07 PM MDT
+  \date      Thu Aug 29 14:47:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -19,19 +19,14 @@
 #include <Macro.h>
 #include <QuinoaControlTypes.h>
 #include <Option.h>
-#include <LibOption.h>
 #include <Box.h>
+#include <QuinoaKeywords.h>
 
 namespace Quinoa {
 
 namespace grammar {
 
   using namespace pegtl;
-  using namespace pegtl::ascii;
-
-  // Keywords
-
-  #include <QuinoaKeywords.h>
 
   // State
 
