@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Fri May 31 11:18:24 2013
+  \date      Wed 28 Aug 2013 09:08:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -16,12 +16,12 @@
 #include <Physics.h>
 #include <Mix.h>
 #include <Timer.h>
-#include <ControlTypes.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
+class QuinoaControl;
 
 //! HomRT : Physics
 class HomRT : public Physics {
@@ -30,7 +30,7 @@ class HomRT : public Physics {
     //! Constructor
     explicit HomRT(Memory* const memory,
                    Paradigm* const paradigm,
-                   Control* const control,
+                   QuinoaControl* const control,
                    Timer* const timer);
 
     //! Destructor

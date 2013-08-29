@@ -1,21 +1,22 @@
 //******************************************************************************
 /*!
-  \file      src/Control/ControlTypes.h
+  \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Fri Aug  2 17:57:21 2013
+  \date      Wed 28 Aug 2013 08:45:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
 */
 //******************************************************************************
-#ifndef ControlTypes_h
-#define ControlTypes_h
+#ifndef QuinoaControlTypes_h
+#define QuinoaControlTypes_h
 
 #include <string>
 #include <vector>
 #include <tuple>
 #include <ostream>
 #include <sstream>
+#include <limits>
 
 #include <QuinoaTypes.h>
 #include <GeometryOptions.h>
@@ -27,8 +28,6 @@
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
-#include <RNGTestOptions.h>
-#include <RNGOptions.h>
 
 namespace Quinoa {
 
@@ -192,7 +191,6 @@ enum BundlePosition { TITLE=0,
                       MIX,
                       FREQUENCY,
                       MIXRATE,
-                      RNGTEST,
                       NSTEP,
                       TERM,
                       DT,
@@ -216,7 +214,6 @@ enum BundlePosition { TITLE=0,
                       S,
                       KAPPA,
                       C,
-                      RNGS,
                       C0,
                       AT,
                       FREQ_GAMMA_C1,
@@ -239,7 +236,6 @@ using Bundle = std::tuple<
   select::MixType,         //!< Selected material mix model
   select::FrequencyType,   //!< Selected turbulence frequency model
   select::MixRateType,     //!< Selected material mix rate model
-  select::RNGTestType,     //!< Selected RNG test suite
   uint64_t,                //!< Number of time steps to take
   real,                    //!< Time to terminate time stepping
   real,                    //!< Size of time step
@@ -263,7 +259,6 @@ using Bundle = std::tuple<
   std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models
   std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
-  std::vector<select::RNGType>,  //!< Random number generators
   real,                    //!< Parameter C0 in the simplified Langevin model
   real,                    //!< Atwood number in beta model
   real,                    //!< C1 in gamma frequency model
@@ -274,6 +269,51 @@ using Bundle = std::tuple<
   std::vector<Product>     //!< Requested (and triggered) statistics
 >;
 
+//! Default bundle for Quinoa's control
+const Bundle defaults(
+  "",                                  //!< Title
+  select::GeometryType::NO_GEOMETRY,   //!< Geometry definition
+  select::PhysicsType::NO_PHYSICS,     //!< Physics
+  select::PositionType::NO_POSITION,   //!< Position model
+  select::MassType::NO_MASS,           //!< Mass model
+  select::HydroType::NO_HYDRO,         //!< Hydrodynamics model
+  select::EnergyType::NO_ENERGY,       //!< Internal energy model
+  select::MixType::NO_MIX,             //!< Material mix model
+  select::FrequencyType::NO_FREQUENCY, //!< Turbulence frequency model
+  select::MixRateType::NO_MIXRATE,     //!< Material mix rate model
+  std::numeric_limits<uint64_t>::max(),//!< Number of time steps to take
+  1.0,                                 //!< Time to terminate time stepping
+  0.5,                                 //!< Size of time step
+  0,                                   //!< Number of position components
+  0,                                   //!< Number of density components
+  0,                                   //!< Number of velocity components
+  0,                                   //!< Number of scalar components
+  0,                                   //!< Number of frequency components
+  1,                                   //!< Total number of particles
+  1,                                   //!< TTY output interval
+  0,                                   //!< Dump output interval
+  0,                                   //!< Plot output interval
+  1,                                   //!< PDF output interval
+  1,                                   //!< Glob output interval
+  "",                                  //!< Input filename
+  "",                                  //!< Output filename
+  "jpdf",                              //!< Default jpdf filename
+  "glob",                              //!< Default glob filename
+  "stat",                              //!< Default statistics filename
+  std::vector<real>(),                 //!< Parameters 'b'
+  std::vector<real>(),                 //!< Paramaters 'S'
+  std::vector<real>(),                 //!< Parameters 'kappa'
+  std::vector<real>(),                 //!< Parameters 'c_ij'
+  2.1,                                 //!< Parameter C0
+  0.5,                                 //!< Parameter Atwood number
+  0.5,                                 //!< Parameter C1 in gamma freq. model
+  0.73,                                //!< Parameter C2 in gamma freq. model
+  5.0,                                 //!< Parameter C3 in gamma freq. model
+  0.25,                                //!< Parameter C4 in gamma freq. model
+  std::vector<real>(),                 //!< Sextets for boxes for anal. geom.
+  std::vector<Product>()               //!< Statistics
+);
+
 //! Vector of bools indicating whether data is set in Bundle during parsing
 using BoolBundle = std::vector<bool>;
 
@@ -281,4 +321,4 @@ using BoolBundle = std::vector<bool>;
 
 } // namespace Quinoa
 
-#endif // ControlTypes_h
+#endif // QuinoaControlTypes_h

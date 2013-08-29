@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue Jul  2 16:27:59 2013
+  \date      Wed 28 Aug 2013 08:53:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -14,13 +14,13 @@
 #include <QuinoaTypes.h>
 #include <Memory.h>
 #include <Distribution.h>
-#include <ControlTypes.h>
+#include <QuinoaControlTypes.h>
 
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Control;
+class QuinoaControl;
 class Physics;
 
 //! Statistics estimator
@@ -30,7 +30,7 @@ class Statistics {
     //! Constructor
     explicit Statistics(Memory* const memory,
                         Paradigm* const paradigm,
-                        Control* const control,
+                        QuinoaControl* const control,
                         Physics* const physics);
 
     //! Destructor

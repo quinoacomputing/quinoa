@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:44:50 2013
+  \date      Wed 28 Aug 2013 08:58:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -30,7 +30,7 @@ class Dirichlet : public Mix<Dirichlet> {
     //! Constructor
     explicit Dirichlet(Memory* const memory,
                        Paradigm* const paradigm,
-                       Control* const control,
+                       QuinoaControl* const control,
                        real* const particles) :
       Mix<Dirichlet>(memory, paradigm, control, particles),
       m_b(control->get<control::B>()),

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:35:27 PM MDT
+  \date      Wed 28 Aug 2013 07:07:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -11,15 +11,12 @@
 #ifndef Geometry_h
 #define Geometry_h
 
-#include <QuinoaTypes.h>
-#include <Exception.h>
-
 namespace Quinoa {
 
 class Memory;
 class Paradigm;
-class Control;
 class Timer;
+class QuinoaControl;
 
 //! Geometry base
 class Geometry {
@@ -28,7 +25,7 @@ class Geometry {
     //! Constructor
     explicit Geometry(Memory* const memory,
                       Paradigm* const paradigm,
-                      Control* const control,
+                      QuinoaControl* const control,
                       Timer* const timer) noexcept :
       m_memory(memory),
       m_paradigm(paradigm),
@@ -47,7 +44,7 @@ class Geometry {
   protected:
     Memory* const m_memory;                    //!< Memory object
     Paradigm* const m_paradigm;                //!< Parallel programming object
-    Control* const m_control;                  //!< Control object
+    QuinoaControl* const m_control;            //!< Control object
     Timer* const m_timer;                      //!< Timer object
 
   private:

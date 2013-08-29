@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Fri Jul 26 13:46:57 2013
+  \date      Wed 28 Aug 2013 08:57:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -15,7 +15,7 @@
 
 #include <QuinoaTypes.h>
 #include <Model.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 
 namespace Quinoa {
 
@@ -28,7 +28,7 @@ class Mass : public Model {
     //! Constructor
     explicit Mass(Memory* const memory,
                   Paradigm* const paradigm,
-                  Control* const control,
+                  QuinoaControl* const control,
                   real* const particles) :
       Model(memory,
             paradigm,

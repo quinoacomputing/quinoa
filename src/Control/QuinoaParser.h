@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Wed Aug 28 15:31:17 2013
+  \date      Wed 28 Aug 2013 07:50:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <Parser.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 
 namespace Quinoa {
 
@@ -25,8 +25,10 @@ class QuinoaParser : public Parser {
     //! Constructor
     //! \param[in]  filename  Control file name to read from
     //! \param[in]  control   Control object to put parsed data in
-    explicit QuinoaParser(const std::string& filename, Control* const control)
-      : Parser(filename, control) {}
+    explicit QuinoaParser(const std::string& filename,
+                          QuinoaControl* const control)
+      : Parser(filename),
+        m_control(control) {}
 
     //! Destructor
     virtual ~QuinoaParser() noexcept = default;
@@ -67,6 +69,8 @@ class QuinoaParser : public Parser {
 
     //! Echo parsed data specific to turbulence frequency model
     void echoFrequency() const;
+
+    QuinoaControl* const m_control;     //!< Control object
 };
 
 } // namespace Quinoa

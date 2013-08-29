@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Fri Aug  2 15:45:00 2013
+  \date      Wed 28 Aug 2013 08:55:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -27,7 +27,7 @@ class Beta : public Mass<Beta> {
     //! Constructor
     explicit Beta(Memory* const memory,
                   Paradigm* const paradigm,
-                  Control* const control,
+                  QuinoaControl* const control,
                   real* const particles) :
       Mass<Beta>(memory, paradigm, control, particles),
       m_At(control->get<control::AT>()) {

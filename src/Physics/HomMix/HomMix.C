@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Fri 26 Jul 2013 08:46:59 PM MDT
+  \date      Wed 28 Aug 2013 09:06:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -19,7 +19,7 @@
 
 #include <Macro.h>
 #include <Memory.h>
-#include <Control.h>
+#include <QuinoaControl.h>
 #include <Mix.h>
 #include <HomMix.h>
 #include <PDFWriter.h>
@@ -33,7 +33,7 @@ using namespace Quinoa;
 
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
-               Control* const control,
+               QuinoaControl* const control,
                Timer* const timer) :
   Physics(memory, paradigm, control, timer),
   m_totalTime(timer->create("Total solution"))

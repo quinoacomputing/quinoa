@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Wed Aug 28 15:30:16 2013
+  \date      Wed 28 Aug 2013 08:45:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -14,7 +14,6 @@
 #include <QuinoaParser.h>
 #include <QuinoaGrammar.h>
 #include <Control.h>
-#include <Defaults.h>
 
 using namespace Quinoa;
 
@@ -26,10 +25,10 @@ QuinoaParser::parse()
 //******************************************************************************
 {
   // Initialize new bundle for parsed data with defaults
-  control::Bundle stack(control::DEFAULTS);
+  control::Bundle stack(control::defaults);
   // Initialize new bool bundle for indicating what data is set in bundle
   control::BoolBundle
-    boolstack(std::tuple_size<decltype(control::DEFAULTS)>::value, false);
+    boolstack(std::tuple_size<decltype(control::defaults)>::value, false);
 
   //std::cout << "==== PARSE START ====" << std::endl;
 #ifdef NDEBUG

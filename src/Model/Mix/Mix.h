@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Fri Jul 26 13:44:05 2013
+  \date      Wed 28 Aug 2013 08:58:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -14,8 +14,8 @@
 #include <cstring>
 
 #include <QuinoaTypes.h>
+#include <QuinoaControl.h>
 #include <Model.h>
-#include <Control.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 
@@ -30,7 +30,7 @@ class Mix : public Model {
     //! Constructor
     explicit Mix(Memory* const memory,
                  Paradigm* const paradigm,
-                 Control* const control,
+                 QuinoaControl* const control,
                  real* const particles) :
       Model(memory,
             paradigm,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
   \author    J. Bakosi
-  \date      Wed Jul 24 09:41:11 2013
+  \date      Wed 28 Aug 2013 09:01:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -13,7 +13,6 @@
 #include "omp.h"
 #endif // _OPENMP
 
-#include <Control.h>
 #include <Mix.h>
 #include <GeneralizedDirichlet.h>
 #include <JPDF.h>
