@@ -1,7 +1,5 @@
 * Control: Control::Bundle would be nicer with a hierarchical structure.
 
-* Don't echo "MPI Fortran compiler:" if empty.
-
 * Can we get rid of Exception macros?
 
 * Alternative RND library: Need a quick switchable way of building without MKL
