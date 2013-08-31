@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:54:07 2013
+  \date      Fri 30 Aug 2013 05:46:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -26,7 +26,7 @@ namespace quinoa {
 //! arguments. Whenever is possible, it should be used via the Assert and ErrChk
 //! macros defined below.
 #define Throw(...) \
-   throw Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+   throw quinoa::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
 //! Assert macro that only throws an exception if expr fails:
 //! If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing, expr is not
