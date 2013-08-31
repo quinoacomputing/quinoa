@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.C
   \author    J. Bakosi
-  \date      Thu Aug 29 17:17:03 2013
+  \date      Fri 30 Aug 2013 06:04:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -57,7 +57,6 @@ MKLTest::MKLErrChk(int vslerr) const
 //******************************************************************************
 {
   using quinoa::ExceptType;
-  using quinoa::Exception;
 
   if (vslerr != VSL_STATUS_OK)
     try {
@@ -66,7 +65,7 @@ MKLTest::MKLErrChk(int vslerr) const
       s << "MKL VSL Error: code " << vslerr;
       Throw(ExceptType::FATAL, s.str());
 
-    } catch (Exception&) {
+    } catch (quinoa::Exception&) {
         throw;
       }
       catch (std::exception& e) {

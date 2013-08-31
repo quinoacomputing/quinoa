@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 17:12:46 2013
+  \date      Fri 30 Aug 2013 06:23:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -45,14 +45,11 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   RNGSSELIB,
                                   PRAND };
 
-using quinoa::select::Toggle;
 using quinoa::select::operator+;
 using quinoa::select::operator<<;
-using quinoa::ExceptType;
-using quinoa::Exception;
 
 //! Class with base templated on the above enum class with associations
-class RNG : public Toggle<RNGType> {
+class RNG : public quinoa::select::Toggle<RNGType> {
 
   public:
     using ParamType = int;
@@ -60,7 +57,7 @@ class RNG : public Toggle<RNGType> {
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit RNG() : Toggle<RNGType>(names, values) {}
+    explicit RNG() : quinoa::select::Toggle<RNGType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -75,7 +72,7 @@ class RNG : public Toggle<RNGType> {
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const {
       auto it = brng.find(rng);
-      Assert(it != brng.end(), ExceptType::FATAL,
+      Assert(it != brng.end(), quinoa::ExceptType::FATAL,
              std::string("Cannot find parameter for RNG \"") + rng + "\"");
       return it->second;
     }
@@ -83,7 +80,7 @@ class RNG : public Toggle<RNGType> {
     //! Return RNG library type based on Enum
     RNGLibType lib(RNGType rng) const {
       auto it = names.find(rng);
-      Assert(it != names.end(), ExceptType::FATAL,
+      Assert(it != names.end(), quinoa::ExceptType::FATAL,
              std::string("Cannot find name for RNG \"") + rng + "\"");
       if (found("MKL", it->second)) return RNGLibType::MKL;
       else if (found("RNGSSELIB", it->second)) return RNGLibType::RNGSSELIB;
