@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.C
+  \file      src/Model/Mix/GenDirichlet/GenDirichlet.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:33:35 2013
+  \date      Sun 01 Sep 2013 03:10:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -14,7 +14,7 @@
 #endif // _OPENMP
 
 #include <Mix.h>
-#include <GeneralizedDirichlet.h>
+#include <GenDirichlet.h>
 #include <JPDF.h>
 
 using namespace std;
