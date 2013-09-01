@@ -22,7 +22,7 @@
 
 * Setup precompiled headers?
 
-* Less libraries?
+* Less and larger libraries?
 
 * Define own error handler for the new operator via set_new_handler(), and
   also customize set_unexpected(), set_terminate().

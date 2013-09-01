@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:05:53 2013
+  \date      Sun 01 Sep 2013 02:22:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -36,10 +36,10 @@ class STLTxtMeshReader : public Reader {
     }
 
     //! Destructor, default compiler generated
-    virtual ~STLTxtMeshReader() noexcept = default;
+    ~STLTxtMeshReader() noexcept override = default;
 
     //! Read ASCII STL mesh
-    void read();
+    void read() override;
 
   private:
     //! Don't permit copy constructor

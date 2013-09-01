@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:26:11 2013
+  \date      Sun 01 Sep 2013 02:16:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -32,11 +32,15 @@ class PDF : public Distribution {
     explicit PDF(const real& binsize) : m_binsize(binsize), m_pdf() {}
 
     //! Destructor: Clear univariate PDF container
-    virtual ~PDF() noexcept { m_pdf.clear(); }
+    ~PDF() noexcept override { m_pdf.clear(); }
+
+    //! Constant accessor to number of samples
+    //! \return Number of samples collected
+    const int& getNsample() const noexcept override { return m_nsample; }
 
     //! Insert new sample into univariate PDF
     //! \param[in]   sample    Value to insert
-    virtual void insert(const real& sample) {
+    void insert(const real& sample) {
       ++m_nsample;                  // Increase number of samples in joint PDF
       ++m_pdf[floor(sample/m_binsize+0.5)];         // Add sample to joint PDF
     }
@@ -48,10 +52,6 @@ class PDF : public Distribution {
     //! Constant accessor to binsize
     //! \return Sample space bin size
     const real& getBinsize() const noexcept { return m_binsize; }
-
-    //! Constant accessor to number of samples
-    //! \return Number of samples collected
-    const int& getNsample() const noexcept { return m_nsample; }
 
   private:
     //! Don't permit copy constructor

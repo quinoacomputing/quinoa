@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:19:44 2013
+  \date      Sun 01 Sep 2013 02:00:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that driver Quinoa
@@ -32,14 +32,14 @@ class QuinoaDriver : public Driver {
                           Paradigm* const paradigm);
 
     //! Destructor
-    virtual ~QuinoaDriver() noexcept;
+    ~QuinoaDriver() noexcept override;
 
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
-    virtual void finalize() noexcept;
+    void finalize() noexcept override;
 
     //! Solve
-    virtual void execute() const;
+    void execute() const override;
 
   private:
     //! Don't permit copy constructor

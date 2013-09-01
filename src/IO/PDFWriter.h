@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:07:21 2013
+  \date      Sun 01 Sep 2013 02:18:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -30,7 +30,7 @@ class PDFWriter : public Writer {
       Writer(filename) {}
 
     //! Destructor: Release PDF file handle
-    virtual ~PDFWriter() noexcept = default;
+    ~PDFWriter() noexcept override = default;
 
     //! Write PDF to file
     void write(const PDF* pdf);

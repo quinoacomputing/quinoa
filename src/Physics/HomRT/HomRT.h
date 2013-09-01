@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:24:48 2013
+  \date      Sun 01 Sep 2013 02:26:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -34,13 +34,13 @@ class HomRT : public Physics {
                    Timer* const timer);
 
     //! Destructor
-    virtual ~HomRT() noexcept = default;
+    ~HomRT() noexcept override = default;
 
     //! Initialize model
-    virtual void init();
+    void init() override;
 
     //! Solve model
-    virtual void solve();
+    void solve() override;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:25:49 2013
+  \date      Sun 01 Sep 2013 02:23:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -29,7 +29,7 @@ class MKLRndStream : public MKL {
                           unsigned int seed);
 
     //! Destructor: Destroy random number generator leap-frog stream
-    virtual ~MKLRndStream() noexcept;
+    ~MKLRndStream() noexcept override;
 
     //! Constant accessor to VSL streams
     const VSLStreamStatePtr* getStr() const noexcept { return m_stream; }

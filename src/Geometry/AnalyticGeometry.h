@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:04:36 2013
+  \date      Sun 01 Sep 2013 02:34:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -32,13 +32,13 @@ class AnalyticGeometry : public Geometry {
       Geometry(memory, paradigm, control, timer) {}
 
     //! Destructor
-    virtual ~AnalyticGeometry() noexcept = default;
+    ~AnalyticGeometry() noexcept override = default;
 
     //! Initialize analytic geometry
-    virtual void init() {}
+    void init() override {}
 
     //! Space-fill analytic geometry
-    virtual void fill() {}
+    void fill() override {}
 
   private:
     //! Don't permit copy constructor

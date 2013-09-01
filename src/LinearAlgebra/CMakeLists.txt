@@ -9,7 +9,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 add_library(LinearAlgebra
             #CG.C
             #Matrix3.C
-            SparseMatrix.C  
             SymCompRowMatrix.C
 )
 

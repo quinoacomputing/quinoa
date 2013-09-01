@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:07:28 2013
+  \date      Sun 01 Sep 2013 02:20:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -27,7 +27,7 @@ class Reader {
     //! Destructor: Release file handle
     virtual ~Reader() noexcept;
 
-    //! Required interface for read
+    //! Read interface
     virtual void read() = 0;
 
     const std::string m_filename;            //!< File name

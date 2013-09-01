@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:24:20 2013
+  \date      Sun 01 Sep 2013 02:25:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -34,16 +34,13 @@ class HomHydro : public Physics {
                       Timer* const timer);
 
     //! Destructor
-    virtual ~HomHydro() noexcept = default;
-
-    //! Echo informaion on model
-    virtual void echo() const;
+    ~HomHydro() noexcept override = default;
 
     //! Initialize model
-    virtual void init();
+    void init() override;
 
     //! Solve model
-    virtual void solve();
+    void solve() override;
 
   private:
     //! Don't permit copy constructor

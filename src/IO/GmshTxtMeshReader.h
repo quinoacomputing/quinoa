@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:05:26 2013
+  \date      Sun 01 Sep 2013 02:21:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -29,10 +29,10 @@ class GmshTxtMeshReader : public Reader {
                                GmshMesh* const mesh);
 
     //! Destructor, default compiler generated
-    virtual ~GmshTxtMeshReader() noexcept = default;
+    ~GmshTxtMeshReader() noexcept override = default;
 
     //! Read Gmsh mesh
-    void read();
+    void read() override;
 
   private:
     //! Don't permit copy constructor

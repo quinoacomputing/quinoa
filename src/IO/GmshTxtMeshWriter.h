@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:06:18 2013
+  \date      Sun 01 Sep 2013 02:19:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -29,7 +29,7 @@ class GmshTxtMeshWriter : public Writer {
       m_mesh(mesh) {}
 
     //! Destructor, default compiler generated
-    virtual ~GmshTxtMeshWriter() noexcept = default;
+    ~GmshTxtMeshWriter() noexcept override = default;
 
     //! Write Gmsh mesh to file
     void write();

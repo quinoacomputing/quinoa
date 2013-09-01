@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:35:21 2013
+  \date      Sun 01 Sep 2013 02:25:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -175,15 +175,6 @@ HomHydro::outJpdf(const real t)
 //   // Output joint PDF
 //   PDFWriter jpdfFile(filename);
 //   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomHydro::echo() const
-//******************************************************************************
-//  Echo informaion on homogeneous hydrodynamics
-//! \author  J. Bakosi
-//******************************************************************************
-{
 }
 
 void

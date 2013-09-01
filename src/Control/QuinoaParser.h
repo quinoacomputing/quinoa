@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:55:51 2013
+  \date      Sun 01 Sep 2013 02:30:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -31,13 +31,13 @@ class QuinoaParser : public Parser {
         m_control(control) {}
 
     //! Destructor
-    virtual ~QuinoaParser() noexcept = default;
+    ~QuinoaParser() noexcept override = default;
 
     //! Parse quinoa control file
-    virtual void parse();
+    void parse() override;
 
     //! Echo parsed information from quinoa control
-    virtual void echo() const;
+    void echo() const override;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:05:12 2013
+  \date      Sun 01 Sep 2013 02:36:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -33,13 +33,13 @@ class DiscreteGeometry : public Geometry {
 
     //! Finalize, single exit point, called implicitly from destructor or
     //! explicitly from anywhere else
-    virtual void finalize() noexcept;
+    void finalize() noexcept;
 
     //! Initialize discrete geometry
-    virtual void init();
+    void init() override;
 
     //! Space-fill discrete geometry
-    virtual void fill() {}
+    void fill() override {}
 
   private:
     //! Don't permit copy constructor
