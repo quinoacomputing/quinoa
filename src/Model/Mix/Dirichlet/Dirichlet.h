@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:22:41 2013
+  \date      Sun 01 Sep 2013 02:03:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -52,7 +52,7 @@ class Dirichlet : public Mix<Dirichlet> {
     }
 
     //! Destructor
-    virtual ~Dirichlet() noexcept = default;
+    ~Dirichlet() noexcept override = default;
 
     //! Initialize particles
     void init(int p, int tid) { initZero(p); IGNORE(tid); }

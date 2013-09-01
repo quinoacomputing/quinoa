@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:01:11 2013
+  \date      Sun 01 Sep 2013 02:33:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -25,7 +25,7 @@ class LibOption : public Option<Type> {
 
   public:
     //! Destructor
-    virtual ~LibOption() noexcept = default;
+    ~LibOption() noexcept override = default;
 
     //! Lookup library option parameter
     const typename Type::ParamType& param(typename Type::EnumType value) const {

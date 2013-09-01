@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.h
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 06:07:27 PM MDT
+  \date      Sun 01 Sep 2013 02:31:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -29,13 +29,13 @@ class RNGTestParser : public quinoa::Parser {
         m_control(control) {}
 
     //! Destructor
-    virtual ~RNGTestParser() noexcept = default;
+    ~RNGTestParser() noexcept override = default;
 
     //! Parse random number generator test suite control file
-    virtual void parse();
+    void parse() override;
 
     //! Echo parsed information from random number generator test suite control
-    virtual void echo() const;
+    void echo() const override;
 
   private:
     //! Don't permit copy constructor

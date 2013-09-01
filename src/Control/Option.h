@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:00:35 2013
+  \date      Sun 01 Sep 2013 02:33:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -41,7 +41,6 @@ class Option {
   private:
     //! Permit compiler to generate (public) copy constructor
     //! Permit compiler to generate (public) move constructor
-
     //! Don't permit copy assigment
     Option& operator=(const Option&) = delete;
     //! Don't permit move assigment

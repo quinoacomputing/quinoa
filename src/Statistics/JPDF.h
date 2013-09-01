@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:26:04 2013
+  \date      Sun 01 Sep 2013 02:15:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -53,14 +53,14 @@ class JPDF : public Distribution {
       m_pdf() {}
 
     //! Destructor: Clear joint PDF container
-    virtual ~JPDF() noexcept { m_pdf.clear(); }
-
-    //! Insert new sample into joint PDF
-    virtual void insert(const std::vector<real>& sample);
+    ~JPDF() noexcept override { m_pdf.clear(); }
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
-    const int& getNsample() const noexcept { return m_nsample; }
+    const int& getNsample() const noexcept override { return m_nsample; }
+
+    //! Insert new sample into joint PDF
+    void insert(const std::vector<real>& sample);
 
     //! Constant accessor to PDF map
     //! \return Pointer to map

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:24:01 2013
+  \date      Sun 01 Sep 2013 02:27:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -32,16 +32,13 @@ class SPINSFlow : public Physics {
                        const std::string& filename);
 
     //! Destructor
-    virtual ~SPINSFlow() noexcept = default;
-
-    //! Echo informaion on model
-    virtual void echo() const;
+    ~SPINSFlow() noexcept override = default;
 
     //! Initialize model
-    virtual void init();
+    void init() override;
 
     //! Solve model
-    virtual void solve();
+    void solve() override;
 
   private:
     //! Don't permit copy constructor

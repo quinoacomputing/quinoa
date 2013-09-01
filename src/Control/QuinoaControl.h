@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:01:40 2013
+  \date      Sun 01 Sep 2013 02:28:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -33,7 +33,7 @@ class QuinoaControl : public Control< control::Bundle,
     explicit QuinoaControl() noexcept : Control(control::defaults) {}
 
     //! Destructor
-    virtual ~QuinoaControl() noexcept = default;
+    ~QuinoaControl() noexcept override = default;
 
     //! Echo vector of vector of element names if set
     //! Fields of vector<vector< struct{field, name, plot} >> must exist

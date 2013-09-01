@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:22:25 2013
+  \date      Sun 01 Sep 2013 02:02:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -44,7 +44,7 @@ class Mix : public Model {
     }
 
     //! Destructor
-    virtual ~Mix() noexcept = default;
+    ~Mix() noexcept override = default;
 
     //! CRTP interface: Initialize particles
     void init(int p, int tid) { static_cast<MixType*>(this)->init(p, tid); }

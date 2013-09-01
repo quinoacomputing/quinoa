@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:00:00 2013
+  \date      Sat 31 Aug 2013 07:46:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -33,10 +33,10 @@ class Control {
     virtual ~Control() noexcept = default;
 
     //! Set: load data
-    void set(const Tuple& data) { m_data = move(data); }
-
-    //! Set: load boolean data
-    void set(const BoolTuple& booldata) { m_booldata = move(booldata); }
+    void set(const Tuple& data, const BoolTuple& booldata) {
+      m_data = move(data);
+      m_booldata = move(booldata);
+    }
 
     //! Get single element 'at' position
     template< Field at >
@@ -47,7 +47,7 @@ class Control {
 
     //! Check if an element is set via boolean data
     template< Field at >
-    bool set() const noexcept { return m_booldata[at]; }
+    constexpr bool set() const noexcept { return m_booldata[at]; }
 
     //! Echo element if set
     template< Field at >

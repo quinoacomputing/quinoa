@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:31:21 2013
+  \date      Sat 31 Aug 2013 07:42:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -41,9 +41,8 @@ QuinoaParser::parse()
   // Filter out repeated statistics
   unique(std::get<control::STATISTICS>(stack));
 
-  // Store off parsed bundles
-  m_control->set(stack);
-  m_control->set(boolstack);
+  // Store off parsed bundle
+  m_control->set(stack, boolstack);
 }
 
 void

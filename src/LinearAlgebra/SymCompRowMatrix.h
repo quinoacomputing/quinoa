@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:07:44 2013
+  \date      Sun 01 Sep 2013 02:40:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -29,7 +29,7 @@ class SymCompRowMatrix : public SparseMatrix {
                               const int *psup1,
                               const int* psup2);
     //! Destructor
-    virtual ~SymCompRowMatrix() noexcept;
+    ~SymCompRowMatrix() noexcept override;
 
     //! Add value to matrix in specified position using relative indexing
     void add(int row, int column, int i, real value);

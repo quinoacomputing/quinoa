@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:25:41 2013
+  \date      Sun 01 Sep 2013 02:23:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -54,7 +54,7 @@ class MKLRndTable : public MKL {
                          const std::string& name);
 
     //! Destructor: Destroy random number skip-ahead table
-    virtual ~MKLRndTable() noexcept;
+    ~MKLRndTable() noexcept override;
 
     //! Regenerate random numbers in table
     void generate() const;

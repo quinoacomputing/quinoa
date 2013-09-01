@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestControl.h
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 06:15:44 PM MDT
+  \date      Sun 01 Sep 2013 02:29:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite control
   \details   Random number generator test suite control
@@ -29,7 +29,7 @@ class RNGTestControl : public quinoa::Control< control::Bundle,
                          control::BundlePosition >(control::defaults) {}
 
     //! Destructor
-    virtual ~RNGTestControl() noexcept = default;
+    ~RNGTestControl() noexcept override = default;
 
   private:
     //! Don't permit copy constructor
