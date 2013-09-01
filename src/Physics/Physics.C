@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:35:03 2013
+  \date      Sun 01 Sep 2013 03:18:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,9 +16,9 @@
 #include <Physics.h>
 #include <Beta.h>
 #include <Dirichlet.h>
-#include <GeneralizedDirichlet.h>
-#include <SimplifiedLangevin.h>
-#include <GeneralizedLangevin.h>
+#include <GenDirichlet.h>
+#include <SLM.h>
+#include <GLM.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>

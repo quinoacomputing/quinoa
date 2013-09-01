@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Hydro/SimplifiedLangevin/SimplifiedLangevin.h
+  \file      src/Model/Hydro/SLM/SLM.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:03:32 PM MDT
+  \date      Sun 01 Sep 2013 03:07:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
 */
 //******************************************************************************
-#ifndef SimplifiedLangevin_h
-#define SimplifiedLangevin_h
+#ifndef SLM_h
+#define SLM_h
 
 #include <Memory.h>
 #include <Hydro.h>
@@ -63,4 +63,4 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
 
 } // namespace quinoa
 
-#endif // SimplifiedLangevin_h
+#endif // SLM_h

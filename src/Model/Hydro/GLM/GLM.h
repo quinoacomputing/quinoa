@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Hydro/GeneralizedLangevin/GeneralizedLangevin.h
+  \file      src/Model/Hydro/GLM/GLM.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:03:41 PM MDT
+  \date      Sun 01 Sep 2013 03:07:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -62,4 +62,4 @@ class GeneralizedLangevin : public Hydro<GeneralizedLangevin> {
 
 } // namespace quinoa
 
-#endif // GeneralizedLangevin_h
+#endif // GLM_h

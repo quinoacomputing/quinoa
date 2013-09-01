@@ -47,19 +47,11 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Paradigm
                       LinearAlgebra
                       Geometry
-                      HomMix
-                      HomHydro
-                      HomRT
-                      SPINSFlow
+                      Physics
+                      Model
                       IO
                       Mesh
                       Statistics
-                      Physics
-                      Beta
-                      Dirichlet
-                      GeneralizedDirichlet
-                      SimplifiedLangevin
-                      GeneralizedLangevin
                       Random
                       QuinoaControl
                       ${SILO_LIBRARY}

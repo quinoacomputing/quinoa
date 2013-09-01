@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/GeneralizedDirichlet/GeneralizedDirichlet.h
+  \file      src/Model/Mix/GenDirichlet/GenDirichlet.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:03:13 PM MDT
+  \date      Sun 01 Sep 2013 03:10:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
 */
 //******************************************************************************
-#ifndef GeneralizedDirichlet_h
-#define GeneralizedDirichlet_h
+#ifndef GenDirichlet_h
+#define GenDirichlet_h
 
 #include <vector>
 
@@ -86,4 +86,4 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
 
 } // namespace quinoa
 
-#endif // GeneralizedDirichlet_h
+#endif // GenDirichlet_h

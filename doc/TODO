@@ -17,12 +17,10 @@
 
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
-* Faster build: explore dynamic libs, less and larger libs, precompiled headers,
-  reduce build  deps with ninja build dependency map
+* Faster build: explore dynamic libs, precompiled headers, reduce build deps
+  with ninja build dependency map
 
 * Setup precompiled headers?
-
-* Less and larger libraries?
 
 * Define own error handler for the new operator via set_new_handler(), and
   also customize set_unexpected(), set_terminate().
