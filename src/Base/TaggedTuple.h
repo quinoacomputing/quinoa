@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:39:29 2013
+  \date      Wed Sep  4 12:49:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -62,8 +62,8 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   template<typename... Args> tt_impl(Args &&...args) :
     std::tuple<Ts...>(std::forward<Args>(args)...) {}
   //! Copy-value accessor
-  //template<typename S> nth<index<S, Ss...>::value, Ts...> get() {
-  //  return std::get<index<S, Ss...>::value>(*this); }
+  template<typename S> nth<index<S, Ss...>::value, Ts...> get() {
+    return std::get<index<S, Ss...>::value>(*this); }
   //! Const-ref accessor
   template<typename S> constexpr const nT<S>&
     get() const { return std::get<index<S, Ss...>::value>(*this); }
