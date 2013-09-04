@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Wed Sep  4 08:22:25 2013
+  \date      Wed Sep  4 12:21:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -53,12 +53,12 @@ HomHydro::solve()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control().get<control::incpar>().get<control::nstep>();
-  const auto dt    = control().get<control::incpar>().get<control::dt>();
-  const auto ttyi  = control().get<control::interval>().get<control::tty>();
-  const auto pdfi  = control().get<control::interval>().get<control::pdf>();
-  const auto glbi  = control().get<control::interval>().get<control::glob>();
-  const auto stai  = control().get<control::interval>().get<control::plot>();
+  const auto nstep = control().get<control::incpar, control::nstep>();
+  const auto dt    = control().get<control::incpar, control::dt>();
+  const auto ttyi  = control().get<control::interval, control::tty>();
+  const auto pdfi  = control().get<control::interval, control::pdf>();
+  const auto glbi  = control().get<control::interval, control::glob>();
+  const auto stai  = control().get<control::interval, control::plot>();
 
   timer()->start(m_totalTime);
 

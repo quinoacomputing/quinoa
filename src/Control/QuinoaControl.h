@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:01:21 2013
+  \date      Wed Sep  4 12:30:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -122,21 +122,20 @@ class QuinoaControl :
     //! Return density offset
     int densityOffset() const noexcept {
       using namespace control;
-      //return this->template get<component>().get<nposition>();
       return get<component,nposition>();
     }
     //! Return velocity offset
     int velocityOffset() const noexcept {
       using namespace control;
-      return this->template get<component>().get<nposition>() +
-             this->template get<component>().get<ndensity>();
+      return get<component,nposition>() +
+             get<component,ndensity>();
     }
     //! Return scalar offset
     int scalarOffset() const noexcept {
       using namespace control;
-      return this->template get<component>().get<nposition>() +
-             this->template get<component>().get<ndensity>() +
-             this->template get<component>().get<nvelocity>();
+      return get<component,nposition>() +
+             get<component,ndensity>() +
+             get<component,nvelocity>();
     }
 
     //! Return offset for term::quantity
@@ -144,15 +143,15 @@ class QuinoaControl :
       using namespace control;
       int offset = 0;
       if (q == Quantity::SCALAR)
-        offset += this->template get<component>().get<nvelocity>();
+        offset += get<component,nvelocity>();
       if (q == Quantity::VELOCITY_Z)
-        offset += this->template get<component>().get<nvelocity>();
+        offset += get<component,nvelocity>();
       if (q == Quantity::VELOCITY_Y)
-        offset += this->template get<component>().get<nvelocity>();
+        offset += get<component,nvelocity>();
       if (q == Quantity::VELOCITY_X)
-        offset += this->template get<component>().get<ndensity>();
+        offset += get<component,ndensity>();
       if (q == Quantity::DENSITY)
-        offset += NCOMP_POS * this->template get<component>().get<nposition>();
+        offset += NCOMP_POS * get<component,nposition>();
       return offset;
     }
 

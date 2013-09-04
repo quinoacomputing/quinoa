@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed Sep  4 08:05:19 2013
+  \date      Wed Sep  4 12:31:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -38,10 +38,10 @@ Statistics::Statistics(Memory* const memory,
 try :
   m_memory(memory),
   m_nthread(paradigm->nthread()),
-  m_npar(control.get<control::component>().get<control::npar>()),
+  m_npar(control.get<control::component, control::npar>()),
   m_physics(physics),
   m_nprop(control.nprop()),
-  m_statistics(control.get<control::statistic>().get<control::stats>()),
+  m_statistics(control.get<control::statistic, control::stats>()),
   m_instOrd(),
   m_ordinary(),
   m_ordFieldName(),

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Wed Sep  4 10:04:13 2013
+  \date      Wed Sep  4 12:29:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -24,6 +24,8 @@ QuinoaParser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  using namespace control;
+
   //std::cout << "==== PARSE START ====" << std::endl;
 #ifdef NDEBUG
   //pegtl::dummy_parse_file<grammar::read_file>(m_filename, m_control);
@@ -33,7 +35,8 @@ QuinoaParser::parse()
   //std::cout << "==== PARSE END ====" << std::endl << std::endl;
 
   // Filter out repeated statistics
-  //unique(m_control.get<control::statistic>().get<control::stats>());
+  unique(const_cast<std::vector<Product>&>(
+           m_control.get<statistic, control::stats>()));
 }
 
 void
@@ -58,7 +61,7 @@ QuinoaParser::echoGeometry() const
 {
   using namespace control;
   std::cout << " * Geometry: "
-            << grammar::Geometry.name(m_control.get<selected>().get<geometry>())
+            << grammar::Geometry.name(m_control.get<selected,geometry>())
             << std::endl;
 }
 
@@ -71,7 +74,7 @@ QuinoaParser::echoPhysics() const
 {
   using namespace control;
   std::cout << " * Physics: "
-            << grammar::Physics.name(m_control.get<selected>().get<physics>())
+            << grammar::Physics.name(m_control.get<selected,physics>())
             << std::endl;
 
   m_control.echo<incpar,nstep>("Number of time steps");
@@ -101,7 +104,7 @@ QuinoaParser::echoMass() const
 {
   using namespace control;
   std::cout << " * Mass model: "
-            << grammar::Mass.name(m_control.get<selected>().get<mass>())
+            << grammar::Mass.name(m_control.get<selected,mass>())
             << std::endl;
 
   m_control.echo<component,ndensity>("Number of density components");
@@ -117,7 +120,7 @@ QuinoaParser::echoHydro() const
 {
   using namespace control;
   std::cout << " * Hydrodynamics model: "
-            << grammar::Hydro.name(m_control.get<selected>().get<hydro>())
+            << grammar::Hydro.name(m_control.get<selected,hydro>())
             << std::endl;
 
   m_control.echo<component,nvelocity>("Number of velocity components");
@@ -133,7 +136,7 @@ QuinoaParser::echoMix() const
 {
   using namespace control;
   std::cout << " * Material mix model: "
-            << grammar::Mix.name(m_control.get<selected>().get<mix>())
+            << grammar::Mix.name(m_control.get<selected,mix>())
             << std::endl;
 
   m_control.echo<component,nscalar>("Number of scalar components");
@@ -152,7 +155,7 @@ QuinoaParser::echoFrequency() const
 {
   using namespace control;
   std::cout << " * Turbulence frequency model: "
-            << grammar::Frequency.name(m_control.get<selected>().get<frequency>())
+            << grammar::Frequency.name(m_control.get<selected,frequency>())
             << std::endl;
 
   m_control.echo<component,nfrequency>("Number of turbulence frequency "

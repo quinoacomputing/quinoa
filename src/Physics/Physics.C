@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed Sep  4 08:05:37 2013
+  \date      Wed Sep  4 12:18:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -39,12 +39,12 @@ Physics::Physics(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_nposition(control.get<control::component>().get<control::nposition>()),
-  m_ndensity(control.get<control::component>().get<control::ndensity>()),
-  m_nvelocity(control.get<control::component>().get<control::nvelocity>()),
-  m_nscalar(control.get<control::component>().get<control::nscalar>()),
-  m_npar(control.get<control::component>().get<control::npar>()),
-  m_term(control.get<control::incpar>().get<control::term>()),
+  m_nposition(control.get<control::component, control::nposition>()),
+  m_ndensity(control.get<control::component, control::ndensity>()),
+  m_nvelocity(control.get<control::component, control::nvelocity>()),
+  m_nscalar(control.get<control::component, control::nscalar>()),
+  m_npar(control.get<control::component, control::npar>()),
+  m_term(control.get<control::incpar, control::term>()),
   m_memory(memory),
   m_paradigm(paradigm),
   m_control(control),
@@ -58,6 +58,8 @@ try :
   m_particles()
 {
 IGNORE(m_paradigm);
+
+  using namespace control;
 
   ErrChk(control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
 
@@ -92,12 +94,11 @@ IGNORE(m_paradigm);
   ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
-  m_glob = new (nothrow) GlobWriter(control.get<control::io>().get<control::glob>());
+  m_glob = new (nothrow) GlobWriter(control.get<io,glob>());
   ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate statistics plot file writer
-  m_stat = new (nothrow) TxtStatWriter(control.get<control::io>().get<control::stats>(),
-                                       m_statistics);
+  m_stat = new (nothrow) TxtStatWriter(control.get<io,stats>(), m_statistics);
   ErrChk(m_stat != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
 } // Roll back changes and rethrow on error
