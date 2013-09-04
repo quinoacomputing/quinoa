@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Wed Sep  4 10:05:21 2013
+  \date      Wed Sep  4 11:56:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -17,7 +17,7 @@
 
 namespace quinoa {
 
-// Credit goes to ecatmur@stackoverflow.com for the template kung-fu below
+//! Tagged tuple
 
 //! typelist
 template<typename... Ts> struct typelist {
@@ -82,7 +82,6 @@ template<typename... Ts> struct tagged_tuple :
 };
 
 // Find the size of a given tagged tuple type: tuple_size/2
-// Based on the header file /usr/include/c++/4.8/tuple
 template<typename _Tp>
   struct tagged_tuple_size;
 

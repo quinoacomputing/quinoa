@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Tue 03 Sep 2013 10:49:38 PM MDT
+  \date      Wed Sep  4 12:01:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -122,7 +122,8 @@ class QuinoaControl :
     //! Return density offset
     int densityOffset() const noexcept {
       using namespace control;
-      return this->template get<component>().get<nposition>();
+      //return this->template get<component>().get<nposition>();
+      return get<component,nposition>();
     }
     //! Return velocity offset
     int velocityOffset() const noexcept {
