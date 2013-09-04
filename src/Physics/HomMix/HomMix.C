@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 03:19:47 PM MDT
+  \date      Wed Sep  4 08:09:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -33,7 +33,7 @@ using namespace quinoa;
 
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
-               QuinoaControl* const control,
+               const QuinoaControl& control,
                Timer* const timer) :
   Physics(memory, paradigm, control, timer),
   m_totalTime(timer->create("Total solution"))
@@ -61,12 +61,12 @@ HomMix::solve()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control()->get<control::NSTEP>();
-  const auto ttyi  = control()->get<control::TTYI>();
-  const auto pdfi  = control()->get<control::PDFI>();
-  const auto glbi  = control()->get<control::GLBI>();
-  const auto stai  = control()->get<control::STAI>();
-  const auto dt    = control()->get<control::DT>();
+  const auto nstep = control().get<control::incpar>().get<control::nstep>();
+  const auto dt    = control().get<control::incpar>().get<control::dt>();
+  const auto ttyi  = control().get<control::interval>().get<control::tty>();
+  const auto pdfi  = control().get<control::interval>().get<control::pdf>();
+  const auto glbi  = control().get<control::interval>().get<control::glob>();
+  const auto stai  = control().get<control::interval>().get<control::plot>();
 
   timer()->start(m_totalTime);
 

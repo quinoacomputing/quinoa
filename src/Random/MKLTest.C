@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.C
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 06:04:11 PM MDT
+  \date      Wed Sep  4 08:28:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -17,9 +17,9 @@
 
 using namespace rngtest;
 
-MKLTest::MKLTest(RNGTestControl* const control) :
+MKLTest::MKLTest(const RNGTestControl& control) :
   m_rng(),
-  m_testrng(control->get<control::RNGS>()),
+  m_testrng(control.get<control::generator>()),
   m_stream()
 //******************************************************************************
 //  Constructor

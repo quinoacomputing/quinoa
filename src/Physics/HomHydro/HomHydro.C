@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:25:34 PM MDT
+  \date      Wed Sep  4 08:22:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -25,7 +25,7 @@ using namespace quinoa;
 
 HomHydro::HomHydro(Memory* const memory,
                    Paradigm* const paradigm,
-                   QuinoaControl* const control,
+                   const QuinoaControl& control,
                    Timer* const timer) :
   Physics(memory, paradigm, control, timer),
   m_totalTime(timer->create("Total solution"))
@@ -53,12 +53,12 @@ HomHydro::solve()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control()->get<control::NSTEP>();
-  const auto ttyi  = control()->get<control::TTYI>();
-  const auto pdfi  = control()->get<control::PDFI>();
-  const auto glbi  = control()->get<control::GLBI>();
-  const auto stai  = control()->get<control::STAI>();
-  const auto dt    = control()->get<control::DT>();
+  const auto nstep = control().get<control::incpar>().get<control::nstep>();
+  const auto dt    = control().get<control::incpar>().get<control::dt>();
+  const auto ttyi  = control().get<control::interval>().get<control::tty>();
+  const auto pdfi  = control().get<control::interval>().get<control::pdf>();
+  const auto glbi  = control().get<control::interval>().get<control::glob>();
+  const auto stai  = control().get<control::interval>().get<control::plot>();
 
   timer()->start(m_totalTime);
 

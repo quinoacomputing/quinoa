@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:01:24 2013
+  \date      Tue 03 Sep 2013 10:43:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -13,12 +13,13 @@
 
 #include <string>
 #include <vector>
-#include <tuple>
 #include <ostream>
 #include <sstream>
 #include <limits>
 
 #include <QuinoaTypes.h>
+#include <TaggedTuple.h>
+
 #include <GeometryOptions.h>
 #include <PhysicsOptions.h>
 #include <PositionOptions.h>
@@ -28,6 +29,13 @@
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
+
+#include <BetaParameters.h>
+#include <DirichletParameters.h>
+#include <GenDirichletParameters.h>
+#include <GammaParameters.h>
+#include <SLMParameters.h>
+#include <GLMParameters.h>
 
 namespace quinoa {
 
@@ -180,142 +188,110 @@ struct FieldName {
 //! <y1y2y3> = <(Y1-<Y1>)(Y2-<Y2>)(Y3-<Y3>)>
 using Product = std::vector<Term>;
 
-//! Position enum for accessing fields of tuple Bundle using names as in struct
-enum BundlePosition { TITLE=0,
-                      GEOMETRY,
-                      PHYSICS,
-                      POSITION,
-                      MASS,
-                      HYDRO,
-                      ENERGY,
-                      MIX,
-                      FREQUENCY,
-                      MIXRATE,
-                      NSTEP,
-                      TERM,
-                      DT,
-                      NPOSITION,
-                      NDENSITY,
-                      NVELOCITY,
-                      NSCALAR,
-                      NFREQUENCY,
-                      NPAR,
-                      TTYI,
-                      DMPI,
-                      STAI,
-                      PDFI,
-                      GLBI,
-                      INPUT,
-                      OUTPUT,
-                      PDFNAME,
-                      GLOBNAME,
-                      STATNAME,
-                      B,
-                      S,
-                      KAPPA,
-                      C,
-                      C0,
-                      AT,
-                      FREQ_GAMMA_C1,
-                      FREQ_GAMMA_C2,
-                      FREQ_GAMMA_C3,
-                      FREQ_GAMMA_C4,
-                      BOXES,
-                      STATISTICS
-};
-
-//! Storage bundle for parsed data
-using Bundle = std::tuple<
-  std::string,             //!< Problem Title
-  select::GeometryType,    //!< Selected geometry definition
-  select::PhysicsType,     //!< Selected physics
-  select::PositionType,    //!< Selected position model
-  select::MassType,        //!< Selected mass model
-  select::HydroType,       //!< Selected hydrodynamics model
-  select::EnergyType,      //!< Selected internal energy model
-  select::MixType,         //!< Selected material mix model
-  select::FrequencyType,   //!< Selected turbulence frequency model
-  select::MixRateType,     //!< Selected material mix rate model
-  uint64_t,                //!< Number of time steps to take
-  real,                    //!< Time to terminate time stepping
-  real,                    //!< Size of time step
-  int,                     //!< Number of position components in position model
-  int,                     //!< Number of density components in mass model
-  int,                     //!< Number of velocity components in hydro model
-  int,                     //!< Number of mixing scalars in material mix model
-  int,                     //!< Number of frequencies in turb. frequency model
-  uint64_t,                //!< Total number of particles
-  int,                     //!< TTY output interval
-  int,                     //!< Dump output interval
-  int,                     //!< Plot output interval
-  int,                     //!< PDF output interval
-  int,                     //!< Glob output interval
-  std::string,             //!< Input filename
-  std::string,             //!< Output filename
-  std::string,             //!< PDF filename
-  std::string,             //!< Glob filename
-  std::string,             //!< Statistics filename
-  std::vector<real>,       //!< Parameters 'b' in Dirichlet mix models
-  std::vector<real>,       //!< Parameters 'S' in Dirichlet mix models
-  std::vector<real>,       //!< Parameters 'kappa' in Dirichlet mix models
-  std::vector<real>,       //!< Parameters 'c_ij' in GenDirichlet mix models
-  real,                    //!< Parameter C0 in the simplified Langevin model
-  real,                    //!< Atwood number in beta model
-  real,                    //!< C1 in gamma frequency model
-  real,                    //!< C2 in gamma frequency model
-  real,                    //!< C3 in gamma frequency model
-  real,                    //!< C4 in gamma frequency model
-  std::vector<real>,       //!< Sextet of box coordinates for anal. geometry def
-  std::vector<Product>     //!< Requested (and triggered) statistics
+//! Storage of selected options
+struct geometry {};
+struct physics {};
+struct position {};
+struct mass {};
+struct hydro {};
+struct energy {};
+struct mix {};
+struct frequency {};
+struct mixrate {};
+using selects = tagged_tuple<
+  geometry,  select::GeometryType,   //!< Selected geometry definition
+  physics,   select::PhysicsType,    //!< Selected physics
+  position,  select::PositionType,   //!< Selected position model
+  mass,      select::MassType,       //!< Selected mass model
+  hydro,     select::HydroType,      //!< Selected hydrodynamics model
+  energy,    select::EnergyType,     //!< Selected internal energy model
+  mix,       select::MixType,        //!< Selected material mix model
+  frequency, select::FrequencyType,  //!< Selected turbulence frequency model
+  mixrate,   select::MixRateType     //!< Selected material mix rate model
 >;
 
-//! Default bundle for Quinoa's control
-const Bundle defaults(
-  "",                                  //!< Title
-  select::GeometryType::NO_GEOMETRY,   //!< Geometry definition
-  select::PhysicsType::NO_PHYSICS,     //!< Physics
-  select::PositionType::NO_POSITION,   //!< Position model
-  select::MassType::NO_MASS,           //!< Mass model
-  select::HydroType::NO_HYDRO,         //!< Hydrodynamics model
-  select::EnergyType::NO_ENERGY,       //!< Internal energy model
-  select::MixType::NO_MIX,             //!< Material mix model
-  select::FrequencyType::NO_FREQUENCY, //!< Turbulence frequency model
-  select::MixRateType::NO_MIXRATE,     //!< Material mix rate model
-  std::numeric_limits<uint64_t>::max(),//!< Number of time steps to take
-  1.0,                                 //!< Time to terminate time stepping
-  0.5,                                 //!< Size of time step
-  0,                                   //!< Number of position components
-  0,                                   //!< Number of density components
-  0,                                   //!< Number of velocity components
-  0,                                   //!< Number of scalar components
-  0,                                   //!< Number of frequency components
-  1,                                   //!< Total number of particles
-  1,                                   //!< TTY output interval
-  0,                                   //!< Dump output interval
-  0,                                   //!< Plot output interval
-  1,                                   //!< PDF output interval
-  1,                                   //!< Glob output interval
-  "",                                  //!< Input filename
-  "",                                  //!< Output filename
-  "jpdf",                              //!< Default jpdf filename
-  "glob",                              //!< Default glob filename
-  "stat",                              //!< Default statistics filename
-  std::vector<real>(),                 //!< Parameters 'b'
-  std::vector<real>(),                 //!< Paramaters 'S'
-  std::vector<real>(),                 //!< Parameters 'kappa'
-  std::vector<real>(),                 //!< Parameters 'c_ij'
-  2.1,                                 //!< Parameter C0
-  0.5,                                 //!< Parameter Atwood number
-  0.5,                                 //!< Parameter C1 in gamma freq. model
-  0.73,                                //!< Parameter C2 in gamma freq. model
-  5.0,                                 //!< Parameter C3 in gamma freq. model
-  0.25,                                //!< Parameter C4 in gamma freq. model
-  std::vector<real>(),                 //!< Sextets for boxes for anal. geom.
-  std::vector<Product>()               //!< Statistics
-);
+//! Time incrementation parameters storage
+struct nstep {};
+struct term {};
+struct dt {};
+using incpars = tagged_tuple<
+  nstep, uint64_t,  //!< Number of time steps to take
+  term,  real,      //!< Time to terminate time stepping
+  dt,    real       //!< Size of time step
+>;
 
-//! Vector of bools indicating whether data is set in Bundle during parsing
-using BoolBundle = std::vector<bool>;
+//! Components storage
+struct nposition {};
+struct ndensity {};
+struct nvelocity {};
+struct nscalar {};
+struct nfrequency {};
+struct npar {};
+using components = tagged_tuple<
+  nposition,  uint8_t,   //!< Number of position components in position model
+  ndensity,   uint8_t,   //!< Number of density components in mass model
+  nvelocity,  uint8_t,   //!< Number of velocity components in hydro model
+  nscalar,    uint8_t,   //!< Number of mixing scalars in material mix model
+  nfrequency, uint8_t,   //!< Number of frequencies in turb. frequency model
+  npar,       uint64_t   //!< Total number of particles
+>;
+
+//! Output intervals storage
+struct tty {};
+struct dump {};
+struct plot {};
+struct pdf {};
+struct glob {};
+using intervals = tagged_tuple<
+  tty,  uint32_t,  //!< TTY output interval
+  dump, uint32_t,  //!< Dump output interval
+  plot, uint32_t,  //!< Plot output interval
+  pdf,  uint32_t,  //!< PDF output interval
+  glob, uint32_t   //!< Glob output interval
+>;
+
+//! IO parameters storage
+struct input {};
+struct output {};
+struct stats {};
+using ios = tagged_tuple<
+  input,  std::string,  //!< Input filename
+  output, std::string,  //!< Output filename
+  pdf,    std::string,  //!< PDF filename
+  glob,   std::string,  //!< Glob filename
+  stats,  std::string   //!< Statistics filename
+>;
+
+//! Model parameters storage
+struct beta {};
+struct dirichlet {};
+struct gendirichlet {};
+struct gamma {};
+struct slm {};
+struct glm {};
+using parameters = tagged_tuple<
+  beta,         BetaParameters,           // Mass models
+  dirichlet,    DirichletParameters,      // Mix models
+  gendirichlet, GenDirichletParameters,
+  gamma,        GammaParameters,
+  slm,          SLMParameters,            // Hydro models
+  glm,          GLMParameters
+>;
+
+//! Statistics storage
+using statistics = tagged_tuple<
+  stats,  std::vector<Product>  //!< Requested (and triggered) statistics
+>;
+
+//! Tags for Control's tagged_tuple
+struct title {};
+struct selected {};
+struct incpar {};
+struct component {};
+struct interval {};
+struct io {};
+struct parameter {};
+struct statistic {};
 
 } // namespace control
 

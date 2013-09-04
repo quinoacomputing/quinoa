@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:28:53 PM MDT
+  \date      Tue 03 Sep 2013 10:49:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -16,21 +16,68 @@
 #include <sstream>
 
 #include <QuinoaTypes.h>
-#include <Control.h>
 #include <QuinoaControlTypes.h>
+#include <Control.h>
 #include <Exception.h>
 #include <Option.h>
 
 namespace quinoa {
 
-//! QuinoaControl : Control< specialized to Quinoa's control >
-class QuinoaControl : public Control< control::Bundle,
-                                      control::BoolBundle,
-                                      control::BundlePosition > {
+//! QuinoaControl : Control<specialized to Quinoa>, see QuinoaControlTypes.h
+class QuinoaControl :
+  public Control< // tag              type
+                  control::title,     std::string,
+                  control::selected,  control::selects,
+                  control::incpar,    control::incpars,
+                  control::component, control::components,
+                  control::interval,  control::intervals,
+                  control::io,        control::ios,
+                  control::parameter, control::parameters,
+                  control::statistic, control::statistics > {
 
   public:
     //! Constructor: set defaults
-    explicit QuinoaControl() noexcept : Control(control::defaults) {}
+    explicit QuinoaControl() = default;
+
+//   //! Default constructor with defaults
+//   explicit options() : geometry(select::GeometryType::NO_GEOMETRY),
+//                        physics(select::PhysicsType::NO_PHYSICS),
+//                        position(select::PositionType::NO_POSITION),
+//                        mass(select::MassType::NO_MASS),
+//                        hydro(select::HydroType::NO_HYDRO),
+//                        energy(select::EnergyType::NO_ENERGY),
+//                        mix(select::MixType::NO_MIX),
+//                        frequency(select::FrequencyType::NO_FREQUENCY),
+//                        mixrate(select::MixRateType::NO_MIXRATE) {}
+// };
+//   //! Default constructor with defaults
+//   explicit incpars() : nstep(std::numeric_limits<uint64_t>::max()),
+//                        term(1.0),
+//                        dt(0.5) {}
+//   //! Default constructor with defaults
+//   explicit components() : nposition(0),
+//                           ndensity(0),
+//                           nvelocity(0),
+//                           nscalar(0),
+//                           nfrequency(0),
+//                           npar(1) {}
+// 
+//   //! Return sum of all components
+//   uint32_t sum() const noexcept {
+//     return nposition + ndensity + nvelocity + nscalar + nfrequency;
+//   }
+//     //! Default constructor with defaults
+//   explicit intervals() : tty(1),
+//                          dump(1),
+//                          plot(1),
+//                          pdf(1),
+//                          glob(1) {}
+//   //! Default constructor with defaults
+//   explicit ios() : input(),
+//                    output(),
+//                    pdf("jpdf"),
+//                    glob("glob"),
+//                    stat("stat") {}
 
     //! Destructor
     ~QuinoaControl() noexcept override = default;
@@ -40,33 +87,32 @@ class QuinoaControl : public Control< control::Bundle,
     //! See src/Control/ControlTypes.h for the definitions of operator << for
     //! outputing Term and vector<Term>, and operator <<= for outputing
     //! requested (i.e., plotted) Term
-    template< control::BundlePosition at >
+    template< typename tag >
     void echoVecVecNames(const std::string& msg, bool req = false) const {
-      if (set<at>()) {
+      //if (set<at>()) {
         std::cout << "   - " << msg << ": {";
-        if (req) for (auto& v : get<at>()) std::cout <<= v;
-        else for (auto& v : get<at>()) std::cout << v;
+        if (req) for (auto& v : this->template get<tag>()) std::cout <<= v;
+        else for (auto& v : this->template get<tag>()) std::cout << v;
         std::cout << " }" << std::endl;
-      }
+      //}
     }
 
     //! Echo vector of Option.names if set
-    template< control::BundlePosition at, class OptionType >
+    template< typename tag, class OptionType >
     void echoVecOptName(const std::string& msg) const {
-      if (set<at>()) {
+      //if (set<at>()) {
         control::Option<OptionType> opt;
         std::cout << "   - " << msg << ": {";
-        for (auto& v : get<at>()) std::cout << " " << opt.name(v);
+        for (auto& v : this->template get<tag>()) {
+          std::cout << " " << opt.name(v);
+        }
         std::cout << " }" << std::endl;
-      }
+      //}
     }
 
     //! Return total number of particle properties
-    int nprop() const noexcept {
-      return std::get<control::NPOSITION>(m_data) +
-             std::get<control::NDENSITY>(m_data) +
-             std::get<control::NVELOCITY>(m_data) +
-             std::get<control::NSCALAR>(m_data);
+    uint32_t nprop() const noexcept {
+      return 1;//this->template get<control::component>().sum();
     }
 
     //! Return position offset
@@ -75,46 +121,53 @@ class QuinoaControl : public Control< control::Bundle,
     }
     //! Return density offset
     int densityOffset() const noexcept {
-      return std::get<control::NPOSITION>(m_data);
+      using namespace control;
+      return this->template get<component>().get<nposition>();
     }
     //! Return velocity offset
     int velocityOffset() const noexcept {
-      return std::get<control::NPOSITION>(m_data) +
-             std::get<control::NDENSITY>(m_data);
+      using namespace control;
+      return this->template get<component>().get<nposition>() +
+             this->template get<component>().get<ndensity>();
     }
     //! Return scalar offset
     int scalarOffset() const noexcept {
-      return std::get<control::NPOSITION>(m_data) +
-             std::get<control::NDENSITY>(m_data) +
-             std::get<control::NVELOCITY>(m_data);
+      using namespace control;
+      return this->template get<component>().get<nposition>() +
+             this->template get<component>().get<ndensity>() +
+             this->template get<component>().get<nvelocity>();
     }
 
     //! Return offset for term::quantity
     int termOffset(control::Quantity q) const noexcept {
       using namespace control;
       int offset = 0;
-      if (q == Quantity::SCALAR)     offset += std::get<NVELOCITY>(m_data);
-      if (q == Quantity::VELOCITY_Z) offset += std::get<NVELOCITY>(m_data);
-      if (q == Quantity::VELOCITY_Y) offset += std::get<NVELOCITY>(m_data);
-      if (q == Quantity::VELOCITY_X) offset += std::get<NDENSITY>(m_data);
+      if (q == Quantity::SCALAR)
+        offset += this->template get<component>().get<nvelocity>();
+      if (q == Quantity::VELOCITY_Z)
+        offset += this->template get<component>().get<nvelocity>();
+      if (q == Quantity::VELOCITY_Y)
+        offset += this->template get<component>().get<nvelocity>();
+      if (q == Quantity::VELOCITY_X)
+        offset += this->template get<component>().get<ndensity>();
       if (q == Quantity::DENSITY)
-        offset += NCOMP_POS * std::get<NPOSITION>(m_data);
+        offset += NCOMP_POS * this->template get<component>().get<nposition>();
       return offset;
     }
 
     //! Error out on model configured at compile-time not matching that whose
     //! coefficients have been parsed
-    template<class OptionType, class ModelType, control::BundlePosition Parsed>
+    template<class OptionType, class ModelType, typename Parsed>
     void matchModels(const ModelType configured) {
-      bool match = configured == get<Parsed>();
-      if (!match) {
-        control::Option<OptionType> Model;
-        std::stringstream ss;
-        ss << "Compile-time-configured model (" << Model.name(configured)
-           << ") does not match that (" << Model.name(get<Parsed>())
-           << ") whose coefficients have been parsed in from the input file.";
-        Throw(ExceptType::FATAL, ss.str());
-      }
+//       bool match = configured == get<options>();
+//       if (!match) {
+//         control::Option<OptionType> Model;
+//         std::stringstream ss;
+//         ss << "Compile-time-configured model (" << Model.name(configured)
+//            << ") does not match that (" << Model.name(get<Parsed>())
+//            << ") whose coefficients have been parsed in from the input file.";
+//         Throw(ExceptType::FATAL, ss.str());
+//       }
     }
 
   private:

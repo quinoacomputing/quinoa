@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 03:18:39 PM MDT
+  \date      Wed Sep  4 08:05:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -28,7 +28,7 @@ using namespace quinoa;
 
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,
-                 QuinoaControl* const control,
+                 const QuinoaControl& control,
                  Timer* const timer)
 //******************************************************************************
 //  Constructor
@@ -39,12 +39,12 @@ Physics::Physics(Memory* const memory,
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_nposition(control->get<control::NPOSITION>()),
-  m_ndensity(control->get<control::NDENSITY>()),
-  m_nvelocity(control->get<control::NVELOCITY>()),
-  m_nscalar(control->get<control::NSCALAR>()),
-  m_npar(control->get<control::NPAR>()),
-  m_term(control->get<control::TERM>()),
+  m_nposition(control.get<control::component>().get<control::nposition>()),
+  m_ndensity(control.get<control::component>().get<control::ndensity>()),
+  m_nvelocity(control.get<control::component>().get<control::nvelocity>()),
+  m_nscalar(control.get<control::component>().get<control::nscalar>()),
+  m_npar(control.get<control::component>().get<control::npar>()),
+  m_term(control.get<control::incpar>().get<control::term>()),
   m_memory(memory),
   m_paradigm(paradigm),
   m_control(control),
@@ -59,11 +59,11 @@ try :
 {
 IGNORE(m_paradigm);
 
-  ErrChk(control->nprop() != 0, ExceptType::FATAL, "No need for physics?");
+  ErrChk(control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
 
   // Allocate memory to store all particle properties
   m_particles =
-    m_memory->newEntry<real>(m_npar * control->nprop(),
+    m_memory->newEntry<real>(m_npar * control.nprop(),
                              REAL,
                              SCALAR,
                              "Particles");
@@ -92,11 +92,11 @@ IGNORE(m_paradigm);
   ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
-  m_glob = new (nothrow) GlobWriter(m_control->get<control::GLOBNAME>());
+  m_glob = new (nothrow) GlobWriter(control.get<control::io>().get<control::glob>());
   ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate statistics plot file writer
-  m_stat = new (nothrow) TxtStatWriter(m_control->get<control::STATNAME>(),
+  m_stat = new (nothrow) TxtStatWriter(control.get<control::io>().get<control::stats>(),
                                        m_statistics);
   ErrChk(m_stat != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 

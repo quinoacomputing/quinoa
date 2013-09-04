@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:27:22 PM MDT
+  \date      Wed Sep  4 08:26:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -19,7 +19,7 @@ using namespace quinoa;
 
 SPINSFlow::SPINSFlow(Memory* const memory,
                      Paradigm* const paradigm,
-                     QuinoaControl* const control,
+                     const QuinoaControl& control,
                      Timer* const timer,
                      const std::string& filename) :
   Physics(memory, paradigm, control, timer),
@@ -28,7 +28,7 @@ SPINSFlow::SPINSFlow(Memory* const memory,
 //  Constructor
 //! \param[in]  memory   Memory object pointer
 //! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  control  Control object pointer
+//! \param[in]  control  Control object
 //! \param[in]  timer    Timer object pointer
 //! \param[in]  filename Mesh filename
 //! \author  J. Bakosi

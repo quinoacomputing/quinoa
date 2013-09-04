@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:25:55 PM MDT
+  \date      Wed Sep  4 08:09:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -30,7 +30,7 @@ class HomHydro : public Physics {
     //! Constructor
     explicit HomHydro(Memory* const memory,
                       Paradigm* const paradigm,
-                      QuinoaControl* const control,
+                      const QuinoaControl& control,
                       Timer* const timer);
 
     //! Destructor
