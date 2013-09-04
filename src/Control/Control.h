@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed Sep  4 10:04:49 2013
+  \date      Wed Sep  4 12:03:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -19,8 +19,8 @@
 namespace quinoa {
 
 //! Control : tagged_tuple
-template< typename... Ts >
-class Control : public tagged_tuple< Ts... > {
+template<typename... Ts>
+class Control : public tagged_tuple<Ts...> {
 
   //using Tuple = tagged_tuple<Ts...>;
 
@@ -36,11 +36,18 @@ class Control : public tagged_tuple< Ts... > {
 //       m_data = move(data);
 //     }
 
-    //! Const-ref accessor to single element at first level
+    //! Const-ref accessor to single element at 1st level
     template< typename tag >
     constexpr const typename tagged_tuple<Ts...>::template nT<tag>&
     get() const noexcept {
-      return this->template get<tag>();
+      return tagged_tuple<Ts...>::template get<tag>();
+    }
+    //! Const-ref accessor to single element at 2nd level
+    template< typename tag, typename subtag >
+    constexpr const typename
+      tagged_tuple<Ts...>::template nT<tag>::template nT<subtag>&
+    get() const noexcept {
+      return tagged_tuple<Ts...>::template get<tag>().template get<subtag>();
     }
 
 //     //! Check if an element is set
