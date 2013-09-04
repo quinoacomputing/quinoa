@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue Sep  3 07:34:48 2013
+  \date      Wed Sep  4 10:04:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -22,6 +22,8 @@ namespace quinoa {
 template< typename... Ts >
 class Control : public tagged_tuple< Ts... > {
 
+  //using Tuple = tagged_tuple<Ts...>;
+
   public:
     //! Constructor: set defaults
     explicit Control() = default;
@@ -34,12 +36,12 @@ class Control : public tagged_tuple< Ts... > {
 //       m_data = move(data);
 //     }
 
-//     //! Const-ref accessor to single element based on tag and subtag
-//     template< typename tag, typename subtag >
-//     constexpr const auto&
-//     get() const noexcept {
-//       return this->template get<tag>().template get<subtag>();
-//     }
+    //! Const-ref accessor to single element at first level
+    template< typename tag >
+    constexpr const typename tagged_tuple<Ts...>::template nT<tag>&
+    get() const noexcept {
+      return this->template get<tag>();
+    }
 
 //     //! Check if an element is set
 //     template< typename tag >
@@ -47,6 +49,13 @@ class Control : public tagged_tuple< Ts... > {
 //     constexpr bool set() const noexcept { return true; }
 
     //! Echo element if set
+    template< typename tag >
+    void echo(const std::string& msg) const {
+      //if (set<tag>())
+        std::cout << "   - " << msg << ": " << this->template get<tag>()
+                  << std::endl;
+    }
+
     template< typename tag, typename subtag >
     void echo(const std::string& msg) const {
       //if (set<tag>())
@@ -54,6 +63,15 @@ class Control : public tagged_tuple< Ts... > {
                   << this->template get<tag>().template get<subtag>()
                   << std::endl;
     }
+
+//     template< typename tag, typename... tags >
+//     void echo(const std::string& msg) const {
+//       //if (set<tag>())
+//         std::cout << "   - " << msg << ": "
+//                   << this->template get<tags>(). ...
+//                   << std::endl;
+//     }
+
 
 //     //! Echo vector of elements if set
 //     template< typename tag >
