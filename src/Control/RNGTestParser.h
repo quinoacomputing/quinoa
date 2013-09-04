@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:31:16 PM MDT
+  \date      Tue 03 Sep 2013 10:51:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -24,7 +24,7 @@ class RNGTestParser : public quinoa::Parser {
     //! \param[in]  filename  Control file name to read from
     //! \param[in]  control   Control object to put parsed data in
     explicit RNGTestParser(const std::string& filename,
-                           RNGTestControl* const control)
+                           RNGTestControl& control)
       : quinoa::Parser(filename),
         m_control(control) {}
 
@@ -47,7 +47,7 @@ class RNGTestParser : public quinoa::Parser {
     //! Don't permit move assigment
     RNGTestParser& operator=(RNGTestParser&&) = delete;
 
-    RNGTestControl* const m_control;    //!< Control object
+    RNGTestControl& m_control;    //!< Control object
 };
 
 } // namespace rngtest

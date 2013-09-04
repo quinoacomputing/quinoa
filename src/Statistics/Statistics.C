@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:35:52 2013
+  \date      Wed Sep  4 08:05:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -25,7 +25,7 @@ using namespace quinoa;
 
 Statistics::Statistics(Memory* const memory,
                        Paradigm* const paradigm,
-                       QuinoaControl* const control,
+                       const QuinoaControl& control,
                        Physics* const physics)
 //******************************************************************************
 //  Constructor
@@ -38,10 +38,10 @@ Statistics::Statistics(Memory* const memory,
 try :
   m_memory(memory),
   m_nthread(paradigm->nthread()),
-  m_npar(control->get<control::NPAR>()),
+  m_npar(control.get<control::component>().get<control::npar>()),
   m_physics(physics),
-  m_nprop(control->nprop()),
-  m_statistics(control->get<control::STATISTICS>()),
+  m_nprop(control.nprop()),
+  m_statistics(control.get<control::statistic>().get<control::stats>()),
   m_instOrd(),
   m_ordinary(),
   m_ordFieldName(),
@@ -65,7 +65,7 @@ try :
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(m_physics->particles() +
-                                    control->termOffset(term.quantity) +
+                                    control.termOffset(term.quantity) +
                                     term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
@@ -99,7 +99,7 @@ try :
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(m_physics->particles() +
-                                      control->termOffset(term.quantity) +
+                                      control.termOffset(term.quantity) +
                                       term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 03:10:47 PM MDT
+  \date      Wed Sep  4 07:57:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -30,17 +30,17 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     //! Constructor
     explicit GeneralizedDirichlet(Memory* const memory,
                                   Paradigm* const paradigm,
-                                  QuinoaControl* const control,
+                                  const QuinoaControl& control,
                                   real* const particles) :
       Mix<GeneralizedDirichlet>(memory, paradigm, control, particles),
-      m_b(control->get<control::B>()),
-      m_S(control->get<control::S>()),
-      m_k(control->get<control::KAPPA>()),
-      m_c(control->get<control::C>()) {
+      m_b(control.get<control::parameter>().get<control::gendirichlet>().b),
+      m_S(control.get<control::parameter>().get<control::gendirichlet>().S),
+      m_k(control.get<control::parameter>().get<control::gendirichlet>().kappa),
+      m_c(control.get<control::parameter>().get<control::gendirichlet>().c) {
       // Error out if mix model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Mix, select::MixType, control::MIX>(
-        select::MixType::GENERALIZED_DIRICHLET);
+      //control->matchModels<select::Mix, select::MixType, control::MIX>(
+      //  select::MixType::GENERALIZED_DIRICHLET);
       ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
              ExceptType::FATAL,
              "Wrong number of generalized Dirichlet model parameters 'b'");

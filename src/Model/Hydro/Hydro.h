@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:03:24 PM MDT
+  \date      Wed Sep  4 07:49:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -28,16 +28,16 @@ class Hydro : public Model {
     //! Constructor
     explicit Hydro(Memory* const memory,
                    Paradigm* const paradigm,
-                   QuinoaControl* const control,
+                   const QuinoaControl& control,
                    real* const particles) :
         Model(memory,
               paradigm,
               control,
               particles,
-              control->get<control::NPAR>(),
-              control->nprop()),
-        m_offset(control->velocityOffset()),
-        m_nvelocity(control->get<control::NVELOCITY>()) {
+              control.get<control::component>().get<control::npar>(),
+              control.nprop()),
+        m_offset(control.velocityOffset()),
+        m_nvelocity(control.get<control::component>().get<control::nvelocity>()) {
         ErrChk(m_nvelocity > 0, ExceptType::FATAL,
                "Wrong number of velocities");
       }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:05:00 2013
+  \date      Wed Sep  4 07:28:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -25,7 +25,7 @@ class Geometry {
     //! Constructor
     explicit Geometry(Memory* const memory,
                       Paradigm* const paradigm,
-                      QuinoaControl* const control,
+                      const QuinoaControl& control,
                       Timer* const timer) noexcept :
       m_memory(memory),
       m_paradigm(paradigm),
@@ -44,7 +44,7 @@ class Geometry {
   protected:
     Memory* const m_memory;                    //!< Memory object
     Paradigm* const m_paradigm;                //!< Parallel programming object
-    QuinoaControl* const m_control;            //!< Control object
+    const QuinoaControl& m_control;            //!< Control object
     Timer* const m_timer;                      //!< Timer object
 
   private:

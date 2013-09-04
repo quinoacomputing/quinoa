@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:24:12 2013
+  \date      Wed Sep  4 07:58:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -73,9 +73,9 @@ class Physics {
     //! Solve physics
     virtual void solve() = 0;
 
-    //! Constant accessor to control object pointer
-    //! \return Pointer to control object
-    QuinoaControl* control() const noexcept { return m_control; }
+    //! Constant accessor to control object
+    //! \return Control object
+    const QuinoaControl& control() const noexcept { return m_control; }
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
@@ -113,7 +113,7 @@ class Physics {
     //! Constructor: protected, designed to be base-only
     explicit Physics(Memory* const memory,
                      Paradigm* const paradigm,
-                     QuinoaControl* const control,
+                     const QuinoaControl& control,
                      Timer* const timer);
 
     const int m_nposition;                //!< Number of position components
@@ -139,7 +139,7 @@ class Physics {
 
     Memory* const m_memory;               //!< Memory object
     Paradigm* const m_paradigm;           //!< Parallel programming object
-    QuinoaControl* const m_control;       //!< Control object
+    const QuinoaControl& m_control;       //!< Control object
     Timer* const m_timer;                 //!< Timer object
 
     Mass<MassType>* m_mass;               //!< Mass model object    

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SLM/SLM.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 03:07:14 PM MDT
+  \date      Wed Sep  4 07:51:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -28,14 +28,14 @@ class SimplifiedLangevin : public Hydro<SimplifiedLangevin> {
     //! Constructor
     explicit SimplifiedLangevin(Memory* const memory,
                                 Paradigm* const paradigm,
-                                QuinoaControl* const control,
+                                const QuinoaControl& control,
                                 real* const particles) :
       Hydro<SimplifiedLangevin>(memory, paradigm, control, particles),
-      m_C0(control->get<control::C0>()) {
+      m_C0(control.get<control::parameter>().get<control::slm>().c0) {
       // Error out if hydro model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Hydro, select::HydroType, control::HYDRO>(
-        select::HydroType::SLM);
+      //control->matchModels<select::Hydro, select::HydroType, control::HYDRO>(
+      //  select::HydroType::SLM);
       //ErrChk on m_C0
     }
 

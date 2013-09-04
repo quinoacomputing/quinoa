@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:03:03 PM MDT
+  \date      Wed Sep  4 07:55:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -30,16 +30,16 @@ class Dirichlet : public Mix<Dirichlet> {
     //! Constructor
     explicit Dirichlet(Memory* const memory,
                        Paradigm* const paradigm,
-                       QuinoaControl* const control,
+                       const QuinoaControl& control,
                        real* const particles) :
       Mix<Dirichlet>(memory, paradigm, control, particles),
-      m_b(control->get<control::B>()),
-      m_S(control->get<control::S>()),
-      m_k(control->get<control::KAPPA>()) {
+      m_b(control.get<control::parameter>().get<control::dirichlet>().b),
+      m_S(control.get<control::parameter>().get<control::dirichlet>().S),
+      m_k(control.get<control::parameter>().get<control::dirichlet>().kappa) {
       // Error out if mix model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Mix, select::MixType, control::MIX>(
-        select::MixType::DIRICHLET);
+      //control->matchModels<select::Mix, select::MixType, control::MIX>(
+      //  select::MixType::DIRICHLET);
       ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
              ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'b'");

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestControl.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:29:16 PM MDT
+  \date      Tue 03 Sep 2013 10:49:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite control
   \details   Random number generator test suite control
@@ -16,17 +16,23 @@
 
 namespace rngtest {
 
-//! RNGTestControl : Control< specialized to RNGTest's control >
-class RNGTestControl : public quinoa::Control< control::Bundle,
-                                               control::BoolBundle,
-                                               control::BundlePosition > {
+//! RNGTestControl : Control<specialized to RNGTest>, see RNGTestControlTypes.h
+class RNGTestControl :
+  public quinoa::Control< // tag              type
+                          control::title,     std::string,
+                          control::suite,     select::RNGTestType,
+                          control::generator, std::vector<select::RNGType> > {
 
   public:
-    //! Constructor
-    explicit RNGTestControl() noexcept
-      : quinoa::Control< control::Bundle,
-                         control::BoolBundle,
-                         control::BundlePosition >(control::defaults) {}
+    //! Constructor: set defaults
+    explicit RNGTestControl() = default;
+
+// //! Default bundle for RNGTest's control
+// const Bundle defaults(
+//   "",                                  //!< Title
+//   select::RNGTestType::NO_RNGTEST,     //!< RNG test suite
+//   std::vector<select::RNGType>()       //!< Random number generators
+// );
 
     //! Destructor
     ~RNGTestControl() noexcept override = default;

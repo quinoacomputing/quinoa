@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GLM/GLM.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 03:07:55 PM MDT
+  \date      Wed Sep  4 07:51:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -31,13 +31,13 @@ class GeneralizedLangevin : public Hydro<GeneralizedLangevin> {
     //! Constructor
     explicit GeneralizedLangevin(Memory* const memory,
                                  Paradigm* const paradigm,
-                                 QuinoaControl* const control,
+                                 const QuinoaControl& control,
                                  real* const particles) :
       Hydro<GeneralizedLangevin>(memory, paradigm, control, particles) {
       // Error out if hydro model selected at compile time does not match that
       // whose options are given in control file
-      control->matchModels<select::Hydro, select::HydroType, control::HYDRO>(
-        select::HydroType::GLM);
+      //control->matchModels<select::Hydro, select::HydroType, control::HYDRO>(
+      //  select::HydroType::GLM);
     }
 
     //! Destructor
