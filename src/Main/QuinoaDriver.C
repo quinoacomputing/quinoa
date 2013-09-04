@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed Sep  4 08:38:39 2013
+  \date      Wed Sep  4 12:13:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -106,17 +106,18 @@ QuinoaDriver::initGeometry()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  using namespace control;
+  using namespace select;
+
   //  Instantiate geometry object (if any)
-  if (m_control.get<control::selected>().get<control::geometry>() ==
-      select::GeometryType::ANALYTIC) {
+  if (m_control.get<selected,geometry>() == GeometryType::ANALYTIC) {
 
     m_geometry = new(std::nothrow)
                    AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer);
     ErrChk(m_geometry != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for geometry object");
 
-  } else if (m_control.get<control::selected>().get<control::geometry>() ==
-               select::GeometryType::DISCRETE) {
+  } else if (m_control.get<selected,geometry>() == GeometryType::DISCRETE) {
 
     m_geometry = new(std::nothrow)
                   DiscreteGeometry(m_memory, m_paradigm, m_control, m_timer);
@@ -136,33 +137,34 @@ QuinoaDriver::initPhysics()
 //! \author J. Bakosi
 //******************************************************************************
 {
+  using namespace control;
+  using namespace select;
+
   //  Instantiate physics object (if any)
-  if (m_control.get<control::selected>().get<control::physics>() ==
-      select::PhysicsType::HOMOGENEOUS_MIX) {
+  if (m_control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
 
     m_physics =
       new(std::nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
-  } else if (m_control.get<control::selected>().get<control::physics>() ==
-             select::PhysicsType::HOMOGENEOUS_HYDRO) {
+  } else if (m_control.get<selected,physics>() ==
+             PhysicsType::HOMOGENEOUS_HYDRO) {
 
     m_physics =
       new(std::nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
-  } else if (m_control.get<control::selected>().get<control::physics>() ==
-             select::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
+  } else if (m_control.get<selected,physics>() ==
+             PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
 
     m_physics =
       new(std::nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
-  } if (m_control.get<control::selected>().get<control::physics>() ==
-        select::PhysicsType::SPINSFLOW) {
+  } if (m_control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
 
     m_physics = new(std::nothrow)
                   SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
