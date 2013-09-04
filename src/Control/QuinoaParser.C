@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Tue Sep  3 08:32:56 2013
+  \date      Wed Sep  4 10:04:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -33,7 +33,7 @@ QuinoaParser::parse()
   //std::cout << "==== PARSE END ====" << std::endl << std::endl;
 
   // Filter out repeated statistics
-  unique(m_control.get<control::statistic>().get<control::stats>());
+  //unique(m_control.get<control::statistic>().get<control::stats>());
 }
 
 void
@@ -175,7 +175,8 @@ QuinoaParser::echo() const
             << std::setw(13+m_filename.length()) << "-" << std::endl;
 
   //if (m_control->set<control::TITLE>())
-    std::cout << " * Title: " << m_control.get<title>() << std::endl;
+    //std::cout << " * Title: " << m_control.get<title>() << std::endl;
+    m_control.echo<title>(" * Title: ");
 
 //   if (m_control->set<control::GEOMETRY>()) echoGeometry();
 //   if (m_control->set<control::PHYSICS>()) echoPhysics();

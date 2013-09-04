@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Mon 02 Sep 2013 06:48:22 AM MDT
+  \date      Wed Sep  4 10:05:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -55,24 +55,27 @@ template<int n, int m, typename... Ts>
 template<typename S, typename T> struct tt_impl;
 template<typename... Ss, typename... Ts>
 struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
-  // Constructor
+  //! Accessor to type of nth element
+  template<typename S>
+  using nT = nth<index<S, Ss...>::value, Ts...>;
+  //! Constructor
   template<typename... Args> tt_impl(Args &&...args) :
     std::tuple<Ts...>(std::forward<Args>(args)...) {}
-  // Copy-value accessor
+  //! Copy-value accessor
   //template<typename S> nth<index<S, Ss...>::value, Ts...> get() {
   //  return std::get<index<S, Ss...>::value>(*this); }
-  // Const-ref accessor
-  template<typename S> constexpr const nth<index<S, Ss...>::value, Ts...>&
+  //! Const-ref accessor
+  template<typename S> constexpr const nT<S>&
     get() const { return std::get<index<S, Ss...>::value>(*this); }
-  // Rvalue accessor
-  template<typename S> nth<index<S, Ss...>::value, Ts...>&
+  //! Rvalue accessor
+  template<typename S> nT<S>&
     get() { return std::get<index<S, Ss...>::value>(*this); }
 };
 
 //! tagged_tuple
 template<typename... Ts> struct tagged_tuple :
   tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>> {
-  // Constructor
+  //! Constructor
   template<typename... Args> tagged_tuple(Args &&...args) :
     tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>>(
       std::forward<Args>(args)...) {}
