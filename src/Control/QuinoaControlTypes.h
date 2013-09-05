@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Tue 03 Sep 2013 10:43:15 PM MDT
+  \date      Wed 04 Sep 2013 07:20:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -29,13 +29,6 @@
 #include <MixOptions.h>
 #include <FrequencyOptions.h>
 #include <MixRateOptions.h>
-
-#include <BetaParameters.h>
-#include <DirichletParameters.h>
-#include <GenDirichletParameters.h>
-#include <GammaParameters.h>
-#include <SLMParameters.h>
-#include <GLMParameters.h>
 
 namespace quinoa {
 
@@ -260,6 +253,54 @@ using ios = tagged_tuple<
   pdf,    std::string,  //!< PDF filename
   glob,   std::string,  //!< Glob filename
   stats,  std::string   //!< Statistics filename
+>;
+
+//! Beta mass model parameters storage
+struct atwood {};
+using BetaParameters = tagged_tuple<
+  atwood, real
+>;
+
+//! Dirichlet mix model parameters storage
+struct b {};
+struct S {};
+struct kappa {};
+using DirichletParameters = tagged_tuple<
+  b,     std::vector<real>,
+  S,     std::vector<real>,
+  kappa, std::vector<real>
+>;
+
+//! Generalized Dirichlet mix model parameters storage
+struct c {};
+using GenDirichletParameters = tagged_tuple<
+  b,     std::vector<real>,
+  S,     std::vector<real>,
+  kappa, std::vector<real>,
+  c,     std::vector<real>
+>;
+
+//! Gamma mix model parameters storage
+struct c1 {};
+struct c2 {};
+struct c3 {};
+struct c4 {};
+using GammaParameters = tagged_tuple<
+  c1, real,
+  c2, real,
+  c3, real,
+  c4, real
+>;
+
+//! Simplified Langevin hydro model parameters storage
+struct c0 {};
+using SLMParameters = tagged_tuple<
+  c0, real
+>;
+
+//! Generalized Langevin hydro model parameters storage
+using GLMParameters = tagged_tuple<
+  c0, real
 >;
 
 //! Model parameters storage

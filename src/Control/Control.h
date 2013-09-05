@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:26:01 2013
+  \date      Wed 04 Sep 2013 07:22:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -49,7 +49,17 @@ class Control : public tagged_tuple<Ts...> {
     get() const noexcept {
       return tagged_tuple<Ts...>::template get<tag>().template get<subtag>();
     }
-
+    //! Const-ref accessor to single element at 3rd level
+    template< typename tag, typename subtag, typename subsubtag >
+    constexpr const typename
+      tagged_tuple<Ts...>::template nT<tag>
+                         ::template nT<subtag>
+                         ::template nT<subsubtag>&
+    get() const noexcept {
+      return tagged_tuple<Ts...>::template get<tag>().
+                                  template get<subtag>().
+                                  template get<subsubtag>();
+    }
 //     //! Check if an element is set
 //     template< typename tag >
 //     //constexpr bool set() const noexcept { return m_booldata[at]; }
