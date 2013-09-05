@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:16:43 2013
+  \date      Wed 04 Sep 2013 07:25:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -30,7 +30,7 @@ class Beta : public Mass<Beta> {
                   const QuinoaControl& control,
                   real* const particles) :
       Mass<Beta>(memory, paradigm, control, particles),
-      m_At(control.get<control::parameter, control::beta>().atwood) {
+      m_At(control.get<control::parameter, control::beta, control::atwood>()) {
       // Error out if mass model selected at compile time does not match that
       // whose options are given in control file
       //control->matchModels<select::Mass, select::MassType, control::MASS>(
