@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed 04 Sep 2013 07:22:21 PM MDT
+  \date      Thu 05 Sep 2013 08:23:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -60,6 +60,9 @@ class Control : public tagged_tuple<Ts...> {
                                   template get<subtag>().
                                   template get<subsubtag>();
     }
+    //! It would be nice to replace the above overloads with a variadic one that
+    //! works with "infinite" levels.
+
 //     //! Check if an element is set
 //     template< typename tag >
 //     //constexpr bool set() const noexcept { return m_booldata[at]; }
