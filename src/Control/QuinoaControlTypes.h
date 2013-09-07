@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Wed 04 Sep 2013 07:20:06 PM MDT
+  \date      Sat 07 Sep 2013 06:53:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -15,10 +15,10 @@
 #include <vector>
 #include <ostream>
 #include <sstream>
-#include <limits>
 
 #include <QuinoaTypes.h>
 #include <TaggedTuple.h>
+#include <QuinoaControlTags.h>
 
 #include <GeometryOptions.h>
 #include <PhysicsOptions.h>
@@ -182,15 +182,6 @@ struct FieldName {
 using Product = std::vector<Term>;
 
 //! Storage of selected options
-struct geometry {};
-struct physics {};
-struct position {};
-struct mass {};
-struct hydro {};
-struct energy {};
-struct mix {};
-struct frequency {};
-struct mixrate {};
 using selects = tagged_tuple<
   geometry,  select::GeometryType,   //!< Selected geometry definition
   physics,   select::PhysicsType,    //!< Selected physics
@@ -204,9 +195,6 @@ using selects = tagged_tuple<
 >;
 
 //! Time incrementation parameters storage
-struct nstep {};
-struct term {};
-struct dt {};
 using incpars = tagged_tuple<
   nstep, uint64_t,  //!< Number of time steps to take
   term,  real,      //!< Time to terminate time stepping
@@ -214,12 +202,6 @@ using incpars = tagged_tuple<
 >;
 
 //! Components storage
-struct nposition {};
-struct ndensity {};
-struct nvelocity {};
-struct nscalar {};
-struct nfrequency {};
-struct npar {};
 using components = tagged_tuple<
   nposition,  uint8_t,   //!< Number of position components in position model
   ndensity,   uint8_t,   //!< Number of density components in mass model
@@ -230,11 +212,6 @@ using components = tagged_tuple<
 >;
 
 //! Output intervals storage
-struct tty {};
-struct dump {};
-struct plot {};
-struct pdf {};
-struct glob {};
 using intervals = tagged_tuple<
   tty,  uint32_t,  //!< TTY output interval
   dump, uint32_t,  //!< Dump output interval
@@ -244,9 +221,6 @@ using intervals = tagged_tuple<
 >;
 
 //! IO parameters storage
-struct input {};
-struct output {};
-struct stats {};
 using ios = tagged_tuple<
   input,  std::string,  //!< Input filename
   output, std::string,  //!< Output filename
@@ -256,15 +230,11 @@ using ios = tagged_tuple<
 >;
 
 //! Beta mass model parameters storage
-struct atwood {};
 using BetaParameters = tagged_tuple<
   atwood, real
 >;
 
 //! Dirichlet mix model parameters storage
-struct b {};
-struct S {};
-struct kappa {};
 using DirichletParameters = tagged_tuple<
   b,     std::vector<real>,
   S,     std::vector<real>,
@@ -272,7 +242,6 @@ using DirichletParameters = tagged_tuple<
 >;
 
 //! Generalized Dirichlet mix model parameters storage
-struct c {};
 using GenDirichletParameters = tagged_tuple<
   b,     std::vector<real>,
   S,     std::vector<real>,
@@ -281,10 +250,6 @@ using GenDirichletParameters = tagged_tuple<
 >;
 
 //! Gamma mix model parameters storage
-struct c1 {};
-struct c2 {};
-struct c3 {};
-struct c4 {};
 using GammaParameters = tagged_tuple<
   c1, real,
   c2, real,
@@ -293,7 +258,6 @@ using GammaParameters = tagged_tuple<
 >;
 
 //! Simplified Langevin hydro model parameters storage
-struct c0 {};
 using SLMParameters = tagged_tuple<
   c0, real
 >;
@@ -304,12 +268,6 @@ using GLMParameters = tagged_tuple<
 >;
 
 //! Model parameters storage
-struct beta {};
-struct dirichlet {};
-struct gendirichlet {};
-struct gamma {};
-struct slm {};
-struct glm {};
 using parameters = tagged_tuple<
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
@@ -323,16 +281,6 @@ using parameters = tagged_tuple<
 using statistics = tagged_tuple<
   stats,  std::vector<Product>  //!< Requested (and triggered) statistics
 >;
-
-//! Tags for Control's tagged_tuple
-struct title {};
-struct selected {};
-struct incpar {};
-struct component {};
-struct interval {};
-struct io {};
-struct parameter {};
-struct statistic {};
 
 } // namespace control
 
