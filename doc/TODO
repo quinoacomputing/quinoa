@@ -1,6 +1,20 @@
-* Control: Control::Bundle would be nicer with a hierarchical structure.
+* Parser/Control:
+    - Control: Control::Bundle would be nicer with a hierarchical structure
+    - Echo what ends up being used instead of what is parsed
+    - Warn on what is set ends up not being used
+    - More sensible/readable error handling during/after parsing
+    - Does it make sense to add operator << for tuple (e.g., for debugging
+      purposes)? See STL 5.1.3.
 
-* Can we get rid of Exception macros?
+    - Automatically turn list of keywords into Keywords.h, could use constexpr
+      functions and/or classes and variadic templates? See Appendix in
+      Concurrency in Action
+
+* Erro/Exception handling:
+    - Can we get rid of Exception macros?
+    - Define own error handler for the new operator via set_new_handler(), and
+      also customize set_unexpected(), set_terminate().
+    - Reuse exception handling code. See STL 4.3.2.
 
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
@@ -10,24 +24,18 @@
 * Testing: Don't know how long I can keep going without some sort of unit and/or
   regression testing infrastructure.
 
-* test suite for exceptions: automatically switch each potential throw location
-  into a throw and test for clean exit (e.g. with valgrind)
+* Test suite for exceptions:
+    - Automatically switch each potential throw location into a throw and test
+      for clean exit (e.g. with valgrind)
     - valgrind can return a different exit code based on errors detected using
       the command line argument --error-exitcode= to valgrind
 
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
-* Faster build: explore dynamic libs, precompiled headers, reduce build deps
-  with ninja build dependency map
-
-* Setup precompiled headers?
-
-* Define own error handler for the new operator via set_new_handler(), and
-  also customize set_unexpected(), set_terminate().
-
-* Automatically turn list of keywords into Keywords.h, could use constexpr
-  functions and/or classes and variadic templates? See Appendix in
-  ConcurrencyInAction.
+* Faster build:
+    - Explore dynamic libs, precompiled headers
+    - Reduce build deps with ninja build dependency map
+    - Setup precompiled headers
 
 * Fix up MemoryEntry with smart pointer features: construction, assignment,
   automatic destruction as leaving scope, dereferencing, testing nullness. See
@@ -40,12 +48,8 @@
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
 
-* Reuse exception handling code. See STL 4.3.2.
-
-* Add operator << for tuple. See STL 5.1.3.
-
 * Fix Timer. See STL 5.7. Also add clocks info. See STL 5.7.3.
 
 * valarrays eligible for more aggressive optimizations, especially on multicore?
 
-* Any libs for concurrent containers? Do we need any?
+* Any libs for concurrent containers? Would be nice for PDF/JPDF.
