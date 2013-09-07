@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTags.h
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 06:53:16 AM MDT
+  \date      Sat 07 Sep 2013 07:16:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's control tags
   \details   All control tags used to build a nested tagged tagged tuple
@@ -70,8 +70,7 @@ struct incpar {};
 struct component {};
 struct interval {};
 struct io {};
-struct parameter {};
-struct statistic {};
+struct param {};
 
 } // namespace control
 

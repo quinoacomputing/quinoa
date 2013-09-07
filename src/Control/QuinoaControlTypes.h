@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 06:53:41 AM MDT
+  \date      Sat 07 Sep 2013 07:15:53 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -275,11 +275,6 @@ using parameters = tagged_tuple<
   gamma,        GammaParameters,
   slm,          SLMParameters,            // Hydro models
   glm,          GLMParameters
->;
-
-//! Statistics storage
-using statistics = tagged_tuple<
-  stats,  std::vector<Product>  //!< Requested (and triggered) statistics
 >;
 
 } // namespace control

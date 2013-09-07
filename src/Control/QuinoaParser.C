@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Wed Sep  4 12:29:18 2013
+  \date      Sat 07 Sep 2013 07:21:05 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -35,8 +35,7 @@ QuinoaParser::parse()
   //std::cout << "==== PARSE END ====" << std::endl << std::endl;
 
   // Filter out repeated statistics
-  unique(const_cast<std::vector<Product>&>(
-           m_control.get<statistic, control::stats>()));
+  unique(const_cast<std::vector<Product>&>(m_control.get<stats>()));
 }
 
 void
@@ -86,8 +85,8 @@ QuinoaParser::echoPhysics() const
   m_control.echo<interval,plot>("Statistics output interval");
   m_control.echo<interval,pdf>("PDF output interval");
   m_control.echo<interval,glob>("Glob output interval");
-  //m_control.echoVecVecNames<control::STATISTICS>("Requested statistics",true);
-  //m_control.echoVecVecNames<control::STATISTICS>("Estimated statistics");
+  m_control.echoVecVecNames<stats>("Requested statistics",true);
+  m_control.echoVecVecNames<stats>("Estimated statistics");
   m_control.echo<io,input>("Input filename");
   m_control.echo<io,output>("Output filename");
   m_control.echo<io,pdf>("PDF filename");
@@ -108,7 +107,6 @@ QuinoaParser::echoMass() const
             << std::endl;
 
   m_control.echo<component,ndensity>("Number of density components");
-  //m_control.echo<component,parameter,atwood>("At");
 }
 
 void
@@ -124,7 +122,6 @@ QuinoaParser::echoHydro() const
             << std::endl;
 
   m_control.echo<component,nvelocity>("Number of velocity components");
-  //m_control->echo<control::C0>("C0");
 }
 
 void
@@ -140,10 +137,6 @@ QuinoaParser::echoMix() const
             << std::endl;
 
   m_control.echo<component,nscalar>("Number of scalar components");
-  //m_control->echoVec<control::B>("Parameter vector b");
-  //m_control->echoVec<control::S>("Parameter vector S");
-  //m_control->echoVec<control::KAPPA>("Parameter vector kappa");
-  //m_control->echoVec<control::C>("Parameter vector c");
 }
 
 void
@@ -160,10 +153,6 @@ QuinoaParser::echoFrequency() const
 
   m_control.echo<component,nfrequency>("Number of turbulence frequency "
                                        " components");
-//   m_control->echo<control::FREQ_GAMMA_C1>("C1");
-//   m_control->echo<control::FREQ_GAMMA_C2>("C2");
-//   m_control->echo<control::FREQ_GAMMA_C3>("C3");
-//   m_control->echo<control::FREQ_GAMMA_C4>("C4");
 }
 
 void
@@ -177,16 +166,14 @@ QuinoaParser::echo() const
   std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
             << std::setw(13+m_filename.length()) << "-" << std::endl;
 
-  //if (m_control->set<control::TITLE>())
-    //std::cout << " * Title: " << m_control.get<title>() << std::endl;
-    m_control.echo<title>(" * Title: ");
+  m_control.echo<title>(" * Title: ");
 
-//   if (m_control->set<control::GEOMETRY>()) echoGeometry();
-//   if (m_control->set<control::PHYSICS>()) echoPhysics();
-//   if (m_control->set<control::MASS>()) echoMass();
-//   if (m_control->set<control::HYDRO>()) echoHydro();
-//   if (m_control->set<control::MIX>()) echoMix();
-//   if (m_control->set<control::FREQUENCY>()) echoFrequency();
+  echoGeometry();
+  echoPhysics();
+  echoMass();
+  echoHydro();
+  echoMix();
+  echoFrequency();
 
   std::cout << std::endl;
 }

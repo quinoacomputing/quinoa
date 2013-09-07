@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:30:36 2013
+  \date      Sat 07 Sep 2013 07:23:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -25,15 +25,15 @@ namespace quinoa {
 
 //! QuinoaControl : Control<specialized to Quinoa>, see QuinoaControlTypes.h
 class QuinoaControl :
-  public Control< // tag              type
-                  control::title,     std::string,
-                  control::selected,  control::selects,
-                  control::incpar,    control::incpars,
-                  control::component, control::components,
-                  control::interval,  control::intervals,
-                  control::io,        control::ios,
-                  control::parameter, control::parameters,
-                  control::statistic, control::statistics > {
+  public Control< // tag               type
+                  control::title,      std::string,
+                  control::selected,   control::selects,
+                  control::incpar,     control::incpars,
+                  control::component,  control::components,
+                  control::interval,   control::intervals,
+                  control::io,         control::ios,
+                  control::param,      control::parameters,
+                  control::stats,      std::vector<control::Product> > {
 
   public:
     //! Constructor: set defaults
@@ -82,32 +82,35 @@ class QuinoaControl :
     //! Destructor
     ~QuinoaControl() noexcept override = default;
 
-    //! Echo vector of vector of element names if set
+    //! Echo vector of vector of element names
     //! Fields of vector<vector< struct{field, name, plot} >> must exist
     //! See src/Control/ControlTypes.h for the definitions of operator << for
     //! outputing Term and vector<Term>, and operator <<= for outputing
     //! requested (i.e., plotted) Term
-    template< typename tag >
+    template<typename... tags>
     void echoVecVecNames(const std::string& msg, bool req = false) const {
-      //if (set<at>()) {
-        std::cout << "   - " << msg << ": {";
-        if (req) for (auto& v : this->template get<tag>()) std::cout <<= v;
-        else for (auto& v : this->template get<tag>()) std::cout << v;
-        std::cout << " }" << std::endl;
-      //}
+      std::cout << "   - " << msg << ": {";
+      if (req) {
+        for (auto& v : this->template get<tags...>()) {
+          std::cout <<= v;
+        }
+      } else {
+        for (auto& v : this->template get<tags...>()) {
+          std::cout << v;
+        }
+      }
+      std::cout << " }" << std::endl;
     }
 
-    //! Echo vector of Option.names if set
-    template< typename tag, class OptionType >
+    //! Echo vector of Option.names
+    template<class OptionType, typename... tags>
     void echoVecOptName(const std::string& msg) const {
-      //if (set<at>()) {
-        control::Option<OptionType> opt;
-        std::cout << "   - " << msg << ": {";
-        for (auto& v : this->template get<tag>()) {
-          std::cout << " " << opt.name(v);
-        }
-        std::cout << " }" << std::endl;
-      //}
+      control::Option<OptionType> opt;
+      std::cout << "   - " << msg << ": {";
+      for (auto& v : this->template get<tags...>()) {
+        std::cout << " " << opt.name(v);
+      }
+      std::cout << " }" << std::endl;
     }
 
     //! Return total number of particle properties
