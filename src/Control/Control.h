@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 05 Sep 2013 08:23:39 PM MDT
+  \date      Sat 07 Sep 2013 07:10:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -36,6 +36,7 @@ class Control : public tagged_tuple<Ts...> {
 //       m_data = move(data);
 //     }
 
+    //! TODO: Replace the overloads below with a variadic one
     //! Const-ref accessor to single element at 1st level
     template< typename tag >
     constexpr const typename tagged_tuple<Ts...>::template nT<tag>&
@@ -60,28 +61,12 @@ class Control : public tagged_tuple<Ts...> {
                                   template get<subtag>().
                                   template get<subsubtag>();
     }
-    //! It would be nice to replace the above overloads with a variadic one that
-    //! works with "infinite" levels.
 
-//     //! Check if an element is set
-//     template< typename tag >
-//     //constexpr bool set() const noexcept { return m_booldata[at]; }
-//     constexpr bool set() const noexcept { return true; }
-
-    //! Echo element if set
-    template< typename tag >
+    //! Echo element
+    template< typename... tags >
     void echo(const std::string& msg) const {
-      //if (set<tag>())
-        std::cout << "   - " << msg << ": " << this->template get<tag>()
-                  << std::endl;
-    }
-
-    template< typename tag, typename subtag >
-    void echo(const std::string& msg) const {
-      //if (set<tag>())
-        std::cout << "   - " << msg << ": "
-                  << this->template get<tag>().template get<subtag>()
-                  << std::endl;
+      std::cout << "   - " << msg << ": " << this->template get<tags...>()
+                << std::endl;
     }
 
 //     template< typename tag, typename... tags >

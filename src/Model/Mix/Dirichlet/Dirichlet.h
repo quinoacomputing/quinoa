@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 04 Sep 2013 07:26:19 PM MDT
+  \date      Sat 07 Sep 2013 07:20:23 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -33,9 +33,9 @@ class Dirichlet : public Mix<Dirichlet> {
                        const QuinoaControl& control,
                        real* const particles) :
       Mix<Dirichlet>(memory, paradigm, control, particles),
-      m_b(control.get<control::parameter, control::dirichlet, control::b>()),
-      m_S(control.get<control::parameter, control::dirichlet, control::S>()),
-      m_k(control.get<control::parameter, control::dirichlet, control::kappa>()) {
+      m_b(control.get<control::param, control::dirichlet, control::b>()),
+      m_S(control.get<control::param, control::dirichlet, control::S>()),
+      m_k(control.get<control::param, control::dirichlet, control::kappa>()) {
       // Error out if mix model selected at compile time does not match that
       // whose options are given in control file
       //control->matchModels<select::Mix, select::MixType, control::MIX>(

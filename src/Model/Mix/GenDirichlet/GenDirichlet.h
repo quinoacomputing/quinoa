@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.h
   \author    J. Bakosi
-  \date      Wed 04 Sep 2013 07:24:46 PM MDT
+  \date      Sat 07 Sep 2013 07:20:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -33,10 +33,10 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
                                   const QuinoaControl& control,
                                   real* const particles) :
       Mix<GeneralizedDirichlet>(memory, paradigm, control, particles),
-      m_b(control.get<control::parameter, control::gendirichlet, control::b>()),
-      m_S(control.get<control::parameter, control::gendirichlet, control::S>()),
-      m_k(control.get<control::parameter, control::gendirichlet, control::kappa>()),
-      m_c(control.get<control::parameter, control::gendirichlet, control::c>()) {
+      m_b(control.get<control::param, control::gendirichlet, control::b>()),
+      m_S(control.get<control::param, control::gendirichlet, control::S>()),
+      m_k(control.get<control::param, control::gendirichlet, control::kappa>()),
+      m_c(control.get<control::param, control::gendirichlet, control::c>()) {
       // Error out if mix model selected at compile time does not match that
       // whose options are given in control file
       //control->matchModels<select::Mix, select::MixType, control::MIX>(
