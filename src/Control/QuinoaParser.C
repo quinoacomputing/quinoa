@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 07:21:05 AM MDT
+  \date      Sun 08 Sep 2013 03:31:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -48,7 +48,7 @@ QuinoaParser::unique(std::vector<control::Product>& statistics)
 {
   std::sort(statistics.begin(), statistics.end());
   auto it = std::unique(statistics.begin(), statistics.end());
-  statistics.resize( std::distance(statistics.begin(), it) );
+  statistics.resize(std::distance(statistics.begin(), it));
 }
 
 void

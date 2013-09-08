@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 07:23:26 AM MDT
+  \date      Sun 08 Sep 2013 05:18:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -14,6 +14,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <limits>
 
 #include <QuinoaTypes.h>
 #include <QuinoaControlTypes.h>
@@ -37,47 +38,66 @@ class QuinoaControl :
 
   public:
     //! Constructor: set defaults
-    explicit QuinoaControl() = default;
-
-//   //! Default constructor with defaults
-//   explicit options() : geometry(select::GeometryType::NO_GEOMETRY),
-//                        physics(select::PhysicsType::NO_PHYSICS),
-//                        position(select::PositionType::NO_POSITION),
-//                        mass(select::MassType::NO_MASS),
-//                        hydro(select::HydroType::NO_HYDRO),
-//                        energy(select::EnergyType::NO_ENERGY),
-//                        mix(select::MixType::NO_MIX),
-//                        frequency(select::FrequencyType::NO_FREQUENCY),
-//                        mixrate(select::MixRateType::NO_MIXRATE) {}
-// };
-//   //! Default constructor with defaults
-//   explicit incpars() : nstep(std::numeric_limits<uint64_t>::max()),
-//                        term(1.0),
-//                        dt(0.5) {}
-//   //! Default constructor with defaults
-//   explicit components() : nposition(0),
-//                           ndensity(0),
-//                           nvelocity(0),
-//                           nscalar(0),
-//                           nfrequency(0),
-//                           npar(1) {}
-// 
-//   //! Return sum of all components
-//   uint32_t sum() const noexcept {
-//     return nposition + ndensity + nvelocity + nscalar + nfrequency;
-//   }
-//     //! Default constructor with defaults
-//   explicit intervals() : tty(1),
-//                          dump(1),
-//                          plot(1),
-//                          pdf(1),
-//                          glob(1) {}
-//   //! Default constructor with defaults
-//   explicit ios() : input(),
-//                    output(),
-//                    pdf("jpdf"),
-//                    glob("glob"),
-//                    stat("stat") {}
+    QuinoaControl() {
+      using namespace control;
+      // Default title
+      set<title>("");
+      // Default options
+      set<selected,geometry>(select::GeometryType::NO_GEOMETRY);
+      set<selected,physics>(select::PhysicsType::NO_PHYSICS);
+      set<selected,position>(select::PositionType::NO_POSITION);
+      set<selected,mass>(select::MassType::NO_MASS);
+      set<selected,hydro>(select::HydroType::NO_HYDRO);
+      set<selected,energy>(select::EnergyType::NO_ENERGY);
+      set<selected,mix>(select::MixType::NO_MIX);
+      set<selected,frequency>(select::FrequencyType::NO_FREQUENCY);
+      set<selected,mixrate>(select::MixRateType::NO_MIXRATE);
+      // Default time incrementation parameters
+      set<incpar,nstep>(std::numeric_limits<uint64_t>::max());
+      set<incpar,term>(1.0);
+      set<incpar,dt>(0.5);
+      // Default number of components
+      set<component,nposition>(0);
+      set<component,ndensity>(0);
+      set<component,nvelocity>(0);
+      set<component,nscalar>(0);
+      set<component,nfrequency>(0);
+      set<component,npar>(1);
+      // Default intervals
+      set<interval,tty>(1);
+      set<interval,dump>(1);
+      set<interval,plot>(1);
+      set<interval,pdf>(1);
+      set<interval,glob>(1);
+      // Default I/O parameters
+      set<io,input>("");
+      set<io,output>("out");
+      set<io,pdf>("pdf");
+      set<io,glob>("glob");
+      set<io,stats>("stat");
+      // Default beta mass model parameters
+      set<param,beta,atwood>(0.5);
+      // Default Dirichlet mix model parameters
+      set<param,dirichlet,b>(std::vector<real>());
+      set<param,dirichlet,S>(std::vector<real>());
+      set<param,dirichlet,kappa>(std::vector<real>());
+      // Default generalized Dirichlet mix model parameters
+      set<param,gendirichlet,b>(std::vector<real>());
+      set<param,gendirichlet,S>(std::vector<real>());
+      set<param,gendirichlet,kappa>(std::vector<real>());
+      set<param,gendirichlet,c>(std::vector<real>());
+      // Default gamma mix model parameters
+      set<param,gamma,c1>(0.5);
+      set<param,gamma,c2>(0.73);
+      set<param,gamma,c3>(5.0);
+      set<param,gamma,c4>(0.25);
+      // Default simplified Langevin hydro model parameters
+      set<param,slm,c0>(2.1);
+      // Default generalized Langevin hydro model parameters
+      set<param,slm,c0>(2.1);
+      // Default requested statistics
+      set<stats>(std::vector<Product>());
+    }
 
     //! Destructor
     ~QuinoaControl() noexcept override = default;
@@ -91,11 +111,11 @@ class QuinoaControl :
     void echoVecVecNames(const std::string& msg, bool req = false) const {
       std::cout << "   - " << msg << ": {";
       if (req) {
-        for (auto& v : this->template get<tags...>()) {
+        for (auto& v : get<tags...>()) {
           std::cout <<= v;
         }
       } else {
-        for (auto& v : this->template get<tags...>()) {
+        for (auto& v : get<tags...>()) {
           std::cout << v;
         }
       }
@@ -107,7 +127,7 @@ class QuinoaControl :
     void echoVecOptName(const std::string& msg) const {
       control::Option<OptionType> opt;
       std::cout << "   - " << msg << ": {";
-      for (auto& v : this->template get<tags...>()) {
+      for (auto& v : get<tags...>()) {
         std::cout << " " << opt.name(v);
       }
       std::cout << " }" << std::endl;
@@ -115,7 +135,12 @@ class QuinoaControl :
 
     //! Return total number of particle properties
     uint32_t nprop() const noexcept {
-      return 1;//this->template get<control::component>().sum();
+      using namespace control;
+      return get<component,nposition>() +
+             get<component,ndensity>() +
+             get<component,nvelocity>() +
+             get<component,nscalar>() +
+             get<component,nfrequency>();
     }
 
     //! Return position offset
