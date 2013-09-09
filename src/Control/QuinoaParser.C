@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Mon Sep  9 10:04:49 2013
+  \date      Mon Sep  9 15:58:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -24,12 +24,11 @@ QuinoaParser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using namespace control;
-
   // Parse
   pegtl::dummy_parse_file<grammar::read_file>(m_filename, m_control);
 
   // Filter out repeated statistics
+  using namespace control;
   unique(const_cast<std::vector<Product>&>(m_control.get<stats>()));
 }
 

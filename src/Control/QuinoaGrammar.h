@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon Sep  9 09:55:42 2013
+  \date      Mon Sep  9 16:56:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -55,47 +55,27 @@ namespace grammar {
 
   // Actions
 
-  // convert string to 'type' via std::stringstream
-  template< typename type >
-  static type convert(const std::string& str) {
-    std::stringstream ss(str);
-    type num;
-    ss >> num;
-    return num;
-  }
-
-  // convert 'type' to string via std::stringstream
-  template< typename type >
-  static std::string convert(const type& val) {
-    std::stringstream ss;
-    ss << val;
-    return ss.str();
-  }
-
-  // convert & store value in state at position given by tags
+  // put value in state at position given by tags without conversion
   template< typename... tags >
-  struct cstore : action_base< cstore<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      // Convert to correct type and store element
-      //stack.set<tags...>(
-      //  convert< typename std::tuple_element<at,Stack>::type >(value);
-    }
-  };
-
-  // store value in state at position given by tags (no conversion)
-  template< typename... tags >
-  struct store : action_base< store<tags...> > {
+  struct set : action_base< set<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.set<tags...>(value);
     }
   };
 
-  // push value in state at position given by tags, converting 'to' type
-  template< typename to, typename...tags >
-  struct push : action_base< push<to,tags...> > {
+  // convert & put value in state at position given by tags
+  template< typename... tags >
+  struct store : action_base< store<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      // Convert to correct type and push element to vector
-      //std::get<at>(stack).push_back(convert<to>(value));
+      stack.store<tags...>(value);
+    }
+  };
+
+  // convert and push_back value to vector in state at position given by tags
+  template< typename...tags >
+  struct push_back : action_base< push_back<tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      stack.push_back<tags...>(value);
     }
   };
 
@@ -139,8 +119,7 @@ namespace grammar {
   // save field ID so push_term can pick it up
   struct save_field : action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
-      field = convert<int>(value) - 1;  // numbering of field IDs start from 0
-      IGNORE(stack);        // suppress compiler warning on unused variable
+      field = stack.convert<int>(value) - 1;  // field ID numbering start from 0
     }
   };
 
@@ -271,7 +250,7 @@ namespace grammar {
   struct parse_title :
          ifmust< one<lbound>,
                  ifapply< trim<not_one<lbound>, one<rbound>>,
-                          store<control::title> >,
+                          set<control::title> >,
                  one<rbound>
                > {};
 
@@ -300,16 +279,16 @@ namespace grammar {
                                      control::selected,
                                      control::mix>>,
                  block< process<keyword::nscalar,
-                                cstore<control::component, control::nscalar>>,
-                        list<keyword::dir_B, push<control::param,
-                                                  control::dirichlet,
-                                                  control::b>>,
-                        list<keyword::dir_S, push<control::param,
-                                                  control::dirichlet,
-                                                  control::S>>,
-                        list<keyword::dir_kappa, push<control::param,
-                                                      control::dirichlet,
-                                                      control::kappa>> > > {};
+                                store<control::component, control::nscalar>>,
+                        list<keyword::dir_B, push_back<control::param,
+                                                       control::dirichlet,
+                                                       control::b>>,
+                        list<keyword::dir_S, push_back<control::param,
+                                                       control::dirichlet,
+                                                       control::S>>,
+                        list<keyword::dir_kappa, push_back<control::param,
+                                                           control::dirichlet,
+                                                           control::kappa>> > > {};
 
   // gendir block
   struct gendir :
@@ -318,19 +297,19 @@ namespace grammar {
                                      control::selected,
                                      control::mix>>,
                  block< process<keyword::nscalar,
-                                cstore<control::component, control::nscalar>>,
-                        list<keyword::dir_B, push<control::param,
-                                                  control::gendirichlet,
-                                                  control::b>>,
-                        list<keyword::dir_S, push<control::param,
-                                                  control::gendirichlet,
-                                                  control::S>>,
-                        list<keyword::dir_kappa, push<control::param,
-                                                      control::gendirichlet,
-                                                      control::kappa>>,
-                        list<keyword::gendir_C, push<control::param,
-                                                     control::gendirichlet,
-                                                     control::c>> > > {};
+                                store<control::component, control::nscalar>>,
+                        list<keyword::dir_B, push_back<control::param,
+                                                       control::gendirichlet,
+                                                       control::b>>,
+                        list<keyword::dir_S, push_back<control::param,
+                                                       control::gendirichlet,
+                                                       control::S>>,
+                        list<keyword::dir_kappa, push_back<control::param,
+                                                           control::gendirichlet,
+                                                           control::kappa>>,
+                        list<keyword::gendir_C, push_back<control::param,
+                                                          control::gendirichlet,
+                                                          control::c>> > > {};
 
   // statistics block
   struct statistics :
@@ -359,11 +338,11 @@ namespace grammar {
                                   control::Moment::CENTRAL, 'w'>,
                         push_term<control::Quantity::VELOCITY_Z,
                                   control::Moment::CENTRAL, 'w'>>,
-                 block< process<keyword::SLM_C0, cstore<control::param,
-                                                        control::slm,
-                                                        control::c0>>,
-                        process<keyword::nvelocity, cstore<control::component,
-                                                           control::nvelocity>>
+                 block< process<keyword::SLM_C0, store<control::param,
+                                                       control::slm,
+                                                       control::c0>>,
+                        process<keyword::nvelocity, store<control::component,
+                                                          control::nvelocity>>
                       > > {};
 
   // freq_gamma block
@@ -372,20 +351,20 @@ namespace grammar {
                         store_option<select::Frequency,
                                      control::selected,
                                      control::frequency> >,
-                 block< process<keyword::nfreq, cstore<control::component,
-                                                       control::nfrequency>>,
-                        process<keyword::freq_gamma_C1, cstore<control::param,
-                                                               control::gamma,
-                                                               control::c1>>,
-                        process<keyword::freq_gamma_C2, cstore<control::param,
-                                                               control::gamma,
-                                                               control::c2>>,
-                        process<keyword::freq_gamma_C3, cstore<control::param,
-                                                               control::gamma,
-                                                               control::c3>>,
-                        process<keyword::freq_gamma_C4, cstore<control::param,
-                                                               control::gamma,
-                                                               control::c4>> >
+                 block< process<keyword::nfreq, store<control::component,
+                                                      control::nfrequency>>,
+                        process<keyword::freq_gamma_C1, store<control::param,
+                                                              control::gamma,
+                                                              control::c1>>,
+                        process<keyword::freq_gamma_C2, store<control::param,
+                                                              control::gamma,
+                                                              control::c2>>,
+                        process<keyword::freq_gamma_C3, store<control::param,
+                                                              control::gamma,
+                                                              control::c3>>,
+                        process<keyword::freq_gamma_C4, store<control::param,
+                                                              control::gamma,
+                                                              control::c4>> >
                > {};
 
   // beta block
@@ -394,11 +373,11 @@ namespace grammar {
                         store_option<select::Mass,
                                      control::selected,
                                      control::mass> >,
-                 block< process<keyword::ndensity, cstore<control::component,
-                                                          control::ndensity>>,
-                        process<keyword::Beta_At, cstore<control::param,
-                                                         control::beta,
-                                                         control::atwood>> >
+                 block< process<keyword::ndensity, store<control::component,
+                                                         control::ndensity>>,
+                        process<keyword::Beta_At, store<control::param,
+                                                        control::beta,
+                                                        control::atwood>> >
                > {};
 
   // geometry definition types
@@ -408,20 +387,20 @@ namespace grammar {
 
   // common to all physics
   struct physics_common :
-         sor< process<keyword::nstep, cstore<control::incpar, control::nstep>>,
-              process<keyword::term, cstore<control::incpar, control::term>>,
-              process<keyword::dt, cstore<control::incpar, control::dt>>,
-              process<keyword::npar, cstore<control::component, control::npar>>,
-              process<keyword::input, store<control::io, control::input>>,
-              process<keyword::output, store<control::io, control::output>>,
-              process<keyword::pdfname, store<control::io, control::pdf>>,
-              process<keyword::globname, store<control::io, control::glob>>,
-              process<keyword::statname, store<control::io, control::stats>>,
-              process<keyword::glbi, cstore<control::interval, control::glob>>,
-              process<keyword::pdfi, cstore<control::interval, control::pdf>>,
-              process<keyword::stai, cstore<control::interval, control::stats>>,
-              process<keyword::ttyi, cstore<control::interval, control::tty>>,
-              process<keyword::dmpi, cstore<control::interval, control::dump>>
+         sor< process<keyword::nstep, store<control::incpar, control::nstep>>,
+              process<keyword::term, store<control::incpar, control::term>>,
+              process<keyword::dt, store<control::incpar, control::dt>>,
+              process<keyword::npar, store<control::component, control::npar>>,
+              process<keyword::input, set<control::io, control::input>>,
+              process<keyword::output, set<control::io, control::output>>,
+              process<keyword::pdfname, set<control::io, control::pdf>>,
+              process<keyword::globname, set<control::io, control::glob>>,
+              process<keyword::statname, set<control::io, control::stats>>,
+              process<keyword::glbi, store<control::interval, control::glob>>,
+              process<keyword::pdfi, store<control::interval, control::pdf>>,
+              process<keyword::stai, store<control::interval, control::plot>>,
+              process<keyword::ttyi, store<control::interval, control::tty>>,
+              process<keyword::dmpi, store<control::interval, control::dump>>
             > {};
 
   // hommix block
