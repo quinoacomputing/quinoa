@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 03:31:42 PM MDT
+  \date      Sun 08 Sep 2013 09:10:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -52,28 +52,40 @@ QuinoaParser::unique(std::vector<control::Product>& statistics)
 }
 
 void
-QuinoaParser::echoGeometry() const
+QuinoaParser::echo() const
 //******************************************************************************
-//  Echo parsed data specific to geometry definition
+//  Echo parsed information from quinoa control
 //! \author  J. Bakosi
 //******************************************************************************
 {
   using namespace control;
+  std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
+            << std::setw(13+m_filename.length()) << "-" << std::endl;
+
+  std::cout << " * Title: " << m_control.get<title>() << std::endl;
   std::cout << " * Geometry: "
             << grammar::Geometry.name(m_control.get<selected,geometry>())
             << std::endl;
-}
-
-void
-QuinoaParser::echoPhysics() const
-//******************************************************************************
-//  Echo parsed data specific to physics
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
   std::cout << " * Physics: "
             << grammar::Physics.name(m_control.get<selected,physics>())
+            << std::endl;
+  std::cout << " * Position: "
+            << grammar::Mass.name(m_control.get<selected,mass>())
+            << std::endl;
+  std::cout << " * Hydrodynamics: "
+            << grammar::Hydro.name(m_control.get<selected,hydro>())
+            << std::endl;
+  std::cout << " * Energy: "
+            << grammar::Energy.name(m_control.get<selected,energy>())
+            << std::endl;
+  std::cout << " * Material mix: "
+            << grammar::Mix.name(m_control.get<selected,mix>())
+            << std::endl;
+  std::cout << " * Frequency: "
+            << grammar::Frequency.name(m_control.get<selected,frequency>())
+            << std::endl;
+  std::cout << " * Material mix rate: "
+            << grammar::MixRate.name(m_control.get<selected,mixrate>())
             << std::endl;
 
   m_control.echo<incpar,nstep>("Number of time steps");
@@ -92,88 +104,6 @@ QuinoaParser::echoPhysics() const
   m_control.echo<io,pdf>("PDF filename");
   m_control.echo<io,glob>("Glob filename");
   m_control.echo<io,stats>("Statistics filename");
-}
-
-void
-QuinoaParser::echoMass() const
-//******************************************************************************
-//  Echo parsed data specific to mass model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
-  std::cout << " * Mass model: "
-            << grammar::Mass.name(m_control.get<selected,mass>())
-            << std::endl;
-
-  m_control.echo<component,ndensity>("Number of density components");
-}
-
-void
-QuinoaParser::echoHydro() const
-//******************************************************************************
-//  Echo parsed data specific to hydrodynamics model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
-  std::cout << " * Hydrodynamics model: "
-            << grammar::Hydro.name(m_control.get<selected,hydro>())
-            << std::endl;
-
-  m_control.echo<component,nvelocity>("Number of velocity components");
-}
-
-void
-QuinoaParser::echoMix() const
-//******************************************************************************
-//  Echo parsed data specific to mix model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
-  std::cout << " * Material mix model: "
-            << grammar::Mix.name(m_control.get<selected,mix>())
-            << std::endl;
-
-  m_control.echo<component,nscalar>("Number of scalar components");
-}
-
-void
-QuinoaParser::echoFrequency() const
-//******************************************************************************
-//  Echo parsed data specific to turbulence frequency model
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
-  std::cout << " * Turbulence frequency model: "
-            << grammar::Frequency.name(m_control.get<selected,frequency>())
-            << std::endl;
-
-  m_control.echo<component,nfrequency>("Number of turbulence frequency "
-                                       " components");
-}
-
-void
-QuinoaParser::echo() const
-//******************************************************************************
-//  Echo parsed information from quinoa control
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using namespace control;
-  std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
-            << std::setw(13+m_filename.length()) << "-" << std::endl;
-
-  m_control.echo<title>(" * Title: ");
-
-  echoGeometry();
-  echoPhysics();
-  echoMass();
-  echoHydro();
-  echoMix();
-  echoFrequency();
 
   std::cout << std::endl;
 }

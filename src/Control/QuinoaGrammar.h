@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 03:31:24 PM MDT
+  \date      Sun 08 Sep 2013 08:00:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -44,10 +44,14 @@ namespace grammar {
   static control::Option<select::Mass> Mass;
   //! Hydro options
   static control::Option<select::Hydro> Hydro;
-  //! Mix options
+  //! Energy options
+  static control::Option<select::Energy> Energy;
+  //! Material mix options
   static control::Option<select::Mix> Mix;
   //! Turbulence frequency options
   static control::Option<select::Frequency> Frequency;
+  //! Material mix rate options
+  static control::Option<select::MixRate> MixRate;
 
   // Actions
 

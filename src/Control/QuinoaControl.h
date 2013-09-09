@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 05:18:23 PM MDT
+  \date      Sun 08 Sep 2013 07:55:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -37,7 +37,7 @@ class QuinoaControl :
                   control::stats,      std::vector<control::Product> > {
 
   public:
-    //! Constructor: set defaults
+    //! Constructor: set all defaults, see QuinoaControlTypes.h
     QuinoaControl() {
       using namespace control;
       // Default title

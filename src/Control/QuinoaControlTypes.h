@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 04:02:13 PM MDT
+  \date      Sun 08 Sep 2013 06:17:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -182,7 +182,7 @@ struct FieldName {
 using Product = std::vector<Term>;
 
 //! Storage of selected options
-using selects = tagged_tuple<
+using selects = tuple::tagged_tuple<
   geometry,  select::GeometryType,   //!< Selected geometry definition
   physics,   select::PhysicsType,    //!< Selected physics
   position,  select::PositionType,   //!< Selected position model
@@ -195,14 +195,14 @@ using selects = tagged_tuple<
 >;
 
 //! Time incrementation parameters storage
-using incpars = tagged_tuple<
+using incpars = tuple::tagged_tuple<
   nstep, uint64_t,  //!< Number of time steps to take
   term,  real,      //!< Time to terminate time stepping
   dt,    real       //!< Size of time step
 >;
 
 //! Components storage
-using components = tagged_tuple<
+using components = tuple::tagged_tuple<
   nposition,  uint8_t,   //!< Number of position components in position model
   ndensity,   uint8_t,   //!< Number of density components in mass model
   nvelocity,  uint8_t,   //!< Number of velocity components in hydro model
@@ -212,7 +212,7 @@ using components = tagged_tuple<
 >;
 
 //! Output intervals storage
-using intervals = tagged_tuple<
+using intervals = tuple::tagged_tuple<
   tty,  uint32_t,  //!< TTY output interval
   dump, uint32_t,  //!< Dump output interval
   plot, uint32_t,  //!< Plot output interval
@@ -221,7 +221,7 @@ using intervals = tagged_tuple<
 >;
 
 //! IO parameters storage
-using ios = tagged_tuple<
+using ios = tuple::tagged_tuple<
   input,  std::string,  //!< Input filename
   output, std::string,  //!< Output filename
   pdf,    std::string,  //!< PDF filename
@@ -230,19 +230,19 @@ using ios = tagged_tuple<
 >;
 
 //! Beta mass model parameters storage
-using BetaParameters = tagged_tuple<
+using BetaParameters = tuple::tagged_tuple<
   atwood, real
 >;
 
 //! Dirichlet mix model parameters storage
-using DirichletParameters = tagged_tuple<
+using DirichletParameters = tuple::tagged_tuple<
   b,     std::vector<real>,
   S,     std::vector<real>,
   kappa, std::vector<real>
 >;
 
 //! Generalized Dirichlet mix model parameters storage
-using GenDirichletParameters = tagged_tuple<
+using GenDirichletParameters = tuple::tagged_tuple<
   b,     std::vector<real>,
   S,     std::vector<real>,
   kappa, std::vector<real>,
@@ -250,7 +250,7 @@ using GenDirichletParameters = tagged_tuple<
 >;
 
 //! Gamma mix model parameters storage
-using GammaParameters = tagged_tuple<
+using GammaParameters = tuple::tagged_tuple<
   c1, real,
   c2, real,
   c3, real,
@@ -258,17 +258,17 @@ using GammaParameters = tagged_tuple<
 >;
 
 //! Simplified Langevin hydro model parameters storage
-using SLMParameters = tagged_tuple<
+using SLMParameters = tuple::tagged_tuple<
   c0, real
 >;
 
 //! Generalized Langevin hydro model parameters storage
-using GLMParameters = tagged_tuple<
+using GLMParameters = tuple::tagged_tuple<
   c0, real
 >;
 
 //! Model parameters storage
-using parameters = tagged_tuple<
+using parameters = tuple::tagged_tuple<
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
   gendirichlet, GenDirichletParameters,
