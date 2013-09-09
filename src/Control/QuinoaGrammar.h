@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon Sep  9 16:56:37 2013
+  \date      Mon Sep  9 17:37:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -71,18 +71,18 @@ namespace grammar {
     }
   };
 
-  // convert and push_back value to vector in state at position given by tags
+  // convert and push back value to vector in state at position given by tags
   template< typename...tags >
-  struct push_back : action_base< push_back<tags...> > {
+  struct store_back : action_base< store_back<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      stack.push_back<tags...>(value);
+      stack.store_back<tags...>(value);
     }
   };
 
   // start new product in vector of statistics
   struct start_product : action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
-      //stack.get<control::stats>().push_back(std::vector<control::Term>());
+      stack.push_back<control::stats>(control::Product());
       IGNORE(value);        // suppress compiler warning on unused variable
     }
   };
@@ -280,36 +280,43 @@ namespace grammar {
                                      control::mix>>,
                  block< process<keyword::nscalar,
                                 store<control::component, control::nscalar>>,
-                        list<keyword::dir_B, push_back<control::param,
-                                                       control::dirichlet,
-                                                       control::b>>,
-                        list<keyword::dir_S, push_back<control::param,
-                                                       control::dirichlet,
-                                                       control::S>>,
-                        list<keyword::dir_kappa, push_back<control::param,
-                                                           control::dirichlet,
-                                                           control::kappa>> > > {};
+                        list< keyword::dir_B,
+                              store_back<control::param,
+                                         control::dirichlet,
+                                         control::b> >,
+                        list< keyword::dir_S,
+                              store_back<control::param,
+                                         control::dirichlet,
+                                         control::S> >,
+                        list< keyword::dir_kappa,
+                              store_back<control::param,
+                                         control::dirichlet,
+                                         control::kappa> > > > {};
 
   // gendir block
   struct gendir :
          ifmust< parse< keyword::mix_gendir,
                         store_option<select::Mix,
                                      control::selected,
-                                     control::mix>>,
-                 block< process<keyword::nscalar,
-                                store<control::component, control::nscalar>>,
-                        list<keyword::dir_B, push_back<control::param,
-                                                       control::gendirichlet,
-                                                       control::b>>,
-                        list<keyword::dir_S, push_back<control::param,
-                                                       control::gendirichlet,
-                                                       control::S>>,
-                        list<keyword::dir_kappa, push_back<control::param,
-                                                           control::gendirichlet,
-                                                           control::kappa>>,
-                        list<keyword::gendir_C, push_back<control::param,
-                                                          control::gendirichlet,
-                                                          control::c>> > > {};
+                                     control::mix> >,
+                 block< process< keyword::nscalar,
+                                 store<control::component, control::nscalar> >,
+                        list< keyword::dir_B,
+                              store_back<control::param,
+                                         control::gendirichlet,
+                                         control::b> >,
+                        list< keyword::dir_S,
+                              store_back<control::param,
+                                         control::gendirichlet,
+                                         control::S> >,
+                        list< keyword::dir_kappa,
+                              store_back<control::param,
+                                         control::gendirichlet,
+                                         control::kappa> >,
+                        list< keyword::gendir_C,
+                              store_back<control::param,
+                                         control::gendirichlet,
+                                         control::c>> > > {};
 
   // statistics block
   struct statistics :
