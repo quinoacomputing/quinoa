@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Wed Sep  4 08:26:36 2013
+  \date      Mon Sep  9 08:28:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -52,4 +52,17 @@ SPINSFlow::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+}
+
+void
+SPINSFlow::echo()
+//******************************************************************************
+//  Echo information on standalone-particle incompressible Navier-Stokes physics
+//! \author J. Bakosi
+//******************************************************************************
+{
+  //! Echo information on physics in general
+  Physics::echo();
+
+  //! Echo information on standalone-particle Navier-Stokes physics
 }

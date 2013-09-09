@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Wed Sep  4 08:22:43 2013
+  \date      Mon Sep  9 08:27:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -51,6 +51,9 @@ class HomRT : public Physics {
     HomRT(HomRT&&) = delete;
     //! Don't permit move assigment
     HomRT& operator=(HomRT&&) = delete;
+
+    //! Echo information on homogeneous Rayleigh-Taylor physics
+    void echo();
 
     //! One-liner report
     void reportHeader() const;

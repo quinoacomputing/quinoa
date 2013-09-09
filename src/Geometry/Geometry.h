@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Wed Sep  4 07:28:08 2013
+  \date      Mon Sep  9 08:20:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -42,6 +42,9 @@ class Geometry {
     virtual void fill() = 0;
 
   protected:
+    //! Echo information on geometry
+    void echo();
+
     Memory* const m_memory;                    //!< Memory object
     Paradigm* const m_paradigm;                //!< Parallel programming object
     const QuinoaControl& m_control;            //!< Control object

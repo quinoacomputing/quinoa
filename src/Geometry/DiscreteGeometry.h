@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Wed Sep  4 07:28:19 2013
+  \date      Mon Sep  9 08:19:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -50,6 +50,9 @@ class DiscreteGeometry : public Geometry {
     DiscreteGeometry(DiscreteGeometry&&) = delete;
     //! Don't permit move assigment
     DiscreteGeometry& operator=(DiscreteGeometry&&) = delete;
+
+    //! Echo information on discrete geometry
+    void echo();
 
     STLMesh* m_mesh;                        //!< Mesh object
 };

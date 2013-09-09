@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Wed Sep  4 12:31:06 2013
+  \date      Mon Sep  9 08:19:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -36,6 +36,9 @@ try :
   m_mesh(nullptr)
 {
   using namespace control;
+
+  //! Echo information on discrete geometry
+  echo();
 
   // Instantiate mesh object
   m_mesh = new(std::nothrow) STLMesh(memory);
@@ -86,6 +89,19 @@ DiscreteGeometry::finalize() noexcept
 //******************************************************************************
 {
   if (m_mesh) { delete m_mesh;  m_mesh  = nullptr; }
+}
+
+void
+DiscreteGeometry::echo()
+//******************************************************************************
+//  Echo information on discrete geometry
+//! \author J. Bakosi
+//******************************************************************************
+{
+  //! Echo information on geometry in general
+  Geometry::echo();
+
+  //! Echo information on discrete geometry
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
-  \date      Wed Sep  4 07:28:33 2013
+  \date      Mon Sep  9 08:20:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -28,17 +28,16 @@ class AnalyticGeometry : public Geometry {
     explicit AnalyticGeometry( Memory* const memory,
                                Paradigm* const paradigm,
                                const QuinoaControl& control,
-                               Timer* const timer) noexcept :
-      Geometry(memory, paradigm, control, timer) {}
+                               Timer* const timer);
 
     //! Destructor
     ~AnalyticGeometry() noexcept override = default;
 
     //! Initialize analytic geometry
-    void init() override {}
+    void init() override;
 
     //! Space-fill analytic geometry
-    void fill() override {}
+    void fill() override;
 
   private:
     //! Don't permit copy constructor
@@ -49,6 +48,9 @@ class AnalyticGeometry : public Geometry {
     AnalyticGeometry(AnalyticGeometry&&) = delete;
     //! Don't permit move assigment
     AnalyticGeometry& operator=(AnalyticGeometry&&) = delete;
+
+    //! Echo information on analytic geometry
+    void echo();
 
     std::vector<Primitive*> m_primitive;     //!< Vector of geometric primitives
 };

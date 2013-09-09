@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Wed Sep  4 08:09:25 2013
+  \date      Mon Sep  9 08:25:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -51,6 +51,9 @@ class HomHydro : public Physics {
     HomHydro(HomHydro&&) = delete;
     //! Don't permit move assigment
     HomHydro& operator=(HomHydro&&) = delete;
+    
+    //! Echo information on homogeneous hydrodynamics physics
+    void echo();
 
     //! One-liner report
     void reportHeader();

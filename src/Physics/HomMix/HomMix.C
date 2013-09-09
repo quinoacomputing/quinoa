@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Wed Sep  4 12:22:06 2013
+  \date      Mon Sep  9 08:25:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -246,4 +246,17 @@ HomMix::init()
     } // m_npar
   } // omp parallel
 
+}
+
+void
+HomMix::echo()
+//******************************************************************************
+//  Echo information on homogeneous material mixing physics
+//! \author J. Bakosi
+//******************************************************************************
+{
+  //! Echo information on physics in general
+  Physics::echo();
+
+  //! Echo information on homogeneous material mixing physics
 }
