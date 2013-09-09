@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.h
   \author    J. Bakosi
-  \date      Tue 03 Sep 2013 10:51:00 PM MDT
+  \date      Mon Sep  9 16:49:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
