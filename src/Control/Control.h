@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 05:22:07 PM MDT
+  \date      Sun 08 Sep 2013 07:46:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -20,10 +20,11 @@ namespace quinoa {
 
 //! Control : tagged_tuple
 template<typename... Ts>
-class Control : public tagged_tuple<Ts...> {
+class Control : public tuple::tagged_tuple<Ts...> {
 
-  //! Short-hand to innherited tagged tuple
-  using Tuple = tagged_tuple<Ts...>;
+  private:
+    //! Short-hand to innherited tagged tuple
+    using Tuple = tuple::tagged_tuple<Ts...>;
 
   public:
     //! Constructor: set defaults
@@ -31,11 +32,6 @@ class Control : public tagged_tuple<Ts...> {
 
     //! Destructor
     virtual ~Control() noexcept = default;
-
-//     //! Set: load data
-//     void set(const Tuple& data) {
-//       m_data = move(data);
-//     }
 
     //! Const-ref accessor
     //! TODO: Replace the overloads below with a variadic one

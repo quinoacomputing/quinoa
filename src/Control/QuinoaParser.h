@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Mon 02 Sep 2013 11:35:29 AM MDT
+  \date      Sun 08 Sep 2013 05:27:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -50,24 +50,6 @@ class QuinoaParser : public Parser {
 
     //! Make requested statistics unique
     void unique(std::vector<control::Product>& statistics);
-
-    //! Echo parsed data specific to geometry
-    void echoGeometry() const;
-
-    //! Echo parsed data specific to physics
-    void echoPhysics() const;
-
-    //! Echo parsed data specific to mass model
-    void echoMass() const;
-
-    //! Echo parsed data specific to hydrodynamics model
-    void echoHydro() const;
-
-    //! Echo parsed data specific to mix model
-    void echoMix() const;
-
-    //! Echo parsed data specific to turbulence frequency model
-    void echoFrequency() const;
 
     QuinoaControl& m_control;     //!< Control object
 };
