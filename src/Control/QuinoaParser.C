@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:58:26 2013
+  \date      Mon Sep  9 10:04:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -26,13 +26,8 @@ QuinoaParser::parse()
 {
   using namespace control;
 
-  //std::cout << "==== PARSE START ====" << std::endl;
-#ifdef NDEBUG
-  //pegtl::dummy_parse_file<grammar::read_file>(m_filename, m_control);
-#else  // NDEBUG
-  //pegtl::basic_parse_file<grammar::read_file>(m_filename, m_control);
-#endif // NDEBUG
-  //std::cout << "==== PARSE END ====" << std::endl << std::endl;
+  // Parse
+  pegtl::dummy_parse_file<grammar::read_file>(m_filename, m_control);
 
   // Filter out repeated statistics
   unique(const_cast<std::vector<Product>&>(m_control.get<stats>()));
