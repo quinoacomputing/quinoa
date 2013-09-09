@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon Sep  9 17:04:09 2013
+  \date      Mon Sep  9 17:35:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -113,18 +113,44 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subsubtag>>(value);
     }
 
-    //! Convert and push_back value to vector at slot
+    //! Push back value to vector at slot
     //! TODO: Replace the overloads below with a variadic one
     //! TODO: ICC should be a move
-    //! Convert and push_back value to vector at tag at 1st level
+    //! Push back value to vector at tag at 1st level without conversion
     template< typename tag >
-    void push_back(const std::string& value) noexcept {
+    void push_back(const typename Tuple::template nT<tag>::value_type& value) {
+      Tuple::template get<tag>().push_back(value);
+    }
+    //! Push back value to vector at tag at 2nd level without conversion
+    template< typename tag, typename subtag >
+    void push_back(const typename Tuple::template nT<tag>
+                                       ::template nT<subtag>
+                                       ::value_type& value) {
+      Tuple::template get<tag>().template get<subtag>().push_back(value);
+    }
+    //! Push back value to vector at tag at 3rd level without conversion
+    template< typename tag, typename subtag, typename subsubtag >
+    void push_back(const typename Tuple::template nT<tag>
+                                       ::template nT<subtag>
+                                       ::template nT<subsubtag>
+                                       ::value_type& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().push_back(value);
+    }
+
+    //! Convert and push back value to vector at slot
+    //! TODO: Replace the overloads below with a variadic one
+    //! TODO: ICC should be a move
+    //! Convert and push back value to vector at tag at 1st level
+    template< typename tag >
+    void store_back(const std::string& value) {
       Tuple::template get<tag>().push_back(
         convert<typename Tuple::template nT<tag>::value_type>(value));
     }
     //! Convert and move value to slot at tag at 2nd level
     template< typename tag, typename subtag >
-    void push_back(const std::string& value) noexcept {
+    void store_back(const std::string& value) {
       Tuple::template get<tag>().
              template get<subtag>().push_back(
         convert<typename Tuple::template nT<tag>
@@ -132,7 +158,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     //! Convert and move value to slot at tag at 3rd level
     template< typename tag, typename subtag, typename subsubtag >
-    void push_back(const std::string& value) noexcept {
+    void store_back(const std::string& value) {
       Tuple::template get<tag>().
              template get<subtag>().
              template get<subsubtag>().push_back(
