@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 04:15:54 PM MDT
+  \date      Mon Sep  9 07:34:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -58,11 +58,11 @@ try :
   // Echo information of stuff parsed
   parser.echo();
 
-  // Instantiate physics object
-  initPhysics();
-
   // Instantiate geometry object
   initGeometry();
+
+  // Instantiate physics object
+  initPhysics();
 
 } // Roll back changes and rethrow on error
   catch (std::exception&) {

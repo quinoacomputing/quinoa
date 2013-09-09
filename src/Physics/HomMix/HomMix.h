@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Wed Sep  4 08:05:59 2013
+  \date      Mon Sep  9 08:25:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -50,6 +50,9 @@ class HomMix : public Physics {
     HomMix(HomMix&&) = delete;
     //! Don't permit move assigment
     HomMix& operator=(HomMix&&) = delete;
+
+    //! Echo information on homogeneous material mixing physics
+    void echo();
 
     //! One-liner report
     void reportHeader() const;

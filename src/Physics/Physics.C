@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed Sep  4 12:18:38 2013
+  \date      Mon Sep  9 08:58:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -60,6 +60,9 @@ try :
 IGNORE(m_paradigm);
 
   using namespace control;
+
+  //! Echo information on physics
+  echo();
 
   ErrChk(control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
 
@@ -138,4 +141,78 @@ Physics::finalize() noexcept
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
   if (m_stat) { delete m_stat; m_stat = nullptr; }
+}
+
+void
+Physics::echo()
+//******************************************************************************
+//  Echo information on physics
+//! \author J. Bakosi
+//******************************************************************************
+{
+  control::Option<select::Physics> ph;
+  control::Option<select::Position> po;
+  control::Option<select::Mass> ms;
+  control::Option<select::Hydro> hy;
+  control::Option<select::Energy> en;
+  control::Option<select::Mix> mx;
+  control::Option<select::Frequency> fr;
+  control::Option<select::MixRate> mr;
+
+  std::cout << " * Physics: "
+            << ph.name(m_control.get<control::selected,control::physics>())
+            << std::endl;
+
+  std::cout << " * Position: "
+            << po.name(m_control.get<control::selected,control::position>())
+            << std::endl;
+  std::cout << " * Mass: "
+            << ms.name(m_control.get<control::selected,control::mass>())
+            << std::endl;
+  std::cout << " * Hydrodynamics: "
+            << hy.name(m_control.get<control::selected,control::hydro>())
+            << std::endl;
+  std::cout << " * Energy: "
+            << en.name(m_control.get<control::selected,control::energy>())
+            << std::endl;
+  std::cout << " * Material mix: "
+            << mx.name(m_control.get<control::selected,control::mix>())
+            << std::endl;
+  std::cout << " * Frequency: "
+            << fr.name(m_control.get<control::selected,control::frequency>())
+            << std::endl;
+  std::cout << " * Material mix rate: "
+            << mr.name(m_control.get<control::selected,control::mixrate>())
+            << std::endl;
+
+  std::cout << " * Incrementation parameters: ";
+  m_control.echo<control::incpar,control::nstep>("Number of time steps");
+  m_control.echo<control::incpar,control::term>("Terminate time");
+  m_control.echo<control::incpar,control::dt>("Time step size");
+
+  std::cout << " * Components: ";
+  m_control.echo<control::component,control::nposition>("Number of positions");
+  m_control.echo<control::component,control::ndensity>("Number of densities");
+  m_control.echo<control::component,control::nvelocity>("Number of velocity");
+  m_control.echo<control::component,control::nscalar>("Number of scalar");
+  m_control.echo<control::component,control::nfrequency>("Number of frequencies");
+  m_control.echo<control::component,control::npar>("Number of particles");
+
+  std::cout << " * Intervals: ";
+  m_control.echo<control::interval,control::tty>("TTY output interval");
+  m_control.echo<control::interval,control::dump>("Dump output interval");
+  m_control.echo<control::interval,control::plot>("Statistics output interval");
+  m_control.echo<control::interval,control::pdf>("PDF output interval");
+  m_control.echo<control::interval,control::glob>("Glob output interval");
+
+  std::cout << " * I/O: ";
+  m_control.echo<control::io,control::input>("Input filename");
+  m_control.echo<control::io,control::output>("Output filename");
+  m_control.echo<control::io,control::pdf>("PDF filename");
+  m_control.echo<control::io,control::glob>("Glob filename");
+  m_control.echo<control::io,control::stats>("Statistics filename");
+
+  std::cout << " * Statistics: ";
+  m_control.echoVecVecNames<control::stats>("Requested statistics",true);
+  m_control.echoVecVecNames<control::stats>("Estimated statistics");
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed Sep  4 07:58:26 2013
+  \date      Mon Sep  9 08:21:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -115,6 +115,9 @@ class Physics {
                      Paradigm* const paradigm,
                      const QuinoaControl& control,
                      Timer* const timer);
+
+    //! Echo information on physics
+    void echo();
 
     const int m_nposition;                //!< Number of position components
     const int m_ndensity;                 //!< Number of density components
