@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 06:24:53 PM MDT
+  \date      Mon Sep  9 10:08:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -80,8 +80,9 @@ std::string operator+ (const std::string& lhs, Enum e) {
 }
 
 //! Operator << for writing Enum to output streams
-template< typename Enum >
-std::ostream& operator<< (std::ostream& os, const Enum& e) {
+template< typename Enum, typename Ch, typename Tr >
+std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os,
+                                       const Enum& e) {
   os << static_cast<unsigned int>(e);
   return os;
 }
