@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon Sep  9 17:35:11 2013
+  \date      Mon 09 Sep 2013 09:05:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -36,7 +36,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
 
     //! Const-ref accessor
     //! TODO: Replace the overloads below with a variadic one
-    //! TODO: ICC should be a move
     //! Const-ref accessor to single element at 1st level
     template< typename tag >
     constexpr const typename Tuple::template nT<tag>&
@@ -55,6 +54,28 @@ class Control : public tuple::tagged_tuple<Ts...> {
                                   ::template nT<subtag>
                                   ::template nT<subsubtag>&
     get() const noexcept {
+      return Tuple::template get<tag>().
+                    template get<subtag>().
+                    template get<subsubtag>();
+    }
+
+    //! Rvalue accessor
+    //! TODO: Replace the overloads below with a variadic one
+    //! Rvalue accessor to single element at 1st level
+    template< typename tag >
+    typename Tuple::template nT<tag>& get() noexcept {
+      return Tuple::template get<tag>();
+    }
+    //! Rvalue accessor to single element at 2nd level
+    template< typename tag, typename subtag >
+    typename Tuple::template nT<tag>::template nT<subtag>& get() noexcept {
+      return Tuple::template get<tag>().template get<subtag>();
+    }
+    //! Rvalue accessor to single element at 3rd level
+    template< typename tag, typename subtag, typename subsubtag >
+    typename Tuple::template nT<tag>
+                  ::template nT<subtag>
+                  ::template nT<subsubtag>& get() noexcept {
       return Tuple::template get<tag>().
                     template get<subtag>().
                     template get<subsubtag>();
