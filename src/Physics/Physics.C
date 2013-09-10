@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon Sep  9 10:04:30 2013
+  \date      Mon 09 Sep 2013 09:37:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -185,34 +185,34 @@ Physics::echo()
             << mr.name(m_control.get<control::selected,control::mixrate>())
             << std::endl;
 
-  std::cout << " * Incrementation parameters: ";
+  std::cout << " * Incrementation parameters:" << std::endl;
   m_control.echo<control::incpar,control::nstep>("Number of time steps");
   m_control.echo<control::incpar,control::term>("Terminate time");
   m_control.echo<control::incpar,control::dt>("Time step size");
 
-  std::cout << " * Components: ";
+  std::cout << " * Components:" << std::endl;
   m_control.echo<control::component,control::nposition>("Number of positions");
   m_control.echo<control::component,control::ndensity>("Number of densities");
   m_control.echo<control::component,control::nvelocity>("Number of velocity");
-  m_control.echo<control::component,control::nscalar>("Number of scalar");
+  m_control.echo<control::component,control::nscalar>("Number of scalars");
   m_control.echo<control::component,control::nfrequency>("Number of frequencies");
   m_control.echo<control::component,control::npar>("Number of particles");
 
-  std::cout << " * Intervals: ";
+  std::cout << " * Intervals:" << std::endl;
   m_control.echo<control::interval,control::tty>("TTY output interval");
   m_control.echo<control::interval,control::dump>("Dump output interval");
   m_control.echo<control::interval,control::plot>("Statistics output interval");
   m_control.echo<control::interval,control::pdf>("PDF output interval");
   m_control.echo<control::interval,control::glob>("Glob output interval");
 
-  std::cout << " * I/O: ";
+  std::cout << " * I/O:" << std::endl;
   m_control.echo<control::io,control::input>("Input filename");
   m_control.echo<control::io,control::output>("Output filename");
   m_control.echo<control::io,control::pdf>("PDF filename");
   m_control.echo<control::io,control::glob>("Glob filename");
   m_control.echo<control::io,control::stats>("Statistics filename");
 
-  std::cout << " * Statistics: ";
+  std::cout << " * Statistics:" << std::endl;
   m_control.echoVecVecNames<control::stats>("Requested statistics",true);
   m_control.echoVecVecNames<control::stats>("Estimated statistics");
 }

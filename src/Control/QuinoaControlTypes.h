@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 06:17:32 PM MDT
+  \date      Mon 09 Sep 2013 09:40:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -203,11 +203,11 @@ using incpars = tuple::tagged_tuple<
 
 //! Components storage
 using components = tuple::tagged_tuple<
-  nposition,  uint8_t,   //!< Number of position components in position model
-  ndensity,   uint8_t,   //!< Number of density components in mass model
-  nvelocity,  uint8_t,   //!< Number of velocity components in hydro model
-  nscalar,    uint8_t,   //!< Number of mixing scalars in material mix model
-  nfrequency, uint8_t,   //!< Number of frequencies in turb. frequency model
+  nposition,  uint32_t,  //!< Number of position components in position model
+  ndensity,   uint32_t,  //!< Number of density components in mass model
+  nvelocity,  uint32_t,  //!< Number of velocity components in hydro model
+  nscalar,    uint32_t,  //!< Number of mixing scalars in material mix model
+  nfrequency, uint32_t,  //!< Number of frequencies in turb. frequency model
   npar,       uint64_t   //!< Total number of particles
 >;
 
