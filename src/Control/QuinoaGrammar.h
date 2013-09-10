@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:33:04 PM MDT
+  \date      Mon 09 Sep 2013 09:53:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -14,12 +14,9 @@
 #ifndef QuinoaGrammar_h
 #define QuinoaGrammar_h
 
-#include <algorithm>
-
 #include <Macro.h>
 #include <QuinoaControlTypes.h>
 #include <Option.h>
-#include <Box.h>
 #include <QuinoaKeywords.h>
 
 namespace quinoa {

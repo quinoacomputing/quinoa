@@ -2,12 +2,14 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Mon Sep  9 15:58:02 2013
+  \date      Mon 09 Sep 2013 09:53:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
 */
 //******************************************************************************
+
+#include <algorithm>
 
 #include <pegtl.hh>
 
