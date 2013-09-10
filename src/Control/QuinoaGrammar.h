@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon Sep  9 17:37:34 2013
+  \date      Mon 09 Sep 2013 08:58:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -91,28 +91,24 @@ namespace grammar {
   template< control::Quantity quantity, control::Moment moment, char name='\0' >
   struct push_term : action_base< push_term<quantity, moment, name> > {
     static void apply(const std::string& value, Stack& stack) {
-// 
-//       // if name is given, push name, otherwise push first char of value
-//       char na(name ? name : value[0]);
-//       // if name is given, it is triggered not user-requested
-//       bool plot(name ? false : true);
-//       // Use stats for shorthand of reference in bundle
-//       std::vector<control::Product>& stats =
-//         std::get<control::STATISTICS>(stack);
-//       // Push term into current product
-//       stats.back().push_back(control::Term(field, quantity, moment, na, plot));
-// 
-//       // If central moment, trigger mean
-//       if (moment == control::Moment::CENTRAL) {
-//         control::Term term(field,
-//                            quantity,
-//                            control::Moment::ORDINARY,
-//                            toupper(na),
-//                            false);
-//         stats.insert(stats.end()-1, control::Product(1,term));
-//       }
-// 
-//       field = 0;            // reset default field
+      // If name is given, push name, otherwise push first char of value
+      char na(name ? name : value[0]);
+      // If name is given, it is triggered not user-requested
+      bool plot(name ? false : true);
+      // Use stats for shorthand of reference to stats vector
+      std::vector<control::Product>& stats = stack.get<control::stats>();
+      // Push term into current product
+      stats.back().push_back(control::Term(field, quantity, moment, na, plot));
+      // If central moment, trigger mean
+      if (moment == control::Moment::CENTRAL) {
+        control::Term term(field,
+                           quantity,
+                           control::Moment::ORDINARY,
+                           toupper(na),
+                           false);
+        stats.insert(stats.end()-1, control::Product(1,term));
+      }
+      field = 0;            // reset default field
     }
   };
 
@@ -123,7 +119,7 @@ namespace grammar {
     }
   };
 
-  template< class OptionType, typename...tags >
+  template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
 //       control::Option<OptionType> Model;
@@ -167,18 +163,18 @@ namespace grammar {
 
   // parse input padded by blank at left and space at right and if it matches
   // 'keywords', apply 'actions'
-  template< class keywords, typename ... actions >
+  template< class keywords, typename... actions >
   struct parse :
-         pad< ifapply< trim<keywords, space>, actions ... >, blank, space > {};
+         pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
 
   // comment: start with '#' until eol
   struct comment :
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
   // plow through block of 'tokens' until 'end' keyword
-  template< typename ... tokens >
+  template< typename... tokens >
   struct block :
-         until< read<keyword::end>, sor<comment, tokens ...> > {};
+         until< read<keyword::end>, sor<comment, tokens...> > {};
 
   // rng: one of the random number generators
   struct rng :
@@ -218,8 +214,7 @@ namespace grammar {
   template< class keyword, control::Quantity q, control::Moment m >
   struct moment :
          sor < ifapply<seq<keyword, ifapply<digit,save_field>>, push_term<q,m>>,
-               ifapply<keyword, push_term<q,m>>
-             > {};
+               ifapply<keyword, push_term<q,m>> > {};
 
   // terms recognized within an expectation and their mapping
   struct terms :
