@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 08:58:30 PM MDT
+  \date      Mon 09 Sep 2013 09:33:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -32,26 +32,8 @@ namespace grammar {
 
   //! Bundle is where everything is stored during parsing
   using Stack = QuinoaControl;
-  //! Out-of-struct storage of field ID for push_term
+  //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
-  //! Geometry definition options
-  static control::Option<select::Geometry> Geometry;
-  //! Physics options
-  static control::Option<select::Physics> Physics;
-  //! Position options
-  static control::Option<select::Position> Position;
-  //! Mass options
-  static control::Option<select::Mass> Mass;
-  //! Hydro options
-  static control::Option<select::Hydro> Hydro;
-  //! Energy options
-  static control::Option<select::Energy> Energy;
-  //! Material mix options
-  static control::Option<select::Mix> Mix;
-  //! Turbulence frequency options
-  static control::Option<select::Frequency> Frequency;
-  //! Material mix rate options
-  static control::Option<select::MixRate> MixRate;
 
   // Actions
 
@@ -63,7 +45,7 @@ namespace grammar {
     }
   };
 
-  // convert & put value in state at position given by tags
+  // convert and put value in state at position given by tags
   template< typename... tags >
   struct store : action_base< store<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -119,19 +101,12 @@ namespace grammar {
     }
   };
 
+  // convert and put option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-//       control::Option<OptionType> Model;
-//       // Issue warning if overwrite
-//       if (boolstack[at]) {
-//         std::cout << ">>> PARSER WARNING: Conflicting options defined in input "
-//                      "file, overwriting \"" << Model.name(std::get<at>(stack))
-//                   << "\" with \"" << Model.name(Model.value(value)) << "\""
-//                   << std::endl;
-//       }
-//       std::get<at>(stack) = Model.value(value);
-//       boolstack[at] = true;
+      control::Option<OptionType> Model;
+      stack.set<tags...>(Model.value(value));
     }
   };
 
