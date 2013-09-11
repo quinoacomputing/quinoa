@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed Sep 11 12:52:11 2013
+  \date      Wed Sep 11 16:07:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -21,16 +21,16 @@ using namespace quinoa;
 
 namespace quinoa {
 
-static void echoName(const QuinoaPrinter& print)
+static void echoTitle(const QuinoaPrinter& print)
 //******************************************************************************
 //  Echo Name
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.header("Quinoa: Lagrangian particle hydrodynamics");
+  print.title("Quinoa: Lagrangian particle hydrodynamics");
 }
 
-static void echoBuildInfo(const QuinoaPrinter& print)
+static void echoBuildEnv(const QuinoaPrinter& print)
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/QuinoaConfig.h filled by
@@ -38,21 +38,32 @@ static void echoBuildInfo(const QuinoaPrinter& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::cout << "\nBuild environment:"
-               "\n------------------\n";
-  std::cout << " * Executable                  : " << QUINOA_EXECUTABLE << "\n";
-  std::cout << " * Version                     : " << QUINOA_VERSION << "\n";
-  std::cout << " * Release                     : " << QUINOA_RELEASE << "\n";
-  std::cout << " * Revision                    : " << QUINOA_GIT_COMMIT << "\n";
-  std::cout << " * CMake build type            : " << QUINOA_BUILD_TYPE << "\n";
-  std::cout << " * MPI C++ compiler            : " << QUINOA_MPI_COMPILER<<"\n";
-  std::cout << " * MPI underlying C++ compiler : " << QUINOA_COMPILER << "\n";
-  std::cout << " * Build date                  : " << QUINOA_BUILD_DATE << "\n";
+  print.section("Build environment");
+  print.item("Executable", QUINOA_EXECUTABLE);
+  print.item("Version", QUINOA_VERSION);
+  print.item("Release", QUINOA_RELEASE);
+  print.item("Revision", QUINOA_GIT_COMMIT);
+  print.item("CMake build type", QUINOA_BUILD_TYPE);
+  print.item("MPI C++ compiler", QUINOA_MPI_COMPILER);
+  print.item("Underlying C++ compiler", QUINOA_COMPILER);
+  print.item("Build date", QUINOA_BUILD_DATE);
 #ifdef NDEBUG
-  std::cout << " * Built without asserts" << "\n";
+  print.item("Asserts", "off");
 #else  // NDEBUG
-  std::cout << " * Built with asserts" << "\n";
+  print.item("Asserts", "on");
 #endif // NDEBUG
+  std::cout << std::endl;
+}
+
+static void echoRunEnv(const QuinoaPrinter& print)
+//******************************************************************************
+//  Echo runtime environment
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print.section("Run-time environment");
+  print.item("Date & Time", "...");
+  print.item("Command line arguments", "...");
   std::cout << std::endl;
 }
 
@@ -74,13 +85,15 @@ int main(int argc, char* argv[])
     // Create pretty printer
     QuinoaPrinter printer;
     // Echo program name
-    echoName(printer);
+    echoTitle(printer);
     // Echo build environment
-    echoBuildInfo(printer);
+    echoBuildEnv(printer);
+    // Echo runtime environment
+    echoRunEnv(printer);
 
     // Query, setup, and echo parallel enviroment
     Paradigm paradigm;
-    paradigm.echo();
+    paradigm.echo(printer);
 
     // Initialize memory manager
     memory = new (std::nothrow) Memory(&paradigm);
