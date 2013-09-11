@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:21:58 2013
+  \date      Wed Sep 11 12:52:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -15,23 +15,22 @@
 #include <Paradigm.h>
 #include <Memory.h>
 #include <QuinoaDriver.h>
+#include <QuinoaPrinter.h>
 
 using namespace quinoa;
 
 namespace quinoa {
 
-static void echoName()
+static void echoName(const QuinoaPrinter& print)
 //******************************************************************************
 //  Echo Name
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::cout << "=========================================\n";
-  std::cout << "Quinoa: Lagrangian particle hydrodynamics\n";
-  std::cout << "=========================================" << std::endl;
+  print.header("Quinoa: Lagrangian particle hydrodynamics");
 }
 
-static void echoBuildInfo()
+static void echoBuildInfo(const QuinoaPrinter& print)
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/QuinoaConfig.h filled by
@@ -72,10 +71,12 @@ int main(int argc, char* argv[])
   ErrCode error = ErrCode::SUCCESS;
   try {
 
+    // Create pretty printer
+    QuinoaPrinter printer;
     // Echo program name
-    echoName();
+    echoName(printer);
     // Echo build environment
-    echoBuildInfo();
+    echoBuildInfo(printer);
 
     // Query, setup, and echo parallel enviroment
     Paradigm paradigm;
