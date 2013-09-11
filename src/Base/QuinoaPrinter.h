@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrinter.h
   \author    J. Bakosi
-  \date      Wed Sep 11 12:47:08 2013
+  \date      Wed Sep 11 16:19:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer

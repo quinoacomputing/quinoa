@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:03:01 2013
+  \date      Wed Sep 11 16:47:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -47,7 +47,7 @@ class Mix : public Toggle<MixType> {
 
     //! Enums -> names
     const std::map<MixType, std::string> names {
-      { MixType::NO_MIX, "No_mix" },
+      { MixType::NO_MIX, "" },
       { MixType::IEM, "Interaction by exchange with the mean" },
       { MixType::IECM, "Interaction by exchange with the conditional mean" },
       { MixType::DIRICHLET, "Dirichlet" },

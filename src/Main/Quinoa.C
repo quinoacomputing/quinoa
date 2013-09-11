@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed Sep 11 16:07:20 2013
+  \date      Wed Sep 11 17:06:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -52,7 +52,6 @@ static void echoBuildEnv(const QuinoaPrinter& print)
 #else  // NDEBUG
   print.item("Asserts", "on");
 #endif // NDEBUG
-  std::cout << std::endl;
 }
 
 static void echoRunEnv(const QuinoaPrinter& print)
@@ -64,7 +63,6 @@ static void echoRunEnv(const QuinoaPrinter& print)
   print.section("Run-time environment");
   print.item("Date & Time", "...");
   print.item("Command line arguments", "...");
-  std::cout << std::endl;
 }
 
 } // namespace quinoa
@@ -92,8 +90,8 @@ int main(int argc, char* argv[])
     echoRunEnv(printer);
 
     // Query, setup, and echo parallel enviroment
-    Paradigm paradigm;
-    paradigm.echo(printer);
+    Paradigm paradigm(printer);
+    paradigm.echo();
 
     // Initialize memory manager
     memory = new (std::nothrow) Memory(&paradigm);
@@ -101,7 +99,8 @@ int main(int argc, char* argv[])
            "No memory for a memory manager?");
 
     // Allocate and initialize driver
-    driver = new (std::nothrow) QuinoaDriver(argc, argv, memory, &paradigm);
+    driver = new (std::nothrow)
+             QuinoaDriver(argc, argv, memory, &paradigm, printer);
     ErrChk(driver != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for driver");
 

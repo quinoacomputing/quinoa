@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:25:13 2013
+  \date      Wed Sep 11 16:31:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -34,8 +34,9 @@ using namespace quinoa;
 HomMix::HomMix(Memory* const memory,
                Paradigm* const paradigm,
                const QuinoaControl& control,
-               Timer* const timer) :
-  Physics(memory, paradigm, control, timer),
+               Timer* const timer,
+               const QuinoaPrinter& print) :
+  Physics(memory, paradigm, control, timer, print),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor

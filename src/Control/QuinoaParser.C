@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:53:22 PM MDT
+  \date      Wed Sep 11 16:42:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -54,9 +54,9 @@ QuinoaParser::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using namespace control;
-  std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
-            << std::setw(13+m_filename.length()) << "-" << std::endl;
-
-  std::cout << " * Title: " << m_control.get<title>() << std::endl;
+//   using namespace control;
+//   std::cout << "Parsed from " << m_filename << ":\n" << std::setfill('-')
+//             << std::setw(13+m_filename.length()) << "-" << std::endl;
+// 
+//   std::cout << " * Title: " << m_control.get<title>() << std::endl;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:37:15 PM MDT
+  \date      Wed Sep 11 17:21:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -29,13 +29,15 @@ using namespace quinoa;
 Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,
                  const QuinoaControl& control,
-                 Timer* const timer)
+                 Timer* const timer,
+                 const QuinoaPrinter& print)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
 //! \param[in]  paradigm Parallel programming object
 //! \param[in]  control  Control object
 //! \param[in]  timer    Timer object
+//! \param[in]  print    Quinoa's pretty printer
 //! \author  J. Bakosi
 //******************************************************************************
 try :
@@ -48,6 +50,7 @@ try :
   m_memory(memory),
   m_paradigm(paradigm),
   m_control(control),
+  m_print(print),
   m_timer(timer),
   m_mass(nullptr),
   m_hydro(nullptr),
@@ -159,60 +162,62 @@ Physics::echo()
   control::Option<select::Frequency> fr;
   control::Option<select::MixRate> mr;
 
-  std::cout << " * Physics: "
-            << ph.name(m_control.get<control::selected,control::physics>())
-            << std::endl;
+  m_print.section("Physics",
+                  ph.name(m_control.get<control::selected,control::physics>()));
 
-  std::cout << " * Position: "
-            << po.name(m_control.get<control::selected,control::position>())
-            << std::endl;
-  std::cout << " * Mass: "
-            << ms.name(m_control.get<control::selected,control::mass>())
-            << std::endl;
-  std::cout << " * Hydrodynamics: "
-            << hy.name(m_control.get<control::selected,control::hydro>())
-            << std::endl;
-  std::cout << " * Energy: "
-            << en.name(m_control.get<control::selected,control::energy>())
-            << std::endl;
-  std::cout << " * Material mix: "
-            << mx.name(m_control.get<control::selected,control::mix>())
-            << std::endl;
-  std::cout << " * Frequency: "
-            << fr.name(m_control.get<control::selected,control::frequency>())
-            << std::endl;
-  std::cout << " * Material mix rate: "
-            << mr.name(m_control.get<control::selected,control::mixrate>())
-            << std::endl;
+  m_print.subsection("Models");
+  m_print.item("Position",
+               po.name(m_control.get<control::selected,control::position>()));
+  m_print.item("Mass",
+               ms.name(m_control.get<control::selected,control::mass>()));
+  m_print.item("Hydrodynamics",
+               hy.name(m_control.get<control::selected,control::hydro>()));
+  m_print.item("Internal energy",
+               en.name(m_control.get<control::selected,control::energy>()));
+  m_print.item("Material mixing",
+               mx.name(m_control.get<control::selected,control::mix>()));
+  m_print.item("Turbulence frequency",
+               fr.name(m_control.get<control::selected,control::frequency>()));
+  m_print.item("Material mix rate",
+               mr.name(m_control.get<control::selected,control::mixrate>()));
 
-  std::cout << " * Incrementation parameters:" << std::endl;
-  m_control.echo<control::incpar,control::nstep>("Number of time steps");
-  m_control.echo<control::incpar,control::term>("Terminate time");
-  m_control.echo<control::incpar,control::dt>("Time step size");
+  m_print.subsection("Incrementation parameters");
+  m_print.item("Number of time steps",
+               m_control.get<control::incpar,control::nstep>());
+  m_print.item("Terminate time",
+               m_control.get<control::incpar,control::term>());
+  m_print.item("Initial time step size",
+               m_control.get<control::incpar,control::dt>());
 
-  std::cout << " * Components:" << std::endl;
-  m_control.echo<control::component,control::nposition>("Number of positions");
-  m_control.echo<control::component,control::ndensity>("Number of densities");
-  m_control.echo<control::component,control::nvelocity>("Number of velocity");
-  m_control.echo<control::component,control::nscalar>("Number of scalars");
-  m_control.echo<control::component,control::nfrequency>("Number of frequencies");
-  m_control.echo<control::component,control::npar>("Number of particles");
+  m_print.subsection("Number of components");
+  m_print.item("Positions",
+               m_control.get<control::component,control::nposition>());
+  m_print.item("Densities",
+               m_control.get<control::component,control::ndensity>());
+  m_print.item("Velocities",
+               m_control.get<control::component,control::nvelocity>());
+  m_print.item("Scalars",
+               m_control.get<control::component,control::nscalar>());
+  m_print.item("Turbulent frequencies",
+               m_control.get<control::component,control::nfrequency>());
+  m_print.item("Particles",
+               m_control.get<control::component,control::npar>());
 
-  std::cout << " * Intervals:" << std::endl;
-  m_control.echo<control::interval,control::tty>("TTY output interval");
-  m_control.echo<control::interval,control::dump>("Dump output interval");
-  m_control.echo<control::interval,control::plot>("Statistics output interval");
-  m_control.echo<control::interval,control::pdf>("PDF output interval");
-  m_control.echo<control::interval,control::glob>("Glob output interval");
+  m_print.subsection("Output intervals");
+  m_print.item("TTY", m_control.get<control::interval,control::tty>());
+  m_print.item("Dump", m_control.get<control::interval,control::dump>());
+  m_print.item("Glob", m_control.get<control::interval,control::glob>());
+  m_print.item("Statistics", m_control.get<control::interval,control::plot>());
+  m_print.item("PDF", m_control.get<control::interval,control::pdf>());
 
-  std::cout << " * I/O:" << std::endl;
-  m_control.echo<control::io,control::input>("Input filename");
-  m_control.echo<control::io,control::output>("Output filename");
-  m_control.echo<control::io,control::pdf>("PDF filename");
-  m_control.echo<control::io,control::glob>("Glob filename");
-  m_control.echo<control::io,control::stats>("Statistics filename");
+  m_print.subsection("I/O filenames");
+  m_print.item("Input", m_control.get<control::io,control::input>());
+  m_print.item("Output", m_control.get<control::io,control::output>());
+  m_print.item("Glob", m_control.get<control::io,control::glob>());
+  m_print.item("Statistics", m_control.get<control::io,control::stats>());
+  m_print.item("PDF", m_control.get<control::io,control::pdf>());
 
-  std::cout << " * Statistics:" << std::endl;
-  m_control.echoVecVecNames<control::stats>("Requested statistics",true);
-  m_control.echoVecVecNames<control::stats>("Estimated statistics");
+  m_print.subsection("Statistics");
+  //m_control.echoVecVecNames<control::stats>("Requested statistics",true);
+  //m_control.echoVecVecNames<control::stats>("Estimated statistics");
 }

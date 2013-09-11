@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:26:34 2013
+  \date      Wed Sep 11 16:31:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -28,8 +28,9 @@ using namespace quinoa;
 HomRT::HomRT(Memory* const memory,
              Paradigm* const paradigm,
              const QuinoaControl& control,
-             Timer* const timer) :
-  Physics(memory, paradigm, control, timer),
+             Timer* const timer,
+             const QuinoaPrinter& print) :
+  Physics(memory, paradigm, control, timer, print),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor

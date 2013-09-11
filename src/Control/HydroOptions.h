@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:00:43 2013
+  \date      Wed Sep 11 16:48:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -45,7 +45,7 @@ class Hydro : public Toggle<HydroType> {
 
     //! Enums -> names
     const std::map<HydroType, std::string> names {
-      { HydroType::NO_HYDRO, "No hydro" },
+      { HydroType::NO_HYDRO, "" },
       { HydroType::SLM, "Simplified Langevin" },
       { HydroType::GLM, "Generalized Langevin"}
     };

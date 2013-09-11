@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:01:52 2013
+  \date      Wed Sep 11 16:46:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -45,7 +45,7 @@ class Position : public Toggle<PositionType> {
 
     //! Enums -> names
     const std::map<PositionType, std::string> names {
-      { PositionType::NO_POSITION, "No position" },
+      { PositionType::NO_POSITION, "" },
       { PositionType::INVISCID, "Inviscid" },
       { PositionType::VISCOUS, "Viscous" }
     };
