@@ -11,6 +11,8 @@ add_library(Base
             Exception.C
             MemoryEntry.C
             Memory.C
+            Printer.C
+            QuinoaPrinter.C
             Timer.C
 )
 
