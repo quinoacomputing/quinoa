@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon Sep  9 10:09:58 2013
+  \date      Wed Sep 11 16:41:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -26,13 +26,15 @@ using namespace quinoa;
 QuinoaDriver::QuinoaDriver(int argc,
                            char** argv,
                            Memory* const memory,
-                           Paradigm* const paradigm)
+                           Paradigm* const paradigm,
+                           const QuinoaPrinter& print)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
 //! \param[in] memory    Memory oject pointer
 //! \param[in] paradigm  Parallel programming paradigm object pointer
+//! \param[in] print     Quinoa's pretty printer
 //! \details   Instantiate geometry, physics, set initial conditions, etc.
 //! \author J. Bakosi
 //******************************************************************************
@@ -40,6 +42,7 @@ try :
   Driver(),
   m_memory(memory),
   m_paradigm(paradigm),
+  m_print(print),
   m_geometry(nullptr),
   m_physics(nullptr)
 {
@@ -50,7 +53,7 @@ try :
          "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
-  QuinoaParser parser(argv[1], m_control);
+  QuinoaParser parser(argv[1], m_print, m_control);
 
   // Parse control file
   parser.parse();
@@ -143,31 +146,31 @@ QuinoaDriver::initPhysics()
   //  Instantiate physics object (if any)
   if (m_control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
 
-    m_physics =
-      new(std::nothrow) HomMix(m_memory, m_paradigm, m_control, m_timer);
+    m_physics = new(std::nothrow)
+                HomMix(m_memory, m_paradigm, m_control, m_timer, m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
   } else if (m_control.get<selected,physics>() ==
              PhysicsType::HOMOGENEOUS_HYDRO) {
 
-    m_physics =
-      new(std::nothrow) HomHydro(m_memory, m_paradigm, m_control, m_timer);
+    m_physics = new(std::nothrow)
+                HomHydro(m_memory, m_paradigm, m_control, m_timer, m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
   } else if (m_control.get<selected,physics>() ==
              PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
 
-    m_physics =
-      new(std::nothrow) HomRT(m_memory, m_paradigm, m_control, m_timer);
+    m_physics = new(std::nothrow)
+                HomRT(m_memory, m_paradigm, m_control, m_timer, m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
   } if (m_control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
 
     m_physics = new(std::nothrow)
-                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer,
+                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer, m_print,
                   "cylinder.msh");
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");

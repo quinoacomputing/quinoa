@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:03:58 2013
+  \date      Wed Sep 11 16:49:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -44,7 +44,7 @@ class Frequency : public Toggle<FrequencyType> {
 
     //! Enums -> names
     const std::map<FrequencyType, std::string> names {
-      { FrequencyType::NO_FREQUENCY, "No frequency" },
+      { FrequencyType::NO_FREQUENCY, "" },
       { FrequencyType::GAMMA, "Gamma" }
     };
 

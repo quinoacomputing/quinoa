@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:03:05 2013
+  \date      Wed Sep 11 16:48:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -44,7 +44,7 @@ class Mass : public Toggle<MassType> {
 
     //! Enums -> names
     const std::map<MassType, std::string> names {
-      { MassType::NO_MASS, "No mass" },
+      { MassType::NO_MASS, "" },
       { MassType::BETA, "Beta" }
     };
 

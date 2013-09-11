@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:01:47 2013
+  \date      Wed Sep 11 16:48:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -43,7 +43,7 @@ class Energy : public Toggle<EnergyType> {
 
     //! Enums -> names
     const std::map<EnergyType, std::string> names {
-      { EnergyType::NO_ENERGY, "No energy" }
+      { EnergyType::NO_ENERGY, "" }
     };
 
     //! keywords -> Enums

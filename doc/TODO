@@ -7,8 +7,9 @@
     - Automatically turn list of keywords into Keywords.h, could use constexpr
       functions and/or classes and variadic templates? See Appendix in
       Concurrency in Action
+    - Add logger?
 
-* Bundle up (Memory, Paradigm, Control, Timer)
+* Bundle up (Memory, Paradigm, Control, Timer, Printer)
 
 * Error/Exception handling:
     - Can we get rid of Exception macros?

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon Sep  9 08:21:28 2013
+  \date      Wed Sep 11 16:33:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,6 +12,7 @@
 #define Physics_h
 
 #include <QuinoaConfig.h>
+#include <QuinoaPrinter.h>
 #include <Mass.h>
 #include <Mix.h>
 #include <Hydro.h>
@@ -114,7 +115,8 @@ class Physics {
     explicit Physics(Memory* const memory,
                      Paradigm* const paradigm,
                      const QuinoaControl& control,
-                     Timer* const timer);
+                     Timer* const timer,
+                     const QuinoaPrinter& print);
 
     //! Echo information on physics
     void echo();
@@ -143,7 +145,8 @@ class Physics {
     Memory* const m_memory;               //!< Memory object
     Paradigm* const m_paradigm;           //!< Parallel programming object
     const QuinoaControl& m_control;       //!< Control object
-    Timer* const m_timer;                 //!< Timer object
+    const QuinoaPrinter& m_print;         //!< Pretty printer
+    Timer* const m_timer;                 //!< Timer
 
     Mass<MassType>* m_mass;               //!< Mass model object    
     Hydro<HydroType>* m_hydro;            //!< Hydro model object    

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Wed Sep 11 15:48:38 2013
+  \date      Wed Sep 11 17:14:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -30,15 +30,39 @@ class Printer {
     //! Print title
     void title(const std::string& title) const;
 
-    //! Print section header
-    void section(const std::string& title) const;
+    //! Print section header: title
+    void section(const std::string& title) const {
+      using boost::format;
+      using boost::io::group;
+
+      std::cout << format("\n * %1%:\n") % title;
+      std::cout << format(" %1%\n") % std::string(title.size()+3,'-');
+    }
+    //! Print section header: title : value
+    template<typename T>
+    void section(const std::string& name, const T& value) const {
+      using boost::format;
+      using boost::io::group;
+
+      std::cout << format("\n * %1%: %2%\n") % name % value;
+      std::cout << format(" %1%\n") %
+                   std::string(name.size() + value.size() + 4, '-');
+    }
+
+    //! Print subsection header: title
+    void subsection(const std::string& title) const {
+      using boost::format;
+      using boost::io::group;
+
+      std::cout << format("\n   - %1%:\n") % title;
+    }
 
     //! Print item: name
     void item(const std::string& name) const {
        using boost::format;
        using boost::io::group;
 
-       std::cout << format("%26s\n") % name;
+       std::cout << format("%35s\n") % name;
     }
     //! Print item: name : value
     template<typename T>
@@ -46,7 +70,7 @@ class Printer {
        using boost::format;
        using boost::io::group;
 
-       std::cout << format("%26s : %s\n") % name % value;
+       std::cout << format("%30s : %s\n") % name % value;
     }
 
   private:

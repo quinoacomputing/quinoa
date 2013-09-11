@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:25:57 2013
+  \date      Wed Sep 11 16:30:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -26,8 +26,9 @@ using namespace quinoa;
 HomHydro::HomHydro(Memory* const memory,
                    Paradigm* const paradigm,
                    const QuinoaControl& control,
-                   Timer* const timer) :
-  Physics(memory, paradigm, control, timer),
+                   Timer* const timer,
+                   const QuinoaPrinter& print) :
+  Physics(memory, paradigm, control, timer, print),
   m_totalTime(timer->create("Total solution"))
 //******************************************************************************
 //  Constructor
