@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:23:47 2013
+  \date      Wed Sep 11 15:44:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -12,6 +12,7 @@
 #define Paradigm_h
 
 #include <OpenMP.h>
+#include <QuinoaPrinter.h>
 
 namespace quinoa {
 
@@ -26,7 +27,7 @@ class Paradigm {
     ~Paradigm() = default;
 
     //! Echo paradigm and configuration
-    void echo() const;
+    void echo(const QuinoaPrinter& print) const;
 
     //! Query if OpenMP is available
     bool availOpenMP() const noexcept { return m_omp.available(); }

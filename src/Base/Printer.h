@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Wed Sep 11 12:50:27 2013
+  \date      Wed Sep 11 15:48:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -12,6 +12,8 @@
 #define Printer_h
 
 #include <string>
+
+#include <boost/format.hpp>
 
 namespace quinoa {
 
@@ -25,8 +27,27 @@ class Printer {
     //! Destructor
     virtual ~Printer() noexcept = default;
 
-    //! Printer header
-    void header(const std::string& title) const;
+    //! Print title
+    void title(const std::string& title) const;
+
+    //! Print section header
+    void section(const std::string& title) const;
+
+    //! Print item: name
+    void item(const std::string& name) const {
+       using boost::format;
+       using boost::io::group;
+
+       std::cout << format("%26s\n") % name;
+    }
+    //! Print item: name : value
+    template<typename T>
+    void item(const std::string& name, const T& value) const {
+       using boost::format;
+       using boost::io::group;
+
+       std::cout << format("%26s : %s\n") % name % value;
+    }
 
   private:
     //! Don't permit copy constructor

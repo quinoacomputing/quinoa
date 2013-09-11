@@ -1,6 +1,4 @@
 * Parser/Control:
-    - Need some kind of a pretty printer class that can print program name,
-      headers, items, etc.
     - Echo what ends up being used instead of what is parsed
     - Warn on what is set ends up not being used
     - More sensible/readable error handling during/after parsing
