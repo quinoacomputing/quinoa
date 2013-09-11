@@ -6,7 +6,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Geometry
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/IO
-                    ${TPL_DIR}/include
+                    ${TPL_DIR}/include/pegtl
 )
 
 add_library(QuinoaControl

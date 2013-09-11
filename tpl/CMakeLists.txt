@@ -41,9 +41,9 @@ ExternalProject_Add_Step(
   DEPENDEES download
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}/include
-          ${TPL_INSTALL_DIR}/include
+          ${TPL_INSTALL_DIR}/include/pegtl
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/include
+          ${SOURCE_DIR}
           ${TPL_SOURCE_DIR}/pegtl
 )
 
@@ -190,4 +190,30 @@ ExternalProject_Add_Step(
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}
           ${TPL_SOURCE_DIR}/testu01
+)
+
+#### Boost ####################################################################
+# http://www.boost.org
+# Header only library
+ExternalProject_Add(
+  boost
+  PREFIX boost
+  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
+  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+)
+# Header-only, copy include dir over, also copy source dir
+ExternalProject_Get_Property(boost SOURCE_DIR)
+ExternalProject_Add_Step(
+  boost copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/boost
+          ${TPL_INSTALL_DIR}/include/boost
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}
+          ${TPL_SOURCE_DIR}/boost
 )
