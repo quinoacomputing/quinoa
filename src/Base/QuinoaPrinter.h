@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrinter.h
   \author    J. Bakosi
-  \date      Wed 11 Sep 2013 08:45:57 PM MDT
+  \date      Wed 11 Sep 2013 10:31:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -21,7 +21,7 @@ class QuinoaPrinter : public Printer {
 
   public:
     //! Constructor
-    explicit QuinoaPrinter() noexcept = default;
+    explicit QuinoaPrinter() = default;
 
     //! Destructor
     ~QuinoaPrinter() noexcept override = default;
@@ -35,10 +35,10 @@ class QuinoaPrinter : public Printer {
     void vecvecNames(const QuinoaControl& ctr,
                      const std::string& msg,
                      const bool req = false) const {
-      std::cout << boost::format("%30s : {") % msg;
+      std::cout << boost::format("%s%-30s :") % m_item_indent % msg;
       if (req) for (auto& v : ctr.get<tags...>()) std::cout <<= v;
       else for (auto& v : ctr.get<tags...>()) std::cout << v;
-      std::cout << " }\n";
+      std::cout << "\n";
     }
 
   private:
