@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 12 10:44:10 2013
+  \date      Thu Sep 12 16:33:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -166,7 +166,6 @@ Physics::echo()
                   ph.name(m_control.get<control::selected,control::physics>()));
 
   m_print.subsection("I/O filenames");
-  m_print.item("Control", m_control.get<control::io,control::ctr>());
   m_print.item("Input", m_control.get<control::io,control::input>());
   m_print.item("Output", m_control.get<control::io,control::output>());
   m_print.item("Glob", m_control.get<control::io,control::glob>());
@@ -226,5 +225,6 @@ Physics::echo()
   m_print.subsection("Statistics");
   m_print.vecvecNames<control::stats>(m_control,"Requested statistics",true);
   m_print.vecvecNames<control::stats>(m_control,"Estimated statistics");
+  m_print.endl();
   m_print.endl();
 }

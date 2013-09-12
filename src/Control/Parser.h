@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:03:12 2013
+  \date      Thu Sep 12 16:24:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -28,7 +28,7 @@ class Parser {
     //! Parser interface
     virtual void parse() = 0;
 
-    //! Echo parsed information interface
+    //! Echo problem setup interface
     virtual void echo() const = 0;
 
   protected:

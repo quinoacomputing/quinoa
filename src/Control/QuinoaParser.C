@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Thu Sep 12 10:49:16 2013
+  \date      Thu Sep 12 16:24:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -50,9 +50,10 @@ QuinoaParser::unique(std::vector<control::Product>& statistics)
 void
 QuinoaParser::echo() const
 //******************************************************************************
-//  Echo parsed information from quinoa control
+//  Echo problem setup
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_print.section("Problem title", m_control.get<control::title>());
+  m_print.section("Title", m_control.get<control::title>());
+  m_print.item("Control file", m_control.get<control::io,control::ctr>());
 }
