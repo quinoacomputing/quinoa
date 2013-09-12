@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Wed 11 Sep 2013 10:30:31 PM MDT
+  \date      Thu 12 Sep 2013 06:57:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -26,30 +26,32 @@ class Printer {
     explicit Printer() = default;
 
     //! Destructor
-    virtual ~Printer() noexcept = default;
+    virtual ~Printer() noexcept {}
 
     //! Print title
     void title(const std::string& title) const {
-      boost::format fmt("%|=80|\n");
-      std::cout << fmt % boost::io::group(std::setfill('='), "");
-      std::cout << fmt % title;
-      std::cout << fmt % boost::io::group(std::setfill('='), "");
+      std::cout << m_title_fmt % boost::io::group(std::setfill('='), "");
+      std::cout << m_title_fmt % title;
+      std::cout << m_title_fmt % boost::io::group(std::setfill('='), "");
     }
 
     //! Print section header: title
     void section(const std::string& title) const {
-      std::cout << boost::format("\n%s%c %s:\n")
-                   % m_section_indent % m_section_bullet % title;
-      std::cout << boost::format("%s%s\n")
+      std::cout << m_section_title_fmt % m_section_indent
+                                       % m_section_bullet
+                                       % title;
+      std::cout << m_underline_fmt
                    % m_section_indent
                    % std::string(m_section_indent_size + 2 + title.size(),'-');
     }
     //! Print section header: title : value
     template<typename T>
     void section(const std::string& name, const T& value) const {
-      std::cout << boost::format("\n%s%c %s: %s\n")
-                   % m_section_indent % m_section_bullet % name % value;
-      std::cout << boost::format("%s%s\n")
+      std::cout << m_section_title_value_fmt % m_section_indent
+                                             % m_section_bullet
+                                             % name
+                                             % value;
+      std::cout << m_underline_fmt
                    % m_section_indent
                    % std::string(m_section_indent_size + 3 + name.size() +
                                  value.size(), '-');
@@ -57,32 +59,36 @@ class Printer {
 
     //! Print subsection header: title
     void subsection(const std::string& title) const {
-      std::cout << boost::format("\n%s%c %s:\n")
-                   % m_subsection_indent
-                   % m_subsection_bullet
-                   % title;
+      std::cout << m_section_title_fmt % m_subsection_indent
+                                       % m_subsection_bullet
+                                       % title;
     }
 
-    //! Print item: name
-//     void item(const std::string& name) const {
-//        std::cout << boost::format("%30s\n") % name;
-//     }
     //! Print item: name : value
     template<typename T>
     void item(const std::string& name, const T& value) const {
-      std::cout << boost::format("%s%-30s : %s\n") %
-                   m_item_indent % name % value;
+      std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
 
   protected:
+    //! bullets
     const char m_section_bullet = '*';
     const char m_subsection_bullet = '-';
-
+    //! indents
     const std::string m_section_indent = " ";
     const std::string m_subsection_indent = m_section_indent + "  ";
     const std::string m_item_indent = m_subsection_indent + "  ";
-
+    //! indent sizes
     const std::string::size_type m_section_indent_size = m_section_indent.size();
+
+    //! Format strings
+    using format = boost::format;
+    mutable format m_title_fmt = format("%|=80|\n");
+    mutable format m_section_title_fmt = format("\n%s%c %s:\n");
+    mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
+    mutable format m_item_name_fmt = format("%s%-30s :");
+    mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
+    mutable format m_underline_fmt = format("%s%s\n");
 
   private:
     //! Don't permit copy constructor
