@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Wed Sep 11 16:14:28 2013
+  \date      Wed 11 Sep 2013 10:22:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -36,6 +36,4 @@ Paradigm::echo() const
   } else {
     m_print.item("OpenMP", "not found");
   }
-
-  std::cout << std::endl;
 }
