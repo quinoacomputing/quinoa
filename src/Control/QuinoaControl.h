@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Sun 08 Sep 2013 07:55:06 PM MDT
+  \date      Wed 11 Sep 2013 07:33:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -102,25 +102,25 @@ class QuinoaControl :
     //! Destructor
     ~QuinoaControl() noexcept override = default;
 
-    //! Echo vector of vector of element names
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist
-    //! See src/Control/ControlTypes.h for the definitions of operator << for
-    //! outputing Term and vector<Term>, and operator <<= for outputing
-    //! requested (i.e., plotted) Term
-    template<typename... tags>
-    void echoVecVecNames(const std::string& msg, bool req = false) const {
-      std::cout << "   - " << msg << ": {";
-      if (req) {
-        for (auto& v : get<tags...>()) {
-          std::cout <<= v;
-        }
-      } else {
-        for (auto& v : get<tags...>()) {
-          std::cout << v;
-        }
-      }
-      std::cout << " }" << std::endl;
-    }
+//     //! Echo vector of vector of element names
+//     //! Fields of vector<vector< struct{field, name, plot} >> must exist
+//     //! See src/Control/ControlTypes.h for the definitions of operator << for
+//     //! outputing Term and vector<Term>, and operator <<= for outputing
+//     //! requested (i.e., plotted) Term
+//     template<typename... tags>
+//     void echoVecVecNames(const std::string& msg, bool req = false) const {
+//       std::cout << "   - " << msg << ": {";
+//       if (req) {
+//         for (auto& v : get<tags...>()) {
+//           std::cout <<= v;
+//         }
+//       } else {
+//         for (auto& v : get<tags...>()) {
+//           std::cout << v;
+//         }
+//       }
+//       std::cout << " }" << std::endl;
+//     }
 
     //! Echo vector of Option.names
     template<class OptionType, typename... tags>

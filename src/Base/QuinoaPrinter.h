@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrinter.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:19:33 2013
+  \date      Wed 11 Sep 2013 08:45:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -12,6 +12,7 @@
 #define QuinoaPrinter_h
 
 #include <Printer.h>
+#include <QuinoaControl.h>
 
 namespace quinoa {
 
@@ -24,6 +25,21 @@ class QuinoaPrinter : public Printer {
 
     //! Destructor
     ~QuinoaPrinter() noexcept override = default;
+
+    //! Echo vector of vector of element names
+    //! Fields of vector<vector< struct{field, name, plot} >> must exist
+    //! See src/Control/QuinoaControlTypes.h for the definitions of operator <<
+    //! for outputing Term and vector<Term>, and operator <<= for outputing
+    //! requested (i.e., plotted) Term
+    template<typename... tags>
+    void vecvecNames(const QuinoaControl& ctr,
+                     const std::string& msg,
+                     const bool req = false) const {
+      std::cout << boost::format("%30s : {") % msg;
+      if (req) for (auto& v : ctr.get<tags...>()) std::cout <<= v;
+      else for (auto& v : ctr.get<tags...>()) std::cout << v;
+      std::cout << " }\n";
+    }
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed Sep 11 17:21:48 2013
+  \date      Wed 11 Sep 2013 08:46:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -218,6 +218,6 @@ Physics::echo()
   m_print.item("PDF", m_control.get<control::io,control::pdf>());
 
   m_print.subsection("Statistics");
-  //m_control.echoVecVecNames<control::stats>("Requested statistics",true);
-  //m_control.echoVecVecNames<control::stats>("Estimated statistics");
+  m_print.vecvecNames<control::stats>(m_control,"Requested statistics",true);
+  m_print.vecvecNames<control::stats>(m_control,"Estimated statistics");
 }
