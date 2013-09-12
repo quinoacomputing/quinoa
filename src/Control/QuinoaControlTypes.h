@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:40:46 PM MDT
+  \date      Thu Sep 12 10:34:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -222,11 +222,12 @@ using intervals = tuple::tagged_tuple<
 
 //! IO parameters storage
 using ios = tuple::tagged_tuple<
-  input,  std::string,  //!< Input filename
-  output, std::string,  //!< Output filename
-  pdf,    std::string,  //!< PDF filename
-  glob,   std::string,  //!< Glob filename
-  stats,  std::string   //!< Statistics filename
+  ctr,     std::string,  //!< Control filename
+  input,   std::string,  //!< Input filename
+  output,  std::string,  //!< Output filename
+  pdf,     std::string,  //!< PDF filename
+  glob,    std::string,  //!< Glob filename
+  stats,   std::string   //!< Statistics filename
 >;
 
 //! Beta mass model parameters storage

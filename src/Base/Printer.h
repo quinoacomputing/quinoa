@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Thu 12 Sep 2013 06:57:17 AM MDT
+  \date      Thu Sep 12 10:59:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -28,11 +28,18 @@ class Printer {
     //! Destructor
     virtual ~Printer() noexcept {}
 
-    //! Print title
-    void title(const std::string& title) const {
-      std::cout << m_title_fmt % boost::io::group(std::setfill('='), "");
-      std::cout << m_title_fmt % title;
-      std::cout << m_title_fmt % boost::io::group(std::setfill('='), "");
+    //! Print header
+    void header(const std::string& title) const {
+      std::cout << m_header_fmt % boost::io::group(std::setfill('='), "");
+      std::cout << std::endl;
+      std::cout << m_header_fmt % title;
+      std::cout << std::endl;
+      std::cout << m_header_fmt % boost::io::group(std::setfill('='), "");
+    }
+
+    //! Print part header: title
+    void part(const std::string& title) const {
+      std::cout << m_part_fmt % title;
     }
 
     //! Print section header: title
@@ -59,9 +66,9 @@ class Printer {
 
     //! Print subsection header: title
     void subsection(const std::string& title) const {
-      std::cout << m_section_title_fmt % m_subsection_indent
-                                       % m_subsection_bullet
-                                       % title;
+      std::cout << m_subsection_title_fmt % m_subsection_indent
+                                          % m_subsection_bullet
+                                          % title;
     }
 
     //! Print item: name : value
@@ -69,11 +76,13 @@ class Printer {
     void item(const std::string& name, const T& value) const {
       std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
+    //! Put std::endl in stream
+    void endl() const { std::cout << std::endl; }
 
   protected:
     //! bullets
     const char m_section_bullet = '*';
-    const char m_subsection_bullet = '-';
+    const char m_subsection_bullet = '<';
     //! indents
     const std::string m_section_indent = " ";
     const std::string m_subsection_indent = m_section_indent + "  ";
@@ -83,9 +92,11 @@ class Printer {
 
     //! Format strings
     using format = boost::format;
-    mutable format m_title_fmt = format("%|=80|\n");
+    mutable format m_header_fmt = format("%|=80|\n");
+    mutable format m_part_fmt = format("\n%|=80|\n");
     mutable format m_section_title_fmt = format("\n%s%c %s:\n");
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
+    mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_item_name_fmt = format("%s%-30s :");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_underline_fmt = format("%s%s\n");

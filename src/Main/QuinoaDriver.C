@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed Sep 11 16:41:33 2013
+  \date      Thu Sep 12 10:58:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -53,10 +53,12 @@ try :
          "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
-  QuinoaParser parser(argv[1], m_print, m_control);
+  QuinoaParser parser(argv[1], print, m_control);
 
   // Parse control file
   parser.parse();
+
+  print.part("Problem setup");
 
   // Echo information of stuff parsed
   parser.echo();
