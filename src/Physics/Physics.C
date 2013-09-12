@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed 11 Sep 2013 08:46:42 PM MDT
+  \date      Thu Sep 12 10:44:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -165,6 +165,15 @@ Physics::echo()
   m_print.section("Physics",
                   ph.name(m_control.get<control::selected,control::physics>()));
 
+  m_print.subsection("I/O filenames");
+  m_print.item("Control", m_control.get<control::io,control::ctr>());
+  m_print.item("Input", m_control.get<control::io,control::input>());
+  m_print.item("Output", m_control.get<control::io,control::output>());
+  m_print.item("Glob", m_control.get<control::io,control::glob>());
+  m_print.item("Statistics", m_control.get<control::io,control::stats>());
+  m_print.item("PDF", m_control.get<control::io,control::pdf>());
+  m_print.endl();
+
   m_print.subsection("Models");
   m_print.item("Position",
                po.name(m_control.get<control::selected,control::position>()));
@@ -180,14 +189,7 @@ Physics::echo()
                fr.name(m_control.get<control::selected,control::frequency>()));
   m_print.item("Material mix rate",
                mr.name(m_control.get<control::selected,control::mixrate>()));
-
-  m_print.subsection("Incrementation parameters");
-  m_print.item("Number of time steps",
-               m_control.get<control::incpar,control::nstep>());
-  m_print.item("Terminate time",
-               m_control.get<control::incpar,control::term>());
-  m_print.item("Initial time step size",
-               m_control.get<control::incpar,control::dt>());
+  m_print.endl();
 
   m_print.subsection("Number of components");
   m_print.item("Positions",
@@ -202,6 +204,16 @@ Physics::echo()
                m_control.get<control::component,control::nfrequency>());
   m_print.item("Particles",
                m_control.get<control::component,control::npar>());
+  m_print.endl();
+
+  m_print.subsection("Incrementation parameters");
+  m_print.item("Number of time steps",
+               m_control.get<control::incpar,control::nstep>());
+  m_print.item("Terminate time",
+               m_control.get<control::incpar,control::term>());
+  m_print.item("Initial time step size",
+               m_control.get<control::incpar,control::dt>());
+  m_print.endl();
 
   m_print.subsection("Output intervals");
   m_print.item("TTY", m_control.get<control::interval,control::tty>());
@@ -209,15 +221,10 @@ Physics::echo()
   m_print.item("Glob", m_control.get<control::interval,control::glob>());
   m_print.item("Statistics", m_control.get<control::interval,control::plot>());
   m_print.item("PDF", m_control.get<control::interval,control::pdf>());
-
-  m_print.subsection("I/O filenames");
-  m_print.item("Input", m_control.get<control::io,control::input>());
-  m_print.item("Output", m_control.get<control::io,control::output>());
-  m_print.item("Glob", m_control.get<control::io,control::glob>());
-  m_print.item("Statistics", m_control.get<control::io,control::stats>());
-  m_print.item("PDF", m_control.get<control::io,control::pdf>());
+  m_print.endl();
 
   m_print.subsection("Statistics");
   m_print.vecvecNames<control::stats>(m_control,"Requested statistics",true);
   m_print.vecvecNames<control::stats>(m_control,"Estimated statistics");
+  m_print.endl();
 }

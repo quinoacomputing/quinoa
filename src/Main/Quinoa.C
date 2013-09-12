@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 12 Sep 2013 06:39:02 AM MDT
+  \date      Thu Sep 12 10:56:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -21,13 +21,13 @@ using namespace quinoa;
 
 namespace quinoa {
 
-static void echoTitle(const QuinoaPrinter& print)
+static void echoHeader(const QuinoaPrinter& print)
 //******************************************************************************
 //  Echo Name
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.title("Quinoa: Lagrangian particle hydrodynamics");
+  print.header("Quinoa: Lagrangian particle hydrodynamics");
 }
 
 static void echoBuildEnv(const QuinoaPrinter& print)
@@ -44,14 +44,14 @@ static void echoBuildEnv(const QuinoaPrinter& print)
   print.item("Release", QUINOA_RELEASE);
   print.item("Revision", QUINOA_GIT_COMMIT);
   print.item("CMake build type", QUINOA_BUILD_TYPE);
-  print.item("MPI C++ compiler", QUINOA_MPI_COMPILER);
-  print.item("Underlying C++ compiler", QUINOA_COMPILER);
-  print.item("Build date", QUINOA_BUILD_DATE);
 #ifdef NDEBUG
   print.item("Asserts", "off");
 #else  // NDEBUG
   print.item("Asserts", "on");
 #endif // NDEBUG
+  print.item("MPI C++ compiler", QUINOA_MPI_COMPILER);
+  print.item("Underlying C++ compiler", QUINOA_COMPILER);
+  print.item("Build date", QUINOA_BUILD_DATE);
 }
 
 static void echoRunEnv(const QuinoaPrinter& print)
@@ -81,16 +81,17 @@ int main(int argc, char* argv[])
   try {
 
     // Create pretty printer
-    QuinoaPrinter printer;
+    QuinoaPrinter print;
     // Echo program name
-    echoTitle(printer);
-    // Echo build environment
-    echoBuildEnv(printer);
-    // Echo runtime environment
-    echoRunEnv(printer);
+    echoHeader(print);
 
+    print.part("Environment");
+    // Echo build environment
+    echoBuildEnv(print);
+    // Echo runtime environment
+    echoRunEnv(print);
     // Query, setup, and echo parallel enviroment
-    Paradigm paradigm(printer);
+    Paradigm paradigm(print);
     paradigm.echo();
 
     // Initialize memory manager
@@ -100,7 +101,7 @@ int main(int argc, char* argv[])
 
     // Allocate and initialize driver
     driver = new (std::nothrow)
-             QuinoaDriver(argc, argv, memory, &paradigm, printer);
+             QuinoaDriver(argc, argv, memory, &paradigm, print);
     ErrChk(driver != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for driver");
 

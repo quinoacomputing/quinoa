@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTags.h
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 07:16:26 AM MDT
+  \date      Thu Sep 12 10:35:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's control tags
   \details   All control tags used to build a nested tagged tagged tuple
@@ -42,6 +42,7 @@ struct plot {};
 struct pdf {};
 struct glob {};
 
+struct ctr {};
 struct input {};
 struct output {};
 struct stats {};

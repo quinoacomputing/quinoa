@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrinter.h
   \author    J. Bakosi
-  \date      Thu 12 Sep 2013 06:57:30 AM MDT
+  \date      Thu Sep 12 10:21:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -38,8 +38,19 @@ class QuinoaPrinter : public Printer {
       std::cout << m_item_name_fmt % m_item_indent % msg;
       if (req) for (auto& v : ctr.get<tags...>()) std::cout <<= v;
       else for (auto& v : ctr.get<tags...>()) std::cout << v;
-      std::cout << "\n";
+      std::cout << '\n';
     }
+
+//     //! Echo vector of Option.names
+//     template<class OptionType, typename... tags>
+//     void echoVecOptName(const std::string& msg) const {
+//       control::Option<OptionType> opt;
+//       std::cout << "   - " << msg << ": {";
+//       for (auto& v : get<tags...>()) {
+//         std::cout << " " << opt.name(v);
+//       }
+//       std::cout << " }" << std::endl;
+//     }
 
   private:
     //! Don't permit copy constructor
