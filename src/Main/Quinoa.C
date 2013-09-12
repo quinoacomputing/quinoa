@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Sep 12 10:56:56 2013
+  \date      Thu Sep 12 16:33:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -93,6 +93,8 @@ int main(int argc, char* argv[])
     // Query, setup, and echo parallel enviroment
     Paradigm paradigm(print);
     paradigm.echo();
+    print.endl();
+    print.endl();
 
     // Initialize memory manager
     memory = new (std::nothrow) Memory(&paradigm);

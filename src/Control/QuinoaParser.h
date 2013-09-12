@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:41:06 2013
+  \date      Thu Sep 12 16:24:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -40,7 +40,7 @@ class QuinoaParser : public Parser {
     //! Parse quinoa control file
     void parse() override;
 
-    //! Echo parsed information from quinoa control
+    //! Echo problem setup
     void echo() const override;
 
   private:

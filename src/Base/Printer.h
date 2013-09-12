@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:59:42 2013
+  \date      Thu Sep 12 16:35:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -39,7 +39,11 @@ class Printer {
 
     //! Print part header: title
     void part(const std::string& title) const {
+      std::string::size_type half_length = title.size()/2 + 2;
+      std::string s(half_length, '-');
+      std::string underline(s + " o " + s);
       std::cout << m_part_fmt % title;
+      std::cout << m_part_underline_fmt % underline;
     }
 
     //! Print section header: title
@@ -47,7 +51,7 @@ class Printer {
       std::cout << m_section_title_fmt % m_section_indent
                                        % m_section_bullet
                                        % title;
-      std::cout << m_underline_fmt
+      std::cout << m_section_underline_fmt
                    % m_section_indent
                    % std::string(m_section_indent_size + 2 + title.size(),'-');
     }
@@ -58,7 +62,7 @@ class Printer {
                                              % m_section_bullet
                                              % name
                                              % value;
-      std::cout << m_underline_fmt
+      std::cout << m_section_underline_fmt
                    % m_section_indent
                    % std::string(m_section_indent_size + 3 + name.size() +
                                  value.size(), '-');
@@ -76,6 +80,7 @@ class Printer {
     void item(const std::string& name, const T& value) const {
       std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
+
     //! Put std::endl in stream
     void endl() const { std::cout << std::endl; }
 
@@ -99,7 +104,8 @@ class Printer {
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_item_name_fmt = format("%s%-30s :");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
-    mutable format m_underline_fmt = format("%s%s\n");
+    mutable format m_part_underline_fmt = format("      %|=68|\n");
+    mutable format m_section_underline_fmt = format("%s%s\n");
 
   private:
     //! Don't permit copy constructor
