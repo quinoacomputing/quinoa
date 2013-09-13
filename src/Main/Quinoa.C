@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Sep 12 16:33:46 2013
+  \date      Fri Sep 13 10:06:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -49,7 +49,7 @@ static void echoBuildEnv(const QuinoaPrinter& print)
 #else  // NDEBUG
   print.item("Asserts", "on");
 #endif // NDEBUG
-  print.item("MPI C++ compiler", QUINOA_MPI_COMPILER);
+  print.item("MPI C++ wrapper", QUINOA_MPI_COMPILER);
   print.item("Underlying C++ compiler", QUINOA_COMPILER);
   print.item("Build date", QUINOA_BUILD_DATE);
 }
@@ -61,7 +61,9 @@ static void echoRunEnv(const QuinoaPrinter& print)
 //******************************************************************************
 {
   print.section("Run-time environment");
-  print.item("Date & Time", "...");
+  print.item("Date, time", "...");
+  print.item("Working directory", "...");
+  print.item("Executable full path", "...");
   print.item("Command line arguments", "...");
 }
 
