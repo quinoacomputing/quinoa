@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Printer.h
   \author    J. Bakosi
-  \date      Thu Sep 12 16:35:42 2013
+  \date      Thu 12 Sep 2013 06:51:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer
   \details   Printer
@@ -39,10 +39,13 @@ class Printer {
 
     //! Print part header: title
     void part(const std::string& title) const {
-      std::string::size_type half_length = title.size()/2 + 2;
+      std::string::size_type half_length = title.size()/2 + 1;
       std::string s(half_length, '-');
       std::string underline(s + " o " + s);
-      std::cout << m_part_fmt % title;
+      std::string upper(title);
+      std::transform(title.begin(), title.end(), upper.begin(), ::toupper);
+      upper = "< " + upper + " >";
+      std::cout << m_part_fmt % upper;
       std::cout << m_part_underline_fmt % underline;
     }
 
