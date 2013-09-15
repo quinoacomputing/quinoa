@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:33:28 2013
+  \date      Sun 15 Sep 2013 04:23:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition
@@ -13,7 +13,7 @@
 
 using namespace quinoa;
 
-STLMesh::STLMesh(Memory* const memory) :
+STLMesh::STLMesh(const Memory& memory) :
   m_memory(memory),
   m_name(""),
   m_x(),
@@ -36,10 +36,10 @@ STLMesh::~STLMesh() noexcept
 //******************************************************************************
 {
   // Free memory entries held
-  m_memory->freeEntry(m_nodelist);
-  m_memory->freeEntry(m_z);
-  m_memory->freeEntry(m_y);
-  m_memory->freeEntry(m_x);
+  m_memory.freeEntry(m_nodelist);
+  m_memory.freeEntry(m_z);
+  m_memory.freeEntry(m_y);
+  m_memory.freeEntry(m_x);
 }
 
 void
@@ -54,12 +54,12 @@ STLMesh::alloc(const size_t nnodes)
   m_nnodes = nnodes;
 
   // Allocate memory entries to store the x, y, z coordinates
-  m_x = m_memory->newEntry<real>(nnodes, REAL, SCALAR, "STL x coord");
-  m_y = m_memory->newEntry<real>(nnodes, REAL, SCALAR, "STL y coord");
-  m_z = m_memory->newEntry<real>(nnodes, REAL, SCALAR, "STL z coord");
+  m_x = m_memory.newEntry<real>(nnodes, REAL, SCALAR, "STL x coord");
+  m_y = m_memory.newEntry<real>(nnodes, REAL, SCALAR, "STL y coord");
+  m_z = m_memory.newEntry<real>(nnodes, REAL, SCALAR, "STL z coord");
 
   // Allocate memory entry to store the node indices describing facets
-  m_nodelist = m_memory->newEntry<int>(nnodes, INT, SCALAR, "STL nodelist");
+  m_nodelist = m_memory.newEntry<int>(nnodes, INT, SCALAR, "STL nodelist");
   // Fill nodelist with increasing integers. This serves as the element
   // connectivity.
   for (size_t i=0; i<nnodes; ++i) m_nodelist[i] = i;

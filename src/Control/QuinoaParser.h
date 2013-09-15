@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:08:20 AM MDT
+  \date      Sun 15 Sep 2013 12:27:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -30,7 +30,9 @@ class QuinoaParser : public Parser {
     explicit QuinoaParser(const std::string& filename,
                           const QuinoaPrint& print,
                           QuinoaControl& control)
-      : Parser(filename), m_print(print), m_control(control) {
+      : Parser(filename),
+        m_print(print),
+        m_control(control) {
       m_control.set<control::io,control::ctr>(filename);
     }
 

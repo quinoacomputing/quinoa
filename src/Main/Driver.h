@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:09:18 PM MDT
+  \date      Sun 15 Sep 2013 04:50:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -22,16 +22,13 @@ class Driver {
 
   public:
     //! Constructor
-    explicit Driver();
+    explicit Driver() = default;
 
     //! Destructor
     virtual ~Driver() noexcept = default;
 
     //! Execute
     virtual void execute() const = 0;
-
-  protected:
-    std::unique_ptr<Timer> m_timer;
 
   private:
     //! Don't permit copy constructor

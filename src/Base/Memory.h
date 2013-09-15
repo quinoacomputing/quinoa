@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:52:48 2013
+  \date      Sun 15 Sep 2013 04:49:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory store, container of memory entries
   \details   Memory store, container of memory entries
@@ -60,7 +60,7 @@ class Memory {
                      const VarType variable,
                      const std::string name,
                      const bool plot = false,
-                     const bool restart = false) {
+                     const bool restart = false) const {
       MemoryEntry* const me =
         newEntry(number, value, variable, name, plot, restart);
       return Data<V>(me, getPtr<V>(me));
@@ -82,7 +82,7 @@ class Memory {
 
     //! Deallocate a memory entry
     template< class V >
-    void freeEntry(Data<V>& data) noexcept {
+    void freeEntry(Data<V>& data) const noexcept {
       freeEntry(data.id);
       data.ptr = nullptr;
     }
@@ -144,7 +144,7 @@ class Memory {
                           const VarType variable,
                           const std::string name,
                           const bool plot = false,
-                          const bool restart = false);
+                          const bool restart = false) const;
 
     //! Allocate and zero memory entry
     MemoryEntry* newZeroEntry(const size_t number,
@@ -165,7 +165,7 @@ class Memory {
     }
 
     //! Deallocate a memory entry
-    void freeEntry(MemoryEntry* id) noexcept;
+    void freeEntry(MemoryEntry* id) const noexcept;
 
     void echo() const;          //!< Echo unsorted entries
     void echoByBytes() const;   //!< Echo entries sorted by Bytes
@@ -178,7 +178,7 @@ class Memory {
 
     const int m_nOMPthreads;    //!< Number of OpenMP threads
 
-    MemorySet m_entry;          //!< Memory entries
+    mutable MemorySet m_entry;  //!< Memory entries
 };
 
 } // namespace quinoa

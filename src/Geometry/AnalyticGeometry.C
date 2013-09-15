@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:18:45 2013
+  \date      Sun 15 Sep 2013 12:45:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -14,18 +14,10 @@
 
 using namespace quinoa;
 
-AnalyticGeometry::AnalyticGeometry(Memory* const memory,
-                                   Paradigm* const paradigm,
-                                   const QuinoaControl& control,
-                                   Timer* const timer) :
-  Geometry(memory, paradigm, control, timer),
-  m_primitive()
+AnalyticGeometry::AnalyticGeometry(const Base& base) : Geometry(base)
 //******************************************************************************
 //  Constructor
-//! \param[in] memory    Memory oject pointer
-//! \param[in] paradigm  Parallel programming paradigm object pointer
-//! \param[in] control   Control object
-//! \param[in] timer     Timer object
+//! \param[in] base  Essentials
 //! \author J. Bakosi
 //******************************************************************************
 {

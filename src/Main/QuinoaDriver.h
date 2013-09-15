@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:12:07 AM MDT
+  \date      Sun 15 Sep 2013 04:27:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -12,15 +12,13 @@
 #define QuinoaDriver_h
 
 #include <Driver.h>
+#include <Base.h>
 #include <QuinoaControl.h>
 #include <QuinoaPrint.h>
 
 namespace quinoa {
 
-class Memory;
-class Paradigm;
 class Geometry;
-class QuinoaControl;
 class Physics;
 
 //! QuinoaDriver : Driver
@@ -30,9 +28,7 @@ class QuinoaDriver : public Driver {
     //! Constructor
     explicit QuinoaDriver(int argc,
                           char** argv,
-                          Memory* const memory,
-                          Paradigm* const paradigm,
-                          const QuinoaPrint& print);
+                          Base& base);
 
     //! Destructor
     ~QuinoaDriver() noexcept override;
@@ -56,11 +52,8 @@ class QuinoaDriver : public Driver {
     //! Instantiate physics object
     void initPhysics();
 
-    Memory* const m_memory;           //!< Memory object
-    Paradigm* const m_paradigm;       //!< Parallel paradigm object
-    const QuinoaPrint& m_print;       //!< Pretty printer object
+    Base& m_base;                     //!< Essentials
 
-    QuinoaControl m_control;          //!< Control object
     Geometry* m_geometry;             //!< Geometry object
     Physics* m_physics;               //!< Physics object
 };

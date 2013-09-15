@@ -27,7 +27,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 )
 
 add_executable(${QUINOA_EXECUTABLE}
-               Driver.C
                QuinoaDriver.C
                Quinoa.C
 )
@@ -73,7 +72,6 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 )
 
 add_executable(${QUINOA_RNGTEST_EXECUTABLE}
-               Driver.C
                RNGTestDriver.C
                RNGTest.C
 )

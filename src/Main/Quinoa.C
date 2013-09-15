@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:13:06 AM MDT
+  \date      Sun 15 Sep 2013 11:28:42 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
     print.endpart();
 
     // Create driver
-    QuinoaDriver driver(argc, argv, &memory, &paradigm, print);
+    QuinoaDriver driver(argc, argv, base);
 
     // Solve
     driver.execute();
