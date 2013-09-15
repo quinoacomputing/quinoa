@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Base/Printer.h
+  \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 12 Sep 2013 06:51:43 PM MDT
+  \date      Sun 15 Sep 2013 11:10:01 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Printer
-  \details   Printer
+  \brief     Print
+  \details   Print
 */
 //******************************************************************************
-#ifndef Printer_h
-#define Printer_h
+#ifndef Print_h
+#define Print_h
 
 #include <string>
 #include <iomanip>
@@ -18,15 +18,15 @@
 
 namespace quinoa {
 
-//! Printer base
-class Printer {
+//! Print base
+class Print {
 
   public:
     //! Constructor
-    explicit Printer() = default;
+    explicit Print() = default;
 
     //! Destructor
-    virtual ~Printer() noexcept {}
+    virtual ~Print() noexcept {}
 
     //! Print header
     void header(const std::string& title) const {
@@ -84,8 +84,11 @@ class Printer {
       std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
 
-    //! Put std::endl in stream
-    void endl() const { std::cout << std::endl; }
+    //! Print end of part
+    void endpart() const { std::cout << "\n\n"; }
+
+    //! Print end of subsection
+    void endsubsection() const { std::cout << "\n"; }
 
   protected:
     //! bullets
@@ -112,15 +115,15 @@ class Printer {
 
   private:
     //! Don't permit copy constructor
-    Printer(const Printer&) = delete;
+    Print(const Print&) = delete;
     //! Don't permit copy assigment
-    Printer& operator=(const Printer&) = delete;
+    Print& operator=(const Print&) = delete;
     //! Don't permit move constructor
-    Printer(Printer&&) = delete;
+    Print(Print&&) = delete;
     //! Don't permit move assigment
-    Printer& operator=(Printer&&) = delete;
+    Print& operator=(Print&&) = delete;
 };
 
 } // namespace quinoa
 
-#endif // Printer_h
+#endif // Print_h

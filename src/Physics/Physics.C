@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 12 16:33:41 2013
+  \date      Sun 15 Sep 2013 11:09:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -30,7 +30,7 @@ Physics::Physics(Memory* const memory,
                  Paradigm* const paradigm,
                  const QuinoaControl& control,
                  Timer* const timer,
-                 const QuinoaPrinter& print)
+                 const QuinoaPrint& print)
 //******************************************************************************
 //  Constructor
 //! \param[in]  memory   Memory object
@@ -171,7 +171,7 @@ Physics::echo()
   m_print.item("Glob", m_control.get<control::io,control::glob>());
   m_print.item("Statistics", m_control.get<control::io,control::stats>());
   m_print.item("PDF", m_control.get<control::io,control::pdf>());
-  m_print.endl();
+  m_print.endsubsection();
 
   m_print.subsection("Models");
   m_print.item("Position",
@@ -188,7 +188,7 @@ Physics::echo()
                fr.name(m_control.get<control::selected,control::frequency>()));
   m_print.item("Material mix rate",
                mr.name(m_control.get<control::selected,control::mixrate>()));
-  m_print.endl();
+  m_print.endsubsection();
 
   m_print.subsection("Number of components");
   m_print.item("Positions",
@@ -203,7 +203,7 @@ Physics::echo()
                m_control.get<control::component,control::nfrequency>());
   m_print.item("Particles",
                m_control.get<control::component,control::npar>());
-  m_print.endl();
+  m_print.endsubsection();
 
   m_print.subsection("Incrementation parameters");
   m_print.item("Number of time steps",
@@ -212,7 +212,7 @@ Physics::echo()
                m_control.get<control::incpar,control::term>());
   m_print.item("Initial time step size",
                m_control.get<control::incpar,control::dt>());
-  m_print.endl();
+  m_print.endsubsection();
 
   m_print.subsection("Output intervals");
   m_print.item("TTY", m_control.get<control::interval,control::tty>());
@@ -220,11 +220,10 @@ Physics::echo()
   m_print.item("Glob", m_control.get<control::interval,control::glob>());
   m_print.item("Statistics", m_control.get<control::interval,control::plot>());
   m_print.item("PDF", m_control.get<control::interval,control::pdf>());
-  m_print.endl();
+  m_print.endsubsection();
 
   m_print.subsection("Statistics");
   m_print.vecvecNames<control::stats>(m_control,"Requested statistics",true);
   m_print.vecvecNames<control::stats>(m_control,"Estimated statistics");
-  m_print.endl();
-  m_print.endl();
+  m_print.endpart();
 }
