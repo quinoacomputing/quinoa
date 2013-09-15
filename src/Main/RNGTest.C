@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Thu Aug 29 17:23:10 2013
+  \date      Sat 14 Sep 2013 08:08:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -66,8 +66,6 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  RNGTestDriver* driver = nullptr;
-
   ErrCode error = ErrCode::SUCCESS;
   try {
 
@@ -76,32 +74,27 @@ int main(int argc, char* argv[])
     // Echo build environment
     echoBuildInfo();
 
-    // Allocate and initialize RNG test driver
-    driver = new (std::nothrow) RNGTestDriver(argc, argv);
-    ErrChk(driver != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for driver");
+    // Create driver
+    RNGTestDriver driver(argc, argv);
 
     // Run RNG tests
-    driver->execute();
+    driver.execute();
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (std::exception& se) {
       Exception qe(ExceptType::RUNTIME, se.what());
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
       Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
-
-  // Finalize and deallocate driver
-  if (driver) { delete driver; driver = nullptr; }
 
   // Return error code
   return static_cast<int>(error);

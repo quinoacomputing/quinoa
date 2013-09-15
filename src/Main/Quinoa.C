@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri Sep 13 10:06:45 2013
+  \date      Sat 14 Sep 2013 08:00:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -76,9 +76,6 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Memory* memory = nullptr;
-  QuinoaDriver* driver = nullptr;
-
   ErrCode error = ErrCode::SUCCESS;
   try {
 
@@ -98,39 +95,30 @@ int main(int argc, char* argv[])
     print.endl();
     print.endl();
 
-    // Initialize memory manager
-    memory = new (std::nothrow) Memory(&paradigm);
-    ErrChk(memory != nullptr, ExceptType::FATAL,
-           "No memory for a memory manager?");
+    // Create memory manager
+    Memory memory(&paradigm);
 
-    // Allocate and initialize driver
-    driver = new (std::nothrow)
-             QuinoaDriver(argc, argv, memory, &paradigm, print);
-    ErrChk(driver != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for driver");
+    // Create driver
+    QuinoaDriver driver(argc, argv, &memory, &paradigm, print);
 
     // Solve
-    driver->execute();
+    driver.execute();
 
   } // Catch and handle Quina::Exceptions
     catch (Exception& qe) {
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
     // Catch std::exceptions and transform them into Quinoa::Exceptions without
     // file:line:func information
     catch (std::exception& se) {
       Exception qe(ExceptType::RUNTIME, se.what());
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
     // Catch uncaught exceptions and still do cleanup
     catch (...) {
       Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
-      error = qe.handleException(driver);
+      error = qe.handleException();
     }
-
-  // Finalize and deallocate driver and memory manager
-  if (driver) { delete driver; driver = nullptr; }
-  if (memory) { delete memory; memory = nullptr; }
 
   // Return error code
   return static_cast<int>(error);

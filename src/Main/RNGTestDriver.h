@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:01:31 PM MDT
+  \date      Sat 14 Sep 2013 08:16:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -25,11 +25,7 @@ class RNGTestDriver : public quinoa::Driver {
     explicit RNGTestDriver(int argc, char** argv);
 
     //! Destructor
-    ~RNGTestDriver() noexcept override;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept override;
+    ~RNGTestDriver() noexcept override = default;
 
     //! Solve
     void execute() const override;

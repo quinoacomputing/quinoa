@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 05:49:04 PM MDT
+  \date      Sat 14 Sep 2013 08:07:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -107,41 +107,8 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv)
 //! \param[in] argv      Argument vector from command line
 //! \author J. Bakosi
 //******************************************************************************
-try :
-  Driver()
 {
 
-} // Roll back changes and rethrow on error
-  catch (std::exception&) {
-    finalize();
-    throw;
-  }
-  // Catch uncaught exceptions
-  catch (...) {
-    finalize();
-    Throw(quinoa::ExceptType::UNCAUGHT, "Non-standard exception");
-  }
-
-RNGTestDriver::~RNGTestDriver() noexcept
-//******************************************************************************
-//  Destructor
-//! \details Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-RNGTestDriver::finalize() noexcept
-//******************************************************************************
-//  Finalize
-//! \details Cleanup either at the end of business as usual or due to an
-//!          exception. No-throw guarantee: this member function never throws
-//!          exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
 }
 
 void

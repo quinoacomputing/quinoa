@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:26:10 2013
+  \date      Sat 14 Sep 2013 08:15:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
-  \details   QuinoaDriver that driver Quinoa
+  \details   QuinoaDriver that drives Quinoa
 */
 //******************************************************************************
 #ifndef QuinoaDriver_h
@@ -36,10 +36,6 @@ class QuinoaDriver : public Driver {
 
     //! Destructor
     ~QuinoaDriver() noexcept override;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept override;
 
     //! Solve
     void execute() const override;
