@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Mon Sep  9 08:19:57 2013
+  \date      Sun 15 Sep 2013 04:22:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -18,10 +18,7 @@
 
 using namespace quinoa;
 
-DiscreteGeometry::DiscreteGeometry(Memory* const memory,
-                                   Paradigm* const paradigm,
-                                   const QuinoaControl& control,
-                                   Timer* const timer)
+DiscreteGeometry::DiscreteGeometry(const Base& base)
 //******************************************************************************
 //  Constructor
 //! \param[in] memory    Memory oject pointer
@@ -32,7 +29,7 @@ DiscreteGeometry::DiscreteGeometry(Memory* const memory,
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  Geometry(memory, paradigm, control, timer),
+  Geometry(base),
   m_mesh(nullptr)
 {
   using namespace control;
@@ -41,18 +38,18 @@ try :
   echo();
 
   // Instantiate mesh object
-  m_mesh = new(std::nothrow) STLMesh(memory);
+  m_mesh = new(std::nothrow) STLMesh(m_base.memory);
   ErrChk(m_mesh != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for STL mesh object");
 
   // Instantiate ASCII STL mesh reader object
-  STLTxtMeshReader reader(control.get<io,input>(), m_mesh);
+  STLTxtMeshReader reader(base.control.get<io,input>(), m_mesh);
 
   // Read in STL mesh
   reader.read();
 
   // Instantiate Silo writer object
-  SiloWriter writer(control.get<io,output>(), m_mesh, DB_ALL_AND_DRVR);
+  SiloWriter writer(base.control.get<io,output>(), m_mesh, DB_ALL_AND_DRVR);
 
   // Write out STL geometry to Silo file
   writer.write();

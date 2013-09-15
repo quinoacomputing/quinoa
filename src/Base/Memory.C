@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Memory.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:30:52 2013
+  \date      Sun 15 Sep 2013 04:49:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Memory (a store for MemoryEntry objects) base class definition
   \details   Memory (a store for MemoryEntry objects) base class definition
@@ -57,7 +57,7 @@ Memory::newEntry(const size_t number,
                  const VarType variable,
                  const string name,
                  const bool plot,
-                 const bool restart)
+                 const bool restart) const
 //******************************************************************************
 //  Allocate memory entry
 //! \param[in]  number    Number of items to allocate
@@ -153,7 +153,7 @@ Memory::newZeroEntry(const size_t number,
 }
 
 void
-Memory::freeEntry(MemoryEntry* id) noexcept
+Memory::freeEntry(MemoryEntry* id) const noexcept
 //******************************************************************************
 //  Deallocate a memory entry
 //! \param[in]  id  ID of the entry to be freed

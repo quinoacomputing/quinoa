@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:22:15 2013
+  \date      Sun 15 Sep 2013 04:37:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration
@@ -21,7 +21,7 @@ class STLMesh {
 
   public:
     //! Constructor
-    explicit STLMesh(Memory* const memory);
+    explicit STLMesh(const Memory& memory);
 
     //! Destructor
     virtual ~STLMesh() noexcept;
@@ -54,7 +54,7 @@ class STLMesh {
     //! Don't permit move assignment
     STLMesh& operator=(STLMesh&&) = delete;
 
-    Memory* const m_memory;                  //!< Memory object pointer
+    const Memory& m_memory;                  //!< Memory object pointer
 
     std::string m_name;                      //!< Name of the mesh
     Data<real> m_x;                          //!< Vertex x coordinates
