@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:00:06 PM MDT
+  \date      Sun 15 Sep 2013 11:13:06 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -12,16 +12,17 @@
 #include <iostream>
 
 #include <QuinoaConfig.h>
+#include <Base.h>
 #include <Paradigm.h>
 #include <Memory.h>
 #include <QuinoaDriver.h>
-#include <QuinoaPrinter.h>
+#include <QuinoaPrint.h>
 
 using namespace quinoa;
 
 namespace quinoa {
 
-static void echoHeader(const QuinoaPrinter& print)
+static void echoHeader(const QuinoaPrint& print)
 //******************************************************************************
 //  Echo Name
 //! \author  J. Bakosi
@@ -30,7 +31,7 @@ static void echoHeader(const QuinoaPrinter& print)
   print.header("Quinoa: Lagrangian particle hydrodynamics");
 }
 
-static void echoBuildEnv(const QuinoaPrinter& print)
+static void echoBuildEnv(const QuinoaPrint& print)
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/QuinoaConfig.h filled by
@@ -54,7 +55,7 @@ static void echoBuildEnv(const QuinoaPrinter& print)
   print.item("Build date", QUINOA_BUILD_DATE);
 }
 
-static void echoRunEnv(const QuinoaPrinter& print)
+static void echoRunEnv(const QuinoaPrint& print)
 //******************************************************************************
 //  Echo runtime environment
 //! \author  J. Bakosi
@@ -79,24 +80,25 @@ int main(int argc, char* argv[])
   ErrCode error = ErrCode::SUCCESS;
   try {
 
-    // Create pretty printer
-    QuinoaPrinter print;
+    // Create the essentials
+    QuinoaPrint print;                  //!< Pretty printer
+    Paradigm paradigm(print);           //!< Parallel compute environment
+    Memory memory(&paradigm);           //!< Memory manager
+    QuinoaControl control;              //!< Controller
+    Timer timer;                        //!< Timer
+
+    // Bundle up essentials
+    Base base(print, paradigm, memory, control, timer);
+
     // Echo program name
     echoHeader(print);
 
+    // Echo environment
     print.part("Environment");
-    // Echo build environment
-    echoBuildEnv(print);
-    // Echo runtime environment
-    echoRunEnv(print);
-    // Query, setup, and echo parallel enviroment
-    Paradigm paradigm(print);
-    paradigm.echo();
-    print.endl();
-    print.endl();
-
-    // Create memory manager
-    Memory memory(&paradigm);
+    echoBuildEnv(print);                //!< Build environment
+    echoRunEnv(print);                  //!< Runtime environment
+    paradigm.echo();                    //!< Parallel compute enviroment
+    print.endpart();
 
     // Create driver
     QuinoaDriver driver(argc, argv, &memory, &paradigm, print);

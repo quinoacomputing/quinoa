@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:15:31 PM MDT
+  \date      Sun 15 Sep 2013 11:12:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -27,11 +27,11 @@ QuinoaDriver::QuinoaDriver(int argc,
                            char** argv,
                            Memory* const memory,
                            Paradigm* const paradigm,
-                           const QuinoaPrinter& print) : m_memory(memory),
-                                                         m_paradigm(paradigm),
-                                                         m_print(print),
-                                                         m_geometry(nullptr),
-                                                         m_physics(nullptr)
+                           const QuinoaPrint& print) : m_memory(memory),
+                                                       m_paradigm(paradigm),
+                                                       m_print(print),
+                                                       m_geometry(nullptr),
+                                                       m_physics(nullptr)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line

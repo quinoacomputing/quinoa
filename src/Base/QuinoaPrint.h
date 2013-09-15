@@ -1,30 +1,30 @@
 //******************************************************************************
 /*!
-  \file      src/Base/QuinoaPrinter.h
+  \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:21:11 2013
+  \date      Sat 14 Sep 2013 07:28:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
 */
 //******************************************************************************
-#ifndef QuinoaPrinter_h
-#define QuinoaPrinter_h
+#ifndef QuinoaPrint_h
+#define QuinoaPrint_h
 
-#include <Printer.h>
+#include <Print.h>
 #include <QuinoaControl.h>
 
 namespace quinoa {
 
-//! QuinoaPrinter : Printer
-class QuinoaPrinter : public Printer {
+//! QuinoaPrint : Print
+class QuinoaPrint : public Print {
 
   public:
     //! Constructor
-    explicit QuinoaPrinter() = default;
+    explicit QuinoaPrint() = default;
 
     //! Destructor
-    ~QuinoaPrinter() noexcept override {}
+    ~QuinoaPrint() noexcept override {}
 
     //! Echo vector of vector of element names
     //! Fields of vector<vector< struct{field, name, plot} >> must exist
@@ -54,15 +54,15 @@ class QuinoaPrinter : public Printer {
 
   private:
     //! Don't permit copy constructor
-    QuinoaPrinter(const QuinoaPrinter&) = delete;
+    QuinoaPrint(const QuinoaPrint&) = delete;
     //! Don't permit copy assigment
-    QuinoaPrinter& operator=(const QuinoaPrinter&) = delete;
+    QuinoaPrint& operator=(const QuinoaPrint&) = delete;
     //! Don't permit move constructor
-    QuinoaPrinter(QuinoaPrinter&&) = delete;
+    QuinoaPrint(QuinoaPrint&&) = delete;
     //! Don't permit move assigment
-    QuinoaPrinter& operator=(QuinoaPrinter&&) = delete;
+    QuinoaPrint& operator=(QuinoaPrint&&) = delete;
 };
 
 } // namespace quinoa
 
-#endif // QuinoaPrinter_h
+#endif // QuinoaPrint_h

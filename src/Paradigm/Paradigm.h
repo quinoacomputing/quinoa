@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:20:58 2013
+  \date      Sun 15 Sep 2013 11:07:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -12,7 +12,7 @@
 #define Paradigm_h
 
 #include <OpenMP.h>
-#include <QuinoaPrinter.h>
+#include <QuinoaPrint.h>
 
 namespace quinoa {
 
@@ -21,7 +21,7 @@ class Paradigm {
 
   public:
     //! Constructor
-    explicit Paradigm(const QuinoaPrinter& print) : m_print(print) {}
+    explicit Paradigm(const QuinoaPrint& print) : m_print(print) {}
 
     //! Destructor
     ~Paradigm() = default;
@@ -52,7 +52,7 @@ class Paradigm {
     Paradigm& operator=(Paradigm&&) = delete;
 
     const OpenMP m_omp;            //!< OpenMP
-    const QuinoaPrinter& m_print;  //!< Pretty printer
+    const QuinoaPrint& m_print;    //!< Pretty printer
 };
 
 } // namespace quinoa
