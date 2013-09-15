@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:30:59 2013
+  \date      Sat 14 Sep 2013 08:00:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -194,7 +194,7 @@ Exception::echo(const char* msg) noexcept
 }
 
 ErrCode
-Exception::handleException(Driver* const driver) noexcept
+Exception::handleException() noexcept
 //******************************************************************************
 //  Handle Exception: Print cumulative message and handle criticality
 //! \details No-throw guarantee: this member function never throws exceptions.
@@ -220,21 +220,18 @@ Exception::handleException(Driver* const driver) noexcept
 
     echo("FATAL ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
-    if (driver) driver->finalize();
     return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::RUNTIME) {
 
     echo("RUNTIME ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
-    if (driver) driver->finalize();
     return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::UNCAUGHT) {
 
     echo("UNKNOWN ERROR");
     printf(">>> Attempting cleanup & graceful exit...\n");
-    if (driver) driver->finalize();
     return ErrCode::FAILURE;
 
   } else {

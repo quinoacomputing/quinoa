@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:17:09 2013
+  \date      Sat 14 Sep 2013 08:09:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -11,9 +11,11 @@
 #ifndef Driver_h
 #define Driver_h
 
-namespace quinoa {
+#include <memory>
 
-class Timer;
+#include <Timer.h>
+
+namespace quinoa {
 
 //! Driver base class
 class Driver {
@@ -23,17 +25,13 @@ class Driver {
     explicit Driver();
 
     //! Destructor
-    virtual ~Driver() noexcept;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    virtual void finalize() noexcept;
+    virtual ~Driver() noexcept = default;
 
     //! Execute
     virtual void execute() const = 0;
 
   protected:
-    Timer* m_timer;                   //!< Timer object
+    std::unique_ptr<Timer> m_timer;
 
   private:
     //! Don't permit copy constructor

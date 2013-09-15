@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 05:46:54 PM MDT
+  \date      Sat 14 Sep 2013 08:06:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -87,8 +87,8 @@ class Exception : public std::exception {
     //! Redefine std::exception's what()
     virtual const char* what() const noexcept { return m_message.c_str(); }
 
-    //! Handle Exception passing pointer to driver whose finalize() is called
-    virtual ErrCode handleException(Driver* const driver = nullptr) noexcept;
+    //! Handle Exception
+    virtual ErrCode handleException() noexcept;
 
     //! Echo message
     void echo(const char* msg) noexcept;

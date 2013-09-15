@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Sep 12 15:58:57 2013
+  \date      Sat 14 Sep 2013 08:15:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -27,7 +27,11 @@ QuinoaDriver::QuinoaDriver(int argc,
                            char** argv,
                            Memory* const memory,
                            Paradigm* const paradigm,
-                           const QuinoaPrinter& print)
+                           const QuinoaPrinter& print) : m_memory(memory),
+                                                         m_paradigm(paradigm),
+                                                         m_print(print),
+                                                         m_geometry(nullptr),
+                                                         m_physics(nullptr)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
@@ -38,15 +42,7 @@ QuinoaDriver::QuinoaDriver(int argc,
 //! \details   Instantiate geometry, physics, set initial conditions, etc.
 //! \author J. Bakosi
 //******************************************************************************
-try :
-  Driver(),
-  m_memory(memory),
-  m_paradigm(paradigm),
-  m_print(print),
-  m_geometry(nullptr),
-  m_physics(nullptr)
 {
-
   // Take exactly one filename argument for now
   // Will need to be extended with a more elaborate command line parser
   ErrChk(argc == 2, ExceptType::FATAL,
@@ -68,35 +64,12 @@ try :
 
   // Instantiate physics object
   initPhysics();
-
-} // Roll back changes and rethrow on error
-  catch (std::exception&) {
-    finalize();
-    throw;
-  }
-  // Catch uncaught exceptions
-  catch (...) {
-    finalize();
-    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
-  }
+}
 
 QuinoaDriver::~QuinoaDriver() noexcept
 //******************************************************************************
 //  Destructor
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-QuinoaDriver::finalize() noexcept
-//******************************************************************************
-//  Finalize
-//! \details Cleanup either at the end of business as usual or due to an
-//!          exception. No-throw guarantee: this member function never throws
-//!          exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -118,14 +91,14 @@ QuinoaDriver::initGeometry()
   if (m_control.get<selected,geometry>() == GeometryType::ANALYTIC) {
 
     m_geometry = new(std::nothrow)
-                   AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer);
+                   AnalyticGeometry(m_memory, m_paradigm, m_control, m_timer.get());
     ErrChk(m_geometry != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for geometry object");
 
   } else if (m_control.get<selected,geometry>() == GeometryType::DISCRETE) {
 
     m_geometry = new(std::nothrow)
-                  DiscreteGeometry(m_memory, m_paradigm, m_control, m_timer);
+                  DiscreteGeometry(m_memory, m_paradigm, m_control, m_timer.get());
     ErrChk(m_geometry != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for geometry object");
 
@@ -149,7 +122,7 @@ QuinoaDriver::initPhysics()
   if (m_control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
 
     m_physics = new(std::nothrow)
-                HomMix(m_memory, m_paradigm, m_control, m_timer, m_print);
+                HomMix(m_memory, m_paradigm, m_control, m_timer.get(), m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
@@ -157,7 +130,7 @@ QuinoaDriver::initPhysics()
              PhysicsType::HOMOGENEOUS_HYDRO) {
 
     m_physics = new(std::nothrow)
-                HomHydro(m_memory, m_paradigm, m_control, m_timer, m_print);
+                HomHydro(m_memory, m_paradigm, m_control, m_timer.get(), m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
@@ -165,14 +138,14 @@ QuinoaDriver::initPhysics()
              PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
 
     m_physics = new(std::nothrow)
-                HomRT(m_memory, m_paradigm, m_control, m_timer, m_print);
+                HomRT(m_memory, m_paradigm, m_control, m_timer.get(), m_print);
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
 
   } if (m_control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
 
     m_physics = new(std::nothrow)
-                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer, m_print,
+                  SPINSFlow(m_memory, m_paradigm, m_control, m_timer.get(), m_print,
                   "cylinder.msh");
     ErrChk(m_physics != nullptr, ExceptType::FATAL,
            "Cannot allocate memory for physics object");
