@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:16:32 2013
+  \date      Sun 15 Sep 2013 05:25:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -26,18 +26,13 @@ class Mass : public Model {
 
   public:
     //! Constructor
-    explicit Mass(Memory* const memory,
-                  Paradigm* const paradigm,
-                  const QuinoaControl& control,
-                  real* const particles) :
-      Model(memory,
-            paradigm,
-            control,
+    explicit Mass(const Base& base, real* const particles) :
+      Model(base,
             particles,
-            control.get<control::component, control::npar>(),
-            control.nprop()),
+            base.control.get<control::component, control::npar>(),
+            base.control.nprop()),
       m_offset(0),
-      m_ndensity(control.get<control::component, control::ndensity>()) {
+      m_ndensity(base.control.get<control::component, control::ndensity>()) {
       ErrChk(m_ndensity > 0, ExceptType::FATAL,
              "Wrong number of particle densities");
     }

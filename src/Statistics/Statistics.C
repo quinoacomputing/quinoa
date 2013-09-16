@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 07:21:38 AM MDT
+  \date      Sun 15 Sep 2013 05:56:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -16,6 +16,7 @@
 #include "omp.h"
 #endif // _OPENMP
 
+#include <Base.h>
 #include <Statistics.h>
 #include <Paradigm.h>
 #include <QuinoaControl.h>
@@ -23,25 +24,20 @@
 
 using namespace quinoa;
 
-Statistics::Statistics(Memory* const memory,
-                       Paradigm* const paradigm,
-                       const QuinoaControl& control,
-                       Physics* const physics)
+Statistics::Statistics(const Base& base, Physics* const physics)
 //******************************************************************************
 //  Constructor
-//! \param[in]  memory   Memory object
-//! \param[in]  paradigm Parallel programming object
-//! \param[in]  control  Control object
+//! \param[in]  base     Essentials
 //! \param[in]  physics  Physics object
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_memory(memory),
-  m_nthread(paradigm->nthread()),
-  m_npar(control.get<control::component, control::npar>()),
+  m_base(base),
+  m_nthread(base.paradigm.nthread()),
+  m_npar(base.control.get<control::component, control::npar>()),
   m_physics(physics),
-  m_nprop(control.nprop()),
-  m_statistics(control.get<control::stats>()),
+  m_nprop(base.control.nprop()),
+  m_statistics(base.control.get<control::stats>()),
   m_instOrd(),
   m_ordinary(),
   m_ordFieldName(),
@@ -65,7 +61,7 @@ try :
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(m_physics->particles() +
-                                    control.termOffset(term.quantity) +
+                                    base.control.termOffset(term.quantity) +
                                     term.field);
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
@@ -80,10 +76,10 @@ try :
   if (m_nord) {
     // Storage for all the required ordinary moments
     // +1 for each thread's 0 as center for ordinary moments
-    m_ordinary = m_memory->newEntry<real>(m_nthread*(m_nord+1),
-                                          REAL,
-                                          SCALAR,
-                                          "ordinary moments");
+    m_ordinary = base.memory.newEntry<real>(m_nthread*(m_nord+1),
+                                            REAL,
+                                            SCALAR,
+                                            "ordinary moments");
 
     // Put in zero as index of center for ordinary moments in central products
     m_ordinary[m_nord] = 0.0;
@@ -99,7 +95,7 @@ try :
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(m_physics->particles() +
-                                      control.termOffset(term.quantity) +
+                                      base.control.termOffset(term.quantity) +
                                       term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
@@ -113,10 +109,10 @@ try :
 
     if (m_ncen) {
       // Storage for all the required central moments
-      m_central = m_memory->newEntry<real>(m_nthread*m_ncen,
-                                           REAL,
-                                           SCALAR,
-                                           "central moments");
+      m_central = base.memory.newEntry<real>(m_nthread*m_ncen,
+                                             REAL,
+                                             SCALAR,
+                                             "central moments");
     } // if (m_ncen)
   } // if (m_nord)
 
@@ -155,8 +151,8 @@ Statistics::finalize() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  if (m_ncen) m_memory->freeEntry(m_central);
-  if (m_nord) m_memory->freeEntry(m_ordinary);
+  if (m_ncen) m_base.memory.freeEntry(m_central);
+  if (m_nord) m_base.memory.freeEntry(m_ordinary);
 }
 
 bool

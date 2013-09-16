@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:36:50 2013
+  \date      Sun 15 Sep 2013 05:50:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -17,15 +17,14 @@
 
 using namespace quinoa;
 
-MKLRandom::MKLRandom(Memory* const memory, Paradigm* const paradigm) noexcept :
-  m_memory(memory),
-  m_nOMPthreads(paradigm->getOpenMP()->nthread()),
+MKLRandom::MKLRandom(const Base& base) noexcept :
+  m_base(base),
+  m_nOMPthreads(base.paradigm.getOpenMP()->nthread()),
   m_table(),
   m_stream()
 //******************************************************************************
 //  Constructor
-//! \param[in] memory   Memory object pointer
-//! \param[in] paradigm Parallel programming object pointer
+//! \param[in] base     Essentials
 //! \details   No-throw guarantee: this member function never throws exceptions.
 //! \author  J. Bakosi
 //******************************************************************************
@@ -65,7 +64,7 @@ MKLRandom::addTable(const int brng,
 {
   // Create new table
   MKLRndTable* table = new (std::nothrow)
-    MKLRndTable(m_memory, m_nOMPthreads, brng, dist, method, seed, number, name);
+    MKLRndTable(m_base.memory, m_nOMPthreads, brng, dist, method, seed, number, name);
   ErrChk(table != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new table

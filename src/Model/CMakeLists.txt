@@ -15,6 +15,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Random
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/Paradigm
 )
 
 add_library(Model

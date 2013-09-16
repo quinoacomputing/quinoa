@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:09:40 AM MDT
+  \date      Sun 15 Sep 2013 10:26:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -26,32 +26,20 @@
 using namespace std;
 using namespace quinoa;
 
-Physics::Physics(Memory* const memory,
-                 Paradigm* const paradigm,
-                 const QuinoaControl& control,
-                 Timer* const timer,
-                 const QuinoaPrint& print)
+Physics::Physics(const Base& base)
 //******************************************************************************
 //  Constructor
-//! \param[in]  memory   Memory object
-//! \param[in]  paradigm Parallel programming object
-//! \param[in]  control  Control object
-//! \param[in]  timer    Timer object
-//! \param[in]  print    Quinoa's pretty printer
+//! \param[in]  base     Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_nposition(control.get<control::component, control::nposition>()),
-  m_ndensity(control.get<control::component, control::ndensity>()),
-  m_nvelocity(control.get<control::component, control::nvelocity>()),
-  m_nscalar(control.get<control::component, control::nscalar>()),
-  m_npar(control.get<control::component, control::npar>()),
-  m_term(control.get<control::incpar, control::term>()),
-  m_memory(memory),
-  m_paradigm(paradigm),
-  m_control(control),
-  m_print(print),
-  m_timer(timer),
+  m_nposition(base.control.get<control::component, control::nposition>()),
+  m_ndensity(base.control.get<control::component, control::ndensity>()),
+  m_nvelocity(base.control.get<control::component, control::nvelocity>()),
+  m_nscalar(base.control.get<control::component, control::nscalar>()),
+  m_npar(base.control.get<control::component, control::npar>()),
+  m_term(base.control.get<control::incpar, control::term>()),
+  m_base(base),
   m_mass(nullptr),
   m_hydro(nullptr),
   m_mix(nullptr),
@@ -60,51 +48,48 @@ try :
   m_stat(nullptr),
   m_particles()
 {
-IGNORE(m_paradigm);
-
   using namespace control;
 
   //! Echo information on physics
   echo();
 
-  ErrChk(control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
+  ErrChk(m_base.control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
 
   // Allocate memory to store all particle properties
   m_particles =
-    m_memory->newEntry<real>(m_npar * control.nprop(),
-                             REAL,
-                             SCALAR,
-                             "Particles");
+    m_base.memory.newEntry<real>(m_npar * m_base.control.nprop(),
+                                 REAL,
+                                 SCALAR,
+                                 "Particles");
 
   // Instantiate mass model
   if (m_ndensity) {
-    m_mass = new (nothrow) MassType(memory, paradigm, control, m_particles.ptr);
+    m_mass = new (nothrow) MassType(m_base, m_particles.ptr);
     ErrChk(m_mass != nullptr, ExceptType::FATAL, "Cannot allocate memory");
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    m_hydro = new (nothrow)
-              HydroType(memory, paradigm, control, m_particles.ptr);
+    m_hydro = new (nothrow) HydroType(m_base, m_particles.ptr);
     ErrChk(m_hydro != nullptr, ExceptType::FATAL, "Cannot allocate memory");
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    m_mix = new (nothrow) MixType(memory, paradigm, control, m_particles.ptr);
+    m_mix = new (nothrow) MixType(m_base, m_particles.ptr);
     ErrChk(m_mix != nullptr, ExceptType::FATAL, "Cannot allocate memory");
   }
 
   // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(memory, paradigm, control, this);
+  m_statistics = new (nothrow) Statistics(m_base, this);
   ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
-  m_glob = new (nothrow) GlobWriter(control.get<io,glob>());
+  m_glob = new (nothrow) GlobWriter(m_base.control.get<io,glob>());
   ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate statistics plot file writer
-  m_stat = new (nothrow) TxtStatWriter(control.get<io,stats>(), m_statistics);
+  m_stat = new (nothrow) TxtStatWriter(m_base.control.get<io,stats>(), m_statistics);
   ErrChk(m_stat != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
 } // Roll back changes and rethrow on error
@@ -137,7 +122,7 @@ Physics::finalize() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_memory->freeEntry(m_particles);  
+  m_base.memory.freeEntry(m_particles);  
   if (m_mass) { delete m_mass; m_mass = nullptr; }
   if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
@@ -162,68 +147,68 @@ Physics::echo()
   control::Option<select::Frequency> fr;
   control::Option<select::MixRate> mr;
 
-  m_print.section("Physics",
-                  ph.name(m_control.get<control::selected,control::physics>()));
+  m_base.print.section("Physics",
+                  ph.name(m_base.control.get<control::selected,control::physics>()));
 
-  m_print.subsection("I/O filenames");
-  m_print.item("Input", m_control.get<control::io,control::input>());
-  m_print.item("Output", m_control.get<control::io,control::output>());
-  m_print.item("Glob", m_control.get<control::io,control::glob>());
-  m_print.item("Statistics", m_control.get<control::io,control::stats>());
-  m_print.item("PDF", m_control.get<control::io,control::pdf>());
-  m_print.endsubsection();
+  m_base.print.subsection("I/O filenames");
+  m_base.print.item("Input", m_base.control.get<control::io,control::input>());
+  m_base.print.item("Output", m_base.control.get<control::io,control::output>());
+  m_base.print.item("Glob", m_base.control.get<control::io,control::glob>());
+  m_base.print.item("Statistics", m_base.control.get<control::io,control::stats>());
+  m_base.print.item("PDF", m_base.control.get<control::io,control::pdf>());
+  m_base.print.endsubsection();
 
-  m_print.subsection("Models");
-  m_print.item("Position",
-               po.name(m_control.get<control::selected,control::position>()));
-  m_print.item("Mass",
-               ms.name(m_control.get<control::selected,control::mass>()));
-  m_print.item("Hydrodynamics",
-               hy.name(m_control.get<control::selected,control::hydro>()));
-  m_print.item("Internal energy",
-               en.name(m_control.get<control::selected,control::energy>()));
-  m_print.item("Material mixing",
-               mx.name(m_control.get<control::selected,control::mix>()));
-  m_print.item("Turbulence frequency",
-               fr.name(m_control.get<control::selected,control::frequency>()));
-  m_print.item("Material mix rate",
-               mr.name(m_control.get<control::selected,control::mixrate>()));
-  m_print.endsubsection();
+  m_base.print.subsection("Models");
+  m_base.print.item("Position",
+               po.name(m_base.control.get<control::selected,control::position>()));
+  m_base.print.item("Mass",
+               ms.name(m_base.control.get<control::selected,control::mass>()));
+  m_base.print.item("Hydrodynamics",
+               hy.name(m_base.control.get<control::selected,control::hydro>()));
+  m_base.print.item("Internal energy",
+               en.name(m_base.control.get<control::selected,control::energy>()));
+  m_base.print.item("Material mixing",
+               mx.name(m_base.control.get<control::selected,control::mix>()));
+  m_base.print.item("Turbulence frequency",
+               fr.name(m_base.control.get<control::selected,control::frequency>()));
+  m_base.print.item("Material mix rate",
+               mr.name(m_base.control.get<control::selected,control::mixrate>()));
+  m_base.print.endsubsection();
 
-  m_print.subsection("Number of components");
-  m_print.item("Positions",
-               m_control.get<control::component,control::nposition>());
-  m_print.item("Densities",
-               m_control.get<control::component,control::ndensity>());
-  m_print.item("Velocities",
-               m_control.get<control::component,control::nvelocity>());
-  m_print.item("Scalars",
-               m_control.get<control::component,control::nscalar>());
-  m_print.item("Turbulent frequencies",
-               m_control.get<control::component,control::nfrequency>());
-  m_print.item("Particles",
-               m_control.get<control::component,control::npar>());
-  m_print.endsubsection();
+  m_base.print.subsection("Number of components");
+  m_base.print.item("Positions",
+               m_base.control.get<control::component,control::nposition>());
+  m_base.print.item("Densities",
+               m_base.control.get<control::component,control::ndensity>());
+  m_base.print.item("Velocities",
+               m_base.control.get<control::component,control::nvelocity>());
+  m_base.print.item("Scalars",
+               m_base.control.get<control::component,control::nscalar>());
+  m_base.print.item("Turbulent frequencies",
+               m_base.control.get<control::component,control::nfrequency>());
+  m_base.print.item("Particles",
+               m_base.control.get<control::component,control::npar>());
+  m_base.print.endsubsection();
 
-  m_print.subsection("Incrementation parameters");
-  m_print.item("Number of time steps",
-               m_control.get<control::incpar,control::nstep>());
-  m_print.item("Terminate time",
-               m_control.get<control::incpar,control::term>());
-  m_print.item("Initial time step size",
-               m_control.get<control::incpar,control::dt>());
-  m_print.endsubsection();
+  m_base.print.subsection("Incrementation parameters");
+  m_base.print.item("Number of time steps",
+               m_base.control.get<control::incpar,control::nstep>());
+  m_base.print.item("Terminate time",
+               m_base.control.get<control::incpar,control::term>());
+  m_base.print.item("Initial time step size",
+               m_base.control.get<control::incpar,control::dt>());
+  m_base.print.endsubsection();
 
-  m_print.subsection("Output intervals");
-  m_print.item("TTY", m_control.get<control::interval,control::tty>());
-  m_print.item("Dump", m_control.get<control::interval,control::dump>());
-  m_print.item("Glob", m_control.get<control::interval,control::glob>());
-  m_print.item("Statistics", m_control.get<control::interval,control::plot>());
-  m_print.item("PDF", m_control.get<control::interval,control::pdf>());
-  m_print.endsubsection();
+  m_base.print.subsection("Output intervals");
+  m_base.print.item("TTY", m_base.control.get<control::interval,control::tty>());
+  m_base.print.item("Dump", m_base.control.get<control::interval,control::dump>());
+  m_base.print.item("Glob", m_base.control.get<control::interval,control::glob>());
+  m_base.print.item("Statistics", m_base.control.get<control::interval,control::plot>());
+  m_base.print.item("PDF", m_base.control.get<control::interval,control::pdf>());
+  m_base.print.endsubsection();
 
-  m_print.subsection("Statistics");
-  m_print.vecvecNames<control::stats>(m_control,"Requested statistics",true);
-  m_print.vecvecNames<control::stats>(m_control,"Estimated statistics");
-  m_print.endpart();
+  m_base.print.subsection("Statistics");
+  m_base.print.vecvecNames<control::stats>(m_base.control,"Requested statistics",true);
+  m_base.print.vecvecNames<control::stats>(m_base.control,"Estimated statistics");
+  m_base.print.endpart();
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:11:17 AM MDT
+  \date      Sun 15 Sep 2013 05:47:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -25,24 +25,6 @@
 
 using namespace quinoa;
 
-HomRT::HomRT(Memory* const memory,
-             Paradigm* const paradigm,
-             const QuinoaControl& control,
-             Timer* const timer,
-             const QuinoaPrint& print) :
-  Physics(memory, paradigm, control, timer, print),
-  m_totalTime(timer->create("Total solution"))
-//******************************************************************************
-//  Constructor
-//! \param[in]  memory   Memory object pointer
-//! \param[in]  paradigm Parallel programming object pointer
-//! \param[in]  control  Control object pointer
-//! \param[in]  timer    Timer object pointer
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
 void
 HomRT::solve()
 //******************************************************************************
@@ -63,7 +45,7 @@ HomRT::solve()
   const auto glbi  = control().get<control::interval, control::glob>();
   const auto stai  = control().get<control::interval, control::plot>();
 
-  timer()->start(m_totalTime);
+  timer().start(m_totalTime);
 
   // Echo headers
   if (nstep) {
@@ -137,7 +119,7 @@ HomRT::report(const uint64_t it,
 //******************************************************************************
 {
   Watch ete, eta;       // estimated time elapsed and to accomplishment
-  timer()->eta(m_totalTime, m_term, t, nstep, it, ete, eta);
+  timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
             << std::scientific << std::setprecision(6) << std::setw(12) << t

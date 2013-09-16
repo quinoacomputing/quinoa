@@ -34,6 +34,7 @@
 * Unit tests: GoogleTest, QuickTest, Template Unit Test
 
 * Faster build:
+    - Remove unnecessary includes
     - Explore dynamic libs, precompiled headers
     - Reduce build deps with ninja build dependency map
     - Setup precompiled headers

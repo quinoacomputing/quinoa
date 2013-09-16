@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:53:34 2013
+  \date      Sun 15 Sep 2013 05:45:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -55,16 +55,16 @@ class Timer {
     virtual ~Timer() noexcept = default;
 
     //! Create new timer
-    TimerIdx create(const std::string& label);
+    TimerIdx create(const std::string& label) const;
 
     //! Start timer
-    void start(const TimerIdx id);
+    void start(const TimerIdx id) const;
 
     //! Return time elapsed between start and stop
-    real query(const TimerIdx id);
+    real query(const TimerIdx id) const;
 
     //! Return time elapsed between start and stop
-    void query(const TimerIdx id, Watch& watch);
+    void query(const TimerIdx id, Watch& watch) const;
 
     //! Estimate time for accomplishment
     void eta(const TimerIdx id,
@@ -73,7 +73,7 @@ class Timer {
              const uint64_t nstep,
              const uint64_t it,
              Watch& elapsedWatch,
-             Watch& estimatedWatch);
+             Watch& estimatedWatch) const;
 
   private:
     //! Don't permit copy constructor
@@ -85,7 +85,7 @@ class Timer {
     //! Don't permit move assigment
     Timer& operator=(Timer&&) = delete;
 
-    Clock m_timer[MAX_TIMERS];      //!< Timers
+    mutable Clock m_timer[MAX_TIMERS];      //!< Timers
 };
 
 } // namespace quinoa

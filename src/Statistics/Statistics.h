@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed Sep  4 08:03:21 2013
+  \date      Sun 15 Sep 2013 05:54:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -12,15 +12,12 @@
 #define Statistics_h
 
 #include <QuinoaTypes.h>
-#include <Memory.h>
+#include <Base.h>
 #include <Distribution.h>
 #include <QuinoaControlTypes.h>
 
 namespace quinoa {
 
-class Memory;
-class Paradigm;
-class QuinoaControl;
 class Physics;
 
 //! Statistics estimator
@@ -28,10 +25,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics(Memory* const memory,
-                        Paradigm* const paradigm,
-                        const QuinoaControl& control,
-                        Physics* const physics);
+    explicit Statistics(const Base& base, Physics* const physics);
 
     //! Destructor
     virtual ~Statistics() noexcept;
@@ -92,7 +86,7 @@ class Statistics {
     //! Return true if string is all lower case
     bool isLower(const std::string&s) const;
 
-    Memory* const m_memory;                   //!< Memory object
+    const Base& m_base;                       //!< Essentials
     const uint64_t m_nthread;                 //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
     Physics* const m_physics;                 //!< Physics object
