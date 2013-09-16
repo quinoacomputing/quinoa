@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Wed Sep  4 12:15:14 2013
+  \date      Sun 15 Sep 2013 05:20:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -28,18 +28,13 @@ class Mix : public Model {
 
   public:
     //! Constructor
-    explicit Mix(Memory* const memory,
-                 Paradigm* const paradigm,
-                 const QuinoaControl& control,
-                 real* const particles) :
-      Model(memory,
-            paradigm,
-            control,
+    explicit Mix(const Base& base, real* const particles) :
+      Model(base,
             particles,
-            control.get<control::component, control::npar>(),
-            control.nprop()),
-      m_offset(control.scalarOffset()),
-      m_nscalar(control.get<control::component, control::nscalar>()) {
+            base.control.get<control::component, control::npar>(),
+            base.control.nprop()),
+      m_offset(base.control.scalarOffset()),
+      m_nscalar(base.control.get<control::component, control::nscalar>()) {
       ErrChk(m_nscalar > 0, ExceptType::FATAL, "Wrong number of scalars");
     }
 

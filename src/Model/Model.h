@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Wed Sep  4 07:32:33 2013
+  \date      Sun 15 Sep 2013 05:25:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -12,6 +12,7 @@
 #define Model_h
 
 #include <QuinoaTypes.h>
+#include <Base.h>
 #include <Exception.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
@@ -27,16 +28,12 @@ class Model {
 
   protected:
     //! Constructor: protected, designed to be base-only
-    explicit Model(Memory* const memory,
-                   Paradigm* const paradigm,
-                   const QuinoaControl& control,
+    explicit Model(const Base& base,
                    real* const particles,
                    const uint64_t npar,
                    int nprop)
     try :
-      m_memory(memory),
-      m_paradigm(paradigm),
-      m_control(control),
+      m_base(base),
       m_particles(particles),
       m_npar(npar),
       m_nprop(nprop),
@@ -52,7 +49,7 @@ class Model {
              "Wrong number of particles");
 
       // Instantiate random number generator
-      m_random = new (std::nothrow) MKLRandom(memory, paradigm);
+      m_random = new (std::nothrow) MKLRandom(m_base);
       ErrChk(m_random != nullptr, ExceptType::FATAL,
              "Cannot allocate memory for random number generator");
 
@@ -79,9 +76,7 @@ class Model {
     //! Destructor: protected, designed to be freed via chlidren-only
     virtual ~Model() noexcept { finalize(); }
 
-    Memory* const m_memory;         //!< Memory object
-    Paradigm* const m_paradigm;     //!< Parallel programming object
-    const QuinoaControl& m_control; //!< Control object
+    const Base& m_base;             //!< Essentials
     real* const m_particles;        //!< Particles
     const uint64_t m_npar;          //!< Number of particles
     const int m_nprop;              //!< Number of particle properties

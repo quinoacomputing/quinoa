@@ -7,6 +7,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/Paradigm
                     ${TPL_DIR}/include
 )
 

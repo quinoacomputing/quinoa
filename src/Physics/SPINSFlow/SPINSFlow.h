@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:11:26 AM MDT
+  \date      Sun 15 Sep 2013 05:53:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -25,12 +25,9 @@ class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    explicit SPINSFlow(Memory* const memory,
-                       Paradigm* const paradigm,
-                       const QuinoaControl& control,
-                       Timer* const timer,
-                       const QuinoaPrint& print,
-                       const std::string& filename);
+    explicit SPINSFlow(const Base& base) :
+      Physics(base),
+      m_totalTime(base.timer.create("Total solution")) {}
 
     //! Destructor
     ~SPINSFlow() noexcept override = default;
@@ -55,7 +52,7 @@ class SPINSFlow : public Physics {
     //! physics
     void echo();
 
-    const std::string m_filename;        //!< Unstructured mesh file name
+    const TimerIdx m_totalTime;           //!< Timer measuring the total run
 };
 
 } // namespace quinoa

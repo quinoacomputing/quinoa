@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:26:23 2013
+  \date      Sun 15 Sep 2013 05:49:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -13,6 +13,7 @@
 
 #include <unordered_set>
 
+#include <Base.h>
 #include <Random.h>
 #include <MKLRndTable.h>
 #include <MKLRndStream.h>
@@ -24,7 +25,7 @@ class MKLRandom : public Random {
 
   public:
     //! Constructor
-    MKLRandom(Memory* const memory, Paradigm* const paradigm) noexcept;
+    MKLRandom(const Base& base) noexcept;
 
     //! Destructor: Free all random number tables and streams
     virtual ~MKLRandom() noexcept;
@@ -65,7 +66,7 @@ class MKLRandom : public Random {
     //! Don't permit move assigment
     MKLRandom& operator=(MKLRandom&&) = delete;
 
-    Memory* const m_memory;            //!< Memory object pointer
+    const Base& m_base;                //!< Essentials
     const int m_nOMPthreads;           //!< Number of OpenMP threads
 
     //! Type for a set of stream-tables to generate a large (and fixed) number

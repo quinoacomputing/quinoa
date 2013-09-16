@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:27:18 2013
+  \date      Sun 15 Sep 2013 05:46:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -30,7 +30,7 @@ Timer::Timer()
 }
 
 TimerIdx
-Timer::create(const std::string& label)
+Timer::create(const std::string& label) const
 //******************************************************************************
 //  Create new timer
 //! \param[in]  label  Name of timer
@@ -61,7 +61,7 @@ Timer::create(const std::string& label)
 }
 
 void
-Timer::start(const TimerIdx id)
+Timer::start(const TimerIdx id) const
 //******************************************************************************
 //  Start timer
 //! \param[in]  id     Timer index
@@ -72,7 +72,7 @@ Timer::start(const TimerIdx id)
 }
 
 real
-Timer::query(const TimerIdx id)
+Timer::query(const TimerIdx id) const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as real
 //! \param[in]  id     Timer index
@@ -92,7 +92,7 @@ Timer::query(const TimerIdx id)
 }
 
 void
-Timer::query(const TimerIdx id, Watch& watch)
+Timer::query(const TimerIdx id, Watch& watch) const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as h:m:s
 //! \param[in]  id     Timer index
@@ -121,7 +121,7 @@ Timer::eta(const TimerIdx id,
            const uint64_t nstep,
            const uint64_t it,
            Watch& elapsedWatch,
-           Watch& estimatedWatch)
+           Watch& estimatedWatch) const
 //******************************************************************************
 //  Estimate time for accomplishment
 //! \param[in]  id              Timer index

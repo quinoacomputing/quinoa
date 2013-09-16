@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:11:11 AM MDT
+  \date      Sun 15 Sep 2013 05:47:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -28,11 +28,9 @@ class HomRT : public Physics {
 
   public:
     //! Constructor
-    explicit HomRT(Memory* const memory,
-                   Paradigm* const paradigm,
-                   const QuinoaControl& control,
-                   Timer* const timer,
-                   const QuinoaPrint& print);
+    explicit HomRT(const Base& base) :
+      Physics(base),
+      m_totalTime(base.timer.create("Total solution")) {}
 
     //! Destructor
     ~HomRT() noexcept override = default;

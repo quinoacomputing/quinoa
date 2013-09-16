@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.h
   \author    J. Bakosi
-  \date      Sat 07 Sep 2013 07:20:15 AM MDT
+  \date      Sun 15 Sep 2013 05:28:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -28,15 +28,12 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
 
   public:
     //! Constructor
-    explicit GeneralizedDirichlet(Memory* const memory,
-                                  Paradigm* const paradigm,
-                                  const QuinoaControl& control,
-                                  real* const particles) :
-      Mix<GeneralizedDirichlet>(memory, paradigm, control, particles),
-      m_b(control.get<control::param, control::gendirichlet, control::b>()),
-      m_S(control.get<control::param, control::gendirichlet, control::S>()),
-      m_k(control.get<control::param, control::gendirichlet, control::kappa>()),
-      m_c(control.get<control::param, control::gendirichlet, control::c>()) {
+    explicit GeneralizedDirichlet(const Base& base, real* const particles) :
+      Mix<GeneralizedDirichlet>(base, particles),
+      m_b(base.control.get<control::param, control::gendirichlet, control::b>()),
+      m_S(base.control.get<control::param, control::gendirichlet, control::S>()),
+      m_k(base.control.get<control::param, control::gendirichlet, control::kappa>()),
+      m_c(base.control.get<control::param, control::gendirichlet, control::c>()) {
       // Error out if mix model selected at compile time does not match that
       // whose options are given in control file
       //control->matchModels<select::Mix, select::MixType, control::MIX>(

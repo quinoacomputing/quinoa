@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 04:27:32 PM MDT
+  \date      Sun 15 Sep 2013 10:18:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -108,40 +108,35 @@ QuinoaDriver::initPhysics()
   using namespace control;
   using namespace select;
 
-//   //  Instantiate physics object (if any)
-//   if (m_base.control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
-// 
-//     m_physics = new(std::nothrow)
-//                 HomMix(m_base.memory, m_base.paradigm, m_base.control, m_base.timer, m_print);
-//     ErrChk(m_physics != nullptr, ExceptType::FATAL,
-//            "Cannot allocate memory for physics object");
-// 
-//   } else if (m_base.control.get<selected,physics>() ==
-//              PhysicsType::HOMOGENEOUS_HYDRO) {
-// 
-//     m_physics = new(std::nothrow)
-//                 HomHydro(m_base.memory, m_base.paradigm, m_base.control, m_base.timer, m_print);
-//     ErrChk(m_physics != nullptr, ExceptType::FATAL,
-//            "Cannot allocate memory for physics object");
-// 
-//   } else if (m_base.control.get<selected,physics>() ==
-//              PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
-// 
-//     m_physics = new(std::nothrow)
-//                 HomRT(m_base.memory, m_base.paradigm, m_base.control, m_base.timer, m_print);
-//     ErrChk(m_physics != nullptr, ExceptType::FATAL,
-//            "Cannot allocate memory for physics object");
-// 
-//   } if (m_base.control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
-// 
-//     m_physics = new(std::nothrow)
-//                   SPINSFlow(m_memory, m_base.paradigm, m_base.control, m_base.timer, m_print,
-//                   "cylinder.msh");
-//     ErrChk(m_physics != nullptr, ExceptType::FATAL,
-//            "Cannot allocate memory for physics object");
-// 
-//   }
-// 
+  //  Instantiate physics object (if any)
+  if (m_base.control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
+
+    m_physics = new(std::nothrow) HomMix(m_base);
+    ErrChk(m_physics != nullptr, ExceptType::FATAL,
+           "Cannot allocate memory for physics object");
+
+  } else if (m_base.control.get<selected,physics>() ==
+             PhysicsType::HOMOGENEOUS_HYDRO) {
+
+    m_physics = new(std::nothrow) HomHydro(m_base);
+    ErrChk(m_physics != nullptr, ExceptType::FATAL,
+           "Cannot allocate memory for physics object");
+
+  } else if (m_base.control.get<selected,physics>() ==
+             PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
+
+    m_physics = new(std::nothrow) HomRT(m_base);
+    ErrChk(m_physics != nullptr, ExceptType::FATAL,
+           "Cannot allocate memory for physics object");
+
+  } if (m_base.control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
+
+    m_physics = new(std::nothrow) SPINSFlow(m_base);
+    ErrChk(m_physics != nullptr, ExceptType::FATAL,
+           "Cannot allocate memory for physics object");
+
+  }
+
   // Initialize physics (if any)
   if (m_physics) m_physics->init();
 }

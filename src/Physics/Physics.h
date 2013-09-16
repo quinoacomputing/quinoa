@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:07:44 AM MDT
+  \date      Sun 15 Sep 2013 05:11:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,17 +12,13 @@
 #define Physics_h
 
 #include <QuinoaConfig.h>
-#include <QuinoaPrint.h>
+#include <Base.h>
 #include <Mass.h>
 #include <Mix.h>
 #include <Hydro.h>
 
 namespace quinoa {
 
-class Memory;
-class Paradigm;
-class QuinoaControl;
-class Timer;
 class Statistics;
 class GlobWriter;
 class TxtStatWriter;
@@ -76,11 +72,11 @@ class Physics {
 
     //! Constant accessor to control object
     //! \return Control object
-    const QuinoaControl& control() const noexcept { return m_control; }
+    const QuinoaControl& control() const noexcept { return m_base.control; }
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
-    Timer* timer() const noexcept { return m_timer; }
+    const Timer& timer() const noexcept { return m_base.timer; }
 
     //! Constant accessor to mass model
     //! \return Pointer to mass model
@@ -112,11 +108,7 @@ class Physics {
 
   protected:
     //! Constructor: protected, designed to be base-only
-    explicit Physics(Memory* const memory,
-                     Paradigm* const paradigm,
-                     const QuinoaControl& control,
-                     Timer* const timer,
-                     const QuinoaPrint& print);
+    explicit Physics(const Base& base);
 
     //! Echo information on physics
     void echo();
@@ -142,11 +134,7 @@ class Physics {
     //! explicitly from anywhere else
     void finalize() noexcept;
 
-    Memory* const m_memory;               //!< Memory object
-    Paradigm* const m_paradigm;           //!< Parallel programming object
-    const QuinoaControl& m_control;       //!< Control object
-    const QuinoaPrint& m_print;           //!< Pretty printer
-    Timer* const m_timer;                 //!< Timer
+    const Base& m_base;                   //!< Essentials
 
     Mass<MassType>* m_mass;               //!< Mass model object    
     Hydro<HydroType>* m_hydro;            //!< Hydro model object    
