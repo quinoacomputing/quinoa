@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 10:19:09 PM MDT
+  \date      Tue 17 Sep 2013 10:43:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -15,11 +15,10 @@
 #include <Base.h>
 #include <QuinoaControl.h>
 #include <QuinoaPrint.h>
+#include <Geometry.h>
+#include <Physics.h>
 
 namespace quinoa {
-
-class Geometry;
-class Physics;
 
 //! QuinoaDriver : Driver
 class QuinoaDriver : public Driver {
@@ -31,7 +30,7 @@ class QuinoaDriver : public Driver {
                           Base& base);
 
     //! Destructor
-    ~QuinoaDriver() noexcept override;
+    ~QuinoaDriver() noexcept override = default;
 
     //! Solve
     void execute() const override;
@@ -52,10 +51,10 @@ class QuinoaDriver : public Driver {
     //! Instantiate physics object
     void initPhysics();
 
-    Base& m_base;                     //!< Essentials
+    Base& m_base;                           //!< Essentials
 
-    Geometry* m_geometry = nullptr;   //!< Geometry object
-    Physics* m_physics = nullptr;     //!< Physics object
+    std::unique_ptr<Geometry> m_geometry;   //!< Geometry object
+    std::unique_ptr<Physics> m_physics;     //!< Physics object
 };
 
 } // namespace quinoa

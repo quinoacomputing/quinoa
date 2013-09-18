@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:53:24 PM MDT
+  \date      Tue 17 Sep 2013 09:16:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -230,21 +230,21 @@ namespace grammar {
          ifmust< parse< keyword::analytic_geometry,
                         store_option<select::Geometry,
                                      control::selected,
-                                     control::geometry> > > {};
+                                     control::geometry> >, block<> > {};
 
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse< keyword::discrete_geometry,
                         store_option<select::Geometry,
                                      control::selected,
-                                     control::geometry> > > {};
+                                     control::geometry> >, block<> > {};
 
   // dir block
   struct dir :
          ifmust< parse< keyword::mix_dir,
                         store_option<select::Mix,
                                      control::selected,
-                                     control::mix>>,
+                                     control::mix> >,
                  block< process<keyword::nscalar,
                                 store<control::component, control::nscalar>>,
                         list< keyword::dir_B,

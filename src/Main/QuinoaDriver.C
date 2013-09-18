@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 10:18:45 PM MDT
+  \date      Tue 17 Sep 2013 10:44:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -58,17 +58,6 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   initPhysics();
 }
 
-QuinoaDriver::~QuinoaDriver() noexcept
-//******************************************************************************
-//  Destructor
-//! \details Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if (m_geometry) { delete m_geometry; m_geometry = nullptr; }
-  if (m_physics)  { delete m_physics;  m_physics  = nullptr; }
-}
-
 void
 QuinoaDriver::initGeometry()
 //******************************************************************************
@@ -81,17 +70,9 @@ QuinoaDriver::initGeometry()
 
   //  Instantiate geometry object (if any)
   if (m_base.control.get<selected,geometry>() == GeometryType::ANALYTIC) {
-
-    m_geometry = new(std::nothrow) AnalyticGeometry(m_base);
-    ErrChk(m_geometry != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for geometry object");
-
+    m_geometry = std::unique_ptr<AnalyticGeometry>(new AnalyticGeometry(m_base));
   } else if (m_base.control.get<selected,geometry>() == GeometryType::DISCRETE) {
-
-    m_geometry = new(std::nothrow) DiscreteGeometry(m_base);
-    ErrChk(m_geometry != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for geometry object");
-
+    m_geometry = std::unique_ptr<DiscreteGeometry>(new DiscreteGeometry(m_base));
   }
 
   // Initialize geometry (if any)
@@ -110,31 +91,15 @@ QuinoaDriver::initPhysics()
 
   //  Instantiate physics object (if any)
   if (m_base.control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
-
-    m_physics = new(std::nothrow) HomMix(m_base);
-    ErrChk(m_physics != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for physics object");
-
+    m_physics = std::unique_ptr<HomMix>(new HomMix(m_base));
   } else if (m_base.control.get<selected,physics>() ==
              PhysicsType::HOMOGENEOUS_HYDRO) {
-
-    m_physics = new(std::nothrow) HomHydro(m_base);
-    ErrChk(m_physics != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for physics object");
-
+    m_physics = std::unique_ptr<HomHydro>(new HomHydro(m_base));
   } else if (m_base.control.get<selected,physics>() ==
              PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
-
-    m_physics = new(std::nothrow) HomRT(m_base);
-    ErrChk(m_physics != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for physics object");
-
+    m_physics = std::unique_ptr<HomRT>(new HomRT(m_base));
   } if (m_base.control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
-
-    m_physics = new(std::nothrow) SPINSFlow(m_base);
-    ErrChk(m_physics != nullptr, ExceptType::FATAL,
-           "Cannot allocate memory for physics object");
-
+    m_physics = std::unique_ptr<SPINSFlow>(new SPINSFlow(m_base));
   }
 
   // Initialize physics (if any)
@@ -148,6 +113,6 @@ QuinoaDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_geometry) m_geometry->fill();
+  //if (m_geometry) m_geometry->fill();
   if (m_physics) m_physics->solve();
 }
