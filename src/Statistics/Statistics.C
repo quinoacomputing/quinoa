@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:56:34 PM MDT
+  \date      Wed 18 Sep 2013 06:29:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -20,11 +20,11 @@
 #include <Statistics.h>
 #include <Paradigm.h>
 #include <QuinoaControl.h>
-#include <Physics.h>
+//#include <Physics.h>
 
 using namespace quinoa;
 
-Statistics::Statistics(const Base& base, Physics* const physics)
+Statistics::Statistics(const Base& base, const real* const particles)
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
@@ -35,7 +35,7 @@ try :
   m_base(base),
   m_nthread(base.paradigm.nthread()),
   m_npar(base.control.get<control::component, control::npar>()),
-  m_physics(physics),
+  m_particles(particles),
   m_nprop(base.control.nprop()),
   m_statistics(base.control.get<control::stats>()),
   m_instOrd(),
@@ -60,7 +60,7 @@ try :
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(m_physics->particles() +
+        m_instOrd[m_nord].push_back(m_particles +
                                     base.control.termOffset(term.quantity) +
                                     term.field);
         if (term.plot) m_plotOrdinary.back() = true;
@@ -94,7 +94,7 @@ try :
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(m_physics->particles() +
+          m_instCen[m_ncen].push_back(m_particles +
                                       base.control.termOffset(term.quantity) +
                                       term.field);
           // Put in index of center for central, m_nord for ordinary moment

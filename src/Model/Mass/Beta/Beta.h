@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:26:29 PM MDT
+  \date      Wed Sep 18 14:02:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -19,14 +19,13 @@ class Memory;
 class Paradigm;
 class JPDF;
 
-//! Beta : Mass<Beta> child for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-class Beta : public Mass<Beta> {
+//! Beta : Mass
+class Beta : public Mass {
 
   public:
     //! Constructor
     explicit Beta(const Base& base, real* const particles) :
-      Mass<Beta>(base, particles),
+      Mass(base, particles),
       m_At(base.control.get<control::param, control::beta, control::atwood>()) {
       // Error out if mass model selected at compile time does not match that
       // whose options are given in control file
@@ -39,10 +38,10 @@ class Beta : public Mass<Beta> {
     ~Beta() noexcept override = default;
 
     //! Initialize particles
-    void init();
+    void init() override;
 
     //! Advance particles
-    void advance(const real& dt);
+    void advance(const real& dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);

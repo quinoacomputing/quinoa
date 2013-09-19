@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:54:55 PM MDT
+  \date      Wed 18 Sep 2013 06:29:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -25,7 +25,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics(const Base& base, Physics* const physics);
+    explicit Statistics(const Base& base, const real* const particles);
 
     //! Destructor
     virtual ~Statistics() noexcept;
@@ -89,7 +89,7 @@ class Statistics {
     const Base& m_base;                       //!< Essentials
     const uint64_t m_nthread;                 //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
-    Physics* const m_physics;                 //!< Physics object
+    const real* const m_particles;            //!< Particles
     const int m_nprop;                        //!< Number of particle properties
     const std::vector<control::Product> m_statistics;//!< Requested tatistics
 
