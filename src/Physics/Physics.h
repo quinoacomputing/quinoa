@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed 18 Sep 2013 06:44:12 PM MDT
+  \date      Thu Sep 19 08:49:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -13,11 +13,9 @@
 
 #include <QuinoaConfig.h>
 #include <Base.h>
-
-#include <Beta.h>
-
-#include <Mix.h>
+#include <Mass.h>
 #include <Hydro.h>
+#include <Mix.h>
 
 namespace quinoa {
 
@@ -52,11 +50,11 @@ class Physics {
 
     //! Constant accessor to hydro model
     //! \return Pointer to hydro model
-    Hydro* hydro() const noexcept { return m_hydro; }
+    Hydro* hydro() const noexcept { return m_hydro.get(); }
 
     //! Constant accessor to mix model
     //! \return Pointer to mix model
-    Mix* mix() const noexcept { return m_mix; }
+    Mix* mix() const noexcept { return m_mix.get(); }
 
     //! Constant accessor to statistics estimator
     //! \return Pointer to statistics estimator
@@ -102,20 +100,20 @@ class Physics {
     //! explicitly from anywhere else
     void finalize() noexcept;
 
-    //! Instantiate selected model
-    template<typename T>
-    std::unique_ptr<T> newModel() {
-      switch (m_base.control.get<control::selected,control::mass>()) {
-        case select::MassType::BETA :
-          return std::move(std::unique_ptr<Beta>(new Beta(m_base, m_particles.ptr)));
-      }
-    }
+    //! REgister models in factories
+    void initFactories();
+
+    //! Model factories
+    std::map<select::MassType, std::function<Mass*()>> m_massFactory;
+    std::map<select::HydroType, std::function<Hydro*()>> m_hydroFactory;
+    std::map<select::MixType, std::function<Mix*()>> m_mixFactory;
 
     const Base& m_base;                   //!< Essentials
 
-    std::unique_ptr<Mass> m_mass;         //!< Mass model object    
-    Hydro* m_hydro;                       //!< Hydro model object    
-    Mix* m_mix;                           //!< Mix model object
+    std::unique_ptr<Mass> m_mass;         //!< Mass model
+    std::unique_ptr<Hydro> m_hydro;       //!< Hydro model
+    std::unique_ptr<Mix> m_mix;           //!< Mix model
+
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
     TxtStatWriter* m_stat;                //!< Statistics file writer
