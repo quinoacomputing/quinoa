@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Fri 30 Aug 2013 06:23:53 PM MDT
+  \date      Thu Sep 19 09:41:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -19,8 +19,7 @@
 #include <Toggle.h>
 
 namespace rngtest {
-
-namespace select {
+namespace sel {
 
 //! Random number generator test types
 enum class RNGType : uint8_t { NO_RNG=0,
@@ -45,11 +44,11 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   RNGSSELIB,
                                   PRAND };
 
-using quinoa::select::operator+;
-using quinoa::select::operator<<;
+using quinoa::sel::operator+;
+using quinoa::sel::operator<<;
 
 //! Class with base templated on the above enum class with associations
-class RNG : public quinoa::select::Toggle<RNGType> {
+class RNG : public quinoa::sel::Toggle<RNGType> {
 
   public:
     using ParamType = int;
@@ -57,7 +56,7 @@ class RNG : public quinoa::select::Toggle<RNGType> {
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit RNG() : quinoa::select::Toggle<RNGType>(names, values) {}
+    explicit RNG() : quinoa::sel::Toggle<RNGType>(names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -155,8 +154,7 @@ class RNG : public quinoa::select::Toggle<RNGType> {
     };
 };
 
-} // namespace select
-
-} // namespace rngtest
+} // sel::
+} // rngtest::
 
 #endif // RNGOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:36:40 2013
+  \date      Thu Sep 19 09:53:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -223,23 +223,21 @@ namespace grm {
   // analytic_geometry block
   struct analytic_geometry:
          ifmust< parse< kw::analytic_geometry,
-                        store_option<select::Geometry,
+                        store_option<sel::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >, block<> > {};
 
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse< kw::discrete_geometry,
-                        store_option<select::Geometry,
+                        store_option<sel::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >, block<> > {};
 
   // dir block
   struct dir :
          ifmust< parse< kw::mix_dir,
-                        store_option<select::Mix,
-                                     ctr::selected,
-                                     ctr::mix> >,
+                        store_option<sel::Mix, ctr::selected, ctr::mix> >,
                  block< process<kw::nscalar,
                                 store<ctr::component, ctr::nscalar>>,
                         list< kw::dir_B,
@@ -258,9 +256,7 @@ namespace grm {
   // gendir block
   struct gendir :
          ifmust< parse< kw::mix_gendir,
-                        store_option<select::Mix,
-                                     ctr::selected,
-                                     ctr::mix> >,
+                        store_option<sel::Mix, ctr::selected, ctr::mix> >,
                  block< process< kw::nscalar,
                                  store<ctr::component, ctr::nscalar> >,
                         list< kw::dir_B,
@@ -288,9 +284,7 @@ namespace grm {
   // slm block
   struct slm :
          ifmust< parse< kw::hydro_slm,
-                        store_option<select::Hydro,
-                                     ctr::selected,
-                                     ctr::hydro>,
+                        store_option<sel::Hydro, ctr::selected, ctr::hydro>,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
                         push_term<ctr::Quantity::VELOCITY_X,
@@ -307,46 +301,37 @@ namespace grm {
                                   ctr::Moment::CENTRAL, 'w'>,
                         push_term<ctr::Quantity::VELOCITY_Z,
                                   ctr::Moment::CENTRAL, 'w'>>,
-                 block< process<kw::SLM_C0, store<ctr::param,
-                                                  ctr::slm,
-                                                  ctr::c0>>,
-                        process<kw::nvelocity, store<ctr::component,
-                                                     ctr::nvelocity>>
+                 block< process<kw::SLM_C0,
+                                store<ctr::param, ctr::slm, ctr::c0>>,
+                        process<kw::nvelocity,
+                                store<ctr::component, ctr::nvelocity>>
                       > > {};
 
   // freq_gamma block
   struct freq_gamma :
-         ifmust< parse< kw::freq_gamma,
-                        store_option<select::Frequency,
-                                     ctr::selected,
-                                     ctr::frequency> >,
-                 block< process<kw::nfreq, store<ctr::component,
-                                                 ctr::nfrequency>>,
-                        process<kw::freq_gamma_C1, store<ctr::param,
-                                                         ctr::gamma,
-                                                         ctr::c1>>,
-                        process<kw::freq_gamma_C2, store<ctr::param,
-                                                         ctr::gamma,
-                                                         ctr::c2>>,
-                        process<kw::freq_gamma_C3, store<ctr::param,
-                                                         ctr::gamma,
-                                                         ctr::c3>>,
-                        process<kw::freq_gamma_C4, store<ctr::param,
-                                                         ctr::gamma,
-                                                         ctr::c4>> >
+         ifmust< parse< kw::freq_gamma, store_option<sel::Frequency,
+                                                     ctr::selected,
+                                                     ctr::frequency> >,
+                 block< process<kw::nfreq,
+                                store<ctr::component, ctr::nfrequency>>,
+                        process<kw::freq_gamma_C1,
+                                store<ctr::param, ctr::gamma, ctr::c1>>,
+                        process<kw::freq_gamma_C2,
+                                store<ctr::param, ctr::gamma, ctr::c2>>,
+                        process<kw::freq_gamma_C3,
+                                store<ctr::param, ctr::gamma, ctr::c3>>,
+                        process<kw::freq_gamma_C4,
+                                store<ctr::param, ctr::gamma, ctr::c4>> >
                > {};
 
   // beta block
   struct beta :
-         ifmust< parse< kw::mass_beta,
-                        store_option<select::Mass,
-                                     ctr::selected,
-                                     ctr::mass> >,
-                 block< process<kw::ndensity, store<ctr::component,
-                                                    ctr::ndensity>>,
-                        process<kw::Beta_At, store<ctr::param,
-                                                   ctr::beta,
-                                                   ctr::atwood>> >
+         ifmust< parse<kw::mass_beta,
+                       store_option<sel::Mass, ctr::selected, ctr::mass>>,
+                 block< process<kw::ndensity,
+                                store<ctr::component, ctr::ndensity>>,
+                        process<kw::Beta_At,
+                                store<ctr::param, ctr::beta, ctr::atwood>> >
                > {};
 
   // geometry definition types
@@ -374,10 +359,8 @@ namespace grm {
 
   // hommix block
   struct hommix :
-         ifmust< parse< kw::hommix,
-                        store_option<select::Physics,
-                                     ctr::selected,
-                                     ctr::physics> >,
+         ifmust< parse<kw::hommix,
+                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
                  block< geometry,
                         physics_common,
                         dir,
@@ -386,43 +369,37 @@ namespace grm {
 
   // homrt block
   struct homrt :
-         ifmust< parse< kw::homrt,
-                        store_option<select::Physics,
-                                     ctr::selected,
-                                     ctr::physics> >,
-                 block< geometry,
-                        physics_common,
-                        dir,
-                        gendir,
-                        slm,
-                        beta,
-                        statistics > > {};
+         ifmust< parse<kw::homrt,
+                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+                 block<geometry,
+                       physics_common,
+                       dir,
+                       gendir,
+                       slm,
+                       beta,
+                       statistics> > {};
 
   // homhydro block
   struct homhydro :
-         ifmust< parse< kw::homhydro,
-                        store_option<select::Physics,
-                                     ctr::selected,
-                                     ctr::physics> >,
-                 block< geometry,
-                        physics_common,
-                        slm,
-                        freq_gamma,
-                        statistics > > {};
+         ifmust< parse<kw::homhydro,
+                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+                 block<geometry,
+                       physics_common,
+                       slm,
+                       freq_gamma,
+                       statistics> > {};
 
   // spinsflow block
   struct spinsflow :
-         ifmust< parse< kw::spinsflow,
-                        store_option<select::Physics,
-                                     ctr::selected,
-                                     ctr::physics> >,
-                 block< geometry,
-                        physics_common,
-                        slm,
-                        freq_gamma,
-                        dir,
-                        gendir,
-                        beta > > {};
+         ifmust< parse<kw::spinsflow,
+                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+                 block<geometry,
+                       physics_common,
+                       slm,
+                       freq_gamma,
+                       dir,
+                       gendir,
+                       beta> > {};
 
   // physics
   struct physics :

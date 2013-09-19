@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:27:04 2013
+  \date      Thu Sep 19 09:46:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -42,16 +42,16 @@ class QuinoaControl :
       using namespace ctr;
       // Default title
       set<title>("");
-      // Default options
-      set<selected,geometry>(select::GeometryType::NO_GEOMETRY);
-      set<selected,physics>(select::PhysicsType::NO_PHYSICS);
-      set<selected,position>(select::PositionType::NO_POSITION);
-      set<selected,mass>(select::MassType::NO_MASS);
-      set<selected,hydro>(select::HydroType::NO_HYDRO);
-      set<selected,energy>(select::EnergyType::NO_ENERGY);
-      set<selected,mix>(select::MixType::NO_MIX);
-      set<selected,frequency>(select::FrequencyType::NO_FREQUENCY);
-      set<selected,mixrate>(select::MixRateType::NO_MIXRATE);
+      // Default models = no selections
+      set<selected,geometry>(sel::GeometryType::NO_GEOMETRY);
+      set<selected,physics>(sel::PhysicsType::NO_PHYSICS);
+      set<selected,position>(sel::PositionType::NO_POSITION);
+      set<selected,mass>(sel::MassType::NO_MASS);
+      set<selected,hydro>(sel::HydroType::NO_HYDRO);
+      set<selected,energy>(sel::EnergyType::NO_ENERGY);
+      set<selected,mix>(sel::MixType::NO_MIX);
+      set<selected,frequency>(sel::FrequencyType::NO_FREQUENCY);
+      set<selected,mixrate>(sel::MixRateType::NO_MIXRATE);
       // Default time incrementation parameters
       set<incpar,nstep>(std::numeric_limits<uint64_t>::max());
       set<incpar,term>(1.0);

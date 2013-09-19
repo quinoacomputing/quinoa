@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:46:44 2013
+  \date      Thu Sep 19 09:41:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Position model types
 enum class PositionType : uint8_t { NO_POSITION=0,
@@ -58,8 +57,7 @@ class Position : public Toggle<PositionType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa:::
 
 #endif // PositionOptions_h

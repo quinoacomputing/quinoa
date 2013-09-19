@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:48:39 2013
+  \date      Thu Sep 19 09:40:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Hydro model types
 enum class HydroType : uint8_t { NO_HYDRO=0,
@@ -58,8 +57,7 @@ class Hydro : public Toggle<HydroType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // HydroOptions_h

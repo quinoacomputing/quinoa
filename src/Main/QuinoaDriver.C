@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:11:30 2013
+  \date      Thu Sep 19 09:54:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -66,7 +66,7 @@ QuinoaDriver::initGeometry()
 //******************************************************************************
 {
   using namespace ctr;
-  using namespace select;
+  using namespace sel;
 
   //  Instantiate geometry object (if any)
   if (m_base.control.get<selected,geometry>() == GeometryType::ANALYTIC) {
@@ -87,7 +87,7 @@ QuinoaDriver::initPhysics()
 //******************************************************************************
 {
   using namespace ctr;
-  using namespace select;
+  using namespace sel;
 
   //  Instantiate physics object (if any)
   if (m_base.control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {

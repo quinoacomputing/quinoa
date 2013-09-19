@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:48:18 2013
+  \date      Thu Sep 19 09:42:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Mass model types
 enum class MassType : uint8_t { NO_MASS=0,
@@ -55,8 +54,7 @@ class Mass : public Toggle<MassType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // MassOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Mon 09 Sep 2013 09:27:15 PM MDT
+  \date      Thu Sep 19 09:43:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -17,8 +17,7 @@
 #include <Exception.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 template< typename Enum >
 class Toggle {
@@ -65,7 +64,7 @@ class Toggle {
     const std::map<std::string, Enum>& values;
 };
 
-// Operators defined outside of class (still in namespace select) to equate
+// Operators defined outside of class (still in namespace sel) to equate
 // operator scope with that of enums
 
 //! Operator + for adding Enum to a std::string
@@ -87,8 +86,7 @@ std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os,
   return os;
 }
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // Toggle_h

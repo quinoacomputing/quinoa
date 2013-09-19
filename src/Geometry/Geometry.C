@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:13:26 2013
+  \date      Thu Sep 19 09:53:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -21,7 +21,7 @@ Geometry::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   Option<select::Geometry> geo;
+//   Option<sel::Geometry> geo;
 //   std::cout << " * Geometry: "
 //             << geo.name(m_base.control.get<selected,geometry>())
 //             << std::endl;

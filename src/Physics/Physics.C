@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:16:47 2013
+  \date      Thu Sep 19 09:45:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -69,19 +69,19 @@ try :
 
   // Instantiate mass model
   if (m_ndensity) {
-    select::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
+    sel::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
     m_mass = std::unique_ptr<Mass>(m_massFactory[m]());
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    select::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
+    sel::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
     m_hydro = std::unique_ptr<Hydro>(m_hydroFactory[m]());
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    select::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
+    sel::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
     m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
   }
 
@@ -144,19 +144,19 @@ Physics::initFactories()
 //******************************************************************************
 {
   // Register mass models
-  m_massFactory[select::MassType::BETA] =
+  m_massFactory[sel::MassType::BETA] =
     std::bind(boost::factory<Beta*>(), m_base, m_particles.ptr);
 
   // Register hydro models
-  m_hydroFactory[select::HydroType::SLM] =
+  m_hydroFactory[sel::HydroType::SLM] =
     std::bind(boost::factory<SimplifiedLangevin*>(), m_base, m_particles.ptr);
-  m_hydroFactory[select::HydroType::GLM] =
+  m_hydroFactory[sel::HydroType::GLM] =
     std::bind(boost::factory<GeneralizedLangevin*>(), m_base, m_particles.ptr);
 
   // Register mix models
-  m_mixFactory[select::MixType::DIRICHLET] =
+  m_mixFactory[sel::MixType::DIRICHLET] =
     std::bind(boost::factory<Dirichlet*>(), m_base, m_particles.ptr);
-  m_mixFactory[select::MixType::GENERALIZED_DIRICHLET] =
+  m_mixFactory[sel::MixType::GENERALIZED_DIRICHLET] =
     std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, m_particles.ptr);
 }
 
@@ -167,14 +167,14 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ctr::Option<select::Physics> ph;
-  ctr::Option<select::Position> po;
-  ctr::Option<select::Mass> ms;
-  ctr::Option<select::Hydro> hy;
-  ctr::Option<select::Energy> en;
-  ctr::Option<select::Mix> mx;
-  ctr::Option<select::Frequency> fr;
-  ctr::Option<select::MixRate> mr;
+  ctr::Option<sel::Physics> ph;
+  ctr::Option<sel::Position> po;
+  ctr::Option<sel::Mass> ms;
+  ctr::Option<sel::Hydro> hy;
+  ctr::Option<sel::Energy> en;
+  ctr::Option<sel::Mix> mx;
+  ctr::Option<sel::Frequency> fr;
+  ctr::Option<sel::MixRate> mr;
 
   m_base.print.section("Physics",
                   ph.name(m_base.control.get<ctr::selected,ctr::physics>()));

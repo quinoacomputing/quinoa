@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestControl.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:19:47 2013
+  \date      Thu Sep 19 09:46:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite control
   \details   Random number generator test suite control
@@ -20,8 +20,8 @@ namespace rngtest {
 class RNGTestControl :
   public quinoa::Control< // tag          type
                           ctr::title,     std::string,
-                          ctr::suite,     select::RNGTestType,
-                          ctr::generator, std::vector<select::RNGType> > {
+                          ctr::suite,     sel::RNGTestType,
+                          ctr::generator, std::vector<sel::RNGType> > {
 
   public:
     //! Constructor: set defaults
@@ -30,8 +30,8 @@ class RNGTestControl :
 // //! Default bundle for RNGTest's control
 // const Bundle defaults(
 //   "",                                  //!< Title
-//   select::RNGTestType::NO_RNGTEST,     //!< RNG test suite
-//   std::vector<select::RNGType>()       //!< Random number generators
+//   sel::RNGTestType::NO_RNGTEST,     //!< RNG test suite
+//   std::vector<sel::RNGType>()       //!< Random number generators
 // );
 
     //! Destructor
