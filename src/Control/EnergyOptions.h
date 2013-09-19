@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:48:33 2013
+  \date      Thu Sep 19 09:41:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Energy model types
 enum class EnergyType : uint8_t { NO_ENERGY=0 };
@@ -52,8 +51,7 @@ class Energy : public Toggle<EnergyType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // EnergyOptions_h

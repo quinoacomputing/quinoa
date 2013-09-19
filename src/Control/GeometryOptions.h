@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/GeometryOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:46:55 2013
+  \date      Thu Sep 19 09:42:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Geometry definition types
 enum class GeometryType : uint8_t { NO_GEOMETRY=0,
@@ -58,8 +57,7 @@ class Geometry : public Toggle<GeometryType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // GeometryOptions_h

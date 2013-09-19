@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 08:49:24 2013
+  \date      Thu Sep 19 09:44:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -104,9 +104,9 @@ class Physics {
     void initFactories();
 
     //! Model factories
-    std::map<select::MassType, std::function<Mass*()>> m_massFactory;
-    std::map<select::HydroType, std::function<Hydro*()>> m_hydroFactory;
-    std::map<select::MixType, std::function<Mix*()>> m_mixFactory;
+    std::map<sel::MassType, std::function<Mass*()>> m_massFactory;
+    std::map<sel::HydroType, std::function<Hydro*()>> m_hydroFactory;
+    std::map<sel::MixType, std::function<Mix*()>> m_mixFactory;
 
     const Base& m_base;                   //!< Essentials
 

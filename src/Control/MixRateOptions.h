@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:48:51 2013
+  \date      Thu Sep 19 09:43:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Material mix rate model types
 enum class MixRateType : uint8_t { NO_MIXRATE=0,
@@ -54,8 +53,7 @@ class MixRate : public Toggle<MixRateType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // MixRateOptions_h

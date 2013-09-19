@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:27:53 2013
+  \date      Thu Sep 19 09:45:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -181,15 +181,15 @@ using Product = std::vector<Term>;
 
 //! Storage of selected options
 using selects = tuple::tagged_tuple<
-  geometry,  select::GeometryType,   //!< Selected geometry definition
-  physics,   select::PhysicsType,    //!< Selected physics
-  position,  select::PositionType,   //!< Selected position model
-  mass,      select::MassType,       //!< Selected mass model
-  hydro,     select::HydroType,      //!< Selected hydrodynamics model
-  energy,    select::EnergyType,     //!< Selected internal energy model
-  mix,       select::MixType,        //!< Selected material mix model
-  frequency, select::FrequencyType,  //!< Selected turbulence frequency model
-  mixrate,   select::MixRateType     //!< Selected material mix rate model
+  geometry,  sel::GeometryType,   //!< Selected geometry definition
+  physics,   sel::PhysicsType,    //!< Selected physics
+  position,  sel::PositionType,   //!< Selected position model
+  mass,      sel::MassType,       //!< Selected mass model
+  hydro,     sel::HydroType,      //!< Selected hydrodynamics model
+  energy,    sel::EnergyType,     //!< Selected internal energy model
+  mix,       sel::MixType,        //!< Selected material mix model
+  frequency, sel::FrequencyType,  //!< Selected turbulence frequency model
+  mixrate,   sel::MixRateType     //!< Selected material mix rate model
 >;
 
 //! Time incrementation parameters storage

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Wed Sep 11 16:47:08 2013
+  \date      Thu Sep 19 09:42:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -17,8 +17,7 @@
 #include <Toggle.h>
 
 namespace quinoa {
-
-namespace select {
+namespace sel {
 
 //! Mix model types
 enum class MixType : uint8_t { NO_MIX=0,
@@ -64,8 +63,7 @@ class Mix : public Toggle<MixType> {
     };
 };
 
-} // namespace select
-
-} // namespace quinoa
+} // sel::
+} // quinoa::
 
 #endif // MixOptions_h

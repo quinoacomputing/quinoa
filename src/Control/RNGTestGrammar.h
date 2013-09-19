@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:35:05 2013
+  \date      Thu Sep 19 09:45:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -22,13 +22,13 @@ namespace grm {
   // State
 
 //   //! RNG test (suite) options
-//   static ctr::Option<select::RNGTest> RNGTest;
+//   static ctr::Option<sel::RNGTest> RNGTest;
 //   //! RNG options
-//   static ctr::LibOption<select::RNG> RNG;
+//   static ctr::LibOption<sel::RNG> RNG;
 
 //   // specialize convert to RNG
 //   template<>
-//   select::RNGType convert(const std::string& str) {
+//   sel::RNGType convert(const std::string& str) {
 //     return RNG.value(str);
 //   }
 
@@ -37,15 +37,15 @@ namespace grm {
 //   // common to all RNG test suites
 //   struct rngtest_common :
 //          sor< process< kw::suite,
-//                        store_option<select::RNGTest, ctr::RNGTEST> >,
-//               list<kw::rngs, push<ctr::RNGS, select::RNGType>, rng>
+//                        store_option<sel::RNGTest, ctr::RNGTEST> >,
+//               list<kw::rngs, push<ctr::RNGS, sel::RNGType>, rng>
 //             > {};
 //
 
 //   // rngtest block
 //   struct rngtest :
 //          ifmust< parse< kw::rngtest,
-//                         store_option<select::Physics, ctr::PHYSICS> >,
+//                         store_option<sel::Physics, ctr::PHYSICS> >,
 //                  block< rngtest_common >
 //                > {};
 // 
