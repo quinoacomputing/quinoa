@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:11:42 PM MDT
+  \date      Thu Sep 19 08:49:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -14,51 +14,17 @@
 #include <QuinoaConfig.h>
 #include <Base.h>
 #include <Mass.h>
-#include <Mix.h>
 #include <Hydro.h>
+#include <Mix.h>
 
 namespace quinoa {
 
 class Statistics;
 class GlobWriter;
 class TxtStatWriter;
-class Dirichlet;
-class GeneralizedDirichlet;
-class SimplifiedLangevin;
-class GeneralizedLangevin;
-class Beta;
 
 //! Physics base
 class Physics {
-
-  private:
-  // Select models based on <build>/Base/QuinoaConfig.h filled by CMake based
-  // on src/MainQuinoaConfig.h.in
-
-  // Mass models
-  #ifdef QUINOA_BETA
-    using MassType = Beta;
-  #else
-    #error "No mass model defined in Base/QuinaConfig.h"
-  #endif
-
-  // Hydrodynamics models
-  #ifdef QUINOA_SLM
-    using HydroType = SimplifiedLangevin;
-  #elif QUINOA_GLM
-    using HydroType = GeneralizedLangevin;
-  #else
-    #error "No hydrodynamics model defined in Base/QuinaConfig.h"
-  #endif
-
-  // Mix models
-  #ifdef QUINOA_DIRICHLET
-    using MixType = Dirichlet;
-  #elif QUINOA_GENERALIZED_DIRICHLET
-    using MixType = GeneralizedDirichlet;
-  #else
-    #error "No mix model defined in Base/QuinaConfig.h"
-  #endif
 
   public:
     //! Destructor
@@ -80,15 +46,15 @@ class Physics {
 
     //! Constant accessor to mass model
     //! \return Pointer to mass model
-    Mass<MassType>* mass() const noexcept { return m_mass; }
+    Mass* mass() const noexcept { return m_mass.get(); }
 
     //! Constant accessor to hydro model
     //! \return Pointer to hydro model
-    Hydro<HydroType>* hydro() const noexcept { return m_hydro; }
+    Hydro* hydro() const noexcept { return m_hydro.get(); }
 
     //! Constant accessor to mix model
     //! \return Pointer to mix model
-    Mix<MixType>* mix() const noexcept { return m_mix; }
+    Mix* mix() const noexcept { return m_mix.get(); }
 
     //! Constant accessor to statistics estimator
     //! \return Pointer to statistics estimator
@@ -134,11 +100,20 @@ class Physics {
     //! explicitly from anywhere else
     void finalize() noexcept;
 
+    //! REgister models in factories
+    void initFactories();
+
+    //! Model factories
+    std::map<select::MassType, std::function<Mass*()>> m_massFactory;
+    std::map<select::HydroType, std::function<Hydro*()>> m_hydroFactory;
+    std::map<select::MixType, std::function<Mix*()>> m_mixFactory;
+
     const Base& m_base;                   //!< Essentials
 
-    Mass<MassType>* m_mass;               //!< Mass model object    
-    Hydro<HydroType>* m_hydro;            //!< Hydro model object    
-    Mix<MixType>* m_mix;                  //!< Mix model object
+    std::unique_ptr<Mass> m_mass;         //!< Mass model
+    std::unique_ptr<Hydro> m_hydro;       //!< Hydro model
+    std::unique_ptr<Mix> m_mix;           //!< Mix model
+
     Statistics* m_statistics;             //!< Statistics estimator object
     GlobWriter* m_glob;                   //!< Glob file writer
     TxtStatWriter* m_stat;                //!< Statistics file writer

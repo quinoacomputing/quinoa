@@ -2,12 +2,14 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 10:26:08 PM MDT
+  \date      Thu Sep 19 08:50:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
 */
 //******************************************************************************
+
+#include <boost/functional/factory.hpp>
 
 #include <QuinoaConfig.h>
 #include <Memory.h>
@@ -26,6 +28,7 @@
 using namespace std;
 using namespace quinoa;
 
+
 Physics::Physics(const Base& base)
 //******************************************************************************
 //  Constructor
@@ -40,7 +43,6 @@ try :
   m_npar(base.control.get<control::component, control::npar>()),
   m_term(base.control.get<control::incpar, control::term>()),
   m_base(base),
-  m_mass(nullptr),
   m_hydro(nullptr),
   m_mix(nullptr),
   m_statistics(nullptr),
@@ -62,26 +64,29 @@ try :
                                  SCALAR,
                                  "Particles");
 
+  //! Initialize model factories
+  initFactories();
+
   // Instantiate mass model
   if (m_ndensity) {
-    m_mass = new (nothrow) MassType(m_base, m_particles.ptr);
-    ErrChk(m_mass != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+    select::MassType m = m_base.control.get<control::selected, control::mass>();
+    m_mass = std::unique_ptr<Mass>(m_massFactory[m]());
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    m_hydro = new (nothrow) HydroType(m_base, m_particles.ptr);
-    ErrChk(m_hydro != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+    select::HydroType m = m_base.control.get<control::selected, control::hydro>();
+    m_hydro = std::unique_ptr<Hydro>(m_hydroFactory[m]());
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    m_mix = new (nothrow) MixType(m_base, m_particles.ptr);
-    ErrChk(m_mix != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+    select::MixType m = m_base.control.get<control::selected, control::mix>();
+    m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
   }
 
   // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(m_base, this);
+  m_statistics = new (nothrow) Statistics(m_base, m_particles.ptr);
   ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
@@ -123,12 +128,36 @@ Physics::finalize() noexcept
 //******************************************************************************
 {
   m_base.memory.freeEntry(m_particles);  
-  if (m_mass) { delete m_mass; m_mass = nullptr; }
-  if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
-  if (m_mix) { delete m_mix; m_mix = nullptr; }
+  //if (m_mass) { delete m_mass; m_mass = nullptr; }
+  //if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
+  //if (m_mix) { delete m_mix; m_mix = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
   if (m_glob) { delete m_glob; m_glob = nullptr; }
   if (m_stat) { delete m_stat; m_stat = nullptr; }
+}
+
+void
+Physics::initFactories()
+//******************************************************************************
+//  Register models in factories
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Register mass models
+  m_massFactory[select::MassType::BETA] =
+    std::bind(boost::factory<Beta*>(), m_base, m_particles.ptr);
+
+  // Register hydro models
+  m_hydroFactory[select::HydroType::SLM] =
+    std::bind(boost::factory<SimplifiedLangevin*>(), m_base, m_particles.ptr);
+  m_hydroFactory[select::HydroType::GLM] =
+    std::bind(boost::factory<GeneralizedLangevin*>(), m_base, m_particles.ptr);
+
+  // Register mix models
+  m_mixFactory[select::MixType::DIRICHLET] =
+    std::bind(boost::factory<Dirichlet*>(), m_base, m_particles.ptr);
+  m_mixFactory[select::MixType::GENERALIZED_DIRICHLET] =
+    std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, m_particles.ptr);
 }
 
 void

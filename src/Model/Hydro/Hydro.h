@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:27:13 PM MDT
+  \date      Wed Sep 18 14:03:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -19,9 +19,7 @@
 
 namespace quinoa {
 
-//! Hydro model base for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-template< typename HydroType >
+//! Hydro model base
 class Hydro : public Model {
 
   public:
@@ -40,11 +38,11 @@ class Hydro : public Model {
     //! Destructor
     ~Hydro() noexcept override = default;
 
-    //! CRTP interface: Initialize particles
-    void init() { static_cast<HydroType*>(this)->init(); }
+    //! Initialize particles
+    virtual void init() = 0;
 
-    //! CRTP interface: Advance particles in hydro model
-    void advance(const real& dt) { static_cast<HydroType*>(this)->advance(dt); }
+    //! Advance particles in hydro model
+    virtual void advance(const real& dt) = 0;
 
   protected:
     const int m_offset;             //!< Velocity-offset relative to base

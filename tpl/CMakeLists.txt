@@ -23,7 +23,7 @@ MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
 #### PEGTL (Parsing Expression Grammar Template Library) ######################
 # http://code.google.com/p/pegtl
-# Header only library
+# Header only
 ExternalProject_Add(
   pegtl
   PREFIX pegtl
@@ -194,7 +194,7 @@ ExternalProject_Add_Step(
 
 #### Boost ####################################################################
 # http://www.boost.org
-# Header only library
+# Header only
 ExternalProject_Add(
   boost
   PREFIX boost

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:27:37 PM MDT
+  \date      Wed Sep 18 14:03:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -22,14 +22,13 @@ class Memory;
 class Paradigm;
 class JPDF;
 
-//! Dirichlet : Mix<Dirichlet> child for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-class Dirichlet : public Mix<Dirichlet> {
+//! Dirichlet : Mix
+class Dirichlet : public Mix {
 
   public:
     //! Constructor
     explicit Dirichlet(const Base& base, real* const particles) :
-      Mix<Dirichlet>(base, particles),
+      Mix(base, particles),
       m_b(base.control.get<control::param, control::dirichlet, control::b>()),
       m_S(base.control.get<control::param, control::dirichlet, control::S>()),
       m_k(base.control.get<control::param, control::dirichlet, control::kappa>()) {
@@ -52,10 +51,10 @@ class Dirichlet : public Mix<Dirichlet> {
     ~Dirichlet() noexcept override = default;
 
     //! Initialize particles
-    void init(int p, int tid) { initZero(p); IGNORE(tid); }
+    void init(int p, int tid) override { initZero(p); IGNORE(tid); }
 
     //! Advance particles
-    void advance(int p, int tid, real dt);
+    void advance(int p, int tid, real dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);
