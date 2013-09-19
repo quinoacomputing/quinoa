@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:34:37 2013
+  \date      Thu Sep 19 10:37:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser
@@ -18,6 +18,7 @@
 
 namespace quinoa {
 namespace grm {
+//! List of keywords the parser understands
 namespace kw {
 
   using namespace pegtl::ascii;

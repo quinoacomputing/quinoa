@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestControlTypes.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:25:46 2013
+  \date      Thu Sep 19 10:40:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for random number generator test suite control and parsing
   \details   Types for random number generator test suite control and parsing
@@ -19,6 +19,7 @@
 #include <RNGOptions.h>
 
 namespace rngtest {
+//! control and parsing
 namespace ctr {
 
 //! Tags for Control's tagged tuple

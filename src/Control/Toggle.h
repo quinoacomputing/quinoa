@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:43:02 2013
+  \date      Thu Sep 19 10:40:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -17,6 +17,7 @@
 #include <Exception.h>
 
 namespace quinoa {
+//! selections
 namespace sel {
 
 template< typename Enum >

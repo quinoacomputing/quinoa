@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:44:07 2013
+  \date      Thu Sep 19 10:41:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite options and associations
   \details   Random number generator test suite options and associations
@@ -17,6 +17,7 @@
 #include <Toggle.h>
 
 namespace rngtest {
+//! selections
 namespace sel {
 
 //! Random number generator test types

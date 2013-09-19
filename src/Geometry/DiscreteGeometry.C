@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:13:34 2013
+  \date      Thu Sep 19 10:32:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -21,10 +21,7 @@ using namespace quinoa;
 DiscreteGeometry::DiscreteGeometry(const Base& base)
 //******************************************************************************
 //  Constructor
-//! \param[in] memory    Memory oject pointer
-//! \param[in] paradigm  Parallel programming paradigm object pointer
-//! \param[in] control   Control object
-//! \param[in] timer     Timer object
+//! \param[in] base      Essentials
 //! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************

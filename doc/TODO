@@ -22,8 +22,9 @@
   false positives) in MKL and non-MKL code. May need to implement another random
   number library.
 
-* Testing: Don't know how long I can keep going without some sort of unit and/or
-  regression testing infrastructure.
+* Testing:
+    - Unit tests: GoogleTest, QuickTest, Template Unit Test
+    - Regression tests:
 
 * Test suite for exceptions:
     - Automatically switch each potential throw location into a throw and test
@@ -31,13 +32,10 @@
     - valgrind can return a different exit code based on errors detected using
       the command line argument --error-exitcode= to valgrind
 
-* Unit tests: GoogleTest, QuickTest, Template Unit Test
-
 * Faster build:
     - Remove unnecessary includes
     - Explore dynamic libs, precompiled headers
     - Reduce build deps with ninja build dependency map
-    - Setup precompiled headers
 
 * Fix up MemoryEntry with smart pointer features: construction, assignment,
   automatic destruction as leaving scope, dereferencing, testing nullness. See

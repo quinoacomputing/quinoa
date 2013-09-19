@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:45:24 2013
+  \date      Thu Sep 19 10:39:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -31,6 +31,7 @@
 #include <MixRateOptions.h>
 
 namespace quinoa {
+//! control and parsing
 namespace ctr {
 
 const int NCOMP_POS = 3;        //!< Number of position components for a field

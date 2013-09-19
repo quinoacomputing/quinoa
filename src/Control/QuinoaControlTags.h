@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTags.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:27:16 2013
+  \date      Thu Sep 19 10:39:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's control tags
   \details   All control tags used to build a nested tagged tagged tuple

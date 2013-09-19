@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:23:18 2013
+  \date      Thu Sep 19 10:25:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -27,8 +27,8 @@ using namespace quinoa;
 Statistics::Statistics(const Base& base, const real* const particles)
 //******************************************************************************
 //  Constructor
-//! \param[in]  base     Essentials
-//! \param[in]  physics  Physics object
+//! \param[in]  base       Essentials
+//! \param[in]  particles  Particles
 //! \author  J. Bakosi
 //******************************************************************************
 try :
