@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:54:48 2013
+  \date      Thu Sep 19 10:20:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -10,6 +10,8 @@
 //******************************************************************************
 
 #include <iostream>
+
+#include <boost/functional/factory.hpp>
 
 #include <QuinoaDriver.h>
 #include <Timer.h>
@@ -51,59 +53,50 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   // Echo information of stuff parsed
   parser.echo();
 
+  //! Initialize factory
+  initFactory();
+
   // Instantiate geometry object
-  initGeometry();
+  sel::GeometryType g = m_base.control.get<ctr::selected, ctr::geometry>();
+  if (g != sel::GeometryType::NO_GEOMETRY) {
+    m_geometry = std::unique_ptr<Geometry>(m_geometryFactory[g]());
+  }
 
   // Instantiate physics object
-  initPhysics();
-}
-
-void
-QuinoaDriver::initGeometry()
-//******************************************************************************
-//  Instantiate geometry object (if any)
-//! \author J. Bakosi
-//******************************************************************************
-{
-  using namespace ctr;
-  using namespace sel;
-
-  //  Instantiate geometry object (if any)
-  if (m_base.control.get<selected,geometry>() == GeometryType::ANALYTIC) {
-    m_geometry = std::unique_ptr<AnalyticGeometry>(new AnalyticGeometry(m_base));
-  } else if (m_base.control.get<selected,geometry>() == GeometryType::DISCRETE) {
-    m_geometry = std::unique_ptr<DiscreteGeometry>(new DiscreteGeometry(m_base));
+  sel::PhysicsType p = m_base.control.get<ctr::selected, ctr::physics>();
+  if (p != sel::PhysicsType::NO_PHYSICS) {
+    m_physics = std::unique_ptr<Physics>(m_physicsFactory[p]());
   }
 
   // Initialize geometry (if any)
   if (m_geometry) m_geometry->init();
-}
-
-void
-QuinoaDriver::initPhysics()
-//******************************************************************************
-//  Instantiate physics object (if any)
-//! \author J. Bakosi
-//******************************************************************************
-{
-  using namespace ctr;
-  using namespace sel;
-
-  //  Instantiate physics object (if any)
-  if (m_base.control.get<selected,physics>() == PhysicsType::HOMOGENEOUS_MIX) {
-    m_physics = std::unique_ptr<HomMix>(new HomMix(m_base));
-  } else if (m_base.control.get<selected,physics>() ==
-             PhysicsType::HOMOGENEOUS_HYDRO) {
-    m_physics = std::unique_ptr<HomHydro>(new HomHydro(m_base));
-  } else if (m_base.control.get<selected,physics>() ==
-             PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR) {
-    m_physics = std::unique_ptr<HomRT>(new HomRT(m_base));
-  } if (m_base.control.get<selected,physics>() == PhysicsType::SPINSFLOW) {
-    m_physics = std::unique_ptr<SPINSFlow>(new SPINSFlow(m_base));
-  }
 
   // Initialize physics (if any)
   if (m_physics) m_physics->init();
+}
+
+void
+QuinoaDriver::initFactory()
+//******************************************************************************
+//  Initialize physics factory
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Register geometry classes
+  m_geometryFactory[sel::GeometryType::ANALYTIC] =
+    std::bind(boost::factory<AnalyticGeometry*>(), m_base);
+  m_geometryFactory[sel::GeometryType::DISCRETE] =
+    std::bind(boost::factory<DiscreteGeometry*>(), m_base);
+
+  // Register physics classes
+  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_MIX] =
+    std::bind(boost::factory<HomMix*>(), m_base);
+  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_HYDRO] =
+    std::bind(boost::factory<HomHydro*>(), m_base);
+  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
+    std::bind(boost::factory<HomRT*>(), m_base);
+  m_physicsFactory[sel::PhysicsType::SPINSFLOW] =
+    std::bind(boost::factory<SPINSFlow*>(), m_base);
 }
 
 void
@@ -113,6 +106,6 @@ QuinoaDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //if (m_geometry) m_geometry->fill();
+  if (m_geometry) m_geometry->fill();
   if (m_physics) m_physics->solve();
 }
