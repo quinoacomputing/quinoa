@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:04:41 2013
+  \date      Thu Sep 19 17:26:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,11 +16,12 @@
 #include <Mass.h>
 #include <Hydro.h>
 #include <Mix.h>
+#include <Statistics.h>
+#include <GlobWriter.h>
+#include <TxtStatWriter.h>
 
 namespace quinoa {
 
-class Statistics;
-class GlobWriter;
 class TxtStatWriter;
 
 //! Physics base
@@ -28,7 +29,7 @@ class Physics {
 
   public:
     //! Destructor
-    virtual ~Physics() noexcept;
+    virtual ~Physics() noexcept = default;
 
     //! Initialize physics
     virtual void init() = 0;
@@ -58,19 +59,19 @@ class Physics {
 
     //! Constant accessor to statistics estimator
     //! \return Pointer to statistics estimator
-    Statistics* statistics() const noexcept { return m_statistics; }
+    Statistics& statistics() noexcept { return m_statistics; }
 
     //! Constant accessor to glob file writer
     //! \return Pointer to glob file writer
-    GlobWriter* globWriter() const noexcept { return m_glob; }
+    GlobWriter& globWriter() noexcept { return m_glob; }
 
     //! Constant accessor to statistics file writer
     //! \return Pointer to statistics file writer
-    TxtStatWriter* statWriter() const noexcept { return m_stat; }
+    TxtStatWriter& statWriter() noexcept { return m_stat; }
 
     //! Constant accessor to particle properties pointer
     //! \return Raw pointer to particle properties array
-    real* particles() const noexcept { return m_particles.ptr; }
+    real* particles() const noexcept { return m_particles.get(); }
 
   protected:
     //! Constructor: protected, designed to be base-only
@@ -96,28 +97,25 @@ class Physics {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
     //! Initialize model factory
     void initFactory();
 
-    const Base& m_base;                   //!< Essentials
+    const Base& m_base;                         //!< Essentials
+    const std::unique_ptr<real[]> m_particles;  //!< Particle properties
+
+    Statistics m_statistics;                    //!< Statistics estimator
 
     //! Model factories
     std::map<sel::MassType, std::function<Mass*()>> m_massFactory;
     std::map<sel::HydroType, std::function<Hydro*()>> m_hydroFactory;
     std::map<sel::MixType, std::function<Mix*()>> m_mixFactory;
 
-    std::unique_ptr<Mass> m_mass;         //!< Mass model
-    std::unique_ptr<Hydro> m_hydro;       //!< Hydro model
-    std::unique_ptr<Mix> m_mix;           //!< Mix model
+    std::unique_ptr<Mass> m_mass;               //!< Mass model
+    std::unique_ptr<Hydro> m_hydro;             //!< Hydro model
+    std::unique_ptr<Mix> m_mix;                 //!< Mix model
 
-    Statistics* m_statistics;             //!< Statistics estimator object
-    GlobWriter* m_glob;                   //!< Glob file writer
-    TxtStatWriter* m_stat;                //!< Statistics file writer
-    Data<real> m_particles;               //!< Particle properties
+    GlobWriter m_glob;                          //!< Glob file writer
+    TxtStatWriter m_stat;                       //!< Statistics file writer
 };
 
 } // namespace quinoa

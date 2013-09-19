@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 10:04:35 2013
+  \date      Thu Sep 19 17:31:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -21,21 +21,13 @@
 #include <GenDirichlet.h>
 #include <SLM.h>
 #include <GLM.h>
-#include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 
 using namespace std;
 using namespace quinoa;
 
-
-Physics::Physics(const Base& base)
-//******************************************************************************
-//  Constructor
-//! \param[in]  base     Essentials
-//! \author  J. Bakosi
-//******************************************************************************
-try :
+Physics::Physics(const Base& base) :
   m_nposition(base.control.get<ctr::component, ctr::nposition>()),
   m_ndensity(base.control.get<ctr::component, ctr::ndensity>()),
   m_nvelocity(base.control.get<ctr::component, ctr::nvelocity>()),
@@ -43,26 +35,20 @@ try :
   m_npar(base.control.get<ctr::component, ctr::npar>()),
   m_term(base.control.get<ctr::incpar, ctr::term>()),
   m_base(base),
-  m_hydro(nullptr),
-  m_mix(nullptr),
-  m_statistics(nullptr),
-  m_glob(nullptr),
-  m_stat(nullptr),
-  m_particles()
+  m_particles(new real [m_npar * base.control.nprop()]),
+  m_statistics(base, m_particles.get()),
+  m_glob(base.control.get<ctr::io, ctr::glob>()),
+  m_stat(base.control.get<ctr::io, ctr::stats>(), m_statistics)
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
 {
   using namespace ctr;
 
   //! Echo information on physics
   echo();
-
-  ErrChk(m_base.control.nprop() != 0, ExceptType::FATAL, "No need for physics?");
-
-  // Allocate memory to store all particle properties
-  m_particles =
-    m_base.memory.newEntry<real>(m_npar * m_base.control.nprop(),
-                                 REAL,
-                                 SCALAR,
-                                 "Particles");
 
   //! Initialize model factories
   initFactory();
@@ -84,56 +70,6 @@ try :
     sel::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
     m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
   }
-
-  // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(m_base, m_particles.ptr);
-  ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
-
-  // Instantiate glob file writer
-  m_glob = new (nothrow) GlobWriter(m_base.control.get<io,glob>());
-  ErrChk(m_glob != nullptr, ExceptType::FATAL,"Cannot allocate memory");
-
-  // Instantiate statistics plot file writer
-  m_stat = new (nothrow) TxtStatWriter(m_base.control.get<io,stats>(), m_statistics);
-  ErrChk(m_stat != nullptr, ExceptType::FATAL,"Cannot allocate memory");
-
-} // Roll back changes and rethrow on error
-  catch (exception&) {
-    finalize();
-    throw;
-  }
-  // Catch uncaught exceptions
-  catch (...) {
-    finalize();
-    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
-  }
-
-Physics::~Physics() noexcept
-//******************************************************************************
-//  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-Physics::finalize() noexcept
-//******************************************************************************
-//! \details Single exit point, called implicitly from destructor or explicitly
-//!          from anywhere else. Exception safety: no-throw guarantee: never
-//!          throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  m_base.memory.freeEntry(m_particles);  
-  //if (m_mass) { delete m_mass; m_mass = nullptr; }
-  //if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
-  //if (m_mix) { delete m_mix; m_mix = nullptr; }
-  if (m_statistics) { delete m_statistics; m_statistics = nullptr; }
-  if (m_glob) { delete m_glob; m_glob = nullptr; }
-  if (m_stat) { delete m_stat; m_stat = nullptr; }
 }
 
 void
@@ -143,21 +79,24 @@ Physics::initFactory()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Get raw pointer to particle properties
+  real* const p = m_particles.get();
+
   // Register mass models
   m_massFactory[sel::MassType::BETA] =
-    std::bind(boost::factory<Beta*>(), m_base, m_particles.ptr);
+    std::bind(boost::factory<Beta*>(), m_base, p);
 
   // Register hydro models
   m_hydroFactory[sel::HydroType::SLM] =
-    std::bind(boost::factory<SimplifiedLangevin*>(), m_base, m_particles.ptr);
+    std::bind(boost::factory<SimplifiedLangevin*>(), m_base, p);
   m_hydroFactory[sel::HydroType::GLM] =
-    std::bind(boost::factory<GeneralizedLangevin*>(), m_base, m_particles.ptr);
+    std::bind(boost::factory<GeneralizedLangevin*>(), m_base, p);
 
   // Register mix models
   m_mixFactory[sel::MixType::DIRICHLET] =
-    std::bind(boost::factory<Dirichlet*>(), m_base, m_particles.ptr);
+    std::bind(boost::factory<Dirichlet*>(), m_base, p);
   m_mixFactory[sel::MixType::GENERALIZED_DIRICHLET] =
-    std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, m_particles.ptr);
+    std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, p);
 }
 
 void
