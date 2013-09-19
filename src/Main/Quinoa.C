@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Sep 19 12:58:19 2013
+  \date      Thu Sep 19 17:29:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -79,7 +79,6 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrCode error = ErrCode::SUCCESS;
   try {
 
     // Install our own new-handler
@@ -115,22 +114,10 @@ int main(int argc, char* argv[])
     // Execute
     driver.execute();
 
-  } // Catch and handle Quina::Exceptions
-    catch (Exception& qe) {
-      error = qe.handleException();
-    }
-    // Catch std::exceptions and transform them into Quinoa::Exceptions without
-    // file:line:func information
-    catch (std::exception& se) {
-      Exception qe(ExceptType::RUNTIME, se.what());
-      error = qe.handleException();
-    }
-    // Catch uncaught exceptions and still do cleanup
-    catch (...) {
-      Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
-      error = qe.handleException();
+  } catch (...) {
+      processException();
     }
 
-  // Return error code
-  return static_cast<int>(error);
+  // Return error code success
+  return static_cast<int>(ErrCode::SUCCESS);
 }

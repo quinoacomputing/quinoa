@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:17:09 2013
+  \date      Thu Sep 19 17:25:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -48,7 +48,7 @@ HomHydro::solve()
   // Echo headers
   if (nstep) {
     reportHeader();
-    statWriter()->header();
+    statWriter().header();
   }
 
   // Time stepping loop
@@ -58,16 +58,16 @@ HomHydro::solve()
     //hydro()->advance(dt);
 
     // Accumulate statistics
-    statistics()->accumulate();
+    statistics().accumulate();
 
     // Output pdf at selected times
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glbi)) { globWriter()->write(it,t); wroteGlob = true; }
+    if (!(it % glbi)) { globWriter().write(it,t); wroteGlob = true; }
 
     // Append statistics file at selected times
-    if (!(it % stai)) { statWriter()->write(it,t); wroteStat = true; }
+    if (!(it % stai)) { statWriter().write(it,t); wroteStat = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

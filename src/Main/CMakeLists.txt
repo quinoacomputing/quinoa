@@ -10,6 +10,7 @@ INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Main
+                    ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Random
@@ -23,6 +24,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Physics/HomHydro
                     ${QUINOA_SOURCE_DIR}/Physics/HomRT
                     ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
+                    ${QUINOA_SOURCE_DIR}/Statistics
                     ${TPL_DIR}/include
 )
 

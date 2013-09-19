@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:19:34 PM MDT
+  \date      Thu Sep 19 16:30:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -26,7 +26,7 @@ class TxtStatWriter : public Writer {
   public:
     //! Constructor
     explicit TxtStatWriter(const std::string& filename,
-                           Statistics* const statistics);
+                           const Statistics& statistics);
 
     //! Destructor
     ~TxtStatWriter() noexcept override = default;
@@ -47,7 +47,7 @@ class TxtStatWriter : public Writer {
     //! Don't permit move assigment
     TxtStatWriter& operator=(TxtStatWriter&&) = delete;
 
-    Statistics* const m_statistics;     //!< Statistics estimator
+    const Statistics& m_statistics;     //!< Statistics estimator
     const int m_nord;                   //!< Number of ordinary moments
     const int m_ncen;                   //!< Number of central moments
     const real* const m_ordinary;       //!< Ordinary moments
