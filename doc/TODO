@@ -9,11 +9,9 @@
       Concurrency in Action
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
 
-* Error/Exception handling:
-    - Can we get rid of Exception macros?
-    - Define own error handler for the new operator via set_new_handler(), and
-      also customize set_unexpected(), set_terminate().
-    - Reuse exception handling code. See STL 4.3.2.
+* Add runtime enviroment echo to Quinoa.C
+
+* Error/Exception handling: Can we get rid of Exception macros?
 
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully

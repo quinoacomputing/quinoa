@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Sep 19 10:38:35 2013
+  \date      Thu Sep 19 12:58:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -13,6 +13,7 @@
 
 #include <QuinoaConfig.h>
 #include <Base.h>
+#include <Handler.h>
 #include <Paradigm.h>
 #include <Memory.h>
 #include <QuinoaDriver.h>
@@ -69,7 +70,7 @@ static void echoRunEnv(const QuinoaPrint& print)
   print.item("Command line arguments", "...");
 }
 
-} // namespace quinoa
+} // quinoa::
 
 int main(int argc, char* argv[])
 //******************************************************************************
@@ -80,6 +81,13 @@ int main(int argc, char* argv[])
 {
   ErrCode error = ErrCode::SUCCESS;
   try {
+
+    // Install our own new-handler
+    std::set_new_handler(newHandler);
+    // Install our own terminate-handler
+    std::set_terminate(terminateHandler);
+    // Install our own unexpected-handler
+    std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
     QuinoaPrint print;                  //!< Pretty printer
@@ -104,7 +112,7 @@ int main(int argc, char* argv[])
     // Create driver
     QuinoaDriver driver(argc, argv, base);
 
-    // Solve
+    // Execute
     driver.execute();
 
   } // Catch and handle Quina::Exceptions
