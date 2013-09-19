@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:06:27 PM MDT
+  \date      Thu Sep 19 12:33:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -64,8 +64,6 @@ enum class ExceptType : uint8_t {
 enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
                      FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
-
-class Driver;
 
 //! Exception base
 class Exception : public std::exception {

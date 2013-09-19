@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 10:25:16 2013
+  \date      Thu Sep 19 13:31:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -20,7 +20,6 @@
 #include <Statistics.h>
 #include <Paradigm.h>
 #include <QuinoaControl.h>
-//#include <Physics.h>
 
 using namespace quinoa;
 

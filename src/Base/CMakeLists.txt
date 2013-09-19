@@ -10,6 +10,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
 
 add_library(Base
             Exception.C
+            Handler.C
             MemoryEntry.C
             Memory.C
             Timer.C
