@@ -63,66 +63,6 @@ string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
 set(QUINOA_EXECUTABLE "quinoa")
 set(QUINOA_RNGTEST_EXECUTABLE "rngtest")
 
-# Mass model options
-# Available mass models
-set(MASS_VALUES "BETA")
-# Initialize all to off
-set(QUINOA_BETA off)  # 0
-# Set default and select from list
-set(QUINOA_MODEL_MASS "BETA"
-    CACHE STRING "Select mass model. Default: BETA (Beta distribution model). Available options: ${MASS_VALUES}")
-SET_PROPERTY (CACHE QUINOA_MODEL_MASS PROPERTY STRINGS ${MASS_VALUES})
-STRING (TOUPPER ${QUINOA_MODEL_MASS} QUINOA_MODEL_MASS)
-LIST (FIND MASS_VALUES ${QUINOA_MODEL_MASS} MASS_INDEX)
-# Evaluate selected model and put in define for it
-IF (${MASS_INDEX} EQUAL 0)
-  set(QUINOA_BETA on)
-ELSEIF (${MASS_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Mass model ${QUINOA_MODEL_MASS} not supported, valid entries are ${MASS_VALUES}")
-ENDIF()
-
-# Hydro model options
-# Available hydrodyanmics models
-set(HYDRO_VALUES "SLM" "GLM")
-# Initialize all to off
-set(QUINOA_SLM off)  # 0
-set(QUINOA_GLM off)  # 1
-# Set default and select from list
-set(QUINOA_MODEL_HYDRO "SLM"
-    CACHE STRING "Select hydrodynamics model. Default: SLM (Simplified Langevin model). Available options: ${HYDRO_VALUES}")
-SET_PROPERTY (CACHE QUINOA_MODEL_HYDRO PROPERTY STRINGS ${HYDRO_VALUES})
-STRING (TOUPPER ${QUINOA_MODEL_HYDRO} QUINOA_MODEL_HYDRO)
-LIST (FIND HYDRO_VALUES ${QUINOA_MODEL_HYDRO} HYDRO_INDEX)
-# Evaluate selected model and put in define for it
-IF (${HYDRO_INDEX} EQUAL 0)
-  set(QUINOA_SLM on)
-ELSEIF (${HYDRO_INDEX} EQUAL 1)
-  set(QUINOA_GLM on)
-ELSEIF (${HYDRO_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Hydrodynamics model ${QUINOA_MODEL_HYDRO} not supported, valid entries are ${HYDRO_VALUES}")
-ENDIF()
-
-# Mix model options
-# Available mix models
-set(MIX_VALUES "DIR" "GENDIR")
-# Initialize all to off
-set(QUINOA_DIRICHLET off)              # 0
-set(QUINOA_GENERALIZED_DIRICHLET off)  # 1
-# Set default and select from list
-set(QUINOA_MODEL_MIX "DIR"
-    CACHE STRING "Select mixing model. Default: DIR (Dirichlet model). Available options: ${MIX_VALUES}")
-SET_PROPERTY (CACHE QUINOA_MODEL_MIX PROPERTY STRINGS ${MIX_VALUES})
-STRING (TOUPPER ${QUINOA_MODEL_MIX} QUINOA_MODEL_MIX)
-LIST (FIND MIX_VALUES ${QUINOA_MODEL_MIX} MIX_INDEX)
-# Evaluate selected model and put in define for it
-IF (${MIX_INDEX} EQUAL 0)
-  set(QUINOA_DIRICHLET on)
-ELSEIF (${MIX_INDEX} EQUAL 1)
-  set(QUINOA_GENERALIZED_DIRICHLET on)
-ELSEIF (${MIX_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Mix model ${QUINOA_MODEL_MIX} not supported, valid entries are ${MIX_VALUES}")
-ENDIF()
-
 # Get git revision
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)

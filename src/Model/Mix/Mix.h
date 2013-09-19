@@ -2,10 +2,10 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:14:08 2013
+  \date      Thu Sep 19 15:20:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
-  \details   Mix mode lbase
+  \details   Mix model base
 */
 //******************************************************************************
 #ifndef Mix_h
