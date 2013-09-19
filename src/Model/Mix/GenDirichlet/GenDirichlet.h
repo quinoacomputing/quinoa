@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:28:21 PM MDT
+  \date      Wed Sep 18 14:02:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -22,14 +22,13 @@ class Memory;
 class Paradigm;
 class JPDF;
 
-//! GeneralizedDirichlet : Mix<GeneralizedDirichlet> child for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
+//! GeneralizedDirichlet : Mix
+class GeneralizedDirichlet : public Mix {
 
   public:
     //! Constructor
     explicit GeneralizedDirichlet(const Base& base, real* const particles) :
-      Mix<GeneralizedDirichlet>(base, particles),
+      Mix(base, particles),
       m_b(base.control.get<control::param, control::gendirichlet, control::b>()),
       m_S(base.control.get<control::param, control::gendirichlet, control::S>()),
       m_k(base.control.get<control::param, control::gendirichlet, control::kappa>()),
@@ -57,10 +56,10 @@ class GeneralizedDirichlet : public Mix<GeneralizedDirichlet> {
     ~GeneralizedDirichlet() noexcept override = default;
 
     //! Initialize particles
-    void init(int p, int tid) { initZero(p); IGNORE(tid); }
+    void init(int p, int tid) override { initZero(p); IGNORE(tid); }
 
     //! Advance particles
-    void advance(int p, int tid, real dt);
+    void advance(int p, int tid, real dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);

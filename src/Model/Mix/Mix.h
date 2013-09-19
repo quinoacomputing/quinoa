@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:20:18 PM MDT
+  \date      Wed Sep 18 13:56:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix mode lbase
@@ -21,9 +21,7 @@
 
 namespace quinoa {
 
-//! Mix model base for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-template< typename MixType >
+//! Mix model base
 class Mix : public Model {
 
   public:
@@ -41,13 +39,11 @@ class Mix : public Model {
     //! Destructor
     ~Mix() noexcept override = default;
 
-    //! CRTP interface: Initialize particles
-    void init(int p, int tid) { static_cast<MixType*>(this)->init(p, tid); }
+    //! Initialize particles
+    virtual void init(int p, int tid) = 0;
 
-    //! CRTP interface: Advance particles in mix model
-    void advance(int p, int tid, real dt) {
-      static_cast<MixType*>(this)->advance(p, tid, dt);
-    }
+    //! Advance particles in mix model
+    virtual void advance(int p, int tid, real dt) = 0;
 
   protected:
     const int m_offset;             //!< Scalar-offset relative to base
