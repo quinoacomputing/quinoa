@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:47:21 PM MDT
+  \date      Thu Sep 19 09:17:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -36,12 +36,12 @@ HomHydro::solve()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control().get<control::incpar, control::nstep>();
-  const auto dt    = control().get<control::incpar, control::dt>();
-  const auto ttyi  = control().get<control::interval, control::tty>();
-  const auto pdfi  = control().get<control::interval, control::pdf>();
-  const auto glbi  = control().get<control::interval, control::glob>();
-  const auto stai  = control().get<control::interval, control::plot>();
+  const auto nstep = control().get<ctr::incpar, ctr::nstep>();
+  const auto dt    = control().get<ctr::incpar, ctr::dt>();
+  const auto ttyi  = control().get<ctr::interval, ctr::tty>();
+  const auto pdfi  = control().get<ctr::interval, ctr::pdf>();
+  const auto glbi  = control().get<ctr::interval, ctr::glob>();
+  const auto stai  = control().get<ctr::interval, ctr::plot>();
 
   timer().start(m_totalTime);
 
@@ -146,7 +146,7 @@ HomHydro::outJpdf(const real t)
   IGNORE(t);
 //   // Contruct filename
 //   stringstream ss;
-//   ss << control()->get<control::PDFNAME>() << "." << t << ".msh";
+//   ss << control()->get<ctr::PDFNAME>() << "." << t << ".msh";
 //   string filename = ss.str();
 // 
 //   // Create joint PDF

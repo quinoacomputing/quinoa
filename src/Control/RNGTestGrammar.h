@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestGrammar.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:50:27 2013
+  \date      Thu Sep 19 09:18:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -23,9 +23,9 @@ namespace grammar {
   // State
 
 //   //! RNG test (suite) options
-//   static control::Option<select::RNGTest> RNGTest;
+//   static ctr::Option<select::RNGTest> RNGTest;
 //   //! RNG options
-//   static control::LibOption<select::RNG> RNG;
+//   static ctr::LibOption<select::RNG> RNG;
 
 //   // specialize convert to RNG
 //   template<>
@@ -38,15 +38,15 @@ namespace grammar {
 //   // common to all RNG test suites
 //   struct rngtest_common :
 //          sor< process< keyword::suite,
-//                        store_option<select::RNGTest, control::RNGTEST> >,
-//               list<keyword::rngs, push<control::RNGS, select::RNGType>, rng>
+//                        store_option<select::RNGTest, ctr::RNGTEST> >,
+//               list<keyword::rngs, push<ctr::RNGS, select::RNGType>, rng>
 //             > {};
 //
 
 //   // rngtest block
 //   struct rngtest :
 //          ifmust< parse< keyword::rngtest,
-//                         store_option<select::Physics, control::PHYSICS> >,
+//                         store_option<select::Physics, ctr::PHYSICS> >,
 //                  block< rngtest_common >
 //                > {};
 // 

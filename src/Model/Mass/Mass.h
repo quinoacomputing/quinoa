@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Wed Sep 18 13:58:17 2013
+  \date      Thu Sep 19 09:15:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -27,10 +27,10 @@ class Mass : public Model {
     explicit Mass(const Base& base, real* const particles) :
       Model(base,
             particles,
-            base.control.get<control::component, control::npar>(),
+            base.control.get<ctr::component, ctr::npar>(),
             base.control.nprop()),
       m_offset(0),
-      m_ndensity(base.control.get<control::component, control::ndensity>()) {
+      m_ndensity(base.control.get<ctr::component, ctr::ndensity>()) {
       ErrChk(m_ndensity > 0, ExceptType::FATAL,
              "Wrong number of particle densities");
     }

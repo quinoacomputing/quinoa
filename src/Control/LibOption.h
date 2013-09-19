@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:33:17 PM MDT
+  \date      Thu Sep 19 09:25:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -16,8 +16,7 @@
 #include <Option.h>
 
 namespace quinoa {
-
-namespace control {
+namespace ctr {
 
 //! Generic library option interface templated on option 'Type'
 template< class Type >
@@ -46,8 +45,7 @@ class LibOption : public Option<Type> {
     LibOption& operator=(LibOption&&) = delete;
 };
 
-} // namespace control
-
-} // namespace quinoa
+} // ctr::
+} // quinoa::
 
 #endif // LibOption_h

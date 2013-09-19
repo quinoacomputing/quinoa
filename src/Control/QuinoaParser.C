@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Thu Sep 12 16:24:00 2013
+  \date      Thu Sep 19 09:29:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -30,12 +30,11 @@ QuinoaParser::parse()
   pegtl::dummy_parse_file<grammar::read_file>(m_filename, m_control);
 
   // Filter out repeated statistics
-  using namespace control;
-  unique(const_cast<std::vector<Product>&>(m_control.get<stats>()));
+  unique(const_cast<std::vector<ctr::Product>&>(m_control.get<ctr::stats>()));
 }
 
 void
-QuinoaParser::unique(std::vector<control::Product>& statistics)
+QuinoaParser::unique(std::vector<ctr::Product>& statistics)
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics
@@ -54,6 +53,6 @@ QuinoaParser::echo() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_print.section("Title", m_control.get<control::title>());
-  m_print.item("Control file", m_control.get<control::io,control::ctr>());
+  m_print.section("Title", m_control.get<ctr::title>());
+  m_print.item("Control file", m_control.get<ctr::io,ctr::control>());
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Wed Sep 18 14:02:18 2013
+  \date      Thu Sep 19 09:15:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -26,11 +26,7 @@ class Beta : public Mass {
     //! Constructor
     explicit Beta(const Base& base, real* const particles) :
       Mass(base, particles),
-      m_At(base.control.get<control::param, control::beta, control::atwood>()) {
-      // Error out if mass model selected at compile time does not match that
-      // whose options are given in control file
-      //control->matchModels<select::Mass, select::MassType, control::MASS>(
-      //  select::MassType::BETA);
+      m_At(base.control.get<ctr::param, ctr::beta, ctr::atwood>()) {
       // ErrChk on m_At
     }
 

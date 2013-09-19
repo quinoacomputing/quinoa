@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 08:50:25 2013
+  \date      Thu Sep 19 09:16:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -36,12 +36,12 @@ Physics::Physics(const Base& base)
 //! \author  J. Bakosi
 //******************************************************************************
 try :
-  m_nposition(base.control.get<control::component, control::nposition>()),
-  m_ndensity(base.control.get<control::component, control::ndensity>()),
-  m_nvelocity(base.control.get<control::component, control::nvelocity>()),
-  m_nscalar(base.control.get<control::component, control::nscalar>()),
-  m_npar(base.control.get<control::component, control::npar>()),
-  m_term(base.control.get<control::incpar, control::term>()),
+  m_nposition(base.control.get<ctr::component, ctr::nposition>()),
+  m_ndensity(base.control.get<ctr::component, ctr::ndensity>()),
+  m_nvelocity(base.control.get<ctr::component, ctr::nvelocity>()),
+  m_nscalar(base.control.get<ctr::component, ctr::nscalar>()),
+  m_npar(base.control.get<ctr::component, ctr::npar>()),
+  m_term(base.control.get<ctr::incpar, ctr::term>()),
   m_base(base),
   m_hydro(nullptr),
   m_mix(nullptr),
@@ -50,7 +50,7 @@ try :
   m_stat(nullptr),
   m_particles()
 {
-  using namespace control;
+  using namespace ctr;
 
   //! Echo information on physics
   echo();
@@ -69,19 +69,19 @@ try :
 
   // Instantiate mass model
   if (m_ndensity) {
-    select::MassType m = m_base.control.get<control::selected, control::mass>();
+    select::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
     m_mass = std::unique_ptr<Mass>(m_massFactory[m]());
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    select::HydroType m = m_base.control.get<control::selected, control::hydro>();
+    select::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
     m_hydro = std::unique_ptr<Hydro>(m_hydroFactory[m]());
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    select::MixType m = m_base.control.get<control::selected, control::mix>();
+    select::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
     m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
   }
 
@@ -167,77 +167,77 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  control::Option<select::Physics> ph;
-  control::Option<select::Position> po;
-  control::Option<select::Mass> ms;
-  control::Option<select::Hydro> hy;
-  control::Option<select::Energy> en;
-  control::Option<select::Mix> mx;
-  control::Option<select::Frequency> fr;
-  control::Option<select::MixRate> mr;
+  ctr::Option<select::Physics> ph;
+  ctr::Option<select::Position> po;
+  ctr::Option<select::Mass> ms;
+  ctr::Option<select::Hydro> hy;
+  ctr::Option<select::Energy> en;
+  ctr::Option<select::Mix> mx;
+  ctr::Option<select::Frequency> fr;
+  ctr::Option<select::MixRate> mr;
 
   m_base.print.section("Physics",
-                  ph.name(m_base.control.get<control::selected,control::physics>()));
+                  ph.name(m_base.control.get<ctr::selected,ctr::physics>()));
 
   m_base.print.subsection("I/O filenames");
-  m_base.print.item("Input", m_base.control.get<control::io,control::input>());
-  m_base.print.item("Output", m_base.control.get<control::io,control::output>());
-  m_base.print.item("Glob", m_base.control.get<control::io,control::glob>());
-  m_base.print.item("Statistics", m_base.control.get<control::io,control::stats>());
-  m_base.print.item("PDF", m_base.control.get<control::io,control::pdf>());
+  m_base.print.item("Input", m_base.control.get<ctr::io,ctr::input>());
+  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::output>());
+  m_base.print.item("Glob", m_base.control.get<ctr::io,ctr::glob>());
+  m_base.print.item("Statistics", m_base.control.get<ctr::io,ctr::stats>());
+  m_base.print.item("PDF", m_base.control.get<ctr::io,ctr::pdf>());
   m_base.print.endsubsection();
 
   m_base.print.subsection("Models");
   m_base.print.item("Position",
-               po.name(m_base.control.get<control::selected,control::position>()));
+               po.name(m_base.control.get<ctr::selected,ctr::position>()));
   m_base.print.item("Mass",
-               ms.name(m_base.control.get<control::selected,control::mass>()));
+               ms.name(m_base.control.get<ctr::selected,ctr::mass>()));
   m_base.print.item("Hydrodynamics",
-               hy.name(m_base.control.get<control::selected,control::hydro>()));
+               hy.name(m_base.control.get<ctr::selected,ctr::hydro>()));
   m_base.print.item("Internal energy",
-               en.name(m_base.control.get<control::selected,control::energy>()));
+               en.name(m_base.control.get<ctr::selected,ctr::energy>()));
   m_base.print.item("Material mixing",
-               mx.name(m_base.control.get<control::selected,control::mix>()));
+               mx.name(m_base.control.get<ctr::selected,ctr::mix>()));
   m_base.print.item("Turbulence frequency",
-               fr.name(m_base.control.get<control::selected,control::frequency>()));
+               fr.name(m_base.control.get<ctr::selected,ctr::frequency>()));
   m_base.print.item("Material mix rate",
-               mr.name(m_base.control.get<control::selected,control::mixrate>()));
+               mr.name(m_base.control.get<ctr::selected,ctr::mixrate>()));
   m_base.print.endsubsection();
 
   m_base.print.subsection("Number of components");
   m_base.print.item("Positions",
-               m_base.control.get<control::component,control::nposition>());
+               m_base.control.get<ctr::component,ctr::nposition>());
   m_base.print.item("Densities",
-               m_base.control.get<control::component,control::ndensity>());
+               m_base.control.get<ctr::component,ctr::ndensity>());
   m_base.print.item("Velocities",
-               m_base.control.get<control::component,control::nvelocity>());
+               m_base.control.get<ctr::component,ctr::nvelocity>());
   m_base.print.item("Scalars",
-               m_base.control.get<control::component,control::nscalar>());
+               m_base.control.get<ctr::component,ctr::nscalar>());
   m_base.print.item("Turbulent frequencies",
-               m_base.control.get<control::component,control::nfrequency>());
+               m_base.control.get<ctr::component,ctr::nfrequency>());
   m_base.print.item("Particles",
-               m_base.control.get<control::component,control::npar>());
+               m_base.control.get<ctr::component,ctr::npar>());
   m_base.print.endsubsection();
 
   m_base.print.subsection("Incrementation parameters");
   m_base.print.item("Number of time steps",
-               m_base.control.get<control::incpar,control::nstep>());
+               m_base.control.get<ctr::incpar,ctr::nstep>());
   m_base.print.item("Terminate time",
-               m_base.control.get<control::incpar,control::term>());
+               m_base.control.get<ctr::incpar,ctr::term>());
   m_base.print.item("Initial time step size",
-               m_base.control.get<control::incpar,control::dt>());
+               m_base.control.get<ctr::incpar,ctr::dt>());
   m_base.print.endsubsection();
 
   m_base.print.subsection("Output intervals");
-  m_base.print.item("TTY", m_base.control.get<control::interval,control::tty>());
-  m_base.print.item("Dump", m_base.control.get<control::interval,control::dump>());
-  m_base.print.item("Glob", m_base.control.get<control::interval,control::glob>());
-  m_base.print.item("Statistics", m_base.control.get<control::interval,control::plot>());
-  m_base.print.item("PDF", m_base.control.get<control::interval,control::pdf>());
+  m_base.print.item("TTY", m_base.control.get<ctr::interval,ctr::tty>());
+  m_base.print.item("Dump", m_base.control.get<ctr::interval,ctr::dump>());
+  m_base.print.item("Glob", m_base.control.get<ctr::interval,ctr::glob>());
+  m_base.print.item("Statistics", m_base.control.get<ctr::interval,ctr::plot>());
+  m_base.print.item("PDF", m_base.control.get<ctr::interval,ctr::pdf>());
   m_base.print.endsubsection();
 
   m_base.print.subsection("Statistics");
-  m_base.print.vecvecNames<control::stats>(m_base.control,"Requested statistics",true);
-  m_base.print.vecvecNames<control::stats>(m_base.control,"Estimated statistics");
+  m_base.print.vecvecNames<ctr::stats>(m_base.control,"Requested statistics",true);
+  m_base.print.vecvecNames<ctr::stats>(m_base.control,"Estimated statistics");
   m_base.print.endpart();
 }

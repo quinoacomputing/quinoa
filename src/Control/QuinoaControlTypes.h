@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTypes.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:34:57 2013
+  \date      Thu Sep 19 09:27:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for control and parsing
   \details   Types for control and parsing
@@ -31,8 +31,7 @@
 #include <MixRateOptions.h>
 
 namespace quinoa {
-
-namespace control {
+namespace ctr {
 
 const int NCOMP_POS = 3;        //!< Number of position components for a field
 
@@ -114,8 +113,7 @@ struct Term {
   }
 
   //! Operator + for adding Term (name+field ID) to a std::string
-  friend std::string operator+ (const std::string& lhs,
-                                const control::Term& term) {
+  friend std::string operator+ (const std::string& lhs, const Term& term) {
     std::stringstream ss;
     ss << lhs << char(term.name) << term.field+1;
     std::string rhs = ss.str();
@@ -222,7 +220,7 @@ using intervals = tuple::tagged_tuple<
 
 //! IO parameters storage
 using ios = tuple::tagged_tuple<
-  ctr,     std::string,  //!< Control filename
+  control, std::string,  //!< Control filename
   input,   std::string,  //!< Input filename
   output,  std::string,  //!< Output filename
   pdf,     std::string,  //!< PDF filename
@@ -278,8 +276,7 @@ using parameters = tuple::tagged_tuple<
   glm,          GLMParameters
 >;
 
-} // namespace control
-
-} // namespace quinoa
+} // ctr::
+} // quinoa::
 
 #endif // QuinoaControlTypes_h

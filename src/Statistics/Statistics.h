@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed 18 Sep 2013 06:29:39 PM MDT
+  \date      Thu Sep 19 09:29:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -75,10 +75,10 @@ class Statistics {
     void estimateCentral();
 
     //! Find out whether product only contains ordinary moment terms
-    bool ordinary(const std::vector<control::Term>& product) const;
+    bool ordinary(const std::vector<ctr::Term>& product) const;
 
     //! Return mean for fluctuation
-    int mean(const control::Term& term) const;
+    int mean(const ctr::Term& term) const;
 
     //! Convert string to upper case
     std::string toUpper(const std::string& s) const;
@@ -91,14 +91,14 @@ class Statistics {
     const uint64_t m_npar;                    //!< Number of particles
     const real* const m_particles;            //!< Particles
     const int m_nprop;                        //!< Number of particle properties
-    const std::vector<control::Product> m_statistics;//!< Requested tatistics
+    const std::vector<ctr::Product> m_statistics;//!< Requested tatistics
 
     //! Instantaneous variable pointers for computing ordinary moments
     std::vector<std::vector<const real*>> m_instOrd;
     Data<real> m_ordinary;                    //!< Ordinary moments
     std::vector<bool> m_plotOrdinary;         //!< Whether to plot ord moments
     //! Ordinary moment field names
-    std::vector<control::FieldName> m_ordFieldName;
+    std::vector<ctr::FieldName> m_ordFieldName;
     std::vector<std::string> m_nameOrdinary;  //!< Ordinary moment names
     int m_nord;                               //!< Number of ordinary moments
 
