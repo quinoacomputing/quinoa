@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:45:00 2013
+  \date      Thu Sep 19 10:04:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -65,7 +65,7 @@ try :
                                  "Particles");
 
   //! Initialize model factories
-  initFactories();
+  initFactory();
 
   // Instantiate mass model
   if (m_ndensity) {
@@ -137,9 +137,9 @@ Physics::finalize() noexcept
 }
 
 void
-Physics::initFactories()
+Physics::initFactory()
 //******************************************************************************
-//  Register models in factories
+//  Initialize model factory
 //! \author  J. Bakosi
 //******************************************************************************
 {

@@ -43,8 +43,8 @@
   automatic destruction as leaving scope, dereferencing, testing nullness. See
   Item 2/28.
 
-* auto_ptr to avoid having to explicitly free pointers in destructors. See Item
-  2/9.
+* unique_ptr to avoid having to explicitly free pointers in destructors. See
+  also Item 2/9.
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 

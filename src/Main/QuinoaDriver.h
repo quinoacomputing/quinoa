@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Tue 17 Sep 2013 10:43:00 PM MDT
+  \date      Thu Sep 19 10:21:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -25,9 +25,7 @@ class QuinoaDriver : public Driver {
 
   public:
     //! Constructor
-    explicit QuinoaDriver(int argc,
-                          char** argv,
-                          Base& base);
+    explicit QuinoaDriver(int argc, char** argv, Base& base);
 
     //! Destructor
     ~QuinoaDriver() noexcept override = default;
@@ -45,13 +43,14 @@ class QuinoaDriver : public Driver {
     //! Don't permit move assignment
     QuinoaDriver& operator=(QuinoaDriver&&) = delete;
 
-    //! Instantiate geometry object
-    void initGeometry();
-
-    //! Instantiate physics object
-    void initPhysics();
+    //! Initialize physics factory
+    void initFactory();
 
     Base& m_base;                           //!< Essentials
+
+    //! Geometry and Physics factories
+    std::map<sel::PhysicsType, std::function<Physics*()>> m_physicsFactory;
+    std::map<sel::GeometryType, std::function<Geometry*()>> m_geometryFactory;
 
     std::unique_ptr<Geometry> m_geometry;   //!< Geometry object
     std::unique_ptr<Physics> m_physics;     //!< Physics object
