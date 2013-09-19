@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 13:31:18 2013
+  \date      Thu Sep 19 17:48:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -23,14 +23,7 @@
 
 using namespace quinoa;
 
-Statistics::Statistics(const Base& base, const real* const particles)
-//******************************************************************************
-//  Constructor
-//! \param[in]  base       Essentials
-//! \param[in]  particles  Particles
-//! \author  J. Bakosi
-//******************************************************************************
-try :
+Statistics::Statistics(const Base& base, const real* const particles) :
   m_base(base),
   m_nthread(base.paradigm.nthread()),
   m_npar(base.control.get<ctr::component, ctr::npar>()),
@@ -38,16 +31,19 @@ try :
   m_nprop(base.control.nprop()),
   m_statistics(base.control.get<ctr::stats>()),
   m_instOrd(),
-  m_ordinary(),
   m_ordFieldName(),
   m_nameOrdinary(),
   m_nord(0),
   m_instCen(),
-  m_central(),
   m_nameCentral(),
   m_ncen(0)
+//******************************************************************************
+//  Constructor
+//! \param[in]  base       Essentials
+//! \param[in]  particles  Particles
+//! \author  J. Bakosi
+//******************************************************************************
 {
-
   // Prepare for computing ordinary moments
   for (auto& product : m_statistics) {
     if (ordinary(product)) {
@@ -75,10 +71,7 @@ try :
   if (m_nord) {
     // Storage for all the required ordinary moments
     // +1 for each thread's 0 as center for ordinary moments
-    m_ordinary = base.memory.newEntry<real>(m_nthread*(m_nord+1),
-                                            REAL,
-                                            SCALAR,
-                                            "ordinary moments");
+    m_ordinary = std::unique_ptr<real[]>(new real [m_nthread*(m_nord+1)]);
 
     // Put in zero as index of center for ordinary moments in central products
     m_ordinary[m_nord] = 0.0;
@@ -98,7 +91,7 @@ try :
                                       term.field);
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
-            m_ordinary + (!isupper(term.name) ? mean(term) : m_nord));
+            m_ordinary.get() + (!isupper(term.name) ? mean(term) : m_nord));
           m_nameCentral.back() += ctr::FieldName(term.name, term.field);
         }
 
@@ -108,50 +101,10 @@ try :
 
     if (m_ncen) {
       // Storage for all the required central moments
-      m_central = base.memory.newEntry<real>(m_nthread*m_ncen,
-                                             REAL,
-                                             SCALAR,
-                                             "central moments");
-    } // if (m_ncen)
-  } // if (m_nord)
-
-} // Roll back changes and rethrow on error
-  catch (Exception& e) {
-    // No need to clean up if exception thrown from base constructor
-    if (e.func() == __PRETTY_FUNCTION__) finalize();
-    throw;
-  }
-  catch (std::exception&) {
-    finalize();
-    throw;
-  }
-  catch (...) {
-    finalize();
-    Throw(ExceptType::UNCAUGHT, "Non-standard exception");
+      m_central = std::unique_ptr<real[]>(new real [m_nthread*m_ncen]);
+    }
   }
 
-Statistics::~Statistics() noexcept
-//******************************************************************************
-//  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  finalize();
-}
-
-void
-Statistics::finalize() noexcept
-//******************************************************************************
-//  Finalize
-//! \details Single exit point, called implicitly from destructor or explicitly
-//!          from anywhere else. Exception safety: no-throw guarantee: never
-//!          throws exceptions.
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  if (m_ncen) m_base.memory.freeEntry(m_central);
-  if (m_nord) m_base.memory.freeEntry(m_ordinary);
 }
 
 bool
@@ -252,7 +205,7 @@ Statistics::estimateOrdinary()
     #endif
 
     // Zero ordinary moment accumulators
-    memset(m_ordinary + tid*(m_nord+1), 0, m_nord*sizeof(real));
+    memset(m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(real));
 
     // Accumulate ordinary moments
     #ifdef _OPENMP
@@ -304,7 +257,7 @@ Statistics::estimateCentral()
     #endif
 
     // Zero central moment accumulators
-    memset(m_central + tid*m_ncen, 0, m_ncen*sizeof(real));
+    memset(m_central.get() + tid*m_ncen, 0, m_ncen*sizeof(real));
 
     // Accumulate central moments
     #ifdef _OPENMP

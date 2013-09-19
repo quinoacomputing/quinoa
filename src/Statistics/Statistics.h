@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:29:32 2013
+  \date      Thu Sep 19 17:49:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -28,7 +28,7 @@ class Statistics {
     explicit Statistics(const Base& base, const real* const particles);
 
     //! Destructor
-    virtual ~Statistics() noexcept;
+    virtual ~Statistics() noexcept = default;
 
     //! Accumulate statistics
     void accumulate();
@@ -40,10 +40,10 @@ class Statistics {
     int ncen() const noexcept { return m_ncen; }
 
     //! Ordinary moments accessor
-    const real* ordinary() const noexcept { return m_ordinary.ptr; }
+    const real* ordinary() const noexcept { return m_ordinary.get(); }
 
     //! Central moments accessor
-    const real* central() const noexcept { return m_central.ptr; }
+    const real* central() const noexcept { return m_central.get(); }
 
     //! Find out whether ordinary moment is to be plotted
     bool plotOrdinary(const int m) const;
@@ -63,10 +63,6 @@ class Statistics {
     Statistics(Statistics&&) = delete;
     //! Don't permit move assigment
     Statistics& operator=(Statistics&&) = delete;
-
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
 
     //! Estimate ordinary moments
     void estimateOrdinary();
@@ -95,7 +91,7 @@ class Statistics {
 
     //! Instantaneous variable pointers for computing ordinary moments
     std::vector<std::vector<const real*>> m_instOrd;
-    Data<real> m_ordinary;                    //!< Ordinary moments
+    std::unique_ptr<real[]> m_ordinary;       //!< Ordinary moments
     std::vector<bool> m_plotOrdinary;         //!< Whether to plot ord moments
     //! Ordinary moment field names
     std::vector<ctr::FieldName> m_ordFieldName;
@@ -104,7 +100,7 @@ class Statistics {
 
     //! Instantaneous variable pointers for computing central moments
     std::vector<std::vector<const real*>> m_instCen;
-    Data<real> m_central;                     //!< Central moments
+    std::unique_ptr<real[]> m_central;        //!< Central moments
     //! Ordinary moments about which to compute central moments
     std::vector<std::vector<const real*>> m_center;
     std::vector<std::string> m_nameCentral;   //!< Central moment names
