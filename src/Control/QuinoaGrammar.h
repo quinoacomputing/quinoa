@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:36:22 2013
+  \date      Thu Sep 19 10:50:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -139,10 +139,10 @@ namespace grm {
   struct comment :
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
-  // plow through block of 'tokens' until 'end' keyword
-  template< typename... tokens >
+  // plow through 'tokens' until 'endkeyword'
+  template< typename endkeyword, typename... tokens >
   struct block :
-         until< read<kw::end>, sor<comment, tokens...> > {};
+         until< read<endkeyword>, sor<comment, tokens...> > {};
 
   // rng: one of the random number generators
   struct rng :
@@ -226,20 +226,21 @@ namespace grm {
          ifmust< parse< kw::analytic_geometry,
                         store_option<sel::Geometry,
                                      ctr::selected,
-                                     ctr::geometry> >, block<> > {};
+                                     ctr::geometry> >, block<kw::end> > {};
 
   // discrete_geometry block
   struct discrete_geometry:
          ifmust< parse< kw::discrete_geometry,
                         store_option<sel::Geometry,
                                      ctr::selected,
-                                     ctr::geometry> >, block<> > {};
+                                     ctr::geometry> >, block<kw::end> > {};
 
   // dir block
   struct dir :
          ifmust< parse< kw::mix_dir,
                         store_option<sel::Mix, ctr::selected, ctr::mix> >,
-                 block< process<kw::nscalar,
+                 block< kw::end,
+                        process<kw::nscalar,
                                 store<ctr::component, ctr::nscalar>>,
                         list< kw::dir_B,
                               store_back<ctr::param,
@@ -258,7 +259,8 @@ namespace grm {
   struct gendir :
          ifmust< parse< kw::mix_gendir,
                         store_option<sel::Mix, ctr::selected, ctr::mix> >,
-                 block< process< kw::nscalar,
+                 block< kw::end,
+                        process< kw::nscalar,
                                  store<ctr::component, ctr::nscalar> >,
                         list< kw::dir_B,
                               store_back<ctr::param,
@@ -280,7 +282,7 @@ namespace grm {
   // statistics block
   struct statistics :
          ifmust< read< kw::statistics >,
-                 block< parse_expectations<'<','>'> > > {};
+                 block< kw::end, parse_expectations<'<','>'> > > {};
 
   // slm block
   struct slm :
@@ -302,7 +304,8 @@ namespace grm {
                                   ctr::Moment::CENTRAL, 'w'>,
                         push_term<ctr::Quantity::VELOCITY_Z,
                                   ctr::Moment::CENTRAL, 'w'>>,
-                 block< process<kw::SLM_C0,
+                 block< kw::end,
+                        process<kw::SLM_C0,
                                 store<ctr::param, ctr::slm, ctr::c0>>,
                         process<kw::nvelocity,
                                 store<ctr::component, ctr::nvelocity>>
@@ -313,7 +316,8 @@ namespace grm {
          ifmust< parse< kw::freq_gamma, store_option<sel::Frequency,
                                                      ctr::selected,
                                                      ctr::frequency> >,
-                 block< process<kw::nfreq,
+                 block< kw::end,
+                        process<kw::nfreq,
                                 store<ctr::component, ctr::nfrequency>>,
                         process<kw::freq_gamma_C1,
                                 store<ctr::param, ctr::gamma, ctr::c1>>,
@@ -329,7 +333,8 @@ namespace grm {
   struct beta :
          ifmust< parse<kw::mass_beta,
                        store_option<sel::Mass, ctr::selected, ctr::mass>>,
-                 block< process<kw::ndensity,
+                 block< kw::end,
+                        process<kw::ndensity,
                                 store<ctr::component, ctr::ndensity>>,
                         process<kw::Beta_At,
                                 store<ctr::param, ctr::beta, ctr::atwood>> >
@@ -362,17 +367,19 @@ namespace grm {
   struct hommix :
          ifmust< parse<kw::hommix,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block< geometry,
-                        physics_common,
-                        dir,
-                        gendir,
-                        statistics > > {};
+                 block<kw::end,
+                       geometry,
+                       physics_common,
+                       dir,
+                       gendir,
+                       statistics> > {};
 
   // homrt block
   struct homrt :
          ifmust< parse<kw::homrt,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<geometry,
+                 block<kw::end,
+                       geometry,
                        physics_common,
                        dir,
                        gendir,
@@ -384,7 +391,8 @@ namespace grm {
   struct homhydro :
          ifmust< parse<kw::homhydro,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<geometry,
+                 block<kw::end,
+                       geometry,
                        physics_common,
                        slm,
                        freq_gamma,
@@ -394,7 +402,8 @@ namespace grm {
   struct spinsflow :
          ifmust< parse<kw::spinsflow,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<geometry,
+                 block<kw::end,
+                       geometry,
                        physics_common,
                        slm,
                        freq_gamma,

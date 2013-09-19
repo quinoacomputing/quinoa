@@ -9,8 +9,6 @@
       Concurrency in Action
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
 
-* Is there a way to move keyword::end out of block in QuinoaGrammar?
-
 * Error/Exception handling:
     - Can we get rid of Exception macros?
     - Define own error handler for the new operator via set_new_handler(), and
