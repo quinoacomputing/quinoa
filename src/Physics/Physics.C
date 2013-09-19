@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 10:26:08 PM MDT
+  \date      Wed 18 Sep 2013 06:44:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -40,7 +40,6 @@ try :
   m_npar(base.control.get<control::component, control::npar>()),
   m_term(base.control.get<control::incpar, control::term>()),
   m_base(base),
-  m_mass(nullptr),
   m_hydro(nullptr),
   m_mix(nullptr),
   m_statistics(nullptr),
@@ -64,24 +63,23 @@ try :
 
   // Instantiate mass model
   if (m_ndensity) {
-    m_mass = new (nothrow) MassType(m_base, m_particles.ptr);
-    ErrChk(m_mass != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+    m_mass = newModel<Mass>();
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    m_hydro = new (nothrow) HydroType(m_base, m_particles.ptr);
+    //m_hydro = new (nothrow) HydroType(m_base, m_particles.ptr);
     ErrChk(m_hydro != nullptr, ExceptType::FATAL, "Cannot allocate memory");
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    m_mix = new (nothrow) MixType(m_base, m_particles.ptr);
+    //m_mix = new (nothrow) MixType(m_base, m_particles.ptr);
     ErrChk(m_mix != nullptr, ExceptType::FATAL, "Cannot allocate memory");
   }
 
   // Instantiate statistics estimator
-  m_statistics = new (nothrow) Statistics(m_base, this);
+  m_statistics = new (nothrow) Statistics(m_base, m_particles.ptr);
   ErrChk(m_statistics != nullptr, ExceptType::FATAL,"Cannot allocate memory");
 
   // Instantiate glob file writer
@@ -123,7 +121,7 @@ Physics::finalize() noexcept
 //******************************************************************************
 {
   m_base.memory.freeEntry(m_particles);  
-  if (m_mass) { delete m_mass; m_mass = nullptr; }
+  //if (m_mass) { delete m_mass; m_mass = nullptr; }
   if (m_hydro) { delete m_hydro; m_hydro = nullptr; }
   if (m_mix) { delete m_mix; m_mix = nullptr; }
   if (m_statistics) { delete m_statistics; m_statistics = nullptr; }

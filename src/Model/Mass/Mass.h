@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:25:46 PM MDT
+  \date      Wed Sep 18 13:58:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -19,9 +19,7 @@
 
 namespace quinoa {
 
-//! Mass model base for CRTP
-//! See: http://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
-template< typename MassType >
+//! Mass model base
 class Mass : public Model {
 
   public:
@@ -40,11 +38,11 @@ class Mass : public Model {
     //! Destructor
     ~Mass() noexcept override = default;
 
-    //! CRTP interface: Initialize particles
-    void init() { static_cast<MassType*>(this)->init(); }
+    //! Initialize particles
+    virtual void init() = 0;
 
-    //! CRTP interface: Advance particles in mass model
-    void advance(const real& dt) { static_cast<MassType*>(this)->advance(dt); }
+    //! Advance particles in mass model
+    virtual void advance(const real& dt) = 0;
 
   protected:
     const int m_offset;             //!< Mass-offset relative to base
