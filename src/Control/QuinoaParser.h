@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 12:27:02 PM MDT
+  \date      Thu Sep 19 09:28:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -33,7 +33,7 @@ class QuinoaParser : public Parser {
       : Parser(filename),
         m_print(print),
         m_control(control) {
-      m_control.set<control::io,control::ctr>(filename);
+      m_control.set<ctr::io,ctr::control>(filename);
     }
 
     //! Destructor
@@ -56,7 +56,7 @@ class QuinoaParser : public Parser {
     QuinoaParser& operator=(QuinoaParser&&) = delete;
 
     //! Make requested statistics unique
-    void unique(std::vector<control::Product>& statistics);
+    void unique(std::vector<ctr::Product>& statistics);
 
     const QuinoaPrint& m_print;       //!< Pretty printer
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:35:09 2013
+  \date      Thu Sep 19 09:27:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -26,20 +26,20 @@ namespace quinoa {
 
 //! QuinoaControl : Control<specialized to Quinoa>, see QuinoaControlTypes.h
 class QuinoaControl :
-  public Control< // tag               type
-                  control::title,      std::string,
-                  control::selected,   control::selects,
-                  control::incpar,     control::incpars,
-                  control::component,  control::components,
-                  control::interval,   control::intervals,
-                  control::io,         control::ios,
-                  control::param,      control::parameters,
-                  control::stats,      std::vector<control::Product> > {
+  public Control< // tag           type
+                  ctr::title,      std::string,
+                  ctr::selected,   ctr::selects,
+                  ctr::incpar,     ctr::incpars,
+                  ctr::component,  ctr::components,
+                  ctr::interval,   ctr::intervals,
+                  ctr::io,         ctr::ios,
+                  ctr::param,      ctr::parameters,
+                  ctr::stats,      std::vector<ctr::Product> > {
 
   public:
     //! Constructor: set all defaults, see QuinoaControlTypes.h
     QuinoaControl() {
-      using namespace control;
+      using namespace ctr;
       // Default title
       set<title>("");
       // Default options
@@ -70,7 +70,7 @@ class QuinoaControl :
       set<interval,pdf>(1);
       set<interval,glob>(1);
       // Default I/O parameters
-      set<io,ctr>("");
+      set<io,control>("");
       set<io,input>("");
       set<io,output>("out");
       set<io,pdf>("pdf");
@@ -105,7 +105,7 @@ class QuinoaControl :
 
     //! Return total number of particle properties
     uint32_t nprop() const noexcept {
-      using namespace control;
+      using namespace ctr;
       return get<component,nposition>() +
              get<component,ndensity>() +
              get<component,nvelocity>() +
@@ -119,26 +119,26 @@ class QuinoaControl :
     }
     //! Return density offset
     int densityOffset() const noexcept {
-      using namespace control;
+      using namespace ctr;
       return get<component,nposition>();
     }
     //! Return velocity offset
     int velocityOffset() const noexcept {
-      using namespace control;
+      using namespace ctr;
       return get<component,nposition>() +
              get<component,ndensity>();
     }
     //! Return scalar offset
     int scalarOffset() const noexcept {
-      using namespace control;
+      using namespace ctr;
       return get<component,nposition>() +
              get<component,ndensity>() +
              get<component,nvelocity>();
     }
 
     //! Return offset for term::quantity
-    int termOffset(control::Quantity q) const noexcept {
-      using namespace control;
+    int termOffset(ctr::Quantity q) const noexcept {
+      using namespace ctr;
       int offset = 0;
       if (q == Quantity::SCALAR)
         offset += get<component,nvelocity>();
@@ -151,21 +151,6 @@ class QuinoaControl :
       if (q == Quantity::DENSITY)
         offset += NCOMP_POS * get<component,nposition>();
       return offset;
-    }
-
-    //! Error out on model configured at compile-time not matching that whose
-    //! coefficients have been parsed
-    template<class OptionType, class ModelType, typename Parsed>
-    void matchModels(const ModelType configured) {
-//       bool match = configured == get<options>();
-//       if (!match) {
-//         control::Option<OptionType> Model;
-//         std::stringstream ss;
-//         ss << "Compile-time-configured model (" << Model.name(configured)
-//            << ") does not match that (" << Model.name(get<Parsed>())
-//            << ") whose coefficients have been parsed in from the input file.";
-//         Throw(ExceptType::FATAL, ss.str());
-//       }
     }
 
   private:

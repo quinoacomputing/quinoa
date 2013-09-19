@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed 18 Sep 2013 06:29:56 PM MDT
+  \date      Thu Sep 19 09:23:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -34,10 +34,10 @@ Statistics::Statistics(const Base& base, const real* const particles)
 try :
   m_base(base),
   m_nthread(base.paradigm.nthread()),
-  m_npar(base.control.get<control::component, control::npar>()),
+  m_npar(base.control.get<ctr::component, ctr::npar>()),
   m_particles(particles),
   m_nprop(base.control.nprop()),
-  m_statistics(base.control.get<control::stats>()),
+  m_statistics(base.control.get<ctr::stats>()),
   m_instOrd(),
   m_ordinary(),
   m_ordFieldName(),
@@ -56,7 +56,7 @@ try :
       m_instOrd.push_back(std::vector<const real*>());
       m_plotOrdinary.push_back(false);
       m_nameOrdinary.push_back(std::string());
-      m_ordFieldName.push_back(control::FieldName());
+      m_ordFieldName.push_back(ctr::FieldName());
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
@@ -66,7 +66,7 @@ try :
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
         m_nameOrdinary.back() += m_ordFieldName.back()
-                               = control::FieldName(term.name, term.field);
+                               = ctr::FieldName(term.name, term.field);
       }
 
       ++m_nord;
@@ -100,7 +100,7 @@ try :
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
             m_ordinary + (!isupper(term.name) ? mean(term) : m_nord));
-          m_nameCentral.back() += control::FieldName(term.name, term.field);
+          m_nameCentral.back() += ctr::FieldName(term.name, term.field);
         }
 
         ++m_ncen;
@@ -156,7 +156,7 @@ Statistics::finalize() noexcept
 }
 
 bool
-Statistics::ordinary(const std::vector<control::Term>& product) const
+Statistics::ordinary(const std::vector<ctr::Term>& product) const
 //******************************************************************************
 //  Find out whether product only contains ordinary moment terms
 //! \param[in]  product   Vector of terms
@@ -166,14 +166,14 @@ Statistics::ordinary(const std::vector<control::Term>& product) const
   // If and only if all terms are ordinary, the product is ordinary
   bool ordinary = true;
   for (auto& term : product) {
-    if (term.moment == control::Moment::CENTRAL)
+    if (term.moment == ctr::Moment::CENTRAL)
       ordinary = false;
   }
   return ordinary;
 }
 
 int
-Statistics::mean(const control::Term& term) const
+Statistics::mean(const ctr::Term& term) const
 //******************************************************************************
 //  Return mean for fluctuation
 //! \param[in]  term      Term (a fluctuation) whose mean to search for

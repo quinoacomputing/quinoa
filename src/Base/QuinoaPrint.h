@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 07:28:20 PM MDT
+  \date      Thu Sep 19 09:17:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -44,7 +44,7 @@ class QuinoaPrint : public Print {
 //     //! Echo vector of Option.names
 //     template<class OptionType, typename... tags>
 //     void echoVecOptName(const std::string& msg) const {
-//       control::Option<OptionType> opt;
+//       ctr::Option<OptionType> opt;
 //       std::cout << "   - " << msg << ": {";
 //       for (auto& v : get<tags...>()) {
 //         std::cout << " " << opt.name(v);

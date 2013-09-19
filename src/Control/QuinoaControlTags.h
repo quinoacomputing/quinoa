@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTags.h
   \author    J. Bakosi
-  \date      Thu Sep 12 10:35:46 2013
+  \date      Thu Sep 19 09:27:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's control tags
   \details   All control tags used to build a nested tagged tagged tuple
@@ -12,8 +12,7 @@
 #define QuinoaControlTags_h
 
 namespace quinoa {
-
-namespace control {
+namespace ctr {
 
 struct geometry {};
 struct physics {};
@@ -42,7 +41,7 @@ struct plot {};
 struct pdf {};
 struct glob {};
 
-struct ctr {};
+struct control {};
 struct input {};
 struct output {};
 struct stats {};
@@ -73,8 +72,7 @@ struct interval {};
 struct io {};
 struct param {};
 
-} // namespace control
-
-} // namespace quinoa
+} // ctr::
+} // quinoa::
 
 #endif // QuinoaControlTags_h
