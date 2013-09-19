@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:02:49 2013
+  \date      Thu Sep 19 09:34:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser
@@ -17,10 +17,8 @@
 #define Keywords
 
 namespace quinoa {
-
-namespace grammar {
-
-namespace keyword {
+namespace grm {
+namespace kw {
 
   using namespace pegtl::ascii;
 
@@ -207,10 +205,8 @@ namespace keyword {
   using mkl_sabstract = pegtl::string< m,k,l,'_',s,a,b,s,t,r,a,c,t >;
   using mkl_nondeterm = pegtl::string< m,k,l,'_',n,o,n,d,e,t,e,r,m >;
 
-} // namespace keyword
-
-} // namespace grammar
-
-} // namespace quinoa
+} // kw::
+} // grm::
+} // quinoa::
 
 #endif // QuinoaKeywords_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:18:33 2013
+  \date      Thu Sep 19 09:35:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -15,8 +15,7 @@
 #define RNGTestGrammar_h
 
 namespace rngtest {
-
-namespace grammar {
+namespace grm {
 
   //using namespace pegtl;
 
@@ -37,22 +36,21 @@ namespace grammar {
 
 //   // common to all RNG test suites
 //   struct rngtest_common :
-//          sor< process< keyword::suite,
+//          sor< process< kw::suite,
 //                        store_option<select::RNGTest, ctr::RNGTEST> >,
-//               list<keyword::rngs, push<ctr::RNGS, select::RNGType>, rng>
+//               list<kw::rngs, push<ctr::RNGS, select::RNGType>, rng>
 //             > {};
 //
 
 //   // rngtest block
 //   struct rngtest :
-//          ifmust< parse< keyword::rngtest,
+//          ifmust< parse< kw::rngtest,
 //                         store_option<select::Physics, ctr::PHYSICS> >,
 //                  block< rngtest_common >
 //                > {};
 // 
 
-} // namespace grammar
-
-} // namespace Quinoa
+} // grm::
+} // rngtest::
 
 #endif // RNGTestGrammar_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:22:36 2013
+  \date      Thu Sep 19 09:36:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -20,8 +20,7 @@
 #include <QuinoaKeywords.h>
 
 namespace quinoa {
-
-namespace grammar {
+namespace grm {
 
   using namespace pegtl;
 
@@ -116,18 +115,18 @@ namespace grammar {
          pad< trim<token, space>, blank, space > {};
 
   // match all accepted as position models
-  struct position : sor< keyword::pos_inviscid,
-                         keyword::pos_viscous > {};
+  struct position : sor< kw::pos_inviscid,
+                         kw::pos_viscous > {};
 
   // match all accepted as hydro models
-  struct hydro : sor< keyword::hydro_slm,
-                      keyword::hydro_glm > {};
+  struct hydro : sor< kw::hydro_slm,
+                      kw::hydro_glm > {};
 
   // match all accepted as mix models
-  struct mix : sor< keyword::mix_iem,
-                    keyword::mix_iecm,
-                    keyword::mix_dir,
-                    keyword::mix_gendir > {};
+  struct mix : sor< kw::mix_iem,
+                    kw::mix_iecm,
+                    kw::mix_dir,
+                    kw::mix_gendir > {};
 
   // parse input padded by blank at left and space at right and if it matches
   // 'keywords', apply 'actions'
@@ -142,24 +141,24 @@ namespace grammar {
   // plow through block of 'tokens' until 'end' keyword
   template< typename... tokens >
   struct block :
-         until< read<keyword::end>, sor<comment, tokens...> > {};
+         until< read<kw::end>, sor<comment, tokens...> > {};
 
   // rng: one of the random number generators
   struct rng :
-         sor< keyword::mkl_mcg31,
-              keyword::mkl_r250,
-              keyword::mkl_mrg32k3a,
-              keyword::mkl_mcg59,
-              keyword::mkl_wh,
-              keyword::mkl_mt19937,
-              keyword::mkl_mt2203,
-              keyword::mkl_sfmt19937,
-              keyword::mkl_sobol,
-              keyword::mkl_niederr,
-              keyword::mkl_iabstract,
-              keyword::mkl_dabstract,
-              keyword::mkl_sabstract,
-              keyword::mkl_nondeterm > {};
+         sor< kw::mkl_mcg31,
+              kw::mkl_r250,
+              kw::mkl_mrg32k3a,
+              kw::mkl_mcg59,
+              kw::mkl_wh,
+              kw::mkl_mt19937,
+              kw::mkl_mt2203,
+              kw::mkl_sfmt19937,
+              kw::mkl_sobol,
+              kw::mkl_niederr,
+              kw::mkl_iabstract,
+              kw::mkl_dabstract,
+              kw::mkl_sabstract,
+              kw::mkl_nondeterm > {};
 
   // number: optional sign followed by digits
   struct number :
@@ -170,7 +169,7 @@ namespace grammar {
   template< class key, class insert, class value = number >
   struct list :
          ifmust< read<key>,
-                 until< read<keyword::end>, sor<comment, parse<value,insert>> >
+                 until< read<kw::end>, sor<comment, parse<value,insert>> >
                > {};
 
   // process 'keyword' and call its 'insert' action if matches 'keywords'
@@ -186,13 +185,13 @@ namespace grammar {
 
   // terms recognized within an expectation and their mapping
   struct terms :
-         sor< moment<keyword::transported_scalar,
+         sor< moment<kw::transported_scalar,
                      ctr::Quantity::SCALAR,
                      ctr::Moment::ORDINARY>,
-              moment<keyword::transported_scalar_fluctuation,
+              moment<kw::transported_scalar_fluctuation,
                      ctr::Quantity::SCALAR,
                      ctr::Moment::CENTRAL>,
-              moment<keyword::velocity_x,
+              moment<kw::velocity_x,
                      ctr::Quantity::VELOCITY_X,
                      ctr::Moment::ORDINARY>
             > {};
@@ -219,76 +218,76 @@ namespace grammar {
 
   // title
   struct title :
-         ifmust< read<keyword::title>, parse_title<'"','"'> > {};
+         ifmust< read<kw::title>, parse_title<'"','"'> > {};
 
   // analytic_geometry block
   struct analytic_geometry:
-         ifmust< parse< keyword::analytic_geometry,
+         ifmust< parse< kw::analytic_geometry,
                         store_option<select::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >, block<> > {};
 
   // discrete_geometry block
   struct discrete_geometry:
-         ifmust< parse< keyword::discrete_geometry,
+         ifmust< parse< kw::discrete_geometry,
                         store_option<select::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >, block<> > {};
 
   // dir block
   struct dir :
-         ifmust< parse< keyword::mix_dir,
+         ifmust< parse< kw::mix_dir,
                         store_option<select::Mix,
                                      ctr::selected,
                                      ctr::mix> >,
-                 block< process<keyword::nscalar,
+                 block< process<kw::nscalar,
                                 store<ctr::component, ctr::nscalar>>,
-                        list< keyword::dir_B,
+                        list< kw::dir_B,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::b> >,
-                        list< keyword::dir_S,
+                        list< kw::dir_S,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::S> >,
-                        list< keyword::dir_kappa,
+                        list< kw::dir_kappa,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::kappa> > > > {};
 
   // gendir block
   struct gendir :
-         ifmust< parse< keyword::mix_gendir,
+         ifmust< parse< kw::mix_gendir,
                         store_option<select::Mix,
                                      ctr::selected,
                                      ctr::mix> >,
-                 block< process< keyword::nscalar,
+                 block< process< kw::nscalar,
                                  store<ctr::component, ctr::nscalar> >,
-                        list< keyword::dir_B,
+                        list< kw::dir_B,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::b> >,
-                        list< keyword::dir_S,
+                        list< kw::dir_S,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::S> >,
-                        list< keyword::dir_kappa,
+                        list< kw::dir_kappa,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::kappa> >,
-                        list< keyword::gendir_C,
+                        list< kw::gendir_C,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::c>> > > {};
 
   // statistics block
   struct statistics :
-         ifmust< read< keyword::statistics >,
+         ifmust< read< kw::statistics >,
                  block< parse_expectations<'<','>'> > > {};
 
   // slm block
   struct slm :
-         ifmust< parse< keyword::hydro_slm,
+         ifmust< parse< kw::hydro_slm,
                         store_option<select::Hydro,
                                      ctr::selected,
                                      ctr::hydro>,
@@ -308,46 +307,46 @@ namespace grammar {
                                   ctr::Moment::CENTRAL, 'w'>,
                         push_term<ctr::Quantity::VELOCITY_Z,
                                   ctr::Moment::CENTRAL, 'w'>>,
-                 block< process<keyword::SLM_C0, store<ctr::param,
-                                                       ctr::slm,
-                                                       ctr::c0>>,
-                        process<keyword::nvelocity, store<ctr::component,
-                                                          ctr::nvelocity>>
+                 block< process<kw::SLM_C0, store<ctr::param,
+                                                  ctr::slm,
+                                                  ctr::c0>>,
+                        process<kw::nvelocity, store<ctr::component,
+                                                     ctr::nvelocity>>
                       > > {};
 
   // freq_gamma block
   struct freq_gamma :
-         ifmust< parse< keyword::freq_gamma,
+         ifmust< parse< kw::freq_gamma,
                         store_option<select::Frequency,
                                      ctr::selected,
                                      ctr::frequency> >,
-                 block< process<keyword::nfreq, store<ctr::component,
-                                                      ctr::nfrequency>>,
-                        process<keyword::freq_gamma_C1, store<ctr::param,
-                                                              ctr::gamma,
-                                                              ctr::c1>>,
-                        process<keyword::freq_gamma_C2, store<ctr::param,
-                                                              ctr::gamma,
-                                                              ctr::c2>>,
-                        process<keyword::freq_gamma_C3, store<ctr::param,
-                                                              ctr::gamma,
-                                                              ctr::c3>>,
-                        process<keyword::freq_gamma_C4, store<ctr::param,
-                                                              ctr::gamma,
-                                                              ctr::c4>> >
+                 block< process<kw::nfreq, store<ctr::component,
+                                                 ctr::nfrequency>>,
+                        process<kw::freq_gamma_C1, store<ctr::param,
+                                                         ctr::gamma,
+                                                         ctr::c1>>,
+                        process<kw::freq_gamma_C2, store<ctr::param,
+                                                         ctr::gamma,
+                                                         ctr::c2>>,
+                        process<kw::freq_gamma_C3, store<ctr::param,
+                                                         ctr::gamma,
+                                                         ctr::c3>>,
+                        process<kw::freq_gamma_C4, store<ctr::param,
+                                                         ctr::gamma,
+                                                         ctr::c4>> >
                > {};
 
   // beta block
   struct beta :
-         ifmust< parse< keyword::mass_beta,
+         ifmust< parse< kw::mass_beta,
                         store_option<select::Mass,
                                      ctr::selected,
                                      ctr::mass> >,
-                 block< process<keyword::ndensity, store<ctr::component,
-                                                         ctr::ndensity>>,
-                        process<keyword::Beta_At, store<ctr::param,
-                                                        ctr::beta,
-                                                        ctr::atwood>> >
+                 block< process<kw::ndensity, store<ctr::component,
+                                                    ctr::ndensity>>,
+                        process<kw::Beta_At, store<ctr::param,
+                                                   ctr::beta,
+                                                   ctr::atwood>> >
                > {};
 
   // geometry definition types
@@ -357,25 +356,25 @@ namespace grammar {
 
   // common to all physics
   struct physics_common :
-         sor< process<keyword::nstep, store<ctr::incpar, ctr::nstep>>,
-              process<keyword::term, store<ctr::incpar, ctr::term>>,
-              process<keyword::dt, store<ctr::incpar, ctr::dt>>,
-              process<keyword::npar, store<ctr::component, ctr::npar>>,
-              process<keyword::input, set<ctr::io, ctr::input>>,
-              process<keyword::output, set<ctr::io, ctr::output>>,
-              process<keyword::pdfname, set<ctr::io, ctr::pdf>>,
-              process<keyword::globname, set<ctr::io, ctr::glob>>,
-              process<keyword::statname, set<ctr::io, ctr::stats>>,
-              process<keyword::glbi, store<ctr::interval, ctr::glob>>,
-              process<keyword::pdfi, store<ctr::interval, ctr::pdf>>,
-              process<keyword::stai, store<ctr::interval, ctr::plot>>,
-              process<keyword::ttyi, store<ctr::interval, ctr::tty>>,
-              process<keyword::dmpi, store<ctr::interval, ctr::dump>>
+         sor< process<kw::nstep, store<ctr::incpar, ctr::nstep>>,
+              process<kw::term, store<ctr::incpar, ctr::term>>,
+              process<kw::dt, store<ctr::incpar, ctr::dt>>,
+              process<kw::npar, store<ctr::component, ctr::npar>>,
+              process<kw::input, set<ctr::io, ctr::input>>,
+              process<kw::output, set<ctr::io, ctr::output>>,
+              process<kw::pdfname, set<ctr::io, ctr::pdf>>,
+              process<kw::globname, set<ctr::io, ctr::glob>>,
+              process<kw::statname, set<ctr::io, ctr::stats>>,
+              process<kw::glbi, store<ctr::interval, ctr::glob>>,
+              process<kw::pdfi, store<ctr::interval, ctr::pdf>>,
+              process<kw::stai, store<ctr::interval, ctr::plot>>,
+              process<kw::ttyi, store<ctr::interval, ctr::tty>>,
+              process<kw::dmpi, store<ctr::interval, ctr::dump>>
             > {};
 
   // hommix block
   struct hommix :
-         ifmust< parse< keyword::hommix,
+         ifmust< parse< kw::hommix,
                         store_option<select::Physics,
                                      ctr::selected,
                                      ctr::physics> >,
@@ -387,7 +386,7 @@ namespace grammar {
 
   // homrt block
   struct homrt :
-         ifmust< parse< keyword::homrt,
+         ifmust< parse< kw::homrt,
                         store_option<select::Physics,
                                      ctr::selected,
                                      ctr::physics> >,
@@ -401,7 +400,7 @@ namespace grammar {
 
   // homhydro block
   struct homhydro :
-         ifmust< parse< keyword::homhydro,
+         ifmust< parse< kw::homhydro,
                         store_option<select::Physics,
                                      ctr::selected,
                                      ctr::physics> >,
@@ -413,7 +412,7 @@ namespace grammar {
 
   // spinsflow block
   struct spinsflow :
-         ifmust< parse< keyword::spinsflow,
+         ifmust< parse< kw::spinsflow,
                         store_option<select::Physics,
                                      ctr::selected,
                                      ctr::physics> >,
@@ -445,8 +444,7 @@ namespace grammar {
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
 
-} // namespace grammar
-
-} // namespace quinoa
+} // grm::
+} // quinoa::
 
 #endif // QuinoaGrammar_h

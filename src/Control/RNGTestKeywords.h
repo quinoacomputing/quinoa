@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestKeywords.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:50:35 2013
+  \date      Thu Sep 19 09:34:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite keywords
   \details   Random number generator test suite keywords
@@ -17,10 +17,8 @@
 #define Keywords
 
 namespace rngtest {
-
-namespace grammar {
-
-namespace keyword {
+namespace grm {
+namespace kw {
 
   using namespace pegtl::ascii;
 
@@ -57,11 +55,9 @@ namespace keyword {
   using mkl_sabstract = pegtl::string< m,k,l,'_',s,a,b,s,t,r,a,c,t >;
   using mkl_nondeterm = pegtl::string< m,k,l,'_',n,o,n,d,e,t,e,r,m >;
 
-} // namespace keyword
-
-} // namespace grammar
-
-} // namespace RNGTest
+} // kw::
+} // grm::
+} // rngtest::
 
 #undef Keywords
 
