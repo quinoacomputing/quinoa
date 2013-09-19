@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:31:21 2013
+  \date      Thu Sep 19 17:33:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -45,8 +45,6 @@ Physics::Physics(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using namespace ctr;
-
   //! Echo information on physics
   echo();
 
