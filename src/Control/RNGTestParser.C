@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.C
   \author    J. Bakosi
-  \date      Thu Sep 12 16:37:03 2013
+  \date      Thu Sep 19 09:33:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -32,9 +32,9 @@ RNGTestParser::parse()
 // 
 //   //std::cout << "==== PARSE START ====" << std::endl;
 // #ifdef NDEBUG
-//   pegtl::dummy_parse_file<grammar::read_file>(m_filename, stack, boolstack);
+//   pegtl::dummy_parse_file<grm::read_file>(m_filename, stack, boolstack);
 // #else  // NDEBUG
-//   pegtl::basic_parse_file<grammar::read_file>(m_filename, stack, boolstack);
+//   pegtl::basic_parse_file<grm::read_file>(m_filename, stack, boolstack);
 // #endif // NDEBUG
 //   //std::cout << "==== PARSE END ====" << std::endl << std::endl;
 // 

@@ -11,8 +11,6 @@
 
 * Is there a way to move keyword::end out of block in QuinoaGrammar?
 
-* Rename namespace 'control' to 'ctr'. Other namespaces?
-
 * Error/Exception handling:
     - Can we get rid of Exception macros?
     - Define own error handler for the new operator via set_new_handler(), and
