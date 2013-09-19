@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestKeywords.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:34:18 2013
+  \date      Thu Sep 19 10:37:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite keywords
   \details   Random number generator test suite keywords
@@ -18,6 +18,7 @@
 
 namespace rngtest {
 namespace grm {
+//! List of keywords the parser understands
 namespace kw {
 
   using namespace pegtl::ascii;

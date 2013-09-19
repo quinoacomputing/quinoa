@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:28:42 AM MDT
+  \date      Thu Sep 19 10:38:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -20,6 +20,7 @@
 
 using namespace quinoa;
 
+//! Everything that contributes to the quina executable
 namespace quinoa {
 
 static void echoHeader(const QuinoaPrint& print)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:08:42 PM MDT
+  \date      Thu Sep 19 10:39:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -15,6 +15,7 @@
 #include <Exception.h>
 #include <RNGTestDriver.h>
 
+//! Everything that contributes to the rngtest executable
 namespace rngtest {
 
 static void echoName()
