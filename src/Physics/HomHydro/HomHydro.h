@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:46:55 PM MDT
+  \date      Thu Sep 19 18:01:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -33,7 +33,7 @@ class HomHydro : public Physics {
       m_totalTime(base.timer.create("Total solution")) {}
 
     //! Destructor
-    ~HomHydro() noexcept override = default;
+    ~HomHydro() override = default;
 
     //! Initialize model
     void init() override;

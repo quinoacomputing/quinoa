@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:53:45 PM MDT
+  \date      Thu Sep 19 18:02:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -30,7 +30,7 @@ class SPINSFlow : public Physics {
       m_totalTime(base.timer.create("Total solution")) {}
 
     //! Destructor
-    ~SPINSFlow() noexcept override = default;
+    ~SPINSFlow() override = default;
 
     //! Initialize model
     void init() override;
