@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:29:02 2013
+  \date      Thu 19 Sep 2013 09:08:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -79,6 +79,8 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  ErrCode error = ErrCode::SUCCESS;
+
   try {
 
     // Install our own new-handler
@@ -115,9 +117,9 @@ int main(int argc, char* argv[])
     driver.execute();
 
   } catch (...) {
-      processException();
+      error = processException();
     }
 
   // Return error code success
-  return static_cast<int>(ErrCode::SUCCESS);
+  return static_cast<int>(error);
 }

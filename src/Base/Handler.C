@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Thu Sep 19 13:27:00 2013
+  \date      Thu 19 Sep 2013 09:08:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -10,11 +10,10 @@
 //******************************************************************************
 
 #include <Handler.h>
-#include <Exception.h>
 
 namespace quinoa {
 
-void processException [[noreturn]] () noexcept
+ErrCode processException() noexcept
 //******************************************************************************
 // Process an exception
 //! \details This function can be used to process an exception. The following
@@ -48,7 +47,7 @@ void processException [[noreturn]] () noexcept
     }
 
   // Return error code
-  std::exit(static_cast<int>(error));
+  return error;
 }
 
 void newHandler() noexcept
