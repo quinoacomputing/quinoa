@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.h
   \author    J. Bakosi
-  \date      Thu Sep 19 13:22:54 2013
+  \date      Thu 19 Sep 2013 08:56:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -11,10 +11,12 @@
 #ifndef Handler_h
 #define Handler_h
 
+#include <Exception.h>
+
 namespace quinoa {
 
 //! Process an exception
-void processException [[noreturn]] () noexcept;
+ErrCode processException() noexcept;
 
 //! Quinoa's own new handler
 void newHandler() noexcept;
