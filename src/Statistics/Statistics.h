@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 17:49:26 2013
+  \date      Thu Sep 19 18:01:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -28,7 +28,7 @@ class Statistics {
     explicit Statistics(const Base& base, const real* const particles);
 
     //! Destructor
-    virtual ~Statistics() noexcept = default;
+    virtual ~Statistics() = default;
 
     //! Accumulate statistics
     void accumulate();

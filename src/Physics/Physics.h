@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 17:26:07 2013
+  \date      Thu Sep 19 18:03:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -29,7 +29,7 @@ class Physics {
 
   public:
     //! Destructor
-    virtual ~Physics() noexcept = default;
+    virtual ~Physics() = default;
 
     //! Initialize physics
     virtual void init() = 0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:36:08 PM MDT
+  \date      Thu Sep 19 18:02:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -30,7 +30,7 @@ class HomMix : public Physics {
       m_totalTime(base.timer.create("Total solution")) {}
 
     //! Destructor
-    ~HomMix() noexcept override = default;
+    ~HomMix() override = default;
 
     //! Initialize model
     void init() override;
