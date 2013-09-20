@@ -143,9 +143,35 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-include_directories(${PROJECT_BINARY_DIR})
-include_directories(${PROJECT_BINARY_DIR}/Base)
-include_directories(${MPI_INCLUDE_PATH})
+include_directories(${QUINOA_SOURCE_DIR}/Base
+                    ${QUINOA_SOURCE_DIR}/Control
+                    ${QUINOA_SOURCE_DIR}/IO
+                    ${QUINOA_SOURCE_DIR}/LinearAlgebra
+                    ${QUINOA_SOURCE_DIR}/Main
+                    ${QUINOA_SOURCE_DIR}/Mesh
+                    ${QUINOA_SOURCE_DIR}/Model
+                    ${QUINOA_SOURCE_DIR}/Model/Mass
+                    ${QUINOA_SOURCE_DIR}/Model/Mass/Beta
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro/SLM
+                    ${QUINOA_SOURCE_DIR}/Model/Hydro/GLM
+                    ${QUINOA_SOURCE_DIR}/Model/Mix
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/Dirichlet
+                    ${QUINOA_SOURCE_DIR}/Model/Mix/GenDirichlet
+                    ${QUINOA_SOURCE_DIR}/Geometry
+                    ${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/Physics/HomMix
+                    ${QUINOA_SOURCE_DIR}/Physics/HomHydro
+                    ${QUINOA_SOURCE_DIR}/Physics/HomRT
+                    ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
+                    ${QUINOA_SOURCE_DIR}/Random
+                    ${QUINOA_SOURCE_DIR}/Statistics
+                    ${QUINOA_SOURCE_DIR}/Paradigm
+                    ${TPL_DIR}/include
+                    ${TPL_DIR}/include/pegtl
+                    ${PROJECT_BINARY_DIR}/Base
+                    ${MPI_INCLUDE_PATH}
+)
 
 # Components
 add_subdirectory(Base)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:43:30 2013
+  \date      Fri Sep 20 13:40:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -46,10 +47,14 @@ class MixRate : public Toggle<MixRateType> {
       { MixRateType::NO_MIXRATE, "" },
       { MixRateType::GAMMA, "Gamma" }
     };
+
+    //! Get access to mixrate keywords
+    const grm::kw::mixrate_gamma gamma {};
+
     //! keywords -> Enums
     const std::map<std::string, MixRateType> values {
       { "no_mixrate", MixRateType::NO_MIXRATE },
-      { "gamma", MixRateType::GAMMA }
+      { gamma.string(), MixRateType::GAMMA }
     };
 };
 

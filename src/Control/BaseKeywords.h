@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
-  \date      Thu Aug 29 14:43:47 2013
+  \date      Fri Sep 20 12:21:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -16,9 +16,9 @@
 #define BaseKeywords_h
 
 // Title
-using title = pegtl::string< t,i,t,l,e >;
+using title = keyword< t,i,t,l,e >;
 
 // End of block
-using end = pegtl::string< e,n,d >;
+using end = keyword< e,n,d >;
 
 #endif // BaseKeywords_h

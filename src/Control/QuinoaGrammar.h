@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:50:06 2013
+  \date      Fri Sep 20 13:17:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -34,7 +34,7 @@ namespace grm {
 
   // Actions
 
-  // put value in state at position given by tags without conversion
+  //! put value in state at position given by tags without conversion
   template< typename... tags >
   struct set : action_base< set<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -42,7 +42,7 @@ namespace grm {
     }
   };
 
-  // convert and put value in state at position given by tags
+  //! convert and put value in state at position given by tags
   template< typename... tags >
   struct store : action_base< store<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -50,7 +50,7 @@ namespace grm {
     }
   };
 
-  // convert and push back value to vector in state at position given by tags
+  //! convert and push back value to vector in state at position given by tags
   template< typename...tags >
   struct store_back : action_base< store_back<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -58,7 +58,7 @@ namespace grm {
     }
   };
 
-  // start new product in vector of statistics
+  //! start new product in vector of statistics
   struct start_product : action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
       stack.push_back<ctr::stats>(ctr::Product());
@@ -66,7 +66,7 @@ namespace grm {
     }
   };
 
-  // add matched value as Term into vector of Product in vector of statistics
+  //! add matched value as Term into vector of Product in vector of statistics
   template< ctr::Quantity q, ctr::Moment m, char name='\0' >
   struct push_term : action_base< push_term<q, m, name> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -87,128 +87,128 @@ namespace grm {
     }
   };
 
-  // save field ID so push_term can pick it up
+  //! save field ID so push_term can pick it up
   struct save_field : action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
       field = stack.convert<int>(value) - 1;  // field ID numbering start from 0
     }
   };
 
-  // convert and put option in state at position given by tags
+  //! convert and put option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      ctr::Option<OptionType> Model;
-      stack.set<tags...>(Model.value(value));
+      ctr::Option<OptionType> option;
+      stack.set<tags...>(option.value(value));
     }
   };
 
   // Grammar
 
-  // read 'token' until 'erased' trimming 'erased'
+  //! read 'token' until 'erased' trimming 'erased'
   template< class token, class erased >
   struct trim :
          seq< token, until< at<erased> > > {};
 
-  // read 'token' padded by blank at left and space at right
+  //! read 'token' padded by blank at left and space at right
   template< class token >
   struct read :
          pad< trim<token, space>, blank, space > {};
 
-  // match all accepted as position models
-  struct position : sor< kw::pos_inviscid,
-                         kw::pos_viscous > {};
+  //! match all accepted as position models
+  struct position : sor< kw::pos_inviscid::pegtl_string,
+                         kw::pos_viscous::pegtl_string > {};
 
-  // match all accepted as hydro models
-  struct hydro : sor< kw::hydro_slm,
-                      kw::hydro_glm > {};
+  //! match all accepted as hydro models
+  struct hydro : sor< kw::hydro_slm::pegtl_string,
+                      kw::hydro_glm::pegtl_string > {};
 
-  // match all accepted as mix models
-  struct mix : sor< kw::mix_iem,
-                    kw::mix_iecm,
-                    kw::mix_dir,
-                    kw::mix_gendir > {};
+  //! match all accepted as mix models
+  struct mix : sor< kw::mix_iem::pegtl_string,
+                    kw::mix_iecm::pegtl_string,
+                    kw::mix_dir::pegtl_string,
+                    kw::mix_gendir::pegtl_string > {};
 
-  // parse input padded by blank at left and space at right and if it matches
-  // 'keywords', apply 'actions'
+  //! parse input padded by blank at left and space at right and if it matches
+  //! 'keywords', apply 'actions'
   template< class keywords, typename... actions >
   struct parse :
          pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
 
-  // comment: start with '#' until eol
+  //! comment: start with '#' until eol
   struct comment :
          pad< trim<one<'#'>,eol>, blank, eol> {};
 
-  // plow through 'tokens' until 'endkeyword'
+  //! plow through 'tokens' until 'endkeyword'
   template< typename endkeyword, typename... tokens >
   struct block :
          until< read<endkeyword>, sor<comment, tokens...> > {};
 
-  // rng: one of the random number generators
+  //! rng: one of the random number generators
   struct rng :
-         sor< kw::mkl_mcg31,
-              kw::mkl_r250,
-              kw::mkl_mrg32k3a,
-              kw::mkl_mcg59,
-              kw::mkl_wh,
-              kw::mkl_mt19937,
-              kw::mkl_mt2203,
-              kw::mkl_sfmt19937,
-              kw::mkl_sobol,
-              kw::mkl_niederr,
-              kw::mkl_iabstract,
-              kw::mkl_dabstract,
-              kw::mkl_sabstract,
-              kw::mkl_nondeterm > {};
+         sor< kw::mkl_mcg31::pegtl_string,
+              kw::mkl_r250::pegtl_string,
+              kw::mkl_mrg32k3a::pegtl_string,
+              kw::mkl_mcg59::pegtl_string,
+              kw::mkl_wh::pegtl_string,
+              kw::mkl_mt19937::pegtl_string,
+              kw::mkl_mt2203::pegtl_string,
+              kw::mkl_sfmt19937::pegtl_string,
+              kw::mkl_sobol::pegtl_string,
+              kw::mkl_niederr::pegtl_string,
+              kw::mkl_iabstract::pegtl_string,
+              kw::mkl_dabstract::pegtl_string,
+              kw::mkl_sabstract::pegtl_string,
+              kw::mkl_nondeterm::pegtl_string > {};
 
-  // number: optional sign followed by digits
+  //! number: optional sign followed by digits
   struct number :
          seq< opt< sor<one<'+'>, one<'-'>> >, digit> {};
 
-  // plow through list of values between keywords 'key' and "end", calling
-  // 'insert' for each if matches and allowing comments between values
+  //! plow through list of values between keywords 'key' and "end", calling
+  //! 'insert' for each if matches and allowing comments between values
   template< class key, class insert, class value = number >
   struct list :
          ifmust< read<key>,
-                 until< read<kw::end>, sor<comment, parse<value,insert>> >
-               > {};
+                 until< read<kw::end::pegtl_string>,
+                        sor<comment, parse<value,insert>> > > {};
 
-  // process 'keyword' and call its 'insert' action if matches 'keywords'
+  //! process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
   struct process :
          ifmust< read<keyword>, parse<keywords,insert> > {};
 
-  // moment: 'keyword' optionally followed by a digit, pushed to vector of terms
+  //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, ctr::Quantity q, ctr::Moment m >
   struct moment :
          sor < ifapply<seq<keyword, ifapply<digit,save_field>>, push_term<q,m>>,
                ifapply<keyword, push_term<q,m>> > {};
 
-  // terms recognized within an expectation and their mapping
+  //! terms recognized within an expectation and their mapping
   struct terms :
-         sor< moment<kw::transported_scalar,
+         sor< moment<kw::transported_scalar::pegtl_string,
                      ctr::Quantity::SCALAR,
                      ctr::Moment::ORDINARY>,
-              moment<kw::transported_scalar_fluctuation,
+              moment<kw::transported_scalar_fluctuation::pegtl_string,
                      ctr::Quantity::SCALAR,
                      ctr::Moment::CENTRAL>,
-              moment<kw::velocity_x,
+              moment<kw::velocity_x::pegtl_string,
                      ctr::Quantity::VELOCITY_X,
                      ctr::Moment::ORDINARY>
             > {};
 
-  // plow through terms in expectation until character 'rbound'
+  //! plow through terms in expectation until character 'rbound'
   template< char rbound >
   struct expectation :
          until< one<rbound>, terms > {};
 
-  // plow through expectations between characters 'lbound' and 'rbound'
+  //! plow through expectations between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_expectations :
          read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
              > {};
 
-  // scan problem title between characters 'lbound' and 'rbound'
+  //! scan problem title between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_title :
          ifmust< one<lbound>,
@@ -217,76 +217,78 @@ namespace grm {
                  one<rbound>
                > {};
 
-  // title
+  //! title
   struct title :
-         ifmust< read<kw::title>, parse_title<'"','"'> > {};
+         ifmust< read<kw::title::pegtl_string>, parse_title<'"','"'> > {};
 
-  // analytic_geometry block
+  //! analytic_geometry block
   struct analytic_geometry:
-         ifmust< parse< kw::analytic_geometry,
+         ifmust< parse< kw::analytic_geometry::pegtl_string,
                         store_option<sel::Geometry,
                                      ctr::selected,
-                                     ctr::geometry> >, block<kw::end> > {};
+                                     ctr::geometry> >,
+                 block<kw::end::pegtl_string> > {};
 
-  // discrete_geometry block
+  //! discrete_geometry block
   struct discrete_geometry:
-         ifmust< parse< kw::discrete_geometry,
+         ifmust< parse< kw::discrete_geometry::pegtl_string,
                         store_option<sel::Geometry,
                                      ctr::selected,
-                                     ctr::geometry> >, block<kw::end> > {};
+                                     ctr::geometry> >,
+                 block<kw::end::pegtl_string> > {};
 
-  // dir block
+  //! dir block
   struct dir :
-         ifmust< parse< kw::mix_dir,
+         ifmust< parse< kw::mix_dir::pegtl_string,
                         store_option<sel::Mix, ctr::selected, ctr::mix> >,
-                 block< kw::end,
-                        process<kw::nscalar,
+                 block< kw::end::pegtl_string,
+                        process<kw::nscalar::pegtl_string,
                                 store<ctr::component, ctr::nscalar>>,
-                        list< kw::dir_B,
+                        list< kw::dir_B::pegtl_string,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::b> >,
-                        list< kw::dir_S,
+                        list< kw::dir_S::pegtl_string,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::S> >,
-                        list< kw::dir_kappa,
+                        list< kw::dir_kappa::pegtl_string,
                               store_back<ctr::param,
                                          ctr::dirichlet,
                                          ctr::kappa> > > > {};
 
-  // gendir block
+  //! gendir block
   struct gendir :
-         ifmust< parse< kw::mix_gendir,
+         ifmust< parse< kw::mix_gendir::pegtl_string,
                         store_option<sel::Mix, ctr::selected, ctr::mix> >,
-                 block< kw::end,
-                        process< kw::nscalar,
+                 block< kw::end::pegtl_string,
+                        process< kw::nscalar::pegtl_string,
                                  store<ctr::component, ctr::nscalar> >,
-                        list< kw::dir_B,
+                        list< kw::dir_B::pegtl_string,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::b> >,
-                        list< kw::dir_S,
+                        list< kw::dir_S::pegtl_string,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::S> >,
-                        list< kw::dir_kappa,
+                        list< kw::dir_kappa::pegtl_string,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::kappa> >,
-                        list< kw::gendir_C,
+                        list< kw::gendir_C::pegtl_string,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::c>> > > {};
 
-  // statistics block
+  //! statistics block
   struct statistics :
-         ifmust< read< kw::statistics >,
-                 block< kw::end, parse_expectations<'<','>'> > > {};
+         ifmust< read<kw::statistics::pegtl_string>,
+                 block<kw::end::pegtl_string, parse_expectations<'<','>'>> > {};
 
-  // slm block
+  //! slm block
   struct slm :
-         ifmust< parse< kw::hydro_slm,
+         ifmust< parse< kw::hydro_slm::pegtl_string,
                         store_option<sel::Hydro, ctr::selected, ctr::hydro>,
                         // trigger estimating the diagonal of Reynolds-stress
                         start_product,
@@ -304,81 +306,82 @@ namespace grm {
                                   ctr::Moment::CENTRAL, 'w'>,
                         push_term<ctr::Quantity::VELOCITY_Z,
                                   ctr::Moment::CENTRAL, 'w'>>,
-                 block< kw::end,
-                        process<kw::SLM_C0,
+                 block< kw::end::pegtl_string,
+                        process<kw::SLM_C0::pegtl_string,
                                 store<ctr::param, ctr::slm, ctr::c0>>,
-                        process<kw::nvelocity,
+                        process<kw::nvelocity::pegtl_string,
                                 store<ctr::component, ctr::nvelocity>>
                       > > {};
 
-  // freq_gamma block
+  //! freq_gamma block
   struct freq_gamma :
-         ifmust< parse< kw::freq_gamma, store_option<sel::Frequency,
-                                                     ctr::selected,
-                                                     ctr::frequency> >,
-                 block< kw::end,
-                        process<kw::nfreq,
+         ifmust< parse< kw::freq_gamma::pegtl_string,
+                        store_option<sel::Frequency,
+                                     ctr::selected,
+                                     ctr::frequency> >,
+                 block< kw::end::pegtl_string,
+                        process<kw::nfreq::pegtl_string,
                                 store<ctr::component, ctr::nfrequency>>,
-                        process<kw::freq_gamma_C1,
+                        process<kw::freq_gamma_C1::pegtl_string,
                                 store<ctr::param, ctr::gamma, ctr::c1>>,
-                        process<kw::freq_gamma_C2,
+                        process<kw::freq_gamma_C2::pegtl_string,
                                 store<ctr::param, ctr::gamma, ctr::c2>>,
-                        process<kw::freq_gamma_C3,
+                        process<kw::freq_gamma_C3::pegtl_string,
                                 store<ctr::param, ctr::gamma, ctr::c3>>,
-                        process<kw::freq_gamma_C4,
+                        process<kw::freq_gamma_C4::pegtl_string,
                                 store<ctr::param, ctr::gamma, ctr::c4>> >
                > {};
 
-  // beta block
+  //! beta block
   struct beta :
-         ifmust< parse<kw::mass_beta,
+         ifmust< parse<kw::mass_beta::pegtl_string,
                        store_option<sel::Mass, ctr::selected, ctr::mass>>,
-                 block< kw::end,
-                        process<kw::ndensity,
+                 block< kw::end::pegtl_string,
+                        process<kw::ndensity::pegtl_string,
                                 store<ctr::component, ctr::ndensity>>,
-                        process<kw::Beta_At,
+                        process<kw::Beta_At::pegtl_string,
                                 store<ctr::param, ctr::beta, ctr::atwood>> >
                > {};
 
-  // geometry definition types
+  //! geometry definition types
   struct geometry :
          sor< analytic_geometry,
               discrete_geometry > {};
 
-  // common to all physics
+  //! common to all physics
   struct physics_common :
-         sor< process<kw::nstep, store<ctr::incpar, ctr::nstep>>,
-              process<kw::term, store<ctr::incpar, ctr::term>>,
-              process<kw::dt, store<ctr::incpar, ctr::dt>>,
-              process<kw::npar, store<ctr::component, ctr::npar>>,
-              process<kw::input, set<ctr::io, ctr::input>>,
-              process<kw::output, set<ctr::io, ctr::output>>,
-              process<kw::pdfname, set<ctr::io, ctr::pdf>>,
-              process<kw::globname, set<ctr::io, ctr::glob>>,
-              process<kw::statname, set<ctr::io, ctr::stats>>,
-              process<kw::glbi, store<ctr::interval, ctr::glob>>,
-              process<kw::pdfi, store<ctr::interval, ctr::pdf>>,
-              process<kw::stai, store<ctr::interval, ctr::plot>>,
-              process<kw::ttyi, store<ctr::interval, ctr::tty>>,
-              process<kw::dmpi, store<ctr::interval, ctr::dump>>
+         sor< process<kw::nstep::pegtl_string, store<ctr::incpar, ctr::nstep>>,
+              process<kw::term::pegtl_string, store<ctr::incpar, ctr::term>>,
+              process<kw::dt::pegtl_string, store<ctr::incpar, ctr::dt>>,
+              process<kw::npar::pegtl_string, store<ctr::component, ctr::npar>>,
+              process<kw::input::pegtl_string, set<ctr::io, ctr::input>>,
+              process<kw::output::pegtl_string, set<ctr::io, ctr::output>>,
+              process<kw::pdfname::pegtl_string, set<ctr::io, ctr::pdf>>,
+              process<kw::globname::pegtl_string, set<ctr::io, ctr::glob>>,
+              process<kw::statname::pegtl_string, set<ctr::io, ctr::stats>>,
+              process<kw::glbi::pegtl_string, store<ctr::interval, ctr::glob>>,
+              process<kw::pdfi::pegtl_string, store<ctr::interval, ctr::pdf>>,
+              process<kw::stai::pegtl_string, store<ctr::interval, ctr::plot>>,
+              process<kw::ttyi::pegtl_string, store<ctr::interval, ctr::tty>>,
+              process<kw::dmpi::pegtl_string, store<ctr::interval, ctr::dump>>
             > {};
 
-  // hommix block
+  //! hommix block
   struct hommix :
-         ifmust< parse<kw::hommix,
+         ifmust< parse<kw::hommix::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<kw::end,
+                 block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        dir,
                        gendir,
                        statistics> > {};
 
-  // homrt block
+  //! homrt block
   struct homrt :
-         ifmust< parse<kw::homrt,
+         ifmust< parse<kw::homrt::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<kw::end,
+                 block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        dir,
@@ -387,22 +390,22 @@ namespace grm {
                        beta,
                        statistics> > {};
 
-  // homhydro block
+  //! homhydro block
   struct homhydro :
-         ifmust< parse<kw::homhydro,
+         ifmust< parse<kw::homhydro::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<kw::end,
+                 block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        slm,
                        freq_gamma,
                        statistics> > {};
 
-  // spinsflow block
+  //! spinsflow block
   struct spinsflow :
-         ifmust< parse<kw::spinsflow,
+         ifmust< parse<kw::spinsflow::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
-                 block<kw::end,
+                 block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        slm,
@@ -411,23 +414,23 @@ namespace grm {
                        gendir,
                        beta> > {};
 
-  // physics
+  //! physics
   struct physics :
          sor< hommix,
               homhydro,
               homrt,
               spinsflow > {};
 
-  // main keywords
+  //! main keywords
   struct keywords :
          sor< title,
               physics > {};
 
-  // ignore: comments and empty lines
+  //! ignore: comments and empty lines
   struct ignore :
          sor< comment, until<eol, space> > {};
 
-  // entry point: parse keywords and ignores until eof
+  //! entry point: parse keywords and ignores until eof
   struct read_file :
          until< eof, sor<keywords, ignore> > {};
 

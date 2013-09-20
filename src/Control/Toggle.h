@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:40:37 2013
+  \date      Fri Sep 20 09:08:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations

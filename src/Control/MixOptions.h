@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:42:18 2013
+  \date      Fri Sep 20 13:37:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -53,13 +54,19 @@ class Mix : public Toggle<MixType> {
       { MixType::GENERALIZED_DIRICHLET, "Generalized Dirichlet" }
     };
 
+    //! Get access to mix keywords
+    const grm::kw::mix_iem iem {};
+    const grm::kw::mix_iecm iecm {};
+    const grm::kw::mix_dir dir {};
+    const grm::kw::mix_gendir gendir {};
+
     //! keywords -> Enums
     const std::map<std::string, MixType> values {
       { "no_mix", MixType::NO_MIX },
-      { "mix_iem", MixType::IEM },
-      { "mix_iecm", MixType::IECM },
-      { "mix_dir", MixType::DIRICHLET },
-      { "mix_gendir", MixType::GENERALIZED_DIRICHLET }
+      { iem.string(), MixType::IEM },
+      { iecm.string(), MixType::IECM },
+      { dir.string(), MixType::DIRICHLET },
+      { gendir.string(), MixType::GENERALIZED_DIRICHLET }
     };
 };
 

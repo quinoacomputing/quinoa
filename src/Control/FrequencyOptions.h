@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:43:43 2013
+  \date      Fri Sep 20 13:32:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -47,10 +48,13 @@ class Frequency : public Toggle<FrequencyType> {
       { FrequencyType::GAMMA, "Gamma" }
     };
 
+    //! Get access to frequency keywords
+    const grm::kw::freq_gamma freq_gamma {};
+
     //! keywords -> Enums
     const std::map<std::string, FrequencyType> values {
       { "no_frequency", FrequencyType::NO_FREQUENCY },
-      { "freq_gamma", FrequencyType::GAMMA }
+      { freq_gamma.string(), FrequencyType::GAMMA }
     };
 };
 

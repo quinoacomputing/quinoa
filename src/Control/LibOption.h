@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:25:01 2013
+  \date      Fri Sep 20 13:44:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -37,8 +37,8 @@ class LibOption : public Option<Type> {
     }
 
   private:
-    //! Permit compiler to generate private copy constructor
-    //! Permit compiler to generate private move constructor
+    //! Permit compiler to generate copy constructor
+    //! Permit compiler to generate move constructor
     //! Don't permit copy assigment
     LibOption& operator=(const LibOption&) = delete;
     //! Don't permit move assigment

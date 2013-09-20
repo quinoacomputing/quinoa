@@ -8,26 +8,6 @@ add_definitions()
 # Include configuration/headers/libraries common to all code
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
-include_directories(${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Main
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/Paradigm
-                    ${QUINOA_SOURCE_DIR}/Random
-                    ${QUINOA_SOURCE_DIR}/Model
-                    ${QUINOA_SOURCE_DIR}/Model/Mass
-                    ${QUINOA_SOURCE_DIR}/Model/Hydro
-                    ${QUINOA_SOURCE_DIR}/Model/Mix
-                    ${QUINOA_SOURCE_DIR}/Geometry
-                    ${QUINOA_SOURCE_DIR}/Physics
-                    ${QUINOA_SOURCE_DIR}/Physics/HomMix
-                    ${QUINOA_SOURCE_DIR}/Physics/HomHydro
-                    ${QUINOA_SOURCE_DIR}/Physics/HomRT
-                    ${QUINOA_SOURCE_DIR}/Physics/SPINSFlow
-                    ${QUINOA_SOURCE_DIR}/Statistics
-                    ${TPL_DIR}/include
-)
-
 add_executable(${QUINOA_EXECUTABLE}
                QuinoaDriver.C
                Quinoa.C
