@@ -2,15 +2,6 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(Geometry CXX)
 
-include_directories(${QUINOA_SOURCE_DIR}/Geometry
-                    ${QUINOA_SOURCE_DIR}/Control
-                    ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/Base
-                    ${QUINOA_SOURCE_DIR}/Paradigm
-                    ${TPL_DIR}/include
-)
-
 add_library(Geometry
             Geometry.C
             AnalyticGeometry.C

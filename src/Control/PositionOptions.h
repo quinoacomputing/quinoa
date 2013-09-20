@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:41:22 2013
+  \date      Fri Sep 20 13:41:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -49,11 +50,15 @@ class Position : public Toggle<PositionType> {
       { PositionType::VISCOUS, "Viscous" }
     };
 
+    //! Get access to position keywords
+    const grm::kw::pos_inviscid inviscid {};
+    const grm::kw::pos_viscous viscous {};
+
     //! keywords -> Enums
     const std::map<std::string, PositionType> values {
       { "no_position", PositionType::NO_POSITION },
-      { "pos_inviscid", PositionType::INVISCID },
-      { "pos_viscous", PositionType::INVISCID }
+      { inviscid.string(), PositionType::INVISCID },
+      { viscous.string(), PositionType::INVISCID }
     };
 };
 

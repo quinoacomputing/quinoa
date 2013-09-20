@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Thu 19 Sep 2013 09:08:20 PM MDT
+  \date      Fri Sep 20 09:48:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -30,17 +30,17 @@ ErrCode processException() noexcept
   try {
     throw;      // rethrow exception to deal with it here
   }
-    // Catch and handle Quina::Exceptions
+    // Catch Quina::Exceptions
     catch (Exception& qe) {
       error = qe.handleException();
     }
-    // Catch std::exceptions and transform them into Quinoa::Exceptions without
+    // Catch std::exception and transform it into Quinoa::Exception without
     // file:line:func information
     catch (std::exception& se) {
       Exception qe(ExceptType::RUNTIME, se.what());
       error = qe.handleException();
     }
-    // Catch uncaught exceptions and still do cleanup
+    // Catch uncaught exception
     catch (...) {
       Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
       error = qe.handleException();

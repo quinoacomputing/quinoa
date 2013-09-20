@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:42:32 2013
+  \date      Fri Sep 20 13:36:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -47,10 +48,13 @@ class Mass : public Toggle<MassType> {
       { MassType::BETA, "Beta" }
     };
 
+    //! Get access to mass keywords
+    const grm::kw::mass_beta beta {};
+
     //! keywords -> Enums
     const std::map<std::string, MassType> values {
       { "no_mass", MassType::NO_MASS },
-      { "mass_beta", MassType::BETA }
+      { beta.string(), MassType::BETA }
     };
 };
 

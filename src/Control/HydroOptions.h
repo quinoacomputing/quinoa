@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:40:52 2013
+  \date      Fri Sep 20 13:35:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -49,11 +50,15 @@ class Hydro : public Toggle<HydroType> {
       { HydroType::GLM, "Generalized Langevin"}
     };
 
+    //! Get access to hydro keywords
+    const grm::kw::hydro_slm slm {};
+    const grm::kw::hydro_glm glm {};
+
     //! keywords -> Enums
     const std::map<std::string, HydroType> values {
       { "no_hydro", HydroType::NO_HYDRO },
-      { "hydro_slm", HydroType::SLM },
-      { "hydro_glm", HydroType::GLM }
+      { slm.string(), HydroType::SLM },
+      { glm.string(), HydroType::GLM }
     };
 };
 

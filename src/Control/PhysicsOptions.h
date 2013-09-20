@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:43:15 2013
+  \date      Fri Sep 20 13:32:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -15,6 +15,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -57,14 +58,21 @@ class Physics : public Toggle<PhysicsType> {
       { PhysicsType::RNGTEST, "Random number generator tests" }
     };
 
+    //! Get access to physics keywords
+    const grm::kw::hommix hommix {};
+    const grm::kw::homhydro homhydro {};
+    const grm::kw::homrt homrt {};
+    const grm::kw::spinsflow spinsflow {};
+    const grm::kw::rngtest rngtest {};
+
     //! keywords -> Enums
     const std::map<std::string, PhysicsType> values {
       { "no_physics", PhysicsType::NO_PHYSICS },
-      { "hommix", PhysicsType::HOMOGENEOUS_MIX },
-      { "homhydro", PhysicsType::HOMOGENEOUS_HYDRO },
-      { "homrt", PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR },
-      { "spinsflow", PhysicsType::SPINSFLOW },
-      { "rngtest", PhysicsType::RNGTEST }
+      { hommix.string(), PhysicsType::HOMOGENEOUS_MIX },
+      { homhydro.string(), PhysicsType::HOMOGENEOUS_HYDRO },
+      { homrt.string(), PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR },
+      { spinsflow.string(), PhysicsType::SPINSFLOW },
+      { rngtest.string(), PhysicsType::RNGTEST }
     };
 };
 
