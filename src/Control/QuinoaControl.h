@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:38:29 2013
+  \date      Fri 20 Sep 2013 05:22:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -24,7 +24,7 @@
 
 namespace quinoa {
 
-//! QuinoaControl : Control<specialized to Quinoa>, see QuinoaControlTypes.h
+//! QuinoaControl : Control< specialized to Quinoa >, see QuinoaControlTypes.h
 class QuinoaControl :
   public Control< // tag           type
                   ctr::title,      std::string,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControlTags.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:39:45 2013
+  \date      Fri 20 Sep 2013 05:32:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's control tags
   \details   All control tags used to build a nested tagged tagged tuple
@@ -71,6 +71,8 @@ struct component {};
 struct interval {};
 struct io {};
 struct param {};
+
+struct pegtlstr {};
 
 } // ctr::
 } // quinoa::
