@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/GeometryOptions.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:33:47 2013
+  \date      Sat 21 Sep 2013 07:06:39 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -43,22 +43,22 @@ class Geometry : public Toggle<GeometryType> {
     //! Don't permit move assigment
     Geometry& operator=(Geometry&&) = delete;
 
+    //! Get access to geometry keywords
+    const grm::kw::analytic_geometry ag {};
+    const grm::kw::discrete_geometry dg {};
+
     //! Enums -> names
     const std::map<GeometryType, std::string> names {
-      { GeometryType::NO_GEOMETRY, "" },
-      { GeometryType::ANALYTIC, "Analytic" },
-      { GeometryType::DISCRETE, "Discrete" }
+      { GeometryType::NO_GEOMETRY, "no_geometry" },
+      { GeometryType::ANALYTIC, ag.name() },
+      { GeometryType::DISCRETE, dg.name() }
     };
-
-    //! Get access to geometry keywords
-    const grm::kw::analytic_geometry analytic {};
-    const grm::kw::discrete_geometry discrete {};
 
     //! keywords -> Enums
     const std::map<std::string, GeometryType> values {
       { "no_geometry", GeometryType::NO_GEOMETRY },
-      { analytic.string(), GeometryType::ANALYTIC },
-      { discrete.string(), GeometryType::DISCRETE }
+      { ag.string(), GeometryType::ANALYTIC },
+      { dg.string(), GeometryType::DISCRETE }
     };
 };
 

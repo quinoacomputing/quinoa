@@ -8,8 +8,6 @@
       functions and/or classes and variadic templates? See Appendix in
       Concurrency in Action.
     - Would it make sense to make the keywords typedefs hierarchical?
-    - Should we move the Option names together with the defintion of the
-      keywords, e.g., inside grm::kw::keyword?
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
 
 * Add runtime enviroment echo to Quinoa.C
