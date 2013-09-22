@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:32:31 2013
+  \date      Sat 21 Sep 2013 02:54:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -42,14 +42,14 @@ class Frequency : public Toggle<FrequencyType> {
     //! Don't permit move assigment
     Frequency& operator=(Frequency&&) = delete;
 
-    //! Enums -> names
-    const std::map<FrequencyType, std::string> names {
-      { FrequencyType::NO_FREQUENCY, "" },
-      { FrequencyType::GAMMA, "Gamma" }
-    };
-
     //! Get access to frequency keywords
     const grm::kw::freq_gamma freq_gamma {};
+
+    //! Enums -> names
+    const std::map<FrequencyType, std::string> names {
+      { FrequencyType::NO_FREQUENCY, "n/a" },
+      { FrequencyType::GAMMA, freq_gamma.name() }
+    };
 
     //! keywords -> Enums
     const std::map<std::string, FrequencyType> values {

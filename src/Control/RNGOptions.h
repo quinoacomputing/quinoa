@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:41:52 2013
+  \date      Sat 21 Sep 2013 10:07:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -17,8 +17,9 @@
 
 #include <Exception.h>
 #include <Toggle.h>
+#include <QuinoaKeywords.h>
 
-namespace rngtest {
+namespace quinoa {
 namespace sel {
 
 //! Random number generator test types
@@ -43,9 +44,6 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSELIB,
                                   PRAND };
-
-using quinoa::sel::operator+;
-using quinoa::sel::operator<<;
 
 //! Class with base templated on the above enum class with associations
 class RNG : public quinoa::sel::Toggle<RNGType> {
@@ -96,42 +94,58 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
       if (f != std::string::npos) return true; else return false;
     }
 
+    //! Get access to RNG keywords
+    const grm::kw::mkl_mcg31 mkl_mcg31 {};
+    const grm::kw::mkl_r250 mkl_r250 {};
+    const grm::kw::mkl_mrg32k3a mkl_mrg32k3a {};
+    const grm::kw::mkl_mcg59 mkl_mcg59 {};
+    const grm::kw::mkl_wh mkl_wh {};
+    const grm::kw::mkl_mt19937 mkl_mt19937 {};
+    const grm::kw::mkl_mt2203 mkl_mt2203 {};
+    const grm::kw::mkl_sfmt19937 mkl_sfmt19937 {};
+    const grm::kw::mkl_sobol mkl_sobol {};
+    const grm::kw::mkl_niederr mkl_niederr {};
+    const grm::kw::mkl_iabstract mkl_iabstract {};
+    const grm::kw::mkl_dabstract mkl_dabstract {};
+    const grm::kw::mkl_sabstract mkl_sabstract {};
+    const grm::kw::mkl_nondeterm mkl_nondeterm {};
+
     //! Enums -> names
     const std::map<RNGType, std::string> names {
-      { RNGType::NO_RNG, "No RNG" },
-      { RNGType::MKL_MCG31, "MKL_VSL_MCG31" },
-      { RNGType::MKL_R250, "MKL_VSL_R250" },
-      { RNGType::MKL_MRG32K3A, "MKL_VSL_MRG32K3A" },
-      { RNGType::MKL_MCG59, "MKL_VSL_MCG59" },
-      { RNGType::MKL_WH, "MKL_VSL_WH" },
-      { RNGType::MKL_MT19937, "MKL_VSL_MT19937" },
-      { RNGType::MKL_MT2203, "MKL_VSL_MT2203" },
-      { RNGType::MKL_SFMT19937, "MKL_VSL_SFMT19937" },
-      { RNGType::MKL_SOBOL, "MKL_VSL_SOBOL" },
-      { RNGType::MKL_NIEDERR, "MKL_VSL_NIEDERR" },
-      { RNGType::MKL_IABSTRACT, "MKL_VSL_IABSTRACT" },
-      { RNGType::MKL_DABSTRACT, "MKL_VSL_DABSTRACT" },
-      { RNGType::MKL_SABSTRACT, "MKL_VSL_SABSTRACT" },
-      { RNGType::MKL_NONDETERM, "MKL_VSL_NONDETERM" }
+      { RNGType::NO_RNG, "n/a" },
+      { RNGType::MKL_MCG31, mkl_mcg31.name() },
+      { RNGType::MKL_R250, mkl_r250.name() },
+      { RNGType::MKL_MRG32K3A, mkl_mrg32k3a.name() },
+      { RNGType::MKL_MCG59, mkl_mcg59.name() },
+      { RNGType::MKL_WH, mkl_wh.name() },
+      { RNGType::MKL_MT19937, mkl_mt19937.name() },
+      { RNGType::MKL_MT2203, mkl_mt2203.name() },
+      { RNGType::MKL_SFMT19937, mkl_sfmt19937.name() },
+      { RNGType::MKL_SOBOL, mkl_sobol.name() },
+      { RNGType::MKL_NIEDERR, mkl_niederr.name() },
+      { RNGType::MKL_IABSTRACT, mkl_iabstract.name() },
+      { RNGType::MKL_DABSTRACT, mkl_dabstract.name() },
+      { RNGType::MKL_SABSTRACT, mkl_sabstract.name() },
+      { RNGType::MKL_NONDETERM, mkl_nondeterm.name() }
     };
 
     //! keywords -> Enums
     const std::map<std::string, RNGType> values {
       { "no_rng", RNGType::NO_RNG },
-      { "mkl_mcg31", RNGType::MKL_MCG31 },
-      { "mkl_r250", RNGType::MKL_R250 },
-      { "mkl_mrg32k3a", RNGType::MKL_MRG32K3A },
-      { "mkl_mcg59", RNGType::MKL_MCG59 },
-      { "mkl_wh", RNGType::MKL_WH },
-      { "mkl_mt19937", RNGType::MKL_MT19937 },
-      { "mkl_mt2203", RNGType::MKL_MT2203 },
-      { "mkl_sfmt19937", RNGType::MKL_SFMT19937 },
-      { "mkl_sobol", RNGType::MKL_SOBOL },
-      { "mkl_niederr", RNGType::MKL_NIEDERR },
-      { "mkl_iabstract", RNGType::MKL_IABSTRACT },
-      { "mkl_dabstract", RNGType::MKL_DABSTRACT },
-      { "mkl_sabstract", RNGType::MKL_SABSTRACT },
-      { "mkl_nondeterm", RNGType::MKL_NONDETERM }
+      { mkl_mcg31.string(), RNGType::MKL_MCG31 },
+      { mkl_r250.string(), RNGType::MKL_R250 },
+      { mkl_mrg32k3a.string(), RNGType::MKL_MRG32K3A },
+      { mkl_mcg59.string(), RNGType::MKL_MCG59 },
+      { mkl_wh.string(), RNGType::MKL_WH },
+      { mkl_mt19937.string(), RNGType::MKL_MT19937 },
+      { mkl_mt2203.string(), RNGType::MKL_MT2203 },
+      { mkl_sfmt19937.string(), RNGType::MKL_SFMT19937 },
+      { mkl_sobol.string(), RNGType::MKL_SOBOL },
+      { mkl_niederr.string(), RNGType::MKL_NIEDERR },
+      { mkl_iabstract.string(), RNGType::MKL_IABSTRACT },
+      { mkl_dabstract.string(), RNGType::MKL_DABSTRACT },
+      { mkl_sabstract.string(), RNGType::MKL_SABSTRACT },
+      { mkl_nondeterm.string(), RNGType::MKL_NONDETERM }
     };
 
     //! Enums -> MKL VSL BRNG parameters
@@ -155,6 +169,6 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
 };
 
 } // sel::
-} // rngtest::
+} // quinoa::
 
 #endif // RNGOptions_h
