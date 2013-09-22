@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:41:42 2013
+  \date      Sat 21 Sep 2013 03:02:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -43,16 +43,16 @@ class Position : public Toggle<PositionType> {
     //! Don't permit move assigment
     Position& operator=(Position&&) = delete;
 
-    //! Enums -> names
-    const std::map<PositionType, std::string> names {
-      { PositionType::NO_POSITION, "" },
-      { PositionType::INVISCID, "Inviscid" },
-      { PositionType::VISCOUS, "Viscous" }
-    };
-
     //! Get access to position keywords
     const grm::kw::pos_inviscid inviscid {};
     const grm::kw::pos_viscous viscous {};
+
+    //! Enums -> names
+    const std::map<PositionType, std::string> names {
+      { PositionType::NO_POSITION, "n/a" },
+      { PositionType::INVISCID, inviscid.name() },
+      { PositionType::VISCOUS, viscous.name() }
+    };
 
     //! keywords -> Enums
     const std::map<std::string, PositionType> values {

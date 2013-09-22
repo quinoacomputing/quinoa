@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/GeometryOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 07:06:39 AM MDT
+  \date      Sat 21 Sep 2013 02:54:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -49,7 +49,7 @@ class Geometry : public Toggle<GeometryType> {
 
     //! Enums -> names
     const std::map<GeometryType, std::string> names {
-      { GeometryType::NO_GEOMETRY, "no_geometry" },
+      { GeometryType::NO_GEOMETRY, "n/a" },
       { GeometryType::ANALYTIC, ag.name() },
       { GeometryType::DISCRETE, dg.name() }
     };

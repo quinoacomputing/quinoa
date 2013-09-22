@@ -4,10 +4,6 @@
     - More sensible/readable error handling during/after parsing
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.
-    - Automatically turn list of keywords into Keywords.h, could use constexpr
-      functions and/or classes and variadic templates? See Appendix in
-      Concurrency in Action.
-    - Would it make sense to make the keywords typedefs hierarchical?
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
 
 * Add runtime enviroment echo to Quinoa.C

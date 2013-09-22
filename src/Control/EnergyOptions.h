@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:29:40 2013
+  \date      Sat 21 Sep 2013 02:54:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -40,13 +40,13 @@ class Energy : public Toggle<EnergyType> {
     //! Don't permit move assigment
     Energy& operator=(Energy&&) = delete;
 
-    //! Enums -> names
-    const std::map<EnergyType, std::string> names {
-      { EnergyType::NO_ENERGY, "" }
-    };
-
     //! Get access to energy keywords
     //const grm::kw::hommix hommix {};
+
+    //! Enums -> names
+    const std::map<EnergyType, std::string> names {
+      { EnergyType::NO_ENERGY, "n/a" }
+    };
 
     //! keywords -> Enums
     const std::map<std::string, EnergyType> values {

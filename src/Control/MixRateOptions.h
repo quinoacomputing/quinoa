@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:40:31 2013
+  \date      Sat 21 Sep 2013 03:01:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -42,14 +42,14 @@ class MixRate : public Toggle<MixRateType> {
     //! Don't permit move assigment
     MixRate& operator=(MixRate&&) = delete;
 
-    //! Enums -> names
-    const std::map<MixRateType, std::string> names {
-      { MixRateType::NO_MIXRATE, "" },
-      { MixRateType::GAMMA, "Gamma" }
-    };
-
     //! Get access to mixrate keywords
     const grm::kw::mixrate_gamma gamma {};
+
+    //! Enums -> names
+    const std::map<MixRateType, std::string> names {
+      { MixRateType::NO_MIXRATE, "n/a" },
+      { MixRateType::GAMMA, gamma.name() }
+    };
 
     //! keywords -> Enums
     const std::map<std::string, MixRateType> values {

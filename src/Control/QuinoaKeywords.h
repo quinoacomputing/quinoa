@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 07:37:40 AM MDT
+  \date      Sat 21 Sep 2013 10:06:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
-  \details   All keywords recognized by Quinoa's parser
+  \details   All keywords recognized by Quinoa's parser. The keywords are
+  defined by specializing struct 'keyword', defined in Control/Keyword.h.
+  Introducing a new keyword requires a more human readable (bust still short)
+  name as well as a short, few-line, help-like description.
 */
 //******************************************************************************
 #ifndef QuinoaKeywords_h
@@ -18,243 +21,278 @@
 
 #include <pegtl.hh>
 
+#include <Keyword.h>
+
 namespace quinoa {
 namespace grm {
-
 //! List of keywords the parser understands
 namespace kw {
-
-//! A keyword is struct that combines a type (pegtl::string) and a value
-//! (std::string)
-template< const char* Name, const char* Help, int Char, int... Chars >
-struct keyword {
-
-  //! Accessor as pegtl::tring
-  using pegtl_string = pegtl::string<Char, Chars...>;
-
-  //! Accessor as std::tring
-  std::string string() const {
-    return std::move(std::string( (sizeof...(Chars)) ?
-                                  (pegtl::escaper<Char, Chars...>::result()) :
-                                  (pegtl::escape(Char)) ));
-  }
-
-  //! Accessor to name
-  const char* name() const { return Name; }
-  //! Accessor to help
-  const char* help() const { return Help; }
-};
 
 using namespace pegtl::ascii;
 
 // Include base keywords recognized by all parsers
 #include <BaseKeywords.h>
 
+// Include Intel's MKL's RNG keywords
+#include <MKLRNGKeywords.h>
+
+struct undefined_info {
+  static const char* name() { return "undefined"; }
+  static const char* help() { return "Undefined."; }
+};
+
 // Keyword 'analytic_geometry'
-const char ag_name[] = "Analytic geometry defintion";
-const char ag_help[] =
-  "This option is used to define the beginning of an analytical geometry "
-  "definition block. Analytical geometry definitions describe a 3D geometry "
-  "using available primitives. Example:\n"
-  "\tanalytical_geometry\n"
-  "\t  box 0.0 0.0 0.0  1.1 1.2 1.3 end # opposite corners: x1 y1 z1 x2 y2 z2\n"
-  "\tend";
+struct analytic_geometry_info {
+  static const char* name() { return "Analytic geometry defintion"; }
+  static const char* help() { return
+    "This option is used to define the beginning of an analytical geometry "
+    "definition block. Analytical geometry definitions describe a 3D geometry "
+    "using available primitives. Example:\n"
+    "\tanalytical_geometry\n"
+    "\t  box 0.0 0.0 0.0  1.1 1.2 1.3 end # opposite corners: x1 y1 z1 x2 y2 "
+    "z2\n"
+    "\tend";
+  }
+};
 using analytic_geometry =
-  keyword<ag_name, ag_help, a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y>;
+  keyword<analytic_geometry_info, a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y>;
 
 // Keyword 'discrete_geometry'
-const char dg_name[] = "Discrete geometry defintion";
-const char dg_help[] =
-  "This option is used to define the beginning of a discrete geometry "
-  "definition block. Discrete geometry definitions are used to specify various "
-  "parameters that influence the generation of point clouds within a closed "
-  "geometry specified by discrete surfaces. Example:\n"
-  "\tdiscrete_geometry\n"
-  "\t  ...\n"
-  "\tend";
+struct discrete_geometry_info {
+  static const char* name() { return "Discrete geometry defintion"; }
+  static const char* help() { return
+    "This option is used to define the beginning of a discrete geometry "
+    "definition block. Discrete geometry definitions are used to specify "
+    "various parameters that influence the generation of point clouds within a "
+    "closed geometry specified by discrete surfaces. Example:\n"
+    "\tdiscrete_geometry\n"
+    "\t  ...\n"
+    "\tend";
+  }
+};
 using discrete_geometry =
-  keyword<ag_name, ag_help, d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y>;
+  keyword<discrete_geometry_info, d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y>;
 
-// Geometry primitives for analytic geometry definition
-//   * Box
-using box = keyword<ag_name, ag_help, b,o,x>;
+// Keyword 'brick'
+struct brick_info {
+  static const char* name() { return "Brick primitive"; }
+  static const char* help() { return
+    "A brick primitive is one of the available geometric primitives that can "
+    "be used to define a 3D geometry in the analytical way, i.e., inside an "
+    "analytic_geometry ... end block. The 'brick' keyword is used to begin a "
+    "brick ... end block. At this time a brick can only be described by the "
+    "coordinates of its oppposite points by their x,y,z coordinates. Example:\n"
+    "\tanalytical_geometry\n"
+    "\t  box 0.0 0.0 0.0  1.1 1.2 1.3 end # opposite corners: x1 y1 z1 x2 y2 "
+    "z2\n"
+    "\tend";
+  }
+};
+using brick = keyword<brick_info, b,r,i,c,k>;
 
 // Input filename
-using input = keyword<ag_name, ag_help, i,n,p,u,t>;
+using input = keyword<undefined_info, i,n,p,u,t>;
 
 // Output filename
-using output = keyword<ag_name, ag_help, o,u,t,p,u,t>;
+using output = keyword<undefined_info, o,u,t,p,u,t>;
 
 // PDF filename
-using pdfname = keyword<ag_name, ag_help,  p,d,f,n,a,m,e >;
+using pdfname = keyword<undefined_info,  p,d,f,n,a,m,e >;
 
 // Glob (i.e. domain-average statistics) filename
-using globname = keyword<ag_name, ag_help,  g,l,o,b,n,a,m,e >;
+using globname = keyword<undefined_info,  g,l,o,b,n,a,m,e >;
 
 // Statistics filename
-using statname = keyword<ag_name, ag_help,  s,t,a,t,n,a,m,e >;
+using statname = keyword<undefined_info,  s,t,a,t,n,a,m,e >;
 
-// Select physics:
-//   * Homogeneous material mixing
-using hommix = keyword<ag_name, ag_help, h,o,m,m,i,x>;
-//   * Homogeneous hydrodinamics
-using homhydro = keyword<ag_name, ag_help,  h,o,m,h,y,d,r,o >;
-//   * Homogeneous Rayleigh-Taylor
-using homrt = keyword<ag_name, ag_help,  h,o,m,r,t >;
-//   * Standalone-particle incompressible Navier-Stokes flow
-using spinsflow = keyword<ag_name, ag_help,  s,p,i,n,s,f,l,o,w >;
+// Keyword 'hommix'
+struct hommix_info {
+  static const char* name() { return "Homogeneous material mixing"; }
+  static const char* help() { return
+    "Physics option, 'hommix', is short for homogeneous material mixing. It is "
+    "the simplest physics option that can be used to research, develop, and "
+    "test material mixing models independent, i.e., decoupled from other "
+    "equations. Only a set of scalar equations are advanced which can be "
+    "coupled to each other. The keyword 'hommix' introduces the hommix ... end "
+    "block, selecting and describing the parameters of the mixing model(s). "
+    "The common physics keywords are recognized.";
+  }
+};
+using hommix = keyword<hommix_info, h,o,m,m,i,x>;
+
+// Keyword 'homhydro'
+struct homhydro_info {
+  static const char* name() { return "Homogeneous hydrodynamics"; }
+  static const char* help() { return
+    "Physics option, 'homhydro', is short for homogeneous hydrodynamics. It is "
+    "the simplest physics option that can be used to research, develop, and "
+    "test hydrodynamics models independent of, i.e., decoupled from other "
+    "equations. Only a set of momentum equations are advanced whose components "
+    "can be coupled to each other. The keyword 'homhydro' introduces the "
+    "homhydro ... end block, selecting and describing the parameters of the "
+    "hydrodynamics model(s). The common physics keywords are recognized.";
+  }
+};
+using homhydro = keyword<homhydro_info,  h,o,m,h,y,d,r,o >;
+
+// Keyword 'homrt'
+struct homrt_info {
+  static const char* name() { return "Homogeneous Rayleigh-Taylor"; }
+  static const char* help() { return
+    "Physics option, 'homrt', is short for homogeneous Rayleigh-Taylor. It is "
+    "the simplest physics option that can be used to research, develop, and "
+    "test hydrodynamics models for variable-density hydrodynamics and coupled "
+    "material mixing, independent, i.e., decoupled from other equations. Only "
+    "a set of mass and momentum conservation equations are advanced whose "
+    "components can be coupled to each other. The keyword 'homrt' introduces "
+    "the homrt ... end block, selecting and describing the parameters of the "
+    "mass and hydrodynamics model(s). The common physics keywords are "
+    "recognized.";
+  }
+};
+using homrt = keyword<homrt_info,  h,o,m,r,t >;
+
+// Keyword 'spinsflow'
+struct spinsflow_info {
+  static const char* name() { return
+    "Standalone-particle incompressible Navier-Stokes flow";
+  }
+  static const char* help() { return
+    "Physics option, 'spinsflow', is short for standalone-particle "
+    "incompressible Navier-Stokes flow. It is a physics option intended for "
+    "inhomogeneous constant-density flow. The transport equations solved are "
+    "the momentum and optionally, energy, and a set of scalars. The "
+    "divergence-constraint is enforced by solving a Poisson equation and "
+    "projection scheme. The keyword 'spinsflow' introduces the spinsflow ... "
+    "end block, selecting and describing the parameters of the above transport "
+    "equations and their models. The common physics keywords are recognized.";
+  }
+};
+using spinsflow = keyword<spinsflow_info,  s,p,i,n,s,f,l,o,w >;
 
 // Select position model:
 //   * Insviscid model
-using pos_inviscid = keyword<ag_name, ag_help,  p,o,s,'_',i,n,v,i,s,c,i,d >;
+using pos_inviscid = keyword<undefined_info,  p,o,s,'_',i,n,v,i,s,c,i,d >;
 //   * Viscous model
-using pos_viscous = keyword<ag_name, ag_help,  p,o,s,'_',v,i,s,c,o,u,s >;
+using pos_viscous = keyword<undefined_info,  p,o,s,'_',v,i,s,c,o,u,s >;
 
 // Select mass model:
 //   * Beta model
-using mass_beta = keyword<ag_name, ag_help,  m,a,s,s,'_',b,e,t,a >;
+using mass_beta = keyword<undefined_info,  m,a,s,s,'_',b,e,t,a >;
 
 // Select hydrodynamics model:
 //   * Simplified Langevin model
-using hydro_slm = keyword<ag_name, ag_help,  h,y,d,r,o,'_',s,l,m >;
+using hydro_slm = keyword<undefined_info,  h,y,d,r,o,'_',s,l,m >;
 //   * Generalized Langevin model
-using hydro_glm = keyword<ag_name, ag_help,  h,y,d,r,o,'_',g,l,m >;
+using hydro_glm = keyword<undefined_info,  h,y,d,r,o,'_',g,l,m >;
 
 // Select material mix model:
 //   * Interaction by exchange with the mean
-using mix_iem = keyword<ag_name, ag_help,  m,i,x,'_',i,e,m >;
+using mix_iem = keyword<undefined_info,  m,i,x,'_',i,e,m >;
 //   * Interaction by exchange with the conditional mean
-using mix_iecm = keyword<ag_name, ag_help,  m,i,x,'_',i,e,c,m >;
+using mix_iecm = keyword<undefined_info,  m,i,x,'_',i,e,c,m >;
 //   * Dirichlet
-using mix_dir = keyword<ag_name, ag_help,  m,i,x,'_',d,i,r >;
+using mix_dir = keyword<undefined_info,  m,i,x,'_',d,i,r >;
 //   * generalized Dirichlet
-using mix_gendir = keyword<ag_name, ag_help,  m,i,x,'_',g,e,n,d,i,r >;
+using mix_gendir = keyword<undefined_info,  m,i,x,'_',g,e,n,d,i,r >;
 
 // Select material mix rate model:
 //   * Gamma distribution model
-using mixrate_gamma = keyword<ag_name, ag_help,  m,i,x,r,a,t,e,'_',g,a,m,m,a >;
+using mixrate_gamma = keyword<undefined_info,  m,i,x,r,a,t,e,'_',g,a,m,m,a >;
 
 // Select turbulence frequency model:
 //   * Gamma distribution model
-using freq_gamma = keyword<ag_name, ag_help,  f,r,e,q,'_',g,a,m,m,a >;
+using freq_gamma = keyword<undefined_info,  f,r,e,q,'_',g,a,m,m,a >;
 
 // Number of time steps to take
-using nstep = keyword<ag_name, ag_help,  n,s,t,e,p >;
+using nstep = keyword<undefined_info,  n,s,t,e,p >;
 
 // Terminate time stepping at this value
-using term = keyword<ag_name, ag_help,  t, e, r, m >;
+using term = keyword<undefined_info,  t, e, r, m >;
 
 // Size of time step
-using dt = keyword<ag_name, ag_help,  d,t >;
+using dt = keyword<undefined_info,  d,t >;
 
 // Start of position model specification block
-using position = keyword<ag_name, ag_help,  p,o,s,i,t,i,o,n >;
+using position = keyword<undefined_info,  p,o,s,i,t,i,o,n >;
 
 // Start of hydrodynamics model specification block
-using hydro = keyword<ag_name, ag_help,  h,y,d,r,o >;
+using hydro = keyword<undefined_info,  h,y,d,r,o >;
 
 // Start of material mix model specification block
-using mix = keyword<ag_name, ag_help,  m,i,x >;
+using mix = keyword<undefined_info,  m,i,x >;
 
 // Number of particle position components
-using nposition = keyword<ag_name, ag_help,  n,p,o,s,i,t,i,o,n >;
+using nposition = keyword<undefined_info,  n,p,o,s,i,t,i,o,n >;
 // Number of particle density components
-using ndensity = keyword<ag_name, ag_help,  n,d,e,n,s,i,t,y >;
+using ndensity = keyword<undefined_info,  n,d,e,n,s,i,t,y >;
 // Number of particle velocity components
-using nvelocity = keyword<ag_name, ag_help,  n,v,e,l,o,c,i,t,y >;
+using nvelocity = keyword<undefined_info,  n,v,e,l,o,c,i,t,y >;
 // Number of particle scalar components
-using nscalar = keyword<ag_name, ag_help,  n,s,c,a,l,a,r >;
+using nscalar = keyword<undefined_info,  n,s,c,a,l,a,r >;
 // Number of particle turbulence frequency components
-using nfreq = keyword<ag_name, ag_help,  n,f,r,e,q >;
+using nfreq = keyword<undefined_info,  n,f,r,e,q >;
 
 // Dirichlet and generalized Dirichlet parameters
-using dir_B = keyword<ag_name, ag_help,  b >;
-using dir_S = keyword<ag_name, ag_help,  S >;
-using dir_kappa = keyword<ag_name, ag_help,  k,a,p,p,a >;
-using gendir_C = keyword<ag_name, ag_help,  C >;
+using dir_B = keyword<undefined_info,  b >;
+using dir_S = keyword<undefined_info,  S >;
+using dir_kappa = keyword<undefined_info,  k,a,p,p,a >;
+using gendir_C = keyword<undefined_info,  C >;
 
 // Langevin model parameters
-using SLM_C0 = keyword<ag_name, ag_help,  C,'0' >;
+using SLM_C0 = keyword<undefined_info,  C,'0' >;
 
 // Gamma frequency model parameters
-using freq_gamma_C1 = keyword<ag_name, ag_help,  C,'1' >;
-using freq_gamma_C2 = keyword<ag_name, ag_help,  C,'2' >;
-using freq_gamma_C3 = keyword<ag_name, ag_help,  C,'3' >;
-using freq_gamma_C4 = keyword<ag_name, ag_help,  C,'4' >;
+using freq_gamma_C1 = keyword<undefined_info,  C,'1' >;
+using freq_gamma_C2 = keyword<undefined_info,  C,'2' >;
+using freq_gamma_C3 = keyword<undefined_info,  C,'3' >;
+using freq_gamma_C4 = keyword<undefined_info,  C,'4' >;
 
 // Beta model parameters
-using Beta_At = keyword<ag_name, ag_help,  A,t >;
+using Beta_At = keyword<undefined_info,  A,t >;
 
 // Quantities
-using transported_scalar = keyword<ag_name, ag_help,  Y >;
-using transported_scalar_fluctuation = keyword<ag_name, ag_help,  y >;
+using transported_scalar = keyword<undefined_info,  Y >;
+using transported_scalar_fluctuation = keyword<undefined_info,  y >;
 
-using velocity_x = keyword<ag_name, ag_help,  U >;
-using velocity_fluctuation_x = keyword<ag_name, ag_help,  u >;
-using velocity_y = keyword<ag_name, ag_help,  V >;
-using velocity_fluctuation_y = keyword<ag_name, ag_help,  v >;
-using velocity_z = keyword<ag_name, ag_help,  W >;
-using velocity_fluctuation_z = keyword<ag_name, ag_help,  w >;
+using velocity_x = keyword<undefined_info,  U >;
+using velocity_fluctuation_x = keyword<undefined_info,  u >;
+using velocity_y = keyword<undefined_info,  V >;
+using velocity_fluctuation_y = keyword<undefined_info,  v >;
+using velocity_z = keyword<undefined_info,  W >;
+using velocity_fluctuation_z = keyword<undefined_info,  w >;
 
-using pressure = keyword<ag_name, ag_help,  P >;
-using pressure_fluctuation = keyword<ag_name, ag_help,  p >;
+using pressure = keyword<undefined_info,  P >;
+using pressure_fluctuation = keyword<undefined_info,  p >;
   
-using density = keyword<ag_name, ag_help,  R >;
-using density_fluctuation = keyword<ag_name, ag_help,  r >;
+using density = keyword<undefined_info,  R >;
+using density_fluctuation = keyword<undefined_info,  r >;
   
 // Total number of particles
-using npar = keyword<ag_name, ag_help,  n,p,a,r >;
+using npar = keyword<undefined_info,  n,p,a,r >;
 
 // TTY (screen) output interval
-using ttyi = keyword<ag_name, ag_help,  t,t,y,i >;
+using ttyi = keyword<undefined_info,  t,t,y,i >;
 
 // Dump (restart file) output interval
-using dmpi = keyword<ag_name, ag_help,  d,m,p,i >;
+using dmpi = keyword<undefined_info,  d,m,p,i >;
 
 // Statistics output interval
-using stai = keyword<ag_name, ag_help,  s,t,a,i >;
+using stai = keyword<undefined_info,  s,t,a,i >;
 
 // PDF output interval
-using pdfi = keyword<ag_name, ag_help,  p,d,f,i >;
+using pdfi = keyword<undefined_info,  p,d,f,i >;
 
 // Glob output interval
-using glbi = keyword<ag_name, ag_help,  g,l,b,i >;
+using glbi = keyword<undefined_info,  g,l,b,i >;
 
 // Statistics
-using statistics = keyword<ag_name, ag_help,  s,t,a,t,i,s,t,i,c,s >;
-
-// Random number generator (RNG) test suite
-using rngtest = keyword<ag_name, ag_help,  r,n,g,t,e,s,t >;
-
-// RNG test suite
-using suite = keyword<ag_name, ag_help,  s,u,i,t,e >;
-
-// RNG test suites
-using smallcrush = keyword<ag_name, ag_help,  s,m,a,l,l,c,r,u,s,h >;
-using crush = keyword<ag_name, ag_help,  c,r,u,s,h >;
-using bigcrush = keyword<ag_name, ag_help,  b,i,g,c,r,u,s,h >;
-
-// RNGs
-using rngs = keyword<ag_name, ag_help,  r,n,g,s >;
-
-// MKL RNGs
-using mkl_mcg31 = keyword<ag_name, ag_help,  m,k,l,'_',m,c,g,'3','1' >;
-using mkl_r250 = keyword<ag_name, ag_help,  m,k,l,'_',r,'2','5','0' >;
-using mkl_mrg32k3a = keyword<ag_name, ag_help,  m,k,l,'_',m,r,g,'3','2',k,'3',a >;
-using mkl_mcg59 = keyword<ag_name, ag_help,  m,k,l,'_',m,c,g,'5','9' >;
-using mkl_wh = keyword<ag_name, ag_help,  m,k,l,'_',w,h >;
-using mkl_mt19937 = keyword<ag_name, ag_help,  m,k,l,'_',m,t,'1','9','9','3','7' >;
-using mkl_mt2203 = keyword<ag_name, ag_help,  m,k,l,'_',m,t,'2','2','0','3' >;
-using mkl_sfmt19937 = keyword<ag_name, ag_help,  m,k,l,'_',s,f,m,t,'1','9','9','3','7' >;
-using mkl_sobol = keyword<ag_name, ag_help,  m,k,l,'_',s,o,b,o,l >;
-using mkl_niederr = keyword<ag_name, ag_help,  m,k,l,'_',n,i,e,d,e,r,r >;
-using mkl_iabstract = keyword<ag_name, ag_help,  m,k,l,'_',i,a,b,s,t,r,a,c,t >;
-using mkl_dabstract = keyword<ag_name, ag_help,  m,k,l,'_',d,a,b,s,t,r,a,c,t >;
-using mkl_sabstract = keyword<ag_name, ag_help,  m,k,l,'_',s,a,b,s,t,r,a,c,t >;
-using mkl_nondeterm = keyword<ag_name, ag_help,  m,k,l,'_',n,o,n,d,e,t,e,r,m >;
+using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
 
 } // kw::
 } // grm::
 } // quinoa::
+
+#undef Keywords
 
 #endif // QuinoaKeywords_h
