@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Fri Sep 20 09:48:00 2013
+  \date      Mon Sep 23 09:08:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -20,8 +20,7 @@ ErrCode processException() noexcept
 //! cases are handled: (1) quinoa::Exception, (2) std::exception converted to
 //! quinoa::Exception with file,func,line information, (3) uncaught exceptions
 //! converted to quinoa::Exception without file,func,line information.
-//! Exception safety: no-throw guarantee: this function never throws exceptions
-//! and never returns but calls std::exit() with an error code.
+//! Exception safety: no-throw guarantee: this function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
