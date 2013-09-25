@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:33:23 2013
+  \date      Wed Sep 25 15:00:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -16,44 +16,6 @@
 
 using namespace quinoa;
 
-GmshMesh::GmshMesh(Memory* const memory) noexcept :
-  m_memory(memory),
-  m_type(0),
-  m_datasize(0),
-  m_coord(),
-  m_nodeId(),
-  m_lineId(),
-  m_triangleId(),
-  m_linpoel(),
-  m_tinpoel(),
-  m_lintag(),
-  m_tritag()
-//******************************************************************************
-//  Constructor
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
-
-GmshMesh::~GmshMesh() noexcept
-//******************************************************************************
-//  Destructor: free memory mesh entries held and containers
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Free memory entries held
-  m_memory->freeEntry(m_coord);
-  m_memory->freeEntry(m_nodeId);
-  m_memory->freeEntry(m_lineId);
-  m_memory->freeEntry(m_triangleId);
-
-  // Free containers held
-  m_linpoel.clear();
-  m_tinpoel.clear();
-  m_lintag.clear();
-  m_tritag.clear();
-}
-
 void
 GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 //******************************************************************************
@@ -61,17 +23,20 @@ GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Store number of nodes
+  m_nnodes = nnodes;
+
   // Allocate new memory entry to store the coordinates
-  m_coord = m_memory->newEntry<real>(nnodes, REAL, VECTOR, COORDS_NAME);
+  m_coord = std::unique_ptr<real[]>(new real [3*nnodes]);
 
   // Allocate new memory entry to store the node Ids
-  m_nodeId = m_memory->newEntry<int>(nnodes, INT, SCALAR, NODES_NAME);
+  m_nodeId = std::unique_ptr<int[]>(new int [nnodes]);
 
   // Allocate new memory entry to store the line element Ids
-  m_lineId = m_memory->newEntry<int>(nlines, INT, SCALAR, LINES_NAME);
+  m_lineId = std::unique_ptr<int[]>(new int [nlines]);
 
   // Allocate new memory entry to store the triangle element Ids
-  m_triangleId = m_memory->newEntry<int>(ntriangles,INT,SCALAR,TRIANGLES_NAME);
+  m_triangleId = std::unique_ptr<int[]>(new int [ntriangles]);
 
   // Reserve capacity to store element connectivities and tags
   reserveElem(nlines, ntriangles);

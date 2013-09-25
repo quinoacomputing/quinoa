@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:22:07 2013
+  \date      Wed Sep 25 14:59:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -12,6 +12,7 @@
 #define GmshMesh_h
 
 #include <vector>
+#include <memory>
 
 #include <Memory.h>
 
@@ -28,10 +29,10 @@ class GmshMesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit GmshMesh(Memory* const memory) noexcept;
-
-    //! Destructor: free memory entries held
-    virtual ~GmshMesh() noexcept;
+    explicit GmshMesh(Memory* const memory) noexcept :
+       m_memory(memory),
+       m_type(0),
+       m_datasize(0) {}
 
     //! Set mesh version
     void setVersion(const real version) { m_version = version; }
@@ -74,19 +75,19 @@ class GmshMesh {
     }
 
     //! Coords accessor
-    real* getCoord() const { return m_coord.ptr; }
+    real* getCoord() const { return m_coord.get(); }
 
     //! NodeId accessor
-    int* getNodeId() const { return m_nodeId.ptr; }
+    int* getNodeId() const { return m_nodeId.get(); }
 
     //! Line element id accessor
-    int* getLineId() const { return m_lineId.ptr; }
+    int* getLineId() const { return m_lineId.get(); }
 
     //! Triangle element id accessor
-    int* getTriangleId() const { return m_triangleId.ptr; }
+    int* getTriangleId() const { return m_triangleId.get(); }
 
     //! Number of nodes accessor
-    int getNnodes() const { return m_memory->getNumber(m_nodeId.id); }
+    int getNnodes() const { return m_nnodes; }
 
     //! Line elements connectivity accessor
     const std::vector<std::vector<int>> getLinpoel() const { return m_linpoel; }
@@ -118,11 +119,12 @@ class GmshMesh {
     real m_version;                          //!< Mesh version in mesh file
     int m_type;                              //!< File type in mesh file
     int m_datasize;                          //!< Data size in mesh file
+    int m_nnodes;                            //!< Number of nodes in mesh
 
-    Data<real> m_coord;                      //!< Node coordinates
-    Data<int> m_nodeId;                      //!< Node Ids
-    Data<int> m_lineId;                      //!< Line element Ids
-    Data<int> m_triangleId;                  //!< Triangle element Ids
+    std::unique_ptr<real[]> m_coord;         //!< Node coordinates
+    std::unique_ptr<int[]> m_nodeId;         //!< Node Ids
+    std::unique_ptr<int[]> m_lineId;         //!< Line element Ids
+    std::unique_ptr<int[]> m_triangleId;     //!< Triangle element Ids
 
     std::vector<std::vector<int>> m_linpoel; //!< Line elements connectivity
     std::vector<std::vector<int>> m_tinpoel; //!< Triangle elements connectivity
