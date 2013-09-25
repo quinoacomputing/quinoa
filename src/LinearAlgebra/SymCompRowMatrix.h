@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:40:32 PM MDT
+  \date      Wed Sep 25 14:38:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -22,14 +22,11 @@ class SymCompRowMatrix : public SparseMatrix {
 
   public:
     //! Constructor
-    explicit SymCompRowMatrix(Memory* const memory,
-                              const std::string name,
-                              const int size,
-                              const int dof,
+    explicit SymCompRowMatrix(const std::string& name,
+                              int size,
+                              int dof,
                               const int *psup1,
                               const int* psup2);
-    //! Destructor
-    ~SymCompRowMatrix() noexcept override;
 
     //! Add value to matrix in specified position using relative indexing
     void add(int row, int column, int i, real value);
@@ -68,14 +65,9 @@ class SymCompRowMatrix : public SparseMatrix {
     //! Don't permit move assigment
     SymCompRowMatrix& operator=(SymCompRowMatrix&&) = delete;
 
-    //! Finalize, single exit point, called implicitly from destructor or
-    //! explicitly from anywhere else
-    void finalize() noexcept;
-
-    Data<int> m_rnz;  //!< Nonzeros in each row (only in constructor)
-    Data<int> m_ia;   //!< Row indices, vector size: size*dof+1
-    Data<int> m_ja;   //!< Column indices, vector size: nnz
-    Data<real> m_a;   //!< Nonzero matrix values, vector size: nnz
+    std::unique_ptr<int[]> m_ia; //!< Row indices, vector size: size*dof+1
+    std::unique_ptr<int[]> m_ja; //!< Column indices, vector size: nnz
+    std::unique_ptr<real[]> m_a; //!< Nonzero matrix values, vector size: nnz
 };
 
 } // namespace quinoa
