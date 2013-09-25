@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:51:34 PM MDT
+  \date      Wed Sep 25 15:50:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -11,6 +11,8 @@
 //******************************************************************************
 #ifndef MKLRndTable_h
 #define MKLRndTable_h
+
+#include <memory>
 
 #include <QuinoaTypes.h>
 #include <Memory.h>
@@ -44,8 +46,7 @@ class MKLRndTable : public MKL {
 
   public:
     //! Constructor: Create random number skip-ahead table
-    explicit MKLRndTable(const Memory& memory,
-                         int nthread,
+    explicit MKLRndTable(int nthread,
                          int brng,
                          RndDist dist,
                          int method,
@@ -60,7 +61,7 @@ class MKLRndTable : public MKL {
     void generate() const;
 
     //! Constant accessor to random number table
-    const real* getRnd() const noexcept { return m_rnd.ptr; }
+    const real* getRnd() const noexcept { return m_rnd.get(); }
 
   private:
     //! Don't permit copy constructor
@@ -76,14 +77,14 @@ class MKLRndTable : public MKL {
     //! explicitly from anywhere else
     void finalize() noexcept;
 
-    const Memory& m_memory;          //!< Memory manager
     const int m_nthread;             //!< Number of threads to use
     const RndDist m_dist;            //!< RndDist (UNIFORM, GAUSSIAN, etc.)
     const int m_method;              //!< Generation method (dist. specific)
     const long long int m_chunk;     //!< Number of numbers generated per thread
+
     const long long int m_remainder; //!< Leftover
-    VSLStreamStatePtr* m_stream;     //!< Array of pointers to thread-streams
-    Data<real> m_rnd;                //!< Random numbers
+    std::unique_ptr<VSLStreamStatePtr[]> m_stream; //!< Thread-streams
+    std::unique_ptr<real[]> m_rnd;   //!< Random numbers
 };
 
 } // namespace quinoa

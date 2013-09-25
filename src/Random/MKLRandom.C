@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:50:33 PM MDT
+  \date      Wed Sep 25 15:59:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -64,7 +64,7 @@ MKLRandom::addTable(const int brng,
 {
   // Create new table
   MKLRndTable* table = new (std::nothrow)
-    MKLRndTable(m_base.memory, m_nOMPthreads, brng, dist, method, seed, number, name);
+    MKLRndTable(m_nOMPthreads, brng, dist, method, seed, number, name);
   ErrChk(table != nullptr, ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new table
