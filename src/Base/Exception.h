@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Thu Sep 19 12:33:00 2013
+  \date      Wed 25 Sep 2013 10:31:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -70,11 +70,11 @@ class Exception : public std::exception {
 
   public:
     //! Constructor
-    explicit Exception(const ExceptType except,
+    explicit Exception(ExceptType except,
                        const std::string& message,
                        const std::string& file = "",
                        const std::string& func = "",
-                       const unsigned int line = 0) noexcept;
+                       unsigned int line = 0) noexcept;
 
     //! Destructor
     virtual ~Exception() noexcept;
@@ -113,6 +113,7 @@ class Exception : public std::exception {
     void echoTrace() noexcept;
 
     const ExceptType m_except;  //!< Exception type (WARNING, etc.)
+    const bool m_trace = true;  //!< True if to echo trace
     const std::string m_file;   //!< Source file where exception is occurred
     const std::string m_func;   //!< Function name where exception is occurred
     const unsigned int m_line;  //!< Source line where exception is occurred

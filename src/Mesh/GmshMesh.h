@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Wed Sep 25 14:59:50 2013
+  \date      Wed 25 Sep 2013 10:33:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -29,8 +29,7 @@ class GmshMesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit GmshMesh(Memory* const memory) noexcept :
-       m_memory(memory),
+    explicit GmshMesh() noexcept :
        m_type(0),
        m_datasize(0) {}
 
@@ -113,8 +112,6 @@ class GmshMesh {
     GmshMesh(GmshMesh&&) = delete;
     //! Don't permit move assignment
     GmshMesh& operator=(GmshMesh&&) = delete;
-
-    Memory* const m_memory;                  //!< Memory object pointer
 
     real m_version;                          //!< Mesh version in mesh file
     int m_type;                              //!< File type in mesh file

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 07:43:58 AM MDT
+  \date      Wed 25 Sep 2013 09:16:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -26,8 +26,7 @@ QuinoaParser::parse()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Parse
-  // basic_parse_file() below gives debug info during parsing, use it for
+  // Parse: basic_parse_file() below gives debug info during parsing, use it for
   // debugging the parser itself, i.e., when modifying the grammar, otherwise,
   // use dummy_parse_file() which compiles faster
   pegtl::dummy_parse_file< grm::read_file >( m_filename, m_control );

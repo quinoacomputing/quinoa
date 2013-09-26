@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:17:54 2013
+  \date      Wed 25 Sep 2013 10:40:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -15,6 +15,7 @@
 #define QuinoaGrammar_h
 
 #include <Macro.h>
+#include <Exception.h>
 #include <QuinoaControlTypes.h>
 #include <Option.h>
 #include <QuinoaKeywords.h>
@@ -33,6 +34,14 @@ namespace grm {
   static int field = 0;
 
   // Actions
+
+  //! error handler
+  struct error : action_base< error > {
+    static void apply(const std::string& value, Stack& stack) {
+      Throw(ExceptType::FATAL, "Error while parsing '" + value + "'");
+      IGNORE(stack);
+    }
+  };
 
   //! put value in state at position given by tags without conversion
   template< typename... tags >
@@ -115,25 +124,15 @@ namespace grm {
   struct read :
          pad< trim<token, space>, blank, space > {};
 
-  //! match all accepted as position models
-  struct position : sor< kw::pos_inviscid::pegtl_string,
-                         kw::pos_viscous::pegtl_string > {};
-
-  //! match all accepted as hydro models
-  struct hydro : sor< kw::hydro_slm::pegtl_string,
-                      kw::hydro_glm::pegtl_string > {};
-
-  //! match all accepted as mix models
-  struct mix : sor< kw::mix_iem::pegtl_string,
-                    kw::mix_iecm::pegtl_string,
-                    kw::mix_dir::pegtl_string,
-                    kw::mix_gendir::pegtl_string > {};
-
   //! parse input padded by blank at left and space at right and if it matches
   //! 'keywords', apply 'actions'
   template< class keywords, typename... actions >
   struct parse :
          pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
+
+  // match unknown keyword and handle error
+  struct unknown :
+         pad< ifapply< trim<alnum, space>, error >, blank, space > {};
 
   //! comment: start with '#' until eol
   struct comment :
@@ -142,7 +141,7 @@ namespace grm {
   //! plow through 'tokens' until 'endkeyword'
   template< typename endkeyword, typename... tokens >
   struct block :
-         until< read<endkeyword>, sor<comment, tokens...> > {};
+         until< read<endkeyword>, sor<comment, tokens..., unknown> > {};
 
   //! rng: one of the random number generators
   struct rng :
@@ -171,7 +170,7 @@ namespace grm {
   struct list :
          ifmust< read<key>,
                  until< read<kw::end::pegtl_string>,
-                        sor<comment, parse<value,insert>> > > {};
+                        sor<comment, parse<value,insert>, unknown> > > {};
 
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
@@ -194,7 +193,8 @@ namespace grm {
                      ctr::Moment::CENTRAL>,
               moment<kw::velocity_x::pegtl_string,
                      ctr::Quantity::VELOCITY_X,
-                     ctr::Moment::ORDINARY>
+                     ctr::Moment::ORDINARY>,
+              unknown
             > {};
 
   //! plow through terms in expectation until character 'rbound'
@@ -424,7 +424,8 @@ namespace grm {
   //! main keywords
   struct keywords :
          sor< title,
-              physics > {};
+              physics,
+              unknown > {};
 
   //! ignore: comments and empty lines
   struct ignore :

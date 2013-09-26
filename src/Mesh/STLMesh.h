@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Thu Sep 19 18:01:06 2013
+  \date      Wed 25 Sep 2013 10:41:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration
@@ -12,9 +12,9 @@
 #define STLMesh_h
 
 #include <memory>
+#include <string>
 
 #include <QuinoaTypes.h>
-#include <Memory.h>
 
 namespace quinoa {
 
@@ -23,7 +23,7 @@ class STLMesh {
 
   public:
     //! Constructor
-    explicit STLMesh(const Memory& memory) : m_memory(memory), m_nnodes(0) {}
+    explicit STLMesh() : m_nnodes(0) {}
 
     //! Destructor
     virtual ~STLMesh() = default;
@@ -55,8 +55,6 @@ class STLMesh {
     STLMesh(STLMesh&&) = delete;
     //! Don't permit move assignment
     STLMesh& operator=(STLMesh&&) = delete;
-
-    const Memory& m_memory;                  //!< Memory object pointer
 
     std::string m_name;                      //!< Name of the mesh
     std::unique_ptr<real[]> m_x;             //!< Vertex x coordinates
