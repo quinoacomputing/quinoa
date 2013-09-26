@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Wed Sep 25 15:59:24 2013
+  \date      Wed 25 Sep 2013 10:34:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -18,7 +18,6 @@
 using namespace quinoa;
 
 MKLRandom::MKLRandom(const Base& base) noexcept :
-  m_base(base),
   m_nOMPthreads(base.paradigm.getOpenMP()->nthread()),
   m_table(),
   m_stream()

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:49:44 PM MDT
+  \date      Wed 25 Sep 2013 10:34:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -66,7 +66,6 @@ class MKLRandom : public Random {
     //! Don't permit move assigment
     MKLRandom& operator=(MKLRandom&&) = delete;
 
-    const Base& m_base;                //!< Essentials
     const int m_nOMPthreads;           //!< Number of OpenMP threads
 
     //! Type for a set of stream-tables to generate a large (and fixed) number

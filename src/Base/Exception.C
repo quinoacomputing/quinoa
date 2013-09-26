@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Thu Sep 19 12:32:55 2013
+  \date      Wed 25 Sep 2013 10:31:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -21,11 +21,11 @@
 
 using namespace quinoa;
 
-Exception::Exception(const ExceptType except,
+Exception::Exception(ExceptType except,
                      const std::string& message,
                      const std::string& file,
                      const std::string& func,
-                     const unsigned int line) noexcept
+                     unsigned int line) noexcept
 //******************************************************************************
 //  Constructor: generate error message
 //! \details No-throw guarantee: this member function never throws exceptions.
@@ -52,7 +52,7 @@ try :
   m_message = s.str();
 
   // Save call-trace
-  saveTrace();
+  if (m_trace) saveTrace();
 
 } // Catch std::exception
   catch (exception& se) {
@@ -74,7 +74,7 @@ Exception::~Exception() noexcept
 //******************************************************************************
 {
   // allocated by execinfo.h's backtrace_symbols() in Exception::saveTrace()
-  free(m_symbolList);
+  if (m_trace) free(m_symbolList);
 }
 
 void
@@ -186,11 +186,15 @@ Exception::echo(const char* msg) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf(">>> %s: %s\n>>> CALL TRACE: ======================================="
-         "==============\n", msg, what());
-  echoTrace();
-  printf(">>> ==============================================================="
-         "==\n");
+  printf(">>> %s: %s\n", msg, what());
+
+  if (m_trace) {
+    printf(">>> CALL TRACE: ==================================================="
+           "==\n");
+    echoTrace();
+    printf(">>> ==============================================================="
+           "==\n");
+  }
 }
 
 ErrCode
@@ -219,19 +223,16 @@ Exception::handleException() noexcept
   } else if (m_except == ExceptType::FATAL) {
 
     echo("FATAL ERROR");
-    printf(">>> Attempting cleanup & graceful exit...\n");
     return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::RUNTIME) {
 
     echo("RUNTIME ERROR");
-    printf(">>> Attempting cleanup & graceful exit...\n");
     return ErrCode::FAILURE;
 
   } else if (m_except == ExceptType::UNCAUGHT) {
 
     echo("UNKNOWN ERROR");
-    printf(">>> Attempting cleanup & graceful exit...\n");
     return ErrCode::FAILURE;
 
   } else {

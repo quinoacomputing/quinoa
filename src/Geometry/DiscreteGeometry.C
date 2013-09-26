@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Thu Sep 19 13:31:24 2013
+  \date      Wed 25 Sep 2013 10:35:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -35,7 +35,7 @@ try :
   echo();
 
   // Instantiate mesh object
-  m_mesh = new(std::nothrow) STLMesh(m_base.memory);
+  m_mesh = new(std::nothrow) STLMesh();
   ErrChk(m_mesh != nullptr, ExceptType::FATAL,
          "Cannot allocate memory for STL mesh object");
 
