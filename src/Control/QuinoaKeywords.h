@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 10:06:20 PM MDT
+  \date      Fri Sep 27 11:08:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser. The keywords are
@@ -43,7 +43,7 @@ struct undefined_info {
 
 // Keyword 'analytic_geometry'
 struct analytic_geometry_info {
-  static const char* name() { return "Analytic geometry defintion"; }
+  static const char* name() { return "Analytic"; }
   static const char* help() { return
     "This option is used to define the beginning of an analytical geometry "
     "definition block. Analytical geometry definitions describe a 3D geometry "

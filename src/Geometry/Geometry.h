@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 12:48:23 PM MDT
+  \date      Fri Sep 27 10:58:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -20,7 +20,7 @@ class Geometry {
 
   public:
     //! Constructor
-    explicit Geometry(const Base& base) noexcept : m_base(base) {}
+    explicit Geometry(const Base& base);
 
     //! Destructor
     virtual ~Geometry() noexcept = default;
