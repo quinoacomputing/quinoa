@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/HydroOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 02:59:48 PM MDT
+  \date      Fri Sep 27 08:54:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -31,7 +31,7 @@ class Hydro : public Toggle<HydroType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Hydro() : Toggle<HydroType>(names, values) {}
+    explicit Hydro() : Toggle<HydroType>("Hydrodynamics", names, values) {}
 
   private:
     //! Don't permit copy constructor

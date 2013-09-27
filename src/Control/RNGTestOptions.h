@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestOptions.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:41:15 2013
+  \date      Fri Sep 27 09:01:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite options and associations
   \details   Random number generator test suite options and associations
@@ -32,7 +32,9 @@ class RNGTest : public quinoa::sel::Toggle<RNGTestType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit RNGTest() : quinoa::sel::Toggle<RNGTestType>(names, values) {}
+    explicit RNGTest() :
+      quinoa::sel::Toggle<RNGTestType>
+        ("Random number generator test suite", names, values) {}
 
   private:
     //! Don't permit copy constructor

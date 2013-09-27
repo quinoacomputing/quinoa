@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 03:01:10 PM MDT
+  \date      Fri Sep 27 09:05:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -33,7 +33,7 @@ class Mix : public Toggle<MixType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Mix() : Toggle<MixType>(names, values) {}
+    explicit Mix() : Toggle<MixType>("Material mix", names, values) {}
 
   private:
     //! Don't permit copy constructor

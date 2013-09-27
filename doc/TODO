@@ -1,6 +1,7 @@
 * Parser/Control:
     - Echo what ends up being used instead of what is parsed
     - Warn on what is set ends up not being used
+    - Warn on overwrites during parsing
     - Echo control file before parser's error might occur
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.
@@ -8,6 +9,7 @@
     - Echo of call-trace from Exception is hard-coded, make it optional (e.g.,
       from command-line argument, e.g., via verbosity level?)
     - Command linear argument parser library or PEGTL?
+    - Replace the overloads in Control.h with variadic ones
 
 * Add runtime enviroment echo to Quinoa.C
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 10:07:12 PM MDT
+  \date      Fri Sep 27 09:00:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -54,7 +54,8 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
 
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit RNG() : quinoa::sel::Toggle<RNGType>(names, values) {}
+    explicit RNG() :
+      quinoa::sel::Toggle<RNGType>("Random number generator", names, values) {}
 
   private:
     //! Don't permit copy constructor

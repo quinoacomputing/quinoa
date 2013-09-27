@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:33:36 2013
+  \date      Fri Sep 27 09:06:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -45,7 +45,7 @@ Physics::Physics(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //! Echo information on physics
+  //! Echo information on physics to be created
   echo();
 
   //! Initialize model factories
@@ -125,20 +125,13 @@ Physics::echo()
   m_base.print.endsubsection();
 
   m_base.print.subsection("Models");
-  m_base.print.item("Position",
-               po.name(m_base.control.get<ctr::selected,ctr::position>()));
-  m_base.print.item("Mass",
-               ms.name(m_base.control.get<ctr::selected,ctr::mass>()));
-  m_base.print.item("Hydrodynamics",
-               hy.name(m_base.control.get<ctr::selected,ctr::hydro>()));
-  m_base.print.item("Internal energy",
-               en.name(m_base.control.get<ctr::selected,ctr::energy>()));
-  m_base.print.item("Material mixing",
-               mx.name(m_base.control.get<ctr::selected,ctr::mix>()));
-  m_base.print.item("Turbulence frequency",
-               fr.name(m_base.control.get<ctr::selected,ctr::frequency>()));
-  m_base.print.item("Material mix rate",
-               mr.name(m_base.control.get<ctr::selected,ctr::mixrate>()));
+  m_base.print.option<sel::Position, ctr::selected, ctr::position>();
+  m_base.print.option<sel::Mass, ctr::selected, ctr::mass>();
+  m_base.print.option<sel::Hydro, ctr::selected, ctr::hydro>();
+  m_base.print.option<sel::Energy, ctr::selected, ctr::energy>();
+  m_base.print.option<sel::Mix, ctr::selected, ctr::mix>();
+  m_base.print.option<sel::Frequency, ctr::selected, ctr::frequency>();
+  m_base.print.option<sel::MixRate, ctr::selected, ctr::mixrate>();
   m_base.print.endsubsection();
 
   m_base.print.subsection("Number of components");

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:24:44 2013
+  \date      Fri Sep 27 09:04:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -23,6 +23,11 @@ class Option {
   public:
     //! Destructor
     virtual ~Option() noexcept = default;
+
+    //! Lookup group name
+    const std::string& group() const {
+      return m_option.group();
+    }
 
     //! Lookup option value
     typename Type::EnumType value(const std::string& keyword) const {

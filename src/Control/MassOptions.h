@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MassOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 03:00:13 PM MDT
+  \date      Fri Sep 27 08:54:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -30,7 +30,7 @@ class Mass : public Toggle<MassType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Mass() : Toggle<MassType>(names, values) {}
+    explicit Mass() : Toggle<MassType>("Mass", names, values) {}
 
   private:
     //! Don't permit copy constructor

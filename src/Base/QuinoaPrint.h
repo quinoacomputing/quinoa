@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:17:44 2013
+  \date      Fri Sep 27 09:08:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -20,11 +20,37 @@ namespace quinoa {
 class QuinoaPrint : public Print {
 
   public:
+    //! Bring also Print::item() into scope so if local overload fails
+    //! Print::item() is available
+    using Print::item;
+
     //! Constructor
-    explicit QuinoaPrint() = default;
+    explicit QuinoaPrint(const QuinoaControl& control,
+                         const QuinoaControl& defctr) :
+      m_ctr(control), m_def(defctr) {}
 
     //! Destructor
     ~QuinoaPrint() noexcept override {}
+
+    //! Print item: name : control's value only if differs from its default
+    template<typename... tags>
+    void item(const std::string& name) const {
+      if (m_ctr.get<tags...>() != m_def.get<tags...>())
+        std::cout << m_item_name_value_fmt % m_item_indent
+                                           % name
+                                           % m_ctr.get<tags...>();
+    }
+
+    //! Print control option: group : option only if differs from its default
+    template<typename OptionType, typename... tags>
+    void option() const {
+      if (m_ctr.get<tags...>() != m_def.get<tags...>()) {
+        ctr::Option<OptionType> opt;
+        std::cout << m_item_name_value_fmt % m_item_indent
+                                           % opt.group()
+                                           % opt.name(m_ctr.get<tags...>());
+      }
+    }
 
     //! Echo vector of vector of element names
     //! Fields of vector<vector< struct{field, name, plot} >> must exist
@@ -61,6 +87,9 @@ class QuinoaPrint : public Print {
     QuinoaPrint(QuinoaPrint&&) = delete;
     //! Don't permit move assigment
     QuinoaPrint& operator=(QuinoaPrint&&) = delete;
+
+    const QuinoaControl& m_ctr;         //!< Parsed control
+    const QuinoaControl& m_def;         //!< Default control
 };
 
 } // namespace quinoa

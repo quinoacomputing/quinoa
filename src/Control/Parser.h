@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Thu Sep 12 16:24:35 2013
+  \date      Thu 26 Sep 2013 08:30:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -27,9 +27,6 @@ class Parser {
 
     //! Parser interface
     virtual void parse() = 0;
-
-    //! Echo problem setup interface
-    virtual void echo() const = 0;
 
   protected:
     const std::string m_filename;                     //!< Name of file to parse

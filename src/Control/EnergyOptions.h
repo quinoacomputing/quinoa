@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/EnergyOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 02:54:31 PM MDT
+  \date      Fri Sep 27 08:52:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -28,7 +28,7 @@ class Energy : public Toggle<EnergyType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Energy() : Toggle<EnergyType>(names, values) {}
+    explicit Energy() : Toggle<EnergyType>("Energy", names, values) {}
 
   private:
     //! Don't permit copy constructor

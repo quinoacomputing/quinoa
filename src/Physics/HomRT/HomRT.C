@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:24:58 2013
+  \date      Thu 26 Sep 2013 10:09:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -180,8 +180,4 @@ HomRT::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Echo information on physics in general
-  Physics::echo();
-
-  //! Echo information on homogeneous Rayleigh-Taylor physics
 }
