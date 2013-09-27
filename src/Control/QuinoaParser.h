@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.h
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 09:17:27 PM MDT
+  \date      Fri Sep 27 14:43:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -14,8 +14,7 @@
 #include <vector>
 
 #include <Parser.h>
-#include <QuinoaControl.h>
-#include <QuinoaPrint.h>
+#include <Base.h>
 
 namespace quinoa {
 
@@ -24,18 +23,7 @@ class QuinoaParser : public Parser {
 
   public:
     //! Constructor
-    //! \param[in]    filename  Control file name to read from
-    //! \param[in]    print     Pretty printer
-    //! \param[inout] control   Control object to put parsed data in
-    explicit QuinoaParser(const std::string& filename,
-                          const QuinoaPrint& print,
-                          QuinoaControl& control)
-      : Parser(filename),
-        m_print(print),
-        m_control(control) {
-      m_control.set<ctr::io,ctr::control>(filename);
-      m_print.item("Control file", filename);
-    }
+    explicit QuinoaParser(const std::string& filename, Base& base);
 
     //! Destructor
     ~QuinoaParser() noexcept override = default;
@@ -56,9 +44,7 @@ class QuinoaParser : public Parser {
     //! Make requested statistics unique
     void unique(std::vector<ctr::Product>& statistics);
 
-    const QuinoaPrint& m_print;                 //!< Pretty printer
-
-    QuinoaControl& m_control;                   //!< Parsed control
+    const Base& m_base;                  //!< Essentials
 };
 
 } // namespace quinoa

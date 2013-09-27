@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Fri 20 Sep 2013 05:22:46 PM MDT
+  \date      Fri Sep 27 14:45:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -163,6 +163,9 @@ class QuinoaControl :
     //! Don't permit move assigment
     QuinoaControl& operator=(QuinoaControl&&) = delete;
 };
+
+//! QuinoaControl defaults
+static const QuinoaControl QuinoaDefaults;
 
 } // namespace quinoa
 
