@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri Sep 27 09:06:17 2013
+  \date      Fri Sep 27 09:41:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -104,17 +104,7 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ctr::Option<sel::Physics> ph;
-  ctr::Option<sel::Position> po;
-  ctr::Option<sel::Mass> ms;
-  ctr::Option<sel::Hydro> hy;
-  ctr::Option<sel::Energy> en;
-  ctr::Option<sel::Mix> mx;
-  ctr::Option<sel::Frequency> fr;
-  ctr::Option<sel::MixRate> mr;
-
-  m_base.print.section("Physics",
-                  ph.name(m_base.control.get<ctr::selected,ctr::physics>()));
+  m_base.print.section<sel::Physics, ctr::selected, ctr::physics>();
 
   m_base.print.subsection("I/O filenames");
   m_base.print.item("Input", m_base.control.get<ctr::io,ctr::input>());
@@ -125,28 +115,22 @@ Physics::echo()
   m_base.print.endsubsection();
 
   m_base.print.subsection("Models");
-  m_base.print.option<sel::Position, ctr::selected, ctr::position>();
-  m_base.print.option<sel::Mass, ctr::selected, ctr::mass>();
-  m_base.print.option<sel::Hydro, ctr::selected, ctr::hydro>();
-  m_base.print.option<sel::Energy, ctr::selected, ctr::energy>();
-  m_base.print.option<sel::Mix, ctr::selected, ctr::mix>();
-  m_base.print.option<sel::Frequency, ctr::selected, ctr::frequency>();
-  m_base.print.option<sel::MixRate, ctr::selected, ctr::mixrate>();
+  m_base.print.item<sel::Position, ctr::selected, ctr::position>();
+  m_base.print.item<sel::Mass, ctr::selected, ctr::mass>();
+  m_base.print.item<sel::Hydro, ctr::selected, ctr::hydro>();
+  m_base.print.item<sel::Energy, ctr::selected, ctr::energy>();
+  m_base.print.item<sel::Mix, ctr::selected, ctr::mix>();
+  m_base.print.item<sel::Frequency, ctr::selected, ctr::frequency>();
+  m_base.print.item<sel::MixRate, ctr::selected, ctr::mixrate>();
   m_base.print.endsubsection();
 
   m_base.print.subsection("Number of components");
-  m_base.print.item("Positions",
-               m_base.control.get<ctr::component,ctr::nposition>());
-  m_base.print.item("Densities",
-               m_base.control.get<ctr::component,ctr::ndensity>());
-  m_base.print.item("Velocities",
-               m_base.control.get<ctr::component,ctr::nvelocity>());
-  m_base.print.item("Scalars",
-               m_base.control.get<ctr::component,ctr::nscalar>());
-  m_base.print.item("Turbulent frequencies",
-               m_base.control.get<ctr::component,ctr::nfrequency>());
-  m_base.print.item("Particles",
-               m_base.control.get<ctr::component,ctr::npar>());
+  m_base.print.item<ctr::component,ctr::nposition>("Positions");
+  m_base.print.item<ctr::component,ctr::ndensity>("Densities");
+  m_base.print.item<ctr::component,ctr::nvelocity>("Velocities");
+  m_base.print.item<ctr::component,ctr::nscalar>("Scalars");
+  m_base.print.item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
+  m_base.print.item<ctr::component,ctr::npar>("Particles");
   m_base.print.endsubsection();
 
   m_base.print.subsection("Incrementation parameters");
