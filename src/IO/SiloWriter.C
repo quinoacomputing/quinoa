@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:32:13 2013
+  \date      Fri Sep 27 15:08:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -39,7 +39,7 @@ quinoa::SiloError(char* msg)
 using namespace quinoa;
 
 SiloWriter::SiloWriter(const std::string& filename,
-                       STLMesh* const mesh,
+                       STLMesh& mesh,
                        const int errLevel) :
   m_filename(filename),
   m_mesh(mesh),
@@ -86,18 +86,18 @@ SiloWriter::write()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  real* coords[] = { m_mesh->getx(), m_mesh->gety(), m_mesh->getz() };
-  int nnodes = m_mesh->nnodes();
+  real* coords[] = { m_mesh.getx(), m_mesh.gety(), m_mesh.getz() };
+  int nnodes = m_mesh.nnodes();
   int nfaces = nnodes/3;
   int zshapetype = DB_ZONETYPE_TRIANGLE;
   int zshapesize = 3;
   int zshapecnt = nfaces;
 
   // Write out STL face connectivity
-  DBPutZonelist2(m_dbfile, "zonelist", nfaces, 3, m_mesh->nodelist(), nnodes,
+  DBPutZonelist2(m_dbfile, "zonelist", nfaces, 3, m_mesh.nodelist(), nnodes,
                  0, 0, 0, &zshapetype, &zshapesize, &zshapecnt, 1, NULL);
 
   // Write out STL mesh: no zones, only faces with a simple face connectivity
-  DBPutUcdmesh(m_dbfile, m_mesh->name().c_str(), 3, NULL, coords,
+  DBPutUcdmesh(m_dbfile, m_mesh.name().c_str(), 3, NULL, coords,
                nnodes, nfaces, "zonelist", NULL, DB_DOUBLE, NULL);
 }

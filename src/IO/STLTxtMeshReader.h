@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:22:01 PM MDT
+  \date      Fri Sep 27 15:16:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -25,15 +25,7 @@ class STLTxtMeshReader : public Reader {
 
   public:
     //! Constructor
-    explicit STLTxtMeshReader(const std::string filename,
-                              STLMesh* const mesh) :
-      Reader(filename),
-      m_mesh(mesh) {
-      Assert(m_mesh != nullptr, ExceptType::FATAL,
-            "Uninitialized mesh object passed to STLTxtMeshReader constructor");
-      // Set mesh name as filename modulo extension
-      mesh->setName(filename.substr(0, filename.find_last_of(".")));
-    }
+    explicit STLTxtMeshReader(const std::string filename, STLMesh& mesh);
 
     //! Destructor, default compiler generated
     ~STLTxtMeshReader() noexcept override = default;
@@ -77,7 +69,7 @@ class STLTxtMeshReader : public Reader {
 
     const bool STORE = true;                 //!< Indicator to store facets
     const bool COUNT = false;                //!< Indicator to only count facets
-    STLMesh* const m_mesh;                   //!< Mesh object pointer
+    STLMesh& m_mesh;                         //!< Mesh object pointer
 };
 
 } // namespace quinoa

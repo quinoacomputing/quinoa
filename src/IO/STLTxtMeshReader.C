@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:32:26 2013
+  \date      Fri Sep 27 15:31:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -17,6 +17,18 @@
 
 using namespace quinoa;
 
+STLTxtMeshReader::STLTxtMeshReader(const std::string filename, STLMesh& mesh) :
+  Reader(filename),
+  m_mesh(mesh)
+//******************************************************************************
+// Constructor
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Set mesh name as filename modulo extension
+  mesh.setName(filename.substr(0, filename.find_last_of(".")));
+}
+
 void
 STLTxtMeshReader::read()
 //******************************************************************************
@@ -30,10 +42,10 @@ STLTxtMeshReader::read()
          "Number of nodes in STL file must be divisible by 3");
 
   // Allocate memory to store coordinates and face list
-  m_mesh->alloc(nnodes);
+  m_mesh.alloc(nnodes);
 
   // Read and store mesh
-  readFacets(STORE, m_mesh->getx(), m_mesh->gety(), m_mesh->getz());
+  readFacets(STORE, m_mesh.getx(), m_mesh.gety(), m_mesh.getz());
 }
 
 size_t

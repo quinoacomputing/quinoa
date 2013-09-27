@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri Sep 27 11:19:01 2013
+  \date      Fri Sep 27 15:28:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -107,8 +107,7 @@ Physics::echo()
   m_base.print.section<sel::Physics, ctr::selected, ctr::physics>();
 
   m_base.print.subsection("I/O filenames");
-  m_base.print.item("Input", m_base.control.get<ctr::io,ctr::input>());
-  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::output>());
+  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::physoutput>());
   m_base.print.item("Glob", m_base.control.get<ctr::io,ctr::glob>());
   m_base.print.item("Statistics", m_base.control.get<ctr::io,ctr::stats>());
   m_base.print.item("PDF", m_base.control.get<ctr::io,ctr::pdf>());

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Fri Sep 27 14:58:03 2013
+  \date      Fri Sep 27 15:29:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -242,7 +242,11 @@ namespace grm {
                         store_option<sel::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >,
-                 block<kw::end::pegtl_string> > {};
+                 block<kw::end::pegtl_string,
+                       process<kw::input::pegtl_string,
+                               set<ctr::io,ctr::input>>,
+                       process<kw::output::pegtl_string,
+                               set<ctr::io, ctr::geomoutput>> > > {};
 
   //! dir block
   struct dir :
@@ -361,8 +365,7 @@ namespace grm {
               process<kw::term::pegtl_string, store<ctr::incpar, ctr::term>>,
               process<kw::dt::pegtl_string, store<ctr::incpar, ctr::dt>>,
               process<kw::npar::pegtl_string, store<ctr::component, ctr::npar>>,
-              process<kw::input::pegtl_string, set<ctr::io, ctr::input>>,
-              process<kw::output::pegtl_string, set<ctr::io, ctr::output>>,
+              process<kw::output::pegtl_string, set<ctr::io, ctr::physoutput>>,
               process<kw::pdfname::pegtl_string, set<ctr::io, ctr::pdf>>,
               process<kw::globname::pegtl_string, set<ctr::io, ctr::glob>>,
               process<kw::statname::pegtl_string, set<ctr::io, ctr::stats>>,

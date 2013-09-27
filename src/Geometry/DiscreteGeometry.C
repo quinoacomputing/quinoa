@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Fri Sep 27 11:07:53 2013
+  \date      Fri Sep 27 15:28:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -18,8 +18,7 @@
 using namespace quinoa;
 
 DiscreteGeometry::DiscreteGeometry(const Base& base) :
-  Geometry(base),
-  m_mesh(new STLMesh)
+  Geometry(base)
 //******************************************************************************
 //  Constructor
 //! \param[in] base      Essentials
@@ -27,17 +26,15 @@ DiscreteGeometry::DiscreteGeometry(const Base& base) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using namespace ctr;
-
   // Instantiate ASCII STL mesh reader object
-  STLTxtMeshReader reader(base.control.get<io,input>(), m_mesh.get());
+  STLTxtMeshReader reader(base.control.get<ctr::io,ctr::input>(), m_mesh);
 
   // Read in STL mesh
   reader.read();
 
   // Instantiate Silo writer object
-  SiloWriter writer(base.control.get<io,output>(),
-                    m_mesh.get(),
+  SiloWriter writer(base.control.get<ctr::io,ctr::geomoutput>(),
+                    m_mesh,
                     DB_ALL_AND_DRVR);
 
   // Write out STL geometry to Silo file
