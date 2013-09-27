@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri Sep 27 10:51:49 2013
+  \date      Fri Sep 27 11:19:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -151,7 +151,7 @@ Physics::echo()
   m_base.print.endsubsection();
 
   m_base.print.subsection("Statistics");
-  m_base.print.requestedStats("Requested statistics");
-  m_base.print.estimatedStats("Estimated statistics");
+  m_base.print.requestedStats("Requested");
+  m_base.print.estimatedStats("Estimated");
   m_base.print.endpart();
 }
