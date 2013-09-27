@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:06:56 2013
+  \date      Fri Sep 27 15:07:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -33,7 +33,7 @@ class SiloWriter {
   public:
     //! Constructor: Acquire glob file handle
     explicit SiloWriter(const std::string& filename,
-                        STLMesh* const mesh,
+                        STLMesh& mesh,
                         const int errLevel);
  
     //! Destructor: Release glob file handle
@@ -53,7 +53,7 @@ class SiloWriter {
     SiloWriter& operator=(SiloWriter&&) = delete;
 
     const std::string m_filename;       //!< Silo filename
-    STLMesh* const m_mesh;              //!< Mesh object pointer
+    STLMesh& m_mesh;                    //!< Mesh
 
     SiloErrorHandler m_errFunc;         //!< Silo error handler function ptr
     int m_errLevel;                     //!< Silo error reporting level

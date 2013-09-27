@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaControl.h
   \author    J. Bakosi
-  \date      Fri Sep 27 14:45:56 2013
+  \date      Fri Sep 27 15:26:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control
   \details   Quinoa control
@@ -72,7 +72,8 @@ class QuinoaControl :
       // Default I/O parameters
       set<io,control>("");
       set<io,input>("");
-      set<io,output>("out");
+      set<io,geomoutput>("out");
+      set<io,physoutput>("out");
       set<io,pdf>("pdf");
       set<io,glob>("glob");
       set<io,stats>("stat");

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:07:47 2013
+  \date      Fri Sep 27 15:36:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -24,7 +24,7 @@ class DiscreteGeometry : public Geometry {
     explicit DiscreteGeometry(const Base& base);
 
     //! Destructor
-    ~DiscreteGeometry() noexcept override = default;
+    ~DiscreteGeometry() noexcept override {}
 
     //! Initialize discrete geometry
     void init() override {}
@@ -42,7 +42,7 @@ class DiscreteGeometry : public Geometry {
     //! Don't permit move assigment
     DiscreteGeometry& operator=(DiscreteGeometry&&) = delete;
 
-    std::unique_ptr<STLMesh> m_mesh;             //!< Mesh object
+    STLMesh m_mesh;             //!< Mesh object
 };
 
 } // namespace quinoa
