@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PositionOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 03:02:03 PM MDT
+  \date      Fri Sep 27 08:49:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -31,7 +31,7 @@ class Position : public Toggle<PositionType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Position() : Toggle<PositionType>(names, values) {}
+    explicit Position() : Toggle<PositionType>("Position", names, values) {}
 
   private:
     //! Don't permit copy constructor

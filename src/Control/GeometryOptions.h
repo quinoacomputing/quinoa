@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/GeometryOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 02:54:18 PM MDT
+  \date      Fri Sep 27 08:53:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -31,7 +31,7 @@ class Geometry : public Toggle<GeometryType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Geometry() : Toggle<GeometryType>(names, values) {}
+    explicit Geometry() : Toggle<GeometryType>("Geometry", names, values) {}
 
   private:
     //! Don't permit copy constructor

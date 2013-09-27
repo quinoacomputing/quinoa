@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.h
   \author    J. Bakosi
-  \date      Thu Sep 12 16:36:44 2013
+  \date      Thu 26 Sep 2013 08:30:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -33,9 +33,6 @@ class RNGTestParser : public quinoa::Parser {
 
     //! Parse random number generator test suite control file
     void parse() override;
-
-    //! Echo problem setup
-    void echo() const override;
 
   private:
     //! Don't permit copy constructor

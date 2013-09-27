@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Sep 19 10:20:13 2013
+  \date      Thu 26 Sep 2013 11:21:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -42,16 +42,12 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
          "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
-  // Note: base is const, but allow parser to populate by removing const
   QuinoaParser parser(argv[1], base.print, base.control);
 
   // Parse control file
   parser.parse();
 
   base.print.part("Problem setup");
-
-  // Echo information of stuff parsed
-  parser.echo();
 
   //! Initialize factory
   initFactory();
@@ -67,12 +63,6 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   if (p != sel::PhysicsType::NO_PHYSICS) {
     m_physics = std::unique_ptr<Physics>(m_physicsFactory[p]());
   }
-
-  // Initialize geometry (if any)
-  if (m_geometry) m_geometry->init();
-
-  // Initialize physics (if any)
-  if (m_physics) m_physics->init();
 }
 
 void
@@ -106,6 +96,15 @@ QuinoaDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_geometry) m_geometry->fill();
-  if (m_physics) m_physics->solve();
+  //! Initialize and execute geometry (if any)
+  if (m_geometry) {
+    m_geometry->init();
+    m_geometry->fill();
+  }
+
+  //! Initialize and execute physics (if any)
+  if (m_physics) {
+    m_physics->init();
+    m_physics->solve();
+  }
 }

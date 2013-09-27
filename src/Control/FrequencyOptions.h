@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FrequencyOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 02:54:24 PM MDT
+  \date      Fri Sep 27 08:53:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -30,7 +30,8 @@ class Frequency : public Toggle<FrequencyType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Frequency() : Toggle<FrequencyType>(names, values) {}
+    explicit Frequency() :
+      Toggle<FrequencyType>("Turbulence frequency", names, values) {}
 
   private:
     //! Don't permit copy constructor

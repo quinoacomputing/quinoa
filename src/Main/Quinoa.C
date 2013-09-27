@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 19 Sep 2013 09:08:54 PM MDT
+  \date      Thu 26 Sep 2013 11:29:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -91,14 +91,15 @@ int main(int argc, char* argv[])
     std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
-    QuinoaPrint print;                  //!< Pretty printer
-    Paradigm paradigm(print);           //!< Parallel compute environment
-    Memory memory(&paradigm);           //!< Memory manager
-    QuinoaControl control;              //!< Controller
-    Timer timer;                        //!< Timer
+    QuinoaControl control;                  //!< Parsed control
+    QuinoaControl defctr;                   //!< Default control
+    QuinoaPrint print(control, defctr);     //!< Pretty printer
+    Paradigm paradigm(print);               //!< Parallel compute environment
+    Memory memory(&paradigm);               //!< Memory manager
+    Timer timer;                            //!< Timer
 
     // Bundle up essentials
-    Base base(print, paradigm, memory, control, timer);
+    Base base(print, paradigm, memory, control, defctr, timer);
 
     // Echo program name
     echoHeader(print);
@@ -106,9 +107,8 @@ int main(int argc, char* argv[])
     // Echo environment
     print.part("Environment");
     echoBuildEnv(print);                //!< Build environment
-    echoRunEnv(print);                  //!< Runtime environment
     paradigm.echo();                    //!< Parallel compute enviroment
-    print.endpart();
+    echoRunEnv(print);                  //!< Runtime environment
 
     // Create driver
     QuinoaDriver driver(argc, argv, base);

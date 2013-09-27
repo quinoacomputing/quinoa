@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MixRateOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 03:01:28 PM MDT
+  \date      Fri Sep 27 08:55:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -30,7 +30,8 @@ class MixRate : public Toggle<MixRateType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit MixRate() : Toggle<MixRateType>(names, values) {}
+    explicit MixRate() :
+      Toggle<MixRateType>("Material mix rate", names, values) {}
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Wed 25 Sep 2013 09:16:48 PM MDT
+  \date      Thu 26 Sep 2013 08:36:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -32,6 +32,9 @@ QuinoaParser::parse()
   pegtl::dummy_parse_file< grm::read_file >( m_filename, m_control );
   //pegtl::basic_parse_file< grm::read_file >( m_filename, m_control );
 
+  m_print.item("Parsed control file", "success");
+  m_print.endpart();
+
   // Filter out repeated statistics
   unique(const_cast<std::vector<ctr::Product>&>(m_control.get<ctr::stats>()));
 }
@@ -47,15 +50,4 @@ QuinoaParser::unique(std::vector<ctr::Product>& statistics)
   std::sort(statistics.begin(), statistics.end());
   auto it = std::unique(statistics.begin(), statistics.end());
   statistics.resize(std::distance(statistics.begin(), it));
-}
-
-void
-QuinoaParser::echo() const
-//******************************************************************************
-//  Echo problem setup
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  m_print.section("Title", m_control.get<ctr::title>());
-  m_print.item("Control file", m_control.get<ctr::io,ctr::control>());
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:25:03 2013
+  \date      Thu 26 Sep 2013 10:09:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -238,8 +238,4 @@ HomMix::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Echo information on physics in general
-  Physics::echo();
-
-  //! Echo information on homogeneous material mixing physics
 }

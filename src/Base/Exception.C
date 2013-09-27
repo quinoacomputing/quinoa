@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed 25 Sep 2013 10:31:17 PM MDT
+  \date      Thu 26 Sep 2013 08:28:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -186,7 +186,7 @@ Exception::echo(const char* msg) noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf(">>> %s: %s\n", msg, what());
+  printf("\n>>> %s: %s\n", msg, what());
 
   if (m_trace) {
     printf(">>> CALL TRACE: ==================================================="

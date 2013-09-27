@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestParser.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:33:14 2013
+  \date      Thu 26 Sep 2013 08:30:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
@@ -44,13 +44,4 @@ RNGTestParser::parse()
 //   // Store off parsed bundles
 //   m_control->set(stack);
 //   m_control->set(boolstack);
-}
-
-void
-RNGTestParser::echo() const
-//******************************************************************************
-//  Echo problem setup
-//! \author  J. Bakosi
-//******************************************************************************
-{
 }

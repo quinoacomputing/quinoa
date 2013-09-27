@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:31:45 2013
+  \date      Thu 26 Sep 2013 08:40:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -25,12 +25,12 @@ Parser::Parser(const std::string& filename) : m_filename(filename)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::ifstream m_q;
+  std::ifstream q;
 
   // Check if control file exists, throw exception if it does not
-  m_q.open(m_filename, std::ifstream::in);
-  ErrChk(m_q.good(), ExceptType::FATAL, "Failed to open file: " + m_filename);
+  q.open(m_filename, std::ifstream::in);
+  ErrChk(q.good(), ExceptType::FATAL, "Failed to open file: " + m_filename);
 
-  m_q.close();
-  ErrChk(!m_q.fail(), ExceptType::FATAL, "Failed to close file: " + m_filename);
+  q.close();
+  ErrChk(!q.fail(), ExceptType::FATAL, "Failed to close file: " + m_filename);
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PhysicsOptions.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 04:56:26 PM MDT
+  \date      Fri Sep 27 08:56:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -33,7 +33,7 @@ class Physics : public Toggle<PhysicsType> {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Physics() : Toggle<PhysicsType>(names, values) {}
+    explicit Physics() : Toggle<PhysicsType>("Physics", names, values) {}
 
   private:
     //! Don't permit copy constructor
