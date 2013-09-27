@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 10:09:41 PM MDT
+  \date      Fri Sep 27 12:01:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -22,6 +22,18 @@
 #include <Statistics.h>
 
 using namespace quinoa;
+
+HomHydro::HomHydro(const Base& base) :
+  Physics(base),
+  m_totalTime(base.timer.create("Total solution"))
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ErrChk(hydro(), ExceptType::FATAL, "No hydrodynamics model specified");
+}
 
 void
 HomHydro::solve()
@@ -55,7 +67,7 @@ HomHydro::solve()
   while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    //hydro()->advance(dt);
+    advance(dt);
 
     // Accumulate statistics
     statistics().accumulate();
@@ -80,6 +92,37 @@ HomHydro::solve()
     ++it;
     if (t > m_term) t = m_term;
   } // Time stepping loop
+}
+
+void
+HomHydro::advance(real dt)
+//******************************************************************************
+//  Advance particles
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  uint64_t p;
+  int tid;
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<m_npar; ++p) {
+
+      hydro()->advance(p, tid, dt);
+
+    } // m_npar
+  } // omp parallel
 }
 
 void

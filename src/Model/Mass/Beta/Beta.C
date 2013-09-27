@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:34:31 2013
+  \date      Fri Sep 27 11:57:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -38,56 +38,18 @@ Beta::init()
 }
 
 void
-Beta::advance(const real& dt)
+Beta::advance(int p, int tid, real dt)
 //******************************************************************************
 //  Advance particles with the Beta model
+//! \param[in]  p    Particle to advance
+//! \param[in]  tid  Thread id
 //! \param[in]  dt   Time step size
 //! \author  J. Bakosi
 //******************************************************************************
 {
+IGNORE(p);
+IGNORE(tid);
 IGNORE(dt);
-//   uint64_t p;
-//   int tid, i;
-//   real yn, d;
-//   real* y;
-//   real dW[m_nscalar];
-// 
-//   #ifdef _OPENMP
-//   #pragma omp parallel private(tid, p, i, y, yn, dW, d)
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     tid = omp_get_thread_num();
-//     #else
-//     tid = 0;
-//     #endif
-// 
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
-//     for (p=0; p<m_npar; ++p) {
-//       // Get access to particle scalars
-//       y = m_scalars + p*m_nscalar;
-// 
-//       // Compute Nth scalar
-//       yn = 1.0 - y[0];
-//       #ifdef __INTEL_COMPILER
-//       #pragma vector always
-//       #endif
-//       for (i=1; i<m_nscalar; ++i) yn -= y[i];
-// 
-//       // Generate Gaussian random numbers with zero mean and unit variance
-//       rndstr()->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-//                           m_str[tid], m_nscalar, dW, 0.0, 1.0);
-// 
-//       // Advance first m_nscalar (K=N-1) scalars
-//       for (i=0; i<m_nscalar; ++i) {
-//         d = m_k[i]*y[i]*yn*dt;
-//         if (d > 0.0) d = sqrt(d); else d = 0.0;
-//         y[i] += m_b[i]/2.0*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
-//       }
-//     } // m_npar
-//   } // omp parallel
 }
 
 void

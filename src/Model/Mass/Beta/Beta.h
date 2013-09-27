@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:15:24 2013
+  \date      Fri Sep 27 11:56:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -37,7 +37,7 @@ class Beta : public Mass {
     void init() override;
 
     //! Advance particles
-    void advance(const real& dt) override;
+    void advance(int p, int tid, real dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);

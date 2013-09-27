@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:15:11 2013
+  \date      Fri Sep 27 11:55:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -42,7 +42,7 @@ class Mass : public Model {
     virtual void init() = 0;
 
     //! Advance particles in mass model
-    virtual void advance(const real& dt) = 0;
+    virtual void advance(int p, int tid, real dt) = 0;
 
   protected:
     const int m_offset;             //!< Mass-offset relative to base

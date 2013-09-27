@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Thu Sep 19 18:02:07 2013
+  \date      Fri Sep 27 11:41:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -25,9 +25,7 @@ class HomMix : public Physics {
 
   public:
     //! Constructor
-    explicit HomMix(const Base& base) :
-      Physics(base),
-      m_totalTime(base.timer.create("Total solution")) {}
+    explicit HomMix(const Base& base);
 
     //! Destructor
     ~HomMix() override = default;

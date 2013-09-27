@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GLM/GLM.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:16:06 2013
+  \date      Fri Sep 27 11:59:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -39,7 +39,7 @@ class GeneralizedLangevin : public Hydro {
     void init() override;
 
     //! Advance particles
-    void advance(const real& dt) override;
+    void advance(int p, int tid, real dt) override;
 
   private:
     //! Don't permit copy constructor

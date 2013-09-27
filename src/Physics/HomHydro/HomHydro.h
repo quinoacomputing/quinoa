@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.h
   \author    J. Bakosi
-  \date      Thu Sep 19 18:01:56 2013
+  \date      Fri Sep 27 12:01:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -28,9 +28,7 @@ class HomHydro : public Physics {
 
   public:
     //! Constructor
-    explicit HomHydro(const Base& base) :
-      Physics(base),
-      m_totalTime(base.timer.create("Total solution")) {}
+    explicit HomHydro(const Base& base);
 
     //! Destructor
     ~HomHydro() override = default;
@@ -63,6 +61,9 @@ class HomHydro : public Physics {
                 const bool wroteJpdf,
                 const bool wroteGlob,
                 const bool wroteStat);
+
+    //! Advance
+    void advance(real dt);
 
     //! Output joint PDF
     void outJpdf(const real t);
