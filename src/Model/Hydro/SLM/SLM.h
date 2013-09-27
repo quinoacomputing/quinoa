@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SLM/SLM.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:15:59 2013
+  \date      Fri Sep 27 11:58:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -38,7 +38,7 @@ class SimplifiedLangevin : public Hydro {
     void init() override;
 
     //! Advance particles
-    void advance(const real& dt) override;
+    void advance(int p, int tid, real dt) override;
 
   private:
     //! Don't permit copy constructor

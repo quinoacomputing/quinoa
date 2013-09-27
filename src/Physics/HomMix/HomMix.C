@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 10:09:29 PM MDT
+  \date      Fri Sep 27 11:47:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -30,6 +30,18 @@
 #include <GenDirichlet.h>
 
 using namespace quinoa;
+
+HomMix::HomMix(const Base& base) :
+  Physics(base),
+  m_totalTime(base.timer.create("Total solution"))
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ErrChk(mix(), ExceptType::FATAL, "No material mix model specified");
+}
 
 void
 HomMix::solve()

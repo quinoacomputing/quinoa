@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:08:38 2013
+  \date      Fri Sep 27 12:12:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser. The keywords are
@@ -186,15 +186,57 @@ using hydro_slm = keyword<undefined_info,  h,y,d,r,o,'_',s,l,m >;
 //   * Generalized Langevin model
 using hydro_glm = keyword<undefined_info,  h,y,d,r,o,'_',g,l,m >;
 
-// Select material mix model:
-//   * Interaction by exchange with the mean
-using mix_iem = keyword<undefined_info,  m,i,x,'_',i,e,m >;
-//   * Interaction by exchange with the conditional mean
-using mix_iecm = keyword<undefined_info,  m,i,x,'_',i,e,c,m >;
-//   * Dirichlet
-using mix_dir = keyword<undefined_info,  m,i,x,'_',d,i,r >;
-//   * generalized Dirichlet
-using mix_gendir = keyword<undefined_info,  m,i,x,'_',g,e,n,d,i,r >;
+// Keyword 'mix_iem'
+struct mix_iem_info {
+  static const char* name() { return
+    "Interaction by exchange with the mean";
+  }
+  static const char* help() { return
+    "Material mix model, 'mix_iem', is short for interaction by exchange with "
+    "the mean (IEM). It is a relaxation-type material mix model intended "
+    "shear-driven flows.";
+  }
+};
+using mix_iem = keyword<mix_iem_info,  m,i,x,'_',i,e,m >;
+
+// Keyword 'mix_iecm'
+struct mix_iecm_info {
+  static const char* name() { return
+    "Interaction by exchange with the conditional mean";
+  }
+  static const char* help() { return
+    "Material mix model, 'mix_iecm', is short for interaction by exchange with "
+    "the conditional mean (IECM). It is a relaxation-type material mix model "
+    "intended shear-driven flows.";
+  }
+};
+using mix_iecm = keyword<mix_iecm_info,  m,i,x,'_',i,e,c,m >;
+
+// Keyword 'mix_dir'
+struct mix_dir_info {
+  static const char* name() { return
+    "Dirichlet";
+  }
+  static const char* help() { return
+    "Material mix model, 'mix_dir', is short for Dirichlet. It is a material "
+    "mix model that explicitly satisfies the unit-sum requirement for all "
+    "statistical samples.";
+  }
+};
+using mix_dir = keyword<mix_dir_info,  m,i,x,'_',d,i,r >;
+
+// Keyword 'mix_gendir'
+struct mix_gendir_info {
+  static const char* name() { return
+    "Generalized Dirichlet";
+  }
+  static const char* help() { return
+    "Material mix model, 'mix_gendir', is short for generalized Dirichlet. It "
+    "is a material mix model that explicitly satisfies the unit-sum "
+    "requirement for all statistical samples.";
+  }
+};
+using mix_gendir = keyword<mix_gendir_info,  m,i,x,'_',g,e,n,d,i,r >;
 
 // Select material mix rate model:
 //   * Gamma distribution model

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:15:38 2013
+  \date      Fri Sep 27 11:57:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -42,7 +42,7 @@ class Hydro : public Model {
     virtual void init() = 0;
 
     //! Advance particles in hydro model
-    virtual void advance(const real& dt) = 0;
+    virtual void advance(int p, int tid, real dt) = 0;
 
   protected:
     const int m_offset;             //!< Velocity-offset relative to base

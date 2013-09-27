@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 10:09:50 PM MDT
+  \date      Fri Sep 27 11:54:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -24,6 +24,20 @@
 #include <SLM.h>
 
 using namespace quinoa;
+
+
+HomRT::HomRT(const Base& base) :
+  Physics(base),
+  m_totalTime(base.timer.create("Total solution"))
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ErrChk(mass(), ExceptType::FATAL, "No mass model specified");
+  ErrChk(hydro(), ExceptType::FATAL, "No hydrodynamics model specified");
+}
 
 void
 HomRT::solve()
@@ -57,8 +71,7 @@ HomRT::solve()
   while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
 
     // Advance particles
-    mass()->advance(dt);
-    hydro()->advance(dt);
+    advance(dt);
 
     // Accumulate statistics
     statistics().accumulate();
@@ -83,6 +96,38 @@ HomRT::solve()
     ++it;
     if (t > m_term) t = m_term;
   } // Time stepping loop
+}
+
+void
+HomRT::advance(real dt)
+//******************************************************************************
+//  Advance particles
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  uint64_t p;
+  int tid;
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<m_npar; ++p) {
+
+      mass()->advance(p, tid, dt);
+      hydro()->advance(p, tid, dt);
+
+    } // m_npar
+  } // omp parallel
 }
 
 void

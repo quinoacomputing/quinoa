@@ -1,5 +1,4 @@
 * Parser/Control:
-    - Echo what ends up being used instead of what is parsed
     - Warn on what is set ends up not being used
     - Warn on overwrites during parsing
     - Echo control file before parser's error might occur
