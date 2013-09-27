@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 11:21:18 PM MDT
+  \date      Fri Sep 27 11:30:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -62,6 +62,13 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   sel::PhysicsType p = m_base.control.get<ctr::selected, ctr::physics>();
   if (p != sel::PhysicsType::NO_PHYSICS) {
     m_physics = std::unique_ptr<Physics>(m_physicsFactory[p]());
+  }
+
+  // Echo 'unspecified' if both geometry and physics are unspecified
+  if (!m_geometry && !m_physics) {
+    base.print.section("Physics", std::string("unspecified"));
+    base.print.section("Geometry", std::string("unspecified"));
+    base.print.endpart();
   }
 }
 
