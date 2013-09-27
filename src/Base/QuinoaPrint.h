@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:08:12 2013
+  \date      Fri Sep 27 09:39:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -20,8 +20,8 @@ namespace quinoa {
 class QuinoaPrint : public Print {
 
   public:
-    //! Bring also Print::item() into scope so if local overload fails
-    //! Print::item() is available
+    //! Make some overloads from base into scope for if local overloads fail
+    using Print::section;
     using Print::item;
 
     //! Constructor
@@ -30,7 +30,25 @@ class QuinoaPrint : public Print {
       m_ctr(control), m_def(defctr) {}
 
     //! Destructor
-    ~QuinoaPrint() noexcept override {}
+    ~QuinoaPrint() noexcept override = default;
+
+    //! Print control option: group : option only if differs from its default
+    template<typename OptionType, typename... tags>
+    void section() const {
+      if (m_ctr.get<tags...>() != m_def.get<tags...>()) {
+        ctr::Option<OptionType> opt;
+        auto& group = opt.group();
+        auto& value = opt.name(m_ctr.get<tags...>());
+        std::cout << m_section_title_value_fmt % m_section_indent
+                                               % m_section_bullet
+                                               % group
+                                               % value;
+        std::cout << m_section_underline_fmt
+                     % m_section_indent
+                     % std::string(m_section_indent_size + 3 +
+                                   group.size() + value.size(), '-');
+      }
+    }
 
     //! Print item: name : control's value only if differs from its default
     template<typename... tags>
@@ -43,7 +61,7 @@ class QuinoaPrint : public Print {
 
     //! Print control option: group : option only if differs from its default
     template<typename OptionType, typename... tags>
-    void option() const {
+    void item() const {
       if (m_ctr.get<tags...>() != m_def.get<tags...>()) {
         ctr::Option<OptionType> opt;
         std::cout << m_item_name_value_fmt % m_item_indent
