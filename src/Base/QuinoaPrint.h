@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:39:22 2013
+  \date      Fri Sep 27 10:52:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -20,7 +20,7 @@ namespace quinoa {
 class QuinoaPrint : public Print {
 
   public:
-    //! Make some overloads from base into scope for if local overloads fail
+    //! Bring vanilla overloads from base into scope in case local overloads fail
     using Print::section;
     using Print::item;
 
@@ -32,7 +32,7 @@ class QuinoaPrint : public Print {
     //! Destructor
     ~QuinoaPrint() noexcept override = default;
 
-    //! Print control option: group : option only if differs from its default
+    //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
     void section() const {
       if (m_ctr.get<tags...>() != m_def.get<tags...>()) {
@@ -50,7 +50,7 @@ class QuinoaPrint : public Print {
       }
     }
 
-    //! Print item: name : control's value only if differs from its default
+    //! Print item: 'name : value' only if differs from its default
     template<typename... tags>
     void item(const std::string& name) const {
       if (m_ctr.get<tags...>() != m_def.get<tags...>())
@@ -59,7 +59,7 @@ class QuinoaPrint : public Print {
                                            % m_ctr.get<tags...>();
     }
 
-    //! Print control option: group : option only if differs from its default
+    //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
     void item() const {
       if (m_ctr.get<tags...>() != m_def.get<tags...>()) {
@@ -70,19 +70,28 @@ class QuinoaPrint : public Print {
       }
     }
 
-    //! Echo vector of vector of element names
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist
-    //! See src/Control/QuinoaControlTypes.h for the definitions of operator <<
-    //! for outputing Term and vector<Term>, and operator <<= for outputing
-    //! requested (i.e., plotted) Term
-    template<typename... tags>
-    void vecvecNames(const QuinoaControl& ctr,
-                     const std::string& msg,
-                     const bool req = false) const {
-      std::cout << m_item_name_fmt % m_item_indent % msg;
-      if (req) for (auto& v : ctr.get<tags...>()) std::cout <<= v;
-      else for (auto& v : ctr.get<tags...>()) std::cout << v;
-      std::cout << '\n';
+    //! Echo requested statistics if differs from default.
+    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
+    //! See src/Control/QuinoaControlTypes.h for the definition of operator <<=
+    //! for outputing requested Term and vector<Term>.
+    void requestedStats(const std::string& msg) const {
+      if (m_ctr.get<ctr::stats>() != m_def.get<ctr::stats>()) {
+        std::cout << m_item_name_fmt % m_item_indent % msg;
+        for (auto& v : m_ctr.get<ctr::stats>()) std::cout <<= v;
+        std::cout << '\n';
+      }
+    }
+
+    //! Echo estimated statistics if differs from default.
+    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
+    //! See src/Control/QuinoaControlTypes.h for the definition of operator <<
+    //! for outputing estimated Term and vector<Term>.
+    void estimatedStats(const std::string& msg) const {
+      if (m_ctr.get<ctr::stats>() != m_def.get<ctr::stats>()) {
+        std::cout << m_item_name_fmt % m_item_indent % msg;
+        for (auto& v : m_ctr.get<ctr::stats>()) std::cout << v;
+        std::cout << '\n';
+      }
     }
 
 //     //! Echo vector of Option.names
