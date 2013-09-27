@@ -1,6 +1,5 @@
 * Parser/Control:
     - Warn on what is set ends up not being used
-    - Warn on overwrites during parsing
     - Echo control file before parser's error might occur
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.

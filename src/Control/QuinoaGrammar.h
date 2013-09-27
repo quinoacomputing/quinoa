@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:32:57 2013
+  \date      Fri Sep 27 14:58:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -28,7 +28,7 @@ namespace grm {
 
   // State
 
-  //! Bundle is where everything is stored during parsing
+  //! Everything is stored in Stack during parsing
   using Stack = QuinoaControl;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
@@ -107,8 +107,15 @@ namespace grm {
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      ctr::Option<OptionType> option;
-      stack.set<tags...>(option.value(value));
+      ctr::Option<OptionType> opt;
+      //! Emit warning on overwrite
+      if (stack.get<tags...>() != QuinoaDefaults.get<tags...>()) {
+        std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
+                  << opt.group() << "' option. Overwriting '"
+                  << opt.name(stack.get<tags...>()) << "' with '"
+                  << opt.name(opt.value(value)) << "'.\n\n";
+      }
+      stack.set<tags...>(opt.value(value));
     }
   };
 
@@ -366,55 +373,67 @@ namespace grm {
               process<kw::dmpi::pegtl_string, store<ctr::interval, ctr::dump>>
             > {};
 
-  //! hommix block
+  //! mass models
+  struct mass :
+         sor< beta > {};
+
+  //! hydro models
+  struct hydro :
+         sor< slm > {};
+
+  //! material mix models
+  struct mix :
+         sor< dir, gendir > {};
+
+  //! turbulence frequency models
+  struct freq :
+         sor< freq_gamma > {};
+
+  //! physics 'hommix' block
   struct hommix :
          ifmust< parse<kw::hommix::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
                  block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
-                       dir,
-                       gendir,
+                       mix,
                        statistics> > {};
 
-  //! homrt block
+  //! physics 'homrt' block
   struct homrt :
          ifmust< parse<kw::homrt::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
                  block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
-                       dir,
-                       gendir,
-                       slm,
-                       beta,
+                       mass,
+                       hydro,
+                       freq,
                        statistics> > {};
 
-  //! homhydro block
+  //! physics 'homhydro' block
   struct homhydro :
          ifmust< parse<kw::homhydro::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
                  block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
-                       slm,
-                       freq_gamma,
+                       hydro,
+                       freq,
                        statistics> > {};
 
-  //! spinsflow block
+  //! physics 'spinsflow' block
   struct spinsflow :
          ifmust< parse<kw::spinsflow::pegtl_string,
                        store_option<sel::Physics, ctr::selected, ctr::physics>>,
                  block<kw::end::pegtl_string,
                        geometry,
                        physics_common,
-                       slm,
-                       freq_gamma,
-                       dir,
-                       gendir,
-                       beta> > {};
+                       hydro,
+                       freq,
+                       mix> > {};
 
-  //! physics
+  //! physics types
   struct physics :
          sor< hommix,
               homhydro,

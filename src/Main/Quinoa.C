@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 11:29:47 PM MDT
+  \date      Fri Sep 27 14:41:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -92,14 +92,13 @@ int main(int argc, char* argv[])
 
     // Create the essentials
     QuinoaControl control;                  //!< Parsed control
-    QuinoaControl defctr;                   //!< Default control
-    QuinoaPrint print(control, defctr);     //!< Pretty printer
+    QuinoaPrint print(control);             //!< Pretty printer
     Paradigm paradigm(print);               //!< Parallel compute environment
     Memory memory(&paradigm);               //!< Memory manager
     Timer timer;                            //!< Timer
 
     // Bundle up essentials
-    Base base(print, paradigm, memory, control, defctr, timer);
+    Base base(print, paradigm, memory, control, timer);
 
     // Echo program name
     echoHeader(print);
