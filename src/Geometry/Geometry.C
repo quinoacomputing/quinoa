@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:53:21 2013
+  \date      Fri Sep 27 10:59:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -14,6 +14,17 @@
 
 using namespace quinoa;
 
+Geometry::Geometry(const Base& base) : m_base(base)
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  //! Echo information on geometry to be created
+  echo();
+}
+
 void
 Geometry::echo()
 //******************************************************************************
@@ -21,8 +32,5 @@ Geometry::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   Option<sel::Geometry> geo;
-//   std::cout << " * Geometry: "
-//             << geo.name(m_base.control.get<selected,geometry>())
-//             << std::endl;
+  m_base.print.section<sel::Geometry, ctr::selected, ctr::geometry>();
 }
