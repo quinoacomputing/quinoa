@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaParser.C
   \author    J. Bakosi
-  \date      Fri Sep 27 14:39:23 2013
+  \date      Fri Sep 27 16:38:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa control file parser
   \details   Quinoa control file parser
@@ -46,6 +46,7 @@ QuinoaParser::parse()
   //pegtl::basic_parse_file< grm::read_file >( m_filename, m_base.control );
 
   m_base.print.item("Parsed control file", "success");
+  m_base.print.section("Title", m_base.control.get<ctr::title>());
   m_base.print.endpart();
 
   // Filter out repeated statistics

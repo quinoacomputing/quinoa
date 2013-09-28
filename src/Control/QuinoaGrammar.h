@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Fri Sep 27 15:29:26 2013
+  \date      Fri Sep 27 18:16:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -33,12 +33,35 @@ namespace grm {
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
 
+  //! Parser error types
+  enum class Error : uint8_t { KEYWORD,
+                               MOMENT,
+                               QUOTED,
+                               LIST };
+
+  static const std::map<Error, std::string> err_msg( {
+    { Error::KEYWORD, "Unknown keyword" },
+    { Error::MOMENT, "Unknown term in moment" },
+    { Error::QUOTED, "Must be double-quoted" },
+    { Error::LIST, "Unknown value in list" }
+  } );
+
   // Actions
 
   //! error handler
-  struct error : action_base< error > {
+  template< Error key >
+  struct error : action_base< error<key> > {
     static void apply(const std::string& value, Stack& stack) {
-      Throw(ExceptType::FATAL, "Error while parsing '" + value + "'");
+      const auto& msg = err_msg.find(key);
+      Assert(msg != err_msg.end(), ExceptType::FATAL,
+            "Unknown parser error. You are doing something pretty nasty, e.g., "
+            "overriding compiler errors by casting some arbitrary type into an "
+            "enum class. Please don't rape the language. There is a good "
+            "reason we rely on strong type checking.");
+      if (msg != err_msg.end()) {
+        Throw(ExceptType::FATAL,
+              "Error while parsing '" + value + "'. " + msg->second + ".");
+      }
       IGNORE(stack);
     }
   };
@@ -138,8 +161,9 @@ namespace grm {
          pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
 
   // match unknown keyword and handle error
+  template< Error key >
   struct unknown :
-         pad< ifapply< trim<alnum, space>, error >, blank, space > {};
+         pad< ifapply< trim<any, space>, error<key> >, blank, space > {};
 
   //! comment: start with '#' until eol
   struct comment :
@@ -148,7 +172,8 @@ namespace grm {
   //! plow through 'tokens' until 'endkeyword'
   template< typename endkeyword, typename... tokens >
   struct block :
-         until< read<endkeyword>, sor<comment, tokens..., unknown> > {};
+         until< read<endkeyword>,
+                sor<comment, tokens..., unknown<Error::KEYWORD>> > {};
 
   //! rng: one of the random number generators
   struct rng :
@@ -177,12 +202,31 @@ namespace grm {
   struct list :
          ifmust< read<key>,
                  until< read<kw::end::pegtl_string>,
-                        sor<comment, parse<value,insert>, unknown> > > {};
+                        sor<comment,
+                            parse<value,insert>,
+                            unknown<Error::LIST>> > > {};
+
+  //! scan string between characters 'lbound' and 'rbound' and if matches apply
+  //! action 'insert'
+  template< class insert, char lbound = '"', char rbound = '"' >
+  struct quoted :
+         ifmust< one<lbound>,
+                 ifapply< sor<trim<not_one<lbound>, one<rbound>>,
+                              unknown<Error::QUOTED>>, insert >,
+                 one<rbound>
+               > {};
 
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
   struct process :
          ifmust< read<keyword>, parse<keywords,insert> > {};
+
+  //! process 'keyword' and call its 'insert' action for string matched
+  //! between characters 'lbound' and 'rbound'
+  template< class keyword, class insert, char lbound='"', char rbound='"' >
+  struct process_quoted :
+         ifmust< read<keyword>,
+                 sor< quoted<insert,lbound,rbound>, unknown<Error::QUOTED>> > {};
 
   //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, ctr::Quantity q, ctr::Moment m >
@@ -201,7 +245,7 @@ namespace grm {
               moment<kw::velocity_x::pegtl_string,
                      ctr::Quantity::VELOCITY_X,
                      ctr::Moment::ORDINARY>,
-              unknown
+              unknown<Error::MOMENT>
             > {};
 
   //! plow through terms in expectation until character 'rbound'
@@ -215,18 +259,9 @@ namespace grm {
          read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
              > {};
 
-  //! scan problem title between characters 'lbound' and 'rbound'
-  template< char lbound, char rbound >
-  struct parse_title :
-         ifmust< one<lbound>,
-                 ifapply< trim<not_one<lbound>, one<rbound>>,
-                          set<ctr::title> >,
-                 one<rbound>
-               > {};
-
   //! title
   struct title :
-         ifmust< read<kw::title::pegtl_string>, parse_title<'"','"'> > {};
+         ifmust< read<kw::title::pegtl_string>, quoted<set<ctr::title>> > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
@@ -243,10 +278,10 @@ namespace grm {
                                      ctr::selected,
                                      ctr::geometry> >,
                  block<kw::end::pegtl_string,
-                       process<kw::input::pegtl_string,
-                               set<ctr::io,ctr::input>>,
-                       process<kw::output::pegtl_string,
-                               set<ctr::io, ctr::geomoutput>> > > {};
+                       process_quoted<kw::input::pegtl_string,
+                                      set<ctr::io,ctr::input>>,
+                       process_quoted<kw::output::pegtl_string,
+                                      set<ctr::io, ctr::geomoutput>> > > {};
 
   //! dir block
   struct dir :
@@ -365,7 +400,7 @@ namespace grm {
               process<kw::term::pegtl_string, store<ctr::incpar, ctr::term>>,
               process<kw::dt::pegtl_string, store<ctr::incpar, ctr::dt>>,
               process<kw::npar::pegtl_string, store<ctr::component, ctr::npar>>,
-              process<kw::output::pegtl_string, set<ctr::io, ctr::physoutput>>,
+              process_quoted<kw::output::pegtl_string, set<ctr::io, ctr::physoutput>>,
               process<kw::pdfname::pegtl_string, set<ctr::io, ctr::pdf>>,
               process<kw::globname::pegtl_string, set<ctr::io, ctr::glob>>,
               process<kw::statname::pegtl_string, set<ctr::io, ctr::stats>>,
@@ -446,8 +481,7 @@ namespace grm {
   //! main keywords
   struct keywords :
          sor< title,
-              physics,
-              unknown > {};
+              physics > {};
 
   //! ignore: comments and empty lines
   struct ignore :
@@ -455,7 +489,7 @@ namespace grm {
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         until< eof, sor<keywords, ignore> > {};
+         until< eof, sor<keywords, ignore, unknown<Error::KEYWORD>> > {};
 
 } // grm::
 } // quinoa::
