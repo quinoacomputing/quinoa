@@ -5,7 +5,7 @@
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Echo of call-trace from Exception is hard-coded, make it optional (e.g.,
       from command-line argument, e.g., via verbosity level?)
-    - Command linear argument parser library or PEGTL?
+    - Command line argument parser library or PEGTL?
     - Replace the overloads in Control.h with variadic ones
     - Fix echo of underlying compiler
 
