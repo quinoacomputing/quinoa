@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaGrammar.h
   \author    J. Bakosi
-  \date      Fri Sep 27 18:16:02 2013
+  \date      Sat 28 Sep 2013 08:03:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa grammar definition
   \details   Grammar definition. We use the Parsing Expression Grammar Template
@@ -53,14 +53,11 @@ namespace grm {
   struct error : action_base< error<key> > {
     static void apply(const std::string& value, Stack& stack) {
       const auto& msg = err_msg.find(key);
-      Assert(msg != err_msg.end(), ExceptType::FATAL,
-            "Unknown parser error. You are doing something pretty nasty, e.g., "
-            "overriding compiler errors by casting some arbitrary type into an "
-            "enum class. Please don't rape the language. There is a good "
-            "reason we rely on strong type checking.");
       if (msg != err_msg.end()) {
         Throw(ExceptType::FATAL,
               "Error while parsing '" + value + "'. " + msg->second + ".");
+      } else {
+        Throw(ExceptType::FATAL, "Unknown parser error.");
       }
       IGNORE(stack);
     }
