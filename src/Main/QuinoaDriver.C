@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Fri Sep 27 12:34:11 2013
+  \date      Fri Sep 27 15:59:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -48,6 +48,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   parser.parse();
 
   base.print.part("Problem setup");
+  base.print.section("Title", base.control.get<ctr::title>());
 
   //! Initialize factory
   initFactory();
