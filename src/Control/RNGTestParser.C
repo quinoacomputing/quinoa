@@ -2,18 +2,15 @@
 /*!
   \file      src/Control/RNGTestParser.C
   \author    J. Bakosi
-  \date      Thu 26 Sep 2013 08:30:39 PM MDT
+  \date      Mon Sep 30 08:51:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite parser
   \details   Random number generator test suite parser
 */
 //******************************************************************************
 
-#include <pegtl.hh>
-
 #include <RNGTestParser.h>
 #include <RNGTestGrammar.h>
-#include <Control.h>
 
 using namespace rngtest;
 

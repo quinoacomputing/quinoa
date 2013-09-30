@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 09:30:37 PM MDT
+  \date      Mon Sep 30 08:50:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Keyword_h
 #define Keyword_h
+
+#include <pegtl.hh>
 
 namespace quinoa {
 namespace grm {
