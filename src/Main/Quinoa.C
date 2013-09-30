@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri Sep 27 14:41:10 2013
+  \date      Mon Sep 30 14:11:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -10,6 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
+
+#include <unistd.h>
+#include <time.h>
 
 #include <QuinoaConfig.h>
 #include <Base.h>
@@ -23,6 +26,50 @@ using namespace quinoa;
 
 //! Everything that contributes to the quina executable
 namespace quinoa {
+
+static std::string workdir()
+//******************************************************************************
+//  Wrapper for POSIX API's getcwd() from unistd.h
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  char cwd[1024];
+
+  if (getcwd(cwd, sizeof(cwd)) != NULL)
+    return std::string(cwd);
+  else
+    Throw(ExceptType::WARNING, std::string("Error from POSIX API's getcwd()"));
+}
+
+static std::string curtime()
+//******************************************************************************
+//  Wrapper for the standard C library's gettimeofday() from
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  time_t current_time;
+  char* c_time_string;
+
+  // Obtain current time as seconds elapsed since the Epoch
+  current_time = time(NULL);
+
+  if (current_time == ((time_t)-1)) {
+    Throw(ExceptType::WARNING, "Failure to compute the current time.");
+  }
+
+  // Convert to local time format
+  c_time_string = ctime(&current_time);
+
+ if (c_time_string == NULL) {
+   Throw(ExceptType::FATAL, "Failure to convert the current time.");
+ }
+
+ // Convert to std::string and remove trailing newline
+ std::string str(c_time_string);
+ str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+
+ return str;
+}
 
 static void echoHeader(const QuinoaPrint& print)
 //******************************************************************************
@@ -57,16 +104,16 @@ static void echoBuildEnv(const QuinoaPrint& print)
   print.item("Build date", QUINOA_BUILD_DATE);
 }
 
-static void echoRunEnv(const QuinoaPrint& print)
+static void echoRunEnv(const QuinoaPrint& print, const char* executable)
 //******************************************************************************
 //  Echo runtime environment
 //! \author  J. Bakosi
 //******************************************************************************
 {
   print.section("Run-time environment");
-  print.item("Date, time", "...");
-  print.item("Working directory", "...");
-  print.item("Executable full path", "...");
+  print.item("Date, time", curtime());
+  print.item("Work directory", workdir());
+  print.item("Executable (rel. to work dir)", executable);
   print.item("Command line arguments", "...");
 }
 
@@ -107,7 +154,7 @@ int main(int argc, char* argv[])
     print.part("Environment");
     echoBuildEnv(print);                //!< Build environment
     paradigm.echo();                    //!< Parallel compute enviroment
-    echoRunEnv(print);                  //!< Runtime environment
+    echoRunEnv(print, argv[0]);         //!< Runtime environment
 
     // Create driver
     QuinoaDriver driver(argc, argv, base);

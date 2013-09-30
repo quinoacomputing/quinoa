@@ -2,13 +2,11 @@
     - Warn on what is set ends up not being used
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.
-    - Add logger: Pantheios? Glog? Boost.Log? Requirements?
+    - Command line argument parser library or PEGTL?
     - Echo of call-trace from Exception is hard-coded, make it optional (e.g.,
       from command-line argument, e.g., via verbosity level?)
-    - Command line argument parser library or PEGTL?
+    - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones
-
-* Add runtime enviroment echo to Quinoa.C
 
 * Error/Exception handling: Can we get rid of Exception macros?
 
@@ -19,7 +17,7 @@
 
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
-    - Regression tests:
+    - Regression tests
 
 * Test suite for exceptions:
     - Automatically switch each potential throw location into a throw and test
@@ -29,11 +27,11 @@
 
 * Faster build:
     - Remove unnecessary includes
-    - Explore dynamic libs, precompiled headers
     - Reduce build deps with ninja build dependency map
+    - Explore dynamic libs, precompiled headers
 
 * unique_ptr to avoid having to explicitly free pointers in destructors. See
-  also Item 2/9.
+  also Item 2/9. Do we still need Memory?
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
