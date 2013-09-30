@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTestKeywords.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 09:54:02 PM MDT
+  \date      Mon Sep 30 08:52:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite parser. The keywords are defined by specializing struct 'keyword',
@@ -18,8 +18,6 @@
 //! the inline includes below to make sure they get included in the correct
 //! namespace and not polluting the global one.
 #define Keywords
-
-#include <pegtl.hh>
 
 #include <Keyword.h>
 

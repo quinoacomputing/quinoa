@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/QuinoaKeywords.h
   \author    J. Bakosi
-  \date      Fri Sep 27 12:12:26 2013
+  \date      Mon Sep 30 08:50:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's keywords
   \details   All keywords recognized by Quinoa's parser. The keywords are
@@ -18,8 +18,6 @@
 //! the inline includes below to make sure they get included in the correct
 //! namespace and not polluting the global one.
 #define Keywords
-
-#include <pegtl.hh>
 
 #include <Keyword.h>
 
