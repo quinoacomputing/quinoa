@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTes/InputDeck/Parser.C
+  \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:02:26 PM MDT
+  \date      Mon 30 Sep 2013 10:44:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser

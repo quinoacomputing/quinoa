@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Options/Frequency.h
+  \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:08:34 PM MDT
+  \date      Mon 30 Sep 2013 10:44:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
