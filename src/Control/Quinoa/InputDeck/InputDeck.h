@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck.h
+  \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:20:53 PM MDT
+  \date      Mon 30 Sep 2013 10:44:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck

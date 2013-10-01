@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTest/InputDeck.h
+  \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:21:05 PM MDT
+  \date      Mon 30 Sep 2013 10:44:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
