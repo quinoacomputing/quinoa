@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTestKeywords.h
+  \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon Sep 30 08:52:10 2013
+  \date      Mon 30 Sep 2013 10:36:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
-  test suite parser. The keywords are defined by specializing struct 'keyword',
-  defined in Control/Keyword.h. Introducing a new keyword requires a more human
-  readable (bust still short) name as well as a short, few-line, help-like
-  description.
+  test suite input deck parser. The keywords are defined by specializing struct
+  'keyword', defined in Control/Keyword.h. Introducing a new keyword requires a
+  more human readable (bust still short) name as well as a short, few-line,
+  help-like description.
 */
 //******************************************************************************
-#ifndef RNGTestKeywords_h
-#define RNGTestKeywords_h
+#ifndef RNGTestInputDeckKeywords_h
+#define RNGTestInputDeckKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
 //! the inline includes below to make sure they get included in the correct
@@ -29,7 +29,7 @@ namespace kw {
 using namespace pegtl::ascii;
 using quinoa::grm::kw::keyword;
 
-// Include base keywords recognized by all parsers
+// Include base keywords recognized by all input deck parsers
 #include <BaseKeywords.h>
 
 // Include Intel's MKL's RNG keywords
@@ -116,4 +116,4 @@ using rngs = keyword< rngs_info, r,n,g,s >;
 
 #undef Keywords
 
-#endif // RNGTestKeywords_h
+#endif // RNGTestInputDeckKeywords_h

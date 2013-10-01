@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/MassOptions.h
+  \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:54:38 2013
+  \date      Mon 30 Sep 2013 10:07:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
 */
 //******************************************************************************
-#ifndef MassOptions_h
-#define MassOptions_h
+#ifndef QuinoaMassOptions_h
+#define QuinoaMassOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -61,4 +61,4 @@ class Mass : public Toggle<MassType> {
 } // sel::
 } // quinoa::
 
-#endif // MassOptions_h
+#endif // QuinoaMassOptions_h

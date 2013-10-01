@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/MixRateOptions.h
+  \file      src/Control/Quinoa/Options/MixRate.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:55:26 2013
+  \date      Mon 30 Sep 2013 10:08:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
 */
 //******************************************************************************
-#ifndef MixRateOptions_h
-#define MixRateOptions_h
+#ifndef QuinoaMixRateOptions_h
+#define QuinoaMixRateOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -62,4 +62,4 @@ class MixRate : public Toggle<MixRateType> {
 } // sel::
 } // quinoa::
 
-#endif // MixRateOptions_h
+#endif // QuinoaMixRateOptions_h

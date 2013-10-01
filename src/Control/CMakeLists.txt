@@ -4,7 +4,7 @@ project(QuinoaControl CXX)
 
 add_library(QuinoaControl
             Parser.C
-            QuinoaParser.C
+            Quinoa/InputDeck/Parser.C
 )
 
 INSTALL(TARGETS QuinoaControl
@@ -17,7 +17,7 @@ project(RNGTestControl CXX)
 
 add_library(RNGTestControl
             Parser.C
-            RNGTestParser.C
+            RNGTest/InputDeck/Parser.C
 )
 
 INSTALL(TARGETS RNGTestControl

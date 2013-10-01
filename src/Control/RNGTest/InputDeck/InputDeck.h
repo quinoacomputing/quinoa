@@ -1,53 +1,53 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTestControl.h
+  \file      src/Control/RNGTest/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 04:58:16 PM MDT
+  \date      Mon 30 Sep 2013 10:21:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Random number generator test suite control
-  \details   Random number generator test suite control
+  \brief     Random number generator test suite input deck
+  \details   Random number generator test suite input deck
 */
 //******************************************************************************
-#ifndef RNGTestControl_h
-#define RNGTestControl_h
+#ifndef RNGTestInputDeck_h
+#define RNGTestInputDeck_h
 
 #include <Control.h>
-#include <RNGTestControlTypes.h>
+#include <RNGTest/InputDeck/Types.h>
 
 namespace rngtest {
 
-//! RNGTestControl : Control<specialized to RNGTest>, see RNGTestControlTypes.h
-class RNGTestControl :
+//! InputDeck : Control< specialized to RNGTest >, see Types.h
+class InputDeck :
   public quinoa::Control< // tag          type
                           ctr::title,     std::string,
-                          ctr::suite,     sel::RNGTestType,
+                          ctr::suite,     sel::BatteryType,
                           ctr::generator, std::vector<quinoa::sel::RNGType> > {
 
   public:
     //! Constructor: set defaults
-    explicit RNGTestControl() = default;
+    explicit InputDeck() = default;
 
 // //! Default bundle for RNGTest's control
 // const Bundle defaults(
 //   "",                                  //!< Title
-//   sel::RNGTestType::NO_RNGTEST,     //!< RNG test suite
+//   sel::BatteryType::NO_BATTERY,     //!< RNG test suite
 //   std::vector<quinoa::sel::RNGType>()       //!< Random number generators
 // );
 
     //! Destructor
-    ~RNGTestControl() noexcept override = default;
+    ~InputDeck() noexcept override = default;
 
   private:
     //! Don't permit copy constructor
-    RNGTestControl(const RNGTestControl&) = delete;
+    InputDeck(const InputDeck&) = delete;
     //! Don't permit copy assigment
-    RNGTestControl& operator=(const RNGTestControl&) = delete;
+    InputDeck& operator=(const InputDeck&) = delete;
     //! Don't permit move constructor
-    RNGTestControl(RNGTestControl&&) = delete;
+    InputDeck(InputDeck&&) = delete;
     //! Don't permit move assigment
-    RNGTestControl& operator=(RNGTestControl&&) = delete;
+    InputDeck& operator=(InputDeck&&) = delete;
 };
 
 } // namespace rngtest
 
-#endif // RNGTestControl_h
+#endif // RNGTestInputDeck_h

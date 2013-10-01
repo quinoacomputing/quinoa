@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaParser.h
+  \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri Sep 27 14:43:51 2013
+  \date      Mon 30 Sep 2013 09:38:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa control file parser
-  \details   Quinoa control file parser
+  \brief     Quinoa's input deck file parser
+  \details   Quinoa's input deck file parser
 */
 //******************************************************************************
-#ifndef QuinoaParser_h
-#define QuinoaParser_h
+#ifndef QuinoaInputDeckParser_h
+#define QuinoaInputDeckParser_h
 
 #include <vector>
 
@@ -18,28 +18,28 @@
 
 namespace quinoa {
 
-//! QuinoaParser : Parser
-class QuinoaParser : public Parser {
+//! InputDeckParser : Parser
+class InputDeckParser : public Parser {
 
   public:
     //! Constructor
-    explicit QuinoaParser(const std::string& filename, Base& base);
+    explicit InputDeckParser(const std::string& filename, Base& base);
 
     //! Destructor
-    ~QuinoaParser() noexcept override = default;
+    ~InputDeckParser() noexcept override = default;
 
     //! Parse quinoa control file
     void parse() override;
 
   private:
     //! Don't permit copy constructor
-    QuinoaParser(const QuinoaParser&) = delete;
+    InputDeckParser(const InputDeckParser&) = delete;
     //! Don't permit copy assigment
-    QuinoaParser& operator=(const QuinoaParser&) = delete;
+    InputDeckParser& operator=(const InputDeckParser&) = delete;
     //! Don't permit move constructor
-    QuinoaParser(QuinoaParser&&) = delete;
+    InputDeckParser(InputDeckParser&&) = delete;
     //! Don't permit move assigment
-    QuinoaParser& operator=(QuinoaParser&&) = delete;
+    InputDeckParser& operator=(InputDeckParser&&) = delete;
 
     //! Make requested statistics unique
     void unique(std::vector<ctr::Product>& statistics);
@@ -49,4 +49,4 @@ class QuinoaParser : public Parser {
 
 } // namespace quinoa
 
-#endif // QuinoaParser_h
+#endif // QuinoaInputDeckParser_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Sep 30 14:11:42 2013
+  \date      Mon 30 Sep 2013 10:25:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -21,6 +21,7 @@
 #include <Memory.h>
 #include <QuinoaDriver.h>
 #include <QuinoaPrint.h>
+#include <Quinoa/CmdLine/Keywords.h>
 
 using namespace quinoa;
 
@@ -35,10 +36,11 @@ static std::string workdir()
 {
   char cwd[1024];
 
-  if (getcwd(cwd, sizeof(cwd)) != NULL)
+  if (getcwd(cwd, sizeof(cwd)) != NULL) {
     return std::string(cwd);
-  else
+  } else {
     Throw(ExceptType::WARNING, std::string("Error from POSIX API's getcwd()"));
+  }
 }
 
 static std::string curtime()
@@ -138,7 +140,7 @@ int main(int argc, char* argv[])
     std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
-    QuinoaControl control;                  //!< Parsed control
+    InputDeck control;                      //!< Parsed input deck
     QuinoaPrint print(control);             //!< Pretty printer
     Paradigm paradigm(print);               //!< Parallel compute environment
     Memory memory(&paradigm);               //!< Memory manager

@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/MixOptions.h
+  \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:05:22 2013
+  \date      Mon 30 Sep 2013 10:08:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
 */
 //******************************************************************************
-#ifndef MixOptions_h
-#define MixOptions_h
+#ifndef QuinoaMixOptions_h
+#define QuinoaMixOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -73,4 +73,4 @@ class Mix : public Toggle<MixType> {
 } // sel::
 } // quinoa::
 
-#endif // MixOptions_h
+#endif // QuinoaMixOptions_h

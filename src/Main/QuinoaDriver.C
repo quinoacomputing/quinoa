@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:45:32 PM MDT
+  \date      Mon 30 Sep 2013 10:26:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -21,7 +21,7 @@
 #include <HomHydro/HomHydro.h>
 #include <HomRT/HomRT.h>
 #include <SPINSFlow/SPINSFlow.h>
-#include <QuinoaParser.h>
+#include <Quinoa/InputDeck/Parser.h>
 
 using namespace quinoa;
 
@@ -42,7 +42,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
          "Exactly one command line argument required: filename.q");
 
   // Instantiate control file parser
-  QuinoaParser parser(argv[1], base);
+  InputDeckParser parser(argv[1], base);
 
   // Parse control file
   parser.parse();

@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaControlTypes.h
+  \file      src/Control/Quinoa/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Fri Sep 27 15:26:08 2013
+  \date      Mon 30 Sep 2013 09:47:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Types for control and parsing
-  \details   Types for control and parsing
+  \brief     Types for Quinoa's input deck parsing
+  \details   Types for Quinoa's input deck parsing
 */
 //******************************************************************************
-#ifndef QuinoaControlTypes_h
-#define QuinoaControlTypes_h
+#ifndef QuinoaInputDeckTypes_h
+#define QuinoaInputDeckTypes_h
 
 #include <string>
 #include <vector>
@@ -18,17 +18,17 @@
 
 #include <QuinoaTypes.h>
 #include <TaggedTuple.h>
-#include <QuinoaControlTags.h>
+#include <Quinoa/InputDeck/Tags.h>
 
-#include <GeometryOptions.h>
-#include <PhysicsOptions.h>
-#include <PositionOptions.h>
-#include <MassOptions.h>
-#include <HydroOptions.h>
-#include <EnergyOptions.h>
-#include <MixOptions.h>
-#include <FrequencyOptions.h>
-#include <MixRateOptions.h>
+#include <Quinoa/Options/Geometry.h>
+#include <Quinoa/Options/Physics.h>
+#include <Quinoa/Options/Position.h>
+#include <Quinoa/Options/Mass.h>
+#include <Quinoa/Options/Hydro.h>
+#include <Quinoa/Options/Energy.h>
+#include <Quinoa/Options/Mix.h>
+#include <Quinoa/Options/Frequency.h>
+#include <Quinoa/Options/MixRate.h>
 
 namespace quinoa {
 //! control and parsing
@@ -281,4 +281,4 @@ using parameters = tuple::tagged_tuple<
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaControlTypes_h
+#endif // QuinoaInputDeckTypes_h

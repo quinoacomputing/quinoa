@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTestGrammar.h
+  \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:38:13 2013
+  \date      Mon 30 Sep 2013 09:57:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
-  \details   Grammar definition. We use the Parsing Expression Grammar Template
-             Library (PEGTL) to create the grammar and the associated parser.
-             Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word of
-             advice: read from the bottom up.
+  \details   Random number generator test suite input deck grammar definition.
+  We use the Parsing Expression Grammar Template Library (PEGTL) to create the
+  grammar and the associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at)
+  for PEGTL. Word of advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef RNGTestGrammar_h
-#define RNGTestGrammar_h
+#ifndef RNGTestInputDeckGrammar_h
+#define RNGTestInputDeckGrammar_h
 
 namespace rngtest {
 //! Grammar definition: state, actions, grammar definition
@@ -54,4 +54,4 @@ namespace grm {
 } // grm::
 } // rngtest::
 
-#endif // RNGTestGrammar_h
+#endif // RNGTestInputDeckGrammar_h

@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaControlTags.h
+  \file      src/Control/Quinoa/InputDeck/Tags.h
   \author    J. Bakosi
-  \date      Fri Sep 27 15:26:21 2013
+  \date      Mon 30 Sep 2013 09:39:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa's control tags
+  \brief     Quinoa's input deck tags
   \details   All control tags used to build a nested tagged tagged tuple
 */
 //******************************************************************************
-#ifndef QuinoaControlTags_h
-#define QuinoaControlTags_h
+#ifndef QuinoaInputDeckTags_h
+#define QuinoaInputDeckTags_h
 
 namespace quinoa {
 namespace ctr {
@@ -78,4 +78,4 @@ struct pegtlstr {};
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaControlTags_h
+#endif // QuinoaInputDeckTags_h

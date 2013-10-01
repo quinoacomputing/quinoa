@@ -1,12 +1,12 @@
 * Parser/Control:
     - Warn on what is set ends up not being used
-    - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
-      5.1.3.
     - Command line argument parser library or PEGTL?
     - Echo of call-trace from Exception is hard-coded, make it optional (e.g.,
       from command-line argument, e.g., via verbosity level?)
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones
+    - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
+      5.1.3.
 
 * Error/Exception handling: Can we get rid of Exception macros?
 
@@ -18,12 +18,11 @@
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
     - Regression tests
-
-* Test suite for exceptions:
-    - Automatically switch each potential throw location into a throw and test
-      for clean exit (e.g. with valgrind)
-    - valgrind can return a different exit code based on errors detected using
-      the command line argument --error-exitcode= to valgrind
+    - Test suite for exceptions:
+        o Automatically switch each potential throw location into a throw and
+          test for clean exit (e.g. with valgrind)
+        o valgrind can return a different exit code based on errors detected
+          using the command line argument --error-exitcode= to valgrind
 
 * Faster build:
     - Remove unnecessary includes

@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaParser.C
+  \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sat 28 Sep 2013 08:26:30 AM MDT
+  \date      Mon 30 Sep 2013 09:24:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa control file parser
-  \details   Quinoa control file parser
+  \brief     Quinoa's input deck file parser
+  \details   Quinoa's input deck file parser
 */
 //******************************************************************************
 
@@ -13,12 +13,12 @@
 
 #include <pegtl.hh>
 
-#include <QuinoaParser.h>
-#include <QuinoaGrammar.h>
+#include <Quinoa/InputDeck/Parser.h>
+#include <Quinoa/InputDeck/Grammar.h>
 
 using namespace quinoa;
 
-QuinoaParser::QuinoaParser(const std::string& filename, Base& base) :
+InputDeckParser::InputDeckParser(const std::string& filename, Base& base) :
   Parser(filename),
   m_base(base)
 //******************************************************************************
@@ -33,7 +33,7 @@ QuinoaParser::QuinoaParser(const std::string& filename, Base& base) :
 }
 
 void
-QuinoaParser::parse()
+InputDeckParser::parse()
 //******************************************************************************
 //  Parse quinoa control file
 //! \author  J. Bakosi
@@ -53,7 +53,7 @@ QuinoaParser::parse()
 }
 
 void
-QuinoaParser::unique(std::vector<ctr::Product>& statistics)
+InputDeckParser::unique(std::vector<ctr::Product>& statistics)
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics

@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/EnergyOptions.h
+  \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:52:53 2013
+  \date      Mon 30 Sep 2013 09:29:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
 */
 //******************************************************************************
-#ifndef EnergyOptions_h
-#define EnergyOptions_h
+#ifndef QuinoaEnergyOptions_h
+#define QuinoaEnergyOptions_h
 
 #include <map>
 
@@ -57,4 +57,4 @@ class Energy : public Toggle<EnergyType> {
 } // sel::
 } // quinoa::
 
-#endif // EnergyOptions_h
+#endif // QuinoaEnergyOptions_h

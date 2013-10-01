@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:42:07 PM MDT
+  \date      Mon 30 Sep 2013 10:15:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -39,7 +39,7 @@ class Physics {
 
     //! Constant accessor to control object
     //! \return Control object
-    const QuinoaControl& control() const noexcept { return m_base.control; }
+    const InputDeck& control() const noexcept { return m_base.control; }
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object

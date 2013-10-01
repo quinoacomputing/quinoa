@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaKeywords.h
+  \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon Sep 30 08:50:49 2013
+  \date      Mon 30 Sep 2013 10:36:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa's keywords
-  \details   All keywords recognized by Quinoa's parser. The keywords are
-  defined by specializing struct 'keyword', defined in Control/Keyword.h.
-  Introducing a new keyword requires a more human readable (bust still short)
+  \brief     Quinoa's input deck keywords
+  \details   All keywords recognized by Quinoa's input deck parser. The keywords
+  are defined by specializing struct 'keyword', defined in Control/Keyword.h.
+  Introducing a new keyword requires a more human readable (but still short)
   name as well as a short, few-line, help-like description.
 */
 //******************************************************************************
-#ifndef QuinoaKeywords_h
-#define QuinoaKeywords_h
+#ifndef QuinoaInputDeckKeywords_h
+#define QuinoaInputDeckKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
 //! the inline includes below to make sure they get included in the correct
@@ -28,7 +28,7 @@ namespace kw {
 
 using namespace pegtl::ascii;
 
-// Include base keywords recognized by all parsers
+// Include base keywords recognized by all input deck parsers
 #include <BaseKeywords.h>
 
 // Include Intel's MKL's RNG keywords
@@ -335,4 +335,4 @@ using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
 
 #undef Keywords
 
-#endif // QuinoaKeywords_h
+#endif // QuinoaInputDeckKeywords_h

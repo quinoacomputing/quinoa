@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Fri Sep 27 15:27:58 2013
+  \date      Mon 30 Sep 2013 10:13:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <Geometry.h>
-#include <QuinoaControl.h>
 
 using namespace quinoa;
 

@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/PhysicsOptions.h
+  \file      src/Control/Quinoa/Options/Physics.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:56:01 2013
+  \date      Mon 30 Sep 2013 10:06:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
 */
 //******************************************************************************
-#ifndef PhysicsOptions_h
-#define PhysicsOptions_h
+#ifndef QuinoaPhysicsOptions_h
+#define QuinoaPhysicsOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -73,4 +73,4 @@ class Physics : public Toggle<PhysicsType> {
 } // sel::
 } // quinoa::
 
-#endif // PhysicsOptions_h
+#endif // QuinoaPhysicsOptions_h

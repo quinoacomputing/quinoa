@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/SPINSFlow/SPINSFlow.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:45:02 PM MDT
+  \date      Mon 30 Sep 2013 10:23:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -12,7 +12,6 @@
 #include <sstream>
 
 #include <Memory.h>
-#include <QuinoaControl.h>
 #include <SPINSFlow/SPINSFlow.h>
 
 using namespace quinoa;
