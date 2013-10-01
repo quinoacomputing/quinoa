@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:33:51 2013
+  \date      Mon 30 Sep 2013 08:41:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -15,8 +15,8 @@
 
 #include <Macro.h>
 #include <Control.h>
-#include <Mix.h>
-#include <Dirichlet.h>
+#include <Mix/Mix.h>
+#include <Mix/Dirichlet/Dirichlet.h>
 #include <JPDF.h>
 
 using namespace std;

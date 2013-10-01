@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Fri Sep 27 11:57:35 2013
+  \date      Mon 30 Sep 2013 08:33:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -15,8 +15,8 @@
 
 #include <Macro.h>
 #include <Control.h>
-#include <Mass.h>
-#include <Beta.h>
+#include <Mass/Mass.h>
+#include <Mass/Beta/Beta.h>
 #include <JPDF.h>
 
 using namespace std;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu Sep 19 09:14:59 2013
+  \date      Mon 30 Sep 2013 08:40:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -14,7 +14,7 @@
 #include <vector>
 
 #include <Macro.h>
-#include <Mix.h>
+#include <Mix/Mix.h>
 
 namespace quinoa {
 

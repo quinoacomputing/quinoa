@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri Sep 27 15:28:04 2013
+  \date      Mon 30 Sep 2013 08:40:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,11 +16,11 @@
 #include <Paradigm.h>
 #include <QuinoaControl.h>
 #include <Physics.h>
-#include <Beta.h>
-#include <Dirichlet.h>
-#include <GenDirichlet.h>
-#include <SLM.h>
-#include <GLM.h>
+#include <Mass/Beta/Beta.h>
+#include <Mix/Dirichlet/Dirichlet.h>
+#include <Mix/GenDirichlet/GenDirichlet.h>
+#include <Hydro/SLM/SLM.h>
+#include <Hydro/GLM/GLM.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 
