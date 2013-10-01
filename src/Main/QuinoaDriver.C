@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Fri Sep 27 15:59:16 2013
+  \date      Mon 30 Sep 2013 08:45:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -17,10 +17,10 @@
 #include <Timer.h>
 #include <AnalyticGeometry.h>
 #include <DiscreteGeometry.h>
-#include <HomMix.h>
-#include <HomHydro.h>
-#include <HomRT.h>
-#include <SPINSFlow.h>
+#include <HomMix/HomMix.h>
+#include <HomHydro/HomHydro.h>
+#include <HomRT/HomRT.h>
+#include <SPINSFlow/SPINSFlow.h>
 #include <QuinoaParser.h>
 
 using namespace quinoa;

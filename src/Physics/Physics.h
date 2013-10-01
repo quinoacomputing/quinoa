@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 18:03:04 2013
+  \date      Mon 30 Sep 2013 08:42:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -13,9 +13,9 @@
 
 #include <QuinoaConfig.h>
 #include <Base.h>
-#include <Mass.h>
-#include <Hydro.h>
-#include <Mix.h>
+#include <Mass/Mass.h>
+#include <Hydro/Hydro.h>
+#include <Mix/Mix.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>

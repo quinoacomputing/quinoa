@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SLM/SLM.C
   \author    J. Bakosi
-  \date      Fri Sep 27 11:58:57 2013
+  \date      Mon 30 Sep 2013 08:37:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -15,10 +15,9 @@
 
 #include <Macro.h>
 #include <Control.h>
-#include <Hydro.h>
-#include <SLM.h>
+#include <Hydro/Hydro.h>
+#include <Hydro/SLM/SLM.h>
 
-using namespace std;
 using namespace quinoa;
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:56:19 2013
+  \date      Mon 30 Sep 2013 08:35:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -11,7 +11,7 @@
 #ifndef Beta_h
 #define Beta_h
 
-#include <Mass.h>
+#include <Mass/Mass.h>
 
 namespace quinoa {
 

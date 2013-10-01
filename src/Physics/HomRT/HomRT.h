@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:53:18 2013
+  \date      Mon 30 Sep 2013 08:42:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Physics.h>
-#include <Mix.h>
+#include <Mix/Mix.h>
 #include <Timer.h>
 
 namespace quinoa {
