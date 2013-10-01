@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:44:49 PM MDT
+  \date      Mon 30 Sep 2013 10:16:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -14,7 +14,6 @@
 
 #include <Memory.h>
 #include <Control.h>
-#include <QuinoaControlTypes.h>
 #include <HomRT/HomRT.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>

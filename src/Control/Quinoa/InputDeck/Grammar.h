@@ -1,24 +1,24 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaGrammar.h
+  \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 28 Sep 2013 08:03:30 AM MDT
+  \date      Mon 30 Sep 2013 09:36:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa grammar definition
-  \details   Grammar definition. We use the Parsing Expression Grammar Template
-             Library (PEGTL) to create the grammar and the associated parser.
-             Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word of
-             advice: read from the bottom up.
+  \brief     Quinoa's input deck grammar definition
+  \details   Quinoa's input deck grammar definition. We use the Parsing
+  Expression Grammar Template Library (PEGTL) to create the grammar and the
+  associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
+  of advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef QuinoaGrammar_h
-#define QuinoaGrammar_h
+#ifndef QuinoaInputDeckGrammar_h
+#define QuinoaInputDeckGrammar_h
 
 #include <Macro.h>
 #include <Exception.h>
-#include <QuinoaControlTypes.h>
+#include <Quinoa/InputDeck/Types.h>
 #include <Option.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 //! Grammar definition: state, actions, grammar
@@ -29,7 +29,7 @@ namespace grm {
   // State
 
   //! Everything is stored in Stack during parsing
-  using Stack = QuinoaControl;
+  using Stack = InputDeck;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
 
@@ -491,4 +491,4 @@ namespace grm {
 } // grm::
 } // quinoa::
 
-#endif // QuinoaGrammar_h
+#endif // QuinoaInputDeckGrammar_h

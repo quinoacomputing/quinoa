@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:55:44 2013
+  \date      Mon 30 Sep 2013 10:14:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -15,7 +15,6 @@
 
 #include <QuinoaTypes.h>
 #include <Model.h>
-#include <QuinoaControl.h>
 
 namespace quinoa {
 

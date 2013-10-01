@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/PositionOptions.h
+  \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:49:41 2013
+  \date      Mon 30 Sep 2013 10:07:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
 */
 //******************************************************************************
-#ifndef PositionOptions_h
-#define PositionOptions_h
+#ifndef QuinoaPositionOptions_h
+#define QuinoaPositionOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -65,4 +65,4 @@ class Position : public Toggle<PositionType> {
 } // sel::
 } // quinoa:::
 
-#endif // PositionOptions_h
+#endif // QuinoaPositionOptions_h

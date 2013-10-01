@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:40:23 PM MDT
+  \date      Mon 30 Sep 2013 10:15:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -14,7 +14,7 @@
 #include <QuinoaConfig.h>
 #include <Memory.h>
 #include <Paradigm.h>
-#include <QuinoaControl.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 #include <Physics.h>
 #include <Mass/Beta/Beta.h>
 #include <Mix/Dirichlet/Dirichlet.h>

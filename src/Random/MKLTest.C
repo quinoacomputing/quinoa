@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.C
   \author    J. Bakosi
-  \date      Thu Sep 19 09:23:33 2013
+  \date      Mon 30 Sep 2013 10:22:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -13,11 +13,11 @@
 
 #include <MKLTest.h>
 #include <Exception.h>
-#include <RNGTestControl.h>
+#include <RNGTest/InputDeck/InputDeck.h>
 
 using namespace rngtest;
 
-MKLTest::MKLTest(const RNGTestControl& control) :
+MKLTest::MKLTest(const InputDeck& control) :
   m_rng(),
   m_testrng(control.get<ctr::generator>()),
   m_stream()

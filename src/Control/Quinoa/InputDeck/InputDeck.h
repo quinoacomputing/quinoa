@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/QuinoaControl.h
+  \file      src/Control/Quinoa/InputDeck.h
   \author    J. Bakosi
-  \date      Fri Sep 27 15:26:39 2013
+  \date      Mon 30 Sep 2013 10:20:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa control
-  \details   Quinoa control
+  \brief     Quinoa's input deck
+  \details   Quinoa's input deck
 */
 //******************************************************************************
-#ifndef QuinoaControl_h
-#define QuinoaControl_h
+#ifndef QuinoaInputDeck_h
+#define QuinoaInputDeck_h
 
 #include <string>
 #include <iostream>
@@ -17,15 +17,15 @@
 #include <limits>
 
 #include <QuinoaTypes.h>
-#include <QuinoaControlTypes.h>
+#include <Quinoa/InputDeck/Types.h>
 #include <Control.h>
 #include <Exception.h>
 #include <Option.h>
 
 namespace quinoa {
 
-//! QuinoaControl : Control< specialized to Quinoa >, see QuinoaControlTypes.h
-class QuinoaControl :
+//! InputDeck : Control< specialized to Quinoa >, see Types.h
+class InputDeck :
   public Control< // tag           type
                   ctr::title,      std::string,
                   ctr::selected,   ctr::selects,
@@ -38,7 +38,7 @@ class QuinoaControl :
 
   public:
     //! Constructor: set all defaults, see QuinoaControlTypes.h
-    QuinoaControl() {
+    InputDeck() {
       using namespace ctr;
       // Default title
       set<title>("");
@@ -102,7 +102,7 @@ class QuinoaControl :
     }
 
     //! Destructor
-    ~QuinoaControl() noexcept override = default;
+    ~InputDeck() noexcept override = default;
 
     //! Return total number of particle properties
     uint32_t nprop() const noexcept {
@@ -156,18 +156,18 @@ class QuinoaControl :
 
   private:
     //! Don't permit copy constructor
-    QuinoaControl(const QuinoaControl&) = delete;
+    InputDeck(const InputDeck&) = delete;
     //! Don't permit copy assigment
-    QuinoaControl& operator=(const QuinoaControl&) = delete;
+    InputDeck& operator=(const InputDeck&) = delete;
     //! Don't permit move constructor
-    QuinoaControl(QuinoaControl&&) = delete;
+    InputDeck(InputDeck&&) = delete;
     //! Don't permit move assigment
-    QuinoaControl& operator=(QuinoaControl&&) = delete;
+    InputDeck& operator=(InputDeck&&) = delete;
 };
 
-//! QuinoaControl defaults
-static const QuinoaControl QuinoaDefaults;
+//! InputDeck defaults
+static const InputDeck QuinoaDefaults;
 
 } // namespace quinoa
 
-#endif // QuinoaControl_h
+#endif // QuinoaInputDeck_h

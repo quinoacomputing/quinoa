@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri Sep 27 14:42:43 2013
+  \date      Mon 30 Sep 2013 10:09:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -12,7 +12,7 @@
 #define QuinoaPrint_h
 
 #include <Print.h>
-#include <QuinoaControl.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
 
@@ -25,7 +25,7 @@ class QuinoaPrint : public Print {
     using Print::item;
 
     //! Constructor
-    explicit QuinoaPrint(const QuinoaControl& control) : m_ctr(control) {}
+    explicit QuinoaPrint(const InputDeck& control) : m_ctr(control) {}
 
     //! Destructor
     ~QuinoaPrint() noexcept override = default;
@@ -70,8 +70,8 @@ class QuinoaPrint : public Print {
 
     //! Echo requested statistics if differs from default.
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/QuinoaControlTypes.h for the definition of operator <<=
-    //! for outputing requested Term and vector<Term>.
+    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
+    //! <<= for outputing requested Term and vector<Term>.
     void requestedStats(const std::string& msg) const {
       if (m_ctr.get<ctr::stats>() != QuinoaDefaults.get<ctr::stats>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
@@ -82,8 +82,8 @@ class QuinoaPrint : public Print {
 
     //! Echo estimated statistics if differs from default.
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/QuinoaControlTypes.h for the definition of operator <<
-    //! for outputing estimated Term and vector<Term>.
+    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
+    //! << for outputing estimated Term and vector<Term>.
     void estimatedStats(const std::string& msg) const {
       if (m_ctr.get<ctr::stats>() != QuinoaDefaults.get<ctr::stats>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
@@ -113,7 +113,7 @@ class QuinoaPrint : public Print {
     //! Don't permit move assigment
     QuinoaPrint& operator=(QuinoaPrint&&) = delete;
 
-    const QuinoaControl& m_ctr;         //!< Parsed control
+    const InputDeck& m_ctr;         //!< Parsed control
 };
 
 } // namespace quinoa

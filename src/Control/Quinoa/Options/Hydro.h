@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/HydroOptions.h
+  \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:54:05 2013
+  \date      Mon 30 Sep 2013 10:08:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
 */
 //******************************************************************************
-#ifndef HydroOptions_h
-#define HydroOptions_h
+#ifndef QuinoaHydroOptions_h
+#define QuinoaHydroOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -65,4 +65,4 @@ class Hydro : public Toggle<HydroType> {
 } // sel::
 } // quinoa::
 
-#endif // HydroOptions_h
+#endif // QuinoaHydroOptions_h

@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/GeometryOptions.h
+  \file      src/Control/Quinoa/Options/Geometry.h
   \author    J. Bakosi
-  \date      Fri Sep 27 08:53:42 2013
+  \date      Mon 30 Sep 2013 09:30:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
 */
 //******************************************************************************
-#ifndef GeometryOptions_h
-#define GeometryOptions_h
+#ifndef QuinoaGeometryOptions_h
+#define QuinoaGeometryOptions_h
 
 #include <map>
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -65,4 +65,4 @@ class Geometry : public Toggle<GeometryType> {
 } // sel::
 } // quinoa::
 
-#endif // GeometryOptions_h
+#endif // QuinoaGeometryOptions_h

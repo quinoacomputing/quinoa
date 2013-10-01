@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 04:59:37 PM MDT
+  \date      Mon 30 Sep 2013 10:18:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -15,9 +15,9 @@
 
 #include <mkl_vsl.h>
 
-#include <RNGTestControl.h>
+#include <RNGTest/InputDeck/InputDeck.h>
 #include <Option.h>
-#include <RNGOptions.h>
+#include <Quinoa/Options/RNG.h>
 
 namespace rngtest {
 
@@ -26,7 +26,7 @@ class MKLTest {
 
   public:
     //! Constructor
-    explicit MKLTest(const RNGTestControl& control);
+    explicit MKLTest(const InputDeck& control);
 
     //! Destructor
     ~MKLTest();

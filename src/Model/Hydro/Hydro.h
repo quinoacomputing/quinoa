@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:57:59 2013
+  \date      Mon 30 Sep 2013 10:14:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -13,7 +13,6 @@
 
 #include <QuinoaTypes.h>
 #include <Model.h>
-#include <QuinoaControl.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
 

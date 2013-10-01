@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:48:53 2013
+  \date      Mon 30 Sep 2013 10:23:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -19,7 +19,6 @@
 #include <Base.h>
 #include <Statistics.h>
 #include <Paradigm.h>
-#include <QuinoaControl.h>
 
 using namespace quinoa;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu Sep 19 18:01:24 2013
+  \date      Mon 30 Sep 2013 10:13:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -14,7 +14,7 @@
 #include <QuinoaTypes.h>
 #include <Base.h>
 #include <Distribution.h>
-#include <QuinoaControlTypes.h>
+#include <Quinoa/InputDeck/Types.h>
 
 namespace quinoa {
 

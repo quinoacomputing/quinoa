@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTestParser.C
+  \file      src/Control/RNGTes/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon Sep 30 08:51:46 2013
+  \date      Mon 30 Sep 2013 10:02:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Random number generator test suite parser
-  \details   Random number generator test suite parser
+  \brief     Random number generator test suite input deck parser
+  \details   Random number generator test suite input deck parser
 */
 //******************************************************************************
 
-#include <RNGTestParser.h>
-#include <RNGTestGrammar.h>
+#include <RNGTest/InputDeck/Parser.h>
+#include <RNGTest/InputDeck/Grammar.h>
 
 using namespace rngtest;
 
 void
-RNGTestParser::parse()
+InputDeckParser::parse()
 //******************************************************************************
 //  Parse random number generator test suite control file
 //! \author  J. Bakosi

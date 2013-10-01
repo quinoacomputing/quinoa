@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGOptions.h
+  \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:00:46 2013
+  \date      Mon 30 Sep 2013 09:42:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Random number generator options and associations
-  \details   Random number generator options and associations
+  \brief     Quinoa's random number generator options and associations
+  \details   Quinoa's random number generator options and associations
 */
 //******************************************************************************
-#ifndef RNGOptions_h
-#define RNGOptions_h
+#ifndef QuinoaRNGOptions_h
+#define QuinoaRNGOptions_h
 
 #include <map>
 
@@ -17,7 +17,7 @@
 
 #include <Exception.h>
 #include <Toggle.h>
-#include <QuinoaKeywords.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace sel {
@@ -172,4 +172,4 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
 } // sel::
 } // quinoa::
 
-#endif // RNGOptions_h
+#endif // QuinoaRNGOptions_h
