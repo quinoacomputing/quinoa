@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:44:26 2013
+  \date      Thu Oct  3 17:47:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -96,15 +96,11 @@ static void echoBuildEnv(const QuinoaPrint& print)
   print.item("Revision", QUINOA_GIT_COMMIT);
   print.item("CMake build type", QUINOA_BUILD_TYPE);
 #ifdef NDEBUG
-  print.item("Asserts",
-             "off (set CMAKE_BUILD_TYPE to DEBUG to turn this on)");
-  print.item("Exception trace",
-             "off (set CMAKE_BUILD_TYPE to DEBUG to turn this on)");
+  print.item("Asserts", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
+  print.item("Exception trace", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
 #else
-  print.item("Asserts",
-             "on (set CMAKE_BUILD_TYPE to RELEASE to turn this off)");
-  print.item("Exception trace",
-             "on (set CMAKE_BUILD_TYPE to RELEASE to turn this off)");
+  print.item("Asserts", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
+  print.item("Exception trace", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
 #endif
   print.item("MPI C++ wrapper", QUINOA_MPI_COMPILER);
   print.item("Underlying C++ compiler", QUINOA_COMPILER);
