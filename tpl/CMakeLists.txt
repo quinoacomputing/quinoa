@@ -27,8 +27,8 @@ MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 ExternalProject_Add(
   pegtl
   PREFIX pegtl
-  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32.tar.gz
-  URL_MD5 99488ab3fbc8566e9767cb499ee77a9a
+  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32-patched.tar.gz
+  URL_MD5 425c9717783b11f485483dcb66f7d60a
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
