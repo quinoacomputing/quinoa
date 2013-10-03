@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:16:47 PM MDT
+  \date      Thu Oct  3 15:47:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -13,7 +13,6 @@
 #include <iomanip>
 
 #include <Macro.h>
-#include <Memory.h>
 #include <HomHydro/HomHydro.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>

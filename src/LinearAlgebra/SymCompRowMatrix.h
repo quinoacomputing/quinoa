@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Wed Sep 25 14:38:46 2013
+  \date      Thu Oct  3 15:45:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -12,8 +12,6 @@
 //******************************************************************************
 #ifndef SymCompRowMatrix_h
 #define SymCompRowMatrix_h
-
-#include <Memory.h>
 
 namespace quinoa {
 

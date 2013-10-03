@@ -27,9 +27,6 @@
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
 
-* unique_ptr to avoid having to explicitly free pointers in destructors. See
-  also Item 2/9. Do we still need Memory?
-
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.

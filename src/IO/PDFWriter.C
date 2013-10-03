@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:32:43 2013
+  \date      Thu Oct  3 15:48:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -13,8 +13,8 @@
 #include <fstream>
 #include <map>
 
-#include <Memory.h>
 #include <PDFWriter.h>
+#include <Exception.h>
 
 using namespace quinoa;
 

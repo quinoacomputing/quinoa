@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Wed Sep 25 15:00:15 2013
+  \date      Thu Oct  3 15:49:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -13,6 +13,7 @@
 #include <iterator>
 
 #include <GmshMesh.h>
+#include <Exception.h>
 
 using namespace quinoa;
 
