@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 10:19:22 2013
+  \date      Thu Oct  3 11:31:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -18,8 +18,8 @@
 
 using namespace quinoa;
 
-InputDeckParser::InputDeckParser(const std::string& filename, Base& base) :
-  FileParser(filename, base)
+InputDeckParser::InputDeckParser(Base& base) :
+  FileParser(base, base.control.get<ctr::io, ctr::control>())
 //******************************************************************************
 //  Constructor
 //! \param[in]    filename  Control file name to read from
@@ -27,8 +27,7 @@ InputDeckParser::InputDeckParser(const std::string& filename, Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_base.control.set<ctr::io,ctr::control>(filename);
-  m_base.print.item("Control file", filename);
+  m_base.print.item("Control file", m_filename);
 }
 
 void
