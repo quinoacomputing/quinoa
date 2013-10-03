@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 11:41:38 2013
+  \date      Thu Oct  3 12:19:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -57,7 +57,7 @@ namespace cmd {
                 "Error while parsing the command line. " + msg->second + ".");
         }
       } else {
-        Throw(ExceptType::FATAL, "Unknown parser error.");
+        Throw(ExceptType::FATAL, "Unknown command line parser error.");
       }
       IGNORE(stack);
     }
@@ -113,29 +113,29 @@ namespace cmd {
                  parse< sor<keywords, apply<error<Error::MISSING>>>,
                         insert> > {};
 
-  //! control
+  //! control (i.e., input deck) file
   struct control :
          process<kw::control, store<ctr::io,ctr::control>> {};
 
-  //! input
+  //! input file
   struct input :
-         ifapply<read<kw::input>, store<ctr::io,ctr::input>> {};
+         process<kw::input, store<ctr::io,ctr::input>> {};
 
-  //! output
+  //! output file
   struct output :
-         ifapply<read<kw::output>, store<ctr::io,ctr::output>> {};
+         process<kw::output, store<ctr::io,ctr::output>> {};
 
-  //! pdf
+  //! pdf output file
   struct pdf :
-         ifapply<read<kw::pdf>, store<ctr::io,ctr::pdf>> {};
+         process<kw::pdf, store<ctr::io,ctr::pdf>> {};
 
-  //! glob
+  //! glob output file
   struct glob :
-         ifapply<read<kw::glob>, store<ctr::io,ctr::glob>> {};
+         process<kw::glob, store<ctr::io,ctr::glob>> {};
 
-  //! stat
+  //! stat output file
   struct stat :
-         ifapply<read<kw::stat>, store<ctr::io,ctr::stat>> {};
+         process<kw::stat, store<ctr::io,ctr::stat>> {};
 
   //! command line keywords
   struct keywords :

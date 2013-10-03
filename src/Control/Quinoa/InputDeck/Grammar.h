@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 11:13:39 2013
+  \date      Thu Oct  3 12:16:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -63,7 +63,7 @@ namespace grm {
                 "Error while parsing the input deck. " + msg->second + ".");
         }
       } else {
-        Throw(ExceptType::FATAL, "Unknown parser error.");
+        Throw(ExceptType::FATAL, "Unknown input deck parser error.");
       }
       IGNORE(stack);
     }
