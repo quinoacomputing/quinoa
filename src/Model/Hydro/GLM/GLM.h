@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GLM/GLM.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:37:06 PM MDT
+  \date      Thu Oct  3 15:46:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -11,17 +11,9 @@
 #ifndef GeneralizedLangevin_h
 #define GeneralizedLangevin_h
 
-#include <Memory.h>
 #include <Hydro/Hydro.h>
 
 namespace quinoa {
-
-class Memory;
-class Paradigm;
-class MKLRandom;
-class MKLRndStream;
-class MemoryEntry;
-class JPDF;
 
 //! GeneralizedLangevin : Hydro
 class GeneralizedLangevin : public Hydro {

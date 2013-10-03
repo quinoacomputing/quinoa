@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Thu Oct  3 12:13:56 2013
+  \date      Thu Oct  3 15:50:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader class definition
   \details   Reader class definition
@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include <Reader.h>
+#include <Exception.h>
 
 using namespace quinoa;
 

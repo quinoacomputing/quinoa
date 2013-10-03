@@ -5,8 +5,6 @@ project(Base CXX)
 add_library(Base
             Exception.C
             Handler.C
-            MemoryEntry.C
-            Memory.C
             Timer.C
 )
 

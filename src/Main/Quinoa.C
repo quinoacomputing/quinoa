@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:17:03 2013
+  \date      Thu Oct  3 15:44:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -18,7 +18,6 @@
 #include <Base.h>
 #include <Handler.h>
 #include <Paradigm.h>
-#include <Memory.h>
 #include <QuinoaDriver.h>
 #include <QuinoaPrint.h>
 #include <Quinoa/CmdLine/Keywords.h>
@@ -155,11 +154,10 @@ int main(int argc, char* argv[])
     InputDeck control;                      //!< Parsed input deck
     QuinoaPrint print(control);             //!< Pretty printer
     Paradigm paradigm(print);               //!< Parallel compute environment
-    Memory memory(&paradigm);               //!< Memory manager
     Timer timer;                            //!< Timer
 
     // Bundle up essentials
-    Base base(print, paradigm, memory, control, timer);
+    Base base(print, paradigm, control, timer);
 
     // Echo program name
     echoHeader(print);

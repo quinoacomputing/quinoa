@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Wed 25 Sep 2013 10:33:49 PM MDT
+  \date      Thu Oct  3 15:55:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -13,8 +13,9 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
-#include <Memory.h>
+#include <QuinoaTypes.h>
 
 namespace quinoa {
 

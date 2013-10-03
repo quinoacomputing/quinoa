@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:16:33 PM MDT
+  \date      Thu Oct  3 15:48:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -18,7 +18,6 @@
 #endif // _OPENMP
 
 #include <Macro.h>
-#include <Memory.h>
 #include <Mix/Mix.h>
 #include <HomMix/HomMix.h>
 #include <PDFWriter.h>
