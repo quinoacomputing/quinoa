@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Wed Sep 25 14:31:05 2013
+  \date      Thu Oct  3 16:10:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -104,8 +104,7 @@ SymCompRowMatrix::SymCompRowMatrix(const std::string& name,
         for (int l=1; l<rnz[i]; l++) {
           for (int e=0; e<rnz[i]-l; e++) {
             if (m_ja[m_ia[i*dof+k]-1+e] > m_ja[m_ia[i*dof+k]+e]) {
-              int itmp;
-	      SWAP(m_ja[m_ia[i*dof+k]-1+e], m_ja[m_ia[i*dof+k]+e], itmp);
+	      std::swap(m_ja[m_ia[i*dof+k]-1+e], m_ja[m_ia[i*dof+k]+e]);
             }
           }
         }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Thu Oct  3 10:14:11 2013
+  \date      Thu Oct  3 17:12:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's input deck parsing
   \details   Types for Quinoa's input deck parsing
@@ -11,13 +11,6 @@
 #ifndef QuinoaInputDeckTypes_h
 #define QuinoaInputDeckTypes_h
 
-#include <string>
-#include <vector>
-#include <ostream>
-#include <sstream>
-
-#include <QuinoaTypes.h>
-#include <TaggedTuple.h>
 #include <Quinoa/InputDeck/Tags.h>
 
 #include <Quinoa/Options/Geometry.h>
@@ -33,8 +26,6 @@
 namespace quinoa {
 //! control and parsing
 namespace ctr {
-
-const int NCOMP_POS = 3;        //!< Number of position components for a field
 
 //! Quantities whose statistics can be estimated. If you change this, make sure
 //! you change Control::termOffset() as well.

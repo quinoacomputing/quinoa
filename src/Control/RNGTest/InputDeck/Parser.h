@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 11:32:29 2013
+  \date      Thu Oct  3 17:31:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -12,7 +12,6 @@
 #define RNGTestInputDeckParser_h
 
 #include <FileParser.h>
-#include <Base.h>
 
 namespace rngtest {
 
@@ -21,8 +20,7 @@ class InputDeckParser : public quinoa::FileParser {
 
   public:
     //! Constructor
-    explicit InputDeckParser(const std::string& filename, quinoa::Base& base)
-      : quinoa::FileParser(base, filename) {}
+    explicit InputDeckParser(quinoa::Base& base);
 
     //! Destructor
     ~InputDeckParser() noexcept override = default;

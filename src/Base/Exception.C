@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Thu Oct  3 14:39:26 2013
+  \date      Thu Oct  3 16:06:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -12,11 +12,10 @@
 #include <iostream>
 #include <sstream>
 #include <cstdio>
-#include <cxxabi.h>
 
+#include <cxxabi.h>
 #include <execinfo.h>
 
-#include <Driver.h>
 #include <Exception.h>
 
 using namespace quinoa;
@@ -205,7 +204,7 @@ Exception::echo(const char* msg) noexcept
 ErrCode
 Exception::handleException() noexcept
 //******************************************************************************
-//  Handle Exception: Print cumulative message and handle criticality
+//  Handle Exception: Print cumulative message
 //! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************

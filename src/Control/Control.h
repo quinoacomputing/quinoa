@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed Sep 11 17:26:37 2013
+  \date      Thu Oct  3 16:17:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -12,7 +12,6 @@
 #define Control_h
 
 #include <string>
-#include <iostream>
 #include <sstream>
 
 #include <TaggedTuple.h>
@@ -187,16 +186,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subtag>
                               ::template nT<subsubtag>::value_type>(value));
     }
-
-//     //! Echo vector of elements if set
-//     template< typename tag >
-//     void echoVec(const std::string& msg) const {
-//       if (set<tag>()) {
-//         std::cout << "   - " << msg << ": {";
-//         for (auto& v : get<tag>()) std::cout << " " << v;
-//         std::cout << " }" << std::endl;
-//       }
-//     }
 
     // convert string to 'type' via std::stringstream
     template< typename type >

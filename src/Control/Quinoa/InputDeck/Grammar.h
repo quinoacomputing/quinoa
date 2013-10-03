@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 12:16:18 2013
+  \date      Thu Oct  3 16:54:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -16,8 +16,8 @@
 
 #include <Macro.h>
 #include <Exception.h>
-#include <Quinoa/InputDeck/Types.h>
 #include <Option.h>
+#include <Quinoa/InputDeck/Types.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
@@ -65,7 +65,7 @@ namespace grm {
       } else {
         Throw(ExceptType::FATAL, "Unknown input deck parser error.");
       }
-      IGNORE(stack);
+      IGNORE(stack);    // suppress compiler warning: parameter never referenced
     }
   };
 
@@ -97,7 +97,7 @@ namespace grm {
   struct start_product : action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
       stack.push_back<ctr::stat>(ctr::Product());
-      IGNORE(value);        // suppress compiler warning on unused variable
+      IGNORE(value);   // suppress compiler warning: paramaeter never referenced
     }
   };
 

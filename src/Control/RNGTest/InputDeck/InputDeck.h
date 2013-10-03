@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:44:50 PM MDT
+  \date      Thu Oct  3 17:27:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -17,6 +17,7 @@
 namespace rngtest {
 
 //! InputDeck : Control< specialized to RNGTest >, see Types.h
+//! This is also where the command line parser stores
 class InputDeck :
   public quinoa::Control< // tag          type
                           ctr::title,     std::string,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Thu Sep 19 10:42:29 2013
+  \date      Thu Oct  3 16:14:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -14,7 +14,6 @@
 #define TaggedTuple_h
 
 #include <tuple>
-#include <iostream>
 
 namespace quinoa {
 //! tagged tuple allowing tag-based access to tuple members with arbitrary types

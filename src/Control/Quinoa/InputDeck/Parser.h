@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 11:23:43 2013
+  \date      Thu Oct  3 17:04:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -11,10 +11,7 @@
 #ifndef QuinoaInputDeckParser_h
 #define QuinoaInputDeckParser_h
 
-#include <vector>
-
 #include <FileParser.h>
-#include <Base.h>
 
 namespace quinoa {
 

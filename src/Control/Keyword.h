@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Thu Oct  3 08:43:01 2013
+  \date      Thu Oct  3 16:51:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -16,14 +16,11 @@
 namespace quinoa {
 namespace kw {
 
-//! A keyword is struct that collects the information that makes up a keyword.
+//! A keyword is a struct that collects the information that makes up a keyword.
 //! The last template parameter is a list of integers, specifying the
 //! case-sensitive characters of the keyword. The keyword must be at least one
 //! character long, but otherwise its length is only limited by the compiler's
-//! recursion handling of variadic templates. The namespace pegtl::ascii
-//! contains some predefined helper definitions of upper and lower-case letters,
-//! for all other characters, just quote it according to the C-language rules,
-//! e.g., '_' is the underscore.
+//! recursion handling of variadic templates.
 template< typename Info, int Char, int... Chars >
 struct keyword {
 
@@ -44,13 +41,19 @@ struct keyword {
   const char* help() const { return Info::help(); }
 };
 
-
+//! A cmdline_keyword is a keyword that adds a character alias to a keyword.
 template< typename Info, int Alias, int Char, int... Chars >
 struct cmdline_keyword : keyword<Info, Char, Chars...> {
 
   //! Accessor to keyword alias character as pegt::string
   using pegtl_alias = pegtl::one<Alias>;
 
+};
+
+// This will go away once all the keywords are documented
+struct undefined_info {
+  static const char* name() { return "undefined"; }
+  static const char* help() { return "Undefined."; }
 };
 
 } // kw::
