@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 07:46:41 2013
+  \date      Thu Oct  3 15:16:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser

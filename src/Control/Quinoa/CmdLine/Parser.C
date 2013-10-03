@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 11:19:05 2013
+  \date      Thu Oct  3 15:13:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -11,6 +11,7 @@
 
 #include <pegtl.hh>
 
+#include <Quinoa/InputDeck/Tags.h>
 #include <Quinoa/CmdLine/Parser.h>
 #include <Quinoa/CmdLine/Grammar.h>
 
@@ -30,4 +31,9 @@ CmdLineParser::parse()
   pegtl::basic_parse_string< cmd::read_string >( m_string, m_base.control );
 
   m_base.print.item("Parsed command line", "success");
+
+  // Make sure mandatory arguments are set
+  ErrChk(!(m_base.control.get<ctr::io, ctr::control>().empty()),
+         ExceptType::FATAL, "Mandatory control file not specified. "
+                            "Use '--control <filename>' or '-c <filename>'.");
 }

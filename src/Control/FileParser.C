@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 12:12:16 2013
+  \date      Thu Oct  3 15:04:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -28,6 +28,9 @@ FileParser::FileParser(Base& base, const std::string& filename) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  //! Make sure there is a filename
+  Assert(!filename.empty(), ExceptType::FATAL, "No filename specified");
+
   std::ifstream q;
 
   // Check if file exists, throw exception if it does not

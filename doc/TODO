@@ -1,8 +1,6 @@
 * Parser/Control:
     - Warn on what is set ends up not being used
     - Add position information to parser error handling
-    - Echo of call-trace from Exception is hard-coded, make it optional (e.g.,
-      from command-line argument, e.g., via verbosity level?)
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL

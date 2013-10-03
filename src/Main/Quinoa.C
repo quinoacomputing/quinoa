@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Oct  3 09:15:19 2013
+  \date      Thu Oct  3 15:17:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -97,10 +97,16 @@ static void echoBuildEnv(const QuinoaPrint& print)
   print.item("Revision", QUINOA_GIT_COMMIT);
   print.item("CMake build type", QUINOA_BUILD_TYPE);
 #ifdef NDEBUG
-  print.item("Asserts", "off");
-#else  // NDEBUG
-  print.item("Asserts", "on");
-#endif // NDEBUG
+  print.item("Asserts",
+             "off (set CMAKE_BUILD_TYPE to DEBUG to turn this on)");
+  print.item("Exception trace",
+             "off (set CMAKE_BUILD_TYPE to DEBUG to turn this on)");
+#else
+  print.item("Asserts",
+             "on (set CMAKE_BUILD_TYPE to RELEASE to turn this off)");
+  print.item("Exception trace",
+             "on (set CMAKE_BUILD_TYPE to RELEASE to turn this off)");
+#endif
   print.item("MPI C++ wrapper", QUINOA_MPI_COMPILER);
   print.item("Underlying C++ compiler", QUINOA_COMPILER);
   print.item("Build date", QUINOA_BUILD_DATE);
@@ -118,10 +124,11 @@ static void echoRunEnv(const QuinoaPrint& print, int argc, char** argv)
   print.item("Executable (rel. to work dir)", argv[0]);
 
   print.item("Command line arguments");
-  for (int i=1; i<argc; ++i) {
+  print.raw('\'');
+  for (int i=1; i<argc-1; ++i) {
     print.raw(std::string(argv[i]) + ' ');
   }
-  print.raw('\n');
+  print.raw(std::string(argv[argc-1]) + "'\n");
 }
 
 } // quinoa::
