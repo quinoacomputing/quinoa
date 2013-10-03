@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:36:56 PM MDT
+  \date      Thu Oct  3 17:29:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite input deck parser. The keywords are defined by specializing struct
@@ -15,19 +15,18 @@
 #define RNGTestInputDeckKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
-//! the inline includes below to make sure they get included in the correct
-//! namespace and not polluting the global one.
+//! the inline includes, such as *Keywords.h, below (if any) to make sure they
+//! get included in the correct namespace and not polluting the global one.
 #define Keywords
 
 #include <Keyword.h>
 
 namespace rngtest {
-namespace grm {
 //! List of keywords the parser understands
 namespace kw {
 
 using namespace pegtl::ascii;
-using quinoa::grm::kw::keyword;
+using quinoa::kw::keyword;
 
 // Include base keywords recognized by all input deck parsers
 #include <BaseKeywords.h>
@@ -111,7 +110,6 @@ struct rngs_info {
 using rngs = keyword< rngs_info, r,n,g,s >;
 
 } // kw::
-} // grm::
 } // rngtest::
 
 #undef Keywords

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 08:50:46 2013
+  \date      Thu Oct  3 16:49:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -15,8 +15,8 @@
 #define QuinoaCmdLineKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
-//! the inline includes below to make sure they get included in the correct
-//! namespace and not polluting the global one.
+//! the inline includes, such as *Keywords.h, below (if any) to make sure they
+//! get included in the correct namespace and not polluting the global one.
 #define Keywords
 
 #include <Keyword.h>
@@ -44,7 +44,6 @@ using glob = cmdline_keyword<undefined_info, g, g,l,o,b >;
 
 // Keyword 'stat', cmdline '--stat' with alias '-s'
 using stat = cmdline_keyword<undefined_info, s, s,t,a,t >;
-
 
 } // kw::
 } // quinoa::

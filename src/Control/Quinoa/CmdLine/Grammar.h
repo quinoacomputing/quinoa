@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 12:19:48 2013
+  \date      Thu Oct  3 16:52:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -17,6 +17,7 @@
 #include <Macro.h>
 #include <Exception.h>
 #include <Quinoa/CmdLine/Keywords.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
 //! Grammar definition: state, actions, grammar
@@ -59,7 +60,7 @@ namespace cmd {
       } else {
         Throw(ExceptType::FATAL, "Unknown command line parser error.");
       }
-      IGNORE(stack);
+      IGNORE(stack);    // suppress compiler warning: parameter never referenced
     }
   };
 

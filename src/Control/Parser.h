@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Wed Oct  2 15:46:54 2013
+  \date      Thu Oct  3 16:24:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef Parser_h
 #define Parser_h
-
-#include <string>
 
 #include <Base.h>
 
@@ -27,7 +25,7 @@ class Parser {
     //! Destructor
     virtual ~Parser() noexcept = default;
 
-    //! Parser interface
+    //! Parse interface
     virtual void parse() = 0;
 
     const Base& m_base;                  //!< Essentials

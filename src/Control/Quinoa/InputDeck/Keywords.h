@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed Oct  2 17:08:17 2013
+  \date      Thu Oct  3 16:47:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -15,8 +15,8 @@
 #define QuinoaInputDeckKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
-//! the inline includes below to make sure they get included in the correct
-//! namespace and not polluting the global one.
+//! the inline includes, such as *Keywords.h, below (if any) to make sure they
+//! get included in the correct namespace and not polluting the global one.
 #define Keywords
 
 #include <Keyword.h>

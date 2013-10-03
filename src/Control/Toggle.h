@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:02:30 2013
+  \date      Thu Oct  3 16:29:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -79,11 +79,8 @@ class Toggle {
 template< typename Enum >
 std::string operator+ (const std::string& lhs, Enum e) {
   std::stringstream ss;
-  // Explicit operator call instead of 'ss << lhs', to avoid gcc's 'ambiguous
-  // overload'
-  operator<<(ss,lhs) << e;
-  std::string rhs = ss.str();
-  return rhs;
+  ss << lhs << e;
+  return ss.str();
 }
 
 //! Operator << for writing Enum to output streams

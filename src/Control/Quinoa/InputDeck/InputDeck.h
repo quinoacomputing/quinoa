@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu Oct  3 14:59:41 2013
+  \date      Thu Oct  3 17:13:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -11,20 +11,14 @@
 #ifndef QuinoaInputDeck_h
 #define QuinoaInputDeck_h
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <limits>
-
-#include <QuinoaTypes.h>
-#include <Quinoa/InputDeck/Types.h>
 #include <Control.h>
-#include <Exception.h>
 #include <Option.h>
+#include <Quinoa/InputDeck/Types.h>
 
 namespace quinoa {
 
-//! InputDeck : Control< specialized to Quinoa >, see Types.h
+//! InputDeck : Control< specialized to Quinoa >, see Types.h,
+//! This is also where the command line parser stores
 class InputDeck :
   public Control< // tag           type
                   ctr::title,      std::string,
@@ -37,7 +31,7 @@ class InputDeck :
                   ctr::stat,       std::vector<ctr::Product> > {
 
   public:
-    //! Constructor: set all defaults, see QuinoaControlTypes.h
+    //! Constructor: set all defaults
     InputDeck() {
       using namespace ctr;
       // Default title
@@ -149,7 +143,7 @@ class InputDeck :
       if (q == Quantity::VELOCITY_X)
         offset += get<component,ndensity>();
       if (q == Quantity::DENSITY)
-        offset += NCOMP_POS * get<component,nposition>();
+        offset += 3 * get<component,nposition>();
       return offset;
     }
 

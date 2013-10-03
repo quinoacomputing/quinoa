@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Fri Sep 20 13:44:56 2013
+  \date      Thu Oct  3 16:21:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef LibOption_h
 #define LibOption_h
-
-#include <string>
 
 #include <Option.h>
 

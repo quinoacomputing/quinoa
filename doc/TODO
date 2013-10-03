@@ -1,6 +1,8 @@
 * Parser/Control:
     - Warn on what is set ends up not being used
     - Add position information to parser error handling
+    - Code reuse among parsers?
+    - Document remaining undocumented keywords
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL

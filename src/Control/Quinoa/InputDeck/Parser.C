@@ -2,16 +2,12 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 11:31:56 2013
+  \date      Thu Oct  3 17:32:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
 */
 //******************************************************************************
-
-#include <algorithm>
-
-#include <pegtl.hh>
 
 #include <Quinoa/InputDeck/Parser.h>
 #include <Quinoa/InputDeck/Grammar.h>
@@ -22,7 +18,6 @@ InputDeckParser::InputDeckParser(Base& base) :
   FileParser(base, base.control.get<ctr::io, ctr::control>())
 //******************************************************************************
 //  Constructor
-//! \param[in]    filename  Control file name to read from
 //! \param[inout] base      Essentials
 //! \author  J. Bakosi
 //******************************************************************************

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 07:59:48 2013
+  \date      Thu Oct  3 16:51:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -34,11 +34,5 @@ struct end_info {
   }
 };
 using end = keyword<end_info, e,n,d >;
-
-// This will go away once all the keywords are documented
-struct undefined_info {
-  static const char* name() { return "undefined"; }
-  static const char* help() { return "Undefined."; }
-};
 
 #endif // BaseKeywords_h
