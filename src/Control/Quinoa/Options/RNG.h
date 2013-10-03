@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:42:37 PM MDT
+  \date      Wed Oct  2 15:56:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -96,20 +96,20 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
     }
 
     //! Get access to RNG keywords
-    const grm::kw::mkl_mcg31 mkl_mcg31 {};
-    const grm::kw::mkl_r250 mkl_r250 {};
-    const grm::kw::mkl_mrg32k3a mkl_mrg32k3a {};
-    const grm::kw::mkl_mcg59 mkl_mcg59 {};
-    const grm::kw::mkl_wh mkl_wh {};
-    const grm::kw::mkl_mt19937 mkl_mt19937 {};
-    const grm::kw::mkl_mt2203 mkl_mt2203 {};
-    const grm::kw::mkl_sfmt19937 mkl_sfmt19937 {};
-    const grm::kw::mkl_sobol mkl_sobol {};
-    const grm::kw::mkl_niederr mkl_niederr {};
-    const grm::kw::mkl_iabstract mkl_iabstract {};
-    const grm::kw::mkl_dabstract mkl_dabstract {};
-    const grm::kw::mkl_sabstract mkl_sabstract {};
-    const grm::kw::mkl_nondeterm mkl_nondeterm {};
+    const kw::mkl_mcg31 mkl_mcg31 {};
+    const kw::mkl_r250 mkl_r250 {};
+    const kw::mkl_mrg32k3a mkl_mrg32k3a {};
+    const kw::mkl_mcg59 mkl_mcg59 {};
+    const kw::mkl_wh mkl_wh {};
+    const kw::mkl_mt19937 mkl_mt19937 {};
+    const kw::mkl_mt2203 mkl_mt2203 {};
+    const kw::mkl_sfmt19937 mkl_sfmt19937 {};
+    const kw::mkl_sobol mkl_sobol {};
+    const kw::mkl_niederr mkl_niederr {};
+    const kw::mkl_iabstract mkl_iabstract {};
+    const kw::mkl_dabstract mkl_dabstract {};
+    const kw::mkl_sabstract mkl_sabstract {};
+    const kw::mkl_nondeterm mkl_nondeterm {};
 
     //! Enums -> names
     const std::map<RNGType, std::string> names {

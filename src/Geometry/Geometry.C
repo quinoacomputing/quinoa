@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:13:05 PM MDT
+  \date      Thu Oct  3 07:20:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -35,6 +35,6 @@ Geometry::echo()
 
   m_base.print.subsection("I/O filenames");
   m_base.print.item("Input", m_base.control.get<ctr::io,ctr::input>());
-  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::geomoutput>());
+  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::output>());
   m_base.print.endsubsection();
 }

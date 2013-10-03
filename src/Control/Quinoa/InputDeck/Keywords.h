@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:36:40 PM MDT
+  \date      Wed Oct  2 17:08:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -22,7 +22,6 @@
 #include <Keyword.h>
 
 namespace quinoa {
-namespace grm {
 //! List of keywords the parser understands
 namespace kw {
 
@@ -33,11 +32,6 @@ using namespace pegtl::ascii;
 
 // Include Intel's MKL's RNG keywords
 #include <MKLRNGKeywords.h>
-
-struct undefined_info {
-  static const char* name() { return "undefined"; }
-  static const char* help() { return "Undefined."; }
-};
 
 // Keyword 'analytic_geometry'
 struct analytic_geometry_info {
@@ -87,21 +81,6 @@ struct brick_info {
   }
 };
 using brick = keyword<brick_info, b,r,i,c,k>;
-
-// Input filename
-using input = keyword<undefined_info, i,n,p,u,t>;
-
-// Output filename
-using output = keyword<undefined_info, o,u,t,p,u,t>;
-
-// PDF filename
-using pdfname = keyword<undefined_info,  p,d,f,n,a,m,e >;
-
-// Glob (i.e. domain-average statistics) filename
-using globname = keyword<undefined_info,  g,l,o,b,n,a,m,e >;
-
-// Statistics filename
-using statname = keyword<undefined_info,  s,t,a,t,n,a,m,e >;
 
 // Keyword 'hommix'
 struct hommix_info {
@@ -330,7 +309,6 @@ using glbi = keyword<undefined_info,  g,l,b,i >;
 using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
 
 } // kw::
-} // grm::
 } // quinoa::
 
 #undef Keywords

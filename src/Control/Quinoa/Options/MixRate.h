@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MixRate.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:08:46 PM MDT
+  \date      Wed Oct  2 15:55:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -44,7 +44,7 @@ class MixRate : public Toggle<MixRateType> {
     MixRate& operator=(MixRate&&) = delete;
 
     //! Get access to mixrate keywords
-    const grm::kw::mixrate_gamma gamma {};
+    const kw::mixrate_gamma gamma {};
 
     //! Enums -> names
     const std::map<MixRateType, std::string> names {

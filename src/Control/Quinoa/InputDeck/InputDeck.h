@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:44:18 PM MDT
+  \date      Thu Oct  3 10:17:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -34,7 +34,7 @@ class InputDeck :
                   ctr::interval,   ctr::intervals,
                   ctr::io,         ctr::ios,
                   ctr::param,      ctr::parameters,
-                  ctr::stats,      std::vector<ctr::Product> > {
+                  ctr::stat,       std::vector<ctr::Product> > {
 
   public:
     //! Constructor: set all defaults, see QuinoaControlTypes.h
@@ -72,11 +72,10 @@ class InputDeck :
       // Default I/O parameters
       set<io,control>("");
       set<io,input>("");
-      set<io,geomoutput>("out");
-      set<io,physoutput>("out");
+      set<io,output>("out");
       set<io,pdf>("pdf");
       set<io,glob>("glob");
-      set<io,stats>("stat");
+      set<io,stat>("stat");
       // Default beta mass model parameters
       set<param,beta,atwood>(0.5);
       // Default Dirichlet mix model parameters
@@ -98,7 +97,7 @@ class InputDeck :
       // Default generalized Langevin hydro model parameters
       set<param,slm,c0>(2.1);
       // Default requested statistics
-      set<stats>(std::vector<Product>());
+      set<stat>(std::vector<Product>());
     }
 
     //! Destructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:07:50 PM MDT
+  \date      Wed Oct  2 15:55:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -43,7 +43,7 @@ class Mass : public Toggle<MassType> {
     Mass& operator=(Mass&&) = delete;
 
     //! Get access to mass keywords
-    const grm::kw::mass_beta beta {};
+    const kw::mass_beta beta {};
 
     //! Enums -> names
     const std::map<MassType, std::string> names {

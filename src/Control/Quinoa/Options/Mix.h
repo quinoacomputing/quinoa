@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:08:22 PM MDT
+  \date      Wed Oct  2 15:55:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -46,10 +46,10 @@ class Mix : public Toggle<MixType> {
     Mix& operator=(Mix&&) = delete;
 
     //! Get access to mix keywords
-    const grm::kw::mix_iem iem {};
-    const grm::kw::mix_iecm iecm {};
-    const grm::kw::mix_dir dir {};
-    const grm::kw::mix_gendir gendir {};
+    const kw::mix_iem iem {};
+    const kw::mix_iecm iecm {};
+    const kw::mix_dir dir {};
+    const kw::mix_gendir gendir {};
 
     //! Enums -> names
     const std::map<MixType, std::string> names {

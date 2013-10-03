@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:26:00 PM MDT
+  \date      Thu Oct  3 08:12:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -15,13 +15,14 @@
 
 #include <QuinoaDriver.h>
 #include <Timer.h>
+#include <Quinoa/InputDeck/Parser.h>
+#include <Quinoa/CmdLine/Parser.h>
 #include <AnalyticGeometry.h>
 #include <DiscreteGeometry.h>
 #include <HomMix/HomMix.h>
 #include <HomHydro/HomHydro.h>
 #include <HomRT/HomRT.h>
 #include <SPINSFlow/SPINSFlow.h>
-#include <Quinoa/InputDeck/Parser.h>
 
 using namespace quinoa;
 
@@ -36,17 +37,21 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Take exactly one filename argument for now
-  // Will need to be extended with a more elaborate command line parser
-  ErrChk(argc == 2, ExceptType::FATAL,
-         "Exactly one command line argument required: filename.q");
+  // Instantiate command line parser
+  CmdLineParser cmdParser(argc, argv, base);
 
-  // Instantiate control file parser
-  InputDeckParser parser(argv[1], base);
+  // Parse command line
+  cmdParser.parse();
 
-  // Parse control file
-  parser.parse();
+Throw(ExceptType::FATAL, "Fine.");
 
+  // Instantiate input deck parser
+  InputDeckParser idParser(argv[1], base);
+
+  // Parse input deck
+  idParser.parse();
+
+  m_base.print.endpart();
   base.print.part("Problem setup");
   base.print.section("Title", base.control.get<ctr::title>());
 

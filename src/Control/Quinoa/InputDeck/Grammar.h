@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:36:11 PM MDT
+  \date      Thu Oct  3 10:18:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -71,7 +71,7 @@ namespace grm {
     }
   };
 
-  //! convert and put value in state at position given by tags
+  //! put value in state at position given by tags
   template< typename... tags >
   struct store : action_base< store<tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -90,7 +90,7 @@ namespace grm {
   //! start new product in vector of statistics
   struct start_product : action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
-      stack.push_back<ctr::stats>(ctr::Product());
+      stack.push_back<ctr::stat>(ctr::Product());
       IGNORE(value);        // suppress compiler warning on unused variable
     }
   };
@@ -104,7 +104,7 @@ namespace grm {
       // If name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference to stats vector
-      std::vector<ctr::Product>& stats = stack.get<ctr::stats>();
+      std::vector<ctr::Product>& stats = stack.get<ctr::stat>();
       // Push term into current product
       stats.back().push_back(ctr::Term(field, q, m, na, plot));
       // If central moment, trigger mean
@@ -274,11 +274,7 @@ namespace grm {
                         store_option<sel::Geometry,
                                      ctr::selected,
                                      ctr::geometry> >,
-                 block<kw::end::pegtl_string,
-                       process_quoted<kw::input::pegtl_string,
-                                      set<ctr::io,ctr::input>>,
-                       process_quoted<kw::output::pegtl_string,
-                                      set<ctr::io, ctr::geomoutput>> > > {};
+                 block<kw::end::pegtl_string> > {};
 
   //! dir block
   struct dir :
@@ -397,10 +393,6 @@ namespace grm {
               process<kw::term::pegtl_string, store<ctr::incpar, ctr::term>>,
               process<kw::dt::pegtl_string, store<ctr::incpar, ctr::dt>>,
               process<kw::npar::pegtl_string, store<ctr::component, ctr::npar>>,
-              process_quoted<kw::output::pegtl_string, set<ctr::io, ctr::physoutput>>,
-              process<kw::pdfname::pegtl_string, set<ctr::io, ctr::pdf>>,
-              process<kw::globname::pegtl_string, set<ctr::io, ctr::glob>>,
-              process<kw::statname::pegtl_string, set<ctr::io, ctr::stats>>,
               process<kw::glbi::pegtl_string, store<ctr::interval, ctr::glob>>,
               process<kw::pdfi::pegtl_string, store<ctr::interval, ctr::pdf>>,
               process<kw::stai::pegtl_string, store<ctr::interval, ctr::plot>>,

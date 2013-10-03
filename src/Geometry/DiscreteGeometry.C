@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:13:27 PM MDT
+  \date      Thu Oct  3 07:25:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -32,7 +32,7 @@ DiscreteGeometry::DiscreteGeometry(const Base& base) :
   reader.read();
 
   // Instantiate Silo writer object
-  SiloWriter writer(base.control.get<ctr::io,ctr::geomoutput>(),
+  SiloWriter writer(base.control.get<ctr::io,ctr::output>(),
                     m_mesh,
                     DB_ALL_AND_DRVR);
 
