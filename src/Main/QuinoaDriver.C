@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Oct  3 08:12:19 2013
+  \date      Thu Oct  3 11:33:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -43,10 +43,8 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   // Parse command line
   cmdParser.parse();
 
-Throw(ExceptType::FATAL, "Fine.");
-
   // Instantiate input deck parser
-  InputDeckParser idParser(argv[1], base);
+  InputDeckParser idParser(base);
 
   // Parse input deck
   idParser.parse();

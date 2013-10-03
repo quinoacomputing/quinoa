@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 10:14:03 2013
+  \date      Thu Oct  3 11:41:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -31,11 +31,13 @@ namespace cmd {
 
   //! Command line parser error types
   enum class Error : uint8_t { KEYWORD,
-                               ALIAS };
+                               ALIAS,
+                               MISSING };
 
   static const std::map<Error, std::string> err_msg( {
-    { Error::KEYWORD, "Unknown command line keyword" },
-    { Error::ALIAS, "Alias command line keyword too long" }
+    { Error::KEYWORD, "Unknown keyword" },
+    { Error::ALIAS, "Alias keyword too long" },
+    { Error::MISSING, "Required filename missing" }
   } );
 
   // Actions
@@ -46,8 +48,14 @@ namespace cmd {
     static void apply(const std::string& value, Stack& stack) {
       const auto& msg = err_msg.find(key);
       if (msg != err_msg.end()) {
-        Throw(ExceptType::FATAL,
-              "Error while parsing '" + value + "'. " + msg->second + ".");
+        if (!value.empty()) {
+          Throw(ExceptType::FATAL,
+                "Error while parsing '" + value + "' in the command line. " +
+                msg->second + ".");
+        } else {
+          Throw(ExceptType::FATAL,
+                "Error while parsing the command line. " + msg->second + ".");
+        }
       } else {
         Throw(ExceptType::FATAL, "Unknown parser error.");
       }
@@ -92,9 +100,22 @@ namespace cmd {
   struct read :
          sor< verbose<keyword>, alias<keyword> > {};
 
+  //! parse input padded by blank at left and space at right and if it matches
+  //! 'keywords', apply 'actions'
+  template< class keywords, typename... actions >
+  struct parse :
+         pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
+
+  //! process 'keyword' and call its 'insert' action if matches 'keywords'
+  template< class keyword, class insert, class keywords = any >
+  struct process :
+         ifmust< read<keyword>,
+                 parse< sor<keywords, apply<error<Error::MISSING>>>,
+                        insert> > {};
+
   //! control
   struct control :
-         ifapply<read<kw::control>, store<ctr::io,ctr::control>> {};
+         process<kw::control, store<ctr::io,ctr::control>> {};
 
   //! input
   struct input :

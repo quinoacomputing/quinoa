@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct  3 10:18:12 2013
+  \date      Thu Oct  3 11:13:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -54,8 +54,14 @@ namespace grm {
     static void apply(const std::string& value, Stack& stack) {
       const auto& msg = err_msg.find(key);
       if (msg != err_msg.end()) {
-        Throw(ExceptType::FATAL,
-              "Error while parsing '" + value + "'. " + msg->second + ".");
+        if (!value.empty()) {
+          Throw(ExceptType::FATAL,
+                "Error while parsing '" + value + "' in the input deck. " +
+                msg->second + ".");
+        } else {
+          Throw(ExceptType::FATAL,
+                "Error while parsing the input deck. " + msg->second + ".");
+        }
       } else {
         Throw(ExceptType::FATAL, "Unknown parser error.");
       }
