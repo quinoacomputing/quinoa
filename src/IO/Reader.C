@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:34:11 2013
+  \date      Thu Oct  3 12:13:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief      reader class definition
-  \details    reader class definition
+  \brief     Reader class definition
+  \details   Reader class definition
 */
 //******************************************************************************
 
@@ -16,16 +16,37 @@
 using namespace quinoa;
 
 Reader::Reader(const std::string filename) :
-  m_filename(filename),
-  m_inFile()
+  m_filename(filename)
 //******************************************************************************
 //  Constructor: Acquire file handle
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_inFile.open(m_filename, std::ifstream::in);
+  // Check if file exists, throw exception if it does not
+  m_inFile.open(filename, std::ifstream::in);
   ErrChk(m_inFile.good(), ExceptType::FATAL,
-         "Failed to open file: " + m_filename);
+         "Failed to open file: " + filename);
+
+  // Attempt to read a character, throw if it fails
+  // It is curious that on some systems opening a directory instead of a file
+  // with the above ifstream::open() call does not set the failbit. Thus we get
+  // here fine, so we try to read a character from it. If it is a directory or
+  // an empty file the read will fail, so we throw. Read more at: http://
+  // stackoverflow.com/questions/9591036/
+  // ifstream-open-doesnt-set-error-bits-when-argument-is-a-directory.
+  m_inFile.get();
+  ErrChk(m_inFile.good(), ExceptType::FATAL,
+         "Failed to read from file: " + filename);
+
+  // Close it
+  m_inFile.close();
+  ErrChk(!m_inFile.fail(), ExceptType::FATAL,
+         "Failed to close file: " + filename);
+
+  // Re-open
+  m_inFile.open(filename, std::ifstream::in);
+  ErrChk(m_inFile.good(), ExceptType::FATAL,
+         "Failed to open file: " + filename);
 }
 
 Reader::~Reader() noexcept
