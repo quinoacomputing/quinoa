@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:47:30 PM MDT
+  \date      Thu Oct  3 10:14:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's input deck parsing
   \details   Types for Quinoa's input deck parsing
@@ -130,7 +130,7 @@ struct Term {
   //! Operator << for writing vector<Term> to output streams
   friend std::ostream& operator<< (std::ostream& os,
                                    const std::vector<Term>& vec) {
-    os << " <";
+    os << "<";
     for (auto& w : vec) os << w;
     os << ">";
     return os;
@@ -140,7 +140,7 @@ struct Term {
   friend std::ostream& operator<<= (std::ostream& os,
                                     const std::vector<Term>& vec) {
     if (vec[0].plot) {
-      os << " <";
+      os << "<";
       for (auto& w : vec) os << w;
       os << ">";
     }
@@ -223,11 +223,10 @@ using intervals = tuple::tagged_tuple<
 using ios = tuple::tagged_tuple<
   control,     std::string,  //!< Control filename
   input,       std::string,  //!< Input filename
-  geomoutput,  std::string,  //!< Geometry output filename
-  physoutput,  std::string,  //!< Physics output filename
+  output,      std::string,  //!< Output filename
   pdf,         std::string,  //!< PDF filename
   glob,        std::string,  //!< Glob filename
-  stats,       std::string   //!< Statistics filename
+  stat,        std::string   //!< Statistics filename
 >;
 
 //! Beta mass model parameters storage

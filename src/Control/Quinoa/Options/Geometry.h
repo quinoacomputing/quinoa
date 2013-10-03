@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Geometry.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:30:43 PM MDT
+  \date      Wed Oct  2 15:54:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -44,8 +44,8 @@ class Geometry : public Toggle<GeometryType> {
     Geometry& operator=(Geometry&&) = delete;
 
     //! Get access to geometry keywords
-    const grm::kw::analytic_geometry ag {};
-    const grm::kw::discrete_geometry dg {};
+    const kw::analytic_geometry ag {};
+    const kw::discrete_geometry dg {};
 
     //! Enums -> names
     const std::map<GeometryType, std::string> names {

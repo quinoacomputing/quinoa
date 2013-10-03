@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:29:07 PM MDT
+  \date      Wed Oct  2 15:54:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -41,7 +41,7 @@ class Energy : public Toggle<EnergyType> {
     Energy& operator=(Energy&&) = delete;
 
     //! Get access to energy keywords
-    //const grm::kw::hommix hommix {};
+    //const kw::hommix hommix {};
 
     //! Enums -> names
     const std::map<EnergyType, std::string> names {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:25:01 PM MDT
+  \date      Thu Oct  3 09:15:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -106,7 +106,7 @@ static void echoBuildEnv(const QuinoaPrint& print)
   print.item("Build date", QUINOA_BUILD_DATE);
 }
 
-static void echoRunEnv(const QuinoaPrint& print, const char* executable)
+static void echoRunEnv(const QuinoaPrint& print, int argc, char** argv)
 //******************************************************************************
 //  Echo runtime environment
 //! \author  J. Bakosi
@@ -115,8 +115,13 @@ static void echoRunEnv(const QuinoaPrint& print, const char* executable)
   print.section("Run-time environment");
   print.item("Date, time", curtime());
   print.item("Work directory", workdir());
-  print.item("Executable (rel. to work dir)", executable);
-  print.item("Command line arguments", "...");
+  print.item("Executable (rel. to work dir)", argv[0]);
+
+  print.item("Command line arguments");
+  for (int i=1; i<argc; ++i) {
+    print.raw(std::string(argv[i]) + ' ');
+  }
+  print.raw('\n');
 }
 
 } // quinoa::
@@ -156,7 +161,7 @@ int main(int argc, char* argv[])
     print.part("Environment");
     echoBuildEnv(print);                //!< Build environment
     paradigm.echo();                    //!< Parallel compute enviroment
-    echoRunEnv(print, argv[0]);         //!< Runtime environment
+    echoRunEnv(print, argc, argv);      //!< Runtime environment
 
     // Create driver
     QuinoaDriver driver(argc, argv, base);

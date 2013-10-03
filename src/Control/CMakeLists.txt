@@ -3,8 +3,10 @@ cmake_minimum_required(VERSION 2.8.5)
 project(QuinoaControl CXX)
 
 add_library(QuinoaControl
-            Parser.C
+            FileParser.C
+            StringParser.C
             Quinoa/InputDeck/Parser.C
+            Quinoa/CmdLine/Parser.C
 )
 
 INSTALL(TARGETS QuinoaControl
@@ -16,7 +18,7 @@ INSTALL(TARGETS QuinoaControl
 project(RNGTestControl CXX)
 
 add_library(RNGTestControl
-            Parser.C
+            FileParser.C
             RNGTest/InputDeck/Parser.C
 )
 

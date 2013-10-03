@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:07:13 PM MDT
+  \date      Wed Oct  2 15:56:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -44,8 +44,8 @@ class Position : public Toggle<PositionType> {
     Position& operator=(Position&&) = delete;
 
     //! Get access to position keywords
-    const grm::kw::pos_inviscid inviscid {};
-    const grm::kw::pos_viscous viscous {};
+    const kw::pos_inviscid inviscid {};
+    const kw::pos_viscous viscous {};
 
     //! Enums -> names
     const std::map<PositionType, std::string> names {

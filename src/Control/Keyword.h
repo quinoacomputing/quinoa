@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon Sep 30 08:50:46 2013
+  \date      Thu Oct  3 08:43:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -14,7 +14,6 @@
 #include <pegtl.hh>
 
 namespace quinoa {
-namespace grm {
 namespace kw {
 
 //! A keyword is struct that collects the information that makes up a keyword.
@@ -45,8 +44,16 @@ struct keyword {
   const char* help() const { return Info::help(); }
 };
 
+
+template< typename Info, int Alias, int Char, int... Chars >
+struct cmdline_keyword : keyword<Info, Char, Chars...> {
+
+  //! Accessor to keyword alias character as pegt::string
+  using pegtl_alias = pegtl::one<Alias>;
+
+};
+
 } // kw::
-} // grm::
 } // quinoa::
 
 #endif // Keyword_h

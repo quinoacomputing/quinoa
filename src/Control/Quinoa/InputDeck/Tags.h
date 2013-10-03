@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Tags.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:39:00 PM MDT
+  \date      Thu Oct  3 10:15:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
-  \details   All control tags used to build a nested tagged tagged tuple
+  \details   Quinoa's input dect tags
 */
 //******************************************************************************
 #ifndef QuinoaInputDeckTags_h
@@ -43,9 +43,8 @@ struct glob {};
 
 struct control {};
 struct input {};
-struct geomoutput {};
-struct physoutput {};
-struct stats {};
+struct output {};
+struct stat {};
 
 struct atwood {};
 struct b {};

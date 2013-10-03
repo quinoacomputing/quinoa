@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:23:49 PM MDT
+  \date      Thu Oct  3 10:18:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -28,7 +28,7 @@ Statistics::Statistics(const Base& base, const real* const particles) :
   m_npar(base.control.get<ctr::component, ctr::npar>()),
   m_particles(particles),
   m_nprop(base.control.nprop()),
-  m_statistics(base.control.get<ctr::stats>()),
+  m_statistics(base.control.get<ctr::stat>()),
   m_instOrd(),
   m_ordFieldName(),
   m_nameOrdinary(),

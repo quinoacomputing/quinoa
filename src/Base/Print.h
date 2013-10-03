@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 11:10:01 AM MDT
+  \date      Thu Oct  3 09:15:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -78,6 +78,11 @@ class Print {
                                           % title;
     }
 
+    //! Print item: name
+    void item(const std::string& name) const {
+      std::cout << m_item_name_fmt % m_item_indent % name;
+    }
+
     //! Print item: name : value
     template<typename T>
     void item(const std::string& name, const T& value) const {
@@ -89,6 +94,10 @@ class Print {
 
     //! Print end of subsection
     void endsubsection() const { std::cout << "\n"; }
+
+    //! Print raw
+    template<typename T>
+    void raw(const T& raw) const { std::cout << raw; }
 
   protected:
     //! bullets
@@ -108,7 +117,7 @@ class Print {
     mutable format m_section_title_fmt = format("\n%s%c %s:\n");
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
-    mutable format m_item_name_fmt = format("%s%-30s :");
+    mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");

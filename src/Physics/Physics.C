@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:15:36 PM MDT
+  \date      Thu Oct  3 10:19:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -38,7 +38,7 @@ Physics::Physics(const Base& base) :
   m_particles(new real [m_npar * base.control.nprop()]),
   m_statistics(base, m_particles.get()),
   m_glob(base.control.get<ctr::io, ctr::glob>()),
-  m_stat(base.control.get<ctr::io, ctr::stats>(), m_statistics)
+  m_stat(base.control.get<ctr::io, ctr::stat>(), m_statistics)
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
@@ -107,9 +107,9 @@ Physics::echo()
   m_base.print.section<sel::Physics, ctr::selected, ctr::physics>();
 
   m_base.print.subsection("I/O filenames");
-  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::physoutput>());
+  m_base.print.item("Output", m_base.control.get<ctr::io,ctr::output>());
   m_base.print.item("Glob", m_base.control.get<ctr::io,ctr::glob>());
-  m_base.print.item("Statistics", m_base.control.get<ctr::io,ctr::stats>());
+  m_base.print.item("Statistics", m_base.control.get<ctr::io,ctr::stat>());
   m_base.print.item("PDF", m_base.control.get<ctr::io,ctr::pdf>());
   m_base.print.endsubsection();
 

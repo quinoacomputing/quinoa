@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:44:37 PM MDT
+  \date      Wed Oct  2 15:54:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -44,7 +44,7 @@ class Frequency : public Toggle<FrequencyType> {
     Frequency& operator=(Frequency&&) = delete;
 
     //! Get access to frequency keywords
-    const grm::kw::freq_gamma freq_gamma {};
+    const kw::freq_gamma freq_gamma {};
 
     //! Enums -> names
     const std::map<FrequencyType, std::string> names {

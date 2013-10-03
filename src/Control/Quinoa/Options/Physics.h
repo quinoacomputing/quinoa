@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Physics.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:06:48 PM MDT
+  \date      Wed Oct  2 15:55:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -46,10 +46,10 @@ class Physics : public Toggle<PhysicsType> {
     Physics& operator=(Physics&&) = delete;
 
     //! Get access to physics keywords
-    const grm::kw::hommix hommix {};
-    const grm::kw::homhydro homhydro {};
-    const grm::kw::homrt homrt {};
-    const grm::kw::spinsflow spinsflow {};
+    const kw::hommix hommix {};
+    const kw::homhydro homhydro {};
+    const kw::homrt homrt {};
+    const kw::spinsflow spinsflow {};
 
     //! Enums -> names
     const std::map<PhysicsType, std::string> names {

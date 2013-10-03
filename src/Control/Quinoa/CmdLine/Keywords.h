@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 09:35:20 PM MDT
+  \date      Thu Oct  3 08:50:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -19,7 +19,35 @@
 //! namespace and not polluting the global one.
 #define Keywords
 
+#include <Keyword.h>
 
+namespace quinoa {
+//! List of keywords the parser understands
+namespace kw {
+
+using namespace pegtl::ascii;
+
+// Keyword 'control', cmdline '--control' with alias '-c'
+using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;
+
+// Keyword 'input', cmdline '--input' with alias '-i'
+using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;
+
+// Keyword 'output', cmdline '--output' with alias '-o'
+using output = cmdline_keyword<undefined_info, o, o,u,t,p,u,t>;
+
+// Keyword 'pdf', cmdline '--pdf' with alias '-p'
+using pdf = cmdline_keyword<undefined_info, p, p,d,f >;
+
+// Keyword 'glob', cmdline '--glob' with alias '-g'
+using glob = cmdline_keyword<undefined_info, g, g,l,o,b >;
+
+// Keyword 'stat', cmdline '--stat' with alias '-s'
+using stat = cmdline_keyword<undefined_info, s, s,t,a,t >;
+
+
+} // kw::
+} // quinoa::
 
 #undef Keywords
 

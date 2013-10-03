@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:08:05 PM MDT
+  \date      Wed Oct  2 15:55:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -44,8 +44,8 @@ class Hydro : public Toggle<HydroType> {
     Hydro& operator=(Hydro&&) = delete;
 
     //! Get access to hydro keywords
-    const grm::kw::hydro_slm slm {};
-    const grm::kw::hydro_glm glm {};
+    const kw::hydro_slm slm {};
+    const kw::hydro_glm glm {};
 
     //! Enums -> names
     const std::map<HydroType, std::string> names {

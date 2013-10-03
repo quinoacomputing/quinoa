@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:09:15 PM MDT
+  \date      Thu Oct  3 10:17:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -73,9 +73,9 @@ class QuinoaPrint : public Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! <<= for outputing requested Term and vector<Term>.
     void requestedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stats>() != QuinoaDefaults.get<ctr::stats>()) {
+      if (m_ctr.get<ctr::stat>() != QuinoaDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<ctr::stats>()) std::cout <<= v;
+        for (auto& v : m_ctr.get<ctr::stat>()) std::cout <<= v;
         std::cout << '\n';
       }
     }
@@ -85,9 +85,9 @@ class QuinoaPrint : public Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! << for outputing estimated Term and vector<Term>.
     void estimatedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stats>() != QuinoaDefaults.get<ctr::stats>()) {
+      if (m_ctr.get<ctr::stat>() != QuinoaDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<ctr::stats>()) std::cout << v;
+        for (auto& v : m_ctr.get<ctr::stat>()) std::cout << v;
         std::cout << '\n';
       }
     }
