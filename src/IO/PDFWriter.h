@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:48:09 2013
+  \date      Thu 03 Oct 2013 08:45:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -31,13 +31,13 @@ class PDFWriter : public Writer {
     ~PDFWriter() noexcept override = default;
 
     //! Write PDF to file
-    void write(const PDF* pdf);
+    void write(const PDF& pdf);
 
     //! Write joint PDF to text file
-    void writeTxt(const JPDF* jpdf);
+    void writeTxt(const JPDF& jpdf);
 
     //! Write joint PDF to gmsh (text) file format
-    void writeGmsh(const JPDF* jpdf);
+    void writeGmsh(const JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor

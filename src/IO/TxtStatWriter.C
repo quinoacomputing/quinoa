@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Thu Sep 19 16:31:19 2013
+  \date      Thu 03 Oct 2013 09:08:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition

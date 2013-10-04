@@ -2,14 +2,12 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Oct  3 11:33:06 2013
+  \date      Thu 03 Oct 2013 08:21:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
 */
 //******************************************************************************
-
-#include <iostream>
 
 #include <boost/functional/factory.hpp>
 

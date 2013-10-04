@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:34:15 2013
+  \date      Thu 03 Oct 2013 08:30:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class definition
   \details   Writer base class definition
@@ -49,7 +49,7 @@ Writer::~Writer() noexcept
     }
     catch (std::exception& e) {
       std::cout << ">>> std::exception in Writer destructor: " << e.what()
-           << std::endl;
+                << std::endl;
     }
     catch (...) {
       std::cout << "UNKNOWN EXCEPTION in Writer destructor" << std::endl;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Thu Oct  3 07:25:10 2013
+  \date      Thu 03 Oct 2013 08:27:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -10,14 +10,12 @@
 //******************************************************************************
 
 #include <DiscreteGeometry.h>
-#include <Exception.h>
 #include <STLTxtMeshReader.h>
 #include <SiloWriter.h>
 
 using namespace quinoa;
 
-DiscreteGeometry::DiscreteGeometry(const Base& base) :
-  Geometry(base)
+DiscreteGeometry::DiscreteGeometry(const Base& base) : Geometry(base)
 //******************************************************************************
 //  Constructor
 //! \param[in] base      Essentials
@@ -25,13 +23,13 @@ DiscreteGeometry::DiscreteGeometry(const Base& base) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate ASCII STL mesh reader object
+  // Instantiate ASCII STL mesh reader
   STLTxtMeshReader reader(base.control.get<ctr::io,ctr::input>(), m_mesh);
 
   // Read in STL mesh
   reader.read();
 
-  // Instantiate Silo writer object
+  // Instantiate Silo writer
   SiloWriter writer(base.control.get<ctr::io,ctr::output>(),
                     m_mesh,
                     DB_ALL_AND_DRVR);

@@ -2,16 +2,12 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:48:39 2013
+  \date      Thu 03 Oct 2013 08:48:52 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
 */
 //******************************************************************************
-
-#include <string>
-#include <fstream>
-#include <map>
 
 #include <PDFWriter.h>
 #include <Exception.h>
@@ -19,31 +15,32 @@
 using namespace quinoa;
 
 void
-PDFWriter::write(const PDF* pdf)
+PDFWriter::write(const PDF& pdf)
 //******************************************************************************
 //  Write out standardized PDF to file
-//! \param[in]  pdf  Object pointer to univariate PDF
+//! \param[in]  pdf  Univariate PDF
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  auto f = pdf->getMap();
-  const real binsize = pdf->getBinsize();
-  const real sp = pdf->getNsample()*binsize;
-  for (auto& p : *f)
+  auto f = pdf.getMap();
+  const real binsize = pdf.getBinsize();
+  const real sp = pdf.getNsample()*binsize;
+  for (auto& p : *f) {
     m_outFile << p.first*binsize << "\t" << p.second/sp << std::endl;
+  }
 }
 
 void
-PDFWriter::writeTxt(const JPDF* jpdf)
+PDFWriter::writeTxt(const JPDF& jpdf)
 //******************************************************************************
 //  Write out standardized joint PDF to text file (only for 2D)
-//! \param[in]  jpdf  Object pointer to joint PDF
+//! \param[in]  jpdf  Joint PDF
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  auto f = jpdf->getMap();
-  real binsize = jpdf->getBinsize();
-  const real sp = jpdf->getNsample()*binsize*binsize;
+  auto f = jpdf.getMap();
+  real binsize = jpdf.getBinsize();
+  const real sp = jpdf.getNsample()*binsize*binsize;
   for (auto& p : *f) {
     m_outFile << p.first[0]*binsize << " " << p.first[1]*binsize
               << " " << p.second/sp << std::endl;
@@ -51,10 +48,10 @@ PDFWriter::writeTxt(const JPDF* jpdf)
 }
 
 void
-PDFWriter::writeGmsh(const JPDF* jpdf)
+PDFWriter::writeGmsh(const JPDF& jpdf)
 //******************************************************************************
 //  Write out standardized joint PDF to Gmsh (text) format (only for 2D)
-//! \param[in]  jpdf  Object pointer to joint PDF
+//! \param[in]  jpdf  Joint PDF
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -63,9 +60,9 @@ PDFWriter::writeGmsh(const JPDF* jpdf)
   ErrChk(!m_outFile.bad(), ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 
-  auto f = jpdf->getMap();
-  real binsize = jpdf->getBinsize();
-  const real sp = jpdf->getNsample()*binsize*binsize;
+  auto f = jpdf.getMap();
+  real binsize = jpdf.getBinsize();
+  const real sp = jpdf.getNsample()*binsize*binsize;
 
   // Find sample space extents
   real xmin = std::numeric_limits<real>::max();

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:50:54 2013
+  \date      Thu 03 Oct 2013 08:34:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -19,7 +19,7 @@
 using namespace quinoa;
 
 GmshTxtMeshReader::GmshTxtMeshReader(const std::string filename,
-                                     GmshMesh* const mesh) :
+                                     GmshMesh& mesh) :
   Reader(filename),
   m_mesh(mesh),
   m_GmshElemNodes(),
@@ -109,7 +109,7 @@ GmshTxtMeshReader::read()
   count();
 
   // Allocate memory to read mesh in
-  m_mesh->alloc(m_nnodes, m_nLins, m_nTris);
+  m_mesh.alloc(m_nnodes, m_nLins, m_nTris);
 
   // Read in mandatory "$MeshFormat" section
   readMeshFormat();
@@ -151,9 +151,9 @@ GmshTxtMeshReader::readMeshFormat()
          ExceptType::FATAL, "Unsupported mesh format: " + m_filename);
   getline(m_inFile, s);  // finish reading the line
   // Save version, type, datasize
-  m_mesh->setVersion(version);
-  m_mesh->setType(type);
-  m_mesh->setDatasize(datasize);
+  m_mesh.setVersion(version);
+  m_mesh.setType(type);
+  m_mesh.setDatasize(datasize);
 
   // Read in end of header: $EndMeshFormat
   getline(m_inFile, s);
@@ -203,8 +203,8 @@ GmshTxtMeshReader::readNodes()
   m_inFile >> num;
 
   // Get pointers to node ids and coordinates
-  int* nodeId = m_mesh->getNodeId();
-  real* coord = m_mesh->getCoord();
+  int* nodeId = m_mesh.getNodeId();
+  real* coord = m_mesh.getCoord();
 
   // Read in node ids and coordinates
   for (int i=0; i<num; ++i, ++m_nodeCnt) {
@@ -284,8 +284,8 @@ GmshTxtMeshReader::readElements()
   m_inFile >> num;
 
   // Get pointers to the element ids
-  int* linId = m_mesh->getLineId();
-  int* triId = m_mesh->getTriangleId();
+  int* linId = m_mesh.getLineId();
+  int* triId = m_mesh.getTriangleId();
 
   // Read in element ids, tags, and element connectivity (node list)
   for (int i=0; i<num; ++i) {
@@ -360,8 +360,8 @@ GmshTxtMeshReader::addElem(int type, std::vector<int>& nodes)
 //******************************************************************************
 {
   switch (type) {
-    case 1: m_mesh->addLine(nodes); break;
-    case 2: m_mesh->addTriangle(nodes); break;
+    case 1: m_mesh.addLine(nodes); break;
+    case 2: m_mesh.addTriangle(nodes); break;
     default:
       Throw(ExceptType::FATAL,
             "Unsupported element type in mesh file: " + m_filename);
@@ -378,8 +378,8 @@ GmshTxtMeshReader::addElemTags(int type, std::vector<int>& tags)
 //******************************************************************************
 {
   switch (type) {
-    case 1: m_mesh->addLineTags(tags); break;
-    case 2: m_mesh->addTriangleTags(tags); break;
+    case 1: m_mesh.addLineTags(tags); break;
+    case 2: m_mesh.addTriangleTags(tags); break;
     default:
       Throw(ExceptType::FATAL,
             "Unsupported element type in mesh file: " + m_filename);

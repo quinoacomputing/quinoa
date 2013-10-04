@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Fri Sep 27 15:08:32 2013
+  \date      Thu 03 Oct 2013 08:56:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -39,8 +39,8 @@ quinoa::SiloError(char* msg)
 using namespace quinoa;
 
 SiloWriter::SiloWriter(const std::string& filename,
-                       STLMesh& mesh,
-                       const int errLevel) :
+                       const STLMesh& mesh,
+                       int errLevel) :
   m_filename(filename),
   m_mesh(mesh),
   m_dbfile(nullptr)
