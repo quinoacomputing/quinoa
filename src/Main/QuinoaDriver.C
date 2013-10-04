@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:21:30 PM MDT
+  \date      Thu 03 Oct 2013 09:28:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -12,7 +12,6 @@
 #include <boost/functional/factory.hpp>
 
 #include <QuinoaDriver.h>
-#include <Timer.h>
 #include <Quinoa/InputDeck/Parser.h>
 #include <Quinoa/CmdLine/Parser.h>
 #include <AnalyticGeometry.h>
@@ -51,7 +50,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
   base.print.part("Problem setup");
   base.print.section("Title", base.control.get<ctr::title>());
 
-  //! Initialize factory
+  //! Initialize geometry and physics factories
   initFactory();
 
   // Instantiate geometry object
