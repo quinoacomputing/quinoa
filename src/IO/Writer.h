@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:20:47 PM MDT
+  \date      Thu 03 Oct 2013 08:29:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -13,8 +13,6 @@
 
 #include <string>
 #include <fstream>
-
-#include <QuinoaTypes.h>
 
 namespace quinoa {
 

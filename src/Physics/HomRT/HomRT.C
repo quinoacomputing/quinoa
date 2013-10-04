@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:47:33 2013
+  \date      Thu 03 Oct 2013 08:46:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -202,7 +202,7 @@ HomRT::outJpdf(const real t)
 
   // Output joint PDF
   PDFWriter jpdfFile(filename);
-  jpdfFile.writeGmsh(&jpdf);
+  jpdfFile.writeGmsh(jpdf);
 }
 
 void

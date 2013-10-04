@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:19:05 PM MDT
+  \date      Thu 03 Oct 2013 08:36:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -24,7 +24,7 @@ class GmshTxtMeshWriter : public Writer {
   public:
     //! Constructor
     explicit GmshTxtMeshWriter(const std::string& filename,
-                              GmshMesh* const mesh) :
+                               GmshMesh& mesh) :
       Writer(filename),
       m_mesh(mesh) {}
 
@@ -56,7 +56,7 @@ class GmshTxtMeshWriter : public Writer {
     //! Write "$PhysicalNames--$EndPhysicalNames" section
     void writePhysicalNames();
 
-    GmshMesh* const m_mesh;         //!< Mesh object pointer
+    GmshMesh& m_mesh;         //!< Mesh object
 };
 
 } // namespace quinoa

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:51:27 2013
+  \date      Thu 03 Oct 2013 09:00:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -11,7 +11,6 @@
 #ifndef STLTxtMeshReader_h
 #define STLTxtMeshReader_h
 
-#include <vector>
 #include <iostream>
 
 #include <Reader.h>
@@ -50,9 +49,9 @@ class STLTxtMeshReader : public Reader {
       const std::string correct;        //!< Keyword that should be read in
 
       //! Initializer constructor
-      explicit STLKeyword(const std::string corr) noexcept : correct(corr) {}
+      explicit STLKeyword(const std::string& corr) noexcept : correct(corr) {}
 
-      //! Operator >> for reading a keyword and error handling
+      //! Operator >> for reading a keyword and hande error
       friend std::ifstream& operator>> (std::ifstream& is, STLKeyword& kw) {
         is >> kw.read;
         ErrChk(kw.read == kw.correct, ExceptType::FATAL,
@@ -70,7 +69,7 @@ class STLTxtMeshReader : public Reader {
 
     const bool STORE = true;                 //!< Indicator to store facets
     const bool COUNT = false;                //!< Indicator to only count facets
-    STLMesh& m_mesh;                         //!< Mesh object pointer
+    STLMesh& m_mesh;                         //!< Mesh
 };
 
 } // namespace quinoa

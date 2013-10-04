@@ -4,7 +4,6 @@ project(Geometry CXX)
 
 add_library(Geometry
             Geometry.C
-            AnalyticGeometry.C
             DiscreteGeometry.C
 )
 
