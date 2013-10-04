@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu Oct  3 17:47:16 2013
+  \date      Thu 03 Oct 2013 08:08:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -120,10 +120,13 @@ static void echoRunEnv(const QuinoaPrint& print, int argc, char** argv)
 
   print.item("Command line arguments");
   print.raw('\'');
-  for (int i=1; i<argc-1; ++i) {
-    print.raw(std::string(argv[i]) + ' ');
+  if (argc>1) {
+    for (int i=1; i<argc-1; ++i) {
+      print.raw(std::string(argv[i]) + ' ');
+    }
+    print.raw(std::string(argv[argc-1]));
   }
-  print.raw(std::string(argv[argc-1]) + "'\n");
+  print.raw("'\n");
 }
 
 } // quinoa::
