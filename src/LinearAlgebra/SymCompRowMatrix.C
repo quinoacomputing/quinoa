@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Thu Oct  3 16:10:11 2013
+  \date      Thu 03 Oct 2013 09:22:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -18,24 +18,20 @@
 #include <omp.h>
 #endif
 
-#include <Macro.h>
-#include <SparseMatrix.h>
 #include <SymCompRowMatrix.h>
 
 using namespace quinoa;
 
-SymCompRowMatrix::SymCompRowMatrix(const std::string& name,
-                                   int size,
+SymCompRowMatrix::SymCompRowMatrix(int size,
                                    int dof,
                                    const int *psup1,
                                    const int *psup2) :
-  SparseMatrix(name, size, dof)
+  SparseMatrix(size, dof)
 //******************************************************************************
 //  Constructor
 //! \details Creates a size x size compressed row sparse matrix with dof degrees
 //!          of freedom, ie. the real size will be (size x dof) x (size x dof)
 //!          and symmetric, storing only the upper triangle.
-//! \param[in]  name         Name of the SparseMatrix instance
 //! \param[in]  size         Size of matrix
 //! \param[in]  dof          Number of degrees of freedom
 //! \param[in]  psup1,psup2  Linked lists storing points surrounding points,
@@ -262,7 +258,6 @@ SymCompRowMatrix::echoAsStored(std::ostream& ofs) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ofs << "name  = " << m_name << std::endl;
   ofs << "size  = " << m_size << std::endl;
   ofs << "rsize = " << m_rsize << std::endl;
   ofs << "dof   = " << m_dof << std::endl;

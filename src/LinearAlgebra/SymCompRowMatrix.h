@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:45:16 2013
+  \date      Thu 03 Oct 2013 09:22:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -13,6 +13,8 @@
 #ifndef SymCompRowMatrix_h
 #define SymCompRowMatrix_h
 
+#include <SparseMatrix.h>
+
 namespace quinoa {
 
 //! Symmetric compressed row sparse matrix
@@ -20,8 +22,7 @@ class SymCompRowMatrix : public SparseMatrix {
 
   public:
     //! Constructor
-    explicit SymCompRowMatrix(const std::string& name,
-                              int size,
+    explicit SymCompRowMatrix(int size,
                               int dof,
                               const int *psup1,
                               const int* psup2);
