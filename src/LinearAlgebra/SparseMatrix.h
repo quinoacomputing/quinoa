@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SparseMatrix.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:45:08 2013
+  \date      Thu 03 Oct 2013 09:20:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix declaration
   \details   Sparse matrix base class declaration
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef SparseMatrix_h
 #define SparseMatrix_h
-
-#include <string>
 
 #include <QuinoaTypes.h>
 
@@ -22,20 +20,16 @@ class SparseMatrix {
 
   protected:
     //! Constructor
-    explicit SparseMatrix(const std::string& name,
-                          int size,
-                          int dof) :
-      m_name(name),
+    explicit SparseMatrix(int size, int dof) :
       m_size(size),
       m_rsize(size*dof),
       m_dof(dof) {}
 
-    const std::string m_name;//!< Name of the sparse matrix instance
-    const int m_size;        //!< Size of matrix: (dof x size) x (dof x size)
-    const int m_rsize;       //!< Width of matrix: dof x size
-    const int m_dof;         //!< Number of degrees of freedom
+    const int m_size;          //!< Size of matrix: (dof x size) x (dof x size)
+    const int m_rsize;         //!< Width of matrix: dof x size
+    const int m_dof;           //!< Number of degrees of freedom
 
-    int m_nnz;               //!< Total number of nonzeros
+    int m_nnz;                 //!< Total number of nonzeros
 
   private:
     //! Don't permit copy constructor
