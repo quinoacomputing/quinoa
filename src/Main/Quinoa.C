@@ -2,17 +2,15 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:08:10 PM MDT
+  \date      Thu 03 Oct 2013 09:31:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
 */
 //******************************************************************************
 
-#include <iostream>
-
+#include <ctime>
 #include <unistd.h>
-#include <time.h>
 
 #include <QuinoaConfig.h>
 #include <Base.h>

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 04:50:33 PM MDT
+  \date      Thu 03 Oct 2013 09:23:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -10,10 +10,6 @@
 //******************************************************************************
 #ifndef Driver_h
 #define Driver_h
-
-#include <memory>
-
-#include <Timer.h>
 
 namespace quinoa {
 
