@@ -9,12 +9,12 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-# Set Quinoa version number: major.minor
-set(QUINOA_MAJOR_VER 0)
-set(QUINOA_MINOR_VER 1)
+# Set version number: major.minor
+set(MAJOR_VER 0)
+set(MINOR_VER 1)
 
-# Set Quinoa release number
-set(QUINOA_RELEASE "LA-CC-XX-XXX")
+# Set release number
+set(RELEASE "LA-CC-XX-XXX")
 
 # Optionally turn off MKL calls
 set(MKL_CALLS ON CACHE BOOL "Set to ON to call MKL functions")
@@ -29,7 +29,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
 # Set build type
-set(QUINOA_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Set default third-party libraries directory
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
@@ -50,18 +50,18 @@ if(OPENMP_FOUND)
 endif()
 
 # Set compiler
-set(QUINOA_MPI_COMPILER "${MPI_CXX_COMPILER}")
-set(QUINOA_COMPILER "${UNDERLYING_CXX_COMPILER}")
+set(MPI_COMPILER "${MPI_CXX_COMPILER}")
+set(COMPILER "${UNDERLYING_CXX_COMPILER}")
 
 # Grab current date to stick into the binary
 execute_process(
   COMMAND "date" #"+%m/%d/%Y"
-  OUTPUT_VARIABLE QUINOA_BUILD_DATE
+  OUTPUT_VARIABLE BUILD_DATE
 )
-string(REGEX REPLACE "[\r\n]" "" QUINOA_BUILD_DATE "${QUINOA_BUILD_DATE}")
+string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 set(QUINOA_EXECUTABLE "quinoa")
-set(QUINOA_RNGTEST_EXECUTABLE "rngtest")
+set(RNGTEST_EXECUTABLE "rngtest")
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -118,8 +118,8 @@ endif()
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
-  "${PROJECT_SOURCE_DIR}/Main/QuinoaConfig.h.in"
-  "${PROJECT_BINARY_DIR}/Base/QuinoaConfig.h"
+  "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
+  "${PROJECT_BINARY_DIR}/Base/Config.h"
 )
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###

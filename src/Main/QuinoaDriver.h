@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 09:25:37 PM MDT
+  \date      Fri 04 Oct 2013 07:49:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -16,6 +16,7 @@
 #include <Geometry.h>
 #include <Physics.h>
 
+//! Everything that contributes to the quina executable
 namespace quinoa {
 
 //! QuinoaDriver : Driver

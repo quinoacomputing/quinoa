@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:16:43 PM MDT
+  \date      Fri 04 Oct 2013 07:50:07 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -13,6 +13,7 @@
 
 #include <Driver.h>
 
+//! Everything that contributes to the rngtest executable
 namespace rngtest {
 
 void MKLErrChk(int vslerr);
