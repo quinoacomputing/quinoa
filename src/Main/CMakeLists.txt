@@ -9,6 +9,7 @@ add_definitions()
 INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
 
 add_executable(${QUINOA_EXECUTABLE}
+               Init.C
                QuinoaDriver.C
                Quinoa.C
 )
@@ -53,22 +54,22 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-add_executable(${QUINOA_RNGTEST_EXECUTABLE}
+add_executable(${RNGTEST_EXECUTABLE}
                RNGTestDriver.C
                RNGTest.C
 )
 
 if(MPI_COMPILE_FLAGS)
-  set_target_properties(${QUINOA_RNGTEST_EXECUTABLE} PROPERTIES
+  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
                         COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
 endif()
 
 if(MPI_LINK_FLAGS)
-  set_target_properties(${QUINOA_RNGTEST_EXECUTABLE} PROPERTIES
+  set_target_properties(${RNGTEST_EXECUTABLE} PROPERTIES
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
-target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
+target_link_libraries(${RNGTEST_EXECUTABLE}
                       Base
                       Random
                       RNGTestControl
@@ -81,7 +82,7 @@ target_link_libraries(${QUINOA_RNGTEST_EXECUTABLE}
                       ${INTEL_OMP_LIBRARY}
 )
 
-INSTALL(TARGETS ${QUINOA_RNGTEST_EXECUTABLE}
+INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development

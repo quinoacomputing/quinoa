@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:43:46 2013
+  \date      Sat 05 Oct 2013 05:03:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -26,13 +26,13 @@ struct Base {
   Timer& timer;
 
   //! Initializer constructor
-  Base(QuinoaPrint& prn,
-       Paradigm& par,
-       InputDeck& ctr,
-       Timer& tim) : print(prn),
-                     paradigm(par),
-                     control(ctr),
-                     timer(tim) {}
+  Base(QuinoaPrint& print,
+       Paradigm& paradigm,
+       InputDeck& control,
+       Timer& timer) : print(print),
+                       paradigm(paradigm),
+                       control(control),
+                       timer(timer) {}
 };
 
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:27:32 2013
+  \date      Fri 04 Oct 2013 08:51:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -12,6 +12,7 @@
 #define RNGTestInputDeck_h
 
 #include <Control.h>
+#include <Option.h>
 #include <RNGTest/InputDeck/Types.h>
 
 namespace rngtest {
@@ -26,7 +27,8 @@ class InputDeck :
 
   public:
     //! Constructor: set defaults
-    explicit InputDeck() = default;
+    InputDeck() {
+    }
 
 // //! Default bundle for RNGTest's control
 // const Bundle defaults(
@@ -48,6 +50,9 @@ class InputDeck :
     //! Don't permit move assigment
     InputDeck& operator=(InputDeck&&) = delete;
 };
+
+//! InputDeck defaults
+static const InputDeck RNGTestDefaults;
 
 } // namespace rngtest
 
