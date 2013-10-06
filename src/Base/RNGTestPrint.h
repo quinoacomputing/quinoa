@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:54:23 AM MDT
+  \date      Sun 06 Oct 2013 02:30:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -11,6 +11,7 @@
 #ifndef RNGTestPrint_h
 #define RNGTestPrint_h
 
+#include <Macro.h>
 #include <Print.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 
@@ -21,7 +22,9 @@ class RNGTestPrint : public quinoa::Print {
 
   public:
     //! Constructor
-    explicit RNGTestPrint(const InputDeck& control) : m_ctr(control) {}
+    explicit RNGTestPrint(const InputDeck& control) : m_ctr(control) {
+      IGNORE(m_ctr);
+    }
 
     //! Destructor
     ~RNGTestPrint() noexcept override = default;

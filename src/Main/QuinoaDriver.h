@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 07:49:46 AM MDT
+  \date      Sun 06 Oct 2013 03:34:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -42,7 +42,7 @@ class QuinoaDriver : public Driver {
     //! Don't permit move assignment
     QuinoaDriver& operator=(QuinoaDriver&&) = delete;
 
-    //! Initialize physics factory
+    //! Initialize geometry and physics factories
     void initFactory();
 
     Base& m_base;                           //!< Essentials

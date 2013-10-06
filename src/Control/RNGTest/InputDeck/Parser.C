@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 17:35:34 2013
+  \date      Sun 06 Oct 2013 03:00:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -14,8 +14,9 @@
 
 using namespace rngtest;
 
-InputDeckParser::InputDeckParser(quinoa::Base& base) :
-  FileParser(base, "blah")
+InputDeckParser::InputDeckParser(Base& base) :
+  FileParser("blah"),
+  m_base(base)
 //******************************************************************************
 //  Constructor
 //! \param[inout] base      Essentials

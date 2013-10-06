@@ -1,38 +1,38 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/CmdLine/Parser.h
+  \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:32:35 PM MDT
+  \date      Sun 06 Oct 2013 03:03:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Quinoa's command line parser
-  \details   Quinoa's command line parser
+  \brief     RNGTest's command line parser
+  \details   RNGTest's command line parser
 */
 //******************************************************************************
-#ifndef QuinoaCmdLineParser_h
-#define QuinoaCmdLineParser_h
+#ifndef RNGTestCmdLineParser_h
+#define RNGTestCmdLineParser_h
 
 #include <StringParser.h>
 
-namespace quinoa {
+namespace rngtest {
 
 //! CmdLineParser : StringParser
-class CmdLineParser : public StringParser{
+class CmdLineParser : public quinoa::StringParser{
 
   public:
     //! Constructor from std::string
     explicit CmdLineParser(const std::string& cmdline, Base& base) :
-      StringParser(cmdline),
+      quinoa::StringParser(cmdline),
       m_base(base) {}
 
     //! Constructor from argc, argv
     explicit CmdLineParser(int argc, char** argv, Base& base) :
-      StringParser(argc, argv),
+      quinoa::StringParser(argc, argv),
       m_base(base) {}
 
     //! Destructor
     ~CmdLineParser() noexcept override = default;
 
-    //! Parse quinoa control file
+    //! Parse rngtest control file
     void parse() override;
 
   private:
@@ -45,9 +45,9 @@ class CmdLineParser : public StringParser{
     //! Don't permit move assigment
     CmdLineParser& operator=(CmdLineParser&&) = delete;
 
-    const Base& m_base;                  //!< Essentials    
+    const Base& m_base;                  //!< Essentials
 };
 
-} // namespace quinoa
+} // rngtest::
 
-#endif // QuinoaCmdLineParser_h
+#endif // RNGTestCmdLineParser_h

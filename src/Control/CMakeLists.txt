@@ -19,7 +19,9 @@ project(RNGTestControl CXX)
 
 add_library(RNGTestControl
             FileParser.C
+            StringParser.C
             RNGTest/InputDeck/Parser.C
+            RNGTest/CmdLine/Parser.C
 )
 
 INSTALL(TARGETS RNGTestControl

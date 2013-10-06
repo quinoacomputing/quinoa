@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:24:43 2013
+  \date      Sun 06 Oct 2013 02:49:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -20,15 +20,13 @@ class Parser {
 
   protected:
     //! Constructor
-    explicit Parser(Base& base) : m_base(base) {}
+    explicit Parser() = default;
 
     //! Destructor
     virtual ~Parser() noexcept = default;
 
     //! Parse interface
     virtual void parse() = 0;
-
-    const Base& m_base;                  //!< Essentials
 
   private:
     //! Don't permit copy constructor

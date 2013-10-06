@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:51:41 AM MDT
+  \date      Sun 06 Oct 2013 03:28:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -13,6 +13,7 @@
 
 #include <Control.h>
 #include <Option.h>
+#include <Quinoa/Options/RNG.h>
 #include <RNGTest/InputDeck/Types.h>
 
 namespace rngtest {
@@ -22,20 +23,23 @@ namespace rngtest {
 class InputDeck :
   public quinoa::Control< // tag          type
                           ctr::title,     std::string,
-                          ctr::suite,     sel::BatteryType,
+                          ctr::selected,  ctr::selects,
+                          ctr::io,        ctr::ios,
                           ctr::generator, std::vector<quinoa::sel::RNGType> > {
 
   public:
     //! Constructor: set defaults
     InputDeck() {
+      using namespace ctr;
+      // Default title
+      set<title>("");
+      // Default selections
+      set<selected,battery>(sel::BatteryType::NO_BATTERY);
+      // Default I/O parameters
+      set<io,control>("");
+      // Default requested generators
+      set<generator>(std::vector<quinoa::sel::RNGType>());
     }
-
-// //! Default bundle for RNGTest's control
-// const Bundle defaults(
-//   "",                                  //!< Title
-//   sel::BatteryType::NO_BATTERY,     //!< RNG test suite
-//   std::vector<quinoa::sel::RNGType>()       //!< Random number generators
-// );
 
     //! Destructor
     ~InputDeck() noexcept override = default;

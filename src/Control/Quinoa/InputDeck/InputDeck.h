@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:13:06 2013
+  \date      Sun 06 Oct 2013 03:23:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -36,7 +36,7 @@ class InputDeck :
       using namespace ctr;
       // Default title
       set<title>("");
-      // Default models = no selections
+      // Default selections
       set<selected,geometry>(sel::GeometryType::NO_GEOMETRY);
       set<selected,physics>(sel::PhysicsType::NO_PHYSICS);
       set<selected,position>(sel::PositionType::NO_POSITION);

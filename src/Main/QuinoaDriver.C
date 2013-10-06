@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 09:28:20 PM MDT
+  \date      Sun 06 Oct 2013 03:34:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -76,7 +76,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
 void
 QuinoaDriver::initFactory()
 //******************************************************************************
-//  Initialize physics factory
+//  Initialize geometry and physics factories
 //! \author  J. Bakosi
 //******************************************************************************
 {

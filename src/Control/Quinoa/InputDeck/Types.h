@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:12:43 2013
+  \date      Sun 06 Oct 2013 03:20:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's input deck parsing
   \details   Types for Quinoa's input deck parsing
@@ -12,7 +12,6 @@
 #define QuinoaInputDeckTypes_h
 
 #include <Quinoa/InputDeck/Tags.h>
-
 #include <Quinoa/Options/Geometry.h>
 #include <Quinoa/Options/Physics.h>
 #include <Quinoa/Options/Position.h>
