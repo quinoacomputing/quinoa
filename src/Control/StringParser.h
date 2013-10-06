@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:24:51 2013
+  \date      Sun 06 Oct 2013 02:52:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -22,12 +22,10 @@ class StringParser : public Parser {
 
   protected:
     //! Constructor from std::string
-    explicit StringParser(const std::string& string, Base& base) :
-      Parser(base),
-      m_string(string) {}
+    explicit StringParser(const std::string& string) : m_string(string) {}
 
     //! Constructor from char**
-    explicit StringParser(int argc, char** argv, Base& base);
+    explicit StringParser(int argc, char** argv);
 
     //! Destructor
     ~StringParser() noexcept override = default;

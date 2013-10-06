@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 11:30:15 2013
+  \date      Sun 06 Oct 2013 02:55:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -22,7 +22,7 @@ class FileParser : public Parser {
 
   protected:
     //! Constructor
-    explicit FileParser(Base& base, const std::string& filename);
+    explicit FileParser(const std::string& filename);
 
     //! Destructor
     ~FileParser() noexcept override = default;

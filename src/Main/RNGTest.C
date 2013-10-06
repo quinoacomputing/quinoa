@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 05 Oct 2013 05:10:18 PM MDT
+  \date      Sun 06 Oct 2013 02:36:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -36,29 +36,29 @@ int main(int argc, char* argv[])
     // Install our own unexpected-handler
     std::set_unexpected(unexpectedHandler);
 
-//     // Create the essentials
-//     InputDeck control;                      //!< Control
-//     RNGTestPrint print(control);            //!< Pretty printer
-//     Paradigm paradigm(print);               //!< Parallel compute environment
-//     Timer timer;                            //!< Timer
-// 
-//     // Bundle up essentials
-//     Base base(print, paradigm, control, timer);
-// 
-//     // Echo program name
-//     init::echoHeader(print, "Quinoa: Random number generator test suite");
-// 
-//     // Echo environment
-//     print.part("Environment");
-//     init::echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
-//     paradigm.echo();                                //!< Parallel compute env
-//     init::echoRunEnv(print, argc, argv);            //!< Runtime environment
-// 
-//     // Create driver
-//     RNGTestDriver driver(argc, argv, base);
-// 
-//     // Execute
-//     driver.execute();
+    // Create the essentials
+    rngtest::InputDeck control;             //!< Control
+    RNGTestPrint print(control);            //!< Pretty printer
+    Paradigm paradigm(print);               //!< Parallel compute environment
+    Timer timer;                            //!< Timer
+
+    // Bundle up essentials
+    rngtest::Base base(print, paradigm, control, timer);
+
+    // Echo program name
+    init::echoHeader(print, "Quinoa: Random number generator test suite");
+
+    // Echo environment
+    print.part("Environment");
+    init::echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
+    paradigm.echo();                                //!< Parallel compute env
+    init::echoRunEnv(print, argc, argv);            //!< Runtime environment
+
+    // Create driver
+    RNGTestDriver driver(argc, argv, base);
+
+    // Execute
+    driver.execute();
 
   } catch (...) {
       error = processException();

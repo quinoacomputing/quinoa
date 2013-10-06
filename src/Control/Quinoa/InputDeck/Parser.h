@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:04:12 2013
+  \date      Sun 06 Oct 2013 02:49:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -40,6 +40,8 @@ class InputDeckParser : public FileParser {
 
     //! Make requested statistics unique
     void unique(std::vector<ctr::Product>& statistics);
+
+    const Base& m_base;                  //!< Essentials
 };
 
 } // namespace quinoa

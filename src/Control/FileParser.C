@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:04:17 2013
+  \date      Sun 06 Oct 2013 02:55:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -16,12 +16,9 @@
 
 using namespace quinoa;
 
-FileParser::FileParser(Base& base, const std::string& filename) :
-  Parser(base),
-  m_filename(filename)
+FileParser::FileParser(const std::string& filename) : m_filename(filename)
 //******************************************************************************
 //  Constructor
-//! \param[inout]  base          Essentials
 //! \param[in]     filename      File to parse
 //! \details    Exception safety: basic guarantee: if an exception is thrown,
 //!             the stream is in a valid state.

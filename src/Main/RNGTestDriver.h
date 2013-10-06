@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 07:50:07 AM MDT
+  \date      Sun 06 Oct 2013 03:31:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -12,6 +12,7 @@
 #define RNGTestDriver_h
 
 #include <Driver.h>
+#include <Base.h>
 
 //! Everything that contributes to the rngtest executable
 namespace rngtest {
@@ -23,7 +24,7 @@ class RNGTestDriver : public quinoa::Driver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver(int argc, char** argv);
+    explicit RNGTestDriver(int argc, char** argv, Base& base);
 
     //! Destructor
     ~RNGTestDriver() noexcept override = default;
@@ -40,6 +41,8 @@ class RNGTestDriver : public quinoa::Driver {
     RNGTestDriver(RNGTestDriver&&) = delete;
     //! Don't permit move assignment
     RNGTestDriver& operator=(RNGTestDriver&&) = delete;
+
+    Base& m_base;                           //!< Essentials
 };
 
 } // namespace rngtest

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:16:33 2013
+  \date      Sun 06 Oct 2013 02:54:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -13,12 +13,11 @@
 
 using namespace quinoa;
 
-StringParser::StringParser(int argc, char** argv, Base& base) : Parser(base)
+StringParser::StringParser(int argc, char** argv)
 //******************************************************************************
 //  Constructor
 //! \param[in]     argc          Number of C-style character arrays in argv
 //! \param[in]     argv          C-style character array of character arrays
-//! \param[inout]  base          Essentials
 //! \details    Exception safety: basic guarantee: if an exception is thrown,
 //!             the stream is in a valid state.
 //! \author  J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu Oct  3 17:32:26 2013
+  \date      Sun 06 Oct 2013 03:00:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -15,7 +15,8 @@
 using namespace quinoa;
 
 InputDeckParser::InputDeckParser(Base& base) :
-  FileParser(base, base.control.get<ctr::io, ctr::control>())
+  FileParser(base.control.get<ctr::io, ctr::control>()),
+  m_base(base)
 //******************************************************************************
 //  Constructor
 //! \param[inout] base      Essentials

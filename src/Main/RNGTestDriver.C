@@ -2,36 +2,40 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 14 Sep 2013 08:07:24 PM MDT
+  \date      Sun 06 Oct 2013 03:32:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
-#include <iostream>
-#include <sstream>
-
-#include <mkl_vsl.h>
-
-extern "C" {
-  #include <unif01.h>
-  #include <bbattery.h>
-}
-
-#include <Timer.h>
-#include <Exception.h>
+#include <Macro.h>
 #include <RNGTestDriver.h>
-#include <MKLTest.h>
+#include <RNGTest/InputDeck/Parser.h>
+#include <RNGTest/CmdLine/Parser.h>
 
-VSLStreamStatePtr stream;
-const int brng = VSL_BRNG_MCG59;
-const unsigned int seed = 0;
-const int method = VSL_RNG_METHOD_UNIFORM_STD;
-const int n = 1;
-const double a = 0.0;
-const double b = 1.0;
-double r;
+// #include <iostream>
+// #include <sstream>
+// 
+// #include <mkl_vsl.h>
+// 
+// extern "C" {
+//   #include <unif01.h>
+//   #include <bbattery.h>
+// }
+// 
+// #include <Timer.h>
+// #include <Exception.h>
+// #include <MKLTest.h>
+// 
+// VSLStreamStatePtr stream;
+// const int brng = VSL_BRNG_MCG59;
+// const unsigned int seed = 0;
+// const int method = VSL_RNG_METHOD_UNIFORM_STD;
+// const int n = 1;
+// const double a = 0.0;
+// const double b = 1.0;
+// double r;
 
 // void
 // MKLErrChk(int vslerr) 
@@ -100,15 +104,23 @@ double r;
 
 using namespace rngtest;
 
-RNGTestDriver::RNGTestDriver(int argc, char** argv)
+RNGTestDriver::RNGTestDriver(int argc, char** argv, Base& base) :
+  m_base(base)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
+//! \param[in] base      Essentials
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Instantiate command line parser
+  CmdLineParser cmdParser(argc, argv, base);
 
+  // Parse command line
+  cmdParser.parse();
+
+IGNORE(m_base);
 }
 
 void

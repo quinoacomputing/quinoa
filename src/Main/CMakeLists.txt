@@ -55,6 +55,7 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 )
 
 add_executable(${RNGTEST_EXECUTABLE}
+               Init.C
                RNGTestDriver.C
                RNGTest.C
 )
@@ -71,6 +72,7 @@ endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       Base
+                      Paradigm
                       Random
                       RNGTestControl
                       #${TESTU01_PROBDIST_LIBRARY}
