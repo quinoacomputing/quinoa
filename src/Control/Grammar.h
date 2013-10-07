@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:39:05 2013
+  \date      Mon Oct  7 14:13:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -65,6 +65,14 @@ namespace grm {
     static void apply(const std::string& value, Stack& stack) {
       handleError<key>(value);
       IGNORE(stack);    // suppress compiler warning: parameter never referenced
+    }
+  };
+
+  //! put value in state at position given by tags without conversion
+  template<class Stack, typename tag, typename... tags >
+  struct put : action_base< put<Stack,tag,tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      stack.template set<tag,tags...>(value);
     }
   };
 
