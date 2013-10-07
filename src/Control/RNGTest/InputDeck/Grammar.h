@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:31:16 2013
+  \date      Mon Oct  7 14:44:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -28,12 +28,12 @@ namespace grm {
   using namespace pegtl;
   using namespace tk::grm;
 
-  // State
+  // RNGTest's InputDeck State
 
   //! Everything is stored in Stack during parsing
   using Stack = ctr::InputDeck;
 
-  // Actions
+  // RNGTest's InputDeck actions
 
   //! convert and put option in state at position given by tags
   template< class OptionType, typename... tags >
@@ -51,7 +51,7 @@ namespace grm {
     }
   };
 
-  // Grammar
+  // RNGTest's InputDeck grammar
 
   //! rng: one of the random number generators
   struct rng :

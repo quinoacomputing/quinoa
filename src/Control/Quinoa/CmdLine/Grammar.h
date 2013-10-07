@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:31:51 2013
+  \date      Mon Oct  7 15:29:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -27,76 +27,38 @@ namespace cmd {
   using namespace pegtl;
   using namespace tk::grm;
 
-  // State
+  // Quinoa's CmdLine state
 
   //! Everything is stored in Stack during parsing
   using Stack = ctr::InputDeck;
 
-  // Actions
+  // Quinoa's CmdLine actions
 
-  //! convert and put value in state at position given by tags
-  template< typename... tags >
-  struct store : action_base< store<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.store<tags...>(value);
-    }
-  };
-
-  // Grammar
-
-  //! match verbose cmdline keyword
-  template< class keyword >
-  struct verbose :
-         seq< string<'-','-'>, typename keyword::pegtl_string, space > {};
-
-  //! match alias cmdline keyword
-  template< class keyword >
-  struct alias :
-         seq< one<'-'>,
-              typename keyword::pegtl_alias,
-              sor<space, unknown<Stack,Error::ALIAS> > > {};
-
-  //! read 'keyword' in either verbose or alias form
-  template< class keyword >
-  struct readkw :
-         sor< verbose<keyword>, alias<keyword> > {};
-
-  //! parse input padded by blank at left and space at right and if it matches
-  //! 'keywords', apply 'actions'
-  template< class keywords, typename... actions >
-  struct parse :
-         pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
-
-  //! process 'keyword' and call its 'insert' action if matches 'keywords'
-  template< class keyword, class insert, class keywords = any >
-  struct process :
-         ifmust< readkw<keyword>,
-                 parse< sor<keywords, apply<error<Stack,Error::MISSING>>>,
-                        insert> > {};
+  // Quinoa's CmdLine grammar
 
   //! control (i.e., input deck) file
   struct control :
-         process<kw::control, store<ctr::io,ctr::control>> {};
+         process_cmd<Stack, kw::control, Store<Stack,ctr::io,ctr::control>> {};
 
   //! input file
   struct input :
-         process<kw::input, store<ctr::io,ctr::input>> {};
+         process_cmd<Stack, kw::input, Store<Stack,ctr::io,ctr::input>> {};
 
   //! output file
   struct output :
-         process<kw::output, store<ctr::io,ctr::output>> {};
+         process_cmd<Stack, kw::output, Store<Stack,ctr::io,ctr::output>> {};
 
   //! pdf output file
   struct pdf :
-         process<kw::pdf, store<ctr::io,ctr::pdf>> {};
+         process_cmd<Stack, kw::pdf, Store<Stack,ctr::io,ctr::pdf>> {};
 
   //! glob output file
   struct glob :
-         process<kw::glob, store<ctr::io,ctr::glob>> {};
+         process_cmd<Stack, kw::glob, Store<Stack,ctr::io,ctr::glob>> {};
 
   //! stat output file
   struct stat :
-         process<kw::stat, store<ctr::io,ctr::stat>> {};
+         process_cmd<Stack, kw::stat, Store<Stack,ctr::io,ctr::stat>> {};
 
   //! command line keywords
   struct keywords :
