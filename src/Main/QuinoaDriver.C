@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:38:08 PM MDT
+  \date      Mon Oct  7 10:55:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -54,14 +54,14 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base) :
   initFactory();
 
   // Instantiate geometry object
-  sel::GeometryType g = m_base.control.get<ctr::selected, ctr::geometry>();
-  if (g != sel::GeometryType::NO_GEOMETRY) {
+  ctr::GeometryType g = m_base.control.get<ctr::selected, ctr::geometry>();
+  if (g != ctr::GeometryType::NO_GEOMETRY) {
     m_geometry = std::unique_ptr<Geometry>(m_geometryFactory[g]());
   }
 
   // Instantiate physics object
-  sel::PhysicsType p = m_base.control.get<ctr::selected, ctr::physics>();
-  if (p != sel::PhysicsType::NO_PHYSICS) {
+  ctr::PhysicsType p = m_base.control.get<ctr::selected, ctr::physics>();
+  if (p != ctr::PhysicsType::NO_PHYSICS) {
     m_physics = std::unique_ptr<Physics>(m_physicsFactory[p]());
   }
 
@@ -81,19 +81,19 @@ QuinoaDriver::initFactory()
 //******************************************************************************
 {
   // Register geometry classes
-  m_geometryFactory[sel::GeometryType::ANALYTIC] =
+  m_geometryFactory[ctr::GeometryType::ANALYTIC] =
     std::bind(boost::factory<AnalyticGeometry*>(), m_base);
-  m_geometryFactory[sel::GeometryType::DISCRETE] =
+  m_geometryFactory[ctr::GeometryType::DISCRETE] =
     std::bind(boost::factory<DiscreteGeometry*>(), m_base);
 
   // Register physics classes
-  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_MIX] =
+  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_MIX] =
     std::bind(boost::factory<HomMix*>(), m_base);
-  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_HYDRO] =
+  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_HYDRO] =
     std::bind(boost::factory<HomHydro*>(), m_base);
-  m_physicsFactory[sel::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
+  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
     std::bind(boost::factory<HomRT*>(), m_base);
-  m_physicsFactory[sel::PhysicsType::SPINSFLOW] =
+  m_physicsFactory[ctr::PhysicsType::SPINSFLOW] =
     std::bind(boost::factory<SPINSFlow*>(), m_base);
 }
 

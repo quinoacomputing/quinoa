@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 2.8.5)
 project(Random CXX)
 
 add_library(Random
-            Random.C
             MKL.C
             MKLRandom.C
             MKLRndStream.C

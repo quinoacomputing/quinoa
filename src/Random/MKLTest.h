@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:18:19 PM MDT
+  \date      Mon Oct  7 10:52:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -44,8 +44,8 @@ class MKLTest {
     //! Special error handler for MKL calls
     void MKLErrChk(int vslerr) const;
 
-    const quinoa::ctr::Option<quinoa::sel::RNG> m_rng;    //!< Available RNGs
-    const std::vector<quinoa::sel::RNGType> m_testrng;    //!< RNGs to test
+    const tk::Option<quinoa::ctr::RNG> m_rng;             //!< Available RNGs
+    const std::vector<quinoa::ctr::RNGType> m_testrng;    //!< RNGs to test
 
     std::vector<VSLStreamStatePtr> m_stream;              //!< RNG streams
 };

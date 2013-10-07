@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:29:21 PM MDT
+  \date      Mon Oct  7 08:26:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -14,7 +14,7 @@
 #include <string>
 #include <fstream>
 
-namespace quinoa {
+namespace tk {
 
 //! Writer base class
 class Writer {
@@ -41,6 +41,6 @@ class Writer {
     Writer& operator=(Writer&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Writer_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:51:55 2013
+  \date      Mon Oct  7 08:12:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -13,7 +13,7 @@
 
 #include <pegtl.hh>
 
-namespace quinoa {
+namespace tk {
 namespace kw {
 
 //! A keyword is a struct that collects the information that makes up a keyword.
@@ -57,6 +57,6 @@ struct undefined_info {
 };
 
 } // kw::
-} // quinoa::
+} // tk::
 
 #endif // Keyword_h

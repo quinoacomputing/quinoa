@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:13:49 PM MDT
+  \date      Mon Oct  7 10:17:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -11,7 +11,7 @@
 #ifndef Statistics_h
 #define Statistics_h
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Base.h>
 #include <Distribution.h>
 #include <Quinoa/InputDeck/Types.h>
@@ -25,7 +25,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics(const Base& base, const real* const particles);
+    explicit Statistics(const Base& base, const tk::real* const particles);
 
     //! Destructor
     virtual ~Statistics() = default;
@@ -40,10 +40,10 @@ class Statistics {
     int ncen() const noexcept { return m_ncen; }
 
     //! Ordinary moments accessor
-    const real* ordinary() const noexcept { return m_ordinary.get(); }
+    const tk::real* ordinary() const noexcept { return m_ordinary.get(); }
 
     //! Central moments accessor
-    const real* central() const noexcept { return m_central.get(); }
+    const tk::real* central() const noexcept { return m_central.get(); }
 
     //! Find out whether ordinary moment is to be plotted
     bool plotOrdinary(const int m) const;
@@ -85,13 +85,13 @@ class Statistics {
     const Base& m_base;                       //!< Essentials
     const uint64_t m_nthread;                 //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
-    const real* const m_particles;            //!< Particles
+    const tk::real* const m_particles;        //!< Particles
     const int m_nprop;                        //!< Number of particle properties
     const std::vector<ctr::Product> m_statistics;//!< Requested tatistics
 
     //! Instantaneous variable pointers for computing ordinary moments
-    std::vector<std::vector<const real*>> m_instOrd;
-    std::unique_ptr<real[]> m_ordinary;       //!< Ordinary moments
+    std::vector<std::vector<const tk::real*>> m_instOrd;
+    std::unique_ptr<tk::real[]> m_ordinary;   //!< Ordinary moments
     std::vector<bool> m_plotOrdinary;         //!< Whether to plot ord moments
     //! Ordinary moment field names
     std::vector<ctr::FieldName> m_ordFieldName;
@@ -99,14 +99,14 @@ class Statistics {
     int m_nord;                               //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
-    std::vector<std::vector<const real*>> m_instCen;
-    std::unique_ptr<real[]> m_central;        //!< Central moments
+    std::vector<std::vector<const tk::real*>> m_instCen;
+    std::unique_ptr<tk::real[]> m_central;    //!< Central moments
     //! Ordinary moments about which to compute central moments
-    std::vector<std::vector<const real*>> m_center;
+    std::vector<std::vector<const tk::real*>> m_center;
     std::vector<std::string> m_nameCentral;   //!< Central moment names
     int m_ncen;                               //!< Number of central moments
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Statistics_h

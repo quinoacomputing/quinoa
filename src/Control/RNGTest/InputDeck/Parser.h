@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:59:27 PM MDT
+  \date      Mon Oct  7 08:20:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -16,7 +16,7 @@
 namespace rngtest {
 
 //! InputDeckParser : FileParser
-class InputDeckParser : public quinoa::FileParser {
+class InputDeckParser : public tk::FileParser {
 
   public:
     //! Constructor

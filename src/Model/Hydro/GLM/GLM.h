@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GLM/GLM.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:46:18 2013
+  \date      Mon Oct  7 10:32:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -20,7 +20,7 @@ class GeneralizedLangevin : public Hydro {
 
   public:
     //! Constructor
-    explicit GeneralizedLangevin(const Base& base, real* const particles) :
+    explicit GeneralizedLangevin(const Base& base, tk::real* const particles) :
       Hydro(base, particles) {
     }
 
@@ -31,7 +31,7 @@ class GeneralizedLangevin : public Hydro {
     void init() override;
 
     //! Advance particles
-    void advance(int p, int tid, real dt) override;
+    void advance(int p, int tid, tk::real dt) override;
 
   private:
     //! Don't permit copy constructor
@@ -44,6 +44,6 @@ class GeneralizedLangevin : public Hydro {
     GeneralizedLangevin& operator=(GeneralizedLangevin&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // GLM_h

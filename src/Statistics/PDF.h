@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:16:43 PM MDT
+  \date      Mon Oct  7 10:09:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -14,22 +14,22 @@
 #include <cmath>
 #include <unordered_map>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Distribution.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Univariate PDF estimator
 class PDF : public Distribution {
 
     //! Univariate PDF as unordered_map: key: bin id,
     //!                                  mapped value: sample counter
-    using pdf = std::unordered_map<int,real>;
+    using pdf = std::unordered_map<int,tk::real>;
 
   public:
     //! Constructor: Initialize univariate PDF container
     //! \param[in]   binsize    Sample space bin size
-    explicit PDF(const real& binsize) : m_binsize(binsize), m_pdf() {}
+    explicit PDF(const tk::real& binsize) : m_binsize(binsize), m_pdf() {}
 
     //! Destructor: Clear univariate PDF container
     ~PDF() noexcept override { m_pdf.clear(); }
@@ -40,7 +40,7 @@ class PDF : public Distribution {
 
     //! Insert new sample into univariate PDF
     //! \param[in]   sample    Value to insert
-    void insert(const real& sample) {
+    void insert(const tk::real& sample) {
       ++m_nsample;                  // Increase number of samples in joint PDF
       ++m_pdf[floor(sample/m_binsize+0.5)];         // Add sample to joint PDF
     }
@@ -51,7 +51,7 @@ class PDF : public Distribution {
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
-    const real& getBinsize() const noexcept { return m_binsize; }
+    const tk::real& getBinsize() const noexcept { return m_binsize; }
 
   private:
     //! Don't permit copy constructor
@@ -63,10 +63,10 @@ class PDF : public Distribution {
     //! Don't permit move assigment
     PDF& operator=(PDF&&) = delete;
 
-    const real m_binsize;   //!< Sample space bin size
-    pdf m_pdf;              //!< Probability density function
+    const tk::real m_binsize;   //!< Sample space bin size
+    pdf m_pdf;                  //!< Probability density function
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // PDF_h

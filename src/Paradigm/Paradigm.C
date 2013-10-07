@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Wed 11 Sep 2013 10:22:02 PM MDT
+  \date      Mon Oct  7 08:37:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -13,7 +13,7 @@
 
 #include <Paradigm.h>
 
-using namespace quinoa;
+using namespace tk;
 
 void
 Paradigm::echo() const

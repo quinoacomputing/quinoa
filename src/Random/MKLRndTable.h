@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndTable.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:51:51 2013
+  \date      Mon Oct  7 10:23:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property
@@ -14,10 +14,10 @@
 
 #include <memory>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <MKL.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Probability distributions for sampling into tables
 enum class RndDist : uint8_t { UNIFORM=0,        //!< Uniform
@@ -26,19 +26,19 @@ enum class RndDist : uint8_t { UNIFORM=0,        //!< Uniform
 };
 
 //! Constants for sampling the uniform distribution in tables
-const real UNIFORM_LEFT_BOUND = 0.0;
-const real UNIFORM_RIGHT_BOUND = 1.0;
+const tk::real UNIFORM_LEFT_BOUND = 0.0;
+const tk::real UNIFORM_RIGHT_BOUND = 1.0;
 
 //! Constants for sampling the Gaussian distribution in tables
-const real GAUSSIAN_MEAN = 0.0;
-const real GAUSSIAN_STD = 1.0;
+const tk::real GAUSSIAN_MEAN = 0.0;
+const tk::real GAUSSIAN_STD = 1.0;
 
 //! Constants for sampling the gamma distribution in tables
-const real GAMMA_MEAN = 1.0;
-const real GAMMA_VAR = 0.25;
-const real GAMMA_SHAPE = GAMMA_MEAN * GAMMA_MEAN / GAMMA_VAR;
-const real GAMMA_DISPLACEMENT = 0.0;
-const real GAMMA_SCALE = GAMMA_VAR / GAMMA_MEAN;
+const tk::real GAMMA_MEAN = 1.0;
+const tk::real GAMMA_VAR = 0.25;
+const tk::real GAMMA_SHAPE = GAMMA_MEAN * GAMMA_MEAN / GAMMA_VAR;
+const tk::real GAMMA_DISPLACEMENT = 0.0;
+const tk::real GAMMA_SCALE = GAMMA_VAR / GAMMA_MEAN;
 
 //! MKL-based random number generator into tables using block-splitting
 class MKLRndTable : public MKL {
@@ -60,7 +60,7 @@ class MKLRndTable : public MKL {
     void generate() const;
 
     //! Constant accessor to random number table
-    const real* getRnd() const noexcept { return m_rnd.get(); }
+    const tk::real* getRnd() const noexcept { return m_rnd.get(); }
 
   private:
     //! Don't permit copy constructor
@@ -83,9 +83,9 @@ class MKLRndTable : public MKL {
 
     const long long int m_remainder; //!< Leftover
     std::unique_ptr<VSLStreamStatePtr[]> m_stream; //!< Thread-streams
-    std::unique_ptr<real[]> m_rnd;   //!< Random numbers
+    std::unique_ptr<tk::real[]> m_rnd;   //!< Random numbers
 };
 
-} // namespace quinoa
+} // namespace tk
 
 #endif // MKLRndTable_h

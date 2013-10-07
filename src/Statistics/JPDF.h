@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:15:30 PM MDT
+  \date      Mon Oct  7 10:10:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -16,10 +16,10 @@
 #include <map>
 #include <algorithm>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Distribution.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Joint PDF estimator
 class JPDF : public Distribution {
@@ -40,14 +40,14 @@ class JPDF : public Distribution {
     //! Joint PDF as unordered_map: key: bin ids,
     //                              mapped value: sample counter,
     //                              hasher: XORed hash of all bin ids
-    using pdf = std::unordered_map<key_type, real, key_hash>;
+    using pdf = std::unordered_map<key_type, tk::real, key_hash>;
     //! Ordered counterpart
-    using ordered_pdf = std::map<key_type, real, key_hash>;
+    using ordered_pdf = std::map<key_type, tk::real, key_hash>;
 
     //! Constructor: Initialize joint PDF container
     //! \param[in]   dim        Dimension of sample space
     //! \param[in]   binsize    Sample space bin size
-    explicit JPDF(const int dim, const real binsize) :
+    explicit JPDF(const int dim, const tk::real binsize) :
       m_binsize(binsize),
       m_key(dim),
       m_pdf() {}
@@ -60,7 +60,7 @@ class JPDF : public Distribution {
     const int& getNsample() const noexcept override { return m_nsample; }
 
     //! Insert new sample into joint PDF
-    void insert(const std::vector<real>& sample);
+    void insert(const std::vector<tk::real>& sample);
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
@@ -68,7 +68,7 @@ class JPDF : public Distribution {
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
-    const real& getBinsize() const noexcept { return m_binsize; }
+    const tk::real& getBinsize() const noexcept { return m_binsize; }
 
   private:
     //! Don't permit copy constructor
@@ -80,11 +80,11 @@ class JPDF : public Distribution {
     //! Don't permit move assigment
     JPDF& operator=(JPDF&&) = delete;
 
-    const real m_binsize;   //!< Sample space bin size
-    key_type m_key;         //!< Temporary key for finding the sample space bin
-    pdf m_pdf;              //!< Probability density function
+    const tk::real m_binsize;//!< Sample space bin size
+    key_type m_key;          //!< Temporary key for finding the sample space bin
+    pdf m_pdf;               //!< Probability density function
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // JPDF_h

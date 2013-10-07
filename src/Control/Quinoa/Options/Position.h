@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:40:53 2013
+  \date      Mon Oct  7 09:17:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -17,7 +17,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Position model types
 enum class PositionType : uint8_t { NO_POSITION=0,
@@ -25,7 +25,7 @@ enum class PositionType : uint8_t { NO_POSITION=0,
                                     VISCOUS };
 
 //! Class with base templated on the above enum class with associations
-class Position : public Toggle<PositionType> {
+class Position : public tk::Toggle<PositionType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -61,7 +61,7 @@ class Position : public Toggle<PositionType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa:::
 
 #endif // QuinoaPositionOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:36:30 PM MDT
+  \date      Mon Oct  7 08:32:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -16,12 +16,7 @@
 #include <Exception.h>
 #include <Config.h>
 
-//! Common initialization routines
-namespace init {
-
-using namespace quinoa;
-
-std::string workdir()
+std::string tk::workdir()
 //******************************************************************************
 //  Wrapper for POSIX API's getcwd() from unistd.h
 //! \author  J. Bakosi
@@ -36,7 +31,7 @@ std::string workdir()
   }
 }
 
-std::string curtime()
+std::string tk::curtime()
 //******************************************************************************
 //  Wrapper for the standard C library's gettimeofday() from
 //! \author  J. Bakosi
@@ -66,7 +61,7 @@ std::string curtime()
  return str;
 }
 
-void echoHeader(const Print& print, const std::string& title)
+void tk::echoHeader(const Print& print, const std::string& title)
 //******************************************************************************
 //  Echo program title
 //! \author  J. Bakosi
@@ -75,7 +70,7 @@ void echoHeader(const Print& print, const std::string& title)
   print.header(title);
 }
 
-void echoBuildEnv(const Print& print, const std::string& executable)
+void tk::echoBuildEnv(const Print& print, const std::string& executable)
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/Config.h filled by
@@ -101,7 +96,7 @@ void echoBuildEnv(const Print& print, const std::string& executable)
   print.item("Build date", BUILD_DATE);
 }
 
-void echoRunEnv(const Print& print, int argc, char** argv)
+void tk::echoRunEnv(const Print& print, int argc, char** argv)
 //******************************************************************************
 //  Echo runtime environment
 //! \author  J. Bakosi
@@ -122,5 +117,3 @@ void echoRunEnv(const Print& print, int argc, char** argv)
   }
   print.raw("'\n");
 }
-
-} // init::

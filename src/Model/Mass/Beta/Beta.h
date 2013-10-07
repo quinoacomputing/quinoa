@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:35:19 PM MDT
+  \date      Mon Oct  7 10:30:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -24,7 +24,7 @@ class Beta : public Mass {
 
   public:
     //! Constructor
-    explicit Beta(const Base& base, real* const particles) :
+    explicit Beta(const Base& base, tk::real* const particles) :
       Mass(base, particles),
       m_At(base.control.get<ctr::param, ctr::beta, ctr::atwood>()) {
       // ErrChk on m_At
@@ -37,7 +37,7 @@ class Beta : public Mass {
     void init() override;
 
     //! Advance particles
-    void advance(int p, int tid, real dt) override;
+    void advance(int p, int tid, tk::real dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);
@@ -52,9 +52,9 @@ class Beta : public Mass {
     //! Don't permit move assigment
     Beta& operator=(Beta&&) = delete;
 
-    const real m_At;            //!< Atwood-number
+    const tk::real m_At;            //!< Atwood-number
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Beta_h

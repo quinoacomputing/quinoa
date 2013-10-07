@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:49:38 PM MDT
+  \date      Mon Oct  7 09:20:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -16,7 +16,7 @@
 namespace quinoa {
 
 //! InputDeckParser : FileParser
-class InputDeckParser : public FileParser {
+class InputDeckParser : public tk::FileParser {
 
   public:
     //! Constructor

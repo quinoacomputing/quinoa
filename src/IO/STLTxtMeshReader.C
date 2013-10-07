@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 09:01:50 PM MDT
+  \date      Mon Oct  7 10:04:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -35,7 +35,7 @@ STLTxtMeshReader::read()
 {
   // Count up number of vertices in STL mesh
   size_t nnodes = readFacets(COUNT);
-  Assert(nnodes % 3 == 0, ExceptType::FATAL,
+  Assert(nnodes % 3 == 0, tk::ExceptType::FATAL,
          "Number of nodes in STL file must be divisible by 3");
 
   // Allocate memory to store coordinates and face list
@@ -47,9 +47,9 @@ STLTxtMeshReader::read()
 
 size_t
 STLTxtMeshReader::readFacets(const bool store,
-                             real* const x,
-                             real* const y,
-                             real* const z)
+                             tk::real* const x,
+                             tk::real* const y,
+                             tk::real* const z)
 //******************************************************************************
 //  Read ASCII STL mesh
 //  \param[in]  store  Whether to store the facets or not (i.e., only count)
@@ -77,7 +77,7 @@ STLTxtMeshReader::readFacets(const bool store,
     bool newfacet = true;
     while (newfacet) {
       // Coordinates of normal, triangle vertex A, B, and C
-      real nx, ny, nz, Ax, Ay, Az, Bx, By, Bz, Cx, Cy, Cz;
+      tk::real nx, ny, nz, Ax, Ay, Az, Bx, By, Bz, Cx, Cy, Cz;
 
       // Read in normal (and throw it away as it is redundant)
       m_inFile >> facet >> normal >> nx >> ny >> nz;
@@ -121,7 +121,7 @@ STLTxtMeshReader::readFacets(const bool store,
         m_inFile >> kw;              // try to read on
         if (!m_inFile.eof()) m_inFile.seekg(back);
       } else {
-        Throw(ExceptType::FATAL,
+        Throw(tk::ExceptType::FATAL,
               "Corruption in ASCII STL file while parsing keyword '" + kw +
               "': keyword 'endfacet' must be followed by either 'facet' or "
               "'endsolid'");

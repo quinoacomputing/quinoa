@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:25:18 PM MDT
+  \date      Mon Oct  7 09:17:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's input deck parsing
   \details   Types for RNGTest's input deck parsing
@@ -19,12 +19,12 @@ namespace rngtest {
 namespace ctr {
 
 //! Storage of selected options
-using selects = quinoa::tuple::tagged_tuple<
+using selects = tk::tuple::tagged_tuple<
   battery,   sel::BatteryType     //!< Selected battery
 >;
 
 //! IO parameters storage
-using ios = quinoa::tuple::tagged_tuple<
+using ios = tk::tuple::tagged_tuple<
   control,     std::string       //!< Control filename
 >;
 

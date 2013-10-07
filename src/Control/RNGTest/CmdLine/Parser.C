@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:30:19 PM MDT
+  \date      Mon Oct  7 08:18:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -31,7 +31,7 @@ CmdLineParser::parse()
 
   // Make sure mandatory arguments are set
   ErrChk(!(m_base.control.get<ctr::io, ctr::control>().empty()),
-         quinoa::ExceptType::FATAL,
+         tk::ExceptType::FATAL,
          "Mandatory control file not specified. "
          "Use '--control <filename>' or '-c <filename>'.");
 }

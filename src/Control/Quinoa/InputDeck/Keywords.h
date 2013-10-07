@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:47:57 2013
+  \date      Mon Oct  7 11:24:00 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -26,6 +26,7 @@ namespace quinoa {
 namespace kw {
 
 using namespace pegtl::ascii;
+using namespace tk::kw;
 
 // Include base keywords recognized by all input deck parsers
 #include <BaseKeywords.h>

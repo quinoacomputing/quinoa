@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:25:01 2013
+  \date      Mon Oct  7 10:23:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -13,9 +13,9 @@
 
 #include <mkl_vsl.h>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
-namespace quinoa {
+namespace tk {
 
 //! MKL-call wrappers with error handling
 class MKL {
@@ -31,36 +31,36 @@ class MKL {
     void uniform(const int& method,
                  const VSLStreamStatePtr& stream,
                  const int& n,
-                 real* r,
-                 const real& a,
-                 const real& b) const;
+                 tk::real* r,
+                 const tk::real& a,
+                 const tk::real& b) const;
 
     //! Call MKL's vdRngGaussian() and handle error
     void gaussian(const int& method,
                   const VSLStreamStatePtr& stream,
                   const int& n,
-                  real* r,
-                  const real& a,
-                  const real& b) const;
+                  tk::real* r,
+                  const tk::real& a,
+                  const tk::real& b) const;
 
     //! Call MKL's vdRngGamma() and handle error
     void gamma(const int& method,
                const VSLStreamStatePtr& stream,
                const int& n,
-               real* r,
-               const real& alpha,
-               const real& a,
-               const real& beta) const;
+               tk::real* r,
+               const tk::real& alpha,
+               const tk::real& a,
+               const tk::real& beta) const;
 
     //! Call MKL's vdRngBeta() and handle error
     void beta(const int& method,
               const VSLStreamStatePtr& stream,
               const int& n,
-              real* r,
-              const real& alpha,
-              const real& beta,
-              const real& disp,
-              const real& scale) const;
+              tk::real* r,
+              const tk::real& alpha,
+              const tk::real& beta,
+              const tk::real& disp,
+              const tk::real& scale) const;
 
   protected:
     //! Call MKL's vslNewStream() and handle error
@@ -95,6 +95,6 @@ class MKL {
     void MKLErrChk(int vslerr) const;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // MKL_h

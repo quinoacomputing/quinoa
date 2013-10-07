@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:49:35 2013
+  \date      Mon Oct  7 10:20:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -28,7 +28,7 @@ GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
   m_nnodes = nnodes;
 
   // Allocate new memory entry to store the coordinates
-  m_coord = std::unique_ptr<real[]>(new real [3*nnodes]);
+  m_coord = std::unique_ptr<tk::real[]>(new tk::real [3*nnodes]);
 
   // Allocate new memory entry to store the node Ids
   m_nodeId = std::unique_ptr<int[]>(new int [nnodes]);
@@ -58,10 +58,10 @@ GmshMesh::reserveElem(const int nlines, const int ntriangles) noexcept
     m_tritag.reserve(ntriangles);
 
   } catch (std::exception&) {
-      Throw(ExceptType::FATAL, "Cannot allocate memory for mesh");
+      Throw(tk::ExceptType::FATAL, "Cannot allocate memory for mesh");
     }
     catch (...) {
-      Throw(ExceptType::UNCAUGHT,
+      Throw(tk::ExceptType::UNCAUGHT,
             "non-standard exception in GmshMesh::reserveElem()");
     }
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:49:40 PM MDT
+  \date      Mon Oct  7 08:14:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -13,7 +13,7 @@
 
 #include <Base.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Parser base
 class Parser {
@@ -39,6 +39,6 @@ class Parser {
     Parser& operator=(Parser&&) = delete;
 };
 
-} // namespace quinoa
+} // namespace tk
 
 #endif // Parser_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:48:52 PM MDT
+  \date      Mon Oct  7 10:14:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -15,7 +15,7 @@
 using namespace quinoa;
 
 void
-PDFWriter::write(const PDF& pdf)
+PDFWriter::write(const tk::PDF& pdf)
 //******************************************************************************
 //  Write out standardized PDF to file
 //! \param[in]  pdf  Univariate PDF
@@ -23,15 +23,15 @@ PDFWriter::write(const PDF& pdf)
 //******************************************************************************
 {
   auto f = pdf.getMap();
-  const real binsize = pdf.getBinsize();
-  const real sp = pdf.getNsample()*binsize;
+  const tk::real binsize = pdf.getBinsize();
+  const tk::real sp = pdf.getNsample()*binsize;
   for (auto& p : *f) {
     m_outFile << p.first*binsize << "\t" << p.second/sp << std::endl;
   }
 }
 
 void
-PDFWriter::writeTxt(const JPDF& jpdf)
+PDFWriter::writeTxt(const tk::JPDF& jpdf)
 //******************************************************************************
 //  Write out standardized joint PDF to text file (only for 2D)
 //! \param[in]  jpdf  Joint PDF
@@ -39,8 +39,8 @@ PDFWriter::writeTxt(const JPDF& jpdf)
 //******************************************************************************
 {
   auto f = jpdf.getMap();
-  real binsize = jpdf.getBinsize();
-  const real sp = jpdf.getNsample()*binsize*binsize;
+  tk::real binsize = jpdf.getBinsize();
+  const tk::real sp = jpdf.getNsample()*binsize*binsize;
   for (auto& p : *f) {
     m_outFile << p.first[0]*binsize << " " << p.first[1]*binsize
               << " " << p.second/sp << std::endl;
@@ -48,7 +48,7 @@ PDFWriter::writeTxt(const JPDF& jpdf)
 }
 
 void
-PDFWriter::writeGmsh(const JPDF& jpdf)
+PDFWriter::writeGmsh(const tk::JPDF& jpdf)
 //******************************************************************************
 //  Write out standardized joint PDF to Gmsh (text) format (only for 2D)
 //! \param[in]  jpdf  Joint PDF
@@ -57,18 +57,18 @@ PDFWriter::writeGmsh(const JPDF& jpdf)
 {
   // Output mesh header: mesh version, file type, data size
   m_outFile << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
-  ErrChk(!m_outFile.bad(), ExceptType::FATAL,
+  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 
   auto f = jpdf.getMap();
-  real binsize = jpdf.getBinsize();
-  const real sp = jpdf.getNsample()*binsize*binsize;
+  tk::real binsize = jpdf.getBinsize();
+  const tk::real sp = jpdf.getNsample()*binsize*binsize;
 
   // Find sample space extents
-  real xmin = std::numeric_limits<real>::max();
-  real xmax = std::numeric_limits<real>::min();
-  real ymin = std::numeric_limits<real>::max();
-  real ymax = std::numeric_limits<real>::min();
+  tk::real xmin = std::numeric_limits<tk::real>::max();
+  tk::real xmax = std::numeric_limits<tk::real>::min();
+  tk::real ymin = std::numeric_limits<tk::real>::max();
+  tk::real ymax = std::numeric_limits<tk::real>::min();
   for (auto& p : *f) {
     if (binsize*p.first[0] < xmin) xmin = binsize*p.first[0];
     if (binsize*p.first[0] > xmax) xmax = binsize*p.first[0];
@@ -82,9 +82,9 @@ PDFWriter::writeGmsh(const JPDF& jpdf)
   m_outFile << "$Nodes\n" << nbix*nbiy << std::endl;
   int k=0;
   for (int i=0; i<nbix; i++ ) {
-    real x = xmin + i*binsize;
+    tk::real x = xmin + i*binsize;
     for (int j=0; j<nbiy; j++ ) {
-      real y = ymin + j*binsize;
+      tk::real y = ymin + j*binsize;
       m_outFile << k++ << " " << x << " " << y << " 0\n";
     }
   }
@@ -111,6 +111,6 @@ PDFWriter::writeGmsh(const JPDF& jpdf)
   }
 
   m_outFile << "$NodetData\n";
-  ErrChk(!m_outFile.bad(), ExceptType::FATAL,
+  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 }

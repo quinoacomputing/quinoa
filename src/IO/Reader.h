@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:49:49 2013
+  \date      Mon Oct  7 08:25:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -13,7 +13,7 @@
 
 #include <fstream>
 
-namespace quinoa {
+namespace tk {
 
 //! Reader base
 class Reader {
@@ -43,6 +43,6 @@ class Reader {
     Reader& operator=(Reader&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Reader_h

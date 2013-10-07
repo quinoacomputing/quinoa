@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:29:37 PM MDT
+  \date      Mon Oct  7 11:41:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -50,15 +50,15 @@ namespace cmd {
       const auto& msg = err_msg.find(key);
       if (msg != err_msg.end()) {
         if (!value.empty()) {
-          Throw(quinoa::ExceptType::FATAL,
+          Throw(tk::ExceptType::FATAL,
                 "Error while parsing '" + value + "' in the command line. " +
                 msg->second + ".");
         } else {
-          Throw(quinoa::ExceptType::FATAL,
+          Throw(tk::ExceptType::FATAL,
                 "Error while parsing the command line. " + msg->second + ".");
         }
       } else {
-        Throw(quinoa::ExceptType::FATAL, "Unknown command line parser error.");
+        Throw(tk::ExceptType::FATAL, "Unknown command line parser error.");
       }
       IGNORE(stack);    // suppress compiler warning: parameter never referenced
     }
@@ -98,7 +98,7 @@ namespace cmd {
 
   //! read 'keyword' in either verbose or alias form
   template< class keyword >
-  struct read :
+  struct readkw :
          sor< verbose<keyword>, alias<keyword> > {};
 
   //! parse input padded by blank at left and space at right and if it matches
@@ -110,7 +110,7 @@ namespace cmd {
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = any >
   struct process :
-         ifmust< read<keyword>,
+         ifmust< readkw<keyword>,
                  parse< sor<keywords, apply<error<Error::MISSING>>>,
                         insert> > {};
 

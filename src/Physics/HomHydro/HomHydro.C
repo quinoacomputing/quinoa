@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:47:40 2013
+  \date      Mon Oct  7 10:40:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -30,7 +30,7 @@ HomHydro::HomHydro(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(hydro(), ExceptType::FATAL, "No hydrodynamics model specified");
+  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
 }
 
 void
@@ -41,7 +41,7 @@ HomHydro::solve()
 //******************************************************************************
 {
   uint64_t it = 0;
-  real t = 0.0;
+  tk::real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
   bool wroteStat = false;
@@ -62,7 +62,8 @@ HomHydro::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() &&
+         it < nstep) {
 
     // Advance particles
     advance(dt);
@@ -93,7 +94,7 @@ HomHydro::solve()
 }
 
 void
-HomHydro::advance(real dt)
+HomHydro::advance(tk::real dt)
 //******************************************************************************
 //  Advance particles
 //! \author  J. Bakosi
@@ -139,8 +140,8 @@ HomHydro::reportHeader()
 void
 HomHydro::report(const uint64_t it,
                  const uint64_t nstep,
-                 const real t,
-                 const real dt,
+                 const tk::real t,
+                 const tk::real dt,
                  const bool wroteJpdf,
                  const bool wroteGlob,
                  const bool wroteStat)
@@ -156,7 +157,7 @@ HomHydro::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Watch ete, eta;       // estimated time elapsed and to accomplishment
+  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
@@ -177,7 +178,7 @@ HomHydro::report(const uint64_t it,
 }
 
 void
-HomHydro::outJpdf(const real t)
+HomHydro::outJpdf(const tk::real t)
 //******************************************************************************
 //  Output joint PDF
 //! \param[in]  t    Time stamp

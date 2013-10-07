@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Mon Sep 23 09:08:39 2013
+  \date      Mon Oct  7 08:07:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -11,15 +11,15 @@
 
 #include <Handler.h>
 
-namespace quinoa {
+namespace tk {
 
 ErrCode processException() noexcept
 //******************************************************************************
 // Process an exception
 //! \details This function can be used to process an exception. The following
-//! cases are handled: (1) quinoa::Exception, (2) std::exception converted to
-//! quinoa::Exception with file,func,line information, (3) uncaught exceptions
-//! converted to quinoa::Exception without file,func,line information.
+//! cases are handled: (1) tk::Exception, (2) std::exception converted to
+//! tk::Exception with file,func,line information, (3) uncaught exceptions
+//! converted to tk::Exception without file,func,line information.
 //! Exception safety: no-throw guarantee: this function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
@@ -107,4 +107,4 @@ void unexpectedHandler () noexcept
     }
 }
 
-} // quinoa::
+} // tk::

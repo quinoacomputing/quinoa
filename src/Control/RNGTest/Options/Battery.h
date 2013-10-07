@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:39:31 2013
+  \date      Mon Oct  7 09:15:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -26,13 +26,13 @@ enum class BatteryType : uint8_t { NO_BATTERY=0,
                                    BIGCRUSH };
 
 //! Class with base templated on the above enum class with associations
-class Battery : public quinoa::sel::Toggle<BatteryType> {
+class Battery : public tk::Toggle<BatteryType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Battery() :
-      quinoa::sel::Toggle<BatteryType>
+      Toggle<BatteryType>
         ("Random number generator test suite", names, values) {}
 
   private:

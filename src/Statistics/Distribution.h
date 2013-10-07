@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Thu Aug 29 15:25:57 2013
+  \date      Mon Oct  7 10:10:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -14,9 +14,7 @@
 #include <vector>
 #include <iostream>
 
-#include <QuinoaTypes.h>
-
-namespace quinoa {
+namespace tk {
 
 //! Distribution estimator base
 class Distribution {
@@ -45,6 +43,6 @@ class Distribution {
     Distribution& operator=(Distribution&&) = delete;
 };
 
-} // namespace quinoa
+} // namespace tk
 
 #endif // Distribution_h

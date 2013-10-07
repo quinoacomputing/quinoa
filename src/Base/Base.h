@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:24:59 PM MDT
+  \date      Mon Oct  7 11:34:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -22,18 +22,18 @@ namespace quinoa {
 //! Base: collection of essentials
 struct Base {
   QuinoaPrint& print;
-  Paradigm& paradigm;
+  tk::Paradigm& paradigm;
   InputDeck& control;
-  Timer& timer;
+  tk::Timer& timer;
 
   //! Initializer constructor
-  Base(QuinoaPrint& print,
-       Paradigm& paradigm,
-       InputDeck& control,
-       Timer& timer) : print(print),
-                       paradigm(paradigm),
-                       control(control),
-                       timer(timer) {}
+  Base(QuinoaPrint& Print,
+       tk::Paradigm& Paradigm,
+       InputDeck& Control,
+       tk::Timer& Timer) : print(Print),
+                           paradigm(Paradigm),
+                           control(Control),
+                           timer(Timer) {}
 };
 
 } // quinoa::
@@ -43,18 +43,18 @@ namespace rngtest {
 //! Base: collection of essentials
 struct Base {
   RNGTestPrint& print;
-  quinoa::Paradigm& paradigm;
+  tk::Paradigm& paradigm;
   InputDeck& control;
-  quinoa::Timer& timer;
+  tk::Timer& timer;
 
   //! Initializer constructor
-  Base(RNGTestPrint& print,
-       quinoa::Paradigm& paradigm,
-       InputDeck& control,
-       quinoa::Timer& timer) : print(print),
-                               paradigm(paradigm),
-                               control(control),
-                               timer(timer) {}
+  Base(RNGTestPrint& Print,
+       tk::Paradigm& Paradigm,
+       InputDeck& Control,
+       tk::Timer& Timer) : print(Print),
+                           paradigm(Paradigm),
+                           control(Control),
+                           timer(Timer) {}
 };
 
 } // rngtest::

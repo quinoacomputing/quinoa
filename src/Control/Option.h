@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Fri Sep 27 09:04:27 2013
+  \date      Mon Oct  7 09:08:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -13,8 +13,7 @@
 
 #include <string>
 
-namespace quinoa {
-namespace ctr {
+namespace tk {
 
 //! Generic option interface templated on option 'Type'
 template< class Type >
@@ -51,7 +50,6 @@ class Option {
     Option& operator=(Option&&) = delete;
 };
 
-} // ctr::
-} // quinoa::
+} // tk::
 
 #endif // Option_h

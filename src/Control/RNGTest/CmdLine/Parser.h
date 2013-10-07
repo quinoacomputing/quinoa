@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:03:30 PM MDT
+  \date      Mon Oct  7 08:17:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line parser
   \details   RNGTest's command line parser
@@ -16,17 +16,17 @@
 namespace rngtest {
 
 //! CmdLineParser : StringParser
-class CmdLineParser : public quinoa::StringParser{
+class CmdLineParser : public tk::StringParser{
 
   public:
     //! Constructor from std::string
     explicit CmdLineParser(const std::string& cmdline, Base& base) :
-      quinoa::StringParser(cmdline),
+      tk::StringParser(cmdline),
       m_base(base) {}
 
     //! Constructor from argc, argv
     explicit CmdLineParser(int argc, char** argv, Base& base) :
-      quinoa::StringParser(argc, argv),
+      tk::StringParser(argc, argv),
       m_base(base) {}
 
     //! Destructor

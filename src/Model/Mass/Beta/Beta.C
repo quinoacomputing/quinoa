@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:33:58 PM MDT
+  \date      Mon Oct  7 10:30:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -29,16 +29,16 @@ Beta::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //const real a = 0.075;    // At = 0.5
-  //const real a = 0.06;     // At = 0.25
-  //const real a = 0.039;    // At = 0.05
+  //const tk::real a = 0.075;    // At = 0.5
+  //const tk::real a = 0.06;     // At = 0.25
+  //const tk::real a = 0.039;    // At = 0.05
 
   //initBeta(a, a, 0.0, 1.0);
   //U[pP+9] = 2.0*At*x[0] + 1.0-At;
 }
 
 void
-Beta::advance(int p, int tid, real dt)
+Beta::advance(int p, int tid, tk::real dt)
 //******************************************************************************
 //  Advance particles with the Beta model
 //! \param[in]  p    Particle to advance
@@ -61,8 +61,8 @@ Beta::jpdf(JPDF& jpdf)
 {
 IGNORE(jpdf);
 //   for (int p=0; p<m_npar; ++p) {
-//     real* y = m_scalars + p*m_nscalar;
-//     vector<real> v(y, y+m_nscalar);
+//     tk::real* y = m_scalars + p*m_nscalar;
+//     vector<tk::real> v(y, y+m_nscalar);
 //     jpdf.insert(v);
 //   }
 }

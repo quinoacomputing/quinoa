@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:35:56 2013
+  \date      Mon Oct  7 08:45:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -14,7 +14,7 @@
 #include <JPDF.h>
 #include <Exception.h>
 
-using namespace quinoa;
+using namespace tk;
 
 void
 JPDF::insert(const std::vector<real>& sample)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/SLM/SLM.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:45:51 2013
+  \date      Mon Oct  7 10:32:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -20,7 +20,7 @@ class SimplifiedLangevin : public Hydro {
 
   public:
     //! Constructor
-    explicit SimplifiedLangevin(const Base& base, real* const particles) :
+    explicit SimplifiedLangevin(const Base& base, tk::real* const particles) :
       Hydro(base, particles),
       m_C0(base.control.get<ctr::param, ctr::slm, ctr::c0>()) {
       //ErrChk on m_C0
@@ -33,7 +33,7 @@ class SimplifiedLangevin : public Hydro {
     void init() override;
 
     //! Advance particles
-    void advance(int p, int tid, real dt) override;
+    void advance(int p, int tid, tk::real dt) override;
 
   private:
     //! Don't permit copy constructor
@@ -45,9 +45,9 @@ class SimplifiedLangevin : public Hydro {
     //! Don't permit move assigment
     SimplifiedLangevin& operator=(SimplifiedLangevin&&) = delete;
 
-    const real m_C0;                //!< Parameter C0 in SLM
+    const tk::real m_C0;                //!< Parameter C0 in SLM
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // SLM_h

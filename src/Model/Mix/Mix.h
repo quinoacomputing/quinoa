@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:14:19 PM MDT
+  \date      Mon Oct  7 10:33:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -13,7 +13,7 @@
 
 #include <cstring>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Model.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
@@ -25,14 +25,14 @@ class Mix : public Model {
 
   public:
     //! Constructor
-    explicit Mix(const Base& base, real* const particles) :
+    explicit Mix(const Base& base, tk::real* const particles) :
       Model(base,
             particles,
             base.control.get<ctr::component, ctr::npar>(),
             base.control.nprop()),
       m_offset(base.control.scalarOffset()),
       m_nscalar(base.control.get<ctr::component, ctr::nscalar>()) {
-      ErrChk(m_nscalar > 0, ExceptType::FATAL, "Wrong number of scalars");
+      ErrChk(m_nscalar > 0, tk::ExceptType::FATAL, "Wrong number of scalars");
     }
 
     //! Destructor
@@ -42,7 +42,7 @@ class Mix : public Model {
     virtual void init(int p, int tid) = 0;
 
     //! Advance particles in mix model
-    virtual void advance(int p, int tid, real dt) = 0;
+    virtual void advance(int p, int tid, tk::real dt) = 0;
 
   protected:
     const int m_offset;             //!< Scalar-offset relative to base
@@ -50,7 +50,7 @@ class Mix : public Model {
 
     //! Initialize scalars with zero
     void initZero(int p) {
-      memset(m_particles + p*m_nprop + m_offset, 0, m_nscalar*sizeof(real));
+      memset(m_particles + p*m_nprop + m_offset, 0, m_nscalar*sizeof(tk::real));
     }
 
   private:
@@ -64,6 +64,6 @@ class Mix : public Model {
     Mix& operator=(Mix&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Mix_h

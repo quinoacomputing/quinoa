@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:46:49 PM MDT
+  \date      Mon Oct  7 10:42:20 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -33,8 +33,8 @@ HomRT::HomRT(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(mass(), ExceptType::FATAL, "No mass model specified");
-  ErrChk(hydro(), ExceptType::FATAL, "No hydrodynamics model specified");
+  ErrChk(mass(), tk::ExceptType::FATAL, "No mass model specified");
+  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
 }
 
 void
@@ -45,7 +45,7 @@ HomRT::solve()
 //******************************************************************************
 {
   uint64_t it = 0;
-  real t = 0.0;
+  tk::real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
   bool wroteStat = false;
@@ -66,7 +66,8 @@ HomRT::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() &&
+         it < nstep) {
 
     // Advance particles
     advance(dt);
@@ -97,7 +98,7 @@ HomRT::solve()
 }
 
 void
-HomRT::advance(real dt)
+HomRT::advance(tk::real dt)
 //******************************************************************************
 //  Advance particles
 //! \author  J. Bakosi
@@ -144,8 +145,8 @@ HomRT::reportHeader() const
 void
 HomRT::report(const uint64_t it,
               const uint64_t nstep,
-              const real t,
-              const real dt,
+              const tk::real t,
+              const tk::real dt,
               const bool wroteJpdf,
               const bool wroteGlob,
               const bool wroteStat)
@@ -161,7 +162,7 @@ HomRT::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Watch ete, eta;       // estimated time elapsed and to accomplishment
+  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
@@ -182,7 +183,7 @@ HomRT::report(const uint64_t it,
 }
 
 void
-HomRT::outJpdf(const real t)
+HomRT::outJpdf(const tk::real t)
 //******************************************************************************
 //  Output joint scalar PDF
 //! \param[in]  t    Time stamp
@@ -195,7 +196,7 @@ HomRT::outJpdf(const real t)
   std::string filename = ss.str();
 
   // Create joint PDF
-  JPDF jpdf(m_nscalar, 0.02);
+  tk::JPDF jpdf(m_nscalar, 0.02);
 
   // Estimate joint PDF
   //mix()->jpdf(jpdf);

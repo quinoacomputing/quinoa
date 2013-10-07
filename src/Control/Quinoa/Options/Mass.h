@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:40:27 2013
+  \date      Mon Oct  7 09:16:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -17,14 +17,14 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Mass model types
 enum class MassType : uint8_t { NO_MASS=0,
                                 BETA };
 
 //! Class with base templated on the above enum class with associations
-class Mass : public Toggle<MassType> {
+class Mass : public tk::Toggle<MassType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -57,7 +57,7 @@ class Mass : public Toggle<MassType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaMassOptions_h

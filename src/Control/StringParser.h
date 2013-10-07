@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:52:36 PM MDT
+  \date      Mon Oct  7 08:14:29 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -15,7 +15,7 @@
 
 #include <Parser.h>
 
-namespace quinoa {
+namespace tk {
 
 //! StringParser : Parser
 class StringParser : public Parser {
@@ -46,6 +46,6 @@ class StringParser : public Parser {
     StringParser& operator=(StringParser&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // StringParser_h

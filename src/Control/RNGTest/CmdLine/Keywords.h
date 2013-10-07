@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:07:34 PM MDT
+  \date      Mon Oct  7 08:17:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line keywords
   \details   All keywords recognized by RNGTest's command line parser. The
@@ -26,8 +26,8 @@ namespace rngtest {
 namespace kw {
 
 using namespace pegtl::ascii;
-using quinoa::kw::cmdline_keyword;
-using quinoa::kw::undefined_info;
+using tk::kw::cmdline_keyword;
+using tk::kw::undefined_info;
 
 // Keyword 'control', cmdline '--control' with alias '-c'
 using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;

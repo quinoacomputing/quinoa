@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:24:52 2013
+  \date      Mon Oct  7 09:50:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -20,7 +20,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Random number generator test types
 enum class RNGType : uint8_t { NO_RNG=0,
@@ -46,7 +46,7 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   PRAND };
 
 //! Class with base templated on the above enum class with associations
-class RNG : public quinoa::sel::Toggle<RNGType> {
+class RNG : public tk::Toggle<RNGType> {
 
   public:
     using ParamType = int;
@@ -55,7 +55,7 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit RNG() :
-      quinoa::sel::Toggle<RNGType>("Random number generator", names, values) {}
+      Toggle<RNGType>("Random number generator", names, values) {}
 
   private:
     //! Don't permit copy constructor
@@ -69,16 +69,18 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
 
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const {
+      using tk::operator+;
       auto it = brng.find(rng);
-      Assert(it != brng.end(), quinoa::ExceptType::FATAL,
+      Assert(it != brng.end(), tk::ExceptType::FATAL,
              std::string("Cannot find parameter for RNG \"") + rng + "\"");
       return it->second;
     }
 
     //! Return RNG library type based on Enum
     RNGLibType lib(RNGType rng) const {
+      using tk::operator+;
       auto it = names.find(rng);
-      Assert(it != names.end(), quinoa::ExceptType::FATAL,
+      Assert(it != names.end(), tk::ExceptType::FATAL,
              std::string("Cannot find name for RNG \"") + rng + "\"");
       if (found("MKL", it->second)) return RNGLibType::MKL;
       else if (found("RNGSSELIB", it->second)) return RNGLibType::RNGSSELIB;
@@ -169,7 +171,7 @@ class RNG : public quinoa::sel::Toggle<RNGType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaRNGOptions_h

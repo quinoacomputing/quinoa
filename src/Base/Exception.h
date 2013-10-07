@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:04:26 2013
+  \date      Mon Oct  7 10:07:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -14,9 +14,9 @@
 #include <exception>
 #include <string>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Throw macro that always throws an exception:
 //! Throw Exception with arguments passed in. Add source filename, function
@@ -26,7 +26,7 @@ namespace quinoa {
 //! arguments. Whenever is possible, it should be used via the Assert and ErrChk
 //! macros defined below.
 #define Throw(...) \
-   throw quinoa::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+   throw tk::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
 //! Assert macro that only throws an exception if expr fails:
 //! If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing, expr is not
@@ -124,6 +124,6 @@ class Exception : public std::exception {
     char** m_symbolList;        //!< Symbol list of stack entries
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Exception_h

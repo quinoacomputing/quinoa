@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Thu Oct  3 15:48:18 2013
+  \date      Mon Oct  7 10:39:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -38,7 +38,7 @@ HomMix::HomMix(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(mix(), ExceptType::FATAL, "No material mix model specified");
+  ErrChk(mix(), tk::ExceptType::FATAL, "No material mix model specified");
 }
 
 void
@@ -49,7 +49,7 @@ HomMix::solve()
 //******************************************************************************
 {
   uint64_t it = 0;
-  real t = 0.0;
+  tk::real t = 0.0;
   bool wroteJpdf = false;
   bool wroteGlob = false;
   bool wroteStat = false;
@@ -70,7 +70,8 @@ HomMix::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<real>::epsilon() && it < nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() &&
+         it < nstep) {
 
     // Advance particles
     advance(dt);
@@ -101,7 +102,7 @@ HomMix::solve()
 }
 
 void
-HomMix::advance(real dt)
+HomMix::advance(tk::real dt)
 //******************************************************************************
 //  Advance particles
 //! \author  J. Bakosi
@@ -147,8 +148,8 @@ HomMix::reportHeader() const
 void
 HomMix::report(const uint64_t it,
                const uint64_t nstep,
-               const real t,
-               const real dt,
+               const tk::real t,
+               const tk::real dt,
                const bool wroteJpdf,
                const bool wroteGlob,
                const bool wroteStat)
@@ -164,7 +165,7 @@ HomMix::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  Watch ete, eta;       // estimated time elapsed and to accomplishment
+  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
 
   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
@@ -185,7 +186,7 @@ HomMix::report(const uint64_t it,
 }
 
 void
-HomMix::outJpdf(const real t)
+HomMix::outJpdf(const tk::real t)
 //******************************************************************************
 //  Output joint scalar PDF
 //! \param[in]  t    Time stamp

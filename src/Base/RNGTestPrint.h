@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:30:51 PM MDT
+  \date      Mon Oct  7 08:09:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -17,8 +17,8 @@
 
 namespace rngtest {
 
-//! RNGTestPrint : quinoa::Print
-class RNGTestPrint : public quinoa::Print {
+//! RNGTestPrint : Print
+class RNGTestPrint : public tk::Print {
 
   public:
     //! Constructor
