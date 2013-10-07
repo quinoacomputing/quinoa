@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Wed 25 Sep 2013 10:41:01 PM MDT
+  \date      Mon Oct  7 10:01:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration
@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
 namespace quinoa {
 
@@ -36,9 +36,9 @@ class STLMesh {
     const std::string& name() const noexcept { return m_name; }
 
     //! Coordinate array accessors
-    real* getx() const noexcept { return m_x.get(); }
-    real* gety() const noexcept { return m_y.get(); }
-    real* getz() const noexcept { return m_z.get(); }
+    tk::real* getx() const noexcept { return m_x.get(); }
+    tk::real* gety() const noexcept { return m_y.get(); }
+    tk::real* getz() const noexcept { return m_z.get(); }
 
     //! Node list accessor
     int* nodelist() const noexcept { return m_nodelist.get(); }
@@ -57,14 +57,14 @@ class STLMesh {
     STLMesh& operator=(STLMesh&&) = delete;
 
     std::string m_name;                      //!< Name of the mesh
-    std::unique_ptr<real[]> m_x;             //!< Vertex x coordinates
-    std::unique_ptr<real[]> m_y;             //!< Vertex y coordinates
-    std::unique_ptr<real[]> m_z;             //!< Vertex z coordinates
+    std::unique_ptr<tk::real[]> m_x;         //!< Vertex x coordinates
+    std::unique_ptr<tk::real[]> m_y;         //!< Vertex y coordinates
+    std::unique_ptr<tk::real[]> m_z;         //!< Vertex z coordinates
     std::unique_ptr<int[]> m_nodelist;       //!< Node indices describing facets
 
     size_t m_nnodes;                         //!< Number of nodes
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // STLMesh_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:55:37 2013
+  \date      Mon Oct  7 10:04:59 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
 namespace quinoa {
 
@@ -35,7 +35,7 @@ class GmshMesh {
        m_datasize(0) {}
 
     //! Set mesh version
-    void setVersion(const real version) { m_version = version; }
+    void setVersion(const tk::real version) { m_version = version; }
 
     //! Set mesh type
     void setType(const int type) { m_type = type; }
@@ -44,7 +44,7 @@ class GmshMesh {
     void setDatasize(const int datasize) { m_datasize = datasize; }
 
     //! Get mesh version
-    real getVersion() const { return m_version; }
+    tk::real getVersion() const { return m_version; }
 
     //! Get mesh type
     int getType() const { return m_type; }
@@ -75,7 +75,7 @@ class GmshMesh {
     }
 
     //! Coords accessor
-    real* getCoord() const { return m_coord.get(); }
+    tk::real* getCoord() const { return m_coord.get(); }
 
     //! NodeId accessor
     int* getNodeId() const { return m_nodeId.get(); }
@@ -114,12 +114,12 @@ class GmshMesh {
     //! Don't permit move assignment
     GmshMesh& operator=(GmshMesh&&) = delete;
 
-    real m_version;                          //!< Mesh version in mesh file
+    tk::real m_version;                      //!< Mesh version in mesh file
     int m_type;                              //!< File type in mesh file
     int m_datasize;                          //!< Data size in mesh file
     int m_nnodes;                            //!< Number of nodes in mesh
 
-    std::unique_ptr<real[]> m_coord;         //!< Node coordinates
+    std::unique_ptr<tk::real[]> m_coord;     //!< Node coordinates
     std::unique_ptr<int[]> m_nodeId;         //!< Node Ids
     std::unique_ptr<int[]> m_lineId;         //!< Line element Ids
     std::unique_ptr<int[]> m_triangleId;     //!< Triangle element Ids
@@ -130,6 +130,6 @@ class GmshMesh {
     std::vector<std::vector<int>> m_tritag;  //!< Triangle element tags
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // GmshMesh_h

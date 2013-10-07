@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:13:02 AM MDT
+  \date      Mon Oct  7 10:36:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -42,7 +42,7 @@ class Physics {
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
-    const Timer& timer() const noexcept { return m_base.timer; }
+    const tk::Timer& timer() const noexcept { return m_base.timer; }
 
     //! Constant accessor to mass model
     //! \return Pointer to mass model
@@ -70,7 +70,7 @@ class Physics {
 
     //! Constant accessor to particle properties pointer
     //! \return Raw pointer to particle properties array
-    real* particles() const noexcept { return m_particles.get(); }
+    tk::real* particles() const noexcept { return m_particles.get(); }
 
   protected:
     //! Constructor: protected, designed to be base-only
@@ -84,7 +84,7 @@ class Physics {
     const int m_nvelocity;                //!< Number of velocity components
     const int m_nscalar;                  //!< Number of scalar components
     const uint64_t m_npar;                //!< Number of particles
-    const real m_term;                    //!< Maximum time to simulate
+    const tk::real m_term;                //!< Maximum time to simulate
 
   private:
     //! Don't permit copy constructor
@@ -99,15 +99,15 @@ class Physics {
     //! Initialize model factory
     void initFactory();
 
-    const Base& m_base;                         //!< Essentials
-    const std::unique_ptr<real[]> m_particles;  //!< Particle properties
+    const Base& m_base;                             //!< Essentials
+    const std::unique_ptr<tk::real[]> m_particles;  //!< Particle properties
 
-    Statistics m_statistics;                    //!< Statistics estimator
+    Statistics m_statistics;                        //!< Statistics estimator
 
     //! Model factories
-    std::map<sel::MassType, std::function<Mass*()>> m_massFactory;
-    std::map<sel::HydroType, std::function<Hydro*()>> m_hydroFactory;
-    std::map<sel::MixType, std::function<Mix*()>> m_mixFactory;
+    std::map<ctr::MassType, std::function<Mass*()>> m_massFactory;
+    std::map<ctr::HydroType, std::function<Hydro*()>> m_hydroFactory;
+    std::map<ctr::MixType, std::function<Mix*()>> m_mixFactory;
 
     std::unique_ptr<Mass> m_mass;               //!< Mass model
     std::unique_ptr<Hydro> m_hydro;             //!< Hydro model
@@ -117,6 +117,6 @@ class Physics {
     TxtStatWriter m_stat;                       //!< Statistics file writer
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Physics_h

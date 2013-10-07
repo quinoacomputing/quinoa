@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:39:47 2013
+  \date      Mon Oct  7 09:16:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -17,14 +17,14 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Frequency model types
 enum class FrequencyType : uint8_t { NO_FREQUENCY=0,
                                      GAMMA };
 
 //! Class with base templated on the above enum class with associations
-class Frequency : public Toggle<FrequencyType> {
+class Frequency : public tk::Toggle<FrequencyType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -58,7 +58,7 @@ class Frequency : public Toggle<FrequencyType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaFrequencyOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 09:33:31 PM MDT
+  \date      Mon Oct  7 08:11:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -16,7 +16,7 @@
 
 #include <TaggedTuple.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Control : tagged_tuple
 template<typename... Ts>
@@ -215,6 +215,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     Control& operator=(Control&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Control_h

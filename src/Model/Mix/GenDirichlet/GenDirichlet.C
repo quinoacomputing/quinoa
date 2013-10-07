@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:41:52 PM MDT
+  \date      Mon Oct  7 10:34:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -21,7 +21,7 @@ using namespace std;
 using namespace quinoa;
 
 void
-GeneralizedDirichlet::advance(int p, int tid, const real dt)
+GeneralizedDirichlet::advance(int p, int tid, const tk::real dt)
 //******************************************************************************
 //  Advance particles with the generalized Dirichlet model
 //! \param[in]  p    Particle to advance
@@ -31,11 +31,11 @@ GeneralizedDirichlet::advance(int p, int tid, const real dt)
 //******************************************************************************
 {
   int i, j, k;
-  real d, a;
-  real* y;
-  real dW[m_nscalar];
-  real Y[m_nscalar];    //!< Y_i = 1 - sum_{k=1}^{i} y_k
-  real U[m_nscalar];    //!< U_i = prod_{j=1}^{K-i} 1/Y_{K-j}
+  tk::real d, a;
+  tk::real* y;
+  tk::real dW[m_nscalar];
+  tk::real Y[m_nscalar];    //!< Y_i = 1 - sum_{k=1}^{i} y_k
+  tk::real U[m_nscalar];    //!< U_i = prod_{j=1}^{K-i} 1/Y_{K-j}
 
   // Get access to particle scalars
   y = m_particles + p*m_nprop + m_offset;
@@ -71,8 +71,8 @@ GeneralizedDirichlet::jpdf(JPDF& jpdf)
 {
 IGNORE(jpdf);
 //   for (uint64_t p=0; p<m_npar; ++p) {
-//     real* y = m_scalars + p*m_nscalar;
-//     vector<real> v(y, y+m_nscalar);
+//     tk::real* y = m_scalars + p*m_nscalar;
+//     vector<tk::real> v(y, y+m_nscalar);
 //     jpdf.insert(v);
 //   }
 }

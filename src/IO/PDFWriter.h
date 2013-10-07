@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:45:14 PM MDT
+  \date      Mon Oct  7 10:13:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -20,7 +20,7 @@
 namespace quinoa {
 
 //! PDFWriter : Writer
-class PDFWriter : public Writer {
+class PDFWriter : public tk::Writer {
 
   public:
     //! Constructor
@@ -31,13 +31,13 @@ class PDFWriter : public Writer {
     ~PDFWriter() noexcept override = default;
 
     //! Write PDF to file
-    void write(const PDF& pdf);
+    void write(const tk::PDF& pdf);
 
     //! Write joint PDF to text file
-    void writeTxt(const JPDF& jpdf);
+    void writeTxt(const tk::JPDF& jpdf);
 
     //! Write joint PDF to gmsh (text) file format
-    void writeGmsh(const JPDF& jpdf);
+    void writeGmsh(const tk::JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -50,6 +50,6 @@ class PDFWriter : public Writer {
     PDFWriter& operator=(PDFWriter&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // PDFWriter_h

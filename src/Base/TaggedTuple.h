@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:14:05 2013
+  \date      Mon Oct  7 08:10:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -15,7 +15,7 @@
 
 #include <tuple>
 
-namespace quinoa {
+namespace tk {
 //! tagged tuple allowing tag-based access to tuple members with arbitrary types
 namespace tuple {
 
@@ -99,6 +99,6 @@ template<typename... _Elements>
     public std::integral_constant<std::size_t, sizeof...(_Elements)/2> { };
 
 } // tuple::
-} // quinoa::
+} // tk::
 
 #endif // TaggedTuple_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRandom.C
   \author    J. Bakosi
-  \date      Wed 25 Sep 2013 10:34:47 PM MDT
+  \date      Mon Oct  7 10:51:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -37,15 +37,15 @@ MKLRandom::~MKLRandom() noexcept
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  for (MKLRndTable* t : m_table) { delete t; }
+  for (tk::MKLRndTable* t : m_table) { delete t; }
   m_table.clear();
-  for (MKLRndStream* s : m_stream) { delete s; }
+  for (tk::MKLRndStream* s : m_stream) { delete s; }
   m_stream.clear();
 }
 
-MKLRndTable*
+tk::MKLRndTable*
 MKLRandom::addTable(const int brng,
-                    const RndDist dist,
+                    const tk::RndDist dist,
                     const int method,
                     const unsigned int seed,
                     const long long int number,
@@ -62,15 +62,15 @@ MKLRandom::addTable(const int brng,
 //******************************************************************************
 {
   // Create new table
-  MKLRndTable* table = new (std::nothrow)
-    MKLRndTable(m_nOMPthreads, brng, dist, method, seed, number, name);
-  ErrChk(table != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+  tk::MKLRndTable* table = new (std::nothrow)
+    tk::MKLRndTable(m_nOMPthreads, brng, dist, method, seed, number, name);
+  ErrChk(table != nullptr, tk::ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new table
   std::pair<Tables::iterator,bool> e = m_table.insert(table);
   if (!e.second) {
     if (table) delete table;
-    Throw(ExceptType::FATAL, "Cannot store random number table");
+    Throw(tk::ExceptType::FATAL, "Cannot store random number table");
   }
 
   // Return key to caller
@@ -78,7 +78,7 @@ MKLRandom::addTable(const int brng,
 }
 
 void
-MKLRandom::eraseTable(MKLRndTable* table) noexcept
+MKLRandom::eraseTable(tk::MKLRndTable* table) noexcept
 //******************************************************************************
 //  Erase a random number table
 //! \param[in]  table    Pointer to table to erase
@@ -89,14 +89,14 @@ MKLRandom::eraseTable(MKLRndTable* table) noexcept
   try {
 
     auto it = m_table.find(table);
-    Assert(it != m_table.end(), ExceptType::FATAL,
+    Assert(it != m_table.end(), tk::ExceptType::FATAL,
            "Cannot find random number table in MKLRandom::eraseTable()");
 
     delete table;
     m_table.erase(it);
 
   } // emit only a warning on error
-    catch (Exception& e) {
+    catch (tk::Exception& e) {
       e.echo("WARNING");
     }
     catch (std::exception& e) {
@@ -116,11 +116,11 @@ MKLRandom::regenTables()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  for (MKLRndTable* t : m_table) t->generate();
+  for (tk::MKLRndTable* t : m_table) t->generate();
 }
 
-const real*
-MKLRandom::getRnd(MKLRndTable* table)
+const tk::real*
+MKLRandom::getRnd(tk::MKLRndTable* table)
 //******************************************************************************
 //  Constant accessor to random number table
 //! \param[in]  table    Table id to access
@@ -128,12 +128,12 @@ MKLRandom::getRnd(MKLRndTable* table)
 //******************************************************************************
 {
   auto it = m_table.find(table);
-  Assert(it != m_table.end(), ExceptType::FATAL,
+  Assert(it != m_table.end(), tk::ExceptType::FATAL,
          "Cannot find random number table");
   return (*it)->getRnd();
 }
 
-MKLRndStream*
+tk::MKLRndStream*
 MKLRandom::addStream(const int brng, const unsigned int seed)
 //******************************************************************************
 //  Add a random number stream
@@ -143,15 +143,15 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 //******************************************************************************
 {
   // Create new stream
-  MKLRndStream* stream =
-    new (std::nothrow) MKLRndStream(m_nOMPthreads, brng, seed);
-  ErrChk(stream != nullptr, ExceptType::FATAL, "Cannot allocate memory");
+  tk::MKLRndStream* stream =
+    new (std::nothrow) tk::MKLRndStream(m_nOMPthreads, brng, seed);
+  ErrChk(stream != nullptr, tk::ExceptType::FATAL, "Cannot allocate memory");
 
   // Store new stream
   std::pair<Streams::iterator,bool> e = m_stream.insert(stream);
   if (!e.second) {
     if (stream) delete stream;
-    Throw(ExceptType::FATAL, "Cannot store random number stream");
+    Throw(tk::ExceptType::FATAL, "Cannot store random number stream");
   }
 
   // Return key to caller
@@ -159,7 +159,7 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 }
 
 void
-MKLRandom::eraseStream(MKLRndStream* stream) noexcept
+MKLRandom::eraseStream(tk::MKLRndStream* stream) noexcept
 //******************************************************************************
 //  Erase a random number stream
 //! \param[in]  stream    Pointer to stream to erase
@@ -170,7 +170,7 @@ MKLRandom::eraseStream(MKLRndStream* stream) noexcept
   try {
 
     auto it = m_stream.find(stream);
-    Assert(it != m_stream.end(), ExceptType::FATAL,
+    Assert(it != m_stream.end(), tk::ExceptType::FATAL,
            "Cannot find random number stream in MKLRandom::eraseStream()");
 
     delete stream;
@@ -187,7 +187,7 @@ MKLRandom::eraseStream(MKLRndStream* stream) noexcept
 }
 
 const VSLStreamStatePtr*
-MKLRandom::getStr(MKLRndStream* stream)
+MKLRandom::getStr(tk::MKLRndStream* stream)
 //******************************************************************************
 //  Constant accessor to VSL stream
 //! \param[in]  stream    Stream id to access
@@ -195,7 +195,7 @@ MKLRandom::getStr(MKLRndStream* stream)
 //******************************************************************************
 {
   auto it = m_stream.find(stream);
-  Assert(it != m_stream.end(), ExceptType::FATAL,
+  Assert(it != m_stream.end(), tk::ExceptType::FATAL,
          "Cannot find random number stream");
   return (*it)->getStr();
 }

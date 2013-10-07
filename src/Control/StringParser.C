@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:54:41 PM MDT
+  \date      Mon Oct  7 08:14:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -11,7 +11,7 @@
 
 #include <StringParser.h>
 
-using namespace quinoa;
+using namespace tk;
 
 StringParser::StringParser(int argc, char** argv)
 //******************************************************************************

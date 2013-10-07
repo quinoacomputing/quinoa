@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu Oct  3 10:17:42 2013
+  \date      Mon Oct  7 09:08:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -17,7 +17,7 @@
 namespace quinoa {
 
 //! QuinoaPrint : Print
-class QuinoaPrint : public Print {
+class QuinoaPrint : public tk::Print {
 
   public:
     //! Bring vanilla overloads from base into scope in case local overloads fail
@@ -34,7 +34,7 @@ class QuinoaPrint : public Print {
     template<typename OptionType, typename... tags>
     void section() const {
       if (m_ctr.get<tags...>() != QuinoaDefaults.get<tags...>()) {
-        ctr::Option<OptionType> opt;
+        tk::Option<OptionType> opt;
         auto& group = opt.group();
         auto& value = opt.name(m_ctr.get<tags...>());
         std::cout << m_section_title_value_fmt % m_section_indent
@@ -61,7 +61,7 @@ class QuinoaPrint : public Print {
     template<typename OptionType, typename... tags>
     void item() const {
       if (m_ctr.get<tags...>() != QuinoaDefaults.get<tags...>()) {
-        ctr::Option<OptionType> opt;
+        tk::Option<OptionType> opt;
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % opt.group()
                                            % opt.name(m_ctr.get<tags...>());
@@ -116,6 +116,6 @@ class QuinoaPrint : public Print {
     const InputDeck& m_ctr;         //!< Parsed control
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // QuinoaPrint_h

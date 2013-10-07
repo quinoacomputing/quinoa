@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:26:15 PM MDT
+  \date      Mon Oct  7 08:36:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -14,7 +14,7 @@
 #include <OpenMP.h>
 #include <Print.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Parallel programming paradigms
 class Paradigm {
@@ -55,6 +55,6 @@ class Paradigm {
     const Print& m_print;          //!< Pretty printer
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Paradigm_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:37:18 PM MDT
+  \date      Mon Oct  7 10:06:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -42,19 +42,19 @@ GmshTxtMeshWriter::writeMeshFormat()
 {
   // Write beginning of header: $MeshFormat
   m_outFile << "$MeshFormat\n";
-  ErrChk(!m_outFile.bad(), ExceptType::FATAL,
+  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 
   // Write "version-number file-type data-size"
   m_outFile << m_mesh.getVersion() << " "
             << m_mesh.getType() << " "
             << m_mesh.getDatasize() << "\n";
-  ErrChk(!m_outFile.bad(), ExceptType::FATAL,
+  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 
   // Write end of header: $EndMeshFormat
   m_outFile << "$EndMeshFormat" << std::endl;
-  ErrChk(!m_outFile.bad(), ExceptType::FATAL,
+  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
          "Failed to write to file: " + m_filename);
 }
 
@@ -70,7 +70,7 @@ GmshTxtMeshWriter::writeNodes()
   // Get number of nodes, and pointers node ids and coordinates
   int nnodes = m_mesh.getNnodes();
   int* nodeId = m_mesh.getNodeId();
-  real* coord = m_mesh.getCoord();
+  tk::real* coord = m_mesh.getCoord();
 
   // Write out number of nodes
   m_outFile << nnodes << std::endl;

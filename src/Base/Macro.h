@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Macro.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:39:38 2013
+  \date      Mon Oct  7 08:08:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Macro definitions
   \details   Macro definitions
@@ -15,7 +15,7 @@
 #include <ctime>
 #include <cstdlib>
 
-namespace quinoa {
+namespace tk {
 
 //! This macro can be used to suppress compiler warning on unused variable
 #define IGNORE(expr) (static_cast<void>(expr))
@@ -32,6 +32,6 @@ gettimeofday(&END_TIME, (struct timezone*)0); \
 total_usecs = (END_TIME.tv_sec-START_TIME.tv_sec) * 1000000 + (END_TIME.tv_usec-START_TIME.tv_usec); \
 printf("Total time was %d uSec.\n", total_usecs);
 
-} // namespace quinoa
+} // tk::
 
 #endif // Macro_h

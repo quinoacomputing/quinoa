@@ -10,7 +10,6 @@ add_library(IO
             PDFWriter.C
             GlobWriter.C
             TxtStatWriter.C
-            GmshTxtPlotWriter.C
             GmshTxtMeshWriter.C
             SiloWriter.C
 )

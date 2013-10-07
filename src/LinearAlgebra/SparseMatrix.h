@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SparseMatrix.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 09:20:16 PM MDT
+  \date      Mon Oct  7 10:18:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Sparse matrix declaration
   \details   Sparse matrix base class declaration
@@ -11,9 +11,9 @@
 #ifndef SparseMatrix_h
 #define SparseMatrix_h
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Sparse matrix base class
 class SparseMatrix {
@@ -42,6 +42,6 @@ class SparseMatrix {
     SparseMatrix& operator=(SparseMatrix&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // SparseMatrix_h

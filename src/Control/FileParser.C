@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:55:29 PM MDT
+  \date      Mon Oct  7 08:11:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -14,7 +14,7 @@
 #include <FileParser.h>
 #include <Exception.h>
 
-using namespace quinoa;
+using namespace tk;
 
 FileParser::FileParser(const std::string& filename) : m_filename(filename)
 //******************************************************************************

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:42:22 PM MDT
+  \date      Mon Oct  7 10:40:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -18,10 +18,6 @@
 #include <Timer.h>
 
 namespace quinoa {
-
-class Memory;
-class Paradigm;
-class QuinoaControl;
 
 //! HomRT : Physics
 class HomRT : public Physics {
@@ -56,21 +52,21 @@ class HomRT : public Physics {
     void reportHeader() const;
     void report(const uint64_t it,
                 const uint64_t nstep,
-                const real t,
-                const real dt,
+                const tk::real t,
+                const tk::real dt,
                 const bool wroteJpdf,
                 const bool wroteGlob,
                 const bool wrotePlot);
 
     //! Advance
-    void advance(real dt);
+    void advance(tk::real dt);
 
     //! Output joint scalar PDF
-    void outJpdf(const real t);
+    void outJpdf(const tk::real t);
 
-    const TimerIdx m_totalTime;           //!< Timer measuring the total run    
+    const tk::TimerIdx m_totalTime;           //!< Timer measuring the total run    
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // HomRT_h

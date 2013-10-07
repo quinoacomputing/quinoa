@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/Hydro.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 10:14:42 PM MDT
+  \date      Mon Oct  7 10:31:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro base
   \details   Hydro base
@@ -11,7 +11,7 @@
 #ifndef Hydro_h
 #define Hydro_h
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Model.h>
 #include <MKLRandom.h>
 #include <MKLRndStream.h>
@@ -23,14 +23,15 @@ class Hydro : public Model {
 
   public:
     //! Constructor
-    explicit Hydro(const Base& base, real* const particles) :
+    explicit Hydro(const Base& base, tk::real* const particles) :
         Model(base,
               particles,
               base.control.get<ctr::component, ctr::npar>(),
               base.control.nprop()),
         m_offset(base.control.velocityOffset()),
         m_nvelocity(base.control.get<ctr::component, ctr::nvelocity>()) {
-        ErrChk(m_nvelocity > 0, ExceptType::FATAL,
+        ErrChk(m_nvelocity > 0,
+               tk::ExceptType::FATAL,
                "Wrong number of velocities");
       }
 
@@ -41,7 +42,7 @@ class Hydro : public Model {
     virtual void init() = 0;
 
     //! Advance particles in hydro model
-    virtual void advance(int p, int tid, real dt) = 0;
+    virtual void advance(int p, int tid, tk::real dt) = 0;
 
   protected:
     const int m_offset;             //!< Velocity-offset relative to base
@@ -58,6 +59,6 @@ class Hydro : public Model {
     Hydro& operator=(Hydro&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Hydro_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:39:26 2013
+  \date      Mon Oct  7 09:16:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -17,7 +17,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Hydro model types
 enum class HydroType : uint8_t { NO_HYDRO=0,
@@ -25,7 +25,7 @@ enum class HydroType : uint8_t { NO_HYDRO=0,
                                  GLM };
 
 //! Class with base templated on the above enum class with associations
-class Hydro : public Toggle<HydroType> {
+class Hydro : public tk::Toggle<HydroType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -61,7 +61,7 @@ class Hydro : public Toggle<HydroType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaHydroOptions_h

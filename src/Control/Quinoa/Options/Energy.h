@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:39:41 2013
+  \date      Mon Oct  7 09:16:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -16,13 +16,13 @@
 #include <Toggle.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Energy model types
 enum class EnergyType : uint8_t { NO_ENERGY=0 };
 
 //! Class with base templated on the above enum class with associations
-class Energy : public Toggle<EnergyType> {
+class Energy : public tk::Toggle<EnergyType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -53,7 +53,7 @@ class Energy : public Toggle<EnergyType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaEnergyOptions_h

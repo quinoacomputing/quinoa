@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Fri Sep 27 10:58:52 2013
+  \date      Mon Oct  7 08:22:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -48,6 +48,6 @@ class Geometry {
     Geometry& operator=(Geometry&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Geometry_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:02:45 AM MDT
+  \date      Mon Oct  7 08:30:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -15,7 +15,7 @@
 
 #include <Print.h>
 
-namespace init {
+namespace tk {
 
 //!  Wrapper for POSIX API's getcwd() from unistd.h
 std::string workdir();
@@ -24,14 +24,14 @@ std::string workdir();
 std::string curtime();
 
 //!  Echo program title
-void echoHeader(const quinoa::Print& print, const std::string& title);
+void echoHeader(const tk::Print& print, const std::string& title);
 
 //!  Echo build environment
-void echoBuildEnv(const quinoa::Print& print, const std::string& executable);
+void echoBuildEnv(const tk::Print& print, const std::string& executable);
 
 //!  Echo runtime environment
-void echoRunEnv(const quinoa::Print& print, int argc, char** argv);
+void echoRunEnv(const tk::Print& print, int argc, char** argv);
 
-} // init::
+} // tk::
 
 #endif // Init_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:32:57 PM MDT
+  \date      Mon Oct  7 10:05:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -19,7 +19,7 @@
 namespace quinoa {
 
 //! GmshTxtMeshReader : Reader
-class GmshTxtMeshReader : public Reader {
+class GmshTxtMeshReader : public tk::Reader {
 
   public:
     //! Constructor
@@ -85,6 +85,6 @@ class GmshTxtMeshReader : public Reader {
     int m_triCnt;                  //!< Counter for triangle elems added
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // GmshTxtMeshReader_h

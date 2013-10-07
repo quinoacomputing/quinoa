@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Geometry.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:40:09 2013
+  \date      Mon Oct  7 09:16:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry options and associations
   \details   Geometry options and associations
@@ -17,7 +17,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Geometry definition types
 enum class GeometryType : uint8_t { NO_GEOMETRY=0,
@@ -25,7 +25,7 @@ enum class GeometryType : uint8_t { NO_GEOMETRY=0,
                                     DISCRETE };
 
 //! Class with base templated on the above enum class with associations
-class Geometry : public Toggle<GeometryType> {
+class Geometry : public tk::Toggle<GeometryType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -61,7 +61,7 @@ class Geometry : public Toggle<GeometryType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaGeometryOptions_h

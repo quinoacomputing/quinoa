@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:41:00 PM MDT
+  \date      Mon Oct  7 10:33:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -23,7 +23,7 @@ using namespace std;
 using namespace quinoa;
 
 void
-Dirichlet::advance(int p, int tid, real dt)
+Dirichlet::advance(int p, int tid, tk::real dt)
 //******************************************************************************
 //  Advance particles with the Dirichlet model
 //! \param[in]  p    Particle to advance
@@ -33,9 +33,9 @@ Dirichlet::advance(int p, int tid, real dt)
 //******************************************************************************
 {
   int i;
-  real yn, d;
-  real* y;
-  real dW[m_nscalar];
+  tk::real yn, d;
+  tk::real* y;
+  tk::real dW[m_nscalar];
 
   // Get access to particle scalars
   y = m_particles + p*m_nprop + m_offset;
@@ -65,8 +65,8 @@ Dirichlet::jpdf(JPDF& jpdf)
 {
 IGNORE(jpdf);
 //   for (uint64_t p=0; p<m_npar; ++p) {
-//     real* y = m_scalars + p*m_nscalar;
-//     vector<real> v(y, y+m_nscalar);
+//     tk::real* y = m_scalars + p*m_nscalar;
+//     vector<tk::real> v(y, y+m_nscalar);
 //     jpdf.insert(v);
 //   }
 }

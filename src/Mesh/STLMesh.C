@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Thu Sep 19 17:58:41 2013
+  \date      Mon Oct  7 10:20:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition
@@ -25,9 +25,9 @@ STLMesh::alloc(const size_t nnodes)
   m_nnodes = nnodes;
 
   // Allocate memory to store the x, y, z coordinates
-  m_x = std::unique_ptr<real[]>(new real [nnodes]);
-  m_y = std::unique_ptr<real[]>(new real [nnodes]);
-  m_z = std::unique_ptr<real[]>(new real [nnodes]);
+  m_x = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
+  m_y = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
+  m_z = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
 
   // Allocate memory to store the node indices describing facets
   m_nodelist = std::unique_ptr<int[]>(new int [nnodes]);

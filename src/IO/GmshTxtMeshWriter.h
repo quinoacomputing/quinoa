@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:36:29 PM MDT
+  \date      Mon Oct  7 10:05:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -19,7 +19,7 @@
 namespace quinoa {
 
 //! GmshTxtMeshWriter : Writer
-class GmshTxtMeshWriter : public Writer {
+class GmshTxtMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
@@ -59,6 +59,6 @@ class GmshTxtMeshWriter : public Writer {
     GmshMesh& m_mesh;         //!< Mesh object
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // GmshTxtMeshWriter_h

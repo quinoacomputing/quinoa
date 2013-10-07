@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 30 Sep 2013 08:40:45 PM MDT
+  \date      Mon Oct  7 10:33:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -27,19 +27,19 @@ class Dirichlet : public Mix {
 
   public:
     //! Constructor
-    explicit Dirichlet(const Base& base, real* const particles) :
+    explicit Dirichlet(const Base& base, tk::real* const particles) :
       Mix(base, particles),
       m_b(base.control.get<ctr::param, ctr::dirichlet, ctr::b>()),
       m_S(base.control.get<ctr::param, ctr::dirichlet, ctr::S>()),
       m_k(base.control.get<ctr::param, ctr::dirichlet, ctr::kappa>()) {
       ErrChk(m_b.size() == static_cast<unsigned int>(m_nscalar),
-             ExceptType::FATAL,
+             tk::ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'b'");
       ErrChk(m_S.size() == static_cast<unsigned int>(m_nscalar),
-             ExceptType::FATAL,
+             tk::ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'S'");
       ErrChk(m_k.size() == static_cast<unsigned int>(m_nscalar),
-             ExceptType::FATAL,
+             tk::ExceptType::FATAL,
              "Wrong number of Dirichlet model parameters 'k'");
     }
 
@@ -50,7 +50,7 @@ class Dirichlet : public Mix {
     void init(int p, int tid) override { initZero(p); IGNORE(tid); }
 
     //! Advance particles
-    void advance(int p, int tid, real dt) override;
+    void advance(int p, int tid, tk::real dt) override;
 
     //! Estimate joint scalar PDF
     void jpdf(JPDF& jpdf);
@@ -65,11 +65,11 @@ class Dirichlet : public Mix {
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
 
-    const std::vector<real> m_b;         //!< SDE coefficients
-    const std::vector<real> m_S;
-    const std::vector<real> m_k;
+    const std::vector<tk::real> m_b;         //!< SDE coefficients
+    const std::vector<tk::real> m_S;
+    const std::vector<tk::real> m_k;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // Dirichlet_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 11:07:24 PM MDT
+  \date      Mon Oct  7 11:39:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -15,7 +15,7 @@
 #include <Exception.h>
 #include <Option.h>
 
-namespace quinoa {
+namespace tk {
 //! Grammar definition: state, actions, grammar
 namespace grm {
 
@@ -27,13 +27,17 @@ namespace grm {
   enum class Error : uint8_t { KEYWORD,
                                MOMENT,
                                QUOTED,
-                               LIST };
+                               LIST,
+                               ALIAS,
+                               MISSING };
 
   static const std::map<Error, std::string> err_msg( {
     { Error::KEYWORD, "Unknown keyword" },
     { Error::MOMENT, "Unknown term in moment" },
     { Error::QUOTED, "Must be double-quoted" },
-    { Error::LIST, "Unknown value in list" }
+    { Error::LIST, "Unknown value in list" },
+    { Error::ALIAS, "Alias keyword too long" },
+    { Error::MISSING, "Required filename missing" }
   } );
   
   //! error handler
@@ -76,15 +80,15 @@ namespace grm {
   struct unknown :
          pad< ifapply< trim<any, space>, error<Stack,key> >, blank, space > {};
 
-  //! read 'token' padded by blank at left and space at right
+  //! read keyword 'token' padded by blank at left and space at right
   template< class token >
-  struct read :
+  struct readkw :
          pad< trim<token, space>, blank, space > {};
 
-  //! parse input padded by blank at left and space at right and if it matches
+  //! scan input padded by blank at left and space at right and if it matches
   //! 'keywords', apply 'actions'
   template< class keywords, typename... actions >
-  struct parse :
+  struct scan :
          pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
 
   //! comment: start with '#' until eol
@@ -98,18 +102,18 @@ namespace grm {
   //! plow through 'tokens' until 'endkeyword'
   template< class Stack, typename endkeyword, typename... tokens >
   struct block :
-         until< read<endkeyword>,
+         until< readkw<endkeyword>,
                 sor<comment, tokens..., unknown<Stack,Error::KEYWORD>> > {};
 
-  //! plow through list of values between keywords 'key' and "end", calling
+  //! plow through vector of values between keywords 'key' and "end", calling
   //! 'insert' for each if matches and allowing comments between values
   template< class Stack, typename endkeyword, class key, class insert,
             class value = number >
-  struct list :
-         ifmust< read<key>,
-                 until< read<endkeyword>,
+  struct vector :
+         ifmust< readkw<key>,
+                 until< readkw<endkeyword>,
                         sor<comment,
-                            parse<value,insert>,
+                            scan<value,insert>,
                             unknown<Stack,Error::LIST>> > > {};
 
   //! scan string between characters 'lbound' and 'rbound' and if matches apply
@@ -125,18 +129,18 @@ namespace grm {
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
   template< class keyword, class insert, class keywords = alnum >
   struct process :
-         ifmust< read<keyword>, parse<keywords,insert> > {};
+         ifmust< readkw<keyword>, scan<keywords,insert> > {};
 
   //! process 'keyword' and call its 'insert' action for string matched
   //! between characters 'lbound' and 'rbound'
   template< class Stack, class keyword, class insert, char lbound='"',
             char rbound='"' >
   struct process_quoted :
-         ifmust< read<keyword>,
+         ifmust< readkw<keyword>,
                  sor< quoted<Stack,insert,lbound,rbound>,
                       unknown<Stack,Error::QUOTED>> > {};
 
 } // grm::
-} // quinoa::
+} // tk::
 
 #endif // QuinoaInputDeckGrammar_h

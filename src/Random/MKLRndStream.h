@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLRndStream.h
   \author    J. Bakosi
-  \date      Thu Oct  3 15:52:03 2013
+  \date      Mon Oct  7 10:23:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -13,10 +13,9 @@
 #ifndef MKLRndStream_h
 #define MKLRndStream_h
 
-#include <QuinoaTypes.h>
 #include <MKL.h>
 
-namespace quinoa {
+namespace tk {
 
 //! MKL-based random number generator from leap-frog streams
 class MKLRndStream : public MKL {
@@ -51,6 +50,6 @@ class MKLRndStream : public MKL {
     VSLStreamStatePtr* m_stream;     //!< Array of pointers to thread-streams
 };
 
-} // namespace quinoa
+} // namespace tk
 
 #endif // MKLRndStream_h

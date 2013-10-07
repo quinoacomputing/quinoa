@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:56:24 PM MDT
+  \date      Mon Oct  7 10:07:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -33,7 +33,7 @@ quinoa::SiloError(char* msg)
   // Echo and throw
   std::stringstream ss;
   ss << "Silo library writer error: " << str;
-  Throw(ExceptType::FATAL, ss.str());
+  Throw(tk::ExceptType::FATAL, ss.str());
 }
 
 using namespace quinoa;
@@ -61,7 +61,7 @@ SiloWriter::SiloWriter(const std::string& filename,
 
   // Create Silo file
   m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_HDF5);
-  ErrChk(m_dbfile != NULL, ExceptType::FATAL,
+  ErrChk(m_dbfile != NULL, tk::ExceptType::FATAL,
         "Cannot create Silo file" + filename);
 }
 
@@ -86,7 +86,7 @@ SiloWriter::write()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  real* coords[] = { m_mesh.getx(), m_mesh.gety(), m_mesh.getz() };
+  tk::real* coords[] = { m_mesh.getx(), m_mesh.gety(), m_mesh.getz() };
   int nnodes = m_mesh.nnodes();
   int nfaces = nnodes/3;
   int zshapetype = DB_ZONETYPE_TRIANGLE;

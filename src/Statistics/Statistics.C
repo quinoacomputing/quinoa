@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu Oct  3 10:18:46 2013
+  \date      Mon Oct  7 10:53:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -22,7 +22,7 @@
 
 using namespace quinoa;
 
-Statistics::Statistics(const Base& base, const real* const particles) :
+Statistics::Statistics(const Base& base, const tk::real* const particles) :
   m_base(base),
   m_nthread(base.paradigm.nthread()),
   m_npar(base.control.get<ctr::component, ctr::npar>()),
@@ -47,7 +47,7 @@ Statistics::Statistics(const Base& base, const real* const particles) :
   for (auto& product : m_statistics) {
     if (ordinary(product)) {
 
-      m_instOrd.push_back(std::vector<const real*>());
+      m_instOrd.push_back(std::vector<const tk::real*>());
       m_plotOrdinary.push_back(false);
       m_nameOrdinary.push_back(std::string());
       m_ordFieldName.push_back(ctr::FieldName());
@@ -70,7 +70,7 @@ Statistics::Statistics(const Base& base, const real* const particles) :
   if (m_nord) {
     // Storage for all the required ordinary moments
     // +1 for each thread's 0 as center for ordinary moments
-    m_ordinary = std::unique_ptr<real[]>(new real [m_nthread*(m_nord+1)]);
+    m_ordinary = std::unique_ptr<tk::real[]>(new tk::real [m_nthread*(m_nord+1)]);
 
     // Put in zero as index of center for ordinary moments in central products
     m_ordinary[m_nord] = 0.0;
@@ -79,8 +79,8 @@ Statistics::Statistics(const Base& base, const real* const particles) :
     for (auto& product : m_statistics) {
       if (!ordinary(product)) {
 
-        m_instCen.push_back(std::vector<const real*>());
-        m_center.push_back(std::vector<const real*>());
+        m_instCen.push_back(std::vector<const tk::real*>());
+        m_center.push_back(std::vector<const tk::real*>());
         m_nameCentral.push_back(std::string());
 
         for (auto& term : product) {
@@ -100,7 +100,7 @@ Statistics::Statistics(const Base& base, const real* const particles) :
 
     if (m_ncen) {
       // Storage for all the required central moments
-      m_central = std::unique_ptr<real[]>(new real [m_nthread*m_ncen]);
+      m_central = std::unique_ptr<tk::real[]>(new tk::real [m_nthread*m_ncen]);
     }
   }
 
@@ -139,7 +139,8 @@ Statistics::mean(const ctr::Term& term) const
     }
   }
 
-  Throw(ExceptType::FATAL, std::string("Cannot find mean for variable ")+term);
+  Throw(tk::ExceptType::FATAL,
+        std::string("Cannot find mean for variable ") + term);
 }
 
 bool
@@ -150,7 +151,7 @@ Statistics::plotOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, ExceptType::FATAL,
+  Assert(m < m_nord, tk::ExceptType::FATAL,
          "Request for an unavailable ordinary moment");
   return m_plotOrdinary[m];
 }
@@ -163,7 +164,7 @@ Statistics::nameOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, ExceptType::FATAL,
+  Assert(m < m_nord, tk::ExceptType::FATAL,
          "Request for an unavailable ordinary moment");
   return m_nameOrdinary[m];
 }
@@ -176,7 +177,7 @@ Statistics::nameCentral(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_ncen, ExceptType::FATAL,
+  Assert(m < m_ncen, tk::ExceptType::FATAL,
          "Request for an unavailable central moment");
   return m_nameCentral[m];
 }
@@ -191,7 +192,7 @@ Statistics::estimateOrdinary()
   uint64_t p;
   int tid, i;
   size_t s, j;
-  real prod;
+  tk::real prod;
 
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p, i, s, j, prod)
@@ -204,7 +205,7 @@ Statistics::estimateOrdinary()
     #endif
 
     // Zero ordinary moment accumulators
-    memset(m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(real));
+    memset(m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(tk::real));
 
     // Accumulate ordinary moments
     #ifdef _OPENMP
@@ -243,7 +244,7 @@ Statistics::estimateCentral()
   uint64_t p;
   int tid, i;
   size_t s, j;
-  real prod;
+  tk::real prod;
 
   #ifdef _OPENMP
   #pragma omp parallel private(tid, p, i, s, j, prod)
@@ -256,7 +257,7 @@ Statistics::estimateCentral()
     #endif
 
     // Zero central moment accumulators
-    memset(m_central.get() + tid*m_ncen, 0, m_ncen*sizeof(real));
+    memset(m_central.get() + tid*m_ncen, 0, m_ncen*sizeof(tk::real));
 
     // Accumulate central moments
     #ifdef _OPENMP

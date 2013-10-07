@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 11:03:16 PM MDT
+  \date      Mon Oct  7 11:47:45 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -26,8 +26,7 @@ namespace rngtest {
 namespace grm {
 
   using namespace pegtl;
-  using namespace quinoa;
-  using namespace quinoa::grm;
+  using namespace tk::grm;
 
   // State
 
@@ -64,7 +63,7 @@ namespace grm {
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      quinoa::ctr::Option<OptionType> opt;
+      tk::Option<OptionType> opt;
       //! Emit warning on overwrite
       if (stack.get<tags...>() != RNGTestDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
@@ -97,38 +96,38 @@ namespace grm {
 
   // common to all RNG test suites
   struct rngtest_common :
-         quinoa::grm::list< Stack,
+         tk::grm::vector< Stack,
                             kw::end::pegtl_string,
                             kw::rngs::pegtl_string,
                             store_back<ctr::generator> > {};
 
-//   //! title
-//   struct title :
-//          ifmust< read<kw::title::pegtl_string>,
-//                  quoted<Stack,set<ctr::title>> > {};
+  //! title
+  struct title :
+         ifmust< readkw<kw::title::pegtl_string>,
+                 quoted<Stack,set<ctr::title>> > {};
 
   // smallcrush block
   struct smallcrush :
-         ifmust< quinoa::grm::parse<kw::smallcrush::pegtl_string,
-                                    store_option<sel::Battery,
-                                                 ctr::selected,
-                                                 ctr::battery>>,
+         ifmust< tk::grm::scan<kw::smallcrush::pegtl_string,
+                               store_option<sel::Battery,
+                                            ctr::selected,
+                                            ctr::battery>>,
                  rngtest_common > {};
 
   // crush block
   struct crush :
-         ifmust< quinoa::grm::parse<kw::crush::pegtl_string,
-                                    store_option<sel::Battery,
-                                                 ctr::selected,
-                                                 ctr::battery>>,
+         ifmust< tk::grm::scan<kw::crush::pegtl_string,
+                               store_option<sel::Battery,
+                                            ctr::selected,
+                                            ctr::battery>>,
                  rngtest_common > {};
 
   // bigcrush block
   struct bigcrush :
-         ifmust< quinoa::grm::parse<kw::bigcrush::pegtl_string,
-                                    store_option<sel::Battery,
-                                                 ctr::selected,
-                                                 ctr::battery>>,
+         ifmust< tk::grm::scan<kw::bigcrush::pegtl_string,
+                               store_option<sel::Battery,
+                                            ctr::selected,
+                                            ctr::battery>>,
                  rngtest_common > {};
 
   //! batteries
@@ -139,7 +138,7 @@ namespace grm {
 
   //! main keywords
   struct keywords :
-         sor< success /*title,
+         sor< title/*,
               battery*/ > {};
 
   //! ignore: comments and empty lines

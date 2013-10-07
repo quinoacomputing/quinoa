@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:23:06 PM MDT
+  \date      Mon Oct  7 09:07:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -20,15 +20,15 @@ namespace quinoa {
 //! InputDeck : Control< specialized to Quinoa >, see Types.h,
 //! This is also where the command line parser stores
 class InputDeck :
-  public Control< // tag           type
-                  ctr::title,      std::string,
-                  ctr::selected,   ctr::selects,
-                  ctr::incpar,     ctr::incpars,
-                  ctr::component,  ctr::components,
-                  ctr::interval,   ctr::intervals,
-                  ctr::io,         ctr::ios,
-                  ctr::param,      ctr::parameters,
-                  ctr::stat,       std::vector<ctr::Product> > {
+  public tk::Control< // tag           type
+                      ctr::title,      std::string,
+                      ctr::selected,   ctr::selects,
+                      ctr::incpar,     ctr::incpars,
+                      ctr::component,  ctr::components,
+                      ctr::interval,   ctr::intervals,
+                      ctr::io,         ctr::ios,
+                      ctr::param,      ctr::parameters,
+                      ctr::stat,       std::vector<ctr::Product> > {
 
   public:
     //! Constructor: set all defaults
@@ -37,15 +37,15 @@ class InputDeck :
       // Default title
       set<title>("");
       // Default selections
-      set<selected,geometry>(sel::GeometryType::NO_GEOMETRY);
-      set<selected,physics>(sel::PhysicsType::NO_PHYSICS);
-      set<selected,position>(sel::PositionType::NO_POSITION);
-      set<selected,mass>(sel::MassType::NO_MASS);
-      set<selected,hydro>(sel::HydroType::NO_HYDRO);
-      set<selected,energy>(sel::EnergyType::NO_ENERGY);
-      set<selected,mix>(sel::MixType::NO_MIX);
-      set<selected,frequency>(sel::FrequencyType::NO_FREQUENCY);
-      set<selected,mixrate>(sel::MixRateType::NO_MIXRATE);
+      set<selected,geometry>(ctr::GeometryType::NO_GEOMETRY);
+      set<selected,physics>(ctr::PhysicsType::NO_PHYSICS);
+      set<selected,position>(ctr::PositionType::NO_POSITION);
+      set<selected,mass>(ctr::MassType::NO_MASS);
+      set<selected,hydro>(ctr::HydroType::NO_HYDRO);
+      set<selected,energy>(ctr::EnergyType::NO_ENERGY);
+      set<selected,mix>(ctr::MixType::NO_MIX);
+      set<selected,frequency>(ctr::FrequencyType::NO_FREQUENCY);
+      set<selected,mixrate>(ctr::MixRateType::NO_MIXRATE);
       // Default time incrementation parameters
       set<incpar,nstep>(std::numeric_limits<uint64_t>::max());
       set<incpar,term>(1.0);
@@ -73,14 +73,14 @@ class InputDeck :
       // Default beta mass model parameters
       set<param,beta,atwood>(0.5);
       // Default Dirichlet mix model parameters
-      set<param,dirichlet,b>(std::vector<real>());
-      set<param,dirichlet,S>(std::vector<real>());
-      set<param,dirichlet,kappa>(std::vector<real>());
+      set<param,dirichlet,b>(std::vector<tk::real>());
+      set<param,dirichlet,S>(std::vector<tk::real>());
+      set<param,dirichlet,kappa>(std::vector<tk::real>());
       // Default generalized Dirichlet mix model parameters
-      set<param,gendirichlet,b>(std::vector<real>());
-      set<param,gendirichlet,S>(std::vector<real>());
-      set<param,gendirichlet,kappa>(std::vector<real>());
-      set<param,gendirichlet,c>(std::vector<real>());
+      set<param,gendirichlet,b>(std::vector<tk::real>());
+      set<param,gendirichlet,S>(std::vector<tk::real>());
+      set<param,gendirichlet,kappa>(std::vector<tk::real>());
+      set<param,gendirichlet,c>(std::vector<tk::real>());
       // Default gamma mix model parameters
       set<param,gamma,c1>(0.5);
       set<param,gamma,c2>(0.73);

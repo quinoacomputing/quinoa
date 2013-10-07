@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Types.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:20:21 PM MDT
+  \date      Mon Oct  7 09:06:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's input deck parsing
   \details   Types for Quinoa's input deck parsing
@@ -11,6 +11,7 @@
 #ifndef QuinoaInputDeckTypes_h
 #define QuinoaInputDeckTypes_h
 
+#include <Types.h>
 #include <Quinoa/InputDeck/Tags.h>
 #include <Quinoa/Options/Geometry.h>
 #include <Quinoa/Options/Physics.h>
@@ -171,27 +172,27 @@ struct FieldName {
 using Product = std::vector<Term>;
 
 //! Storage of selected options
-using selects = tuple::tagged_tuple<
-  geometry,  sel::GeometryType,   //!< Selected geometry definition
-  physics,   sel::PhysicsType,    //!< Selected physics
-  position,  sel::PositionType,   //!< Selected position model
-  mass,      sel::MassType,       //!< Selected mass model
-  hydro,     sel::HydroType,      //!< Selected hydrodynamics model
-  energy,    sel::EnergyType,     //!< Selected internal energy model
-  mix,       sel::MixType,        //!< Selected material mix model
-  frequency, sel::FrequencyType,  //!< Selected turbulence frequency model
-  mixrate,   sel::MixRateType     //!< Selected material mix rate model
+using selects = tk::tuple::tagged_tuple<
+  geometry,  ctr::GeometryType,   //!< Selected geometry definition
+  physics,   ctr::PhysicsType,    //!< Selected physics
+  position,  ctr::PositionType,   //!< Selected position model
+  mass,      ctr::MassType,       //!< Selected mass model
+  hydro,     ctr::HydroType,      //!< Selected hydrodynamics model
+  energy,    ctr::EnergyType,     //!< Selected internal energy model
+  mix,       ctr::MixType,        //!< Selected material mix model
+  frequency, ctr::FrequencyType,  //!< Selected turbulence frequency model
+  mixrate,   ctr::MixRateType     //!< Selected material mix rate model
 >;
 
 //! Time incrementation parameters storage
-using incpars = tuple::tagged_tuple<
+using incpars = tk::tuple::tagged_tuple<
   nstep, uint64_t,  //!< Number of time steps to take
-  term,  real,      //!< Time to terminate time stepping
-  dt,    real       //!< Size of time step
+  term,  tk::real,  //!< Time to terminate time stepping
+  dt,    tk::real   //!< Size of time step
 >;
 
 //! Components storage
-using components = tuple::tagged_tuple<
+using components = tk::tuple::tagged_tuple<
   nposition,  uint32_t,  //!< Number of position components in position model
   ndensity,   uint32_t,  //!< Number of density components in mass model
   nvelocity,  uint32_t,  //!< Number of velocity components in hydro model
@@ -201,7 +202,7 @@ using components = tuple::tagged_tuple<
 >;
 
 //! Output intervals storage
-using intervals = tuple::tagged_tuple<
+using intervals = tk::tuple::tagged_tuple<
   tty,  uint32_t,  //!< TTY output interval
   dump, uint32_t,  //!< Dump output interval
   plot, uint32_t,  //!< Plot output interval
@@ -210,7 +211,7 @@ using intervals = tuple::tagged_tuple<
 >;
 
 //! IO parameters storage
-using ios = tuple::tagged_tuple<
+using ios = tk::tuple::tagged_tuple<
   control,     std::string,  //!< Control filename
   input,       std::string,  //!< Input filename
   output,      std::string,  //!< Output filename
@@ -220,45 +221,45 @@ using ios = tuple::tagged_tuple<
 >;
 
 //! Beta mass model parameters storage
-using BetaParameters = tuple::tagged_tuple<
-  atwood, real
+using BetaParameters = tk::tuple::tagged_tuple<
+  atwood, tk::real
 >;
 
 //! Dirichlet mix model parameters storage
-using DirichletParameters = tuple::tagged_tuple<
-  b,     std::vector<real>,
-  S,     std::vector<real>,
-  kappa, std::vector<real>
+using DirichletParameters = tk::tuple::tagged_tuple<
+  b,     std::vector<tk::real>,
+  S,     std::vector<tk::real>,
+  kappa, std::vector<tk::real>
 >;
 
 //! Generalized Dirichlet mix model parameters storage
-using GenDirichletParameters = tuple::tagged_tuple<
-  b,     std::vector<real>,
-  S,     std::vector<real>,
-  kappa, std::vector<real>,
-  c,     std::vector<real>
+using GenDirichletParameters = tk::tuple::tagged_tuple<
+  b,     std::vector<tk::real>,
+  S,     std::vector<tk::real>,
+  kappa, std::vector<tk::real>,
+  c,     std::vector<tk::real>
 >;
 
 //! Gamma mix model parameters storage
-using GammaParameters = tuple::tagged_tuple<
-  c1, real,
-  c2, real,
-  c3, real,
-  c4, real
+using GammaParameters = tk::tuple::tagged_tuple<
+  c1, tk::real,
+  c2, tk::real,
+  c3, tk::real,
+  c4, tk::real
 >;
 
 //! Simplified Langevin hydro model parameters storage
-using SLMParameters = tuple::tagged_tuple<
-  c0, real
+using SLMParameters = tk::tuple::tagged_tuple<
+  c0, tk::real
 >;
 
 //! Generalized Langevin hydro model parameters storage
-using GLMParameters = tuple::tagged_tuple<
-  c0, real
+using GLMParameters = tk::tuple::tagged_tuple<
+  c0, tk::real
 >;
 
 //! Model parameters storage
-using parameters = tuple::tagged_tuple<
+using parameters = tk::tuple::tagged_tuple<
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
   gendirichlet, GenDirichletParameters,

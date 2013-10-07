@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:13:14 AM MDT
+  \date      Mon Oct  7 10:36:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -22,7 +22,6 @@
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 
-using namespace std;
 using namespace quinoa;
 
 Physics::Physics(const Base& base) :
@@ -33,7 +32,7 @@ Physics::Physics(const Base& base) :
   m_npar(base.control.get<ctr::component, ctr::npar>()),
   m_term(base.control.get<ctr::incpar, ctr::term>()),
   m_base(base),
-  m_particles(new real [m_npar * base.control.nprop()]),
+  m_particles(new tk::real [m_npar * base.control.nprop()]),
   m_statistics(base, m_particles.get()),
   m_glob(base.control.get<ctr::io, ctr::glob>()),
   m_stat(base.control.get<ctr::io, ctr::stat>(), m_statistics)
@@ -51,19 +50,19 @@ Physics::Physics(const Base& base) :
 
   // Instantiate mass model
   if (m_ndensity) {
-    sel::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
+    ctr::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
     m_mass = std::unique_ptr<Mass>(m_massFactory[m]());
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    sel::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
+    ctr::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
     m_hydro = std::unique_ptr<Hydro>(m_hydroFactory[m]());
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    sel::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
+    ctr::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
     m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
   }
 }
@@ -76,22 +75,22 @@ Physics::initFactory()
 //******************************************************************************
 {
   // Get raw pointer to particle properties
-  real* const p = m_particles.get();
+  tk::real* const p = m_particles.get();
 
   // Register mass models
-  m_massFactory[sel::MassType::BETA] =
+  m_massFactory[ctr::MassType::BETA] =
     std::bind(boost::factory<Beta*>(), m_base, p);
 
   // Register hydro models
-  m_hydroFactory[sel::HydroType::SLM] =
+  m_hydroFactory[ctr::HydroType::SLM] =
     std::bind(boost::factory<SimplifiedLangevin*>(), m_base, p);
-  m_hydroFactory[sel::HydroType::GLM] =
+  m_hydroFactory[ctr::HydroType::GLM] =
     std::bind(boost::factory<GeneralizedLangevin*>(), m_base, p);
 
   // Register mix models
-  m_mixFactory[sel::MixType::DIRICHLET] =
+  m_mixFactory[ctr::MixType::DIRICHLET] =
     std::bind(boost::factory<Dirichlet*>(), m_base, p);
-  m_mixFactory[sel::MixType::GENERALIZED_DIRICHLET] =
+  m_mixFactory[ctr::MixType::GENERALIZED_DIRICHLET] =
     std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, p);
 }
 
@@ -102,7 +101,7 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_base.print.section<sel::Physics, ctr::selected, ctr::physics>();
+  m_base.print.section<ctr::Physics, ctr::selected, ctr::physics>();
 
   m_base.print.subsection("Output filenames");
   m_base.print.item("Output", m_base.control.get<ctr::io,ctr::output>());
@@ -112,13 +111,13 @@ Physics::echo()
   m_base.print.endsubsection();
 
   m_base.print.subsection("Models");
-  m_base.print.item<sel::Position, ctr::selected, ctr::position>();
-  m_base.print.item<sel::Mass, ctr::selected, ctr::mass>();
-  m_base.print.item<sel::Hydro, ctr::selected, ctr::hydro>();
-  m_base.print.item<sel::Energy, ctr::selected, ctr::energy>();
-  m_base.print.item<sel::Mix, ctr::selected, ctr::mix>();
-  m_base.print.item<sel::Frequency, ctr::selected, ctr::frequency>();
-  m_base.print.item<sel::MixRate, ctr::selected, ctr::mixrate>();
+  m_base.print.item<ctr::Position, ctr::selected, ctr::position>();
+  m_base.print.item<ctr::Mass, ctr::selected, ctr::mass>();
+  m_base.print.item<ctr::Hydro, ctr::selected, ctr::hydro>();
+  m_base.print.item<ctr::Energy, ctr::selected, ctr::energy>();
+  m_base.print.item<ctr::Mix, ctr::selected, ctr::mix>();
+  m_base.print.item<ctr::Frequency, ctr::selected, ctr::frequency>();
+  m_base.print.item<ctr::MixRate, ctr::selected, ctr::mixrate>();
   m_base.print.endsubsection();
 
   m_base.print.subsection("Number of components");

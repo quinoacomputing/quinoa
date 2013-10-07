@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri 04 Oct 2013 08:17:20 AM MDT
+  \date      Mon Oct  7 10:58:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -18,6 +18,7 @@
 #include <QuinoaPrint.h>
 
 using namespace quinoa;
+using namespace tk;
 
 int main(int argc, char* argv[])
 //******************************************************************************
@@ -37,22 +38,22 @@ int main(int argc, char* argv[])
     std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
-    InputDeck control;                      //!< Control
-    QuinoaPrint print(control);             //!< Pretty printer
-    Paradigm paradigm(print);               //!< Parallel compute environment
-    Timer timer;                            //!< Timer
+    InputDeck control;                       //!< Control
+    QuinoaPrint print(control);              //!< Pretty printer
+    Paradigm paradigm(print);                //!< Parallel compute environment
+    Timer timer;                             //!< Timer
 
     // Bundle up essentials
     Base base(print, paradigm, control, timer);
 
     // Echo program name
-    init::echoHeader(print, "Quinoa: Lagrangian particle hydrodynamics");
+    echoHeader(print, "Quinoa: Lagrangian particle hydrodynamics");
 
     // Echo environment
     print.part("Environment");
-    init::echoBuildEnv(print, QUINOA_EXECUTABLE);  //!< Build environment
-    paradigm.echo();                               //!< Parallel compute env
-    init::echoRunEnv(print, argc, argv);           //!< Runtime environment
+    echoBuildEnv(print, QUINOA_EXECUTABLE);  //!< Build environment
+    paradigm.echo();                         //!< Parallel compute env
+    echoRunEnv(print, argc, argv);           //!< Runtime environment
 
     // Create driver
     QuinoaDriver driver(argc, argv, base);

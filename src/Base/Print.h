@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:11:53 2013
+  \date      Mon Oct  7 08:08:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -15,7 +15,7 @@
 
 #include <boost/format.hpp>
 
-namespace quinoa {
+namespace tk {
 
 //! Print base
 class Print {
@@ -132,6 +132,6 @@ class Print {
     Print& operator=(Print&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Print_h

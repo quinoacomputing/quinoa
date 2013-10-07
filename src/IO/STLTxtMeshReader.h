@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 09:00:44 PM MDT
+  \date      Mon Oct  7 10:02:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -21,7 +21,7 @@ class STLMesh;
 namespace quinoa {
 
 //! STLTxtMeshReader : Reader
-class STLTxtMeshReader : public Reader {
+class STLTxtMeshReader : public tk::Reader {
 
   public:
     //! Constructor
@@ -54,7 +54,7 @@ class STLTxtMeshReader : public Reader {
       //! Operator >> for reading a keyword and hande error
       friend std::ifstream& operator>> (std::ifstream& is, STLKeyword& kw) {
         is >> kw.read;
-        ErrChk(kw.read == kw.correct, ExceptType::FATAL,
+        ErrChk(kw.read == kw.correct, tk::ExceptType::FATAL,
                "Corruption in ASCII STL file while parsing keyword '" +
                kw.read + "', should be '" + kw.correct + "'");
         return is;
@@ -63,15 +63,15 @@ class STLTxtMeshReader : public Reader {
 
     //! Read (or count vertices in) ASCII STL mesh
     size_t readFacets(const bool store,
-                      real* const x = nullptr,
-                      real* const y = nullptr,
-                      real* const z = nullptr);
+                      tk::real* const x = nullptr,
+                      tk::real* const y = nullptr,
+                      tk::real* const z = nullptr);
 
     const bool STORE = true;                 //!< Indicator to store facets
     const bool COUNT = false;                //!< Indicator to only count facets
     STLMesh& m_mesh;                         //!< Mesh
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // STLTxtMeshReader_h

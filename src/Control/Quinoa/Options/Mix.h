@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:40:32 2013
+  \date      Mon Oct  7 09:16:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -17,7 +17,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Mix model types
 enum class MixType : uint8_t { NO_MIX=0,
@@ -27,7 +27,7 @@ enum class MixType : uint8_t { NO_MIX=0,
                                GENERALIZED_DIRICHLET };
 
 //! Class with base templated on the above enum class with associations
-class Mix : public Toggle<MixType> {
+class Mix : public tk::Toggle<MixType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -69,7 +69,7 @@ class Mix : public Toggle<MixType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaMixOptions_h

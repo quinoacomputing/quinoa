@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 10:33:10 PM MDT
+  \date      Mon Oct  7 09:50:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -16,9 +16,26 @@
 
 #include <Exception.h>
 
-namespace quinoa {
-//! selections
-namespace sel {
+namespace tk {
+
+// Operators defined outside of class (still in namespace tk) to equate operator
+// scope with that of enums
+
+//! Operator << for writing Enum to output streams
+template< typename Enum, typename Ch, typename Tr >
+std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os,
+                                       const Enum& e) {
+  os << static_cast<unsigned int>(e);
+  return os;
+}
+
+//! Operator + for adding Enum to a std::string
+template< typename Enum >
+std::string operator+ (const std::string& lhs, Enum e) {
+  std::stringstream ss;
+  ss << lhs << e;
+  return ss.str();
+}
 
 template< typename Enum >
 class Toggle {
@@ -72,26 +89,6 @@ class Toggle {
     const std::map<std::string, Enum>& values;
 };
 
-// Operators defined outside of class (still in namespace sel) to equate
-// operator scope with that of enums
-
-//! Operator + for adding Enum to a std::string
-template< typename Enum >
-std::string operator+ (const std::string& lhs, Enum e) {
-  std::stringstream ss;
-  ss << lhs << e;
-  return ss.str();
-}
-
-//! Operator << for writing Enum to output streams
-template< typename Enum, typename Ch, typename Tr >
-std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os,
-                                       const Enum& e) {
-  os << static_cast<unsigned int>(e);
-  return os;
-}
-
-} // sel::
-} // quinoa::
+} // tk::
 
 #endif // Toggle_h

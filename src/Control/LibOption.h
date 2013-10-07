@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:21:30 2013
+  \date      Mon Oct  7 08:13:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -13,7 +13,7 @@
 
 #include <Option.h>
 
-namespace quinoa {
+namespace tk {
 namespace ctr {
 
 //! Generic library option interface templated on option 'Type'
@@ -44,6 +44,6 @@ class LibOption : public Option<Type> {
 };
 
 } // ctr::
-} // quinoa::
+} // tk::
 
 #endif // LibOption_h

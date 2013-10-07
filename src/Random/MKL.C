@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKL.C
   \author    J. Bakosi
-  \date      Thu Aug 29 15:35:31 2013
+  \date      Mon Oct  7 08:43:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -15,7 +15,7 @@
 #include <MKL.h>
 #include <Exception.h>
 
-using namespace quinoa;
+using namespace tk;
 
 void
 MKL::uniform(const int& method,

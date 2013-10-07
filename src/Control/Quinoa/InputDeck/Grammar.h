@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 11:08:32 PM MDT
+  \date      Mon Oct  7 11:40:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -26,6 +26,7 @@ namespace quinoa {
 namespace grm {
 
   using namespace pegtl;
+  using namespace tk::grm;
 
   // State
 
@@ -100,7 +101,7 @@ namespace grm {
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      ctr::Option<OptionType> opt;
+      tk::Option<OptionType> opt;
       //! Emit warning on overwrite
       if (stack.get<tags...>() != QuinoaDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
@@ -142,117 +143,117 @@ namespace grm {
   //! plow through expectations between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_expectations :
-         read< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
-             > {};
+         readkw< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
+               > {};
 
   //! title
   struct title :
-         ifmust< read<kw::title::pegtl_string>,
+         ifmust< readkw<kw::title::pegtl_string>,
                  quoted<Stack,set<ctr::title>> > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
-         ifmust< parse< kw::analytic_geometry::pegtl_string,
-                        store_option<sel::Geometry,
-                                     ctr::selected,
-                                     ctr::geometry> >,
+         ifmust< scan< kw::analytic_geometry::pegtl_string,
+                       store_option<ctr::Geometry,
+                                    ctr::selected,
+                                    ctr::geometry> >,
                  block<Stack,kw::end::pegtl_string> > {};
 
   //! discrete_geometry block
   struct discrete_geometry:
-         ifmust< parse< kw::discrete_geometry::pegtl_string,
-                        store_option<sel::Geometry,
-                                     ctr::selected,
-                                     ctr::geometry> >,
+         ifmust< scan< kw::discrete_geometry::pegtl_string,
+                       store_option<ctr::Geometry,
+                                    ctr::selected,
+                                    ctr::geometry> >,
                  block<Stack,kw::end::pegtl_string> > {};
 
   //! dir block
   struct dir :
-         ifmust< parse< kw::mix_dir::pegtl_string,
-                        store_option<sel::Mix, ctr::selected, ctr::mix> >,
+         ifmust< scan< kw::mix_dir::pegtl_string,
+                       store_option<ctr::Mix, ctr::selected, ctr::mix> >,
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::nscalar::pegtl_string,
                                 store<ctr::component, ctr::nscalar>>,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_B::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::dirichlet,
-                                         ctr::b> >,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_S::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::dirichlet,
-                                         ctr::S> >,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_kappa::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::dirichlet,
-                                         ctr::kappa> > > > {};
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::dir_B::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::dirichlet,
+                                           ctr::b> >,
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::dir_S::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::dirichlet,
+                                           ctr::S> >,
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::dir_kappa::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::dirichlet,
+                                           ctr::kappa> > > > {};
 
   //! gendir block
   struct gendir :
-         ifmust< parse< kw::mix_gendir::pegtl_string,
-                        store_option<sel::Mix, ctr::selected, ctr::mix> >,
+         ifmust< scan< kw::mix_gendir::pegtl_string,
+                       store_option<ctr::Mix, ctr::selected, ctr::mix> >,
                  block< Stack,
                         kw::end::pegtl_string,
                         process< kw::nscalar::pegtl_string,
                                  store<ctr::component, ctr::nscalar> >,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_B::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::gendirichlet,
-                                         ctr::b> >,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_S::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::gendirichlet,
-                                         ctr::S> >,
-                        list< Stack,
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::dir_B::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::gendirichlet,
+                                           ctr::b> >,
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::dir_S::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::gendirichlet,
+                                           ctr::S> >,
+                        vector< Stack,
                               kw::end::pegtl_string,
                               kw::dir_kappa::pegtl_string,
                               store_back<ctr::param,
                                          ctr::gendirichlet,
                                          ctr::kappa> >,
-                        list< Stack,
-                              kw::end::pegtl_string,
-                              kw::gendir_C::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::gendirichlet,
-                                         ctr::c>> > > {};
+                        vector< Stack,
+                                kw::end::pegtl_string,
+                                kw::gendir_C::pegtl_string,
+                                store_back<ctr::param,
+                                           ctr::gendirichlet,
+                                           ctr::c>> > > {};
 
   //! statistics block
   struct statistics :
-         ifmust< read<kw::statistics::pegtl_string>,
+         ifmust< readkw<kw::statistics::pegtl_string>,
                  block<Stack,
                        kw::end::pegtl_string,
                        parse_expectations<'<','>'>> > {};
 
   //! slm block
   struct slm :
-         ifmust< parse< kw::hydro_slm::pegtl_string,
-                        store_option<sel::Hydro, ctr::selected, ctr::hydro>,
-                        // trigger estimating the diagonal of Reynolds-stress
-                        start_product,
-                        push_term<ctr::Quantity::VELOCITY_X,
-                                  ctr::Moment::CENTRAL, 'u'>,
-                        push_term<ctr::Quantity::VELOCITY_X,
-                                  ctr::Moment::CENTRAL, 'u'>,
-                        start_product,
-                        push_term<ctr::Quantity::VELOCITY_Y,
-                                  ctr::Moment::CENTRAL, 'v'>,
-                        push_term<ctr::Quantity::VELOCITY_Y,
-                                  ctr::Moment::CENTRAL, 'v'>,
-                        start_product,
-                        push_term<ctr::Quantity::VELOCITY_Z,
-                                  ctr::Moment::CENTRAL, 'w'>,
-                        push_term<ctr::Quantity::VELOCITY_Z,
-                                  ctr::Moment::CENTRAL, 'w'>>,
+         ifmust< scan< kw::hydro_slm::pegtl_string,
+                       store_option<ctr::Hydro, ctr::selected, ctr::hydro>,
+                       // trigger estimating the diagonal of Reynolds-stress
+                       start_product,
+                       push_term<ctr::Quantity::VELOCITY_X,
+                                 ctr::Moment::CENTRAL, 'u'>,
+                       push_term<ctr::Quantity::VELOCITY_X,
+                                 ctr::Moment::CENTRAL, 'u'>,
+                       start_product,
+                       push_term<ctr::Quantity::VELOCITY_Y,
+                                 ctr::Moment::CENTRAL, 'v'>,
+                       push_term<ctr::Quantity::VELOCITY_Y,
+                                 ctr::Moment::CENTRAL, 'v'>,
+                       start_product,
+                       push_term<ctr::Quantity::VELOCITY_Z,
+                                 ctr::Moment::CENTRAL, 'w'>,
+                       push_term<ctr::Quantity::VELOCITY_Z,
+                                 ctr::Moment::CENTRAL, 'w'>>,
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::SLM_C0::pegtl_string,
@@ -263,10 +264,10 @@ namespace grm {
 
   //! freq_gamma block
   struct freq_gamma :
-         ifmust< parse< kw::freq_gamma::pegtl_string,
-                        store_option<sel::Frequency,
-                                     ctr::selected,
-                                     ctr::frequency> >,
+         ifmust< scan< kw::freq_gamma::pegtl_string,
+                       store_option<ctr::Frequency,
+                                    ctr::selected,
+                                    ctr::frequency> >,
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::nfreq::pegtl_string,
@@ -283,8 +284,8 @@ namespace grm {
 
   //! beta block
   struct beta :
-         ifmust< parse<kw::mass_beta::pegtl_string,
-                       store_option<sel::Mass, ctr::selected, ctr::mass>>,
+         ifmust< scan<kw::mass_beta::pegtl_string,
+                      store_option<ctr::Mass, ctr::selected, ctr::mass>>,
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::ndensity::pegtl_string,
@@ -340,8 +341,8 @@ namespace grm {
 
   //! physics 'hommix' block
   struct hommix :
-         ifmust< parse<kw::hommix::pegtl_string,
-                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+         ifmust< scan<kw::hommix::pegtl_string,
+                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
                        kw::end::pegtl_string,
                        geometry,
@@ -351,8 +352,8 @@ namespace grm {
 
   //! physics 'homrt' block
   struct homrt :
-         ifmust< parse<kw::homrt::pegtl_string,
-                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+         ifmust< scan<kw::homrt::pegtl_string,
+                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
                        kw::end::pegtl_string,
                        geometry,
@@ -364,8 +365,8 @@ namespace grm {
 
   //! physics 'homhydro' block
   struct homhydro :
-         ifmust< parse<kw::homhydro::pegtl_string,
-                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+         ifmust< scan<kw::homhydro::pegtl_string,
+                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
                        kw::end::pegtl_string,
                        geometry,
@@ -376,8 +377,8 @@ namespace grm {
 
   //! physics 'spinsflow' block
   struct spinsflow :
-         ifmust< parse<kw::spinsflow::pegtl_string,
-                       store_option<sel::Physics, ctr::selected, ctr::physics>>,
+         ifmust< scan<kw::spinsflow::pegtl_string,
+                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
                        kw::end::pegtl_string,
                        geometry,

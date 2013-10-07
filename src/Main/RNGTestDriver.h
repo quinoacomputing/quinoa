@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:31:37 PM MDT
+  \date      Mon Oct  7 08:33:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -20,7 +20,7 @@ namespace rngtest {
 void MKLErrChk(int vslerr);
 
 //! RNGTestDriver base class
-class RNGTestDriver : public quinoa::Driver {
+class RNGTestDriver : public tk::Driver {
 
   public:
     //! Constructor
@@ -45,6 +45,6 @@ class RNGTestDriver : public quinoa::Driver {
     Base& m_base;                           //!< Essentials
 };
 
-} // namespace rngtest
+} // rngtest::
 
 #endif // RNGTestDriver_h

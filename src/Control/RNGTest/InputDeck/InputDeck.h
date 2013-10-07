@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:28:47 PM MDT
+  \date      Mon Oct  7 09:18:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -21,11 +21,11 @@ namespace rngtest {
 //! InputDeck : Control< specialized to RNGTest >, see Types.h
 //! This is also where the command line parser stores
 class InputDeck :
-  public quinoa::Control< // tag          type
-                          ctr::title,     std::string,
-                          ctr::selected,  ctr::selects,
-                          ctr::io,        ctr::ios,
-                          ctr::generator, std::vector<quinoa::sel::RNGType> > {
+  public tk::Control< // tag          type
+                      ctr::title,     std::string,
+                      ctr::selected,  ctr::selects,
+                      ctr::io,        ctr::ios,
+                      ctr::generator, std::vector<quinoa::ctr::RNGType> > {
 
   public:
     //! Constructor: set defaults
@@ -38,7 +38,7 @@ class InputDeck :
       // Default I/O parameters
       set<io,control>("");
       // Default requested generators
-      set<generator>(std::vector<quinoa::sel::RNGType>());
+      set<generator>(std::vector<quinoa::ctr::RNGType>());
     }
 
     //! Destructor

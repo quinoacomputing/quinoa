@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Thu Sep 19 16:30:41 2013
+  \date      Mon Oct  7 10:11:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -13,7 +13,7 @@
 
 #include <string>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Writer.h>
 
 namespace quinoa {
@@ -21,7 +21,7 @@ namespace quinoa {
 class Statistics;
 
 //! TxtStatWriter : Writer
-class TxtStatWriter : public Writer {
+class TxtStatWriter : public tk::Writer {
 
   public:
     //! Constructor
@@ -35,7 +35,7 @@ class TxtStatWriter : public Writer {
     void header();
 
     //! Write statistics file
-    void write(const int it, const real t);
+    void write(const int it, const tk::real t);
 
   private:
     //! Don't permit copy constructor
@@ -50,10 +50,10 @@ class TxtStatWriter : public Writer {
     const Statistics& m_statistics;     //!< Statistics estimator
     const int m_nord;                   //!< Number of ordinary moments
     const int m_ncen;                   //!< Number of central moments
-    const real* const m_ordinary;       //!< Ordinary moments
-    const real* const m_central;        //!< Central moments
+    const tk::real* const m_ordinary;   //!< Ordinary moments
+    const tk::real* const m_central;    //!< Central moments
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // TxtStatWriter_h

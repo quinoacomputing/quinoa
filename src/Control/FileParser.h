@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:55:39 PM MDT
+  \date      Mon Oct  7 08:11:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -15,7 +15,7 @@
 
 #include <Parser.h>
 
-namespace quinoa {
+namespace tk {
 
 //! FileParser : Parser
 class FileParser : public Parser {
@@ -43,6 +43,6 @@ class FileParser : public Parser {
     FileParser& operator=(FileParser&&) = delete;
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // FileParser_h

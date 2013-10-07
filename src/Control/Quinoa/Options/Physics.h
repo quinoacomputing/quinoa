@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Physics.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:40:44 2013
+  \date      Mon Oct  7 09:17:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics options and associations
   \details   Physics options and associations
@@ -17,7 +17,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-namespace sel {
+namespace ctr {
 
 //! Physics types
 enum class PhysicsType : uint8_t { NO_PHYSICS=0,
@@ -27,7 +27,7 @@ enum class PhysicsType : uint8_t { NO_PHYSICS=0,
                                    SPINSFLOW };
 
 //! Class with base templated on the above enum class with associations
-class Physics : public Toggle<PhysicsType> {
+class Physics : public tk::Toggle<PhysicsType> {
 
   public:
     //! Constructor: pass associations references to base, which will handle
@@ -69,7 +69,7 @@ class Physics : public Toggle<PhysicsType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // quinoa::
 
 #endif // QuinoaPhysicsOptions_h

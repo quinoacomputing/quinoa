@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:21:12 PM MDT
+  \date      Mon Oct  7 08:22:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
@@ -16,8 +16,6 @@
 #include <Geometry.h>
 
 namespace quinoa {
-
-class Primitive;
 
 //! Analytic geometry definition
 class AnalyticGeometry : public Geometry {
@@ -44,10 +42,8 @@ class AnalyticGeometry : public Geometry {
     AnalyticGeometry(AnalyticGeometry&&) = delete;
     //! Don't permit move assigment
     AnalyticGeometry& operator=(AnalyticGeometry&&) = delete;
-
-    std::vector<Primitive*> m_primitive;     //!< Vector of geometric primitives
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // AnalyticGeometry_h

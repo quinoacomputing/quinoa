@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.h
   \author    J. Bakosi
-  \date      Fri Sep 27 11:41:22 2013
+  \date      Mon Oct  7 10:38:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -53,21 +53,21 @@ class HomMix : public Physics {
     void reportHeader() const;
     void report(const uint64_t it,
                 const uint64_t nstep,
-                const real t,
-                const real dt,
+                const tk::real t,
+                const tk::real dt,
                 const bool wroteJpdf,
                 const bool wroteGlob,
                 const bool wrotePlot);
 
     //! Advance
-    void advance(real dt);
+    void advance(tk::real dt);
 
     //! Output joint scalar PDF
-    void outJpdf(const real t);
+    void outJpdf(const tk::real t);
 
-    const TimerIdx m_totalTime;           //!< Timer measuring the total run    
+    const tk::TimerIdx m_totalTime;           //!< Timer measuring the total run    
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // HomMix_h

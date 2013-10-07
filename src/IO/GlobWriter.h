@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Sun 01 Sep 2013 02:18:52 PM MDT
+  \date      Mon Oct  7 10:03:38 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -13,13 +13,13 @@
 
 #include <string>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 #include <Writer.h>
 
 namespace quinoa {
 
 //! GlobWriter : Writer
-class GlobWriter : public Writer {
+class GlobWriter : public tk::Writer {
 
   public:
     //! Constructor: Acquire glob file handle
@@ -30,7 +30,7 @@ class GlobWriter : public Writer {
     ~GlobWriter() noexcept override = default;
 
     //! Write glob file
-    void write(const uint64_t it, const real t);
+    void write(const uint64_t it, const tk::real t);
 
   private:
     //! Don't permit copy constructor
@@ -43,6 +43,6 @@ class GlobWriter : public Writer {
     GlobWriter& operator=(GlobWriter&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // GlobWriter_h

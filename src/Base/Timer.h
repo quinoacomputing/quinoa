@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Sun 15 Sep 2013 05:45:56 PM MDT
+  \date      Mon Oct  7 08:49:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -14,9 +14,9 @@
 #include <string>
 #include <chrono>
 
-#include <QuinoaTypes.h>
+#include <Types.h>
 
-namespace quinoa {
+namespace tk {
 
 using TimerIdx = int;
 
@@ -88,6 +88,6 @@ class Timer {
     mutable Clock m_timer[MAX_TIMERS];      //!< Timers
 };
 
-} // namespace quinoa
+} // tk::
 
 #endif // Timer_h

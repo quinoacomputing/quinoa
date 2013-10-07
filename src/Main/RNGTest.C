@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 02:36:40 PM MDT
+  \date      Mon Oct  7 10:58:27 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -17,8 +17,8 @@
 #include <RNGTestDriver.h>
 #include <RNGTestPrint.h>
 
-using namespace quinoa;
 using namespace rngtest;
+using namespace tk;
 
 int main(int argc, char* argv[])
 //******************************************************************************
@@ -37,22 +37,22 @@ int main(int argc, char* argv[])
     std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
-    rngtest::InputDeck control;             //!< Control
-    RNGTestPrint print(control);            //!< Pretty printer
-    Paradigm paradigm(print);               //!< Parallel compute environment
-    Timer timer;                            //!< Timer
+    rngtest::InputDeck control;               //!< Control
+    RNGTestPrint print(control);              //!< Pretty printer
+    Paradigm paradigm(print);                 //!< Parallel compute environment
+    Timer timer;                              //!< Timer
 
     // Bundle up essentials
     rngtest::Base base(print, paradigm, control, timer);
 
     // Echo program name
-    init::echoHeader(print, "Quinoa: Random number generator test suite");
+    echoHeader(print, "Quinoa: Random number generator test suite");
 
     // Echo environment
     print.part("Environment");
-    init::echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
-    paradigm.echo();                                //!< Parallel compute env
-    init::echoRunEnv(print, argc, argv);            //!< Runtime environment
+    echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
+    paradigm.echo();                          //!< Parallel compute env
+    echoRunEnv(print, argc, argv);            //!< Runtime environment
 
     // Create driver
     RNGTestDriver driver(argc, argv, base);
