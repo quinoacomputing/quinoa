@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:23:07 2013
+  \date      Mon Oct  7 15:28:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -37,7 +37,7 @@ namespace grm {
     { Error::QUOTED, "Must be double-quoted" },
     { Error::LIST, "Unknown value in list" },
     { Error::ALIAS, "Alias keyword too long" },
-    { Error::MISSING, "Required filename missing" }
+    { Error::MISSING, "Required field missing" }
   } );
   
   //! error handler
@@ -104,10 +104,27 @@ namespace grm {
   struct unknown :
          pad< ifapply< trim<any, space>, error<Stack,key> >, blank, space > {};
 
+  //! match alias cmdline keyword
+  template< class Stack, class keyword >
+  struct alias :
+         seq< one<'-'>,
+              typename keyword::pegtl_alias,
+              sor<space, unknown<Stack,Error::ALIAS>> > {};
+
+  //! match verbose cmdline keyword
+  template< class keyword >
+  struct verbose :
+         seq< string<'-','-'>, typename keyword::pegtl_string, space > {};
+
   //! read keyword 'token' padded by blank at left and space at right
   template< class token >
   struct readkw :
          pad< trim<token, space>, blank, space > {};
+
+  //! read command line 'keyword' in either verbose or alias form
+  template< class Stack, class keyword >
+  struct readcmd :
+         sor< verbose<keyword>, alias<Stack,keyword> > {};
 
   //! scan input padded by blank at left and space at right and if it matches
   //! 'keywords', apply 'actions'
@@ -151,9 +168,11 @@ namespace grm {
                > {};
 
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
-  template< class keyword, class insert, class keywords = alnum >
+  template< class Stack, class keyword, class insert, class keywords = alnum >
   struct process :
-         ifmust< readkw<keyword>, scan<keywords,insert> > {};
+         ifmust< readkw<keyword>,
+                 scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
+                       insert> > {};
 
   //! process 'keyword' and call its 'insert' action for string matched
   //! between characters 'lbound' and 'rbound'
@@ -163,6 +182,14 @@ namespace grm {
          ifmust< readkw<keyword>,
                  sor< quoted<Stack,insert,lbound,rbound>,
                       unknown<Stack,Error::QUOTED>> > {};
+
+  //! process command line 'keyword' and call its 'insert' action if matches
+  //! 'keywords'
+  template< class Stack, class keyword, class insert, class keywords = any >
+  struct process_cmd :
+         ifmust< readcmd<Stack,keyword>,
+                 scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
+                       insert> > {};
 
 } // grm::
 } // tk::
