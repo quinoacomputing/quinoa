@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:14:44 2013
+  \date      Mon Oct  7 14:19:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -96,7 +96,7 @@ namespace grm {
   //! title
   struct title :
          ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,put<Stack,ctr::title>> > {};
+                 quoted<Stack,Set<Stack,ctr::title>> > {};
 
   // smallcrush block
   struct smallcrush :

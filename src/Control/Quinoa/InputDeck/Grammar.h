@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:13:36 2013
+  \date      Mon Oct  7 14:19:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -36,22 +36,6 @@ namespace grm {
   static int field = 0;
 
   // Actions
-
-//   //! put value in state at position given by tags without conversion
-//   template<typename... tags >
-//   struct set : action_base< set<tags...> > {
-//     static void apply(const std::string& value, Stack& stack) {
-//       stack.set<tags...>(value);
-//     }
-//   };
-
-  //! put value in state at position given by tags
-  template< typename... tags >
-  struct store : action_base< store<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.store<tags...>(value);
-    }
-  };
 
   //! convert and push back value to vector in state at position given by tags
   template< typename...tags >
@@ -149,7 +133,7 @@ namespace grm {
   //! title
   struct title :
          ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,put<Stack,ctr::title>> > {};
+                 quoted<Stack,Set<Stack,ctr::title>> > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
@@ -174,7 +158,7 @@ namespace grm {
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::nscalar::pegtl_string,
-                                store<ctr::component, ctr::nscalar>>,
+                                Store<Stack, ctr::component, ctr::nscalar>>,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
@@ -201,7 +185,7 @@ namespace grm {
                  block< Stack,
                         kw::end::pegtl_string,
                         process< kw::nscalar::pegtl_string,
-                                 store<ctr::component, ctr::nscalar> >,
+                                 Store<Stack, ctr::component, ctr::nscalar> >,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
@@ -257,9 +241,9 @@ namespace grm {
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::SLM_C0::pegtl_string,
-                                store<ctr::param, ctr::slm, ctr::c0>>,
+                                Store<Stack, ctr::param, ctr::slm, ctr::c0>>,
                         process<kw::nvelocity::pegtl_string,
-                                store<ctr::component, ctr::nvelocity>>
+                                Store<Stack, ctr::component, ctr::nvelocity>>
                       > > {};
 
   //! freq_gamma block
@@ -271,15 +255,15 @@ namespace grm {
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::nfreq::pegtl_string,
-                                store<ctr::component, ctr::nfrequency>>,
+                                Store<Stack, ctr::component, ctr::nfrequency>>,
                         process<kw::freq_gamma_C1::pegtl_string,
-                                store<ctr::param, ctr::gamma, ctr::c1>>,
+                                Store<Stack, ctr::param, ctr::gamma, ctr::c1>>,
                         process<kw::freq_gamma_C2::pegtl_string,
-                                store<ctr::param, ctr::gamma, ctr::c2>>,
+                                Store<Stack, ctr::param, ctr::gamma, ctr::c2>>,
                         process<kw::freq_gamma_C3::pegtl_string,
-                                store<ctr::param, ctr::gamma, ctr::c3>>,
+                                Store<Stack, ctr::param, ctr::gamma, ctr::c3>>,
                         process<kw::freq_gamma_C4::pegtl_string,
-                                store<ctr::param, ctr::gamma, ctr::c4>> >
+                                Store<Stack, ctr::param, ctr::gamma, ctr::c4>> >
                > {};
 
   //! beta block
@@ -289,9 +273,10 @@ namespace grm {
                  block< Stack,
                         kw::end::pegtl_string,
                         process<kw::ndensity::pegtl_string,
-                                store<ctr::component, ctr::ndensity>>,
+                                Store<Stack, ctr::component, ctr::ndensity>>,
                         process<kw::Beta_At::pegtl_string,
-                                store<ctr::param,
+                                Store<Stack,
+                                      ctr::param,
                                       ctr::beta,
                                       ctr::atwood>> >
                > {};
@@ -304,23 +289,23 @@ namespace grm {
   //! common to all physics
   struct physics_common :
          sor< process<kw::nstep::pegtl_string,
-                      store<ctr::incpar, ctr::nstep>>,
+                      Store<Stack, ctr::incpar, ctr::nstep>>,
               process<kw::term::pegtl_string,
-                      store<ctr::incpar, ctr::term>>,
+                      Store<Stack, ctr::incpar, ctr::term>>,
               process<kw::dt::pegtl_string,
-                      store<ctr::incpar, ctr::dt>>,
+                      Store<Stack, ctr::incpar, ctr::dt>>,
               process<kw::npar::pegtl_string,
-                      store<ctr::component, ctr::npar>>,
+                      Store<Stack, ctr::component, ctr::npar>>,
               process<kw::glbi::pegtl_string,
-                      store<ctr::interval, ctr::glob>>,
+                      Store<Stack, ctr::interval, ctr::glob>>,
               process<kw::pdfi::pegtl_string,
-                      store<ctr::interval, ctr::pdf>>,
+                      Store<Stack, ctr::interval, ctr::pdf>>,
               process<kw::stai::pegtl_string,
-                      store<ctr::interval, ctr::plot>>,
+                      Store<Stack, ctr::interval, ctr::plot>>,
               process<kw::ttyi::pegtl_string,
-                      store<ctr::interval, ctr::tty>>,
+                      Store<Stack, ctr::interval, ctr::tty>>,
               process<kw::dmpi::pegtl_string,
-                      store<ctr::interval, ctr::dump>>
+                      Store<Stack, ctr::interval, ctr::dump>>
             > {};
 
   //! mass models
