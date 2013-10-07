@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:41:43 2013
+  \date      Mon Oct  7 14:32:34 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -28,7 +28,7 @@ namespace cmd {
   // State
 
   //! Everything is stored in Stack during parsing
-  using Stack = InputDeck;
+  using Stack = ctr::InputDeck;
 
   //! Command line parser error types
   enum class Error : uint8_t { KEYWORD,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:18:47 2013
+  \date      Mon Oct  7 14:29:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -17,6 +17,7 @@
 #include <RNGTest/InputDeck/Types.h>
 
 namespace rngtest {
+namespace ctr {
 
 //! InputDeck : Control< specialized to RNGTest >, see Types.h
 //! This is also where the command line parser stores
@@ -58,6 +59,7 @@ class InputDeck :
 //! InputDeck defaults
 static const InputDeck RNGTestDefaults;
 
-} // namespace rngtest
+} // ctr::
+} // rngtest::
 
 #endif // RNGTestInputDeck_h

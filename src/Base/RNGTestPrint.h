@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:09:58 2013
+  \date      Mon Oct  7 14:29:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -22,7 +22,7 @@ class RNGTestPrint : public tk::Print {
 
   public:
     //! Constructor
-    explicit RNGTestPrint(const InputDeck& control) : m_ctr(control) {
+    explicit RNGTestPrint(const ctr::InputDeck& control) : m_ctr(control) {
       IGNORE(m_ctr);
     }
 
@@ -39,7 +39,7 @@ class RNGTestPrint : public tk::Print {
     //! Don't permit move assigment
     RNGTestPrint& operator=(RNGTestPrint&&) = delete;
 
-    const InputDeck& m_ctr;         //!< Parsed control
+    const ctr::InputDeck& m_ctr;         //!< Parsed control
 };
 
 } // rngtest::

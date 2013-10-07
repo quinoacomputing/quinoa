@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:24:28 2013
+  \date      Mon Oct  7 14:31:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -31,7 +31,7 @@ namespace grm {
   // State
 
   //! Everything is stored in Stack during parsing
-  using Stack = InputDeck;
+  using Stack = ctr::InputDeck;
 
   // Actions
 
@@ -41,7 +41,7 @@ namespace grm {
     static void apply(const std::string& value, Stack& stack) {
       tk::Option<OptionType> opt;
       //! Emit warning on overwrite
-      if (stack.get<tags...>() != RNGTestDefaults.get<tags...>()) {
+      if (stack.get<tags...>() != ctr::RNGTestDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
                   << opt.name(stack.get<tags...>()) << "' with '"

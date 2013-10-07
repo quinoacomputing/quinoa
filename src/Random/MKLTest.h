@@ -2,7 +2,7 @@
 /*!
   \file      src/Random/MKLTest.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:52:05 2013
+  \date      Mon Oct  7 14:33:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -26,7 +26,7 @@ class MKLTest {
 
   public:
     //! Constructor
-    explicit MKLTest(const InputDeck& control);
+    explicit MKLTest(const ctr::InputDeck& control);
 
     //! Destructor
     ~MKLTest();

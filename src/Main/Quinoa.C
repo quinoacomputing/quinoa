@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:58:37 2013
+  \date      Mon Oct  7 14:34:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     std::set_unexpected(unexpectedHandler);
 
     // Create the essentials
-    InputDeck control;                       //!< Control
+    ctr::InputDeck control;                  //!< Control
     QuinoaPrint print(control);              //!< Pretty printer
     Paradigm paradigm(print);                //!< Parallel compute environment
     Timer timer;                             //!< Timer
