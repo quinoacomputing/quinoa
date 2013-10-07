@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:07:24 2013
+  \date      Mon Oct  7 14:27:03 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -16,6 +16,7 @@
 #include <Quinoa/InputDeck/Types.h>
 
 namespace quinoa {
+namespace ctr {
 
 //! InputDeck : Control< specialized to Quinoa >, see Types.h,
 //! This is also where the command line parser stores
@@ -161,6 +162,7 @@ class InputDeck :
 //! InputDeck defaults
 static const InputDeck QuinoaDefaults;
 
-} // namespace quinoa
+} // ctr::
+} // quinoa::
 
 #endif // QuinoaInputDeck_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:22:19 2013
+  \date      Mon Oct  7 14:30:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -31,7 +31,7 @@ namespace grm {
   // State
 
   //! Everything is stored in Stack during parsing
-  using Stack = InputDeck;
+  using Stack = ctr::InputDeck;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
 
@@ -79,7 +79,7 @@ namespace grm {
     static void apply(const std::string& value, Stack& stack) {
       tk::Option<OptionType> opt;
       //! Emit warning on overwrite
-      if (stack.get<tags...>() != QuinoaDefaults.get<tags...>()) {
+      if (stack.get<tags...>() != ctr::QuinoaDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
                   << opt.name(stack.get<tags...>()) << "' with '"

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:34:41 2013
+  \date      Mon Oct  7 14:29:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -23,13 +23,13 @@ namespace quinoa {
 struct Base {
   QuinoaPrint& print;
   tk::Paradigm& paradigm;
-  InputDeck& control;
+  ctr::InputDeck& control;
   tk::Timer& timer;
 
   //! Initializer constructor
   Base(QuinoaPrint& Print,
        tk::Paradigm& Paradigm,
-       InputDeck& Control,
+       ctr::InputDeck& Control,
        tk::Timer& Timer) : print(Print),
                            paradigm(Paradigm),
                            control(Control),
@@ -44,13 +44,13 @@ namespace rngtest {
 struct Base {
   RNGTestPrint& print;
   tk::Paradigm& paradigm;
-  InputDeck& control;
+  ctr::InputDeck& control;
   tk::Timer& timer;
 
   //! Initializer constructor
   Base(RNGTestPrint& Print,
        tk::Paradigm& Paradigm,
-       InputDeck& Control,
+       ctr::InputDeck& Control,
        tk::Timer& Timer) : print(Print),
                            paradigm(Paradigm),
                            control(Control),

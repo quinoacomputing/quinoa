@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:36:19 2013
+  \date      Mon Oct  7 14:33:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -38,7 +38,7 @@ class Physics {
 
     //! Constant accessor to control object
     //! \return Control object
-    const InputDeck& control() const noexcept { return m_base.control; }
+    const ctr::InputDeck& control() const noexcept { return m_base.control; }
 
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
