@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:19:16 2013
+  \date      Mon Oct  7 14:23:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -81,6 +81,14 @@ namespace grm {
   struct Store : action_base< Store<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template store<tag,tags...>(value);
+    }
+  };
+
+  //! convert and push back value to vector in state at position given by tags
+  template< class Stack, typename tag, typename...tags >
+  struct Store_back : action_base< Store_back<Stack,tag,tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      stack.template store_back<tag,tags...>(value);
     }
   };
 
