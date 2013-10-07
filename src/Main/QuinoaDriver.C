@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:34:00 PM MDT
+  \date      Sun 06 Oct 2013 03:38:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -23,8 +23,8 @@
 
 using namespace quinoa;
 
-QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base)
-  : m_base(base)
+QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base) :
+  m_base(base)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line

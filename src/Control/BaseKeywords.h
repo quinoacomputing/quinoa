@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:51:48 2013
+  \date      Sun 06 Oct 2013 04:30:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -11,9 +11,6 @@
 #ifndef Keywords
 #error "BaseKeywords.h should only be included within a *Keywords.h"
 #endif
-
-#ifndef BaseKeywords_h
-#define BaseKeywords_h
 
 // Keyword 'title'
 struct title_info {
@@ -34,5 +31,3 @@ struct end_info {
   }
 };
 using end = keyword<end_info, e,n,d >;
-
-#endif // BaseKeywords_h
