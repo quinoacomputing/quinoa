@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:40:02 2013
+  \date      Mon Oct  7 14:13:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -37,13 +37,13 @@ namespace grm {
 
   // Actions
 
-  //! put value in state at position given by tags without conversion
-  template<typename... tags >
-  struct set : action_base< set<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.set<tags...>(value);
-    }
-  };
+//   //! put value in state at position given by tags without conversion
+//   template<typename... tags >
+//   struct set : action_base< set<tags...> > {
+//     static void apply(const std::string& value, Stack& stack) {
+//       stack.set<tags...>(value);
+//     }
+//   };
 
   //! put value in state at position given by tags
   template< typename... tags >
@@ -149,7 +149,7 @@ namespace grm {
   //! title
   struct title :
          ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,set<ctr::title>> > {};
+                 quoted<Stack,put<Stack,ctr::title>> > {};
 
   //! analytic_geometry block
   struct analytic_geometry:

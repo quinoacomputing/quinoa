@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:47:45 2013
+  \date      Mon Oct  7 14:14:44 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -34,14 +34,6 @@ namespace grm {
   using Stack = InputDeck;
 
   // Actions
-
-  //! put value in state at position given by tags without conversion
-  template< typename... tags >
-  struct set : action_base< set<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.set<tags...>(value);
-    }
-  };
 
   //! put value in state at position given by tags
   template< typename... tags >
@@ -104,7 +96,7 @@ namespace grm {
   //! title
   struct title :
          ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,set<ctr::title>> > {};
+                 quoted<Stack,put<Stack,ctr::title>> > {};
 
   // smallcrush block
   struct smallcrush :
