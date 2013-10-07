@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
-  \date      Sat 21 Sep 2013 09:52:47 PM MDT
+  \date      Sun 06 Oct 2013 04:31:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
@@ -15,9 +15,6 @@
 #ifndef Keywords
 #error "MKLRNGKeywords.h should only be included within a *Keywords.h"
 #endif
-
-#ifndef MKLRNGKeywords_h
-#define MKLRNGKeywords_h
 
 // Keyword 'mkl_mcg31'
 struct mkl_mcg31_info {
@@ -182,5 +179,3 @@ struct mkl_nondeterm_info {
 };
 using mkl_nondeterm =
   keyword< mkl_nondeterm_info, m,k,l,'_',n,o,n,d,e,t,e,r,m >;
-
-#endif // MKLRNGKeywords_h

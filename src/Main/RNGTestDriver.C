@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:32:48 PM MDT
+  \date      Sun 06 Oct 2013 04:36:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -119,6 +119,12 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, Base& base) :
 
   // Parse command line
   cmdParser.parse();
+
+  // Instantiate input deck parser
+  InputDeckParser idParser(base);
+
+  // Parse input deck
+  idParser.parse();
 
 IGNORE(m_base);
 }

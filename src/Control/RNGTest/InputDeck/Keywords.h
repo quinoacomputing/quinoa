@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 17:29:02 2013
+  \date      Sun 06 Oct 2013 04:03:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite input deck parser. The keywords are defined by specializing struct
@@ -34,38 +34,15 @@ using quinoa::kw::keyword;
 // Include Intel's MKL's RNG keywords
 #include <MKLRNGKeywords.h>
 
-// Keyword 'rngtest'
-struct rngtest_info {
-  static const char* name() { return
-    "Random number generator (RNG) test suite"; }
-  static const char* help() { return
-    "This keyword is used to introduce the description of a random number "
-    "generator test suite. This is an rngtest ... end block, defining various "
-    "options and parameters of the test suite to run.";
-  }
-};
-using rngtest = keyword< rngtest_info, r,n,g,t,e,s,t >;
-
-// Keyword 'battery'
-struct battery_info {
-  static const char* name() { return "RNG test suite selector"; }
-  static const char* help() { return
-    "This keyword is used to select the set of predefined battery of tests to "
-    "run. Example:\n"
-    "\t  battery smallcrush";
-  }
-};
-using battery = keyword< battery_info, b,a,t,t,e,r,y >;
-
 // Keyword 'smallcrush'
 struct smallcrush_info {
   static const char* name() { return "SmallCrush"; }
   static const char* help() { return
-    "This keyword is used to select the RNG battery 'SmallCrush'. SmallCrush "
-    "is a battery of relatively small number, O(10), of tests, defined in "
-    "TestU01, a library for the empirical testing of random number generators. "
-    "For more info, see "
-    "http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.";
+    "This keyword is used to introduce the description of the random number "
+    "generator test suite, i.e., battery, 'SmallCrush'. SmallCrush is a "
+    "battery of relatively small number, O(10), of tests, defined in TestU01, "
+    "a library for the empirical testing of random number generators. For more "
+    "info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.";
   }
 };
 using smallcrush = keyword< smallcrush_info, s,m,a,l,l,c,r,u,s,h >;
@@ -74,8 +51,9 @@ using smallcrush = keyword< smallcrush_info, s,m,a,l,l,c,r,u,s,h >;
 struct crush_info {
   static const char* crush_name() { return "Crush"; }
   static const char* crush_help() { return
-    "This keyword is used to select the RNG battery 'Crush'. Crush is a suite "
-    "of stringent statistical tests, O(100), defined in TestU01, a library for "
+    "This keyword is used to introduce the description of the random number "
+    "generator test suite, i.e., battery, 'Crush'. Crush is a suite of "
+    "stringent statistical tests, O(100), defined in TestU01, a library for "
     "the empirical testing of random number generators. For more info, see "
     "http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.";
   }
@@ -86,7 +64,8 @@ using crush = keyword< crush_info, c,r,u,s,h >;
 struct bigcrush_info {
   static const char* bigcrush_name() { return "BigCrush"; }
   static const char* bigcrush_help() { return
-    "This keyword is used to select the RNG battery 'BigCrush'. BigCrush is a "
+    "This keyword is used to introduce the description of the random number "
+    "generator test suite, i.e., battery, 'BigCrush'. BigCrush is a "
     "suite of very stringent statistical tests, O(100), defined in TestU01, a "
     "library for the empirical testing of random number generators. For more "
     "info, see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html.";
