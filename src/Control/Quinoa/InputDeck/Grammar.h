@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:19:41 2013
+  \date      Mon Oct  7 14:22:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -36,14 +36,6 @@ namespace grm {
   static int field = 0;
 
   // Actions
-
-  //! convert and push back value to vector in state at position given by tags
-  template< typename...tags >
-  struct store_back : action_base< store_back<tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      stack.store_back<tags...>(value);
-    }
-  };
 
   //! start new product in vector of statistics
   struct start_product : action_base< start_product > {
@@ -162,19 +154,22 @@ namespace grm {
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::dirichlet,
                                            ctr::b> >,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_S::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::dirichlet,
                                            ctr::S> >,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_kappa::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::dirichlet,
                                            ctr::kappa> > > > {};
 
@@ -189,25 +184,29 @@ namespace grm {
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::gendirichlet,
                                            ctr::b> >,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::dir_S::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::gendirichlet,
                                            ctr::S> >,
                         vector< Stack,
-                              kw::end::pegtl_string,
-                              kw::dir_kappa::pegtl_string,
-                              store_back<ctr::param,
-                                         ctr::gendirichlet,
-                                         ctr::kappa> >,
+                                kw::end::pegtl_string,
+                                kw::dir_kappa::pegtl_string,
+                                Store_back<Stack,
+                                           ctr::param,
+                                           ctr::gendirichlet,
+                                           ctr::kappa> >,
                         vector< Stack,
                                 kw::end::pegtl_string,
                                 kw::gendir_C::pegtl_string,
-                                store_back<ctr::param,
+                                Store_back<Stack,
+                                           ctr::param,
                                            ctr::gendirichlet,
                                            ctr::c>> > > {};
 
