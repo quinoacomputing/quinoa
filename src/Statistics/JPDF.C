@@ -2,14 +2,14 @@
 /*!
   \file      src/Statistics/JPDF.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:45:47 2013
+  \date      Mon 07 Oct 2013 08:47:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
 */
 //******************************************************************************
 
-#include <iostream>
+#include <cmath>
 
 #include <JPDF.h>
 #include <Exception.h>

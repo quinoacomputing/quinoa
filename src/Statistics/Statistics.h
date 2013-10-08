@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:17:29 2013
+  \date      Mon 07 Oct 2013 08:49:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -17,8 +17,6 @@
 #include <Quinoa/InputDeck/Types.h>
 
 namespace quinoa {
-
-class Physics;
 
 //! Statistics estimator
 class Statistics {
