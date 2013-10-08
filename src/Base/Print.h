@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:36:55 PM MDT
+  \date      Tue Oct  8 07:14:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -25,7 +25,7 @@ class Print {
     explicit Print() = default;
 
     //! Destructor
-    virtual ~Print() noexcept = default;
+    virtual ~Print() = default;
 
     //! Print header
     void header(const std::string& title) const {

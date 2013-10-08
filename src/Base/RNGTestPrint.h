@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:29:48 2013
+  \date      Tue Oct  8 07:14:19 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -27,7 +27,7 @@ class RNGTestPrint : public tk::Print {
     }
 
     //! Destructor
-    ~RNGTestPrint() noexcept override = default;
+    ~RNGTestPrint() override = default;
 
   private:
     //! Don't permit copy constructor
