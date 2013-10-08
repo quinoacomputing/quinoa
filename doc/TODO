@@ -7,8 +7,6 @@
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.
 
-* Error/Exception handling: Can we get rid of Exception macros?
-
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
   false positives) in MKL and non-MKL code. May need to implement another random
