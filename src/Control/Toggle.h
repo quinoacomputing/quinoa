@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:50:57 2013
+  \date      Mon 07 Oct 2013 08:20:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -23,15 +23,15 @@ namespace tk {
 
 //! Operator << for writing Enum to output streams
 template< typename Enum, typename Ch, typename Tr >
-std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os,
-                                       const Enum& e) {
+std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os, Enum e) {
   os << static_cast<unsigned int>(e);
   return os;
 }
 
 //! Operator + for adding Enum to a std::string
-template< typename Enum >
-std::string operator+ (const std::string& lhs, Enum e) {
+template< typename Enum, typename Ch, typename Tr >
+std::basic_string<Ch,Tr> operator+ (const std::basic_string<Ch,Tr>& lhs,
+                                    Enum e) {
   std::stringstream ss;
   ss << lhs << e;
   return ss.str();

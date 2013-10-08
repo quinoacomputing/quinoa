@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:08:25 2013
+  \date      Mon 07 Oct 2013 08:36:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -25,7 +25,7 @@ class Print {
     explicit Print() = default;
 
     //! Destructor
-    virtual ~Print() noexcept {}
+    virtual ~Print() noexcept = default;
 
     //! Print header
     void header(const std::string& title) const {
@@ -38,6 +38,7 @@ class Print {
 
     //! Print part header: title
     void part(const std::string& title) const {
+      using std::operator+;
       std::string::size_type half_length = title.size()/2 + 1;
       std::string s(half_length, '-');
       std::string underline(s + " o " + s);
@@ -104,10 +105,12 @@ class Print {
     const char m_subsection_bullet = '<';
     //! indents
     const std::string m_section_indent = " ";
-    const std::string m_subsection_indent = m_section_indent + "  ";
-    const std::string m_item_indent = m_subsection_indent + "  ";
+    const std::string m_subsection_indent =
+      std::operator+(m_section_indent,"  ");
+    const std::string m_item_indent = std::operator+(m_subsection_indent,"  ");
     //! indent sizes
-    const std::string::size_type m_section_indent_size = m_section_indent.size();
+    const std::string::size_type m_section_indent_size =
+      m_section_indent.size();
 
     //! Format strings
     using format = boost::format;
