@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:28:19 2013
+  \date      Tue Oct  8 07:14:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -28,7 +28,7 @@ class QuinoaPrint : public tk::Print {
     explicit QuinoaPrint(const ctr::InputDeck& control) : m_ctr(control) {}
 
     //! Destructor
-    ~QuinoaPrint() noexcept override = default;
+    ~QuinoaPrint() override = default;
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
