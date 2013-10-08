@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:36:57 2013
+  \date      Mon Oct  7 16:24:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -11,7 +11,6 @@
 
 #include <boost/functional/factory.hpp>
 
-#include <Paradigm.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 #include <Physics.h>
 #include <Mass/Beta/Beta.h>
