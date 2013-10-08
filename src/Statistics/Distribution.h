@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:10:08 2013
+  \date      Mon 07 Oct 2013 08:44:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Distribution estimator base
   \details   Distribution estimator base
@@ -10,9 +10,6 @@
 //******************************************************************************
 #ifndef Distribution_h
 #define Distribution_h
-
-#include <vector>
-#include <iostream>
 
 namespace tk {
 

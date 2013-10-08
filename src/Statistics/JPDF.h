@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:10:59 2013
+  \date      Mon 07 Oct 2013 08:46:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -13,7 +13,6 @@
 
 #include <vector>
 #include <unordered_map>
-#include <map>
 #include <algorithm>
 
 #include <Types.h>
@@ -41,8 +40,6 @@ class JPDF : public Distribution {
     //                              mapped value: sample counter,
     //                              hasher: XORed hash of all bin ids
     using pdf = std::unordered_map<key_type, tk::real, key_hash>;
-    //! Ordered counterpart
-    using ordered_pdf = std::map<key_type, tk::real, key_hash>;
 
     //! Constructor: Initialize joint PDF container
     //! \param[in]   dim        Dimension of sample space
