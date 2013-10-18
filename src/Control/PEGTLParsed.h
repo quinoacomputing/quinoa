@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/PEGTLParsed.h
+  \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
-  \date      Fri Oct 18 09:28:54 2013
+  \date      Fri Oct 18 13:13:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments
