@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:18:34 2013
+  \date      Fri Oct 18 13:15:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -89,7 +89,7 @@ namespace deck {
   // smallcrush block
   struct smallcrush :
          ifmust< tk::grm::scan<kw::smallcrush::pegtl_string,
-                               store_option<sel::Battery,
+                               store_option<ctr::Battery,
                                             ctr::selected,
                                             ctr::battery>>,
                  rngtest_common > {};
@@ -97,7 +97,7 @@ namespace deck {
   // crush block
   struct crush :
          ifmust< tk::grm::scan<kw::crush::pegtl_string,
-                               store_option<sel::Battery,
+                               store_option<ctr::Battery,
                                             ctr::selected,
                                             ctr::battery>>,
                  rngtest_common > {};
@@ -105,7 +105,7 @@ namespace deck {
   // bigcrush block
   struct bigcrush :
          ifmust< tk::grm::scan<kw::bigcrush::pegtl_string,
-                               store_option<sel::Battery,
+                               store_option<ctr::Battery,
                                             ctr::selected,
                                             ctr::battery>>,
                  rngtest_common > {};

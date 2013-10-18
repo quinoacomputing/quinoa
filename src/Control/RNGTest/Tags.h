@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTest/InputDeck/Tags.h
+  \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:27:06 PM MDT
+  \date      Fri Oct 18 13:13:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's input deck tags
   \details   RNGTest's input deck tags

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:15:34 2013
+  \date      Fri Oct 18 13:15:46 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -16,8 +16,7 @@
 #include <Toggle.h>
 
 namespace rngtest {
-//! selections
-namespace sel {
+namespace ctr {
 
 //! Random number generator battery types
 enum class BatteryType : uint8_t { NO_BATTERY=0,
@@ -62,7 +61,7 @@ class Battery : public tk::Toggle<BatteryType> {
     };
 };
 
-} // sel::
+} // ctr::
 } // rngtest::
 
 #endif // RNGTestBatteryOptions_h
