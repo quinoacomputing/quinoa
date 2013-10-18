@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 10:28:46 PM MDT
+  \date      Fri Oct 18 12:11:01 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line parser
   \details   RNGTest's command line parser
@@ -12,6 +12,7 @@
 #define RNGTestCmdLineParser_h
 
 #include <StringParser.h>
+#include <RNGTest/CmdLine/CmdLine.h>
 
 namespace rngtest {
 
@@ -19,15 +20,10 @@ namespace rngtest {
 class CmdLineParser : public tk::StringParser{
 
   public:
-    //! Constructor from std::string
-    explicit CmdLineParser(const std::string& cmdline, Base& base) :
-      tk::StringParser(cmdline),
-      m_base(base) {}
-
-    //! Constructor from argc, argv
-    explicit CmdLineParser(int argc, char** argv, Base& base) :
-      tk::StringParser(argc, argv),
-      m_base(base) {}
+    //! Constructor
+    explicit CmdLineParser(int argc, char** argv,
+                           const tk::Print& print,
+                           std::unique_ptr< ctr::CmdLine >& cmdline);
 
     //! Destructor
     ~CmdLineParser() noexcept override = default;
@@ -41,8 +37,6 @@ class CmdLineParser : public tk::StringParser{
     CmdLineParser(CmdLineParser&&) = delete;
     //! Don't permit move assigment
     CmdLineParser& operator=(CmdLineParser&&) = delete;
-
-    const Base& m_base;                  //!< Essentials
 };
 
 } // rngtest::

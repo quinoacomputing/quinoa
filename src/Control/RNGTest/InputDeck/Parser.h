@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 10:28:28 PM MDT
+  \date      Fri Oct 18 12:22:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -12,6 +12,8 @@
 #define RNGTestInputDeckParser_h
 
 #include <FileParser.h>
+#include <RNGTest/CmdLine/CmdLine.h>
+#include <RNGTest/InputDeck/InputDeck.h>
 
 namespace rngtest {
 
@@ -20,7 +22,9 @@ class InputDeckParser : public tk::FileParser {
 
   public:
     //! Constructor
-    explicit InputDeckParser(Base& base);
+    explicit InputDeckParser(const tk::Print& print,
+                             const std::unique_ptr< ctr::CmdLine >& cmdline,
+                             std::unique_ptr< ctr::InputDeck >& inputdeck);
 
     //! Destructor
     ~InputDeckParser() noexcept override = default;
@@ -34,8 +38,6 @@ class InputDeckParser : public tk::FileParser {
     InputDeckParser(InputDeckParser&&) = delete;
     //! Don't permit move assigment
     InputDeckParser& operator=(InputDeckParser&&) = delete;
-
-    const Base& m_base;                  //!< Essentials
 };
 
 } // namespace rngtest

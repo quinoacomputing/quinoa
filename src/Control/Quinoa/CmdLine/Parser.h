@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri Oct 18 11:09:35 2013
+  \date      Fri Oct 18 12:08:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line parser
   \details   Quinoa's command line parser
@@ -39,6 +39,6 @@ class CmdLineParser : public tk::StringParser{
     CmdLineParser& operator=(CmdLineParser&&) = delete;
 };
 
-} // namespace quinoa
+} // quinoa::
 
 #endif // QuinoaCmdLineParser_h

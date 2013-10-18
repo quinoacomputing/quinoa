@@ -1,17 +1,17 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTest/InputDeck/Types.h
+  \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:17:42 2013
+  \date      Fri Oct 18 11:51:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Types for RNGTest's input deck parsing
-  \details   Types for RNGTest's input deck parsing
+  \brief     Types for RNGTest's parsers
+  \details   Types for RNGTest's parsers
 */
 //******************************************************************************
-#ifndef RNGTestInputDeckTypes_h
-#define RNGTestInputDeckTypes_h
+#ifndef RNGTestTypes_h
+#define RNGTestTypes_h
 
-#include <RNGTest/InputDeck/Tags.h>
+#include <RNGTest/Tags.h>
 #include <RNGTest/Options/Battery.h>
 
 namespace rngtest {
@@ -28,7 +28,10 @@ using ios = tk::tuple::tagged_tuple<
   control,     std::string       //!< Control filename
 >;
 
+//! PEGTL location type to use throughout all of RNGTest's parsers
+using Location = pegtl::ascii_location;
+
 } // ctr::
 } // rngtest::
 
-#endif // RNGTestInputDeckTypes_h
+#endif // RNGTestTypes_h

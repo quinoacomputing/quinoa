@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri Oct 18 11:29:52 2013
+  \date      Fri Oct 18 11:36:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -12,8 +12,8 @@
 #include <Init.h>
 #include <Config.h>
 #include <Handler.h>
-#include <QuinoaDriver.h>
 #include <Print.h>
+#include <QuinoaDriver.h>
 
 using namespace quinoa;
 using namespace tk;
