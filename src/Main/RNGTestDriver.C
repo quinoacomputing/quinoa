@@ -2,14 +2,13 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 10:29:56 PM MDT
+  \date      Fri Oct 18 12:25:04 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
-#include <Macro.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/InputDeck/Parser.h>
 #include <RNGTest/CmdLine/Parser.h>
@@ -104,23 +103,34 @@
 
 using namespace rngtest;
 
-RNGTestDriver::RNGTestDriver(int argc, char** argv, Base& base) :
-  m_base(base)
+RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
-//! \param[in] base      Essentials
+//! \param[in] print     Simple pretty printer
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate command line parser
-  CmdLineParser cmdParser(argc, argv, base);
+  // Parse command line into cmdline
+  std::unique_ptr< ctr::CmdLine > cmdline;
+  CmdLineParser cmdParser(argc, argv, print, cmdline);
 
-  // Instantiate input deck parser
-  InputDeckParser idParser(base);
+  // Parse input deck into m_control
+  InputDeckParser inputdeckParser(print, cmdline, m_control);
 
-IGNORE(m_base);
+  // Create pretty printer for Quinoa
+  m_print = std::unique_ptr< RNGTestPrint >( new RNGTestPrint(m_control) );
+  m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
+  m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
+
+  // Bundle up essentials
+  m_base = std::unique_ptr< Base >(
+             new Base(*m_print, *m_paradigm, *m_control, *m_timer) );
+
+  print.endpart();
+  print.part("Problem setup");
+  print.section("Title", m_control->get<ctr::title>());
 }
 
 void

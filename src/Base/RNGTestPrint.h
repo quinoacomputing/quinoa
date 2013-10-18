@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Tue Oct  8 07:14:19 2013
+  \date      Fri Oct 18 12:26:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -22,9 +22,8 @@ class RNGTestPrint : public tk::Print {
 
   public:
     //! Constructor
-    explicit RNGTestPrint(const ctr::InputDeck& control) : m_ctr(control) {
-      IGNORE(m_ctr);
-    }
+    explicit RNGTestPrint(const std::unique_ptr< ctr::InputDeck >& control) :
+      m_ctr(*control) {}
 
     //! Destructor
     ~RNGTestPrint() override = default;

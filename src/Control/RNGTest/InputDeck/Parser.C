@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 10:28:36 PM MDT
+  \date      Fri Oct 18 12:24:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -14,30 +14,34 @@
 
 using namespace rngtest;
 
-InputDeckParser::InputDeckParser(Base& base) :
-  FileParser(base.control.get<ctr::io, ctr::control>()),
-  m_base(base)
+InputDeckParser::InputDeckParser(const tk::Print& print,
+                                 const std::unique_ptr< ctr::CmdLine >& cmdline,
+                                 std::unique_ptr< ctr::InputDeck >& inputdeck) :
+  FileParser( cmdline->get<ctr::io, ctr::control>() )
 //******************************************************************************
 //  Constructor
-//! \param[inout] base      Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_base.print.item("Control file", m_filename);
-}
+  print.item("Control file", m_filename);
 
-// void
-// InputDeckParser::parse()
-// //******************************************************************************
-// //  Parse random number generator test suite control file
-// //! \author  J. Bakosi
-// //******************************************************************************
-// {
-//   // Parse: basic_parse_file() below gives debug info during parsing, use it for
-//   // debugging the parser itself, i.e., when modifying the grammar, otherwise,
-//   // use dummy_parse_file() which compiles faster
-//   pegtl::dummy_parse_file< grm::read_file >( m_filename, m_base.control );
-//   //pegtl::basic_parse_file< grm::read_file >( m_filename, m_base.control );
-// 
-//   m_base.print.item("Parsed control file", "success");
-// }
+  // Create PEGTL file input from std::string
+  pegtl::file_input< ctr::Location > input( m_filename );
+
+  // Create std::unique_ptr behind which to store parsed input deck data:
+  // PEGTLInputDeck derives from InputDeck and has location() used during parse
+  std::unique_ptr< deck::PEGTLInputDeck > pid( new deck::PEGTLInputDeck(input) );
+
+  // Parse input file by populating the underlying tagged tuple:
+  // basic_parse() below gives debug info during parsing, use it for debugging
+  // the parser itself, i.e., when modifying the grammar, otherwise, use
+  // dummy_parse() to compile faster
+  pegtl::dummy_parse< deck::read_file >( input, *pid );
+
+  // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
+  // by creating a unique_ptr to the base class (InputDeck) and transfer it out
+  inputdeck = std::unique_ptr< ctr::InputDeck >( std::move(pid) );
+
+  // If we got here, parser succeeded
+  print.item("Parsed control file", "success");
+}

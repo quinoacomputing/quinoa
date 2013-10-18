@@ -7,7 +7,6 @@ add_library(Random
             MKLRandom.C
             MKLRndStream.C
             MKLRndTable.C
-            MKLTest.C
 )
 
 INSTALL(TARGETS Random
