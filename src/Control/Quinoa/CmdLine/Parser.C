@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri Oct 18 08:54:27 2013
+  \date      Fri Oct 18 11:10:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -14,7 +14,8 @@
 
 using namespace quinoa;
 
-CmdLineParser::CmdLineParser(int argc, char** argv, const Base& base,
+CmdLineParser::CmdLineParser(int argc, char** argv,
+                             const tk::Print& print,
                              std::unique_ptr< ctr::CmdLine >& cmdline) :
   StringParser( argc, argv )
 //******************************************************************************
@@ -40,7 +41,7 @@ CmdLineParser::CmdLineParser(int argc, char** argv, const Base& base,
   cmdline = std::unique_ptr< ctr::CmdLine >( std::move(pcmdline) );
 
   // If we got here, parser succeeded
-  base.print.item("Parsed command line", "success");
+  print.item("Parsed command line", "success");
 
   // Make sure mandatory arguments are set
   ErrChk(!(cmdline->get<ctr::io, ctr::control>().empty()),

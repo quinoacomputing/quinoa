@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:37:02 2013
+  \date      Fri Oct 18 11:32:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -15,25 +15,25 @@
 
 using namespace tk;
 
-void
-Paradigm::echo() const
+Paradigm::Paradigm(const Print& print)
 //******************************************************************************
-//  Echo paradigm and configuration
+//  Constructor
+//! \param[in] print     Simple pretty printer
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_print.section("Compute environment");
+  print.section("Compute environment");
 
   // OpenMP
   if (m_omp.available()) {
-    m_print.item("OpenMP", "found");
+    print.item("OpenMP", "found");
     if (m_omp.used()) {
-      m_print.item("Using threads", "yes");
-      m_print.item("Number of threads", m_omp.nthread());
+      print.item("Using threads", "yes");
+      print.item("Number of threads", m_omp.nthread());
     } else {
-      m_print.item("Using threads", "no");
+      print.item("Using threads", "no");
     }
   } else {
-    m_print.item("OpenMP", "not found");
+    print.item("OpenMP", "not found");
   }
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon Oct  7 14:34:14 2013
+  \date      Fri Oct 18 11:29:52 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -11,11 +11,9 @@
 
 #include <Init.h>
 #include <Config.h>
-#include <Base.h>
 #include <Handler.h>
-#include <Paradigm.h>
 #include <QuinoaDriver.h>
-#include <QuinoaPrint.h>
+#include <Print.h>
 
 using namespace quinoa;
 using namespace tk;
@@ -37,14 +35,8 @@ int main(int argc, char* argv[])
     // Install our own unexpected-handler
     std::set_unexpected(unexpectedHandler);
 
-    // Create the essentials
-    ctr::InputDeck control;                  //!< Control
-    QuinoaPrint print(control);              //!< Pretty printer
-    Paradigm paradigm(print);                //!< Parallel compute environment
-    Timer timer;                             //!< Timer
-
-    // Bundle up essentials
-    Base base(print, paradigm, control, timer);
+    // Create pretty printer
+    Print print;
 
     // Echo program name
     echoHeader(print, "Quinoa: Lagrangian particle hydrodynamics");
@@ -52,11 +44,10 @@ int main(int argc, char* argv[])
     // Echo environment
     print.part("Environment");
     echoBuildEnv(print, QUINOA_EXECUTABLE);  //!< Build environment
-    paradigm.echo();                         //!< Parallel compute env
     echoRunEnv(print, argc, argv);           //!< Runtime environment
 
     // Create driver
-    QuinoaDriver driver(argc, argv, base);
+    QuinoaDriver driver(argc, argv, print);
 
     // Execute
     driver.execute();

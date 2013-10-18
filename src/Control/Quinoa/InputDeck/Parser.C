@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri Oct 18 08:56:12 2013
+  \date      Fri Oct 18 11:11:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -14,7 +14,7 @@
 
 using namespace quinoa;
 
-InputDeckParser::InputDeckParser(const Base& base,
+InputDeckParser::InputDeckParser(const tk::Print& print,
                                  const std::unique_ptr< ctr::CmdLine >& cmdline,
                                  std::unique_ptr< ctr::InputDeck >& inputdeck) :
   FileParser( cmdline->get<ctr::io, ctr::control>() )
@@ -23,7 +23,7 @@ InputDeckParser::InputDeckParser(const Base& base,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  base.print.item("Control file", m_filename);
+  print.item("Control file", m_filename);
 
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );
@@ -46,7 +46,7 @@ InputDeckParser::InputDeckParser(const Base& base,
   unique( inputdeck->get<ctr::stat>() );
 
   // If we got here, parser succeeded
-  base.print.item("Parsed control file", "success");
+  print.item("Parsed control file", "success");
 }
 
 void
