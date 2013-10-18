@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:55:07 2013
+  \date      Fri Oct 11 16:32:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -34,17 +34,13 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, Base& base) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Instantiate command line parser
-  CmdLineParser cmdParser(argc, argv, base);
-
   // Parse command line
-  cmdParser.parse();
-
-  // Instantiate input deck parser
-  InputDeckParser idParser(base);
+  std::unique_ptr< ctr::CmdLine > cmdline;
+  CmdLineParser cmdParser(argc, argv, base, cmdline);
 
   // Parse input deck
-  idParser.parse();
+  std::unique_ptr< ctr::InputDeck > inputdeck;
+  InputDeckParser inputdeckParser(base, cmdline, inputdeck);
 
   m_base.print.endpart();
   base.print.part("Problem setup");

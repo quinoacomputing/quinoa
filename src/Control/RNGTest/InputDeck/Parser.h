@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:20:38 2013
+  \date      Wed 09 Oct 2013 10:28:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -24,9 +24,6 @@ class InputDeckParser : public tk::FileParser {
 
     //! Destructor
     ~InputDeckParser() noexcept override = default;
-
-    //! Parse random number generator test suite control file
-    void parse() override;
 
   private:
     //! Don't permit copy constructor

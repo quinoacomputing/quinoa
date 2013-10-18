@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:14:11 2013
+  \date      Wed 09 Oct 2013 10:28:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -24,9 +24,6 @@ class Parser {
 
     //! Destructor
     virtual ~Parser() noexcept = default;
-
-    //! Parse interface
-    virtual void parse() = 0;
 
   private:
     //! Don't permit copy constructor

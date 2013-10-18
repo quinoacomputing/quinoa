@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:17:48 2013
+  \date      Wed 09 Oct 2013 10:28:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line parser
   \details   RNGTest's command line parser
@@ -31,9 +31,6 @@ class CmdLineParser : public tk::StringParser{
 
     //! Destructor
     ~CmdLineParser() noexcept override = default;
-
-    //! Parse rngtest control file
-    void parse() override;
 
   private:
     //! Don't permit copy constructor

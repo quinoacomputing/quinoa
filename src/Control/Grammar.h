@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 15:28:22 2013
+  \date      Wed 09 Oct 2013 10:08:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -11,7 +11,8 @@
 #ifndef Grammar_h
 #define Grammar_h
 
-#include <Macro.h>
+#include <sstream>
+
 #include <Exception.h>
 #include <Option.h>
 
@@ -41,19 +42,23 @@ namespace grm {
   } );
   
   //! error handler
-  template< Error key >
-  static void handleError(const std::string& value) {
+  template< class Stack, Error key >
+  static void handleError(const Stack& stack, const std::string& value) {
     const auto& msg = err_msg.find(key);
     if (msg != err_msg.end()) {
       if (!value.empty()) {
-        Throw(ExceptType::FATAL,
-              "Error while parsing '" + value + "'. " + msg->second + ".");
+        std::stringstream ss;
+        ss << "Error while parsing '" << value << "' at " << stack.location()
+           << ". " << msg->second << ".";
+        Throw(ExceptType::FATAL, ss.str());
       } else {
-        Throw(ExceptType::FATAL,
-              "Error while parsing. " + msg->second + ".");
+        std::stringstream ss;
+        ss << "Error while parsing at " << stack.location() << ". "
+           << msg->second << ".";
+        Throw(ExceptType::FATAL, ss.str());
       }
     } else {
-      Throw(ExceptType::FATAL, "Unknown input deck parser error.");
+      Throw(ExceptType::FATAL, "Unknown parser error.");
     }
   }
 
@@ -63,8 +68,7 @@ namespace grm {
   template< class Stack, Error key >
   struct error : action_base< error<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
-      handleError<key>(value);
-      IGNORE(stack);    // suppress compiler warning: parameter never referenced
+      handleError<Stack,key>(stack,value);
     }
   };
 
