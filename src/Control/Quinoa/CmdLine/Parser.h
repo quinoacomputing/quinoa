@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri Oct 11 14:27:34 2013
+  \date      Fri Oct 18 11:09:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line parser
   \details   Quinoa's command line parser
@@ -21,7 +21,8 @@ class CmdLineParser : public tk::StringParser{
 
   public:
     //! Constructor
-    explicit CmdLineParser(int argc, char** argv, const Base& base,
+    explicit CmdLineParser(int argc, char** argv,
+                           const tk::Print& print,
                            std::unique_ptr< ctr::CmdLine >& cmdline);
 
     //! Destructor

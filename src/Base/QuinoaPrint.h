@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri Oct 18 09:24:13 2013
+  \date      Fri Oct 18 10:47:26 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -25,7 +25,8 @@ class QuinoaPrint : public tk::Print {
     using Print::item;
 
     //! Constructor
-    explicit QuinoaPrint(const ctr::InputDeck& control) : m_ctr(control) {}
+    explicit QuinoaPrint(const std::unique_ptr< ctr::InputDeck >& control) :
+      m_ctr(*control) {}
 
     //! Destructor
     ~QuinoaPrint() override = default;

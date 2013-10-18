@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon Oct  7 14:33:54 2013
+  \date      Fri Oct 18 11:18:39 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -36,29 +36,28 @@ int main(int argc, char* argv[])
     // Install our own unexpected-handler
     std::set_unexpected(unexpectedHandler);
 
-    // Create the essentials
-    ctr::InputDeck control;                   //!< Control
-    RNGTestPrint print(control);              //!< Pretty printer
-    Paradigm paradigm(print);                 //!< Parallel compute environment
-    Timer timer;                              //!< Timer
-
-    // Bundle up essentials
-    rngtest::Base base(print, paradigm, control, timer);
-
-    // Echo program name
-    echoHeader(print, "Quinoa: Random number generator test suite");
-
-    // Echo environment
-    print.part("Environment");
-    echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
-    paradigm.echo();                          //!< Parallel compute env
-    echoRunEnv(print, argc, argv);            //!< Runtime environment
-
-    // Create driver
-    RNGTestDriver driver(argc, argv, base);
-
-    // Execute
-    driver.execute();
+//     // Create the essentials
+//     ctr::InputDeck control;                   //!< Control
+//     RNGTestPrint print(control);              //!< Pretty printer
+//     Paradigm paradigm(print);                 //!< Parallel compute environment
+//     Timer timer;                              //!< Timer
+// 
+//     // Bundle up essentials
+//     rngtest::Base base(print, paradigm, control, timer);
+// 
+//     // Echo program name
+//     echoHeader(print, "Quinoa: Random number generator test suite");
+// 
+//     // Echo environment
+//     print.part("Environment");
+//     echoBuildEnv(print, RNGTEST_EXECUTABLE);  //!< Build environment
+//     echoRunEnv(print, argc, argv);            //!< Runtime environment
+// 
+//     // Create driver
+//     RNGTestDriver driver(argc, argv, base);
+// 
+//     // Execute
+//     driver.execute();
 
   } catch (...) {
       error = processException();

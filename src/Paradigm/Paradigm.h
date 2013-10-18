@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:36:55 2013
+  \date      Fri Oct 18 11:32:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -21,13 +21,10 @@ class Paradigm {
 
   public:
     //! Constructor
-    explicit Paradigm(const Print& print) : m_print(print) {}
+    explicit Paradigm(const Print& print);
 
     //! Destructor
-    ~Paradigm() = default;
-
-    //! Echo paradigm and configuration
-    void echo() const;
+    virtual ~Paradigm() noexcept = default;
 
     //! Query if OpenMP is available
     bool availOpenMP() const noexcept { return m_omp.available(); }
@@ -52,7 +49,6 @@ class Paradigm {
     Paradigm& operator=(Paradigm&&) = delete;
 
     const OpenMP m_omp;            //!< OpenMP
-    const Print& m_print;          //!< Pretty printer
 };
 
 } // tk::
