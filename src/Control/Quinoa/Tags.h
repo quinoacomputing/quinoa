@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/Tags.h
+  \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu Oct  3 14:59:27 2013
+  \date      Fri Oct 18 09:05:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
 */
 //******************************************************************************
-#ifndef QuinoaInputDeckTags_h
-#define QuinoaInputDeckTags_h
+#ifndef QuinoaTags_h
+#define QuinoaTags_h
 
 namespace quinoa {
 namespace ctr {
@@ -75,4 +75,4 @@ struct param {};
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaInputDeckTags_h
+#endif // QuinoaTags_h

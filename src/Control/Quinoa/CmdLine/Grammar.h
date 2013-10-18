@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 15:29:51 2013
+  \date      Fri Oct 18 08:48:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -17,20 +17,24 @@
 #include <Macro.h>
 #include <Exception.h>
 #include <Grammar.h>
+#include <PEGTLParsed.h>
 #include <Quinoa/CmdLine/Keywords.h>
-#include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
-//! Grammar definition: state, actions, grammar
+//! Command line parser grammar definition: state, actions, grammar
 namespace cmd {
 
   using namespace pegtl;
   using namespace tk::grm;
 
+  //! PEGTLParsed type specialized to Quinoa's command line parser
+  using PEGTLCmdLine = ctr::PEGTLParsed< ctr::CmdLine,
+                                         string_input<ctr::Location> >;
+
   // Quinoa's CmdLine state
 
   //! Everything is stored in Stack during parsing
-  using Stack = ctr::InputDeck;
+  using Stack = PEGTLCmdLine;
 
   // Quinoa's CmdLine actions
 

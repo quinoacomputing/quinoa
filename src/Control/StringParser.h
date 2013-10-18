@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:14:29 2013
+  \date      Wed 09 Oct 2013 10:27:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -29,9 +29,6 @@ class StringParser : public Parser {
 
     //! Destructor
     ~StringParser() noexcept override = default;
-
-    //! StringParser's parse interface
-    void parse() override = 0;
 
     std::string m_string;                     //!< String to parse
 

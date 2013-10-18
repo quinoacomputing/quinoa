@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 03:00:02 PM MDT
+  \date      Fri Oct 18 08:56:12 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -14,35 +14,39 @@
 
 using namespace quinoa;
 
-InputDeckParser::InputDeckParser(Base& base) :
-  FileParser(base.control.get<ctr::io, ctr::control>()),
-  m_base(base)
+InputDeckParser::InputDeckParser(const Base& base,
+                                 const std::unique_ptr< ctr::CmdLine >& cmdline,
+                                 std::unique_ptr< ctr::InputDeck >& inputdeck) :
+  FileParser( cmdline->get<ctr::io, ctr::control>() )
 //******************************************************************************
 //  Constructor
-//! \param[inout] base      Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_base.print.item("Control file", m_filename);
-}
+  base.print.item("Control file", m_filename);
 
-void
-InputDeckParser::parse()
-//******************************************************************************
-//  Parse quinoa control file
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  // Parse: basic_parse_file() below gives debug info during parsing, use it for
-  // debugging the parser itself, i.e., when modifying the grammar, otherwise,
-  // use dummy_parse_file() which compiles faster
-  pegtl::dummy_parse_file< grm::read_file >( m_filename, m_base.control );
-  //pegtl::basic_parse_file< grm::read_file >( m_filename, m_base.control );
+  // Create PEGTL file input from std::string
+  pegtl::file_input< ctr::Location > input( m_filename );
 
-  m_base.print.item("Parsed control file", "success");
+  // Create std::unique_ptr behind which to store parsed input deck data:
+  // PEGTLInputDeck derives from InputDeck and has location() used during parse
+  std::unique_ptr< deck::PEGTLInputDeck > pid( new deck::PEGTLInputDeck(input) );
+
+  // Parse input file by populating the underlying tagged tuple:
+  // basic_parse() below gives debug info during parsing, use it for debugging
+  // the parser itself, i.e., when modifying the grammar, otherwise, use
+  // dummy_parse() to compile faster
+  pegtl::dummy_parse< deck::read_file >( input, *pid );
+
+  // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
+  // by creating a unique_ptr to the base class (InputDeck) and transfer it out
+  inputdeck = std::unique_ptr< ctr::InputDeck >( std::move(pid) );
 
   // Filter out repeated statistics
-  unique(m_base.control.get<ctr::stat>());
+  unique( inputdeck->get<ctr::stat>() );
+
+  // If we got here, parser succeeded
+  base.print.item("Parsed control file", "success");
 }
 
 void

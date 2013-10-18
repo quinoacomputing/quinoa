@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Tue Oct  8 07:14:02 2013
+  \date      Fri Oct 18 09:24:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -33,7 +33,7 @@ class QuinoaPrint : public tk::Print {
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
     void section() const {
-      if (m_ctr.get<tags...>() != ctr::QuinoaDefaults.get<tags...>()) {
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         auto& group = opt.group();
         auto& value = opt.name(m_ctr.get<tags...>());
@@ -51,7 +51,7 @@ class QuinoaPrint : public tk::Print {
     //! Print item: 'name : value' only if differs from its default
     template<typename... tags>
     void item(const std::string& name) const {
-      if (m_ctr.get<tags...>() != ctr::QuinoaDefaults.get<tags...>())
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>())
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % name
                                            % m_ctr.get<tags...>();
@@ -60,7 +60,7 @@ class QuinoaPrint : public tk::Print {
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
     void item() const {
-      if (m_ctr.get<tags...>() != ctr::QuinoaDefaults.get<tags...>()) {
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % opt.group()
@@ -73,7 +73,7 @@ class QuinoaPrint : public tk::Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! <<= for outputing requested Term and vector<Term>.
     void requestedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stat>() != ctr::QuinoaDefaults.get<ctr::stat>()) {
+      if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
         for (auto& v : m_ctr.get<ctr::stat>()) std::cout <<= v;
         std::cout << '\n';
@@ -85,7 +85,7 @@ class QuinoaPrint : public tk::Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! << for outputing estimated Term and vector<Term>.
     void estimatedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stat>() != ctr::QuinoaDefaults.get<ctr::stat>()) {
+      if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
         for (auto& v : m_ctr.get<ctr::stat>()) std::cout << v;
         std::cout << '\n';

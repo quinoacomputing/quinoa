@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:20:12 2013
+  \date      Fri Oct 11 16:33:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -12,6 +12,8 @@
 #define QuinoaInputDeckParser_h
 
 #include <FileParser.h>
+#include <Quinoa/CmdLine/CmdLine.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
 
@@ -20,13 +22,12 @@ class InputDeckParser : public tk::FileParser {
 
   public:
     //! Constructor
-    explicit InputDeckParser(Base& base);
+    explicit InputDeckParser(const Base& base,
+                             const std::unique_ptr< ctr::CmdLine >& cmdline,
+                             std::unique_ptr< ctr::InputDeck >& inputdeck);
 
     //! Destructor
     ~InputDeckParser() noexcept override = default;
-
-    //! Parse quinoa control file
-    void parse() override;
 
   private:
     //! Don't permit copy constructor
@@ -40,8 +41,6 @@ class InputDeckParser : public tk::FileParser {
 
     //! Make requested statistics unique
     void unique(std::vector<ctr::Product>& statistics);
-
-    const Base& m_base;                  //!< Essentials
 };
 
 } // namespace quinoa

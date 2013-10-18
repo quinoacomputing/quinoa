@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/Types.h
+  \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:06:10 2013
+  \date      Fri Oct 18 08:42:50 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Types for Quinoa's input deck parsing
-  \details   Types for Quinoa's input deck parsing
+  \brief     Types for Quinoa's parsers
+  \details   Types for Quinoa's parsers
 */
 //******************************************************************************
-#ifndef QuinoaInputDeckTypes_h
-#define QuinoaInputDeckTypes_h
+#ifndef QuinoaTypes_h
+#define QuinoaTypes_h
 
 #include <Types.h>
-#include <Quinoa/InputDeck/Tags.h>
+#include <Quinoa/Tags.h>
 #include <Quinoa/Options/Geometry.h>
 #include <Quinoa/Options/Physics.h>
 #include <Quinoa/Options/Position.h>
@@ -268,7 +268,10 @@ using parameters = tk::tuple::tagged_tuple<
   glm,          GLMParameters
 >;
 
+//! PEGTL location type to use throughout all of Quinoa's parsers
+using Location = pegtl::ascii_location;
+
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaInputDeckTypes_h
+#endif // QuinoaTypes_h

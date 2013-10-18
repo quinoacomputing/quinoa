@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:55:00 2013
+  \date      Fri Oct 18 09:24:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -18,20 +18,24 @@
 #include <Exception.h>
 #include <Option.h>
 #include <Grammar.h>
-#include <Quinoa/InputDeck/Types.h>
+#include <Quinoa/Types.h>
+#include <PEGTLParsed.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
-//! Quinoa's grammar definition: state, actions, grammar
-namespace grm {
+namespace deck {
 
   using namespace pegtl;
   using namespace tk::grm;
 
+  //! PEGTLParsed type specialized to Quinoa's input deck parser
+  using PEGTLInputDeck = ctr::PEGTLParsed< ctr::InputDeck,
+                                           file_input<ctr::Location> >;
+
   // Quinoa's InputDeck state
 
   //! Everything is stored in Stack during parsing
-  using Stack = ctr::InputDeck;
+  using Stack = PEGTLInputDeck;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
 
@@ -79,7 +83,7 @@ namespace grm {
     static void apply(const std::string& value, Stack& stack) {
       tk::Option<OptionType> opt;
       //! Emit warning on overwrite
-      if (stack.get<tags...>() != ctr::QuinoaDefaults.get<tags...>()) {
+      if (stack.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
                   << opt.name(stack.get<tags...>()) << "' with '"
@@ -411,7 +415,7 @@ namespace grm {
   struct read_file :
          until< eof, sor<keywords, ignore, unknown<Stack,Error::KEYWORD>> > {};
 
-} // grm::
+} // deck::
 } // quinoa::
 
 #endif // QuinoaInputDeckGrammar_h

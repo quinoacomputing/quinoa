@@ -6,6 +6,7 @@
     - Replace the overloads in Control.h with variadic ones
     - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
       5.1.3.
+    - Add stringstream-based throw
 
 * Alternative RND library: Need a quick switchable way of building without MKL
   as it is practically impossible to distinguish between memory leaks (hopefully
