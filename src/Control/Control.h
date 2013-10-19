@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:02:06 AM MDT
+  \date      Sat 19 Oct 2013 08:49:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -117,7 +117,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     template< typename tag >
     void store(const std::string& value) noexcept {
       Tuple::template get<tag>() =
-        convert<typename Tuple::template nT<tag>>( std::move(value) );
+        convert<typename Tuple::template nT<tag>>( value );
     }
     //! Convert and move value to slot at tag at 2nd level
     template< typename tag, typename subtag >
@@ -125,7 +125,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
       Tuple::template get<tag>().
              template get<subtag>() =
         convert<typename Tuple::template nT<tag>
-                              ::template nT<subtag>>( std::move(value) );
+                              ::template nT<subtag>>( value );
     }
     //! Convert and move value to slot at tag at 3rd level
     template< typename tag, typename subtag, typename subsubtag >
@@ -135,7 +135,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
              template get<subsubtag>() =
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
-                              ::template nT<subsubtag>>( std::move(value) );
+                              ::template nT<subsubtag>>( value );
     }
 
     //! Push back value to vector at slot
@@ -143,7 +143,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! Push back value to vector at tag at 1st level without conversion
     template< typename tag >
     void push_back(const typename Tuple::template nT<tag>::value_type& value) {
-      Tuple::template get<tag>().push_back( std::move(value) );
+      Tuple::template get<tag>().push_back( value );
     }
     //! Push back value to vector at tag at 2nd level without conversion
     template< typename tag, typename subtag >
@@ -151,7 +151,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
                                        ::template nT<subtag>
                                        ::value_type& value) {
       Tuple::template get<tag>().
-             template get<subtag>().push_back( std::move(value) );
+             template get<subtag>().push_back( value );
     }
     //! Push back value to vector at tag at 3rd level without conversion
     template< typename tag, typename subtag, typename subsubtag >
@@ -161,7 +161,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
                                        ::value_type& value) {
       Tuple::template get<tag>().
              template get<subtag>().
-             template get<subsubtag>().push_back( std::move(value) );
+             template get<subsubtag>().push_back( value );
     }
 
     //! Convert and push back value to vector at slot
@@ -171,7 +171,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     void store_back(const std::string& value) {
       Tuple::template get<tag>().push_back(
         convert<typename Tuple::template nT<tag>
-                              ::value_type>( std::move(value) ));
+                              ::value_type>( value ));
     }
     //! Convert and move value to slot at tag at 2nd level
     template< typename tag, typename subtag >
@@ -180,7 +180,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
              template get<subtag>().push_back(
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
-                              ::value_type>( std::move(value) ));
+                              ::value_type>( value ));
     }
     //! Convert and move value to slot at tag at 3rd level
     template< typename tag, typename subtag, typename subsubtag >
@@ -191,7 +191,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
                               ::template nT<subsubtag>
-                              ::value_type>( std::move(value) ));
+                              ::value_type>( value ));
     }
 
     // convert string to 'type' via std::stringstream
