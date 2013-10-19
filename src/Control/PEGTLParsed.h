@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
-  \date      Fri Oct 18 13:13:25 2013
+  \date      Sat 19 Oct 2013 08:19:37 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments
@@ -14,13 +14,23 @@
 namespace quinoa {
 namespace ctr {
 
+struct unused {};
+
 //! PEGTLParsed
-template< class Parsed, typename Input >
+template< class Parsed,
+          typename Input,
+          typename cmdtag = unused,
+          class Cmd = unused >
 class PEGTLParsed : public Parsed {
 
   public:
     //! Constructor
     explicit PEGTLParsed(const Input& input) : m_input(input) {}
+
+    //! Constructor setting command line
+    explicit PEGTLParsed(const Input& input, const Cmd& cl) : m_input(input) {
+      Parsed::template set<cmdtag>(cl);
+    }
 
     //! Destructor
     // ICC: this should be 'override' with 'virtual' removed

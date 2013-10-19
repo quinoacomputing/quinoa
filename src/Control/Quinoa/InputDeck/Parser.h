@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri Oct 18 11:11:10 2013
+  \date      Sat 19 Oct 2013 07:20:53 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -23,7 +23,7 @@ class InputDeckParser : public tk::FileParser {
   public:
     //! Constructor
     explicit InputDeckParser(const tk::Print& print,
-                             const std::unique_ptr< ctr::CmdLine >& cmdline,
+                             std::unique_ptr< ctr::CmdLine > cmdline,
                              std::unique_ptr< ctr::InputDeck >& inputdeck);
 
     //! Destructor

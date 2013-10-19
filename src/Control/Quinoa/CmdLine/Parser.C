@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri Oct 18 12:17:13 2013
+  \date      Fri 18 Oct 2013 06:03:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -28,17 +28,17 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
 
   // Create std::unique_ptr behind which to store parsed command line data:
   // PEGTLCmdLine derives from CmdLine and has location() used during parsing
-  std::unique_ptr< cmd::PEGTLCmdLine > pcmdline( new cmd::PEGTLCmdLine(input) );
+  std::unique_ptr< cmd::PEGTLCmdLine > pcl( new cmd::PEGTLCmdLine(input) );
 
   // Parse command line string by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
-  pegtl::dummy_parse< cmd::read_string >( input, *pcmdline );
+  pegtl::dummy_parse< cmd::read_string >( input, *pcl );
 
   // Strip cmdline (and its underlying tagged tuple) from PEGTL instruments by
   // creating a unique_ptr to the base class (CmdLine) and transfer it out
-  cmdline = std::unique_ptr< ctr::CmdLine >( std::move(pcmdline) );
+  cmdline = std::unique_ptr< ctr::CmdLine >( std::move(pcl) );
 
   // If we got here, parser succeeded
   print.item("Parsed command line", "success");

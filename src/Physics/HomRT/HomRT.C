@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:39:04 PM MDT
+  \date      Sat 19 Oct 2013 08:33:01 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -190,7 +190,7 @@ HomRT::outJpdf(const tk::real t)
 {
   // Contruct filename
   std::stringstream ss;
-  ss << control().get<ctr::io>().get<ctr::pdf>() << "." << t << ".msh";
+  ss << control().get<ctr::cmd,ctr::io,ctr::pdf>() << "." << t << ".msh";
   std::string filename = ss.str();
 
   // Create joint PDF

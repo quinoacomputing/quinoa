@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri Oct 18 12:24:22 2013
+  \date      Sat 19 Oct 2013 08:07:03 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -15,7 +15,7 @@
 using namespace rngtest;
 
 InputDeckParser::InputDeckParser(const tk::Print& print,
-                                 const std::unique_ptr< ctr::CmdLine >& cmdline,
+                                 std::unique_ptr< ctr::CmdLine > cmdline,
                                  std::unique_ptr< ctr::InputDeck >& inputdeck) :
   FileParser( cmdline->get<ctr::io, ctr::control>() )
 //******************************************************************************
@@ -30,7 +30,8 @@ InputDeckParser::InputDeckParser(const tk::Print& print,
 
   // Create std::unique_ptr behind which to store parsed input deck data:
   // PEGTLInputDeck derives from InputDeck and has location() used during parse
-  std::unique_ptr< deck::PEGTLInputDeck > pid( new deck::PEGTLInputDeck(input) );
+  std::unique_ptr< deck::PEGTLInputDeck >
+    pid( new deck::PEGTLInputDeck(input, *cmdline) );
 
   // Parse input file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging

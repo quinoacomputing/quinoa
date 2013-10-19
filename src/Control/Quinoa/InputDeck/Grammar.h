@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:18:47 2013
+  \date      Sat 19 Oct 2013 08:20:56 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -29,8 +29,10 @@ namespace deck {
   using namespace tk::grm;
 
   //! PEGTLParsed type specialized to Quinoa's input deck parser
-  using PEGTLInputDeck =
-    ctr::PEGTLParsed< ctr::InputDeck, file_input<ctr::Location> >;
+  using PEGTLInputDeck = ctr::PEGTLParsed< ctr::InputDeck,
+                                           file_input< ctr::Location >,
+                                           ctr::cmd,
+                                           ctr::CmdLine >;
 
   // Quinoa's InputDeck state
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:20:06 2013
+  \date      Fri Oct 18 12:53:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -27,7 +27,7 @@ namespace cmd {
   using namespace pegtl;
   using namespace tk::grm;
 
-  //! PEGTLParsed type specialized to Quinoa's command line parser
+  //! PEGTLParsed type specialized to RNGTest's command line parser
   using PEGTLCmdLine =
     quinoa::ctr::PEGTLParsed< ctr::CmdLine, string_input<ctr::Location> >;
 

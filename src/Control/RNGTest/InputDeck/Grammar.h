@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Oct 18 13:15:51 2013
+  \date      Sat 19 Oct 2013 08:21:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -29,8 +29,10 @@ namespace deck {
   using namespace tk::grm;
 
   //! PEGTLParsed type specialized to RNGTest's input deck parser
-  using PEGTLInputDeck =
-    quinoa::ctr::PEGTLParsed< ctr::InputDeck, file_input<ctr::Location> >;
+  using PEGTLInputDeck = quinoa::ctr::PEGTLParsed< ctr::InputDeck,
+                                                   file_input< ctr::Location >,
+                                                   ctr::cmd,
+                                                   ctr::CmdLine >;
 
   // RNGTest's InputDeck State
 

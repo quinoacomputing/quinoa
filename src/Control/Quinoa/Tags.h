@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Fri Oct 18 09:05:21 2013
+  \date      Fri Oct 18 13:45:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -70,6 +70,7 @@ struct incpar {};
 struct component {};
 struct interval {};
 struct io {};
+struct cmd {};
 struct param {};
 
 } // ctr::
