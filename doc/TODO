@@ -1,6 +1,5 @@
 * Parser/Control:
     - Warn on what is set ends up not being used
-    - Add position information to parser error handling
     - Document remaining undocumented keywords
     - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones

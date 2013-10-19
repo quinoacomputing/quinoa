@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri Oct 18 11:46:14 2013
+  \date      Sat 19 Oct 2013 08:28:04 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -16,21 +16,22 @@
 #include <Control.h>
 #include <Option.h>
 #include <Quinoa/Types.h>
+#include <Quinoa/CmdLine/CmdLine.h>
 
 namespace quinoa {
 namespace ctr {
 
 //! InputDeck : Control< specialized to Quinoa >, see Types.h,
 class InputDeck :
-  public tk::Control< // tag           type
-                      ctr::title,      std::string,
-                      ctr::selected,   ctr::selects,
-                      ctr::incpar,     ctr::incpars,
-                      ctr::component,  ctr::components,
-                      ctr::interval,   ctr::intervals,
-                      ctr::io,         ctr::ios,
-                      ctr::param,      ctr::parameters,
-                      ctr::stat,       std::vector<ctr::Product> > {
+  public tk::Control< // tag      type
+                      title,      std::string,
+                      selected,   selects,
+                      incpar,     incpars,
+                      component,  components,
+                      interval,   intervals,
+                      cmd,        CmdLine,
+                      param,      parameters,
+                      stat,       std::vector<Product> > {
 
   public:
     //! Constructor: set all defaults
@@ -39,15 +40,15 @@ class InputDeck :
       // Default title
       set<title>("");
       // Default selections
-      set<selected,geometry>(ctr::GeometryType::NO_GEOMETRY);
-      set<selected,physics>(ctr::PhysicsType::NO_PHYSICS);
-      set<selected,position>(ctr::PositionType::NO_POSITION);
-      set<selected,mass>(ctr::MassType::NO_MASS);
-      set<selected,hydro>(ctr::HydroType::NO_HYDRO);
-      set<selected,energy>(ctr::EnergyType::NO_ENERGY);
-      set<selected,mix>(ctr::MixType::NO_MIX);
-      set<selected,frequency>(ctr::FrequencyType::NO_FREQUENCY);
-      set<selected,mixrate>(ctr::MixRateType::NO_MIXRATE);
+      set<selected,geometry>(GeometryType::NO_GEOMETRY);
+      set<selected,physics>(PhysicsType::NO_PHYSICS);
+      set<selected,position>(PositionType::NO_POSITION);
+      set<selected,mass>(MassType::NO_MASS);
+      set<selected,hydro>(HydroType::NO_HYDRO);
+      set<selected,energy>(EnergyType::NO_ENERGY);
+      set<selected,mix>(MixType::NO_MIX);
+      set<selected,frequency>(FrequencyType::NO_FREQUENCY);
+      set<selected,mixrate>(MixRateType::NO_MIXRATE);
       // Default time incrementation parameters
       set<incpar,nstep>(std::numeric_limits<uint64_t>::max());
       set<incpar,term>(1.0);
@@ -65,13 +66,6 @@ class InputDeck :
       set<interval,plot>(1);
       set<interval,pdf>(1);
       set<interval,glob>(1);
-      // Default I/O parameters
-      set<io,control>("");
-      set<io,input>("");
-      set<io,output>("out");
-      set<io,pdf>("pdf");
-      set<io,glob>("glob");
-      set<io,stat>("stat");
       // Default beta mass model parameters
       set<param,beta,atwood>(0.5);
       // Default Dirichlet mix model parameters
@@ -95,9 +89,6 @@ class InputDeck :
       // Default requested statistics
       set<stat>(std::vector<Product>());
     }
-
-    //! Destructor
-    ~InputDeck() noexcept override = default;
 
     //! Return total number of particle properties
     uint32_t nprop() const noexcept {
@@ -133,7 +124,7 @@ class InputDeck :
     }
 
     //! Return offset for term::quantity
-    int termOffset(ctr::Quantity q) const noexcept {
+    int termOffset(Quantity q) const noexcept {
       using namespace ctr;
       int offset = 0;
       if (q == Quantity::SCALAR)

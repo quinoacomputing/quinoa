@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Thu 03 Oct 2013 08:27:19 PM MDT
+  \date      Sat 19 Oct 2013 08:31:38 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -24,15 +24,16 @@ DiscreteGeometry::DiscreteGeometry(const Base& base) : Geometry(base)
 //******************************************************************************
 {
   // Instantiate ASCII STL mesh reader
-  STLTxtMeshReader reader(base.control.get<ctr::io,ctr::input>(), m_mesh);
+  STLTxtMeshReader
+    reader( base.control.get< ctr::cmd, ctr::io, ctr::input >(), m_mesh );
 
   // Read in STL mesh
   reader.read();
 
   // Instantiate Silo writer
-  SiloWriter writer(base.control.get<ctr::io,ctr::output>(),
-                    m_mesh,
-                    DB_ALL_AND_DRVR);
+  SiloWriter writer( base.control.get< ctr::cmd, ctr::io, ctr::output >(),
+                     m_mesh,
+                     DB_ALL_AND_DRVR);
 
   // Write out STL geometry to Silo file
   writer.write();

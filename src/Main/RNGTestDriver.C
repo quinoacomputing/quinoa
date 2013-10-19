@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri Oct 18 12:25:04 2013
+  \date      Sat 19 Oct 2013 08:42:21 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -116,8 +116,8 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   std::unique_ptr< ctr::CmdLine > cmdline;
   CmdLineParser cmdParser(argc, argv, print, cmdline);
 
-  // Parse input deck into m_control
-  InputDeckParser inputdeckParser(print, cmdline, m_control);
+  // Parse input deck into m_control, transfer cmdline (no longer needed)
+  InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
   // Create pretty printer for Quinoa
   m_print = std::unique_ptr< RNGTestPrint >( new RNGTestPrint(m_control) );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
-  \date      Fri Oct 18 13:13:36 2013
+  \date      Fri Oct 18 15:44:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's input deck tags
   \details   RNGTest's input deck tags
@@ -20,6 +20,7 @@ struct title {};
 struct selected {};
 struct battery {};
 struct generator {};
+struct cmd {};
 
 } // ctr::
 } // rngtest::

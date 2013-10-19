@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri Oct 18 09:36:08 2013
+  \date      Sat 19 Oct 2013 08:02:06 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -32,6 +32,9 @@ class Control : public tuple::tagged_tuple<Ts...> {
 
     //! Destructor
     virtual ~Control() noexcept = default;
+
+    //! Instruct compiler to generate copy assigment
+    Control& operator=(const Control&) = default;
 
     //! Const-ref accessor
     //! TODO: Replace the overloads below with a variadic one
@@ -80,28 +83,32 @@ class Control : public tuple::tagged_tuple<Ts...> {
                     template get<subsubtag>();
     }
 
-    //! Move value to slot
+    //! Set value
     //! TODO: Replace the overloads below with a variadic one
-    //! Move value to slot at tag at 1st level
+    //! Set value at slot at tag at 1st level
     template< typename tag >
     void set(const typename Tuple::template nT<tag>& value) noexcept {
-      Tuple::template get<tag>() = std::move(value);
+      Tuple::template get<tag>() = value;
     }
-    //! Move value to slot at tag at 2nd level
+    //! Set value at slot at tag at 2nd level
     template< typename tag, typename subtag >
     void set(const typename Tuple::template nT<tag>
                                  ::template nT<subtag>& value) noexcept {
-      Tuple::template get<tag>().
-             template get<subtag>() = std::move(value);
+      Tuple::template get<tag>().template get<subtag>() = value;
     }
-    //! Move value to slot at tag at 3rd level
+    //! Set value at slot at tag at 3rd level
     template< typename tag, typename subtag, typename subsubtag >
     void set(const typename Tuple::template nT<tag>
                                  ::template nT<subtag>
                                  ::template nT<subsubtag>& value) noexcept {
       Tuple::template get<tag>().
              template get<subtag>().
-             template get<subsubtag>() = std::move(value);
+             template get<subsubtag>() = value;
+    }
+
+    template< typename tag >
+    void swallow(typename Tuple::template nT<tag>&& value) noexcept {
+      Tuple::template set<tag>( std::move(value) );
     }
 
     //! Convert and move value to slot
@@ -207,8 +214,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
   private:
     //! Don't permit copy constructor
     Control(const Control&) = delete;
-    //! Don't permit copy assigment
-    Control& operator=(const Control&) = delete;
     //! Don't permit move constructor
     Control(Control&&) = delete;
     //! Don't permit move assigment
