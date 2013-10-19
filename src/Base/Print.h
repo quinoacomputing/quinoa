@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Tue Oct  8 07:14:05 2013
+  \date      Sat 19 Oct 2013 08:50:53 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -11,6 +11,7 @@
 #ifndef Print_h
 #define Print_h
 
+#include <iostream>
 #include <iomanip>
 
 #include <boost/format.hpp>
