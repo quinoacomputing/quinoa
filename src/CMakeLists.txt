@@ -124,15 +124,15 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   add_definitions("-opt-report=0")
 endif()
 
+# Include third-party libraries configuration
+include(TPLs)
+
 # Make sure that the config file is in the search path
 # Configure a header file to pass info to the code
 configure_file(
   "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
   "${PROJECT_BINARY_DIR}/Base/Config.h"
 )
-
-# Include third-party libraries configuration
-include(TPLs)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
