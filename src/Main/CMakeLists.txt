@@ -5,9 +5,6 @@ project(${QUINOA_EXECUTABLE} CXX)
 # Basic configuration
 add_definitions()
 
-# Include configuration/headers/libraries common to all code
-INCLUDE(${QUINOA_SOURCE_DIR}/QuinoaCommon.cmake)
-
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
                QuinoaDriver.C
