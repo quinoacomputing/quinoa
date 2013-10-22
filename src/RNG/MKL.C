@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKL.C
+  \file      src/RNG/MKL.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:43:42 2013
+  \date      Tue Oct 22 15:42:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling

@@ -31,7 +31,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       IO
                       Mesh
                       Statistics
-                      Random
+                      RNG
                       QuinoaControl
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
@@ -70,7 +70,7 @@ endif()
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       Base
                       Paradigm
-                      Random
+                      RNG
                       RNGTestControl
                       #${TESTU01_PROBDIST_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}

@@ -1,34 +1,34 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLRandom.h
+  \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:27:52 2013
+  \date      Tue Oct 22 15:42:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */
 //******************************************************************************
-#ifndef MKLRandom_h
-#define MKLRandom_h
+#ifndef MKLRNG_h
+#define MKLRNG_h
 
 #include <unordered_set>
 
 #include <Base.h>
-#include <Random.h>
+#include <RNG.h>
 #include <MKLRndTable.h>
 #include <MKLRndStream.h>
 
 namespace quinoa {
 
 //! MKL-based random number generator
-class MKLRandom : public tk::Random {
+class MKLRNG : public tk::RNG {
 
   public:
     //! Constructor
-    MKLRandom(const Base& base) noexcept;
+    MKLRNG(const Base& base) noexcept;
 
     //! Destructor: Free all random number tables and streams
-    virtual ~MKLRandom() noexcept;
+    virtual ~MKLRNG() noexcept;
 
     //! Add random table
     tk::MKLRndTable* addTable(const int brng,
@@ -58,13 +58,13 @@ class MKLRandom : public tk::Random {
 
   private:
     //! Don't permit copy constructor
-    MKLRandom(const MKLRandom&) = delete;
+    MKLRNG(const MKLRNG&) = delete;
     //! Don't permit copy assigment
-    MKLRandom& operator=(const MKLRandom&) = delete;
+    MKLRNG& operator=(const MKLRNG&) = delete;
     //! Don't permit move constructor
-    MKLRandom(MKLRandom&&) = delete;
+    MKLRNG(MKLRNG&&) = delete;
     //! Don't permit move assigment
-    MKLRandom& operator=(MKLRandom&&) = delete;
+    MKLRNG& operator=(MKLRNG&&) = delete;
 
     const int m_nOMPthreads;           //!< Number of OpenMP threads
 
@@ -86,4 +86,4 @@ class MKLRandom : public tk::Random {
 
 } // quinoa::
 
-#endif // MKLRandom_h
+#endif // MKLRNG_h

@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLTest.C
+  \file      src/RNG/MKLTest.C
   \author    J. Bakosi
-  \date      Mon Oct  7 14:33:31 2013
+  \date      Tue Oct 22 15:44:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests

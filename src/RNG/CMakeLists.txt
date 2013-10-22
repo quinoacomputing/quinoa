@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Random CXX)
+project(RNG CXX)
 
-add_library(Random
+add_library(RNG
             MKL.C
-            MKLRandom.C
+            MKLRNG.C
             MKLRndStream.C
             MKLRndTable.C
 )
 
-INSTALL(TARGETS Random
+INSTALL(TARGETS RNG
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

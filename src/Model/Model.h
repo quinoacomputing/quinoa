@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Model.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:56:42 2013
+  \date      Tue Oct 22 15:46:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model base
   \details   Model base
@@ -14,7 +14,7 @@
 #include <Types.h>
 #include <Base.h>
 #include <Exception.h>
-#include <MKLRandom.h>
+#include <MKLRNG.h>
 #include <MKLRndStream.h>
 
 namespace quinoa {
@@ -45,7 +45,7 @@ class Model {
              "Wrong number of particles");
 
       // Instantiate random number generator
-      m_random = new (std::nothrow) MKLRandom(m_base);
+      m_random = new (std::nothrow) MKLRNG(m_base);
       ErrChk(m_random != nullptr, tk::ExceptType::FATAL,
              "Cannot allocate memory for random number generator");
 
@@ -105,7 +105,7 @@ class Model {
       if (m_random) { delete m_random; m_random = nullptr; }  
     }
 
-    MKLRandom* m_random;            //!< Random number generator object
+    MKLRNG* m_random;            //!< Random number generator object
     tk::MKLRndStream* m_rndStr;     //!< Random number stream object
 };
 
