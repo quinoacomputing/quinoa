@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:50:30 2013
+  \date      Mon Oct 21 12:55:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -22,7 +22,7 @@
 namespace quinoa {
 namespace ctr {
 
-//! Random number generator test types
+//! Random number generator types
 enum class RNGType : uint8_t { NO_RNG=0,
                                MKL_MCG31,
                                MKL_R250,
