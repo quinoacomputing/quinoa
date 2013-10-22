@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:07:36 2013
+  \date      Mon Oct 21 12:52:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -12,6 +12,7 @@
 #define Exception_h
 
 #include <exception>
+#include <cstdlib>
 #include <string>
 
 #include <Types.h>
