@@ -1,41 +1,41 @@
 //******************************************************************************
 /*!
-  \file      src/Random/Random.h
+  \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:22:37 2013
+  \date      Tue Oct 22 15:41:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
 */
 //******************************************************************************
-#ifndef Random_h
-#define Random_h
+#ifndef RNG_h
+#define RNG_h
 
 #include <Types.h>
 
 namespace tk {
 
 //! Random number generator base
-class Random {
+class RNG {
 
   protected:
     //! Constructor: Default, compiler generated
-    explicit Random() = default;
+    explicit RNG() = default;
 
     //! Destructor: Default, compiler generated
-    virtual ~Random() noexcept = default;
+    virtual ~RNG() noexcept = default;
 
   private:
     //! Don't permit copy constructor
-    Random(const Random&) = delete;
+    RNG(const RNG&) = delete;
     //! Don't permit copy assigment
-    Random& operator=(const Random&) = delete;
+    RNG& operator=(const RNG&) = delete;
     //! Don't permit move constructor
-    Random(Random&&) = delete;
+    RNG(RNG&&) = delete;
     //! Don't permit move assigment
-    Random& operator=(Random&&) = delete;
+    RNG& operator=(RNG&&) = delete;
 };
 
 } // namespace tk
 
-#endif // Random_h
+#endif // RNG_h

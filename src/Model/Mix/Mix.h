@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Mix.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:33:04 2013
+  \date      Tue Oct 22 15:46:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model base
   \details   Mix model base
@@ -15,7 +15,7 @@
 
 #include <Types.h>
 #include <Model.h>
-#include <MKLRandom.h>
+#include <MKLRNG.h>
 #include <MKLRndStream.h>
 
 namespace quinoa {

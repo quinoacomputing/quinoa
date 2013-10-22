@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLRndTable.h
+  \file      src/RNG/MKLRndTable.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:23:04 2013
+  \date      Tue Oct 22 15:43:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fixed large number of fixed property

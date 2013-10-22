@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLRandom.C
+  \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:51:08 2013
+  \date      Tue Oct 22 15:43:10 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -11,13 +11,13 @@
 
 #include <iostream>
 
-#include <MKLRandom.h>
+#include <MKLRNG.h>
 #include <Paradigm.h>
 #include <Exception.h>
 
 using namespace quinoa;
 
-MKLRandom::MKLRandom(const Base& base) noexcept :
+MKLRNG::MKLRNG(const Base& base) noexcept :
   m_nOMPthreads(base.paradigm.getOpenMP()->nthread()),
   m_table(),
   m_stream()
@@ -30,7 +30,7 @@ MKLRandom::MKLRandom(const Base& base) noexcept :
 {
 }
 
-MKLRandom::~MKLRandom() noexcept
+MKLRNG::~MKLRNG() noexcept
 //******************************************************************************
 //  Destructor: Free all random number tables and streams
 //! \details No-throw guarantee: this member function never throws exceptions.
@@ -44,12 +44,12 @@ MKLRandom::~MKLRandom() noexcept
 }
 
 tk::MKLRndTable*
-MKLRandom::addTable(const int brng,
-                    const tk::RndDist dist,
-                    const int method,
-                    const unsigned int seed,
-                    const long long int number,
-                    const std::string name)
+MKLRNG::addTable(const int brng,
+                 const tk::RndDist dist,
+                 const int method,
+                 const unsigned int seed,
+                 const long long int number,
+                 const std::string name)
 //******************************************************************************
 //  Add a random number table
 //! \param[in]  brng     Basic VSL generator type
@@ -78,7 +78,7 @@ MKLRandom::addTable(const int brng,
 }
 
 void
-MKLRandom::eraseTable(tk::MKLRndTable* table) noexcept
+MKLRNG::eraseTable(tk::MKLRndTable* table) noexcept
 //******************************************************************************
 //  Erase a random number table
 //! \param[in]  table    Pointer to table to erase
@@ -90,7 +90,7 @@ MKLRandom::eraseTable(tk::MKLRndTable* table) noexcept
 
     auto it = m_table.find(table);
     Assert(it != m_table.end(), tk::ExceptType::FATAL,
-           "Cannot find random number table in MKLRandom::eraseTable()");
+           "Cannot find random number table in MKLRNG::eraseTable()");
 
     delete table;
     m_table.erase(it);
@@ -100,17 +100,17 @@ MKLRandom::eraseTable(tk::MKLRndTable* table) noexcept
       e.echo("WARNING");
     }
     catch (std::exception& e) {
-      std::cout << ">>> std::exception in MKLRandom::eraseTable(): "
+      std::cout << ">>> std::exception in MKLRNG::eraseTable(): "
                 << e.what() << std::endl;
     }
     catch (...) {
-      std::cout << ">>> UNKNOWN EXCEPTION in MKLRandom::eraseTable()"
+      std::cout << ">>> UNKNOWN EXCEPTION in MKLRNG::eraseTable()"
                 << std::endl;
     }
 }
 
 void
-MKLRandom::regenTables()
+MKLRNG::regenTables()
 //******************************************************************************
 //  Regenerate random numbers in all tables
 //! \author  J. Bakosi
@@ -120,7 +120,7 @@ MKLRandom::regenTables()
 }
 
 const tk::real*
-MKLRandom::getRnd(tk::MKLRndTable* table)
+MKLRNG::getRnd(tk::MKLRndTable* table)
 //******************************************************************************
 //  Constant accessor to random number table
 //! \param[in]  table    Table id to access
@@ -134,7 +134,7 @@ MKLRandom::getRnd(tk::MKLRndTable* table)
 }
 
 tk::MKLRndStream*
-MKLRandom::addStream(const int brng, const unsigned int seed)
+MKLRNG::addStream(const int brng, const unsigned int seed)
 //******************************************************************************
 //  Add a random number stream
 //! \param[in]  brng     Basic VSL generator type
@@ -159,7 +159,7 @@ MKLRandom::addStream(const int brng, const unsigned int seed)
 }
 
 void
-MKLRandom::eraseStream(tk::MKLRndStream* stream) noexcept
+MKLRNG::eraseStream(tk::MKLRndStream* stream) noexcept
 //******************************************************************************
 //  Erase a random number stream
 //! \param[in]  stream    Pointer to stream to erase
@@ -171,7 +171,7 @@ MKLRandom::eraseStream(tk::MKLRndStream* stream) noexcept
 
     auto it = m_stream.find(stream);
     Assert(it != m_stream.end(), tk::ExceptType::FATAL,
-           "Cannot find random number stream in MKLRandom::eraseStream()");
+           "Cannot find random number stream in MKLRNG::eraseStream()");
 
     delete stream;
     m_stream.erase(it);
@@ -181,13 +181,13 @@ MKLRandom::eraseStream(tk::MKLRndStream* stream) noexcept
       std::cout << "WARNING: " << e.what() << std::endl;
     }
     catch (...) {
-      std::cout << "UNKNOWN EXCEPTION in MKLRandom::eraseStream()" << std::endl
+      std::cout << "UNKNOWN EXCEPTION in MKLRNG::eraseStream()" << std::endl
                 << "Continuing anyway..." << std::endl;
     }
 }
 
 const VSLStreamStatePtr*
-MKLRandom::getStr(tk::MKLRndStream* stream)
+MKLRNG::getStr(tk::MKLRndStream* stream)
 //******************************************************************************
 //  Constant accessor to VSL stream
 //! \param[in]  stream    Stream id to access

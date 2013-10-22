@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Random/MKLRndStream.h
+  \file      src/RNG/MKLRndStream.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:23:48 2013
+  \date      Tue Oct 22 15:43:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
