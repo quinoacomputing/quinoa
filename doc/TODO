@@ -1,10 +1,9 @@
 * Parser/Control:
-    - Warn on what is set ends up not being used
     - Document remaining undocumented keywords
-    - Add logger: Pantheios? Glog? Boost.Log? Requirements?
     - Replace the overloads in Control.h with variadic ones
-    - Add operator << for tagged tuple (e.g., for debugging purposes)? See STL
-      5.1.3.
+    - Warn on what is set ends up not being used
+    - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
+    - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
     - Add stringstream-based throw
 
 * Alternative RND library: Need a quick switchable way of building without MKL
@@ -20,6 +19,7 @@
           test for clean exit (e.g. with valgrind)
         o valgrind can return a different exit code based on errors detected
           using the command line argument --error-exitcode= to valgrind
+    - Clang's address-, thread-, and memory-sanitizer
 
 * Faster build:
     - Reduce build deps with ninja build dependency map
