@@ -28,6 +28,15 @@ ENDIF(MKL_CALLS)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'.")
+  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Set build type
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
@@ -121,6 +130,9 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
   "${PROJECT_BINARY_DIR}/Base/Config.h"
 )
+
+# Include third-party libraries configuration
+include(TPLs)
 
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree

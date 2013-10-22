@@ -1,7 +1,5 @@
 # Headers and libraries paths
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
-
 #### MKL
 find_library(MKL_INTERFACE_LIBRARY
              NAMES mkl_intel_ilp64
