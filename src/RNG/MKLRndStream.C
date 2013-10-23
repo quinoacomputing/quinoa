@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRndStream.C
   \author    J. Bakosi
-  \date      Tue Oct 22 15:43:43 2013
+  \date      Tue 22 Oct 2013 08:58:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -81,6 +81,8 @@ MKLRndStream::finalize() noexcept
 {
   try {
 
+#ifdef HAS_MKL
+#ifdef NDEBUG
     // Delete all thread streams
     for (int t=0; t<m_nthread; ++t) {
       if (m_stream[t] != nullptr &&
@@ -88,6 +90,8 @@ MKLRndStream::finalize() noexcept
         std::cout << "WARNING: Failed to delete MKL VSL stream" << std::endl;
       }
     }
+#endif
+#endif
 
   } // emit warning on error
     catch (std::exception& e) {

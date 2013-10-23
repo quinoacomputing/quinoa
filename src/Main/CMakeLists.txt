@@ -40,8 +40,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
-                      ${PTHREAD_LIBRARY}
-                      ${MATH_LIBRARY}
                       #${MPI_LIBRARIES}
 )
 

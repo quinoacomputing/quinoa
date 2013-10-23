@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Fri Oct 18 11:20:13 2013
+  \date      Tue 22 Oct 2013 09:22:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -94,6 +94,14 @@ void tk::echoBuildEnv(const Print& print, const std::string& executable)
   print.item("MPI C++ wrapper", MPI_COMPILER);
   print.item("Underlying C++ compiler", COMPILER);
   print.item("Build date", BUILD_DATE);
+  print.raw("\n");
+
+  print.subsection("Optional third-party libs");
+#ifdef HAS_MKL
+  print.item("MKL (Intel's Math Kernel Lib)", "yes");
+#else
+  print.item("MKL (Intel's Math Kernel Lib)", "no");
+#endif
 }
 
 void tk::echoRunEnv(const Print& print, int argc, char** argv)
