@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKL.h
   \author    J. Bakosi
-  \date      Tue Oct 22 15:42:03 2013
+  \date      Wed Oct 23 07:59:32 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
