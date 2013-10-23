@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:43:04 2013
+  \date      Wed Oct 23 07:44:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -23,6 +23,11 @@ std::string workdir();
 
 //! Wrapper for the standard C library's gettimeofday() from
 std::string curtime();
+
+#ifdef HAS_MKL
+//! Echo MKL (Intel Math Kernel Library) version information
+void echoMKL(const tk::Print& print, const std::string& title);
+#endif
 
 //! Echo program title
 void echoHeader(const tk::Print& print, const std::string& title);
