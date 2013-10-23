@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Tue Oct 22 15:28:19 2013
+  \date      Tue 22 Oct 2013 08:48:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -34,7 +34,7 @@ namespace tk {
 #define BUILD_DATE                   "@BUILD_DATE@"
 
 // Optional TPLs
-#cmakedefine HAS_MKL                 1
+#cmakedefine HAS_MKL
 
 } // tk::
 

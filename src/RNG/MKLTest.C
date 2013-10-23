@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLTest.C
   \author    J. Bakosi
-  \date      Tue Oct 22 15:44:14 2013
+  \date      Tue 22 Oct 2013 08:52:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL random number generator tests
   \details   MKL random number generator tests
@@ -28,7 +28,7 @@ MKLTest::MKLTest(const ctr::InputDeck& control) :
 {
 //   for (auto& r : m_testrng) {
 //     if (lib(r) == RNGLibType::MKL) {
-//   #ifdef MKL_CALLS
+//   #ifdef HAS_MKL
 //   #ifdef NDEBUG
 //     vslNewStream(&stream, brng, seed);
 //   #else  // NDEBUG

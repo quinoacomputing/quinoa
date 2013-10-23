@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:42:21 AM MDT
+  \date      Tue 22 Oct 2013 08:52:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -64,7 +64,7 @@
 // 
 // void initMKL()
 // {
-// #ifdef MKL_CALLS
+// #ifdef HAS_MKL
 // #ifdef NDEBUG
 //   vslNewStream(&stream, brng, seed);
 // #else  // NDEBUG
@@ -75,7 +75,7 @@
 // 
 // void finalizeMKL()
 // {
-// #ifdef MKL_CALLS
+// #ifdef HAS_MKL
 // #ifdef NDEBUG
 //   vslDeleteStream(&stream);
 // #else  // NDEBUG
@@ -90,7 +90,7 @@
 // //! \author J. Bakosi
 // //******************************************************************************
 // {
-// #ifdef MKL_CALLS
+// #ifdef HAS_MKL
 // #ifdef NDEBUG
 //   vdRngUniform(method, stream, n, &r, a, b);
 // #else  // NDEBUG

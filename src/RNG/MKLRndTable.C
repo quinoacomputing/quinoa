@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRndTable.C
   \author    J. Bakosi
-  \date      Tue Oct 22 15:44:00 2013
+  \date      Tue 22 Oct 2013 08:59:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -100,6 +100,8 @@ MKLRndTable::finalize() noexcept
 {
   try {
 
+#ifdef HAS_MKL
+#ifdef NDEBUG
     // Delete all thread streams
     for (int t=0; t<m_nthread; ++t) {
       if (m_stream[t] != nullptr &&
@@ -107,6 +109,8 @@ MKLRndTable::finalize() noexcept
         std::cout << "WARNING: Failed to delete MKL VSL stream" << std::endl;
       }
     }
+#endif
+#endif
 
   } // emit warning on error
     catch (std::exception& e) {
