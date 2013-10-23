@@ -2,19 +2,26 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Tue 22 Oct 2013 09:22:49 PM MDT
+  \date      Wed Oct 23 07:50:06 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
 */
 //******************************************************************************
 
+#include <sstream>
 #include <ctime>
+
 #include <unistd.h>
+
+#include <Config.h>
+
+#ifdef HAS_MKL
+#include <mkl_service.h>
+#endif
 
 #include <Init.h>
 #include <Exception.h>
-#include <Config.h>
 
 std::string tk::workdir()
 //******************************************************************************
@@ -61,6 +68,30 @@ std::string tk::curtime()
  return str;
 }
 
+#ifdef HAS_MKL
+void tk::echoMKL(const tk::Print& print, const std::string& title)
+//******************************************************************************
+//  Echo MKL (Intel Math Kernel Library) version information
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  MKLVersion vmkl;
+  mkl_get_version( &vmkl );
+
+  std::stringstream version;
+  version << vmkl.MajorVersion << "."
+          << vmkl.MinorVersion << "."
+          << vmkl.UpdateVersion;
+
+  print.subsection(title);
+  print.item("Version", version.str());
+  print.item("Product status", vmkl.ProductStatus);
+  print.item("Build", vmkl.Build);
+  print.item("Platform", vmkl.Platform);
+  print.item("Processor", vmkl.Processor);
+}
+#endif
+
 void tk::echoHeader(const Print& print, const std::string& title)
 //******************************************************************************
 //  Echo program title
@@ -96,11 +127,10 @@ void tk::echoBuildEnv(const Print& print, const std::string& executable)
   print.item("Build date", BUILD_DATE);
   print.raw("\n");
 
-  print.subsection("Optional third-party libs");
 #ifdef HAS_MKL
-  print.item("MKL (Intel's Math Kernel Lib)", "yes");
+  echoMKL(print, "MKL, Intel Math Kernel Lib");
 #else
-  print.item("MKL (Intel's Math Kernel Lib)", "no");
+  print.item("MKL, Intel Math Kernel Lib", "no");
 #endif
 }
 
