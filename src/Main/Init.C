@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Wed Oct 23 07:50:06 2013
+  \date      Thu 24 Oct 2013 07:28:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -85,7 +85,7 @@ void tk::echoMKL(const tk::Print& print, const std::string& title)
 
   print.subsection(title);
   print.item("Version", version.str());
-  print.item("Product status", vmkl.ProductStatus);
+  print.item("Status", vmkl.ProductStatus);
   print.item("Build", vmkl.Build);
   print.item("Platform", vmkl.Platform);
   print.item("Processor", vmkl.Processor);
