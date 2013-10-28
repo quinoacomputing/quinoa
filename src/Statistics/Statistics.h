@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 08:40:57 PM MDT
+  \date      Sun 27 Oct 2013 03:33:38 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -81,7 +81,7 @@ class Statistics {
     bool isLower(const std::string&s) const;
 
     const Base& m_base;                       //!< Essentials
-    const uint64_t m_nthread;                 //!< Number of threads
+    const uint64_t m_nthreads;                //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
     const tk::real* const m_particles;        //!< Particles
     const int m_nprop;                        //!< Number of particle properties

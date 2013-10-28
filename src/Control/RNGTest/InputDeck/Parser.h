@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:06:11 AM MDT
+  \date      Sun 27 Oct 2013 05:28:16 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -12,6 +12,7 @@
 #define RNGTestInputDeckParser_h
 
 #include <FileParser.h>
+#include <Print.h>
 #include <RNGTest/CmdLine/CmdLine.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:39:02 2013
+  \date      Mon Oct 28 07:32:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -26,6 +26,7 @@
 #include <Statistics.h>
 #include <Mix/Dirichlet/Dirichlet.h>
 #include <Mix/GenDirichlet/GenDirichlet.h>
+#include <MKLRNG.h>
 
 using namespace quinoa;
 
@@ -39,6 +40,8 @@ HomMix::HomMix(const Base& base) :
 //******************************************************************************
 {
   ErrChk(mix(), tk::ExceptType::FATAL, "No material mix model specified");
+
+  MKLRNG mklrng(1, VSL_BRNG_MCG31, 0);
 }
 
 void
@@ -126,7 +129,7 @@ HomMix::advance(tk::real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
 
-      mix()->advance(p, tid, dt);
+      //mix()->advance(p, tid, dt);
 
     } // m_npar
   } // omp parallel
@@ -235,7 +238,7 @@ HomMix::init()
     #endif
     for (p=0; p<m_npar; ++p) {
 
-      mix()->init(p, tid);
+      //mix()->init(p, tid);
 
     } // m_npar
   } // omp parallel

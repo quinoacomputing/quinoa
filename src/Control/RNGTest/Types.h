@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Fri Oct 18 13:16:06 2013
+  \date      Sun 27 Oct 2013 07:38:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef RNGTestTypes_h
 #define RNGTestTypes_h
+
+#include <pegtl.hh>
 
 #include <RNGTest/Tags.h>
 #include <RNGTest/Options/Battery.h>

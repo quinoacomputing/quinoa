@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Mass.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:29:43 2013
+  \date      Mon Oct 28 07:26:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase
@@ -11,9 +11,6 @@
 #ifndef Mass_h
 #define Mass_h
 
-#include <cstring>
-
-#include <Types.h>
 #include <Model.h>
 
 namespace quinoa {
@@ -23,29 +20,30 @@ class Mass : public Model {
 
   public:
     //! Constructor
-    explicit Mass(const Base& base, tk::real* const particles) :
-      Model(base,
-            particles,
-            base.control.get<ctr::component, ctr::npar>(),
-            base.control.nprop()),
-      m_offset(0),
-      m_ndensity(base.control.get<ctr::component, ctr::ndensity>()) {
-      ErrChk(m_ndensity > 0, tk::ExceptType::FATAL,
-             "Wrong number of particle densities");
-    }
+    explicit Mass() {}
+//     explicit Mass(const Base& base, tk::real* const particles) :
+//       Model(base,
+//             particles,
+//             base.control.get<ctr::component, ctr::npar>(),
+//             base.control.nprop()),
+//       m_offset(0),
+//       m_ndensity(base.control.get<ctr::component, ctr::ndensity>()) {
+//       ErrChk(m_ndensity > 0, tk::ExceptType::FATAL,
+//              "Wrong number of particle densities");
+//     }
 
     //! Destructor
     ~Mass() noexcept override = default;
 
-    //! Initialize particles
-    virtual void init() = 0;
-
-    //! Advance particles in mass model
-    virtual void advance(int p, int tid, tk::real dt) = 0;
-
-  protected:
-    const int m_offset;             //!< Mass-offset relative to base
-    const int m_ndensity;           //!< Number of density components
+//     //! Initialize particles
+//     virtual void init() = 0;
+// 
+//     //! Advance particles in mass model
+//     virtual void advance(int p, int tid, tk::real dt) = 0;
+// 
+//   protected:
+//     const int m_offset;             //!< Mass-offset relative to base
+//     const int m_ndensity;           //!< Number of density components
 
 //     //! Initialize densities with beta symmetric PDF
 //     //! \param[in] alpha  First shape parameter

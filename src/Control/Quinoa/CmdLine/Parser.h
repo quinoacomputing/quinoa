@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:08:31 2013
+  \date      Sun 27 Oct 2013 05:30:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line parser
   \details   Quinoa's command line parser
@@ -11,6 +11,7 @@
 #ifndef QuinoaCmdLineParser_h
 #define QuinoaCmdLineParser_h
 
+#include <Print.h>
 #include <StringParser.h>
 #include <Quinoa/CmdLine/CmdLine.h>
 

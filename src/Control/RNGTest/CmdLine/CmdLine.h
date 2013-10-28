@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:08:43 AM MDT
+  \date      Sun 27 Oct 2013 05:26:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line
   \details   RNGTest's command line
@@ -14,6 +14,7 @@
 #include <string>
 
 #include <Control.h>
+#include <RNGTest/Types.h>
 
 namespace rngtest {
 namespace ctr {

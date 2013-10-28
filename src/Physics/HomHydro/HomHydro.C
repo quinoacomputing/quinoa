@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:36:21 PM MDT
+  \date      Mon Oct 28 07:32:11 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -116,7 +116,7 @@ HomHydro::advance(tk::real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
 
-      hydro()->advance(p, tid, dt);
+      //hydro()->advance(p, tid, dt);
 
     } // m_npar
   } // omp parallel

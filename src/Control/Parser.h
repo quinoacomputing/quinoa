@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Wed 09 Oct 2013 10:28:02 PM MDT
+  \date      Sun 27 Oct 2013 05:01:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef Parser_h
 #define Parser_h
-
-#include <Base.h>
 
 namespace tk {
 

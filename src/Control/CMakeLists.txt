@@ -7,6 +7,10 @@ add_library(QuinoaControl
             StringParser.C
             Quinoa/InputDeck/Parser.C
             Quinoa/CmdLine/Parser.C
+            Quinoa/Options/RNG.C
+            Quinoa/Options/Mass.C
+            Quinoa/Options/Hydro.C
+            Quinoa/Options/Mix.C
 )
 
 INSTALL(TARGETS QuinoaControl

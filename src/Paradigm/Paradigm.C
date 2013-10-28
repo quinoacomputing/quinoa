@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Fri Oct 18 11:32:51 2013
+  \date      Sun 27 Oct 2013 03:32:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -29,7 +29,7 @@ Paradigm::Paradigm(const Print& print)
     print.item("OpenMP", "found");
     if (m_omp.used()) {
       print.item("Using threads", "yes");
-      print.item("Number of threads", m_omp.nthread());
+      print.item("Number of threads", m_omp.nthreads());
     } else {
       print.item("Using threads", "no");
     }

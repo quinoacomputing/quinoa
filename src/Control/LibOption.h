@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/LibOption.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:13:08 2013
+  \date      Sat 26 Oct 2013 08:21:20 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Library option
   \details   Library option
@@ -14,7 +14,6 @@
 #include <Option.h>
 
 namespace tk {
-namespace ctr {
 
 //! Generic library option interface templated on option 'Type'
 template< class Type >
@@ -43,7 +42,6 @@ class LibOption : public Option<Type> {
     LibOption& operator=(LibOption&&) = delete;
 };
 
-} // ctr::
 } // tk::
 
 #endif // LibOption_h
