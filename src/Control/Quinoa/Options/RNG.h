@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed Oct 23 08:18:07 2013
+  \date      Mon Oct 28 07:55:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -19,9 +19,9 @@
 #include <mkl_vsl.h>
 #endif
 
-#include <Exception.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
+#include <RNG.h>
 
 namespace quinoa {
 namespace ctr {
@@ -52,6 +52,9 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   RNGSSELIB,
                                   PRAND };
 
+//! Random number generator factory type
+using RNGFactory = std::map< RNGType, std::function<tk::RNG*()> >;
+
 //! Class with base templated on the above enum class with associations
 class RNG : public tk::Toggle<RNGType> {
 
@@ -64,6 +67,12 @@ class RNG : public tk::Toggle<RNGType> {
     explicit RNG() :
       Toggle<RNGType>("Random number generator", names, values) {}
 
+    //! Return parameter based on Enum
+    const ParamType& param(RNGType rng) const;
+
+    //! Register random number generators into factory
+    void initFactory(RNGFactory& f, int nthreads, unsigned int seed) const;
+ 
   private:
     //! Don't permit copy constructor
     RNG(const RNG&) = delete;
@@ -74,35 +83,14 @@ class RNG : public tk::Toggle<RNGType> {
     //! Don't permit move assigment
     RNG& operator=(RNG&&) = delete;
 
-    //! Return parameter based on Enum
-    const ParamType& param(RNGType rng) const {
-      using tk::operator+;
-      auto it = brng.find(rng);
-      Assert(it != brng.end(), tk::ExceptType::FATAL,
-             std::string("Cannot find parameter for RNG \"") + rng + "\"");
-      return it->second;
-    }
-
     //! Return RNG library type based on Enum
-    RNGLibType lib(RNGType rng) const {
-      using tk::operator+;
-      auto it = names.find(rng);
-      Assert(it != names.end(), tk::ExceptType::FATAL,
-             std::string("Cannot find name for RNG \"") + rng + "\"");
-      if (found("MKL", it->second)) return RNGLibType::MKL;
-      else if (found("RNGSSELIB", it->second)) return RNGLibType::RNGSSELIB;
-      else if (found("PRAND", it->second)) return RNGLibType::PRAND;
-      else return RNGLibType::NO_LIB;
-    }
+    RNGLibType lib(RNGType rng) const;
 
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for
     //! \param[in]  str  String to search in
     //! \return     True if found, false if not
-    bool found(const std::string& kw, const std::string& str) const {
-      std::size_t f = str.find(kw);
-      if (f != std::string::npos) return true; else return false;
-    }
+    bool found(const std::string& kw, const std::string& str) const;
 
     //! Get access to RNG keywords
     const kw::mkl_mcg31 mkl_mcg31 {};

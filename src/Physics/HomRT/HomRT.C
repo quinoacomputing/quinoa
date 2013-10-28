@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomRT/HomRT.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:33:01 AM MDT
+  \date      Mon Oct 28 07:33:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -68,7 +68,7 @@ HomRT::solve()
          it < nstep) {
 
     // Advance particles
-    advance(dt);
+    //advance(dt);
 
     // Accumulate statistics
     statistics().accumulate();
@@ -120,8 +120,8 @@ HomRT::advance(tk::real dt)
     #endif
     for (p=0; p<m_npar; ++p) {
 
-      mass()->advance(p, tid, dt);
-      hydro()->advance(p, tid, dt);
+      //mass()->advance(p, tid, dt);
+      //hydro()->advance(p, tid, dt);
 
     } // m_npar
   } // omp parallel
@@ -211,8 +211,8 @@ HomRT::init()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  mass()->init();
-  hydro()->init();
+//  mass()->init();
+//  hydro()->init();
 }
 
 void

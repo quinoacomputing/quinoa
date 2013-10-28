@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:11:01 2013
+  \date      Sun 27 Oct 2013 05:31:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line parser
   \details   RNGTest's command line parser
@@ -11,6 +11,7 @@
 #ifndef RNGTestCmdLineParser_h
 #define RNGTestCmdLineParser_h
 
+#include <Print.h>
 #include <StringParser.h>
 #include <RNGTest/CmdLine/CmdLine.h>
 

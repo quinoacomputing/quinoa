@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mass/Beta/Beta.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:30:01 2013
+  \date      Mon Oct 28 07:27:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Beta mass model
   \details   Beta mass model
@@ -15,32 +15,29 @@
 
 namespace quinoa {
 
-class Memory;
-class Paradigm;
-class JPDF;
-
 //! Beta : Mass
 class Beta : public Mass {
 
   public:
     //! Constructor
-    explicit Beta(const Base& base, tk::real* const particles) :
-      Mass(base, particles),
-      m_At(base.control.get<ctr::param, ctr::beta, ctr::atwood>()) {
-      // ErrChk on m_At
-    }
+    explicit Beta() {}
+//     explicit Beta(const Base& base, tk::real* const particles) :
+//       Mass(base, particles),
+//       m_At(base.control.get<ctr::param, ctr::beta, ctr::atwood>()) {
+//       // ErrChk on m_At
+//     }
 
     //! Destructor
     ~Beta() noexcept override = default;
 
-    //! Initialize particles
-    void init() override;
-
-    //! Advance particles
-    void advance(int p, int tid, tk::real dt) override;
-
-    //! Estimate joint scalar PDF
-    void jpdf(JPDF& jpdf);
+//     //! Initialize particles
+//     void init() override;
+// 
+//     //! Advance particles
+//     void advance(int p, int tid, tk::real dt) override;
+// 
+//     //! Estimate joint scalar PDF
+//     void jpdf(tk::JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -52,7 +49,7 @@ class Beta : public Mass {
     //! Don't permit move assigment
     Beta& operator=(Beta&&) = delete;
 
-    const tk::real m_At;            //!< Atwood-number
+//    const tk::real m_At;            //!< Atwood-number
 };
 
 } // quinoa::

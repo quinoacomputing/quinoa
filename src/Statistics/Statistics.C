@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:51:13 PM MDT
+  \date      Sun 27 Oct 2013 03:33:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -23,7 +23,7 @@ using namespace quinoa;
 
 Statistics::Statistics(const Base& base, const tk::real* const particles) :
   m_base(base),
-  m_nthread(base.paradigm.nthread()),
+  m_nthreads(base.paradigm.nthreads()),
   m_npar(base.control.get<ctr::component, ctr::npar>()),
   m_particles(particles),
   m_nprop(base.control.nprop()),
@@ -69,7 +69,7 @@ Statistics::Statistics(const Base& base, const tk::real* const particles) :
   if (m_nord) {
     // Storage for all the required ordinary moments
     // +1 for each thread's 0 as center for ordinary moments
-    m_ordinary = std::unique_ptr<tk::real[]>(new tk::real [m_nthread*(m_nord+1)]);
+    m_ordinary = std::unique_ptr<tk::real[]>(new tk::real [m_nthreads*(m_nord+1)]);
 
     // Put in zero as index of center for ordinary moments in central products
     m_ordinary[m_nord] = 0.0;
@@ -99,7 +99,7 @@ Statistics::Statistics(const Base& base, const tk::real* const particles) :
 
     if (m_ncen) {
       // Storage for all the required central moments
-      m_central = std::unique_ptr<tk::real[]>(new tk::real [m_nthread*m_ncen]);
+      m_central = std::unique_ptr<tk::real[]>(new tk::real [m_nthreads*m_ncen]);
     }
   }
 
@@ -221,7 +221,7 @@ Statistics::estimateOrdinary()
   } // omp parallel
 
   // Collect ordinary moments from all threads
-  for (p=1; p<m_nthread; ++p) {
+  for (p=1; p<m_nthreads; ++p) {
     for (i=0; i<m_nord; ++i) {
       m_ordinary[i] += m_ordinary[p*(m_nord+1) + i];
     }
@@ -275,7 +275,7 @@ Statistics::estimateCentral()
   } // omp parallel
 
   // Collect central moments from all threads
-  for (p=1; p<m_nthread; ++p) {
+  for (p=1; p<m_nthreads; ++p) {
     for (i=0; i<m_ncen; ++i) {
       m_central[i] += m_central[p*m_ncen + i];
     }

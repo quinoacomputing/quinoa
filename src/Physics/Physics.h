@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:33:01 2013
+  \date      Mon Oct 28 08:53:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -18,6 +18,8 @@
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
+#include <Quinoa/Options/RNG.h>
+#include <Quinoa/Options/Mass.h>
 
 namespace quinoa {
 
@@ -96,18 +98,19 @@ class Physics {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    //! Initialize model factory
-    void initFactory();
+    //! Initialize factories
+    void initFactories();
 
     const Base& m_base;                             //!< Essentials
     const std::unique_ptr<tk::real[]> m_particles;  //!< Particle properties
 
     Statistics m_statistics;                        //!< Statistics estimator
 
-    //! Model factories
-    std::map<ctr::MassType, std::function<Mass*()>> m_massFactory;
-    std::map<ctr::HydroType, std::function<Hydro*()>> m_hydroFactory;
-    std::map<ctr::MixType, std::function<Mix*()>> m_mixFactory;
+    //! Factories
+    ctr::RNGFactory m_RNGFactory;               //!< RNG factory
+    ctr::MassFactory m_massFactory;             //!< Mass model factory
+    ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
+    ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
     std::unique_ptr<Mass> m_mass;               //!< Mass model
     std::unique_ptr<Hydro> m_hydro;             //!< Hydro model

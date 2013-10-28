@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:37:14 2013
+  \date      Sun 27 Oct 2013 03:32:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -30,13 +30,13 @@ class OpenMP {
       #ifdef _OPENMP
         m_available(true),
         m_used(true),
-        m_nthread(omp_get_max_threads())
+        m_nthreads(omp_get_max_threads())
       #else  // _OPENMP
         m_available(false),
         m_used(false),
-        m_nthread(1)
+        m_nthreads(1)
       #endif // _OPENMP
-    { Assert(m_nthread != 0, ExceptType::FATAL, "Need at least one thread"); }
+    { Assert(m_nthreads != 0, ExceptType::FATAL, "Need at least one thread"); }
 
     //! Destructor
     ~OpenMP() noexcept = default;
@@ -50,7 +50,7 @@ class OpenMP {
     bool used() const noexcept { return m_used; }
 
     //! Constant accessor to number of OpenMP threads
-    int nthread() const noexcept { return m_nthread; }
+    int nthreads() const noexcept { return m_nthreads; }
 
   private:
     //! Don't permit copy constructor
@@ -64,7 +64,7 @@ class OpenMP {
 
     const bool m_available;           //!< True if OpenMP is available
     const bool m_used;                //!< True if OpenMP is used
-    const int m_nthread;              //!< Number of OpenMP threads
+    const int m_nthreads;             //!< Number of OpenMP threads
 };
 
 } // tk::

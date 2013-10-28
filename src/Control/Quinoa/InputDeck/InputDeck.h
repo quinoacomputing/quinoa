@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:28:04 AM MDT
+  \date      Sun 27 Oct 2013 06:24:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -15,7 +15,6 @@
 
 #include <Control.h>
 #include <Option.h>
-#include <Quinoa/Types.h>
 #include <Quinoa/CmdLine/CmdLine.h>
 
 namespace quinoa {

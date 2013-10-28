@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Tue Oct 22 15:42:32 2013
+  \date      Fri 25 Oct 2013 10:36:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -11,12 +11,11 @@
 #ifndef MKLRNG_h
 #define MKLRNG_h
 
-#include <unordered_set>
+#include <memory>
 
-#include <Base.h>
+#include <mkl_vsl_types.h>
+
 #include <RNG.h>
-#include <MKLRndTable.h>
-#include <MKLRndStream.h>
 
 namespace quinoa {
 
@@ -25,36 +24,16 @@ class MKLRNG : public tk::RNG {
 
   public:
     //! Constructor
-    MKLRNG(const Base& base) noexcept;
+    explicit MKLRNG(const int nthreads, int brng, unsigned int seed);
 
     //! Destructor: Free all random number tables and streams
     virtual ~MKLRNG() noexcept;
 
-    //! Add random table
-    tk::MKLRndTable* addTable(const int brng,
-                              const tk::RndDist dist,
-                              const int method,
-                              const unsigned int seed,
-                              const long long int number,
-                              const std::string name);
+    //! Uniform RNG
+    void uniform(int tid, int num, tk::real* r) const override;
 
-    //! Erase a random number table
-    void eraseTable(tk::MKLRndTable* table) noexcept;
-
-    //! Regenerate random numbers in all tables
-    void regenTables();
-
-    //! Constant accessor to random number table
-    const tk::real* getRnd(tk::MKLRndTable* table);
-
-    //! Add a random number stream
-    tk::MKLRndStream* addStream(const int brng, const unsigned int seed);
-
-    //! Erase a random number stream
-    void eraseStream(tk::MKLRndStream* stream) noexcept;
-
-    //! Constant accessor to random number VSL stream
-    const VSLStreamStatePtr* getStr(tk::MKLRndStream* stream);
+    //! Gaussian RNG
+    void gaussian(int tid, int num, tk::real* r) const override;
 
   private:
     //! Don't permit copy constructor
@@ -66,22 +45,10 @@ class MKLRNG : public tk::RNG {
     //! Don't permit move assigment
     MKLRNG& operator=(MKLRNG&&) = delete;
 
-    const int m_nOMPthreads;           //!< Number of OpenMP threads
+    int m_nthreads;
 
-    //! Type for a set of stream-tables to generate a large (and fixed) number
-    //! of random numbers with fixed properties using several threads
-    using Tables = std::unordered_set<tk::MKLRndTable*>;
-
-    //! Type for a set of streams to generate a few  random numbers with
-    //! arbitrary properties using several threads with leap-frogging
-    using Streams = std::unordered_set<tk::MKLRndStream*>;
-
-    //! Stream tables to generate fixed numbers of random numbers with fixed
-    //! properties using several threads
-    Tables m_table;
-
-    //! Streams to generate a few random numbers at a time leap-frogging
-    Streams m_stream;
+    //! Random number stream for threads
+    std::unique_ptr< VSLStreamStatePtr[] > m_stream;
 };
 
 } // quinoa::

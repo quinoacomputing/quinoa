@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:16:48 2013
+  \date      Mon Oct 28 08:45:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -15,6 +15,7 @@
 
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
+#include <Mass/Mass.h>
 
 namespace quinoa {
 namespace ctr {
@@ -23,6 +24,9 @@ namespace ctr {
 enum class MassType : uint8_t { NO_MASS=0,
                                 BETA };
 
+//! Mass model factory type
+using MassFactory = std::map< MassType, std::function<Mass*()> >;
+
 //! Class with base templated on the above enum class with associations
 class Mass : public tk::Toggle<MassType> {
 
@@ -30,6 +34,9 @@ class Mass : public tk::Toggle<MassType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Mass() : Toggle<MassType>("Mass", names, values) {}
+
+    //! Register mass models into factory
+    void initFactory(MassFactory& f) const;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:39:57 AM MDT
+  \date      Mon Oct 28 13:54:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -11,8 +11,8 @@
 
 #include <boost/functional/factory.hpp>
 
-#include <Quinoa/InputDeck/InputDeck.h>
 #include <Physics.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 #include <Mass/Beta/Beta.h>
 #include <Mix/Dirichlet/Dirichlet.h>
 #include <Mix/GenDirichlet/GenDirichlet.h>
@@ -44,53 +44,54 @@ Physics::Physics(const Base& base) :
   //! Echo information on physics to be created
   echo();
 
-  //! Initialize model factories
-  initFactory();
+  //! Initialize factories
+  initFactories();
 
   // Instantiate mass model
   if (m_ndensity) {
     ctr::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
-    m_mass = std::unique_ptr<Mass>(m_massFactory[m]());
+    m_mass = std::unique_ptr<Mass>( m_massFactory[m]() );
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
     ctr::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
-    m_hydro = std::unique_ptr<Hydro>(m_hydroFactory[m]());
+    m_hydro = std::unique_ptr<Hydro>( m_hydroFactory[m]() );
   }
 
   // Instantiate mix model
   if (m_nscalar) {
     ctr::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
-    m_mix = std::unique_ptr<Mix>(m_mixFactory[m]());
+    m_mix = std::unique_ptr<Mix>( m_mixFactory[m]() );
   }
 }
 
 void
-Physics::initFactory()
+Physics::initFactories()
 //******************************************************************************
-//  Initialize model factory
+//  Initialize factories
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Get raw pointer to particle properties
-  tk::real* const p = m_particles.get();
+  // TODO: Parse in and from control
+  // TODO: Echo number of registered stuff
+  unsigned int seed = 0;
+
+  // Register random number generators
+  ctr::RNG rng;
+  rng.initFactory(m_RNGFactory, m_base.paradigm.nthreads(), seed);
 
   // Register mass models
-  m_massFactory[ctr::MassType::BETA] =
-    std::bind(boost::factory<Beta*>(), m_base, p);
+  ctr::Mass mass;
+  mass.initFactory(m_massFactory);
 
   // Register hydro models
-  m_hydroFactory[ctr::HydroType::SLM] =
-    std::bind(boost::factory<SimplifiedLangevin*>(), m_base, p);
-  m_hydroFactory[ctr::HydroType::GLM] =
-    std::bind(boost::factory<GeneralizedLangevin*>(), m_base, p);
+  ctr::Hydro hydro;
+  hydro.initFactory(m_hydroFactory);
 
   // Register mix models
-  m_mixFactory[ctr::MixType::DIRICHLET] =
-    std::bind(boost::factory<Dirichlet*>(), m_base, p);
-  m_mixFactory[ctr::MixType::GENERALIZED_DIRICHLET] =
-    std::bind(boost::factory<GeneralizedDirichlet*>(), m_base, p);
+  ctr::Mix mix;
+  mix.initFactory(m_mixFactory);
 }
 
 void

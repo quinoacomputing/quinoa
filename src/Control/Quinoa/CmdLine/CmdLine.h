@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:01:29 AM MDT
+  \date      Sun 27 Oct 2013 06:06:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -14,14 +14,14 @@
 #include <string>
 
 #include <Control.h>
+#include <Quinoa/Types.h>
 
 namespace quinoa {
 namespace ctr {
 
 //! CmdLine : Control< specialized to Quinoa >, see Types.h,
-class CmdLine :
-  public tk::Control< // tag    type
-                      io,       ios > {
+class CmdLine : public tk::Control< // tag    type
+                                    io,       ios > {
 
   public:
     //! Constructor: set all defaults
