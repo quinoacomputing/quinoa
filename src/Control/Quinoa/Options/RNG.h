@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:55:40 2013
+  \date      Tue Oct 29 15:32:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -12,6 +12,7 @@
 #define QuinoaRNGOptions_h
 
 #include <map>
+#include <list>
 
 #include <Config.h>
 
@@ -71,7 +72,8 @@ class RNG : public tk::Toggle<RNGType> {
     const ParamType& param(RNGType rng) const;
 
     //! Register random number generators into factory
-    void initFactory(RNGFactory& f, int nthreads, unsigned int seed) const;
+    void initFactory( RNGFactory& f, std::list<std::string>& names,
+                      int nthreads, unsigned int seed ) const;
  
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.C
   \author    J. Bakosi
-  \date      Mon Oct 28 08:52:15 2013
+  \date      Tue Oct 29 15:34:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's hydrodynamics model options
   \details   Quinoa's hydrodynamics model options
@@ -18,12 +18,12 @@
 using namespace quinoa::ctr;
 
 void
-Hydro::initFactory(HydroFactory& f) const
+Hydro::initFactory(HydroFactory& f, std::list<std::string>& names) const
 //******************************************************************************
 //  Register hydrodynamics models into factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
- f[ HydroType::SLM ] = boost::factory< SLM* >();
- f[ HydroType::GLM ] = boost::factory< GLM* >();
+ names.push_back( add<SLM>(f, HydroType::SLM) );
+ names.push_back( add<GLM>(f, HydroType::GLM) );
 }

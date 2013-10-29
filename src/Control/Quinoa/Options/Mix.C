@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.C
   \author    J. Bakosi
-  \date      Mon Oct 28 08:51:03 2013
+  \date      Tue Oct 29 15:36:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's material mix model options
   \details   Quinoa's material mix model options
@@ -18,12 +18,12 @@
 using namespace quinoa::ctr;
 
 void
-Mix::initFactory(MixFactory& f) const
+Mix::initFactory(MixFactory& f, std::list<std::string>& names) const
 //******************************************************************************
 //  Register material mix models into factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
- f[ MixType::DIRICHLET ] = boost::factory< Dirichlet* >();
- f[ MixType::GENERALIZED_DIRICHLET ] = boost::factory< GenDirichlet* >();
+ names.push_back( add<Dirichlet>(f, MixType::DIRICHLET) );
+ names.push_back( add<GenDirichlet>(f, MixType::GENERALIZED_DIRICHLET) );
 }
