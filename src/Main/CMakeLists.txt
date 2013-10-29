@@ -31,8 +31,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       IO
                       Mesh
                       Statistics
-                      RNG
                       QuinoaControl
+                      RNG
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}

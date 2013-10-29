@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Oct 18 08:42:50 2013
+  \date      Mon 28 Oct 2013 08:45:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -22,6 +22,7 @@
 #include <Quinoa/Options/Mix.h>
 #include <Quinoa/Options/Frequency.h>
 #include <Quinoa/Options/MixRate.h>
+#include <Quinoa/Options/RNG.h>
 
 namespace quinoa {
 //! control and parsing
@@ -181,7 +182,8 @@ using selects = tk::tuple::tagged_tuple<
   energy,    ctr::EnergyType,     //!< Selected internal energy model
   mix,       ctr::MixType,        //!< Selected material mix model
   frequency, ctr::FrequencyType,  //!< Selected turbulence frequency model
-  mixrate,   ctr::MixRateType     //!< Selected material mix rate model
+  mixrate,   ctr::MixRateType,    //!< Selected material mix rate model
+  rng,       ctr::RNGType         //!< Selected random number generator
 >;
 
 //! Time incrementation parameters storage
@@ -218,6 +220,11 @@ using ios = tk::tuple::tagged_tuple<
   pdf,         std::string,  //!< PDF filename
   glob,        std::string,  //!< Glob filename
   stat,        std::string   //!< Statistics filename
+>;
+
+//! Random number generator parameters storage
+using RNGParameters = tk::tuple::tagged_tuple<
+  seed, unsigned int
 >;
 
 //! Beta mass model parameters storage
@@ -258,8 +265,9 @@ using GLMParameters = tk::tuple::tagged_tuple<
   c0, tk::real
 >;
 
-//! Model parameters storage
+//! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
+  rng,          RNGParameters,            // Random number generator
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
   gendirichlet, GenDirichletParameters,

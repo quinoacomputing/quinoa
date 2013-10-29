@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:20:56 AM MDT
+  \date      Mon 28 Oct 2013 09:08:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -330,7 +330,13 @@ namespace deck {
                       Store<Stack, ctr::interval, ctr::tty>>,
               process<Stack,
                       kw::dmpi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::dump>>
+                      Store<Stack, ctr::interval, ctr::dump>>,
+              process<Stack,
+                      kw::rng::pegtl_string,
+                      store_option<ctr::RNG, ctr::selected, ctr::rng>>,
+              process<Stack,
+                      kw::seed::pegtl_string,
+                      Store<Stack, ctr::param, ctr::rng, ctr::seed>>
             > {};
 
   //! mass models

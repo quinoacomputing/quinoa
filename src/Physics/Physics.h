@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Mon Oct 28 08:53:15 2013
+  \date      Mon 28 Oct 2013 09:36:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,14 +12,13 @@
 #define Physics_h
 
 #include <Base.h>
+#include <RNG.h>
 #include <Mass/Mass.h>
 #include <Hydro/Hydro.h>
 #include <Mix/Mix.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
-#include <Quinoa/Options/RNG.h>
-#include <Quinoa/Options/Mass.h>
 
 namespace quinoa {
 
@@ -112,6 +111,7 @@ class Physics {
     ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
+    std::unique_ptr<tk::RNG> m_rng;             //!< Random number generator
     std::unique_ptr<Mass> m_mass;               //!< Mass model
     std::unique_ptr<Hydro> m_hydro;             //!< Hydro model
     std::unique_ptr<Mix> m_mix;                 //!< Mix model
