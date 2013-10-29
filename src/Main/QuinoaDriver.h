@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 09:17:31 PM MDT
+  \date      Tue Oct 29 10:22:33 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -18,6 +18,12 @@
 
 //! Everything that contributes to the quina executable
 namespace quinoa {
+
+//! Geometry factory type
+using GeometryFactory = std::map< ctr::GeometryType, std::function<Geometry*()> >;
+
+//! Physics factory type
+using PhysicsFactory = std::map< ctr::PhysicsType, std::function<Physics*()> >;
 
 //! QuinoaDriver : Driver
 class QuinoaDriver : public tk::Driver {
@@ -51,12 +57,11 @@ class QuinoaDriver : public tk::Driver {
     std::unique_ptr< tk::Timer > m_timer;        //!< Timer
     std::unique_ptr< Base > m_base;              //!< Essentials bundle
 
-    //! Geometry and Physics factories
-    std::map< ctr::PhysicsType, std::function<Physics*()> > m_physicsFactory;
-    std::map< ctr::GeometryType, std::function<Geometry*()> > m_geometryFactory;
+    PhysicsFactory m_physicsFactory;             //!< Physics factory
+    GeometryFactory m_geometryFactory;           //!< Geometry factory
 
-    std::unique_ptr< Geometry > m_geometry;   //!< Geometry object
-    std::unique_ptr< Physics > m_physics;     //!< Physics object
+    std::unique_ptr< Geometry > m_geometry;      //!< Geometry object
+    std::unique_ptr< Physics > m_physics;        //!< Physics object
 };
 
 } // quinoa::
