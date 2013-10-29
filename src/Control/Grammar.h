@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:25:37 PM MDT
+  \date      Tue Oct 29 07:27:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -192,13 +192,6 @@ namespace grm {
   template< class Stack, class keyword, class insert, class keywords = any >
   struct process_cmd :
          ifmust< readcmd<Stack,keyword>,
-                 scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
-                       insert> > {};
-
-  //! process random number generator
-  template< class Stack, class keyword, class insert, class keywords = alnum >
-  struct process_rng :
-         ifmust < readkw<keyword>,
                  scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
                        insert> > {};
 
