@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Mon Oct 28 08:50:09 2013
+  \date      Tue Oct 29 15:32:07 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -12,6 +12,7 @@
 #define QuinoaHydroOptions_h
 
 #include <map>
+#include <list>
 
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
@@ -37,7 +38,7 @@ class Hydro : public tk::Toggle<HydroType> {
     explicit Hydro() : Toggle<HydroType>("Hydrodynamics", names, values) {}
 
     //! Register hydrodynamics models into factory
-    void initFactory(HydroFactory& f) const;
+    void initFactory(HydroFactory& f, std::list<std::string>& names) const;
 
   private:
     //! Don't permit copy constructor

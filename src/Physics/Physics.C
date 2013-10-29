@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 09:44:15 PM MDT
+  \date      Tue Oct 29 15:37:09 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -77,19 +77,23 @@ Physics::initFactories()
   // Register random number generators
   ctr::RNG rng;
   unsigned int seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
-  rng.initFactory(m_RNGFactory, m_base.paradigm.nthreads(), seed);
+  std::list< std::string > registeredRNG;
+  rng.initFactory(m_RNGFactory, registeredRNG, m_base.paradigm.nthreads(), seed);
 
   // Register mass models
   ctr::Mass mass;
-  mass.initFactory(m_massFactory);
+  std::list< std::string > registeredMass;
+  mass.initFactory(m_massFactory, registeredMass);
 
   // Register hydro models
   ctr::Hydro hydro;
-  hydro.initFactory(m_hydroFactory);
+  std::list< std::string > registeredHydro;
+  hydro.initFactory(m_hydroFactory, registeredHydro);
 
   // Register mix models
   ctr::Mix mix;
-  mix.initFactory(m_mixFactory);
+  std::list< std::string > registeredMix;
+  mix.initFactory(m_mixFactory, registeredMix);
 }
 
 void
