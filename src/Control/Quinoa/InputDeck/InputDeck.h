@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 06:24:07 PM MDT
+  \date      Mon 28 Oct 2013 08:55:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -48,6 +48,7 @@ class InputDeck :
       set<selected,mix>(MixType::NO_MIX);
       set<selected,frequency>(FrequencyType::NO_FREQUENCY);
       set<selected,mixrate>(MixRateType::NO_MIXRATE);
+      set<selected,rng>(RNGType::NO_RNG);
       // Default time incrementation parameters
       set<incpar,nstep>(std::numeric_limits<uint64_t>::max());
       set<incpar,term>(1.0);
@@ -65,6 +66,8 @@ class InputDeck :
       set<interval,plot>(1);
       set<interval,pdf>(1);
       set<interval,glob>(1);
+      // Default random number generator seed
+      set<param,rng,seed>(0);
       // Default beta mass model parameters
       set<param,beta,atwood>(0.5);
       // Default Dirichlet mix model parameters

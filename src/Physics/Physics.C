@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon Oct 28 13:54:30 2013
+  \date      Mon 28 Oct 2013 09:44:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -13,11 +13,6 @@
 
 #include <Physics.h>
 #include <Quinoa/InputDeck/InputDeck.h>
-#include <Mass/Beta/Beta.h>
-#include <Mix/Dirichlet/Dirichlet.h>
-#include <Mix/GenDirichlet/GenDirichlet.h>
-#include <Hydro/SLM/SLM.h>
-#include <Hydro/GLM/GLM.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 
@@ -47,6 +42,12 @@ Physics::Physics(const Base& base) :
   //! Initialize factories
   initFactories();
 
+  // Instantiate random number generator
+  ctr::RNGType r = m_base.control.get<ctr::selected, ctr::rng>();
+  if (r != ctr::RNGType::NO_RNG) {
+    m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
+  }
+
   // Instantiate mass model
   if (m_ndensity) {
     ctr::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
@@ -73,12 +74,9 @@ Physics::initFactories()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // TODO: Parse in and from control
-  // TODO: Echo number of registered stuff
-  unsigned int seed = 0;
-
   // Register random number generators
   ctr::RNG rng;
+  unsigned int seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
   rng.initFactory(m_RNGFactory, m_base.paradigm.nthreads(), seed);
 
   // Register mass models
@@ -116,7 +114,12 @@ Physics::echo()
                      m_base.control.get< ctr::cmd, ctr::io, ctr::pdf >() );
   m_base.print.endsubsection();
 
-  m_base.print.subsection("Models");
+  m_base.print.subsection("Selected");
+  m_base.print.item<ctr::RNG, ctr::selected, ctr::rng>();
+  if (m_base.control.get<ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG) {
+    m_base.print.item("Seed",
+                       m_base.control.get<ctr::param, ctr::rng, ctr::seed>());
+  }
   m_base.print.item<ctr::Position, ctr::selected, ctr::position>();
   m_base.print.item<ctr::Mass, ctr::selected, ctr::mass>();
   m_base.print.item<ctr::Hydro, ctr::selected, ctr::hydro>();
@@ -137,11 +140,11 @@ Physics::echo()
 
   m_base.print.subsection("Incrementation parameters");
   m_base.print.item("Number of time steps",
-               m_base.control.get<ctr::incpar,ctr::nstep>());
+                    m_base.control.get<ctr::incpar,ctr::nstep>());
   m_base.print.item("Terminate time",
-               m_base.control.get<ctr::incpar,ctr::term>());
+                    m_base.control.get<ctr::incpar,ctr::term>());
   m_base.print.item("Initial time step size",
-               m_base.control.get<ctr::incpar,ctr::dt>());
+                    m_base.control.get<ctr::incpar,ctr::dt>());
   m_base.print.endsubsection();
 
   m_base.print.subsection("Output intervals");

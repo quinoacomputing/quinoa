@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:21:31 AM MDT
+  \date      Mon 28 Oct 2013 08:13:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -79,9 +79,9 @@ namespace deck {
   // common to all RNG test suites
   struct rngtest_common :
          tk::grm::vector< Stack,
-                            kw::end::pegtl_string,
-                            kw::rngs::pegtl_string,
-                            Store_back<Stack,ctr::generator> > {};
+                          kw::end::pegtl_string,
+                          kw::rngs::pegtl_string,
+                          Store_back<Stack,ctr::generator> > {};
 
   //! title
   struct title :
@@ -90,26 +90,27 @@ namespace deck {
 
   // smallcrush block
   struct smallcrush :
-         ifmust< tk::grm::scan<kw::smallcrush::pegtl_string,
-                               store_option<ctr::Battery,
-                                            ctr::selected,
-                                            ctr::battery>>,
-                 rngtest_common > {};
+         ifmust< scan< kw::smallcrush::pegtl_string,
+                       store_option< ctr::Battery,
+                                     ctr::selected,
+                                     ctr::battery > >,
+                 block< Stack,
+                        rngtest_common> > {};
 
   // crush block
   struct crush :
-         ifmust< tk::grm::scan<kw::crush::pegtl_string,
-                               store_option<ctr::Battery,
-                                            ctr::selected,
-                                            ctr::battery>>,
+         ifmust< scan< kw::crush::pegtl_string,
+                       store_option< ctr::Battery,
+                                     ctr::selected,
+                                     ctr::battery > >,
                  rngtest_common > {};
 
   // bigcrush block
   struct bigcrush :
-         ifmust< tk::grm::scan<kw::bigcrush::pegtl_string,
-                               store_option<ctr::Battery,
-                                            ctr::selected,
-                                            ctr::battery>>,
+         ifmust< scan< kw::bigcrush::pegtl_string,
+                       store_option< ctr::Battery,
+                                     ctr::selected,
+                                     ctr::battery > >,
                  rngtest_common > {};
 
   //! batteries
