@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Tue Oct 29 15:32:23 2013
+  \date      Tue Oct 29 15:44:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -37,7 +37,7 @@ class Mass : public tk::Toggle<MassType> {
     explicit Mass() : Toggle<MassType>("Mass", names, values) {}
 
     //! Register mass models into factory
-    void initFactory(MassFactory& f, std::list<std::string>& names) const;
+    void initFactory(MassFactory& f, std::list<std::string>& reg) const;
 
   private:
     //! Don't permit copy constructor
