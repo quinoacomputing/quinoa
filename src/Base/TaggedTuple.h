@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 07:39:00 AM MDT
+  \date      Tue Oct 29 15:38:56 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -63,8 +63,8 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   template<typename S> nT<S>& get() {
     return std::get<index<S, Ss...>::value>(*this); }
   //! Set value
-  template<typename S> void set(nT<S>&& value) {
-    std::get<index<S, Ss...>::value>(*this) = std::move(value); }
+  //template<typename S> void set(const nT<S>& value) {
+  //  std::get<index<S, Ss...>::value>(*this) = std::move(value); }
 };
 
 //! tagged_tuple
