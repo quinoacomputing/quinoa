@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 07:38:05 PM MDT
+  \date      Wed Oct 30 07:14:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -11,10 +11,9 @@
 #ifndef RNGTestTypes_h
 #define RNGTestTypes_h
 
-#include <pegtl.hh>
-
 #include <RNGTest/Tags.h>
 #include <RNGTest/Options/Battery.h>
+#include <Quinoa/Options/RNG.h>
 
 namespace rngtest {
 //! control and parsing

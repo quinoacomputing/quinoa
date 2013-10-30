@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:12:48 2013
+  \date      Wed Oct 30 07:08:15 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -45,7 +45,7 @@ struct keyword {
 template< typename Info, int Alias, int Char, int... Chars >
 struct cmdline_keyword : keyword<Info, Char, Chars...> {
 
-  //! Accessor to keyword alias character as pegt::string
+  //! Accessor to keyword alias character as pegtl::string
   using pegtl_alias = pegtl::one<Alias>;
 
 };
