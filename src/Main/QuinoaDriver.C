@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 09:24:19 PM MDT
+  \date      Wed Oct 30 06:02:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -83,21 +83,31 @@ QuinoaDriver::initFactory()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register geometry classes
-  m_geometryFactory[ctr::GeometryType::ANALYTIC] =
-    std::bind(boost::factory<AnalyticGeometry*>(), *m_base);
-  m_geometryFactory[ctr::GeometryType::DISCRETE] =
-    std::bind(boost::factory<DiscreteGeometry*>(), *m_base);
+  // Register geometry types
+  ctr::Geometry geometry;
+  std::list< std::string > registeredGeometry;
+  registeredGeometry.push_back(
+    geometry.add<AnalyticGeometry>(m_geometryFactory,
+                                   ctr::GeometryType::ANALYTIC, *m_base) );
+  registeredGeometry.push_back(
+    geometry.add<DiscreteGeometry>(m_geometryFactory,
+                                   ctr::GeometryType::DISCRETE, *m_base) );
 
-  // Register physics classes
-  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_MIX] =
-    std::bind(boost::factory<HomMix*>(), *m_base);
-  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_HYDRO] =
-    std::bind(boost::factory<HomHydro*>(), *m_base);
-  m_physicsFactory[ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR] =
-    std::bind(boost::factory<HomRT*>(), *m_base);
-  m_physicsFactory[ctr::PhysicsType::SPINSFLOW] =
-    std::bind(boost::factory<SPINSFlow*>(), *m_base);
+  // Register physics types
+  ctr::Physics physics;
+  std::list< std::string > registeredPhysics;
+  registeredPhysics.push_back(
+    physics.add<HomMix>(m_physicsFactory,
+                        ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base) );
+  registeredPhysics.push_back(
+    physics.add<HomHydro>(m_physicsFactory,
+                          ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base) );
+  registeredPhysics.push_back(
+    physics.add<HomRT>(m_physicsFactory,
+                       ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base) );
+  registeredPhysics.push_back(
+    physics.add<SPINSFlow>(m_physicsFactory,
+                           ctr::PhysicsType::SPINSFLOW, *m_base) );
 }
 
 void
