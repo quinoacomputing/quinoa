@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Tue Oct 29 13:25:57 2013
+  \date      Wed Oct 30 06:44:25 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -48,20 +48,23 @@ class QuinoaDriver : public tk::Driver {
     //! Don't permit move assignment
     QuinoaDriver& operator=(QuinoaDriver&&) = delete;
 
-    //! Initialize geometry and physics factories
-    void initFactory();
+    //! Initialize factories
+    void initFactories(const tk::Print& print);
 
+    //! Factories
+    PhysicsFactory m_physicsFactory;             //!< Physics factory
+    GeometryFactory m_geometryFactory;           //!< Geometry factory
+
+    //! Pointers to selected options
+    std::unique_ptr< Geometry > m_geometry;      //!< Geometry object
+    std::unique_ptr< Physics > m_physics;        //!< Physics object
+
+    //! Pointers to essentials to be created
     std::unique_ptr< ctr::InputDeck > m_control; //!< Control
     std::unique_ptr< QuinoaPrint > m_print;      //!< Pretty printer
     std::unique_ptr< tk::Paradigm > m_paradigm;  //!< Parallel compute env.
     std::unique_ptr< tk::Timer > m_timer;        //!< Timer
     std::unique_ptr< Base > m_base;              //!< Essentials bundle
-
-    PhysicsFactory m_physicsFactory;             //!< Physics factory
-    GeometryFactory m_geometryFactory;           //!< Geometry factory
-
-    std::unique_ptr< Geometry > m_geometry;      //!< Geometry object
-    std::unique_ptr< Physics > m_physics;        //!< Physics object
 };
 
 } // quinoa::

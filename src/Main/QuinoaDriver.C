@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed Oct 30 06:02:21 2013
+  \date      Wed Oct 30 06:59:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -45,16 +45,16 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
 
+  print.endpart();
+
   // Bundle up essentials
   m_base = std::unique_ptr< Base >(
              new Base(*m_print, *m_paradigm, *m_control, *m_timer) );
 
-  print.endpart();
-  print.part("Problem setup");
-  print.section("Title", m_control->get<ctr::title>());
+  print.part("Factory");
 
-  //! Initialize geometry and physics factories
-  initFactory();
+  //! Initialize factories
+  initFactories(print);
 
   // Instantiate geometry object
   ctr::GeometryType g = m_control->get<ctr::selected, ctr::geometry>();
@@ -72,12 +72,11 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   if (!m_geometry && !m_physics) {
     print.section("Physics", std::string("unspecified"));
     print.section("Geometry", std::string("unspecified"));
-    print.endpart();
   }
 }
 
 void
-QuinoaDriver::initFactory()
+QuinoaDriver::initFactories(const tk::Print& print)
 //******************************************************************************
 //  Initialize geometry and physics factories
 //! \author  J. Bakosi
@@ -85,29 +84,31 @@ QuinoaDriver::initFactory()
 {
   // Register geometry types
   ctr::Geometry geometry;
-  std::list< std::string > registeredGeometry;
-  registeredGeometry.push_back(
+  std::list< std::string > regGeometry;
+  regGeometry.push_back(
     geometry.add<AnalyticGeometry>(m_geometryFactory,
                                    ctr::GeometryType::ANALYTIC, *m_base) );
-  registeredGeometry.push_back(
+  regGeometry.push_back(
     geometry.add<DiscreteGeometry>(m_geometryFactory,
                                    ctr::GeometryType::DISCRETE, *m_base) );
+  print.list("Registered geometry options", regGeometry);
 
   // Register physics types
   ctr::Physics physics;
-  std::list< std::string > registeredPhysics;
-  registeredPhysics.push_back(
+  std::list< std::string > regPhysics;
+  regPhysics.push_back(
     physics.add<HomMix>(m_physicsFactory,
                         ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base) );
-  registeredPhysics.push_back(
+  regPhysics.push_back(
     physics.add<HomHydro>(m_physicsFactory,
                           ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base) );
-  registeredPhysics.push_back(
+  regPhysics.push_back(
     physics.add<HomRT>(m_physicsFactory,
                        ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base) );
-  registeredPhysics.push_back(
+  regPhysics.push_back(
     physics.add<SPINSFlow>(m_physicsFactory,
                            ctr::PhysicsType::SPINSFLOW, *m_base) );
+  print.list("Registered physics options", regPhysics);
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Tue Oct 29 15:37:09 2013
+  \date      Wed Oct 30 07:02:02 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -36,11 +36,11 @@ Physics::Physics(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  //! Initialize factories
+  initFactories(m_base.print);
+
   //! Echo information on physics to be created
   echo();
-
-  //! Initialize factories
-  initFactories();
 
   // Instantiate random number generator
   ctr::RNGType r = m_base.control.get<ctr::selected, ctr::rng>();
@@ -68,7 +68,7 @@ Physics::Physics(const Base& base) :
 }
 
 void
-Physics::initFactories()
+Physics::initFactories(const tk::Print& print)
 //******************************************************************************
 //  Initialize factories
 //! \author  J. Bakosi
@@ -76,24 +76,28 @@ Physics::initFactories()
 {
   // Register random number generators
   ctr::RNG rng;
+  std::list< std::string > regRNG;
   unsigned int seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
-  std::list< std::string > registeredRNG;
-  rng.initFactory(m_RNGFactory, registeredRNG, m_base.paradigm.nthreads(), seed);
+  rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
+  print.list("Registered random number generator options", regRNG);
 
   // Register mass models
   ctr::Mass mass;
-  std::list< std::string > registeredMass;
-  mass.initFactory(m_massFactory, registeredMass);
+  std::list< std::string > regMass;
+  mass.initFactory(m_massFactory, regMass);
+  print.list("Registered mass model options", regMass);
 
   // Register hydro models
   ctr::Hydro hydro;
-  std::list< std::string > registeredHydro;
-  hydro.initFactory(m_hydroFactory, registeredHydro);
+  std::list< std::string > regHydro;
+  hydro.initFactory(m_hydroFactory, regHydro);
+  print.list("Registered hydrodyanmics model options", regHydro);
 
   // Register mix models
   ctr::Mix mix;
-  std::list< std::string > registeredMix;
-  mix.initFactory(m_mixFactory, registeredMix);
+  std::list< std::string > regMix;
+  mix.initFactory(m_mixFactory, regMix);
+  print.list("Registered material mix model options", regMix);
 }
 
 void
@@ -103,64 +107,61 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_base.print.section<ctr::Physics, ctr::selected, ctr::physics>();
+  const QuinoaPrint& print = m_base.print;
+  const ctr::InputDeck& control = m_base.control;
 
-  m_base.print.subsection("Output filenames");
-  m_base.print.item( "Input",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::input >() );
-  m_base.print.item( "Output",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::output >() );
-  m_base.print.item( "Glob",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::glob >() );
-  m_base.print.item( "Statistics",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::stat >() );
-  m_base.print.item( "PDF",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::pdf >() );
-  m_base.print.endsubsection();
+  print.endpart();
+  print.part("Problem setup");
+  print.section("Title", control.get<ctr::title>());
+  print.section<ctr::Physics, ctr::selected, ctr::physics>();
 
-  m_base.print.subsection("Selected");
-  m_base.print.item<ctr::RNG, ctr::selected, ctr::rng>();
-  if (m_base.control.get<ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG) {
-    m_base.print.item("Seed",
-                       m_base.control.get<ctr::param, ctr::rng, ctr::seed>());
+  print.subsection("Output filenames");
+  print.item( "Input", control.get< ctr::cmd, ctr::io, ctr::input >() );
+  print.item( "Output", control.get< ctr::cmd, ctr::io, ctr::output >() );
+  print.item( "Glob", control.get< ctr::cmd, ctr::io, ctr::glob >() );
+  print.item( "Statistics", control.get< ctr::cmd, ctr::io, ctr::stat >() );
+  print.item( "PDF", control.get< ctr::cmd, ctr::io, ctr::pdf >() );
+  print.endsubsection();
+
+  print.subsection("Selected");
+  print.item<ctr::RNG, ctr::selected, ctr::rng>();
+  if (control.get<ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG) {
+    print.item("Seed", control.get<ctr::param, ctr::rng, ctr::seed>());
   }
-  m_base.print.item<ctr::Position, ctr::selected, ctr::position>();
-  m_base.print.item<ctr::Mass, ctr::selected, ctr::mass>();
-  m_base.print.item<ctr::Hydro, ctr::selected, ctr::hydro>();
-  m_base.print.item<ctr::Energy, ctr::selected, ctr::energy>();
-  m_base.print.item<ctr::Mix, ctr::selected, ctr::mix>();
-  m_base.print.item<ctr::Frequency, ctr::selected, ctr::frequency>();
-  m_base.print.item<ctr::MixRate, ctr::selected, ctr::mixrate>();
-  m_base.print.endsubsection();
+  print.item<ctr::Position, ctr::selected, ctr::position>();
+  print.item<ctr::Mass, ctr::selected, ctr::mass>();
+  print.item<ctr::Hydro, ctr::selected, ctr::hydro>();
+  print.item<ctr::Energy, ctr::selected, ctr::energy>();
+  print.item<ctr::Mix, ctr::selected, ctr::mix>();
+  print.item<ctr::Frequency, ctr::selected, ctr::frequency>();
+  print.item<ctr::MixRate, ctr::selected, ctr::mixrate>();
+  print.endsubsection();
 
-  m_base.print.subsection("Number of components");
-  m_base.print.item<ctr::component,ctr::nposition>("Positions");
-  m_base.print.item<ctr::component,ctr::ndensity>("Densities");
-  m_base.print.item<ctr::component,ctr::nvelocity>("Velocities");
-  m_base.print.item<ctr::component,ctr::nscalar>("Scalars");
-  m_base.print.item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
-  m_base.print.item<ctr::component,ctr::npar>("Particles");
-  m_base.print.endsubsection();
+  print.subsection("Number of components");
+  print.item<ctr::component,ctr::nposition>("Positions");
+  print.item<ctr::component,ctr::ndensity>("Densities");
+  print.item<ctr::component,ctr::nvelocity>("Velocities");
+  print.item<ctr::component,ctr::nscalar>("Scalars");
+  print.item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
+  print.item<ctr::component,ctr::npar>("Particles");
+  print.endsubsection();
 
-  m_base.print.subsection("Incrementation parameters");
-  m_base.print.item("Number of time steps",
-                    m_base.control.get<ctr::incpar,ctr::nstep>());
-  m_base.print.item("Terminate time",
-                    m_base.control.get<ctr::incpar,ctr::term>());
-  m_base.print.item("Initial time step size",
-                    m_base.control.get<ctr::incpar,ctr::dt>());
-  m_base.print.endsubsection();
+  print.subsection("Incrementation parameters");
+  print.item("Number of time steps", control.get<ctr::incpar,ctr::nstep>());
+  print.item("Terminate time", control.get<ctr::incpar,ctr::term>());
+  print.item("Initial time step size", control.get<ctr::incpar,ctr::dt>());
+  print.endsubsection();
 
-  m_base.print.subsection("Output intervals");
-  m_base.print.item("TTY", m_base.control.get<ctr::interval,ctr::tty>());
-  m_base.print.item("Dump", m_base.control.get<ctr::interval,ctr::dump>());
-  m_base.print.item("Glob", m_base.control.get<ctr::interval,ctr::glob>());
-  m_base.print.item("Statistics", m_base.control.get<ctr::interval,ctr::plot>());
-  m_base.print.item("PDF", m_base.control.get<ctr::interval,ctr::pdf>());
-  m_base.print.endsubsection();
+  print.subsection("Output intervals");
+  print.item("TTY", control.get<ctr::interval,ctr::tty>());
+  print.item("Dump", control.get<ctr::interval,ctr::dump>());
+  print.item("Glob", control.get<ctr::interval,ctr::glob>());
+  print.item("Statistics", control.get<ctr::interval,ctr::plot>());
+  print.item("PDF", control.get<ctr::interval,ctr::pdf>());
+  print.endsubsection();
 
-  m_base.print.subsection("Statistics");
-  m_base.print.requestedStats("Requested");
-  m_base.print.estimatedStats("Estimated");
-  m_base.print.endpart();
+  print.subsection("Statistics");
+  print.requestedStats("Requested");
+  print.estimatedStats("Estimated");
+  print.endpart();
 }

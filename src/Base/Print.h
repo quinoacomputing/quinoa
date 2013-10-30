@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:50:53 AM MDT
+  \date      Wed Oct 30 06:57:36 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <list>
 
 #include <boost/format.hpp>
 
@@ -90,6 +91,15 @@ class Print {
       std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
 
+    //! Print list: name: entries...
+    void list(const std::string& name,
+              const std::list< std::string >& entries) const {
+      section(name);
+      for (const auto& e : entries) {
+        std::cout << m_list_item_fmt % m_item_indent % e;
+      }
+    }
+
     //! Print end of part
     void endpart() const { std::cout << "\n\n"; }
 
@@ -120,6 +130,7 @@ class Print {
     mutable format m_section_title_fmt = format("\n%s%c %s:\n");
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
+    mutable format m_list_item_fmt = format("%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
