@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:39:21 PM MDT
+  \date      Wed Oct 30 06:45:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -52,7 +52,7 @@ using analytic_geometry =
 
 // Keyword 'discrete_geometry'
 struct discrete_geometry_info {
-  static const char* name() { return "Discrete geometry defintion"; }
+  static const char* name() { return "Discrete"; }
   static const char* help() { return
     "This option is used to define the beginning of a discrete geometry "
     "definition block. Discrete geometry definitions are used to specify "
