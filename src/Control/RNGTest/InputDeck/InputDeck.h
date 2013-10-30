@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:05:20 AM MDT
+  \date      Wed Oct 30 07:13:51 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -13,9 +13,6 @@
 
 #include <Control.h>
 #include <Option.h>
-#include <RNGTest/Types.h>
-#include <RNGTest/Tags.h>
-#include <Quinoa/Options/RNG.h>
 #include <RNGTest/CmdLine/CmdLine.h>
 
 namespace rngtest {
