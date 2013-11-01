@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 09:08:15 PM MDT
+  \date      Thu Oct 31 07:23:48 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -330,14 +330,20 @@ namespace deck {
                       Store<Stack, ctr::interval, ctr::tty>>,
               process<Stack,
                       kw::dmpi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::dump>>,
-              process<Stack,
-                      kw::rng::pegtl_string,
-                      store_option<ctr::RNG, ctr::selected, ctr::rng>>,
-              process<Stack,
-                      kw::seed::pegtl_string,
-                      Store<Stack, ctr::param, ctr::rng, ctr::seed>>
+                      Store<Stack, ctr::interval, ctr::dump>>
             > {};
+
+  //! rng block
+  struct rng :
+         ifmust< scan< kw::mkl_mcg31::pegtl_string,
+                       store_option<ctr::RNG, ctr::selected, ctr::rng>>,
+                 block< Stack,
+                        kw::end::pegtl_string,
+                        process< Stack,
+                                 kw::seed::pegtl_string,
+                                 Store< Stack, ctr::param,
+                                               ctr::rng,
+                                               ctr::seed> > > > {};
 
   //! mass models
   struct mass :
@@ -364,6 +370,7 @@ namespace deck {
                        geometry,
                        physics_common,
                        mix,
+                       rng,
                        statistics> > {};
 
   //! physics 'homrt' block

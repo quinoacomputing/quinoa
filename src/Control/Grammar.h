@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Tue Oct 29 07:27:24 2013
+  \date      Thu Oct 31 07:28:35 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -172,7 +172,7 @@ namespace grm {
                > {};
 
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
-  template< class Stack, class keyword, class insert, class keywords = alnum >
+  template< class Stack, class keyword, class insert, class keywords = digit >
   struct process :
          ifmust< readkw<keyword>,
                  scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
