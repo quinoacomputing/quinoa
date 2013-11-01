@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed Oct 30 06:45:14 2013
+  \date      Thu 31 Oct 2013 06:42:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -305,9 +305,6 @@ using pdfi = keyword<undefined_info,  p,d,f,i >;
 
 // Glob output interval
 using glbi = keyword<undefined_info,  g,l,b,i >;
-
-// Random number generator
-using rng = keyword<undefined_info, r,n,g >;
 
 // Random number generator seed
 using seed = keyword<undefined_info, s,e,e,d >;
