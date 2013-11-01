@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:13:12 PM MDT
+  \date      Thu 31 Oct 2013 09:56:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -41,7 +41,7 @@ namespace deck {
 
   // RNGTest's InputDeck actions
 
-  //! convert and put option in state at position given by tags
+  //! put option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -57,36 +57,29 @@ namespace deck {
     }
   };
 
+  //! push back option in state at position given by tags
+  template< class OptionType, typename... tags >
+  struct store_back_option : action_base< store_option<OptionType, tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      tk::Option<OptionType> opt;
+      stack.push_back<tags...>(opt.value(value));
+    }
+  };
+
   // RNGTest's InputDeck grammar
-
-  //! rng: one of the random number generators
-  struct rng :
-         sor< quinoa::kw::mkl_mcg31::pegtl_string,
-              quinoa::kw::mkl_r250::pegtl_string,
-              quinoa::kw::mkl_mrg32k3a::pegtl_string,
-              quinoa::kw::mkl_mcg59::pegtl_string,
-              quinoa::kw::mkl_wh::pegtl_string,
-              quinoa::kw::mkl_mt19937::pegtl_string,
-              quinoa::kw::mkl_mt2203::pegtl_string,
-              quinoa::kw::mkl_sfmt19937::pegtl_string,
-              quinoa::kw::mkl_sobol::pegtl_string,
-              quinoa::kw::mkl_niederr::pegtl_string,
-              quinoa::kw::mkl_iabstract::pegtl_string,
-              quinoa::kw::mkl_dabstract::pegtl_string,
-              quinoa::kw::mkl_sabstract::pegtl_string,
-              quinoa::kw::mkl_nondeterm::pegtl_string > {};
-
-  // common to all RNG test suites
-  struct rngtest_common :
-         tk::grm::vector< Stack,
-                          kw::end::pegtl_string,
-                          kw::rngs::pegtl_string,
-                          Store_back<Stack,ctr::generator> > {};
 
   //! title
   struct title :
-         ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,Set<Stack,ctr::title>> > {};
+         ifmust< readkw< kw::title::pegtl_string >,
+                 quoted< Stack, Set< Stack, ctr::title > > > {};
+
+  //! rngs block
+  struct rngs :
+         process_rng< Stack,
+                      store_back_option< quinoa::ctr::RNG,
+                                         ctr::selected, ctr::rng >,
+                      kw::seed::pegtl_string,
+                      Store_back< Stack, ctr::param, ctr::rng, ctr::seed > > {};
 
   // smallcrush block
   struct smallcrush :
@@ -94,8 +87,7 @@ namespace deck {
                        store_option< ctr::Battery,
                                      ctr::selected,
                                      ctr::battery > >,
-                 block< Stack,
-                        rngtest_common> > {};
+                 block< Stack, rngs > > {};
 
   // crush block
   struct crush :
@@ -103,7 +95,7 @@ namespace deck {
                        store_option< ctr::Battery,
                                      ctr::selected,
                                      ctr::battery > >,
-                 rngtest_common > {};
+                 block< Stack, rngs > > {};
 
   // bigcrush block
   struct bigcrush :
@@ -111,7 +103,7 @@ namespace deck {
                        store_option< ctr::Battery,
                                      ctr::selected,
                                      ctr::battery > >,
-                 rngtest_common > {};
+                 block< Stack, rngs > > {};
 
   //! batteries
   struct battery :
@@ -121,8 +113,8 @@ namespace deck {
 
   //! main keywords
   struct keywords :
-         sor< title/*,
-              battery*/ > {};
+         sor< title,
+              battery > {};
 
   //! ignore: comments and empty lines
   struct ignore :

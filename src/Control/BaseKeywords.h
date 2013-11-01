@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
-  \date      Mon Oct  7 11:31:33 2013
+  \date      Thu 31 Oct 2013 08:24:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -11,6 +11,8 @@
 #ifndef Keywords
 #error "BaseKeywords.h should only be included within a *Keywords.h"
 #endif
+
+using namespace pegtl::ascii;
 
 // Keyword 'title'
 struct title_info {

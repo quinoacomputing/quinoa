@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:37:46 PM MDT
+  \date      Thu 31 Oct 2013 08:24:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
@@ -15,6 +15,8 @@
 #ifndef Keywords
 #error "MKLRNGKeywords.h should only be included within a *Keywords.h"
 #endif
+
+using namespace pegtl::ascii;
 
 // Keyword 'mkl_mcg31'
 struct mkl_mcg31_info {

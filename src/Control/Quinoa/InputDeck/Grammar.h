@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct 31 07:23:48 2013
+  \date      Thu 31 Oct 2013 09:56:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -79,7 +79,7 @@ namespace deck {
     }
   };
 
-  //! convert and put option in state at position given by tags
+  //! put option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply(const std::string& value, Stack& stack) {
@@ -130,8 +130,8 @@ namespace deck {
 
   //! title
   struct title :
-         ifmust< readkw<kw::title::pegtl_string>,
-                 quoted<Stack,Set<Stack,ctr::title>> > {};
+         ifmust< readkw< kw::title::pegtl_string >,
+                 quoted< Stack, Set< Stack, ctr::title > > > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
@@ -139,7 +139,7 @@ namespace deck {
                        store_option<ctr::Geometry,
                                     ctr::selected,
                                     ctr::geometry> >,
-                 block<Stack,kw::end::pegtl_string> > {};
+                 block<Stack> > {};
 
   //! discrete_geometry block
   struct discrete_geometry:
@@ -147,33 +147,29 @@ namespace deck {
                        store_option<ctr::Geometry,
                                     ctr::selected,
                                     ctr::geometry> >,
-                 block<Stack,kw::end::pegtl_string> > {};
+                 block<Stack> > {};
 
   //! dir block
   struct dir :
          ifmust< scan< kw::mix_dir::pegtl_string,
                        store_option<ctr::Mix, ctr::selected, ctr::mix> >,
                  block< Stack,
-                        kw::end::pegtl_string,
                         process<Stack,
                                 kw::nscalar::pegtl_string,
                                 Store<Stack, ctr::component, ctr::nscalar>>,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
                                            ctr::dirichlet,
                                            ctr::b> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_S::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
                                            ctr::dirichlet,
                                            ctr::S> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_kappa::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
@@ -185,33 +181,28 @@ namespace deck {
          ifmust< scan< kw::mix_gendir::pegtl_string,
                        store_option<ctr::Mix, ctr::selected, ctr::mix> >,
                  block< Stack,
-                        kw::end::pegtl_string,
                         process<Stack,
                                 kw::nscalar::pegtl_string,
                                 Store<Stack, ctr::component, ctr::nscalar> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_B::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
                                            ctr::gendirichlet,
                                            ctr::b> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_S::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
                                            ctr::gendirichlet,
                                            ctr::S> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::dir_kappa::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
                                            ctr::gendirichlet,
                                            ctr::kappa> >,
                         vector< Stack,
-                                kw::end::pegtl_string,
                                 kw::gendir_C::pegtl_string,
                                 Store_back<Stack,
                                            ctr::param,
@@ -222,7 +213,6 @@ namespace deck {
   struct statistics :
          ifmust< readkw<kw::statistics::pegtl_string>,
                  block<Stack,
-                       kw::end::pegtl_string,
                        parse_expectations<'<','>'>> > {};
 
   //! slm block
@@ -246,7 +236,6 @@ namespace deck {
                        push_term<ctr::Quantity::VELOCITY_Z,
                                  ctr::Moment::CENTRAL, 'w'>>,
                  block< Stack,
-                        kw::end::pegtl_string,
                         process<Stack,
                                 kw::SLM_C0::pegtl_string,
                                 Store<Stack, ctr::param, ctr::slm, ctr::c0>>,
@@ -262,7 +251,6 @@ namespace deck {
                                     ctr::selected,
                                     ctr::frequency> >,
                  block< Stack,
-                        kw::end::pegtl_string,
                         process<Stack,
                                 kw::nfreq::pegtl_string,
                                 Store<Stack, ctr::component, ctr::nfrequency>>,
@@ -285,7 +273,6 @@ namespace deck {
          ifmust< scan<kw::mass_beta::pegtl_string,
                       store_option<ctr::Mass, ctr::selected, ctr::mass>>,
                  block< Stack,
-                        kw::end::pegtl_string,
                         process<Stack,
                                 kw::ndensity::pegtl_string,
                                 Store<Stack, ctr::component, ctr::ndensity>>,
@@ -333,17 +320,12 @@ namespace deck {
                       Store<Stack, ctr::interval, ctr::dump>>
             > {};
 
-  //! rng block
-  struct rng :
-         ifmust< scan< kw::mkl_mcg31::pegtl_string,
-                       store_option<ctr::RNG, ctr::selected, ctr::rng>>,
-                 block< Stack,
-                        kw::end::pegtl_string,
-                        process< Stack,
-                                 kw::seed::pegtl_string,
-                                 Store< Stack, ctr::param,
-                                               ctr::rng,
-                                               ctr::seed> > > > {};
+  //! rngs block
+  struct rngs :
+         process_rng< Stack,
+                      store_option< ctr::RNG, ctr::selected, ctr::rng >,
+                      kw::seed::pegtl_string,
+                      Store< Stack, ctr::param, ctr::rng, ctr::seed > > {};
 
   //! mass models
   struct mass :
@@ -366,11 +348,10 @@ namespace deck {
          ifmust< scan<kw::hommix::pegtl_string,
                       store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
-                       kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        mix,
-                       rng,
+                       rngs,
                        statistics> > {};
 
   //! physics 'homrt' block
@@ -378,7 +359,6 @@ namespace deck {
          ifmust< scan<kw::homrt::pegtl_string,
                       store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
-                       kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        mass,
@@ -391,7 +371,6 @@ namespace deck {
          ifmust< scan<kw::homhydro::pegtl_string,
                       store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
-                       kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        hydro,
@@ -403,7 +382,6 @@ namespace deck {
          ifmust< scan<kw::spinsflow::pegtl_string,
                       store_option<ctr::Physics, ctr::selected, ctr::physics>>,
                  block<Stack,
-                       kw::end::pegtl_string,
                        geometry,
                        physics_common,
                        hydro,

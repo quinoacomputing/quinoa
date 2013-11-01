@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu Oct 31 07:28:35 2013
+  \date      Thu 31 Oct 2013 09:43:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -144,19 +144,18 @@ namespace grm {
   struct number :
          seq< opt< sor<one<'+'>, one<'-'>> >, digit> {};
 
-  //! plow through 'tokens' until 'endkeyword'
-  template< class Stack, typename endkeyword, typename... tokens >
+  //! plow through 'tokens' until kw::end
+  template< class Stack, typename... tokens >
   struct block :
-         until< readkw<endkeyword>,
+         until< readkw< kw::end::pegtl_string >,
                 sor<comment, tokens..., unknown<Stack,Error::KEYWORD>> > {};
 
-  //! plow through vector of values between keywords 'key' and "end", calling
+  //! plow through vector of values between keywords 'key' and kw::end, calling
   //! 'insert' for each if matches and allowing comments between values
-  template< class Stack, typename endkeyword, class key, class insert,
-            class value = number >
+  template< class Stack, class key, class insert, class value = number >
   struct vector :
          ifmust< readkw<key>,
-                 until< readkw<endkeyword>,
+                 until< readkw< kw::end::pegtl_string >,
                         sor<comment,
                             scan<value,insert>,
                             unknown<Stack,Error::LIST>> > > {};
@@ -195,6 +194,29 @@ namespace grm {
                  scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
                        insert> > {};
 
+  //! rng: match any one of the random number generators
+  struct rng :
+         sor< kw::mkl_mcg31::pegtl_string,
+              kw::mkl_r250::pegtl_string,
+              kw::mkl_mrg32k3a::pegtl_string,
+              kw::mkl_mcg59::pegtl_string,
+              kw::mkl_wh::pegtl_string,
+              kw::mkl_mt19937::pegtl_string,
+              kw::mkl_mt2203::pegtl_string,
+              kw::mkl_sfmt19937::pegtl_string,
+              kw::mkl_sobol::pegtl_string,
+              kw::mkl_niederr::pegtl_string,
+              kw::mkl_iabstract::pegtl_string,
+              kw::mkl_dabstract::pegtl_string,
+              kw::mkl_sabstract::pegtl_string,
+              kw::mkl_nondeterm::pegtl_string > {};
+
+  //! process random number generator
+  template< class Stack, class ins_option, class param, class ins_param >
+  struct process_rng :
+         ifmust< scan< rng, ins_option >,
+                 block< Stack,
+                        process< Stack, param, ins_param > > > {};
 } // grm::
 } // tk::
 
