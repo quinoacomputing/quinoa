@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Tue 22 Oct 2013 08:52:40 PM MDT
+  \date      Thu 31 Oct 2013 09:53:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -131,6 +131,12 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   print.endpart();
   print.part("Problem setup");
   print.section("Title", m_control->get<ctr::title>());
+
+//   print.subsection("Selected");
+//   m_print->list<quinoa::ctr::RNG, ctr::selected, ctr::rng>();
+//   if (m_control->get<ctr::selected, ctr::rng>()[0] != ctr::RNGType::NO_RNG) {
+//     print.item("Seed", m_control->get<ctr::param, ctr::rng, ctr::seed>()[0]);
+//   }
 }
 
 void

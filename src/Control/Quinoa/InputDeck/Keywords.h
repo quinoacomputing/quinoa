@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 06:42:40 PM MDT
+  \date      Thu 31 Oct 2013 08:33:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -20,6 +20,7 @@
 #define Keywords
 
 #include <Keyword.h>
+#include <SharedKeywords.h>
 
 namespace quinoa {
 //! List of keywords the parser understands
@@ -27,12 +28,6 @@ namespace kw {
 
 using namespace pegtl::ascii;
 using namespace tk::kw;
-
-// Include base keywords recognized by all input deck parsers
-#include <BaseKeywords.h>
-
-// Include Intel's MKL's RNG keywords
-#include <MKLRNGKeywords.h>
 
 // Keyword 'analytic_geometry'
 struct analytic_geometry_info {
@@ -305,9 +300,6 @@ using pdfi = keyword<undefined_info,  p,d,f,i >;
 
 // Glob output interval
 using glbi = keyword<undefined_info,  g,l,b,i >;
-
-// Random number generator seed
-using seed = keyword<undefined_info, s,e,e,d >;
 
 // Statistics
 using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;

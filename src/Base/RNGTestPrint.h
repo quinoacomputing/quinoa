@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:26:25 2013
+  \date      Thu 31 Oct 2013 09:54:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -27,6 +27,17 @@ class RNGTestPrint : public tk::Print {
 
     //! Destructor
     ~RNGTestPrint() override = default;
+
+//     //! Print control option: 'group : option' only if differs from its default
+//     template<typename OptionType, typename... tags>
+//     void item() const {
+//       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
+//         tk::Option<OptionType> opt;
+//         std::cout << m_item_name_value_fmt % m_item_indent
+//                                            % opt.group()
+//                                            % opt.name(m_ctr.get<tags...>()[0]);
+//       }
+//     }
 
   private:
     //! Don't permit copy constructor

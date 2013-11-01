@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Sun 06 Oct 2013 04:03:02 PM MDT
+  \date      Thu 31 Oct 2013 09:45:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite input deck parser. The keywords are defined by specializing struct
@@ -20,19 +20,14 @@
 #define Keywords
 
 #include <Keyword.h>
+#include <SharedKeywords.h>
 
 namespace rngtest {
 //! List of keywords the parser understands
 namespace kw {
 
 using namespace pegtl::ascii;
-using quinoa::kw::keyword;
-
-// Include base keywords recognized by all input deck parsers
-#include <BaseKeywords.h>
-
-// Include Intel's MKL's RNG keywords
-#include <MKLRNGKeywords.h>
+using namespace tk::kw;
 
 // Keyword 'smallcrush'
 struct smallcrush_info {
@@ -72,21 +67,6 @@ struct bigcrush_info {
   }
 };
 using bigcrush = keyword< bigcrush_info, b,i,g,c,r,u,s,h >;
-
-// Keyword 'rngs'
-struct rngs_info {
-  static const char* rngs_name() { return "RNGs start block"; }
-  static const char* rngs_help() { return
-    "This keyword is used to introduce a block that lists the names of the "
-    "random number generators to test. Example:\n"
-    "\trngs\n"
-    "\t  mkl_r250\n"
-    "\t  mkl_mcg31\n"
-    "\t  mkl_mrg32k3a\n"
-    "\tend";
-  }
-};
-using rngs = keyword< rngs_info, r,n,g,s >;
 
 } // kw::
 } // rngtest::
