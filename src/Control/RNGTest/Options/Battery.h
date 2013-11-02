@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:39:54 PM MDT
+  \date      Sat 02 Nov 2013 12:47:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -15,6 +15,7 @@
 #include <list>
 
 #include <Toggle.h>
+#include <RNGTest/InputDeck/Keywords.h>
 #include <Battery.h>
 
 namespace rngtest {
@@ -36,8 +37,7 @@ class Battery : public tk::Toggle<BatteryType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Battery() :
-      Toggle<BatteryType>
-        ("RNG battery", names, values) {}
+      Toggle<BatteryType>("RNG battery", names, values) {}
 
     //! Register batteries into factory
     void initFactory( BatteryFactory& f, std::list<std::string>& reg ) const;
@@ -52,20 +52,25 @@ class Battery : public tk::Toggle<BatteryType> {
     //! Don't permit move assigment
     Battery& operator=(Battery&&) = delete;
 
+    //! Get access to battery keywords
+    const kw::smallcrush smallcrush {};
+    const kw::crush crush {};
+    const kw::bigcrush bigcrush {};
+
     //! Enums -> names
     const std::map<BatteryType, std::string> names {
-      { BatteryType::NO_BATTERY, "No battery" },
-      { BatteryType::SMALLCRUSH, "SmallCrush" },
-      { BatteryType::CRUSH, "Crush" },
-      { BatteryType::BIGCRUSH, "BigCrush" }
+      { BatteryType::NO_BATTERY, "n/a" },
+      { BatteryType::SMALLCRUSH, smallcrush.name() },
+      { BatteryType::CRUSH, crush.name() },
+      { BatteryType::BIGCRUSH, bigcrush.name() }
     };
 
     //! keywords -> Enums
     const std::map<std::string, BatteryType> values {
       { "no_battery", BatteryType::NO_BATTERY },
-      { "smallcrush", BatteryType::SMALLCRUSH },
-      { "crush", BatteryType::CRUSH },
-      { "bigcrush", BatteryType::BIGCRUSH }
+      { smallcrush.string(), BatteryType::SMALLCRUSH },
+      { crush.string(), BatteryType::CRUSH },
+      { bigcrush.string(), BatteryType::BIGCRUSH }
     };
 };
 

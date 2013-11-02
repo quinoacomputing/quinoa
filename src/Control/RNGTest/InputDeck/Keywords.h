@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 09:45:35 PM MDT
+  \date      Sat 02 Nov 2013 12:49:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite input deck parser. The keywords are defined by specializing struct
@@ -44,8 +44,8 @@ using smallcrush = keyword< smallcrush_info, s,m,a,l,l,c,r,u,s,h >;
 
 // Keyword 'crush'
 struct crush_info {
-  static const char* crush_name() { return "Crush"; }
-  static const char* crush_help() { return
+  static const char* name() { return "Crush"; }
+  static const char* help() { return
     "This keyword is used to introduce the description of the random number "
     "generator test suite, i.e., battery, 'Crush'. Crush is a suite of "
     "stringent statistical tests, O(100), defined in TestU01, a library for "
@@ -57,8 +57,8 @@ using crush = keyword< crush_info, c,r,u,s,h >;
 
 // Keyword 'bigcrush'
 struct bigcrush_info {
-  static const char* bigcrush_name() { return "BigCrush"; }
-  static const char* bigcrush_help() { return
+  static const char* name() { return "BigCrush"; }
+  static const char* help() { return
     "This keyword is used to introduce the description of the random number "
     "generator test suite, i.e., battery, 'BigCrush'. BigCrush is a "
     "suite of very stringent statistical tests, O(100), defined in TestU01, a "
