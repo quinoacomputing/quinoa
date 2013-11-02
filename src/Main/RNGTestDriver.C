@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 09:53:54 PM MDT
+  \date      Sat 02 Nov 2013 12:38:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -12,6 +12,7 @@
 #include <RNGTestDriver.h>
 #include <RNGTest/InputDeck/Parser.h>
 #include <RNGTest/CmdLine/Parser.h>
+#include <RNGTest/InputDeck/InputDeck.h>
 
 // #include <iostream>
 // #include <sstream>
@@ -124,19 +125,68 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
 
+  print.endpart();
+
   // Bundle up essentials
   m_base = std::unique_ptr< Base >(
              new Base(*m_print, *m_paradigm, *m_control, *m_timer) );
 
-  print.endpart();
-  print.part("Problem setup");
-  print.section("Title", m_control->get<ctr::title>());
+  print.part("Factory");
+
+  //! Initialize factories
+  initFactories(print);
+
+  //! Echo information on random number generator test suite to be created
+  echo();
+
+  // Instantiate battery
+  ctr::BatteryType b = m_control->get<ctr::selected, ctr::battery>();
+  if (b != ctr::BatteryType::NO_BATTERY) {
+    m_battery = std::unique_ptr<Battery>( m_batteryFactory[b]() );
+  }
 
 //   print.subsection("Selected");
 //   m_print->list<quinoa::ctr::RNG, ctr::selected, ctr::rng>();
 //   if (m_control->get<ctr::selected, ctr::rng>()[0] != ctr::RNGType::NO_RNG) {
 //     print.item("Seed", m_control->get<ctr::param, ctr::rng, ctr::seed>()[0]);
 //   }
+}
+
+void
+RNGTestDriver::initFactories(const tk::Print& print)
+//******************************************************************************
+//  Initialize factories
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Register random number generators
+  quinoa::ctr::RNG rng;
+  std::list< std::string > regRNG;
+  unsigned int seed = m_base->control.get<ctr::param, ctr::rng, ctr::seed>()[0];
+  rng.initFactory(m_RNGFactory, regRNG, m_base->paradigm.nthreads(), seed);
+  print.list("Registered random number generators", regRNG);
+
+  // Register batteries
+  ctr::Battery battery;
+  std::list< std::string > regBattery;
+  battery.initFactory(m_batteryFactory, regBattery);
+  print.list("Registered batteries", regBattery);
+}
+
+void
+RNGTestDriver::echo()
+//******************************************************************************
+//  Echo information on random number generator test suite
+//! \author J. Bakosi
+//******************************************************************************
+{
+  const RNGTestPrint& print = m_base->print;
+  const ctr::InputDeck& control = m_base->control;
+
+  print.endpart();
+  print.part("Problem");
+  print.section("Title", control.get<ctr::title>());
+  print.section<ctr::Battery, ctr::selected, ctr::battery>();
 }
 
 void

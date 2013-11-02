@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Wed Oct 30 07:02:13 2013
+  \date      Sat 02 Nov 2013 12:30:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -94,11 +94,11 @@ class Physics {
     //! Don't permit move assigment
     Physics& operator=(Physics&&) = delete;
 
-    //! Echo information on physics
-    void echo();
-
     //! Initialize factories
     void initFactories(const tk::Print& print);
+
+    //! Echo information on physics
+    void echo();
 
     const Base& m_base;                             //!< Essentials
     const std::unique_ptr<tk::real[]> m_particles;  //!< Particle properties
@@ -112,10 +112,10 @@ class Physics {
     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
     //! Pointers to selected options
-    std::unique_ptr<tk::RNG> m_rng;             //!< Random number generator
-    std::unique_ptr<Mass> m_mass;               //!< Mass model
-    std::unique_ptr<Hydro> m_hydro;             //!< Hydro model
-    std::unique_ptr<Mix> m_mix;                 //!< Mix model
+    std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
+    std::unique_ptr< Mass > m_mass;             //!< Mass model
+    std::unique_ptr< Hydro > m_hydro;           //!< Hydro model
+    std::unique_ptr< Mix > m_mix;               //!< Mix model
 
     GlobWriter m_glob;                          //!< Glob file writer
     TxtStatWriter m_stat;                       //!< Statistics file writer

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 09:54:03 PM MDT
+  \date      Sat 02 Nov 2013 12:38:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -21,12 +21,34 @@ namespace rngtest {
 class RNGTestPrint : public tk::Print {
 
   public:
+    //! Bring vanilla overloads from base into scope in case local overloads fail
+    using Print::section;
+    using Print::item;
+
     //! Constructor
     explicit RNGTestPrint(const std::unique_ptr< ctr::InputDeck >& control) :
       m_ctr(*control) {}
 
     //! Destructor
     ~RNGTestPrint() override = default;
+
+    //! Print control option: 'group : option' only if differs from its default
+    template<typename OptionType, typename... tags>
+    void section() const {
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
+        tk::Option<OptionType> opt;
+        auto& group = opt.group();
+        auto& value = opt.name(m_ctr.get<tags...>());
+        std::cout << m_section_title_value_fmt % m_section_indent
+                                               % m_section_bullet
+                                               % group
+                                               % value;
+        std::cout << m_section_underline_fmt
+                     % m_section_indent
+                     % std::string(m_section_indent_size + 3 +
+                                   group.size() + value.size(), '-');
+      }
+    }
 
 //     //! Print control option: 'group : option' only if differs from its default
 //     template<typename OptionType, typename... tags>

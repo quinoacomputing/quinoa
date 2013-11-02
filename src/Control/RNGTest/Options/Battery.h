@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Fri Oct 18 13:15:46 2013
+  \date      Sat 02 Nov 2013 12:39:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -12,8 +12,10 @@
 #define RNGTestBatteryOptions_h
 
 #include <map>
+#include <list>
 
 #include <Toggle.h>
+#include <Battery.h>
 
 namespace rngtest {
 namespace ctr {
@@ -24,6 +26,9 @@ enum class BatteryType : uint8_t { NO_BATTERY=0,
                                    CRUSH,
                                    BIGCRUSH };
 
+//! Battery factory type
+using BatteryFactory = std::map< BatteryType, std::function<Battery*()> >;
+
 //! Class with base templated on the above enum class with associations
 class Battery : public tk::Toggle<BatteryType> {
 
@@ -32,7 +37,10 @@ class Battery : public tk::Toggle<BatteryType> {
     //! class-user interactions
     explicit Battery() :
       Toggle<BatteryType>
-        ("Random number generator test suite", names, values) {}
+        ("RNG battery", names, values) {}
+
+    //! Register batteries into factory
+    void initFactory( BatteryFactory& f, std::list<std::string>& reg ) const;
 
   private:
     //! Don't permit copy constructor
@@ -54,7 +62,7 @@ class Battery : public tk::Toggle<BatteryType> {
 
     //! keywords -> Enums
     const std::map<std::string, BatteryType> values {
-      { "no_rngtest", BatteryType::NO_BATTERY },
+      { "no_battery", BatteryType::NO_BATTERY },
       { "smallcrush", BatteryType::SMALLCRUSH },
       { "crush", BatteryType::CRUSH },
       { "bigcrush", BatteryType::BIGCRUSH }
