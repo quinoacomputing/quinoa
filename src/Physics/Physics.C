@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Wed Oct 30 07:02:02 2013
+  \date      Sat 02 Nov 2013 12:28:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -79,25 +79,25 @@ Physics::initFactories(const tk::Print& print)
   std::list< std::string > regRNG;
   unsigned int seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
   rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
-  print.list("Registered random number generator options", regRNG);
+  print.list("Registered random number generators", regRNG);
 
   // Register mass models
   ctr::Mass mass;
   std::list< std::string > regMass;
   mass.initFactory(m_massFactory, regMass);
-  print.list("Registered mass model options", regMass);
+  print.list("Registered mass models", regMass);
 
   // Register hydro models
   ctr::Hydro hydro;
   std::list< std::string > regHydro;
   hydro.initFactory(m_hydroFactory, regHydro);
-  print.list("Registered hydrodyanmics model options", regHydro);
+  print.list("Registered hydrodyanmics models", regHydro);
 
   // Register mix models
   ctr::Mix mix;
   std::list< std::string > regMix;
   mix.initFactory(m_mixFactory, regMix);
-  print.list("Registered material mix model options", regMix);
+  print.list("Registered material mix models", regMix);
 }
 
 void
@@ -111,7 +111,7 @@ Physics::echo()
   const ctr::InputDeck& control = m_base.control;
 
   print.endpart();
-  print.part("Problem setup");
+  print.part("Problem");
   print.section("Title", control.get<ctr::title>());
   print.section<ctr::Physics, ctr::selected, ctr::physics>();
 

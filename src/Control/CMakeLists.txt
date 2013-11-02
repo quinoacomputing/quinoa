@@ -26,6 +26,8 @@ add_library(RNGTestControl
             StringParser.C
             RNGTest/InputDeck/Parser.C
             RNGTest/CmdLine/Parser.C
+            Quinoa/Options/RNG.C
+            RNGTest/Options/Battery.C
 )
 
 INSTALL(TARGETS RNGTestControl

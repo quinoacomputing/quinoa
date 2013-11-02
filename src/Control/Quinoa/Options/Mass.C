@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.C
   \author    J. Bakosi
-  \date      Tue Oct 29 15:44:46 2013
+  \date      Sat 02 Nov 2013 10:51:23 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's mass model options
   \details   Quinoa's mass model options
@@ -15,7 +15,6 @@
 #include <Mass/Beta/Beta.h>
 
 using namespace quinoa::ctr;
-
 
 void
 Mass::initFactory(MassFactory& f, std::list<std::string>& reg) const

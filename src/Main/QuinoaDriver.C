@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed Oct 30 06:59:41 2013
+  \date      Sat 02 Nov 2013 11:05:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -56,16 +56,16 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   //! Initialize factories
   initFactories(print);
 
-  // Instantiate geometry object
+  // Instantiate geometry
   ctr::GeometryType g = m_control->get<ctr::selected, ctr::geometry>();
   if (g != ctr::GeometryType::NO_GEOMETRY) {
-    m_geometry = std::unique_ptr<Geometry>(m_geometryFactory[g]());
+    m_geometry = std::unique_ptr<Geometry>( m_geometryFactory[g]() );
   }
 
-  // Instantiate physics object
+  // Instantiate physics
   ctr::PhysicsType p = m_control->get<ctr::selected, ctr::physics>();
   if (p != ctr::PhysicsType::NO_PHYSICS) {
-    m_physics = std::unique_ptr<Physics>(m_physicsFactory[p]());
+    m_physics = std::unique_ptr<Physics>( m_physicsFactory[p]() );
   }
 
   // Echo 'unspecified' if both geometry and physics are unspecified

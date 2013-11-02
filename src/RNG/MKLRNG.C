@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Fri 25 Oct 2013 11:01:27 PM MDT
+  \date      Sat 02 Nov 2013 06:54:10 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -32,13 +32,13 @@ MKLRNG::MKLRNG(const int nthreads, int brng, unsigned int seed) :
   m_stream =
     std::unique_ptr< VSLStreamStatePtr[] >( new VSLStreamStatePtr [nthreads] );
 
-  // Initialize thread-streams for block-splitting. These MKL functions
+  // Initialize thread-streams for block-splitting. These MKL VSL functions
   // dynamically allocate memory, so these calls being in a constructor are a
   // potential memory leak hazard in the presence of exceptions. However,
   // thankfully, the MKL functions below only emit warnings if they encounter
   // errors and always continue. As a result, the constructor finishes, the
-  // object gets created, so the destructor will also get called when leaving
-  // scope.
+  // MKLRNG object gets created, so the destructor will also get called when
+  // leaving scope.
   for (int i=0; i<nthreads; ++i) {
     vslNewStream( &m_stream[i], brng, seed );
     vslLeapfrogStream( m_stream[i], i, nthreads );
