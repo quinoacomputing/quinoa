@@ -12,6 +12,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 include(GetMPICompilers)
 get_mpi_compilers()
 
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
+  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+endif()
+
 # Set src directory where the source of third-party libraries will be copied
 set(TPL_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 MESSAGE(STATUS "Third-party library source dir: " ${TPL_SOURCE_DIR})
