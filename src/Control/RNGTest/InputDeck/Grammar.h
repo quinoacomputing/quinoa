@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 09:56:46 PM MDT
+  \date      Sun 03 Nov 2013 02:31:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -44,25 +44,25 @@ namespace deck {
   //! put option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
+    static void apply( const std::string& value, Stack& stack ) {
       tk::Option<OptionType> opt;
       //! Emit warning on overwrite
-      if (stack.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
+      if (stack.get< tags... >() != ctr::InputDeckDefaults.get< tags... >()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
                   << opt.name(stack.get<tags...>()) << "' with '"
                   << opt.name(opt.value(value)) << "'.\n\n";
       }
-      stack.set<tags...>(opt.value(value));
+      stack.set< tags... >( opt.value( value ) );
     }
   };
 
   //! push back option in state at position given by tags
   template< class OptionType, typename... tags >
   struct store_back_option : action_base< store_option<OptionType, tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      tk::Option<OptionType> opt;
-      stack.push_back<tags...>(opt.value(value));
+    static void apply( const std::string& value, Stack& stack ) {
+      tk::Option< OptionType > opt;
+      stack.push_back< tags... >( opt.value( value ) );
     }
   };
 
@@ -81,13 +81,23 @@ namespace deck {
                       kw::seed::pegtl_string,
                       Store_back< Stack, ctr::param, ctr::rng, ctr::seed > > {};
 
+  //! mkl_uniform_method
+  struct mkl_uniform_method :
+         process< Stack,
+                  kw::mkl_uniform_method::pegtl_string,
+                  store_option< ctr::MKLUniformMethod,
+                                ctr::selected, ctr::mkl_uniform_method >,
+                  alpha > {};
+
   // smallcrush block
   struct smallcrush :
          ifmust< scan< kw::smallcrush::pegtl_string,
                        store_option< ctr::Battery,
                                      ctr::selected,
                                      ctr::battery > >,
-                 block< Stack, rngs > > {};
+                 block< Stack,
+                        rngs,
+                        mkl_uniform_method > > {};
 
   // crush block
   struct crush :

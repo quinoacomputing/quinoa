@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 09:43:28 PM MDT
+  \date      Sun 03 Nov 2013 01:06:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -182,17 +182,17 @@ namespace grm {
   template< class Stack, class keyword, class insert, char lbound='"',
             char rbound='"' >
   struct process_quoted :
-         ifmust< readkw<keyword>,
-                 sor< quoted<Stack,insert,lbound,rbound>,
-                      unknown<Stack,Error::QUOTED>> > {};
+         ifmust< readkw< keyword >,
+                 sor< quoted< Stack, insert, lbound, rbound >,
+                      unknown< Stack, Error::QUOTED > > > {};
 
   //! process command line 'keyword' and call its 'insert' action if matches
   //! 'keywords'
   template< class Stack, class keyword, class insert, class keywords = any >
   struct process_cmd :
-         ifmust< readcmd<Stack,keyword>,
-                 scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
-                       insert> > {};
+         ifmust< readcmd< Stack, keyword >,
+                 scan< sor< keywords, apply< error< Stack, Error::MISSING > > >,
+                       insert > > {};
 
   //! rng: match any one of the random number generators
   struct rng :
@@ -220,4 +220,4 @@ namespace grm {
 } // grm::
 } // tk::
 
-#endif // QuinoaInputDeckGrammar_h
+#endif // Grammar_h
