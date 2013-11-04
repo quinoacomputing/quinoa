@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:47:02 PM MDT
+  \date      Sun 03 Nov 2013 02:27:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -28,16 +28,16 @@ enum class BatteryType : uint8_t { NO_BATTERY=0,
                                    BIGCRUSH };
 
 //! Battery factory type
-using BatteryFactory = std::map< BatteryType, std::function<Battery*()> >;
+using BatteryFactory = std::map< BatteryType, std::function< Battery*() > >;
 
 //! Class with base templated on the above enum class with associations
-class Battery : public tk::Toggle<BatteryType> {
+class Battery : public tk::Toggle< BatteryType > {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Battery() :
-      Toggle<BatteryType>("RNG battery", names, values) {}
+      Toggle< BatteryType >("RNG battery", names, values) {}
 
     //! Register batteries into factory
     void initFactory( BatteryFactory& f, std::list<std::string>& reg ) const;

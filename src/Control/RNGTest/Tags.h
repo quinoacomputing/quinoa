@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 07:17:54 PM MDT
+  \date      Sun 03 Nov 2013 01:47:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's input deck tags
   \details   RNGTest's input deck tags
@@ -24,6 +24,7 @@ struct cmd {};
 struct rng {};
 struct seed {};
 struct param {};
+struct mkl_uniform_method {};
 
 } // ctr::
 } // rngtest::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:38:59 PM MDT
+  \date      Sun 03 Nov 2013 08:35:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -144,12 +144,6 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   if (b != ctr::BatteryType::NO_BATTERY) {
     m_battery = std::unique_ptr<Battery>( m_batteryFactory[b]() );
   }
-
-//   print.subsection("Selected");
-//   m_print->list<quinoa::ctr::RNG, ctr::selected, ctr::rng>();
-//   if (m_control->get<ctr::selected, ctr::rng>()[0] != ctr::RNGType::NO_RNG) {
-//     print.item("Seed", m_control->get<ctr::param, ctr::rng, ctr::seed>()[0]);
-//   }
 }
 
 void
@@ -187,6 +181,16 @@ RNGTestDriver::echo()
   print.part("Problem");
   print.section("Title", control.get<ctr::title>());
   print.section<ctr::Battery, ctr::selected, ctr::battery>();
+
+  print.subsection("Selected");
+  print.item<ctr::MKLUniformMethod, ctr::selected, ctr::mkl_uniform_method>();
+
+//   print.subsection("Selected");
+//   m_print->list<quinoa::ctr::RNG, ctr::selected, ctr::rng>();
+//   if (m_control->get<ctr::selected, ctr::rng>()[0] != ctr::RNGType::NO_RNG) {
+//     print.item("Seed", m_control->get<ctr::param, ctr::rng, ctr::seed>()[0]);
+//   }
+
 }
 
 void
