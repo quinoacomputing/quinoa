@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 10:32:56 PM MST
+  \date      Thu Nov  7 09:08:47 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -182,18 +182,8 @@ RNGTestDriver::echo()
   print.section("Title", control.get<ctr::title>());
   print.section<ctr::Battery, ctr::selected, ctr::battery>();
 
-  quinoa::ctr::RNG rng;
-  print.subsection("Seeds");
-  for (auto& s : control.get<ctr::param, ctr::mklrng>()) {
-    print.item(rng.name(s.first), s.second.get<quinoa::ctr::seed>());
-  }
-  print.endsubsection();
-  quinoa::ctr::MKLUniformMethod um;
-  print.subsection("Uniform method types");
-  for (auto& s : control.get<ctr::param, ctr::mklrng>()) {
-    print.item( rng.name(s.first),
-                um.name(s.second.get<quinoa::ctr::uniform_method>()) );
-  }
+  print.mklparams< quinoa::ctr::RNG, quinoa::ctr::MKLUniformMethod >
+                 ( control.get<ctr::param, ctr::mklrng>() );
   print.endpart();
 }
 
