@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:01:27 PM MST
+  \date      Wed 06 Nov 2013 10:46:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -57,13 +57,27 @@ namespace deck {
     }
   };
 
-  //! convert and insert value to map<key,type> at position given by tags
-  template<typename tag, typename...tags >
-  struct insert_seed : action_base< insert_seed<tag,tags...> > {
+  //! convert and insert value to map at position given by tags
+  template<typename field, typename tag, typename...tags >
+  struct insert_field : action_base< insert_field<field,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       // get most recent rng
       const ctr::RNGType& key = stack.get< ctr::selected, ctr::rng >().back();
-      stack.insert< ctr::RNGType, tag, tags... >( key, value );
+      stack.insert_field< ctr::RNGType, field, tag, tags... >( key, value );
+    }
+  };
+
+  //! convert and insert option value to map at position given by tags
+  template<class OptionType, typename field, typename tag, typename...tags >
+  struct insert_option :
+    action_base< insert_option<OptionType,field,tag,tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      tk::Option< OptionType > opt;
+      using EnumType = typename OptionType::EnumType;
+      // get most recent rng
+      const ctr::RNGType& key = stack.get< ctr::selected, ctr::rng >().back();
+      stack.insert_opt< ctr::RNGType, field, EnumType, tag, tags... >
+                      ( key, opt.value(value) );
     }
   };
 
@@ -74,21 +88,28 @@ namespace deck {
          ifmust< readkw< kw::title::pegtl_string >,
                  quoted< Stack, Set< Stack, ctr::title > > > {};
 
-  //! rngs block
-  struct rngs :
-         process_rng< Stack,
-                      Store_back_option< Stack, quinoa::ctr::RNG,
-                                         ctr::selected, ctr::rng >,
-                      kw::seed::pegtl_string,
-                      insert_seed< ctr::param, ctr::rng, ctr::seed > > {};
+  //! mklrngs blocks
+  struct mklrngs :
+         ifmust< scan< mklrng,
+                       Store_back_option< Stack, quinoa::ctr::RNG,
+                                          ctr::selected, ctr::rng > >,
+                 block< Stack,
+                        process< Stack,
+                                 kw::seed::pegtl_string,
+                                 insert_field< quinoa::ctr::seed,
+                                               ctr::param,
+                                               ctr::mklrng > >,
+                        process< Stack,
+                                 kw::uniform_method::pegtl_string,
+                                 insert_option< quinoa::ctr::MKLUniformMethod,
+                                                quinoa::ctr::uniform_method,
+                                                ctr::param,
+                                                ctr::mklrng >,
+                                 alpha > > > {};
 
-  //! mkl_uniform_method
-  struct mkl_uniform_method :
-         process< Stack,
-                  kw::mkl_uniform_method::pegtl_string,
-                  store_option< ctr::MKLUniformMethod,
-                                ctr::selected, ctr::mkl_uniform_method >,
-                  alpha > {};
+  //! rngs
+  struct rngs :
+         sor< mklrngs > {};
 
   // smallcrush block
   struct smallcrush :
@@ -96,9 +117,7 @@ namespace deck {
                        store_option< ctr::Battery,
                                      ctr::selected,
                                      ctr::battery > >,
-                 block< Stack,
-                        rngs,
-                        mkl_uniform_method > > {};
+                 block< Stack, rngs > > {};
 
   // crush block
   struct crush :

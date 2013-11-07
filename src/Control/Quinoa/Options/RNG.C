@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:42:22 PM MST
+  \date      Wed 06 Nov 2013 09:13:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -34,18 +34,18 @@ RNG::param(RNGType rng) const
 }
 
 unsigned int
-RNG::seed( RNGType rng, const std::map< RNGType, unsigned int >& seed ) const
+RNG::seed( RNGType rng, const MKLRNGParam& mklparam ) const
 //******************************************************************************
 //  Return seed value for RNG
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  auto it = seed.find( rng );
+  auto it = mklparam.find( rng );
 
-  if ( it != seed.end() ) {
-    return it->second;          // user has specified it
+  if ( it != mklparam.end() ) {
+    return it->second.get<ctr::seed>();  // user has specified it
   } else {
-    return 0;                   // user has not specified it
+    return 0;                            // user has not specified it
   }
 }
 
@@ -53,7 +53,7 @@ void
 RNG::initFactory( RNGFactory& f,
                   std::list< std::string >& reg,
                   int nthreads,
-                  const std::map< RNGType, unsigned int >& seedmap ) const
+                  const MKLRNGParam& mklparam ) const
 //******************************************************************************
 //  Register random number generators into factory
 //! \author  J. Bakosi
@@ -61,7 +61,8 @@ RNG::initFactory( RNGFactory& f,
 {
   //! Lambda to register a random number generator into factory
   auto regRNG = [&]( RNGType rng ) {
-    reg.push_back(add<MKLRNG>(f, rng, nthreads, param(rng), seed(rng,seedmap)));
+    reg.push_back(
+      add< MKLRNG >( f, rng, nthreads, param(rng), seed(rng, mklparam) ) );
   };
 
   regRNG( RNGType::MKL_MCG31 );

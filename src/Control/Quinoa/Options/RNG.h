@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:34:44 PM MST
+  \date      Wed 06 Nov 2013 09:15:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -20,8 +20,11 @@
 #include <mkl_vsl.h>
 #endif
 
+#include <TaggedTuple.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
+#include <Quinoa/Options/MKLUniformMethod.h>
+#include <Quinoa/Tags.h>
 #include <RNG.h>
 
 namespace quinoa {
@@ -56,6 +59,15 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
 //! Random number generator factory type
 using RNGFactory = std::map< RNGType, std::function<tk::RNG*()> >;
 
+//! MKL random number generator parameters storage
+using MKLRNGParameters = tk::tuple::tagged_tuple<
+  seed,            unsigned int,              //!< seed
+  uniform_method,  MKLUniformMethodType       //!< uniform method type
+>;
+
+//! MKL RNG parameters bundle
+using MKLRNGParam = std::map< RNGType, MKLRNGParameters >;
+
 //! Class with base templated on the above enum class with associations
 class RNG : public tk::Toggle<RNGType> {
 
@@ -75,7 +87,7 @@ class RNG : public tk::Toggle<RNGType> {
     void initFactory( RNGFactory& f,
                       std::list< std::string >& reg,
                       int nthreads,
-                      const std::map< RNGType, unsigned int >& seed ) const;
+                      const MKLRNGParam& mklparam ) const;
  
   private:
     //! Don't permit copy constructor
@@ -91,8 +103,7 @@ class RNG : public tk::Toggle<RNGType> {
     RNGLibType lib(RNGType rng) const;
 
     //! Return seed value for RNG
-    unsigned int seed(RNGType rng,
-                      const std::map< RNGType, unsigned int >& seedmap ) const;
+    unsigned int seed(RNGType rng, const MKLRNGParam& mklparam ) const;
 
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for

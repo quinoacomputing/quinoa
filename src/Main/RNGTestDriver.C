@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:06:56 PM MST
+  \date      Wed 06 Nov 2013 10:32:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -156,8 +156,8 @@ RNGTestDriver::initFactories(const tk::Print& print)
   // Register random number generators
   quinoa::ctr::RNG rng;
   std::list< std::string > regRNG;
-  auto& seed  = m_base->control.get<ctr::param, ctr::rng, ctr::seed>();
-  rng.initFactory(m_RNGFactory, regRNG, m_base->paradigm.nthreads(), seed);
+  auto& mklparam  = m_base->control.get<ctr::param, ctr::mklrng>();
+  rng.initFactory(m_RNGFactory, regRNG, m_base->paradigm.nthreads(), mklparam);
   print.list("Registered random number generators", regRNG);
 
   // Register batteries
@@ -182,15 +182,19 @@ RNGTestDriver::echo()
   print.section("Title", control.get<ctr::title>());
   print.section<ctr::Battery, ctr::selected, ctr::battery>();
 
-  print.subsection("Selected");
-  print.item<ctr::MKLUniformMethod, ctr::selected, ctr::mkl_uniform_method>();
-
-//   print.subsection("Selected");
-//   m_print->list<quinoa::ctr::RNG, ctr::selected, ctr::rng>();
-//   if (m_control->get<ctr::selected, ctr::rng>()[0] != ctr::RNGType::NO_RNG) {
-//     print.item("Seed", m_control->get<ctr::param, ctr::rng, ctr::seed>()[0]);
-//   }
-
+  quinoa::ctr::RNG rng;
+  print.subsection("Seeds");
+  for (auto& s : control.get<ctr::param, ctr::mklrng>()) {
+    print.item(rng.name(s.first), s.second.get<quinoa::ctr::seed>());
+  }
+  print.endsubsection();
+  quinoa::ctr::MKLUniformMethod um;
+  print.subsection("Uniform method types");
+  for (auto& s : control.get<ctr::param, ctr::mklrng>()) {
+    print.item( rng.name(s.first),
+                um.name(s.second.get<quinoa::ctr::uniform_method>()) );
+  }
+  print.endpart();
 }
 
 void

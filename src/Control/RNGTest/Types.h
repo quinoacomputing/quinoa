@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Wed Nov  6 07:18:54 2013
+  \date      Wed 06 Nov 2013 09:06:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -13,7 +13,6 @@
 
 #include <RNGTest/Tags.h>
 #include <RNGTest/Options/Battery.h>
-#include <RNGTest/Options/MKLUniformMethod.h>
 #include <Quinoa/Options/RNG.h>
 
 namespace rngtest {
@@ -24,24 +23,18 @@ using quinoa::ctr::RNGType;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  battery,             BatteryType,           //!< Battery
-  rng,                 std::vector< RNGType >,//!< Random number generators
-  mkl_uniform_method,  MKLUniformMethodType   //!< MKL uniform RNG method
+  battery,  BatteryType,                      //!< Battery
+  rng,      std::vector< RNGType >            //!< Random number generators
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  control,   std::string                           //!< Control filename
->;
-
-//! Random number generator parameters storage
-using RNGParameters = tk::tuple::tagged_tuple<
-  seed,     std::map< RNGType, unsigned int >      //!< RNG seeds
+  control,   std::string                      //!< Control filename
 >;
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  rng,       RNGParameters                         //!< Random number generators
+  mklrng,    quinoa::ctr::MKLRNGParam         //!< MKL RNG parameters
 >;
 
 //! PEGTL location type to use throughout all of RNGTest's parsers

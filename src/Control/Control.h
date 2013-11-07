@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:05:58 PM MST
+  \date      Wed 06 Nov 2013 10:43:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -194,35 +194,46 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::value_type>( value ));
     }
 
-    //! Convert and insert value to map at slot
+    //! Convert and insert value to field of map at slot
     //! TODO: Replace the overloads below with a variadic one
-    //! Convert and insert value to map at tag at 1st level
-    template< typename key_type, typename tag >
-    void insert(const key_type& key, const std::string& value) {
-      Tuple::template get<tag>()[ key ] =
+    //! Convert and insert value to field of map at tag at 1st level
+    template< typename key_type, typename field, typename tag >
+    void insert_field(const key_type& key, const std::string& value) {
+      Tuple::template get<tag>()[ key ].template get<field>() =
         convert<typename Tuple::template nT<tag>
-                              ::mapped_type>( value );
+                              ::mapped_type
+                              ::template nT<field>>( value );
     }
-    //! Convert and insert value to map at tag at 2nd level
-    template< typename key_type, typename tag, typename subtag >
-    void insert(const key_type& key, const std::string& value) {
+    //! Convert and insert value to field of map at tag at 2nd level
+    template< typename key_type, typename field, typename tag, typename subtag >
+    void insert_field(const key_type& key, const std::string& value) {
       Tuple::template get<tag>().
-             template get<subtag>()[ key ] =
+             template get<subtag>()[ key ].template get<field>() =
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
-                              ::mapped_type>( value );
+                              ::mapped_type
+                              ::template nT<field>>( value );
     }
-    //! Convert and insert value to map at tag at 3rd level
-    template< typename key_type, typename tag, typename subtag,
+    //! Convert and insert value to field of map at tag at 3rd level
+    template< typename key_type, typename field, typename tag, typename subtag,
               typename subsubtag >
-    void insert(const key_type key, const std::string& value) {
+    void insert_field(const key_type key, const std::string& value) {
       Tuple::template get<tag>().
              template get<subtag>().
-             template get<subsubtag>()[ key ] =
+             template get<subsubtag>()[ key ].template get<field>() =
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
                               ::template nT<subsubtag>
-                              ::mapped_type>( value );
+                              ::mapped_type
+                              ::template nT<field>>( value );
+    }
+
+    //! Convert and insert option value to field of map at tag at 2nd level
+    template< typename key_type, typename field, typename field_type,
+              typename tag, typename subtag >
+    void insert_opt(const key_type& key, const field_type& value) {
+      Tuple::template get<tag>().
+             template get<subtag>()[ key ].template get<field>() = value;
     }
 
     // convert string to 'type' via std::stringstream
