@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 01:06:45 PM MST
+  \date      Mon 04 Nov 2013 09:12:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -93,6 +93,16 @@ namespace grm {
   struct Store_back : action_base< Store_back<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template store_back<tag,tags...>(value);
+    }
+  };
+
+  //! push back option in state at position given by tags
+  template< class Stack, class OptionType, typename tag, typename... tags >
+  struct Store_back_option :
+         action_base< Store_back_option<Stack, OptionType, tag, tags...> > {
+    static void apply( const std::string& value, Stack& stack ) {
+      tk::Option< OptionType > opt;
+      stack.template push_back<tag,tags...>( opt.value( value ) );
     }
   };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Tue Oct 29 15:44:25 2013
+  \date      Mon 04 Nov 2013 10:42:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -33,55 +33,51 @@ RNG::param(RNGType rng) const
   return it->second;
 }
 
+unsigned int
+RNG::seed( RNGType rng, const std::map< RNGType, unsigned int >& seed ) const
+//******************************************************************************
+//  Return seed value for RNG
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto it = seed.find( rng );
+
+  if ( it != seed.end() ) {
+    return it->second;          // user has specified it
+  } else {
+    return 0;                   // user has not specified it
+  }
+}
+
 void
-RNG::initFactory( RNGFactory& f, std::list<std::string>& reg,
-                  int nthreads, unsigned int seed ) const
+RNG::initFactory( RNGFactory& f,
+                  std::list< std::string >& reg,
+                  int nthreads,
+                  const std::map< RNGType, unsigned int >& seedmap ) const
 //******************************************************************************
 //  Register random number generators into factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_MCG31,
-                            nthreads, param(RNGType::MKL_MCG31), seed) );
+  //! Lambda to register a random number generator into factory
+  auto regRNG = [&]( RNGType rng ) {
+    reg.push_back(add<MKLRNG>(f, rng, nthreads, param(rng), seed(rng,seedmap)));
+  };
 
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_R250,
-                            nthreads, param(RNGType::MKL_R250), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_MRG32K3A,
-                            nthreads, param(RNGType::MKL_MRG32K3A), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_MCG59,
-                            nthreads, param(RNGType::MKL_MCG59), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_WH,
-                            nthreads, param(RNGType::MKL_WH), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_MT19937,
-                            nthreads, param(RNGType::MKL_MT19937), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_MT2203,
-                            nthreads, param(RNGType::MKL_MT2203), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_SFMT19937,
-                            nthreads, param(RNGType::MKL_SFMT19937), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_SOBOL,
-                            nthreads, param(RNGType::MKL_SOBOL), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_NIEDERR,
-                            nthreads, param(RNGType::MKL_NIEDERR), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_IABSTRACT,
-                            nthreads, param(RNGType::MKL_IABSTRACT), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_DABSTRACT,
-                            nthreads, param(RNGType::MKL_DABSTRACT), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_SABSTRACT,
-                            nthreads, param(RNGType::MKL_SABSTRACT), seed) );
-
- reg.push_back( add<MKLRNG>(f, RNGType::MKL_NONDETERM,
-                            nthreads, param(RNGType::MKL_NONDETERM), seed) );
+  regRNG( RNGType::MKL_MCG31 );
+  regRNG( RNGType::MKL_R250 );
+  regRNG( RNGType::MKL_MRG32K3A );
+  regRNG( RNGType::MKL_MCG59 );
+  regRNG( RNGType::MKL_WH );
+  regRNG( RNGType::MKL_MT19937 );
+  regRNG( RNGType::MKL_MT2203 );
+  regRNG( RNGType::MKL_SFMT19937 );
+  regRNG( RNGType::MKL_SOBOL );
+  regRNG( RNGType::MKL_NIEDERR );
+  regRNG( RNGType::MKL_IABSTRACT );
+  regRNG( RNGType::MKL_DABSTRACT );
+  regRNG( RNGType::MKL_SABSTRACT );
+  regRNG( RNGType::MKL_NONDETERM );
 }
 
 RNG::LibType

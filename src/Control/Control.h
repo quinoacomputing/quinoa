@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:49:00 AM MDT
+  \date      Mon 04 Nov 2013 10:05:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -192,6 +192,37 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subtag>
                               ::template nT<subsubtag>
                               ::value_type>( value ));
+    }
+
+    //! Convert and insert value to map at slot
+    //! TODO: Replace the overloads below with a variadic one
+    //! Convert and insert value to map at tag at 1st level
+    template< typename key_type, typename tag >
+    void insert(const key_type& key, const std::string& value) {
+      Tuple::template get<tag>()[ key ] =
+        convert<typename Tuple::template nT<tag>
+                              ::mapped_type>( value );
+    }
+    //! Convert and insert value to map at tag at 2nd level
+    template< typename key_type, typename tag, typename subtag >
+    void insert(const key_type& key, const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>()[ key ] =
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::mapped_type>( value );
+    }
+    //! Convert and insert value to map at tag at 3rd level
+    template< typename key_type, typename tag, typename subtag,
+              typename subsubtag >
+    void insert(const key_type key, const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>()[ key ] =
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::template nT<subsubtag>
+                              ::mapped_type>( value );
     }
 
     // convert string to 'type' via std::stringstream

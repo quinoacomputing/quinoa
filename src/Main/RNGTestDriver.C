@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 08:35:44 PM MST
+  \date      Mon 04 Nov 2013 10:06:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -156,7 +156,7 @@ RNGTestDriver::initFactories(const tk::Print& print)
   // Register random number generators
   quinoa::ctr::RNG rng;
   std::list< std::string > regRNG;
-  unsigned int seed = m_base->control.get<ctr::param, ctr::rng, ctr::seed>()[0];
+  auto& seed  = m_base->control.get<ctr::param, ctr::rng, ctr::seed>();
   rng.initFactory(m_RNGFactory, regRNG, m_base->paradigm.nthreads(), seed);
   print.list("Registered random number generators", regRNG);
 

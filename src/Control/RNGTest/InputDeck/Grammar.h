@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 02:31:57 PM MST
+  \date      Mon 04 Nov 2013 10:01:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -45,24 +45,25 @@ namespace deck {
   template< class OptionType, typename... tags >
   struct store_option : action_base< store_option<OptionType, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
-      tk::Option<OptionType> opt;
+      tk::Option< OptionType > opt;
       //! Emit warning on overwrite
       if (stack.get< tags... >() != ctr::InputDeckDefaults.get< tags... >()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
-                  << opt.name(stack.get<tags...>()) << "' with '"
-                  << opt.name(opt.value(value)) << "'.\n\n";
+                  << opt.name( stack.get< tags... >() ) << "' with '"
+                  << opt.name( opt.value( value ) ) << "'.\n\n";
       }
       stack.set< tags... >( opt.value( value ) );
     }
   };
 
-  //! push back option in state at position given by tags
-  template< class OptionType, typename... tags >
-  struct store_back_option : action_base< store_option<OptionType, tags...> > {
-    static void apply( const std::string& value, Stack& stack ) {
-      tk::Option< OptionType > opt;
-      stack.push_back< tags... >( opt.value( value ) );
+  //! convert and insert value to map<key,type> at position given by tags
+  template<typename tag, typename...tags >
+  struct insert_seed : action_base< insert_seed<tag,tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      // get most recent rng
+      const ctr::RNGType& key = stack.get< ctr::selected, ctr::rng >().back();
+      stack.insert< ctr::RNGType, tag, tags... >( key, value );
     }
   };
 
@@ -76,10 +77,10 @@ namespace deck {
   //! rngs block
   struct rngs :
          process_rng< Stack,
-                      store_back_option< quinoa::ctr::RNG,
+                      Store_back_option< Stack, quinoa::ctr::RNG,
                                          ctr::selected, ctr::rng >,
                       kw::seed::pegtl_string,
-                      Store_back< Stack, ctr::param, ctr::rng, ctr::seed > > {};
+                      insert_seed< ctr::param, ctr::rng, ctr::seed > > {};
 
   //! mkl_uniform_method
   struct mkl_uniform_method :
