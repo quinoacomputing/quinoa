@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 08:26:54 PM MST
+  \date      Wed Nov  6 07:18:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -24,9 +24,9 @@ using quinoa::ctr::RNGType;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  battery,             ctr::BatteryType,           //!< Battery
-  rng,                 std::vector< RNGType >,     //!< Random number generators
-  mkl_uniform_method,  ctr::MKLUniformMethodType   //!< MKL uniform RNG method
+  battery,             BatteryType,           //!< Battery
+  rng,                 std::vector< RNGType >,//!< Random number generators
+  mkl_uniform_method,  MKLUniformMethodType   //!< MKL uniform RNG method
 >;
 
 //! IO parameters storage
@@ -36,7 +36,7 @@ using ios = tk::tuple::tagged_tuple<
 
 //! Random number generator parameters storage
 using RNGParameters = tk::tuple::tagged_tuple<
-  seed,                std::vector< unsigned int > //!< RNG seeds
+  seed,     std::map< RNGType, unsigned int >      //!< RNG seeds
 >;
 
 //! Parameters storage

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue Oct 29 15:43:55 2013
+  \date      Mon 04 Nov 2013 10:34:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -72,8 +72,10 @@ class RNG : public tk::Toggle<RNGType> {
     const ParamType& param(RNGType rng) const;
 
     //! Register random number generators into factory
-    void initFactory( RNGFactory& f, std::list<std::string>& reg,
-                      int nthreads, unsigned int seed ) const;
+    void initFactory( RNGFactory& f,
+                      std::list< std::string >& reg,
+                      int nthreads,
+                      const std::map< RNGType, unsigned int >& seed ) const;
  
   private:
     //! Don't permit copy constructor
@@ -87,6 +89,10 @@ class RNG : public tk::Toggle<RNGType> {
 
     //! Return RNG library type based on Enum
     RNGLibType lib(RNGType rng) const;
+
+    //! Return seed value for RNG
+    unsigned int seed(RNGType rng,
+                      const std::map< RNGType, unsigned int >& seedmap ) const;
 
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for

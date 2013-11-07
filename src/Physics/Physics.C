@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:28:04 PM MDT
+  \date      Mon 04 Nov 2013 10:14:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -77,8 +77,8 @@ Physics::initFactories(const tk::Print& print)
   // Register random number generators
   ctr::RNG rng;
   std::list< std::string > regRNG;
-  unsigned int seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
-  rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
+  //auto& seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
+  //rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
   print.list("Registered random number generators", regRNG);
 
   // Register mass models
