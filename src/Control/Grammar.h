@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 09:12:29 PM MST
+  \date      Wed 06 Nov 2013 07:07:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -204,8 +204,8 @@ namespace grm {
                  scan< sor< keywords, apply< error< Stack, Error::MISSING > > >,
                        insert > > {};
 
-  //! rng: match any one of the random number generators
-  struct rng :
+  //! mklrng: match any one of the MKL random number generators
+  struct mklrng :
          sor< kw::mkl_mcg31::pegtl_string,
               kw::mkl_r250::pegtl_string,
               kw::mkl_mrg32k3a::pegtl_string,
@@ -221,12 +221,6 @@ namespace grm {
               kw::mkl_sabstract::pegtl_string,
               kw::mkl_nondeterm::pegtl_string > {};
 
-  //! process random number generator
-  template< class Stack, class ins_option, class param, class ins_param >
-  struct process_rng :
-         ifmust< scan< rng, ins_option >,
-                 block< Stack,
-                        process< Stack, param, ins_param > > > {};
 } // grm::
 } // tk::
 

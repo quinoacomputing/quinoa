@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 08:49:48 PM MST
+  \date      Wed 06 Nov 2013 06:39:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
@@ -182,8 +182,8 @@ struct mkl_nondeterm_info {
 using mkl_nondeterm =
   keyword< mkl_nondeterm_info, m,k,l,'_',n,o,n,d,e,t,e,r,m >;
 
-// Keyword 'mkl_uniform_method'
-struct mkl_uniform_method_info {
+// Keyword 'uniform_method'
+struct uniform_method_info {
   static const char* name() { return "Intel MKL uniform RNG method"; }
   static const char* help() { return
     "This keyword is used to specify the method used to generate uniform "
@@ -191,18 +191,18 @@ struct mkl_uniform_method_info {
     "'accurate'.";
   }
 };
-using mkl_uniform_method = keyword< mkl_uniform_method_info,
-                                     m,k,l,'_',u,n,i,f,o,r,m,'_',m,e,t,h,o,d >;
+using uniform_method = keyword< uniform_method_info,
+                                u,n,i,f,o,r,m,'_',m,e,t,h,o,d >;
 
 // Keyword 'std'
-struct std_info {
+struct standard_info {
   static const char* name() { return "standard"; }
   static const char* help() { return
     "This keyword is used to specify the standard method used to generate "
     "uniform random numbers using the Intel MKL library.";
   }
 };
-using standard = keyword< std_info, s,t,d >;
+using standard = keyword< standard_info, s,t,a,n,d,a,r,d >;
 
 // Keyword 'accurate'
 struct accurate_info {

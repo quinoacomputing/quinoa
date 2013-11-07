@@ -1,22 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/RNGTest/Options/MKLUniformMethod.h
+  \file      src/Control/Quinoa/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 02:27:27 PM MST
+  \date      Wed 06 Nov 2013 10:21:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
 */
 //******************************************************************************
-#ifndef RNGTestMKLUniformMethodOptions_h
-#define RNGTestMKLUniformMethodOptions_h
+#ifndef QuinoaMKLUniformMethodOptions_h
+#define QuinoaMKLUniformMethodOptions_h
 
 #include <map>
 
 #include <Toggle.h>
-#include <RNGTest/InputDeck/Keywords.h>
 
-namespace rngtest {
+namespace quinoa {
 namespace ctr {
 
 //! MKL uniform random number generator methods
@@ -63,6 +62,6 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
 };
 
 } // ctr::
-} // rngtest::
+} // quinoa::
 
-#endif // RNGTestMKLUniformMethodOptions_h
+#endif // QuinoaMKLUniformMethodOptions_h
