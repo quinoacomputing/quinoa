@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 10:21:27 PM MST
+  \date      Thu Nov  7 08:43:13 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -30,7 +30,7 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit MKLUniformMethod() :
-      Toggle< MKLUniformMethodType >("MKL uniform method", names, values) {}
+      Toggle< MKLUniformMethodType >("uniform method", names, values) {}
 
   private:
     //! Don't permit copy constructor
