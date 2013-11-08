@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri Oct 18 10:47:26 2013
+  \date      Thu 07 Nov 2013 10:01:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -21,8 +21,8 @@ class QuinoaPrint : public tk::Print {
 
   public:
     //! Bring vanilla overloads from base into scope in case local overloads fail
-    using Print::section;
-    using Print::item;
+    //using Print::section;
+    //using Print::item;
 
     //! Constructor
     explicit QuinoaPrint(const std::unique_ptr< ctr::InputDeck >& control) :
@@ -33,7 +33,7 @@ class QuinoaPrint : public tk::Print {
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
-    void section() const {
+    void Section() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         auto& group = opt.group();
@@ -51,7 +51,7 @@ class QuinoaPrint : public tk::Print {
 
     //! Print item: 'name : value' only if differs from its default
     template<typename... tags>
-    void item(const std::string& name) const {
+    void Item(const std::string& name) const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>())
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % name
@@ -60,7 +60,7 @@ class QuinoaPrint : public tk::Print {
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
-    void item() const {
+    void Item() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         std::cout << m_item_name_value_fmt % m_item_indent
@@ -73,7 +73,7 @@ class QuinoaPrint : public tk::Print {
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! <<= for outputing requested Term and vector<Term>.
-    void requestedStats(const std::string& msg) const {
+    void RequestedStats(const std::string& msg) const {
       if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
         for (auto& v : m_ctr.get<ctr::stat>()) std::cout <<= v;
@@ -85,7 +85,7 @@ class QuinoaPrint : public tk::Print {
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! << for outputing estimated Term and vector<Term>.
-    void estimatedStats(const std::string& msg) const {
+    void EstimatedStats(const std::string& msg) const {
       if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
         for (auto& v : m_ctr.get<ctr::stat>()) std::cout << v;

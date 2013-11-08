@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu Nov  7 08:42:49 2013
+  \date      Thu 07 Nov 2013 10:03:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -34,7 +34,7 @@ class RNGTestPrint : public tk::Print {
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
-    void section() const {
+    void Section() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         auto& group = opt.group();
@@ -52,7 +52,7 @@ class RNGTestPrint : public tk::Print {
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>
-    void item() const {
+    void Item() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
         std::cout << m_item_name_value_fmt % m_item_indent
@@ -63,7 +63,7 @@ class RNGTestPrint : public tk::Print {
 
     //! Print all fields of MKL RNG parameters
     template< typename RNG, typename UniformMethod, typename MapType >
-    void mklparams( const MapType& map ) const {
+    void Mklparams( const MapType& map ) const {
       tk::Option< RNG > rng;
       tk::Option< UniformMethod > um;
       for (auto& m : map) {

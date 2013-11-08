@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:31:02 AM MDT
+  \date      Thu 07 Nov 2013 09:59:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -31,12 +31,13 @@ Geometry::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_base.print.section<ctr::Geometry, ctr::selected, ctr::geometry>();
+  const QuinoaPrint& print = m_base.print;
+  const ctr::InputDeck& control = m_base.control;
 
-  m_base.print.subsection("I/O filenames");
-  m_base.print.item( "Input",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::input >() );
-  m_base.print.item( "Output",
-                     m_base.control.get< ctr::cmd, ctr::io, ctr::output >() );
-  m_base.print.endsubsection();
+  print.Section<ctr::Geometry, ctr::selected, ctr::geometry>();
+
+  print.subsection("I/O filenames");
+  print.item( "Input", control.get< ctr::cmd, ctr::io, ctr::input >() );
+  print.item( "Output", control.get< ctr::cmd, ctr::io, ctr::output >() );
+  print.endsubsection();
 }
