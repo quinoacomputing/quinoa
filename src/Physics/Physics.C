@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Nov  7 11:43:57 2013
+  \date      Thu 07 Nov 2013 10:01:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -113,7 +113,7 @@ Physics::echo()
   print.endpart();
   print.part("Problem");
   print.section("Title", control.get<ctr::title>());
-  print.section<ctr::Physics, ctr::selected, ctr::physics>();
+  print.Section<ctr::Physics, ctr::selected, ctr::physics>();
 
   print.subsection("Output filenames");
   print.item( "Input", control.get< ctr::cmd, ctr::io, ctr::input >() );
@@ -124,26 +124,26 @@ Physics::echo()
   print.endsubsection();
 
   print.subsection("Selected");
-  print.item<ctr::RNG, ctr::selected, ctr::rng>();
+  print.Item<ctr::RNG, ctr::selected, ctr::rng>();
   if (control.get<ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG) {
     print.item("Seed", control.get<ctr::param, ctr::rng, ctr::seed>());
   }
-  print.item<ctr::Position, ctr::selected, ctr::position>();
-  print.item<ctr::Mass, ctr::selected, ctr::mass>();
-  print.item<ctr::Hydro, ctr::selected, ctr::hydro>();
-  print.item<ctr::Energy, ctr::selected, ctr::energy>();
-  print.item<ctr::Mix, ctr::selected, ctr::mix>();
-  print.item<ctr::Frequency, ctr::selected, ctr::frequency>();
-  print.item<ctr::MixRate, ctr::selected, ctr::mixrate>();
+  print.Item<ctr::Position, ctr::selected, ctr::position>();
+  print.Item<ctr::Mass, ctr::selected, ctr::mass>();
+  print.Item<ctr::Hydro, ctr::selected, ctr::hydro>();
+  print.Item<ctr::Energy, ctr::selected, ctr::energy>();
+  print.Item<ctr::Mix, ctr::selected, ctr::mix>();
+  print.Item<ctr::Frequency, ctr::selected, ctr::frequency>();
+  print.Item<ctr::MixRate, ctr::selected, ctr::mixrate>();
   print.endsubsection();
 
   print.subsection("Number of components");
-  print.item<ctr::component,ctr::nposition>("Positions");
-  print.item<ctr::component,ctr::ndensity>("Densities");
-  print.item<ctr::component,ctr::nvelocity>("Velocities");
-  print.item<ctr::component,ctr::nscalar>("Scalars");
-  print.item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
-  print.item<ctr::component,ctr::npar>("Particles");
+  print.Item<ctr::component,ctr::nposition>("Positions");
+  print.Item<ctr::component,ctr::ndensity>("Densities");
+  print.Item<ctr::component,ctr::nvelocity>("Velocities");
+  print.Item<ctr::component,ctr::nscalar>("Scalars");
+  print.Item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
+  print.Item<ctr::component,ctr::npar>("Particles");
   print.endsubsection();
 
   print.subsection("Incrementation parameters");
@@ -161,7 +161,7 @@ Physics::echo()
   print.endsubsection();
 
   print.subsection("Statistics");
-  print.requestedStats("Requested");
-  print.estimatedStats("Estimated");
+  print.RequestedStats("Requested");
+  print.EstimatedStats("Estimated");
   print.endpart();
 }

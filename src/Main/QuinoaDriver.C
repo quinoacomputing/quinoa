@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Nov  7 11:45:28 2013
+  \date      Thu 07 Nov 2013 09:47:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -87,7 +87,8 @@ QuinoaDriver::initFactories(const tk::Print& print)
   std::list< ctr::GeometryType > regGeometry;
   regGeometry.push_back(
     geometry.add< AnalyticGeometry >( m_geometryFactory,
-                                      ctr::GeometryType::ANALYTIC, *m_base ) );
+                                      ctr::GeometryType::ANALYTIC,
+                                      *m_base ) );
   regGeometry.push_back(
     geometry.add< DiscreteGeometry >( m_geometryFactory,
                                       ctr::GeometryType::DISCRETE, *m_base ) );
@@ -97,17 +98,21 @@ QuinoaDriver::initFactories(const tk::Print& print)
   ctr::Physics physics;
   std::list< ctr::PhysicsType > regPhysics;
   regPhysics.push_back(
-    physics.add<HomMix>(m_physicsFactory,
-                        ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base) );
+    physics.add< HomMix >( m_physicsFactory,
+                           ctr::PhysicsType::HOMOGENEOUS_MIX,
+                           *m_base ) );
   regPhysics.push_back(
-    physics.add<HomHydro>(m_physicsFactory,
-                          ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base) );
+    physics.add< HomHydro >( m_physicsFactory,
+                             ctr::PhysicsType::HOMOGENEOUS_HYDRO,
+                             *m_base ) );
   regPhysics.push_back(
-    physics.add<HomRT>(m_physicsFactory,
-                       ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base) );
+    physics.add< HomRT >( m_physicsFactory,
+                          ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR,
+                          *m_base ) );
   regPhysics.push_back(
-    physics.add<SPINSFlow>(m_physicsFactory,
-                           ctr::PhysicsType::SPINSFLOW, *m_base) );
+    physics.add< SPINSFlow >( m_physicsFactory,
+                              ctr::PhysicsType::SPINSFLOW,
+                              *m_base ) );
   print.list("Registered physics options", physics, regPhysics);
 }
 

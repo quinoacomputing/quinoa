@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu Nov  7 11:46:22 2013
+  \date      Thu 07 Nov 2013 10:04:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -180,9 +180,9 @@ RNGTestDriver::echo()
   print.endpart();
   print.part("Problem");
   print.section("Title", control.get<ctr::title>());
-  print.section<ctr::Battery, ctr::selected, ctr::battery>();
+  print.Section<ctr::Battery, ctr::selected, ctr::battery>();
 
-  print.mklparams< quinoa::ctr::RNG, quinoa::ctr::MKLUniformMethod >
+  print.Mklparams< quinoa::ctr::RNG, quinoa::ctr::MKLUniformMethod >
                  ( control.get<ctr::param, ctr::mklrng>() );
   print.endpart();
 }
