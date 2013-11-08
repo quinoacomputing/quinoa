@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed Oct 30 06:57:36 2013
+  \date      Thu Nov  7 11:43:18 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -86,17 +86,19 @@ class Print {
     }
 
     //! Print item: name : value
-    template<typename T>
+    template< typename T >
     void item(const std::string& name, const T& value) const {
       std::cout << m_item_name_value_fmt % m_item_indent % name % value;
     }
 
     //! Print list: name: entries...
+    template< typename Enum, typename OptionType >
     void list(const std::string& name,
-              const std::list< std::string >& entries) const {
+              const OptionType& opt,
+              const std::list< Enum >& entries) const {
       section(name);
       for (const auto& e : entries) {
-        std::cout << m_list_item_fmt % m_item_indent % e;
+        std::cout << m_list_item_fmt % m_item_indent % opt.name(e);
       }
     }
 

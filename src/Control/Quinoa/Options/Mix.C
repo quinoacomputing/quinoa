@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.C
   \author    J. Bakosi
-  \date      Tue Oct 29 15:45:18 2013
+  \date      Thu Nov  7 11:34:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's material mix model options
   \details   Quinoa's material mix model options
@@ -18,7 +18,7 @@
 using namespace quinoa::ctr;
 
 void
-Mix::initFactory(MixFactory& f, std::list<std::string>& reg) const
+Mix::initFactory(MixFactory& f, std::list< MixType >& reg) const
 //******************************************************************************
 //  Register material mix models into factory
 //! \author  J. Bakosi

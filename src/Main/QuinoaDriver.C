@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 11:05:49 AM MDT
+  \date      Thu Nov  7 11:45:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -84,18 +84,18 @@ QuinoaDriver::initFactories(const tk::Print& print)
 {
   // Register geometry types
   ctr::Geometry geometry;
-  std::list< std::string > regGeometry;
+  std::list< ctr::GeometryType > regGeometry;
   regGeometry.push_back(
-    geometry.add<AnalyticGeometry>(m_geometryFactory,
-                                   ctr::GeometryType::ANALYTIC, *m_base) );
+    geometry.add< AnalyticGeometry >( m_geometryFactory,
+                                      ctr::GeometryType::ANALYTIC, *m_base ) );
   regGeometry.push_back(
-    geometry.add<DiscreteGeometry>(m_geometryFactory,
-                                   ctr::GeometryType::DISCRETE, *m_base) );
-  print.list("Registered geometry options", regGeometry);
+    geometry.add< DiscreteGeometry >( m_geometryFactory,
+                                      ctr::GeometryType::DISCRETE, *m_base ) );
+  print.list("Registered geometry options", geometry, regGeometry);
 
   // Register physics types
   ctr::Physics physics;
-  std::list< std::string > regPhysics;
+  std::list< ctr::PhysicsType > regPhysics;
   regPhysics.push_back(
     physics.add<HomMix>(m_physicsFactory,
                         ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base) );
@@ -108,7 +108,7 @@ QuinoaDriver::initFactories(const tk::Print& print)
   regPhysics.push_back(
     physics.add<SPINSFlow>(m_physicsFactory,
                            ctr::PhysicsType::SPINSFLOW, *m_base) );
-  print.list("Registered physics options", regPhysics);
+  print.list("Registered physics options", physics, regPhysics);
 }
 
 void

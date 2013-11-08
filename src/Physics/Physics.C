@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Mon 04 Nov 2013 10:14:59 PM MST
+  \date      Thu Nov  7 11:43:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -76,28 +76,28 @@ Physics::initFactories(const tk::Print& print)
 {
   // Register random number generators
   ctr::RNG rng;
-  std::list< std::string > regRNG;
+  std::list< ctr::RNGType > regRNG;
   //auto& seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
   //rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
-  print.list("Registered random number generators", regRNG);
+  print.list("Registered random number generators", rng, regRNG);
 
   // Register mass models
   ctr::Mass mass;
-  std::list< std::string > regMass;
+  std::list< ctr::MassType > regMass;
   mass.initFactory(m_massFactory, regMass);
-  print.list("Registered mass models", regMass);
+  print.list("Registered mass models", mass, regMass);
 
   // Register hydro models
   ctr::Hydro hydro;
-  std::list< std::string > regHydro;
+  std::list< ctr::HydroType > regHydro;
   hydro.initFactory(m_hydroFactory, regHydro);
-  print.list("Registered hydrodyanmics models", regHydro);
+  print.list("Registered hydrodyanmics models", hydro, regHydro);
 
   // Register mix models
   ctr::Mix mix;
-  std::list< std::string > regMix;
+  std::list< ctr::MixType > regMix;
   mix.initFactory(m_mixFactory, regMix);
-  print.list("Registered material mix models", regMix);
+  print.list("Registered material mix models", mix, regMix);
 }
 
 void

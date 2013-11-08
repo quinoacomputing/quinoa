@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sun 03 Nov 2013 02:27:19 PM MST
+  \date      Thu Nov  7 11:34:49 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -40,7 +40,7 @@ class Battery : public tk::Toggle< BatteryType > {
       Toggle< BatteryType >("RNG battery", names, values) {}
 
     //! Register batteries into factory
-    void initFactory( BatteryFactory& f, std::list<std::string>& reg ) const;
+    void initFactory( BatteryFactory& f, std::list< BatteryType >& reg ) const;
 
   private:
     //! Don't permit copy constructor

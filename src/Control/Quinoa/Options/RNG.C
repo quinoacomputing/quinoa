@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 09:13:04 PM MST
+  \date      Thu Nov  7 11:31:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -51,7 +51,7 @@ RNG::seed( RNGType rng, const MKLRNGParam& mklparam ) const
 
 void
 RNG::initFactory( RNGFactory& f,
-                  std::list< std::string >& reg,
+                  std::list< RNGType >& reg,
                   int nthreads,
                   const MKLRNGParam& mklparam ) const
 //******************************************************************************
