@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:17:33 PM MDT
+  \date      Thu Nov  7 11:34:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's battery options
   \details   RNGTest's battery options
@@ -19,7 +19,7 @@
 using namespace rngtest::ctr;
 
 void
-Battery::initFactory(BatteryFactory& f, std::list<std::string>& reg) const
+Battery::initFactory(BatteryFactory& f, std::list< BatteryType >& reg) const
 //******************************************************************************
 //  Register batteries into factory
 //! \author  J. Bakosi

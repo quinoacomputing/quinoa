@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 10:33:16 PM MST
+  \date      Thu Nov  7 11:32:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -73,11 +73,11 @@ class Toggle {
     //! \param[in] factory Factory instance
     //! \param[in] e       Enum key to factory's std::map
     //! \param[in] args    Variable number of arguments to constructor
-    //! \return    The name of option as returned from Toggle::name()
+    //! \return    The enum of option as returned
     template< typename C, typename F, typename... Args >
-    const std::string& add( F& factory, Enum e, const Args&... args ) const {
+    Enum add( F& factory, Enum e, const Args&... args ) const {
       factory[e] = std::bind( boost::factory<C*>(), std::move(args)... );
-      return name(e);
+      return e;
     }
 
   protected:

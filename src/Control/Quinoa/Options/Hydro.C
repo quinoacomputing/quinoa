@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.C
   \author    J. Bakosi
-  \date      Tue Oct 29 15:44:59 2013
+  \date      Thu Nov  7 11:33:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's hydrodynamics model options
   \details   Quinoa's hydrodynamics model options
@@ -18,7 +18,7 @@
 using namespace quinoa::ctr;
 
 void
-Hydro::initFactory(HydroFactory& f, std::list<std::string>& reg) const
+Hydro::initFactory(HydroFactory& f, std::list< HydroType >& reg) const
 //******************************************************************************
 //  Register hydrodynamics models into factory
 //! \author  J. Bakosi
