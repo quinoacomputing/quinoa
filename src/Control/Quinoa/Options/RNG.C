@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Thu Nov  7 11:31:53 2013
+  \date      Sat 09 Nov 2013 08:55:37 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options

@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu 07 Nov 2013 10:01:45 PM MST
+  \date      Sat 09 Nov 2013 11:11:21 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -111,11 +111,11 @@ Physics::echo()
   const ctr::InputDeck& control = m_base.control;
 
   print.endpart();
-  print.part("Problem");
-  print.section("Title", control.get<ctr::title>());
-  print.Section<ctr::Physics, ctr::selected, ctr::physics>();
+  print.part( "Problem" );
+  print.section( "Title", control.get< ctr::title >() );
+  print.Section< ctr::Physics, ctr::selected, ctr::physics >();
 
-  print.subsection("Output filenames");
+  print.subsection( "Output filenames" );
   print.item( "Input", control.get< ctr::cmd, ctr::io, ctr::input >() );
   print.item( "Output", control.get< ctr::cmd, ctr::io, ctr::output >() );
   print.item( "Glob", control.get< ctr::cmd, ctr::io, ctr::glob >() );
@@ -124,44 +124,44 @@ Physics::echo()
   print.endsubsection();
 
   print.subsection("Selected");
-  print.Item<ctr::RNG, ctr::selected, ctr::rng>();
-  if (control.get<ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG) {
-    print.item("Seed", control.get<ctr::param, ctr::rng, ctr::seed>());
+  print.Item< ctr::RNG, ctr::selected, ctr::rng >();
+  if (control.get< ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG ) {
+    print.item( "Seed", control.get< ctr::param, ctr::rng, ctr::seed >() );
   }
-  print.Item<ctr::Position, ctr::selected, ctr::position>();
-  print.Item<ctr::Mass, ctr::selected, ctr::mass>();
-  print.Item<ctr::Hydro, ctr::selected, ctr::hydro>();
-  print.Item<ctr::Energy, ctr::selected, ctr::energy>();
-  print.Item<ctr::Mix, ctr::selected, ctr::mix>();
-  print.Item<ctr::Frequency, ctr::selected, ctr::frequency>();
-  print.Item<ctr::MixRate, ctr::selected, ctr::mixrate>();
+  print.Item< ctr::Position, ctr::selected, ctr::position >();
+  print.Item< ctr::Mass, ctr::selected, ctr::mass >();
+  print.Item< ctr::Hydro, ctr::selected, ctr::hydro >();
+  print.Item< ctr::Energy, ctr::selected, ctr::energy >();
+  print.Item< ctr::Mix, ctr::selected, ctr::mix >();
+  print.Item< ctr::Frequency, ctr::selected, ctr::frequency >();
+  print.Item< ctr::MixRate, ctr::selected, ctr::mixrate >();
   print.endsubsection();
 
-  print.subsection("Number of components");
-  print.Item<ctr::component,ctr::nposition>("Positions");
-  print.Item<ctr::component,ctr::ndensity>("Densities");
-  print.Item<ctr::component,ctr::nvelocity>("Velocities");
-  print.Item<ctr::component,ctr::nscalar>("Scalars");
-  print.Item<ctr::component,ctr::nfrequency>("Turbulent frequencies");
-  print.Item<ctr::component,ctr::npar>("Particles");
+  print.subsection( "Number of components" );
+  print.Item< ctr::component, ctr::nposition >( "Positions" );
+  print.Item< ctr::component, ctr::ndensity >( "Densities" );
+  print.Item< ctr::component, ctr::nvelocity >( "Velocities" );
+  print.Item< ctr::component, ctr::nscalar >( "Scalars" );
+  print.Item< ctr::component, ctr::nfrequency >( "Turbulent frequencies" );
+  print.Item< ctr::component, ctr::npar >( "Particles" );
   print.endsubsection();
 
-  print.subsection("Incrementation parameters");
-  print.item("Number of time steps", control.get<ctr::incpar,ctr::nstep>());
-  print.item("Terminate time", control.get<ctr::incpar,ctr::term>());
-  print.item("Initial time step size", control.get<ctr::incpar,ctr::dt>());
+  print.subsection( "Incrementation parameters" );
+  print.item( "Number of time steps", control.get< ctr::incpar,ctr::nstep >() );
+  print.item( "Terminate time", control.get< ctr::incpar,ctr::term >() );
+  print.item( "Initial time step size", control.get< ctr::incpar, ctr::dt >() );
   print.endsubsection();
 
-  print.subsection("Output intervals");
-  print.item("TTY", control.get<ctr::interval,ctr::tty>());
-  print.item("Dump", control.get<ctr::interval,ctr::dump>());
-  print.item("Glob", control.get<ctr::interval,ctr::glob>());
-  print.item("Statistics", control.get<ctr::interval,ctr::plot>());
-  print.item("PDF", control.get<ctr::interval,ctr::pdf>());
+  print.subsection( "Output intervals" );
+  print.item( "TTY", control.get< ctr::interval, ctr::tty>() );
+  print.item( "Dump", control.get< ctr::interval, ctr::dump>() );
+  print.item( "Glob", control.get< ctr::interval, ctr::glob >() );
+  print.item( "Statistics", control.get< ctr::interval, ctr::plot >() );
+  print.item( "PDF", control.get< ctr::interval, ctr::pdf >() );
   print.endsubsection();
 
-  print.subsection("Statistics");
-  print.RequestedStats("Requested");
-  print.EstimatedStats("Estimated");
+  print.subsection( "Statistics" );
+  print.RequestedStats( "Requested" );
+  print.EstimatedStats( "Estimated" );
   print.endpart();
 }
