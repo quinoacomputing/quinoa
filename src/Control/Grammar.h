@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:04:05 PM MST
+  \date      Sat 09 Nov 2013 01:14:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -117,6 +117,23 @@ namespace grm {
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       stack.template insert_field< key_type, field, tag, tags... >( key, value );
+    }
+  };
+
+  //! convert and insert option value to map at position given by tags
+  template< class Stack, class OptionType, typename field, typename sel,
+            typename vec, typename tag, typename...tags >
+  struct Insert_option :
+  action_base<Insert_option<Stack, OptionType, field, sel, vec, tag, tags...>> {
+    static void apply( const std::string& value, Stack& stack ) {
+      tk::Option< OptionType > opt;
+      using EnumType = typename OptionType::EnumType;
+      // get recently inserted key from <sel,vec>
+      using key_type =
+        typename Stack::template nT< sel >::template nT< vec >::value_type;
+      const key_type& key = stack.template get< sel, vec >().back();
+      stack.template insert_opt< key_type, field, EnumType, tag, tags... >
+                               ( key, opt.value(value) );
     }
   };
 
