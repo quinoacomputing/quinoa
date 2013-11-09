@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 07 Nov 2013 09:31:32 PM MST
+  \date      Sat 09 Nov 2013 03:50:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -25,7 +25,6 @@
 #include <Quinoa/InputDeck/Keywords.h>
 #include <Quinoa/Options/MKLUniformMethod.h>
 #include <Quinoa/Tags.h>
-#include <RNG.h>
 
 namespace quinoa {
 namespace ctr {
@@ -56,9 +55,6 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   RNGSSELIB,
                                   PRAND };
 
-//! Random number generator factory type
-using RNGFactory = std::map< RNGType, std::function<tk::RNG*()> >;
-
 //! MKL random number generator parameters storage
 using MKLRNGParameters = tk::tuple::tagged_tuple<
   seed,            unsigned int,              //!< seed
@@ -82,13 +78,10 @@ class RNG : public tk::Toggle<RNGType> {
 
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const;
-
-    //! Register random number generators into factory
-    void initFactory( RNGFactory& f,
-                      std::list< RNGType >& reg,
-                      int nthreads,
-                      const MKLRNGParam& mklparam ) const;
  
+    //! Return seed value for RNG
+    unsigned int seed( RNGType rng, const MKLRNGParam& mklparam ) const;
+
   private:
     //! Don't permit copy constructor
     RNG(const RNG&) = delete;
@@ -101,9 +94,6 @@ class RNG : public tk::Toggle<RNGType> {
 
     //! Return RNG library type based on Enum
     RNGLibType lib(RNGType rng) const;
-
-    //! Return seed value for RNG
-    unsigned int seed(RNGType rng, const MKLRNGParam& mklparam ) const;
 
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for

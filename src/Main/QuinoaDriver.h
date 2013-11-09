@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 11:02:06 AM MST
+  \date      Sat 09 Nov 2013 03:25:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -20,10 +20,10 @@
 namespace quinoa {
 
 //! Geometry factory type
-using GeometryFactory = std::map< ctr::GeometryType, std::function<Geometry*()> >;
+using GeometryFactory = std::map< ctr::GeometryType, std::function< Geometry*() > >;
 
 //! Physics factory type
-using PhysicsFactory = std::map< ctr::PhysicsType, std::function<Physics*()> >;
+using PhysicsFactory = std::map< ctr::PhysicsType, std::function< Physics*() > >;
 
 //! QuinoaDriver : Driver
 class QuinoaDriver : public tk::Driver {
@@ -35,7 +35,7 @@ class QuinoaDriver : public tk::Driver {
     //! Destructor
     ~QuinoaDriver() noexcept override = default;
 
-    //! Solve
+    //! Execute
     void execute() const override;
 
   private:

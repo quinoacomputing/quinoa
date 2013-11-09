@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Battery.h
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 10:47:07 AM MDT
+  \date      Sat 09 Nov 2013 03:28:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -11,6 +11,8 @@
 #ifndef Battery_h
 #define Battery_h
 
+#include <Base.h>
+
 namespace rngtest {
 
 //! Battery
@@ -18,10 +20,13 @@ class Battery {
 
   public:
     //! Constructor
-    explicit Battery() = default;
+    explicit Battery(const Base& base) : m_base(base) {}
 
     //! Destructor
     virtual ~Battery() noexcept = default;
+
+    //! Run battery of RNG tests
+    virtual void run() = 0;
 
   private:
     //! Don't permit copy constructor
@@ -32,6 +37,8 @@ class Battery {
     Battery(Battery&&) = delete;
     //! Don't permit move assigment
     Battery& operator=(Battery&&) = delete;
+
+    const Base& m_base;                   //!< Essentials
 };
 
 } // rngtest::
