@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 11:03:58 AM MST
+  \date      Sat 09 Nov 2013 01:25:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -143,6 +143,11 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   ctr::BatteryType b = m_control->get<ctr::selected, ctr::battery>();
   if (b != ctr::BatteryType::NO_BATTERY) {
     m_battery = std::unique_ptr<Battery>( m_batteryFactory[b]() );
+  }
+
+  // Echo 'unspecified' if not battery is unspecified
+  if (!m_battery) {
+    print.section("RNG battery", std::string("unspecified"));
   }
 }
 
