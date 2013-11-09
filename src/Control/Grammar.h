@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 07:07:02 PM MST
+  \date      Sat 09 Nov 2013 01:04:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -103,6 +103,20 @@ namespace grm {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
       stack.template push_back<tag,tags...>( opt.value( value ) );
+    }
+  };
+
+  //! convert and insert value to map at position given by tags
+  template< class Stack, typename field, typename sel, typename vec,
+            typename tag, typename...tags >
+  struct Insert_field :
+  action_base< Insert_field< Stack, field, sel, vec, tag, tags... > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // get recently inserted key from <sel,vec>
+      using key_type =
+        typename Stack::template nT< sel >::template nT< vec >::value_type;
+      const key_type& key = stack.template get< sel, vec >().back();
+      stack.template insert_field< key_type, field, tag, tags... >( key, value );
     }
   };
 

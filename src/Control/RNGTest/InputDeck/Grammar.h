@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 10:46:02 PM MST
+  \date      Sat 09 Nov 2013 01:03:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -57,16 +57,6 @@ namespace deck {
     }
   };
 
-  //! convert and insert value to map at position given by tags
-  template<typename field, typename tag, typename...tags >
-  struct insert_field : action_base< insert_field<field,tag,tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      // get most recent rng
-      const ctr::RNGType& key = stack.get< ctr::selected, ctr::rng >().back();
-      stack.insert_field< ctr::RNGType, field, tag, tags... >( key, value );
-    }
-  };
-
   //! convert and insert option value to map at position given by tags
   template<class OptionType, typename field, typename tag, typename...tags >
   struct insert_option :
@@ -96,15 +86,15 @@ namespace deck {
                  block< Stack,
                         process< Stack,
                                  kw::seed::pegtl_string,
-                                 insert_field< quinoa::ctr::seed,
-                                               ctr::param,
-                                               ctr::mklrng > >,
+                                 Insert_field< Stack,
+                                               quinoa::ctr::seed,
+                                               ctr::selected, ctr::rng,
+                                               ctr::param, ctr::mklrng > >,
                         process< Stack,
                                  kw::uniform_method::pegtl_string,
                                  insert_option< quinoa::ctr::MKLUniformMethod,
                                                 quinoa::ctr::uniform_method,
-                                                ctr::param,
-                                                ctr::mklrng >,
+                                                ctr::param, ctr::mklrng >,
                                  alpha > > > {};
 
   //! rngs
