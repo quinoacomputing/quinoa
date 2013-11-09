@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Thu Nov  7 08:43:13 2013
+  \date      Sat 09 Nov 2013 01:20:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -19,8 +19,7 @@ namespace quinoa {
 namespace ctr {
 
 //! MKL uniform random number generator methods
-enum class MKLUniformMethodType : uint8_t { NO_METHOD=0,
-                                            STANDARD,
+enum class MKLUniformMethodType : uint8_t { STANDARD,
                                             ACCURATE };
 
 //! Class with base templated on the above enum class with associations
@@ -48,14 +47,12 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
 
     //! Enums -> names
     const std::map< MKLUniformMethodType, std::string > names {
-      { MKLUniformMethodType::NO_METHOD, "n/a" },
       { MKLUniformMethodType::STANDARD, standard.name() },
       { MKLUniformMethodType::ACCURATE, accurate.name() }
     };
 
     //! keywords -> Enums
     const std::map< std::string, MKLUniformMethodType > values {
-      { "no_method", MKLUniformMethodType::NO_METHOD },
       { standard.string(), MKLUniformMethodType::STANDARD },
       { accurate.string(), MKLUniformMethodType::ACCURATE }
     };
