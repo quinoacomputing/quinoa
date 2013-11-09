@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:03:19 PM MST
+  \date      Sat 09 Nov 2013 01:13:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -57,20 +57,6 @@ namespace deck {
     }
   };
 
-  //! convert and insert option value to map at position given by tags
-  template<class OptionType, typename field, typename tag, typename...tags >
-  struct insert_option :
-    action_base< insert_option<OptionType,field,tag,tags...> > {
-    static void apply(const std::string& value, Stack& stack) {
-      tk::Option< OptionType > opt;
-      using EnumType = typename OptionType::EnumType;
-      // get most recent rng
-      const ctr::RNGType& key = stack.get< ctr::selected, ctr::rng >().back();
-      stack.insert_opt< ctr::RNGType, field, EnumType, tag, tags... >
-                      ( key, opt.value(value) );
-    }
-  };
-
   // RNGTest's InputDeck grammar
 
   //! title
@@ -92,8 +78,10 @@ namespace deck {
                                                ctr::param, ctr::mklrng > >,
                         process< Stack,
                                  kw::uniform_method::pegtl_string,
-                                 insert_option< quinoa::ctr::MKLUniformMethod,
+                                 Insert_option< Stack,
+                                                quinoa::ctr::MKLUniformMethod,
                                                 quinoa::ctr::uniform_method,
+                                                ctr::selected, ctr::rng,
                                                 ctr::param, ctr::mklrng >,
                                  alpha > > > {};
 
