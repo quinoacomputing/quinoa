@@ -2,17 +2,14 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 08:55:37 AM MST
+  \date      Sat 09 Nov 2013 03:42:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
 */
 //******************************************************************************
 
-#include <boost/functional/factory.hpp>
-
 #include <Quinoa/Options/RNG.h>
-#include <MKLRNG.h>
 
 using namespace quinoa::ctr;
 
@@ -47,38 +44,6 @@ RNG::seed( RNGType rng, const MKLRNGParam& mklparam ) const
   } else {
     return 0;                            // user has not specified it
   }
-}
-
-void
-RNG::initFactory( RNGFactory& f,
-                  std::list< RNGType >& reg,
-                  int nthreads,
-                  const MKLRNGParam& mklparam ) const
-//******************************************************************************
-//  Register random number generators into factory
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  //! Lambda to register a random number generator into factory
-  auto regRNG = [&]( RNGType rng ) {
-    reg.push_back(
-      add< MKLRNG >( f, rng, nthreads, param(rng), seed(rng, mklparam) ) );
-  };
-
-  regRNG( RNGType::MKL_MCG31 );
-  regRNG( RNGType::MKL_R250 );
-  regRNG( RNGType::MKL_MRG32K3A );
-  regRNG( RNGType::MKL_MCG59 );
-  regRNG( RNGType::MKL_WH );
-  regRNG( RNGType::MKL_MT19937 );
-  regRNG( RNGType::MKL_MT2203 );
-  regRNG( RNGType::MKL_SFMT19937 );
-  regRNG( RNGType::MKL_SOBOL );
-  regRNG( RNGType::MKL_NIEDERR );
-  regRNG( RNGType::MKL_IABSTRACT );
-  regRNG( RNGType::MKL_DABSTRACT );
-  regRNG( RNGType::MKL_SABSTRACT );
-  regRNG( RNGType::MKL_NONDETERM );
 }
 
 RNG::LibType

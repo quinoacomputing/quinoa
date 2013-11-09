@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 12:30:23 PM MDT
+  \date      Sat 09 Nov 2013 03:27:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -22,7 +22,8 @@
 
 namespace quinoa {
 
-class TxtStatWriter;
+//! Random number generator factory type
+using RNGFactory = std::map< quinoa::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! Physics base
 class Physics {
@@ -106,7 +107,7 @@ class Physics {
     Statistics m_statistics;                        //!< Statistics estimator
 
     //! Factories
-    ctr::RNGFactory m_RNGFactory;               //!< RNG factory
+    RNGFactory m_RNGFactory;                    //!< RNG factory
     ctr::MassFactory m_massFactory;             //!< Mass model factory
     ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
     ctr::MixFactory m_mixFactory;               //!< Material mix model factory

@@ -11,6 +11,7 @@ endif()
 
 add_library(RNG
             RNG.C
+            SmallCrush.C
             ${MKL_SOURCE}
             ${MKLRNG_SOURCE}
             ${MKLRNDSTREAM_SOURCE}

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:55:04 PM MDT
+  \date      Sat 09 Nov 2013 01:27:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -30,7 +30,7 @@ class InputDeck :
                       interval,   intervals,
                       cmd,        CmdLine,
                       param,      parameters,
-                      stat,       std::vector<Product> > {
+                      stat,       std::vector< Product > > {
 
   public:
     //! Constructor: set all defaults
