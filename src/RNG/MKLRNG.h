@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Fri 25 Oct 2013 10:36:19 PM MDT
+  \date      Sat 09 Nov 2013 05:33:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -15,6 +15,7 @@
 
 #include <mkl_vsl_types.h>
 
+#include <Quinoa/Options/RNG.h>
 #include <RNG.h>
 
 namespace quinoa {
@@ -24,7 +25,10 @@ class MKLRNG : public tk::RNG {
 
   public:
     //! Constructor
-    explicit MKLRNG(const int nthreads, int brng, unsigned int seed);
+    explicit MKLRNG( int nthreads,
+                     int brng,
+                     unsigned int seed,
+                     int uniform_method );
 
     //! Destructor: Free all random number tables and streams
     virtual ~MKLRNG() noexcept;
@@ -45,7 +49,8 @@ class MKLRNG : public tk::RNG {
     //! Don't permit move assigment
     MKLRNG& operator=(MKLRNG&&) = delete;
 
-    int m_nthreads;
+    const int m_uniform_method;         //!< Uniform method to use
+    const int m_nthreads;               //!< Number of threads
 
     //! Random number stream for threads
     std::unique_ptr< VSLStreamStatePtr[] > m_stream;

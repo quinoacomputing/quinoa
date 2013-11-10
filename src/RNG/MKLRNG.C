@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 06:54:10 AM MDT
+  \date      Sat 09 Nov 2013 05:33:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -18,7 +18,11 @@
 
 using namespace quinoa;
 
-MKLRNG::MKLRNG(const int nthreads, int brng, unsigned int seed) :
+MKLRNG::MKLRNG( int nthreads,
+                int brng,
+                unsigned int seed,
+                int uniform_method ) :
+  m_uniform_method(uniform_method),
   m_nthreads(nthreads)
 //******************************************************************************
 //  Constructor
@@ -68,7 +72,7 @@ MKLRNG::uniform(int tid, int num, tk::real* r) const
 //******************************************************************************
 {
   // method should be exposed to user
-  vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD, m_stream[tid], num, r, 0.0, 1.0);
+  vdRngUniform(m_uniform_method, m_stream[tid], num, r, 0.0, 1.0);
 }
 
 void

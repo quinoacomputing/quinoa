@@ -27,6 +27,7 @@ add_library(RNGTestControl
             RNGTest/InputDeck/Parser.C
             RNGTest/CmdLine/Parser.C
             Quinoa/Options/RNG.C
+            Quinoa/Options/MKLUniformMethod.C
 )
 
 INSTALL(TARGETS RNGTestControl

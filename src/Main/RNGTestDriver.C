@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 04:00:48 PM MST
+  \date      Sat 09 Nov 2013 05:57:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -192,11 +192,18 @@ RNGTestDriver::initRNGFactory( const quinoa::ctr::RNG& opt,
 //******************************************************************************
 {
   using quinoa::ctr::RNGType;
+  using quinoa::ctr::seed;
+  using quinoa::ctr::uniform_method;
+
+  quinoa::ctr::MKLUniformMethod um_opt;
 
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
-    add< quinoa::MKLRNG >( m_RNGFactory, reg, opt, rng, nthreads,
-                           opt.param(rng), opt.seed(rng,mklparam) );
+    add< quinoa::MKLRNG >( m_RNGFactory, reg, opt, rng,
+                           nthreads,
+                           opt.param( rng ),
+                           opt.mkl_seed( rng, mklparam ),
+                           um_opt.param(opt.mkl_uniform_method(rng,mklparam)) );
   };
 
   regMKLRNG( RNGType::MKL_MCG31 );
