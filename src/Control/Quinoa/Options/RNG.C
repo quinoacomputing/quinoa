@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 03:42:57 PM MST
+  \date      Sat 09 Nov 2013 05:53:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -31,18 +31,34 @@ RNG::param(RNGType rng) const
 }
 
 unsigned int
-RNG::seed( RNGType rng, const MKLRNGParam& mklparam ) const
+RNG::mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const
 //******************************************************************************
-//  Return seed value for RNG
+//  Return seed value from MKLRNGParams
 //! \author  J. Bakosi
 //******************************************************************************
 {
   auto it = mklparam.find( rng );
 
-  if ( it != mklparam.end() ) {
-    return it->second.get<ctr::seed>();  // user has specified it
-  } else {
-    return 0;                            // user has not specified it
+  if ( it != mklparam.end() ) { // user has specified it
+    return it->second.get< ctr::seed >();
+  } else {                      // user has not specified it, return default
+    return 0;
+  }
+}
+
+MKLUniformMethodType
+RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
+//******************************************************************************
+//  Return uniform method from MKLRNGParams
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto it = mklparam.find( rng );
+
+  if ( it != mklparam.end() ) { // user has specified it
+    return it->second.get< ctr::uniform_method >();
+  } else {                      // user has not specified it, return default
+    return MKLUniformMethodType::STANDARD;
   }
 }
 

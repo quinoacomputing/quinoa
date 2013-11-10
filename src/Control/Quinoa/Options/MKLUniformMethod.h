@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:20:29 PM MST
+  \date      Sat 09 Nov 2013 05:30:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -13,7 +13,10 @@
 
 #include <map>
 
+#include <mkl_vsl.h>
+
 #include <Toggle.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace ctr {
@@ -26,10 +29,16 @@ enum class MKLUniformMethodType : uint8_t { STANDARD,
 class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
 
   public:
+    using ParamType = int;
+
+  public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit MKLUniformMethod() :
       Toggle< MKLUniformMethodType >("uniform method", names, values) {}
+
+    //! Return parameter based on Enum
+    const ParamType& param(MKLUniformMethodType rng) const;
 
   private:
     //! Don't permit copy constructor
@@ -55,6 +64,12 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     const std::map< std::string, MKLUniformMethodType > values {
       { standard.string(), MKLUniformMethodType::STANDARD },
       { accurate.string(), MKLUniformMethodType::ACCURATE }
+    };
+
+    //! Enums -> MKL VSL RNG UNIFORM METHOD parameters
+    const std::map< MKLUniformMethodType, ParamType > method {
+      { MKLUniformMethodType::STANDARD, VSL_RNG_METHOD_UNIFORM_STD },
+      { MKLUniformMethodType::ACCURATE, VSL_RNG_METHOD_UNIFORM_STD_ACCURATE }
     };
 };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 03:50:55 PM MST
+  \date      Sat 09 Nov 2013 05:53:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -79,8 +79,12 @@ class RNG : public tk::Toggle<RNGType> {
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const;
  
-    //! Return seed value for RNG
-    unsigned int seed( RNGType rng, const MKLRNGParam& mklparam ) const;
+    //! Return seed from MKLRNGParams
+    unsigned int mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const;
+
+    //! Return uniform method from MKLRNGParams
+    MKLUniformMethodType
+    mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const;
 
   private:
     //! Don't permit copy constructor
