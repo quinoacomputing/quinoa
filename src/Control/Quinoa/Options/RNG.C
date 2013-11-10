@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 05:53:47 PM MST
+  \date      Sat 09 Nov 2013 06:12:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -59,6 +59,22 @@ RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
     return it->second.get< ctr::uniform_method >();
   } else {                      // user has not specified it, return default
     return MKLUniformMethodType::STANDARD;
+  }
+}
+
+MKLGaussianMethodType
+RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const
+//******************************************************************************
+//  Return Gaussian method from MKLRNGParams
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  auto it = mklparam.find( rng );
+
+  if ( it != mklparam.end() ) { // user has specified it
+    return it->second.get< ctr::gaussian_method >();
+  } else {                      // user has not specified it, return default
+    return MKLGaussianMethodType::BOXMULLER;
   }
 }
 

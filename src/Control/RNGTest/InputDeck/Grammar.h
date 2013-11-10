@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:13:04 PM MST
+  \date      Sat 09 Nov 2013 06:16:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -81,6 +81,14 @@ namespace deck {
                                  Insert_option< Stack,
                                                 quinoa::ctr::MKLUniformMethod,
                                                 quinoa::ctr::uniform_method,
+                                                ctr::selected, ctr::rng,
+                                                ctr::param, ctr::mklrng >,
+                                 alpha >,
+                        process< Stack,
+                                 kw::gaussian_method::pegtl_string,
+                                 Insert_option< Stack,
+                                                quinoa::ctr::MKLGaussianMethod,
+                                                quinoa::ctr::gaussian_method,
                                                 ctr::selected, ctr::rng,
                                                 ctr::param, ctr::mklrng >,
                                  alpha > > > {};

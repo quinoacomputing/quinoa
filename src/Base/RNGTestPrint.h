@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 07 Nov 2013 10:03:35 PM MST
+  \date      Sat 09 Nov 2013 06:31:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -62,10 +62,12 @@ class RNGTestPrint : public tk::Print {
     }
 
     //! Print all fields of MKL RNG parameters
-    template< typename RNG, typename UniformMethod, typename MapType >
+    template< typename RNG, typename UniformMethod, typename GaussianMethod,
+              typename MapType >
     void Mklparams( const MapType& map ) const {
       tk::Option< RNG > rng;
       tk::Option< UniformMethod > um;
+      tk::Option< GaussianMethod > gm;
       for (auto& m : map) {
         subsection( rng.name(m.first) );
         std::cout << m_item_name_value_fmt
@@ -75,7 +77,13 @@ class RNGTestPrint : public tk::Print {
         std::cout << m_item_name_value_fmt
                      % m_item_indent
                      % um.group()
-                     % um.name(m.second.template get<quinoa::ctr::uniform_method>());
+                     % um.name(
+                         m.second.template get<quinoa::ctr::uniform_method>() );
+        std::cout << m_item_name_value_fmt
+                     % m_item_indent
+                     % gm.group()
+                     % gm.name(
+                         m.second.template get<quinoa::ctr::gaussian_method>() );
         endsubsection();
       }
     }

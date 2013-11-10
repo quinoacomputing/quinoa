@@ -28,6 +28,7 @@ add_library(RNGTestControl
             RNGTest/CmdLine/Parser.C
             Quinoa/Options/RNG.C
             Quinoa/Options/MKLUniformMethod.C
+            Quinoa/Options/MKLGaussianMethod.C
 )
 
 INSTALL(TARGETS RNGTestControl
