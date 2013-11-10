@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 08:52:07 PM MST
+  \date      Sat 09 Nov 2013 06:12:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -60,6 +60,7 @@ struct c4 {};
 
 struct seed {};
 struct uniform_method {};
+struct gaussian_method {};
 
 struct beta {};
 struct dirichlet {};

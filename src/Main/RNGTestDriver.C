@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 05:57:09 PM MST
+  \date      Sat 09 Nov 2013 06:32:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -196,6 +196,7 @@ RNGTestDriver::initRNGFactory( const quinoa::ctr::RNG& opt,
   using quinoa::ctr::uniform_method;
 
   quinoa::ctr::MKLUniformMethod um_opt;
+  quinoa::ctr::MKLGaussianMethod gm_opt;
 
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
@@ -203,7 +204,8 @@ RNGTestDriver::initRNGFactory( const quinoa::ctr::RNG& opt,
                            nthreads,
                            opt.param( rng ),
                            opt.mkl_seed( rng, mklparam ),
-                           um_opt.param(opt.mkl_uniform_method(rng,mklparam)) );
+                           um_opt.param(opt.mkl_uniform_method(rng,mklparam)),
+                           gm_opt.param(opt.mkl_gaussian_method(rng,mklparam)) );
   };
 
   regMKLRNG( RNGType::MKL_MCG31 );
@@ -237,7 +239,9 @@ RNGTestDriver::echo()
   print.section("Title", control.get<ctr::title>());
   print.Section<ctr::Battery, ctr::selected, ctr::battery>();
 
-  print.Mklparams< quinoa::ctr::RNG, quinoa::ctr::MKLUniformMethod >
+  print.Mklparams< quinoa::ctr::RNG,
+                   quinoa::ctr::MKLUniformMethod,
+                   quinoa::ctr::MKLGaussianMethod >
                  ( control.get<ctr::param, ctr::mklrng>() );
   print.endpart();
 }

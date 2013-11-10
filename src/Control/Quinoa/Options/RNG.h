@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 05:53:55 PM MST
+  \date      Sat 09 Nov 2013 06:16:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -24,6 +24,7 @@
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 #include <Quinoa/Options/MKLUniformMethod.h>
+#include <Quinoa/Options/MKLGaussianMethod.h>
 #include <Quinoa/Tags.h>
 
 namespace quinoa {
@@ -57,8 +58,9 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
 
 //! MKL random number generator parameters storage
 using MKLRNGParameters = tk::tuple::tagged_tuple<
-  seed,            unsigned int,              //!< seed
-  uniform_method,  MKLUniformMethodType       //!< uniform method type
+  seed,             unsigned int,              //!< seed
+  uniform_method,   MKLUniformMethodType,      //!< uniform method type
+  gaussian_method,  MKLGaussianMethodType      //!< Gaussian method type
 >;
 
 //! MKL RNG parameters bundle
@@ -85,6 +87,10 @@ class RNG : public tk::Toggle<RNGType> {
     //! Return uniform method from MKLRNGParams
     MKLUniformMethodType
     mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const;
+
+    //! Return Gaussian method from MKLRNGParams
+    MKLGaussianMethodType
+    mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const;
 
   private:
     //! Don't permit copy constructor

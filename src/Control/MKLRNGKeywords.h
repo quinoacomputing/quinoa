@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 06:39:35 PM MST
+  \date      Sat 09 Nov 2013 06:07:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
@@ -194,7 +194,7 @@ struct uniform_method_info {
 using uniform_method = keyword< uniform_method_info,
                                 u,n,i,f,o,r,m,'_',m,e,t,h,o,d >;
 
-// Keyword 'std'
+// Keyword 'standard'
 struct standard_info {
   static const char* name() { return "standard"; }
   static const char* help() { return
@@ -213,3 +213,45 @@ struct accurate_info {
   }
 };
 using accurate = keyword< accurate_info, a,c,c,u,r,a,t,e >;
+
+// Keyword 'gaussian_method'
+struct gaussian_method_info {
+  static const char* name() { return "Intel MKL Gaussian RNG method"; }
+  static const char* help() { return
+    "This keyword is used to specify the method used to generate Gaussian "
+    "random numbers using the Intel MKL library. Valid options are 'boxmuller' "
+    ", 'boxmuller2', and 'icdf'.";
+  }
+};
+using gaussian_method = keyword< gaussian_method_info,
+                                 g,a,u,s,s,i,a,n,'_',m,e,t,h,o,d >;
+
+// Keyword 'boxmuller'
+struct boxmuller_info {
+  static const char* name() { return "boxmuller"; }
+  static const char* help() { return
+    "This keyword is used to specify the Box-Muller method used to generate "
+    "Gaussian random numbers using the Intel MKL library.";
+  }
+};
+using boxmuller = keyword< boxmuller_info, b,o,x,m,u,l,l,e,r >;
+
+// Keyword 'boxmuller2'
+struct boxmuller2_info {
+  static const char* name() { return "boxmuller2"; }
+  static const char* help() { return
+    "This keyword is used to specify the Box-Muller 2 method used to generate "
+    "Gaussian random numbers using the Intel MKL library.";
+  }
+};
+using boxmuller2 = keyword< boxmuller2_info, b,o,x,m,u,l,l,e,r,'2' >;
+
+// Keyword 'icdf'
+struct icdf_info {
+  static const char* name() { return "icdf"; }
+  static const char* help() { return
+    "This keyword is used to specify the ICDF method used to generate "
+    "Gaussian random numbers using the Intel MKL library.";
+  }
+};
+using icdf = keyword< icdf_info, i,c,d,f >;
