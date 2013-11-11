@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 09:28:48 AM MST
+  \date      Mon 11 Nov 2013 10:34:37 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -424,12 +424,17 @@ namespace deck {
   struct freq :
          pegtl::sor< freq_gamma > {};
 
+  //! scan and store physics keyword and option
+  template< typename keyword >
+  struct scan_physics :
+         tk::grm::scan< keyword,
+                        store_option< ctr::Physics,
+                                      ctr::selected,
+                                      ctr::physics > > {};
+
   //! physics 'hommix' block
   struct hommix :
-         pegtl::ifmust< tk::grm::scan< kw::hommix::pegtl_string,
-                                       store_option< ctr::Physics,
-                                                     ctr::selected,
-                                                     ctr::physics > >,
+         pegtl::ifmust< scan_physics< kw::hommix::pegtl_string >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
@@ -439,43 +444,38 @@ namespace deck {
 
   //! physics 'homrt' block
   struct homrt :
-         pegtl::ifmust< tk::grm::scan< kw::homrt::pegtl_string,
-                                       store_option< ctr::Physics,
-                                                     ctr::selected,
-                                                     ctr::physics > >,
+         pegtl::ifmust< scan_physics< kw::homrt::pegtl_string >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
                                         mass,
                                         hydro,
                                         freq,
+                                        rngs,
                                         statistics > > {};
 
   //! physics 'homhydro' block
   struct homhydro :
-         pegtl::ifmust< tk::grm::scan< kw::homhydro::pegtl_string,
-                                       store_option< ctr::Physics,
-                                                     ctr::selected,
-                                                     ctr::physics > >,
+         pegtl::ifmust< scan_physics< kw::homhydro::pegtl_string >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
                                         hydro,
                                         freq,
+                                        rngs,
                                         statistics > > {};
 
   //! physics 'spinsflow' block
   struct spinsflow :
-         pegtl::ifmust< tk::grm::scan< kw::spinsflow::pegtl_string,
-                                       store_option< ctr::Physics,
-                                                     ctr::selected,
-                                                     ctr::physics > >,
+         pegtl::ifmust< scan_physics< kw::spinsflow::pegtl_string >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
                                         hydro,
                                         freq,
-                                        mix > > {};
+                                        mix,
+                                        rngs,
+                                        statistics > > {};
 
   //! physics types
   struct physics :
@@ -486,8 +486,7 @@ namespace deck {
 
   //! main keywords
   struct keywords :
-         pegtl::sor< title,
-                     physics > {};
+         pegtl::sor< title, physics > {};
 
   //! ignore: comments and empty lines
   struct ignore :
