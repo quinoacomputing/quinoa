@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomMix/HomMix.C
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 09:48:27 PM MDT
+  \date      Sun 10 Nov 2013 06:26:26 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -27,7 +27,7 @@
 #include <Mix/Dirichlet/Dirichlet.h>
 #include <Mix/GenDirichlet/GenDirichlet.h>
 
-using namespace quinoa;
+using quinoa::HomMix;
 
 HomMix::HomMix(const Base& base) :
   Physics(base),

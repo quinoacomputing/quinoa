@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRndStream.C
   \author    J. Bakosi
-  \date      Tue 22 Oct 2013 08:58:18 PM MDT
+  \date      Sun 10 Nov 2013 06:18:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation from MKL streams
   \details   Streams are used to generate a few random numbers with no
@@ -16,7 +16,7 @@
 #include <MKLRndStream.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::MKLRndStream;
 
 MKLRndStream::MKLRndStream(int nthread,
                            int brng,

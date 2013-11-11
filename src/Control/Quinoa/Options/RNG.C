@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:12:47 PM MST
+  \date      Sun 10 Nov 2013 10:37:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -11,10 +11,10 @@
 
 #include <Quinoa/Options/RNG.h>
 
-using namespace quinoa::ctr;
+using quinoa::ctr::RNG;
 
 const RNG::ParamType&
-RNG::param(RNGType rng) const
+RNG::param( RNGType rng ) const
 //******************************************************************************
 //  Return parameter based on enum
 //! \author  J. Bakosi
@@ -46,7 +46,7 @@ RNG::mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const
   }
 }
 
-MKLUniformMethodType
+quinoa::ctr::MKLUniformMethodType
 RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
 //******************************************************************************
 //  Return uniform method from MKLRNGParams
@@ -62,7 +62,7 @@ RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
   }
 }
 
-MKLGaussianMethodType
+quinoa::ctr::MKLGaussianMethodType
 RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const
 //******************************************************************************
 //  Return Gaussian method from MKLRNGParams
@@ -79,7 +79,7 @@ RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const
 }
 
 RNG::LibType
-RNG::lib(RNGType rng) const
+RNG::lib( RNGType rng ) const
 //******************************************************************************
 //  Return RNG library tpe based on Enum
 //! \author  J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:07:15 PM MST
+  \date      Sun 10 Nov 2013 10:54:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -52,9 +52,9 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     MKLGaussianMethod& operator=(MKLGaussianMethod&&) = delete;
 
     //! Get access to MKL Gaussian method keywords
-    const kw::boxmuller boxmuller{};
-    const kw::boxmuller2 boxmuller2 {};
-    const kw::icdf icdf {};
+    const tk::kw::boxmuller boxmuller{};
+    const tk::kw::boxmuller2 boxmuller2 {};
+    const tk::kw::icdf icdf {};
 
     //! Enums -> names
     const std::map< MKLGaussianMethodType, std::string > names {

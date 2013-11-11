@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:16:40 PM MST
+  \date      Sun 10 Nov 2013 10:55:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -112,20 +112,20 @@ class RNG : public tk::Toggle<RNGType> {
     bool found(const std::string& kw, const std::string& str) const;
 
     //! Get access to RNG keywords
-    const kw::mkl_mcg31 mkl_mcg31 {};
-    const kw::mkl_r250 mkl_r250 {};
-    const kw::mkl_mrg32k3a mkl_mrg32k3a {};
-    const kw::mkl_mcg59 mkl_mcg59 {};
-    const kw::mkl_wh mkl_wh {};
-    const kw::mkl_mt19937 mkl_mt19937 {};
-    const kw::mkl_mt2203 mkl_mt2203 {};
-    const kw::mkl_sfmt19937 mkl_sfmt19937 {};
-    const kw::mkl_sobol mkl_sobol {};
-    const kw::mkl_niederr mkl_niederr {};
-    const kw::mkl_iabstract mkl_iabstract {};
-    const kw::mkl_dabstract mkl_dabstract {};
-    const kw::mkl_sabstract mkl_sabstract {};
-    const kw::mkl_nondeterm mkl_nondeterm {};
+    const tk::kw::mkl_mcg31 mkl_mcg31 {};
+    const tk::kw::mkl_r250 mkl_r250 {};
+    const tk::kw::mkl_mrg32k3a mkl_mrg32k3a {};
+    const tk::kw::mkl_mcg59 mkl_mcg59 {};
+    const tk::kw::mkl_wh mkl_wh {};
+    const tk::kw::mkl_mt19937 mkl_mt19937 {};
+    const tk::kw::mkl_mt2203 mkl_mt2203 {};
+    const tk::kw::mkl_sfmt19937 mkl_sfmt19937 {};
+    const tk::kw::mkl_sobol mkl_sobol {};
+    const tk::kw::mkl_niederr mkl_niederr {};
+    const tk::kw::mkl_iabstract mkl_iabstract {};
+    const tk::kw::mkl_dabstract mkl_dabstract {};
+    const tk::kw::mkl_sabstract mkl_sabstract {};
+    const tk::kw::mkl_nondeterm mkl_nondeterm {};
 
     //! Enums -> names
     const std::map<RNGType, std::string> names {

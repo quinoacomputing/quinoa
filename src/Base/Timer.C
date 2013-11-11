@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:50:00 2013
+  \date      Sun 10 Nov 2013 06:31:01 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -14,7 +14,7 @@
 #include <Timer.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::Timer;
 
 Timer::Timer()
 //******************************************************************************
@@ -29,7 +29,7 @@ Timer::Timer()
   }
 }
 
-TimerIdx
+tk::TimerIdx
 Timer::create(const std::string& label) const
 //******************************************************************************
 //  Create new timer
@@ -71,7 +71,7 @@ Timer::start(const TimerIdx id) const
   m_timer[id].start = clock::now();
 }
 
-real
+tk::real
 Timer::query(const TimerIdx id) const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as real
@@ -79,13 +79,12 @@ Timer::query(const TimerIdx id) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using namespace std::chrono;
-
   // Get time stamp
   m_timer[id].now = clock::now();
 
   // Compute time difference between start and now in real
-  dsec elapsed = duration_cast<dsec>(m_timer[id].now - m_timer[id].start);
+  dsec elapsed =
+    std::chrono::duration_cast< dsec >( m_timer[id].now - m_timer[id].start );
 
   // Return elapsed time
   return elapsed.count();
@@ -100,7 +99,10 @@ Timer::query(const TimerIdx id, Watch& watch) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using namespace std::chrono;
+  using std::chrono::duration_cast;
+  using std::chrono::hours;
+  using std::chrono::minutes;
+  using std::chrono::seconds;
 
   // Get time stamp
   m_timer[id].now = clock::now();
@@ -109,15 +111,15 @@ Timer::query(const TimerIdx id, Watch& watch) const
   dsec elapsed = (m_timer[id].now - m_timer[id].start) / 1000.0;
 
   // Put elapsed time in watch as hours:minutes:seconds
-  watch.h = duration_cast<hours>(elapsed);
-  watch.m = duration_cast<minutes>(elapsed) % hours(1);
-  watch.s = duration_cast<seconds>(elapsed) % minutes(1);
+  watch.h = duration_cast< hours >( elapsed );
+  watch.m = duration_cast< minutes >( elapsed ) % hours(1);
+  watch.s = duration_cast< seconds >( elapsed ) % minutes(1);
 }
 
 void
 Timer::eta(const TimerIdx id,
-           const real term,
-           const real time,
+           const tk::real term,
+           const tk::real time,
            const uint64_t nstep,
            const uint64_t it,
            Watch& elapsedWatch,
@@ -134,7 +136,10 @@ Timer::eta(const TimerIdx id,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using namespace std::chrono;
+  using std::chrono::duration_cast;
+  using std::chrono::hours;
+  using std::chrono::minutes;
+  using std::chrono::seconds;
 
   dsec elapsed, estimated;
 
@@ -151,7 +156,7 @@ Timer::eta(const TimerIdx id,
     // Estimate time until term in seconds
     dsec est_term = elapsed * (term-time) / time;
     // Estimate time until nstep in seconds
-    dsec est_nstep = elapsed * static_cast<real>(nstep-it) / it;
+    dsec est_nstep = elapsed * static_cast<tk::real>(nstep-it) / it;
 
     // Time stepping will stop at term or nstep, whichever is sooner
     estimated = min(est_term, est_nstep);

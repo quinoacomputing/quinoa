@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:07:30 2013
+  \date      Sun 10 Nov 2013 06:23:42 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -18,7 +18,7 @@
 
 #include <Exception.h>
 
-using namespace tk;
+using tk::Exception;
 
 Exception::Exception(ExceptType except,
                      const std::string& message,
@@ -200,6 +200,8 @@ Exception::echo(const char* msg) noexcept
            "==\n");
   }
 }
+
+using tk::ErrCode;
 
 ErrCode
 Exception::handleException() noexcept

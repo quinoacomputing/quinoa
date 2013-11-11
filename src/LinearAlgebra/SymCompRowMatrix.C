@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:28:22 2013
+  \date      Mon 11 Nov 2013 09:01:00 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -20,7 +20,7 @@
 
 #include <SymCompRowMatrix.h>
 
-using namespace tk;
+using tk::SymCompRowMatrix;
 
 SymCompRowMatrix::SymCompRowMatrix(int size,
                                    int dof,
@@ -206,7 +206,7 @@ SymCompRowMatrix::ins(int row, int column, real value)
   m_a[m_ia[row]-1+idx] = value;
 }
 
-real
+tk::real
 SymCompRowMatrix::get(int row, int column, int i) const
 //******************************************************************************
 //  Get value from matrix from specified position using relative indexing
@@ -229,7 +229,7 @@ SymCompRowMatrix::get(int row, int column, int i) const
   return m_a[m_ia[rmdof+i]-1+idx];
 }
 
-real
+tk::real
 SymCompRowMatrix::get(int row, int column) const
 //******************************************************************************
 //  Get value from matrix from specified position using absolute indexing

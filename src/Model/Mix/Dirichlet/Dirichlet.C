@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/Dirichlet/Dirichlet.C
   \author    J. Bakosi
-  \date      Mon Oct 28 07:23:48 2013
+  \date      Sun 10 Nov 2013 06:13:34 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet mix model
   \details   Dirichlet mix model
@@ -11,7 +11,7 @@
 
 #include <Mix/Dirichlet/Dirichlet.h>
 
-using namespace quinoa;
+using quinoa::Dirichlet;
 
 // void
 // Dirichlet::advance(int p, int tid, tk::real dt)

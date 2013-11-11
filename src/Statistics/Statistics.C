@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 03:33:31 PM MDT
+  \date      Sun 10 Nov 2013 06:14:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -19,7 +19,7 @@
 #include <Base.h>
 #include <Statistics.h>
 
-using namespace quinoa;
+using quinoa::Statistics;
 
 Statistics::Statistics(const Base& base, const tk::real* const particles) :
   m_base(base),

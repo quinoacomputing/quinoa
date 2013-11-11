@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:14:36 2013
+  \date      Sun 10 Nov 2013 06:42:01 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String parser
   \details   String parser
@@ -11,7 +11,7 @@
 
 #include <StringParser.h>
 
-using namespace tk;
+using tk::StringParser;
 
 StringParser::StringParser(int argc, char** argv)
 //******************************************************************************

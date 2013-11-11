@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:26:55 2013
+  \date      Sun 10 Nov 2013 06:19:37 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class definition
   \details   Writer base class definition
@@ -14,7 +14,7 @@
 #include <Writer.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::Writer;
 
 Writer::Writer(const std::string& filename) :
   m_filename(filename),

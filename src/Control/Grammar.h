@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:14:31 PM MST
+  \date      Sun 10 Nov 2013 07:06:17 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -19,8 +19,6 @@
 namespace tk {
 //! Grammar definition: state, actions, grammar
 namespace grm {
-
-  using namespace pegtl;
 
   // Common auxiliary functions
 
@@ -66,7 +64,7 @@ namespace grm {
 
   //! error dispatch
   template< class Stack, Error key >
-  struct error : action_base< error<Stack,key> > {
+  struct error : pegtl::action_base< error<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
       handleError<Stack,key>(stack,value);
     }
@@ -74,7 +72,7 @@ namespace grm {
 
   //! put value in state at position given by tags without conversion
   template<class Stack, typename tag, typename... tags >
-  struct Set : action_base< Set<Stack,tag,tags...> > {
+  struct Set : pegtl::action_base< Set<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template set<tag,tags...>(value);
     }
@@ -82,7 +80,7 @@ namespace grm {
 
   //! put value in state at position given by tags with conversion, see Control
   template< class Stack, typename tag, typename... tags >
-  struct Store : action_base< Store<Stack,tag,tags...> > {
+  struct Store : pegtl::action_base< Store<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template store<tag,tags...>(value);
     }
@@ -90,7 +88,7 @@ namespace grm {
 
   //! convert and push back value to vector in state at position given by tags
   template< class Stack, typename tag, typename...tags >
-  struct Store_back : action_base< Store_back<Stack,tag,tags...> > {
+  struct Store_back : pegtl::action_base< Store_back<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template store_back<tag,tags...>(value);
     }
@@ -99,7 +97,7 @@ namespace grm {
   //! push back option in state at position given by tags
   template< class Stack, class OptionType, typename tag, typename... tags >
   struct Store_back_option :
-         action_base< Store_back_option<Stack, OptionType, tag, tags...> > {
+  pegtl::action_base< Store_back_option<Stack, OptionType, tag, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
       stack.template push_back<tag,tags...>( opt.value( value ) );
@@ -110,7 +108,7 @@ namespace grm {
   template< class Stack, typename field, typename sel, typename vec,
             typename tag, typename...tags >
   struct Insert_field :
-  action_base< Insert_field< Stack, field, sel, vec, tag, tags... > > {
+  pegtl::action_base< Insert_field< Stack, field, sel, vec, tag, tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
       // get recently inserted key from <sel,vec>
       using key_type =
@@ -124,7 +122,8 @@ namespace grm {
   template< class Stack, class OptionType, typename field, typename sel,
             typename vec, typename tag, typename...tags >
   struct Insert_option :
-  action_base<Insert_option<Stack, OptionType, field, sel, vec, tag, tags...>> {
+  pegtl::action_base< Insert_option< Stack, OptionType, field, sel, vec, tag,
+                                     tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
       using EnumType = typename OptionType::EnumType;
@@ -142,115 +141,141 @@ namespace grm {
   //! read 'token' until 'erased' trimming 'erased'
   template< class token, class erased >
   struct trim :
-         seq< token, until< at<erased> > > {};
+         pegtl::seq< token, pegtl::until< pegtl::at<erased> > > {};
 
   // match unknown keyword and handle error
   template< class Stack, Error key >
   struct unknown :
-         pad< ifapply< trim<any, space>, error<Stack,key> >, blank, space > {};
+         pegtl::pad< pegtl::ifapply< trim< pegtl::any, pegtl::space >,
+                                     error< Stack, key > >,
+                     pegtl::blank,
+                     pegtl::space > {};
 
   //! match alias cmdline keyword
   template< class Stack, class keyword >
   struct alias :
-         seq< one<'-'>,
-              typename keyword::pegtl_alias,
-              sor<space, unknown<Stack,Error::ALIAS>> > {};
+         pegtl::seq< pegtl::one<'-'>,
+                     typename keyword::pegtl_alias,
+                     pegtl::sor< pegtl::space,
+                                 unknown< Stack, Error::ALIAS > > > {};
 
   //! match verbose cmdline keyword
   template< class keyword >
   struct verbose :
-         seq< string<'-','-'>, typename keyword::pegtl_string, space > {};
+         pegtl::seq< pegtl::string<'-','-'>,
+                     typename keyword::pegtl_string,
+                     pegtl::space > {};
 
   //! read keyword 'token' padded by blank at left and space at right
   template< class token >
   struct readkw :
-         pad< trim<token, space>, blank, space > {};
+         pegtl::pad< trim< token, pegtl::space >,
+                     pegtl::blank,
+                     pegtl::space > {};
 
   //! read command line 'keyword' in either verbose or alias form
   template< class Stack, class keyword >
   struct readcmd :
-         sor< verbose<keyword>, alias<Stack,keyword> > {};
+         pegtl::sor< verbose< keyword >, alias< Stack, keyword > > {};
 
   //! scan input padded by blank at left and space at right and if it matches
   //! 'keywords', apply 'actions'
   template< class keywords, typename... actions >
   struct scan :
-         pad< ifapply< trim<keywords, space>, actions... >, blank, space > {};
+         pegtl::pad< pegtl::ifapply< trim< keywords, pegtl::space >,
+                                     actions... >,
+                     pegtl::blank,
+                     pegtl::space > {};
 
   //! comment: start with '#' until eol
   struct comment :
-         pad< trim<one<'#'>,eol>, blank, eol> {};
+         pegtl::pad< trim< pegtl::one<'#'>, pegtl::eol >,
+                     pegtl::blank,
+                     pegtl::eol > {};
 
   //! number: optional sign followed by digits
   struct number :
-         seq< opt< sor<one<'+'>, one<'-'>> >, digit> {};
+         pegtl::seq< pegtl::opt< pegtl::sor< pegtl::one<'+'>,
+                                             pegtl::one<'-'> > >,
+                     pegtl::digit > {};
 
   //! plow through 'tokens' until kw::end
   template< class Stack, typename... tokens >
   struct block :
-         until< readkw< kw::end::pegtl_string >,
-                sor<comment, tokens..., unknown<Stack,Error::KEYWORD>> > {};
+         pegtl::until< readkw< kw::end::pegtl_string >,
+                       pegtl::sor< comment,
+                                   tokens...,
+                                   unknown< Stack, Error::KEYWORD > > > {};
 
   //! plow through vector of values between keywords 'key' and kw::end, calling
   //! 'insert' for each if matches and allowing comments between values
   template< class Stack, class key, class insert, class value = number >
   struct vector :
-         ifmust< readkw<key>,
-                 until< readkw< kw::end::pegtl_string >,
-                        sor<comment,
-                            scan<value,insert>,
-                            unknown<Stack,Error::LIST>> > > {};
+         pegtl::ifmust< readkw< key >,
+                        pegtl::until< readkw< kw::end::pegtl_string >,
+                                      pegtl::sor< comment,
+                                                  scan< value, insert >,
+                                                  unknown<Stack,
+                                                          Error::LIST> > > > {};
 
   //! scan string between characters 'lbound' and 'rbound' and if matches apply
   //! action 'insert'
   template< class Stack, class insert, char lbound = '"', char rbound = '"' >
   struct quoted :
-         ifmust< one<lbound>,
-                 ifapply< sor<trim<not_one<lbound>, one<rbound>>,
-                              unknown<Stack,Error::QUOTED>>, insert >,
-                 one<rbound>
-               > {};
+         pegtl::ifmust< pegtl::one< lbound >,
+                        pegtl::ifapply<
+                          pegtl::sor< trim< pegtl::not_one< lbound >,
+                                            pegtl::one< rbound > >,
+                                      unknown< Stack, Error::QUOTED > >,
+                        insert >,
+                        pegtl::one< rbound > > {};
 
   //! process 'keyword' and call its 'insert' action if matches 'keywords'
-  template< class Stack, class keyword, class insert, class keywords = digit >
+  template< class Stack, class keyword, class insert,
+            class keywords = pegtl::digit >
   struct process :
-         ifmust< readkw<keyword>,
-                 scan< sor<keywords, apply<error<Stack,Error::MISSING>>>,
-                       insert> > {};
+         pegtl::ifmust< readkw< keyword >,
+                        scan< pegtl::sor<
+                                keywords,
+                                pegtl::apply< error< Stack, Error::MISSING > > >,
+                              insert > > {};
 
   //! process 'keyword' and call its 'insert' action for string matched
   //! between characters 'lbound' and 'rbound'
   template< class Stack, class keyword, class insert, char lbound='"',
             char rbound='"' >
   struct process_quoted :
-         ifmust< readkw< keyword >,
-                 sor< quoted< Stack, insert, lbound, rbound >,
-                      unknown< Stack, Error::QUOTED > > > {};
+         pegtl::ifmust< readkw< keyword >,
+                        pegtl::sor< quoted< Stack, insert, lbound, rbound >,
+                                    unknown< Stack, Error::QUOTED > > > {};
 
   //! process command line 'keyword' and call its 'insert' action if matches
   //! 'keywords'
-  template< class Stack, class keyword, class insert, class keywords = any >
+  template< class Stack, class keyword, class insert,
+            class keywords = pegtl::any >
   struct process_cmd :
-         ifmust< readcmd< Stack, keyword >,
-                 scan< sor< keywords, apply< error< Stack, Error::MISSING > > >,
-                       insert > > {};
+         pegtl::ifmust< readcmd< Stack, keyword >,
+                        scan< pegtl::sor<
+                                keywords,
+                                pegtl::apply< error< Stack, Error::MISSING > > >,
+                              insert > > {};
 
   //! mklrng: match any one of the MKL random number generators
   struct mklrng :
-         sor< kw::mkl_mcg31::pegtl_string,
-              kw::mkl_r250::pegtl_string,
-              kw::mkl_mrg32k3a::pegtl_string,
-              kw::mkl_mcg59::pegtl_string,
-              kw::mkl_wh::pegtl_string,
-              kw::mkl_mt19937::pegtl_string,
-              kw::mkl_mt2203::pegtl_string,
-              kw::mkl_sfmt19937::pegtl_string,
-              kw::mkl_sobol::pegtl_string,
-              kw::mkl_niederr::pegtl_string,
-              kw::mkl_iabstract::pegtl_string,
-              kw::mkl_dabstract::pegtl_string,
-              kw::mkl_sabstract::pegtl_string,
-              kw::mkl_nondeterm::pegtl_string > {};
+         pegtl::sor< kw::mkl_mcg31::pegtl_string,
+                     kw::mkl_r250::pegtl_string,
+                     kw::mkl_mrg32k3a::pegtl_string,
+                     kw::mkl_mcg59::pegtl_string,
+                     kw::mkl_wh::pegtl_string,
+                     kw::mkl_mt19937::pegtl_string,
+                     kw::mkl_mt2203::pegtl_string,
+                     kw::mkl_sfmt19937::pegtl_string,
+                     kw::mkl_sobol::pegtl_string,
+                     kw::mkl_niederr::pegtl_string,
+                     kw::mkl_iabstract::pegtl_string,
+                     kw::mkl_dabstract::pegtl_string,
+                     kw::mkl_sabstract::pegtl_string,
+                     kw::mkl_nondeterm::pegtl_string > {};
 
 } // grm::
 } // tk::

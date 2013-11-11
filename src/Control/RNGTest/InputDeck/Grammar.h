@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:16:07 PM MST
+  \date      Sun 10 Nov 2013 07:31:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -25,14 +25,12 @@
 namespace rngtest {
 namespace deck {
 
-  using namespace pegtl;
-  using namespace tk::grm;
-
   //! PEGTLParsed type specialized to RNGTest's input deck parser
-  using PEGTLInputDeck = quinoa::ctr::PEGTLParsed< ctr::InputDeck,
-                                                   file_input< ctr::Location >,
-                                                   ctr::cmd,
-                                                   ctr::CmdLine >;
+  using PEGTLInputDeck =
+          quinoa::ctr::PEGTLParsed< ctr::InputDeck,
+                                    pegtl::file_input< ctr::Location >,
+                                    ctr::cmd,
+                                    ctr::CmdLine >;
 
   // RNGTest's InputDeck State
 
@@ -43,7 +41,7 @@ namespace deck {
 
   //! put option in state at position given by tags
   template< class OptionType, typename... tags >
-  struct store_option : action_base< store_option<OptionType, tags...> > {
+  struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
       //! Emit warning on overwrite
@@ -61,84 +59,113 @@ namespace deck {
 
   //! title
   struct title :
-         ifmust< readkw< kw::title::pegtl_string >,
-                 quoted< Stack, Set< Stack, ctr::title > > > {};
+         pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
+                        tk::grm::quoted< Stack,
+                                         tk::grm::Set<Stack, ctr::title> > > {};
+
+  //! MKL RNG seed
+  struct mkl_seed :
+         tk::grm::process< Stack,
+                           tk::kw::seed::pegtl_string,
+                           tk::grm::Insert_field< Stack,
+                                                  quinoa::ctr::seed,
+                                                  ctr::selected,
+                                                  ctr::rng,
+                                                  ctr::param,
+                                                  ctr::mklrng > > {};
+
+  //! MKL uniform method
+  struct mkl_uniform_method :
+         tk::grm::process< Stack,
+                           tk::kw::uniform_method::pegtl_string,
+                           tk::grm::Insert_option< Stack,
+                                                   quinoa::ctr::MKLUniformMethod,
+                                                   quinoa::ctr::uniform_method,
+                                                   ctr::selected,
+                                                   ctr::rng,
+                                                   ctr::param,
+                                                   ctr::mklrng >,
+                           pegtl::alpha > {};
+
+  //! MKL Gaussian method
+  struct mkl_gaussian_method :
+         tk::grm::process< Stack,
+                           tk::kw::gaussian_method::pegtl_string,
+                           tk::grm::Insert_option<
+                             Stack,
+                             quinoa::ctr::MKLGaussianMethod,
+                             quinoa::ctr::gaussian_method,
+                             ctr::selected,
+                             ctr::rng,
+                             ctr::param,
+                             ctr::mklrng >,
+                           pegtl::alpha > {};
 
   //! mklrngs blocks
   struct mklrngs :
-         ifmust< scan< mklrng,
-                       Store_back_option< Stack, quinoa::ctr::RNG,
-                                          ctr::selected, ctr::rng > >,
-                 block< Stack,
-                        process< Stack,
-                                 kw::seed::pegtl_string,
-                                 Insert_field< Stack,
-                                               quinoa::ctr::seed,
-                                               ctr::selected, ctr::rng,
-                                               ctr::param, ctr::mklrng > >,
-                        process< Stack,
-                                 kw::uniform_method::pegtl_string,
-                                 Insert_option< Stack,
-                                                quinoa::ctr::MKLUniformMethod,
-                                                quinoa::ctr::uniform_method,
-                                                ctr::selected, ctr::rng,
-                                                ctr::param, ctr::mklrng >,
-                                 alpha >,
-                        process< Stack,
-                                 kw::gaussian_method::pegtl_string,
-                                 Insert_option< Stack,
-                                                quinoa::ctr::MKLGaussianMethod,
-                                                quinoa::ctr::gaussian_method,
-                                                ctr::selected, ctr::rng,
-                                                ctr::param, ctr::mklrng >,
-                                 alpha > > > {};
-
+         pegtl::ifmust<
+           tk::grm::scan< tk::grm::mklrng,
+                          tk::grm::Store_back_option< Stack,
+                                                      quinoa::ctr::RNG,
+                                                      ctr::selected,
+                                                      ctr::rng > >,
+           tk::grm::block< Stack,
+                           mkl_seed,
+                           mkl_uniform_method,
+                           mkl_gaussian_method > > {};
+          
   //! rngs
   struct rngs :
-         sor< mklrngs > {};
+         pegtl::sor< mklrngs > {};
 
   // smallcrush block
   struct smallcrush :
-         ifmust< scan< kw::smallcrush::pegtl_string,
-                       store_option< ctr::Battery,
-                                     ctr::selected,
-                                     ctr::battery > >,
-                 block< Stack, rngs > > {};
+         pegtl::ifmust< tk::grm::scan< kw::smallcrush::pegtl_string,
+                                       store_option< ctr::Battery,
+                                                     ctr::selected,
+                                                     ctr::battery > >,
+                        tk::grm::block< Stack, rngs > > {};
 
   // crush block
   struct crush :
-         ifmust< scan< kw::crush::pegtl_string,
-                       store_option< ctr::Battery,
-                                     ctr::selected,
-                                     ctr::battery > >,
-                 block< Stack, rngs > > {};
+         pegtl::ifmust< tk::grm::scan< kw::crush::pegtl_string,
+                                       store_option< ctr::Battery,
+                                                     ctr::selected,
+                                                     ctr::battery > >,
+                        tk::grm::block< Stack, rngs > > {};
 
   // bigcrush block
   struct bigcrush :
-         ifmust< scan< kw::bigcrush::pegtl_string,
-                       store_option< ctr::Battery,
-                                     ctr::selected,
-                                     ctr::battery > >,
-                 block< Stack, rngs > > {};
+         pegtl::ifmust< tk::grm::scan< kw::bigcrush::pegtl_string,
+                                       store_option< ctr::Battery,
+                                                     ctr::selected,
+                                                    ctr::battery > >,
+                        tk::grm::block< Stack, rngs > > {};
 
   //! batteries
   struct battery :
-         sor< smallcrush,
-              crush,
-              bigcrush > {};
+         pegtl::sor< smallcrush,
+                     crush,
+                     bigcrush > {};
 
   //! main keywords
   struct keywords :
-         sor< title,
-              battery > {};
+         pegtl::sor< title,
+                     battery > {};
 
   //! ignore: comments and empty lines
   struct ignore :
-         sor< comment, until<eol, space> > {};
+         pegtl::sor< tk::grm::comment,
+                     pegtl::until< pegtl::eol, pegtl::space > > {};
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         until< eof, sor<keywords, ignore, unknown<Stack,Error::KEYWORD>> > {};
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   ignore,
+                                   tk::grm::unknown<
+                                     Stack,
+                                     tk::grm::Error::KEYWORD > > > {};
 
 } // deck::
 } // rngtest::

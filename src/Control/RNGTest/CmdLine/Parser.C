@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri Oct 18 12:17:05 2013
+  \date      Sun 10 Nov 2013 06:41:07 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -12,7 +12,7 @@
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/CmdLine/Grammar.h>
 
-using namespace rngtest;
+using rngtest::CmdLineParser;
 
 CmdLineParser::CmdLineParser(int argc, char** argv,
                              const tk::Print& print,

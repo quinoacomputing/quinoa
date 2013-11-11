@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Nov 2013 10:45:31 PM MST
+  \date      Mon 11 Nov 2013 08:52:38 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -25,12 +25,9 @@
 namespace quinoa {
 namespace deck {
 
-  using namespace pegtl;
-  using namespace tk::grm;
-
   //! PEGTLParsed type specialized to Quinoa's input deck parser
   using PEGTLInputDeck = ctr::PEGTLParsed< ctr::InputDeck,
-                                           file_input< ctr::Location >,
+                                           pegtl::file_input< ctr::Location >,
                                            ctr::cmd,
                                            ctr::CmdLine >;
 
@@ -44,7 +41,7 @@ namespace deck {
   // Quinoa's InputDeck actions
 
   //! start new product in vector of statistics
-  struct start_product : action_base< start_product > {
+  struct start_product : pegtl::action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
       stack.push_back<ctr::stat>(ctr::Product());
       IGNORE(value);   // suppress compiler warning: parameter never referenced
@@ -53,7 +50,7 @@ namespace deck {
 
   //! add matched value as Term into vector of Product in vector of statistics
   template< ctr::Quantity q, ctr::Moment m, char name='\0' >
-  struct push_term : action_base< push_term<q, m, name> > {
+  struct push_term : pegtl::action_base< push_term<q, m, name> > {
     static void apply(const std::string& value, Stack& stack) {
       // If name is given, push name, otherwise push first char of value
       char na(name ? name : value[0]);
@@ -73,7 +70,7 @@ namespace deck {
   };
 
   //! save field ID so push_term can pick it up
-  struct save_field : action_base< save_field > {
+  struct save_field : pegtl::action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
       field = stack.convert<int>(value) - 1;  // field ID numbering start from 0
     }
@@ -81,7 +78,7 @@ namespace deck {
 
   //! put option in state at position given by tags
   template< class OptionType, typename... tags >
-  struct store_option : action_base< store_option<OptionType, tags...> > {
+  struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       tk::Option<OptionType> opt;
       //! Emit warning on overwrite
@@ -100,322 +97,410 @@ namespace deck {
   //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, ctr::Quantity q, ctr::Moment m >
   struct moment :
-         sor < ifapply<seq<keyword, ifapply<digit,save_field>>, push_term<q,m>>,
-               ifapply<keyword, push_term<q,m>> > {};
+         pegtl::sor < pegtl::ifapply< pegtl::seq< keyword,
+                                                  pegtl::ifapply< pegtl::digit,
+                                                                  save_field > >,
+                                      push_term< q, m > >,
+                      pegtl::ifapply< keyword, push_term< q, m > > > {};
 
   //! terms recognized within an expectation and their mapping
   struct terms :
-         sor< moment<kw::transported_scalar::pegtl_string,
-                     ctr::Quantity::SCALAR,
-                     ctr::Moment::ORDINARY>,
-              moment<kw::transported_scalar_fluctuation::pegtl_string,
-                     ctr::Quantity::SCALAR,
-                     ctr::Moment::CENTRAL>,
-              moment<kw::velocity_x::pegtl_string,
-                     ctr::Quantity::VELOCITY_X,
-                     ctr::Moment::ORDINARY>,
-              unknown<Stack,Error::MOMENT>
-            > {};
+         pegtl::sor< moment< kw::transported_scalar::pegtl_string,
+                             ctr::Quantity::SCALAR,
+                             ctr::Moment::ORDINARY >,
+                     moment< kw::transported_scalar_fluctuation::pegtl_string,
+                             ctr::Quantity::SCALAR,
+                             ctr::Moment::CENTRAL >,
+                     moment< kw::velocity_x::pegtl_string,
+                             ctr::Quantity::VELOCITY_X,
+                             ctr::Moment::ORDINARY >,
+                     tk::grm::unknown< Stack, tk::grm::Error::MOMENT > > {};
 
   //! plow through terms in expectation until character 'rbound'
   template< char rbound >
   struct expectation :
-         until< one<rbound>, terms > {};
+         pegtl::until< pegtl::one< rbound >, terms > {};
 
   //! plow through expectations between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
   struct parse_expectations :
-         readkw< ifmust< one<lbound>, apply<start_product>, expectation<rbound> >
-               > {};
+         tk::grm::readkw< pegtl::ifmust< pegtl::one< lbound >,
+                                         pegtl::apply< start_product >,
+                                         expectation< rbound > > > {};
 
   //! title
   struct title :
-         ifmust< readkw< kw::title::pegtl_string >,
-                 quoted< Stack, Set< Stack, ctr::title > > > {};
+         pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
+                                         tk::grm::quoted<
+                                           Stack,
+                                           tk::grm::Set< Stack,
+                                                         ctr::title > > > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
-         ifmust< scan< kw::analytic_geometry::pegtl_string,
-                       store_option<ctr::Geometry,
-                                    ctr::selected,
-                                    ctr::geometry> >,
-                 block<Stack> > {};
+         pegtl::ifmust< tk::grm::scan< kw::analytic_geometry::pegtl_string,
+                                       store_option< ctr::Geometry,
+                                                     ctr::selected,
+                                                     ctr::geometry > >,
+                        tk::grm::block< Stack > > {};
 
   //! discrete_geometry block
   struct discrete_geometry:
-         ifmust< scan< kw::discrete_geometry::pegtl_string,
-                       store_option<ctr::Geometry,
-                                    ctr::selected,
-                                    ctr::geometry> >,
-                 block<Stack> > {};
+         pegtl::ifmust< tk::grm::scan< kw::discrete_geometry::pegtl_string,
+                                       store_option< ctr::Geometry,
+                                                     ctr::selected,
+                                                     ctr::geometry > >,
+                        tk::grm::block< Stack > > {};
 
   //! dir block
   struct dir :
-         ifmust< scan< kw::mix_dir::pegtl_string,
-                       store_option<ctr::Mix, ctr::selected, ctr::mix> >,
-                 block< Stack,
-                        process<Stack,
-                                kw::nscalar::pegtl_string,
-                                Store<Stack, ctr::component, ctr::nscalar>>,
-                        vector< Stack,
-                                kw::dir_B::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::dirichlet,
-                                           ctr::b> >,
-                        vector< Stack,
-                                kw::dir_S::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::dirichlet,
-                                           ctr::S> >,
-                        vector< Stack,
-                                kw::dir_kappa::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::dirichlet,
-                                           ctr::kappa> > > > {};
+         pegtl::ifmust< tk::grm::scan< kw::mix_dir::pegtl_string,
+                                       store_option< ctr::Mix,
+                                                     ctr::selected,
+                                                     ctr::mix > >,
+                        tk::grm::block< Stack,
+                                        tk::grm::process<
+                                          Stack,
+                                          kw::nscalar::pegtl_string,
+                                          tk::grm::Store< Stack,
+                                                          ctr::component,
+                                                          ctr::nscalar > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_B::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::dirichlet,
+                                                               ctr::b > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_S::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::dirichlet,
+                                                               ctr::S > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_kappa::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::dirichlet,
+                                                               ctr::kappa > > > > {};
 
   //! gendir block
   struct gendir :
-         ifmust< scan< kw::mix_gendir::pegtl_string,
-                       store_option<ctr::Mix, ctr::selected, ctr::mix> >,
-                 block< Stack,
-                        process<Stack,
-                                kw::nscalar::pegtl_string,
-                                Store<Stack, ctr::component, ctr::nscalar> >,
-                        vector< Stack,
-                                kw::dir_B::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::gendirichlet,
-                                           ctr::b> >,
-                        vector< Stack,
-                                kw::dir_S::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::gendirichlet,
-                                           ctr::S> >,
-                        vector< Stack,
-                                kw::dir_kappa::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::gendirichlet,
-                                           ctr::kappa> >,
-                        vector< Stack,
-                                kw::gendir_C::pegtl_string,
-                                Store_back<Stack,
-                                           ctr::param,
-                                           ctr::gendirichlet,
-                                           ctr::c>> > > {};
+         pegtl::ifmust< tk::grm::scan< kw::mix_gendir::pegtl_string,
+                                       store_option< ctr::Mix,
+                                                     ctr::selected,
+                                                     ctr::mix > >,
+                        tk::grm::block< Stack,
+                                        tk::grm::process<
+                                          Stack,
+                                          kw::nscalar::pegtl_string,
+                                          tk::grm::Store< Stack,
+                                                          ctr::component,
+                                                          ctr::nscalar > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_B::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::gendirichlet,
+                                                               ctr::b > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_S::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::gendirichlet,
+                                                               ctr::S > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::dir_kappa::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::gendirichlet,
+                                                               ctr::kappa > >,
+                                        tk::grm::vector<
+                                          Stack,
+                                          kw::gendir_C::pegtl_string,
+                                          tk::grm::Store_back< Stack,
+                                                               ctr::param,
+                                                               ctr::gendirichlet,
+                                                               ctr::c > > > > {};
 
   //! statistics block
   struct statistics :
-         ifmust< readkw<kw::statistics::pegtl_string>,
-                 block<Stack,
-                       parse_expectations<'<','>'>> > {};
+         pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
+                        tk::grm::block< Stack, parse_expectations<'<','>'> > > {};
 
   //! slm block
   struct slm :
-         ifmust< scan< kw::hydro_slm::pegtl_string,
-                       store_option<ctr::Hydro, ctr::selected, ctr::hydro>,
-                       // trigger estimating the diagonal of Reynolds-stress
-                       start_product,
-                       push_term<ctr::Quantity::VELOCITY_X,
-                                 ctr::Moment::CENTRAL, 'u'>,
-                       push_term<ctr::Quantity::VELOCITY_X,
-                                 ctr::Moment::CENTRAL, 'u'>,
-                       start_product,
-                       push_term<ctr::Quantity::VELOCITY_Y,
-                                 ctr::Moment::CENTRAL, 'v'>,
-                       push_term<ctr::Quantity::VELOCITY_Y,
-                                 ctr::Moment::CENTRAL, 'v'>,
-                       start_product,
-                       push_term<ctr::Quantity::VELOCITY_Z,
-                                 ctr::Moment::CENTRAL, 'w'>,
-                       push_term<ctr::Quantity::VELOCITY_Z,
-                                 ctr::Moment::CENTRAL, 'w'>>,
-                 block< Stack,
-                        process<Stack,
-                                kw::SLM_C0::pegtl_string,
-                                Store<Stack, ctr::param, ctr::slm, ctr::c0>>,
-                        process<Stack,
-                                kw::nvelocity::pegtl_string,
-                                Store<Stack, ctr::component, ctr::nvelocity>>
-                      > > {};
+         pegtl::ifmust< tk::grm::scan<
+                          kw::hydro_slm::pegtl_string,
+                          store_option< ctr::Hydro,
+                                        ctr::selected,
+                                        ctr::hydro >,
+                          // trigger estimating the diagonal of Reynolds-stress
+                          start_product,
+                          push_term< ctr::Quantity::VELOCITY_X,
+                                     ctr::Moment::CENTRAL, 'u' >,
+                          push_term< ctr::Quantity::VELOCITY_X,
+                                     ctr::Moment::CENTRAL, 'u' >,
+                          start_product,
+                          push_term< ctr::Quantity::VELOCITY_Y,
+                                     ctr::Moment::CENTRAL, 'v' >,
+                          push_term< ctr::Quantity::VELOCITY_Y,
+                                     ctr::Moment::CENTRAL, 'v' >,
+                          start_product,
+                          push_term< ctr::Quantity::VELOCITY_Z,
+                                     ctr::Moment::CENTRAL, 'w' >,
+                          push_term< ctr::Quantity::VELOCITY_Z,
+                                     ctr::Moment::CENTRAL, 'w'> >,
+                          tk::grm::block<
+                            Stack,
+                            tk::grm::process< Stack,
+                                              kw::SLM_C0::pegtl_string,
+                                              tk::grm::Store< Stack,
+                                                              ctr::param,
+                                                              ctr::slm,
+                                                              ctr::c0 > >,
+                            tk::grm::process< Stack,
+                                              kw::nvelocity::pegtl_string,
+                                              tk::grm::Store< Stack,
+                                                              ctr::component,
+                                                              ctr::nvelocity > > > > {};
 
   //! freq_gamma block
   struct freq_gamma :
-         ifmust< scan< kw::freq_gamma::pegtl_string,
-                       store_option<ctr::Frequency,
-                                    ctr::selected,
-                                    ctr::frequency> >,
-                 block< Stack,
-                        process<Stack,
-                                kw::nfreq::pegtl_string,
-                                Store<Stack, ctr::component, ctr::nfrequency>>,
-                        process<Stack,
-                                kw::freq_gamma_C1::pegtl_string,
-                                Store<Stack, ctr::param, ctr::gamma, ctr::c1>>,
-                        process<Stack,
-                                kw::freq_gamma_C2::pegtl_string,
-                                Store<Stack, ctr::param, ctr::gamma, ctr::c2>>,
-                        process<Stack,
-                                kw::freq_gamma_C3::pegtl_string,
-                                Store<Stack, ctr::param, ctr::gamma, ctr::c3>>,
-                        process<Stack,
-                                kw::freq_gamma_C4::pegtl_string,
-                                Store<Stack, ctr::param, ctr::gamma, ctr::c4>> >
-               > {};
+         pegtl::ifmust< tk::grm::scan< kw::freq_gamma::pegtl_string,
+                                       store_option< ctr::Frequency,
+                                                     ctr::selected,
+                                                     ctr::frequency > >,
+                        tk::grm::block<
+                          Stack,
+                          tk::grm::process<
+                            Stack,
+                            kw::nfreq::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::component,
+                                            ctr::nfrequency > >,
+                          tk::grm::process<
+                            Stack,
+                            kw::freq_gamma_C1::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::param,
+                                            ctr::gamma,
+                                            ctr::c1 > >,
+                          tk::grm::process<
+                            Stack,
+                            kw::freq_gamma_C2::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::param,
+                                            ctr::gamma,
+                                            ctr::c2 > >,
+                          tk::grm::process<
+                            Stack,
+                            kw::freq_gamma_C3::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::param,
+                                            ctr::gamma,
+                                            ctr::c3 > >,
+                          tk::grm::process<
+                            Stack,
+                            kw::freq_gamma_C4::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::param,
+                                            ctr::gamma,
+                                            ctr::c4 > > > > {};
 
   //! beta block
   struct beta :
-         ifmust< scan<kw::mass_beta::pegtl_string,
-                      store_option<ctr::Mass, ctr::selected, ctr::mass>>,
-                 block< Stack,
-                        process<Stack,
-                                kw::ndensity::pegtl_string,
-                                Store<Stack, ctr::component, ctr::ndensity>>,
-                        process<Stack,
-                                kw::Beta_At::pegtl_string,
-                                Store<Stack,
-                                      ctr::param,
-                                      ctr::beta,
-                                      ctr::atwood>> >
-               > {};
+         pegtl::ifmust< tk::grm::scan< kw::mass_beta::pegtl_string,
+                                       store_option< ctr::Mass,
+                                                     ctr::selected,
+                                                     ctr::mass > >,
+                        tk::grm::block<
+                          Stack,
+                          tk::grm::process<
+                            Stack,
+                            kw::ndensity::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::component,
+                                            ctr::ndensity > >,
+                          tk::grm::process<
+                            Stack,
+                            kw::Beta_At::pegtl_string,
+                            tk::grm::Store< Stack,
+                                            ctr::param,
+                                            ctr::beta,
+                                            ctr::atwood > > > > {};
 
   //! geometry definition types
   struct geometry :
-         sor< analytic_geometry,
-              discrete_geometry > {};
+         pegtl::sor< analytic_geometry,
+                     discrete_geometry > {};
 
   //! common to all physics
   struct physics_common :
-         sor< process<Stack,
-                      kw::nstep::pegtl_string,
-                      Store<Stack, ctr::incpar, ctr::nstep>>,
-              process<Stack,
-                      kw::term::pegtl_string,
-                      Store<Stack, ctr::incpar, ctr::term>>,
-              process<Stack,
-                      kw::dt::pegtl_string,
-                      Store<Stack, ctr::incpar, ctr::dt>>,
-              process<Stack,
-                      kw::npar::pegtl_string,
-                      Store<Stack, ctr::component, ctr::npar>>,
-              process<Stack,
-                      kw::glbi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::glob>>,
-              process<Stack,
-                      kw::pdfi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::pdf>>,
-              process<Stack,
-                      kw::stai::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::plot>>,
-              process<Stack,
-                      kw::ttyi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::tty>>,
-              process<Stack,
-                      kw::dmpi::pegtl_string,
-                      Store<Stack, ctr::interval, ctr::dump>>
-            > {};
+         pegtl::sor< tk::grm::process< Stack,
+                                       kw::nstep::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::incpar,
+                                                       ctr::nstep > >,
+                     tk::grm::process< Stack,
+                                       kw::term::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::incpar,
+                                                       ctr::term > >,
+                     tk::grm::process< Stack,
+                                       kw::dt::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::incpar,
+                                                       ctr::dt > >,
+                     tk::grm::process< Stack,
+                                       kw::npar::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::component,
+                                                       ctr::npar > >,
+                     tk::grm::process< Stack,
+                                       kw::glbi::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::interval,
+                                                       ctr::glob > >,
+                     tk::grm::process< Stack,
+                                       kw::pdfi::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::interval,
+                                                       ctr::pdf > >,
+                     tk::grm::process< Stack,
+                                       kw::stai::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::interval,
+                                                       ctr::plot > >,
+                     tk::grm::process< Stack,
+                                       kw::ttyi::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::interval,
+                                                       ctr::tty > >,
+                     tk::grm::process< Stack,
+                                       kw::dmpi::pegtl_string,
+                                       tk::grm::Store< Stack,
+                                                       ctr::interval,
+                                                       ctr::dump > > > {};
 
   //! mklrngs block
   struct mklrngs :
-         ifmust< scan< mklrng,
-                       store_option< ctr::RNG, ctr::selected, ctr::rng > >,
-                 block< Stack,
-                        process< Stack,
-                                 kw::seed::pegtl_string,
-                                 Store< Stack,
-                                        ctr::param,
-                                        ctr::rng,
-                                        ctr::seed > > > > {};
+         pegtl::ifmust< tk::grm::scan< tk::grm::mklrng,
+                                       store_option< ctr::RNG,
+                                                     ctr::selected,
+                                                     ctr::rng > >,
+                        tk::grm::block<
+                          Stack,
+                          tk::grm::process< Stack,
+                                            tk::kw::seed::pegtl_string,
+                                            tk::grm::Store< Stack,
+                                                            ctr::param,
+                                                            ctr::rng,
+                                                            ctr::seed > > > > {};
 
   //! rngs
   struct rngs :
-         sor< mklrngs > {};
+         pegtl::sor< mklrngs > {};
 
   //! mass models
   struct mass :
-         sor< beta > {};
+         pegtl::sor< beta > {};
 
   //! hydro models
   struct hydro :
-         sor< slm > {};
+         pegtl::sor< slm > {};
 
   //! material mix models
   struct mix :
-         sor< dir, gendir > {};
+         pegtl::sor< dir, gendir > {};
 
   //! turbulence frequency models
   struct freq :
-         sor< freq_gamma > {};
+         pegtl::sor< freq_gamma > {};
 
   //! physics 'hommix' block
   struct hommix :
-         ifmust< scan<kw::hommix::pegtl_string,
-                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
-                 block<Stack,
-                       geometry,
-                       physics_common,
-                       mix,
-                       rngs,
-                       statistics> > {};
+         pegtl::ifmust< tk::grm::scan< kw::hommix::pegtl_string,
+                                       store_option< ctr::Physics,
+                                                     ctr::selected,
+                                                     ctr::physics > >,
+                        tk::grm::block< Stack,
+                                        geometry,
+                                        physics_common,
+                                        mix,
+                                        rngs,
+                                        statistics > > {};
 
   //! physics 'homrt' block
   struct homrt :
-         ifmust< scan<kw::homrt::pegtl_string,
-                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
-                 block<Stack,
-                       geometry,
-                       physics_common,
-                       mass,
-                       hydro,
-                       freq,
-                       statistics> > {};
+         pegtl::ifmust< tk::grm::scan< kw::homrt::pegtl_string,
+                                       store_option< ctr::Physics,
+                                                     ctr::selected,
+                                                     ctr::physics > >,
+                        tk::grm::block< Stack,
+                                        geometry,
+                                        physics_common,
+                                        mass,
+                                        hydro,
+                                        freq,
+                                        statistics > > {};
 
   //! physics 'homhydro' block
   struct homhydro :
-         ifmust< scan<kw::homhydro::pegtl_string,
-                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
-                 block<Stack,
-                       geometry,
-                       physics_common,
-                       hydro,
-                       freq,
-                       statistics> > {};
+         pegtl::ifmust< tk::grm::scan< kw::homhydro::pegtl_string,
+                                       store_option< ctr::Physics,
+                                                     ctr::selected,
+                                                     ctr::physics > >,
+                        tk::grm::block< Stack,
+                                        geometry,
+                                        physics_common,
+                                        hydro,
+                                        freq,
+                                        statistics > > {};
 
   //! physics 'spinsflow' block
   struct spinsflow :
-         ifmust< scan<kw::spinsflow::pegtl_string,
-                      store_option<ctr::Physics, ctr::selected, ctr::physics>>,
-                 block<Stack,
-                       geometry,
-                       physics_common,
-                       hydro,
-                       freq,
-                       mix> > {};
+         pegtl::ifmust< tk::grm::scan< kw::spinsflow::pegtl_string,
+                                       store_option< ctr::Physics,
+                                                     ctr::selected,
+                                                     ctr::physics > >,
+                        tk::grm::block< Stack,
+                                        geometry,
+                                        physics_common,
+                                        hydro,
+                                        freq,
+                                        mix > > {};
 
   //! physics types
   struct physics :
-         sor< hommix,
-              homhydro,
-              homrt,
-              spinsflow > {};
+         pegtl::sor< hommix,
+                     homhydro,
+                     homrt,
+                     spinsflow > {};
 
   //! main keywords
   struct keywords :
-         sor< title,
-              physics > {};
+         pegtl::sor< title,
+                     physics > {};
 
   //! ignore: comments and empty lines
   struct ignore :
-         sor< comment, until<eol, space> > {};
+         pegtl::sor< tk::grm::comment,
+                     pegtl::until< pegtl::eol, pegtl::space > > {};
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         until< eof, sor<keywords, ignore, unknown<Stack,Error::KEYWORD>> > {};
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   ignore,
+                                   tk::grm::unknown< Stack,
+                                                     tk::grm::Error::KEYWORD > > > {};
 
 } // deck::
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri Oct 18 12:53:17 2013
+  \date      Sun 10 Nov 2013 07:34:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -24,12 +24,10 @@ namespace rngtest {
 //! Grammar definition: state, actions, grammar
 namespace cmd {
 
-  using namespace pegtl;
-  using namespace tk::grm;
-
   //! PEGTLParsed type specialized to RNGTest's command line parser
   using PEGTLCmdLine =
-    quinoa::ctr::PEGTLParsed< ctr::CmdLine, string_input<ctr::Location> >;
+    quinoa::ctr::PEGTLParsed< ctr::CmdLine,
+                              pegtl::string_input< ctr::Location > >;
 
   // RNGTest's CmdLine state
 
@@ -42,15 +40,23 @@ namespace cmd {
 
   //! control (i.e., input deck) file
   struct control :
-         process_cmd<Stack, kw::control, Store<Stack,ctr::io,ctr::control>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::control,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::control > > {};
 
   //! command line keywords
   struct keywords :
-         sor< control > {};
+         pegtl::sor< control > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :
-         until< eof, sor<keywords, unknown<Stack,Error::KEYWORD>> > {};
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   tk::grm::unknown<
+                                     Stack,
+                                     tk::grm::Error::KEYWORD > > > {};
 
 } // cmd::
 } // rngtest::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Hydro/GLM/GLM.C
   \author    J. Bakosi
-  \date      Mon Oct 28 08:55:42 2013
+  \date      Sun 10 Nov 2013 06:12:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -11,7 +11,7 @@
 
 #include <Hydro/GLM/GLM.h>
 
-using namespace quinoa;
+using quinoa::GLM;
 
 // void
 // GLM::init()

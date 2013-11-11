@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
-  \date      Thu 07 Nov 2013 09:59:32 PM MST
+  \date      Mon 11 Nov 2013 08:58:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Geometry base
   \details   Geometry base
@@ -11,7 +11,7 @@
 
 #include <Geometry.h>
 
-using namespace quinoa;
+using quinoa::Geometry;
 
 Geometry::Geometry(const Base& base) : m_base(base)
 //******************************************************************************

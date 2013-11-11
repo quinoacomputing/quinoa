@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 11:11:21 AM MST
+  \date      Sun 10 Nov 2013 06:26:50 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,7 +16,7 @@
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 
-using namespace quinoa;
+using quinoa::Physics;
 
 Physics::Physics(const Base& base) :
   m_nposition(base.control.get<ctr::component, ctr::nposition>()),

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 01:27:13 PM MST
+  \date      Sun 10 Nov 2013 06:34:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -31,12 +31,11 @@ class InputDeck :
   public:
     //! Constructor: set defaults
     InputDeck() {
-      using namespace ctr;
       // Default title
-      set< title >( "" );
+      set< ctr::title >( "" );
       // Default selections
       // Default I/O parameters
-      set< io, control >( "" );
+      set< ctr::io, ctr::control >( "" );
     }
 
     //! Destructor
