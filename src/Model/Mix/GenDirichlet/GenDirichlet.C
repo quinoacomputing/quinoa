@@ -2,7 +2,7 @@
 /*!
   \file      src/Model/Mix/GenDirichlet/GenDirichlet.C
   \author    J. Bakosi
-  \date      Mon Oct 28 08:44:02 2013
+  \date      Sun 10 Nov 2013 06:13:51 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet mix model
   \details   The generalized Dirichlet mix model
@@ -11,8 +11,7 @@
 
 #include <Mix/GenDirichlet/GenDirichlet.h>
 
-using namespace std;
-using namespace quinoa;
+using quinoa::GenDirichlet;
 
 // void
 // GenDirichlet::advance(int p, int tid, const tk::real dt)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:20:10 2013
+  \date      Sun 10 Nov 2013 06:15:07 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -15,7 +15,7 @@
 #include <GmshMesh.h>
 #include <Exception.h>
 
-using namespace quinoa;
+using quinoa::GmshMesh;
 
 void
 GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)

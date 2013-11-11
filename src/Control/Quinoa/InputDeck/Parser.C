@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:06:56 AM MDT
+  \date      Sun 10 Nov 2013 10:58:48 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -12,7 +12,7 @@
 #include <Quinoa/InputDeck/Parser.h>
 #include <Quinoa/InputDeck/Grammar.h>
 
-using namespace quinoa;
+using quinoa::InputDeckParser;
 
 InputDeckParser::InputDeckParser(const tk::Print& print,
                                  std::unique_ptr< ctr::CmdLine > cmdline,

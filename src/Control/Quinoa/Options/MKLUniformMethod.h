@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 05:30:32 PM MST
+  \date      Sun 10 Nov 2013 10:54:23 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -51,8 +51,8 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     MKLUniformMethod& operator=(MKLUniformMethod&&) = delete;
 
     //! Get access to MKL uniform method keywords
-    const kw::standard standard {};
-    const kw::accurate accurate {};
+    const tk::kw::standard standard {};
+    const tk::kw::accurate accurate {};
 
     //! Enums -> names
     const std::map< MKLUniformMethodType, std::string > names {

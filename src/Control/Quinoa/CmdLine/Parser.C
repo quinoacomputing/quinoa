@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri 18 Oct 2013 06:03:53 PM MDT
+  \date      Mon 11 Nov 2013 08:53:25 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -12,7 +12,7 @@
 #include <Quinoa/CmdLine/Parser.h>
 #include <Quinoa/CmdLine/Grammar.h>
 
-using namespace quinoa;
+using quinoa::CmdLineParser;
 
 CmdLineParser::CmdLineParser(int argc, char** argv,
                              const tk::Print& print,

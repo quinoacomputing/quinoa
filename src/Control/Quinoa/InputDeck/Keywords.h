@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 08:33:13 PM MDT
+  \date      Sun 10 Nov 2013 10:53:47 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -27,7 +27,8 @@ namespace quinoa {
 namespace kw {
 
 using namespace pegtl::ascii;
-using namespace tk::kw;
+using tk::kw::keyword;
+using tk::kw::undefined_info;
 
 // Keyword 'analytic_geometry'
 struct analytic_geometry_info {
@@ -43,7 +44,7 @@ struct analytic_geometry_info {
   }
 };
 using analytic_geometry =
-  keyword<analytic_geometry_info, a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y>;
+  keyword< analytic_geometry_info, a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y >;
 
 // Keyword 'discrete_geometry'
 struct discrete_geometry_info {
@@ -59,7 +60,7 @@ struct discrete_geometry_info {
   }
 };
 using discrete_geometry =
-  keyword<discrete_geometry_info, d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y>;
+  keyword< discrete_geometry_info, d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y >;
 
 // Keyword 'brick'
 struct brick_info {
@@ -76,7 +77,7 @@ struct brick_info {
     "\tend";
   }
 };
-using brick = keyword<brick_info, b,r,i,c,k>;
+using brick = keyword< brick_info, b,r,i,c,k >;
 
 // Keyword 'hommix'
 struct hommix_info {

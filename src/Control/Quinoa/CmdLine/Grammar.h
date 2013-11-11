@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:20:05 AM MDT
+  \date      Mon 11 Nov 2013 08:58:39 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -24,12 +24,9 @@ namespace quinoa {
 //! Command line parser grammar definition: state, actions, grammar
 namespace cmd {
 
-  using namespace pegtl;
-  using namespace tk::grm;
-
   //! PEGTLParsed type specialized to Quinoa's command line parser
   using PEGTLCmdLine = ctr::PEGTLParsed< ctr::CmdLine,
-                                         string_input< ctr::Location > >;
+                                         pegtl::string_input< ctr::Location > >;
 
   // Quinoa's CmdLine state
 
@@ -42,40 +39,67 @@ namespace cmd {
 
   //! control (i.e., input deck) file
   struct control :
-         process_cmd<Stack, kw::control, Store<Stack,ctr::io,ctr::control>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::control,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::control > > {};
 
   //! input file
   struct input :
-         process_cmd<Stack, kw::input, Store<Stack,ctr::io,ctr::input>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::input,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::input > > {};
 
   //! output file
   struct output :
-         process_cmd<Stack, kw::output, Store<Stack,ctr::io,ctr::output>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::output,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::output > > {};
 
   //! pdf output file
   struct pdf :
-         process_cmd<Stack, kw::pdf, Store<Stack,ctr::io,ctr::pdf>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::pdf,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::pdf > > {};
 
   //! glob output file
   struct glob :
-         process_cmd<Stack, kw::glob, Store<Stack,ctr::io,ctr::glob>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::glob,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::glob > > {};
 
   //! stat output file
   struct stat :
-         process_cmd<Stack, kw::stat, Store<Stack,ctr::io,ctr::stat>> {};
+         tk::grm::process_cmd< Stack,
+                               kw::stat,
+                               tk::grm::Store< Stack,
+                                               ctr::io,
+                                               ctr::stat > > {};
 
   //! command line keywords
   struct keywords :
-         sor< control,
-              input,
-              output,
-              pdf,
-              glob,
-              stat > {};
+         pegtl::sor< control,
+                     input,
+                     output,
+                     pdf,
+                     glob,
+                     stat > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :
-         until< eof, sor<keywords, unknown<Stack,Error::KEYWORD>> > {};
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   tk::grm::unknown< Stack,
+                                                     tk::grm::Error::KEYWORD > > > {};
 
 } // cmd::
 } // quinoa::

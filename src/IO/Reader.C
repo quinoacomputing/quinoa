@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:25:22 2013
+  \date      Sun 10 Nov 2013 06:20:43 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader class definition
   \details   Reader class definition
@@ -14,7 +14,7 @@
 #include <Reader.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::Reader;
 
 Reader::Reader(const std::string filename) :
   m_filename(filename)

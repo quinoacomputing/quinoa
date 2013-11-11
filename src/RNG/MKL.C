@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKL.C
   \author    J. Bakosi
-  \date      Tue 22 Oct 2013 08:52:56 PM MDT
+  \date      Sun 10 Nov 2013 06:18:51 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-call wrappers with error handling
   \details   MKL-call wrappers with error handling
@@ -15,7 +15,7 @@
 #include <MKL.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::MKL;
 
 void
 MKL::uniform(const int& method,

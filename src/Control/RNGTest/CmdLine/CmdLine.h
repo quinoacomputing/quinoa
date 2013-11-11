@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 05:26:19 PM MDT
+  \date      Sun 10 Nov 2013 06:41:23 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line
   \details   RNGTest's command line
@@ -27,7 +27,6 @@ class CmdLine :
   public:
     //! Constructor: set all defaults
     CmdLine() {
-      using namespace ctr;
       // Default I/O parameters
       set<io,control>("");
     }

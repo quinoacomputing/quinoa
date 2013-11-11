@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/HomHydro/HomHydro.C
   \author    J. Bakosi
-  \date      Mon Oct 28 07:32:11 2013
+  \date      Sun 10 Nov 2013 06:31:25 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -17,7 +17,7 @@
 #include <TxtStatWriter.h>
 #include <Statistics.h>
 
-using namespace quinoa;
+using quinoa::HomHydro;
 
 HomHydro::HomHydro(const Base& base) :
   Physics(base),

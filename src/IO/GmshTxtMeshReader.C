@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Mon Oct  7 10:08:58 2013
+  \date      Sun 10 Nov 2013 06:20:14 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -16,7 +16,7 @@
 #include <GmshTxtMeshReader.h>
 #include <Exception.h>
 
-using namespace quinoa;
+using quinoa::GmshTxtMeshReader;
 
 GmshTxtMeshReader::GmshTxtMeshReader(const std::string filename,
                                      GmshMesh& mesh) :

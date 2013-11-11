@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRndTable.C
   \author    J. Bakosi
-  \date      Tue 22 Oct 2013 08:59:17 PM MDT
+  \date      Sun 10 Nov 2013 06:18:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generation into tables using Intel's MKL
   \details   Tables are used to generate a fix number of fixed property random
@@ -15,7 +15,7 @@
 #include <MKLRndTable.h>
 #include <Exception.h>
 
-using namespace tk;
+using tk::MKLRndTable;
 
 MKLRndTable::MKLRndTable(int nthread,
                          int brng,

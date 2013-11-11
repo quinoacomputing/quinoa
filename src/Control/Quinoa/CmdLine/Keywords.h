@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Thu Oct  3 16:49:16 2013
+  \date      Sun 10 Nov 2013 10:57:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -26,6 +26,8 @@ namespace quinoa {
 namespace kw {
 
 using namespace pegtl::ascii;
+using tk::kw::cmdline_keyword;
+using tk::kw::undefined_info;
 
 // Keyword 'control', cmdline '--control' with alias '-c'
 using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;

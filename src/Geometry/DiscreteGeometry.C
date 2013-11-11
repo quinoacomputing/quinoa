@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.C
   \author    J. Bakosi
-  \date      Sat 19 Oct 2013 08:31:38 AM MDT
+  \date      Mon 11 Nov 2013 08:59:15 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -13,7 +13,7 @@
 #include <STLTxtMeshReader.h>
 #include <SiloWriter.h>
 
-using namespace quinoa;
+using quinoa::DiscreteGeometry;
 
 DiscreteGeometry::DiscreteGeometry(const Base& base) : Geometry(base)
 //******************************************************************************

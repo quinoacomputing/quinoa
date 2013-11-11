@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 10:58:14 AM MST
+  \date      Sun 10 Nov 2013 06:12:15 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -21,7 +21,7 @@
 #include <HomRT/HomRT.h>
 #include <SPINSFlow/SPINSFlow.h>
 
-using namespace quinoa;
+using quinoa::QuinoaDriver;
 
 QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
 //******************************************************************************

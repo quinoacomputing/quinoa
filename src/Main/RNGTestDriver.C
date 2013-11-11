@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:32:20 PM MST
+  \date      Sun 10 Nov 2013 06:11:34 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -106,7 +106,7 @@
 //   return r;
 // }
 
-using namespace rngtest;
+using rngtest::RNGTestDriver;
 
 RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
 //******************************************************************************
