@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 07:06:17 AM MST
+  \date      Mon 11 Nov 2013 09:30:43 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -39,7 +39,7 @@ namespace grm {
     { Error::MISSING, "Required field missing" }
   } );
   
-  //! error handler
+  //! parser error handler
   template< class Stack, Error key >
   static void handleError(const Stack& stack, const std::string& value) {
     const auto& msg = err_msg.find(key);
@@ -141,7 +141,7 @@ namespace grm {
   //! read 'token' until 'erased' trimming 'erased'
   template< class token, class erased >
   struct trim :
-         pegtl::seq< token, pegtl::until< pegtl::at<erased> > > {};
+         pegtl::seq< token, pegtl::until< pegtl::at< erased > > > {};
 
   // match unknown keyword and handle error
   template< class Stack, Error key >
@@ -237,7 +237,8 @@ namespace grm {
          pegtl::ifmust< readkw< keyword >,
                         scan< pegtl::sor<
                                 keywords,
-                                pegtl::apply< error< Stack, Error::MISSING > > >,
+                                pegtl::apply< error< Stack,
+                                                     Error::MISSING > > >,
                               insert > > {};
 
   //! process 'keyword' and call its 'insert' action for string matched
@@ -257,7 +258,8 @@ namespace grm {
          pegtl::ifmust< readcmd< Stack, keyword >,
                         scan< pegtl::sor<
                                 keywords,
-                                pegtl::apply< error< Stack, Error::MISSING > > >,
+                                pegtl::apply< error< Stack,
+                                                     Error::MISSING > > >,
                               insert > > {};
 
   //! mklrng: match any one of the MKL random number generators
@@ -276,6 +278,21 @@ namespace grm {
                      kw::mkl_dabstract::pegtl_string,
                      kw::mkl_sabstract::pegtl_string,
                      kw::mkl_nondeterm::pegtl_string > {};
+
+  //! read_file entry point: parse 'keywords' and 'ignore' until eof
+  template< class Stack, typename keywords, typename ignore >
+  struct read_file :
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   ignore,
+                                   unknown< Stack, Error::KEYWORD > > > {};
+
+  //! read_string entry point: parse 'keywords' until end of string
+  template< class Stack, typename keywords >
+  struct read_string :
+         pegtl::until< pegtl::eof,
+                       pegtl::sor< keywords,
+                                   unknown< Stack, Error::KEYWORD > > > {};
 
 } // grm::
 } // tk::

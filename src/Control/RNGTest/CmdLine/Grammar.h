@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 07:34:18 AM MST
+  \date      Mon 11 Nov 2013 09:31:01 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -52,11 +52,7 @@ namespace cmd {
 
   //! entry point: parse keywords and until end of string
   struct read_string :
-         pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   tk::grm::unknown<
-                                     Stack,
-                                     tk::grm::Error::KEYWORD > > > {};
+         tk::grm::read_string< Stack, keywords > {};
 
 } // cmd::
 } // rngtest::

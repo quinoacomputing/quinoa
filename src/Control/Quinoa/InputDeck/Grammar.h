@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 08:52:38 AM MST
+  \date      Mon 11 Nov 2013 09:28:48 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -496,11 +496,7 @@ namespace deck {
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   ignore,
-                                   tk::grm::unknown< Stack,
-                                                     tk::grm::Error::KEYWORD > > > {};
+         tk::grm::read_file< Stack, keywords, ignore > {};
 
 } // deck::
 } // quinoa::
