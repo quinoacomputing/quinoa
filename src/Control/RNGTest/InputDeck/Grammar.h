@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 07:31:03 AM MST
+  \date      Mon 11 Nov 2013 09:27:50 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -78,13 +78,14 @@ namespace deck {
   struct mkl_uniform_method :
          tk::grm::process< Stack,
                            tk::kw::uniform_method::pegtl_string,
-                           tk::grm::Insert_option< Stack,
-                                                   quinoa::ctr::MKLUniformMethod,
-                                                   quinoa::ctr::uniform_method,
-                                                   ctr::selected,
-                                                   ctr::rng,
-                                                   ctr::param,
-                                                   ctr::mklrng >,
+                           tk::grm::Insert_option<
+                             Stack,
+                             quinoa::ctr::MKLUniformMethod,
+                             quinoa::ctr::uniform_method,
+                             ctr::selected,
+                             ctr::rng,
+                             ctr::param,
+                             ctr::mklrng >,
                            pegtl::alpha > {};
 
   //! MKL Gaussian method
@@ -118,35 +119,20 @@ namespace deck {
   struct rngs :
          pegtl::sor< mklrngs > {};
 
-  // smallcrush block
-  struct smallcrush :
-         pegtl::ifmust< tk::grm::scan< kw::smallcrush::pegtl_string,
+  // TestU01 batteries
+  template< typename battery_kw >
+  struct testu01 :
+         pegtl::ifmust< tk::grm::scan< typename battery_kw::pegtl_string,
                                        store_option< ctr::Battery,
                                                      ctr::selected,
                                                      ctr::battery > >,
-                        tk::grm::block< Stack, rngs > > {};
-
-  // crush block
-  struct crush :
-         pegtl::ifmust< tk::grm::scan< kw::crush::pegtl_string,
-                                       store_option< ctr::Battery,
-                                                     ctr::selected,
-                                                     ctr::battery > >,
-                        tk::grm::block< Stack, rngs > > {};
-
-  // bigcrush block
-  struct bigcrush :
-         pegtl::ifmust< tk::grm::scan< kw::bigcrush::pegtl_string,
-                                       store_option< ctr::Battery,
-                                                     ctr::selected,
-                                                    ctr::battery > >,
                         tk::grm::block< Stack, rngs > > {};
 
   //! batteries
   struct battery :
-         pegtl::sor< smallcrush,
-                     crush,
-                     bigcrush > {};
+         pegtl::sor< testu01< kw::smallcrush >,
+                     testu01< kw::crush >,
+                     testu01< kw::bigcrush > > {};
 
   //! main keywords
   struct keywords :
@@ -160,12 +146,7 @@ namespace deck {
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   ignore,
-                                   tk::grm::unknown<
-                                     Stack,
-                                     tk::grm::Error::KEYWORD > > > {};
+         tk::grm::read_file< Stack, keywords, ignore > {};
 
 } // deck::
 } // rngtest::

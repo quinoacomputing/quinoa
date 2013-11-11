@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 08:58:39 AM MST
+  \date      Mon 11 Nov 2013 09:32:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -96,10 +96,7 @@ namespace cmd {
 
   //! entry point: parse keywords and until end of string
   struct read_string :
-         pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   tk::grm::unknown< Stack,
-                                                     tk::grm::Error::KEYWORD > > > {};
+         tk::grm::read_string< Stack, keywords > {};
 
 } // cmd::
 } // quinoa::
