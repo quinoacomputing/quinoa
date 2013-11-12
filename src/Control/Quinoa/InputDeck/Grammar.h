@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue Nov 12 15:22:43 2013
+  \date      Tue Nov 12 16:11:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -128,6 +128,40 @@ namespace deck {
                                          pegtl::apply< start_product >,
                                          expectation< rbound > > > {};
 
+  //! control parameter
+  template< typename keyword, typename tag, typename... tags >
+  struct control :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           tk::grm::Store< Stack, tag, tags... > > {};
+
+  //! incrementation control parameter
+  template< typename keyword, typename tag >
+  struct incpar :
+         control< keyword, ctr::incpar, tag > {};
+
+  //! component control parameter
+  template< typename keyword, typename tag >
+  struct component :
+         control< keyword, ctr::component, tag > {};
+
+  //! interval control parameter
+  template< typename keyword, typename tag >
+  struct interval :
+         control< keyword, ctr::interval, tag > {};
+
+  //! model parameter
+  template< typename keyword, typename model, typename tag >
+  struct parameter :
+         control< keyword, ctr::param, model, tag > {};
+
+  //! model parameter vector
+  template< typename keyword, typename...tags >
+  struct parameter_vector :
+         tk::grm::vector< Stack,
+                          typename keyword::pegtl_string,
+                          tk::grm::Store_back< Stack, ctr::param, tags... > > {};
+
   //! title
   struct title :
          pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
@@ -159,33 +193,16 @@ namespace deck {
                                                      ctr::selected,
                                                      ctr::mix > >,
                         tk::grm::block< Stack,
-                                        tk::grm::process<
-                                          Stack,
-                                          kw::nscalar::pegtl_string,
-                                          tk::grm::Store< Stack,
-                                                          ctr::component,
-                                                          ctr::nscalar > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_B::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::dirichlet,
-                                                               ctr::b > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_S::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::dirichlet,
-                                                               ctr::S > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_kappa::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::dirichlet,
-                                                               ctr::kappa > > > > {};
+                                        component< kw::nscalar, ctr::nscalar >,
+                                        parameter_vector< kw::dir_B,
+                                                          ctr::dirichlet,
+                                                          ctr::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          ctr::dirichlet,
+                                                          ctr::S >,
+                                        parameter_vector< kw::dir_S,
+                                                          ctr::dirichlet,
+                                                          ctr::kappa > > > {};
 
   //! gendir block
   struct gendir :
@@ -194,40 +211,19 @@ namespace deck {
                                                      ctr::selected,
                                                      ctr::mix > >,
                         tk::grm::block< Stack,
-                                        tk::grm::process<
-                                          Stack,
-                                          kw::nscalar::pegtl_string,
-                                          tk::grm::Store< Stack,
-                                                          ctr::component,
-                                                          ctr::nscalar > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_B::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::gendirichlet,
-                                                               ctr::b > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_S::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::gendirichlet,
-                                                               ctr::S > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::dir_kappa::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::gendirichlet,
-                                                               ctr::kappa > >,
-                                        tk::grm::vector<
-                                          Stack,
-                                          kw::gendir_C::pegtl_string,
-                                          tk::grm::Store_back< Stack,
-                                                               ctr::param,
-                                                               ctr::gendirichlet,
-                                                               ctr::c > > > > {};
+                                        component< kw::nscalar, ctr::nscalar >,
+                                        parameter_vector< kw::dir_B,
+                                                          ctr::gendirichlet,
+                                                          ctr::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          ctr::gendirichlet,
+                                                          ctr::S >,
+                                        parameter_vector< kw::dir_kappa,
+                                                          ctr::gendirichlet,
+                                                          ctr::kappa >,
+                                        parameter_vector< kw::gendir_C,
+                                                          ctr::gendirichlet,
+                                                          ctr::c > > > {};
 
   //! statistics block
   struct statistics :
@@ -259,17 +255,8 @@ namespace deck {
                                      ctr::Moment::CENTRAL, 'w'> >,
                           tk::grm::block<
                             Stack,
-                            tk::grm::process< Stack,
-                                              kw::SLM_C0::pegtl_string,
-                                              tk::grm::Store< Stack,
-                                                              ctr::param,
-                                                              ctr::slm,
-                                                              ctr::c0 > >,
-                            tk::grm::process< Stack,
-                                              kw::nvelocity::pegtl_string,
-                                              tk::grm::Store< Stack,
-                                                              ctr::component,
-                                                              ctr::nvelocity > > > > {};
+                            parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,
+                            component< kw::nvelocity, ctr::nvelocity > > > {};
 
   //! freq_gamma block
   struct freq_gamma :
@@ -279,40 +266,12 @@ namespace deck {
                                                      ctr::frequency > >,
                         tk::grm::block<
                           Stack,
-                          tk::grm::process<
-                            Stack,
-                            kw::nfreq::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::component,
-                                            ctr::nfrequency > >,
-                          tk::grm::process<
-                            Stack,
-                            kw::freq_gamma_C1::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::param,
-                                            ctr::gamma,
-                                            ctr::c1 > >,
-                          tk::grm::process<
-                            Stack,
-                            kw::freq_gamma_C2::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::param,
-                                            ctr::gamma,
-                                            ctr::c2 > >,
-                          tk::grm::process<
-                            Stack,
-                            kw::freq_gamma_C3::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::param,
-                                            ctr::gamma,
-                                            ctr::c3 > >,
-                          tk::grm::process<
-                            Stack,
-                            kw::freq_gamma_C4::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::param,
-                                            ctr::gamma,
-                                            ctr::c4 > > > > {};
+                          component< kw::nfreq, ctr::nfrequency >,
+                          parameter< kw::freq_gamma_C1, ctr::gamma, ctr::c1 >,
+                          parameter< kw::freq_gamma_C2, ctr::gamma, ctr::c2 >,
+                          parameter< kw::freq_gamma_C3, ctr::gamma, ctr::c3 >,
+                          parameter< kw::freq_gamma_C4, ctr::gamma, ctr::c4 > >
+                      > {};
 
   //! beta block
   struct beta :
@@ -322,46 +281,14 @@ namespace deck {
                                                      ctr::mass > >,
                         tk::grm::block<
                           Stack,
-                          tk::grm::process<
-                            Stack,
-                            kw::ndensity::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::component,
-                                            ctr::ndensity > >,
-                          tk::grm::process<
-                            Stack,
-                            kw::Beta_At::pegtl_string,
-                            tk::grm::Store< Stack,
-                                            ctr::param,
-                                            ctr::beta,
-                                            ctr::atwood > > > > {};
+                          component< kw::ndensity, ctr::ndensity >,
+                          parameter< kw::Beta_At, ctr::beta, ctr::atwood > >
+                      > {};
 
   //! geometry definition types
   struct geometry :
          pegtl::sor< analytic_geometry,
                      discrete_geometry > {};
-
-  //! parameter
-  template< typename keyword, typename tag, typename subtag >
-  struct parameter :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           tk::grm::Store< Stack, tag, subtag > > {};
-
-  //! incrementation parameter
-  template< typename keyword, typename tag >
-  struct incpar :
-         parameter< keyword, ctr::incpar, tag > {};
-
-  //! component
-  template< typename keyword, typename tag >
-  struct component :
-         parameter< keyword, ctr::component, tag > {};
-
-  //! interval
-  template< typename keyword, typename tag >
-  struct interval :
-         parameter< keyword, ctr::interval, tag > {};
 
   //! common to all physics
   struct physics_common :
