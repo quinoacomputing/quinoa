@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 10:34:37 AM MST
+  \date      Tue Nov 12 15:22:43 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -341,53 +341,39 @@ namespace deck {
          pegtl::sor< analytic_geometry,
                      discrete_geometry > {};
 
+  //! parameter
+  template< typename keyword, typename tag, typename subtag >
+  struct parameter :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           tk::grm::Store< Stack, tag, subtag > > {};
+
+  //! incrementation parameter
+  template< typename keyword, typename tag >
+  struct incpar :
+         parameter< keyword, ctr::incpar, tag > {};
+
+  //! component
+  template< typename keyword, typename tag >
+  struct component :
+         parameter< keyword, ctr::component, tag > {};
+
+  //! interval
+  template< typename keyword, typename tag >
+  struct interval :
+         parameter< keyword, ctr::interval, tag > {};
+
   //! common to all physics
   struct physics_common :
-         pegtl::sor< tk::grm::process< Stack,
-                                       kw::nstep::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::incpar,
-                                                       ctr::nstep > >,
-                     tk::grm::process< Stack,
-                                       kw::term::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::incpar,
-                                                       ctr::term > >,
-                     tk::grm::process< Stack,
-                                       kw::dt::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::incpar,
-                                                       ctr::dt > >,
-                     tk::grm::process< Stack,
-                                       kw::npar::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::component,
-                                                       ctr::npar > >,
-                     tk::grm::process< Stack,
-                                       kw::glbi::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::interval,
-                                                       ctr::glob > >,
-                     tk::grm::process< Stack,
-                                       kw::pdfi::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::interval,
-                                                       ctr::pdf > >,
-                     tk::grm::process< Stack,
-                                       kw::stai::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::interval,
-                                                       ctr::plot > >,
-                     tk::grm::process< Stack,
-                                       kw::ttyi::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::interval,
-                                                       ctr::tty > >,
-                     tk::grm::process< Stack,
-                                       kw::dmpi::pegtl_string,
-                                       tk::grm::Store< Stack,
-                                                       ctr::interval,
-                                                       ctr::dump > > > {};
+         pegtl::sor< incpar< kw::nstep, ctr::nstep >,
+                     incpar< kw::term,  ctr::term >,
+                     incpar< kw::dt, ctr::dt >,
+                     component< kw::npar, ctr::npar >,
+                     interval< kw::glbi, ctr::glob >,
+                     interval< kw::pdfi, ctr::pdf >,
+                     interval< kw::stai, ctr::plot >,
+                     interval< kw::ttyi, ctr::tty >,
+                     interval< kw::dmpi, ctr::dump > > {};
 
   //! mklrngs block
   struct mklrngs :
@@ -427,14 +413,14 @@ namespace deck {
   //! scan and store physics keyword and option
   template< typename keyword >
   struct scan_physics :
-         tk::grm::scan< keyword,
+         tk::grm::scan< typename keyword::pegtl_string,
                         store_option< ctr::Physics,
                                       ctr::selected,
                                       ctr::physics > > {};
 
   //! physics 'hommix' block
   struct hommix :
-         pegtl::ifmust< scan_physics< kw::hommix::pegtl_string >,
+         pegtl::ifmust< scan_physics< kw::hommix >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
@@ -444,7 +430,7 @@ namespace deck {
 
   //! physics 'homrt' block
   struct homrt :
-         pegtl::ifmust< scan_physics< kw::homrt::pegtl_string >,
+         pegtl::ifmust< scan_physics< kw::homrt >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
@@ -456,7 +442,7 @@ namespace deck {
 
   //! physics 'homhydro' block
   struct homhydro :
-         pegtl::ifmust< scan_physics< kw::homhydro::pegtl_string >,
+         pegtl::ifmust< scan_physics< kw::homhydro >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
@@ -467,7 +453,7 @@ namespace deck {
 
   //! physics 'spinsflow' block
   struct spinsflow :
-         pegtl::ifmust< scan_physics< kw::spinsflow::pegtl_string >,
+         pegtl::ifmust< scan_physics< kw::spinsflow >,
                         tk::grm::block< Stack,
                                         geometry,
                                         physics_common,
