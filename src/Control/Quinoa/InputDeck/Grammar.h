@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue Nov 12 17:26:24 2013
+  \date      Tue 12 Nov 2013 09:16:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -43,7 +43,7 @@ namespace deck {
   //! start new product in vector of statistics
   struct start_product : pegtl::action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
-      stack.push_back<ctr::stat>(ctr::Product());
+      stack.push_back< ctr::stat >( ctr::Product() );
       IGNORE(value);   // suppress compiler warning: parameter never referenced
     }
   };
@@ -168,6 +168,14 @@ namespace deck {
          tk::grm::scan< typename keyword::pegtl_string,
                         store_option< option, ctr::selected, tags... > > {};
 
+  //! scan and trigger
+  template< typename keyword, typename option, typename tag,
+            typename... triggers >
+  struct scan_and_trigger :
+         tk::grm::scan< typename keyword::pegtl_string,
+                        store_option< option, ctr::selected, tag >,
+                        triggers... > {};
+
   //! scan and store geometry keyword and option
   template< typename keyword >
   struct scan_geometry :
@@ -254,29 +262,31 @@ namespace deck {
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
                         tk::grm::block< Stack, parse_expectations<'<','>'> > > {};
 
+  //! Fluctuating velocity in x direction
+  struct u :
+         push_term< ctr::Quantity::VELOCITY_X,
+                    ctr::Moment::CENTRAL, 'u' > {};
+
+  //! Fluctuating velocity in y direction
+  struct v :
+         push_term< ctr::Quantity::VELOCITY_Y,
+                    ctr::Moment::CENTRAL, 'v' > {};
+
+  //! Fluctuating velocity in z direction
+  struct w :
+         push_term< ctr::Quantity::VELOCITY_Z,
+                    ctr::Moment::CENTRAL, 'w' > {};
+
   //! slm block
   struct slm :
-         pegtl::ifmust< tk::grm::scan<
-                          kw::hydro_slm::pegtl_string,
-                          store_option< ctr::Hydro,
-                                        ctr::selected,
-                                        ctr::hydro >,
+         pegtl::ifmust< scan_and_trigger<
+                          kw::hydro_slm,
+                          ctr::Hydro,
+                          ctr::hydro,
                           // trigger estimating the diagonal of Reynolds-stress
-                          start_product,
-                          push_term< ctr::Quantity::VELOCITY_X,
-                                     ctr::Moment::CENTRAL, 'u' >,
-                          push_term< ctr::Quantity::VELOCITY_X,
-                                     ctr::Moment::CENTRAL, 'u' >,
-                          start_product,
-                          push_term< ctr::Quantity::VELOCITY_Y,
-                                     ctr::Moment::CENTRAL, 'v' >,
-                          push_term< ctr::Quantity::VELOCITY_Y,
-                                     ctr::Moment::CENTRAL, 'v' >,
-                          start_product,
-                          push_term< ctr::Quantity::VELOCITY_Z,
-                                     ctr::Moment::CENTRAL, 'w' >,
-                          push_term< ctr::Quantity::VELOCITY_Z,
-                                     ctr::Moment::CENTRAL, 'w'> >,
+                          start_product, u, u,
+                          start_product, v, v,
+                          start_product, w, w >,
                           tk::grm::block<
                             Stack,
                             parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,

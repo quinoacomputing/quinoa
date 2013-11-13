@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 09:30:43 AM MST
+  \date      Tue 12 Nov 2013 08:59:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -66,7 +66,7 @@ namespace grm {
   template< class Stack, Error key >
   struct error : pegtl::action_base< error<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
-      handleError<Stack,key>(stack,value);
+      handleError< Stack, key >( stack, value );
     }
   };
 
