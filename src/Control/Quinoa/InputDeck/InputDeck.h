@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:45:00 AM MST
+  \date      Tue 12 Nov 2013 09:24:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -49,7 +49,7 @@ class InputDeck :
       set< selected, mixrate >( MixRateType::NO_MIXRATE );
       set< selected, rng >( RNGType::NO_RNG );
       // Default time incrementation parameters
-      set< incpar, nstep >( std::numeric_limits<uint64_t>::max() );
+      set< incpar, nstep >( std::numeric_limits< uint64_t >::max() );
       set< incpar, term >( 1.0 );
       set< incpar, dt >( 0.5 );
       // Default number of components

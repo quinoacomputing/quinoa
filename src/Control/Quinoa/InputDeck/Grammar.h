@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 09:16:53 PM MST
+  \date      Tue 12 Nov 2013 09:30:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -50,20 +50,20 @@ namespace deck {
 
   //! add matched value as Term into vector of Product in vector of statistics
   template< ctr::Quantity q, ctr::Moment m, char name='\0' >
-  struct push_term : pegtl::action_base< push_term<q, m, name> > {
-    static void apply(const std::string& value, Stack& stack) {
+  struct push_term : pegtl::action_base< push_term< q, m, name > > {
+    static void apply( const std::string& value, Stack& stack ) {
       // If name is given, push name, otherwise push first char of value
       char na(name ? name : value[0]);
       // If name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference to stats vector
-      std::vector<ctr::Product>& stats = stack.get<ctr::stat>();
+      std::vector< ctr::Product >& stats = stack.get< ctr::stat >();
       // Push term into current product
-      stats.back().push_back(ctr::Term(field, q, m, na, plot));
+      stats.back().push_back( ctr::Term( field, q, m, na, plot ) );
       // If central moment, trigger mean
       if (m == ctr::Moment::CENTRAL) {
-        ctr::Term term(field, q, ctr::Moment::ORDINARY, toupper(na), false);
-        stats.insert(stats.end()-1, ctr::Product(1,term));
+        ctr::Term term( field, q, ctr::Moment::ORDINARY, toupper(na), false );
+        stats.insert( stats.end() - 1, ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
     }
@@ -72,7 +72,7 @@ namespace deck {
   //! save field ID so push_term can pick it up
   struct save_field : pegtl::action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
-      field = stack.convert<int>(value) - 1;  // field ID numbering start from 0
+      field = stack.convert< int >( value ) - 1;  // field ID numbers start at 0
     }
   };
 
@@ -85,10 +85,10 @@ namespace deck {
       if (stack.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
                   << opt.group() << "' option. Overwriting '"
-                  << opt.name(stack.get<tags...>()) << "' with '"
-                  << opt.name(opt.value(value)) << "'.\n\n";
+                  << opt.name( stack.get< tags... >() ) << "' with '"
+                  << opt.name( opt.value( value ) ) << "'.\n\n";
       }
-      stack.set<tags...>(opt.value(value));
+      stack.set< tags... >( opt.value( value ) );
     }
   };
 
