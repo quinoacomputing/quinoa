@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 08:59:22 PM MST
+  \date      Tue 12 Nov 2013 10:06:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -30,7 +30,7 @@ namespace grm {
                                ALIAS,
                                MISSING };
 
-  static const std::map<Error, std::string> err_msg( {
+  static const std::map< Error, std::string > err_msg( {
     { Error::KEYWORD, "Unknown keyword" },
     { Error::MOMENT, "Unknown term in moment" },
     { Error::QUOTED, "Must be double-quoted" },
@@ -41,7 +41,7 @@ namespace grm {
   
   //! parser error handler
   template< class Stack, Error key >
-  static void handleError(const Stack& stack, const std::string& value) {
+  static void handleError( const Stack& stack, const std::string& value ) {
     const auto& msg = err_msg.find(key);
     if (msg != err_msg.end()) {
       if (!value.empty()) {
@@ -58,6 +58,22 @@ namespace grm {
     } else {
       Throw(ExceptType::FATAL, "Unknown parser error.");
     }
+  }
+
+  //! put option in state at position given by tags
+  template< class Stack, class OptionType, class DefaultStack, class... tags >
+  static void Store_option( Stack& stack,
+                            const std::string& value,
+                            const DefaultStack& defaults ) {
+    tk::Option< OptionType > opt;
+    //! Emit warning on overwrite
+    if (stack.template get< tags... >() != defaults.template get< tags... >()) {
+      std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
+                << opt.group() << "' option. Overwriting '"
+                << opt.name( stack.template get< tags... >() ) << "' with '"
+                << opt.name( opt.value( value ) ) << "'.\n\n";
+    }
+    stack.template set< tags... >( opt.value( value ) );
   }
 
   // Common actions
