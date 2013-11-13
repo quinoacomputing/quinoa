@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue Nov 12 16:11:24 2013
+  \date      Tue Nov 12 17:26:24 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -162,6 +162,42 @@ namespace deck {
                           typename keyword::pegtl_string,
                           tk::grm::Store_back< Stack, ctr::param, tags... > > {};
 
+  //! scan selected option
+  template< typename keyword, typename option, typename... tags >
+  struct scan_selected_option :
+         tk::grm::scan< typename keyword::pegtl_string,
+                        store_option< option, ctr::selected, tags... > > {};
+
+  //! scan and store geometry keyword and option
+  template< typename keyword >
+  struct scan_geometry :
+         scan_selected_option< keyword, ctr::Geometry, ctr::geometry > {};
+
+  //! scan and store physics keyword and option
+  template< typename keyword >
+  struct scan_physics :
+         scan_selected_option< keyword, ctr::Physics, ctr::physics > {};
+
+  //! scan and store mass keyword and option
+  template< typename keyword >
+  struct scan_mass :
+         scan_selected_option< keyword, ctr::Mass, ctr::mass > {};
+
+  //! scan and store hydro keyword and option
+  template< typename keyword >
+  struct scan_hydro :
+         scan_selected_option< keyword, ctr::Hydro, ctr::hydro > {};
+
+  //! scan and store mix keyword and option
+  template< typename keyword >
+  struct scan_mix :
+         scan_selected_option< keyword, ctr::Mix, ctr::mix > {};
+
+  //! scan and store frequency keyword and option
+  template< typename keyword >
+  struct scan_frequency :
+         scan_selected_option< keyword, ctr::Frequency, ctr::frequency > {};
+
   //! title
   struct title :
          pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
@@ -172,26 +208,17 @@ namespace deck {
 
   //! analytic_geometry block
   struct analytic_geometry:
-         pegtl::ifmust< tk::grm::scan< kw::analytic_geometry::pegtl_string,
-                                       store_option< ctr::Geometry,
-                                                     ctr::selected,
-                                                     ctr::geometry > >,
+         pegtl::ifmust< scan_geometry< kw::analytic_geometry >,
                         tk::grm::block< Stack > > {};
 
   //! discrete_geometry block
   struct discrete_geometry:
-         pegtl::ifmust< tk::grm::scan< kw::discrete_geometry::pegtl_string,
-                                       store_option< ctr::Geometry,
-                                                     ctr::selected,
-                                                     ctr::geometry > >,
+         pegtl::ifmust< scan_geometry< kw::discrete_geometry >,
                         tk::grm::block< Stack > > {};
 
   //! dir block
   struct dir :
-         pegtl::ifmust< tk::grm::scan< kw::mix_dir::pegtl_string,
-                                       store_option< ctr::Mix,
-                                                     ctr::selected,
-                                                     ctr::mix > >,
+         pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, ctr::nscalar >,
                                         parameter_vector< kw::dir_B,
@@ -206,10 +233,7 @@ namespace deck {
 
   //! gendir block
   struct gendir :
-         pegtl::ifmust< tk::grm::scan< kw::mix_gendir::pegtl_string,
-                                       store_option< ctr::Mix,
-                                                     ctr::selected,
-                                                     ctr::mix > >,
+         pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, ctr::nscalar >,
                                         parameter_vector< kw::dir_B,
@@ -260,10 +284,7 @@ namespace deck {
 
   //! freq_gamma block
   struct freq_gamma :
-         pegtl::ifmust< tk::grm::scan< kw::freq_gamma::pegtl_string,
-                                       store_option< ctr::Frequency,
-                                                     ctr::selected,
-                                                     ctr::frequency > >,
+         pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
                           Stack,
                           component< kw::nfreq, ctr::nfrequency >,
@@ -275,10 +296,7 @@ namespace deck {
 
   //! beta block
   struct beta :
-         pegtl::ifmust< tk::grm::scan< kw::mass_beta::pegtl_string,
-                                       store_option< ctr::Mass,
-                                                     ctr::selected,
-                                                     ctr::mass > >,
+         pegtl::ifmust< scan_mass< kw::mass_beta >,
                         tk::grm::block<
                           Stack,
                           component< kw::ndensity, ctr::ndensity >,
@@ -292,10 +310,10 @@ namespace deck {
 
   //! common to all physics
   struct physics_common :
-         pegtl::sor< incpar< kw::nstep, ctr::nstep >,
+         pegtl::sor< component< kw::npar, ctr::npar >,
+                     incpar< kw::nstep, ctr::nstep >,
                      incpar< kw::term,  ctr::term >,
                      incpar< kw::dt, ctr::dt >,
-                     component< kw::npar, ctr::npar >,
                      interval< kw::glbi, ctr::glob >,
                      interval< kw::pdfi, ctr::pdf >,
                      interval< kw::stai, ctr::plot >,
@@ -336,14 +354,6 @@ namespace deck {
   //! turbulence frequency models
   struct freq :
          pegtl::sor< freq_gamma > {};
-
-  //! scan and store physics keyword and option
-  template< typename keyword >
-  struct scan_physics :
-         tk::grm::scan< typename keyword::pegtl_string,
-                        store_option< ctr::Physics,
-                                      ctr::selected,
-                                      ctr::physics > > {};
 
   //! physics 'hommix' block
   struct hommix :
