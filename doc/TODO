@@ -2,7 +2,7 @@
     - Defaults for Toggles, then collapse ctr::RNG searches
     - Warn on overwrite for Grammar's Store_back_option and Insert_option
     - Code reuse for store_option in rngtest and quinoa?
-    - Code reuse in Quinoa/InputDeck/Grammar.h, rework rng and trigger
+    - Code reuse in Quinoa/InputDeck/Grammar.h, rework rng
     - Document remaining undocumented keywords
     - Replace the overloads in Control.h with variadic ones
     - Warn on what is set ends up not being used
