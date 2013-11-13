@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 09:30:55 PM MST
+  \date      Tue 12 Nov 2013 10:06:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -43,15 +43,8 @@ namespace deck {
   template< class OptionType, typename... tags >
   struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
-      tk::Option< OptionType > opt;
-      //! Emit warning on overwrite
-      if (stack.get< tags... >() != ctr::InputDeckDefaults.get< tags... >()) {
-        std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
-                  << opt.group() << "' option. Overwriting '"
-                  << opt.name( stack.get< tags... >() ) << "' with '"
-                  << opt.name( opt.value( value ) ) << "'.\n\n";
-      }
-      stack.set< tags... >( opt.value( value ) );
+      tk::grm::Store_option< Stack, OptionType, ctr::InputDeck, tags... >
+                           ( stack, value, ctr::InputDeckDefaults );
     }
   };
 

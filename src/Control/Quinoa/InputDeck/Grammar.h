@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 09:30:03 PM MST
+  \date      Tue 12 Nov 2013 10:17:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -80,15 +80,8 @@ namespace deck {
   template< class OptionType, typename... tags >
   struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      tk::Option<OptionType> opt;
-      //! Emit warning on overwrite
-      if (stack.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
-        std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
-                  << opt.group() << "' option. Overwriting '"
-                  << opt.name( stack.get< tags... >() ) << "' with '"
-                  << opt.name( opt.value( value ) ) << "'.\n\n";
-      }
-      stack.set< tags... >( opt.value( value ) );
+      tk::grm::Store_option< Stack, OptionType, ctr::InputDeck, tags... >
+                           ( stack, value, ctr::InputDeckDefaults );
     }
   };
 
@@ -279,18 +272,18 @@ namespace deck {
 
   //! slm block
   struct slm :
-         pegtl::ifmust< scan_and_trigger<
-                          kw::hydro_slm,
-                          ctr::Hydro,
-                          ctr::hydro,
-                          // trigger estimating the diagonal of Reynolds-stress
-                          start_product, u, u,
-                          start_product, v, v,
-                          start_product, w, w >,
-                          tk::grm::block<
-                            Stack,
-                            parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,
-                            component< kw::nvelocity, ctr::nvelocity > > > {};
+         pegtl::ifmust<
+           scan_and_trigger< kw::hydro_slm,
+                             ctr::Hydro,
+                             ctr::hydro,
+                             // trigger estimating the diagonal of
+                             // Reynolds-stress
+                             start_product, u, u,
+                             start_product, v, v,
+                             start_product, w, w >,
+           tk::grm::block< Stack,
+                           parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,
+                           component< kw::nvelocity, ctr::nvelocity > > > {};
 
   //! freq_gamma block
   struct freq_gamma :
