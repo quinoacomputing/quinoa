@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 10:06:16 PM MST
+  \date      Tue 12 Nov 2013 10:32:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -56,6 +56,20 @@ namespace deck {
                         tk::grm::quoted< Stack,
                                          tk::grm::Set<Stack, ctr::title> > > {};
 
+  //! insert mkl parameter
+  template< typename keyword, typename option, typename field >
+  struct mklrng_option :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           tk::grm::Insert_option< Stack,
+                                                   option,
+                                                   field,
+                                                   ctr::selected,
+                                                   ctr::rng,
+                                                   ctr::param,
+                                                   ctr::mklrng >,
+                           pegtl::alpha > {};
+
   //! MKL RNG seed
   struct mkl_seed :
          tk::grm::process< Stack,
@@ -69,31 +83,15 @@ namespace deck {
 
   //! MKL uniform method
   struct mkl_uniform_method :
-         tk::grm::process< Stack,
-                           tk::kw::uniform_method::pegtl_string,
-                           tk::grm::Insert_option<
-                             Stack,
-                             quinoa::ctr::MKLUniformMethod,
-                             quinoa::ctr::uniform_method,
-                             ctr::selected,
-                             ctr::rng,
-                             ctr::param,
-                             ctr::mklrng >,
-                           pegtl::alpha > {};
+         mklrng_option< tk::kw::uniform_method,
+                        quinoa::ctr::MKLUniformMethod,
+                        quinoa::ctr::uniform_method > {};
 
   //! MKL Gaussian method
   struct mkl_gaussian_method :
-         tk::grm::process< Stack,
-                           tk::kw::gaussian_method::pegtl_string,
-                           tk::grm::Insert_option<
-                             Stack,
-                             quinoa::ctr::MKLGaussianMethod,
-                             quinoa::ctr::gaussian_method,
-                             ctr::selected,
-                             ctr::rng,
-                             ctr::param,
-                             ctr::mklrng >,
-                           pegtl::alpha > {};
+         mklrng_option< tk::kw::gaussian_method,
+                        quinoa::ctr::MKLGaussianMethod,
+                        quinoa::ctr::gaussian_method > {};
 
   //! mklrngs blocks
   struct mklrngs :
@@ -107,7 +105,7 @@ namespace deck {
                            mkl_seed,
                            mkl_uniform_method,
                            mkl_gaussian_method > > {};
-          
+
   //! rngs
   struct rngs :
          pegtl::sor< mklrngs > {};
