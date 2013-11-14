@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu Nov 14 08:14:05 2013
+  \date      Thu Nov 14 10:47:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -130,21 +130,27 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
 
   print.endpart();
+  print.part("Factory");
+
+  // Register random number generators
+  quinoa::ctr::RNG rng;
+  std::list< quinoa::ctr::RNGType > regRNG;
+  initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
+                  m_control->get< ctr::param, ctr::mklrng >() );
+  print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
   m_base = std::unique_ptr< Base >(
-             new Base(*m_print, *m_paradigm, *m_control, *m_timer) );
-
-  print.part("Factory");
+           new Base(*m_print, *m_paradigm, *m_control, *m_timer, m_RNGFactory) );
 
   //! Initialize factories
-  initFactories(print);
+  initFactories( print );
 
   //! Echo information on random number generator test suite to be created
   echo();
 
   // Instantiate battery
-  ctr::BatteryType b = m_control->get<ctr::selected, ctr::battery>();
+  ctr::BatteryType b = m_control->get< ctr::selected, ctr::battery >();
   if (b != ctr::BatteryType::NO_BATTERY) {
     m_battery = std::unique_ptr< Battery >( m_batteryFactory[b]() );
   }
@@ -162,13 +168,6 @@ RNGTestDriver::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register random number generators
-  quinoa::ctr::RNG rng;
-  std::list< quinoa::ctr::RNGType > regRNG;
-  initRNGFactory( rng, regRNG, m_base->paradigm.nthreads(),
-                  m_base->control.get<ctr::param, ctr::mklrng>() );
-  print.list("Registered random number generators", rng, regRNG);
-
   // Register batteries
   ctr::Battery battery;
   std::list< ctr::BatteryType > regBatt;
@@ -179,49 +178,6 @@ RNGTestDriver::initFactories(const tk::Print& print)
   add< BigCrush >( m_batteryFactory, regBatt, battery,
                    ctr::BatteryType::BIGCRUSH, *m_base );
   print.list("Registered batteries", battery, regBatt);
-}
-
-void
-RNGTestDriver::initRNGFactory( const quinoa::ctr::RNG& opt,
-                               std::list< quinoa::ctr::RNGType >& reg,
-                               int nthreads,
-                               const quinoa::ctr::MKLRNGParameters& mklparam )
-//******************************************************************************
-//  Register random number generators into factory
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  using quinoa::ctr::RNGType;
-  using quinoa::ctr::seed;
-  using quinoa::ctr::uniform_method;
-
-  quinoa::ctr::MKLUniformMethod um_opt;
-  quinoa::ctr::MKLGaussianMethod gm_opt;
-
-  //! Lambda to register a MKL random number generator into factory
-  auto regMKLRNG = [&]( RNGType rng ) {
-    add< quinoa::MKLRNG >( m_RNGFactory, reg, opt, rng,
-                           nthreads,
-                           opt.param( rng ),
-                           opt.mkl_seed( rng, mklparam ),
-                           um_opt.param(opt.mkl_uniform_method(rng,mklparam)),
-                           gm_opt.param(opt.mkl_gaussian_method(rng,mklparam)) );
-  };
-
-  regMKLRNG( RNGType::MKL_MCG31 );
-  regMKLRNG( RNGType::MKL_R250 );
-  regMKLRNG( RNGType::MKL_MRG32K3A );
-  regMKLRNG( RNGType::MKL_MCG59 );
-  regMKLRNG( RNGType::MKL_WH );
-  regMKLRNG( RNGType::MKL_MT19937 );
-  regMKLRNG( RNGType::MKL_MT2203 );
-  regMKLRNG( RNGType::MKL_SFMT19937 );
-  regMKLRNG( RNGType::MKL_SOBOL );
-  regMKLRNG( RNGType::MKL_NIEDERR );
-  regMKLRNG( RNGType::MKL_IABSTRACT );
-  regMKLRNG( RNGType::MKL_DABSTRACT );
-  regMKLRNG( RNGType::MKL_SABSTRACT );
-  regMKLRNG( RNGType::MKL_NONDETERM );
 }
 
 void

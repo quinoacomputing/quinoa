@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:17:41 2013
+  \date      Thu Nov 14 09:38:54 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -12,8 +12,15 @@
 #define Driver_h
 
 #include <list>
+#include <map>
+
+#include <Quinoa/Options/RNG.h>
+#include <RNG.h>
 
 namespace tk {
+
+//! Random number generator factory type
+using RNGFactory = std::map< quinoa::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! Driver base class
 class Driver {
@@ -43,6 +50,13 @@ class Driver {
     void add( F& f, std::list<E>& reg, const O& o, E e, const Args&... args ) {
       reg.push_back( o.template add<C>( f, e, std::move(args)... ) );
     }
+
+    //! Register random number generators into factory
+    void initRNGFactory( tk::RNGFactory& factory,
+                         const quinoa::ctr::RNG& opt,
+                         std::list< quinoa::ctr::RNGType >& reg,
+                         int nthreads,
+                         const quinoa::ctr::MKLRNGParameters& mklparam );
 
   private:
     //! Don't permit copy constructor

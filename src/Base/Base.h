@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Mon Oct  7 14:29:08 2013
+  \date      Thu Nov 14 10:35:16 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -16,6 +16,7 @@
 #include <Paradigm.h>
 #include <Control.h>
 #include <Timer.h>
+#include <Driver.h>
 
 namespace quinoa {
 
@@ -25,15 +26,18 @@ struct Base {
   tk::Paradigm& paradigm;
   ctr::InputDeck& control;
   tk::Timer& timer;
+  tk::RNGFactory& rng;
 
   //! Initializer constructor
   Base(QuinoaPrint& Print,
        tk::Paradigm& Paradigm,
        ctr::InputDeck& Control,
-       tk::Timer& Timer) : print(Print),
-                           paradigm(Paradigm),
-                           control(Control),
-                           timer(Timer) {}
+       tk::Timer& Timer,
+       tk::RNGFactory& Rng) : print(Print),
+                              paradigm(Paradigm),
+                              control(Control),
+                              timer(Timer),
+                              rng(Rng) {}
 };
 
 } // quinoa::
@@ -46,15 +50,18 @@ struct Base {
   tk::Paradigm& paradigm;
   ctr::InputDeck& control;
   tk::Timer& timer;
+  tk::RNGFactory& rng;
 
   //! Initializer constructor
   Base(RNGTestPrint& Print,
        tk::Paradigm& Paradigm,
        ctr::InputDeck& Control,
-       tk::Timer& Timer) : print(Print),
-                           paradigm(Paradigm),
-                           control(Control),
-                           timer(Timer) {}
+       tk::Timer& Timer,
+       tk::RNGFactory& Rng) : print(Print),
+                              paradigm(Paradigm),
+                              control(Control),
+                              timer(Timer),
+                              rng(Rng) {}
 };
 
 } // rngtest::

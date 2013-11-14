@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:12:15 AM MST
+  \date      Thu Nov 14 10:47:40 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -46,32 +46,38 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
 
   print.endpart();
+  print.part("Factory");
+
+  // Register random number generators
+  quinoa::ctr::RNG rng;
+  std::list< quinoa::ctr::RNGType > regRNG;
+  initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
+                  m_control->get< ctr::param, ctr::mklrng >() );
+  print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
   m_base = std::unique_ptr< Base >(
-             new Base(*m_print, *m_paradigm, *m_control, *m_timer) );
-
-  print.part("Factory");
+           new Base(*m_print, *m_paradigm, *m_control, *m_timer, m_RNGFactory) );
 
   //! Initialize factories
-  initFactories(print);
+  initFactories( print );
 
   // Instantiate geometry
-  ctr::GeometryType g = m_control->get<ctr::selected, ctr::geometry>();
+  ctr::GeometryType g = m_control->get< ctr::selected, ctr::geometry >();
   if (g != ctr::GeometryType::NO_GEOMETRY) {
-    m_geometry = std::unique_ptr<Geometry>( m_geometryFactory[g]() );
+    m_geometry = std::unique_ptr< Geometry >( m_geometryFactory[g]() );
   }
 
   // Instantiate physics
-  ctr::PhysicsType p = m_control->get<ctr::selected, ctr::physics>();
+  ctr::PhysicsType p = m_control->get< ctr::selected, ctr::physics >();
   if (p != ctr::PhysicsType::NO_PHYSICS) {
-    m_physics = std::unique_ptr<Physics>( m_physicsFactory[p]() );
+    m_physics = std::unique_ptr< Physics >( m_physicsFactory[p]() );
   }
 
   // Echo 'unspecified' if both geometry and physics are unspecified
   if (!m_geometry && !m_physics) {
-    print.section("Physics", std::string("unspecified"));
-    print.section("Geometry", std::string("unspecified"));
+    print.section( "Physics", std::string("unspecified") );
+    print.section( "Geometry", std::string("unspecified") );
   }
 }
 
