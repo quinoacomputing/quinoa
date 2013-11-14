@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Thu Nov 14 08:24:21 2013
+  \date      Thu Nov 14 09:52:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -74,13 +74,6 @@ Physics::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register random number generators
-  ctr::RNG rng;
-  std::list< ctr::RNGType > regRNG;
-  //auto& seed = m_base.control.get<ctr::param, ctr::rng, ctr::seed>();
-  //rng.initFactory(m_RNGFactory, regRNG, m_base.paradigm.nthreads(), seed);
-  print.list("Registered random number generators", rng, regRNG);
-
   // Register mass models
   ctr::Mass mass;
   std::list< ctr::MassType > regMass;

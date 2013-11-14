@@ -7,6 +7,7 @@ add_definitions()
 
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
+               Driver.C
                QuinoaDriver.C
                Quinoa.C
 )
@@ -51,6 +52,7 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
+               Driver.C
                RNGTestDriver.C
                RNGTest.C
 )

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 03:25:34 PM MST
+  \date      Thu Nov 14 09:48:42 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -52,6 +52,7 @@ class QuinoaDriver : public tk::Driver {
     void initFactories(const tk::Print& print);
 
     //! Factories
+    tk::RNGFactory m_RNGFactory;                 //!< RNG factory
     PhysicsFactory m_physicsFactory;             //!< Physics factory
     GeometryFactory m_geometryFactory;           //!< Geometry factory
 

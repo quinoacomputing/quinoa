@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:14:14 2013
+  \date      Thu Nov 14 09:39:31 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -13,14 +13,10 @@
 
 #include <Driver.h>
 #include <Base.h>
-#include <RNG.h>
 #include <Battery.h>
 
 //! Everything that contributes to the rngtest executable
 namespace rngtest {
-
-//! Random number generator factory type
-using RNGFactory = std::map< quinoa::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! Battery factory type
 using BatteryFactory = std::map< ctr::BatteryType, std::function< Battery*() > >;
@@ -51,17 +47,11 @@ class RNGTestDriver : public tk::Driver {
     //! Initialize factories
     void initFactories(const tk::Print& print);
 
-    //! Register random number generators into factory
-    void initRNGFactory( const quinoa::ctr::RNG& opt,
-                         std::list< quinoa::ctr::RNGType >& reg,
-                         int nthreads,
-                         const quinoa::ctr::MKLRNGParameters& mklparam );
-
     //! Echo information on random number test suite
     void echo();
 
     //! Factories
-    RNGFactory m_RNGFactory;                     //!< RNG factory
+    tk::RNGFactory m_RNGFactory;                 //!< RNG factory
     BatteryFactory m_batteryFactory;             //!< Battery factory
 
     //! Pointers to selected options

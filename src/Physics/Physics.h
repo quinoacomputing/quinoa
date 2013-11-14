@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:18:30 2013
+  \date      Thu Nov 14 10:33:58 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,7 +12,6 @@
 #define Physics_h
 
 #include <Base.h>
-#include <RNG.h>
 #include <Mass/Mass.h>
 #include <Hydro/Hydro.h>
 #include <Mix/Mix.h>
@@ -21,9 +20,6 @@
 #include <TxtStatWriter.h>
 
 namespace quinoa {
-
-//! Random number generator factory type
-using RNGFactory = std::map< quinoa::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! Physics base
 class Physics {
@@ -98,12 +94,6 @@ class Physics {
     //! Initialize factories
     void initFactories(const tk::Print& print);
 
-    //! Register random number generators into factory
-    void initRNGFactory( const quinoa::ctr::RNG& opt,
-                         std::list< quinoa::ctr::RNGType >& reg,
-                         int nthreads,
-                         const quinoa::ctr::MKLRNGParameters& mklparam );
-
     //! Echo information on physics
     void echo();
 
@@ -113,7 +103,6 @@ class Physics {
     Statistics m_statistics;                        //!< Statistics estimator
 
     //! Factories
-    RNGFactory m_RNGFactory;                    //!< RNG factory
     ctr::MassFactory m_massFactory;             //!< Mass model factory
     ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
