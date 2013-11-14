@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 07:17:39 2013
+  \date      Thu Nov 14 11:39:37 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL grammar
   \details   MKL grammar
@@ -38,7 +38,7 @@ namespace mkl {
   struct rng_option :
          tk::grm::process< Stack,
                            typename keyword::pegtl_string,
-                           tk::grm::Insert_option< Stack,
+                           tk::grm::insert_option< Stack,
                                                    option,
                                                    field,
                                                    sel, vec, tags... >,
@@ -76,7 +76,7 @@ namespace mkl {
   struct rngs :
          pegtl::ifmust<
            tk::grm::scan< rng,
-                          tk::grm::Store_back_option< Stack,
+                          tk::grm::store_back_option< Stack,
                                                       quinoa::ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 07:11:23 2013
+  \date      Thu Nov 14 11:39:28 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -62,7 +62,7 @@ namespace grm {
 
   //! put option in state at position given by tags
   template< class Stack, class OptionType, class DefaultStack, class... tags >
-  static void Store_option( Stack& stack,
+  static void store_option( Stack& stack,
                             const std::string& value,
                             const DefaultStack& defaults ) {
     tk::Option< OptionType > opt;
@@ -76,7 +76,7 @@ namespace grm {
     stack.template set< tags... >( opt.value( value ) );
   }
 
-  // Common actions
+  // Common PEGTL actions
 
   //! error dispatch
   template< class Stack, Error key >
@@ -112,8 +112,8 @@ namespace grm {
 
   //! push back option in state at position given by tags
   template< class Stack, class OptionType, typename tag, typename... tags >
-  struct Store_back_option :
-  pegtl::action_base< Store_back_option<Stack, OptionType, tag, tags...> > {
+  struct store_back_option :
+  pegtl::action_base< store_back_option<Stack, OptionType, tag, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
       stack.template push_back<tag,tags...>( opt.value( value ) );
@@ -137,8 +137,8 @@ namespace grm {
   //! convert and insert option value to map at position given by tags
   template< class Stack, class OptionType, typename field, typename sel,
             typename vec, typename tag, typename... tags >
-  struct Insert_option :
-  pegtl::action_base< Insert_option< Stack, OptionType, field, sel, vec, tag,
+  struct insert_option :
+  pegtl::action_base< insert_option< Stack, OptionType, field, sel, vec, tag,
                                      tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;

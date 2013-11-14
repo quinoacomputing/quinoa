@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:15:22 2013
+  \date      Thu Nov 14 11:37:41 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -81,7 +81,7 @@ namespace deck {
   template< class OptionType, typename... tags >
   struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
-      tk::grm::Store_option< Stack, OptionType, ctr::InputDeck, tags... >
+      tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
                            ( stack, value, ctr::InputDeckDefaults );
     }
   };

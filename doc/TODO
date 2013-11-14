@@ -1,5 +1,5 @@
 * Parser/Control:
-    - Warn on overwrite for Grammar's Store_back_option and Insert_option
+    - Warn on overwrite for Grammar's store_back_option and insert_option
     - Overwriting should zero contents beside emitting a warning
     - Document remaining undocumented keywords
     - Replace the overloads in Control.h with variadic ones
