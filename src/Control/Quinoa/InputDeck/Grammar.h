@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 10:17:15 PM MST
+  \date      Thu Nov 14 08:15:22 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -17,10 +17,11 @@
 #include <Macro.h>
 #include <Exception.h>
 #include <Option.h>
-#include <Grammar.h>
 #include <PEGTLParsed.h>
 #include <Quinoa/Types.h>
 #include <Quinoa/InputDeck/Keywords.h>
+#include <Grammar.h>
+#include <MKLGrammar.h>
 
 namespace quinoa {
 namespace deck {
@@ -323,24 +324,11 @@ namespace deck {
                      interval< kw::ttyi, ctr::tty >,
                      interval< kw::dmpi, ctr::dump > > {};
 
-  //! mklrngs block
-  struct mklrngs :
-         pegtl::ifmust< tk::grm::scan< tk::grm::mklrng,
-                                       store_option< ctr::RNG,
-                                                     ctr::selected,
-                                                     ctr::rng > >,
-                        tk::grm::block<
-                          Stack,
-                          tk::grm::process< Stack,
-                                            tk::kw::seed::pegtl_string,
-                                            tk::grm::Store< Stack,
-                                                            ctr::param,
-                                                            ctr::rng,
-                                                            ctr::seed > > > > {};
-
   //! rngs
   struct rngs :
-         pegtl::sor< mklrngs > {};
+         pegtl::sor< tk::mkl::rngs< Stack,
+                                    ctr::selected, ctr::rng,
+                                    ctr::param, ctr::mklrng > > {};
 
   //! mass models
   struct mass :

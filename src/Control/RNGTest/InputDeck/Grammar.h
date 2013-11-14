@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 10:32:58 PM MST
+  \date      Thu Nov 14 08:33:53 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -17,10 +17,11 @@
 #include <Macro.h>
 #include <Exception.h>
 #include <Option.h>
-#include <Grammar.h>
 #include <PEGTLParsed.h>
 #include <RNGTest/Types.h>
 #include <RNGTest/InputDeck/Keywords.h>
+#include <Grammar.h>
+#include <MKLGrammar.h>
 
 namespace rngtest {
 namespace deck {
@@ -56,59 +57,11 @@ namespace deck {
                         tk::grm::quoted< Stack,
                                          tk::grm::Set<Stack, ctr::title> > > {};
 
-  //! insert mkl parameter
-  template< typename keyword, typename option, typename field >
-  struct mklrng_option :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           tk::grm::Insert_option< Stack,
-                                                   option,
-                                                   field,
-                                                   ctr::selected,
-                                                   ctr::rng,
-                                                   ctr::param,
-                                                   ctr::mklrng >,
-                           pegtl::alpha > {};
-
-  //! MKL RNG seed
-  struct mkl_seed :
-         tk::grm::process< Stack,
-                           tk::kw::seed::pegtl_string,
-                           tk::grm::Insert_field< Stack,
-                                                  quinoa::ctr::seed,
-                                                  ctr::selected,
-                                                  ctr::rng,
-                                                  ctr::param,
-                                                  ctr::mklrng > > {};
-
-  //! MKL uniform method
-  struct mkl_uniform_method :
-         mklrng_option< tk::kw::uniform_method,
-                        quinoa::ctr::MKLUniformMethod,
-                        quinoa::ctr::uniform_method > {};
-
-  //! MKL Gaussian method
-  struct mkl_gaussian_method :
-         mklrng_option< tk::kw::gaussian_method,
-                        quinoa::ctr::MKLGaussianMethod,
-                        quinoa::ctr::gaussian_method > {};
-
-  //! mklrngs blocks
-  struct mklrngs :
-         pegtl::ifmust<
-           tk::grm::scan< tk::grm::mklrng,
-                          tk::grm::Store_back_option< Stack,
-                                                      quinoa::ctr::RNG,
-                                                      ctr::selected,
-                                                      ctr::rng > >,
-           tk::grm::block< Stack,
-                           mkl_seed,
-                           mkl_uniform_method,
-                           mkl_gaussian_method > > {};
-
   //! rngs
   struct rngs :
-         pegtl::sor< mklrngs > {};
+         pegtl::sor< tk::mkl::rngs< Stack,
+                                    ctr::selected, ctr::rng,
+                                    ctr::param, ctr::mklrng > > {};
 
   // TestU01 batteries
   template< typename battery_kw >

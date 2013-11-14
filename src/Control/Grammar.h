@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Tue 12 Nov 2013 10:06:39 PM MST
+  \date      Thu Nov 14 07:11:23 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -136,7 +136,7 @@ namespace grm {
 
   //! convert and insert option value to map at position given by tags
   template< class Stack, class OptionType, typename field, typename sel,
-            typename vec, typename tag, typename...tags >
+            typename vec, typename tag, typename... tags >
   struct Insert_option :
   pegtl::action_base< Insert_option< Stack, OptionType, field, sel, vec, tag,
                                      tags... > > {
@@ -277,23 +277,6 @@ namespace grm {
                                 pegtl::apply< error< Stack,
                                                      Error::MISSING > > >,
                               insert > > {};
-
-  //! mklrng: match any one of the MKL random number generators
-  struct mklrng :
-         pegtl::sor< kw::mkl_mcg31::pegtl_string,
-                     kw::mkl_r250::pegtl_string,
-                     kw::mkl_mrg32k3a::pegtl_string,
-                     kw::mkl_mcg59::pegtl_string,
-                     kw::mkl_wh::pegtl_string,
-                     kw::mkl_mt19937::pegtl_string,
-                     kw::mkl_mt2203::pegtl_string,
-                     kw::mkl_sfmt19937::pegtl_string,
-                     kw::mkl_sobol::pegtl_string,
-                     kw::mkl_niederr::pegtl_string,
-                     kw::mkl_iabstract::pegtl_string,
-                     kw::mkl_dabstract::pegtl_string,
-                     kw::mkl_sabstract::pegtl_string,
-                     kw::mkl_nondeterm::pegtl_string > {};
 
   //! read_file entry point: parse 'keywords' and 'ignore' until eof
   template< class Stack, typename keywords, typename ignore >

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Mon 28 Oct 2013 08:45:00 PM MDT
+  \date      Thu Nov 14 08:03:08 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -174,16 +174,16 @@ using Product = std::vector<Term>;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  geometry,  ctr::GeometryType,   //!< Selected geometry definition
-  physics,   ctr::PhysicsType,    //!< Selected physics
-  position,  ctr::PositionType,   //!< Selected position model
-  mass,      ctr::MassType,       //!< Selected mass model
-  hydro,     ctr::HydroType,      //!< Selected hydrodynamics model
-  energy,    ctr::EnergyType,     //!< Selected internal energy model
-  mix,       ctr::MixType,        //!< Selected material mix model
-  frequency, ctr::FrequencyType,  //!< Selected turbulence frequency model
-  mixrate,   ctr::MixRateType,    //!< Selected material mix rate model
-  rng,       ctr::RNGType         //!< Selected random number generator
+  geometry,  ctr::GeometryType,         //!< Selected geometry definition
+  physics,   ctr::PhysicsType,          //!< Selected physics
+  position,  ctr::PositionType,         //!< Selected position model
+  mass,      ctr::MassType,             //!< Selected mass model
+  hydro,     ctr::HydroType,            //!< Selected hydrodynamics model
+  energy,    ctr::EnergyType,           //!< Selected internal energy model
+  mix,       ctr::MixType,              //!< Selected material mix model
+  frequency, ctr::FrequencyType,        //!< Selected turbulence frequency model
+  mixrate,   ctr::MixRateType,          //!< Selected material mix rate model
+  rng,       std::vector< ctr::RNGType >//!< Selected random number generators
 >;
 
 //! Time incrementation parameters storage
@@ -267,7 +267,7 @@ using GLMParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  rng,          RNGParameters,            // Random number generator
+  mklrng,       MKLRNGParameters,         // MKLRandom number generator
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
   gendirichlet, GenDirichletParameters,

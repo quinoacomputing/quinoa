@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:26:50 AM MST
+  \date      Thu Nov 14 08:24:21 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -42,11 +42,11 @@ Physics::Physics(const Base& base) :
   //! Echo information on physics to be created
   echo();
 
-  // Instantiate random number generator
-  ctr::RNGType r = m_base.control.get<ctr::selected, ctr::rng>();
-  if (r != ctr::RNGType::NO_RNG) {
-    m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
-  }
+//   // Instantiate random number generator
+//   ctr::RNGType r = m_base.control.get<ctr::selected, ctr::rng>();
+//   if (r != ctr::RNGType::NO_RNG) {
+//     m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
+//   }
 
   // Instantiate mass model
   if (m_ndensity) {
@@ -124,10 +124,10 @@ Physics::echo()
   print.endsubsection();
 
   print.subsection("Selected");
-  print.Item< ctr::RNG, ctr::selected, ctr::rng >();
-  if (control.get< ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG ) {
-    print.item( "Seed", control.get< ctr::param, ctr::rng, ctr::seed >() );
-  }
+//  print.Item< ctr::RNG, ctr::selected, ctr::rng >();
+//   if (control.get< ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG ) {
+//     print.item( "Seed", control.get< ctr::param, ctr::rng, ctr::seed >() );
+//   }
   print.Item< ctr::Position, ctr::selected, ctr::position >();
   print.Item< ctr::Mass, ctr::selected, ctr::mass >();
   print.Item< ctr::Hydro, ctr::selected, ctr::hydro >();

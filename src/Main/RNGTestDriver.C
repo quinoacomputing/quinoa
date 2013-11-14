@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:11:34 AM MST
+  \date      Thu Nov 14 08:14:05 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -185,7 +185,7 @@ void
 RNGTestDriver::initRNGFactory( const quinoa::ctr::RNG& opt,
                                std::list< quinoa::ctr::RNGType >& reg,
                                int nthreads,
-                               const quinoa::ctr::MKLRNGParam& mklparam )
+                               const quinoa::ctr::MKLRNGParameters& mklparam )
 //******************************************************************************
 //  Register random number generators into factory
 //! \author  J. Bakosi
