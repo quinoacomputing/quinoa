@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:12:59 PM MST
+  \date      Thu Nov 14 08:04:57 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -24,6 +24,7 @@ struct mix {};
 struct frequency {};
 struct mixrate {};
 struct rng {};
+struct mklrng {};
 
 struct nstep {};
 struct term {};

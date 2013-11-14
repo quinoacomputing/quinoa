@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 04:00:37 PM MST
+  \date      Thu Nov 14 08:14:14 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -55,7 +55,7 @@ class RNGTestDriver : public tk::Driver {
     void initRNGFactory( const quinoa::ctr::RNG& opt,
                          std::list< quinoa::ctr::RNGType >& reg,
                          int nthreads,
-                         const quinoa::ctr::MKLRNGParam& mklparam );
+                         const quinoa::ctr::MKLRNGParameters& mklparam );
 
     //! Echo information on random number test suite
     void echo();

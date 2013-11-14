@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:55:08 AM MST
+  \date      Thu Nov 14 08:09:55 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -57,14 +57,14 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   PRAND };
 
 //! MKL random number generator parameters storage
-using MKLRNGParameters = tk::tuple::tagged_tuple<
+using MKLRNGParam = tk::tuple::tagged_tuple<
   seed,             unsigned int,              //!< seed
   uniform_method,   MKLUniformMethodType,      //!< uniform method type
   gaussian_method,  MKLGaussianMethodType      //!< Gaussian method type
 >;
 
 //! MKL RNG parameters bundle
-using MKLRNGParam = std::map< RNGType, MKLRNGParameters >;
+using MKLRNGParameters = std::map< RNGType, MKLRNGParam >;
 
 //! Class with base templated on the above enum class with associations
 class RNG : public tk::Toggle<RNGType> {
@@ -82,15 +82,15 @@ class RNG : public tk::Toggle<RNGType> {
     const ParamType& param(RNGType rng) const;
  
     //! Return seed from MKLRNGParams
-    unsigned int mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const;
+    unsigned int mkl_seed( RNGType rng, const MKLRNGParameters& mklparam ) const;
 
     //! Return uniform method from MKLRNGParams
     MKLUniformMethodType
-    mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const;
+    mkl_uniform_method( RNGType rng, const MKLRNGParameters& mklparam ) const;
 
     //! Return Gaussian method from MKLRNGParams
     MKLGaussianMethodType
-    mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const;
+    mkl_gaussian_method( RNGType rng, const MKLRNGParameters& mklparam ) const;
 
   private:
     //! Don't permit copy constructor

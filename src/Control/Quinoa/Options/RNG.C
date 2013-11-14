@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:37:08 AM MST
+  \date      Thu Nov 14 08:10:17 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -31,7 +31,7 @@ RNG::param( RNGType rng ) const
 }
 
 unsigned int
-RNG::mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const
+RNG::mkl_seed( RNGType rng, const MKLRNGParameters& mklparam ) const
 //******************************************************************************
 //  Return seed value from MKLRNGParams
 //! \author  J. Bakosi
@@ -47,7 +47,7 @@ RNG::mkl_seed( RNGType rng, const MKLRNGParam& mklparam ) const
 }
 
 quinoa::ctr::MKLUniformMethodType
-RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
+RNG::mkl_uniform_method( RNGType rng, const MKLRNGParameters& mklparam ) const
 //******************************************************************************
 //  Return uniform method from MKLRNGParams
 //! \author  J. Bakosi
@@ -63,7 +63,7 @@ RNG::mkl_uniform_method( RNGType rng, const MKLRNGParam& mklparam ) const
 }
 
 quinoa::ctr::MKLGaussianMethodType
-RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParam& mklparam ) const
+RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParameters& mklparam ) const
 //******************************************************************************
 //  Return Gaussian method from MKLRNGParams
 //! \author  J. Bakosi

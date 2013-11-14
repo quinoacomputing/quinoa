@@ -2,7 +2,7 @@
 /*!
   \file      src/Physics/Physics.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 03:27:48 PM MST
+  \date      Thu Nov 14 08:18:30 2013
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -97,6 +97,12 @@ class Physics {
 
     //! Initialize factories
     void initFactories(const tk::Print& print);
+
+    //! Register random number generators into factory
+    void initRNGFactory( const quinoa::ctr::RNG& opt,
+                         std::list< quinoa::ctr::RNGType >& reg,
+                         int nthreads,
+                         const quinoa::ctr::MKLRNGParameters& mklparam );
 
     //! Echo information on physics
     void echo();
