@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 02:45:10 PM MST
+  \date      Thu 21 Nov 2013 02:48:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -11,22 +11,22 @@
 #ifndef SmallCrush_h
 #define SmallCrush_h
 
-#include <Battery.h>
+#include <TestU01.h>
 
 namespace rngtest {
 
-//! SmallCrush : Battery
-class SmallCrush : public Battery {
+//! SmallCrush : TestU01
+class SmallCrush : public TestU01 {
 
   public:
     //! Constructor
-    explicit SmallCrush(const Base& base) : Battery(base) {};
+    explicit SmallCrush(const Base& base);
 
     //! Destructor
-    virtual ~SmallCrush() noexcept = default;
+    ~SmallCrush() noexcept override = default;
 
     //! Run battery of RNG tests
-    virtual void run() override;
+    void run() override;
 
   private:
     //! Don't permit copy constructor
@@ -37,6 +37,8 @@ class SmallCrush : public Battery {
     SmallCrush(SmallCrush&&) = delete;
     //! Don't permit move assigment
     SmallCrush& operator=(SmallCrush&&) = delete;
+
+    std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
 };
 
 } // rngtest::
