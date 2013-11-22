@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Fri 25 Oct 2013 10:32:46 PM MDT
+  \date      Thu 21 Nov 2013 02:58:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -26,10 +26,10 @@ class RNG {
     virtual ~RNG() noexcept = default;
 
     //! Uniform RNG interface
-    virtual void uniform(int tid, int num, tk::real* r) const = 0;
+    virtual void uniform(int tid, int num, double* r) const = 0;
 
     //! Gaussian RNG interface
-    virtual void gaussian(int tid, int num, tk::real* r) const = 0;
+    virtual void gaussian(int tid, int num, double* r) const = 0;
 
   private:
     //! Don't permit copy constructor

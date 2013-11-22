@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu Nov 14 11:20:01 2013
+  \date      Thu 21 Nov 2013 03:15:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -34,14 +34,13 @@ Driver::initRNGFactory( tk::RNGFactory& factory,
 
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
-    add< quinoa::MKLRNG >( factory, reg, opt, rng,
-                           nthreads,
-                           opt.param( rng ),
-                           opt.mkl_seed( rng, mklparam ),
-                           um_opt.param( opt.mkl_uniform_method( rng,
-                                                                 mklparam ) ),
-                           gm_opt.param( opt.mkl_gaussian_method( rng,
-                                                                  mklparam) ) );
+    add< quinoa::MKLRNG >
+       ( factory, reg, opt, rng,
+         nthreads,
+         opt.param( rng ),
+         opt.mkl_seed( rng, mklparam ),
+         um_opt.param( opt.mkl_uniform_method( rng, mklparam ) ),
+         gm_opt.param( opt.mkl_gaussian_method( rng, mklparam) ) );
   };
 
   regMKLRNG( RNGType::MKL_MCG31 );

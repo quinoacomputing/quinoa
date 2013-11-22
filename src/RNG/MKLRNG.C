@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:16:00 AM MST
+  \date      Thu 21 Nov 2013 02:57:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -67,7 +67,7 @@ MKLRNG::~MKLRNG() noexcept
 }
 
 void
-MKLRNG::uniform(int tid, int num, tk::real* r) const
+MKLRNG::uniform(int tid, int num, double* r) const
 //******************************************************************************
 // Call MKL's uniform RNG
 //! \author  J. Bakosi
@@ -78,7 +78,7 @@ MKLRNG::uniform(int tid, int num, tk::real* r) const
 }
 
 void
-MKLRNG::gaussian(int tid, int num, tk::real* r) const
+MKLRNG::gaussian(int tid, int num, double* r) const
 //******************************************************************************
 // Call MKL's Gaussian RNG
 //! \author  J. Bakosi
