@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 06:16:05 PM MST
+  \date      Thu 21 Nov 2013 06:34:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -37,6 +37,8 @@ class SmallCrush : public TestU01 {
     SmallCrush(SmallCrush&&) = delete;
     //! Don't permit move assigment
     SmallCrush& operator=(SmallCrush&&) = delete;
+
+    std::string m_rngname;
 };
 
 } // rngtest::
