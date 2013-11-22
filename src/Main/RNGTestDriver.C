@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu Nov 14 10:47:05 2013
+  \date      Thu 21 Nov 2013 06:39:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -17,94 +17,6 @@
 #include <Crush.h>
 #include <BigCrush.h>
 #include <MKLRNG.h>
-
-// #include <iostream>
-// #include <sstream>
-// 
-// #include <mkl_vsl.h>
-// 
-// extern "C" {
-//   #include <unif01.h>
-//   #include <bbattery.h>
-// }
-// 
-// #include <Timer.h>
-// #include <Exception.h>
-// #include <MKLTest.h>
-// 
-// VSLStreamStatePtr stream;
-// const int brng = VSL_BRNG_MCG59;
-// const unsigned int seed = 0;
-// const int method = VSL_RNG_METHOD_UNIFORM_STD;
-// const int n = 1;
-// const double a = 0.0;
-// const double b = 1.0;
-// double r;
-
-// void
-// MKLErrChk(int vslerr) 
-// //******************************************************************************
-// //  Special error handler for MKL
-// //! \param[in]  vslerr     Error code
-// //! \author  J. Bakosi
-// //******************************************************************************
-// {
-//   if (vslerr != VSL_STATUS_OK)
-//     try {
-// 
-//       std::stringstream s;
-//       s << "MKL VSL Error: code " << vslerr;
-//       Throw(Quinoa::ExceptType::FATAL, s.str());
-// 
-//     } catch (Exception&) {
-//         throw;
-//       }
-//       catch (std::exception& e) {
-//         Throw(Quinoa::ExceptType::FATAL, e.what());
-//       }
-//       catch (...) {
-//         Throw(Quinoa::ExceptType::UNCAUGHT, "non-standard exception");
-//       }
-// }
-// 
-// void initMKL()
-// {
-// #ifdef HAS_MKL
-// #ifdef NDEBUG
-//   vslNewStream(&stream, brng, seed);
-// #else  // NDEBUG
-//   Quinoa::MKLErrChk(vslNewStream(&stream, brng, seed));
-// #endif // NDEBUG
-// #endif
-// }
-// 
-// void finalizeMKL()
-// {
-// #ifdef HAS_MKL
-// #ifdef NDEBUG
-//   vslDeleteStream(&stream);
-// #else  // NDEBUG
-//   Quinoa::MKLErrChk(vslDeleteStream(&stream));
-// #endif // NDEBUG
-// #endif
-// }
-// 
-// double MKL_VSL()
-// //******************************************************************************
-// //  MKL VSL test
-// //! \author J. Bakosi
-// //******************************************************************************
-// {
-// #ifdef HAS_MKL
-// #ifdef NDEBUG
-//   vdRngUniform(method, stream, n, &r, a, b);
-// #else  // NDEBUG
-//   Quinoa::MKLErrChk(vdRngUniform(method, stream, n, &r, a, b));
-// #endif // NDEBUG
-// #endif
-// 
-//   return r;
-// }
 
 using rngtest::RNGTestDriver;
 
@@ -213,17 +125,4 @@ RNGTestDriver::execute() const
   if (m_battery) {
     m_battery->run();
   }
-
-  //MKLTest mkl(control());
-
-//   initMKL();
-// 
-//   const char* name = "MKL VSL test";
-// 
-//   unif01_Gen *gen;
-//   gen = unif01_CreateExternGen01(const_cast<char*>(name), MKL_VSL);
-//   bbattery_SmallCrush(gen);
-//   unif01_DeleteExternGen01(gen);
-// 
-//   finalizeMKL();
 }
