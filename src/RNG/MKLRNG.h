@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 06:24:45 PM MST
+  \date      Thu 21 Nov 2013 02:58:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -35,10 +35,10 @@ class MKLRNG : public tk::RNG {
     virtual ~MKLRNG() noexcept;
 
     //! Uniform RNG
-    void uniform(int tid, int num, tk::real* r) const override;
+    void uniform(int tid, int num, double* r) const override;
 
     //! Gaussian RNG
-    void gaussian(int tid, int num, tk::real* r) const override;
+    void gaussian(int tid, int num, double* r) const override;
 
   private:
     //! Don't permit copy constructor

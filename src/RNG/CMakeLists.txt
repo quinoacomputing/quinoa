@@ -5,6 +5,7 @@ project(RNG CXX)
 if (HAS_MKL)
   set (MKL_SOURCE "MKL.C")
   set (MKLRNG_SOURCE "MKLRNG.C")
+  set (MKLRNGWRAPPERS_SOURCE "MKLRNGWrappers.C")
   set (MKLRNDSTREAM_SOURCE "MKLRndStream.C")
   set (MKLRNDTABLE_SOURCE "MKLRndTable.C")
 endif()
@@ -14,6 +15,7 @@ add_library(RNG
             SmallCrush.C
             ${MKL_SOURCE}
             ${MKLRNG_SOURCE}
+            ${MKLRNGWRAPPERS_SOURCE}
             ${MKLRNDSTREAM_SOURCE}
             ${MKLRNDTABLE_SOURCE}
 )
