@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MatrixRank.h
   \author    J. Bakosi
-  \date      Fri 22 Nov 2013 05:30:31 PM MST
+  \date      Sat 23 Nov 2013 04:44:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical tests suggested by George Marsaglia
   \details   Statistical tests suggested by George Marsaglia
@@ -24,6 +24,12 @@ class MatrixRank : public Marsaglia {
 
     //! Destructor
     ~MatrixRank() noexcept override = default;
+
+    //! Run
+    double run() override { return 0.0; }
+
+    //! Test name accessor
+    const char* name() const override { return ""; }
 
   private:
     //! Don't permit copy constructor
