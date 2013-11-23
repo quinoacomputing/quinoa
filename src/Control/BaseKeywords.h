@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
-  \date      Thu 31 Oct 2013 08:24:02 PM MDT
+  \date      Fri 22 Nov 2013 05:19:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -11,6 +11,9 @@
 #ifndef Keywords
 #error "BaseKeywords.h should only be included within a *Keywords.h"
 #endif
+
+namespace tk {
+namespace kw {
 
 using namespace pegtl::ascii;
 
@@ -33,3 +36,6 @@ struct end_info {
   }
 };
 using end = keyword<end_info, e,n,d >;
+
+} // kw::
+} // tk::
