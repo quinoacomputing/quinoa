@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Fri 22 Nov 2013 06:31:07 PM MST
+  \date      Sat 23 Nov 2013 12:25:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -15,8 +15,8 @@ extern "C" {
   #include <unif01.h>
 }
 
+#include <TestU01Wrap.h>
 #include <TestU01.h>
-#include <StatTest.h>
 
 namespace rngtest {
 
@@ -43,21 +43,11 @@ class SmallCrush : public TestU01 {
     //! Don't permit move assigment
     SmallCrush& operator=(SmallCrush&&) = delete;
 
+    //! Name of RNGs
     std::string m_rngname;
 
-    //!< TestU01 external generator custom deleter provided by TestU01
-    struct Gen01Deleter {
-      void operator()( unif01_Gen* gen ) {
-        unif01_DeleteExternGen01( gen );
-      }
-    };
-    //!< TestU01 external generator type with a custom deleter by TestU01
-    using Gen01Pointer = std::unique_ptr< unif01_Gen, Gen01Deleter >;
-
-    //!< TestU01 external generator
-    Gen01Pointer m_gen;
-
-    std::vector< std::unique_ptr< StatTest > > m_tests;
+    //! Statistical tests
+    TestContainer m_tests;
 };
 
 } // rngtest::

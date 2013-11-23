@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 02:49:12 PM MST
+  \date      Sat 23 Nov 2013 12:27:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -24,6 +24,11 @@ class TestU01 : public Battery {
 
     //! Destructor
     ~TestU01() noexcept override = default;
+
+    //! TestU01 external generator type with a custom deleter by TestU01
+    using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
+    //! TestU01 external generator
+    Gen01Ptr m_gen;
 
   private:
     //! Don't permit copy constructor

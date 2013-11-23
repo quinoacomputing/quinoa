@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/StatTest.h
   \author    J. Bakosi
-  \date      Fri 22 Nov 2013 05:36:53 PM MST
+  \date      Sat 23 Nov 2013 04:44:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -22,6 +22,17 @@ class StatTest {
 
     //! Destructor
     virtual ~StatTest() noexcept = default;
+
+    //! Run
+    virtual double run() = 0;
+
+    //! Test name accessor
+    virtual const char* name() const = 0;
+
+  protected:
+    static const long THOUSAND = 1000;
+    static const long MILLION = THOUSAND * THOUSAND;
+    static const long BILLION = THOUSAND * MILLION;
 
   private:
     //! Don't permit copy constructor

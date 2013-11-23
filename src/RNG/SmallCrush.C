@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Fri 22 Nov 2013 06:36:04 PM MST
+  \date      Sat 23 Nov 2013 03:26:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -47,14 +47,12 @@ SmallCrush::SmallCrush(const Base& base) : TestU01(base)
   }
 
   // Create TestU01 external generator
-  m_gen = Gen01Pointer(
+  m_gen = Gen01Ptr(
             unif01_CreateExternGen01( const_cast<char*>( m_rngname.c_str() ),
                                       MKLRNGUniform ) );
 
   // Add statistical tests to create battery
-  m_tests.push_back(
-    std::unique_ptr< BirthdaySpacings >( new BirthdaySpacings(m_gen.get()) ) );
-  m_tests.push_back( std::unique_ptr< MatrixRank >( new MatrixRank ) );
+  add< BirthdaySpacings >( m_tests, m_gen );
 }
 
 void
@@ -66,5 +64,10 @@ SmallCrush::run()
 {
   swrite_Basic = FALSE; // no putput from TestU01
 
-  bbattery_SmallCrush( m_gen.get() );
+  //bbattery_SmallCrush( m_gen.get() );
+
+  for (auto& test : m_tests) {
+    test.pval = test.ptr->run();
+    std::cout << test.ptr->name() << " pval = " << test.pval << std::endl;
+  }
 }
