@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 06:38:19 PM MST
+  \date      Fri 22 Nov 2013 06:36:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -19,6 +19,8 @@ extern "C" {
 
 #include <SmallCrush.h>
 #include <MKLRNGWrappers.h>
+#include <BirthdaySpacings.h>
+#include <MatrixRank.h>
 
 namespace rngtest {
 
@@ -34,6 +36,7 @@ SmallCrush::SmallCrush(const Base& base) : TestU01(base)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Instantiate RNGs
   ctr::RNGType r = m_base.control.get< ctr::selected, ctr::rng >()[0];
   if (r != ctr::RNGType::NO_RNG) {
     // Save name of random number generator
@@ -42,6 +45,16 @@ SmallCrush::SmallCrush(const Base& base) : TestU01(base)
     // Instantiate random number generator
     g_rng = std::unique_ptr< tk::RNG >( m_base.rng[r]() );
   }
+
+  // Create TestU01 external generator
+  m_gen = Gen01Pointer(
+            unif01_CreateExternGen01( const_cast<char*>( m_rngname.c_str() ),
+                                      MKLRNGUniform ) );
+
+  // Add statistical tests to create battery
+  m_tests.push_back(
+    std::unique_ptr< BirthdaySpacings >( new BirthdaySpacings(m_gen.get()) ) );
+  m_tests.push_back( std::unique_ptr< MatrixRank >( new MatrixRank ) );
 }
 
 void
@@ -53,9 +66,5 @@ SmallCrush::run()
 {
   swrite_Basic = FALSE; // no putput from TestU01
 
-  unif01_Gen *gen;
-  gen = unif01_CreateExternGen01( const_cast<char*>( m_rngname.c_str() ),
-                                  MKLRNGUniform );
-  bbattery_SmallCrush( gen );
-  unif01_DeleteExternGen01( gen );
+  bbattery_SmallCrush( m_gen.get() );
 }
