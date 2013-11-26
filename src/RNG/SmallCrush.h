@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Sat 23 Nov 2013 12:25:08 PM MST
+  \date      Mon 25 Nov 2013 10:09:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -16,12 +16,12 @@ extern "C" {
 }
 
 #include <TestU01Wrap.h>
-#include <TestU01.h>
+#include <TestU01Suite.h>
 
 namespace rngtest {
 
-//! SmallCrush : TestU01
-class SmallCrush : public TestU01 {
+//! SmallCrush : TestU01Suite
+class SmallCrush : public TestU01Suite {
 
   public:
     //! Constructor

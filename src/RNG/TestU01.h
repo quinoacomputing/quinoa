@@ -2,33 +2,40 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Sat 23 Nov 2013 12:27:44 PM MST
+  \date      Mon 25 Nov 2013 10:48:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     TestU01 random number generator test suite
-  \details   TestU01 random number generator test suite
+  \brief     TestU01 statistical tests
+  \details   TestU01 statistical tests
 */
 //******************************************************************************
 #ifndef TestU01_h
 #define TestU01_h
 
-#include <Battery.h>
+#include <StatTest.h>
 
 namespace rngtest {
 
-//! TestU01 random number generator test suite
-class TestU01 : public Battery {
+//! TestU01 : StatTest
+template< typename ResPtr, ResPtr* (*Creator)(void), void (*Deleter)(ResPtr *),
+          double (*Run)(unif01_Gen*,
+                        typename TestU01Ptr<ResPtr, Deleter>::element_type*) >
+class TestU01 : public StatTest {
 
-  protected:
+  public:
     //! Constructor
-    explicit TestU01(const Base& base) : Battery(base) {}
+    explicit TestU01(const unif01_Gen* const gen) :
+      m_gen( gen ), m_res( ResultPtr( Creator() ) ) {};
 
     //! Destructor
     ~TestU01() noexcept override = default;
 
-    //! TestU01 external generator type with a custom deleter by TestU01
-    using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-    //! TestU01 external generator
-    Gen01Ptr m_gen;
+    //! Run
+    double run() override {
+      return Run( const_cast<unif01_Gen*>(m_gen), m_res.get() );
+    }
+
+    //! Test name accessor
+    const char* name() const override { return m_res->name; }
 
   private:
     //! Don't permit copy constructor
@@ -39,6 +46,13 @@ class TestU01 : public Battery {
     TestU01(TestU01&&) = delete;
     //! Don't permit move assigment
     TestU01& operator=(TestU01&&) = delete;
+
+    const unif01_Gen* const m_gen;          //!< Raw ptr to TestU01 generator
+
+    //! TestU01 results type with a custom deleter by TestU01
+    using ResultPtr = TestU01Ptr< ResPtr, Deleter >;
+    //! TestU01 results struct (wrapped to std::unique_ptr)
+    ResultPtr m_res;
 };
 
 } // rngtest::
