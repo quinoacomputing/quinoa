@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Sat 23 Nov 2013 03:26:06 PM MST
+  \date      Mon 25 Nov 2013 11:13:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -19,8 +19,7 @@ extern "C" {
 
 #include <SmallCrush.h>
 #include <MKLRNGWrappers.h>
-#include <BirthdaySpacings.h>
-#include <MatrixRank.h>
+#include <TestU01.h>
 
 namespace rngtest {
 
@@ -30,7 +29,7 @@ extern std::unique_ptr< tk::RNG > g_rng;
 
 using rngtest::SmallCrush;
 
-SmallCrush::SmallCrush(const Base& base) : TestU01(base)
+SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
@@ -51,8 +50,14 @@ SmallCrush::SmallCrush(const Base& base) : TestU01(base)
             unif01_CreateExternGen01( const_cast<char*>( m_rngname.c_str() ),
                                       MKLRNGUniform ) );
 
-  // Add statistical tests to create battery
-  add< BirthdaySpacings >( m_tests, m_gen );
+  // Type specializations
+  using BirthdaySpacingsTest = TestU01< sres_Poisson,
+                                        sres_CreatePoisson,
+                                        sres_DeletePoisson,
+                                        BirthdaySpacings >;
+
+  // Add statistical tests to battery
+  add< BirthdaySpacingsTest >( m_tests, m_gen );
 }
 
 void

@@ -1,41 +1,34 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/BirthdaySpacings.C
+  \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 09:12:40 PM MST
+  \date      Mon 25 Nov 2013 10:55:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Statistical tests suggested by George Marsaglia
-  \details   Statistical tests suggested by George Marsaglia
+  \brief     TestU01 suite
+  \details   TestU01 suite
 */
 //******************************************************************************
-
-#include <iostream>
 
 extern "C" {
   #include <smarsa.h>
 }
 
-#include <BirthdaySpacings.h>
+#include <TestU01Suite.h>
 
-using rngtest::BirthdaySpacings;
+using rngtest::TestU01Suite;
 
 double
-BirthdaySpacings::run()
+TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res )
 //******************************************************************************
 //  Run BirthdaySpacings test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Pretty awful that TestU01 does not guarantee the constness of gen
-  unif01_Gen* gen = const_cast< unif01_Gen* >( m_gen );
-
-  PoissonResPtr::element_type* res = m_res.get();
-
 #ifdef USE_LONGLONG
   smarsa_BirthdaySpacings( gen, res, 1, 5 * MILLION, 0, 1073741824, 2, 1 );
 #else
   smarsa_BirthdaySpacings( gen, res, 10, MILLION / 2, 0, 67108864, 2, 1 );
 #endif
 
-  return m_res->pVal2;
+  return res->pVal2;
 }

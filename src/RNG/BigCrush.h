@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 02:45:30 PM MST
+  \date      Mon 25 Nov 2013 10:09:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -11,16 +11,16 @@
 #ifndef BigCrush_h
 #define BigCrush_h
 
-#include <Battery.h>
+#include <TestU01Suite.h>
 
 namespace rngtest {
 
-//! BigCrush : Battery
-class BigCrush : public Battery {
+//! BigCrush : TestU01Suite
+class BigCrush : public TestU01Suite {
 
   public:
     //! Constructor
-    explicit BigCrush(const Base& base) : Battery(base) {}
+    explicit BigCrush(const Base& base) : TestU01Suite(base) {}
 
     //! Destructor
     virtual ~BigCrush() noexcept = default;

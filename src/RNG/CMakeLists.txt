@@ -13,7 +13,7 @@ endif()
 add_library(RNG
             RNG.C
             SmallCrush.C
-            BirthdaySpacings.C
+            TestU01Suite.C
             ${MKL_SOURCE}
             ${MKLRNG_SOURCE}
             ${MKLRNGWRAPPERS_SOURCE}
