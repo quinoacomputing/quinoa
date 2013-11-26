@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BirthdaySpacings.h
   \author    J. Bakosi
-  \date      Sat 23 Nov 2013 04:43:26 PM MST
+  \date      Sun 24 Nov 2013 12:39:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical tests suggested by George Marsaglia
   \details   Statistical tests suggested by George Marsaglia
@@ -21,7 +21,9 @@ class BirthdaySpacings : public Marsaglia {
 
   public:
     //! Constructor
-    explicit BirthdaySpacings(const unif01_Gen* const gen);
+    explicit BirthdaySpacings(const unif01_Gen* const gen) :
+      m_gen(gen),
+      m_res( PoissonResPtr( sres_CreatePoisson() ) ) {}
 
     //! Destructor
     ~BirthdaySpacings() noexcept override = default;
