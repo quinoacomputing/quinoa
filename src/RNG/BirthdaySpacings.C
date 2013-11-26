@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BirthdaySpacings.C
   \author    J. Bakosi
-  \date      Sat 23 Nov 2013 12:29:36 PM MST
+  \date      Mon 25 Nov 2013 09:12:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical tests suggested by George Marsaglia
   \details   Statistical tests suggested by George Marsaglia
@@ -18,16 +18,6 @@ extern "C" {
 #include <BirthdaySpacings.h>
 
 using rngtest::BirthdaySpacings;
-
-BirthdaySpacings::BirthdaySpacings(const unif01_Gen* const gen) :
-  m_gen(gen),
-  m_res( PoissonResPtr( sres_CreatePoisson() ) )
-//******************************************************************************
-//  Constructor
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
 
 double
 BirthdaySpacings::run()
