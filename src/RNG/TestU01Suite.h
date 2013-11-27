@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 11:12:42 PM MST
+  \date      Wed 27 Nov 2013 12:05:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -14,6 +14,7 @@
 extern "C" {
   #include <unif01.h>
   #include <sres.h>
+  #include <sknuth.h>
 }
 
 #include <Battery.h>
@@ -36,8 +37,9 @@ class TestU01Suite : public Battery {
     //! TestU01 external generator
     Gen01Ptr m_gen;
 
-    //! Marsaglia's BirthdaySpacing test
+    //! Statistical tests wrappers
     static double BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res );
+    static double Collision( unif01_Gen* gen, sknuth_Res2* res );
 
   private:
     //! Don't permit copy constructor

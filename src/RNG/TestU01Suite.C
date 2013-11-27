@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 10:55:30 PM MST
+  \date      Wed 27 Nov 2013 12:50:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -11,6 +11,7 @@
 
 extern "C" {
   #include <smarsa.h>
+  #include <sknuth.h>
 }
 
 #include <TestU01Suite.h>
@@ -20,7 +21,7 @@ using rngtest::TestU01Suite;
 double
 TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res )
 //******************************************************************************
-//  Run BirthdaySpacings test
+//  Run Marsdaglia's BirthdaySpacings test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -31,4 +32,16 @@ TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res )
 #endif
 
   return res->pVal2;
+}
+
+double
+TestU01Suite::Collision( unif01_Gen* gen, sknuth_Res2* res )
+//******************************************************************************
+//  Run Knuth's Collision test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  sknuth_Collision (gen, res, 1, 5 * MILLION, 0, 65536, 2);
+
+  return res->Pois->pVal2;
 }

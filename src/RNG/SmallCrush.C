@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 11:13:31 PM MST
+  \date      Wed 27 Nov 2013 12:50:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -46,18 +46,32 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
   }
 
   // Create TestU01 external generator
-  m_gen = Gen01Ptr(
-            unif01_CreateExternGen01( const_cast<char*>( m_rngname.c_str() ),
-                                      MKLRNGUniform ) );
+  char* const rngname = const_cast<char*>( m_rngname.c_str() );
+  m_gen =
+    Gen01Ptr( unif01_CreateExternGen01( rngname,
+                                        MKLRNGUniform ) );
 
   // Type specializations
+  struct BirthdaySpacings_info {
+    static const char* name() { return "Marsaglia's BirthdaySpacings"; }
+  };
   using BirthdaySpacingsTest = TestU01< sres_Poisson,
                                         sres_CreatePoisson,
                                         sres_DeletePoisson,
-                                        BirthdaySpacings >;
+                                        BirthdaySpacings,
+                                        BirthdaySpacings_info >;
+  struct Collision_info {
+    static const char* name() { return "Knuth's Collision"; }
+  };
+  using CollisionTest = TestU01< sknuth_Res2,
+                                 sknuth_CreateRes2,
+                                 sknuth_DeleteRes2,
+                                 Collision,
+                                 Collision_info >;
 
   // Add statistical tests to battery
   add< BirthdaySpacingsTest >( m_tests, m_gen );
+  add< CollisionTest >( m_tests, m_gen );
 }
 
 void

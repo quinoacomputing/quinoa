@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 09:16:55 AM MST
+  \date      Wed 27 Nov 2013 12:43:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -16,15 +16,16 @@
 namespace rngtest {
 
 //! TestU01 : StatTest
-template< typename ResPtr,                      //!< Raw pointer to results
-          ResPtr* (*Creator)(void),             //!< Results creator function
-          void (*Deleter)(ResPtr *),            //!< Results deleter function
-          double (*Run)(unif01_Gen*, ResPtr*) > //!< Test runner function
+template< typename Result,                      //!< Results type
+          Result* (*Creator)(void),             //!< Results creator function
+          void (*Deleter)(Result *),            //!< Results deleter function
+          double (*Run)(unif01_Gen*, Result*),  //!< Test runner function
+          typename Info >                       //!< Test info
 class TestU01 : public StatTest {
 
   public:
     //! Constructor
-    explicit TestU01(const unif01_Gen* const gen) :
+    explicit TestU01( const unif01_Gen* const gen ) :
       m_gen( gen ), m_res( ResultPtr( Creator() ) ) {};
 
     //! Destructor
@@ -37,7 +38,7 @@ class TestU01 : public StatTest {
     }
 
     //! Test name accessor
-    const char* name() const override { return m_res->name; }
+    const char* name() const override { return Info::name(); }
 
   private:
     //! Don't permit copy constructor
@@ -52,7 +53,7 @@ class TestU01 : public StatTest {
     const unif01_Gen* const m_gen;          //!< Raw ptr to TestU01 generator
 
     //! TestU01 results type with a custom deleter by TestU01
-    using ResultPtr = TestU01Ptr< ResPtr, Deleter >;
+    using ResultPtr = TestU01Ptr< Result, Deleter >;
     //! TestU01 results struct (wrapped to std::unique_ptr)
     ResultPtr m_res;
 };
