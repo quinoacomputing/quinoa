@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 12:50:07 PM MST
+  \date      Wed 27 Nov 2013 12:57:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -68,10 +68,19 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
                                  sknuth_DeleteRes2,
                                  Collision,
                                  Collision_info >;
+  struct Gap_info {
+    static const char* name() { return "Knuth's Gap"; }
+  };
+  using GapTest = TestU01< sres_Chi2,
+                           sres_CreateChi2,
+                           sres_DeleteChi2,
+                           Gap,
+                           Gap_info >;
 
   // Add statistical tests to battery
   add< BirthdaySpacingsTest >( m_tests, m_gen );
   add< CollisionTest >( m_tests, m_gen );
+  add< GapTest >( m_tests, m_gen );
 }
 
 void
