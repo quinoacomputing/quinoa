@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 10:48:38 PM MST
+  \date      Wed 27 Nov 2013 09:16:55 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -16,9 +16,10 @@
 namespace rngtest {
 
 //! TestU01 : StatTest
-template< typename ResPtr, ResPtr* (*Creator)(void), void (*Deleter)(ResPtr *),
-          double (*Run)(unif01_Gen*,
-                        typename TestU01Ptr<ResPtr, Deleter>::element_type*) >
+template< typename ResPtr,                      //!< Raw pointer to results
+          ResPtr* (*Creator)(void),             //!< Results creator function
+          void (*Deleter)(ResPtr *),            //!< Results deleter function
+          double (*Run)(unif01_Gen*, ResPtr*) > //!< Test runner function
 class TestU01 : public StatTest {
 
   public:
@@ -31,6 +32,7 @@ class TestU01 : public StatTest {
 
     //! Run
     double run() override {
+      // Pretty awful that TestU01 does not guarantee the constness of gen
       return Run( const_cast<unif01_Gen*>(m_gen), m_res.get() );
     }
 
