@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 12:50:42 PM MST
+  \date      Wed 27 Nov 2013 12:57:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -44,4 +44,16 @@ TestU01Suite::Collision( unif01_Gen* gen, sknuth_Res2* res )
   sknuth_Collision (gen, res, 1, 5 * MILLION, 0, 65536, 2);
 
   return res->Pois->pVal2;
+}
+
+double
+TestU01Suite::Gap( unif01_Gen* gen, sres_Chi2* res )
+//******************************************************************************
+//  Run Knuth's Gap test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  sknuth_Gap (gen, res, 1, MILLION / 5, 22, 0.0, .00390625);
+
+  return res->pVal2[gofw_Mean];
 }
