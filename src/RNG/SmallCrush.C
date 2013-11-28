@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 12:57:01 PM MST
+  \date      Wed 27 Nov 2013 10:45:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -23,7 +23,8 @@ extern "C" {
 
 namespace rngtest {
 
-extern std::unique_ptr< tk::RNG > g_rng;
+extern std::unique_ptr< tk::RNG > g_rng;        //!< RNG used by TestU01
+extern int g_tid;                               //!< Thread id used by TestU01
 
 } // rngtest::
 
@@ -47,9 +48,7 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
 
   // Create TestU01 external generator
   char* const rngname = const_cast<char*>( m_rngname.c_str() );
-  m_gen =
-    Gen01Ptr( unif01_CreateExternGen01( rngname,
-                                        MKLRNGUniform ) );
+  m_gen = Gen01Ptr( unif01_CreateExternGen01( rngname, MKLRNGUniform ) );
 
   // Type specializations
   struct BirthdaySpacings_info {
@@ -90,12 +89,45 @@ SmallCrush::run()
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  const RNGTestPrint& print = m_base.print;
+
+  print.part("Run");  
   swrite_Basic = FALSE; // no putput from TestU01
 
+  //g_tid = 0;
   //bbattery_SmallCrush( m_gen.get() );
 
-  for (auto& test : m_tests) {
-    test.pval = test.ptr->run();
-    std::cout << test.ptr->name() << " pval = " << test.pval << std::endl;
+  std::vector< double > pval( m_tests.size(), -1.0 );
+
+  size_t i;
+  #ifdef _OPENMP
+  #pragma omp parallel private(g_tid,i)
+  #endif
+  {
+    #ifdef _OPENMP
+    g_tid = omp_get_thread_num();
+    #else
+    g_tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (i=0; i<m_tests.size(); ++i) {
+      m_tests[i].pval = m_tests[i].ptr->run();
+      pval[i] = m_tests[i].pval;
+    }
   }
+
+  // Output failed test only
+  std::list< std::string > failed;
+  std::stringstream ss;
+  for (i=0; i<m_tests.size(); ++i) {
+    if ((pval[i] <= gofw_Suspectp) || (pval[i] >= 1.0 - gofw_Suspectp)) {
+      ss << m_tests[i].ptr->name() << ", pval = " << pval[i];
+      failed.push_back( ss.str() );
+    }
+  }
+  m_base.print.list( "Failed tests", failed );
+  m_base.print.endpart();
 }
