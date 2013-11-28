@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Thu 28 Nov 2013 10:31:36 AM MST
+  \date      Thu 28 Nov 2013 10:57:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -91,7 +91,7 @@ SmallCrush::run()
 {
   const RNGTestPrint& print = m_base.print;
 
-  print.part("Run");  
+  print.part("Running battery SmallCrush");
   swrite_Basic = FALSE; // no putput from TestU01
 
   //g_tid = 0;

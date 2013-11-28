@@ -85,18 +85,25 @@ if(HAS_PEDANTIC)
   add_definitions("-Wno-vla")
 endif()
 
-check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
-if(HAS_WREMARKS)
-  add_definitions("-Wremarks")
-endif()
-
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
+  # clang-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   add_definitions("-Wno-vla-extension")
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  # using GCC
+
+  # gcc-specific settings
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+
+  # intel-specific settings
+  check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
+  if(HAS_WREMARKS)
+    add_definitions("-Wremarks")
+  endif()
+
   # Intel-specific compiler arguments:
   # Suppress the following Intel compiler remarks:
   #   111: statement is unreachable
@@ -110,6 +117,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   #  3346: dynamic exception specifications are deprecated
   add_definitions("-diag-disable 111,193,304,383,444,981,1418,1599,3346")
   add_definitions("-opt-report=0")
+
 endif()
 
 # Include third-party libraries configuration
@@ -173,12 +181,4 @@ add_subdirectory(Paradigm)
 add_subdirectory(Physics)
 add_subdirectory(RNG)
 add_subdirectory(Statistics)
-#add_subdirectory(FEM)
-#add_subdirectory(Particles)
-#add_subdirectory(SDE)
-#add_subdirectory(WallTreatment)
-#add_subdirectory(ThirdParty/exodiff)
-#add_subdirectory(Utilities/forcenorm)
-#add_subdirectory(Utilities/divset)
-#add_subdirectory(test/rng)
 add_subdirectory(Main)
