@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 10:45:05 PM MST
+  \date      Thu 28 Nov 2013 10:31:36 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -114,8 +114,7 @@ SmallCrush::run()
     #pragma omp for
     #endif
     for (i=0; i<m_tests.size(); ++i) {
-      m_tests[i].pval = m_tests[i].ptr->run();
-      pval[i] = m_tests[i].pval;
+      pval[i] = m_tests[i]->run();
     }
   }
 
@@ -124,7 +123,7 @@ SmallCrush::run()
   std::stringstream ss;
   for (i=0; i<m_tests.size(); ++i) {
     if ((pval[i] <= gofw_Suspectp) || (pval[i] >= 1.0 - gofw_Suspectp)) {
-      ss << m_tests[i].ptr->name() << ", pval = " << pval[i];
+      ss << m_tests[i]->name() << ", pval = " << pval[i];
       failed.push_back( ss.str() );
     }
   }
