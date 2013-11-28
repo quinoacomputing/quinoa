@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 12:57:01 PM MST
+  \date      Wed 27 Nov 2013 07:59:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -94,8 +94,13 @@ SmallCrush::run()
 
   //bbattery_SmallCrush( m_gen.get() );
 
-  for (auto& test : m_tests) {
-    test.pval = test.ptr->run();
-    std::cout << test.ptr->name() << " pval = " << test.pval << std::endl;
+  for (size_t i=0; i<m_tests.size(); ++i) {
+    m_tests[i].pval = m_tests[i].ptr->run();
+    std::cout << m_tests[i].ptr->name() << " pval = " << m_tests[i].pval << std::endl;
   }
+
+//   for (auto& test : m_tests) {
+//     test.pval = test.ptr->run();
+//     std::cout << test.ptr->name() << " pval = " << test.pval << std::endl;
+//   }
 }

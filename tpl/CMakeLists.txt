@@ -174,12 +174,13 @@ ExternalProject_Add_Step(
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
+# This TPL has been forked: No PREFIX, no URL, no URL_MD5, instead we specify
+# SOURCE_DIR, containing own fork, and no need to copy the source either.
+# Changes are tracked in git repo in SOURCE_DIR.
 ExternalProject_Add(
   testu01
-  PREFIX testu01
-  URL ${PROJECT_SOURCE_DIR}/TestU01.zip
-  URL_MD5 ff9bd5106178c1ca0665691db8e57293
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3
+  CONFIGURE_COMMAND ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CXX=${UNDERLYING_CXX_COMPILER}
                     F77=${UNDERLYING_FORTRAN_COMPILER}
@@ -190,15 +191,6 @@ ExternalProject_Add(
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
-)
-# Keep a copy of the source
-ExternalProject_Get_Property(testu01 SOURCE_DIR)
-ExternalProject_Add_Step(
-  testu01 copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/testu01
 )
 
 #### Boost ####################################################################
