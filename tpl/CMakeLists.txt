@@ -21,10 +21,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Set src directory where the source of third-party libraries will be copied
-set(TPL_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
-MESSAGE(STATUS "Third-party library source dir: " ${TPL_SOURCE_DIR})
-
 # Set install directory based on compiler ID
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(TPL_INSTALL_DIR "${PROJECT_SOURCE_DIR}/install/${COMP}")
@@ -43,7 +39,7 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
   LOG_DOWNLOAD 1
 )
-# Header-only, copy include dir over, also copy source dir
+# Header-only, copy include dir over
 ExternalProject_Get_Property(pegtl SOURCE_DIR)
 ExternalProject_Add_Step(
   pegtl copy-source
@@ -51,9 +47,29 @@ ExternalProject_Add_Step(
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}/include
           ${TPL_INSTALL_DIR}/include/pegtl
+)
+
+#### Boost ####################################################################
+# http://www.boost.org
+# Header only
+ExternalProject_Add(
+  boost
+  PREFIX boost
+  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
+  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+)
+# Header-only, copy include dir over
+ExternalProject_Get_Property(boost SOURCE_DIR)
+ExternalProject_Add_Step(
+  boost copy-source
+  DEPENDEES download
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/pegtl
+          ${SOURCE_DIR}/boost
+          ${TPL_INSTALL_DIR}/include/boost
 )
 
 #### Trilinos #################################################################
@@ -76,15 +92,6 @@ ExternalProject_Add(
   LOG_BUILD 1
   LOG_INSTALL 1
 )
-# Keep a copy of the source
-ExternalProject_Get_Property(trilinos SOURCE_DIR)
-ExternalProject_Add_Step(
-  trilinos copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/packages/zoltan
-          ${TPL_SOURCE_DIR}/trilinos/packages/zoltan
-)
 
 #### HDF5 #####################################################################
 # http://www.hdfgroup.org/HDF5
@@ -101,15 +108,6 @@ ExternalProject_Add(
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
-)
-# Keep a copy of the source
-ExternalProject_Get_Property(hdf5 SOURCE_DIR)
-ExternalProject_Add_Step(
-  hdf5 copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/hdf5
 )
 
 #### H5Part ###################################################################
@@ -130,15 +128,6 @@ ExternalProject_Add(
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
-)
-# Keep a copy of the source
-ExternalProject_Get_Property(h5part SOURCE_DIR)
-ExternalProject_Add_Step(
-  h5part copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/h5part
 )
 
 #### Silo #####################################################################
@@ -161,15 +150,6 @@ ExternalProject_Add(
   LOG_BUILD 1
   LOG_INSTALL 1
 )
-# Keep a copy of the source
-ExternalProject_Get_Property(silo SOURCE_DIR)
-ExternalProject_Add_Step(
-  silo copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/silo
-)
 
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
@@ -190,39 +170,4 @@ ExternalProject_Add(
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
-)
-# Keep a copy of the source
-ExternalProject_Get_Property(testu01 SOURCE_DIR)
-ExternalProject_Add_Step(
-  testu01 copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/testu01
-)
-
-#### Boost ####################################################################
-# http://www.boost.org
-# Header only
-ExternalProject_Add(
-  boost
-  PREFIX boost
-  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
-  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over, also copy source dir
-ExternalProject_Get_Property(boost SOURCE_DIR)
-ExternalProject_Add_Step(
-  boost copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/boost
-          ${TPL_INSTALL_DIR}/include/boost
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}
-          ${TPL_SOURCE_DIR}/boost
 )
