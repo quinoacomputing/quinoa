@@ -72,7 +72,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       Paradigm
                       RNGTestControl
                       RNG
-                      #${TESTU01_PROBDIST_LIBRARY}
+                      ${TESTU01_PROBDIST_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
