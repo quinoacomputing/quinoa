@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed Oct 23 07:44:58 2013
+  \date      Fri 29 Nov 2013 03:15:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -28,6 +28,9 @@ std::string curtime();
 //! Echo MKL (Intel Math Kernel Library) version information
 void echoMKL(const tk::Print& print, const std::string& title);
 #endif
+
+//! Echo Boost library version information
+void echoBoost(const tk::Print& print, const std::string& title);
 
 //! Echo program title
 void echoHeader(const tk::Print& print, const std::string& title);
