@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Thu 24 Oct 2013 07:28:23 PM MDT
+  \date      Fri 29 Nov 2013 03:18:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -19,6 +19,8 @@
 #ifdef HAS_MKL
 #include <mkl_service.h>
 #endif
+
+#include <boost/version.hpp>
 
 #include <Init.h>
 #include <Exception.h>
@@ -92,6 +94,21 @@ void tk::echoMKL(const tk::Print& print, const std::string& title)
 }
 #endif
 
+void tk::echoBoost(const tk::Print& print, const std::string& title)
+//******************************************************************************
+//  Echo Boost C++ libraries version information
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::stringstream version;
+  version << (BOOST_VERSION / 100000) << "."
+          << ((BOOST_VERSION / 100) % 1000) << "."
+          << (BOOST_VERSION % 100);
+
+  print.subsection(title);
+  print.item("Version", version.str());
+}
+
 void tk::echoHeader(const Print& print, const std::string& title)
 //******************************************************************************
 //  Echo program title
@@ -128,10 +145,13 @@ void tk::echoBuildEnv(const Print& print, const std::string& executable)
   print.raw("\n");
 
 #ifdef HAS_MKL
-  echoMKL(print, "MKL, Intel Math Kernel Lib");
+  echoMKL(print, "Intel Math Kernel Library");
 #else
-  print.item("MKL, Intel Math Kernel Lib", "no");
+  print.item("Intel Math Kernel Library", "no");
 #endif
+  print.raw("\n");
+
+  echoBoost(print, "Boost C++ Libraries");
 }
 
 void tk::echoRunEnv(const Print& print, int argc, char** argv)
