@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 03:15:21 PM MST
+  \date      Fri 29 Nov 2013 05:30:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Common initialization for mains
-  \details   Common initialization for mains
+  \brief     Common initialization for all mains
+  \details   Common initialization for all mains
 */
 //******************************************************************************
 #ifndef Init_h
@@ -32,17 +32,22 @@ void echoMKL(const tk::Print& print, const std::string& title);
 //! Echo Boost library version information
 void echoBoost(const tk::Print& print, const std::string& title);
 
+//! Echo OpenMP runtime version information
+void echoOpenMP(const tk::Print& print, const std::string& title);
+
 //! Echo program title
 void echoHeader(const tk::Print& print, const std::string& title);
 
 //! Echo build environment
-void echoBuildEnv(const tk::Print& print, const std::string& executable);
+void echoBuildEnv( const tk::Print& print,
+                   const std::string& executable,
+                   void (*echoTPL)(const Print& print) );
 
 //! Echo runtime environment
 void echoRunEnv(const tk::Print& print, int argc, char** argv);
 
-//! Main() templated on driver
-template< class Driver >
+//! Main()
+template< class Driver, void (*echoTPL)(const Print& print) >
 int Main(int argc, char* argv[],
          const std::string& name,
          const std::string& executable)
@@ -66,8 +71,8 @@ int Main(int argc, char* argv[],
 
     // Echo environment
     print.part("Environment");
-    echoBuildEnv(print, executable);  //!< Build environment
-    echoRunEnv(print, argc, argv);    //!< Runtime environment
+    echoBuildEnv(print, executable, echoTPL);  //!< Build environment
+    echoRunEnv(print, argc, argv);             //!< Runtime environment
 
     // Create driver
     Driver driver(argc, argv, print);
