@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 08:09:30 AM MST
+  \date      Fri 29 Nov 2013 06:06:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -20,7 +20,7 @@ extern "C" {
 }
 
 #include <Battery.h>
-#include <TestU01Wrap.h>
+#include <TestU01Util.h>
 
 namespace rngtest {
 
