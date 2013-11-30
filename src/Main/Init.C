@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 03:18:42 PM MST
+  \date      Fri 29 Nov 2013 05:31:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -109,6 +109,23 @@ void tk::echoBoost(const tk::Print& print, const std::string& title)
   print.item("Version", version.str());
 }
 
+void tk::echoOpenMP(const tk::Print& print, const std::string& title)
+//******************************************************************************
+//  Echo OpenMP runtime version information
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::stringstream version;
+  #ifdef _OPENMP
+  version << _OPENMP;
+  #else
+  version << "n/a";
+  #endif
+
+  print.subsection(title);
+  print.item("Version", version.str());
+}
+
 void tk::echoHeader(const Print& print, const std::string& title)
 //******************************************************************************
 //  Echo program title
@@ -118,7 +135,9 @@ void tk::echoHeader(const Print& print, const std::string& title)
   print.header(title);
 }
 
-void tk::echoBuildEnv(const Print& print, const std::string& executable)
+void tk::echoBuildEnv( const Print& print,
+                       const std::string& executable,
+                       void (*echoTPL)(const Print& print) )
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/Config.h filled by
@@ -142,16 +161,21 @@ void tk::echoBuildEnv(const Print& print, const std::string& executable)
   print.item("MPI C++ wrapper", MPI_COMPILER);
   print.item("Underlying C++ compiler", COMPILER);
   print.item("Build date", BUILD_DATE);
-  print.raw("\n");
 
+  // TPLs used by all executables
+  print.raw("\n");
+  echoOpenMP(print, "OpenMP runtime");
+  print.raw("\n");
 #ifdef HAS_MKL
   echoMKL(print, "Intel Math Kernel Library");
 #else
   print.item("Intel Math Kernel Library", "no");
 #endif
   print.raw("\n");
-
   echoBoost(print, "Boost C++ Libraries");
+
+  // TPLs used by this executable
+  echoTPL(print);
 }
 
 void tk::echoRunEnv(const Print& print, int argc, char** argv)

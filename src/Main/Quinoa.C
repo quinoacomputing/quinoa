@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Sat 02 Nov 2013 11:00:22 AM MDT
+  \date      Fri 29 Nov 2013 05:01:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa main
   \details   Quinoa main
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <Init.h>
+#include <InitQuinoa.h>
 #include <Config.h>
 #include <QuinoaDriver.h>
 
@@ -19,6 +20,9 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  return tk::Main< quinoa::QuinoaDriver >( argc, argv,
-           "Quinoa: Lagrangian particle hydrodynamics", QUINOA_EXECUTABLE);
+  return tk::Main< quinoa::QuinoaDriver, quinoa::echoTPL >
+                 ( argc,
+                   argv,
+                   "Quinoa: Lagrangian particle hydrodynamics",
+                   QUINOA_EXECUTABLE );
 }
