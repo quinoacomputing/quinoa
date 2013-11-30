@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 10:03:59 AM MST
+  \date      Fri 29 Nov 2013 07:19:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -88,7 +88,28 @@ class RNGTestPrint : public tk::Print {
       }
     }
 
-    //! Print failed statistical tests' names and p-values
+    //! Print statistical test names and number of p-values produced
+    template< class StatTest, class TestContainer >
+    void names( const TestContainer& tests ) const {
+      using Psize = typename StatTest::Pvals::size_type;
+      using Tsize = typename TestContainer::size_type;
+      Tsize ntest = tests.size();
+      for (Tsize i=0; i<ntest; ++i) {
+        Psize npval = tests[i]->nresult();
+        for (Psize p=0; p<npval; ++p) {
+          std::string name( tests[i]->name(p) );
+          if (p>0) name += " *";
+          std::cout << m_list_item_fmt % m_item_indent % name;
+        }
+      }
+      raw( "\n" );
+      raw( m_item_indent +
+           std::string("Note: Tests followed by an asterisk (*) are\n") +
+           m_item_indent +
+           std::string("statistics computed from the preceding test.\n") );
+    }
+
+    //! Print failed statistical test names and p-values
     template< class StatTest, class TestContainer >
     void failed( const std::string& name,
                  const std::vector< typename StatTest::Pvals >& pvals,

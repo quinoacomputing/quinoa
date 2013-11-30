@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.h
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 10:09:03 PM MST
+  \date      Fri 29 Nov 2013 06:24:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -23,10 +23,13 @@ class BigCrush : public TestU01Suite {
     explicit BigCrush(const Base& base) : TestU01Suite(base) {}
 
     //! Destructor
-    virtual ~BigCrush() noexcept = default;
+    ~BigCrush() noexcept override = default;
 
     //! Run battery of RNG tests
-    virtual void run() override { std::cout << "BigCrush::run() unimplemented!" << std::endl; }
+    void run() override { std::cout << "BigCrush::run() unimplemented!" << std::endl; }
+
+    //! Print list of registered statistical tests
+    void print() const override {  std::cout << "BigCrush::print() unimplemented!" << std::endl; }
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 09:58:54 AM MST
+  \date      Fri 29 Nov 2013 06:52:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -193,4 +193,15 @@ SmallCrush::run()
   m_base.print.failed< StatTest >( "Failed tests", m_pvals, m_tests );
 
   m_base.print.endpart();
+}
+
+void
+SmallCrush::print() const
+//******************************************************************************
+//  Print list of registered statistical tests
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Output test names and number of p-values produces
+  m_base.print.names< StatTest >( m_tests );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/StatTest.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 08:17:27 AM MST
+  \date      Fri 29 Nov 2013 06:49:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -33,6 +33,9 @@ class StatTest {
     //! Test name accessor
     virtual const Names::value_type&
     name( const Names::size_type& i ) const = 0;
+
+    //! Number of results/test accessor
+    virtual const Names::size_type& nresult() const = 0;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 06:39:36 PM MST
+  \date      Fri 29 Nov 2013 06:56:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -58,14 +58,14 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   //! Initialize factories
   initFactories( print );
 
-  //! Echo information on random number generator test suite to be created
-  echo();
-
   // Instantiate battery
   ctr::BatteryType b = m_control->get< ctr::selected, ctr::battery >();
   if (b != ctr::BatteryType::NO_BATTERY) {
     m_battery = std::unique_ptr< Battery >( m_batteryFactory[b]() );
   }
+
+  //! Echo information on random number generator test suite to be created
+  echo();
 
   // Echo 'unspecified' if not battery is unspecified
   if (!m_battery) {
@@ -105,8 +105,11 @@ RNGTestDriver::echo()
   print.endpart();
   print.part("Problem");
   print.section("Title", control.get<ctr::title>());
-  print.Section<ctr::Battery, ctr::selected, ctr::battery>();
 
+  print.Section<ctr::Battery, ctr::selected, ctr::battery>();
+  m_battery->print();
+
+  print.section("RNG(s) tested");
   print.Mklparams< quinoa::ctr::RNG,
                    quinoa::ctr::MKLUniformMethod,
                    quinoa::ctr::MKLGaussianMethod >

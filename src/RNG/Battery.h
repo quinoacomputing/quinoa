@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Battery.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 09:40:05 AM MST
+  \date      Fri 29 Nov 2013 06:20:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -28,6 +28,9 @@ class Battery {
 
     //! Run battery of RNG tests
     virtual void run() = 0;
+
+    //! Print list of registered statistical tests
+    virtual void print() const = 0;
 
     //! Container type for statistical tests
     using TestContainer = std::vector< std::unique_ptr< StatTest > >;

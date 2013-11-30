@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 08:35:32 AM MST
+  \date      Fri 29 Nov 2013 06:49:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -45,6 +45,9 @@ class TestU01 : public StatTest {
               "Indexing outside of container bounds in TestU01::names()" );
       return m_names[i];
     }
+
+    //! Number of results/test (i.e., p-values) accessor
+    const Names::size_type& nresult() const override { return m_npval; }
 
   private:
     //! Don't permit copy constructor

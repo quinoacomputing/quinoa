@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 06:06:23 PM MST
+  \date      Fri 29 Nov 2013 06:25:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -32,6 +32,9 @@ class SmallCrush : public TestU01Suite {
 
     //! Run battery of RNG tests
     void run() override;
+
+    //! Print list of registered statistical tests
+    void print() const override;
 
   private:
     //! Don't permit copy constructor
