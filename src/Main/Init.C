@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 05:31:04 PM MST
+  \date      Fri 29 Nov 2013 07:17:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -152,11 +152,11 @@ void tk::echoBuildEnv( const Print& print,
   print.item("Revision", GIT_COMMIT);
   print.item("CMake build type", BUILD_TYPE);
 #ifdef NDEBUG
-  print.item("Asserts", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
-  print.item("Exception trace", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
+  print.item("Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
+  print.item("Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
 #else
-  print.item("Asserts", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
-  print.item("Exception trace", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
+  print.item("Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
+  print.item("Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
 #endif
   print.item("MPI C++ wrapper", MPI_COMPILER);
   print.item("Underlying C++ compiler", COMPILER);
