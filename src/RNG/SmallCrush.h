@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 09:20:25 AM MST
+  \date      Fri 29 Nov 2013 06:06:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -15,7 +15,7 @@ extern "C" {
   #include <unif01.h>
 }
 
-#include <TestU01Wrap.h>
+#include <TestU01Util.h>
 #include <TestU01Suite.h>
 
 namespace rngtest {
