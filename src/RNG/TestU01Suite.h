@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 06:06:29 PM MST
+  \date      Sat 30 Nov 2013 10:06:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -36,8 +36,8 @@ class TestU01Suite : public Battery {
 
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-    //! TestU01 external generator
-    Gen01Ptr m_gen;
+    //! TestU01 external generators
+    std::vector< Gen01Ptr > m_gen;
 
     //! Statistical tests wrappers
     using Pvals = StatTest::Pvals;
