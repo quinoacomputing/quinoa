@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.h
   \author    J. Bakosi
-  \date      Mon 25 Nov 2013 10:08:57 PM MST
+  \date      Fri 29 Nov 2013 06:25:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -23,10 +23,13 @@ class Crush : public TestU01Suite {
     explicit Crush(const Base& base) : TestU01Suite(base) {}
 
     //! Destructor
-    virtual ~Crush() noexcept = default;
+    ~Crush() noexcept override = default;
 
     //! Run battery of RNG tests
-    virtual void run() override { std::cout << "Crush::run() unimplemented!" << std::endl; }
+    void run() override { std::cout << "Crush::run() unimplemented!" << std::endl; }
+
+    //! Print list of registered statistical tests
+    void print() const override {  std::cout << "Crush::print() unimplemented!" << std::endl; }
 
   private:
     //! Don't permit copy constructor

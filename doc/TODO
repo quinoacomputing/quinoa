@@ -11,6 +11,13 @@
   false positives) in MKL and non-MKL code. May need to implement another random
   number library.
 
+* RNGTest:
+    - Output number of failed tests / number of total tests
+    - Output runtime information
+    - Add task-based parallelism using (optional) TBB
+    - Test multiple RNGs simultaneously - need to remove limitations on
+      TestU01's single external RNG
+
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
     - Regression tests
