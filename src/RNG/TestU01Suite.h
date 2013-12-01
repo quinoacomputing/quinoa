@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 27 Nov 2013 12:53:58 PM MST
+  \date      Sat 30 Nov 2013 10:06:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -14,11 +14,13 @@
 extern "C" {
   #include <unif01.h>
   #include <sres.h>
+  #include <sstring.h>
   #include <sknuth.h>
+  #include <swalk.h>
 }
 
 #include <Battery.h>
-#include <TestU01Wrap.h>
+#include <TestU01Util.h>
 
 namespace rngtest {
 
@@ -34,13 +36,21 @@ class TestU01Suite : public Battery {
 
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-    //! TestU01 external generator
-    Gen01Ptr m_gen;
+    //! TestU01 external generators
+    std::vector< Gen01Ptr > m_gen;
 
     //! Statistical tests wrappers
-    static double BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res );
-    static double Collision( unif01_Gen* gen, sknuth_Res2* res );
-    static double Gap( unif01_Gen* gen, sres_Chi2* res );
+    using Pvals = StatTest::Pvals;
+    static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res );
+    static Pvals Collision( unif01_Gen* gen, sknuth_Res2* res );
+    static Pvals Gap( unif01_Gen* gen, sres_Chi2* res );
+    static Pvals SimpPoker( unif01_Gen* gen, sres_Chi2* res );
+    static Pvals CouponCollector( unif01_Gen* gen, sres_Chi2* res );
+    static Pvals MaxOft( unif01_Gen* gen, sknuth_Res1* res );
+    static Pvals WeightDistrib( unif01_Gen* gen, sres_Chi2* res );
+    static Pvals MatrixRank( unif01_Gen* gen, sres_Chi2* res );
+    static Pvals HammingIndep( unif01_Gen* gen, sstring_Res* res );
+    static Pvals RandomWalk1( unif01_Gen* gen, swalk_Res* res );
 
   private:
     //! Don't permit copy constructor

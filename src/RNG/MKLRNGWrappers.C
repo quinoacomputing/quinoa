@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNGWrappers.C
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 06:15:11 PM MST
+  \date      Sat 30 Nov 2013 10:51:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL RNG wrappers
   \details   MKL RNG wrappers
@@ -10,22 +10,24 @@
 //******************************************************************************
 
 #include <memory>
+#include <vector>
 
 #include <MKLRNGWrappers.h>
-#include <RNG.h>
 
 namespace rngtest {
 
-std::unique_ptr< tk::RNG > g_rng;
+std::vector< std::unique_ptr<tk::RNG> > g_rng;       //!< RNGs
+Rsize g_rid;                                         //!< RNG id
+std::vector< int > g_tid;                            //!< Global thread ids
 
-double MKLRNGUniform()
+double MKLRNGUniform(void*, void*)
 //******************************************************************************
 //  TestU01 MKL uniform RNG wrapper
 //! \author  J. Bakosi
 //******************************************************************************
 {
   double r;
-  g_rng->uniform( 0, 1, &r );
+  g_rng[ g_rid ]->uniform( g_tid[g_rid], 1, &r );
   return r;
 }
 

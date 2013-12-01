@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Thu 24 Oct 2013 07:28:23 PM MDT
+  \date      Fri 29 Nov 2013 07:17:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -19,6 +19,8 @@
 #ifdef HAS_MKL
 #include <mkl_service.h>
 #endif
+
+#include <boost/version.hpp>
 
 #include <Init.h>
 #include <Exception.h>
@@ -92,6 +94,38 @@ void tk::echoMKL(const tk::Print& print, const std::string& title)
 }
 #endif
 
+void tk::echoBoost(const tk::Print& print, const std::string& title)
+//******************************************************************************
+//  Echo Boost C++ libraries version information
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::stringstream version;
+  version << (BOOST_VERSION / 100000) << "."
+          << ((BOOST_VERSION / 100) % 1000) << "."
+          << (BOOST_VERSION % 100);
+
+  print.subsection(title);
+  print.item("Version", version.str());
+}
+
+void tk::echoOpenMP(const tk::Print& print, const std::string& title)
+//******************************************************************************
+//  Echo OpenMP runtime version information
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::stringstream version;
+  #ifdef _OPENMP
+  version << _OPENMP;
+  #else
+  version << "n/a";
+  #endif
+
+  print.subsection(title);
+  print.item("Version", version.str());
+}
+
 void tk::echoHeader(const Print& print, const std::string& title)
 //******************************************************************************
 //  Echo program title
@@ -101,7 +135,9 @@ void tk::echoHeader(const Print& print, const std::string& title)
   print.header(title);
 }
 
-void tk::echoBuildEnv(const Print& print, const std::string& executable)
+void tk::echoBuildEnv( const Print& print,
+                       const std::string& executable,
+                       void (*echoTPL)(const Print& print) )
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/Config.h filled by
@@ -116,22 +152,30 @@ void tk::echoBuildEnv(const Print& print, const std::string& executable)
   print.item("Revision", GIT_COMMIT);
   print.item("CMake build type", BUILD_TYPE);
 #ifdef NDEBUG
-  print.item("Asserts", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
-  print.item("Exception trace", "off (CMAKE_BUILD_TYPE=DEBUG turns this on)");
+  print.item("Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
+  print.item("Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
 #else
-  print.item("Asserts", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
-  print.item("Exception trace", "on (CMAKE_BUILD_TYPE=RELEASE turns this off)");
+  print.item("Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
+  print.item("Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
 #endif
   print.item("MPI C++ wrapper", MPI_COMPILER);
   print.item("Underlying C++ compiler", COMPILER);
   print.item("Build date", BUILD_DATE);
-  print.raw("\n");
 
+  // TPLs used by all executables
+  print.raw("\n");
+  echoOpenMP(print, "OpenMP runtime");
+  print.raw("\n");
 #ifdef HAS_MKL
-  echoMKL(print, "MKL, Intel Math Kernel Lib");
+  echoMKL(print, "Intel Math Kernel Library");
 #else
-  print.item("MKL, Intel Math Kernel Lib", "no");
+  print.item("Intel Math Kernel Library", "no");
 #endif
+  print.raw("\n");
+  echoBoost(print, "Boost C++ Libraries");
+
+  // TPLs used by this executable
+  echoTPL(print);
 }
 
 void tk::echoRunEnv(const Print& print, int argc, char** argv)
