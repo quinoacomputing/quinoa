@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Sat 30 Nov 2013 11:23:36 PM MST
+  \date      Mon 02 Dec 2013 09:45:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -18,14 +18,11 @@ extern "C" {
 }
 
 #include <SmallCrush.h>
-#include <MKLRNGWrappers.h>
 #include <TestU01.h>
 
 namespace rngtest {
 
-extern std::vector< std::unique_ptr<tk::RNG> > g_rng;  //!< RNGs
-extern Rsize g_rid;                                    //!< RNG id
-extern std::vector< int > g_tid;                       //!< Thread ids
+extern int g_tid;               //!< Global thread id (in TestU01Suite.C)
 
 } // rngtest::
 
@@ -41,112 +38,96 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
   std::vector< ctr::RNGType > rngs =
     m_base.control.get< ctr::selected, ctr::rng >();
 
-  // Instantiate all RNGs selected
+  // Instantiate all selected RNGs and add statistical tests for each
   for (const auto& r : rngs) {
     if (r != ctr::RNGType::NO_RNG) {
-
-      // Save name of random number generator
-      std::string name( quinoa::ctr::RNG().name( r ) );
-
-      // Instantiate random number generator
-      g_rng.push_back( std::unique_ptr< tk::RNG >( m_base.rng[r]() ) );
-
-      // Create associated TestU01 external generator
-      char* const rngname = const_cast<char*>( name.c_str() );
-      m_gen.push_back(
-        Gen01Ptr( unif01_CreateExternGen01( rngname, MKLRNGUniform ) ) );
-
-      // Add statistical tests to battery of RNG just instantiated
-      m_tests.push_back( TestContainer() );
-      m_pvals.push_back( std::vector< StatTest::Pvals >() );
-      addTests( m_gen.back(), m_tests.back(), m_pvals.back() );
+      int id = m_rng[r];                // Get RNG id
+      m_testRNGs.push_back( id );       // Build vector of RNG ids to test
+      addTests( m_gen[ id ], r );       // Add tests to battery for this RNG
     }
   }
 }
 
 void
-SmallCrush::addTests( const Gen01Ptr& gen,
-                      TestContainer& tests,
-                      std::vector< StatTest::Pvals >& pvals )
+SmallCrush::addTests( const Gen01Ptr& gen, const quinoa::ctr::RNGType& rng )
 //******************************************************************************
 // Add statistical tests to battery, count up total number of p-values
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Poisson,
                   sres_CreatePoisson,
                   sres_DeletePoisson,
                   BirthdaySpacings > >
-       ( tests, gen, StatTest::Names({"Birthday Spacings"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Birthday Spacings"}) ) );
   
-
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sknuth_Res2,
                   sknuth_CreateRes2,
                   sknuth_DeleteRes2,
                   Collision > >
-       ( tests, gen, StatTest::Names({"Collision"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Collision"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Chi2,
                   sres_CreateChi2,
                   sres_DeleteChi2,
                   Gap > >
-       ( tests, gen, StatTest::Names({"Gap"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Gap"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Chi2,
                   sres_CreateChi2,
                   sres_DeleteChi2,
                   SimpPoker > >
-       ( tests, gen, StatTest::Names({"Simplified Poker"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Simplified Poker"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Chi2,
                   sres_CreateChi2,
                   sres_DeleteChi2,
                   CouponCollector > >
-       ( tests, gen, StatTest::Names({"Coupon Collector"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Coupon Collector"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sknuth_Res1,
                   sknuth_CreateRes1,
                   sknuth_DeleteRes1,
                   MaxOft > >
-       ( tests, gen,
+       ( m_tests, gen, rng,
          StatTest::Names({"Maximum-of-t",
                           "Maximum-of-t Anderson-Darling"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Chi2,
                   sres_CreateChi2,
                   sres_DeleteChi2,
                   WeightDistrib > >
-       ( tests, gen,
+       ( m_tests, gen, rng,
          StatTest::Names({"Weight Distribution"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sres_Chi2,
                   sres_CreateChi2,
                   sres_DeleteChi2,
                   MatrixRank > >
-       ( tests, gen, StatTest::Names({"Matrix Rank"}) ) );
+       ( m_tests, gen, rng, StatTest::Names({"Matrix Rank"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< sstring_Res,
                   sstring_CreateRes,
                   sstring_DeleteRes,
                   HammingIndep > >
-       ( tests, gen,
+       ( m_tests, gen, rng,
          StatTest::Names({"Hamming Independence"}) ) );
 
-  pvals.push_back(
+  m_pvals.push_back(
     add< TestU01< swalk_Res,
                   swalk_CreateRes,
                   swalk_DeleteRes,
                   RandomWalk1 > >
-       ( tests, gen,
+       ( m_tests, gen, rng,
          StatTest::Names({"Random Walk 1 Stat H",
                           "Random Walk 1 Stat M",
                           "Random Walk 1 Stat J",
@@ -161,50 +142,69 @@ SmallCrush::run()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   const RNGTestPrint& print = m_base.print;
-// 
-//   print.part("Run SmallCrush");
-//   swrite_Basic = FALSE;         // Want screen no putput from TestU01
-// 
-//   //g_tid = 0;
-//   //bbattery_SmallCrush( m_gen.get() );
-// 
-//   using Pvals = StatTest::Pvals;
-//   using Psize = Pvals::size_type;
-//   using Tsize = TestContainer::size_type;
-// 
-//   Tsize ntest = m_tests.size();
-// 
-//   #ifdef _OPENMP
-//   #pragma omp parallel private(g_tid)
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     g_tid = omp_get_thread_num();
-//     #else
-//     g_tid = 0;
-//     #endif
-// 
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
-//     for (Tsize i=0; i<ntest; ++i) {
-//       // Run test
-//       Pvals pvals = m_tests[i]->run();
-//       // Evaluate test
-//       Psize npval = pvals.size();
-//       for (Psize p=0; p<npval; ++p) {
-//         if ((pvals[p] <= gofw_Suspectp) || (pvals[p] >= 1.0 - gofw_Suspectp)) {
-//           m_pvals[i][p] = pvals[p];
-//         }
-//       }
-//     }
-//   }
-// 
-//   // Output failed tests
-//   m_base.print.failed< StatTest >( "Failed tests", m_pvals, m_tests );
-// 
-//   m_base.print.endpart();
+  const RNGTestPrint& print = m_base.print;
+
+  print.part("Run SmallCrush");
+  swrite_Basic = FALSE;         // Want screen no putput from TestU01
+
+//   g_tid = 0;
+//   bbattery_SmallCrush( m_gen[ m_testRNGs[0] ].get() );
+//   bbattery_SmallCrush( m_gen[ m_testRNGs[1] ].get() );
+
+  using Pvals = StatTest::Pvals;
+  using Psize = Pvals::size_type;
+  using Tsize = TestContainer::size_type;
+
+  Tsize ntest = m_tests.size();
+
+  #ifdef _OPENMP
+  #pragma omp parallel private(g_tid)
+  #endif
+  {
+    #ifdef _OPENMP
+    g_tid = omp_get_thread_num();
+    #else
+    g_tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (Tsize i=0; i<ntest; ++i) {
+      // Run test
+      Pvals pvals = m_tests[i]->run();
+      // Evaluate test: only save suspect p-values
+      Psize npval = pvals.size();
+      for (Psize p=0; p<npval; ++p) {
+        if ((pvals[p] <= gofw_Suspectp) || (pvals[p] >= 1.0 - gofw_Suspectp)) {
+          m_pvals[i][p] = pvals[p];
+        }
+      }
+    }
+  }
+
+  // Count up total and failed tests
+  using Pval = StatTest::Pvals::value_type;
+  StatTest::Pvals::size_type total = 0, failed = 0;
+  Pval Eps = std::numeric_limits< Pval >::epsilon();
+  for (const auto& t : m_pvals) {
+    for (const auto& p : t) {
+      ++total;
+      if (fabs(p+1.0) > Eps) {
+        ++failed;
+      }
+    }
+  }
+
+  // Output failed tests
+  if (failed) {
+    m_base.print.failed< StatTest >
+                       ( "Failed tests", total, failed, m_pvals, m_tests );
+  } else {
+    m_base.print.section("All tests passed.");
+  }
+
+  m_base.print.endpart();
 }
 
 void
@@ -214,7 +214,6 @@ SmallCrush::print() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Output test names and number of p-values produced.
-  // The first one suffices as all are the same.
-  m_base.print.names< StatTest >( m_tests[0] );
+  // Output test names (only for the first RNG tested, the rest are repeats)
+  m_base.print.names< StatTest >( m_tests, m_tests.size()/m_testRNGs.size() );
 }

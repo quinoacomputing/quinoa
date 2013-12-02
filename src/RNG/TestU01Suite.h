@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 30 Nov 2013 10:06:43 PM MST
+  \date      Mon 02 Dec 2013 09:58:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -24,20 +24,42 @@ extern "C" {
 
 namespace rngtest {
 
+//! Global pointers to RNGs (in TestU01Suite.C)
+extern std::vector< std::unique_ptr< tk::RNG > > g_rng;
+
 //! TestU01 random number generator test suite
 class TestU01Suite : public Battery {
 
   protected:
     //! Constructor
-    explicit TestU01Suite(const Base& base) : Battery(base) {}
+    explicit TestU01Suite(const Base& base);
 
     //! Destructor
     ~TestU01Suite() noexcept override = default;
 
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-    //! TestU01 external generators
+    //! TestU01 external RNGs (associated to all of quinoa's RNGs)
     std::vector< Gen01Ptr > m_gen;
+    //! TestU01 external RNGs associated to an integer id
+    std::map< quinoa::ctr::RNGType, int > m_rng;
+
+    //! Ids of RNGs tested
+    std::vector< int > m_testRNGs;
+
+    template< int id>
+    void addRNG( quinoa::ctr::RNGType rng,
+                 double (*wrap)(void*,void*),
+                 unsigned long (*wrap_bits)(void*,void*)) {
+      // Create new RNG and store its pointer in global scope
+      g_rng.push_back( std::unique_ptr< tk::RNG >( m_base.rng[rng]() ) );
+      // Create new TestU01 external RNG and associate global-scope wrapper
+      char* const name = const_cast<char*>( quinoa::ctr::RNG().name(rng).c_str() );
+      m_gen.push_back(
+        Gen01Ptr( unif01_CreateExternGen01( name, wrap, wrap_bits ) ) );
+      // Associate rng to id
+      m_rng[ rng ] = id;
+    }
 
     //! Statistical tests wrappers
     using Pvals = StatTest::Pvals;

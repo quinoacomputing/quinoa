@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 05:02:17 PM MST
+  \date      Mon 02 Dec 2013 06:03:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -23,6 +23,6 @@ int main(int argc, char* argv[])
   return tk::Main< rngtest::RNGTestDriver, rngtest::echoTPL >
                  ( argc,
                    argv,
-                   "Quinoa: Random number generator test suite",
+                   "Quinoa: Random number generator (RNG) test suite",
                    RNGTEST_EXECUTABLE);
 }
