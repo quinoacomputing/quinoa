@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 08:16:24 AM MST
+  \date      Mon 02 Dec 2013 09:52:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -17,8 +17,63 @@ extern "C" {
 
 #include <TestU01Suite.h>
 
+namespace rngtest {
+
+std::vector< std::unique_ptr< tk::RNG > > g_rng;  //!< Global pointers to RNGs
+int g_tid;                                        //!< Global thread id
+
+template< int id >
+static double uniform(void*, void*)
+//******************************************************************************
+//  TestU01 uniform RNG wrapper
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  double r;
+  g_rng[id]->uniform( g_tid, 1, &r );
+  return r;
+}
+
+template< int id >
+static unsigned long uniform_bits(void*, void*)
+//******************************************************************************
+//  TestU01 uniform RNG bits wrapper
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  double r;
+  g_rng[id]->uniform( g_tid, 1, &r );
+  return static_cast<unsigned long>(r * unif01_NORM32);
+}
+
+} // rngtest::
+
 using rngtest::TestU01Suite;
 using Pvals = rngtest::StatTest::Pvals;
+
+TestU01Suite::TestU01Suite( const Base& base ) : Battery(base)
+//******************************************************************************
+//  Constructor
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using quinoa::ctr::RNGType;
+
+  addRNG< 0>( RNGType::MKL_MCG31,     uniform< 0>, uniform_bits< 0> );
+  addRNG< 1>( RNGType::MKL_R250,      uniform< 1>, uniform_bits< 1> );
+  addRNG< 2>( RNGType::MKL_MRG32K3A,  uniform< 2>, uniform_bits< 2> );
+  addRNG< 3>( RNGType::MKL_MCG59,     uniform< 3>, uniform_bits< 3> );
+  addRNG< 4>( RNGType::MKL_WH,        uniform< 4>, uniform_bits< 4> );
+  addRNG< 5>( RNGType::MKL_MT19937,   uniform< 5>, uniform_bits< 5> );
+  addRNG< 6>( RNGType::MKL_MT2203,    uniform< 6>, uniform_bits< 6> );
+  addRNG< 7>( RNGType::MKL_SFMT19937, uniform< 7>, uniform_bits< 7> );
+  addRNG< 8>( RNGType::MKL_SOBOL,     uniform< 8>, uniform_bits< 8> );
+  addRNG< 9>( RNGType::MKL_NIEDERR,   uniform< 9>, uniform_bits< 9> );
+  //addRNG<10>( RNGType::MKL_IABSTRACT, uniform<10>, uniform_bits<10> );
+  //addRNG<11>( RNGType::MKL_DABSTRACT, uniform<11>, uniform_bits<11> );
+  //addRNG<12>( RNGType::MKL_SABSTRACT, uniform<12>, uniform_bits<12> );
+  //addRNG<13>( RNGType::MKL_NONDETERM, uniform<13>, uniform_bits<13> );
+}
 
 Pvals
 TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res )

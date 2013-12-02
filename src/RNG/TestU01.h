@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 06:49:28 PM MST
+  \date      Mon 02 Dec 2013 05:43:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -24,8 +24,11 @@ class TestU01 : public StatTest {
 
   public:
     //! Constructor
-    explicit TestU01( const unif01_Gen* const gen, Names&& names ) :
+    explicit TestU01( const unif01_Gen* const gen,
+                      const quinoa::ctr::RNGType& rng,
+                      Names&& names ) :
       m_gen( gen ),
+      m_rng( rng ),
       m_npval( names.size() ),
       m_names( std::move(names) ),
       m_res( ResultPtr( Creator() ) ) {};
@@ -49,6 +52,9 @@ class TestU01 : public StatTest {
     //! Number of results/test (i.e., p-values) accessor
     const Names::size_type& nresult() const override { return m_npval; }
 
+    //! RNG enum accessor
+    const quinoa::ctr::RNGType& rng() const override { return m_rng; }
+
   private:
     //! Don't permit copy constructor
     TestU01(const TestU01&) = delete;
@@ -60,6 +66,7 @@ class TestU01 : public StatTest {
     TestU01& operator=(TestU01&&) = delete;
 
     const unif01_Gen* const m_gen;             //!< Raw ptr to TestU01 generator
+    const quinoa::ctr::RNGType m_rng;          //!< RNG selected
     const Names::size_type m_npval;            //!< Number of p-values produced
     const Names m_names;                       //!< Name(s) of tests
 
