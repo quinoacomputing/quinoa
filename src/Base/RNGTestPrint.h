@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 09:42:15 PM MST
+  \date      Tue 03 Dec 2013 01:38:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -65,29 +65,39 @@ class RNGTestPrint : public tk::Print {
       }
     }
 
+    template< typename UniformMethod, typename GaussianMethod >
+    void echoMKLParams( const quinoa::ctr::MKLRNGParam& p ) const {
+      tk::Option< UniformMethod > um;
+      tk::Option< GaussianMethod > gm;
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % "seed"
+                   % p.get<quinoa::ctr::seed>();
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % um.group()
+                   % um.name( p.get<quinoa::ctr::uniform_method>() );
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % gm.group()
+                   % gm.name( p.get<quinoa::ctr::gaussian_method>() );
+    }
+
     //! Print all fields of MKL RNG parameters
     template< typename RNG, typename UniformMethod, typename GaussianMethod,
               typename MapType >
-    void Mklparams( const MapType& map ) const {
+    void Mklparams( const std::vector< quinoa::ctr::RNGType >& vec,
+                    const MapType& map ) const {
       tk::Option< RNG > rng;
-      tk::Option< UniformMethod > um;
-      tk::Option< GaussianMethod > gm;
-      for (auto& m : map) {
-        subsection( rng.name(m.first) );
-        std::cout << m_item_name_value_fmt
-                     % m_item_indent
-                     % "seed"
-                     % m.second.template get<quinoa::ctr::seed>();
-        std::cout << m_item_name_value_fmt
-                     % m_item_indent
-                     % um.group()
-                     % um.name(
-                         m.second.template get<quinoa::ctr::uniform_method>() );
-        std::cout << m_item_name_value_fmt
-                     % m_item_indent
-                     % gm.group()
-                     % gm.name(
-                         m.second.template get<quinoa::ctr::gaussian_method>() );
+      for (const auto& r : vec) {
+        subsection( rng.name(r) );
+        const auto& m = map.find(r);
+        if (m == map.end()) {   // no parameter map entry, using defaults
+          echoMKLParams< UniformMethod, GaussianMethod >
+                       ( quinoa::ctr::MKLRNGParam() );
+        } else {
+          echoMKLParams< UniformMethod, GaussianMethod >( m->second );
+        }
         endsubsection();
       }
     }
@@ -95,7 +105,8 @@ class RNGTestPrint : public tk::Print {
     //! Print statistical test names
     template< class StatTest, class TestContainer >
     void names( const TestContainer& tests,
-                const typename TestContainer::size_type& ntest ) const {
+                const typename TestContainer::size_type& ntest ) const
+    {
       using Psize = typename StatTest::Pvals::size_type;
       using Tsize = typename TestContainer::size_type;
       for (Tsize i=0; i<ntest; ++i) {
