@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 30 Nov 2013 11:01:09 PM MST
+  \date      Tue 03 Dec 2013 01:14:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -113,7 +113,8 @@ RNGTestDriver::echo()
   print.Mklparams< quinoa::ctr::RNG,
                    quinoa::ctr::MKLUniformMethod,
                    quinoa::ctr::MKLGaussianMethod >
-                 ( control.get<ctr::param, ctr::mklrng>() );
+                 ( control.get<ctr::selected, ctr::rng>(),
+                   control.get<ctr::param, ctr::mklrng>() );
   print.endpart();
 }
 
