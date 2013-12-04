@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 09:58:28 PM MST
+  \date      Tue 03 Dec 2013 10:22:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -39,26 +39,27 @@ class TestU01Suite : public Battery {
 
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-    //! TestU01 external RNGs (associated to all of quinoa's RNGs)
-    std::vector< Gen01Ptr > m_gen;
-    //! TestU01 external RNGs associated to an integer id
-    std::map< quinoa::ctr::RNGType, int > m_rng;
+    //! TestU01 external RNGs (associated to quinoa's RNGs)
+    // ICC: This should be a map!
+    std::vector< quinoa::ctr::RNGType > m_rng1;
+    std::vector< Gen01Ptr > m_rng;
 
     //! Ids of RNGs tested
-    std::vector< int > m_testRNGs;
+    std::vector< quinoa::ctr::RNGType > m_testRNGs;
 
     template< int id>
-    void addRNG( quinoa::ctr::RNGType rng,
+    void addRNG( quinoa::ctr::RNGType r,
                  double (*wrap)(void*,void*),
                  unsigned long (*wrap_bits)(void*,void*)) {
       // Create new RNG and store its pointer in global scope
-      g_rng.push_back( std::unique_ptr< tk::RNG >( m_base.rng[rng]() ) );
+      g_rng.push_back( std::unique_ptr< tk::RNG >( m_base.rng[r]() ) );
       // Create new TestU01 external RNG and associate global-scope wrapper
-      char* const name = const_cast<char*>( quinoa::ctr::RNG().name(rng).c_str() );
-      m_gen.push_back(
+      char* const name = const_cast<char*>(quinoa::ctr::RNG().name(r).c_str());
+      // ICC: m_rng should be a map and this should be map.emplace()
+      // m_rng[r] = Gen01Ptr( unif01_CreateExternGen01( name, wrap, wrap_bits ) );
+      m_rng1.push_back( r );
+      m_rng.push_back(
         Gen01Ptr( unif01_CreateExternGen01( name, wrap, wrap_bits ) ) );
-      // Associate rng to id
-      m_rng[ rng ] = id;
     }
 
     //! Statistical tests wrappers
