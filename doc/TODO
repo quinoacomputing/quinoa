@@ -12,7 +12,6 @@
   number library.
 
 * RNGTest:
-    - Output runtime information
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using (optional) TBB
     - Make rngtest optional

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Tue 03 Dec 2013 10:08:10 PM MST
+  \date      Wed 04 Dec 2013 12:47:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -49,8 +49,9 @@ class SmallCrush : public TestU01Suite {
     //! Add statistical tests to battery
     void addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen );
 
-    TestContainer m_tests;                      //!< Statistical tests
-    std::vector< StatTest::Pvals > m_pvals;     //!< p-values of tests
+    TestContainer m_tests;                            //!< Statistical tests
+    std::vector< StatTest::Pvals > m_pvals;           //!< p-values of tests
+    StatTest::Pvals::size_type m_npval;               //!< Total number of stats
 };
 
 } // rngtest::

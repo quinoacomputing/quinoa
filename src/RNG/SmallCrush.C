@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 12:40:05 AM MST
+  \date      Wed 04 Dec 2013 12:49:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -23,7 +23,9 @@ extern "C" {
 namespace rngtest {
 
 extern int g_tid;               //!< Global thread id (in TestU01Suite.C)
+#ifdef _OPENMP
 #pragma omp threadprivate(g_tid)
+#endif
 
 } // rngtest::
 
@@ -55,12 +57,18 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
       }
     }
   }
+
+  // Count up total number of statistics expected
+  m_npval = 0;
+  for (const auto& t : m_pvals) {
+    m_npval += t.size();
+  }
 }
 
 void
 SmallCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
 //******************************************************************************
-// Add statistical tests to battery, count up total number of p-values
+// Add statistical tests to battery
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -154,17 +162,19 @@ SmallCrush::run()
   const RNGTestPrint& print = m_base.print;
 
   print.part("Run SmallCrush");
+  print.section("Statistical tests finished");
+
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
 //   g_tid = 0;
 //   bbattery_SmallCrush( m_rng[2].get() );
 
-  using Pvals = StatTest::Pvals;
-  using Psize = Pvals::size_type;
+  using Pval = StatTest::Pvals::value_type;
+  using Psize = StatTest::Pvals::size_type;
   using Tsize = TestContainer::size_type;
 
   Tsize ntest = m_tests.size();
-
+  Psize n = 0;
   #ifdef _OPENMP
   #pragma omp parallel
   #endif
@@ -179,11 +189,25 @@ SmallCrush::run()
     #pragma omp for
     #endif
     for (Tsize i=0; i<ntest; ++i) {
+
       // Run test
-      Pvals pvals = m_tests[i]->run();
-      // Evaluate test: only save suspect p-values
+      StatTest::Pvals pvals = m_tests[i]->run();
+
+      // Evaluate test
       Psize npval = pvals.size();
       for (Psize p=0; p<npval; ++p) {
+
+        // Increase number tests completed
+        #ifdef _OPENMP
+        #pragma omp atomic
+        #endif
+        ++n;
+
+        // Output one-liner
+        m_base.print.test< StatTest, TestContainer >
+                         ( n, m_npval, m_tests[i], p, pvals[p] );
+
+        // Save suspect p-value
         if ((pvals[p] <= gofw_Suspectp) || (pvals[p] >= 1.0 - gofw_Suspectp)) {
           m_pvals[i][p] = pvals[p];
         }
@@ -191,14 +215,11 @@ SmallCrush::run()
     }
   }
 
-  // Count up total and failed tests
-  using Pval = StatTest::Pvals::value_type;
-  StatTest::Pvals::size_type total = 0, failed = 0;
-  Pval Eps = std::numeric_limits< Pval >::epsilon();
+  // Count up number of failed tests
+  StatTest::Pvals::size_type failed = 0;
   for (const auto& t : m_pvals) {
     for (const auto& p : t) {
-      ++total;
-      if (fabs(p+1.0) > Eps) {
+      if (fabs(p+1.0) > std::numeric_limits< Pval >::epsilon()) {
         ++failed;
       }
     }
@@ -207,7 +228,7 @@ SmallCrush::run()
   // Output failed tests
   if (failed) {
     m_base.print.failed< StatTest >
-                       ( "Failed tests", total, failed, m_pvals, m_tests );
+                       ( "Failed tests", m_npval, failed, m_pvals, m_tests );
   } else {
     m_base.print.section("All tests passed.");
   }
