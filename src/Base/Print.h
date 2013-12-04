@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 12:11:45 PM MST
+  \date      Wed 04 Dec 2013 03:47:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -111,6 +111,11 @@ class Print {
       }
     }
 
+    //! Print note
+    void note(const std::string& msg) const {
+      std::cout << m_note_fmt % m_section_indent % msg;
+    }
+
     //! Print end of part
     void endpart() const { std::cout << "\n\n"; }
 
@@ -142,6 +147,7 @@ class Print {
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_list_item_fmt = format("%s%-30s\n");
+    mutable format m_note_fmt = format("\n%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_item_widename_value_fmt = format("%s%-60s : %s\n");
