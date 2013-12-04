@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 09:52:33 PM MST
+  \date      Tue 03 Dec 2013 09:25:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -59,6 +59,12 @@ TestU01Suite::TestU01Suite( const Base& base ) : Battery(base)
 {
   using quinoa::ctr::RNGType;
 
+  // I know this is lame for at least two reasons:
+  //   * The order is important, and must start from zero
+  //   * The ids must be literals as this is done at compile-time
+  // This is due to two opposing requirements:
+  //   * The wrappers, uniform() and uniform_bits(), this way can be templates
+  //   * They must be in global scope as they are passed to TestU01
   addRNG< 0>( RNGType::MKL_MCG31,     uniform< 0>, uniform_bits< 0> );
   addRNG< 1>( RNGType::MKL_R250,      uniform< 1>, uniform_bits< 1> );
   addRNG< 2>( RNGType::MKL_MRG32K3A,  uniform< 2>, uniform_bits< 2> );

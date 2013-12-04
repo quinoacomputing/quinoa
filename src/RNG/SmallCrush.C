@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 09:45:26 PM MST
+  \date      Tue 03 Dec 2013 10:23:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -41,15 +41,23 @@ SmallCrush::SmallCrush(const Base& base) : TestU01Suite(base)
   // Instantiate all selected RNGs and add statistical tests for each
   for (const auto& r : rngs) {
     if (r != ctr::RNGType::NO_RNG) {
-      int id = m_rng[r];                // Get RNG id
-      m_testRNGs.push_back( id );       // Build vector of RNG ids to test
-      addTests( m_gen[ id ], r );       // Add tests to battery for this RNG
+      // ICC: replace linear search with map.find()
+      // const auto& rng = m_rng.find(r);   // Find RNG in registry
+      // Assert( rng != m_rng.end(), tk::ExceptType::FATAL, "RNG not found" );
+      // m_testRNGs.push_back( rng->first );// Build vector of RNG ids to test
+      // addTests( r, rng->second );        // Add tests to battery for this RNG
+      for (size_t i=0; i<m_rng1.size(); ++i) {
+        if (m_rng1[i] == r) {
+          m_testRNGs.push_back( r );        // Build vector of RNG ids to test
+          addTests( r, m_rng[i] );          // Add tests to battery for this RNG
+        }
+      }
     }
   }
 }
 
 void
-SmallCrush::addTests( const Gen01Ptr& gen, const quinoa::ctr::RNGType& rng )
+SmallCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
 //******************************************************************************
 // Add statistical tests to battery, count up total number of p-values
 //! \author  J. Bakosi
@@ -148,8 +156,8 @@ SmallCrush::run()
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
 //   g_tid = 0;
-//   bbattery_SmallCrush( m_gen[ m_testRNGs[0] ].get() );
-//   bbattery_SmallCrush( m_gen[ m_testRNGs[1] ].get() );
+//   bbattery_SmallCrush( m_rng[ m_testRNGs[0] ].get() );
+//   bbattery_SmallCrush( m_rng[ m_testRNGs[1] ].get() );
 
   using Pvals = StatTest::Pvals;
   using Psize = Pvals::size_type;

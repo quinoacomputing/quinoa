@@ -13,6 +13,11 @@
 
 * RNGTest:
     - Output runtime information
+    - Time RNGs during batteries and output their cost as a result beside pvals
+    - Add legend:
+        The following tests gave p-values outside [0.001, 0.9990]:
+        (eps  means a value < 1.0e-300):
+        (eps1 means a value < 1.0e-15):
     - Add task-based parallelism using (optional) TBB
     - Make rngtest optional
     - Make MKL optional

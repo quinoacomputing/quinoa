@@ -10,7 +10,6 @@ if (HAS_MKL)
 endif()
 
 add_library(RNG
-            RNG.C
             SmallCrush.C
             TestU01Suite.C
             ${MKL_SOURCE}
