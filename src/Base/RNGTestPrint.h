@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 11:22:48 AM MST
+  \date      Wed 04 Dec 2013 12:52:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -153,6 +153,31 @@ class RNGTestPrint : public tk::Print {
       return ss.str();
     }
 
+    //! Print a single test name, RNG and pass or fail + p-value
+    template< class StatTest, class TestContainer >
+    void test( const typename StatTest::Pvals::size_type& n,
+               const typename StatTest::Pvals::size_type& npval,
+               const typename TestContainer::value_type& test,
+               const typename StatTest::Pvals::size_type& p,
+               const typename StatTest::Pvals::value_type& pvalue ) const
+    {
+      // Construct info-line
+      tk::Option< quinoa::ctr::RNG > rng;
+      std::stringstream ss;
+      ss << "[" << n << "/" << npval << "] " << test->name(p) << ", "
+         << rng.name(test->rng());
+      std::string pvalstr("pass");
+      // Decide if pass of fail
+      if ((pvalue <= gofw_Suspectp) || (pvalue >= 1.0 - gofw_Suspectp)) {
+        pvalstr = "fail, p-value = " + pval(pvalue);
+      }
+      // Output
+      std::cout << m_item_widename_value_fmt
+                   % m_item_indent
+                   % ss.str()
+                   % pvalstr;
+    }
+
     //! Print failed statistical test names, RNGs, and p-values
     template< class StatTest, class TestContainer >
     void failed(
@@ -170,11 +195,11 @@ class RNGTestPrint : public tk::Print {
       section( ss.str() );
       raw( m_item_indent + "The following tests gave p-values outside "
                            "[0.001, 0.999]\n" +
-           m_item_indent + "(eps  means a value < 1.0e-300)\n" +
-           m_item_indent + "(eps1 means a value < 1.0e-15)\n" +
            m_item_indent + "List groupped by RNG, in the order given in the "
                            "input file\n" +
-           m_item_indent + "Legend: Test, RNG : p-value\n\n" );
+           m_item_indent + "Legend: Test, RNG : p-value\n" +
+           m_item_indent + "(eps  means a value < 1.0e-300)\n" +
+           m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
       Tsize ntest = tests.size();
       std::string oldname;
       for (Tsize i=0; i<ntest; ++i) {
