@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Tue 03 Dec 2013 09:25:16 PM MST
+  \date      Wed 04 Dec 2013 12:17:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -21,6 +21,7 @@ namespace rngtest {
 
 std::vector< std::unique_ptr< tk::RNG > > g_rng;  //!< Global pointers to RNGs
 int g_tid;                                        //!< Global thread id
+#pragma omp threadprivate(g_tid)
 
 template< int id >
 static double uniform(void*, void*)

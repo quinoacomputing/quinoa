@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Tue 03 Dec 2013 10:23:21 PM MST
+  \date      Wed 04 Dec 2013 12:40:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -23,6 +23,7 @@ extern "C" {
 namespace rngtest {
 
 extern int g_tid;               //!< Global thread id (in TestU01Suite.C)
+#pragma omp threadprivate(g_tid)
 
 } // rngtest::
 
@@ -156,8 +157,7 @@ SmallCrush::run()
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
 //   g_tid = 0;
-//   bbattery_SmallCrush( m_rng[ m_testRNGs[0] ].get() );
-//   bbattery_SmallCrush( m_rng[ m_testRNGs[1] ].get() );
+//   bbattery_SmallCrush( m_rng[2].get() );
 
   using Pvals = StatTest::Pvals;
   using Psize = Pvals::size_type;
@@ -166,7 +166,7 @@ SmallCrush::run()
   Tsize ntest = m_tests.size();
 
   #ifdef _OPENMP
-  #pragma omp parallel private(g_tid)
+  #pragma omp parallel
   #endif
   {
     #ifdef _OPENMP
