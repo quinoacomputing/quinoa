@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 12:49:12 PM MST
+  \date      Wed 04 Dec 2013 03:43:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -230,7 +230,7 @@ SmallCrush::run()
     m_base.print.failed< StatTest >
                        ( "Failed tests", m_npval, failed, m_pvals, m_tests );
   } else {
-    m_base.print.section("All tests passed.");
+    m_base.print.note("All tests passed");
   }
 
   m_base.print.endpart();
