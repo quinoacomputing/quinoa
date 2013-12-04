@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Tue 03 Dec 2013 01:38:49 PM MST
+  \date      Wed 04 Dec 2013 11:22:48 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -168,9 +168,13 @@ class RNGTestPrint : public tk::Print {
       std::stringstream ss;
       ss << name << " (" << failed << "/" << total << ")";
       section( ss.str() );
-      raw( m_item_indent + "Legend: Test, RNG : p-value\n" +
-           m_item_indent + "Note: List groupped by RNG, and in the order given "
-                           "in the input file.\n\n" );
+      raw( m_item_indent + "The following tests gave p-values outside "
+                           "[0.001, 0.999]\n" +
+           m_item_indent + "(eps  means a value < 1.0e-300)\n" +
+           m_item_indent + "(eps1 means a value < 1.0e-15)\n" +
+           m_item_indent + "List groupped by RNG, in the order given in the "
+                           "input file\n" +
+           m_item_indent + "Legend: Test, RNG : p-value\n\n" );
       Tsize ntest = tests.size();
       std::string oldname;
       for (Tsize i=0; i<ntest; ++i) {
