@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Tue 03 Dec 2013 01:14:37 PM MST
+  \date      Thu 05 Dec 2013 09:12:54 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -66,11 +66,6 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
 
   //! Echo information on random number generator test suite to be created
   echo();
-
-  // Echo 'unspecified' if not battery is unspecified
-  if (!m_battery) {
-    print.section("RNG battery", std::string("unspecified"));
-  }
 }
 
 void
@@ -104,18 +99,25 @@ RNGTestDriver::echo()
 
   print.endpart();
   print.part("Problem");
-  print.section("Title", control.get<ctr::title>());
 
-  print.Section<ctr::Battery, ctr::selected, ctr::battery>();
-  m_battery->print();
+  if (!control.get<ctr::title>().empty()) {
+    print.section("Title", control.get<ctr::title>());
+  }
 
-  print.section("RNG(s) tested");
-  print.Mklparams< quinoa::ctr::RNG,
-                   quinoa::ctr::MKLUniformMethod,
-                   quinoa::ctr::MKLGaussianMethod >
-                 ( control.get<ctr::selected, ctr::rng>(),
-                   control.get<ctr::param, ctr::mklrng>() );
-  print.endpart();
+  if (m_battery) {
+    print.Section<ctr::Battery, ctr::selected, ctr::battery>();
+
+    m_battery->print();
+    print.section("RNG(s) tested");
+    print.Mklparams< quinoa::ctr::RNG,
+                     quinoa::ctr::MKLUniformMethod,
+                     quinoa::ctr::MKLGaussianMethod >
+                   ( control.get<ctr::selected, ctr::rng>(),
+                     control.get<ctr::param, ctr::mklrng>() );
+    print.endpart();
+  } else {
+    print.note( "No RNG battery specified" );
+  }
 }
 
 void
@@ -126,7 +128,5 @@ RNGTestDriver::execute() const
 //******************************************************************************
 {
   //! Run battery (if any)
-  if (m_battery) {
-    m_battery->run();
-  }
+  if (m_battery) m_battery->run();
 }
