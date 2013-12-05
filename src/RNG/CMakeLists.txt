@@ -10,8 +10,10 @@ if (HAS_MKL)
 endif()
 
 add_library(RNG
-            SmallCrush.C
             TestU01Suite.C
+            SmallCrush.C
+            Crush.C
+            BigCrush.C
             ${MKL_SOURCE}
             ${MKLRNG_SOURCE}
             ${MKLRNDSTREAM_SOURCE}
