@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 09:34:10 PM MST
+  \date      Thu 05 Dec 2013 09:40:12 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -171,8 +171,8 @@ TestU01Suite::run()
         ++n;
 
         // Output one-liner
-        m_base.print.test< StatTest, TestContainer >
-                         ( n, m_npval, m_tests[i], p, pvals[p] );
+        print.test< StatTest, TestContainer >
+                  ( n, m_npval, m_tests[i], p, pvals[p] );
 
         // Save suspect p-value
         if ((pvals[p] <= gofw_Suspectp) || (pvals[p] >= 1.0 - gofw_Suspectp)) {
@@ -182,17 +182,17 @@ TestU01Suite::run()
     }
   }
 
+  // Count up number of filed tests
   StatTest::Pvals::size_type nfail = failed();
 
-  // Output failed tests
+  // Output summary of failed tests
   if (nfail) {
-    m_base.print.failed< StatTest >
-                       ( "Failed tests", m_npval, nfail, m_pvals, m_tests );
+    print.failed< StatTest >("Failed tests", m_npval, nfail, m_pvals, m_tests);
   } else {
-    m_base.print.note("All tests passed");
+    print.note("All tests passed");
   }
 
-  m_base.print.endpart();
+  print.endpart();
 }
 
 void
