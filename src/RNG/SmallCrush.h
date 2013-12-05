@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 12:47:00 PM MST
+  \date      Wed 04 Dec 2013 09:24:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -10,10 +10,6 @@
 //******************************************************************************
 #ifndef SmallCrush_h
 #define SmallCrush_h
-
-extern "C" {
-  #include <unif01.h>
-}
 
 #include <TestU01Util.h>
 #include <TestU01Suite.h>
@@ -30,11 +26,8 @@ class SmallCrush : public TestU01Suite {
     //! Destructor
     ~SmallCrush() noexcept override = default;
 
-    //! Run battery of RNG tests
-    void run() override;
-
-    //! Print list of registered statistical tests
-    void print() const override;
+    //! Add statistical tests to battery
+    void addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen );
 
   private:
     //! Don't permit copy constructor
@@ -45,13 +38,6 @@ class SmallCrush : public TestU01Suite {
     SmallCrush(SmallCrush&&) = delete;
     //! Don't permit move assigment
     SmallCrush& operator=(SmallCrush&&) = delete;
-
-    //! Add statistical tests to battery
-    void addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen );
-
-    TestContainer m_tests;                            //!< Statistical tests
-    std::vector< StatTest::Pvals > m_pvals;           //!< p-values of tests
-    StatTest::Pvals::size_type m_npval;               //!< Total number of stats
 };
 
 } // rngtest::

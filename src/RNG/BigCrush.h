@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 06:24:42 PM MST
+  \date      Wed 04 Dec 2013 09:25:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -11,6 +11,7 @@
 #ifndef BigCrush_h
 #define BigCrush_h
 
+#include <TestU01Util.h>
 #include <TestU01Suite.h>
 
 namespace rngtest {
@@ -20,16 +21,13 @@ class BigCrush : public TestU01Suite {
 
   public:
     //! Constructor
-    explicit BigCrush(const Base& base) : TestU01Suite(base) {}
+    explicit BigCrush( const Base& base );
 
     //! Destructor
     ~BigCrush() noexcept override = default;
 
-    //! Run battery of RNG tests
-    void run() override { std::cout << "BigCrush::run() unimplemented!" << std::endl; }
-
-    //! Print list of registered statistical tests
-    void print() const override {  std::cout << "BigCrush::print() unimplemented!" << std::endl; }
+    //! Add statistical tests to battery
+    void addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen );
 
   private:
     //! Don't permit copy constructor
