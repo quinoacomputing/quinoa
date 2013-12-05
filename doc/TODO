@@ -11,6 +11,8 @@
   false positives) in MKL and non-MKL code. May need to implement another random
   number library.
 
+* Build & runtime hostname output (if portable)
+
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using (optional) TBB
