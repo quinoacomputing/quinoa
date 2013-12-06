@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Battery.h
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 05:34:48 PM MST
+  \date      Thu 05 Dec 2013 11:43:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -37,19 +37,6 @@ class Battery {
 
   protected:
     const Base& m_base;                   //!< Essentials
-
-    //! Add statistical test to battery
-    template< class TestType, class GenPtrType >
-    StatTest::Pvals add( TestContainer& tests,
-                         const GenPtrType& gen,
-                         const quinoa::ctr::RNGType& rng,
-                         std::vector< std::string >&& names ) {
-      const StatTest::Names::size_type npval = names.size();
-      std::unique_ptr< TestType >
-        ptr( new TestType( gen.get(), std::move(rng), std::move(names) ) );
-      tests.push_back( std::move(ptr) );
-      return StatTest::Pvals( npval, -1.0 );
-    }
 
   private:
     //! Don't permit copy constructor

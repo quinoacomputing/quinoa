@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 09:38:00 PM MST
+  \date      Fri 06 Dec 2013 01:09:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -17,6 +17,7 @@ extern "C" {
   #include <sstring.h>
   #include <sknuth.h>
   #include <swalk.h>
+  #include <smarsa.h>
 }
 
 #include <Battery.h>
@@ -47,18 +48,33 @@ class TestU01Suite : public Battery {
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
 
-    //! Statistical tests wrappers
     using Pvals = StatTest::Pvals;
-    static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res );
-    static Pvals Collision( unif01_Gen* gen, sknuth_Res2* res );
-    static Pvals Gap( unif01_Gen* gen, sres_Chi2* res );
-    static Pvals SimpPoker( unif01_Gen* gen, sres_Chi2* res );
-    static Pvals CouponCollector( unif01_Gen* gen, sres_Chi2* res );
-    static Pvals MaxOft( unif01_Gen* gen, sknuth_Res1* res );
-    static Pvals WeightDistrib( unif01_Gen* gen, sres_Chi2* res );
-    static Pvals MatrixRank( unif01_Gen* gen, sres_Chi2* res );
-    static Pvals HammingIndep( unif01_Gen* gen, sstring_Res* res );
-    static Pvals RandomWalk1( unif01_Gen* gen, swalk_Res* res );
+
+    //! Statistical tests wrappers
+    static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
+               const std::tuple<long, long, int, long, int, int>& xargs);
+    static Pvals Collision( unif01_Gen* gen, sknuth_Res2* res,
+               const std::tuple<long, long, int, long, int>& xargs );
+    static Pvals Gap( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, double, double>& xargs );
+    static Pvals SimpPoker( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int, int>& xargs );
+    static Pvals CouponCollector( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals MaxOft( unif01_Gen* gen, sknuth_Res1* res,
+               const std::tuple<long, long, int, int, int>& xargs );
+    static Pvals WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, long, double, double>& xargs );
+    static Pvals MatrixRank( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int, int, int>& xargs );
+    static Pvals HammingIndep( unif01_Gen* gen, sstring_Res* res,
+               const std::tuple<long, long, int, int, int, int>& xargs );
+    static Pvals RandomWalk1( unif01_Gen* gen, swalk_Res* res,
+               const std::tuple<long, long, int, int, long, long>& xargs );
+    static Pvals SerialOver( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long,long, int, long, int>& xargs );
+    static Pvals CollisionOver( unif01_Gen* gen, smarsa_Res* res,
+               const std::tuple<long, long, int, long, int>& xargs );
 
     //! Setup RNGs
     template< class Suite >
@@ -85,8 +101,27 @@ class TestU01Suite : public Battery {
       total();  // Count up total number of statistics expected
     }
 
-    TestContainer m_tests;                      //!< Statistical tests
-    std::vector< StatTest::Pvals > m_pvals;     //!< p-values of tests
+    //! Add statistical test to battery
+    template< class TestType, class Result, typename... Ts >
+    void add( const Gen01Ptr& gen,
+              const quinoa::ctr::RNGType& rng,
+              StatTest::Names&& names,
+              Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
+              Ts&&... xargs )
+    {
+      m_pvals.push_back( Pvals(names.size(), -1.0) );
+      std::unique_ptr< TestType >
+        ptr( new TestType( gen.get(),
+                           std::move(rng),
+                           std::move(names),
+                           runner,
+                           std::forward<Ts>(xargs)... ) );
+      m_tests.push_back( std::move(ptr) );
+    }
+
+    static const long THOUSAND = 1000;
+    static const long MILLION = THOUSAND * THOUSAND;
+    static const long BILLION = THOUSAND * MILLION;
 
   private:
     //! Don't permit copy constructor
@@ -126,14 +161,13 @@ class TestU01Suite : public Battery {
     void total();
 
     //! Count up number of failed tests
-    StatTest::Pvals::size_type failed();
-
-    StatTest::Pvals::size_type m_npval;         //!< Total number of stats
-    static const long THOUSAND = 1000;
-    static const long MILLION = THOUSAND * THOUSAND;
-    static const long BILLION = THOUSAND * MILLION;
+    Pvals::size_type failed();
 
     const std::string m_name;                   //!< Test suite name
+
+    Pvals::size_type m_npval;                   //!< Total number of stats
+    TestContainer m_tests;                      //!< Statistical tests
+    std::vector< Pvals > m_pvals;               //!< p-values of tests
 };
 
 } // rngtest::
