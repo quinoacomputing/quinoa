@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 05:43:19 PM MST
+  \date      Thu 05 Dec 2013 11:58:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -16,29 +16,38 @@
 namespace rngtest {
 
 //! TestU01 : StatTest
-template< typename Result,                                //!< Results type
+template< class Result,                                //!< Results type
           Result* (*Creator)(void),                       //!< Results creator
           void (*Deleter)(Result *),                      //!< Results deleter
-          StatTest::Pvals (*Run)(unif01_Gen*, Result*) >  //!< Test runner
+          typename... Ts >                          //!< Extra runner args types
 class TestU01 : public StatTest {
+
+    using Xargs = std::tuple< Ts... >;
+
+    //! Test runner function pointer type
+    using RunFn = StatTest::Pvals (*)( unif01_Gen*, Result*, const Xargs& );
 
   public:
     //! Constructor
     explicit TestU01( const unif01_Gen* const gen,
                       const quinoa::ctr::RNGType& rng,
-                      Names&& names ) :
+                      Names&& names,
+                      RunFn runner,
+                      Ts&&... xargs ) :
       m_gen( gen ),
       m_rng( rng ),
       m_npval( names.size() ),
       m_names( std::move(names) ),
-      m_res( ResultPtr( Creator() ) ) {};
+      m_runner( runner ),
+      m_xargs( std::forward<Ts>(xargs)... ),
+      m_res( ResultPtr( Creator() ) ) {}
 
     //! Destructor
     ~TestU01() noexcept override = default;
 
-    //! Run, pretty awful that TestU01 does not guarantee the constness of gen
+    //! Run test, awful that TestU01 does not guarantee the constness of gen
     StatTest::Pvals run() override {
-      return Run( const_cast<unif01_Gen*>(m_gen), m_res.get() );
+      return m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
     }
 
     //! Test name accessor
@@ -69,6 +78,8 @@ class TestU01 : public StatTest {
     const quinoa::ctr::RNGType m_rng;          //!< RNG selected
     const Names::size_type m_npval;            //!< Number of p-values produced
     const Names m_names;                       //!< Name(s) of tests
+    const RunFn m_runner;                      //!< Test runner function
+    const Xargs m_xargs;                       //!< Extra args for run()
 
     //! TestU01 results type with a custom deleter by TestU01
     using ResultPtr = TestU01Ptr< Result, Deleter >;

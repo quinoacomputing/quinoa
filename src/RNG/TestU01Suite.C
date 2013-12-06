@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu 05 Dec 2013 09:40:12 AM MST
+  \date      Fri 06 Dec 2013 12:56:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -207,66 +207,79 @@ TestU01Suite::print() const
 }
 
 Pvals
-TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res )
+TestU01Suite::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
+                const std::tuple<long, long, int, long, int, int>& xargs )
 //******************************************************************************
-//  Run Marsdaglia's BirthdaySpacings test
+//  Run Marsaglia's BirthdaySpacings test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-#ifdef USE_LONGLONG
-  smarsa_BirthdaySpacings( gen, res, 1, 5 * MILLION, 0, 1073741824, 2, 1 );
-#else
-  smarsa_BirthdaySpacings( gen, res, 10, MILLION / 2, 0, 67108864, 2, 1 );
-#endif
+  using std::get;
+  smarsa_BirthdaySpacings( gen, res, get<0>(xargs), get<1>(xargs),
+                           get<2>(xargs), get<3>(xargs), get<4>(xargs),
+                           get<5>(xargs) );
   return Pvals( { res->pVal2 } );
 }
 
 Pvals
-TestU01Suite::Collision( unif01_Gen* gen, sknuth_Res2* res )
+TestU01Suite::Collision( unif01_Gen* gen, sknuth_Res2* res,
+                         const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Collision test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sknuth_Collision( gen, res, 1, 5 * MILLION, 0, 65536, 2 );
+  using std::get;
+  sknuth_Collision( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                    get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->Pois->pVal2 } );
 }
 
 Pvals
-TestU01Suite::Gap( unif01_Gen* gen, sres_Chi2* res )
+TestU01Suite::Gap( unif01_Gen* gen, sres_Chi2* res,
+                   const std::tuple<long, long, int, double, double>& xargs )
 //******************************************************************************
 //  Run Knuth's Gap test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sknuth_Gap( gen, res, 1, MILLION / 5, 22, 0.0, .00390625 );
+  using std::get;
+  sknuth_Gap( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+              get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::SimpPoker( unif01_Gen* gen, sres_Chi2* res )
+TestU01Suite::SimpPoker( unif01_Gen* gen, sres_Chi2* res,
+                         const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Simplified Poker test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sknuth_SimpPoker( gen, res, 1, 2 * MILLION / 5, 24, 64, 64 );
+  using std::get;
+  sknuth_SimpPoker( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                    get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::CouponCollector( unif01_Gen* gen, sres_Chi2* res )
+TestU01Suite::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
+                               const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Coupon Collector test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sknuth_CouponCollector( gen, res, 1, MILLION / 2, 26, 16 );
+  using std::get;
+  sknuth_CouponCollector( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                          get<2>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res)
+TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
+                      const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Maximum-of-t test
 //! \author  J. Bakosi
@@ -278,49 +291,89 @@ TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res)
 }
 
 Pvals
-TestU01Suite::WeightDistrib( unif01_Gen* gen, sres_Chi2* res)
+TestU01Suite::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
+                const std::tuple<long, long, int, long, double, double>& xargs )
 //******************************************************************************
 //  Run Matsumoto's Weight Distribution test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  svaria_WeightDistrib( gen, res, 1, MILLION / 5, 27, 256, 0.0, 0.125 );
+  using std::get;
+  svaria_WeightDistrib( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                        get<3>(xargs), get<4>(xargs), get<5>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::MatrixRank( unif01_Gen* gen, sres_Chi2* res )
+TestU01Suite::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
+                const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
-//  Run Marsdaglia's Matrix Rank test
+//  Run Marsaglia's Matrix Rank test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  smarsa_MatrixRank( gen, res, 1, 20 * THOUSAND, 20, 10, 60, 60 );
+  using std::get;
+  smarsa_MatrixRank( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                     get<3>(xargs), get<4>(xargs), get<5>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::HammingIndep( unif01_Gen* gen, sstring_Res* res )
+TestU01Suite::HammingIndep( unif01_Gen* gen, sstring_Res* res,
+                const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run L'Ecuyer's Hamming Independence test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sstring_HammingIndep( gen, res, 1, MILLION/2, 20, 10, 300, 0 );
+  using std::get;
+  sstring_HammingIndep( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                        get<3>(xargs), get<4>(xargs), get<5>(xargs) );
   return Pvals( { res->Bas->pVal2[gofw_Mean] } );
 }
 
 Pvals
-TestU01Suite::RandomWalk1( unif01_Gen* gen, swalk_Res* res )
+TestU01Suite::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
+                const std::tuple<long, long, int, int, long, long>& xargs )
 //******************************************************************************
 //  Run Random Walk 1 test
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  swalk_RandomWalk1( gen, res, 1, MILLION, 0, 30, 150, 150 );
+  using std::get;
+  swalk_RandomWalk1( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                     get<3>(xargs), get<4>(xargs), get<5>(xargs) );
   return Pvals( { res->H[0]->pVal2[gofw_Mean],
                   res->M[0]->pVal2[gofw_Mean],
                   res->J[0]->pVal2[gofw_Mean],
                   res->R[0]->pVal2[gofw_Mean],
                   res->C[0]->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::SerialOver( unif01_Gen* gen, sres_Basic* res,
+                          const std::tuple<long, long, int, long, int>& xargs )
+//******************************************************************************
+//  Run Marsaglia's Serial Over test, t = 2
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  smarsa_SerialOver( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                     get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
+                const std::tuple<long, long, int, long, int>& xargs )
+//******************************************************************************
+//  Run Marsaglia's Serial Over test, t = 2
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  smarsa_CollisionOver( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                        get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->Pois->pVal2 } );
 }

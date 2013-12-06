@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 09:24:42 PM MST
+  \date      Fri 06 Dec 2013 12:36:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -32,82 +32,75 @@ SmallCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_pvals.push_back(
-    add< TestU01< sres_Poisson,
-                  sres_CreatePoisson,
-                  sres_DeletePoisson,
-                  BirthdaySpacings > >
-       ( m_tests, gen, rng, StatTest::Names({"Birthday Spacings"}) ) );
-  
-  m_pvals.push_back(
-    add< TestU01< sknuth_Res2,
-                  sknuth_CreateRes2,
-                  sknuth_DeleteRes2,
-                  Collision > >
-       ( m_tests, gen, rng, StatTest::Names({"Collision"}) ) );
+  // Marsaglia's BirthdaySpacings
+  #ifdef USE_LONGLONG
+  add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                long, long, int, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Birthday Spacings"} ),
+         BirthdaySpacings, 1L, 5L * MILLION, 0, 1073741824L, 2, 1 );
+  #else
+  add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                long, long, int, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Birthday Spacings"} ),
+         BirthdaySpacings, 10L, MILLION / 2, 0, 67108864L, 2, 1 );
+  #endif
 
-  m_pvals.push_back(
-    add< TestU01< sres_Chi2,
-                  sres_CreateChi2,
-                  sres_DeleteChi2,
-                  Gap > >
-       ( m_tests, gen, rng, StatTest::Names({"Gap"}) ) );
+  // Knuth's Collision
+  add< TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                long, long, int, long, int > >
+       ( gen, rng, StatTest::Names( {"Collision"} ),
+         Collision, 1L, 5L * MILLION, 0, 65536L, 2 );
 
-  m_pvals.push_back(
-    add< TestU01< sres_Chi2,
-                  sres_CreateChi2,
-                  sres_DeleteChi2,
-                  SimpPoker > >
-       ( m_tests, gen, rng, StatTest::Names({"Simplified Poker"}) ) );
+  // Knuth's Gap
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double, double > >
+       ( gen, rng, StatTest::Names( {"Gap"} ),
+         Gap, 1L, MILLION / 5, 22, 0.0, 0.00390625 );
 
-  m_pvals.push_back(
-    add< TestU01< sres_Chi2,
-                  sres_CreateChi2,
-                  sres_DeleteChi2,
-                  CouponCollector > >
-       ( m_tests, gen, rng, StatTest::Names({"Coupon Collector"}) ) );
+  // Knuth's Simple Poker
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Simplified Poker"} ),
+         SimpPoker, 1L, 2L * MILLION / 5, 24, 64, 64 );
 
-  m_pvals.push_back(
-    add< TestU01< sknuth_Res1,
-                  sknuth_CreateRes1,
-                  sknuth_DeleteRes1,
-                  MaxOft > >
-       ( m_tests, gen, rng,
-         StatTest::Names({"Maximum-of-t",
-                          "Maximum-of-t Anderson-Darling"}) ) );
+  // Knuth's Coupon Collector
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Coupon Collector"} ),
+         CouponCollector, 1L, MILLION / 2, 26, 16 );
 
-  m_pvals.push_back(
-    add< TestU01< sres_Chi2,
-                  sres_CreateChi2,
-                  sres_DeleteChi2,
-                  WeightDistrib > >
-       ( m_tests, gen, rng,
-         StatTest::Names({"Weight Distribution"}) ) );
+  // Knuth's Maximum-of-t
+  add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Maximum-of-t",
+                                     "Maximum-of-t Anderson-Darling"} ),
+         MaxOft, 1L, 2L * MILLION, 0, static_cast<int>(MILLION / 10), 6 );
 
-  m_pvals.push_back(
-    add< TestU01< sres_Chi2,
-                  sres_CreateChi2,
-                  sres_DeleteChi2,
-                  MatrixRank > >
-       ( m_tests, gen, rng, StatTest::Names({"Matrix Rank"}) ) );
+  // Weight Distribution
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution"} ),
+         WeightDistrib, 1L, MILLION / 5, 27, 256L, 0.0, 0.125 );
 
-  m_pvals.push_back(
-    add< TestU01< sstring_Res,
-                  sstring_CreateRes,
-                  sstring_DeleteRes,
-                  HammingIndep > >
-       ( m_tests, gen, rng,
-         StatTest::Names({"Hamming Independence"}) ) );
+  // Marsaglia's Matrix Rank
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Matrix Rank"} ),
+         MatrixRank, 1L, 20L * THOUSAND, 20, 10, 60, 60 );
 
-  m_pvals.push_back(
-    add< TestU01< swalk_Res,
-                  swalk_CreateRes,
-                  swalk_DeleteRes,
-                  RandomWalk1 > >
-       ( m_tests, gen, rng,
-         StatTest::Names({"Random Walk 1 Stat H",
-                          "Random Walk 1 Stat M",
-                          "Random Walk 1 Stat J",
-                          "Random Walk 1 Stat R",
-                          "Random Walk 1 Stat C"}) ) );
+  // Hamming independence
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence"} ),
+         HammingIndep, 1L, MILLION/2, 20, 10, 300, 0 );
+
+  // Random Walk 1
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H",
+                                     "Random Walk 1 Stat M",
+                                     "Random Walk 1 Stat J",
+                                     "Random Walk 1 Stat R",
+                                     "Random Walk 1 Stat C"} ),
+         RandomWalk1, 1L, static_cast<long>(MILLION), 0, 30, 150L, 150L );
 }
