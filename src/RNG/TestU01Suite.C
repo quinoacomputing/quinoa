@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 06 Dec 2013 12:56:55 PM MST
+  \date      Sat 07 Dec 2013 09:50:48 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -285,7 +285,9 @@ TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  sknuth_MaxOft( gen, res, 1, 2 * MILLION, 0, MILLION / 10, 6 );
+  using std::get;
+  sknuth_MaxOft( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                 get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->Chi->pVal2[gofw_Mean],
                   res->Bas->pVal2[gofw_Mean] } );
 }
@@ -377,3 +379,45 @@ TestU01Suite::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
                         get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->Pois->pVal2 } );
 }
+
+Pvals
+TestU01Suite::ClosePairs( unif01_Gen* gen, snpair_Res* res,
+                const std::tuple<long, long, int, int, int, int, int>& xargs )
+//******************************************************************************
+//  Run the close-pairs test, t = 2
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  snpair_ClosePairs( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                        get<3>(xargs), get<4>(xargs), get<5>(xargs) );
+  if (get<6>(xargs)) {
+    return Pvals( { res->pVal[snpair_NP],
+                    res->pVal[snpair_mNP],
+                    res->pVal[snpair_mNP1],
+                    res->pVal[snpair_mNP2],
+                    res->pVal[snpair_NJumps],
+                    res->pVal[snpair_mNP2S] } );
+  } else {
+    return Pvals( { res->pVal[snpair_NP],
+                    res->pVal[snpair_mNP],
+                    res->pVal[snpair_mNP1],
+                    res->pVal[snpair_mNP2],
+                    res->pVal[snpair_NJumps] } );
+  }
+}
+
+Pvals
+TestU01Suite::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
+                const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run the close-pairs test using bit match distance, t = 2
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  snpair_ClosePairsBitMatch( gen, res, get<0>(xargs), get<1>(xargs),
+                             get<2>(xargs), get<3>(xargs) );
+  return Pvals( { res->pVal[snpair_BM] } );
+}
+

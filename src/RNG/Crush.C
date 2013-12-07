@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.C
   \author    J. Bakosi
-  \date      Fri 06 Dec 2013 01:35:28 PM MST
+  \date      Sat 07 Dec 2013 09:57:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -189,6 +189,120 @@ Crush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
 
   #endif // USE_LONG_LONG
 
+  // Close Pairs, t = 2
+  add< TestU01< snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                long, long, int, int, int, int, int > >
+     ( gen, rng, StatTest::Names( {"Close Pairs NP t=2",
+                                   "Close Pairs mNP t=2",
+                                   "Close Pairs mNP1 t=2",
+                                   "Close Pairs mNP2 t=2",
+                                   "Close Pairs mNJumps t=2" } ),
+       ClosePairs, 10L, 2L * MILLION, 0, 2, 0, 30, 0 );
 
+  // Close Pairs, t = 3
+  add< TestU01< snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                long, long, int, int, int, int, int > >
+     ( gen, rng, StatTest::Names( {"Close Pairs NP t=3",
+                                   "Close Pairs mNP t=3",
+                                   "Close Pairs mNP1 t=3",
+                                   "Close Pairs mNP2 t=3",
+                                   "Close Pairs mNJumps t=3",
+                                   "Close Pairs mNP2S t=3" } ),
+       ClosePairs, 10L, 2L * MILLION, 0, 3, 0, 30, 1 );
+
+  // Close Pairs, t = 7
+  add< TestU01< snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                long, long, int, int, int, int, int > >
+     ( gen, rng, StatTest::Names( {"Close Pairs NP t=3",
+                                   "Close Pairs mNP t=3",
+                                   "Close Pairs mNP1 t=3",
+                                   "Close Pairs mNP2 t=3",
+                                   "Close Pairs mNJumps t=3",
+                                   "Close Pairs mNP2S t=3" } ),
+       ClosePairs, 5L, 2L * MILLION, 0, 7, 0, 30, 1 );
+
+  // Close Pairs Bit Match, t = 2
+  add< TestU01< snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                long, long, int, int > >
+     ( gen, rng, StatTest::Names( {"Close Pairs Bit Match t=2"} ),
+       ClosePairsBitMatch, 4L, 4L * MILLION, 0, 2 );
+
+  // Close Pairs Bit Match, t = 4
+  add< TestU01< snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                long, long, int, int > >
+     ( gen, rng, StatTest::Names( {"Close Pairs Bit Match t=4"} ),
+       ClosePairsBitMatch, 2L, 4L * MILLION, 0, 4 );
+
+  // Knuth's Simple Poker, d = 16, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Simplified Poker d=16 r=0"} ),
+         SimpPoker, 1L, 40L * MILLION, 0, 16, 16 );
+
+  // Knuth's Simple Poker, d = 16, r = 26
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Simplified Poker d=16 r=26"} ),
+         SimpPoker, 1L, 40L * MILLION, 26, 16, 16 );
+
+  // Knuth's Simple Poker, d = 64, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Simplified Poker d=64 r=0"} ),
+         SimpPoker, 1L, 10L * MILLION, 0, 64, 64 );
+
+  // Knuth's Simple Poker, d = 64, r = 24
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Simplified Poker d=64 r=24"} ),
+         SimpPoker, 1L, 10L * MILLION, 24, 64, 64 );
+
+  // Knuth's Coupon Collector, d = 4, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Coupon Collector d=4 r=0"} ),
+         CouponCollector, 1L, 40L * MILLION, 0, 4 );
+
+  // Knuth's Coupon Collector, d = 4, r = 28
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Coupon Collector d=4 r=28"} ),
+         CouponCollector, 1L, 40L * MILLION, 28, 4 );
+
+  // Knuth's Coupon Collector, d = 16, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Coupon Collector d=16 r=0"} ),
+         CouponCollector, 1L, 10L * MILLION, 0, 16 );
+
+  // Knuth's Coupon Collector, d = 16, r = 26
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Coupon Collector d=16 r=26"} ),
+         CouponCollector, 1L, 10L * MILLION, 26, 16 );
+
+  // Knuth's Gap, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double, double > >
+       ( gen, rng, StatTest::Names( {"Gap r=0"} ),
+         Gap, 1L, 100L * MILLION, 0, 0.0, 0.125 );
+
+  // Knuth's Gap, r = 27
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double, double > >
+       ( gen, rng, StatTest::Names( {"Gap r=27"} ),
+         Gap, 1L, 100L * MILLION, 27, 0.0, 0.125 );
+
+  // Knuth's Gap, r = 0, n = 5e+6
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double, double > >
+       ( gen, rng, StatTest::Names( {"Gap r=0 n=5M"} ),
+         Gap, 1L, 5L * MILLION, 0, 0.0, 1.0/256.0 );
+
+  // Knuth's Gap, r = 22, n = 5e+6
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double, double > >
+       ( gen, rng, StatTest::Names( {"Gap r=22 n=5M"} ),
+         Gap, 1L, 5L * MILLION, 22, 0.0, 1.0/256.0 );
 
 }

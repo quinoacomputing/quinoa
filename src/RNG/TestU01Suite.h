@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Fri 06 Dec 2013 01:09:41 PM MST
+  \date      Sat 07 Dec 2013 09:35:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -18,6 +18,7 @@ extern "C" {
   #include <sknuth.h>
   #include <swalk.h>
   #include <smarsa.h>
+  #include <snpair.h>
 }
 
 #include <Battery.h>
@@ -75,6 +76,10 @@ class TestU01Suite : public Battery {
                const std::tuple<long,long, int, long, int>& xargs );
     static Pvals CollisionOver( unif01_Gen* gen, smarsa_Res* res,
                const std::tuple<long, long, int, long, int>& xargs );
+    static Pvals ClosePairs( unif01_Gen* gen, snpair_Res* res,
+               const std::tuple<long, long, int, int, int, int, int>& xargs );
+    static Pvals ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
+               const std::tuple<long, long, int, int>& xargs );
 
     //! Setup RNGs
     template< class Suite >
