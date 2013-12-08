@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 09:35:35 AM MST
+  \date      Sat 07 Dec 2013 04:50:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -19,6 +19,8 @@ extern "C" {
   #include <swalk.h>
   #include <smarsa.h>
   #include <snpair.h>
+  #include <scomp.h>
+  #include <sspectral.h>
 }
 
 #include <Battery.h>
@@ -63,7 +65,8 @@ class TestU01Suite : public Battery {
     static Pvals CouponCollector( unif01_Gen* gen, sres_Chi2* res,
                const std::tuple<long, long, int, int>& xargs );
     static Pvals MaxOft( unif01_Gen* gen, sknuth_Res1* res,
-               const std::tuple<long, long, int, int, int>& xargs );
+               const std::tuple<long, long, int, int, int, gofw_TestType,
+                                gofw_TestType>& xargs );
     static Pvals WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
                const std::tuple<long, long, int, long, double, double>& xargs );
     static Pvals MatrixRank( unif01_Gen* gen, sres_Chi2* res,
@@ -80,6 +83,44 @@ class TestU01Suite : public Battery {
                const std::tuple<long, long, int, int, int, int, int>& xargs );
     static Pvals ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
                const std::tuple<long, long, int, int>& xargs );
+    static Pvals Run( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals Permutation( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals SampleProd( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals SampleMean( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, int>& xargs );
+    static Pvals SampleCorr( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, long, int, int, int>& xargs );
+    static Pvals SumCollector( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, double>& xargs );
+    static Pvals Savir2( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, long, int>& xargs );
+    static Pvals GCD( unif01_Gen* gen, smarsa_Res2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals LinearComp( unif01_Gen* gen, scomp_Res* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals LempelZiv( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, int, int, int>& xargs );
+    static Pvals Fourier3( unif01_Gen* gen, sspectral_Res* res,
+               const std::tuple<long, int, int, int>& xargs );
+    static Pvals LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
+               const std::tuple<long, long, int, int, long>& xargs );
+    static Pvals PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals HammingWeight2( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, int, int, long>& xargs );
+    static Pvals HammingCorr( unif01_Gen* gen, sstring_Res* res,
+               const std::tuple<long, long, int, int, int>& xargs );
+    static Pvals StringRun( unif01_Gen* gen, sstring_Res3* res,
+               const std::tuple<long, long, int, int>& xargs );
+    static Pvals AutoCor( unif01_Gen* gen, sres_Basic* res,
+               const std::tuple<long, long, int, int, int>& xargs );
 
     //! Setup RNGs
     template< class Suite >

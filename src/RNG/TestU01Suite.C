@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 09:50:48 AM MST
+  \date      Sat 07 Dec 2013 06:58:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -13,6 +13,7 @@ extern "C" {
   #include <smarsa.h>
   #include <svaria.h>
   #include <swrite.h>
+  #include <bbattery.h>
 }
 
 #include <TestU01Suite.h>
@@ -134,8 +135,8 @@ TestU01Suite::run()
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
-//   g_tid = 0;
-//   bbattery_SmallCrush( m_rng[2].get() );
+  //g_tid = 0;
+  //bbattery_Crush( m_rng[3].get() );
 
   using Psize = StatTest::Pvals::size_type;
   using Tsize = TestContainer::size_type;
@@ -273,13 +274,14 @@ TestU01Suite::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
 {
   using std::get;
   sknuth_CouponCollector( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
-                          get<2>(xargs) );
+                          get<3>(xargs) );
   return Pvals( { res->pVal2[gofw_Mean] } );
 }
 
 Pvals
 TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
-                      const std::tuple<long, long, int, int, int>& xargs )
+                const std::tuple<long, long, int, int, int, gofw_TestType,
+                                 gofw_TestType>& xargs )
 //******************************************************************************
 //  Run Knuth's Maximum-of-t test
 //! \author  J. Bakosi
@@ -288,8 +290,8 @@ TestU01Suite::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
   using std::get;
   sknuth_MaxOft( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
                  get<3>(xargs), get<4>(xargs) );
-  return Pvals( { res->Chi->pVal2[gofw_Mean],
-                  res->Bas->pVal2[gofw_Mean] } );
+  return Pvals( { res->Chi->pVal2[get<5>(xargs)],
+                  res->Bas->pVal2[get<6>(xargs)] } );
 }
 
 Pvals
@@ -421,3 +423,272 @@ TestU01Suite::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
   return Pvals( { res->pVal[snpair_BM] } );
 }
 
+Pvals
+TestU01Suite::Run( unif01_Gen* gen, sres_Chi2* res,
+                   const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Knuth's Run test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sknuth_Run( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+              get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::Permutation( unif01_Gen* gen, sres_Chi2* res,
+                           const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Knuth's Permutation test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sknuth_Permutation( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                      get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
+                const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Knuth's Collision test with permutations
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sknuth_CollisionPermut( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                          get<3>(xargs) );
+  return Pvals( { res->Pois->pVal2 } );
+}
+
+Pvals
+TestU01Suite::SampleProd( unif01_Gen* gen, sres_Basic* res,
+                const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Sample Products test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  svaria_SampleProd( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                     get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::SampleMean( unif01_Gen* gen, sres_Basic* res,
+                const std::tuple<long, long, int>& xargs )
+//******************************************************************************
+//  Run Sample Mean test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  svaria_SampleMean( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs) );
+  return Pvals( { res->pVal2[gofw_AD] } );
+}
+
+Pvals
+TestU01Suite::SampleCorr( unif01_Gen* gen, sres_Basic* res,
+                const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Sample Autocorrelation test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  svaria_SampleCorr( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                     get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
+                const std::tuple<long, long, long, int, int, int>& xargs )
+//******************************************************************************
+//  Run Maurer's "universal" test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  svaria_AppearanceSpacings( gen, res, get<0>(xargs), get<1>(xargs),
+                             get<2>(xargs), get<3>(xargs), get<4>(xargs),
+                             get<5>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::SumCollector( unif01_Gen* gen, sres_Chi2* res,
+                            const std::tuple<long, long, int, double>& xargs )
+//******************************************************************************
+//  Run Sum Collector test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  svaria_SumCollector( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                       get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::Savir2( unif01_Gen* gen, sres_Chi2* res,
+                      const std::tuple<long, long, int, long, int>& xargs )
+//******************************************************************************
+//  Run Marsaglia's modified Savir test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  smarsa_Savir2( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                 get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::GCD( unif01_Gen* gen, smarsa_Res2* res,
+                   const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Marsaglia's greatest common divisor test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  smarsa_GCD( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+              get<3>(xargs) );
+  return Pvals( { res->GCD->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::LinearComp( unif01_Gen* gen, scomp_Res* res,
+                          const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Linear Complexity test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  scomp_LinearComp( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                    get<3>(xargs) );
+  return Pvals( { res->JumpNum->pVal2[gofw_Mean],
+                  res->JumpSize->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::LempelZiv( unif01_Gen* gen, sres_Basic* res,
+                         const std::tuple<long, int, int, int>& xargs )
+//******************************************************************************
+//  Run Lempel-Ziv Compressibility test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  scomp_LempelZiv( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                   get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Sum] } );
+}
+
+Pvals
+TestU01Suite::Fourier3( unif01_Gen* gen, sspectral_Res* res,
+                        const std::tuple<long, int, int, int>& xargs )
+//******************************************************************************
+//  Run Fourier3 test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sspectral_Fourier3( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                      get<3>(xargs) );
+  return Pvals( { res->Bas->pVal2[gofw_AD] } );
+}
+
+
+Pvals
+TestU01Suite::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
+                const std::tuple<long, long, int, int, long>& xargs )
+//******************************************************************************
+//  Run Longest Head Run test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_LongestHeadRun( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                          get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->Chi->pVal2[gofw_Mean],
+                  res->Disc->pVal2 } );
+}
+
+Pvals
+TestU01Suite::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
+                                const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run Periods In Strings test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_PeriodsInStrings( gen, res, get<0>(xargs), get<1>(xargs),
+                            get<2>(xargs), get<3>(xargs) );
+  return Pvals( { res->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
+                const std::tuple<long, long, int, int, long>& xargs )
+//******************************************************************************
+//  Run Hamming Weight 2 test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_HammingWeight2( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                          get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->pVal2[gofw_Sum] } );
+}
+
+Pvals
+TestU01Suite::HammingCorr( unif01_Gen* gen, sstring_Res* res,
+                           const std::tuple<long, long, int, int, int>& xargs )
+//******************************************************************************
+//  Run Hamming Weight Correlation test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_HammingCorr( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                       get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->Bas->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::StringRun( unif01_Gen* gen, sstring_Res3* res,
+                         const std::tuple<long, long, int, int>& xargs )
+//******************************************************************************
+//  Run String Run test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_Run( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+               get<3>(xargs) );
+  return Pvals( { res->NRuns->pVal2[gofw_Mean],
+                  res->NBits->pVal2[gofw_Mean] } );
+}
+
+Pvals
+TestU01Suite::AutoCor( unif01_Gen* gen, sres_Basic* res,
+                       const std::tuple<long, long, int, int, int>& xargs )
+//******************************************************************************
+//  Run Autocorrelation test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  using std::get;
+  sstring_AutoCor( gen, res, get<0>(xargs), get<1>(xargs), get<2>(xargs),
+                   get<3>(xargs), get<4>(xargs) );
+  return Pvals( { res->pVal2[gofw_Sum] } );
+}
