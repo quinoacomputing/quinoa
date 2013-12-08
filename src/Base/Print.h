@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 03:47:02 PM MST
+  \date      Sun 08 Dec 2013 07:13:41 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -150,7 +150,7 @@ class Print {
     mutable format m_note_fmt = format("\n%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
-    mutable format m_item_widename_value_fmt = format("%s%-60s : %s\n");
+    mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
 
