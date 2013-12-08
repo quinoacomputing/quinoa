@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Thu 05 Dec 2013 11:58:37 PM MST
+  \date      Sun 08 Dec 2013 03:18:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -16,9 +16,9 @@
 namespace rngtest {
 
 //! TestU01 : StatTest
-template< class Result,                                //!< Results type
-          Result* (*Creator)(void),                       //!< Results creator
-          void (*Deleter)(Result *),                      //!< Results deleter
+template< class Result,                             //!< Results type
+          Result* (*Creator)(void),                 //!< Results creator
+          void (*Deleter)(Result *),                //!< Results deleter
           typename... Ts >                          //!< Extra runner args types
 class TestU01 : public StatTest {
 
