@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 05 Dec 2013 09:12:54 AM MST
+  \date      Sat 07 Dec 2013 04:59:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -106,7 +106,6 @@ RNGTestDriver::echo()
 
   if (m_battery) {
     print.Section<ctr::Battery, ctr::selected, ctr::battery>();
-
     m_battery->print();
     print.section("RNG(s) tested");
     print.Mklparams< quinoa::ctr::RNG,
@@ -114,7 +113,7 @@ RNGTestDriver::echo()
                      quinoa::ctr::MKLGaussianMethod >
                    ( control.get<ctr::selected, ctr::rng>(),
                      control.get<ctr::param, ctr::mklrng>() );
-    print.endpart();
+    print.raw("\n");
   } else {
     print.note( "No RNG battery specified" );
   }

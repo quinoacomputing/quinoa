@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Fri 06 Dec 2013 12:36:31 PM MST
+  \date      Sat 07 Dec 2013 03:24:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -71,10 +71,11 @@ SmallCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
 
   // Knuth's Maximum-of-t
   add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
-                long, long, int, int, int > >
+                long, long, int, int, int, gofw_TestType, gofw_TestType > >
        ( gen, rng, StatTest::Names( {"Maximum-of-t",
                                      "Maximum-of-t Anderson-Darling"} ),
-         MaxOft, 1L, 2L * MILLION, 0, static_cast<int>(MILLION / 10), 6 );
+         MaxOft, 1L, 2L * MILLION, 0, static_cast<int>(MILLION / 10), 6,
+                 gofw_Mean, gofw_Mean );
 
   // Weight Distribution
   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
