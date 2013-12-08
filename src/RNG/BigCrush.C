@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 08:58:26 PM MST
+  \date      Sat 07 Dec 2013 10:41:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -391,6 +391,262 @@ BigCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
                 long, long, int, int > >
        ( gen, rng, StatTest::Names( {"Permutation t=10"} ),
          Permutation, 1L, static_cast<long>(BILLION / 2), 10, 10 );
+
+  // Knuth's Collision with permutations, r = 0
+  add< TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Collision w. Permutations r=0"} ),
+         CollisionPermut, 20L, 20L * MILLION, 0, 14 );
+
+  // Knuth's Collision with permutations, r = 10
+  add< TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Collision w. Permutations r=10"} ),
+         CollisionPermut, 20L, 20L * MILLION, 10, 14 );
+
+  // Knuth's Maximum-of-t, t = 8
+  add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                long, long, int, int, int, gofw_TestType, gofw_TestType > >
+       ( gen, rng, StatTest::Names( {"Maximum-of-t t=8",
+                                     "Maximum-of-t Anderson-Darling t=8"} ),
+         MaxOft, 40L, 10L * MILLION, 0, static_cast<int>(MILLION / 10), 8,
+                 gofw_Sum, gofw_AD );
+
+  // Knuth's Maximum-of-t, t = 16
+  add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                long, long, int, int, int, gofw_TestType, gofw_TestType > >
+       ( gen, rng, StatTest::Names( {"Maximum-of-t t=16",
+                                     "Maximum-of-t Anderson-Darling t=16"} ),
+         MaxOft, 30L, 10L * MILLION, 0, static_cast<int>(MILLION / 10), 16,
+                 gofw_Sum, gofw_AD );
+
+  // Knuth's Maximum-of-t, t = 24
+  add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                long, long, int, int, int, gofw_TestType, gofw_TestType > >
+       ( gen, rng, StatTest::Names( {"Maximum-of-t t=24",
+                                     "Maximum-of-t Anderson-Darling t=24"} ),
+         MaxOft, 20L, 10L * MILLION, 0, static_cast<int>(MILLION / 10), 24,
+                 gofw_Mean, gofw_Mean );
+
+  // Knuth's Maximum-of-t, t = 32
+  add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                long, long, int, int, int, gofw_TestType, gofw_TestType > >
+       ( gen, rng, StatTest::Names( {"Maximum-of-t t=32",
+                                     "Maximum-of-t Anderson-Darling t=32"} ),
+         MaxOft, 20L, 10L * MILLION, 0, static_cast<int>(MILLION / 10), 32,
+                 gofw_Mean, gofw_Mean );
+
+  // Sample Products, t = 8
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Sample Products t=8"} ),
+         SampleProd, 4L, 10L * MILLION, 0, 8 );
+
+  // Sample Products, t = 16
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Sample Products t=16"} ),
+         SampleProd, 20L, 10L * MILLION, 0, 16 );
+
+  // Sample Products, t = 24
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Sample Products t=24"} ),
+         SampleProd, 20L, 10L * MILLION, 0, 24 );
+
+  // Sample Mean, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int > >
+       ( gen, rng, StatTest::Names( {"Sample Mean r=0"} ),
+         SampleMean, 20L * MILLION, 30L, 0 );
+
+  // Sample Mean, r = 10
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int > >
+       ( gen, rng, StatTest::Names( {"Sample Mean r=10"} ),
+         SampleMean, 20L * MILLION, 30L, 10 );
+
+  // Sample Autorrelation, k = 1
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Sample Autorrelation k=1"} ),
+         SampleCorr, 1L, 2L * BILLION, 0, 1 );
+
+  // Sample Autorrelation, k = 2
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Sample Autorrelation k=2"} ),
+         SampleCorr, 1L, 2L * BILLION, 0, 2 );
+
+  // Maurer's "universal" test, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Appearance Spacings r=0"} ),
+         AppearanceSpacings, 1L, 10L * MILLION, 400L * MILLION, 0, 30, 15 );
+
+  // Maurer's "universal" test, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Appearance Spacings r=0"} ),
+         AppearanceSpacings, 1L, 10L * MILLION, static_cast<long>(BILLION), 0,
+                             3, 15 );
+
+  // Maurer's "universal" test, r = 27
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Appearance Spacings r=27"} ),
+         AppearanceSpacings, 1L, 10L * MILLION, static_cast<long>(BILLION), 27,
+                             3, 15 );
+
+  // Weight Distribution, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=0"} ),
+         WeightDistrib, 1L, 20L * MILLION, 0, 256L, 0.0, 0.25 );
+
+  // Weight Distribution, r = 20
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=20"} ),
+         WeightDistrib, 1L, 20L * MILLION, 20, 256L, 0.0, 0.25 );
+
+  // Weight Distribution, r = 28
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=28"} ),
+         WeightDistrib, 1L, 20L * MILLION, 28, 256L, 0.0, 0.25 );
+
+  // Weight Distribution, r = 0, beta = 1/16
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=0 beta=1/16"} ),
+         WeightDistrib, 1L, 20L * MILLION, 0, 256L, 0.0, 0.0625 );
+
+  // Weight Distribution, r = 10
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=10"} ),
+         WeightDistrib, 1L, 20L * MILLION, 10, 256L, 0.0, 0.0625 );
+
+  // Weight Distribution, r = 26
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, long, double, double > >
+       ( gen, rng, StatTest::Names( {"Weight Distribution r=26"} ),
+         WeightDistrib, 1L, 20L * MILLION, 26, 256L, 0.0, 0.0625 );
+
+  // Sum Collector
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, double > >
+       ( gen, rng, StatTest::Names( {"Sum Collector"} ),
+         SumCollector, 1L, 500L * MILLION, 0, 10.0 );
+
+  // Marsaglia's Matrix Rank, L = 30, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Matrix Rank L=30 r=0"} ),
+         MatrixRank, 10L, static_cast<long>(MILLION), 0, 5, 30, 30 );
+
+  // Marsaglia's Matrix Rank, L = 30, r = 25
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Matrix Rank L=30 r=25"} ),
+         MatrixRank, 10L, static_cast<long>(MILLION), 25, 5, 30, 30 );
+
+  // Marsaglia's Matrix Rank, L = 1000, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Matrix Rank L=1000 r=0"} ),
+         MatrixRank, 1L, 5L * THOUSAND, 0, 4, 1000, 1000 );
+
+  // Marsaglia's Matrix Rank, L = 1000, r = 26
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Matrix Rank L=1000 r=26"} ),
+         MatrixRank, 1L, 5L * THOUSAND, 26, 4, 1000, 1000 );
+
+  // Marsaglia's Matrix Rank, L = 5000, r = 15
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+              long, long, int, int, int, int > >
+     ( gen, rng, StatTest::Names( {"Matrix Rank L=5000 r=15"} ),
+       MatrixRank, 1L, 80L, 15, 15, 5000, 5000 );
+
+  // Marsaglia's Matrix Rank, L = 5000, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+              long, long, int, int, int, int > >
+     ( gen, rng, StatTest::Names( {"Matrix Rank L=5000 r=0"} ),
+       MatrixRank, 1L, 80L, 0, 30, 5000, 5000 );
+
+  // Marsaglia's Modified Savir
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+              long, long, int, long, int > >
+     ( gen, rng, StatTest::Names( {"Savir2"} ),
+       Savir2, 10L, 10L * MILLION, 10, 1024L * 1024L, 30 );
+
+  // Marsaglia's greatest common divisor
+  add< TestU01< smarsa_Res2, smarsa_CreateRes2, smarsa_DeleteRes2,
+              long, long, int, int > >
+     ( gen, rng, StatTest::Names( {"GCD"} ),
+       GCD, 10L, 50L * MILLION, 0, 30 );
+
+  // Random Walk 1, L = 50, r = 0
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=50 r=0",
+                                     "Random Walk 1 Stat M L=50 r=0",
+                                     "Random Walk 1 Stat J L=50 r=0",
+                                     "Random Walk 1 Stat R L=50 r=0",
+                                     "Random Walk 1 Stat C L=50 r=0"} ),
+         RandomWalk1, 1L, 100L * MILLION, 0, 5, 50L, 50L );
+
+  // Random Walk 1, L = 50, r = 25
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=50 r=25",
+                                     "Random Walk 1 Stat M L=50 r=25",
+                                     "Random Walk 1 Stat J L=50 r=25",
+                                     "Random Walk 1 Stat R L=50 r=25",
+                                     "Random Walk 1 Stat C L=50 r=25"} ),
+         RandomWalk1, 1L, 100L * MILLION, 25, 5, 50L, 50L );
+
+  // Random Walk 1, L = 1000, r = 0
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=1000 r=0",
+                                     "Random Walk 1 Stat M L=1000 r=0",
+                                     "Random Walk 1 Stat J L=1000 r=0",
+                                     "Random Walk 1 Stat R L=1000 r=0",
+                                     "Random Walk 1 Stat C L=1000 r=0"} ),
+         RandomWalk1, 1L, 10L * MILLION, 0, 10, 1000L, 1000L );
+
+  // Random Walk 1, L = 1000, r = 20
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=1000 r=20",
+                                     "Random Walk 1 Stat M L=1000 r=20",
+                                     "Random Walk 1 Stat J L=1000 r=20",
+                                     "Random Walk 1 Stat R L=1000 r=20",
+                                     "Random Walk 1 Stat C L=1000 r=20"} ),
+         RandomWalk1, 1L, 10L * MILLION, 20, 10, 1000L, 1000L );
+
+  // Random Walk 1, L = 10000, r = 0
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=10000 r=0",
+                                     "Random Walk 1 Stat M L=10000 r=0",
+                                     "Random Walk 1 Stat J L=10000 r=0",
+                                     "Random Walk 1 Stat R L=10000 r=0",
+                                     "Random Walk 1 Stat C L=10000 r=0"} ),
+         RandomWalk1, 1L, static_cast<long>(MILLION), 0, 15, 10000L, 10000L );
+
+  // Random Walk 1, L = 10000, r = 15
+  add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                long, long, int, int, long, long > >
+       ( gen, rng, StatTest::Names( {"Random Walk 1 Stat H L=10000 r=15",
+                                     "Random Walk 1 Stat M L=10000 r=15",
+                                     "Random Walk 1 Stat J L=10000 r=15",
+                                     "Random Walk 1 Stat R L=10000 r=15",
+                                     "Random Walk 1 Stat C L=10000 r=15"} ),
+         RandomWalk1, 1L, static_cast<long>(MILLION), 15, 15, 10000L, 10000L );
 
 
 }

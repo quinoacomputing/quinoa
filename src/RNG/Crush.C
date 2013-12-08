@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 08:04:09 PM MST
+  \date      Sat 07 Dec 2013 10:34:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -481,13 +481,13 @@ Crush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
      ( gen, rng, StatTest::Names( {"Savir2"} ),
        Savir2, 1L, 20L * MILLION, 0, 1024L * 1024L, 30 );
 
-  // Marsaglia's gretes common divisor, r = 0
+  // Marsaglia's greatest common divisor, r = 0
   add< TestU01< smarsa_Res2, smarsa_CreateRes2, smarsa_DeleteRes2,
               long, long, int, int > >
      ( gen, rng, StatTest::Names( {"GCD r=0"} ),
        GCD, 1L, 100L * MILLION, 0, 30 );
 
-  // Marsaglia's gretes common divisor, r = 10
+  // Marsaglia's greatest common divisor, r = 10
   add< TestU01< smarsa_Res2, smarsa_CreateRes2, smarsa_DeleteRes2,
               long, long, int, int > >
      ( gen, rng, StatTest::Names( {"GCD r=10"} ),
