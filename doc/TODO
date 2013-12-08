@@ -18,7 +18,6 @@
     - Add task-based parallelism using (optional) TBB
     - Make rngtest optional
     - Make MKL optional
-    - Add unit tests comparing serial and parallel batteries
 
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
