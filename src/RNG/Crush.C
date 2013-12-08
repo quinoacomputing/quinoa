@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 10:34:45 PM MST
+  \date      Sun 08 Dec 2013 12:31:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -716,5 +716,4 @@ Crush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
                 long, long, int, int, int > >
        ( gen, rng, StatTest::Names( {"Autocorrelation d=10 r=20"} ),
          AutoCor, 5L, 11L + BILLION, 20, 10, 10 );
-
 }

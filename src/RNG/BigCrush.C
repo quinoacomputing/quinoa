@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 10:41:27 PM MST
+  \date      Sun 08 Dec 2013 12:32:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -648,5 +648,173 @@ BigCrush::addTests( const quinoa::ctr::RNGType& rng, const Gen01Ptr& gen )
                                      "Random Walk 1 Stat C L=10000 r=15"} ),
          RandomWalk1, 1L, static_cast<long>(MILLION), 15, 15, 10000L, 10000L );
 
+  // Linear Complexity, r = 0
+  add< TestU01< scomp_Res, scomp_CreateRes, scomp_DeleteRes,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Linear Complexity Jump r=0",
+                                     "Linear Complexity Size r=0"} ),
+         LinearComp, 1L, 400L * THOUSAND + 20, 0, 1 );
 
+  // Linear Complexity, r = 29
+  add< TestU01< scomp_Res, scomp_CreateRes, scomp_DeleteRes,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Linear Complexity Jump r=29",
+                                     "Linear Complexity Size r=29"} ),
+         LinearComp, 1L, 400L * THOUSAND + 20, 29, 1 );
+
+  // Lempel-Ziv Compressibility, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Lempel-Ziv Compressibility r=0"} ),
+         LempelZiv, 10L, 27, 0, 30 );
+
+  // Lempel-Ziv Compressibility, r = 15
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Lempel-Ziv Compressibility r=15"} ),
+         LempelZiv, 10L, 27, 15, 15 );
+
+  // Fourier3, r = 0
+  add< TestU01< sspectral_Res, sspectral_CreateRes, sspectral_DeleteRes,
+                long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Fourier 3 r=0"} ),
+         Fourier3, 100L * THOUSAND, 14, 0, 3 );
+
+  // Fourier3, r = 20
+  add< TestU01< sspectral_Res, sspectral_CreateRes, sspectral_DeleteRes,
+                long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Fourier 3 r=27"} ),
+         Fourier3, 100L * THOUSAND, 14, 27, 3 );
+
+  // Longes Heat Run, r = 0
+  add< TestU01< sstring_Res2, sstring_CreateRes2, sstring_DeleteRes2,
+                long, long, int, int, long > >
+       ( gen, rng, StatTest::Names( {"Longest Head Run Chi r=0",
+                                     "Longest Head Run Disc r=0"} ),
+         LongestHeadRun, 1L, 1000L, 0, 3, 20L + 10L * MILLION );
+
+  // Longes Heat Run, r = 27
+  add< TestU01< sstring_Res2, sstring_CreateRes2, sstring_DeleteRes2,
+                long, long, int, int, long > >
+       ( gen, rng, StatTest::Names( {"Longest Head Run Chi r=27",
+                                     "Longest Head Run Disc r=27"} ),
+         LongestHeadRun, 1L, 1000L, 27, 3, 20L + 10L * MILLION );
+
+  // Periods In Strings, r = 0
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Periods In Strings r=0"} ),
+         PeriodsInStrings, 10L, BILLION / 2, 0, 10 );
+
+  // Periods In Strings, r = 20
+  add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"Periods In Strings r=20"} ),
+         PeriodsInStrings, 10L, BILLION / 2, 20, 10 );
+
+  // Hamming Weight 2, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, long > >
+       ( gen, rng, StatTest::Names( {"Hamming Weight 2 r=0"} ),
+         HammingWeight2, 10L, static_cast<long>(BILLION), 0, 3,
+                         static_cast<long>(MILLION) );
+
+  // Hamming Weight 2, r = 27
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, long > >
+       ( gen, rng, StatTest::Names( {"Hamming Weight 2 r=27"} ),
+         HammingWeight2, 10L, static_cast<long>(BILLION), 27, 3,
+                         static_cast<long>(MILLION) );
+
+  // Hamming Correlation, L = 30
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int> >
+       ( gen, rng, StatTest::Names( {"Hamming Correlation L=30"} ),
+         HammingCorr, 1L, static_cast<long>(BILLION), 10, 10, 30 );
+
+  // Hamming Correlation, L = 300
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int> >
+       ( gen, rng, StatTest::Names( {"Hamming Correlation L=300"} ),
+         HammingCorr, 1L, 100L * MILLION, 10, 10, 10 * 30 );
+
+  // Hamming Correlation, L = 1200
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int> >
+       ( gen, rng, StatTest::Names( {"Hamming Correlation L=1200"} ),
+         HammingCorr, 1L, 100L * MILLION, 10, 10, 40 * 30 );
+
+  // Hamming independence, L = 30, r = 0
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=30 r=0"} ),
+         HammingIndep, 10L, 30L * MILLION, 0, 3, 30, 0 );
+
+  // Hamming independence, L = 30, r = 27
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=30 r=27"} ),
+         HammingIndep, 10L, 30L * MILLION, 27, 3, 30, 0 );
+
+  // Hamming independence, L = 300, r = 0
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=300 r=0"} ),
+         HammingIndep, 1L, 30L * MILLION, 0, 4, 10 * 30, 0 );
+
+  // Hamming independence, L = 300, r = 26
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=300 r=26"} ),
+         HammingIndep, 1L, 30L * MILLION, 26, 4, 10 * 30, 0 );
+
+  // Hamming independence, L = 1200, r = 0
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=1200 r=0"} ),
+         HammingIndep, 1L, 10L * MILLION, 0, 5, 40 * 30, 0 );
+
+  // Hamming independence, L = 1200, r = 25
+  add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                long, long, int, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Hamming Independence L=1200 r=25"} ),
+         HammingIndep, 1L, 10L * MILLION, 25, 5, 40 * 30, 0 );
+
+  // String Run, r = 0
+  add< TestU01< sstring_Res3, sstring_CreateRes3, sstring_DeleteRes3,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"String Run NRuns r=0",
+                                     "String Run NBits r=0"} ),
+         StringRun, 1L, 2L * BILLION, 0, 3 );
+
+  // String Run, r = 27
+  add< TestU01< sstring_Res3, sstring_CreateRes3, sstring_DeleteRes3,
+                long, long, int, int > >
+       ( gen, rng, StatTest::Names( {"String Run NRuns r=27",
+                                     "String Run NBits r=27"} ),
+         StringRun, 1L, 2L * BILLION, 27, 3 );
+
+  // Autocorrelation, d = 1, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Autocorrelation d=1 r=0"} ),
+         AutoCor, 10L, 30L + BILLION, 0, 3, 1 );
+
+  // Autocorrelation, d = 3, r = 0
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Autocorrelation d=3 r=0"} ),
+         AutoCor, 10L, 30L + BILLION, 0, 3, 3 );
+
+  // Autocorrelation, d = 1, r =27
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Autocorrelation d=1 r=27"} ),
+         AutoCor, 10L, 30L + BILLION, 27, 3, 1 );
+
+  // Autocorrelation, d = 3, r = 27
+  add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                long, long, int, int, int > >
+       ( gen, rng, StatTest::Names( {"Autocorrelation d=3 r=27"} ),
+         AutoCor, 10L, 30L + BILLION, 27, 3, 3 );
 }
