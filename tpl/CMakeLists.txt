@@ -154,13 +154,12 @@ ExternalProject_Add(
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
-# This TPL has been forked: No PREFIX, no URL, no URL_MD5, instead we specify
-# SOURCE_DIR, containing own fork, and no need to copy the source either.
-# Changes are tracked in git repo in SOURCE_DIR.
 ExternalProject_Add(
   testu01
-  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3
-  CONFIGURE_COMMAND ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3/configure
+  PREFIX testu01
+  URL ${PROJECT_SOURCE_DIR}/TestU01-1.2.3.tar.gz
+  URL_MD5 dfe63dfce27d1a6114a644f6eb9a23a7
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CXX=${UNDERLYING_CXX_COMPILER}
                     F77=${UNDERLYING_FORTRAN_COMPILER}
@@ -172,3 +171,29 @@ ExternalProject_Add(
   LOG_BUILD 1
   LOG_INSTALL 1
 )
+
+#### TestU01 ##################################################################
+# http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+# No need for MPI, use underlying compilers
+# This TPL can be used to hack it. ExternalProject_Add will look for the source
+# in SOURCE_DIR and build there. Building with different compilers requires a
+# 'make clean' before this cmake command will be successful.  No PREFIX, no
+# URL, no URL_MD5, instead we specify SOURCE_DIR, containing own fork. Changes
+# are tracked in git repo in SOURCE_DIR. Once the hacking is done, create a new
+# tarball and update the above ExternalProject_Add, as that is more automatic
+# for new builds from scratch.
+#ExternalProject_Add(
+#  testu01
+#  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3
+#  CONFIGURE_COMMAND ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3/configure
+#                    CC=${UNDERLYING_C_COMPILER}
+#                    CXX=${UNDERLYING_CXX_COMPILER}
+#                    F77=${UNDERLYING_FORTRAN_COMPILER}
+#                    CFLAGS=-Wno-error=return-type
+#                    --prefix=${TPL_INSTALL_DIR}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
