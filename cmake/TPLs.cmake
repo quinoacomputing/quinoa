@@ -28,6 +28,7 @@ find_library(MKL_CORE_LIBRARY
 
 set(INTEL_OMP_RUNTIME_LIBRARY "NOTFOUND")
 find_library(INTEL_OMP_RUNTIME_LIBRARY
+             NO_DEFAULT_PATH
              NAMES iomp5
              PATHS ${MKL_SEARCH_PATH}/../../../compiler/lib/intel64)
 
