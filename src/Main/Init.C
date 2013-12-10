@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 07:17:23 PM MST
+  \date      Mon 09 Dec 2013 10:27:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -59,15 +59,15 @@ std::string tk::curtime()
   // Convert to local time format
   c_time_string = ctime(&current_time);
 
- if (c_time_string == NULL) {
-   Throw(ExceptType::WARNING, "Failure to convert the current time.");
- }
+  if (c_time_string == NULL) {
+    Throw(ExceptType::WARNING, "Failure to convert the current time.");
+  }
 
- // Convert to std::string and remove trailing newline
- std::string str(c_time_string);
- str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+  // Convert to std::string and remove trailing newline
+  std::string str(c_time_string);
+  str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
 
- return str;
+  return str;
 }
 
 #ifdef HAS_MKL
