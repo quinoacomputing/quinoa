@@ -81,6 +81,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
+                      ${TBB_LIBRARY}
 )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
