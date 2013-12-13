@@ -13,6 +13,8 @@
 
 * Build & runtime hostname output (if portable)
 
+* Pass -O3 for configure-based TPL builds
+
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using either OpenMP or (optional) TBB
@@ -27,7 +29,7 @@
           test for clean exit (e.g. with valgrind)
         o valgrind can return a different exit code based on errors detected
           using the command line argument --error-exitcode= to valgrind
-    - Clang's address-, thread-, and memory-sanitizer
+    - Clang's static-, address-, thread-, and memory-sanitizer
 
 * Faster build:
     - Reduce build deps with ninja build dependency map

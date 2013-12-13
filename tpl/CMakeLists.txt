@@ -175,13 +175,13 @@ ExternalProject_Add(
 #### TestU01 ##################################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
-# This TPL can be used to hack it. ExternalProject_Add will look for the source
-# in SOURCE_DIR and build there. Building with different compilers requires a
-# 'make clean' before this cmake command will be successful.  No PREFIX, no
-# URL, no URL_MD5, instead we specify SOURCE_DIR, containing own fork. Changes
-# are tracked in git repo in SOURCE_DIR. Once the hacking is done, create a new
-# tarball and update the above ExternalProject_Add, as that is more automatic
-# for new builds from scratch.
+# This TPL-build can be used to hack TestU01. ExternalProject_Add will look for
+# the source in SOURCE_DIR and build there. Building with different compilers
+# requires a 'make clean' before this cmake command will be successful. No
+# PREFIX, no URL, no URL_MD5, instead we specify SOURCE_DIR, containing the
+# fork. Changes are tracked in git repo in SOURCE_DIR. Once the hacking is done,
+# create a new tarball and update the above ExternalProject_Add, as that is more
+# automatic for new builds (using different compilers) from scratch.
 #ExternalProject_Add(
 #  testu01
 #  SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3
