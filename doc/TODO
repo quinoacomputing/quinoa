@@ -14,6 +14,7 @@
 * Build & runtime hostname output (if portable)
 
 * RNGTest:
+    - Output before battery starts: # tests, # stats
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using either OpenMP or (optional) TBB
     - Make rngtest optional
