@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 06:58:42 PM MST
+  \date      Thu 12 Dec 2013 09:48:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -21,6 +21,7 @@ extern "C" {
 namespace rngtest {
 
 std::vector< std::unique_ptr< tk::RNG > > g_rng;  //!< Global pointers to RNGs
+
 int g_tid;                                        //!< Global thread id
 #ifdef _OPENMP
 #pragma omp threadprivate(g_tid)
@@ -95,28 +96,21 @@ TestU01Suite::total()
 //******************************************************************************
 {
   m_npval = 0;
-  for (const auto& t : m_pvals) {
-    m_npval += t.size();
+  for (const auto& t : m_tests) {
+    m_npval += t->nstat();
   }
 }
 
-
-rngtest::StatTest::Pvals::size_type
+rngtest::StatTest::Psize
 TestU01Suite::failed()
 //******************************************************************************
 //  Count up number of failed tests
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using Pval = StatTest::Pvals::value_type;
-
-  StatTest::Pvals::size_type failed = 0;
-  for (const auto& t : m_pvals) {
-    for (const auto& p : t) {
-      if (fabs(p+1.0) > std::numeric_limits< Pval >::epsilon()) {
-        ++failed;
-      }
-    }
+  StatTest::Psize failed = 0;
+  for (const auto& t : m_tests) {
+    failed += t->nfail();
   }
   return failed;
 }
@@ -131,14 +125,14 @@ TestU01Suite::run()
   const RNGTestPrint& print = m_base.print;
 
   print.part( m_name );
-  print.section( "Statistical tests finished" );
+  print.section( "Statistics computed" );
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
   //g_tid = 0;
   //bbattery_Crush( m_rng[3].get() );
 
-  using Psize = StatTest::Pvals::size_type;
+  using Psize = StatTest::Psize;
   using Tsize = TestContainer::size_type;
 
   Tsize ntest = m_tests.size();
@@ -154,15 +148,15 @@ TestU01Suite::run()
     #endif
 
     #ifdef _OPENMP
-    #pragma omp for
+    #pragma omp for schedule(dynamic)
     #endif
     for (Tsize i=0; i<ntest; ++i) {
 
       // Run test
-      StatTest::Pvals pvals = m_tests[i]->run();
+      m_tests[i]->run();
 
       // Evaluate test
-      Psize npval = pvals.size();
+      Psize npval = m_tests[i]->nstat();
       for (Psize p=0; p<npval; ++p) {
 
         // Increase number tests completed
@@ -172,23 +166,17 @@ TestU01Suite::run()
         ++n;
 
         // Output one-liner
-        print.test< StatTest, TestContainer >
-                  ( n, m_npval, m_tests[i], p, pvals[p] );
-
-        // Save suspect p-value
-        if ((pvals[p] <= gofw_Suspectp) || (pvals[p] >= 1.0 - gofw_Suspectp)) {
-          m_pvals[i][p] = pvals[p];
-        }
+        print.test< StatTest, TestContainer >( n, m_npval, m_tests[i], p );
       }
     }
   }
 
   // Count up number of filed tests
-  StatTest::Pvals::size_type nfail = failed();
+  StatTest::Psize nfail = failed();
 
   // Output summary of failed tests
   if (nfail) {
-    print.failed< StatTest >("Failed tests", m_npval, nfail, m_pvals, m_tests);
+    print.failed< StatTest >("Failed statistics", m_npval, nfail, m_tests);
   } else {
     print.note("All tests passed");
   }
@@ -204,7 +192,7 @@ TestU01Suite::print() const
 //******************************************************************************
 {
   // Output test names (only for the first RNG tested, the rest are repeats)
-  m_base.print.names< StatTest >( m_tests, m_tests.size()/m_testRNGs.size() );
+  m_base.print.names< StatTest >( m_tests, ntest() );
 }
 
 Pvals
