@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 04:50:04 PM MST
+  \date      Thu 12 Dec 2013 09:14:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -40,6 +40,12 @@ class TestU01Suite : public Battery {
 
     //! Print list of registered statistical tests
     void print() const override;
+
+    //! Return number of statistical tests in battery
+    Tsize ntest() const override { return m_tests.size()/m_testRNGs.size(); }
+
+    //! Return number of statistics produced by battery
+    StatTest::Psize nstat() const override { return m_npval/m_testRNGs.size(); }
 
   protected:
     //! Constructor
@@ -124,7 +130,8 @@ class TestU01Suite : public Battery {
 
     //! Setup RNGs
     template< class Suite >
-    void setupRNGs( Suite& suite ) {
+    void setupRNGs( Suite& suite )
+    {
       // Get vector of selected RNGs
       std::vector< ctr::RNGType > rngs =
         m_base.control.get< ctr::selected, ctr::rng >();
@@ -155,7 +162,6 @@ class TestU01Suite : public Battery {
               Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
     {
-      m_pvals.push_back( Pvals(names.size(), -1.0) );
       std::unique_ptr< TestType >
         ptr( new TestType( gen.get(),
                            std::move(rng),
@@ -213,7 +219,6 @@ class TestU01Suite : public Battery {
 
     Pvals::size_type m_npval;                   //!< Total number of stats
     TestContainer m_tests;                      //!< Statistical tests
-    std::vector< Pvals > m_pvals;               //!< p-values of tests
 };
 
 } // rngtest::

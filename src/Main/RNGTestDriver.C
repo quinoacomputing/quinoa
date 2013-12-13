@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 04:59:12 PM MST
+  \date      Thu 12 Dec 2013 08:58:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -105,7 +105,7 @@ RNGTestDriver::echo()
   }
 
   if (m_battery) {
-    print.Section<ctr::Battery, ctr::selected, ctr::battery>();
+    print.battery( m_battery->ntest(), m_battery->nstat() );
     m_battery->print();
     print.section("RNG(s) tested");
     print.Mklparams< quinoa::ctr::RNG,

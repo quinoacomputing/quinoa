@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/StatTest.h
   \author    J. Bakosi
-  \date      Mon 02 Dec 2013 05:43:10 PM MST
+  \date      Thu 12 Dec 2013 08:38:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -27,18 +27,30 @@ class StatTest {
     using Pvals = std::vector< double >;
     using Names = std::vector< std::string >;
 
+    using Psize = Pvals::size_type;
+    using Nsize = Names::size_type;
+
     //! Run
-    virtual Pvals run() = 0;
+    virtual void run() = 0;
 
     //! Test name accessor
-    virtual const Names::value_type&
-    name( const Names::size_type& i ) const = 0;
+    virtual const Names::value_type& name( const Nsize& i ) const = 0;
 
     //! Number of results/test accessor
-    virtual const Names::size_type& nresult() const = 0;
+    virtual const Nsize& nstat() const = 0;
 
     //! RNG enum accessor
     virtual const quinoa::ctr::RNGType& rng() const = 0;
+
+    //! Query whether test is failed
+    virtual bool fail( const Nsize& p ) const = 0;
+
+    //! p-value accessors
+    virtual double pval( const Nsize& p ) const = 0;
+    virtual std::string pvalstr( const Nsize& p ) const = 0;
+
+    //! Return number of failed tests
+    virtual Psize nfail() const = 0;
 
   private:
     //! Don't permit copy constructor

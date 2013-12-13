@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Battery.h
   \author    J. Bakosi
-  \date      Thu 05 Dec 2013 11:43:28 PM MST
+  \date      Thu 12 Dec 2013 08:50:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -34,6 +34,13 @@ class Battery {
 
     //! Container type for statistical tests
     using TestContainer = std::vector< std::unique_ptr< StatTest > >;
+    using Tsize = TestContainer::size_type;
+
+    //! Return number of statistical tests in battery
+    virtual Tsize ntest() const = 0;
+
+    //! Return number of statistics produced by battery
+    virtual StatTest::Psize nstat() const = 0;
 
   protected:
     const Base& m_base;                   //!< Essentials
