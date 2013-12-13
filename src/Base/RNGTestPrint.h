@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed 04 Dec 2013 12:52:19 PM MST
+  \date      Thu 12 Dec 2013 08:14:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -122,44 +122,12 @@ class RNGTestPrint : public tk::Print {
            m_item_indent + "statistics computed from the preceding test.\n" );
     }
 
-    //! Return humand-readable p-value (ala TestU01::bbattery.c::WritePval)
-    std::string pval( double p ) const {
-      std::stringstream ss;
-      if (p < gofw_Suspectp) {
-
-        if ((p >= 0.01) && (p <= 0.99))
-          ss << p;
-        else if (p < gofw_Epsilonp)
-          ss << "eps";
-        else if (p < 0.01)
-          ss << p;
-        else if (p >= 1.0 - gofw_Epsilonp1)
-          ss << "1 - eps1";
-        else if (p < 1.0 - 1.0e-4)
-          ss << p;
-        else
-          ss << 1.0 - p;
-
-      } else if (p > 1.0 - gofw_Suspectp) {
-
-        if (p >= 1.0 - gofw_Epsilonp1)
-          ss << "1 - eps1";
-        else if (p >= 1.0 - 1.0e-4)
-          ss << "1 - " << 1.0 - p;
-        else
-          ss << p;
-
-      }
-      return ss.str();
-    }
-
     //! Print a single test name, RNG and pass or fail + p-value
     template< class StatTest, class TestContainer >
     void test( const typename StatTest::Pvals::size_type& n,
                const typename StatTest::Pvals::size_type& npval,
                const typename TestContainer::value_type& test,
-               const typename StatTest::Pvals::size_type& p,
-               const typename StatTest::Pvals::value_type& pvalue ) const
+               const typename StatTest::Pvals::size_type& p ) const
     {
       // Construct info-line
       tk::Option< quinoa::ctr::RNG > rng;
@@ -167,10 +135,8 @@ class RNGTestPrint : public tk::Print {
       ss << "[" << n << "/" << npval << "] " << test->name(p) << ", "
          << rng.name(test->rng());
       std::string pvalstr("pass");
-      // Decide if pass of fail
-      if ((pvalue <= gofw_Suspectp) || (pvalue >= 1.0 - gofw_Suspectp)) {
-        pvalstr = "fail, p-value = " + pval(pvalue);
-      }
+      // Put in p-value if test failed
+      if (test->fail(p)) pvalstr = "fail, p-value = " + test->pvalstr(p);
       // Output
       std::cout << m_item_widename_value_fmt
                    % m_item_indent
@@ -184,7 +150,6 @@ class RNGTestPrint : public tk::Print {
       const std::string& name,
       const typename std::vector< typename StatTest::Pvals >::size_type& total,
       const typename std::vector< typename StatTest::Pvals >::size_type& failed,
-      const std::vector< typename StatTest::Pvals >& pvals,
       const TestContainer& tests ) const
     {
       using Psize = typename StatTest::Pvals::size_type;
@@ -203,9 +168,9 @@ class RNGTestPrint : public tk::Print {
       Tsize ntest = tests.size();
       std::string oldname;
       for (Tsize i=0; i<ntest; ++i) {
-        Psize npval = pvals[i].size();
+        Psize npval = tests[i]->nresult();
         for (Psize p=0; p<npval; ++p) {
-          if ( fabs(pvals[i][p]+1.0) > std::numeric_limits<Pval>::epsilon() ) {
+          if ( tests[i]->fail(p) ) {
             tk::Option< quinoa::ctr::RNG > rng;
             std::string newname( rng.name( tests[i]->rng() ) );
             std::string rngname( newname == oldname ? "" : (", " + newname) );
@@ -213,7 +178,7 @@ class RNGTestPrint : public tk::Print {
             std::cout << m_item_widename_value_fmt
                          % m_item_indent
                          % (tests[i]->name(p) + rngname)
-                         % pval( pvals[i][p] );
+                         % tests[i]->pvalstr(p);
           }
         }
       }
