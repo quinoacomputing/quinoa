@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:14:37 PM MST
+  \date      Thu 12 Dec 2013 08:38:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -59,7 +59,7 @@ class TestU01 : public StatTest {
     }
 
     //! Number of results/test (i.e., p-values) accessor
-    const Nsize& nresult() const override { return m_npval; }
+    const Nsize& nstat() const override { return m_npval; }
 
     //! RNG enum accessor
     const quinoa::ctr::RNGType& rng() const override { return m_rng; }

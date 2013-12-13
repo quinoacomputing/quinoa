@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:06:24 PM MST
+  \date      Thu 12 Dec 2013 09:48:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -97,10 +97,9 @@ TestU01Suite::total()
 {
   m_npval = 0;
   for (const auto& t : m_tests) {
-    m_npval += t->nresult();
+    m_npval += t->nstat();
   }
 }
-
 
 rngtest::StatTest::Psize
 TestU01Suite::failed()
@@ -126,7 +125,7 @@ TestU01Suite::run()
   const RNGTestPrint& print = m_base.print;
 
   print.part( m_name );
-  print.section( "Statistical tests finished" );
+  print.section( "Statistics computed" );
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
@@ -149,7 +148,7 @@ TestU01Suite::run()
     #endif
 
     #ifdef _OPENMP
-    #pragma omp for
+    #pragma omp for schedule(dynamic)
     #endif
     for (Tsize i=0; i<ntest; ++i) {
 
@@ -157,7 +156,7 @@ TestU01Suite::run()
       m_tests[i]->run();
 
       // Evaluate test
-      Psize npval = m_tests[i]->nresult();
+      Psize npval = m_tests[i]->nstat();
       for (Psize p=0; p<npval; ++p) {
 
         // Increase number tests completed
@@ -177,7 +176,7 @@ TestU01Suite::run()
 
   // Output summary of failed tests
   if (nfail) {
-    print.failed< StatTest >("Failed tests", m_npval, nfail, m_tests);
+    print.failed< StatTest >("Failed statistics", m_npval, nfail, m_tests);
   } else {
     print.note("All tests passed");
   }
@@ -193,7 +192,7 @@ TestU01Suite::print() const
 //******************************************************************************
 {
   // Output test names (only for the first RNG tested, the rest are repeats)
-  m_base.print.names< StatTest >( m_tests, m_tests.size()/m_testRNGs.size() );
+  m_base.print.names< StatTest >( m_tests, ntest() );
 }
 
 Pvals
