@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 09:48:22 PM MST
+  \date      Fri 13 Dec 2013 11:43:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -128,9 +128,6 @@ TestU01Suite::run()
   print.section( "Statistics computed" );
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
-
-  //g_tid = 0;
-  //bbattery_Crush( m_rng[3].get() );
 
   using Psize = StatTest::Psize;
   using Tsize = TestContainer::size_type;
