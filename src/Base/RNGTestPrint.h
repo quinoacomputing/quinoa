@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 09:46:22 PM MST
+  \date      Fri 13 Dec 2013 11:20:19 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -59,7 +59,7 @@ class RNGTestPrint : public tk::Print {
         auto& group = bat.group();
         auto& value = bat.name( m_ctr.get< ctr::selected, ctr::battery >() );
         std::stringstream ss;
-        ss << value << " (tests: " << ntest << ", stats: " << nstat << ")";
+        ss << value << " (" << ntest << " tests, " << nstat << " stats)";
         std::cout << m_section_title_value_fmt % m_section_indent
                                                % m_section_bullet
                                                % group
