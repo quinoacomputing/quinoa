@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:14:44 PM MST
+  \date      Thu 12 Dec 2013 09:46:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -10,10 +10,6 @@
 //******************************************************************************
 #ifndef RNGTestPrint_h
 #define RNGTestPrint_h
-
-extern "C" {
-  #include <gofw.h>
-}
 
 #include <Macro.h>
 #include <Print.h>
@@ -37,20 +33,41 @@ class RNGTestPrint : public tk::Print {
     ~RNGTestPrint() override = default;
 
     //! Print control option: 'group : option' only if differs from its default
-    template<typename OptionType, typename... tags>
+    template< class OptionType, typename... tags >
     void Section() const {
-      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
-        tk::Option<OptionType> opt;
+      if (m_ctr.get< tags... >() != ctr::InputDeckDefaults.get< tags... >()) {
+        tk::Option< OptionType > opt;
         auto& group = opt.group();
-        auto& value = opt.name(m_ctr.get<tags...>());
+        auto& value = opt.name( m_ctr.get< tags... >() );
         std::cout << m_section_title_value_fmt % m_section_indent
                                                % m_section_bullet
                                                % group
                                                % value;
         std::cout << m_section_underline_fmt
                      % m_section_indent
-                     % std::string(m_section_indent_size + 3 +
-                                   group.size() + value.size(), '-');
+                     % std::string( m_section_indent_size + 3 +
+                                    group.size() + value.size(), '-' );
+      }
+    }
+
+    //! Print battery option: 'group : option (info)' only if differs from def.
+    template< class Psize, class Tsize >
+    void battery( const Tsize& ntest, const Psize& nstat ) const {
+      if (m_ctr.get< ctr::selected, ctr::battery >() !=
+          ctr::InputDeckDefaults.get< ctr::selected, ctr::battery >() ) {
+        tk::Option< ctr::Battery > bat;
+        auto& group = bat.group();
+        auto& value = bat.name( m_ctr.get< ctr::selected, ctr::battery >() );
+        std::stringstream ss;
+        ss << value << " (tests: " << ntest << ", stats: " << nstat << ")";
+        std::cout << m_section_title_value_fmt % m_section_indent
+                                               % m_section_bullet
+                                               % group
+                                               % ss.str();
+        std::cout << m_section_underline_fmt
+                     % m_section_indent
+                     % std::string( m_section_indent_size + 3 +
+                                    group.size() + value.size(), '-' );
       }
     }
 
@@ -107,10 +124,10 @@ class RNGTestPrint : public tk::Print {
     void names( const TestContainer& tests,
                 const typename TestContainer::size_type& ntest ) const
     {
-      using Psize = typename StatTest::Pvals::size_type;
+      using Psize = typename StatTest::Psize;
       using Tsize = typename TestContainer::size_type;
       for (Tsize i=0; i<ntest; ++i) {
-        Psize npval = tests[i]->nresult();
+        Psize npval = tests[i]->nstat();
         for (Psize p=0; p<npval; ++p) {
           std::string name( tests[i]->name(p) );
           if (p>0) name += " *";
@@ -124,10 +141,10 @@ class RNGTestPrint : public tk::Print {
 
     //! Print a single test name, RNG and pass or fail + p-value
     template< class StatTest, class TestContainer >
-    void test( const typename StatTest::Pvals::size_type& n,
-               const typename StatTest::Pvals::size_type& npval,
+    void test( const typename StatTest::Psize& n,
+               const typename StatTest::Psize& npval,
                const typename TestContainer::value_type& test,
-               const typename StatTest::Pvals::size_type& p ) const
+               const typename StatTest::Psize& p ) const
     {
       // Construct info-line
       tk::Option< quinoa::ctr::RNG > rng;
@@ -152,7 +169,7 @@ class RNGTestPrint : public tk::Print {
       const typename std::vector< typename StatTest::Pvals >::size_type& failed,
       const TestContainer& tests ) const
     {
-      using Psize = typename StatTest::Pvals::size_type;
+      using Psize = typename StatTest::Psize;
       using Pval = typename StatTest::Pvals::value_type;
       using Tsize = typename TestContainer::size_type;
       std::stringstream ss;
@@ -168,7 +185,7 @@ class RNGTestPrint : public tk::Print {
       Tsize ntest = tests.size();
       std::string oldname;
       for (Tsize i=0; i<ntest; ++i) {
-        Psize npval = tests[i]->nresult();
+        Psize npval = tests[i]->nstat();
         for (Psize p=0; p<npval; ++p) {
           if ( tests[i]->fail(p) ) {
             tk::Option< quinoa::ctr::RNG > rng;

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/StatTest.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:17:01 PM MST
+  \date      Thu 12 Dec 2013 08:38:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -37,7 +37,7 @@ class StatTest {
     virtual const Names::value_type& name( const Nsize& i ) const = 0;
 
     //! Number of results/test accessor
-    virtual const Nsize& nresult() const = 0;
+    virtual const Nsize& nstat() const = 0;
 
     //! RNG enum accessor
     virtual const quinoa::ctr::RNGType& rng() const = 0;
