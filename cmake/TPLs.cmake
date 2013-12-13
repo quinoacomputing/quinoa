@@ -75,48 +75,48 @@ else()
   set(HAS_MKL off)
 endif()
 
-#### TBB (optional)
-message(STATUS "Check for optional TBB (Threading Building Blocks Library)")
-
-# Add TBBROOT variable to cache, initialize with TBBROOT environment variable
-set(TBBROOT $ENV{TBBROOT} CACHE STRING "Root of optional TBB library. Clear this variable to disable TBB.")
-
-message(STATUS "\tTBBROOT = ${TBBROOT}")
-set(TBB_SEARCH_PATH)
-list(APPEND TBB_SEARCH_PATH ${TBBROOT}/lib/intel64/gcc4.4)
-
-# Attempt to find libraries
-set(TBB_LIBRARY "NOTFOUND")
-if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
-  find_library(TBB_LIBRARY
-               NAMES tbb_debug
-               PATHS ${TBB_SEARCH_PATH})
-else()
-  find_library(TBB_LIBRARY
-               NAMES tbb
-               PATHS ${TBB_SEARCH_PATH})
-endif()
-
-# Echo find libraries status
-if (TBB_LIBRARY)
-  message(STATUS "\tFound TBB library '${TBB_LIBRARY}'")
-else()
-  set(TBB_LIBRARY "")
-  if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
-    message(STATUS "\tCould not find TBB library 'tbb_debug'")
-  else()
-    message(STATUS "\tCould not find TBB library 'tbb'")
-  endif()
-endif()
-
-# Define HAS_TBB macro and echo TBB status
-if (TBB_LIBRARY)
-  message(STATUS "Check for optional TBB (Threading Building Blocks Library) -- works")
-  set(HAS_TBB on)
-else()
-  message(STATUS "Check for optional TBB (Threading Building Blocks Library) -- failed")
-  set(HAS_TBB off)
-endif()
+##### TBB (optional)
+#message(STATUS "Check for optional TBB (Threading Building Blocks Library)")
+#
+## Add TBBROOT variable to cache, initialize with TBBROOT environment variable
+#set(TBBROOT $ENV{TBBROOT} CACHE STRING "Root of optional TBB library. Clear this variable to disable TBB.")
+#
+#message(STATUS "\tTBBROOT = ${TBBROOT}")
+#set(TBB_SEARCH_PATH)
+#list(APPEND TBB_SEARCH_PATH ${TBBROOT}/lib/intel64/gcc4.4)
+#
+## Attempt to find libraries
+#set(TBB_LIBRARY "NOTFOUND")
+#if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
+#  find_library(TBB_LIBRARY
+#               NAMES tbb_debug
+#               PATHS ${TBB_SEARCH_PATH})
+#else()
+#  find_library(TBB_LIBRARY
+#               NAMES tbb
+#               PATHS ${TBB_SEARCH_PATH})
+#endif()
+#
+## Echo find libraries status
+#if (TBB_LIBRARY)
+#  message(STATUS "\tFound TBB library '${TBB_LIBRARY}'")
+#else()
+#  set(TBB_LIBRARY "")
+#  if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
+#    message(STATUS "\tCould not find TBB library 'tbb_debug'")
+#  else()
+#    message(STATUS "\tCould not find TBB library 'tbb'")
+#  endif()
+#endif()
+#
+## Define HAS_TBB macro and echo TBB status
+#if (TBB_LIBRARY)
+#  message(STATUS "Check for optional TBB (Threading Building Blocks Library) -- works")
+#  set(HAS_TBB on)
+#else()
+#  message(STATUS "Check for optional TBB (Threading Building Blocks Library) -- failed")
+#  set(HAS_TBB off)
+#endif()
 
 #### Z
 find_library(Z_LIBRARY
