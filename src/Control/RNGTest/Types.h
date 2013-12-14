@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:03:23 2013
+  \date      Fri 13 Dec 2013 07:14:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -34,7 +34,8 @@ using ios = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  mklrng,    quinoa::ctr::MKLRNGParameters    //!< MKL RNG parameters
+  mklrng,    quinoa::ctr::MKLRNGParameters,   //!< MKL RNG parameters
+  rngsse,    quinoa::ctr::RNGSSEParameters    //!< RNGSSE parameters
 >;
 
 //! PEGTL location type to use throughout all of RNGTest's parsers

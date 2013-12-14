@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 11:48:35 2013
+  \date      Fri 13 Dec 2013 07:10:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -22,6 +22,7 @@
 #include <RNGTest/InputDeck/Keywords.h>
 #include <Grammar.h>
 #include <MKLGrammar.h>
+#include <RNGSSEGrammar.h>
 
 namespace rngtest {
 namespace deck {
@@ -61,7 +62,10 @@ namespace deck {
   struct rngs :
          pegtl::sor< tk::mkl::rngs< Stack,
                                     ctr::selected, ctr::rng,
-                                    ctr::param, ctr::mklrng > > {};
+                                    ctr::param, ctr::mklrng >,
+                     tk::rngsse::rngs< Stack,
+                                       ctr::selected, ctr::rng,
+                                       ctr::param, ctr::rngsse > > {};
 
   // TestU01 batteries
   template< typename battery_kw >

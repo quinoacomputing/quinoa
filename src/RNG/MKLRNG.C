@@ -2,14 +2,12 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Thu 21 Nov 2013 02:57:48 PM MST
+  \date      Fri 13 Dec 2013 11:39:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */
 //******************************************************************************
-
-#include <iostream>
 
 #include <mkl_vsl.h>
 

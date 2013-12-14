@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/SharedKeywords.h
   \author    J. Bakosi
-  \date      Fri 22 Nov 2013 05:18:52 PM MST
+  \date      Fri 13 Dec 2013 06:23:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Shared keywords are shared among different executables
   \details   Shared keywords are shared among different executables
@@ -19,5 +19,8 @@
 
 // Intel's MKL's RNG keywords
 #include <MKLRNGKeywords.h>
+
+// RNGSSE's keywords
+#include <RNGSSEKeywords.h>
 
 #endif // SharedKeywords_h

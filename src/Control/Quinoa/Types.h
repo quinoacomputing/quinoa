@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:03:08 2013
+  \date      Fri 13 Dec 2013 07:28:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -267,7 +267,8 @@ using GLMParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  mklrng,       MKLRNGParameters,         // MKLRandom number generator
+  mklrng,       MKLRNGParameters,         // MKL RNG parameters
+  rngsse,       RNGSSEParameters,         // RNGSSE RNG parameters
   beta,         BetaParameters,           // Mass models
   dirichlet,    DirichletParameters,      // Mix models
   gendirichlet, GenDirichletParameters,

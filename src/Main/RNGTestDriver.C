@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:58:22 PM MST
+  \date      Fri 13 Dec 2013 09:43:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -48,7 +48,8 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
   quinoa::ctr::RNG rng;
   std::list< quinoa::ctr::RNGType > regRNG;
   initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
-                  m_control->get< ctr::param, ctr::mklrng >() );
+                  m_control->get< ctr::param, ctr::mklrng >(),
+                  m_control->get< ctr::param, ctr::rngsse >() );
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
@@ -108,11 +109,11 @@ RNGTestDriver::echo()
     print.battery( m_battery->ntest(), m_battery->nstat() );
     m_battery->print();
     print.section("RNG(s) tested");
-    print.Mklparams< quinoa::ctr::RNG,
-                     quinoa::ctr::MKLUniformMethod,
-                     quinoa::ctr::MKLGaussianMethod >
-                   ( control.get<ctr::selected, ctr::rng>(),
+    print.MKLParams( control.get<ctr::selected, ctr::rng>(),
                      control.get<ctr::param, ctr::mklrng>() );
+    print.RNGSSEParams( control.get<ctr::selected, ctr::rng>(),
+                        control.get<ctr::param, ctr::rngsse>() );
+
     print.raw("\n");
   } else {
     print.note( "No RNG battery specified" );

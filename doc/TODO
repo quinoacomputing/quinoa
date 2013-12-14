@@ -18,7 +18,6 @@
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using either OpenMP or (optional) TBB
-    - Make rngtest optional
     - Make MKL optional
 
 * Testing:
