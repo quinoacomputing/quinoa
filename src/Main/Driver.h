@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu Nov 14 09:38:54 2013
+  \date      Sat 14 Dec 2013 11:43:24 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -16,6 +16,7 @@
 
 #include <Quinoa/Options/RNG.h>
 #include <RNG.h>
+#include <RNGSSE.h>
 
 namespace tk {
 
@@ -56,7 +57,8 @@ class Driver {
                          const quinoa::ctr::RNG& opt,
                          std::list< quinoa::ctr::RNGType >& reg,
                          int nthreads,
-                         const quinoa::ctr::MKLRNGParameters& mklparam );
+                         const quinoa::ctr::MKLRNGParameters& mklparam,
+                         const quinoa::ctr::RNGSSEParameters& rngsseparam );
 
   private:
     //! Don't permit copy constructor
@@ -67,6 +69,21 @@ class Driver {
     Driver(Driver&&) = delete;
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
+
+   //! Register MKL RNGs into factory
+   void regMKL( tk::RNGFactory& factory,
+                const quinoa::ctr::RNG& opt,
+                std::list< quinoa::ctr::RNGType >& reg,
+                int nthreads,
+                const quinoa::ctr::MKLRNGParameters& mklparam );
+
+   //! Register RNGSSE RNGs into factory
+   void regRNGSSE( tk::RNGFactory& factory,
+                   const quinoa::ctr::RNG& opt,
+                   std::list< quinoa::ctr::RNGType >& reg,
+                   int nthreads,
+                   const quinoa::ctr::RNGSSEParameters& param );
+
 };
 
 } // namespace tk

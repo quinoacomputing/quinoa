@@ -136,6 +136,12 @@ find_library(HDF5_LIBRARY
              PATHS ${TPL_DIR}/lib
 )
 
+#### RNGSSE2
+find_library(RNGSSE_LIBRARY
+             NAMES rngsse
+             PATHS ${TPL_DIR}/lib
+)
+
 #### TestU01
 find_library(TESTU01_LIBRARY
              NAMES testu01

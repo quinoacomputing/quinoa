@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu Nov 14 10:47:40 2013
+  \date      Fri 13 Dec 2013 07:26:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -52,7 +52,8 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   quinoa::ctr::RNG rng;
   std::list< quinoa::ctr::RNGType > regRNG;
   initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
-                  m_control->get< ctr::param, ctr::mklrng >() );
+                  m_control->get< ctr::param, ctr::mklrng >(),
+                  m_control->get< ctr::param, ctr::rngsse >() );
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials

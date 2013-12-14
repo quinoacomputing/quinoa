@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:09:55 2013
+  \date      Sat 14 Dec 2013 11:27:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -32,6 +32,7 @@ namespace ctr {
 
 //! Random number generator types
 enum class RNGType : uint8_t { NO_RNG=0
+                             , RNGSSE_MRG32K3A
                              #ifdef HAS_MKL
                              , MKL_MCG31
                              , MKL_R250
@@ -53,8 +54,15 @@ enum class RNGType : uint8_t { NO_RNG=0
 //! Random number generator library types
 enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
-                                  RNGSSELIB,
+                                  RNGSSE,
                                   PRAND };
+
+//! RNGSSE random number generator parameters storage
+using RNGSSEParam = tk::tuple::tagged_tuple<
+  seed,             unsigned int               //!< seed
+>;
+//! RNGSSE parameters bundle
+using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
 
 //! MKL random number generator parameters storage
 using MKLRNGParam = tk::tuple::tagged_tuple<
@@ -62,7 +70,6 @@ using MKLRNGParam = tk::tuple::tagged_tuple<
   uniform_method,   MKLUniformMethodType,      //!< uniform method type
   gaussian_method,  MKLGaussianMethodType      //!< Gaussian method type
 >;
-
 //! MKL RNG parameters bundle
 using MKLRNGParameters = std::map< RNGType, MKLRNGParam >;
 
@@ -81,16 +88,17 @@ class RNG : public tk::Toggle<RNGType> {
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const;
  
-    //! Return seed from MKLRNGParams
-    unsigned int mkl_seed( RNGType rng, const MKLRNGParameters& mklparam ) const;
+    //! Return field from RNG parameters bundle: if user has specified it,
+    //! return it, if user did not specified it, return default.
+    template< class tag, class Param, class Field >
+    Field param( RNGType rng, const Field& def, const Param& bundle ) const {
+      auto it = bundle.find( rng );
+      if ( it != bundle.end() ) return it->second.template get< tag >();
+      else return def;
+    }
 
-    //! Return uniform method from MKLRNGParams
-    MKLUniformMethodType
-    mkl_uniform_method( RNGType rng, const MKLRNGParameters& mklparam ) const;
-
-    //! Return Gaussian method from MKLRNGParams
-    MKLGaussianMethodType
-    mkl_gaussian_method( RNGType rng, const MKLRNGParameters& mklparam ) const;
+    //! Return RNG library type based on Enum
+    RNGLibType lib(RNGType rng) const;
 
   private:
     //! Don't permit copy constructor
@@ -102,9 +110,6 @@ class RNG : public tk::Toggle<RNGType> {
     //! Don't permit move assigment
     RNG& operator=(RNG&&) = delete;
 
-    //! Return RNG library type based on Enum
-    RNGLibType lib(RNGType rng) const;
-
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for
     //! \param[in]  str  String to search in
@@ -112,6 +117,7 @@ class RNG : public tk::Toggle<RNGType> {
     bool found(const std::string& kw, const std::string& str) const;
 
     //! Get access to RNG keywords
+    const tk::kw::rngsse_mrg32k3a rngsse_mrg32k3a {};
     const tk::kw::mkl_mcg31 mkl_mcg31 {};
     const tk::kw::mkl_r250 mkl_r250 {};
     const tk::kw::mkl_mrg32k3a mkl_mrg32k3a {};
@@ -130,6 +136,7 @@ class RNG : public tk::Toggle<RNGType> {
     //! Enums -> names
     const std::map<RNGType, std::string> names {
         { RNGType::NO_RNG, "n/a" }
+      , { RNGType::RNGSSE_MRG32K3A, rngsse_mrg32k3a.name() }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, mkl_mcg31.name() }
       , { RNGType::MKL_R250, mkl_r250.name() }
@@ -151,6 +158,7 @@ class RNG : public tk::Toggle<RNGType> {
     //! keywords -> Enums
     const std::map<std::string, RNGType> values {
         { "no_rng", RNGType::NO_RNG }
+      , { rngsse_mrg32k3a.string(), RNGType::RNGSSE_MRG32K3A }
       #ifdef HAS_MKL
       , { mkl_mcg31.string(), RNGType::MKL_MCG31 }
       , { mkl_r250.string(), RNGType::MKL_R250 }
@@ -172,6 +180,7 @@ class RNG : public tk::Toggle<RNGType> {
     //! Enums -> MKL VSL BRNG parameters
     const std::map<RNGType, ParamType> brng {
         { RNGType::NO_RNG, -1 }
+      , { RNGType::RNGSSE_MRG32K3A, 0 }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, VSL_BRNG_MCG31 }
       , { RNGType::MKL_R250, VSL_BRNG_R250 }

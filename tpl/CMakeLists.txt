@@ -32,8 +32,8 @@ MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 ExternalProject_Add(
   pegtl
   PREFIX pegtl
-  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32-patched.tar.gz
-  URL_MD5 425c9717783b11f485483dcb66f7d60a
+  URL ${PROJECT_SOURCE_DIR}/pegtl-0.32.tar.gz
+  URL_MD5 b2989e2b38f0a80f197f59ed00c50a81
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
@@ -145,6 +145,23 @@ ExternalProject_Add(
                     --with-hdf5=${TPL_INSTALL_DIR}/include,${TPL_INSTALL_DIR}/lib
                     --prefix=${TPL_INSTALL_DIR}
   BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### RNGSSELib2 ################################################################
+# http://dx.doi.org/10.1016/j.cpc.2013.04.007
+# No need for MPI, use underlying compilers
+ExternalProject_Add(
+  rngsse2
+  PREFIX rngsse2
+  URL ${PROJECT_SOURCE_DIR}/rngsselib_2.tar.gz
+  URL_MD5 b78981ae65c3d801e2b878f2a38084b8
+  CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
+             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1

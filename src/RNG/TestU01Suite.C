@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 11:43:59 AM MST
+  \date      Fri 13 Dec 2013 11:41:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -72,16 +72,17 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   //   * The wrappers, uniform() and uniform_bits(), this way can be templates,
   //     which facilitates code-reuse
   //   * The wrappers must be in global scope as they are passed to TestU01
-  addRNG< 0>( RNGType::MKL_MCG31,     uniform< 0>, uniform_bits< 0> );
-  addRNG< 1>( RNGType::MKL_R250,      uniform< 1>, uniform_bits< 1> );
-  addRNG< 2>( RNGType::MKL_MRG32K3A,  uniform< 2>, uniform_bits< 2> );
-  addRNG< 3>( RNGType::MKL_MCG59,     uniform< 3>, uniform_bits< 3> );
-  addRNG< 4>( RNGType::MKL_WH,        uniform< 4>, uniform_bits< 4> );
-  addRNG< 5>( RNGType::MKL_MT19937,   uniform< 5>, uniform_bits< 5> );
-  addRNG< 6>( RNGType::MKL_MT2203,    uniform< 6>, uniform_bits< 6> );
-  addRNG< 7>( RNGType::MKL_SFMT19937, uniform< 7>, uniform_bits< 7> );
-  addRNG< 8>( RNGType::MKL_SOBOL,     uniform< 8>, uniform_bits< 8> );
-  addRNG< 9>( RNGType::MKL_NIEDERR,   uniform< 9>, uniform_bits< 9> );
+  addRNG< 0>( RNGType::MKL_MCG31,       uniform< 0>, uniform_bits< 0> );
+  addRNG< 1>( RNGType::MKL_R250,        uniform< 1>, uniform_bits< 1> );
+  addRNG< 2>( RNGType::MKL_MRG32K3A,    uniform< 2>, uniform_bits< 2> );
+  addRNG< 3>( RNGType::MKL_MCG59,       uniform< 3>, uniform_bits< 3> );
+  addRNG< 4>( RNGType::MKL_WH,          uniform< 4>, uniform_bits< 4> );
+  addRNG< 5>( RNGType::MKL_MT19937,     uniform< 5>, uniform_bits< 5> );
+  addRNG< 6>( RNGType::MKL_MT2203,      uniform< 6>, uniform_bits< 6> );
+  addRNG< 7>( RNGType::MKL_SFMT19937,   uniform< 7>, uniform_bits< 7> );
+  addRNG< 8>( RNGType::MKL_SOBOL,       uniform< 8>, uniform_bits< 8> );
+  addRNG< 9>( RNGType::MKL_NIEDERR,     uniform< 9>, uniform_bits< 9> );
+  addRNG<10>( RNGType::RNGSSE_MRG32K3A, uniform<10>, uniform_bits<10> );
   //addRNG<10>( RNGType::MKL_IABSTRACT, uniform<10>, uniform_bits<10> );
   //addRNG<11>( RNGType::MKL_DABSTRACT, uniform<11>, uniform_bits<11> );
   //addRNG<12>( RNGType::MKL_SABSTRACT, uniform<12>, uniform_bits<12> );

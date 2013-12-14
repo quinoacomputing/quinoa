@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 11:20:19 AM MST
+  \date      Sat 14 Dec 2013 11:52:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -82,40 +82,43 @@ class RNGTestPrint : public tk::Print {
       }
     }
 
-    template< typename UniformMethod, typename GaussianMethod >
-    void echoMKLParams( const quinoa::ctr::MKLRNGParam& p ) const {
-      tk::Option< UniformMethod > um;
-      tk::Option< GaussianMethod > gm;
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % "seed"
-                   % p.get<quinoa::ctr::seed>();
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % um.group()
-                   % um.name( p.get<quinoa::ctr::uniform_method>() );
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % gm.group()
-                   % gm.name( p.get<quinoa::ctr::gaussian_method>() );
+    //! Print all fields of MKL RNG parameters
+    template< class MapType >
+    void MKLParams( const std::vector< quinoa::ctr::RNGType >& vec,
+                    const MapType& map ) const
+    {
+      quinoa::ctr::RNG rng;
+      for (const auto& r : vec) {
+        if (rng.lib(r) == quinoa::ctr::RNGLibType::MKL) {
+          subsection( rng.name(r) );
+          const auto& m = map.find(r);
+          if (m == map.end()) {   // no parameter map entry, print defaults
+            echoMKLParams( quinoa::ctr::MKLRNGParam() );
+          } else {
+            echoMKLParams( m->second );
+          }
+          endsubsection();
+        }
+      }
     }
 
-    //! Print all fields of MKL RNG parameters
-    template< typename RNG, typename UniformMethod, typename GaussianMethod,
-              typename MapType >
-    void Mklparams( const std::vector< quinoa::ctr::RNGType >& vec,
-                    const MapType& map ) const {
-      tk::Option< RNG > rng;
+    //! Print all fields of RNGSSE parameters
+    template< class MapType >
+    void RNGSSEParams( const std::vector< quinoa::ctr::RNGType >& vec,
+                       const MapType& map ) const
+    {
+      quinoa::ctr::RNG rng;
       for (const auto& r : vec) {
-        subsection( rng.name(r) );
-        const auto& m = map.find(r);
-        if (m == map.end()) {   // no parameter map entry, using defaults
-          echoMKLParams< UniformMethod, GaussianMethod >
-                       ( quinoa::ctr::MKLRNGParam() );
-        } else {
-          echoMKLParams< UniformMethod, GaussianMethod >( m->second );
+        if (rng.lib(r) == quinoa::ctr::RNGLibType::RNGSSE) {
+          subsection( rng.name(r) );
+          const auto& m = map.find(r);
+          if (m == map.end()) {   // no parameter map entry, print defaults
+            echoRNGSSEParams( quinoa::ctr::RNGSSEParam() );
+          } else {
+            echoRNGSSEParams( m->second );
+          }
+          endsubsection();
         }
-        endsubsection();
       }
     }
 
@@ -170,7 +173,6 @@ class RNGTestPrint : public tk::Print {
       const TestContainer& tests ) const
     {
       using Psize = typename StatTest::Psize;
-      using Pval = typename StatTest::Pvals::value_type;
       using Tsize = typename TestContainer::size_type;
       std::stringstream ss;
       ss << name << " (" << failed << "/" << total << ")";
@@ -210,6 +212,30 @@ class RNGTestPrint : public tk::Print {
     RNGTestPrint(RNGTestPrint&&) = delete;
     //! Don't permit move assigment
     RNGTestPrint& operator=(RNGTestPrint&&) = delete;
+
+    void echoMKLParams( const quinoa::ctr::MKLRNGParam& p ) const {
+      tk::Option< quinoa::ctr::MKLUniformMethod > um;
+      tk::Option< quinoa::ctr::MKLGaussianMethod > gm;
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % "seed"
+                   % p.get<quinoa::ctr::seed>();
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % um.group()
+                   % um.name( p.get<quinoa::ctr::uniform_method>() );
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % gm.group()
+                   % gm.name( p.get<quinoa::ctr::gaussian_method>() );
+    }
+
+    void echoRNGSSEParams( const quinoa::ctr::RNGSSEParam& p ) const {
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % "seed"
+                   % p.get<quinoa::ctr::seed>();
+    }
 
     const ctr::InputDeck& m_ctr;         //!< Parsed control
 };

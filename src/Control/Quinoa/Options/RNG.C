@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.C
   \author    J. Bakosi
-  \date      Thu Nov 14 08:10:17 2013
+  \date      Sat 14 Dec 2013 11:35:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -30,58 +30,10 @@ RNG::param( RNGType rng ) const
   return it->second;
 }
 
-unsigned int
-RNG::mkl_seed( RNGType rng, const MKLRNGParameters& mklparam ) const
-//******************************************************************************
-//  Return seed value from MKLRNGParams
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  auto it = mklparam.find( rng );
-
-  if ( it != mklparam.end() ) { // user has specified it
-    return it->second.get< ctr::seed >();
-  } else {                      // user has not specified it, return default
-    return 0;
-  }
-}
-
-quinoa::ctr::MKLUniformMethodType
-RNG::mkl_uniform_method( RNGType rng, const MKLRNGParameters& mklparam ) const
-//******************************************************************************
-//  Return uniform method from MKLRNGParams
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  auto it = mklparam.find( rng );
-
-  if ( it != mklparam.end() ) { // user has specified it
-    return it->second.get< ctr::uniform_method >();
-  } else {                      // user has not specified it, return default
-    return MKLUniformMethodType::STANDARD;
-  }
-}
-
-quinoa::ctr::MKLGaussianMethodType
-RNG::mkl_gaussian_method( RNGType rng, const MKLRNGParameters& mklparam ) const
-//******************************************************************************
-//  Return Gaussian method from MKLRNGParams
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  auto it = mklparam.find( rng );
-
-  if ( it != mklparam.end() ) { // user has specified it
-    return it->second.get< ctr::gaussian_method >();
-  } else {                      // user has not specified it, return default
-    return MKLGaussianMethodType::BOXMULLER;
-  }
-}
-
 RNG::LibType
 RNG::lib( RNGType rng ) const
 //******************************************************************************
-//  Return RNG library tpe based on Enum
+//  Return RNG library type based on Enum
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -94,8 +46,8 @@ RNG::lib( RNGType rng ) const
 
   if (found("MKL", it->second)) {
     return RNGLibType::MKL;
-  } else if (found("RNGSSELIB", it->second)) {
-    return RNGLibType::RNGSSELIB;
+  } else if (found("RNGSSE", it->second)) {
+    return RNGLibType::RNGSSE;
   } else if (found("PRAND", it->second)) {
     return RNGLibType::PRAND;
   } else {
@@ -110,7 +62,7 @@ RNG::found(const std::string& kw, const std::string& str) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::size_t f = str.find(kw);
+  std::string::size_type f = str.find(kw);
 
   if (f != std::string::npos) {
     return true;
