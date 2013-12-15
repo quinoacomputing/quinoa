@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.C
   \author    J. Bakosi
-  \date      Sun 08 Dec 2013 12:31:16 PM MST
+  \date      Sun 15 Dec 2013 11:31:38 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -22,7 +22,7 @@ Crush::Crush(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  setupRNGs( *this );
+  assignTests( *this );
 }
 
 void

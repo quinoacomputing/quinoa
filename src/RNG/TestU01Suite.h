@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 09:14:11 PM MST
+  \date      Sun 15 Dec 2013 12:12:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -42,10 +42,10 @@ class TestU01Suite : public Battery {
     void print() const override;
 
     //! Return number of statistical tests in battery
-    Tsize ntest() const override { return m_tests.size()/m_testRNGs.size(); }
+    Tsize ntest() const override { return m_tests.size() / m_numRNGs; }
 
     //! Return number of statistics produced by battery
-    StatTest::Psize nstat() const override { return m_npval/m_testRNGs.size(); }
+    StatTest::Psize nstat() const override { return m_npval / m_numRNGs; }
 
   protected:
     //! Constructor
@@ -128,29 +128,18 @@ class TestU01Suite : public Battery {
     static Pvals AutoCor( unif01_Gen* gen, sres_Basic* res,
                const std::tuple<long, long, int, int, int>& xargs );
 
-    //! Setup RNGs
+    //! Assign statistical tests to selected RNGs
     template< class Suite >
-    void setupRNGs( Suite& suite )
+    void assignTests( Suite& suite )
     {
-      // Get vector of selected RNGs
-      std::vector< ctr::RNGType > rngs =
-        m_base.control.get< ctr::selected, ctr::rng >();
-      // Instantiate all selected RNGs and add statistical tests for each
-      for (const auto& r : rngs) {
-        if (r != ctr::RNGType::NO_RNG) {
-          // ICC: replace linear search with map.find()
-          // const auto& rng = m_rng.find(r);   // Find RNG in registry
-          // Assert( rng != m_rng.end(), tk::ExceptType::FATAL, "RNG not found" );
-          // m_testRNGs.push_back( rng->first );// Build vector of RNG ids to test
-          // addTests( r, rng->second );        // Add tests to battery for this RNG
-          for (size_t i=0; i<m_rng1.size(); ++i) {
-            if (m_rng1[i] == r) {
-              m_testRNGs.push_back( r );    // Build vector of RNG ids to test
-              suite.addTests( r, m_rng[i] );// Add tests to battery for this RNG
-            }
-          }
-        }
-      }
+      using Rsize = std::vector< quinoa::ctr::RNGType >::size_type;
+      Rsize size = m_rngEnum.size();
+       for (Rsize r=0; r<size; ++r) {
+         if (m_rngEnum[r] != ctr::RNGType::NO_RNG) {
+           ++m_numRNGs;
+           suite.addTests( m_rngEnum[r], m_rngPtr[r] );
+         }
+       }
       total();  // Count up total number of statistics expected
     }
 
@@ -185,28 +174,30 @@ class TestU01Suite : public Battery {
     //! Don't permit move assigment
     TestU01Suite& operator=(TestU01Suite&&) = delete;
 
-    //! TestU01 external RNGs (associated to quinoa's RNGs)
-    // ICC: This should be a map!
-    std::vector< quinoa::ctr::RNGType > m_rng1;
-    std::vector< Gen01Ptr > m_rng;
+    // TestU01 external RNGs associated to quinoa's RNGs. This could be one
+    // std::map, however, using two equal-sized std::vectors instead. This is
+    // due to the constraints on passing the RNGs as global wrappers to TestU01.
+    // Only those entries of the std::vectors are initialized and used that are
+    // requested by the user (know only at runtime). RNGs are always assigned to
+    // the same position (hence std::vector instead of std::map), regardless of
+    // requested or not. See also TestU01Suite constructor.
+    std::vector< quinoa::ctr::RNGType > m_rngEnum;
+    std::vector< Gen01Ptr > m_rngPtr;
 
-    //! Ids of RNGs tested
-    std::vector< quinoa::ctr::RNGType > m_testRNGs;
+    //! Number of RNGs tested
+    std::vector< quinoa::ctr::RNGType >::size_type m_numRNGs;
 
-    template< int id>
+    template< int id >
     void addRNG( quinoa::ctr::RNGType r,
                  double (*wrap)(void*,void*),
                  unsigned long (*wrap_bits)(void*,void*) )
     {
       // Create new RNG and store its pointer in global scope
-      g_rng.push_back( std::unique_ptr< tk::RNG >( m_base.rng[r]() ) );
+      g_rng[id] = std::unique_ptr< tk::RNG >( m_base.rng[r]() );
       // Create new TestU01 external RNG and associate global-scope wrapper
       char* const name = const_cast<char*>(quinoa::ctr::RNG().name(r).c_str());
-      // ICC: m_rng should be a map and this should be map.emplace()
-      // m_rng[r] = Gen01Ptr( unif01_CreateExternGen01( name, wrap, wrap_bits ) );
-      m_rng1.push_back( r );
-      m_rng.push_back(
-        Gen01Ptr( unif01_CreateExternGen01( name, wrap, wrap_bits ) ) );
+      m_rngEnum[id] = r;
+      m_rngPtr[id] = Gen01Ptr( unif01_CreateExternGen01(name, wrap, wrap_bits) );
     }
 
     //! Count up total number of statistics expected

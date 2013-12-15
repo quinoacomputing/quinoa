@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.C
   \author    J. Bakosi
-  \date      Sun 08 Dec 2013 12:32:46 PM MST
+  \date      Sun 15 Dec 2013 11:31:46 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -22,7 +22,7 @@ BigCrush::BigCrush(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  setupRNGs( *this );
+  assignTests( *this );
 }
 
 void
