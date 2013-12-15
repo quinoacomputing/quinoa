@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.C
   \author    J. Bakosi
-  \date      Sat 07 Dec 2013 03:24:01 PM MST
+  \date      Sun 15 Dec 2013 11:26:42 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -22,7 +22,7 @@ SmallCrush::SmallCrush(const Base& base) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  setupRNGs( *this );
+  assignTests( *this );
 }
 
 void
