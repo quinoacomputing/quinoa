@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 11:41:14 PM MST
+  \date      Sat 14 Dec 2013 09:38:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -82,7 +82,17 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   addRNG< 7>( RNGType::MKL_SFMT19937,   uniform< 7>, uniform_bits< 7> );
   addRNG< 8>( RNGType::MKL_SOBOL,       uniform< 8>, uniform_bits< 8> );
   addRNG< 9>( RNGType::MKL_NIEDERR,     uniform< 9>, uniform_bits< 9> );
-  addRNG<10>( RNGType::RNGSSE_MRG32K3A, uniform<10>, uniform_bits<10> );
+  addRNG<10>( RNGType::RNGSSE_GM19,     uniform<10>, uniform_bits<10> );
+  addRNG<11>( RNGType::RNGSSE_GM29,     uniform<11>, uniform_bits<11> );
+  addRNG<12>( RNGType::RNGSSE_GM31,     uniform<12>, uniform_bits<12> );
+  addRNG<13>( RNGType::RNGSSE_GM55,     uniform<13>, uniform_bits<13> );
+  addRNG<14>( RNGType::RNGSSE_GM61,     uniform<14>, uniform_bits<14> );
+  addRNG<15>( RNGType::RNGSSE_GQ581,    uniform<15>, uniform_bits<15> );
+  addRNG<16>( RNGType::RNGSSE_GQ583,    uniform<16>, uniform_bits<16> );
+  addRNG<17>( RNGType::RNGSSE_GQ584,    uniform<17>, uniform_bits<17> );
+  addRNG<18>( RNGType::RNGSSE_MT19937,  uniform<18>, uniform_bits<18> );
+  addRNG<19>( RNGType::RNGSSE_LFSR113,  uniform<19>, uniform_bits<19> );
+  addRNG<20>( RNGType::RNGSSE_MRG32K3A, uniform<20>, uniform_bits<20> );
   //addRNG<10>( RNGType::MKL_IABSTRACT, uniform<10>, uniform_bits<10> );
   //addRNG<11>( RNGType::MKL_DABSTRACT, uniform<11>, uniform_bits<11> );
   //addRNG<12>( RNGType::MKL_SABSTRACT, uniform<12>, uniform_bits<12> );

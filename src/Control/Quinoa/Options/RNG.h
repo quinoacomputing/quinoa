@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 11:27:52 AM MST
+  \date      Sat 14 Dec 2013 03:34:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -32,6 +32,16 @@ namespace ctr {
 
 //! Random number generator types
 enum class RNGType : uint8_t { NO_RNG=0
+                             , RNGSSE_GM19
+                             , RNGSSE_GM29
+                             , RNGSSE_GM31
+                             , RNGSSE_GM55
+                             , RNGSSE_GM61
+                             , RNGSSE_GQ581
+                             , RNGSSE_GQ583
+                             , RNGSSE_GQ584
+                             , RNGSSE_MT19937
+                             , RNGSSE_LFSR113
                              , RNGSSE_MRG32K3A
                              #ifdef HAS_MKL
                              , MKL_MCG31
@@ -117,6 +127,16 @@ class RNG : public tk::Toggle<RNGType> {
     bool found(const std::string& kw, const std::string& str) const;
 
     //! Get access to RNG keywords
+    const tk::kw::rngsse_gm19 rngsse_gm19 {};
+    const tk::kw::rngsse_gm29 rngsse_gm29 {};
+    const tk::kw::rngsse_gm31 rngsse_gm31 {};
+    const tk::kw::rngsse_gm55 rngsse_gm55 {};
+    const tk::kw::rngsse_gm61 rngsse_gm61 {};
+    const tk::kw::rngsse_gq581 rngsse_gq581 {};
+    const tk::kw::rngsse_gq583 rngsse_gq583 {};
+    const tk::kw::rngsse_gq584 rngsse_gq584 {};
+    const tk::kw::rngsse_mt19937 rngsse_mt19937 {};
+    const tk::kw::rngsse_lfsr113 rngsse_lfsr113 {};
     const tk::kw::rngsse_mrg32k3a rngsse_mrg32k3a {};
     const tk::kw::mkl_mcg31 mkl_mcg31 {};
     const tk::kw::mkl_r250 mkl_r250 {};
@@ -136,6 +156,16 @@ class RNG : public tk::Toggle<RNGType> {
     //! Enums -> names
     const std::map<RNGType, std::string> names {
         { RNGType::NO_RNG, "n/a" }
+      , { RNGType::RNGSSE_GM19, rngsse_gm19.name() }
+      , { RNGType::RNGSSE_GM29, rngsse_gm29.name() }
+      , { RNGType::RNGSSE_GM31, rngsse_gm31.name() }
+      , { RNGType::RNGSSE_GM55, rngsse_gm55.name() }
+      , { RNGType::RNGSSE_GM61, rngsse_gm61.name() }
+      , { RNGType::RNGSSE_GQ581, rngsse_gq581.name() }
+      , { RNGType::RNGSSE_GQ583, rngsse_gq583.name() }
+      , { RNGType::RNGSSE_GQ584, rngsse_gq584.name() }
+      , { RNGType::RNGSSE_MT19937, rngsse_mt19937.name() }
+      , { RNGType::RNGSSE_LFSR113, rngsse_lfsr113.name() }
       , { RNGType::RNGSSE_MRG32K3A, rngsse_mrg32k3a.name() }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, mkl_mcg31.name() }
@@ -158,6 +188,16 @@ class RNG : public tk::Toggle<RNGType> {
     //! keywords -> Enums
     const std::map<std::string, RNGType> values {
         { "no_rng", RNGType::NO_RNG }
+      , { rngsse_gm19.string(), RNGType::RNGSSE_GM19 }
+      , { rngsse_gm29.string(), RNGType::RNGSSE_GM29 }
+      , { rngsse_gm31.string(), RNGType::RNGSSE_GM31 }
+      , { rngsse_gm55.string(), RNGType::RNGSSE_GM55 }
+      , { rngsse_gm61.string(), RNGType::RNGSSE_GM61 }
+      , { rngsse_gq581.string(), RNGType::RNGSSE_GQ581 }
+      , { rngsse_gq583.string(), RNGType::RNGSSE_GQ583 }
+      , { rngsse_gq584.string(), RNGType::RNGSSE_GQ584 }
+      , { rngsse_mt19937.string(), RNGType::RNGSSE_MT19937 }
+      , { rngsse_lfsr113.string(), RNGType::RNGSSE_LFSR113 }
       , { rngsse_mrg32k3a.string(), RNGType::RNGSSE_MRG32K3A }
       #ifdef HAS_MKL
       , { mkl_mcg31.string(), RNGType::MKL_MCG31 }
@@ -180,7 +220,17 @@ class RNG : public tk::Toggle<RNGType> {
     //! Enums -> MKL VSL BRNG parameters
     const std::map<RNGType, ParamType> brng {
         { RNGType::NO_RNG, -1 }
-      , { RNGType::RNGSSE_MRG32K3A, 0 }
+      , { RNGType::RNGSSE_GM19, 0 }
+      , { RNGType::RNGSSE_GM29, 1 }
+      , { RNGType::RNGSSE_GM31, 2 }
+      , { RNGType::RNGSSE_GM55, 3 }
+      , { RNGType::RNGSSE_GM61, 4 }
+      , { RNGType::RNGSSE_GQ581, 5 }
+      , { RNGType::RNGSSE_GQ583, 6 }
+      , { RNGType::RNGSSE_GQ584, 7 }
+      , { RNGType::RNGSSE_MT19937, 8 }
+      , { RNGType::RNGSSE_LFSR113, 9 }
+      , { RNGType::RNGSSE_MRG32K3A, 10 }
       #ifdef HAS_MKL
       , { RNGType::MKL_MCG31, VSL_BRNG_MCG31 }
       , { RNGType::MKL_R250, VSL_BRNG_R250 }

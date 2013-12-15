@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 12:09:06 PM MST
+  \date      Sat 14 Dec 2013 09:35:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -18,20 +18,21 @@ namespace quinoa {
 
 //! RNGSSE-based random number generator
 template< class State,
-          void (*Init)(State*, unsigned long long),
+          typename SeqNumType,
+          void (*Init)(State*, SeqNumType),
           unsigned int (*Generate)(State*) > 
 class RNGSSE : public tk::RNG {
 
   public:
     //! Constructor
-    explicit RNGSSE( unsigned long long nthreads, unsigned int seed )
+    explicit RNGSSE( SeqNumType nthreads, unsigned int seed )
     {
       // Throw if not NDEBUG and nthreads invalid
       Assert(nthreads > 0, tk::ExceptType::FATAL, "Need at least one thread");
       // Allocate array of stream-pointers for threads
       m_stream = std::unique_ptr< State[] >( new State [nthreads] );
       // Initialize thread-streams
-      for ( unsigned long long i=0; i<nthreads; ++i) {
+      for ( SeqNumType i=0; i<nthreads; ++i) {
         Init( &m_stream[i], i );
       }
     }
