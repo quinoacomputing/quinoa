@@ -2,11 +2,8 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(RNG CXX)
 
-if (HAS_MKL)
-  set (MKL_SOURCE "MKL.C")
+if(HAS_MKL)
   set (MKLRNG_SOURCE "MKLRNG.C")
-  set (MKLRNDSTREAM_SOURCE "MKLRndStream.C")
-  set (MKLRNDTABLE_SOURCE "MKLRndTable.C")
 endif()
 
 add_library(RNG
@@ -14,10 +11,7 @@ add_library(RNG
             SmallCrush.C
             Crush.C
             BigCrush.C
-            ${MKL_SOURCE}
             ${MKLRNG_SOURCE}
-            ${MKLRNDSTREAM_SOURCE}
-            ${MKLRNDTABLE_SOURCE}
 )
 
 INSTALL(TARGETS RNG

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 11:39:28 2013
+  \date      Sun 15 Dec 2013 03:58:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -116,7 +116,10 @@ namespace grm {
   pegtl::action_base< store_back_option<Stack, OptionType, tag, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::Option< OptionType > opt;
-      stack.template push_back<tag,tags...>( opt.value( value ) );
+      if (opt.exist( value ))
+        stack.template push_back<tag,tags...>( opt.value( value ) );
+      else
+        Throw( ExceptType::FATAL, "Non-existent option: '" + value + "'" );
     }
   };
 

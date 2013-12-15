@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Mon 09 Dec 2013 10:27:48 PM MST
+  \date      Sun 15 Dec 2013 03:25:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -169,7 +169,7 @@ void tk::echoBuildEnv( const Print& print,
 #ifdef HAS_MKL
   echoMKL(print, "Intel Math Kernel Library");
 #else
-  print.item("Intel Math Kernel Library", "no");
+  print.item("Intel Math Kernel Library", "n/a");
 #endif
   print.raw("\n");
   echoBoost(print, "Boost C++ Libraries");
