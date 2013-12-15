@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:08:17 2013
+  \date      Sun 15 Dec 2013 03:57:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -31,6 +31,11 @@ class Option {
     //! Lookup option value
     typename Type::EnumType value(const std::string& keyword) const {
       return m_option.value(keyword);
+    }
+
+    //! Check if keyword exist
+    bool exist(const std::string& keyword) const {
+      return m_option.exist(keyword);
     }
 
     //! Lookup option name

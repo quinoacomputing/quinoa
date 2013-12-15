@@ -6,11 +6,6 @@
     - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
     - Add stringstream-based throw
 
-* Alternative RND library: Need a quick switchable way of building without MKL
-  as it is practically impossible to distinguish between memory leaks (hopefully
-  false positives) in MKL and non-MKL code. May need to implement another random
-  number library.
-
 * Build & runtime hostname output (if portable)
 
 * Pass -O3 for configure-based TPL builds
@@ -18,7 +13,6 @@
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using either OpenMP or (optional) TBB
-    - Make MKL optional
 
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 12:12:02 PM MST
+  \date      Sun 15 Dec 2013 03:21:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -86,6 +86,7 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   // and used that are requested by the user. RNGs are always assigned to the
   // same position, regardless of requested or not.
   for (const auto& r : rngs) {
+    #ifdef HAS_MKL
     if (r == ctr::RNGType::MKL_MCG31) {
       addRNG< 0 >( r, uniform< 0 >, uniform_bits< 0 > );
     } else if (r == ctr::RNGType::MKL_R250) {
@@ -114,7 +115,9 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
       addRNG< 12 >( r, uniform< 12 >, uniform_bits< 12 > );
     } else if (r == ctr::RNGType::MKL_NONDETERM) {
       addRNG< 13 >( r, uniform< 13 >, uniform_bits< 13 > );
-    } else if (r == ctr::RNGType::RNGSSE_GM19) {
+    } else
+    #endif
+    if (r == ctr::RNGType::RNGSSE_GM19) {
       addRNG< 14 >( r, uniform< 14 >, uniform_bits< 14 > );
     } else if (r == ctr::RNGType::RNGSSE_GM29) {
       addRNG< 15 >( r, uniform< 15 >, uniform_bits< 15 > );

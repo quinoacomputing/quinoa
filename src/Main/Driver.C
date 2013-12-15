@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 09:34:43 PM MST
+  \date      Sun 15 Dec 2013 03:23:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -40,10 +40,13 @@ Driver::initRNGFactory( tk::RNGFactory& factory,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  #ifdef HAS_MKL
   regMKL( factory, opt, reg, nthreads, mklparam );
+  #endif
   regRNGSSE( factory, opt, reg, nthreads, rngsseparam );
 }
 
+#ifdef HAS_MKL
 void
 Driver::regMKL( tk::RNGFactory& factory,
                 const quinoa::ctr::RNG& opt,
@@ -95,6 +98,7 @@ Driver::regMKL( tk::RNGFactory& factory,
   regMKLRNG( RNGType::MKL_SABSTRACT );
   regMKLRNG( RNGType::MKL_NONDETERM );
 }
+#endif
 
 void
 Driver::regRNGSSE( tk::RNGFactory& factory,

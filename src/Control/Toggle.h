@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Thu Nov  7 11:32:28 2013
+  \date      Sun 15 Dec 2013 03:57:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -50,12 +50,18 @@ class Toggle {
       return groupname;
     }
 
-    //! Lookup Enum value based on keyword
+    //! Lookup Enum value based on keyword, Enum must exist
     Enum value(const std::string keyword) const {
       auto it = values.find(keyword);
       Assert(it != values.end(), ExceptType::FATAL,
             "Cannot find value for keyword \"" + keyword + "\"");
       return it->second;
+    }
+
+    //! Check if keyword exists
+    bool exist(const std::string keyword) const {
+      auto it = values.find(keyword);
+      if (it != values.end()) return true; else return false;
     }
 
     //! Lookup option name based on Enum

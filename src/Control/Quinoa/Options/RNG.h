@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 03:34:42 PM MST
+  \date      Sun 15 Dec 2013 04:02:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -99,7 +99,7 @@ class RNG : public tk::Toggle<RNGType> {
     const ParamType& param(RNGType rng) const;
  
     //! Return field from RNG parameters bundle: if user has specified it,
-    //! return it, if user did not specified it, return default.
+    //! return it, if user did not specify it, return default
     template< class tag, class Param, class Field >
     Field param( RNGType rng, const Field& def, const Param& bundle ) const {
       auto it = bundle.find( rng );
@@ -138,6 +138,7 @@ class RNG : public tk::Toggle<RNGType> {
     const tk::kw::rngsse_mt19937 rngsse_mt19937 {};
     const tk::kw::rngsse_lfsr113 rngsse_lfsr113 {};
     const tk::kw::rngsse_mrg32k3a rngsse_mrg32k3a {};
+    #ifdef HAS_MKL
     const tk::kw::mkl_mcg31 mkl_mcg31 {};
     const tk::kw::mkl_r250 mkl_r250 {};
     const tk::kw::mkl_mrg32k3a mkl_mrg32k3a {};
@@ -152,6 +153,7 @@ class RNG : public tk::Toggle<RNGType> {
     const tk::kw::mkl_dabstract mkl_dabstract {};
     const tk::kw::mkl_sabstract mkl_sabstract {};
     const tk::kw::mkl_nondeterm mkl_nondeterm {};
+    #endif
 
     //! Enums -> names
     const std::map<RNGType, std::string> names {

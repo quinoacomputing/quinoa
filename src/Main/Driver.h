@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 11:43:24 AM MST
+  \date      Sun 15 Dec 2013 03:23:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -70,12 +70,14 @@ class Driver {
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
 
+   #ifdef HAS_MKL
    //! Register MKL RNGs into factory
    void regMKL( tk::RNGFactory& factory,
                 const quinoa::ctr::RNG& opt,
                 std::list< quinoa::ctr::RNGType >& reg,
                 int nthreads,
                 const quinoa::ctr::MKLRNGParameters& mklparam );
+   #endif
 
    //! Register RNGSSE RNGs into factory
    void regRNGSSE( tk::RNGFactory& factory,
