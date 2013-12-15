@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 07:08:45 PM MST
+  \date      Sat 14 Dec 2013 03:39:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -17,7 +17,17 @@ namespace rngsse {
 
   //! rng: match any one of the RNGSSE random number generators
   struct rng :
-         pegtl::sor< kw::rngsse_mrg32k3a::pegtl_string > {};
+         pegtl::sor< kw::rngsse_gm19::pegtl_string,
+                     kw::rngsse_gm29::pegtl_string,
+                     kw::rngsse_gm31::pegtl_string,
+                     kw::rngsse_gm55::pegtl_string,
+                     kw::rngsse_gm61::pegtl_string,
+                     kw::rngsse_gq581::pegtl_string,
+                     kw::rngsse_gq583::pegtl_string,
+                     kw::rngsse_gq584::pegtl_string,
+                     kw::rngsse_mt19937::pegtl_string,
+                     kw::rngsse_lfsr113::pegtl_string,
+                     kw::rngsse_mrg32k3a::pegtl_string > {};
 
   //! insert RNGSSE parameter
   template< typename Stack, typename keyword, typename option, typename field,

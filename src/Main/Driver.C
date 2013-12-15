@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 11:43:47 AM MST
+  \date      Sat 14 Dec 2013 09:34:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -10,6 +10,16 @@
 //******************************************************************************
 
 extern "C" {
+  #include <gm19.h>
+  #include <gm29.h>
+  #include <gm31.h>
+  #include <gm55.h>
+  #include <gm61.h>
+  #include <gq58x1.h>
+  #include <gq58x3.h>
+  #include <gq58x4.h>
+  #include <mt19937.h>
+  #include <lfsr113.h>
   #include <mrg32k3a.h>
 }
 
@@ -100,7 +110,88 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
   using quinoa::ctr::RNGType;
 
   // Register RNGSSE RNGs
+  add< quinoa::RNGSSE< gm19_state,
+                       unsigned int,
+                       gm19_init_sequence_,
+                       gm19_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GM19,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM19, 0, param ) );
+
+  add< quinoa::RNGSSE< gm29_state,
+                       unsigned,
+                       gm29_init_short_sequence_,
+                       gm29_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GM29,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM29, 0, param ) );
+
+  add< quinoa::RNGSSE< gm31_state,
+                       unsigned,
+                       gm31_init_short_sequence_,
+                       gm31_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GM31,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM31, 0, param ) );
+
+  add< quinoa::RNGSSE< gm55_state,
+                       unsigned long long,
+                       gm55_init_short_sequence_,
+                       gm55_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GM55,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM55, 0, param ) );
+
+  add< quinoa::RNGSSE< gm61_state,
+                       unsigned long long,
+                       gm61_init_sequence_,
+                       gm61_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GM61,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM61, 0, param ) );
+
+  add< quinoa::RNGSSE< gq58x1_state,
+                       unsigned,
+                       gq58x1_init_short_sequence_,
+                       gq58x1_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GQ581,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ581, 0, param ) );
+
+  add< quinoa::RNGSSE< gq58x3_state,
+                       unsigned,
+                       gq58x3_init_short_sequence_,
+                       gq58x3_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GQ583,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ583, 0, param ) );
+
+  add< quinoa::RNGSSE< gq58x4_state,
+                       unsigned,
+                       gq58x4_init_short_sequence_,
+                       gq58x4_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_GQ584,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ584, 0, param ) );
+
+  add< quinoa::RNGSSE< mt19937_state,
+                       unsigned long long,
+                       mt19937_init_sequence_,
+                       mt19937_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_MT19937,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MT19937, 0, param ) );
+
+  add< quinoa::RNGSSE< lfsr113_state,
+                       unsigned long long,
+                       lfsr113_init_sequence_,
+                       lfsr113_generate_ > >
+     ( factory, reg, opt, RNGType::RNGSSE_LFSR113,
+       nthreads,
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_LFSR113, 0, param ) );
+
   add< quinoa::RNGSSE< mrg32k3a_state,
+                       unsigned long long,
                        mrg32k3a_init_sequence_,
                        mrg32k3a_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_MRG32K3A,
