@@ -6,7 +6,7 @@ message(STATUS "Check for optional MKL (Intel Math Kernel Library)")
 # Add MKLROOT variable to cache, initialize with MKLROOT environment variable
 set(MKLROOT $ENV{MKLROOT} CACHE STRING "Root of optional MKL library. Clear this variable to disable MKL.")
 
-message(STATUS "\tMKLROOT = ${MKLROOT}")
+message(STATUS "  MKLROOT = ${MKLROOT}")
 set(MKL_SEARCH_PATH)
 list(APPEND MKL_SEARCH_PATH ${MKLROOT}/lib/intel64)
 
@@ -34,31 +34,31 @@ find_library(INTEL_OMP_RUNTIME_LIBRARY
 
 # Echo find libraries status
 if (MKL_INTERFACE_LIBRARY)
-  message(STATUS "\tFound MKL interface library '${MKL_INTERFACE_LIBRARY}'")
+  message(STATUS "  Found MKL interface library '${MKL_INTERFACE_LIBRARY}'")
 else()
   set(MKL_INTERFACE_LIBRARY "")
-  message(STATUS "\tCould not find MKL interface library 'mkl_intel_ilp64'")
+  message(STATUS "  Could not find MKL interface library 'mkl_intel_ilp64'")
 endif()
 
 if (MKL_THREAD_LIBRARY)
-  message(STATUS "\tFound MKL thread library '${MKL_THREAD_LIBRARY}'")
+  message(STATUS "  Found MKL thread library '${MKL_THREAD_LIBRARY}'")
 else()
   set(MKL_THREAD_LIBRARY "")
-  message(STATUS "\tCould not find MKL thread library 'mkl_intel_thread'")
+  message(STATUS "  Could not find MKL thread library 'mkl_intel_thread'")
 endif()
 
 if (MKL_CORE_LIBRARY)
-  message(STATUS "\tFound MKL core library '${MKL_CORE_LIBRARY}'")
+  message(STATUS "  Found MKL core library '${MKL_CORE_LIBRARY}'")
 else()
   set(MKL_CORE_LIBRARY "")
-  message(STATUS "\tCould not find MKL core library 'mkl_core'")
+  message(STATUS "  Could not find MKL core library 'mkl_core'")
 endif()
 
 if (INTEL_OMP_RUNTIME_LIBRARY)
-  message(STATUS "\tFound Intel OpenMP runtime library '${INTEL_OMP_RUNTIME_LIBRARY}'")
+  message(STATUS "  Found Intel OpenMP runtime library '${INTEL_OMP_RUNTIME_LIBRARY}'")
 else()
   set(INTEL_OMP_RUNTIME_LIBRARY "")
-  message(STATUS "\tCould not find Intel OpenMP runtime library 'iomp5' required by MKL thread library 'mkl_intel_thread'")
+  message(STATUS "  Could not find Intel OpenMP runtime library 'iomp5' required by MKL thread library 'mkl_intel_thread'")
 endif()
 
 # Define HAS_MKL macro and echo MKL status
@@ -81,7 +81,7 @@ endif()
 ## Add TBBROOT variable to cache, initialize with TBBROOT environment variable
 #set(TBBROOT $ENV{TBBROOT} CACHE STRING "Root of optional TBB library. Clear this variable to disable TBB.")
 #
-#message(STATUS "\tTBBROOT = ${TBBROOT}")
+#message(STATUS "  TBBROOT = ${TBBROOT}")
 #set(TBB_SEARCH_PATH)
 #list(APPEND TBB_SEARCH_PATH ${TBBROOT}/lib/intel64/gcc4.4)
 #
@@ -99,13 +99,13 @@ endif()
 #
 ## Echo find libraries status
 #if (TBB_LIBRARY)
-#  message(STATUS "\tFound TBB library '${TBB_LIBRARY}'")
+#  message(STATUS "  Found TBB library '${TBB_LIBRARY}'")
 #else()
 #  set(TBB_LIBRARY "")
 #  if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
-#    message(STATUS "\tCould not find TBB library 'tbb_debug'")
+#    message(STATUS "  Could not find TBB library 'tbb_debug'")
 #  else()
-#    message(STATUS "\tCould not find TBB library 'tbb'")
+#    message(STATUS "  Could not find TBB library 'tbb'")
 #  endif()
 #endif()
 #
@@ -141,6 +141,22 @@ find_library(RNGSSE_LIBRARY
              NAMES rngsse
              PATHS ${TPL_DIR}/lib
 )
+
+#### Optional Boost libraries
+message(STATUS "Check for optional Boost C++ pre-compiled Libraries")
+set(BOOST_ROOT ${TPL_DIR})
+set(Boost_NO_SYSTEM_PATHS on)
+find_package(Boost COMPONENTS system)
+if(Boost_FOUND)
+  set(HAS_BOOST_LIBS on)
+  message(STATUS "  Boost_INCLUDE_DIR = '${Boost_INCLUDE_DIR}'")
+  message(STATUS "  Boost_LIBRARY_DIR = '${Boost_LIBRARY_DIR}'")
+  message(STATUS "  Boost_SYSTEM_LIBRARY_DIR = '${Boost_SYSTEM_LIBRARY_DEBUG}'")
+  message(STATUS "  Boost_SYSTEM_LIBRARY_RELEASE = '${Boost_SYSTEM_LIBRARY_RELEASE}'")
+  message(STATUS "Check for optional Boost pre-compiled C++ Libraries -- works")
+else()
+  message(STATUS "Check for optional Boost pre-compiled C++ Libraries -- failed")
+endif()
 
 #### TestU01
 find_library(TESTU01_LIBRARY

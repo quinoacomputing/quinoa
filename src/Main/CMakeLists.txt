@@ -43,6 +43,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
+                      ${Boost_LIBRARIES}
                       #${MPI_LIBRARIES}
 )
 
@@ -83,6 +84,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
+                      ${Boost_LIBRARIES}
                       #${TBB_LIBRARY}
 )
 

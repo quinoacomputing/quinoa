@@ -26,6 +26,13 @@ string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(TPL_INSTALL_DIR "${PROJECT_SOURCE_DIR}/install/${COMP}")
 MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 
+# Boost's as build toolset wants 'gcc' for the gnu compiler
+if(${COMP} STREQUAL "gnu")
+  set(BOOST_TOOLSET "gcc")
+else()
+  set(BOOST_TOOLSET ${COMP})
+endif()
+
 #### PEGTL (Parsing Expression Grammar Template Library) ######################
 # http://code.google.com/p/pegtl
 # Header only
@@ -51,25 +58,21 @@ ExternalProject_Add_Step(
 
 #### Boost ####################################################################
 # http://www.boost.org
-# Header only
 ExternalProject_Add(
   boost
   PREFIX boost
   URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
   URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
+                    --prefix=${TPL_INSTALL_DIR}
+                    --with-libraries=system
+  BUILD_COMMAND bjam toolset=${BOOST_TOOLSET}
+  INSTALL_COMMAND bjam install
+  BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over
-ExternalProject_Get_Property(boost SOURCE_DIR)
-ExternalProject_Add_Step(
-  boost copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/boost
-          ${TPL_INSTALL_DIR}/include/boost
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
 )
 
 #### Trilinos #################################################################
