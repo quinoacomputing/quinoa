@@ -6,10 +6,6 @@
     - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
     - Add stringstream-based throw
 
-* Build & runtime hostname output (if portable)
-
-* Pass -O3 for configure-based TPL builds
-
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - Add task-based parallelism using either OpenMP or (optional) TBB
@@ -24,9 +20,12 @@
           using the command line argument --error-exitcode= to valgrind
     - Clang's static-, address-, thread-, and memory-sanitizer
 
-* Faster build:
+* Build:
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
+    - Pass -O3 for configure-based TPL builds
+    - Revisit intel-specific compiler arguments; make them non-global if
+      possible
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:25:18 PM MST
+  \date      Sun 15 Dec 2013 08:35:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -21,6 +21,10 @@
 #endif
 
 #include <boost/version.hpp>
+
+#ifdef HAS_BOOST_LIBS   // Boost.Asio requires the Boost.System library
+#include <boost/asio/ip/host_name.hpp>
+#endif
 
 #include <Init.h>
 #include <Exception.h>
@@ -146,11 +150,13 @@ void tk::echoBuildEnv( const Print& print,
 //******************************************************************************
 {
   print.section("Build environment");
+  print.item("Hostname", BUILD_HOSTNAME);
   print.item("Executable", executable);
   print.item("Version", VERSION);
   print.item("Release", RELEASE);
   print.item("Revision", GIT_COMMIT);
   print.item("CMake build type", BUILD_TYPE);
+
 #ifdef NDEBUG
   print.item("Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
   print.item("Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
@@ -158,6 +164,7 @@ void tk::echoBuildEnv( const Print& print,
   print.item("Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
   print.item("Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
 #endif
+
   print.item("MPI C++ wrapper", MPI_COMPILER);
   print.item("Underlying C++ compiler", COMPILER);
   print.item("Build date", BUILD_DATE);
@@ -166,11 +173,13 @@ void tk::echoBuildEnv( const Print& print,
   print.raw("\n");
   echoOpenMP(print, "OpenMP runtime");
   print.raw("\n");
+
 #ifdef HAS_MKL
   echoMKL(print, "Intel Math Kernel Library");
 #else
   print.item("Intel Math Kernel Library", "n/a");
 #endif
+
   print.raw("\n");
   echoBoost(print, "Boost C++ Libraries");
 
@@ -185,6 +194,11 @@ void tk::echoRunEnv(const Print& print, int argc, char** argv)
 //******************************************************************************
 {
   print.section("Run-time environment");
+
+  #ifdef HAS_BOOST_LIBS
+  print.item("Hostname", boost::asio::ip::host_name());
+  #endif
+
   print.item("Date, time", curtime());
   print.item("Work directory", workdir());
   print.item("Executable (rel. to work dir)", argv[0]);

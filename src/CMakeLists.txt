@@ -46,6 +46,9 @@ if(OPENMP_FOUND)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+# Query build hostname
+site_name(HOSTNAME)
+
 # Set compiler
 set(MPI_COMPILER "${MPI_CXX_COMPILER}")
 set(COMPILER "${UNDERLYING_CXX_COMPILER}")
@@ -115,8 +118,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
   #  1599: declaration hides parameter
+  #  2415: variable of static storage duration was declared but never referenced
   #  3346: dynamic exception specifications are deprecated
-  add_definitions("-diag-disable 111,193,304,383,444,869,981,1418,1599,3346")
+  add_definitions("-diag-disable 111,193,304,383,444,869,981,1418,1599,2415,3346")
   add_definitions("-opt-report=0")
 
 endif()
