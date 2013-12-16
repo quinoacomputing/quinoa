@@ -66,8 +66,8 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
                     --prefix=${TPL_INSTALL_DIR}
                     --with-libraries=system
-  BUILD_COMMAND bjam toolset=${BOOST_TOOLSET}
-  INSTALL_COMMAND bjam install
+  BUILD_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam toolset=${BOOST_TOOLSET}
+  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam install
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -143,6 +143,8 @@ ExternalProject_Add(
   URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
                     CC=${MPI_C_COMPILER}
+                    CXX=${MPI_CXX_COMPILER}
+                    F77=${MPI_Fortran_COMPILER}
                     --enable-optimization
                     --disable-silex
                     --with-hdf5=${TPL_INSTALL_DIR}/include,${TPL_INSTALL_DIR}/lib
