@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 08:35:48 PM MST
+  \date      Tue 17 Dec 2013 08:34:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -22,7 +22,7 @@
 
 #include <boost/version.hpp>
 
-#ifdef HAS_BOOST_LIBS   // Boost.Asio requires the Boost.System library
+#ifdef HAS_BOOST_SYSTEM   // Boost.Asio requires the Boost.System library
 #include <boost/asio/ip/host_name.hpp>
 #endif
 
@@ -195,7 +195,7 @@ void tk::echoRunEnv(const Print& print, int argc, char** argv)
 {
   print.section("Run-time environment");
 
-  #ifdef HAS_BOOST_LIBS
+  #ifdef HAS_BOOST_SYSTEM
   print.item("Hostname", boost::asio::ip::host_name());
   #endif
 

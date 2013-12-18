@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InitQuinoa.C
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 05:42:42 PM MST
+  \date      Tue 17 Dec 2013 06:59:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa-specific initialization for main
   \details   Quinoa-specific initialization for main
@@ -11,25 +11,25 @@
 
 #include <sstream>
 
-#include <zoltan.h>
+//#include <zoltan.h>
 #include <silo.h>
 #include <H5public.h>
 #include <zlib.h>
 
 #include <InitQuinoa.h>
 
-void quinoa::echoZoltan(const tk::Print& print, const std::string& title)
-//******************************************************************************
-//  Echo Zoltan library version information
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::stringstream version;
-  version << ZOLTAN_VERSION_NUMBER;
-
-  print.subsection(title);
-  print.item("Version", version.str());
-}
+// void quinoa::echoZoltan(const tk::Print& print, const std::string& title)
+// //******************************************************************************
+// //  Echo Zoltan library version information
+// //! \author  J. Bakosi
+// //******************************************************************************
+// {
+//   std::stringstream version;
+//   version << ZOLTAN_VERSION_NUMBER;
+// 
+//   print.subsection(title);
+//   print.item("Version", version.str());
+// }
 
 void quinoa::echoSilo(const tk::Print& print, const std::string& title)
 //******************************************************************************
@@ -78,8 +78,8 @@ void quinoa::echoTPL(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.raw("\n");
-  echoZoltan(print, "Zoltan library");
+  //print.raw("\n");
+  //echoZoltan(print, "Zoltan library");
   print.raw("\n");
   echoSilo(print, "Silo library");
   print.raw("\n");

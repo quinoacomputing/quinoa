@@ -75,26 +75,26 @@ ExternalProject_Add(
   LOG_INSTALL 1
 )
 
-#### Trilinos #################################################################
-# http://trilinos.sandia.gov
-ExternalProject_Add(
-  trilinos
-  PREFIX trilinos
-  URL ${PROJECT_SOURCE_DIR}/trilinos-11.2.4-Source.tar.gz
-  URL_MD5 29abd4c5bd4bb39aef87e151bfe12541
-  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-             -D Trilinos_ENABLE_Zoltan:BOOL=ON
-             -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_Fortran:BOOL=OFF
-             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+##### Trilinos #################################################################
+## http://trilinos.sandia.gov
+#ExternalProject_Add(
+#  trilinos
+#  PREFIX trilinos
+#  URL ${PROJECT_SOURCE_DIR}/trilinos-11.2.4-Source.tar.gz
+#  URL_MD5 29abd4c5bd4bb39aef87e151bfe12541
+#  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+#             -D Trilinos_ENABLE_Zoltan:BOOL=ON
+#             -D TPL_ENABLE_MPI:BOOL=ON
+#             -D Trilinos_ENABLE_Fortran:BOOL=OFF
+#             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+#             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+#             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+#             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### HDF5 #####################################################################
 # http://www.hdfgroup.org/HDF5
@@ -113,25 +113,25 @@ ExternalProject_Add(
   LOG_INSTALL 1
 )
 
-#### H5Part ###################################################################
-# http://vis.lbl.gov/Research/H5Part
-ExternalProject_Add(
-  h5part
-  DEPENDS hdf5
-  PREFIX h5part
-  URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
-  URL_MD5 327c63d198e38a12565b74cffdf1f9d7
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
-                    CC=${MPI_C_COMPILER}
-                    --enable-parallel
-                    --with-hdf5=${TPL_INSTALL_DIR}
-                    --prefix=${TPL_INSTALL_DIR}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+##### H5Part ###################################################################
+## http://vis.lbl.gov/Research/H5Part
+#ExternalProject_Add(
+#  h5part
+#  DEPENDS hdf5
+#  PREFIX h5part
+#  URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
+#  URL_MD5 327c63d198e38a12565b74cffdf1f9d7
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
+#                    CC=${MPI_C_COMPILER}
+#                    --enable-parallel
+#                    --with-hdf5=${TPL_INSTALL_DIR}
+#                    --prefix=${TPL_INSTALL_DIR}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### Silo #####################################################################
 # https://wci.llnl.gov/codes/silo

@@ -14,23 +14,26 @@ list(APPEND MKL_SEARCH_PATH ${MKLROOT}/lib/intel64)
 set(MKL_INTERFACE_LIBRARY "NOTFOUND")
 find_library(MKL_INTERFACE_LIBRARY
              NAMES mkl_intel_ilp64
-             PATHS ${MKL_SEARCH_PATH})
+             PATHS ${MKL_SEARCH_PATH}
+             NO_DEFAULT_PATH)
 
 set(MKL_THREAD_LIBRARY "NOTFOUND")
 find_library(MKL_THREAD_LIBRARY
              NAMES mkl_intel_thread
-             PATHS ${MKL_SEARCH_PATH})
+             PATHS ${MKL_SEARCH_PATH}
+             NO_DEFAULT_PATH)
 
 set(MKL_CORE_LIBRARY "NOTFOUND")
 find_library(MKL_CORE_LIBRARY
              NAMES mkl_core
-             PATHS ${MKL_SEARCH_PATH})
+             PATHS ${MKL_SEARCH_PATH}
+             NO_DEFAULT_PATH)
 
 set(INTEL_OMP_RUNTIME_LIBRARY "NOTFOUND")
 find_library(INTEL_OMP_RUNTIME_LIBRARY
-             NO_DEFAULT_PATH
              NAMES iomp5
-             PATHS ${MKL_SEARCH_PATH}/../../../compiler/lib/intel64)
+             PATHS ${MKL_SEARCH_PATH}/../../../compiler/lib/intel64
+             NO_DEFAULT_PATH)
 
 # Echo find libraries status
 if (MKL_INTERFACE_LIBRARY)
@@ -90,11 +93,13 @@ endif()
 #if (CMAKE_BUILD_TYPE MATCHES DEBUG OR CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
 #  find_library(TBB_LIBRARY
 #               NAMES tbb_debug
-#               PATHS ${TBB_SEARCH_PATH})
+#               PATHS ${TBB_SEARCH_PATH}
+#               NO_DEFAULT_PATH)
 #else()
 #  find_library(TBB_LIBRARY
 #               NAMES tbb
-#               PATHS ${TBB_SEARCH_PATH})
+#               PATHS ${TBB_SEARCH_PATH}
+#               NO_DEFAULT_PATH)
 #endif()
 #
 ## Echo find libraries status
@@ -121,51 +126,49 @@ endif()
 #### Z
 find_library(Z_LIBRARY
              NAMES z
-             PATHS /usr/lib64
-)
+             PATHS /usr/lib64)
 
 #### Silo
 find_library(SILO_LIBRARY
              NAMES siloh5
              PATHS ${TPL_DIR}/lib
-)
+             NO_DEFAULT_PATH)
 
 #### HDF5
 find_library(HDF5_LIBRARY
              NAMES hdf5
              PATHS ${TPL_DIR}/lib
-)
+             NO_DEFAULT_PATH)
 
 #### RNGSSE2
 find_library(RNGSSE_LIBRARY
              NAMES rngsse
              PATHS ${TPL_DIR}/lib
-)
+             NO_DEFAULT_PATH)
 
-#### Optional Boost libraries
-message(STATUS "Check for optional Boost C++ pre-compiled Libraries")
-set(BOOST_ROOT ${TPL_DIR})
-set(Boost_NO_SYSTEM_PATHS on)
-find_package(Boost COMPONENTS system)
-if(Boost_FOUND)
-  set(HAS_BOOST_LIBS on)
-  message(STATUS "  Boost_SYSTEM_LIBRARY_DEBUG = '${Boost_SYSTEM_LIBRARY_DEBUG}'")
-  message(STATUS "  Boost_SYSTEM_LIBRARY_RELEASE = '${Boost_SYSTEM_LIBRARY_RELEASE}'")
-  message(STATUS "Check for optional Boost pre-compiled C++ Libraries -- works")
+#### Boost C++ system library
+message(STATUS "Check for optional Boost C++ system library")
+find_library(BOOST_SYSTEM_LIBRARY
+             NAMES boost_system
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH)
+if(BOOST_SYSTEM_LIBRARY)
+  set(HAS_BOOST_SYSTEM on)
+  message(STATUS "Check for optional Boost C++ system library -- works")
 else()
-  message(STATUS "Check for optional Boost pre-compiled C++ Libraries -- failed")
+  message(STATUS "Check for optional Boost C++ system library -- failed")
 endif()
 
 #### TestU01
 find_library(TESTU01_LIBRARY
              NAMES testu01
              PATHS ${TPL_DIR}/lib
-)
+             NO_DEFAULT_PATH)
 find_library(TESTU01_PROBDIST_LIBRARY
              NAMES probdist
              PATHS ${TPL_DIR}/lib
-)
+             NO_DEFAULT_PATH)
 #find_library(TESTU01_MYLIB_LIBRARY
 #             NAMES mylib
 #             PATHS ${TPL_DIR}/lib
-#)
+#             NO_DEFAULT_PATH)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InitQuinoa.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 05:43:06 PM MST
+  \date      Tue 17 Dec 2013 06:59:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa-specific initialization for main
   \details   Quinoa-specific initialization for main
@@ -12,9 +12,6 @@
 #define InitQuinoa_h
 
 #include <string>
-
-#include <zoltan.h>
-#include <silo.h>
 
 #include <Print.h>
 
