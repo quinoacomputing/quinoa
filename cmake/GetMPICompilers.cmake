@@ -72,14 +72,32 @@ function(get_mpi_compilers)
   # Echo compilers
   if (MPI_C_COMPILER)
     MESSAGE(STATUS "MPI C wrapper: " ${MPI_C_COMPILER})
+    if(NOT IS_ABSOLUTE ${MPI_C_COMPILER})
+      execute_process(
+        COMMAND           which ${MPI_C_COMPILER}
+        OUTPUT_VARIABLE   MPI_C_COMPILER
+      )
+    endif()
   endif()
 
   if (MPI_CXX_COMPILER)
     MESSAGE(STATUS "MPI C++ wrapper: " ${MPI_CXX_COMPILER})
+    if(NOT IS_ABSOLUTE ${MPI_CXX_COMPILER})
+      execute_process(
+        COMMAND           which ${MPI_CXX_COMPILER}
+        OUTPUT_VARIABLE   MPI_CXX_COMPILER
+      )
+    endif()
   endif()
 
   if (MPI_Fortran_COMPILER)
     MESSAGE(STATUS "MPI Fortran wrapper: " ${MPI_Fortran_COMPILER})
+    if(NOT IS_ABSOLUTE ${MPI_Fortran_COMPILER})
+      execute_process(
+        COMMAND           which ${MPI_Fortran_COMPILER}
+        OUTPUT_VARIABLE   MPI_Fortran_COMPILER
+      )
+    endif()
   endif()
 
   if (UNDERLYING_C_COMPILER)
