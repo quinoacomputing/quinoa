@@ -30,8 +30,9 @@ set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Set default third-party libraries directory
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-set(TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP} CACHE STRING
-    "Third-party libraries directory")
+set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP})
+get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
+set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
 MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
 
 # Find MPI and get its underlying compilers

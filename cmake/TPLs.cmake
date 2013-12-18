@@ -124,12 +124,13 @@ endif()
 #endif()
 
 #### Z
+set(Z_LIBRARY "NOTFOUND")
 find_library(Z_LIBRARY
              NAMES z
-             PATHS /usr/lib64
              REQUIRED)
 
 #### Silo
+set(SILO_LIBRARY "NOTFOUND")
 find_library(SILO_LIBRARY
              NAMES siloh5
              PATHS ${TPL_DIR}/lib
@@ -137,6 +138,7 @@ find_library(SILO_LIBRARY
              REQUIRED)
 
 #### HDF5
+set(HDF5_LIBRARY "NOTFOUND")
 find_library(HDF5_LIBRARY
              NAMES hdf5
              PATHS ${TPL_DIR}/lib
@@ -144,6 +146,7 @@ find_library(HDF5_LIBRARY
              REQUIRED)
 
 #### RNGSSE2
+set(RNGSSE_LIBRARY "NOTFOUND")
 find_library(RNGSSE_LIBRARY
              NAMES rngsse
              PATHS ${TPL_DIR}/lib
@@ -151,6 +154,7 @@ find_library(RNGSSE_LIBRARY
              REQUIRED)
 
 #### Boost C++ system library (optional)
+set(BOOST_SYSTEM_LIBRARY "NOTFOUND")
 message(STATUS "Check for optional Boost C++ system library")
 find_library(BOOST_SYSTEM_LIBRARY
              NAMES boost_system
@@ -160,20 +164,24 @@ if(BOOST_SYSTEM_LIBRARY)
   set(HAS_BOOST_SYSTEM on)
   message(STATUS "Check for optional Boost C++ system library -- works")
 else()
+  set(BOOST_SYSTEM_LIBRARY "")
   message(STATUS "Check for optional Boost C++ system library -- failed")
 endif()
 
 #### TestU01
+set(TESTU01_LIBRARY "NOTFOUND")
 find_library(TESTU01_LIBRARY
              NAMES testu01
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+set(TESTU01_PROBDIST_LIBRARY "NOTFOUND")
 find_library(TESTU01_PROBDIST_LIBRARY
              NAMES probdist
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
+#set(TESTU01_MYLIB_LIBRARY "NOTFOUND")
 #find_library(TESTU01_MYLIB_LIBRARY
 #             NAMES mylib
 #             PATHS ${TPL_DIR}/lib
