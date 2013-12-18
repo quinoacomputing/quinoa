@@ -135,6 +135,9 @@ configure_file(
   "${PROJECT_BINARY_DIR}/Base/Config.h"
 )
 
+# Remove build hostname from cmake cache
+unset(HOSTNAME CACHE)
+
 ### Set RPATH so that shared libs paths stay in the binary after install ###
 # Don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH false)

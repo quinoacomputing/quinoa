@@ -26,6 +26,7 @@
     - Pass -O3 for configure-based TPL builds
     - Revisit intel-specific compiler arguments; make them non-global if
       possible
+    - Switch as many TPLs to optional as make sense
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
