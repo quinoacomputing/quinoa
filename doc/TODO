@@ -8,7 +8,11 @@
 
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
-    - Add task-based parallelism using either OpenMP or (optional) TBB
+    - RNGSSE:
+        o expose short-, medium-, and long-sequence initialization to user
+        o can RNGSSE's generators take a seed?
+        o Hook up SSE versions
+        o Hook up GPU versions
 
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
