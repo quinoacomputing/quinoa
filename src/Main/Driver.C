@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:23:46 PM MST
+  \date      Sat 21 Dec 2013 08:17:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -65,6 +65,7 @@ Driver::regMKL( tk::RNGFactory& factory,
   using quinoa::ctr::MKLGaussianMethodType;
 
   // Defaults for MKL RNGs
+  unsigned int s_def = 0;
   MKLUniformMethodType u_def = MKLUniformMethodType::STANDARD;
   MKLGaussianMethodType g_def = MKLGaussianMethodType::BOXMULLER;
 
@@ -77,7 +78,7 @@ Driver::regMKL( tk::RNGFactory& factory,
        ( factory, reg, opt, rng,
          nthreads,
          opt.param( rng ),
-         opt.param< quinoa::ctr::seed >( rng, 0, param ),
+         opt.param< quinoa::ctr::seed >( rng, s_def, param ),
          um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
          gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ) );
   };
