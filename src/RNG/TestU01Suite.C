@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:21:37 PM MST
+  \date      Sat 21 Dec 2013 07:53:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -20,32 +20,39 @@ extern "C" {
 
 namespace rngtest {
 
-std::vector< std::unique_ptr< tk::RNG > > g_rng;  //!< Global pointers to RNGs
+//! Number of RNGs registered
+static const size_t g_maxRNGs = 25;
 
-int g_tid;                                        //!< Global thread id
+//! Global pointers to RNGs
+std::vector< std::unique_ptr< tk::RNG > > g_rng(g_maxRNGs);
+
+//! Global thread id
+int g_tid;
 #ifdef _OPENMP
 #pragma omp threadprivate(g_tid)
 #endif
 
-template< int id >
+template< size_t id >
 static double uniform(void*, void*)
 //******************************************************************************
 //  TestU01 uniform RNG wrapper
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  static_assert(g_maxRNGs >= id, "RNG id >= max RNGs");
   double r;
   g_rng[id]->uniform( g_tid, 1, &r );
   return r;
 }
 
-template< int id >
+template< size_t id >
 static unsigned long uniform_bits(void*, void*)
 //******************************************************************************
 //  TestU01 uniform RNG bits wrapper
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  static_assert(g_maxRNGs >= id, "RNG id >= max RNGs");
   double r;
   g_rng[id]->uniform( g_tid, 1, &r );
   return static_cast<unsigned long>(r * unif01_NORM32);
@@ -65,14 +72,10 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
 {
   using quinoa::ctr::RNGType;
 
-  // Number of RNGs will be registered
-  const size_t numRNGs = 25;
-
-  // Resize std::vector triples to given fixed size
+  // Resize std::vector triples to given fixed size (g_rng done in global scope)
   // (assignTests() will leverage on the default enum)
-  m_rngEnum.resize( numRNGs, ctr::RNGType::NO_RNG );
-  g_rng.reserve( numRNGs );
-  m_rngPtr.reserve( numRNGs );
+  m_rngEnum.resize( g_maxRNGs, ctr::RNGType::NO_RNG );
+  m_rngPtr.reserve( g_maxRNGs );
 
   // Get vector of selected RNGs
   std::vector< ctr::RNGType > rngs =
@@ -180,15 +183,17 @@ TestU01Suite::run()
   const RNGTestPrint& print = m_base.print;
 
   print.part( m_name );
-  print.section( "Statistics computed" );
+  print.statshead( "Statistics computed" );
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
   using Psize = StatTest::Psize;
+  using Rsize = StatTest::Rsize;
   using Tsize = TestContainer::size_type;
 
   Tsize ntest = m_tests.size();
-  Psize n = 0;
+  Psize ncomplete = 0;
+  std::vector< Rsize > nfail( g_maxRNGs, 0);
   #ifdef _OPENMP
   #pragma omp parallel
   #endif
@@ -204,31 +209,43 @@ TestU01Suite::run()
     #endif
     for (Tsize i=0; i<ntest; ++i) {
 
+      // Get reference to ith test
+      std::unique_ptr< StatTest >& test = m_tests[i];
+
       // Run test
-      m_tests[i]->run();
+      test->run();
 
       // Evaluate test
-      Psize npval = m_tests[i]->nstat();
+      Psize npval = test->nstat();
       for (Psize p=0; p<npval; ++p) {
 
         // Increase number tests completed
         #ifdef _OPENMP
         #pragma omp atomic
         #endif
-        ++n;
+        ++ncomplete;
+
+        // Increase number of failed tests for RNG
+        if (test->fail(p)) {
+          #ifdef _OPENMP
+          #pragma omp atomic
+          #endif
+          ++nfail[ test->id() ];
+        }
 
         // Output one-liner
-        print.test< StatTest, TestContainer >( n, m_npval, m_tests[i], p );
+        print.test< StatTest, TestContainer >
+                  ( ncomplete, nfail[test->id()], m_npval, test, p );
       }
     }
   }
 
-  // Count up number of filed tests
-  StatTest::Psize nfail = failed();
+  // Count up number of total failed tests (for all RNGs tested)
+  StatTest::Psize tfail = failed();
 
-  // Output summary of failed tests
-  if (nfail) {
-    print.failed< StatTest >("Failed statistics", m_npval, nfail, m_tests);
+  // Output summary of failed tests (for all RNGs tested)
+  if (tfail) {
+    print.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
   } else {
     print.note("All tests passed");
   }

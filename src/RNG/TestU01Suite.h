@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 12:12:39 PM MST
+  \date      Sat 21 Dec 2013 07:36:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -132,12 +132,12 @@ class TestU01Suite : public Battery {
     template< class Suite >
     void assignTests( Suite& suite )
     {
-      using Rsize = std::vector< quinoa::ctr::RNGType >::size_type;
+      using Rsize = StatTest::Rsize;
       Rsize size = m_rngEnum.size();
        for (Rsize r=0; r<size; ++r) {
          if (m_rngEnum[r] != ctr::RNGType::NO_RNG) {
            ++m_numRNGs;
-           suite.addTests( m_rngEnum[r], m_rngPtr[r] );
+           suite.addTests( r, m_rngEnum[r], m_rngPtr[r] );
          }
        }
       total();  // Count up total number of statistics expected
@@ -145,14 +145,16 @@ class TestU01Suite : public Battery {
 
     //! Add statistical test to battery
     template< class TestType, class Result, typename... Ts >
-    void add( const Gen01Ptr& gen,
+    void add( const StatTest::Rsize& id,
+              const Gen01Ptr& gen,
               const quinoa::ctr::RNGType& rng,
               StatTest::Names&& names,
               Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
     {
       std::unique_ptr< TestType >
-        ptr( new TestType( gen.get(),
+        ptr( new TestType( id,
+                           gen.get(),
                            std::move(rng),
                            std::move(names),
                            runner,
@@ -206,10 +208,10 @@ class TestU01Suite : public Battery {
     //! Count up number of failed tests
     Pvals::size_type failed();
 
-    const std::string m_name;                   //!< Test suite name
+    const std::string m_name;             //!< Test suite name
 
-    Pvals::size_type m_npval;                   //!< Total number of stats
-    TestContainer m_tests;                      //!< Statistical tests
+    Pvals::size_type m_npval;             //!< Total number of stats
+    TestContainer m_tests;                //!< Statistical tests
 };
 
 } // rngtest::

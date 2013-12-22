@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 06:56:30 AM MST
+  \date      Sat 21 Dec 2013 07:56:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -142,9 +142,22 @@ class RNGTestPrint : public tk::Print {
            m_item_indent + "statistics computed from the preceding test.\n" );
     }
 
+    //! Print statistical tests header (with legend)
+    void statshead(const std::string& title) const {
+      std::cout << m_section_title_fmt % m_section_indent
+                                       % m_section_bullet
+                                       % title;
+      std::cout << m_section_underline_fmt
+                   % m_section_indent
+                   % std::string(m_section_indent_size + 2 + title.size(),'-');
+      raw( m_item_indent +
+           "Legend: [done/total/failed] Test, RNG : p-value\n\n" );
+    }
+
     //! Print a single test name, RNG and pass or fail + p-value
     template< class StatTest, class TestContainer >
-    void test( const typename StatTest::Psize& n,
+    void test( const typename StatTest::Psize& ncomplete,
+               const typename StatTest::Rsize& nfail,
                const typename StatTest::Psize& npval,
                const typename TestContainer::value_type& test,
                const typename StatTest::Psize& p ) const
@@ -152,8 +165,8 @@ class RNGTestPrint : public tk::Print {
       // Construct info-line
       tk::Option< quinoa::ctr::RNG > rng;
       std::stringstream ss;
-      ss << "[" << n << "/" << npval << "] " << test->name(p) << ", "
-         << rng.name(test->rng());
+      ss << "[" << ncomplete << "/" << npval << "/" << nfail << "] "
+         << test->name(p) << ", " << rng.name(test->rng());
       std::string pvalstr("pass");
       // Put in p-value if test failed
       if (test->fail(p)) pvalstr = "fail, p-value = " + test->pvalstr(p);
