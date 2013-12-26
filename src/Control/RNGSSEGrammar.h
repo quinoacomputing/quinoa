@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 03:39:07 PM MST
+  \date      Thu 26 Dec 2013 02:10:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -49,6 +49,14 @@ namespace rngsse {
                            tk::grm::Insert_field< Stack,
                                                   quinoa::ctr::seed,
                                                   sel, vec, tags... > > {};
+  //! RNGSSE sequence length
+  template< typename Stack, typename sel, typename vec, typename... tags >
+  struct seqlen :
+         rng_option< Stack,
+                     tk::kw::seqlen,
+                     quinoa::ctr::RNGSSESeqLen,
+                     quinoa::ctr::seqlen,
+                     sel, vec, tags... > {};
 
   //! rngs blocks
   template< typename Stack, typename sel, typename vec, typename... tags >
@@ -59,7 +67,8 @@ namespace rngsse {
                                                       quinoa::ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
-                           seed< Stack, sel, vec, tags... > > > {};
+                           seed< Stack, sel, vec, tags... >,
+                           seqlen< Stack, sel, vec, tags... > > > {};
 
 } // rngsse::
 } // tk::

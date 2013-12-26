@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 04:02:32 PM MST
+  \date      Thu 26 Dec 2013 02:02:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -25,6 +25,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 #include <Quinoa/Options/MKLUniformMethod.h>
 #include <Quinoa/Options/MKLGaussianMethod.h>
+#include <Quinoa/Options/RNGSSESeqLen.h>
 #include <Quinoa/Tags.h>
 
 namespace quinoa {
@@ -69,7 +70,8 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
 
 //! RNGSSE random number generator parameters storage
 using RNGSSEParam = tk::tuple::tagged_tuple<
-  seed,             unsigned int               //!< seed
+  seed,             unsigned int,              //!< seed
+  seqlen,           RNGSSESeqLenType           //!< sequence length type
 >;
 //! RNGSSE parameters bundle
 using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
