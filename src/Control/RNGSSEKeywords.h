@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEKeywords.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 03:31:08 PM MST
+  \date      Thu 26 Dec 2013 02:01:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for RNGSSE lib
   \details   Random number generator selector keywords for those generators
@@ -160,6 +160,54 @@ struct rngsse_mrg32k3a_info {
 
 using rngsse_mrg32k3a =
   keyword< rngsse_mrg32k3a_info, r,n,g,s,s,e,'_',m,r,g,'3','2',k,'3',a >;
+
+// Keyword 'seqlen'
+struct seqlen_info {
+  static const char* name() { return "RNGSSE sequence length"; }
+  static const char* help() { return
+    "This keyword is used to select RNGSSE library's generator sequence "
+    "length. Valid options are 'short', 'medium', and 'long'.";
+  }
+};
+
+using seqlen =
+  keyword< seqlen_info, s,e,q,l,e,n >;
+
+// Keyword 'short'
+struct seq_short_info {
+  static const char* name() { return "short"; }
+  static const char* help() { return
+    "This keyword is used to select the short sequence length for RNGSSE "
+    "library's generator sequence.";
+  }
+};
+
+using seq_short =
+  keyword< seq_short_info, s,h,o,r,t >;
+
+// Keyword 'medium'
+struct seq_med_info {
+  static const char* name() { return "medium"; }
+  static const char* help() { return
+    "This keyword is used to select the medium sequence length for RNGSSE "
+    "library's generator sequence.";
+  }
+};
+
+using seq_med =
+  keyword< seq_med_info, m,e,d,i,u,m >;
+
+// Keyword 'long'
+struct seq_long_info {
+  static const char* name() { return "long"; }
+  static const char* help() { return
+    "This keyword is used to select the long sequence length for RNGSSE "
+    "library's generator sequence.";
+  }
+};
+
+using seq_long =
+  keyword< seq_long_info, l,o,n,g >;
 
 } // kw::
 } // tk::

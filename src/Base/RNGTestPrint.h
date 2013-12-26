@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:56:08 PM MST
+  \date      Thu 26 Dec 2013 02:12:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -244,10 +244,15 @@ class RNGTestPrint : public tk::Print {
     }
 
     void echoRNGSSEParams( const quinoa::ctr::RNGSSEParam& p ) const {
+      tk::Option< quinoa::ctr::RNGSSESeqLen > seq;
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % "seed"
                    % p.get<quinoa::ctr::seed>();
+      std::cout << m_item_name_value_fmt
+                   % m_item_indent
+                   % seq.group()
+                   % seq.name( p.get<quinoa::ctr::seqlen>() );
     }
 
     const ctr::InputDeck& m_ctr;         //!< Parsed control
