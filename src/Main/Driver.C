@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 08:17:13 PM MST
+  \date      Fri 27 Dec 2013 07:48:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -113,15 +113,26 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
 //******************************************************************************
 {
   using quinoa::ctr::RNGType;
+//  using quinoa::ctr::seqlen;
+//  using quinoa::ctr::RNGSSESeqLenType;
+
+  // Defaults for RNGSSE RNGs
+  unsigned int s_def = 0;
+//  RNGSSESeqLenType l_def = RNGSSESeqLenType::SHORT;
 
   // Register RNGSSE RNGs
+
+  // Get sequence length
+//   if ( opt.param< seqlen >( RNGType::RNGSSE_GM19, l_def, param ) == l_def ) {
+//     std::cout << "\n>>> WARNING: RNGSSE_GM19 does not take a sequence length parameter. Remove the 'seqlen' parameter from the rngsse_gm19 ... end block from the control file.\n\n";
+//   }
   add< quinoa::RNGSSE< gm19_state,
                        unsigned int,
                        gm19_init_sequence_,
                        gm19_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM19,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM19, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM19, s_def, param ) );
 
   add< quinoa::RNGSSE< gm29_state,
                        unsigned,
@@ -129,7 +140,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm29_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM29,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM29, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM29, s_def, param ) );
 
   add< quinoa::RNGSSE< gm31_state,
                        unsigned,
@@ -137,7 +148,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm31_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM31,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM31, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM31, s_def, param ) );
 
   add< quinoa::RNGSSE< gm55_state,
                        unsigned long long,
@@ -145,7 +156,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm55_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM55,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM55, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM55, s_def, param ) );
 
   add< quinoa::RNGSSE< gm61_state,
                        unsigned long long,
@@ -153,7 +164,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm61_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM61,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM61, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM61, s_def, param ) );
 
   add< quinoa::RNGSSE< gq58x1_state,
                        unsigned,
@@ -161,7 +172,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x1_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ581,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ581, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ581, s_def, param ) );
 
   add< quinoa::RNGSSE< gq58x3_state,
                        unsigned,
@@ -169,7 +180,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x3_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ583,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ583, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ583, s_def, param ) );
 
   add< quinoa::RNGSSE< gq58x4_state,
                        unsigned,
@@ -177,7 +188,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x4_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ584,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ584, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ584, s_def, param ) );
 
   add< quinoa::RNGSSE< mt19937_state,
                        unsigned long long,
@@ -185,7 +196,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        mt19937_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_MT19937,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MT19937, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MT19937, s_def, param ) );
 
   add< quinoa::RNGSSE< lfsr113_state,
                        unsigned long long,
@@ -193,7 +204,7 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        lfsr113_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_LFSR113,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_LFSR113, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_LFSR113, s_def, param ) );
 
   add< quinoa::RNGSSE< mrg32k3a_state,
                        unsigned long long,
@@ -201,5 +212,5 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        mrg32k3a_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_MRG32K3A,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MRG32K3A, 0, param ) );
+       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MRG32K3A, s_def, param ) );
 }

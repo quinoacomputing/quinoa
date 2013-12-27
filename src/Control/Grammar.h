@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:58:43 PM MST
+  \date      Fri 27 Dec 2013 07:53:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -295,6 +295,18 @@ namespace grm {
          pegtl::until< pegtl::eof,
                        pegtl::sor< keywords,
                                    unknown< Stack, Error::KEYWORD > > > {};
+
+  //! insert RNG parameter
+  template< typename Stack, typename keyword, typename option, typename field,
+            typename sel, typename vec, typename... tags >
+  struct rng_option :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           tk::grm::insert_option< Stack,
+                                                   option,
+                                                   field,
+                                                   sel, vec, tags... >,
+                           pegtl::alpha > {};
 
 } // grm::
 } // tk::
