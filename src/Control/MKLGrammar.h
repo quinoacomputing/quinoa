@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 04:11:07 PM MST
+  \date      Fri 27 Dec 2013 07:52:42 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL grammar
   \details   MKL grammar
@@ -32,18 +32,6 @@ namespace mkl {
                      kw::mkl_sabstract::pegtl_string,
                      kw::mkl_nondeterm::pegtl_string > {};
 
-  //! insert MKL parameter
-  template< typename Stack, typename keyword, typename option, typename field,
-            typename sel, typename vec, typename... tags >
-  struct rng_option :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           tk::grm::insert_option< Stack,
-                                                   option,
-                                                   field,
-                                                   sel, vec, tags... >,
-                           pegtl::alpha > {};
-
   //! MKL RNG seed
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seed :
@@ -56,20 +44,20 @@ namespace mkl {
   //! MKL uniform method
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct uniform_method :
-         rng_option< Stack,
-                     tk::kw::uniform_method,
-                     quinoa::ctr::MKLUniformMethod,
-                     quinoa::ctr::uniform_method,
-                     sel, vec, tags... > {};
-
+         grm::rng_option< Stack,
+                          tk::kw::uniform_method,
+                          quinoa::ctr::MKLUniformMethod,
+                          quinoa::ctr::uniform_method,
+                          sel, vec, tags... > {};
+     
   //! MKL Gaussian method
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct gaussian_method :
-         rng_option< Stack,
-                     tk::kw::gaussian_method,
-                     quinoa::ctr::MKLGaussianMethod,
-                     quinoa::ctr::gaussian_method,
-                     sel, vec, tags... > {};
+         grm::rng_option< Stack,
+                          tk::kw::gaussian_method,
+                          quinoa::ctr::MKLGaussianMethod,
+                          quinoa::ctr::gaussian_method,
+                          sel, vec, tags... > {};
 
   //! rngs blocks
   template< typename Stack, typename sel, typename vec, typename... tags >

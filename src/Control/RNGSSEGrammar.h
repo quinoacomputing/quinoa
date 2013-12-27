@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 02:10:04 PM MST
+  \date      Fri 27 Dec 2013 07:53:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -29,18 +29,6 @@ namespace rngsse {
                      kw::rngsse_lfsr113::pegtl_string,
                      kw::rngsse_mrg32k3a::pegtl_string > {};
 
-  //! insert RNGSSE parameter
-  template< typename Stack, typename keyword, typename option, typename field,
-            typename sel, typename vec, typename... tags >
-  struct rng_option :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           tk::grm::insert_option< Stack,
-                                                   option,
-                                                   field,
-                                                   sel, vec, tags... >,
-                           pegtl::alpha > {};
-
   //! RNGSSE seed
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seed :
@@ -52,11 +40,11 @@ namespace rngsse {
   //! RNGSSE sequence length
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seqlen :
-         rng_option< Stack,
-                     tk::kw::seqlen,
-                     quinoa::ctr::RNGSSESeqLen,
-                     quinoa::ctr::seqlen,
-                     sel, vec, tags... > {};
+         grm::rng_option< Stack,
+                          tk::kw::seqlen,
+                          quinoa::ctr::RNGSSESeqLen,
+                          quinoa::ctr::seqlen,
+                          sel, vec, tags... > {};
 
   //! rngs blocks
   template< typename Stack, typename sel, typename vec, typename... tags >
