@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:53:58 AM MST
+  \date      Fri 27 Dec 2013 04:28:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -28,7 +28,9 @@ namespace grm {
                                QUOTED,
                                LIST,
                                ALIAS,
-                               MISSING };
+                               MISSING,
+                               UNSUPPORTED,
+                               NOOPTION };
 
   static const std::map< Error, std::string > err_msg( {
     { Error::KEYWORD, "Unknown keyword" },
@@ -36,7 +38,9 @@ namespace grm {
     { Error::QUOTED, "Must be double-quoted" },
     { Error::LIST, "Unknown value in list" },
     { Error::ALIAS, "Alias keyword too long" },
-    { Error::MISSING, "Required field missing" }
+    { Error::MISSING, "Required field missing" },
+    { Error::UNSUPPORTED, "Option not supported" },
+    { Error::NOOPTION, "Option does not exist" }
   } );
   
   //! parser error handler
@@ -119,7 +123,7 @@ namespace grm {
       if (opt.exist( value ))
         stack.template push_back<tag,tags...>( opt.value( value ) );
       else
-        Throw( ExceptType::FATAL, "Non-existent option: '" + value + "'" );
+        handleError< Stack, Error::NOOPTION >( stack, value );
     }
   };
 
@@ -300,13 +304,13 @@ namespace grm {
   template< typename Stack, typename keyword, typename option, typename field,
             typename sel, typename vec, typename... tags >
   struct rng_option :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           tk::grm::insert_option< Stack,
-                                                   option,
-                                                   field,
-                                                   sel, vec, tags... >,
-                           pegtl::alpha > {};
+         process< Stack,
+                  typename keyword::pegtl_string,
+                  insert_option< Stack,
+                                 option,
+                                 field,
+                                 sel, vec, tags... >,
+                  pegtl::alpha > {};
 
 } // grm::
 } // tk::

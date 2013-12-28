@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 09:35:35 PM MST
+  \date      Fri 27 Dec 2013 07:44:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -17,23 +17,55 @@
 namespace quinoa {
 
 //! RNGSSE-based random number generator
-template< class State,
-          typename SeqNumType,
-          void (*Init)(State*, SeqNumType),
-          unsigned int (*Generate)(State*) > 
+template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
 class RNGSSE : public tk::RNG {
 
+    using InitFn = void (*)(State*, SeqNumType);
+
   public:
-    //! Constructor
-    explicit RNGSSE( SeqNumType nthreads, unsigned int seed )
-    {
+    //! Constructor with sequence length option: short, long, medium
+    explicit RNGSSE( SeqNumType nthreads, ctr::RNGSSESeqLenType seqlen,
+                     InitFn fnShort, InitFn fnLong, InitFn fnMed) {
+      // Select init function based on sequence length specified
+      InitFn fn = nullptr;
+      switch ( seqlen ) {
+        case ctr::RNGSSESeqLenType::SHORT : fn = fnShort; break;
+        case ctr::RNGSSESeqLenType::LONG : fn = fnLong; break;
+        case ctr::RNGSSESeqLenType::MEDIUM : fn = fnMed; break;
+        default:
+          Throw( tk::ExceptType::FATAL,
+                 "RNGSSE sequence length not handled in RNGSSE constructor");
+      }
+      RNGSSE(nthreads, fn);
+    }
+
+    //! Constructor with sequence length option: short, long
+    explicit RNGSSE( SeqNumType nthreads, ctr::RNGSSESeqLenType seqlen,
+                     InitFn fnShort, InitFn fnLong ) {
+      // Select init function based on sequence length specified
+      InitFn fn = nullptr;
+      switch ( seqlen ) {
+        case ctr::RNGSSESeqLenType::SHORT : fn = fnShort; break;
+        case ctr::RNGSSESeqLenType::LONG : fn = fnLong; break;
+        default:
+          Throw( tk::ExceptType::FATAL,
+                 "RNGSSE sequence length not handled in RNGSSE constructor");
+      }
+      RNGSSE(nthreads, fn);
+    }
+
+    //! Constructor for no sequence lengths option
+    explicit RNGSSE( SeqNumType nthreads, InitFn fn ) {
+      // Throw if not NDEBUG and init function pointer is invalid
+      Assert( fn != nullptr,
+              tk::ExceptType::FATAL, "nullptr passed to RNGSSE constructor" );
       // Throw if not NDEBUG and nthreads invalid
       Assert(nthreads > 0, tk::ExceptType::FATAL, "Need at least one thread");
       // Allocate array of stream-pointers for threads
       m_stream = std::unique_ptr< State[] >( new State [nthreads] );
       // Initialize thread-streams
       for ( SeqNumType i=0; i<nthreads; ++i) {
-        Init( &m_stream[i], i );
+        fn( &m_stream[i], i );
       }
     }
 

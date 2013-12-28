@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:48:45 AM MST
+  \date      Fri 27 Dec 2013 07:45:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -113,104 +113,108 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
 //******************************************************************************
 {
   using quinoa::ctr::RNGType;
-//  using quinoa::ctr::seqlen;
-//  using quinoa::ctr::RNGSSESeqLenType;
+  using quinoa::ctr::seqlen;
+  using quinoa::ctr::RNGSSESeqLenType;
 
   // Defaults for RNGSSE RNGs
-  unsigned int s_def = 0;
-//  RNGSSESeqLenType l_def = RNGSSESeqLenType::SHORT;
+  RNGSSESeqLenType l_def = RNGSSESeqLenType::SHORT;
 
   // Register RNGSSE RNGs
-
-  // Get sequence length
-//   if ( opt.param< seqlen >( RNGType::RNGSSE_GM19, l_def, param ) == l_def ) {
-//     std::cout << "\n>>> WARNING: RNGSSE_GM19 does not take a sequence length parameter. Remove the 'seqlen' parameter from the rngsse_gm19 ... end block from the control file.\n\n";
-//   }
   add< quinoa::RNGSSE< gm19_state,
-                       unsigned int,
-                       gm19_init_sequence_,
+                       unsigned,
                        gm19_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM19,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM19, s_def, param ) );
+       &gm19_init_sequence_ );
 
-  add< quinoa::RNGSSE< gm29_state,
-                       unsigned,
-                       gm29_init_short_sequence_,
-                       gm29_generate_ > >
+   add< quinoa::RNGSSE< gm29_state,
+                        unsigned,
+                        &gm29_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM29,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM29, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GM29, l_def, param ),
+       &gm29_init_short_sequence_,
+       &gm29_init_long_sequence_,
+       &gm29_init_medium_sequence_ );
 
   add< quinoa::RNGSSE< gm31_state,
                        unsigned,
-                       gm31_init_short_sequence_,
                        gm31_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM31,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM31, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GM31, l_def, param ),
+       &gm31_init_short_sequence_,
+       &gm31_init_long_sequence_,
+       &gm31_init_medium_sequence_ );
 
   add< quinoa::RNGSSE< gm55_state,
                        unsigned long long,
-                       gm55_init_short_sequence_,
                        gm55_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM55,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM55, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GM55, l_def, param ),
+       &gm55_init_short_sequence_,
+       &gm55_init_long_sequence_ );
 
   add< quinoa::RNGSSE< gm61_state,
                        unsigned long long,
-                       gm61_init_sequence_,
                        gm61_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM61,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GM61, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GM61, l_def, param ),
+       &gm61_init_sequence_,
+       &gm61_init_long_sequence_ );
 
   add< quinoa::RNGSSE< gq58x1_state,
                        unsigned,
-                       gq58x1_init_short_sequence_,
                        gq58x1_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ581,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ581, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GQ581, l_def, param ),
+       &gq58x1_init_short_sequence_,
+       &gq58x1_init_long_sequence_,
+       &gq58x1_init_medium_sequence_ );
 
   add< quinoa::RNGSSE< gq58x3_state,
                        unsigned,
-                       gq58x3_init_short_sequence_,
                        gq58x3_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ583,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ583, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GQ583, l_def, param ),
+       &gq58x3_init_short_sequence_,
+       &gq58x3_init_long_sequence_,
+       &gq58x3_init_medium_sequence_ );
 
   add< quinoa::RNGSSE< gq58x4_state,
                        unsigned,
-                       gq58x4_init_short_sequence_,
                        gq58x4_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ584,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_GQ584, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_GQ584, l_def, param ),
+       &gq58x4_init_short_sequence_,
+       &gq58x4_init_long_sequence_,
+       &gq58x4_init_medium_sequence_ );
 
   add< quinoa::RNGSSE< mt19937_state,
                        unsigned long long,
-                       mt19937_init_sequence_,
                        mt19937_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_MT19937,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MT19937, s_def, param ) );
+       &mt19937_init_sequence_ );
 
   add< quinoa::RNGSSE< lfsr113_state,
                        unsigned long long,
-                       lfsr113_init_sequence_,
                        lfsr113_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_LFSR113,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_LFSR113, s_def, param ) );
+       opt.param< seqlen >( RNGType::RNGSSE_LFSR113, l_def, param ),
+       &lfsr113_init_sequence_,
+       &lfsr113_init_long_sequence_ );
 
   add< quinoa::RNGSSE< mrg32k3a_state,
                        unsigned long long,
-                       mrg32k3a_init_sequence_,
                        mrg32k3a_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_MRG32K3A,
        nthreads,
-       opt.param< quinoa::ctr::seed >( RNGType::RNGSSE_MRG32K3A, s_def, param ) );
+       &mrg32k3a_init_sequence_ );
 }

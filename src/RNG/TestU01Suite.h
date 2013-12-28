@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:36:13 PM MST
+  \date      Fri 27 Dec 2013 04:40:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -42,10 +42,14 @@ class TestU01Suite : public Battery {
     void print() const override;
 
     //! Return number of statistical tests in battery
-    Tsize ntest() const override { return m_tests.size() / m_numRNGs; }
+    Tsize ntest() const override {
+      return m_numRNGs ? m_tests.size() / m_numRNGs : 0;
+    }
 
     //! Return number of statistics produced by battery
-    StatTest::Psize nstat() const override { return m_npval / m_numRNGs; }
+    StatTest::Psize nstat() const override {
+      return m_numRNGs ? m_npval / m_numRNGs : 0;
+    }
 
   protected:
     //! Constructor

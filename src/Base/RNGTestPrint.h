@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 02:12:15 PM MST
+  \date      Fri 27 Dec 2013 05:47:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -113,9 +113,9 @@ class RNGTestPrint : public tk::Print {
           subsection( rng.name(r) );
           const auto& m = map.find(r);
           if (m == map.end()) {   // no parameter map entry, print defaults
-            echoRNGSSEParams( quinoa::ctr::RNGSSEParam() );
+            echoRNGSSEParams( quinoa::ctr::RNGSSEParam(), rng, r );
           } else {
-            echoRNGSSEParams( m->second );
+            echoRNGSSEParams( m->second, rng, r );
           }
           endsubsection();
         }
@@ -243,16 +243,20 @@ class RNGTestPrint : public tk::Print {
                    % gm.name( p.get<quinoa::ctr::gaussian_method>() );
     }
 
-    void echoRNGSSEParams( const quinoa::ctr::RNGSSEParam& p ) const {
-      tk::Option< quinoa::ctr::RNGSSESeqLen > seq;
+    void echoRNGSSEParams( const quinoa::ctr::RNGSSEParam& p,
+                           const quinoa::ctr::RNG& rng,
+                           const quinoa::ctr::RNGType& r ) const {
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % "seed"
                    % p.get<quinoa::ctr::seed>();
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % seq.group()
-                   % seq.name( p.get<quinoa::ctr::seqlen>() );
+      if ( rng.supportsSeq(r) ) {
+        tk::Option< quinoa::ctr::RNGSSESeqLen > seq;
+        std::cout << m_item_name_value_fmt
+                     % m_item_indent
+                     % seq.group()
+                     % seq.name( p.get<quinoa::ctr::seqlen>() );
+      }
     }
 
     const ctr::InputDeck& m_ctr;         //!< Parsed control

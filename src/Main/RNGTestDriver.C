@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 09:43:55 PM MST
+  \date      Fri 27 Dec 2013 04:54:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -20,7 +20,8 @@
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
+RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
+  m_ntest(0)
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
@@ -65,6 +66,9 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print)
     m_battery = std::unique_ptr< Battery >( m_batteryFactory[b]() );
   }
 
+  // Query number of tests to run
+  if (m_battery) m_ntest = m_battery->ntest();
+
   //! Echo information on random number generator test suite to be created
   echo();
 }
@@ -105,28 +109,26 @@ RNGTestDriver::echo()
     print.section("Title", control.get<ctr::title>());
   }
 
-  if (m_battery) {
-    print.battery( m_battery->ntest(), m_battery->nstat() );
+  if (m_battery && m_ntest) {
+    print.battery( m_ntest, m_battery->nstat() );
     m_battery->print();
     print.section("RNG(s) tested");
     print.MKLParams( control.get<ctr::selected, ctr::rng>(),
                      control.get<ctr::param, ctr::mklrng>() );
     print.RNGSSEParams( control.get<ctr::selected, ctr::rng>(),
                         control.get<ctr::param, ctr::rngsse>() );
-
     print.raw("\n");
   } else {
-    print.note( "No RNG battery specified" );
+    print.note( "No RNG battery or no RNGs specified" );
   }
 }
 
 void
 RNGTestDriver::execute() const
 //******************************************************************************
-//  Execute
+//  Run battery
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Run battery (if any)
-  if (m_battery) m_battery->run();
+  if (m_battery && m_ntest) m_battery->run();
 }
