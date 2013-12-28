@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 02:02:15 PM MST
+  \date      Fri 27 Dec 2013 07:10:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -86,7 +86,7 @@ using MKLRNGParam = tk::tuple::tagged_tuple<
 using MKLRNGParameters = std::map< RNGType, MKLRNGParam >;
 
 //! Class with base templated on the above enum class with associations
-class RNG : public tk::Toggle<RNGType> {
+class RNG : public tk::Toggle< RNGType > {
 
   public:
     using ParamType = int;
@@ -95,7 +95,7 @@ class RNG : public tk::Toggle<RNGType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit RNG() :
-      Toggle<RNGType>("Random number generator", names, values) {}
+      Toggle< RNGType >( "Random number generator", names, values ) {}
 
     //! Return parameter based on Enum
     const ParamType& param(RNGType rng) const;
@@ -110,7 +110,24 @@ class RNG : public tk::Toggle<RNGType> {
     }
 
     //! Return RNG library type based on Enum
-    RNGLibType lib(RNGType rng) const;
+    RNGLibType lib( RNGType rng ) const;
+
+    //! Return whether RNG supports sequence option
+    bool supportsSeq( RNGType rng ) const {
+      auto it = support.find( rng );
+      if ( it != support.end() ) return true;
+      else return false;
+    }
+
+    //! Return whether RNG supports sequence option given
+    template< class OptionType >
+    bool supportsOpt( RNGType rng, const OptionType& option ) const {
+      auto it = support.find( rng );
+      if ( it != support.end() )
+        for (const auto& o : it->second)
+          if (o == option) return true;
+      return false;
+    }
 
   private:
     //! Don't permit copy constructor
@@ -252,6 +269,33 @@ class RNG : public tk::Toggle<RNGType> {
       , { RNGType::MKL_NONDETERM, VSL_BRNG_NONDETERM }
       #endif
     };
+
+    //! Enums -> sequence length options supported
+    using svec = std::vector< RNGSSESeqLenType >;
+    const std::map< RNGType, svec > support {
+        { RNGType::RNGSSE_GM29,    svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::MEDIUM,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GM31,    svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::MEDIUM,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GM55,    svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GQ581,   svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::MEDIUM,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GQ583,   svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::MEDIUM,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GQ584,   svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::MEDIUM,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_GM61,    svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::LONG } },
+        { RNGType::RNGSSE_LFSR113, svec { RNGSSESeqLenType::SHORT,
+                                          RNGSSESeqLenType::LONG } }
+    };
+
 };
 
 } // ctr::

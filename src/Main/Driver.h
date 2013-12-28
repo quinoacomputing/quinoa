@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:23:59 PM MST
+  \date      Fri 27 Dec 2013 07:34:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -85,7 +85,6 @@ class Driver {
                    std::list< quinoa::ctr::RNGType >& reg,
                    int nthreads,
                    const quinoa::ctr::RNGSSEParameters& param );
-
 };
 
 } // namespace tk

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:53:03 PM MST
+  \date      Fri 27 Dec 2013 04:36:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -64,7 +64,7 @@ using rngtest::TestU01Suite;
 using Pvals = rngtest::StatTest::Pvals;
 
 TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
-  : Battery( base ), m_name( name )
+  : Battery( base ), m_numRNGs(0), m_name( name )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
