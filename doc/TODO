@@ -9,7 +9,7 @@
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - RNGSSE:
-        o can RNGSSE's generators take a seed?
+        o Can RNGSSE's generators take a seed?
         o Hook up SSE versions
         o Hook up GPU versions
 

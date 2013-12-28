@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEKeywords.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 02:01:24 PM MST
+  \date      Fri 27 Dec 2013 08:16:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for RNGSSE lib
   \details   Random number generator selector keywords for those generators
@@ -97,7 +97,7 @@ struct rngsse_gq581_info {
 };
 
 using rngsse_gq581 =
-  keyword< rngsse_gq581_info, r,n,g,s,s,e,'_',g,m,'5','8','.','1' >;
+  keyword< rngsse_gq581_info, r,n,g,s,s,e,'_',g,q,'5','8','.','1' >;
 
 // Keyword 'rngsse_gq58.3'
 struct rngsse_gq583_info {
@@ -110,7 +110,7 @@ struct rngsse_gq583_info {
 };
 
 using rngsse_gq583 =
-  keyword< rngsse_gq583_info, r,n,g,s,s,e,'_',g,m,'5','8','.','3' >;
+  keyword< rngsse_gq583_info, r,n,g,s,s,e,'_',g,q,'5','8','.','3' >;
 
 // Keyword 'rngsse_gq58.4'
 struct rngsse_gq584_info {
@@ -123,7 +123,7 @@ struct rngsse_gq584_info {
 };
 
 using rngsse_gq584 =
-  keyword< rngsse_gq584_info, r,n,g,s,s,e,'_',g,q,'5','8','4' >;
+  keyword< rngsse_gq584_info, r,n,g,s,s,e,'_',g,q,'5','8','.','4' >;
 
 // Keyword 'rngsse_mt19937'
 struct rngsse_mt19937_info {
