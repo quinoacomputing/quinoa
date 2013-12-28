@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:44:46 PM MST
+  \date      Fri 27 Dec 2013 09:04:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -24,39 +24,16 @@ class RNGSSE : public tk::RNG {
 
   public:
     //! Constructor with sequence length option: short, long, medium
-    explicit RNGSSE( SeqNumType nthreads, ctr::RNGSSESeqLenType seqlen,
-                     InitFn fnShort, InitFn fnLong, InitFn fnMed) {
+    explicit RNGSSE( SeqNumType nthreads,
+                     InitFn fnShort,
+                     ctr::RNGSSESeqLenType seqlen = ctr::RNGSSESeqLenType::SHORT,
+                     InitFn fnLong = nullptr,
+                     InitFn fnMed = nullptr) {
       // Select init function based on sequence length specified
-      InitFn fn = nullptr;
-      switch ( seqlen ) {
-        case ctr::RNGSSESeqLenType::SHORT : fn = fnShort; break;
-        case ctr::RNGSSESeqLenType::LONG : fn = fnLong; break;
-        case ctr::RNGSSESeqLenType::MEDIUM : fn = fnMed; break;
-        default:
-          Throw( tk::ExceptType::FATAL,
-                 "RNGSSE sequence length not handled in RNGSSE constructor");
-      }
-      RNGSSE(nthreads, fn);
-    }
-
-    //! Constructor with sequence length option: short, long
-    explicit RNGSSE( SeqNumType nthreads, ctr::RNGSSESeqLenType seqlen,
-                     InitFn fnShort, InitFn fnLong ) {
-      // Select init function based on sequence length specified
-      InitFn fn = nullptr;
-      switch ( seqlen ) {
-        case ctr::RNGSSESeqLenType::SHORT : fn = fnShort; break;
-        case ctr::RNGSSESeqLenType::LONG : fn = fnLong; break;
-        default:
-          Throw( tk::ExceptType::FATAL,
-                 "RNGSSE sequence length not handled in RNGSSE constructor");
-      }
-      RNGSSE(nthreads, fn);
-    }
-
-    //! Constructor for no sequence lengths option
-    explicit RNGSSE( SeqNumType nthreads, InitFn fn ) {
-      // Throw if not NDEBUG and init function pointer is invalid
+      InitFn fn = fnShort;
+      if (seqlen == ctr::RNGSSESeqLenType::LONG) fn = fnLong;
+      else if (seqlen == ctr::RNGSSESeqLenType::MEDIUM) fn = fnMed;
+      // Throw if not NDEBUG and stream init function pointer is invalid
       Assert( fn != nullptr,
               tk::ExceptType::FATAL, "nullptr passed to RNGSSE constructor" );
       // Throw if not NDEBUG and nthreads invalid

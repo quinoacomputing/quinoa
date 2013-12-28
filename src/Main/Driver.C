@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:45:18 PM MST
+  \date      Fri 27 Dec 2013 09:04:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -132,8 +132,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                         &gm29_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM29,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GM29, l_def, param ),
        &gm29_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GM29, l_def, param ),
        &gm29_init_long_sequence_,
        &gm29_init_medium_sequence_ );
 
@@ -142,8 +142,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm31_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM31,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GM31, l_def, param ),
        &gm31_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GM31, l_def, param ),
        &gm31_init_long_sequence_,
        &gm31_init_medium_sequence_ );
 
@@ -152,8 +152,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm55_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM55,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GM55, l_def, param ),
        &gm55_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GM55, l_def, param ),
        &gm55_init_long_sequence_ );
 
   add< quinoa::RNGSSE< gm61_state,
@@ -161,8 +161,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gm61_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GM61,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GM61, l_def, param ),
        &gm61_init_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GM61, l_def, param ),
        &gm61_init_long_sequence_ );
 
   add< quinoa::RNGSSE< gq58x1_state,
@@ -170,8 +170,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x1_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ581,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GQ581, l_def, param ),
        &gq58x1_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GQ581, l_def, param ),
        &gq58x1_init_long_sequence_,
        &gq58x1_init_medium_sequence_ );
 
@@ -180,8 +180,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x3_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ583,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GQ583, l_def, param ),
        &gq58x3_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GQ583, l_def, param ),
        &gq58x3_init_long_sequence_,
        &gq58x3_init_medium_sequence_ );
 
@@ -190,8 +190,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        gq58x4_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_GQ584,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_GQ584, l_def, param ),
        &gq58x4_init_short_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_GQ584, l_def, param ),
        &gq58x4_init_long_sequence_,
        &gq58x4_init_medium_sequence_ );
 
@@ -207,8 +207,8 @@ Driver::regRNGSSE( tk::RNGFactory& factory,
                        lfsr113_generate_ > >
      ( factory, reg, opt, RNGType::RNGSSE_LFSR113,
        nthreads,
-       opt.param< seqlen >( RNGType::RNGSSE_LFSR113, l_def, param ),
        &lfsr113_init_sequence_,
+       opt.param< seqlen >( RNGType::RNGSSE_LFSR113, l_def, param ),
        &lfsr113_init_long_sequence_ );
 
   add< quinoa::RNGSSE< mrg32k3a_state,
