@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 04:36:58 PM MST
+  \date      Sat 28 Dec 2013 05:47:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -78,7 +78,7 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   m_rngPtr.reserve( g_maxRNGs );
 
   // Get vector of selected RNGs
-  std::vector< ctr::RNGType > rngs =
+  const std::vector< ctr::RNGType > rngs =
     m_base.control.get< ctr::selected, ctr::rng >();
 
   // Instantiate selected RNGs. The ids below must be literals as this is done
@@ -88,7 +88,7 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   // code-reuse. Only those entries of the std::vector triplet are initialized
   // and used that are requested by the user. RNGs are always assigned to the
   // same position, regardless of requested or not.
-  for (const auto& r : rngs) {
+  for (auto& r : rngs) {
     #ifdef HAS_MKL
     if (r == ctr::RNGType::MKL_MCG31) {
       addRNG< 0 >( r, uniform< 0 >, uniform_bits< 0 > );

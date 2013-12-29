@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/RNG.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:10:22 PM MST
+  \date      Sat 28 Dec 2013 05:42:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -124,7 +124,7 @@ class RNG : public tk::Toggle< RNGType > {
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
       if ( it != support.end() )
-        for (const auto& o : it->second)
+        for (auto& o : it->second)
           if (o == option) return true;
       return false;
     }
@@ -271,6 +271,7 @@ class RNG : public tk::Toggle< RNGType > {
     };
 
     //! Enums -> sequence length options supported
+    // ICC: the name svec is not needed
     using svec = std::vector< RNGSSESeqLenType >;
     const std::map< RNGType, svec > support {
         { RNGType::RNGSSE_GM29,    svec { RNGSSESeqLenType::SHORT,
