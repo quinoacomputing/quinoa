@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sun 08 Dec 2013 07:13:41 AM MST
+  \date      Sat 28 Dec 2013 05:41:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -95,7 +95,7 @@ class Print {
     void list(const std::string& name,
               const std::list< std::string >& entries) const {
       section( name );
-      for (const auto& e : entries) {
+      for (auto& e : entries) {
         std::cout << m_list_item_fmt % m_item_indent % e;
       }
     }
@@ -106,7 +106,7 @@ class Print {
               const OptionType& opt,
               const std::list< Enum >& entries) const {
       section( name );
-      for (const auto& e : entries) {
+      for (auto& e : entries) {
         std::cout << m_list_item_fmt % m_item_indent % opt.name(e);
       }
     }

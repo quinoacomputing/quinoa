@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 05:47:14 PM MST
+  \date      Sat 28 Dec 2013 05:44:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -88,7 +88,7 @@ class RNGTestPrint : public tk::Print {
                     const MapType& map ) const
     {
       quinoa::ctr::RNG rng;
-      for (const auto& r : vec) {
+      for (auto& r : vec) {
         if (rng.lib(r) == quinoa::ctr::RNGLibType::MKL) {
           subsection( rng.name(r) );
           const auto& m = map.find(r);
@@ -108,7 +108,7 @@ class RNGTestPrint : public tk::Print {
                        const MapType& map ) const
     {
       quinoa::ctr::RNG rng;
-      for (const auto& r : vec) {
+      for (auto& r : vec) {
         if (rng.lib(r) == quinoa::ctr::RNGLibType::RNGSSE) {
           subsection( rng.name(r) );
           const auto& m = map.find(r);
