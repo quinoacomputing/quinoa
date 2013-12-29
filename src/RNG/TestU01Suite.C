@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 05:47:06 PM MST
+  \date      Sat 28 Dec 2013 06:31:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -216,7 +216,7 @@ TestU01Suite::run()
       test->run();
 
       // Evaluate test
-      Psize npval = test->nstat();
+      auto npval = test->nstat();
       for (Psize p=0; p<npval; ++p) {
 
         // Increase number tests completed
@@ -241,7 +241,7 @@ TestU01Suite::run()
   }
 
   // Count up number of total failed tests (for all RNGs tested)
-  StatTest::Psize tfail = failed();
+  auto tfail = failed();
 
   // Output summary of failed tests (for all RNGs tested)
   if (tfail) {

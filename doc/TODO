@@ -31,6 +31,9 @@
     - Switch as many TPLs to optional as make sense
     - Echo "all optional libraries found" or what's missing at what path
 
+* Statistics::estimateOrdinary/Central: move variables to for-loop-local, use
+  auto
+
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.

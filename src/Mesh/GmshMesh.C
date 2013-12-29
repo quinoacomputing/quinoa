@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:15:07 AM MST
+  \date      Sat 28 Dec 2013 06:27:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -73,7 +73,7 @@ GmshMesh::echoElemSets() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using ST = std::vector<std::vector<int>>::size_type;
+  using ST = std::vector< std::vector< int > >::size_type;
 
   // Get pointers to the element ids
   int* linId = getLineId();

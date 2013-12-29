@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 09:04:53 PM MST
+  \date      Sat 28 Dec 2013 06:29:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -41,7 +41,7 @@ class RNGSSE : public tk::RNG {
       // Allocate array of stream-pointers for threads
       m_stream = std::unique_ptr< State[] >( new State [nthreads] );
       // Initialize thread-streams
-      for ( SeqNumType i=0; i<nthreads; ++i) {
+      for (SeqNumType i=0; i<nthreads; ++i) {
         fn( &m_stream[i], i );
       }
     }
