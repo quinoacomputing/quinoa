@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Thu Nov 14 10:35:16 2013
+  \date      Sat 28 Dec 2013 07:31:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -14,7 +14,6 @@
 #include <QuinoaPrint.h>
 #include <RNGTestPrint.h>
 #include <Paradigm.h>
-#include <Control.h>
 #include <Timer.h>
 #include <Driver.h>
 

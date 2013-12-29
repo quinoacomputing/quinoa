@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:25:49 PM MST
+  \date      Sat 28 Dec 2013 07:33:43 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -11,7 +11,6 @@
 #ifndef RNGTestPrint_h
 #define RNGTestPrint_h
 
-#include <Macro.h>
 #include <Print.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 
