@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 11:39:11 PM MST
+  \date      Sat 28 Dec 2013 06:15:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -43,7 +43,7 @@ MKLRNG::MKLRNG( int nthreads,
   // errors and always continue. As a result, the constructor finishes, the
   // MKLRNG object gets created, so the destructor will also get called when
   // leaving scope.
-  for (int i=0; i<nthreads; ++i) {
+  for (auto i=0; i<nthreads; ++i) {
     vslNewStream( &m_stream[i], brng, seed );
     vslLeapfrogStream( m_stream[i], i, nthreads );
   }
@@ -57,7 +57,7 @@ MKLRNG::~MKLRNG() noexcept
 //******************************************************************************
 {
   // Delete all thread streams
-  for (int i=0; i<m_nthreads; ++i) {
+  for (auto i=0; i<m_nthreads; ++i) {
     if (m_stream[i]) {
       vslDeleteStream( &m_stream[i] );
     }

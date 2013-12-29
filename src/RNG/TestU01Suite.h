@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 04:40:20 PM MST
+  \date      Sat 28 Dec 2013 06:33:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -137,7 +137,7 @@ class TestU01Suite : public Battery {
     void assignTests( Suite& suite )
     {
       using Rsize = StatTest::Rsize;
-      Rsize size = m_rngEnum.size();
+      auto size = m_rngEnum.size();
        for (Rsize r=0; r<size; ++r) {
          if (m_rngEnum[r] != ctr::RNGType::NO_RNG) {
            ++m_numRNGs;

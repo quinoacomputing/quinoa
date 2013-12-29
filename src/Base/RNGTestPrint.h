@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 05:44:33 PM MST
+  \date      Sat 28 Dec 2013 06:25:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -130,7 +130,7 @@ class RNGTestPrint : public tk::Print {
       using Psize = typename StatTest::Psize;
       using Tsize = typename TestContainer::size_type;
       for (Tsize i=0; i<ntest; ++i) {
-        Psize npval = tests[i]->nstat();
+        auto npval = tests[i]->nstat();
         for (Psize p=0; p<npval; ++p) {
           std::string name( tests[i]->name(p) );
           if (p>0) name += " *";
@@ -200,7 +200,7 @@ class RNGTestPrint : public tk::Print {
       Tsize ntest = tests.size();
       std::string oldname;
       for (Tsize i=0; i<ntest; ++i) {
-        Psize npval = tests[i]->nstat();
+        auto npval = tests[i]->nstat();
         for (Psize p=0; p<npval; ++p) {
           if ( tests[i]->fail(p) ) {
             tk::Option< quinoa::ctr::RNG > rng;

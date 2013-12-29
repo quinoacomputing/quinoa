@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Tue 17 Dec 2013 08:34:53 PM MST
+  \date      Sat 28 Dec 2013 06:06:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -206,7 +206,7 @@ void tk::echoRunEnv(const Print& print, int argc, char** argv)
   print.item("Command line arguments");
   print.raw('\'');
   if (argc>1) {
-    for (int i=1; i<argc-1; ++i) {
+    for (auto i=1; i<argc-1; ++i) {
       print.raw(std::string(argv[i]) + ' ');
     }
     print.raw(std::string(argv[argc-1]));
