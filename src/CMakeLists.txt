@@ -114,6 +114,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   #   111: statement is unreachable
   #   193: zero used for undefined preprocessing identifier
   #   304: access control not specified ("public" by default)
+  #   367: duplicate friend declaration
   #   383: value copied to temporary, reference to temporary used
   #   444: destructor for base class is not virtual
   #   869: parameter was never referenced
@@ -122,7 +123,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   #  1599: declaration hides parameter
   #  2415: variable of static storage duration was declared but never referenced
   #  3346: dynamic exception specifications are deprecated
-  add_definitions("-diag-disable 111,193,304,383,444,869,981,1418,1599,2415,3346")
+  add_definitions("-diag-disable 111,193,304,367,383,444,869,981,1418,1599,2415,3346")
   add_definitions("-opt-report=0")
 
 endif()
