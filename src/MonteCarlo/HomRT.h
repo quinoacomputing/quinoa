@@ -1,69 +1,63 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomHydro/HomHydro.h
+  \file      src/MonteCarlo/HomRT.h
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:40:50 PM MDT
+  \date      Tue 31 Dec 2013 01:39:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous hydrodynamics
-  \details   Homogeneous hydrodynamics
+  \brief     Homogeneous Rayleigh-Taylor
+  \details   Homogeneous Rayleigh-Taylor
 */
 //******************************************************************************
-#ifndef HomHydro_h
-#define HomHydro_h
+#ifndef HomRT_h
+#define HomRT_h
 
 #include <Physics.h>
-#include <Hydro/Hydro.h>
 
 namespace quinoa {
 
-//! HomHydro : Physics
-class HomHydro : public Physics {
+//! HomRT : Physics
+class HomRT : public Physics {
 
   public:
     //! Constructor
-    explicit HomHydro(const Base& base);
+    explicit HomRT(const Base& base);
 
     //! Destructor
-    ~HomHydro() override = default;
+    ~HomRT() override = default;
 
     //! Initialize model
     void init() override;
 
-    //! Solve model
-    void solve() override;
+    //! Run
+    void run() override;
 
   private:
     //! Don't permit copy constructor
-    HomHydro(const HomHydro&) = delete;
+    HomRT(const HomRT&) = delete;
     //! Don't permit copy assigment
-    HomHydro& operator=(const HomHydro&) = delete;
+    HomRT& operator=(const HomRT&) = delete;
     //! Don't permit move constructor
-    HomHydro(HomHydro&&) = delete;
+    HomRT(HomRT&&) = delete;
     //! Don't permit move assigment
-    HomHydro& operator=(HomHydro&&) = delete;
-    
-    //! Echo information on homogeneous hydrodynamics physics
-    void echo();
+    HomRT& operator=(HomRT&&) = delete;
 
     //! One-liner report
-    void reportHeader();
+    void reportHeader() const;
     void report(const uint64_t it,
                 const uint64_t nstep,
                 const tk::real t,
                 const tk::real dt,
                 const bool wroteJpdf,
                 const bool wroteGlob,
-                const bool wroteStat);
+                const bool wrotePlot);
 
     //! Advance
     void advance(tk::real dt);
 
-    //! Output joint PDF
+    //! Output joint scalar PDF
     void outJpdf(const tk::real t);
-
-    const tk::TimerIdx m_totalTime;           //!< Timer measuring the total run
 };
 
 } // quinoa::
 
-#endif // HomHydro_h
+#endif // HomRT_h

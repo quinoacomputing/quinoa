@@ -1,22 +1,22 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/SPINSFlow/SPINSFlow.C
+  \file      src/MonteCarlo/SPINSFlow.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:27:01 AM MST
+  \date      Tue 31 Dec 2013 01:35:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
 */
 //******************************************************************************
 
-#include <SPINSFlow/SPINSFlow.h>
+#include <SPINSFlow.h>
 
 using quinoa::SPINSFlow;
 
 void
-SPINSFlow::solve()
+SPINSFlow::run()
 //******************************************************************************
-//  Solve
+//  Run
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -27,15 +27,6 @@ SPINSFlow::init()
 //******************************************************************************
 //  Initialize the physics
 //! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
-void
-SPINSFlow::echo()
-//******************************************************************************
-//  Echo information on standalone-particle incompressible Navier-Stokes physics
-//! \author J. Bakosi
 //******************************************************************************
 {
 }

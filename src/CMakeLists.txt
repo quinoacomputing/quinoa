@@ -170,7 +170,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/Model
                     ${QUINOA_SOURCE_DIR}/Geometry
-                    ${QUINOA_SOURCE_DIR}/Physics
+                    ${QUINOA_SOURCE_DIR}/MonteCarlo
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Paradigm
@@ -189,7 +189,7 @@ add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
 add_subdirectory(Model)
 add_subdirectory(Paradigm)
-add_subdirectory(Physics)
+add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(Statistics)
 add_subdirectory(Main)

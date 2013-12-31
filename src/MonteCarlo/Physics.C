@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/Physics.C
+  \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Thu Nov 14 09:52:14 2013
+  \date      Tue 31 Dec 2013 01:50:50 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -11,25 +11,18 @@
 
 #include <boost/functional/factory.hpp>
 
-#include <Physics.h>
-#include <Quinoa/InputDeck/InputDeck.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
+#include <Physics.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 
 using quinoa::Physics;
 
-Physics::Physics(const Base& base) :
-  m_nposition(base.control.get<ctr::component, ctr::nposition>()),
-  m_ndensity(base.control.get<ctr::component, ctr::ndensity>()),
-  m_nvelocity(base.control.get<ctr::component, ctr::nvelocity>()),
-  m_nscalar(base.control.get<ctr::component, ctr::nscalar>()),
-  m_npar(base.control.get<ctr::component, ctr::npar>()),
-  m_term(base.control.get<ctr::incpar, ctr::term>()),
-  m_base(base),
-  m_particles(new tk::real [m_npar * base.control.nprop()]),
-  m_statistics(base, m_particles.get()),
-  m_glob(base.control.get<ctr::cmd, ctr::io, ctr::glob>()),
-  m_stat(base.control.get<ctr::cmd, ctr::io, ctr::stat>(), m_statistics)
+Physics::Physics( const Base& base ) : MonteCarlo( base ),
+  m_nposition( base.control.get<ctr::component, ctr::nposition>() ),
+  m_ndensity( base.control.get<ctr::component, ctr::ndensity>() ),
+  m_nvelocity( base.control.get<ctr::component, ctr::nvelocity>() ),
+  m_nscalar( base.control.get<ctr::component, ctr::nscalar>() )
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
@@ -37,7 +30,7 @@ Physics::Physics(const Base& base) :
 //******************************************************************************
 {
   //! Initialize factories
-  initFactories(m_base.print);
+  initFactories( print() );
 
   //! Echo information on physics to be created
   echo();
@@ -50,19 +43,19 @@ Physics::Physics(const Base& base) :
 
   // Instantiate mass model
   if (m_ndensity) {
-    ctr::MassType m = m_base.control.get<ctr::selected, ctr::mass>();
+    ctr::MassType m = control().get<ctr::selected, ctr::mass>();
     m_mass = std::unique_ptr<Mass>( m_massFactory[m]() );
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    ctr::HydroType m = m_base.control.get<ctr::selected, ctr::hydro>();
+    ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
     m_hydro = std::unique_ptr<Hydro>( m_hydroFactory[m]() );
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    ctr::MixType m = m_base.control.get<ctr::selected, ctr::mix>();
+    ctr::MixType m = control().get<ctr::selected, ctr::mix>();
     m_mix = std::unique_ptr<Mix>( m_mixFactory[m]() );
   }
 }
@@ -100,8 +93,8 @@ Physics::echo()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  const QuinoaPrint& print = m_base.print;
-  const ctr::InputDeck& control = m_base.control;
+  const QuinoaPrint& print = this->print();
+  const ctr::InputDeck& control = this->control();
 
   print.endpart();
   print.part( "Problem" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:21:15 AM MST
+  \date      Tue 31 Dec 2013 01:00:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -35,7 +35,7 @@ TxtStatWriter::TxtStatWriter(const std::string& filename,
 }
 
 void
-TxtStatWriter::header()
+TxtStatWriter::header() const
 //******************************************************************************
 //  Write out statistics file header
 //! \author J. Bakosi

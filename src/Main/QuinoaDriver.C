@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 07:26:57 PM MST
+  \date      Tue 31 Dec 2013 01:44:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -16,10 +16,10 @@
 #include <Quinoa/CmdLine/Parser.h>
 #include <AnalyticGeometry.h>
 #include <DiscreteGeometry.h>
-#include <HomMix/HomMix.h>
-#include <HomHydro/HomHydro.h>
-#include <HomRT/HomRT.h>
-#include <SPINSFlow/SPINSFlow.h>
+#include <HomMix.h>
+#include <HomHydro.h>
+#include <HomRT.h>
+#include <SPINSFlow.h>
 
 using quinoa::QuinoaDriver;
 
@@ -128,6 +128,6 @@ QuinoaDriver::execute() const
   //! Initialize and execute physics (if any)
   if (m_physics) {
     m_physics->init();
-    m_physics->solve();
+    m_physics->run();
   }
 }

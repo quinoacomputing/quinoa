@@ -1,49 +1,46 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomRT/HomRT.h
+  \file      src/MonteCarlo/HomMix.h
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:40:34 PM MDT
+  \date      Tue 31 Dec 2013 01:50:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous Rayleigh-Taylor
-  \details   Homogeneous Rayleigh-Taylor
+  \brief     Homogeneous material mixing
+  \details   Homogeneous material mixing
 */
 //******************************************************************************
-#ifndef HomRT_h
-#define HomRT_h
+#ifndef HomMix_h
+#define HomMix_h
 
 #include <Physics.h>
-#include <Timer.h>
+#include <Base.h>
 
 namespace quinoa {
 
-//! HomRT : Physics
-class HomRT : public Physics {
+//! HomMix : Physics
+class HomMix : public Physics {
 
   public:
     //! Constructor
-    explicit HomRT(const Base& base);
+    explicit HomMix(const Base& base);
 
     //! Destructor
-    ~HomRT() override = default;
+    ~HomMix() override = default;
 
-    //! Initialize model
+    //! Initialize
     void init() override;
 
-    //! Solve model
-    void solve() override;
+    //! Run
+    void run() override;
 
   private:
     //! Don't permit copy constructor
-    HomRT(const HomRT&) = delete;
+    HomMix(const HomMix&) = delete;
     //! Don't permit copy assigment
-    HomRT& operator=(const HomRT&) = delete;
+    HomMix& operator=(const HomMix&) = delete;
     //! Don't permit move constructor
-    HomRT(HomRT&&) = delete;
+    HomMix(HomMix&&) = delete;
     //! Don't permit move assigment
-    HomRT& operator=(HomRT&&) = delete;
-
-    //! Echo information on homogeneous Rayleigh-Taylor physics
-    void echo();
+    HomMix& operator=(HomMix&&) = delete;
 
     //! One-liner report
     void reportHeader() const;
@@ -60,10 +57,8 @@ class HomRT : public Physics {
 
     //! Output joint scalar PDF
     void outJpdf(const tk::real t);
-
-    const tk::TimerIdx m_totalTime;           //!< Timer measuring the total run    
 };
 
 } // quinoa::
 
-#endif // HomRT_h
+#endif // HomMix_h
