@@ -28,7 +28,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Paradigm
                       LinearAlgebra
                       Geometry
-                      Physics
+                      MonteCarlo
                       Model
                       IO
                       Mesh

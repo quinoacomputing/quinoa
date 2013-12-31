@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:26:49 2013
+  \date      Tue 31 Dec 2013 01:01:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -26,9 +26,9 @@ class Writer {
     //! Destructor: Release file handle
     virtual ~Writer() noexcept;
 
-    const std::string m_filename;    //!< File name
+    const std::string m_filename;          //!< File name
 
-    std::ofstream m_outFile;         //!< File output stream
+    mutable std::ofstream m_outFile;       //!< File output stream
 
   private:
     //! Don't permit copy constructor

@@ -1,40 +1,47 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomHydro/HomHydro.C
+  \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:31:25 AM MST
+  \date      Tue 31 Dec 2013 01:50:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Homogeneous hydrodynamics
-  \details   Homogeneous hydrodynamics
+  \brief     Homogeneous material mixing
+  \details   Homogeneous material mixing
 */
 //******************************************************************************
 
+#include <cmath>
 #include <iomanip>
+#include <sstream>
+
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
 
 #include <Macro.h>
-#include <HomHydro/HomHydro.h>
+#include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 #include <Statistics.h>
+#include <HomMix.h>
+#include <Mix/Dirichlet/Dirichlet.h>
+#include <Mix/GenDirichlet/GenDirichlet.h>
 
-using quinoa::HomHydro;
+using quinoa::HomMix;
 
-HomHydro::HomHydro(const Base& base) :
-  Physics(base),
-  m_totalTime(base.timer.create("Total solution"))
+HomMix::HomMix(const Base& base) : Physics( base )
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
+  ErrChk( mix(), tk::ExceptType::FATAL, "No material mix model specified" );
 }
 
 void
-HomHydro::solve()
+HomMix::run()
 //******************************************************************************
-//  Solve
+//  Run
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -51,7 +58,7 @@ HomHydro::solve()
   const auto glbi  = control().get<ctr::interval, ctr::glob>();
   const auto stai  = control().get<ctr::interval, ctr::plot>();
 
-  timer().start(m_totalTime);
+  //timer().start(m_totalTime);
 
   // Echo headers
   if (nstep) {
@@ -60,7 +67,7 @@ HomHydro::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() &&
+  while (fabs(t - term()) > std::numeric_limits<tk::real>::epsilon() &&
          it < nstep) {
 
     // Advance particles
@@ -87,12 +94,12 @@ HomHydro::solve()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > m_term) t = m_term;
+    if (t > term()) t = term();
   } // Time stepping loop
 }
 
 void
-HomHydro::advance(tk::real dt)
+HomMix::advance(tk::real dt)
 //******************************************************************************
 //  Advance particles
 //! \author  J. Bakosi
@@ -114,16 +121,16 @@ HomHydro::advance(tk::real dt)
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<m_npar; ++p) {
+    for (p=0; p<npar(); ++p) {
 
-      //hydro()->advance(p, tid, dt);
+      //mix()->advance(p, tid, dt);
 
-    } // m_npar
-  } // omp parallel
+    }
+  }
 }
 
 void
-HomHydro::reportHeader()
+HomMix::reportHeader() const
 //******************************************************************************
 //  Echo report header
 //! \author  J. Bakosi
@@ -136,13 +143,13 @@ HomHydro::reportHeader()
 }
 
 void
-HomHydro::report(const uint64_t it,
-                 const uint64_t nstep,
-                 const tk::real t,
-                 const tk::real dt,
-                 const bool wroteJpdf,
-                 const bool wroteGlob,
-                 const bool wroteStat)
+HomMix::report(const uint64_t it,
+               const uint64_t nstep,
+               const tk::real t,
+               const tk::real dt,
+               const bool wroteJpdf,
+               const bool wroteGlob,
+               const bool wroteStat)
 //******************************************************************************
 //  One-liner report
 //! \param[in]  it         Iteration counter
@@ -155,35 +162,35 @@ HomHydro::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
-  timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
-
-  std::cout << std::setfill(' ') << std::setw(8) << it << "  "
-            << std::scientific << std::setprecision(6) << std::setw(12) << t
-            << "  " << dt << "  " << std::setfill('0')
-            << std::setw(3) << ete.h.count() << ":"
-            << std::setw(2) << ete.m.count() << ":"
-            << std::setw(2) << ete.s.count() << "  "
-            << std::setw(3) << eta.h.count() << ":"
-            << std::setw(2) << eta.m.count() << ":"
-            << std::setw(2) << eta.s.count() << "  ";
-
-  if (wroteGlob) std::cout << "G";
-  if (wroteJpdf) std::cout << "J";
-  if (wroteStat) std::cout << "P";
-
-  std::cout << std::endl;
+//   tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
+//   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
+// 
+//   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
+//             << std::scientific << std::setprecision(6) << std::setw(12) << t
+//             << "  " << dt << "  " << std::setfill('0')
+//             << std::setw(3) << ete.h.count() << ":"
+//             << std::setw(2) << ete.m.count() << ":"
+//             << std::setw(2) << ete.s.count() << "  "
+//             << std::setw(3) << eta.h.count() << ":"
+//             << std::setw(2) << eta.m.count() << ":"
+//             << std::setw(2) << eta.s.count() << "  ";
+// 
+//   if (wroteGlob) std::cout << "G";
+//   if (wroteJpdf) std::cout << "J";
+//   if (wroteStat) std::cout << "P";
+// 
+//   std::cout << std::endl;
 }
 
 void
-HomHydro::outJpdf(const tk::real t)
+HomMix::outJpdf(const tk::real t)
 //******************************************************************************
-//  Output joint PDF
+//  Output joint scalar PDF
 //! \param[in]  t    Time stamp
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  IGNORE(t);
+IGNORE(t);
 //   // Contruct filename
 //   stringstream ss;
 //   ss << control()->get<ctr::PDFNAME>() << "." << t << ".msh";
@@ -201,20 +208,32 @@ HomHydro::outJpdf(const tk::real t)
 }
 
 void
-HomHydro::init()
+HomMix::init()
 //******************************************************************************
-//  Initialize homogeneous hydrodynamics
+//  Initialize homogeneous material mix
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //hydro()->init();
-}
+  uint64_t p;
+  int tid;
 
-void
-HomHydro::echo()
-//******************************************************************************
-//  Echo information on homogeneous hydrodynamics physics
-//! \author J. Bakosi
-//******************************************************************************
-{
+  #ifdef _OPENMP
+  #pragma omp parallel private(tid, p)
+  #endif
+  {
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #else
+    tid = 0;
+    #endif
+
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (p=0; p<npar(); ++p) {
+
+      //mix()->init(p, tid);
+
+    }
+  }
 }

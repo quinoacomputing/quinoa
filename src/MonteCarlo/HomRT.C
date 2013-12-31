@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/HomRT/HomRT.C
+  \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:26:38 AM MST
+  \date      Tue 31 Dec 2013 01:43:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -12,7 +12,7 @@
 #include <iomanip>
 
 #include <Control.h>
-#include <HomRT/HomRT.h>
+#include <HomRT.h>
 #include <PDFWriter.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
@@ -21,23 +21,21 @@
 
 using quinoa::HomRT;
 
-HomRT::HomRT(const Base& base) :
-  Physics(base),
-  m_totalTime(base.timer.create("Total solution"))
+HomRT::HomRT( const Base& base ) : Physics( base )
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(mass(), tk::ExceptType::FATAL, "No mass model specified");
-  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
+  ErrChk( mass(), tk::ExceptType::FATAL, "No mass model specified" );
+  ErrChk( hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified" );
 }
 
 void
-HomRT::solve()
+HomRT::run()
 //******************************************************************************
-//  Solve
+//  Run
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -54,7 +52,7 @@ HomRT::solve()
   const auto glbi  = control().get<ctr::interval, ctr::glob>();
   const auto stai  = control().get<ctr::interval, ctr::plot>();
 
-  timer().start(m_totalTime);
+  //timer().start( m_totalTime );
 
   // Echo headers
   if (nstep) {
@@ -63,8 +61,7 @@ HomRT::solve()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() &&
-         it < nstep) {
+  while (fabs(t-term()) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
 
     // Advance particles
     //advance(dt);
@@ -90,7 +87,7 @@ HomRT::solve()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > m_term) t = m_term;
+    if (t > term()) t = term();
   } // Time stepping loop
 }
 
@@ -117,13 +114,13 @@ HomRT::advance(tk::real dt)
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<m_npar; ++p) {
+    for (p=0; p<npar(); ++p) {
 
       //mass()->advance(p, tid, dt);
       //hydro()->advance(p, tid, dt);
 
-    } // m_npar
-  } // omp parallel
+    }
+  }
 }
 
 void
@@ -159,24 +156,24 @@ HomRT::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
-  timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
-
-  std::cout << std::setfill(' ') << std::setw(8) << it << "  "
-            << std::scientific << std::setprecision(6) << std::setw(12) << t
-            << "  " << dt << "  " << std::setfill('0')
-            << std::setw(3) << ete.h.count() << ":"
-            << std::setw(2) << ete.m.count() << ":"
-            << std::setw(2) << ete.s.count() << "  "
-            << std::setw(3) << eta.h.count() << ":"
-            << std::setw(2) << eta.m.count() << ":"
-            << std::setw(2) << eta.s.count() << "  ";
-
-  if (wroteGlob) std::cout << "G";
-  if (wroteJpdf) std::cout << "J";
-  if (wroteStat) std::cout << "P";
-
-  std::cout << std::endl;
+//   tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
+//   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
+// 
+//   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
+//             << std::scientific << std::setprecision(6) << std::setw(12) << t
+//             << "  " << dt << "  " << std::setfill('0')
+//             << std::setw(3) << ete.h.count() << ":"
+//             << std::setw(2) << ete.m.count() << ":"
+//             << std::setw(2) << ete.s.count() << "  "
+//             << std::setw(3) << eta.h.count() << ":"
+//             << std::setw(2) << eta.m.count() << ":"
+//             << std::setw(2) << eta.s.count() << "  ";
+// 
+//   if (wroteGlob) std::cout << "G";
+//   if (wroteJpdf) std::cout << "J";
+//   if (wroteStat) std::cout << "P";
+// 
+//   std::cout << std::endl;
 }
 
 void
@@ -212,13 +209,4 @@ HomRT::init()
 {
 //  mass()->init();
 //  hydro()->init();
-}
-
-void
-HomRT::echo()
-//******************************************************************************
-//  Echo information on homogeneous Rayleigh-Taylor physics
-//! \author J. Bakosi
-//******************************************************************************
-{
 }

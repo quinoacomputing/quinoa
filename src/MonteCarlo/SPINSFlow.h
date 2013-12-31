@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Physics/SPINSFlow/SPINSFlow.h
+  \file      src/MonteCarlo/SPINSFlow.h
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:41:07 PM MDT
+  \date      Tue 31 Dec 2013 01:35:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -12,7 +12,6 @@
 #define SPINSFlow_h
 
 #include <Physics.h>
-#include <Hydro/Hydro.h>
 
 namespace quinoa {
 
@@ -21,18 +20,16 @@ class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    explicit SPINSFlow(const Base& base) :
-      Physics(base),
-      m_totalTime(base.timer.create("Total solution")) {}
+    explicit SPINSFlow(const Base& base) : Physics(base) {}
 
     //! Destructor
     ~SPINSFlow() override = default;
 
-    //! Initialize model
+    //! Initialize
     void init() override;
 
-    //! Solve model
-    void solve() override;
+    //! Run
+    void run() override;
 
   private:
     //! Don't permit copy constructor
@@ -43,12 +40,6 @@ class SPINSFlow : public Physics {
     SPINSFlow(SPINSFlow&&) = delete;
     //! Don't permit move assigment
     SPINSFlow& operator=(SPINSFlow&&) = delete;
-
-    //! Echo information on standalone-particle incompressible Navier-Stokes
-    //! physics
-    void echo();
-
-    const tk::TimerIdx m_totalTime;           //!< Timer measuring the total run
 };
 
 } // quinoa::
