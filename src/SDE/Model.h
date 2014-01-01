@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Model.h
+  \file      src/SDE/Model.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:22:29 2013
+  \date      Wed 01 Jan 2014 01:42:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Model base
-  \details   Model base
+  \brief     Models base
+  \details   Models base
 */
 //******************************************************************************
 #ifndef Model_h
@@ -13,11 +13,12 @@
 
 #include <Types.h>
 #include <Exception.h>
+#include <SDE.h>
 
 namespace quinoa {
 
 //! Model base
-class Model {
+class Model : public SDE {
 
   protected:
     //! Constructor: protected, designed to be base-only

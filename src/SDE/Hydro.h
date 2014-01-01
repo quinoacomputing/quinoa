@@ -1,10 +1,10 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Hydro/Hydro.h
+  \file      src/SDE/Hydro.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:25:10 2013
+  \date      Wed 01 Jan 2014 01:20:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Hydro base
+  \brief     Hydrodynamics models base
   \details   Hydro base
 */
 //******************************************************************************

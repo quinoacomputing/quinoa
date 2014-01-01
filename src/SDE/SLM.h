@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Hydro/SLM/SLM.h
+  \file      src/SDE/SLM.h
   \author    J. Bakosi
-  \date      Mon Oct 28 08:54:51 2013
+  \date      Wed 01 Jan 2014 01:19:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Simplified Langevin hydrodynamics model
   \details   Simplified Langevin hydrodynamics model
@@ -11,7 +11,7 @@
 #ifndef SLM_h
 #define SLM_h
 
-#include <Hydro/Hydro.h>
+#include <Hydro.h>
 
 namespace quinoa {
 
@@ -20,7 +20,7 @@ class SLM : public Hydro {
 
   public:
     //! Constructor
-    explicit SLM() {}
+    explicit SLM() = default;
 //     explicit SLM(const Base& base, tk::real* const particles) :
 //       Hydro(base, particles),
 //       m_C0(base.control.get<ctr::param, ctr::slm, ctr::c0>()) {

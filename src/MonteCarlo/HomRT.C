@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:43:23 PM MST
+  \date      Wed 01 Jan 2014 01:53:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -17,7 +17,6 @@
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 #include <Statistics.h>
-#include <Mass/Beta/Beta.h>
 
 using quinoa::HomRT;
 

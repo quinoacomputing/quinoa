@@ -1,22 +1,22 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/Dirichlet/Dirichlet.h
+  \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:23:18 2013
+  \date      Wed 01 Jan 2014 01:46:19 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Dirichlet mix model
-  \details   Dirichlet mix model
+  \brief     Dirichlet SDE
+  \details   Dirichlet SDE
 */
 //******************************************************************************
 #ifndef Dirichlet_h
 #define Dirichlet_h
 
-#include <Mix/Mix.h>
+#include <SDE.h>
 
 namespace quinoa {
 
 //! Dirichlet : Mix
-class Dirichlet : public Mix {
+class Dirichlet : public SDE {
 
   public:
     //! Constructor

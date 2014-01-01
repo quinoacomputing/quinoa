@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/Mix.h
+  \file      src/SDE/Mix.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:21:56 2013
+  \date      Wed 01 Jan 2014 01:20:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Mix model base
-  \details   Mix model base
+  \brief     Mix models base
+  \details   Mix models base
 */
 //******************************************************************************
 #ifndef Mix_h

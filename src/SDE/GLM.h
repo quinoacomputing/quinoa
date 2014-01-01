@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Hydro/GLM/GLM.h
+  \file      src/SDE/GLM.h
   \author    J. Bakosi
-  \date      Mon Oct 28 08:55:37 2013
+  \date      Wed 01 Jan 2014 01:56:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Generalized Langevin hydrodynamics model
   \details   Generalized Langevin hydrodynamics model
@@ -11,7 +11,7 @@
 #ifndef GLM_h
 #define GLM_h
 
-#include <Hydro/Hydro.h>
+#include <Hydro.h>
 
 namespace quinoa {
 
@@ -20,19 +20,10 @@ class GLM : public Hydro {
 
   public:
     //! Constructor
-    explicit GLM() {}
-//     explicit GLM(const Base& base, tk::real* const particles) :
-//       Hydro(base, particles) {
-//     }
+    explicit GLM() = default;
 
     //! Destructor
     ~GLM() noexcept override = default;
-
-//     //! Initialize particles
-//     void init() override;
-// 
-//     //! Advance particles
-//     void advance(int p, int tid, tk::real dt) override;
 
   private:
     //! Don't permit copy constructor
