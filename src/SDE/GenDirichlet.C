@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/GenDirichlet/GenDirichlet.C
+  \file      src/SDE/GenDirichlet.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:13:51 AM MST
+  \date      Wed 01 Jan 2014 01:55:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     The generalized Dirichlet mix model
-  \details   The generalized Dirichlet mix model
+  \brief     The generalized Dirichlet SDE
+  \details   The generalized Dirichlet SDE
 */
 //******************************************************************************
 
-#include <Mix/GenDirichlet/GenDirichlet.h>
+#include <GenDirichlet.h>
 
 using quinoa::GenDirichlet;
 

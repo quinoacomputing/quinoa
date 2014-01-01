@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:34:30 AM MST
+  \date      Wed 01 Jan 2014 01:41:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -15,15 +15,15 @@
 #include <list>
 
 #include <Toggle.h>
+#include <Mass.h>
 #include <Quinoa/InputDeck/Keywords.h>
-#include <Mass/Mass.h>
 
 namespace quinoa {
 namespace ctr {
 
 //! Mass model types
 enum class MassType : uint8_t { NO_MASS=0,
-                                BETA };
+                                BM };
 
 //! Mass model factory type
 using MassFactory = std::map< MassType, std::function<Mass*()> >;
@@ -55,13 +55,13 @@ class Mass : public tk::Toggle<MassType> {
     //! Enums -> names
     const std::map<MassType, std::string> names {
       { MassType::NO_MASS, "n/a" },
-      { MassType::BETA, beta.name() }
+      { MassType::BM, beta.name() }
     };
 
     //! keywords -> Enums
     const std::map<std::string, MassType> values {
       { "no_mass", MassType::NO_MASS },
-      { beta.string(), MassType::BETA }
+      { beta.string(), MassType::BM }
     };
 };
 

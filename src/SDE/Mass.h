@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mass/Mass.h
+  \file      src/SDE/Mass.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:26:47 2013
+  \date      Wed 01 Jan 2014 01:21:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model base
   \details   Mass mode lbase

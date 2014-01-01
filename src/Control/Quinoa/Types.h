@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 07:28:24 PM MST
+  \date      Wed 01 Jan 2014 01:58:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -166,10 +166,10 @@ struct FieldName {
 
 //! Products are N Terms to be multiplied and ensemble averaged
 //! E.g. the scalar flux in x direction needs two terms for ensemble averaging:
-//! (Y-<Y>) and (U-<U>), then the moment is <yu> = <(Y-<Y>)(U-<U>)>
+//! (Y-\<Y\>) and (U-\<U\>), then the moment is \<yu\> = <(Y-\<Y\>)(U-\<U\>)>
 //! E.g the third mixed central moment of three scalars needs three terms for
-//! ensemble averaging: (Y1-<Y1>), (Y2-<Y2>), and (Y3-<Y3>), then the moment is
-//! <y1y2y3> = <(Y1-<Y1>)(Y2-<Y2>)(Y3-<Y3>)>
+//! ensemble averaging: (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the
+//! moment is \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
 using Product = std::vector<Term>;
 
 //! Storage of selected options

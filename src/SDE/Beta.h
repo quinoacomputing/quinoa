@@ -1,43 +1,29 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mass/Beta/Beta.h
+  \file      src/SDE/Beta.h
   \author    J. Bakosi
-  \date      Mon Oct 28 07:27:14 2013
+  \date      Wed 01 Jan 2014 01:06:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Beta mass model
-  \details   Beta mass model
+  \brief     Beta SDE
+  \details   Beta SDE
 */
 //******************************************************************************
 #ifndef Beta_h
 #define Beta_h
 
-#include <Mass/Mass.h>
+#include <SDE.h>
 
 namespace quinoa {
 
-//! Beta : Mass
-class Beta : public Mass {
+//! Beta : SDE
+class Beta : public SDE {
 
   public:
     //! Constructor
-    explicit Beta() {}
-//     explicit Beta(const Base& base, tk::real* const particles) :
-//       Mass(base, particles),
-//       m_At(base.control.get<ctr::param, ctr::beta, ctr::atwood>()) {
-//       // ErrChk on m_At
-//     }
+    explicit Beta() = default;
 
     //! Destructor
     ~Beta() noexcept override = default;
-
-//     //! Initialize particles
-//     void init() override;
-// 
-//     //! Advance particles
-//     void advance(int p, int tid, tk::real dt) override;
-// 
-//     //! Estimate joint scalar PDF
-//     void jpdf(tk::JPDF& jpdf);
 
   private:
     //! Don't permit copy constructor
@@ -48,8 +34,6 @@ class Beta : public Mass {
     Beta(Beta&&) = delete;
     //! Don't permit move assigment
     Beta& operator=(Beta&&) = delete;
-
-//    const tk::real m_At;            //!< Atwood-number
 };
 
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 12:51:25 PM MST
+  \date      Wed 01 Jan 2014 01:47:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,9 +16,9 @@
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 #include <MonteCarlo.h>
-#include <Mass/Mass.h>
-#include <Hydro/Hydro.h>
-#include <Mix/Mix.h>
+#include <Mass.h>
+#include <Hydro.h>
+#include <Mix.h>
 
 namespace quinoa {
 

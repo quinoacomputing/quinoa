@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:35:31 AM MST
+  \date      Wed 01 Jan 2014 01:46:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's material mix model options
   \details   Quinoa's material mix model options
@@ -12,8 +12,8 @@
 #include <boost/functional/factory.hpp>
 
 #include <Quinoa/Options/Mix.h>
-#include <Mix/Dirichlet/Dirichlet.h>
-#include <Mix/GenDirichlet/GenDirichlet.h>
+#include <DM.h>
+#include <GDM.h>
 
 using quinoa::ctr::Mix;
 
@@ -24,6 +24,6 @@ Mix::initFactory( MixFactory& factory, std::list< MixType >& reg ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
- reg.push_back( add< Dirichlet >( factory, MixType::DIRICHLET ) );
- reg.push_back( add< GenDirichlet >( factory, MixType::GENERALIZED_DIRICHLET ) );
+ reg.push_back( add< DM >( factory, MixType::DM ) );
+ reg.push_back( add< GDM >( factory, MixType::GDM ) );
 }

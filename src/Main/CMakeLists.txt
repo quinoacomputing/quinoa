@@ -29,12 +29,12 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       LinearAlgebra
                       Geometry
                       MonteCarlo
-                      Model
                       IO
                       Mesh
                       Statistics
                       QuinoaControl
                       RNG
+                      SDE
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}

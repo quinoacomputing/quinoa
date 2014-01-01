@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:34:54 AM MST
+  \date      Wed 01 Jan 2014 01:40:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -15,8 +15,8 @@
 #include <list>
 
 #include <Toggle.h>
+#include <Mix.h>
 #include <Quinoa/InputDeck/Keywords.h>
-#include <Mix/Mix.h>
 
 namespace quinoa {
 namespace ctr {
@@ -25,8 +25,8 @@ namespace ctr {
 enum class MixType : uint8_t { NO_MIX=0,
                                IEM,
                                IECM,
-                               DIRICHLET,
-                               GENERALIZED_DIRICHLET };
+                               DM,
+                               GDM };
 
 //! Material mix model factory type
 using MixFactory = std::map< MixType, std::function<Mix*()> >;
@@ -63,8 +63,8 @@ class Mix : public tk::Toggle<MixType> {
       { MixType::NO_MIX, "n/a" },
       { MixType::IEM, iem.name() },
       { MixType::IECM, iecm.name() },
-      { MixType::DIRICHLET, dir.name() },
-      { MixType::GENERALIZED_DIRICHLET, gendir.name() }
+      { MixType::DM, dir.name() },
+      { MixType::GDM, gendir.name() }
     };
 
     //! keywords -> Enums
@@ -72,8 +72,8 @@ class Mix : public tk::Toggle<MixType> {
       { "no_mix", MixType::NO_MIX },
       { iem.string(), MixType::IEM },
       { iecm.string(), MixType::IECM },
-      { dir.string(), MixType::DIRICHLET },
-      { gendir.string(), MixType::GENERALIZED_DIRICHLET }
+      { dir.string(), MixType::DM },
+      { gendir.string(), MixType::GDM }
     };
 };
 

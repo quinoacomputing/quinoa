@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Model/Mix/Dirichlet/Dirichlet.C
+  \file      src/SDE/Dirichlet.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:13:34 AM MST
+  \date      Wed 01 Jan 2014 01:17:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Dirichlet mix model
-  \details   Dirichlet mix model
+  \brief     Dirichlet SDE
+  \details   Dirichlet SDE
 */
 //******************************************************************************
 
-#include <Mix/Dirichlet/Dirichlet.h>
+#include <Dirichlet.h>
 
 using quinoa::Dirichlet;
 
