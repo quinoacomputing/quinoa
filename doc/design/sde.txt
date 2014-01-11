@@ -1,0 +1,92 @@
+General requirements:
+=====================
+
+ * Numerical time integration of stochastic differential equations (SDE) are a
+   central theme. This must be:
+    - Efficient
+    - Maintainable
+    - The design must scale well with adding new functionality (i.e., new
+      equations and new models for already implemented equations)
+    - Should easily accommodate various algorithms for the same functionality on
+      different hardware end/or using various parallelization strategies
+
+ * There should be a possibility to quickly prototype a new SDE, e.g., in
+   test-bed class. This is to:
+    - Verify its invariant PDF
+    - Explore the behavior of its statistics
+    - Integrate multiple variables (coupled or non-coupled)
+
+ * Questions:
+    - Should SDE base hold a single RNG used by all specific (derived) SDEs or
+      different SDEs should be able to instantiate and use their own?
+    - What new requirements and constraints does spatial inhomogeneity entail?
+
+Requirements on SDE base:
+=========================
+
+ * SDEs should inherit at least from one base class (if a multiple-policy
+   design is adopted) that should have SDE-generic data and member functions,
+   which facilitates code-reuse.
+
+ * Base SDE class should work for both N = 1 or N > 1, i.e., single-variate or
+   multi-variate SDEs.
+
+ * Base SDE class should have pure virtual interfaces for:
+    - Initialization of the particles at t = 0, e.g., init()
+    - Advancing the particles in time, e.g., advance()
+
+ * Possible policies of an SDE base class:
+
+    - Initialization policy
+      ---------------------
+      Specifies how the initialization of the particles happen at t = 0.
+      Possible initialization policies:
+       o Do nothing: leave memory associated to particle data uninitialized
+       o Zero: zero particle properties
+       o Fill with one given constant: single-delta-spike PDF
+       o Fill with different constants given per variable
+       o Sample from given PDF, N = 1
+       o Sample from different PDF given per variable, N > 1 (independent)
+       o Sample from given JPDF, N > 1 (possibly non-independent)
+       o Pre-cycle properties using a given SDE and its constant coefficients
+         for:
+         - a given time period
+         - a given number of time steps
+         - until convergence is reached for given statistics and convergence
+           criteria
+
+   - Time-integration policy:
+     ------------------------
+     Specifies what time-integrator to use when advancing particles.
+     Possible time-integration policies:
+       o Euler-Maruyama
+       o Milstein
+       o Runge-Kutta (with various orders)
+       o Various other explicit and implicit integrators, see Kloeden & Platen
+
+ * Specific SDE types (e.g., Ornstein-Uhlenbeck, Dirichlet, skew-normal, etc),
+   should derive from the SDE base class, forwarding base class policies, i.e.,
+   a specific SDE class should not hard-code any base class policy.
+
+ * Specific SDE classes may have their own policies (specific to the given SDE).
+
+ * Questions:
+    - What new requirements and constraints does spatial inhomogeneity entail?
+
+Requirements on SDE Dirichlet:
+==============================
+
+ * Should derive from SDE base
+
+ * Dirichlet SDE possible policies:
+
+    - Coefficients policy:
+      --------------------
+      Specifies how the coefficients, b, S, and kappa, are used by the SDE.
+      Possible coefficients policies:
+       o Constant: initialized once, used for all t > 0 (e.g., for testing)
+       o Functional: advance() algorithm queries coefficients at every update
+         via functions, e.g., b(time, various statistics)
+
+ * Questions:
+    - What new requirements and constraints does spatial inhomogeneity entail?
