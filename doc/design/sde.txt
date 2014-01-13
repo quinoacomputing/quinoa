@@ -70,6 +70,29 @@ General requirements:
       the most appropriate layout could be selected. If such a design is
       maintanable, there is still a question wether the data layout selection
       should be done at compile-, or run-time.
+    - Have looked at https://code.google.com/p/blaze-lib, which implements row-,
+      and column-major matrix classes based on a template argument. See, e.g.,
+      blaze-1.5/blaze/math/dense/StaticMatrix.h, which reveals that the template
+      argument (bool) SO selects between row-, or column-major internal storage.
+      Then SO is used at both compile-time (e.g., by the class-user, when
+      instantiating the type of the matrix), as well as run-time (e.g., the
+      implementation of isDefault()). Both compile-time and run-time usage of
+      the SO template arguments are problematic:
+      1. The compile-time usage duplicates a lot of code by having to provide
+         similar implementations for the element-access operator() of
+         StaticMatrix specialized to column-major. There is a generic
+         implementation for SO for everthing that is agnostic of SO, and there
+         is a specialization when SO = column-major.
+      2. The run-time usage also duplicates code by doing an if-test on SO in
+         e.g., isDefault().
+      Is there a better way of doing this? If there are only two types of data
+      layout (particle-, and property-major), code duplication should not be too
+      much of an issue. However, the implementation of particle-property data
+      access must be absolutely zero run-time cost. This means the selection
+      must be at compile-time and the element access must be absolutely
+      invisible to the derived SDE classes. In other words, there must be no
+      re-implementation of a time-integrator for an SDE just because the data
+      access is different.
 
  * Questions:
     - Should SDE base hold a single RNG used by all specific (derived) SDEs or
