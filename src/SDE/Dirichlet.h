@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 10:06:04 PM MST
+  \date      Tue Jan 14 09:13:45 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -40,9 +40,6 @@ class Dirichlet : public SDE< Init > {
 //              tk::ExceptType::FATAL,
 //              "Wrong number of Dirichlet model parameters 'k'");
 //     }
-
-    //! Destructor
-    ~Dirichlet() noexcept override = default;
 
     //! Advance particles
     void advance(int p, int tid, tk::real dt) override {
