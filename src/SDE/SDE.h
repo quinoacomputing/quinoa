@@ -2,10 +2,10 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 09:54:25 PM MST
+  \date      Tue Jan 14 07:44:41 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     SDE base
-  \details   SDE base
+  \brief     SDE
+  \details   SDE
 */
 //******************************************************************************
 #ifndef SDE_h
@@ -13,13 +13,14 @@
 
 #include <cstdint>
 
+#include <Model.h>
 #include <Base.h>
 
 namespace quinoa {
 
-//! SDE base
+//! SDE
 template< class Init >
-class SDE {
+class SDE : public Model {
 
   protected:
     //! Constructor: protected, designed to be base-only

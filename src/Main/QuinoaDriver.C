@@ -2,15 +2,14 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:44:08 PM MST
+  \date      Tue Jan 14 09:04:12 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
 */
 //******************************************************************************
 
-#include <boost/functional/factory.hpp>
-
+#include <Factory.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/InputDeck/Parser.h>
 #include <Quinoa/CmdLine/Parser.h>
@@ -92,23 +91,23 @@ QuinoaDriver::initFactories(const tk::Print& print)
   // Register geometry types
   ctr::Geometry geometry;
   std::list< ctr::GeometryType > regGeo;
-  add< AnalyticGeometry >( m_geometryFactory, regGeo, geometry,
-                           ctr::GeometryType::ANALYTIC, *m_base );
-  add< DiscreteGeometry >( m_geometryFactory, regGeo, geometry,
-                           ctr::GeometryType::DISCRETE, *m_base );
+  tk::regist< AnalyticGeometry >( m_geometryFactory, regGeo, geometry,
+                                 ctr::GeometryType::ANALYTIC, *m_base );
+  tk::regist< DiscreteGeometry >( m_geometryFactory, regGeo, geometry,
+                                  ctr::GeometryType::DISCRETE, *m_base );
   print.list("Registered geometry options", geometry, regGeo);
 
   // Register physics types
   ctr::Physics physics;
   std::list< ctr::PhysicsType > regPhys;
-  add< HomMix >( m_physicsFactory, regPhys, physics,
-                 ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base );
-  add< HomHydro >( m_physicsFactory, regPhys, physics,
-                   ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base );
-  add< HomRT >( m_physicsFactory, regPhys, physics,
-                ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base );
-  add< SPINSFlow >( m_physicsFactory, regPhys, physics,
-                    ctr::PhysicsType::SPINSFLOW, *m_base );
+  tk::regist< HomMix >( m_physicsFactory, regPhys, physics,
+                        ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base );
+  tk::regist< HomHydro >( m_physicsFactory, regPhys, physics,
+                          ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base );
+  tk::regist< HomRT >( m_physicsFactory, regPhys, physics,
+                       ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base );
+  tk::regist< SPINSFlow >( m_physicsFactory, regPhys, physics,
+                           ctr::PhysicsType::SPINSFLOW, *m_base );
   print.list("Registered physics options", physics, regPhys);
 }
 

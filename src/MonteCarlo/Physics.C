@@ -2,19 +2,18 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 09:34:57 PM MST
+  \date      Tue Jan 14 09:07:40 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
 */
 //******************************************************************************
 
-#include <boost/functional/factory.hpp>
-
+#include <Factory.h>
 #include <Physics.h>
 #include <Quinoa/InputDeck/InputDeck.h>
-
 #include <InitPolicy.h>
+#include <DirCoeffPolicy.h>
 #include <Dirichlet.h>
 
 using quinoa::Physics;
@@ -79,14 +78,15 @@ Physics::initFactories(const tk::Print& print)
 //   std::list< ctr::HydroType > regHydro;
 //   hydro.initFactory(m_hydroFactory, regHydro);
 //   print.list("Registered hydrodyanmics models", hydro, regHydro);
-// 
-//   // Register mix models
-//   ctr::Mix mix;
-//   std::list< ctr::MixType > regMix;
-//   mix.initFactory(m_mixFactory, regMix);
-//   print.list("Registered material mix models", mix, regMix);
 
-  Dirichlet< InitDoNothing > dir( base(), particles() );
+  // Register mix models
+  ctr::Mix mix;
+  std::list< ctr::MixType > regMix;
+  tk::regist< Dirichlet< InitRaw, DirCoeffConst > >
+            ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
+              base(), particles() );
+  mix.initFactory(m_mixFactory, regMix);
+  print.list("Registered material mix models", mix, regMix);
 }
 
 void
