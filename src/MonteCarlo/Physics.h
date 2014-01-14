@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:47:17 PM MST
+  \date      Mon 13 Jan 2014 07:30:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -16,9 +16,6 @@
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 #include <MonteCarlo.h>
-#include <Mass.h>
-#include <Hydro.h>
-#include <Mix.h>
 
 namespace quinoa {
 
@@ -31,15 +28,15 @@ class Physics : public MonteCarlo {
 
     //! Accessor to mass model
     //! \return Pointer to mass model
-    Mass* mass() const noexcept { return m_mass.get(); }
+//    Mass* mass() const noexcept { return m_mass.get(); }
 
     //! Accessor to hydro model
     //! \return Pointer to hydro model
-    Hydro* hydro() const noexcept { return m_hydro.get(); }
+//    Hydro* hydro() const noexcept { return m_hydro.get(); }
 
     //! Accessor to mix model
     //! \return Pointer to mix model
-    Mix* mix() const noexcept { return m_mix.get(); }
+//    Mix* mix() const noexcept { return m_mix.get(); }
 
   protected:
     //! Constructor: protected, designed to be base-only
@@ -67,15 +64,15 @@ class Physics : public MonteCarlo {
     void echo();
 
     //! Factories
-    ctr::MassFactory m_massFactory;             //!< Mass model factory
-    ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
-    ctr::MixFactory m_mixFactory;               //!< Material mix model factory
+//     ctr::MassFactory m_massFactory;             //!< Mass model factory
+//     ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
+//     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
     //! Pointers to selected options
     std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
-    std::unique_ptr< Mass > m_mass;             //!< Mass model
-    std::unique_ptr< Hydro > m_hydro;           //!< Hydro model
-    std::unique_ptr< Mix > m_mix;               //!< Mix model
+//     std::unique_ptr< Mass > m_mass;             //!< Mass model
+//     std::unique_ptr< Hydro > m_hydro;           //!< Hydro model
+//     std::unique_ptr< Mix > m_mix;               //!< Mix model
 };
 
 } // quinoa::

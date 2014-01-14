@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:53:57 PM MST
+  \date      Mon 13 Jan 2014 07:30:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -33,7 +33,7 @@ HomMix::HomMix(const Base& base) : Physics( base )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk( mix(), tk::ExceptType::FATAL, "No material mix model specified" );
+//  ErrChk( mix(), tk::ExceptType::FATAL, "No material mix model specified" );
 }
 
 void

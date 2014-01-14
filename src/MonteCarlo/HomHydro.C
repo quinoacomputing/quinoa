@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:42:49 PM MST
+  \date      Mon 13 Jan 2014 07:31:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -26,7 +26,7 @@ HomHydro::HomHydro(const Base& base) : Physics(base)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
+//  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
 }
 
 void

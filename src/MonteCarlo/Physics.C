@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:50:50 PM MST
+  \date      Mon 13 Jan 2014 09:34:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -11,10 +11,11 @@
 
 #include <boost/functional/factory.hpp>
 
-#include <GlobWriter.h>
-#include <TxtStatWriter.h>
 #include <Physics.h>
 #include <Quinoa/InputDeck/InputDeck.h>
+
+#include <InitPolicy.h>
+#include <Dirichlet.h>
 
 using quinoa::Physics;
 
@@ -41,23 +42,23 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 //     m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
 //   }
 
-  // Instantiate mass model
-  if (m_ndensity) {
-    ctr::MassType m = control().get<ctr::selected, ctr::mass>();
-    m_mass = std::unique_ptr<Mass>( m_massFactory[m]() );
-  }
-
-  // Instantiate hydrodynamics model
-  if (m_nvelocity) {
-    ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
-    m_hydro = std::unique_ptr<Hydro>( m_hydroFactory[m]() );
-  }
-
-  // Instantiate mix model
-  if (m_nscalar) {
-    ctr::MixType m = control().get<ctr::selected, ctr::mix>();
-    m_mix = std::unique_ptr<Mix>( m_mixFactory[m]() );
-  }
+//   // Instantiate mass model
+//   if (m_ndensity) {
+//     ctr::MassType m = control().get<ctr::selected, ctr::mass>();
+//     m_mass = std::unique_ptr<Mass>( m_massFactory[m]() );
+//   }
+// 
+//   // Instantiate hydrodynamics model
+//   if (m_nvelocity) {
+//     ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
+//     m_hydro = std::unique_ptr<Hydro>( m_hydroFactory[m]() );
+//   }
+// 
+//   // Instantiate mix model
+//   if (m_nscalar) {
+//     ctr::MixType m = control().get<ctr::selected, ctr::mix>();
+//     m_mix = std::unique_ptr<Mix>( m_mixFactory[m]() );
+//   }
 }
 
 void
@@ -67,23 +68,25 @@ Physics::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register mass models
-  ctr::Mass mass;
-  std::list< ctr::MassType > regMass;
-  mass.initFactory(m_massFactory, regMass);
-  print.list("Registered mass models", mass, regMass);
+//   // Register mass models
+//   ctr::Mass mass;
+//   std::list< ctr::MassType > regMass;
+//   mass.initFactory(m_massFactory, regMass);
+//   print.list("Registered mass models", mass, regMass);
+// 
+//   // Register hydro models
+//   ctr::Hydro hydro;
+//   std::list< ctr::HydroType > regHydro;
+//   hydro.initFactory(m_hydroFactory, regHydro);
+//   print.list("Registered hydrodyanmics models", hydro, regHydro);
+// 
+//   // Register mix models
+//   ctr::Mix mix;
+//   std::list< ctr::MixType > regMix;
+//   mix.initFactory(m_mixFactory, regMix);
+//   print.list("Registered material mix models", mix, regMix);
 
-  // Register hydro models
-  ctr::Hydro hydro;
-  std::list< ctr::HydroType > regHydro;
-  hydro.initFactory(m_hydroFactory, regHydro);
-  print.list("Registered hydrodyanmics models", hydro, regHydro);
-
-  // Register mix models
-  ctr::Mix mix;
-  std::list< ctr::MixType > regMix;
-  mix.initFactory(m_mixFactory, regMix);
-  print.list("Registered material mix models", mix, regMix);
+  Dirichlet< InitDoNothing > dir( base(), particles() );
 }
 
 void
