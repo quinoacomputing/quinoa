@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:46:19 PM MST
+  \date      Mon 13 Jan 2014 09:22:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -16,13 +16,16 @@
 namespace quinoa {
 
 //! Dirichlet : Mix
-class Dirichlet : public SDE {
+template< class Init >
+class Dirichlet : public SDE< Init > {
 
   public:
     //! Constructor
-    explicit Dirichlet() {}
-//     explicit Dirichlet(const Base& base, tk::real* const particles) :
-//       Mix(base, particles),
+    explicit Dirichlet(const Base& base, tk::real* const particles) :
+      SDE< Init >( base,
+                   particles,
+                   base.control.scalarOffset(),
+                   base.control.get<ctr::component, ctr::nscalar>() ) {}
 //       m_b(base.control.get<ctr::param, ctr::dirichlet, ctr::b>()),
 //       m_S(base.control.get<ctr::param, ctr::dirichlet, ctr::S>()),
 //       m_k(base.control.get<ctr::param, ctr::dirichlet, ctr::kappa>()) {

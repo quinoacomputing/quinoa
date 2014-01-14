@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:53:40 PM MST
+  \date      Mon 13 Jan 2014 07:31:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -27,8 +27,8 @@ HomRT::HomRT( const Base& base ) : Physics( base )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ErrChk( mass(), tk::ExceptType::FATAL, "No mass model specified" );
-  ErrChk( hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified" );
+//  ErrChk( mass(), tk::ExceptType::FATAL, "No mass model specified" );
+//  ErrChk( hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified" );
 }
 
 void

@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:05:24 PM MST
+  \date      Mon 13 Jan 2014 09:54:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE base
   \details   SDE base
@@ -11,17 +11,30 @@
 #ifndef SDE_h
 #define SDE_h
 
-#include <Types.h>
-#include <Exception.h>
+#include <cstdint>
+
+#include <Base.h>
 
 namespace quinoa {
 
 //! SDE base
+template< class Init >
 class SDE {
 
   protected:
     //! Constructor: protected, designed to be base-only
-    explicit SDE() = default;
+    explicit SDE( const Base& base,
+                  tk::real* const particles,
+                  int offset,
+                  int ncomp ) :
+      m_particles( particles ),
+      m_npar( base.control.get< ctr::component, ctr::npar >() ),
+      m_nprop( base.control.nprop() ),
+      m_offset( offset ),
+      m_ncomp( ncomp )
+    {
+      m_initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
+    }
 
     //! Destructor: protected, designed to be freed via children-only
     virtual ~SDE() noexcept = default;
@@ -35,6 +48,14 @@ class SDE {
     SDE(SDE&&) = delete;
     //! Don't permit move assigment
     SDE& operator=(SDE&&) = delete;
+
+    tk::real* const m_particles;    //!< Particle properties
+    const uint64_t m_npar;          //!< Total number of particles
+    const int m_nprop;              //!< Total number of particle properties
+    const int m_offset;             //!< Offset SDE operates from
+    const int m_ncomp;              //!< Number of components
+
+    Init m_initialize;              //!< Initialization policy
 };
 
 } // quinoa::

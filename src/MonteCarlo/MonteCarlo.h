@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:33:26 PM MST
+  \date      Mon 13 Jan 2014 08:15:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -55,6 +55,10 @@ class MonteCarlo {
     //! \return Pointer to timer object
     const tk::Timer& timer() const noexcept { return m_base.timer; }
 
+    //! Constant accessor to base
+    //! \return Pointer to base
+    const Base& base() const noexcept { return m_base; }
+
     //! Accessor to statistics estimator
     //! \return Pointer to statistics estimator
     Statistics& statistics() noexcept { return m_statistics; }
@@ -69,7 +73,7 @@ class MonteCarlo {
 
     //! Accessor to particle properties pointer
     //! \return Raw pointer to particle properties array
-    const tk::real* particles() const noexcept { return m_particles.get(); }
+    tk::real* particles() const noexcept { return m_particles.get(); }
 
     //! Accessor to max run time
     //! \return Max run time

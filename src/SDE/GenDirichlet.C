@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirichlet.C
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:55:56 PM MST
+  \date      Mon 13 Jan 2014 07:32:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     The generalized Dirichlet SDE
   \details   The generalized Dirichlet SDE
@@ -11,7 +11,7 @@
 
 #include <GenDirichlet.h>
 
-using quinoa::GenDirichlet;
+//using quinoa::GenDirichlet;
 
 // void
 // GenDirichlet::advance(int p, int tid, const tk::real dt)
