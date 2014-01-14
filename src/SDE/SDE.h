@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue Jan 14 07:44:41 2014
+  \date      Tue Jan 14 09:13:59 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -36,9 +36,6 @@ class SDE : public Model {
     {
       m_initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
     }
-
-    //! Destructor: protected, designed to be freed via children-only
-    virtual ~SDE() noexcept = default;
 
   private:
     //! Don't permit copy constructor
