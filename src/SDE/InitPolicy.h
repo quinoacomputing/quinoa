@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 09:45:45 PM MST
+  \date      Tue Jan 14 07:50:15 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -17,8 +17,8 @@
 
 namespace quinoa {
 
-//! Do nothing initialization policy: leave memory uninitialized
-struct InitDoNothing {
+//! Raw initialization policy: leave memory uninitialized
+struct InitRaw {
   void operator()( tk::real* const particles, uint64_t npar, int nprop,
                    int offset, int ncomp ) {}
 };

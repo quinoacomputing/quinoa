@@ -117,7 +117,7 @@ Requirements on SDE base:
 
  * Possible policies of an SDE base class:
 
-    - Initialization policy
+    - Initialization policy:
       ---------------------
       Specifies how the initialization of the particles happen at t = 0.
       Possible initialization policies:

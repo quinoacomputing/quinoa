@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 07:30:09 PM MST
+  \date      Tue Jan 14 08:38:19 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -64,15 +64,15 @@ class Physics : public MonteCarlo {
     void echo();
 
     //! Factories
-//     ctr::MassFactory m_massFactory;             //!< Mass model factory
-//     ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
-//     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
+//    ctr::MassFactory m_massFactory;             //!< Mass model factory
+//    ctr::HydroFactory m_hydroFactory;           //!< Hydrodynamics model factory
+    ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
     //! Pointers to selected options
     std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
-//     std::unique_ptr< Mass > m_mass;             //!< Mass model
-//     std::unique_ptr< Hydro > m_hydro;           //!< Hydro model
-//     std::unique_ptr< Mix > m_mix;               //!< Mix model
+//    std::unique_ptr< Mass > m_mass;             //!< Mass model
+//    std::unique_ptr< Hydro > m_hydro;           //!< Hydro model
+    std::unique_ptr< Model > m_mix;               //!< Mix model
 };
 
 } // quinoa::

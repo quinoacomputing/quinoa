@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 07:27:20 PM MST
+  \date      Tue Jan 14 07:47:38 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -14,6 +14,7 @@
 #include <map>
 #include <list>
 
+#include <Model.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
@@ -24,11 +25,11 @@ namespace ctr {
 enum class MixType : uint8_t { NO_MIX=0,
                                IEM,
                                IECM,
-                               DM,
-                               GDM };
+                               DIRICHLET,
+                               GENDIR };
 
 //! Material mix model factory type
-//using MixFactory = std::map< MixType, std::function<Mix*()> >;
+using MixFactory = std::map< MixType, std::function<Model*()> >;
 
 //! Class with base templated on the above enum class with associations
 class Mix : public tk::Toggle<MixType> {
@@ -39,7 +40,7 @@ class Mix : public tk::Toggle<MixType> {
     explicit Mix() : Toggle<MixType>("Material mix", names, values) {}
 
     //! Register mix models into factory
-//    void initFactory( MixFactory& factory, std::list< MixType >& reg ) const;
+    void initFactory( MixFactory& factory, std::list< MixType >& reg ) const;
 
   private:
     //! Don't permit copy constructor
@@ -62,8 +63,8 @@ class Mix : public tk::Toggle<MixType> {
       { MixType::NO_MIX, "n/a" },
       { MixType::IEM, iem.name() },
       { MixType::IECM, iecm.name() },
-      { MixType::DM, dir.name() },
-      { MixType::GDM, gendir.name() }
+      { MixType::DIRICHLET, dir.name() },
+      { MixType::GENDIR, gendir.name() }
     };
 
     //! keywords -> Enums
@@ -71,8 +72,8 @@ class Mix : public tk::Toggle<MixType> {
       { "no_mix", MixType::NO_MIX },
       { iem.string(), MixType::IEM },
       { iecm.string(), MixType::IECM },
-      { dir.string(), MixType::DM },
-      { gendir.string(), MixType::GDM }
+      { dir.string(), MixType::DIRICHLET },
+      { gendir.string(), MixType::GENDIR }
     };
 };
 

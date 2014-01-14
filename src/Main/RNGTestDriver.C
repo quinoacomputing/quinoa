@@ -2,13 +2,14 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 04:54:56 PM MST
+  \date      Tue Jan 14 09:05:25 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
+#include <Factory.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/InputDeck/Parser.h>
 #include <RNGTest/CmdLine/Parser.h>
@@ -83,12 +84,12 @@ RNGTestDriver::initFactories(const tk::Print& print)
   // Register batteries
   ctr::Battery battery;
   std::list< ctr::BatteryType > regBatt;
-  add< SmallCrush >( m_batteryFactory, regBatt, battery,
-                     ctr::BatteryType::SMALLCRUSH, *m_base );
-  add< Crush >( m_batteryFactory, regBatt, battery,
-                ctr::BatteryType::CRUSH, *m_base );
-  add< BigCrush >( m_batteryFactory, regBatt, battery,
-                   ctr::BatteryType::BIGCRUSH, *m_base );
+  tk::regist< SmallCrush >( m_batteryFactory, regBatt, battery,
+                            ctr::BatteryType::SMALLCRUSH, *m_base );
+  tk::regist< Crush >( m_batteryFactory, regBatt, battery,
+                       ctr::BatteryType::CRUSH, *m_base );
+  tk::regist< BigCrush >( m_batteryFactory, regBatt, battery,
+                          ctr::BatteryType::BIGCRUSH, *m_base );
   print.list("Registered batteries", battery, regBatt);
 }
 
