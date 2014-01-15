@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 08:47:33 PM MST
+  \date      Tue 14 Jan 2014 09:00:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -37,6 +37,12 @@ class SDE : public Model {
       Init initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
     }
 
+    tk::real* const m_particles;    //!< Particle properties
+    const uint64_t m_npar;          //!< Total number of particles
+    const int m_nprop;              //!< Total number of particle properties
+    const int m_offset;             //!< Offset SDE operates from
+    const int m_ncomp;              //!< Number of components
+
   private:
     //! Don't permit copy constructor
     SDE(const SDE&) = delete;
@@ -46,12 +52,6 @@ class SDE : public Model {
     SDE(SDE&&) = delete;
     //! Don't permit move assigment
     SDE& operator=(SDE&&) = delete;
-
-    tk::real* const m_particles;    //!< Particle properties
-    const uint64_t m_npar;          //!< Total number of particles
-    const int m_nprop;              //!< Total number of particle properties
-    const int m_offset;             //!< Offset SDE operates from
-    const int m_ncomp;              //!< Number of components
 };
 
 } // quinoa::
