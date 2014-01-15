@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 09:00:54 PM MST
+  \date      Wed Jan 15 10:35:19 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -15,11 +15,13 @@
 
 #include <Model.h>
 #include <Base.h>
+#include <InitPolicy.h>
+#include <LayoutPolicy.h>
 
 namespace quinoa {
 
 //! SDE
-template< class Init >
+template< class Init, class Layout >
 class SDE : public Model {
 
   protected:

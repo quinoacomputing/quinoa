@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 07:22:42 PM MST
+  \date      Wed Jan 15 10:39:09 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -12,8 +12,6 @@
 #include <Factory.h>
 #include <Physics.h>
 #include <Quinoa/InputDeck/InputDeck.h>
-#include <InitPolicy.h>
-#include <DirCoeffPolicy.h>
 #include <Dirichlet.h>
 
 using quinoa::Physics;
@@ -82,7 +80,7 @@ Physics::initFactories(const tk::Print& print)
   // Register mix models
   ctr::Mix mix;
   std::list< ctr::MixType > regMix;
-  tk::regist< Dirichlet< InitRaw, DirCoeffConst > >
+  tk::regist< Dirichlet< InitRaw, LayoutParticleMajor, DirCoeffConst > >
             ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
               base(), particles() );
   print.list("Registered material mix models", mix, regMix);
