@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue Jan 14 09:13:59 2014
+  \date      Tue 14 Jan 2014 08:37:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -32,10 +32,8 @@ class SDE : public Model {
       m_npar( base.control.get< ctr::component, ctr::npar >() ),
       m_nprop( base.control.nprop() ),
       m_offset( offset ),
-      m_ncomp( ncomp )
-    {
-      m_initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
-    }
+      m_ncomp( ncomp ),
+      m_initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp ) {}
 
   private:
     //! Don't permit copy constructor

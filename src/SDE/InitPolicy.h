@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Tue Jan 14 07:50:15 2014
+  \date      Tue 14 Jan 2014 08:36:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -19,14 +19,14 @@ namespace quinoa {
 
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
-  void operator()( tk::real* const particles, uint64_t npar, int nprop,
-                   int offset, int ncomp ) {}
+  InitRaw( tk::real* const particles, uint64_t npar, int nprop, int offset,
+           int ncomp ) {}
 };
 
 //! Zero initialization policy: zero particle properties
 struct InitZero {
-  void operator()( tk::real* const particles, uint64_t npar, int nprop,
-                   int offset, int ncomp )
+  InitZero( tk::real* const particles, uint64_t npar, int nprop, int offset,
+            int ncomp )
   {
     #ifdef _OPENMP
     #pragma omp parallel for
