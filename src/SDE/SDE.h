@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 08:37:24 PM MST
+  \date      Tue 14 Jan 2014 08:47:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -32,8 +32,10 @@ class SDE : public Model {
       m_npar( base.control.get< ctr::component, ctr::npar >() ),
       m_nprop( base.control.nprop() ),
       m_offset( offset ),
-      m_ncomp( ncomp ),
-      m_initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp ) {}
+      m_ncomp( ncomp )
+    {
+      Init initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
+    }
 
   private:
     //! Don't permit copy constructor
@@ -50,8 +52,6 @@ class SDE : public Model {
     const int m_nprop;              //!< Total number of particle properties
     const int m_offset;             //!< Offset SDE operates from
     const int m_ncomp;              //!< Number of components
-
-    Init m_initialize;              //!< Initialization policy
 };
 
 } // quinoa::
