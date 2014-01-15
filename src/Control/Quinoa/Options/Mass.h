@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 07:26:41 PM MST
+  \date      Tue 14 Jan 2014 07:16:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -14,6 +14,7 @@
 #include <map>
 #include <list>
 
+#include <Model.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
@@ -22,10 +23,10 @@ namespace ctr {
 
 //! Mass model types
 enum class MassType : uint8_t { NO_MASS=0,
-                                BM };
+                                BETA };
 
 //! Mass model factory type
-//using MassFactory = std::map< MassType, std::function<Mass*()> >;
+using MassFactory = std::map< MassType, std::function<Model*()> >;
 
 //! Class with base templated on the above enum class with associations
 class Mass : public tk::Toggle<MassType> {
@@ -34,9 +35,6 @@ class Mass : public tk::Toggle<MassType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Mass() : Toggle<MassType>("Mass", names, values) {}
-
-    //! Register mass models into factory
-    //void initFactory( MassFactory& factory, std::list< MassType >& reg ) const;
 
   private:
     //! Don't permit copy constructor
@@ -54,13 +52,13 @@ class Mass : public tk::Toggle<MassType> {
     //! Enums -> names
     const std::map<MassType, std::string> names {
       { MassType::NO_MASS, "n/a" },
-      { MassType::BM, beta.name() }
+      { MassType::BETA, beta.name() }
     };
 
     //! keywords -> Enums
     const std::map<std::string, MassType> values {
       { "no_mass", MassType::NO_MASS },
-      { beta.string(), MassType::BM }
+      { beta.string(), MassType::BETA }
     };
 };
 

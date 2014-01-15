@@ -10,9 +10,6 @@ add_library(QuinoaControl
             Quinoa/Options/RNG.C
             Quinoa/Options/MKLUniformMethod.C
             Quinoa/Options/MKLGaussianMethod.C
-            Quinoa/Options/Mass.C
-            Quinoa/Options/Hydro.C
-            Quinoa/Options/Mix.C
 )
 
 INSTALL(TARGETS QuinoaControl
