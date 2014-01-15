@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Tue Jan 14 07:47:38 2014
+  \date      Tue 14 Jan 2014 07:15:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -38,9 +38,6 @@ class Mix : public tk::Toggle<MixType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Mix() : Toggle<MixType>("Material mix", names, values) {}
-
-    //! Register mix models into factory
-    void initFactory( MixFactory& factory, std::list< MixType >& reg ) const;
 
   private:
     //! Don't permit copy constructor

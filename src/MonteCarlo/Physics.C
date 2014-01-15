@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Tue Jan 14 09:07:40 2014
+  \date      Tue 14 Jan 2014 07:22:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -41,23 +41,23 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 //     m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
 //   }
 
-//   // Instantiate mass model
-//   if (m_ndensity) {
-//     ctr::MassType m = control().get<ctr::selected, ctr::mass>();
-//     m_mass = std::unique_ptr<Mass>( m_massFactory[m]() );
-//   }
-// 
-//   // Instantiate hydrodynamics model
-//   if (m_nvelocity) {
-//     ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
-//     m_hydro = std::unique_ptr<Hydro>( m_hydroFactory[m]() );
-//   }
-// 
-//   // Instantiate mix model
-//   if (m_nscalar) {
-//     ctr::MixType m = control().get<ctr::selected, ctr::mix>();
-//     m_mix = std::unique_ptr<Mix>( m_mixFactory[m]() );
-//   }
+  // Instantiate mass model
+  if (m_ndensity) {
+    ctr::MassType m = control().get<ctr::selected, ctr::mass>();
+    m_mass = std::unique_ptr< Model >( m_massFactory[m]() );
+  }
+
+  // Instantiate hydrodynamics model
+  if (m_nvelocity) {
+    ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
+    m_hydro = std::unique_ptr< Model >( m_hydroFactory[m]() );
+  }
+
+  // Instantiate mix model
+  if (m_nscalar) {
+    ctr::MixType m = control().get<ctr::selected, ctr::mix>();
+    m_mix = std::unique_ptr< Model >( m_mixFactory[m]() );
+  }
 }
 
 void
@@ -67,17 +67,17 @@ Physics::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   // Register mass models
-//   ctr::Mass mass;
-//   std::list< ctr::MassType > regMass;
-//   mass.initFactory(m_massFactory, regMass);
-//   print.list("Registered mass models", mass, regMass);
-// 
-//   // Register hydro models
-//   ctr::Hydro hydro;
-//   std::list< ctr::HydroType > regHydro;
-//   hydro.initFactory(m_hydroFactory, regHydro);
-//   print.list("Registered hydrodyanmics models", hydro, regHydro);
+  // Register mass models
+  ctr::Mass mass;
+  std::list< ctr::MassType > regMass;
+  // tk::regist()
+  print.list("Registered mass models", mass, regMass);
+
+  // Register hydro models
+  ctr::Hydro hydro;
+  std::list< ctr::HydroType > regHydro;
+  // tk::regist()
+  print.list("Registered hydrodyanmics models", hydro, regHydro);
 
   // Register mix models
   ctr::Mix mix;
@@ -85,7 +85,6 @@ Physics::initFactories(const tk::Print& print)
   tk::regist< Dirichlet< InitRaw, DirCoeffConst > >
             ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
               base(), particles() );
-  mix.initFactory(m_mixFactory, regMix);
   print.list("Registered material mix models", mix, regMix);
 }
 
