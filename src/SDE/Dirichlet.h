@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 09:43:11 PM MST
+  \date      Wed Jan 15 10:35:36 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -12,18 +12,21 @@
 #define Dirichlet_h
 
 #include <SDE.h>
+#include <DirCoeffPolicy.h>
 
 namespace quinoa {
 
 //! Dirichlet : Mix
-template< class Init, class Coefficients >
-class Dirichlet : public SDE< Init > {
+template< class Init, class Layout, class Coefficients >
+class Dirichlet : public SDE< Init, Layout > {
 
   public:
+    //! SDE base shorthand
+    using SDE = SDE< Init, Layout >;
+
     //! Constructor
     explicit Dirichlet(const Base& base, tk::real* const particles) :
-      SDE< Init >
-         ( base,
+      SDE( base,
            particles,
            base.control.scalarOffset(),
            base.control.get< ctr::component, ctr::nscalar >() ),
@@ -34,10 +37,10 @@ class Dirichlet : public SDE< Init > {
                m_b, m_S, m_k ) {}
 
     //! Pull base class data to scope
-    using SDE< Init >::m_particles;
-    using SDE< Init >::m_nprop;
-    using SDE< Init >::m_offset;
-    using SDE< Init >::m_ncomp;
+    using SDE::m_particles;
+    using SDE::m_nprop;
+    using SDE::m_offset;
+    using SDE::m_ncomp;
 
     //! Advance particles
     void advance(int p, int tid, tk::real dt) override {
