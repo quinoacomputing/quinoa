@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Wed Jan 15 10:39:09 2014
+  \date      Wed Jan 15 15:09:36 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -32,12 +32,6 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 
   //! Echo information on physics to be created
   echo();
-
-//   // Instantiate random number generator
-//   ctr::RNGType r = m_base.control.get<ctr::selected, ctr::rng>();
-//   if (r != ctr::RNGType::NO_RNG) {
-//     m_rng = std::unique_ptr<tk::RNG>( m_RNGFactory[r]() );
-//   }
 
   // Instantiate mass model
   if (m_ndensity) {

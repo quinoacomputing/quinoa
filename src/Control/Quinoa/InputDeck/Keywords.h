@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:53:47 AM MST
+  \date      Wed 15 Jan 2014 08:29:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -304,6 +304,12 @@ using glbi = keyword<undefined_info,  g,l,b,i >;
 
 // Statistics
 using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
+
+// RNG block
+using rngs = keyword<undefined_info,  r,n,g,s >;
+
+// RNG
+using rng = keyword<undefined_info,  r,n,g >;
 
 } // kw::
 } // quinoa::

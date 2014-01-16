@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 01:58:23 PM MST
+  \date      Wed 15 Jan 2014 09:33:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -222,21 +222,18 @@ using ios = tk::tuple::tagged_tuple<
   stat,        std::string   //!< Statistics filename
 >;
 
-//! Random number generator parameters storage
-using RNGParameters = tk::tuple::tagged_tuple<
-  seed, unsigned int
->;
-
 //! Beta mass model parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
-  atwood, tk::real
+  atwood, tk::real,
+  rng,    ctr::RNGType            //!< RNG used
 >;
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
   b,     std::vector<tk::real>,
   S,     std::vector<tk::real>,
-  kappa, std::vector<tk::real>
+  kappa, std::vector<tk::real>,
+  rng,   ctr::RNGType            //!< RNG used
 >;
 
 //! Generalized Dirichlet mix model parameters storage
@@ -244,15 +241,17 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
   b,     std::vector<tk::real>,
   S,     std::vector<tk::real>,
   kappa, std::vector<tk::real>,
-  c,     std::vector<tk::real>
+  c,     std::vector<tk::real>,
+  rng,   ctr::RNGType            //!< RNG used
 >;
 
 //! Gamma mix model parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
-  c1, tk::real,
-  c2, tk::real,
-  c3, tk::real,
-  c4, tk::real
+  c1,    tk::real,
+  c2,    tk::real,
+  c3,    tk::real,
+  c4,    tk::real,
+  rng,   ctr::RNGType            //!< RNG used
 >;
 
 //! Simplified Langevin hydro model parameters storage
