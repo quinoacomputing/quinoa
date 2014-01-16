@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed Jan 15 10:35:36 2014
+  \date      Wed 15 Jan 2014 09:44:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -22,11 +22,11 @@ class Dirichlet : public SDE< Init, Layout > {
 
   public:
     //! SDE base shorthand
-    using SDE = SDE< Init, Layout >;
+    using sde = SDE< Init, Layout >;
 
     //! Constructor
-    explicit Dirichlet(const Base& base, tk::real* const particles) :
-      SDE( base,
+    explicit Dirichlet( const Base& base, tk::real* const particles ) :
+      sde( base,
            particles,
            base.control.scalarOffset(),
            base.control.get< ctr::component, ctr::nscalar >() ),
@@ -37,10 +37,10 @@ class Dirichlet : public SDE< Init, Layout > {
                m_b, m_S, m_k ) {}
 
     //! Pull base class data to scope
-    using SDE::m_particles;
-    using SDE::m_nprop;
-    using SDE::m_offset;
-    using SDE::m_ncomp;
+    using sde::m_particles;
+    using sde::m_nprop;
+    using sde::m_offset;
+    using sde::m_ncomp;
 
     //! Advance particles
     void advance(int p, int tid, tk::real dt) override {

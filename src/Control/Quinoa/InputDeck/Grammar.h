@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Nov 14 11:37:41 2013
+  \date      Wed 15 Jan 2014 09:45:58 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -22,6 +22,7 @@
 #include <Quinoa/InputDeck/Keywords.h>
 #include <Grammar.h>
 #include <MKLGrammar.h>
+#include <RNGSSEGrammar.h>
 
 namespace quinoa {
 namespace deck {
@@ -156,16 +157,22 @@ namespace deck {
                           typename keyword::pegtl_string,
                           tk::grm::Store_back< Stack, ctr::param, tags... > > {};
 
+  //! scan parameter option
+  template< typename keyword, typename option, typename... tags >
+  struct parameter_option :
+         tk::grm::scan< typename keyword::pegtl_string,
+                        store_option< option, ctr::param, tags... > > {};
+
   //! scan selected option
   template< typename keyword, typename option, typename... tags >
-  struct scan_selected_option :
+  struct select_option :
          tk::grm::scan< typename keyword::pegtl_string,
                         store_option< option, ctr::selected, tags... > > {};
 
-  //! scan and trigger
+  //! scan selected option and trigger
   template< typename keyword, typename option, typename tag,
             typename... triggers >
-  struct scan_and_trigger :
+  struct select_option_and_trigger :
          tk::grm::scan< typename keyword::pegtl_string,
                         store_option< option, ctr::selected, tag >,
                         triggers... > {};
@@ -173,32 +180,32 @@ namespace deck {
   //! scan and store geometry keyword and option
   template< typename keyword >
   struct scan_geometry :
-         scan_selected_option< keyword, ctr::Geometry, ctr::geometry > {};
+         select_option< keyword, ctr::Geometry, ctr::geometry > {};
 
   //! scan and store physics keyword and option
   template< typename keyword >
   struct scan_physics :
-         scan_selected_option< keyword, ctr::Physics, ctr::physics > {};
+         select_option< keyword, ctr::Physics, ctr::physics > {};
 
   //! scan and store mass keyword and option
   template< typename keyword >
   struct scan_mass :
-         scan_selected_option< keyword, ctr::Mass, ctr::mass > {};
+         select_option< keyword, ctr::Mass, ctr::mass > {};
 
   //! scan and store hydro keyword and option
   template< typename keyword >
   struct scan_hydro :
-         scan_selected_option< keyword, ctr::Hydro, ctr::hydro > {};
+         select_option< keyword, ctr::Hydro, ctr::hydro > {};
 
   //! scan and store mix keyword and option
   template< typename keyword >
   struct scan_mix :
-         scan_selected_option< keyword, ctr::Mix, ctr::mix > {};
+         select_option< keyword, ctr::Mix, ctr::mix > {};
 
   //! scan and store frequency keyword and option
   template< typename keyword >
   struct scan_frequency :
-         scan_selected_option< keyword, ctr::Frequency, ctr::frequency > {};
+         select_option< keyword, ctr::Frequency, ctr::frequency > {};
 
   //! title
   struct title :
@@ -223,6 +230,10 @@ namespace deck {
          pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, ctr::nscalar >,
+                                        parameter_option< kw::rng,
+                                                          ctr::RNG,
+                                                          ctr::dirichlet,
+                                                          ctr::rng >,
                                         parameter_vector< kw::dir_B,
                                                           ctr::dirichlet,
                                                           ctr::b >,
@@ -238,6 +249,10 @@ namespace deck {
          pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, ctr::nscalar >,
+                                        parameter_option< kw::rng,
+                                                          ctr::RNG,
+                                                          ctr::gendirichlet,
+                                                          ctr::rng >,
                                         parameter_vector< kw::dir_B,
                                                           ctr::gendirichlet,
                                                           ctr::b >,
@@ -274,14 +289,13 @@ namespace deck {
   //! slm block
   struct slm :
          pegtl::ifmust<
-           scan_and_trigger< kw::hydro_slm,
-                             ctr::Hydro,
-                             ctr::hydro,
-                             // trigger estimating the diagonal of
-                             // Reynolds-stress
-                             start_product, u, u,
-                             start_product, v, v,
-                             start_product, w, w >,
+           select_option_and_trigger< kw::hydro_slm,
+                                      ctr::Hydro,
+                                      ctr::hydro,
+                                      // trigger Reynolds-stress diagonal
+                                      start_product, u, u,
+                                      start_product, v, v,
+                                      start_product, w, w >,
            tk::grm::block< Stack,
                            parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,
                            component< kw::nvelocity, ctr::nvelocity > > > {};
@@ -292,6 +306,10 @@ namespace deck {
                         tk::grm::block<
                           Stack,
                           component< kw::nfreq, ctr::nfrequency >,
+                          parameter_option< kw::rng,
+                                            ctr::RNG,
+                                            ctr::gamma,
+                                            ctr::rng >,
                           parameter< kw::freq_gamma_C1, ctr::gamma, ctr::c1 >,
                           parameter< kw::freq_gamma_C2, ctr::gamma, ctr::c2 >,
                           parameter< kw::freq_gamma_C3, ctr::gamma, ctr::c3 >,
@@ -304,6 +322,10 @@ namespace deck {
                         tk::grm::block<
                           Stack,
                           component< kw::ndensity, ctr::ndensity >,
+                          parameter_option< kw::rng,
+                                            ctr::RNG,
+                                            ctr::beta,
+                                            ctr::rng >,
                           parameter< kw::Beta_At, ctr::beta, ctr::atwood > >
                       > {};
 
@@ -328,7 +350,15 @@ namespace deck {
   struct rngs :
          pegtl::sor< tk::mkl::rngs< Stack,
                                     ctr::selected, ctr::rng,
-                                    ctr::param, ctr::mklrng > > {};
+                                    ctr::param, ctr::mklrng >,
+                     tk::rngsse::rngs< Stack,
+                                       ctr::selected, ctr::rng,
+                                       ctr::param, ctr::rngsse > > {};
+
+  // RNGs block
+  struct rngblock :
+         pegtl::ifmust< tk::grm::readkw< kw::rngs::pegtl_string >,
+                        tk::grm::block< Stack, rngs > > {};
 
   //! mass models
   struct mass :
@@ -353,7 +383,7 @@ namespace deck {
                                         geometry,
                                         physics_common,
                                         mix,
-                                        rngs,
+                                        rngblock,
                                         statistics > > {};
 
   //! physics 'homrt' block
@@ -365,7 +395,7 @@ namespace deck {
                                         mass,
                                         hydro,
                                         freq,
-                                        rngs,
+                                        rngblock,
                                         statistics > > {};
 
   //! physics 'homhydro' block
@@ -376,7 +406,7 @@ namespace deck {
                                         physics_common,
                                         hydro,
                                         freq,
-                                        rngs,
+                                        rngblock,
                                         statistics > > {};
 
   //! physics 'spinsflow' block
@@ -388,7 +418,7 @@ namespace deck {
                                         hydro,
                                         freq,
                                         mix,
-                                        rngs,
+                                        rngblock,
                                         statistics > > {};
 
   //! physics types

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 07:19:47 PM MST
+  \date      Wed Jan 15 15:24:57 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -69,7 +69,6 @@ class Physics : public MonteCarlo {
     ctr::MixFactory m_mixFactory;               //!< Material mix model factory
 
     //! Pointers to selected options
-    std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
     std::unique_ptr< Model > m_mass;            //!< Mass model
     std::unique_ptr< Model > m_hydro;           //!< Hydro model
     std::unique_ptr< Model > m_mix;             //!< Mix model

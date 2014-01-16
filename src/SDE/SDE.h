@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Wed Jan 15 10:35:19 2014
+  \date      Wed Jan 15 15:57:52 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -36,7 +36,10 @@ class SDE : public Model {
       m_offset( offset ),
       m_ncomp( ncomp )
     {
+      // Initialize particle properties (and throw away init policy
       Init initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
+      // Instantiate RNG
+      initRNG( base );
     }
 
     tk::real* const m_particles;    //!< Particle properties
@@ -54,6 +57,20 @@ class SDE : public Model {
     SDE(SDE&&) = delete;
     //! Don't permit move assigment
     SDE& operator=(SDE&&) = delete;
+
+    //! Instantiate random number genrator
+    void initRNG( const Base& base ) {
+      // Get vector of selected RNGs
+//       const std::vector< ctr::RNGType > rngs =
+//         base.control.get<ctr::selected, ctr::rng>();
+//       // For now, only instantiate the first one of the RNGs
+//       if (rngs[0] != ctr::RNGType::NO_RNG) {
+//         m_rng = std::unique_ptr< tk::RNG >( base.rng[rngs[0]]() );
+//       }
+//       ErrChk( m_rng, tk::ExceptType::FATAL, "No RNG requested");
+    }
+
+    std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
 };
 
 } // quinoa::
