@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 15 Jan 2014 09:45:58 PM MST
+  \date      Thu Jan 16 07:24:11 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -240,7 +240,7 @@ namespace deck {
                                         parameter_vector< kw::dir_S,
                                                           ctr::dirichlet,
                                                           ctr::S >,
-                                        parameter_vector< kw::dir_S,
+                                        parameter_vector< kw::dir_kappa,
                                                           ctr::dirichlet,
                                                           ctr::kappa > > > {};
 
