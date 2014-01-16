@@ -28,6 +28,7 @@
 * Build:
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
+      (https://github.com/ducakar/openzone/ uses pch cmake and clang)
     - Pass -O3 for configure-based TPL builds
     - Revisit intel-specific compiler arguments; make all non-global if possible
     - Switch as many TPLs to optional as make sense
@@ -51,7 +52,7 @@
   Nth ~ Nn x (Nctpn + Natpn)
 
   Nppt ~ 
-  Nepp ~ 10^1 ÷ 10^6
+  Nepp ~ 10^1 -- 10^6
   Nt ~ 10^9
 
   NRG MRG32K3A: Nth = 10^19, L = 10^38
