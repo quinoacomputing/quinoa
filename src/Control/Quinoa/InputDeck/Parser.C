@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:58:48 AM MST
+  \date      Thu 16 Jan 2014 09:52:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -17,7 +17,7 @@ using quinoa::InputDeckParser;
 InputDeckParser::InputDeckParser(const tk::Print& print,
                                  std::unique_ptr< ctr::CmdLine > cmdline,
                                  std::unique_ptr< ctr::InputDeck >& inputdeck) :
-  FileParser( cmdline->get<ctr::io, ctr::control>() )
+  FileParser( cmdline->get<tag::io, tag::control>() )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
@@ -44,14 +44,14 @@ InputDeckParser::InputDeckParser(const tk::Print& print,
   inputdeck = std::unique_ptr< ctr::InputDeck >( std::move(pid) );
 
   // Filter out repeated statistics
-  unique( inputdeck->get<ctr::stat>() );
+  unique( inputdeck->get< tag::stat >() );
 
   // If we got here, parser succeeded
   print.item("Parsed control file", "success");
 }
 
 void
-InputDeckParser::unique(std::vector<ctr::Product>& statistics)
+InputDeckParser::unique( std::vector< ctr::Product >& statistics )
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics

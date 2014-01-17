@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/BigCrush.C
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:33:05 PM MST
+  \date      Thu 16 Jan 2014 10:14:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -27,7 +27,7 @@ BigCrush::BigCrush(const Base& base) :
 
 void
 BigCrush::addTests( const StatTest::Rsize& id,
-                    const quinoa::ctr::RNGType& rng,
+                    const tk::ctr::RNGType& rng,
                     const Gen01Ptr& gen )
 //******************************************************************************
 // Add statistical tests to battery

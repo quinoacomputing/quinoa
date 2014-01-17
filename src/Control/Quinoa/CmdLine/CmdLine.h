@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 08:53:47 AM MST
+  \date      Thu 16 Jan 2014 09:40:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -21,18 +21,18 @@ namespace ctr {
 
 //! CmdLine : Control< specialized to Quinoa >, see Types.h,
 class CmdLine : public tk::Control< // tag    type
-                                    io,       ios > {
+                                    tag::io,  ios > {
 
   public:
     //! Constructor: set all defaults
     CmdLine() {
       // Default I/O parameters
-      set<io,control>("");
-      set<io,input>("");
-      set<io,output>("out");
-      set<io,pdf>("pdf");
-      set<io,glob>("glob");
-      set<io,stat>("stat");
+      set< tag::io, tag::control >( "" );
+      set< tag::io, tag::input >( "" );
+      set< tag::io, tag::output >( "out" );
+      set< tag::io, tag::pdf >( "pdf" );
+      set< tag::io, tag::glob >( "glob" );
+      set< tag::io, tag::stat >( "stat" );
     }
 
     //! Destructor

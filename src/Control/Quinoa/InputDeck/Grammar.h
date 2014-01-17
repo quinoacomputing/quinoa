@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Jan 16 07:24:11 2014
+  \date      Thu 16 Jan 2014 09:51:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -30,7 +30,7 @@ namespace deck {
   //! PEGTLParsed type specialized to Quinoa's input deck parser
   using PEGTLInputDeck = ctr::PEGTLParsed< ctr::InputDeck,
                                            pegtl::file_input< ctr::Location >,
-                                           ctr::cmd,
+                                           tag::cmd,
                                            ctr::CmdLine >;
 
   // Quinoa's InputDeck state
@@ -45,7 +45,7 @@ namespace deck {
   //! start new product in vector of statistics
   struct start_product : pegtl::action_base< start_product > {
     static void apply(const std::string& value, Stack& stack) {
-      stack.push_back< ctr::stat >( ctr::Product() );
+      stack.push_back< tag::stat >( ctr::Product() );
       IGNORE(value);   // suppress compiler warning: parameter never referenced
     }
   };
@@ -59,7 +59,7 @@ namespace deck {
       // If name is given, it is triggered not user-requested
       bool plot(name ? false : true);
       // Use stats for shorthand of reference to stats vector
-      std::vector< ctr::Product >& stats = stack.get< ctr::stat >();
+      std::vector< ctr::Product >& stats = stack.get< tag::stat >();
       // Push term into current product
       stats.back().push_back( ctr::Term( field, q, m, na, plot ) );
       // If central moment, trigger mean
@@ -131,81 +131,81 @@ namespace deck {
                            tk::grm::Store< Stack, tag, tags... > > {};
 
   //! incrementation control parameter
-  template< typename keyword, typename tag >
+  template< typename keyword, typename Tag >
   struct incpar :
-         control< keyword, ctr::incpar, tag > {};
+         control< keyword, tag::incpar, Tag > {};
 
   //! component control parameter
-  template< typename keyword, typename tag >
+  template< typename keyword, typename Tag >
   struct component :
-         control< keyword, ctr::component, tag > {};
+         control< keyword, tag::component, Tag > {};
 
   //! interval control parameter
-  template< typename keyword, typename tag >
+  template< typename keyword, typename Tag >
   struct interval :
-         control< keyword, ctr::interval, tag > {};
+         control< keyword, tag::interval, Tag > {};
 
   //! model parameter
-  template< typename keyword, typename model, typename tag >
+  template< typename keyword, typename model, typename Tag >
   struct parameter :
-         control< keyword, ctr::param, model, tag > {};
+         control< keyword, tag::param, model, Tag > {};
 
   //! model parameter vector
   template< typename keyword, typename...tags >
   struct parameter_vector :
          tk::grm::vector< Stack,
                           typename keyword::pegtl_string,
-                          tk::grm::Store_back< Stack, ctr::param, tags... > > {};
+                          tk::grm::Store_back< Stack, tag::param, tags... > > {};
 
   //! scan parameter option
   template< typename keyword, typename option, typename... tags >
   struct parameter_option :
          tk::grm::scan< typename keyword::pegtl_string,
-                        store_option< option, ctr::param, tags... > > {};
+                        store_option< option, tag::param, tags... > > {};
 
   //! scan selected option
   template< typename keyword, typename option, typename... tags >
   struct select_option :
          tk::grm::scan< typename keyword::pegtl_string,
-                        store_option< option, ctr::selected, tags... > > {};
+                        store_option< option, tag::selected, tags... > > {};
 
   //! scan selected option and trigger
-  template< typename keyword, typename option, typename tag,
+  template< typename keyword, typename option, typename Tag,
             typename... triggers >
   struct select_option_and_trigger :
          tk::grm::scan< typename keyword::pegtl_string,
-                        store_option< option, ctr::selected, tag >,
+                        store_option< option, tag::selected, Tag >,
                         triggers... > {};
 
   //! scan and store geometry keyword and option
   template< typename keyword >
   struct scan_geometry :
-         select_option< keyword, ctr::Geometry, ctr::geometry > {};
+         select_option< keyword, ctr::Geometry, tag::geometry > {};
 
   //! scan and store physics keyword and option
   template< typename keyword >
   struct scan_physics :
-         select_option< keyword, ctr::Physics, ctr::physics > {};
+         select_option< keyword, ctr::Physics, tag::physics > {};
 
   //! scan and store mass keyword and option
   template< typename keyword >
   struct scan_mass :
-         select_option< keyword, ctr::Mass, ctr::mass > {};
+         select_option< keyword, ctr::Mass, tag::mass > {};
 
   //! scan and store hydro keyword and option
   template< typename keyword >
   struct scan_hydro :
-         select_option< keyword, ctr::Hydro, ctr::hydro > {};
+         select_option< keyword, ctr::Hydro, tag::hydro > {};
 
   //! scan and store mix keyword and option
   template< typename keyword >
   struct scan_mix :
-         select_option< keyword, ctr::Mix, ctr::mix > {};
+         select_option< keyword, ctr::Mix, tag::mix > {};
 
   //! scan and store frequency keyword and option
   template< typename keyword >
   struct scan_frequency :
-         select_option< keyword, ctr::Frequency, ctr::frequency > {};
+         select_option< keyword, ctr::Frequency, tag::frequency > {};
 
   //! title
   struct title :
@@ -213,7 +213,7 @@ namespace deck {
                                          tk::grm::quoted<
                                            Stack,
                                            tk::grm::Set< Stack,
-                                                         ctr::title > > > {};
+                                                         tag::title > > > {};
 
   //! analytic_geometry block
   struct analytic_geometry:
@@ -229,42 +229,42 @@ namespace deck {
   struct dir :
          pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
-                                        component< kw::nscalar, ctr::nscalar >,
+                                        component< kw::nscalar, tag::nscalar >,
                                         parameter_option< kw::rng,
-                                                          ctr::RNG,
-                                                          ctr::dirichlet,
-                                                          ctr::rng >,
+                                                          tk::ctr::RNG,
+                                                          tag::dirichlet,
+                                                          tk::tag::rng >,
                                         parameter_vector< kw::dir_B,
-                                                          ctr::dirichlet,
-                                                          ctr::b >,
+                                                          tag::dirichlet,
+                                                          tag::b >,
                                         parameter_vector< kw::dir_S,
-                                                          ctr::dirichlet,
-                                                          ctr::S >,
+                                                          tag::dirichlet,
+                                                          tag::S >,
                                         parameter_vector< kw::dir_kappa,
-                                                          ctr::dirichlet,
-                                                          ctr::kappa > > > {};
+                                                          tag::dirichlet,
+                                                          tag::kappa > > > {};
 
   //! gendir block
   struct gendir :
          pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
-                                        component< kw::nscalar, ctr::nscalar >,
+                                        component< kw::nscalar, tag::nscalar >,
                                         parameter_option< kw::rng,
-                                                          ctr::RNG,
-                                                          ctr::gendirichlet,
-                                                          ctr::rng >,
+                                                          tk::ctr::RNG,
+                                                          tag::gendirichlet,
+                                                          tk::tag::rng >,
                                         parameter_vector< kw::dir_B,
-                                                          ctr::gendirichlet,
-                                                          ctr::b >,
+                                                          tag::gendirichlet,
+                                                          tag::b >,
                                         parameter_vector< kw::dir_S,
-                                                          ctr::gendirichlet,
-                                                          ctr::S >,
+                                                          tag::gendirichlet,
+                                                          tag::S >,
                                         parameter_vector< kw::dir_kappa,
-                                                          ctr::gendirichlet,
-                                                          ctr::kappa >,
+                                                          tag::gendirichlet,
+                                                          tag::kappa >,
                                         parameter_vector< kw::gendir_C,
-                                                          ctr::gendirichlet,
-                                                          ctr::c > > > {};
+                                                          tag::gendirichlet,
+                                                          tag::c > > > {};
 
   //! statistics block
   struct statistics :
@@ -291,29 +291,29 @@ namespace deck {
          pegtl::ifmust<
            select_option_and_trigger< kw::hydro_slm,
                                       ctr::Hydro,
-                                      ctr::hydro,
+                                      tag::hydro,
                                       // trigger Reynolds-stress diagonal
                                       start_product, u, u,
                                       start_product, v, v,
                                       start_product, w, w >,
            tk::grm::block< Stack,
-                           parameter< kw::SLM_C0, ctr::slm, ctr::c0 >,
-                           component< kw::nvelocity, ctr::nvelocity > > > {};
+                           parameter< kw::SLM_C0, tag::slm, tag::c0 >,
+                           component< kw::nvelocity, tag::nvelocity > > > {};
 
   //! freq_gamma block
   struct freq_gamma :
          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
                           Stack,
-                          component< kw::nfreq, ctr::nfrequency >,
+                          component< kw::nfreq, tag::nfrequency >,
                           parameter_option< kw::rng,
-                                            ctr::RNG,
-                                            ctr::gamma,
-                                            ctr::rng >,
-                          parameter< kw::freq_gamma_C1, ctr::gamma, ctr::c1 >,
-                          parameter< kw::freq_gamma_C2, ctr::gamma, ctr::c2 >,
-                          parameter< kw::freq_gamma_C3, ctr::gamma, ctr::c3 >,
-                          parameter< kw::freq_gamma_C4, ctr::gamma, ctr::c4 > >
+                                            tk::ctr::RNG,
+                                            tag::gamma,
+                                            tk::tag::rng >,
+                          parameter< kw::freq_gamma_C1, tag::gamma, tag::c1 >,
+                          parameter< kw::freq_gamma_C2, tag::gamma, tag::c2 >,
+                          parameter< kw::freq_gamma_C3, tag::gamma, tag::c3 >,
+                          parameter< kw::freq_gamma_C4, tag::gamma, tag::c4 > >
                       > {};
 
   //! beta block
@@ -321,12 +321,12 @@ namespace deck {
          pegtl::ifmust< scan_mass< kw::mass_beta >,
                         tk::grm::block<
                           Stack,
-                          component< kw::ndensity, ctr::ndensity >,
+                          component< kw::ndensity, tag::ndensity >,
                           parameter_option< kw::rng,
-                                            ctr::RNG,
-                                            ctr::beta,
-                                            ctr::rng >,
-                          parameter< kw::Beta_At, ctr::beta, ctr::atwood > >
+                                            tk::ctr::RNG,
+                                            tag::beta,
+                                            tk::tag::rng >,
+                          parameter< kw::Beta_At, tag::beta, tag::atwood > >
                       > {};
 
   //! geometry definition types
@@ -336,24 +336,24 @@ namespace deck {
 
   //! common to all physics
   struct physics_common :
-         pegtl::sor< component< kw::npar, ctr::npar >,
-                     incpar< kw::nstep, ctr::nstep >,
-                     incpar< kw::term,  ctr::term >,
-                     incpar< kw::dt, ctr::dt >,
-                     interval< kw::glbi, ctr::glob >,
-                     interval< kw::pdfi, ctr::pdf >,
-                     interval< kw::stai, ctr::plot >,
-                     interval< kw::ttyi, ctr::tty >,
-                     interval< kw::dmpi, ctr::dump > > {};
+         pegtl::sor< component< kw::npar, tag::npar >,
+                     incpar< kw::nstep, tag::nstep >,
+                     incpar< kw::term,  tag::term >,
+                     incpar< kw::dt, tag::dt >,
+                     interval< kw::glbi, tag::glob >,
+                     interval< kw::pdfi, tag::pdf >,
+                     interval< kw::stai, tag::plot >,
+                     interval< kw::ttyi, tag::tty >,
+                     interval< kw::dmpi, tag::dump > > {};
 
   //! rngs
   struct rngs :
          pegtl::sor< tk::mkl::rngs< Stack,
-                                    ctr::selected, ctr::rng,
-                                    ctr::param, ctr::mklrng >,
+                                    tag::selected, tk::tag::rng,
+                                    tag::param, tk::tag::mklrng >,
                      tk::rngsse::rngs< Stack,
-                                       ctr::selected, ctr::rng,
-                                       ctr::param, ctr::rngsse > > {};
+                                       tag::selected, tk::tag::rng,
+                                       tag::param, tk::tag::rngsse > > {};
 
   // RNGs block
   struct rngblock :

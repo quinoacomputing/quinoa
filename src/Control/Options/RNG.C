@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:37:32 PM MST
+  \date      Thu 16 Jan 2014 08:58:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -11,7 +11,7 @@
 
 #include <Options/RNG.h>
 
-using quinoa::ctr::RNG;
+using tk::ctr::RNG;
 
 const RNG::ParamType&
 RNG::param( RNGType rng ) const

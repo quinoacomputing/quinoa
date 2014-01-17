@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 09:31:01 AM MST
+  \date      Thu 16 Jan 2014 09:57:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -43,8 +43,8 @@ namespace cmd {
          tk::grm::process_cmd< Stack,
                                kw::control,
                                tk::grm::Store< Stack,
-                                               ctr::io,
-                                               ctr::control > > {};
+                                               tag::io,
+                                               tag::control > > {};
 
   //! command line keywords
   struct keywords :

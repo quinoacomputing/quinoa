@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 08:15:46 PM MST
+  \date      Thu 16 Jan 2014 10:03:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -35,13 +35,13 @@ class MonteCarlo {
     //! Constructor: protected, designed to be base-only
     explicit MonteCarlo( const Base& base ) :
       m_base( base ),
-      m_npar( base.control.get<ctr::component, ctr::npar>() ),
-      m_term( base.control.get<ctr::incpar, ctr::term>() ),
+      m_npar( base.control.get< tag::component, tag::npar >() ),
+      m_term( base.control.get< tag::incpar, tag::term >() ),
       m_totalTime( base.timer.create("Total solution") ),
       m_particles( new tk::real [ m_npar * base.control.nprop() ] ),
       m_statistics( base, m_particles.get() ),
-      m_glob( base.control.get<ctr::cmd, ctr::io, ctr::glob>() ),
-      m_stat( base.control.get<ctr::cmd, ctr::io, ctr::stat>(), m_statistics ) {}
+      m_glob( base.control.get< tag::cmd, tag::io, tag::glob >() ),
+      m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics ) {}
 
     //! Constant accessor to control object
     //! \return Control object

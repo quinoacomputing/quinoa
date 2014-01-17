@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:36:42 PM MST
+  \date      Thu 16 Jan 2014 08:58:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -11,7 +11,7 @@
 
 #include <Options/MKLUniformMethod.h>
 
-using quinoa::ctr::MKLUniformMethod;
+using tk::ctr::MKLUniformMethod;
 
 const MKLUniformMethod::ParamType&
 MKLUniformMethod::param( MKLUniformMethodType m ) const

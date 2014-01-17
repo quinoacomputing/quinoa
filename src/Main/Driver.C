@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Tue Jan 14 09:01:50 2014
+  \date      Thu 16 Jan 2014 10:27:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -31,11 +31,11 @@ using tk::Driver;
 
 void
 Driver::initRNGFactory( tk::RNGFactory& factory,
-                        const quinoa::ctr::RNG& opt,
-                        std::list< quinoa::ctr::RNGType >& reg,
+                        const tk::ctr::RNG& opt,
+                        std::list< tk::ctr::RNGType >& reg,
                         int nthreads,
-                        const quinoa::ctr::MKLRNGParameters& mklparam,
-                        const quinoa::ctr::RNGSSEParameters& rngsseparam )
+                        const tk::ctr::MKLRNGParameters& mklparam,
+                        const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
 //  Register random number generators into factory
 //! \author  J. Bakosi
@@ -50,36 +50,36 @@ Driver::initRNGFactory( tk::RNGFactory& factory,
 #ifdef HAS_MKL
 void
 Driver::regMKL( tk::RNGFactory& factory,
-                const quinoa::ctr::RNG& opt,
-                std::list< quinoa::ctr::RNGType >& reg,
+                const tk::ctr::RNG& opt,
+                std::list< tk::ctr::RNGType >& reg,
                 int nthreads,
-                const quinoa::ctr::MKLRNGParameters& param )
+                const tk::ctr::MKLRNGParameters& param )
 //******************************************************************************
 //  Register MKL random number generators into factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using quinoa::ctr::RNGType;
-  using quinoa::ctr::uniform_method;
-  using quinoa::ctr::gaussian_method;
-  using quinoa::ctr::MKLUniformMethodType;
-  using quinoa::ctr::MKLGaussianMethodType;
+  using tk::ctr::RNGType;
+  using tk::ctr::MKLUniformMethodType;
+  using tk::ctr::MKLGaussianMethodType;
+  using tk::tag::uniform_method;
+  using tk::tag::gaussian_method;
 
   // Defaults for MKL RNGs
   unsigned int s_def = 0;
   MKLUniformMethodType u_def = MKLUniformMethodType::STANDARD;
   MKLGaussianMethodType g_def = MKLGaussianMethodType::BOXMULLER;
 
-  quinoa::ctr::MKLUniformMethod um_opt;
-  quinoa::ctr::MKLGaussianMethod gm_opt;
+  tk::ctr::MKLUniformMethod um_opt;
+  tk::ctr::MKLGaussianMethod gm_opt;
 
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
-    regist< quinoa::MKLRNG >
+    regist< tk::MKLRNG >
           ( factory, reg, opt, rng,
             nthreads,
             opt.param( rng ),
-            opt.param< quinoa::ctr::seed >( rng, s_def, param ),
+            opt.param< tk::tag::seed >( rng, s_def, param ),
             um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
             gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ) );
   };
@@ -104,19 +104,19 @@ Driver::regMKL( tk::RNGFactory& factory,
 
 void
 Driver::regRNGSSE( tk::RNGFactory& factory,
-                   const quinoa::ctr::RNG& opt,
-                   std::list< quinoa::ctr::RNGType >& reg,
+                   const tk::ctr::RNG& opt,
+                   std::list< tk::ctr::RNGType >& reg,
                    int nthreads,
-                   const quinoa::ctr::RNGSSEParameters& param )
+                   const tk::ctr::RNGSSEParameters& param )
 //******************************************************************************
 //  Register RNGSSE random number generators into factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using quinoa::RNGSSE;
-  using quinoa::ctr::RNGType;
-  using quinoa::ctr::seqlen;
-  using quinoa::ctr::RNGSSESeqLenType;
+  using tk::RNGSSE;
+  using tk::ctr::RNGType;
+  using tk::ctr::RNGSSESeqLenType;
+  using tk::tag::seqlen;
 
   // Defaults for RNGSSE RNGs
   RNGSSESeqLenType l_def = RNGSSESeqLenType::SHORT;

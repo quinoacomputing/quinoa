@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 06:09:20 PM MST
+  \date      Thu 16 Jan 2014 09:46:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -23,9 +23,9 @@ namespace rngsse {
   struct insert_seq : pegtl::action_base< insert_seq< Stack, Option, field, sel,
                                                       vec, tag, tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
-      quinoa::ctr::RNG rng;
-      tk::Option< quinoa::ctr::RNGSSESeqLen > opt;
-      using EnumType = quinoa::ctr::RNGSSESeqLen::EnumType;
+      ctr::RNG rng;
+      tk::Option< ctr::RNGSSESeqLen > opt;
+      using EnumType = ctr::RNGSSESeqLen::EnumType;
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
@@ -61,7 +61,7 @@ namespace rngsse {
          tk::grm::process< Stack,
                            tk::kw::seed::pegtl_string,
                            tk::grm::Insert_field< Stack,
-                                                  quinoa::ctr::seed,
+                                                  tag::seed,
                                                   sel, vec, tags... > > {};
 
   //! RNG sequence length parameter
@@ -78,8 +78,8 @@ namespace rngsse {
   struct seqlen :
          rngsse_seq< Stack,
                      tk::kw::seqlen,
-                     quinoa::ctr::RNG,
-                     quinoa::ctr::seqlen,
+                     ctr::RNG,
+                     tag::seqlen,
                      sel, vec, tags... > {};
 
   //! rngs blocks
@@ -88,7 +88,7 @@ namespace rngsse {
          pegtl::ifmust<
            tk::grm::scan< rng,
                           tk::grm::store_back_option< Stack,
-                                                      quinoa::ctr::RNG,
+                                                      ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
                            seed< Stack, sel, vec, tags... >,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:31:07 PM MST
+  \date      Thu 16 Jan 2014 10:14:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -24,10 +24,10 @@ using quinoa::Statistics;
 Statistics::Statistics(const Base& base, const tk::real* const particles) :
   m_base(base),
   m_nthreads(base.paradigm.nthreads()),
-  m_npar(base.control.get<ctr::component, ctr::npar>()),
+  m_npar(base.control.get< tag::component, tag::npar >()),
   m_particles(particles),
   m_nprop(base.control.nprop()),
-  m_statistics(base.control.get<ctr::stat>()),
+  m_statistics(base.control.get< tag::stat >()),
   m_instOrd(),
   m_ordFieldName(),
   m_nameOrdinary(),

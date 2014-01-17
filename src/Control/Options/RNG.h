@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:37:24 PM MST
+  \date      Thu 16 Jan 2014 09:09:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -24,11 +24,9 @@
 #include <Toggle.h>
 #include <Quinoa/Tags.h>
 #include <Quinoa/InputDeck/Keywords.h>
-#include <Options/MKLUniformMethod.h>
-#include <Options/MKLGaussianMethod.h>
 #include <Options/RNGSSESeqLen.h>
 
-namespace quinoa {
+namespace tk {
 namespace ctr {
 
 //! Random number generator types
@@ -67,23 +65,6 @@ enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSE,
                                   PRAND };
-
-//! RNGSSE random number generator parameters storage
-using RNGSSEParam = tk::tuple::tagged_tuple<
-  seed,             unsigned int,              //!< seed
-  seqlen,           RNGSSESeqLenType           //!< sequence length type
->;
-//! RNGSSE parameters bundle
-using RNGSSEParameters = std::map< RNGType, RNGSSEParam >;
-
-//! MKL random number generator parameters storage
-using MKLRNGParam = tk::tuple::tagged_tuple<
-  seed,             unsigned int,              //!< seed
-  uniform_method,   MKLUniformMethodType,      //!< uniform method type
-  gaussian_method,  MKLGaussianMethodType      //!< Gaussian method type
->;
-//! MKL RNG parameters bundle
-using MKLRNGParameters = std::map< RNGType, MKLRNGParam >;
 
 //! Class with base templated on the above enum class with associations
 class RNG : public tk::Toggle< RNGType > {
@@ -300,6 +281,6 @@ class RNG : public tk::Toggle< RNGType > {
 };
 
 } // ctr::
-} // quinoa::
+} // tk::
 
 #endif // RNGOptions_h

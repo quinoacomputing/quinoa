@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 07:31:14 PM MST
+  \date      Thu 16 Jan 2014 10:08:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -44,12 +44,12 @@ HomRT::run()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control().get<ctr::incpar, ctr::nstep>();
-  const auto dt    = control().get<ctr::incpar, ctr::dt>();
-  const auto ttyi  = control().get<ctr::interval, ctr::tty>();
-  const auto pdfi  = control().get<ctr::interval, ctr::pdf>();
-  const auto glbi  = control().get<ctr::interval, ctr::glob>();
-  const auto stai  = control().get<ctr::interval, ctr::plot>();
+  const auto nstep = control().get<tag::incpar, tag::nstep>();
+  const auto dt    = control().get<tag::incpar, tag::dt>();
+  const auto ttyi  = control().get<tag::interval, tag::tty>();
+  const auto pdfi  = control().get<tag::interval, tag::pdf>();
+  const auto glbi  = control().get<tag::interval, tag::glob>();
+  const auto stai  = control().get<tag::interval, tag::plot>();
 
   //timer().start( m_totalTime );
 
@@ -185,7 +185,7 @@ HomRT::outJpdf(const tk::real t)
 {
   // Contruct filename
   std::stringstream ss;
-  ss << control().get<ctr::cmd,ctr::io,ctr::pdf>() << "." << t << ".msh";
+  ss << control().get< tag::cmd, tag::io, tag::pdf >() << "." << t << ".msh";
   std::string filename = ss.str();
 
   // Create joint PDF

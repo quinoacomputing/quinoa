@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Tue Jan 14 09:04:12 2014
+  \date      Thu 16 Jan 2014 10:28:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -48,11 +48,11 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   print.part("Factory");
 
   // Register random number generators
-  quinoa::ctr::RNG rng;
-  std::list< quinoa::ctr::RNGType > regRNG;
+  tk::ctr::RNG rng;
+  std::list< tk::ctr::RNGType > regRNG;
   initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
-                  m_control->get< ctr::param, ctr::mklrng >(),
-                  m_control->get< ctr::param, ctr::rngsse >() );
+                  m_control->get< tag::param, tk::tag::mklrng >(),
+                  m_control->get< tag::param, tk::tag::rngsse >() );
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
@@ -63,13 +63,13 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   initFactories( print );
 
   // Instantiate geometry
-  ctr::GeometryType g = m_control->get< ctr::selected, ctr::geometry >();
+  ctr::GeometryType g = m_control->get< tag::selected, tag::geometry >();
   if (g != ctr::GeometryType::NO_GEOMETRY) {
     m_geometry = std::unique_ptr< Geometry >( m_geometryFactory[g]() );
   }
 
   // Instantiate physics
-  ctr::PhysicsType p = m_control->get< ctr::selected, ctr::physics >();
+  ctr::PhysicsType p = m_control->get< tag::selected, tag::physics >();
   if (p != ctr::PhysicsType::NO_PHYSICS) {
     m_physics = std::unique_ptr< Physics >( m_physicsFactory[p]() );
   }

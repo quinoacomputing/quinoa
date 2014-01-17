@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:33:09 PM MST
+  \date      Thu 16 Jan 2014 09:55:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -19,23 +19,23 @@ namespace rngtest {
 //! control and parsing
 namespace ctr {
 
-using quinoa::ctr::RNGType;
+using tk::ctr::RNGType;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  battery,  BatteryType,                      //!< Battery
-  rng,      std::vector< RNGType >            //!< Random number generators
+  tag::battery,   BatteryType,                //!< Battery
+  tk::tag::rng,   std::vector< RNGType >      //!< Random number generators
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  control,   std::string                      //!< Control filename
+  tag::control,   std::string                 //!< Control filename
 >;
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  mklrng,    quinoa::ctr::MKLRNGParameters,   //!< MKL RNG parameters
-  rngsse,    quinoa::ctr::RNGSSEParameters    //!< RNGSSE parameters
+  tk::tag::mklrng,    tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
+  tk::tag::rngsse,    tk::ctr::RNGSSEParameters    //!< RNGSSE parameters
 >;
 
 //! PEGTL location type to use throughout all of RNGTest's parsers

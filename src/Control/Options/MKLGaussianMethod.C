@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:36:10 PM MST
+  \date      Thu 16 Jan 2014 08:58:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -11,7 +11,7 @@
 
 #include <Options/MKLGaussianMethod.h>
 
-using quinoa::ctr::MKLGaussianMethod;
+using tk::ctr::MKLGaussianMethod;
 
 const MKLGaussianMethod::ParamType&
 MKLGaussianMethod::param( MKLGaussianMethodType m ) const

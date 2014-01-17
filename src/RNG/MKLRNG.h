@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:34:33 PM MST
+  \date      Thu 16 Jan 2014 10:25:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -18,10 +18,10 @@
 #include <Options/RNG.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace tk {
 
 //! MKL-based random number generator
-class MKLRNG : public tk::RNG {
+class MKLRNG : public RNG {
 
   public:
     //! Constructor
@@ -58,6 +58,6 @@ class MKLRNG : public tk::RNG {
     std::unique_ptr< VSLStreamStatePtr[] > m_stream;
 };
 
-} // quinoa::
+} // tk::
 
 #endif // MKLRNG_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Wed Jan 15 15:57:52 2014
+  \date      Thu 16 Jan 2014 10:04:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -31,7 +31,7 @@ class SDE : public Model {
                   int offset,
                   int ncomp ) :
       m_particles( particles ),
-      m_npar( base.control.get< ctr::component, ctr::npar >() ),
+      m_npar( base.control.get< tag::component, tag::npar >() ),
       m_nprop( base.control.nprop() ),
       m_offset( offset ),
       m_ncomp( ncomp )
@@ -61,10 +61,10 @@ class SDE : public Model {
     //! Instantiate random number genrator
     void initRNG( const Base& base ) {
       // Get vector of selected RNGs
-//       const std::vector< ctr::RNGType > rngs =
-//         base.control.get<ctr::selected, ctr::rng>();
+//       const std::vector< tk::ctr::RNGType > rngs =
+//         base.control.get< tag::selected, tk::tag::rng>();
 //       // For now, only instantiate the first one of the RNGs
-//       if (rngs[0] != ctr::RNGType::NO_RNG) {
+//       if (rngs[0] != tk::ctr::RNGType::NO_RNG) {
 //         m_rng = std::unique_ptr< tk::RNG >( base.rng[rngs[0]]() );
 //       }
 //       ErrChk( m_rng, tk::ExceptType::FATAL, "No RNG requested");

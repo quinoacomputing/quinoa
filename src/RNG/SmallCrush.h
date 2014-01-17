@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/SmallCrush.h
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:31:33 PM MST
+  \date      Thu 16 Jan 2014 10:12:55 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -28,7 +28,7 @@ class SmallCrush : public TestU01Suite {
 
     //! Add statistical tests to battery
     void addTests( const StatTest::Rsize& id,
-                   const quinoa::ctr::RNGType& rng,
+                   const tk::ctr::RNGType& rng,
                    const Gen01Ptr& gen );
 
   private:

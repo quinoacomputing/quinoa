@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:31:08 PM MST
+  \date      Thu 16 Jan 2014 09:35:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -17,6 +17,7 @@
 
 #include <boost/format.hpp>
 
+#include <tkTypes.h>
 #include <Option.h>
 #include <Options/RNG.h>
 
@@ -131,16 +132,16 @@ class Print {
 
     //! Print all fields of MKL RNG parameters
     template< class MapType >
-    void MKLParams( const std::vector< quinoa::ctr::RNGType >& vec,
+    void MKLParams( const std::vector< ctr::RNGType >& vec,
                     const MapType& map ) const
     {
-      quinoa::ctr::RNG rng;
+      ctr::RNG rng;
       for (auto& r : vec) {
-        if (rng.lib(r) == quinoa::ctr::RNGLibType::MKL) {
+        if (rng.lib(r) == ctr::RNGLibType::MKL) {
           subsection( rng.name(r) );
           const auto& m = map.find(r);
           if (m == map.end()) {   // no parameter map entry, print defaults
-            echoMKLParams( quinoa::ctr::MKLRNGParam() );
+            echoMKLParams( ctr::MKLRNGParam() );
           } else {
             echoMKLParams( m->second );
           }
@@ -151,16 +152,16 @@ class Print {
 
     //! Print all fields of RNGSSE parameters
     template< class MapType >
-    void RNGSSEParams( const std::vector< quinoa::ctr::RNGType >& vec,
+    void RNGSSEParams( const std::vector< ctr::RNGType >& vec,
                        const MapType& map ) const
     {
-      quinoa::ctr::RNG rng;
+      ctr::RNG rng;
       for (auto& r : vec) {
-        if (rng.lib(r) == quinoa::ctr::RNGLibType::RNGSSE) {
+        if (rng.lib(r) == ctr::RNGLibType::RNGSSE) {
           subsection( rng.name(r) );
           const auto& m = map.find(r);
           if (m == map.end()) {   // no parameter map entry, print defaults
-            echoRNGSSEParams( quinoa::ctr::RNGSSEParam(), rng, r );
+            echoRNGSSEParams( ctr::RNGSSEParam(), rng, r );
           } else {
             echoRNGSSEParams( m->second, rng, r );
           }
@@ -208,36 +209,36 @@ class Print {
     //! Don't permit move assigment
     Print& operator=(Print&&) = delete;
 
-    void echoMKLParams( const quinoa::ctr::MKLRNGParam& p ) const {
-      tk::Option< quinoa::ctr::MKLUniformMethod > um;
-      tk::Option< quinoa::ctr::MKLGaussianMethod > gm;
+    void echoMKLParams( const ctr::MKLRNGParam& p ) const {
+      Option< ctr::MKLUniformMethod > um;
+      Option< ctr::MKLGaussianMethod > gm;
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % "seed"
-                   % p.get<quinoa::ctr::seed>();
+                   % p.get<tag::seed>();
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % um.group()
-                   % um.name( p.get<quinoa::ctr::uniform_method>() );
+                   % um.name( p.get<tag::uniform_method>() );
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % gm.group()
-                   % gm.name( p.get<quinoa::ctr::gaussian_method>() );
+                   % gm.name( p.get<tag::gaussian_method>() );
     }
 
-    void echoRNGSSEParams( const quinoa::ctr::RNGSSEParam& p,
-                           const quinoa::ctr::RNG& rng,
-                           const quinoa::ctr::RNGType& r ) const {
+    void echoRNGSSEParams( const ctr::RNGSSEParam& p,
+                           const ctr::RNG& rng,
+                           const ctr::RNGType& r ) const {
       std::cout << m_item_name_value_fmt
                    % m_item_indent
                    % "seed"
-                   % p.get<quinoa::ctr::seed>();
+                   % p.get<tag::seed>();
       if ( rng.supportsSeq(r) ) {
-        tk::Option< quinoa::ctr::RNGSSESeqLen > seq;
+        Option< ctr::RNGSSESeqLen > seq;
         std::cout << m_item_name_value_fmt
                      % m_item_indent
                      % seq.group()
-                     % seq.name( p.get<quinoa::ctr::seqlen>() );
+                     % seq.name( p.get<tag::seqlen>() );
       }
     }
 };

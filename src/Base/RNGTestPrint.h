@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:21:17 PM MST
+  \date      Thu 16 Jan 2014 10:00:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -52,11 +52,11 @@ class RNGTestPrint : public tk::Print {
     //! Print battery option: 'group : option (info)' only if differs from def.
     template< class Psize, class Tsize >
     void battery( const Tsize& ntest, const Psize& nstat ) const {
-      if (m_ctr.get< ctr::selected, ctr::battery >() !=
-          ctr::InputDeckDefaults.get< ctr::selected, ctr::battery >() ) {
+      if (m_ctr.get< tag::selected, tag::battery >() !=
+          ctr::InputDeckDefaults.get< tag::selected, tag::battery >() ) {
         tk::Option< ctr::Battery > bat;
         auto& group = bat.group();
-        auto& value = bat.name( m_ctr.get< ctr::selected, ctr::battery >() );
+        auto& value = bat.name( m_ctr.get< tag::selected, tag::battery >() );
         std::stringstream ss;
         ss << value << " (" << ntest << " tests, " << nstat << " stats)";
         std::cout << m_section_title_value_fmt % m_section_indent
@@ -122,7 +122,7 @@ class RNGTestPrint : public tk::Print {
                const typename StatTest::Psize& p ) const
     {
       // Construct info-line
-      tk::Option< quinoa::ctr::RNG > rng;
+      tk::Option< tk::ctr::RNG > rng;
       std::stringstream ss;
       ss << "[" << ncomplete << "/" << npval << "/" << nfail << "] "
          << test->name(p) << ", " << rng.name(test->rng());
@@ -162,7 +162,7 @@ class RNGTestPrint : public tk::Print {
         auto npval = tests[i]->nstat();
         for (Psize p=0; p<npval; ++p) {
           if ( tests[i]->fail(p) ) {
-            tk::Option< quinoa::ctr::RNG > rng;
+            tk::Option< tk::ctr::RNG > rng;
             std::string newname( rng.name( tests[i]->rng() ) );
             std::string rngname( newname == oldname ? "" : (", " + newname) );
             oldname = newname;

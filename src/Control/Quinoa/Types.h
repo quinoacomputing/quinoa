@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:31:37 PM MST
+  \date      Thu 16 Jan 2014 09:39:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -174,106 +174,106 @@ using Product = std::vector<Term>;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  geometry,  ctr::GeometryType,         //!< Selected geometry definition
-  physics,   ctr::PhysicsType,          //!< Selected physics
-  position,  ctr::PositionType,         //!< Selected position model
-  mass,      ctr::MassType,             //!< Selected mass model
-  hydro,     ctr::HydroType,            //!< Selected hydrodynamics model
-  energy,    ctr::EnergyType,           //!< Selected internal energy model
-  mix,       ctr::MixType,              //!< Selected material mix model
-  frequency, ctr::FrequencyType,        //!< Selected turbulence frequency model
-  mixrate,   ctr::MixRateType,          //!< Selected material mix rate model
-  rng,       std::vector< ctr::RNGType >//!< Selected random number generators
+  tag::geometry,  ctr::GeometryType,   //!< Selected geometry definition
+  tag::physics,   ctr::PhysicsType,    //!< Selected physics
+  tag::position,  ctr::PositionType,   //!< Selected position model
+  tag::mass,      ctr::MassType,       //!< Selected mass model
+  tag::hydro,     ctr::HydroType,      //!< Selected hydrodynamics model
+  tag::energy,    ctr::EnergyType,     //!< Selected internal energy model
+  tag::mix,       ctr::MixType,        //!< Selected material mix model
+  tag::frequency, ctr::FrequencyType,  //!< Selected turbulence frequency model
+  tag::mixrate,   ctr::MixRateType,    //!< Selected material mix rate model
+  tk::tag::rng,   std::vector< tk::ctr::RNGType > //!< Selected RNGs
 >;
 
 //! Time incrementation parameters storage
 using incpars = tk::tuple::tagged_tuple<
-  nstep, uint64_t,  //!< Number of time steps to take
-  term,  tk::real,  //!< Time to terminate time stepping
-  dt,    tk::real   //!< Size of time step
+  tag::nstep, uint64_t,  //!< Number of time steps to take
+  tag::term,  tk::real,  //!< Time to terminate time stepping
+  tag::dt,    tk::real   //!< Size of time step
 >;
 
 //! Components storage
 using components = tk::tuple::tagged_tuple<
-  nposition,  uint32_t,  //!< Number of position components in position model
-  ndensity,   uint32_t,  //!< Number of density components in mass model
-  nvelocity,  uint32_t,  //!< Number of velocity components in hydro model
-  nscalar,    uint32_t,  //!< Number of mixing scalars in material mix model
-  nfrequency, uint32_t,  //!< Number of frequencies in turb. frequency model
-  npar,       uint64_t   //!< Total number of particles
+  tag::nposition,  uint32_t, //!< Number of position components in position model
+  tag::ndensity,   uint32_t, //!< Number of density components in mass model
+  tag::nvelocity,  uint32_t, //!< Number of velocity components in hydro model
+  tag::nscalar,    uint32_t, //!< Number of mixing scalars in material mix model
+  tag::nfrequency, uint32_t, //!< Number of frequencies in turb. frequency model
+  tag::npar,       uint64_t  //!< Total number of particles
 >;
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tty,  uint32_t,  //!< TTY output interval
-  dump, uint32_t,  //!< Dump output interval
-  plot, uint32_t,  //!< Plot output interval
-  pdf,  uint32_t,  //!< PDF output interval
-  glob, uint32_t   //!< Glob output interval
+  tag::tty,  uint32_t,  //!< TTY output interval
+  tag::dump, uint32_t,  //!< Dump output interval
+  tag::plot, uint32_t,  //!< Plot output interval
+  tag::pdf,  uint32_t,  //!< PDF output interval
+  tag::glob, uint32_t   //!< Glob output interval
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  control,     std::string,  //!< Control filename
-  input,       std::string,  //!< Input filename
-  output,      std::string,  //!< Output filename
-  pdf,         std::string,  //!< PDF filename
-  glob,        std::string,  //!< Glob filename
-  stat,        std::string   //!< Statistics filename
+  tag::control,     std::string,  //!< Control filename
+  tag::input,       std::string,  //!< Input filename
+  tag::output,      std::string,  //!< Output filename
+  tag::pdf,         std::string,  //!< PDF filename
+  tag::glob,        std::string,  //!< Glob filename
+  tag::stat,        std::string   //!< Statistics filename
 >;
 
 //! Beta mass model parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
-  atwood, tk::real,
-  rng,    ctr::RNGType            //!< RNG used
+  tag::atwood,     tk::real,
+  tk::tag::rng,    tk::ctr::RNGType            //!< RNG used
 >;
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
-  b,     std::vector<tk::real>,
-  S,     std::vector<tk::real>,
-  kappa, std::vector<tk::real>,
-  rng,   ctr::RNGType            //!< RNG used
+  tag::b,         std::vector<tk::real>,
+  tag::S,         std::vector<tk::real>,
+  tag::kappa,     std::vector<tk::real>,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
 //! Generalized Dirichlet mix model parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
-  b,     std::vector<tk::real>,
-  S,     std::vector<tk::real>,
-  kappa, std::vector<tk::real>,
-  c,     std::vector<tk::real>,
-  rng,   ctr::RNGType            //!< RNG used
+  tag::b,         std::vector<tk::real>,
+  tag::S,         std::vector<tk::real>,
+  tag::kappa,     std::vector<tk::real>,
+  tag::c,         std::vector<tk::real>,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
 //! Gamma mix model parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
-  c1,    tk::real,
-  c2,    tk::real,
-  c3,    tk::real,
-  c4,    tk::real,
-  rng,   ctr::RNGType            //!< RNG used
+  tag::c1,        tk::real,
+  tag::c2,        tk::real,
+  tag::c3,        tk::real,
+  tag::c4,        tk::real,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
 //! Simplified Langevin hydro model parameters storage
 using SLMParameters = tk::tuple::tagged_tuple<
-  c0, tk::real
+  tag::c0, tk::real
 >;
 
 //! Generalized Langevin hydro model parameters storage
 using GLMParameters = tk::tuple::tagged_tuple<
-  c0, tk::real
+  tag::c0, tk::real
 >;
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  mklrng,       MKLRNGParameters,         // MKL RNG parameters
-  rngsse,       RNGSSEParameters,         // RNGSSE RNG parameters
-  beta,         BetaParameters,           // Mass models
-  dirichlet,    DirichletParameters,      // Mix models
-  gendirichlet, GenDirichletParameters,
-  gamma,        GammaParameters,
-  slm,          SLMParameters,            // Hydro models
-  glm,          GLMParameters
+  tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
+  tk::tag::rngsse,   tk::ctr::RNGSSEParameters,         // RNGSSE RNG parameters
+  tag::beta,         BetaParameters,
+  tag::dirichlet,    DirichletParameters,
+  tag::gendirichlet, GenDirichletParameters,
+  tag::gamma,        GammaParameters,
+  tag::slm,          SLMParameters,
+  tag::glm,          GLMParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers

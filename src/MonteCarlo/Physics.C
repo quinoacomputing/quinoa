@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Wed Jan 15 15:09:36 2014
+  \date      Thu 16 Jan 2014 10:06:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -17,10 +17,10 @@
 using quinoa::Physics;
 
 Physics::Physics( const Base& base ) : MonteCarlo( base ),
-  m_nposition( base.control.get<ctr::component, ctr::nposition>() ),
-  m_ndensity( base.control.get<ctr::component, ctr::ndensity>() ),
-  m_nvelocity( base.control.get<ctr::component, ctr::nvelocity>() ),
-  m_nscalar( base.control.get<ctr::component, ctr::nscalar>() )
+  m_nposition( base.control.get<tag::component, tag::nposition>() ),
+  m_ndensity( base.control.get<tag::component, tag::ndensity>() ),
+  m_nvelocity( base.control.get<tag::component, tag::nvelocity>() ),
+  m_nscalar( base.control.get<tag::component, tag::nscalar>() )
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
@@ -35,19 +35,19 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 
   // Instantiate mass model
   if (m_ndensity) {
-    ctr::MassType m = control().get<ctr::selected, ctr::mass>();
+    ctr::MassType m = control().get<tag::selected, tag::mass>();
     m_mass = std::unique_ptr< Model >( m_massFactory[m]() );
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    ctr::HydroType m = control().get<ctr::selected, ctr::hydro>();
+    ctr::HydroType m = control().get<tag::selected, tag::hydro>();
     m_hydro = std::unique_ptr< Model >( m_hydroFactory[m]() );
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    ctr::MixType m = control().get<ctr::selected, ctr::mix>();
+    ctr::MixType m = control().get<tag::selected, tag::mix>();
     m_mix = std::unique_ptr< Model >( m_mixFactory[m]() );
   }
 }
@@ -92,52 +92,52 @@ Physics::echo()
 
   print.endpart();
   print.part( "Problem" );
-  print.section( "Title", control.get< ctr::title >() );
-  print.Section< ctr::Physics, ctr::selected, ctr::physics >();
+  print.section( "Title", control.get< tag::title >() );
+  print.Section< ctr::Physics, tag::selected, tag::physics >();
 
   print.subsection( "Output filenames" );
-  print.item( "Input", control.get< ctr::cmd, ctr::io, ctr::input >() );
-  print.item( "Output", control.get< ctr::cmd, ctr::io, ctr::output >() );
-  print.item( "Glob", control.get< ctr::cmd, ctr::io, ctr::glob >() );
-  print.item( "Statistics", control.get< ctr::cmd, ctr::io, ctr::stat >() );
-  print.item( "PDF", control.get< ctr::cmd, ctr::io, ctr::pdf >() );
+  print.item( "Input", control.get< tag::cmd, tag::io, tag::input >() );
+  print.item( "Output", control.get< tag::cmd, tag::io, tag::output >() );
+  print.item( "Glob", control.get< tag::cmd, tag::io, tag::glob >() );
+  print.item( "Statistics", control.get< tag::cmd, tag::io, tag::stat >() );
+  print.item( "PDF", control.get< tag::cmd, tag::io, tag::pdf >() );
   print.endsubsection();
 
   print.subsection("Selected");
-//  print.Item< ctr::RNG, ctr::selected, ctr::rng >();
-//   if (control.get< ctr::selected, ctr::rng>() != ctr::RNGType::NO_RNG ) {
-//     print.item( "Seed", control.get< ctr::param, ctr::rng, ctr::seed >() );
+//  print.Item< tk::ctr::RNG, tag::selected, tk::tag::rng >();
+//   if (control.get< tag::selected, tk::tag::rng>() != tk::ctr::RNGType::NO_RNG ) {
+//     print.item( "Seed", control.get< tag::param, tk::tag::rng, tk::tag::seed >() );
 //   }
-  print.Item< ctr::Position, ctr::selected, ctr::position >();
-  print.Item< ctr::Mass, ctr::selected, ctr::mass >();
-  print.Item< ctr::Hydro, ctr::selected, ctr::hydro >();
-  print.Item< ctr::Energy, ctr::selected, ctr::energy >();
-  print.Item< ctr::Mix, ctr::selected, ctr::mix >();
-  print.Item< ctr::Frequency, ctr::selected, ctr::frequency >();
-  print.Item< ctr::MixRate, ctr::selected, ctr::mixrate >();
+  print.Item< ctr::Position, tag::selected, tag::position >();
+  print.Item< ctr::Mass, tag::selected, tag::mass >();
+  print.Item< ctr::Hydro, tag::selected, tag::hydro >();
+  print.Item< ctr::Energy, tag::selected, tag::energy >();
+  print.Item< ctr::Mix, tag::selected, tag::mix >();
+  print.Item< ctr::Frequency, tag::selected, tag::frequency >();
+  print.Item< ctr::MixRate, tag::selected, tag::mixrate >();
   print.endsubsection();
 
   print.subsection( "Number of components" );
-  print.Item< ctr::component, ctr::nposition >( "Positions" );
-  print.Item< ctr::component, ctr::ndensity >( "Densities" );
-  print.Item< ctr::component, ctr::nvelocity >( "Velocities" );
-  print.Item< ctr::component, ctr::nscalar >( "Scalars" );
-  print.Item< ctr::component, ctr::nfrequency >( "Turbulent frequencies" );
-  print.Item< ctr::component, ctr::npar >( "Particles" );
+  print.Item< tag::component, tag::nposition >( "Positions" );
+  print.Item< tag::component, tag::ndensity >( "Densities" );
+  print.Item< tag::component, tag::nvelocity >( "Velocities" );
+  print.Item< tag::component, tag::nscalar >( "Scalars" );
+  print.Item< tag::component, tag::nfrequency >( "Turbulent frequencies" );
+  print.Item< tag::component, tag::npar >( "Particles" );
   print.endsubsection();
 
   print.subsection( "Incrementation parameters" );
-  print.item( "Number of time steps", control.get< ctr::incpar,ctr::nstep >() );
-  print.item( "Terminate time", control.get< ctr::incpar,ctr::term >() );
-  print.item( "Initial time step size", control.get< ctr::incpar, ctr::dt >() );
+  print.item( "Number of time steps", control.get< tag::incpar, tag::nstep >() );
+  print.item( "Terminate time", control.get< tag::incpar, tag::term >() );
+  print.item( "Initial time step size", control.get< tag::incpar, tag::dt >() );
   print.endsubsection();
 
   print.subsection( "Output intervals" );
-  print.item( "TTY", control.get< ctr::interval, ctr::tty>() );
-  print.item( "Dump", control.get< ctr::interval, ctr::dump>() );
-  print.item( "Glob", control.get< ctr::interval, ctr::glob >() );
-  print.item( "Statistics", control.get< ctr::interval, ctr::plot >() );
-  print.item( "PDF", control.get< ctr::interval, ctr::pdf >() );
+  print.item( "TTY", control.get< tag::interval, tag::tty>() );
+  print.item( "Dump", control.get< tag::interval, tag::dump>() );
+  print.item( "Glob", control.get< tag::interval, tag::glob >() );
+  print.item( "Statistics", control.get< tag::interval, tag::plot >() );
+  print.item( "PDF", control.get< tag::interval, tag::pdf >() );
   print.endsubsection();
 
   print.subsection( "Statistics" );
