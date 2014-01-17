@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/MKLUniformMethod.h
+  \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:54:23 AM MST
+  \date      Thu 16 Jan 2014 08:36:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
 */
 //******************************************************************************
-#ifndef QuinoaMKLUniformMethodOptions_h
-#define QuinoaMKLUniformMethodOptions_h
+#ifndef MKLUniformMethodOptions_h
+#define MKLUniformMethodOptions_h
 
 #include <map>
 
@@ -76,4 +76,4 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaMKLUniformMethodOptions_h
+#endif // MKLUniformMethodOptions_h

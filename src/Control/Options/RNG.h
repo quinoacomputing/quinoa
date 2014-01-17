@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/RNG.h
+  \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 05:42:18 PM MST
+  \date      Thu 16 Jan 2014 08:37:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
 */
 //******************************************************************************
-#ifndef QuinoaRNGOptions_h
-#define QuinoaRNGOptions_h
+#ifndef RNGOptions_h
+#define RNGOptions_h
 
 #include <map>
 #include <list>
@@ -22,11 +22,11 @@
 
 #include <TaggedTuple.h>
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
-#include <Quinoa/Options/MKLUniformMethod.h>
-#include <Quinoa/Options/MKLGaussianMethod.h>
-#include <Quinoa/Options/RNGSSESeqLen.h>
 #include <Quinoa/Tags.h>
+#include <Quinoa/InputDeck/Keywords.h>
+#include <Options/MKLUniformMethod.h>
+#include <Options/MKLGaussianMethod.h>
+#include <Options/RNGSSESeqLen.h>
 
 namespace quinoa {
 namespace ctr {
@@ -302,4 +302,4 @@ class RNG : public tk::Toggle< RNGType > {
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaRNGOptions_h
+#endif // RNGOptions_h

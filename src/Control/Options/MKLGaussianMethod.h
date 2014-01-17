@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/MKLGaussianMethod.h
+  \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:54:39 AM MST
+  \date      Thu 16 Jan 2014 08:36:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
 */
 //******************************************************************************
-#ifndef QuinoaMKLGaussianMethodOptions_h
-#define QuinoaMKLGaussianMethodOptions_h
+#ifndef MKLGaussianMethodOptions_h
+#define MKLGaussianMethodOptions_h
 
 #include <map>
 
@@ -81,4 +81,4 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaMKLGaussianMethodOptions_h
+#endif // MKLGaussianMethodOptions_h
