@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/StatTest.h
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:26:51 PM MST
+  \date      Thu 16 Jan 2014 10:08:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -24,9 +24,9 @@ class StatTest {
     virtual ~StatTest() noexcept = default;
 
     //! Container types
-    using Pvals = std::vector< double >;               //!< For storing p-values
-    using Names = std::vector< std::string >;          //!< For names of tests
-    using RNGs = std::vector< quinoa::ctr::RNGType >;  //!< For names of tests
+    using Pvals = std::vector< double >;           //!< For storing p-values
+    using Names = std::vector< std::string >;      //!< For names of tests
+    using RNGs = std::vector< tk::ctr::RNGType >;  //!< For names of tests
 
     using Psize = Pvals::size_type;
     using Nsize = Names::size_type;
@@ -42,7 +42,7 @@ class StatTest {
     virtual const Nsize& nstat() const = 0;
 
     //! RNG enum accessor
-    virtual const quinoa::ctr::RNGType& rng() const = 0;
+    virtual const tk::ctr::RNGType& rng() const = 0;
 
     //! RNG id accessor
     virtual const Rsize& id() const = 0;

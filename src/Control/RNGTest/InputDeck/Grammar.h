@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 07:10:37 PM MST
+  \date      Thu 16 Jan 2014 09:57:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -31,7 +31,7 @@ namespace deck {
   using PEGTLInputDeck =
           quinoa::ctr::PEGTLParsed< ctr::InputDeck,
                                     pegtl::file_input< ctr::Location >,
-                                    ctr::cmd,
+                                    tag::cmd,
                                     ctr::CmdLine >;
 
   // RNGTest's InputDeck State
@@ -56,24 +56,24 @@ namespace deck {
   struct title :
          pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
                         tk::grm::quoted< Stack,
-                                         tk::grm::Set<Stack, ctr::title> > > {};
+                                         tk::grm::Set<Stack, tag::title> > > {};
 
   //! rngs
   struct rngs :
          pegtl::sor< tk::mkl::rngs< Stack,
-                                    ctr::selected, ctr::rng,
-                                    ctr::param, ctr::mklrng >,
+                                    tag::selected, tk::tag::rng,
+                                    tag::param, tk::tag::mklrng >,
                      tk::rngsse::rngs< Stack,
-                                       ctr::selected, ctr::rng,
-                                       ctr::param, ctr::rngsse > > {};
+                                       tag::selected, tk::tag::rng,
+                                       tag::param, tk::tag::rngsse > > {};
 
   // TestU01 batteries
   template< typename battery_kw >
   struct testu01 :
          pegtl::ifmust< tk::grm::scan< typename battery_kw::pegtl_string,
                                        store_option< ctr::Battery,
-                                                     ctr::selected,
-                                                     ctr::battery > >,
+                                                     tag::selected,
+                                                     tag::battery > >,
                         tk::grm::block< Stack, rngs > > {};
 
   //! batteries

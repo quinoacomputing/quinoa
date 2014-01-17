@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Tue Jan 14 09:05:25 2014
+  \date      Thu 16 Jan 2014 10:30:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -47,11 +47,11 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   print.part("Factory");
 
   // Register random number generators
-  quinoa::ctr::RNG rng;
-  std::list< quinoa::ctr::RNGType > regRNG;
+  tk::ctr::RNG rng;
+  std::list< tk::ctr::RNGType > regRNG;
   initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
-                  m_control->get< ctr::param, ctr::mklrng >(),
-                  m_control->get< ctr::param, ctr::rngsse >() );
+                  m_control->get< tag::param, tk::tag::mklrng >(),
+                  m_control->get< tag::param, tk::tag::rngsse >() );
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
@@ -62,7 +62,7 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   initFactories( print );
 
   // Instantiate battery
-  ctr::BatteryType b = m_control->get< ctr::selected, ctr::battery >();
+  ctr::BatteryType b = m_control->get< tag::selected, tag::battery >();
   if (b != ctr::BatteryType::NO_BATTERY) {
     m_battery = std::unique_ptr< Battery >( m_batteryFactory[b]() );
   }
@@ -106,18 +106,18 @@ RNGTestDriver::echo()
   print.endpart();
   print.part("Problem");
 
-  if (!control.get<ctr::title>().empty()) {
-    print.section("Title", control.get<ctr::title>());
+  if ( !control.get< tag::title >().empty() ) {
+    print.section("Title", control.get< tag::title >());
   }
 
   if (m_battery && m_ntest) {
     print.battery( m_ntest, m_battery->nstat() );
     m_battery->print();
     print.section("RNG(s) tested");
-    print.MKLParams( control.get<ctr::selected, ctr::rng>(),
-                     control.get<ctr::param, ctr::mklrng>() );
-    print.RNGSSEParams( control.get<ctr::selected, ctr::rng>(),
-                        control.get<ctr::param, ctr::rngsse>() );
+    print.MKLParams( control.get< tag::selected, tk::tag::rng >(),
+                     control.get< tag::param, tk::tag::mklrng >() );
+    print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),
+                        control.get< tag::param, tk::tag::rngsse >() );
     print.raw("\n");
   } else {
     print.note( "No RNG battery or no RNGs specified" );

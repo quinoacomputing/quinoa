@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu Nov 14 08:08:39 2013
+  \date      Thu 16 Jan 2014 09:45:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -22,79 +22,79 @@ namespace ctr {
 
 //! InputDeck : Control< specialized to Quinoa >, see Types.h,
 class InputDeck :
-  public tk::Control< // tag      type
-                      title,      std::string,
-                      selected,   selects,
-                      incpar,     incpars,
-                      component,  components,
-                      interval,   intervals,
-                      cmd,        CmdLine,
-                      param,      parameters,
-                      stat,       std::vector< Product > > {
+  public tk::Control< // tag           type
+                      tag::title,      std::string,
+                      tag::selected,   selects,
+                      tag::incpar,     incpars,
+                      tag::component,  components,
+                      tag::interval,   intervals,
+                      tag::cmd,        CmdLine,
+                      tag::param,      parameters,
+                      tag::stat,       std::vector< Product > > {
 
   public:
     //! Constructor: set all defaults
     InputDeck() {
       // Default title
-      set< ctr::title >( "" );
+      set< tag::title >( "" );
       // Default selections
-      set< selected, geometry >( GeometryType::NO_GEOMETRY );
-      set< selected, physics >( PhysicsType::NO_PHYSICS );
-      set< selected, position >( PositionType::NO_POSITION );
-      set< selected, mass >( MassType::NO_MASS );
-      set< selected, hydro >( HydroType::NO_HYDRO );
-      set< selected, energy >( EnergyType::NO_ENERGY );
-      set< selected, mix >( MixType::NO_MIX );
-      set< selected, frequency >( FrequencyType::NO_FREQUENCY );
-      set< selected, mixrate >( MixRateType::NO_MIXRATE );
+      set< tag::selected, tag::geometry >( GeometryType::NO_GEOMETRY );
+      set< tag::selected, tag::physics >( PhysicsType::NO_PHYSICS );
+      set< tag::selected, tag::position >( PositionType::NO_POSITION );
+      set< tag::selected, tag::mass >( MassType::NO_MASS );
+      set< tag::selected, tag::hydro >( HydroType::NO_HYDRO );
+      set< tag::selected, tag::energy >( EnergyType::NO_ENERGY );
+      set< tag::selected, tag::mix >( MixType::NO_MIX );
+      set< tag::selected, tag::frequency >( FrequencyType::NO_FREQUENCY );
+      set< tag::selected, tag::mixrate >( MixRateType::NO_MIXRATE );
       // Default time incrementation parameters
-      set< incpar, nstep >( std::numeric_limits< uint64_t >::max() );
-      set< incpar, term >( 1.0 );
-      set< incpar, dt >( 0.5 );
+      set< tag::incpar, tag::nstep >( std::numeric_limits< uint64_t >::max() );
+      set< tag::incpar, tag::term >( 1.0 );
+      set< tag::incpar, tag::dt >( 0.5 );
       // Default number of components
-      set< component, nposition >( 0 );
-      set< component, ndensity >( 0 );
-      set< component, nvelocity >( 0 );
-      set< component, nscalar >( 0 );
-      set< component, nfrequency >( 0 );
-      set< component, npar >( 1 );
+      set< tag::component, tag::nposition >( 0 );
+      set< tag::component, tag::ndensity >( 0 );
+      set< tag::component, tag::nvelocity >( 0 );
+      set< tag::component, tag::nscalar >( 0 );
+      set< tag::component, tag::nfrequency >( 0 );
+      set< tag::component, tag::npar >( 1 );
       // Default intervals
-      set< interval, tty >( 1 );
-      set< interval, dump >( 1 );
-      set< interval, plot >( 1 );
-      set< interval, pdf >( 1 );
-      set< interval, glob >( 1 );
+      set< tag::interval, tag::tty >( 1 );
+      set< tag::interval, tag::dump >( 1 );
+      set< tag::interval, tag::plot >( 1 );
+      set< tag::interval, tag::pdf >( 1 );
+      set< tag::interval, tag::glob >( 1 );
       // Default beta mass model parameters
-      set< param, beta, atwood >( 0.5 );
+      set< tag::param, tag::beta, tag::atwood >( 0.5 );
       // Default Dirichlet mix model parameters
-      set< param, dirichlet, b >( std::vector< tk::real >() );
-      set< param, dirichlet, S >( std::vector< tk::real >() );
-      set< param, dirichlet, kappa >( std::vector< tk::real >() );
+      set< tag::param, tag::dirichlet, tag::b >( std::vector< tk::real >() );
+      set< tag::param, tag::dirichlet, tag::S >( std::vector< tk::real >() );
+      set< tag::param, tag::dirichlet, tag::kappa >( std::vector< tk::real >() );
       // Default generalized Dirichlet mix model parameters
-      set< param, gendirichlet, b >( std::vector< tk::real >() );
-      set< param, gendirichlet, S >( std::vector< tk::real >() );
-      set< param, gendirichlet, kappa >( std::vector< tk::real >() );
-      set< param, gendirichlet, c >( std::vector< tk::real >() );
+      set< tag::param, tag::gendirichlet, tag::b >( std::vector< tk::real >() );
+      set< tag::param, tag::gendirichlet, tag::S >( std::vector< tk::real >() );
+      set< tag::param, tag::gendirichlet, tag::kappa >( std::vector< tk::real >() );
+      set< tag::param, tag::gendirichlet, tag::c >( std::vector< tk::real >() );
       // Default gamma mix model parameters
-      set< param, gamma, c1 >( 0.5 );
-      set< param, gamma, c2 >( 0.73 );
-      set< param, gamma, c3 >( 5.0 );
-      set< param, gamma, c4 >( 0.25 );
+      set< tag::param, tag::gamma, tag::c1 >( 0.5 );
+      set< tag::param, tag::gamma, tag::c2 >( 0.73 );
+      set< tag::param, tag::gamma, tag::c3 >( 5.0 );
+      set< tag::param, tag::gamma, tag::c4 >( 0.25 );
       // Default simplified Langevin hydro model parameters
-      set< param, slm, c0 >( 2.1 );
+      set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default generalized Langevin hydro model parameters
-      set< param, slm, c0 >( 2.1 );
+      set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default requested statistics
-      set<stat>( std::vector< Product >() );
+      set< tag::stat >( std::vector< Product >() );
     }
 
     //! Return total number of particle properties
     uint32_t nprop() const noexcept {
-      return get< component, nposition >() +
-             get< component, ndensity >() +
-             get< component, nvelocity> () +
-             get< component, nscalar >() +
-             get< component, nfrequency >();
+      return get< tag::component, tag::nposition >() +
+             get< tag::component, tag::ndensity >() +
+             get< tag::component, tag::nvelocity> () +
+             get< tag::component, tag::nscalar >() +
+             get< tag::component, tag::nfrequency >();
     }
 
     //! Return position offset
@@ -103,33 +103,33 @@ class InputDeck :
     }
     //! Return density offset
     int densityOffset() const noexcept {
-      return get< component, nposition >();
+      return get< tag::component, tag::nposition >();
     }
     //! Return velocity offset
     int velocityOffset() const noexcept {
-      return get< component, nposition >() +
-             get< component, ndensity >();
+      return get< tag::component, tag::nposition >() +
+             get< tag::component, tag::ndensity >();
     }
     //! Return scalar offset
     int scalarOffset() const noexcept {
-      return get< component, nposition >() +
-             get< component, ndensity >() +
-             get< component, nvelocity >();
+      return get< tag::component, tag::nposition >() +
+             get< tag::component, tag::ndensity >() +
+             get< tag::component, tag::nvelocity >();
     }
 
     //! Return offset for term::quantity
     int termOffset(Quantity q) const noexcept {
       int offset = 0;
       if (q == Quantity::SCALAR)
-        offset += get< component, nvelocity >();
+        offset += get< tag::component, tag::nvelocity >();
       if (q == Quantity::VELOCITY_Z)
-        offset += get< component, nvelocity >();
+        offset += get< tag::component, tag::nvelocity >();
       if (q == Quantity::VELOCITY_Y)
-        offset += get< component, nvelocity >();
+        offset += get< tag::component, tag::nvelocity >();
       if (q == Quantity::VELOCITY_X)
-        offset += get< component, ndensity >();
+        offset += get< tag::component, tag::ndensity >();
       if (q == Quantity::DENSITY)
-        offset += 3 * get< component, nposition >();
+        offset += 3 * get< tag::component, tag::nposition >();
       return offset;
     }
 

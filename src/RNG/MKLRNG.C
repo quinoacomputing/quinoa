@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:15:57 PM MST
+  \date      Thu 16 Jan 2014 10:26:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -14,7 +14,7 @@
 #include <MKLRNG.h>
 #include <Exception.h>
 
-using quinoa::MKLRNG;
+using tk::MKLRNG;
 
 MKLRNG::MKLRNG( int nthreads,
                 int brng,

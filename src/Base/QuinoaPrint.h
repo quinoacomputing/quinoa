@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu 07 Nov 2013 10:01:35 PM MST
+  \date      Thu 16 Jan 2014 09:59:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -74,9 +74,9 @@ class QuinoaPrint : public tk::Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! <<= for outputing requested Term and vector<Term>.
     void RequestedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
+      if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<ctr::stat>()) std::cout <<= v;
+        for (auto& v : m_ctr.get<tag::stat>()) std::cout <<= v;
         std::cout << '\n';
       }
     }
@@ -86,23 +86,12 @@ class QuinoaPrint : public tk::Print {
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
     //! << for outputing estimated Term and vector<Term>.
     void EstimatedStats(const std::string& msg) const {
-      if (m_ctr.get<ctr::stat>() != ctr::InputDeckDefaults.get<ctr::stat>()) {
+      if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
         std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<ctr::stat>()) std::cout << v;
+        for (auto& v : m_ctr.get<tag::stat>()) std::cout << v;
         std::cout << '\n';
       }
     }
-
-//     //! Echo vector of Option.names
-//     template<class OptionType, typename... tags>
-//     void echoVecOptName(const std::string& msg) const {
-//       ctr::Option<OptionType> opt;
-//       std::cout << "   - " << msg << ": {";
-//       for (auto& v : get<tags...>()) {
-//         std::cout << " " << opt.name(v);
-//       }
-//       std::cout << " }" << std::endl;
-//     }
 
   private:
     //! Don't permit copy constructor

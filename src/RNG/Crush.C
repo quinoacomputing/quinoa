@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/Crush.C
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:32:29 PM MST
+  \date      Thu 16 Jan 2014 10:14:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -27,7 +27,7 @@ Crush::Crush(const Base& base) :
 
 void
 Crush::addTests( const StatTest::Rsize& id,
-                 const quinoa::ctr::RNGType& rng,
+                 const tk::ctr::RNGType& rng,
                  const Gen01Ptr& gen )
 //******************************************************************************
 // Add statistical tests to battery

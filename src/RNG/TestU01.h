@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Sat 21 Dec 2013 07:37:22 PM MST
+  \date      Thu 16 Jan 2014 10:13:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -31,7 +31,7 @@ class TestU01 : public StatTest {
     //! Constructor
     explicit TestU01( const Rsize& id,
                       const unif01_Gen* const gen,
-                      const quinoa::ctr::RNGType& rng,
+                      const tk::ctr::RNGType& rng,
                       Names&& names,
                       RunFn runner,
                       Ts&&... xargs ) :
@@ -64,7 +64,7 @@ class TestU01 : public StatTest {
     const Nsize& nstat() const override { return m_npval; }
 
     //! RNG enum accessor
-    const quinoa::ctr::RNGType& rng() const override { return m_rng; }
+    const tk::ctr::RNGType& rng() const override { return m_rng; }
 
     //! RNG id accessor
     const Rsize& id() const override { return m_id; }
@@ -135,7 +135,7 @@ class TestU01 : public StatTest {
 
     const Rsize m_id;                          //!< RNG id
     const unif01_Gen* const m_gen;             //!< Raw ptr to TestU01 generator
-    const quinoa::ctr::RNGType m_rng;          //!< RNG selected
+    const tk::ctr::RNGType m_rng;              //!< RNG selected
     const Psize m_npval;                       //!< Number of p-values produced
     const Names m_names;                       //!< Name(s) of tests
     const RunFn m_runner;                      //!< Test runner function

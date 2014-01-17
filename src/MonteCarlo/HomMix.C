@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 07:30:54 PM MST
+  \date      Thu 16 Jan 2014 10:07:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -49,12 +49,12 @@ HomMix::run()
   bool wroteGlob = false;
   bool wroteStat = false;
 
-  const auto nstep = control().get<ctr::incpar, ctr::nstep>();
-  const auto dt    = control().get<ctr::incpar, ctr::dt>();
-  const auto ttyi  = control().get<ctr::interval, ctr::tty>();
-  const auto pdfi  = control().get<ctr::interval, ctr::pdf>();
-  const auto glbi  = control().get<ctr::interval, ctr::glob>();
-  const auto stai  = control().get<ctr::interval, ctr::plot>();
+  const auto nstep = control().get<tag::incpar, tag::nstep>();
+  const auto dt    = control().get<tag::incpar, tag::dt>();
+  const auto ttyi  = control().get<tag::interval, tag::tty>();
+  const auto pdfi  = control().get<tag::interval, tag::pdf>();
+  const auto glbi  = control().get<tag::interval, tag::glob>();
+  const auto stai  = control().get<tag::interval, tag::plot>();
 
   //timer().start(m_totalTime);
 

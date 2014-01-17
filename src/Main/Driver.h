@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:33:34 PM MST
+  \date      Thu 16 Jan 2014 10:16:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -17,11 +17,12 @@
 #include <Options/RNG.h>
 #include <RNG.h>
 #include <RNGSSE.h>
+#include <tkTypes.h>
 
 namespace tk {
 
 //! Random number generator factory type
-using RNGFactory = std::map< quinoa::ctr::RNGType, std::function<tk::RNG*()> >;
+using RNGFactory = std::map< tk::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! Driver base class
 class Driver {
@@ -38,11 +39,11 @@ class Driver {
 
     //! Register random number generators into factory
     void initRNGFactory( tk::RNGFactory& factory,
-                         const quinoa::ctr::RNG& opt,
-                         std::list< quinoa::ctr::RNGType >& reg,
+                         const tk::ctr::RNG& opt,
+                         std::list< tk::ctr::RNGType >& reg,
                          int nthreads,
-                         const quinoa::ctr::MKLRNGParameters& mklparam,
-                         const quinoa::ctr::RNGSSEParameters& rngsseparam );
+                         const tk::ctr::MKLRNGParameters& mklparam,
+                         const tk::ctr::RNGSSEParameters& rngsseparam );
 
   private:
     //! Don't permit copy constructor
@@ -57,18 +58,18 @@ class Driver {
    #ifdef HAS_MKL
    //! Register MKL RNGs into factory
    void regMKL( tk::RNGFactory& factory,
-                const quinoa::ctr::RNG& opt,
-                std::list< quinoa::ctr::RNGType >& reg,
+                const tk::ctr::RNG& opt,
+                std::list< tk::ctr::RNGType >& reg,
                 int nthreads,
-                const quinoa::ctr::MKLRNGParameters& mklparam );
+                const tk::ctr::MKLRNGParameters& mklparam );
    #endif
 
    //! Register RNGSSE RNGs into factory
    void regRNGSSE( tk::RNGFactory& factory,
-                   const quinoa::ctr::RNG& opt,
-                   std::list< quinoa::ctr::RNGType >& reg,
+                   const tk::ctr::RNG& opt,
+                   std::list< tk::ctr::RNGType >& reg,
                    int nthreads,
-                   const quinoa::ctr::RNGSSEParameters& param );
+                   const tk::ctr::RNGSSEParameters& param );
 };
 
 } // namespace tk

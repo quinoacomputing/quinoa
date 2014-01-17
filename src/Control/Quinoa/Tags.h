@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 01:57:42 PM MST
+  \date      Thu 16 Jan 2014 09:34:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -12,7 +12,7 @@
 #define QuinoaTags_h
 
 namespace quinoa {
-namespace ctr {
+namespace tag {
 
 struct geometry {};
 struct physics {};
@@ -23,10 +23,6 @@ struct energy {};
 struct mix {};
 struct frequency {};
 struct mixrate {};
-struct rng {};
-struct mklrng {};
-struct rngsse {};
-struct seqlen {};
 
 struct nstep {};
 struct term {};
@@ -61,10 +57,6 @@ struct c2 {};
 struct c3 {};
 struct c4 {};
 
-struct seed {};
-struct uniform_method {};
-struct gaussian_method {};
-
 struct beta {};
 struct dirichlet {};
 struct gendirichlet {};
@@ -81,7 +73,7 @@ struct io {};
 struct cmd {};
 struct param {};
 
-} // ctr::
+} // tag::
 } // quinoa::
 
 #endif // QuinoaTags_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:41:07 AM MST
+  \date      Thu 16 Jan 2014 09:58:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -44,8 +44,8 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
   print.item("Parsed command line", "success");
 
   // Make sure mandatory arguments are set
-  ErrChk(!(cmdline->get<ctr::io, ctr::control>().empty()),
-         tk::ExceptType::FATAL,
-         "Mandatory control file not specified. "
-         "Use '--control <filename>' or '-c <filename>'.");
+  ErrChk( !(cmdline->get< tag::io, tag::control >().empty()),
+          tk::ExceptType::FATAL,
+          "Mandatory control file not specified. "
+          "Use '--control <filename>' or '-c <filename>'.");
 }

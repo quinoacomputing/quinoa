@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:33:24 PM MST
+  \date      Thu 16 Jan 2014 10:11:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -139,7 +139,7 @@ class TestU01Suite : public Battery {
       using Rsize = StatTest::Rsize;
       auto size = m_rngEnum.size();
        for (Rsize r=0; r<size; ++r) {
-         if (m_rngEnum[r] != ctr::RNGType::NO_RNG) {
+         if (m_rngEnum[r] != tk::ctr::RNGType::NO_RNG) {
            ++m_numRNGs;
            suite.addTests( r, m_rngEnum[r], m_rngPtr[r] );
          }
@@ -151,7 +151,7 @@ class TestU01Suite : public Battery {
     template< class TestType, class Result, typename... Ts >
     void add( const StatTest::Rsize& id,
               const Gen01Ptr& gen,
-              const quinoa::ctr::RNGType& rng,
+              const tk::ctr::RNGType& rng,
               StatTest::Names&& names,
               Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
@@ -187,21 +187,21 @@ class TestU01Suite : public Battery {
     // requested by the user (know only at runtime). RNGs are always assigned to
     // the same position (hence std::vector instead of std::map), regardless of
     // requested or not. See also TestU01Suite constructor.
-    std::vector< quinoa::ctr::RNGType > m_rngEnum;
+    std::vector< tk::ctr::RNGType > m_rngEnum;
     std::vector< Gen01Ptr > m_rngPtr;
 
     //! Number of RNGs tested
-    std::vector< quinoa::ctr::RNGType >::size_type m_numRNGs;
+    std::vector< tk::ctr::RNGType >::size_type m_numRNGs;
 
     template< int id >
-    void addRNG( quinoa::ctr::RNGType r,
+    void addRNG( tk::ctr::RNGType r,
                  double (*wrap)(void*,void*),
                  unsigned long (*wrap_bits)(void*,void*) )
     {
       // Create new RNG and store its pointer in global scope
       g_rng[id] = std::unique_ptr< tk::RNG >( m_base.rng[r]() );
       // Create new TestU01 external RNG and associate global-scope wrapper
-      char* const name = const_cast<char*>(quinoa::ctr::RNG().name(r).c_str());
+      char* const name = const_cast<char*>( tk::ctr::RNG().name(r).c_str() );
       m_rngEnum[id] = r;
       m_rngPtr[id] = Gen01Ptr( unif01_CreateExternGen01(name, wrap, wrap_bits) );
     }

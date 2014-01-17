@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 15 Jan 2014 09:44:34 PM MST
+  \date      Thu 16 Jan 2014 10:04:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -29,11 +29,11 @@ class Dirichlet : public SDE< Init, Layout > {
       sde( base,
            particles,
            base.control.scalarOffset(),
-           base.control.get< ctr::component, ctr::nscalar >() ),
-      m_coeff( base.control.get< ctr::component, ctr::nscalar >(),
-               base.control.get< ctr::param, ctr::dirichlet, ctr::b >(),
-               base.control.get< ctr::param, ctr::dirichlet, ctr::S >(),
-               base.control.get< ctr::param, ctr::dirichlet, ctr::kappa >(),
+           base.control.get< tag::component, tag::nscalar >() ),
+      m_coeff( base.control.get< tag::component, tag::nscalar >(),
+               base.control.get< tag::param, tag::dirichlet, tag::b >(),
+               base.control.get< tag::param, tag::dirichlet, tag::S >(),
+               base.control.get< tag::param, tag::dirichlet, tag::kappa >(),
                m_b, m_S, m_k ) {}
 
     //! Pull base class data to scope

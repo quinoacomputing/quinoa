@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:40:50 AM MST
+  \date      Thu 16 Jan 2014 09:57:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -17,7 +17,7 @@ using rngtest::InputDeckParser;
 InputDeckParser::InputDeckParser(const tk::Print& print,
                                  std::unique_ptr< ctr::CmdLine > cmdline,
                                  std::unique_ptr< ctr::InputDeck >& inputdeck) :
-  FileParser( cmdline->get<ctr::io, ctr::control>() )
+  FileParser( cmdline->get< tag::io, tag::control >() )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi

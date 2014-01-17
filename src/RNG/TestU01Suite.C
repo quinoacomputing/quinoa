@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:31:36 PM MST
+  \date      Thu 16 Jan 2014 10:10:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -70,16 +70,16 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using quinoa::ctr::RNGType;
+  using tk::ctr::RNGType;
 
   // Resize std::vector triples to given fixed size (g_rng done in global scope)
   // (assignTests() will leverage on the default enum)
-  m_rngEnum.resize( g_maxRNGs, ctr::RNGType::NO_RNG );
+  m_rngEnum.resize( g_maxRNGs, RNGType::NO_RNG );
   m_rngPtr.reserve( g_maxRNGs );
 
   // Get vector of selected RNGs
-  const std::vector< ctr::RNGType > rngs =
-    m_base.control.get< ctr::selected, ctr::rng >();
+  const std::vector< RNGType > rngs =
+    m_base.control.get< tag::selected, tk::tag::rng >();
 
   // Instantiate selected RNGs. The ids below must be literals as this is done
   // at compile-time. However, only those RNGs that are requested by the user
@@ -90,57 +90,57 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   // same position, regardless of requested or not.
   for (auto& r : rngs) {
     #ifdef HAS_MKL
-    if (r == ctr::RNGType::MKL_MCG31) {
+    if (r == RNGType::MKL_MCG31) {
       addRNG< 0 >( r, uniform< 0 >, uniform_bits< 0 > );
-    } else if (r == ctr::RNGType::MKL_R250) {
+    } else if (r == RNGType::MKL_R250) {
       addRNG< 1 >( r, uniform< 1 >, uniform_bits< 1 > );
-    } else if (r == ctr::RNGType::MKL_MRG32K3A) {
+    } else if (r == RNGType::MKL_MRG32K3A) {
       addRNG< 2 >( r, uniform< 2 >, uniform_bits< 2 > );
-    } else if (r == ctr::RNGType::MKL_MCG59) {
+    } else if (r == RNGType::MKL_MCG59) {
       addRNG< 3 >( r, uniform< 3 >, uniform_bits< 3 > );
-    } else if (r == ctr::RNGType::MKL_WH) {
+    } else if (r == RNGType::MKL_WH) {
       addRNG< 4 >( r, uniform< 4 >, uniform_bits< 4 > );
-    } else if (r == ctr::RNGType::MKL_MT19937) {
+    } else if (r == RNGType::MKL_MT19937) {
       addRNG< 5 >( r, uniform< 5 >, uniform_bits< 5 > );
-    } else if (r == ctr::RNGType::MKL_MT2203) {
+    } else if (r == RNGType::MKL_MT2203) {
       addRNG< 6 >( r, uniform< 6 >, uniform_bits< 6 > );
-    } else if (r == ctr::RNGType::MKL_SFMT19937) {
+    } else if (r == RNGType::MKL_SFMT19937) {
       addRNG< 7 >( r, uniform< 7 >, uniform_bits< 7 > );
-    } else if (r == ctr::RNGType::MKL_SOBOL) {
+    } else if (r == RNGType::MKL_SOBOL) {
       addRNG< 8 >( r, uniform< 8 >, uniform_bits< 8 > );
-    } else if (r == ctr::RNGType::MKL_NIEDERR) {
+    } else if (r == RNGType::MKL_NIEDERR) {
       addRNG< 9 >( r, uniform< 9 >, uniform_bits< 9 > );
-    } else if (r == ctr::RNGType::MKL_IABSTRACT) {
+    } else if (r == RNGType::MKL_IABSTRACT) {
       addRNG< 10 >( r, uniform< 10 >, uniform_bits< 10 > );
-    } else if (r == ctr::RNGType::MKL_DABSTRACT) {
+    } else if (r == RNGType::MKL_DABSTRACT) {
       addRNG< 11 >( r, uniform< 11 >, uniform_bits< 11 > );
-    } else if (r == ctr::RNGType::MKL_SABSTRACT) {
+    } else if (r == RNGType::MKL_SABSTRACT) {
       addRNG< 12 >( r, uniform< 12 >, uniform_bits< 12 > );
-    } else if (r == ctr::RNGType::MKL_NONDETERM) {
+    } else if (r == RNGType::MKL_NONDETERM) {
       addRNG< 13 >( r, uniform< 13 >, uniform_bits< 13 > );
     } else
     #endif
-    if (r == ctr::RNGType::RNGSSE_GM19) {
+    if (r == RNGType::RNGSSE_GM19) {
       addRNG< 14 >( r, uniform< 14 >, uniform_bits< 14 > );
-    } else if (r == ctr::RNGType::RNGSSE_GM29) {
+    } else if (r == RNGType::RNGSSE_GM29) {
       addRNG< 15 >( r, uniform< 15 >, uniform_bits< 15 > );
-    } else if (r == ctr::RNGType::RNGSSE_GM31) {
+    } else if (r == RNGType::RNGSSE_GM31) {
       addRNG< 16 >( r, uniform< 16 >, uniform_bits< 16 > );
-    } else if (r == ctr::RNGType::RNGSSE_GM55) {
+    } else if (r == RNGType::RNGSSE_GM55) {
       addRNG< 17 >( r, uniform< 17 >, uniform_bits< 17 > );
-    } else if (r == ctr::RNGType::RNGSSE_GM61) {
+    } else if (r == RNGType::RNGSSE_GM61) {
       addRNG< 18 >( r, uniform< 18 >, uniform_bits< 18 > );
-    } else if (r == ctr::RNGType::RNGSSE_GQ581) {
+    } else if (r == RNGType::RNGSSE_GQ581) {
       addRNG< 19 >( r, uniform< 19 >, uniform_bits< 19 > );
-    } else if (r == ctr::RNGType::RNGSSE_GQ583) {
+    } else if (r == RNGType::RNGSSE_GQ583) {
       addRNG< 20 >( r, uniform< 20 >, uniform_bits< 20 > );
-    } else if (r == ctr::RNGType::RNGSSE_GQ584) {
+    } else if (r == RNGType::RNGSSE_GQ584) {
       addRNG< 21 >( r, uniform< 21 >, uniform_bits< 21 > );
-    } else if (r == ctr::RNGType::RNGSSE_MT19937) {
+    } else if (r == RNGType::RNGSSE_MT19937) {
       addRNG< 22 >( r, uniform< 22 >, uniform_bits< 22 > );
-    } else if (r == ctr::RNGType::RNGSSE_LFSR113) {
+    } else if (r == RNGType::RNGSSE_LFSR113) {
       addRNG< 23 >( r, uniform< 23 >, uniform_bits< 23 > );
-    } else if (r == ctr::RNGType::RNGSSE_MRG32K3A) {
+    } else if (r == RNGType::RNGSSE_MRG32K3A) {
       addRNG< 24 >( r, uniform< 24 >, uniform_bits< 24 > );
     }
   }

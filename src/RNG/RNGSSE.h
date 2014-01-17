@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:29:36 PM MST
+  \date      Thu 16 Jan 2014 10:25:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -14,7 +14,7 @@
 #include <RNG.h>
 #include <Exception.h>
 
-namespace quinoa {
+namespace tk {
 
 //! RNGSSE-based random number generator
 template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
@@ -26,13 +26,14 @@ class RNGSSE : public tk::RNG {
     //! Constructor with sequence length option: short, long, medium
     explicit RNGSSE( SeqNumType nthreads,
                      InitFn fnShort,
-                     ctr::RNGSSESeqLenType seqlen = ctr::RNGSSESeqLenType::SHORT,
+                     tk::ctr::RNGSSESeqLenType seqlen =
+                       tk::ctr::RNGSSESeqLenType::SHORT,
                      InitFn fnLong = nullptr,
                      InitFn fnMed = nullptr) {
       // Select init function based on sequence length specified
       InitFn fn = fnShort;
-      if (seqlen == ctr::RNGSSESeqLenType::LONG) fn = fnLong;
-      else if (seqlen == ctr::RNGSSESeqLenType::MEDIUM) fn = fnMed;
+      if (seqlen == tk::ctr::RNGSSESeqLenType::LONG) fn = fnLong;
+      else if (seqlen == tk::ctr::RNGSSESeqLenType::MEDIUM) fn = fnMed;
       // Throw if not NDEBUG and stream init function pointer is invalid
       Assert( fn != nullptr,
               tk::ExceptType::FATAL, "nullptr passed to RNGSSE constructor" );
@@ -72,6 +73,6 @@ class RNGSSE : public tk::RNG {
     std::unique_ptr< State[] > m_stream;
 };
 
-} // quinoa::
+} // tk::
 
 #endif // RNGSSE_h

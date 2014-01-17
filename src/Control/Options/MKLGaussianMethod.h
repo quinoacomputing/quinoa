@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:36:02 PM MST
+  \date      Thu 16 Jan 2014 08:58:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -18,7 +18,7 @@
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
-namespace quinoa {
+namespace tk {
 namespace ctr {
 
 //! MKL Gaussian random number generator methods
@@ -79,6 +79,6 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
 };
 
 } // ctr::
-} // quinoa::
+} // tk::
 
 #endif // MKLGaussianMethodOptions_h

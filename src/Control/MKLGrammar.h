@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 07:52:42 AM MST
+  \date      Thu 16 Jan 2014 09:46:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL grammar
   \details   MKL grammar
@@ -38,7 +38,7 @@ namespace mkl {
          tk::grm::process< Stack,
                            tk::kw::seed::pegtl_string,
                            tk::grm::Insert_field< Stack,
-                                                  quinoa::ctr::seed,
+                                                  tag::seed,
                                                   sel, vec, tags... > > {};
 
   //! MKL uniform method
@@ -46,8 +46,8 @@ namespace mkl {
   struct uniform_method :
          grm::rng_option< Stack,
                           tk::kw::uniform_method,
-                          quinoa::ctr::MKLUniformMethod,
-                          quinoa::ctr::uniform_method,
+                          ctr::MKLUniformMethod,
+                          tag::uniform_method,
                           sel, vec, tags... > {};
      
   //! MKL Gaussian method
@@ -55,8 +55,8 @@ namespace mkl {
   struct gaussian_method :
          grm::rng_option< Stack,
                           tk::kw::gaussian_method,
-                          quinoa::ctr::MKLGaussianMethod,
-                          quinoa::ctr::gaussian_method,
+                          ctr::MKLGaussianMethod,
+                          tag::gaussian_method,
                           sel, vec, tags... > {};
 
   //! rngs blocks
@@ -65,7 +65,7 @@ namespace mkl {
          pegtl::ifmust<
            tk::grm::scan< rng,
                           tk::grm::store_back_option< Stack,
-                                                      quinoa::ctr::RNG,
+                                                      ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
                            seed< Stack, sel, vec, tags... >,
