@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Tue Jan 14 08:53:01 2014
+  \date      Thu 16 Jan 2014 08:33:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -14,7 +14,7 @@
 #include <list>
 #include <map>
 
-#include <Quinoa/Options/RNG.h>
+#include <Options/RNG.h>
 #include <RNG.h>
 #include <RNGSSE.h>
 

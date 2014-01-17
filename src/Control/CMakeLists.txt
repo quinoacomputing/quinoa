@@ -7,9 +7,9 @@ add_library(QuinoaControl
             StringParser.C
             Quinoa/InputDeck/Parser.C
             Quinoa/CmdLine/Parser.C
-            Quinoa/Options/RNG.C
-            Quinoa/Options/MKLUniformMethod.C
-            Quinoa/Options/MKLGaussianMethod.C
+            Options/RNG.C
+            Options/MKLUniformMethod.C
+            Options/MKLGaussianMethod.C
 )
 
 INSTALL(TARGETS QuinoaControl
@@ -25,9 +25,9 @@ add_library(RNGTestControl
             StringParser.C
             RNGTest/InputDeck/Parser.C
             RNGTest/CmdLine/Parser.C
-            Quinoa/Options/RNG.C
-            Quinoa/Options/MKLUniformMethod.C
-            Quinoa/Options/MKLGaussianMethod.C
+            Options/RNG.C
+            Options/MKLUniformMethod.C
+            Options/MKLGaussianMethod.C
 )
 
 INSTALL(TARGETS RNGTestControl

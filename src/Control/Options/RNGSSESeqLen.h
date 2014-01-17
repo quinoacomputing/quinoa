@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/RNGSSESeqLen.h
+  \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Thu 26 Dec 2013 02:00:24 PM MST
+  \date      Thu 16 Jan 2014 08:37:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
 */
 //******************************************************************************
-#ifndef QuinoaRNGSSESeqLenOptions_h
-#define QuinoaRNGSSESeqLenOptions_h
+#ifndef RNGSSESeqLenOptions_h
+#define RNGSSESeqLenOptions_h
 
 #include <map>
 
@@ -66,4 +66,4 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
 } // ctr::
 } // quinoa::
 
-#endif // QuinoaRNGSSESeqLenOptions_h
+#endif // RNGSSESeqLenOptions_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 08:25:30 AM MST
+  \date      Thu 16 Jan 2014 08:34:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -15,7 +15,7 @@
 
 #include <mkl_vsl_types.h>
 
-#include <Quinoa/Options/RNG.h>
+#include <Options/RNG.h>
 #include <RNG.h>
 
 namespace quinoa {

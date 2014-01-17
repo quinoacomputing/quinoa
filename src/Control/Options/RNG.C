@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/RNG.C
+  \file      src/Control/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 14 Dec 2013 11:35:59 AM MST
+  \date      Thu 16 Jan 2014 08:37:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
 */
 //******************************************************************************
 
-#include <Quinoa/Options/RNG.h>
+#include <Options/RNG.h>
 
 using quinoa::ctr::RNG;
 

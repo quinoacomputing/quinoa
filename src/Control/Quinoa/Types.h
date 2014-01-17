@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 15 Jan 2014 09:33:48 PM MST
+  \date      Thu 16 Jan 2014 08:31:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -22,7 +22,7 @@
 #include <Quinoa/Options/Mix.h>
 #include <Quinoa/Options/Frequency.h>
 #include <Quinoa/Options/MixRate.h>
-#include <Quinoa/Options/RNG.h>
+#include <Options/RNG.h>
 
 namespace quinoa {
 //! control and parsing
