@@ -33,6 +33,11 @@
     - Revisit intel-specific compiler arguments; make all non-global if possible
     - Switch as many TPLs to optional as make sense
     - Echo "all optional libraries found" or what's missing at what path
+    - Make executables optional
+    - Make children of MonteCarlo optional
+    - Make children of SDEs optional
+    - Make coefficients policies optional
+    - Document what is optional
 
 * Statistics::estimateOrdinary/Central: move variables to for-loop-local
 
