@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:30:00 PM MST
+  \date      Sat 18 Jan 2014 07:55:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -38,7 +38,7 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   // Parse input deck into m_control, transfer cmdline (no longer needed)
   InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
-  // Create pretty printer for Quinoa
+  // Create pretty printer
   m_print = std::unique_ptr< RNGTestPrint >( new RNGTestPrint(m_control) );
   m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
@@ -113,7 +113,7 @@ RNGTestDriver::echo()
   if (m_battery && m_ntest) {
     print.battery( m_ntest, m_battery->nstat() );
     m_battery->print();
-    print.section("RNG(s) tested");
+    print.section("RNGs tested");
     print.MKLParams( control.get< tag::selected, tk::tag::rng >(),
                      control.get< tag::param, tk::tag::mklrng >() );
     print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),

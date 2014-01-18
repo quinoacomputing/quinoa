@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:28:28 PM MST
+  \date      Sat 18 Jan 2014 07:50:13 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -39,7 +39,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   // Parse input deck into m_control, transfer cmdline (no longer needed)
   InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
-  // Create pretty printer for Quinoa
+  // Create pretty printer
   m_print = std::unique_ptr< QuinoaPrint >( new QuinoaPrint(m_control) );
   m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
   m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
@@ -88,16 +88,16 @@ QuinoaDriver::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register geometry types
+  // Register geometries
   ctr::Geometry geometry;
   std::list< ctr::GeometryType > regGeo;
   tk::regist< AnalyticGeometry >( m_geometryFactory, regGeo, geometry,
                                  ctr::GeometryType::ANALYTIC, *m_base );
   tk::regist< DiscreteGeometry >( m_geometryFactory, regGeo, geometry,
                                   ctr::GeometryType::DISCRETE, *m_base );
-  print.list("Registered geometry options", geometry, regGeo);
+  print.list("Registered geometries", geometry, regGeo);
 
-  // Register physics types
+  // Register physics
   ctr::Physics physics;
   std::list< ctr::PhysicsType > regPhys;
   tk::regist< HomMix >( m_physicsFactory, regPhys, physics,
@@ -108,7 +108,7 @@ QuinoaDriver::initFactories(const tk::Print& print)
                        ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base );
   tk::regist< SPINSFlow >( m_physicsFactory, regPhys, physics,
                            ctr::PhysicsType::SPINSFLOW, *m_base );
-  print.list("Registered physics options", physics, regPhys);
+  print.list("Registered physics", physics, regPhys);
 }
 
 void

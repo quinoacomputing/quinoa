@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Thu Nov 14 09:48:42 2013
+  \date      Sat 18 Jan 2014 07:50:10 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
