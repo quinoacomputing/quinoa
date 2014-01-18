@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:06:41 PM MST
+  \date      Sat 18 Jan 2014 08:27:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -92,7 +92,16 @@ Physics::echo()
 
   print.endpart();
   print.part( "Problem" );
+
   print.section( "Title", control.get< tag::title >() );
+
+  print.section("Random number generators");
+
+  print.MKLParams( control.get< tag::selected, tk::tag::rng >(),
+                   control.get< tag::param, tk::tag::mklrng >() );
+  print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),
+                      control.get< tag::param, tk::tag::rngsse >() );
+
   print.Section< ctr::Physics, tag::selected, tag::physics >();
 
   print.subsection( "Output filenames" );
@@ -103,11 +112,7 @@ Physics::echo()
   print.item( "PDF", control.get< tag::cmd, tag::io, tag::pdf >() );
   print.endsubsection();
 
-  print.subsection("Selected");
-//  print.Item< tk::ctr::RNG, tag::selected, tk::tag::rng >();
-//   if (control.get< tag::selected, tk::tag::rng>() != tk::ctr::RNGType::NO_RNG ) {
-//     print.item( "Seed", control.get< tag::param, tk::tag::rng, tk::tag::seed >() );
-//   }
+  print.subsection("Modules");
   print.Item< ctr::Position, tag::selected, tag::position >();
   print.Item< ctr::Mass, tag::selected, tag::mass >();
   print.Item< ctr::Hydro, tag::selected, tag::hydro >();

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:35:33 PM MST
+  \date      Sat 18 Jan 2014 08:26:49 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -98,7 +98,7 @@ class Print {
     //! Print list: name: entries...
     void list(const std::string& name,
               const std::list< std::string >& entries) const {
-      section( name );
+      if (!entries.empty()) section( name );
       for (auto& e : entries) {
         std::cout << m_list_item_fmt % m_item_indent % e;
       }
@@ -109,7 +109,7 @@ class Print {
     void list(const std::string& name,
               const OptionType& opt,
               const std::list< Enum >& entries) const {
-      section( name );
+      if (!entries.empty()) section( name );
       for (auto& e : entries) {
         std::cout << m_list_item_fmt % m_item_indent % opt.name(e);
       }
@@ -145,7 +145,6 @@ class Print {
           } else {
             echoMKLParams( m->second );
           }
-          endsubsection();
         }
       }
     }
@@ -165,7 +164,6 @@ class Print {
           } else {
             echoRNGSSEParams( m->second, rng, r );
           }
-          endsubsection();
         }
       }
     }
