@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 07:34:01 AM MST
+  \date      Mon 20 Jan 2014 08:13:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -87,6 +87,30 @@ namespace deck {
     }
   };
 
+  //! put option in state at position given by tags if among the selected
+  template< class OptionType, typename sel, typename vec, typename... tags >
+  struct check_store_option :
+  pegtl::action_base< check_store_option< OptionType, sel, vec, tags... > >
+  {
+    static void apply(const std::string& value, Stack& stack) {
+      // error out if chosen item does not exist in selected vector
+      tk::Option< OptionType > opt;
+      using EnumType = typename OptionType::EnumType;
+      using value_type =
+        typename Stack::template nT< sel >::template nT< vec >::value_type;
+      bool exists = false;
+      for (const auto& r : stack.template get< sel, vec >()) {
+        if (opt.value(value) == r) exists = true;
+      }
+      if (!exists) {
+        tk::grm::handleError< Stack, tk::grm::Error::NOTSELECTED >
+                            ( stack, value );
+      }
+      tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
+                           ( stack, value, ctr::InputDeckDefaults );
+    }
+  };
+
   // Quinoa's InputDeck grammar
 
   //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
@@ -162,7 +186,10 @@ namespace deck {
   struct rng :
          tk::grm::process< Stack,
                            typename keyword::pegtl_string,
-                           store_option< option, tag::param, model, tags... >,
+                           check_store_option< option,
+                                               tag::selected,
+                                               tk::tag::rng,
+                                               tag::param, model, tags... >,
                            pegtl::alpha > {};
 
   //! scan selected option

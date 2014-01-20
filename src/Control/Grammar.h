@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 05:42:48 PM MST
+  \date      Mon 20 Jan 2014 08:10:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -30,7 +30,8 @@ namespace grm {
                                ALIAS,
                                MISSING,
                                UNSUPPORTED,
-                               NOOPTION };
+                               NOOPTION,
+                               NOTSELECTED };
 
   static const std::map< Error, std::string > err_msg( {
     { Error::KEYWORD, "Unknown keyword" },
@@ -40,7 +41,8 @@ namespace grm {
     { Error::ALIAS, "Alias keyword too long" },
     { Error::MISSING, "Required field missing" },
     { Error::UNSUPPORTED, "Option not supported" },
-    { Error::NOOPTION, "Option does not exist" }
+    { Error::NOOPTION, "Option does not exist" },
+    { Error::NOTSELECTED, "Option is not among the selected ones" }
   } );
   
   //! parser error handler
