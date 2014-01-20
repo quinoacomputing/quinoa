@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:51:48 PM MST
+  \date      Mon 20 Jan 2014 07:34:01 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -157,11 +157,13 @@ namespace deck {
                           typename keyword::pegtl_string,
                           tk::grm::Store_back< Stack, tag::param, tags... > > {};
 
-  //! scan parameter option
-  template< typename keyword, typename option, typename... tags >
-  struct parameter_option :
-         tk::grm::scan< typename keyword::pegtl_string,
-                        store_option< option, tag::param, tags... > > {};
+  //! rng parameter
+  template< typename keyword, typename option, typename model, typename... tags >
+  struct rng :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           store_option< option, tag::param, model, tags... >,
+                           pegtl::alpha > {};
 
   //! scan selected option
   template< typename keyword, typename option, typename... tags >
@@ -225,47 +227,6 @@ namespace deck {
          pegtl::ifmust< scan_geometry< kw::discrete_geometry >,
                         tk::grm::block< Stack > > {};
 
-  //! dir block
-  struct dir :
-         pegtl::ifmust< scan_mix< kw::mix_dir >,
-                        tk::grm::block< Stack,
-                                        component< kw::nscalar, tag::nscalar >,
-                                        parameter_option< kw::rng,
-                                                          tk::ctr::RNG,
-                                                          tag::dirichlet,
-                                                          tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
-                                                          tag::dirichlet,
-                                                          tag::b >,
-                                        parameter_vector< kw::dir_S,
-                                                          tag::dirichlet,
-                                                          tag::S >,
-                                        parameter_vector< kw::dir_kappa,
-                                                          tag::dirichlet,
-                                                          tag::kappa > > > {};
-
-  //! gendir block
-  struct gendir :
-         pegtl::ifmust< scan_mix< kw::mix_gendir >,
-                        tk::grm::block< Stack,
-                                        component< kw::nscalar, tag::nscalar >,
-                                        parameter_option< kw::rng,
-                                                          tk::ctr::RNG,
-                                                          tag::gendirichlet,
-                                                          tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
-                                                          tag::gendirichlet,
-                                                          tag::b >,
-                                        parameter_vector< kw::dir_S,
-                                                          tag::gendirichlet,
-                                                          tag::S >,
-                                        parameter_vector< kw::dir_kappa,
-                                                          tag::gendirichlet,
-                                                          tag::kappa >,
-                                        parameter_vector< kw::gendir_C,
-                                                          tag::gendirichlet,
-                                                          tag::c > > > {};
-
   //! statistics block
   struct statistics :
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
@@ -300,16 +261,54 @@ namespace deck {
                            parameter< kw::SLM_C0, tag::slm, tag::c0 >,
                            component< kw::nvelocity, tag::nvelocity > > > {};
 
+  //! dir block
+  struct dir :
+         pegtl::ifmust< scan_mix< kw::mix_dir >,
+                        tk::grm::block< Stack,
+                                        component< kw::nscalar, tag::nscalar >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::dirichlet,
+                                             tk::tag::rng >,
+                                        parameter_vector< kw::dir_B,
+                                                          tag::dirichlet,
+                                                          tag::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          tag::dirichlet,
+                                                          tag::S >,
+                                        parameter_vector< kw::dir_kappa,
+                                                          tag::dirichlet,
+                                                          tag::kappa > > > {};
+
+  //! gendir block
+  struct gendir :
+         pegtl::ifmust< scan_mix< kw::mix_gendir >,
+                        tk::grm::block< Stack,
+                                        component< kw::nscalar, tag::nscalar >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::gendirichlet,
+                                             tk::tag::rng >,
+                                        parameter_vector< kw::dir_B,
+                                                          tag::gendirichlet,
+                                                          tag::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          tag::gendirichlet,
+                                                          tag::S >,
+                                        parameter_vector< kw::dir_kappa,
+                                                          tag::gendirichlet,
+                                                          tag::kappa >,
+                                        parameter_vector< kw::gendir_C,
+                                                          tag::gendirichlet,
+                                                          tag::c > > > {};
+
   //! freq_gamma block
   struct freq_gamma :
          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
                           Stack,
                           component< kw::nfreq, tag::nfrequency >,
-                          parameter_option< kw::rng,
-                                            tk::ctr::RNG,
-                                            tag::gamma,
-                                            tk::tag::rng >,
+                          rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
                           parameter< kw::freq_gamma_C1, tag::gamma, tag::c1 >,
                           parameter< kw::freq_gamma_C2, tag::gamma, tag::c2 >,
                           parameter< kw::freq_gamma_C3, tag::gamma, tag::c3 >,
@@ -322,10 +321,7 @@ namespace deck {
                         tk::grm::block<
                           Stack,
                           component< kw::ndensity, tag::ndensity >,
-                          parameter_option< kw::rng,
-                                            tk::ctr::RNG,
-                                            tag::beta,
-                                            tk::tag::rng >,
+                          rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
                           parameter< kw::Beta_At, tag::beta, tag::atwood > >
                       > {};
 
