@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:04:20 PM MST
+  \date      Mon 20 Jan 2014 05:08:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -24,29 +24,41 @@ namespace quinoa {
 template< class Init, class Layout >
 class SDE : public Model {
 
+  public:
+    //! Return true indicating that SDE is stochastic
+    bool stochastic() const noexcept override { return true; }
+
+    //! Return RNG type if stochastic, NO_RNG if deterministic
+    tk::ctr::RNGType rng() const noexcept override { return m_rngType; }
+
   protected:
     //! Constructor: protected, designed to be base-only
     explicit SDE( const Base& base,
+                  tk::ctr::RNGType rngType,
                   tk::real* const particles,
                   int offset,
                   int ncomp ) :
+      m_rngType( rngType ),
       m_particles( particles ),
       m_npar( base.control.get< tag::component, tag::npar >() ),
       m_nprop( base.control.nprop() ),
       m_offset( offset ),
       m_ncomp( ncomp )
     {
+      Assert( m_rngType != tk::ctr::RNGType::NO_RNG, tk::ExceptType::FATAL,
+              "Cannot instantiate class SDE without an RNG" );
       // Initialize particle properties (and throw away init policy
       Init initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
       // Instantiate RNG
       initRNG( base );
     }
 
-    tk::real* const m_particles;    //!< Particle properties
-    const uint64_t m_npar;          //!< Total number of particles
-    const int m_nprop;              //!< Total number of particle properties
-    const int m_offset;             //!< Offset SDE operates from
-    const int m_ncomp;              //!< Number of components
+    const tk::ctr::RNGType m_rngType;  //!< RNG used
+    tk::real* const m_particles;       //!< Particle properties
+    const uint64_t m_npar;             //!< Total number of particles
+    const int m_nprop;                 //!< Total number of particle properties
+    const int m_offset;                //!< Offset SDE operates from
+    const int m_ncomp;                 //!< Number of components
 
   private:
     //! Don't permit copy constructor
@@ -60,14 +72,7 @@ class SDE : public Model {
 
     //! Instantiate random number genrator
     void initRNG( const Base& base ) {
-      // Get vector of selected RNGs
-//       const std::vector< tk::ctr::RNGType > rngs =
-//         base.control.get< tag::selected, tk::tag::rng>();
-//       // For now, only instantiate the first one of the RNGs
-//       if (rngs[0] != tk::ctr::RNGType::NO_RNG) {
-//         m_rng = std::unique_ptr< tk::RNG >( base.rng[rngs[0]]() );
-//       }
-//       ErrChk( m_rng, tk::ExceptType::FATAL, "No RNG requested");
+      m_rng = std::unique_ptr< tk::RNG >( base.rng[ m_rngType ]() );
     }
 
     std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator

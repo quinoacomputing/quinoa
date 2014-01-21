@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Sat 18 Jan 2014 08:27:53 AM MST
+  \date      Mon 20 Jan 2014 06:00:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -30,9 +30,6 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
   //! Initialize factories
   initFactories( print() );
 
-  //! Echo information on physics to be created
-  echo();
-
   // Instantiate mass model
   if (m_ndensity) {
     ctr::MassType m = control().get<tag::selected, tag::mass>();
@@ -50,6 +47,9 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
     ctr::MixType m = control().get<tag::selected, tag::mix>();
     m_mix = std::unique_ptr< Model >( m_mixFactory[m]() );
   }
+
+  //! Echo information on physics to be created
+  echo();
 }
 
 void
@@ -112,12 +112,11 @@ Physics::echo()
   print.item( "PDF", control.get< tag::cmd, tag::io, tag::pdf >() );
   print.endsubsection();
 
-  print.subsection("Modules");
   print.Item< ctr::Position, tag::selected, tag::position >();
   print.Item< ctr::Mass, tag::selected, tag::mass >();
   print.Item< ctr::Hydro, tag::selected, tag::hydro >();
   print.Item< ctr::Energy, tag::selected, tag::energy >();
-  print.Item< ctr::Mix, tag::selected, tag::mix >();
+  print.Model< ctr::Mix, tag::selected, tag::mix >( m_mix.get() );
   print.Item< ctr::Frequency, tag::selected, tag::frequency >();
   print.Item< ctr::MixRate, tag::selected, tag::mixrate >();
   print.endsubsection();

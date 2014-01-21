@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:59:13 PM MST
+  \date      Mon 20 Jan 2014 06:05:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -91,6 +91,27 @@ class QuinoaPrint : public tk::Print {
         for (auto& v : m_ctr.get<tag::stat>()) std::cout << v;
         std::cout << '\n';
       }
+    }
+
+    //! Print configuration of a model
+    template< typename OptionType, typename... tags >
+    void Model( const quinoa::Model* const model ) const {
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
+        tk::Option< OptionType > opt;
+        // Echo option "group : value" as subsection title
+        subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>() ) );
+        // Echo RNG if model is stochastic
+        if (model->stochastic()) {
+          tk::Option< tk::ctr::RNG > rng;
+          std::cout << m_item_name_value_fmt % m_item_indent
+                                             % rng.group()
+                                             % rng.name( model->rng() );
+        }
+      }
+    }
+
+    template< class M >
+    void Model( const M* const model ) const {
     }
 
   private:

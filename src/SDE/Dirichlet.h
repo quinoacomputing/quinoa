@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:04:39 PM MST
+  \date      Mon 20 Jan 2014 04:53:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -27,6 +27,7 @@ class Dirichlet : public SDE< Init, Layout > {
     //! Constructor
     explicit Dirichlet( const Base& base, tk::real* const particles ) :
       sde( base,
+           base.control.get< tag::param, tag::dirichlet, tk::tag::rng >(),
            particles,
            base.control.scalarOffset(),
            base.control.get< tag::component, tag::nscalar >() ),
