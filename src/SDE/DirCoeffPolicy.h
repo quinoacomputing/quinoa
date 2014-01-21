@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 09:27:45 PM MST
+  \date      Mon 20 Jan 2014 10:10:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -13,11 +13,12 @@
 
 namespace quinoa {
 
-//! Dirichlet constant coefficients policity: constants
+//! Dirichlet constant coefficients policity: constants in time
 struct DirCoeffConst {
 
   //! Constructor: initialize coefficients
-  DirCoeffConst( unsigned int ncomp,
+  DirCoeffConst( std::string& policy,
+                 unsigned int ncomp,
                  const std::vector< tk::real >& b_,
                  const std::vector< tk::real >& S_,
                  const std::vector< tk::real >& k_,
@@ -25,6 +26,7 @@ struct DirCoeffConst {
                  std::vector< tk::real >& S,
                  std::vector< tk::real >& k )
   {
+    policy = "constant";
     b = b_; S = S_; k = k_;
     ErrChk( b.size() == ncomp, tk::ExceptType::FATAL,
             "Wrong number of Dirichlet model parameters 'b'");
