@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 06:00:40 PM MST
+  \date      Mon 20 Jan 2014 09:29:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -112,25 +112,24 @@ Physics::echo()
   print.item( "PDF", control.get< tag::cmd, tag::io, tag::pdf >() );
   print.endsubsection();
 
-  print.Item< ctr::Position, tag::selected, tag::position >();
-  print.Item< ctr::Mass, tag::selected, tag::mass >();
-  print.Item< ctr::Hydro, tag::selected, tag::hydro >();
-  print.Item< ctr::Energy, tag::selected, tag::energy >();
+//   print.Item< ctr::Position, tag::selected, tag::position >();
+//   print.Item< ctr::Mass, tag::selected, tag::mass >();
+//   print.Item< ctr::Hydro, tag::selected, tag::hydro >();
+//   print.Item< ctr::Energy, tag::selected, tag::energy >();
   print.Model< ctr::Mix, tag::selected, tag::mix >( m_mix.get() );
-  print.Item< ctr::Frequency, tag::selected, tag::frequency >();
-  print.Item< ctr::MixRate, tag::selected, tag::mixrate >();
+//   print.Item< ctr::Frequency, tag::selected, tag::frequency >();
+//   print.Item< ctr::MixRate, tag::selected, tag::mixrate >();
   print.endsubsection();
 
   print.subsection( "Number of components" );
-  print.Item< tag::component, tag::nposition >( "Positions" );
-  print.Item< tag::component, tag::ndensity >( "Densities" );
-  print.Item< tag::component, tag::nvelocity >( "Velocities" );
-  print.Item< tag::component, tag::nscalar >( "Scalars" );
-  print.Item< tag::component, tag::nfrequency >( "Turbulent frequencies" );
+//   print.Item< tag::component, tag::nposition >( "Positions" );
+//   print.Item< tag::component, tag::ndensity >( "Densities" );
+//   print.Item< tag::component, tag::nvelocity >( "Velocities" );
+//   print.Item< tag::component, tag::nfrequency >( "Turbulent frequencies" );
   print.Item< tag::component, tag::npar >( "Particles" );
   print.endsubsection();
 
-  print.subsection( "Incrementation parameters" );
+  print.subsection( "Increment parameters" );
   print.item( "Number of time steps", control.get< tag::incpar, tag::nstep >() );
   print.item( "Terminate time", control.get< tag::incpar, tag::term >() );
   print.item( "Initial time step size", control.get< tag::incpar, tag::dt >() );

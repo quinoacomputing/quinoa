@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Model.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 05:04:39 PM MST
+  \date      Mon 20 Jan 2014 10:03:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model
   \details   Model
@@ -34,6 +34,18 @@ class Model {
 
     //! Return RNG type if stochastic, NO_RNG if deterministic
     virtual tk::ctr::RNGType rng() const noexcept = 0;
+
+    //! Return number of components
+    virtual int ncomp() const noexcept = 0;
+
+    //! Return initialization policy
+    virtual const std::string& initPolicy() const noexcept = 0;
+
+    //! Return data layout policy
+    virtual const std::string& layoutPolicy() const noexcept = 0;
+
+    //! Return coefficients policy
+    virtual const std::string& coeffPolicy() const noexcept = 0;
 
   private:
     //! Don't permit copy constructor

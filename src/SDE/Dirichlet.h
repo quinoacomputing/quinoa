@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 04:53:30 PM MST
+  \date      Mon 20 Jan 2014 10:10:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -31,11 +31,17 @@ class Dirichlet : public SDE< Init, Layout > {
            particles,
            base.control.scalarOffset(),
            base.control.get< tag::component, tag::nscalar >() ),
-      m_coeff( base.control.get< tag::component, tag::nscalar >(),
+      m_coeff( m_coeffPolicy,
+               base.control.get< tag::component, tag::nscalar >(),
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
                base.control.get< tag::param, tag::dirichlet, tag::S >(),
                base.control.get< tag::param, tag::dirichlet, tag::kappa >(),
                m_b, m_S, m_k ) {}
+
+    //! Return coefficients policy
+    const std::string& coeffPolicy() const noexcept override {
+      return m_coeffPolicy;
+    }
 
     //! Pull base class data to scope
     using sde::m_particles;
@@ -75,7 +81,8 @@ class Dirichlet : public SDE< Init, Layout > {
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
 
-    Coefficients m_coeff;               //!< Coefficients update policy
+    std::string m_coeffPolicy;          //!< Coefficients policy name
+    Coefficients m_coeff;               //!< Coefficients policy
 
     std::vector< tk::real > m_b;        //!< SDE coefficients
     std::vector< tk::real > m_S;

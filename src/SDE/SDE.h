@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 05:08:27 PM MST
+  \date      Mon 20 Jan 2014 10:01:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -31,6 +31,19 @@ class SDE : public Model {
     //! Return RNG type if stochastic, NO_RNG if deterministic
     tk::ctr::RNGType rng() const noexcept override { return m_rngType; }
 
+    //! Return number of components
+    int ncomp() const noexcept override { return m_ncomp; }
+
+    //! Return initialization policy
+    const std::string& initPolicy() const noexcept override {
+      return m_initPolicy;
+    }
+
+    //! Return data layout policy
+    const std::string& layoutPolicy() const noexcept override {
+      return m_layoutPolicy;
+    }
+
   protected:
     //! Constructor: protected, designed to be base-only
     explicit SDE( const Base& base,
@@ -47,10 +60,11 @@ class SDE : public Model {
     {
       Assert( m_rngType != tk::ctr::RNGType::NO_RNG, tk::ExceptType::FATAL,
               "Cannot instantiate class SDE without an RNG" );
-      // Initialize particle properties (and throw away init policy
-      Init initialize( m_particles, m_npar, m_nprop, m_offset, m_ncomp );
+      // Initialize particle properties (and throw away init policy)
+      Init( m_initPolicy, m_particles, m_npar, m_nprop, m_offset, m_ncomp );
       // Instantiate RNG
       initRNG( base );
+      m_layoutPolicy = "unused";
     }
 
     const tk::ctr::RNGType m_rngType;  //!< RNG used
@@ -76,6 +90,8 @@ class SDE : public Model {
     }
 
     std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
+    std::string m_initPolicy;                   //!< Initialization policy name
+    std::string m_layoutPolicy;                 //!< Data layout policy name
 };
 
 } // quinoa::
