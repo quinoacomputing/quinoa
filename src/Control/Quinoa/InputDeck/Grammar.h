@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 08:13:05 AM MST
+  \date      Tue 21 Jan 2014 07:38:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -95,19 +95,17 @@ namespace deck {
     static void apply(const std::string& value, Stack& stack) {
       // error out if chosen item does not exist in selected vector
       tk::Option< OptionType > opt;
-      using EnumType = typename OptionType::EnumType;
-      using value_type =
-        typename Stack::template nT< sel >::template nT< vec >::value_type;
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
         if (opt.value(value) == r) exists = true;
       }
-      if (!exists) {
+      if (exists) {
+        tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
+                             ( stack, value, ctr::InputDeckDefaults );
+      } else {
         tk::grm::handleError< Stack, tk::grm::Error::NOTSELECTED >
                             ( stack, value );
       }
-      tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
-                           ( stack, value, ctr::InputDeckDefaults );
     }
   };
 
