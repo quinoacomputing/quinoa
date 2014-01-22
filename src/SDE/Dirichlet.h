@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 10:10:51 PM MST
+  \date      Tue 21 Jan 2014 10:05:57 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -17,7 +17,7 @@
 namespace quinoa {
 
 //! Dirichlet : Mix
-template< class Init, class Layout, class Coefficients >
+template< class Init, bool Layout, class Coefficients >
 class Dirichlet : public SDE< Init, Layout > {
 
   public:
@@ -36,7 +36,11 @@ class Dirichlet : public SDE< Init, Layout > {
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
                base.control.get< tag::param, tag::dirichlet, tag::S >(),
                base.control.get< tag::param, tag::dirichlet, tag::kappa >(),
-               m_b, m_S, m_k ) {}
+               m_b, m_S, m_k )
+    {
+       Data<Layout> d( particles, m_nprop, m_offset );
+       d( 0, 0 );
+    }
 
     //! Return coefficients policy
     const std::string& coeffPolicy() const noexcept override {
