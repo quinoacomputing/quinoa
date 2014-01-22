@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 10:01:21 PM MST
+  \date      Tue 21 Jan 2014 09:32:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -21,7 +21,7 @@
 namespace quinoa {
 
 //! SDE
-template< class Init, class Layout >
+template< class Init, bool Layout >
 class SDE : public Model {
 
   public:

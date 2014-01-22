@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 09:29:49 PM MST
+  \date      Tue 21 Jan 2014 10:06:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -74,7 +74,7 @@ Physics::initFactories(const tk::Print& print)
   // Register mix models
   ctr::Mix mix;
   std::list< ctr::MixType > regMix;
-  tk::regist< Dirichlet< InitRaw, LayoutParticleMajor, DirCoeffConst > >
+  tk::regist< Dirichlet< InitRaw, ParticleMajor, DirCoeffConst > >
             ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
               base(), particles() );
   print.list("Registered material mix models", mix, regMix);
