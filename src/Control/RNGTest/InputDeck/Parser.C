@@ -2,12 +2,14 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:57:37 PM MST
+  \date      Sat 25 Jan 2014 02:28:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <RNGTest/InputDeck/Parser.h>
 #include <RNGTest/InputDeck/Grammar.h>
@@ -31,7 +33,7 @@ InputDeckParser::InputDeckParser(const tk::Print& print,
   // Create std::unique_ptr behind which to store parsed input deck data:
   // PEGTLInputDeck derives from InputDeck and has location() used during parse
   std::unique_ptr< deck::PEGTLInputDeck >
-    pid( new deck::PEGTLInputDeck(input, *cmdline) );
+    pid( tk::make_unique< deck::PEGTLInputDeck >( input, *cmdline ) );
 
   // Parse input file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging

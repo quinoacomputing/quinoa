@@ -71,8 +71,8 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 # Add compiler flags
 include(CheckCXXCompilerFlag)
 
-check_cxx_compiler_flag(-std=c++11 HAS_CPP0X)
-if(HAS_CPP0X)
+check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
+if(HAS_CPP11)
   add_definitions("-std=c++11")
   set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
 endif()

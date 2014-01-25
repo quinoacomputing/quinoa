@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:25:54 PM MST
+  \date      Sat 25 Jan 2014 03:16:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef RNGSSE_h
 #define RNGSSE_h
+
+#include <make_unique.h>
 
 #include <RNG.h>
 #include <Exception.h>
@@ -40,7 +42,7 @@ class RNGSSE : public tk::RNG {
       // Throw if not NDEBUG and nthreads invalid
       Assert(nthreads > 0, tk::ExceptType::FATAL, "Need at least one thread");
       // Allocate array of stream-pointers for threads
-      m_stream = std::unique_ptr< State[] >( new State [nthreads] );
+      m_stream = tk::make_unique< State[] >( nthreads );
       // Initialize thread-streams
       for (SeqNumType i=0; i<nthreads; ++i) {
         fn( &m_stream[i], i );
