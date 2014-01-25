@@ -2,12 +2,14 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:53:55 PM MST
+  \date      Sat 25 Jan 2014 02:30:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <Quinoa/CmdLine/Parser.h>
 #include <Quinoa/CmdLine/Grammar.h>
@@ -28,7 +30,8 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
 
   // Create std::unique_ptr behind which to store parsed command line data:
   // PEGTLCmdLine derives from CmdLine and has location() used during parsing
-  std::unique_ptr< cmd::PEGTLCmdLine > pcl( new cmd::PEGTLCmdLine(input) );
+  std::unique_ptr< cmd::PEGTLCmdLine >
+    pcl( tk::make_unique< cmd::PEGTLCmdLine >( input ) );
 
   // Parse command line string by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging

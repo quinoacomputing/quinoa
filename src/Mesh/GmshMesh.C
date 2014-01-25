@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:27:32 PM MST
+  \date      Sat 25 Jan 2014 03:29:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -11,6 +11,8 @@
 
 #include <iostream>
 #include <iterator>
+
+#include <make_unique.h>
 
 #include <GmshMesh.h>
 #include <Exception.h>
@@ -27,17 +29,17 @@ GmshMesh::alloc(const int nnodes, const int nlines, const int ntriangles)
   // Store number of nodes
   m_nnodes = nnodes;
 
-  // Allocate new memory entry to store the coordinates
-  m_coord = std::unique_ptr<tk::real[]>(new tk::real [3*nnodes]);
+  // Allocate memory to store the coordinates
+  m_coord = tk::make_unique< tk::real[] >( 3*nnodes );
 
-  // Allocate new memory entry to store the node Ids
-  m_nodeId = std::unique_ptr<int[]>(new int [nnodes]);
+  // Allocate memory to store the node Ids
+  m_nodeId = tk::make_unique< int[] >( nnodes );
 
-  // Allocate new memory entry to store the line element Ids
-  m_lineId = std::unique_ptr<int[]>(new int [nlines]);
+  // Allocate memory to store the line element Ids
+  m_lineId = tk::make_unique< int[] >( nlines );
 
-  // Allocate new memory entry to store the triangle element Ids
-  m_triangleId = std::unique_ptr<int[]>(new int [ntriangles]);
+  // Allocate memory to store the triangle element Ids
+  m_triangleId = tk::make_unique< int[] >( ntriangles );
 
   // Reserve capacity to store element connectivities and tags
   reserveElem(nlines, ntriangles);

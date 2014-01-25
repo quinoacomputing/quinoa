@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 08:34:20 AM MST
+  \date      Sat 25 Jan 2014 03:49:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -28,8 +28,8 @@ namespace tk {
 //! \param[in] e       Enum key to factory's std::map
 //! \param[in] args    Variable number of arguments to constructor
 template< class C, class F, class O, typename E, typename... Args >
-void regist( F& f, std::list<E>& reg, const O& o, E e, const Args&... args ) {
-  reg.push_back( o.template add<C>( f, e, std::move(args)... ) );
+void regist( F& f, std::list<E>& reg, const O& o, E e, Args&&... args ) {
+  reg.push_back( o.template add<C>( f, e, std::forward<Args>(args)... ) );
 }
 
 } // tk::

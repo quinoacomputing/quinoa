@@ -2,12 +2,14 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:26:40 PM MST
+  \date      Sat 25 Jan 2014 03:15:28 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <mkl_vsl.h>
 
@@ -33,8 +35,7 @@ MKLRNG::MKLRNG( int nthreads,
   Assert(nthreads > 0, tk::ExceptType::FATAL, "Need at least one thread");
 
   // Allocate array of stream-pointers for threads (noexcept)
-  m_stream =
-    std::unique_ptr< VSLStreamStatePtr[] >( new VSLStreamStatePtr [nthreads] );
+  m_stream = tk::make_unique< VSLStreamStatePtr[] >( nthreads );
 
   // Initialize thread-streams for block-splitting. These MKL VSL functions
   // dynamically allocate memory, so these calls being in a constructor are a

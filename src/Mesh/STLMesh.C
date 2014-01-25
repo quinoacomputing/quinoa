@@ -2,12 +2,14 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:15:23 AM MST
+  \date      Sat 25 Jan 2014 03:26:22 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) mesh class definition
   \details   ASCII STL (STereoLithography) mesh class definition
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <STLMesh.h>
 
@@ -25,12 +27,12 @@ STLMesh::alloc(const size_t nnodes)
   m_nnodes = nnodes;
 
   // Allocate memory to store the x, y, z coordinates
-  m_x = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
-  m_y = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
-  m_z = std::unique_ptr<tk::real[]>(new tk::real [nnodes]);
+  m_x = tk::make_unique< tk::real[] >( nnodes );
+  m_y = tk::make_unique< tk::real[] >( nnodes );
+  m_z = tk::make_unique< tk::real[] >( nnodes );
 
   // Allocate memory to store the node indices describing facets
-  m_nodelist = std::unique_ptr<int[]>(new int [nnodes]);
+  m_nodelist = tk::make_unique< int[] >( nnodes );
   // Fill nodelist with increasing integers; this serves as connectivity
   for (size_t i=0; i<nnodes; ++i) m_nodelist[i] = i;
 }

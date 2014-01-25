@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Mon 11 Nov 2013 09:01:00 AM MST
+  \date      Sat 25 Jan 2014 03:36:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -13,6 +13,8 @@
 
 #include <iostream>
 #include <memory>
+
+#include <make_unique.h>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -41,11 +43,11 @@ SymCompRowMatrix::SymCompRowMatrix(int size,
 {
   // Allocate array for storing the nonzeros in each row
   // TODO: Converted to unique_ptr, but still need to zero!
-  std::unique_ptr<int[]> rnz(new int [size]);
+  std::unique_ptr< int[] > rnz( tk::make_unique< int[] >( size ) );
 
   // Allocate array for row indices
   // TODO: Converted to unique_ptr, but still need to zero!
-  m_ia = std::unique_ptr<int[]>(new int [m_rsize+1]);
+  m_ia = tk::make_unique< int[] >( m_rsize+1 );
 
   // Calculate number of nonzeros in each block row (rnz[]),
   // total number of nonzeros (nnz) and fill row indices (m_ia[])
@@ -69,10 +71,10 @@ SymCompRowMatrix::SymCompRowMatrix(int size,
 
   // Allocate array for column indices
   // TODO: Converted to unique_ptr, but still need to zero!
-  m_ja = std::unique_ptr<int[]>(new int [m_nnz]);
+  m_ja = tk::make_unique< int[] >( m_nnz );
   // Allocate array for nonzero matrix values
   // TODO: Converted to unique_ptr, but still need to zero!
-  m_a = std::unique_ptr<real[]>(new real [m_nnz]);
+  m_a = tk::make_unique< real[] >( m_nnz );
 
   // Fill column indices
   for (int i=0; i<size; i++) { // loop over all points
@@ -89,6 +91,7 @@ SymCompRowMatrix::SymCompRowMatrix(int size,
     }
   }
 
+  // TODO: Replace with std::sort()
   // (bubble-)Sort column indices
   // loop over all points
   for (int i=0; i<size; i++) {

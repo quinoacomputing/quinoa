@@ -2,12 +2,14 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 18 Jan 2014 07:50:13 AM MST
+  \date      Sat 25 Jan 2014 03:12:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <Factory.h>
 #include <QuinoaDriver.h>
@@ -40,9 +42,9 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
   // Create pretty printer
-  m_print = std::unique_ptr< QuinoaPrint >( new QuinoaPrint(m_control) );
-  m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
-  m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
+  m_print = tk::make_unique< QuinoaPrint >( m_control );
+  m_paradigm = tk::make_unique< tk::Paradigm >( print );
+  m_timer = tk::make_unique< tk::Timer >();
 
   print.endpart();
   print.part("Factory");
@@ -56,8 +58,8 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
-  m_base = std::unique_ptr< Base >(
-           new Base(*m_print, *m_paradigm, *m_control, *m_timer, m_RNGFactory) );
+  m_base = tk::make_unique< Base >( *m_print, *m_paradigm, *m_control,
+                                    *m_timer, m_RNGFactory );
 
   //! Initialize factories
   initFactories( print );

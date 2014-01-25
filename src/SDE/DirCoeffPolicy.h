@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 10:10:20 PM MST
+  \date      Sat 25 Jan 2014 04:43:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies

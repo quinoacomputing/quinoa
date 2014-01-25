@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:37:30 AM MST
+  \date      Sat 25 Jan 2014 04:45:01 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -31,6 +31,9 @@ class Dirichlet : public SDE< Init > {
            particles,
            base.control.scalarOffset(),
            base.control.get< tag::component, tag::nscalar >() ),
+      m_b( base.control.get< tag::component, tag::nscalar >() ),
+      m_S( base.control.get< tag::component, tag::nscalar >() ),
+      m_k( base.control.get< tag::component, tag::nscalar >() ),
       m_coeff( m_coeffPolicy,
                base.control.get< tag::component, tag::nscalar >(),
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
@@ -81,12 +84,12 @@ class Dirichlet : public SDE< Init > {
     //! Don't permit move assigment
     Dirichlet& operator=(Dirichlet&&) = delete;
 
-    std::string m_coeffPolicy;          //!< Coefficients policy name
-    Coefficients m_coeff;               //!< Coefficients policy
-
     std::vector< tk::real > m_b;        //!< SDE coefficients
     std::vector< tk::real > m_S;
     std::vector< tk::real > m_k;
+
+    std::string m_coeffPolicy;          //!< Coefficients policy name
+    Coefficients m_coeff;               //!< Coefficients policy
 };
 
 } // quinoa::

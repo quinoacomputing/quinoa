@@ -2,12 +2,14 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 18 Jan 2014 07:55:45 AM MST
+  \date      Sat 25 Jan 2014 03:14:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
+
+#include <make_unique.h>
 
 #include <Factory.h>
 #include <RNGTestDriver.h>
@@ -39,9 +41,9 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
   // Create pretty printer
-  m_print = std::unique_ptr< RNGTestPrint >( new RNGTestPrint(m_control) );
-  m_paradigm = std::unique_ptr< tk::Paradigm >( new tk::Paradigm(print) );
-  m_timer = std::unique_ptr< tk::Timer >( new tk::Timer );
+  m_print = tk::make_unique< RNGTestPrint >( m_control );
+  m_paradigm = tk::make_unique< tk::Paradigm >( print );
+  m_timer = tk::make_unique< tk::Timer >();
 
   print.endpart();
   print.part("Factory");
@@ -55,8 +57,8 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
-  m_base = std::unique_ptr< Base >(
-           new Base(*m_print, *m_paradigm, *m_control, *m_timer, m_RNGFactory) );
+  m_base = tk::make_unique< Base >( *m_print, *m_paradigm, *m_control,
+                                    *m_timer, m_RNGFactory );
 
   //! Initialize factories
   initFactories( print );

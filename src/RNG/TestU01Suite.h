@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:11:09 PM MST
+  \date      Sat 25 Jan 2014 03:20:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -156,14 +156,13 @@ class TestU01Suite : public Battery {
               Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
     {
-      std::unique_ptr< TestType >
-        ptr( new TestType( id,
-                           gen.get(),
-                           std::move(rng),
-                           std::move(names),
-                           runner,
-                           std::forward<Ts>(xargs)... ) );
-      m_tests.push_back( std::move(ptr) );
+      m_tests.push_back( 
+        tk::make_unique< TestType >( id,
+                                     gen.get(),
+                                     std::move(rng),
+                                     std::move(names),
+                                     runner,
+                                     std::forward<Ts>(xargs)... ) );
     }
 
     static const long THOUSAND = 1000;
