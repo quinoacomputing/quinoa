@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 10:12:07 PM MST
+  \date      Wed 22 Jan 2014 09:33:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -104,10 +104,10 @@ class QuinoaPrint : public tk::Print {
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % "Init policy"
                                            % model->initPolicy();
-        // Echo data layout policy
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Data layout policy"
-                                           % model->layoutPolicy();
+//         // Echo data layout policy
+//         std::cout << m_item_name_value_fmt % m_item_indent
+//                                            % "Data layout policy"
+//                                            % model->layoutPolicy();
         // Echo coefficients policy
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % "Coefficients policy"

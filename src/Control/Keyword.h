@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed Oct 30 07:08:15 2013
+  \date      Fri 24 Jan 2014 08:26:40 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -29,9 +29,9 @@ struct keyword {
 
   //! Accessor to keyword as std::tring
   std::string string() const {
-    return std::move(std::string( (sizeof...(Chars)) ?
-                                  (pegtl::escaper<Char, Chars...>::result()) :
-                                  (pegtl::escape(Char)) ));
+    return std::string( (sizeof...(Chars)) ?
+                        (pegtl::escaper<Char, Chars...>::result()) :
+                        (pegtl::escape(Char)) );
   }
 
   //! Accessor to name (more human readable but still short description)

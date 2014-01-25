@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Types.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:09:34 2013
+  \date      Fri 24 Jan 2014 08:07:28 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Toolkit-level type definitions
   \details   Toolkit-level type definitions
@@ -15,6 +15,6 @@ namespace tk {
 
 using real = double;
 
-} // tk
+} // tk::
 
 #endif // Types_h

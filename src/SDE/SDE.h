@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Tue 21 Jan 2014 09:32:04 PM MST
+  \date      Fri 24 Jan 2014 07:38:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -16,12 +16,11 @@
 #include <Model.h>
 #include <Base.h>
 #include <InitPolicy.h>
-#include <LayoutPolicy.h>
 
 namespace quinoa {
 
 //! SDE
-template< class Init, bool Layout >
+template< class Init >
 class SDE : public Model {
 
   public:
@@ -39,16 +38,11 @@ class SDE : public Model {
       return m_initPolicy;
     }
 
-    //! Return data layout policy
-    const std::string& layoutPolicy() const noexcept override {
-      return m_layoutPolicy;
-    }
-
   protected:
     //! Constructor: protected, designed to be base-only
     explicit SDE( const Base& base,
                   tk::ctr::RNGType rngType,
-                  tk::real* const particles,
+                  const ParProps& particles,
                   int offset,
                   int ncomp ) :
       m_rngType( rngType ),
@@ -64,11 +58,10 @@ class SDE : public Model {
       Init( m_initPolicy, m_particles, m_npar, m_nprop, m_offset, m_ncomp );
       // Instantiate RNG
       initRNG( base );
-      m_layoutPolicy = "unused";
     }
 
     const tk::ctr::RNGType m_rngType;  //!< RNG used
-    tk::real* const m_particles;       //!< Particle properties
+    const ParProps& m_particles;       //!< Particle properties
     const uint64_t m_npar;             //!< Total number of particles
     const int m_nprop;                 //!< Total number of particle properties
     const int m_offset;                //!< Offset SDE operates from
@@ -91,7 +84,6 @@ class SDE : public Model {
 
     std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
     std::string m_initPolicy;                   //!< Initialization policy name
-    std::string m_layoutPolicy;                 //!< Data layout policy name
 };
 
 } // quinoa::

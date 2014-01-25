@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 07:31:13 PM MST
+  \date      Fri 24 Jan 2014 07:24:47 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -16,6 +16,7 @@
 #include <Paradigm.h>
 #include <Timer.h>
 #include <Driver.h>
+#include <LayoutPolicy.h>
 
 namespace quinoa {
 
@@ -38,6 +39,13 @@ struct Base {
                               timer(Timer),
                               rng(Rng) {}
 };
+
+//! Select data layout policy for particle properties
+#ifdef LAYOUT_PARTICLE
+using ParProps = ParticleProperties< ParticleMajor >;
+#else
+using ParProps = ParticleProperties< PropertyMajor >;
+#endif
 
 } // quinoa::
 

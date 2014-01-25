@@ -89,6 +89,27 @@ if(HAS_PEDANTIC)
   add_definitions("-Wno-vla")
 endif()
 
+# Set data layout for particle properties
+# Available options
+set(LAYOUT_VALUES "particle" "property")
+# Initialize all to off
+set(LAYOUT_PARTICLE off)  # 0
+set(LAYOUT_PROPERTY off)  # 1
+# Set default and select from list
+set(LAYOUT "particle" CACHE STRING "Select data layout for particle properties. Default: particle(-major). Available options: ${LAYOUT_VALUES}")
+SET_PROPERTY (CACHE LAYOUT PROPERTY STRINGS ${LAYOUT_VALUES})
+STRING (TOLOWER ${LAYOUT} LAYOUT)
+LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
+# Evaluate selected option and put in a define for it
+IF (${LAYOUT_INDEX} EQUAL 0)
+  set(LAYOUT_PARTICLE on)
+ELSEIF (${LAYOUT_INDEX} EQUAL 1)
+  set(LAYOUT_PROPERTY on)
+ELSEIF (${LAYOUT_INDEX} EQUAL -1)
+  MESSAGE(FATAL_ERROR "Data layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
+ENDIF()
+message(STATUS "Data layout for particle properties (LAYOUT): " ${LAYOUT})
+
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 

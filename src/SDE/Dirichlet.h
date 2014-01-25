@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 21 Jan 2014 10:05:57 PM MST
+  \date      Fri 24 Jan 2014 07:37:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -17,15 +17,15 @@
 namespace quinoa {
 
 //! Dirichlet : Mix
-template< class Init, bool Layout, class Coefficients >
-class Dirichlet : public SDE< Init, Layout > {
+template< class Init, class Coefficients >
+class Dirichlet : public SDE< Init > {
 
   public:
     //! SDE base shorthand
-    using sde = SDE< Init, Layout >;
+    using sde = SDE< Init >;
 
     //! Constructor
-    explicit Dirichlet( const Base& base, tk::real* const particles ) :
+    explicit Dirichlet( const Base& base, const ParProps& particles ) :
       sde( base,
            base.control.get< tag::param, tag::dirichlet, tk::tag::rng >(),
            particles,
@@ -36,11 +36,7 @@ class Dirichlet : public SDE< Init, Layout > {
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
                base.control.get< tag::param, tag::dirichlet, tag::S >(),
                base.control.get< tag::param, tag::dirichlet, tag::kappa >(),
-               m_b, m_S, m_k )
-    {
-       Data<Layout> d( particles, m_nprop, m_offset );
-       d( 0, 0 );
-    }
+               m_b, m_S, m_k ) {}
 
     //! Return coefficients policy
     const std::string& coeffPolicy() const noexcept override {
@@ -55,24 +51,24 @@ class Dirichlet : public SDE< Init, Layout > {
 
     //! Advance particles
     void advance(int p, int tid, tk::real dt) override {
-      // Get access to particle scalars
-      tk::real* y = m_particles + p*m_nprop + m_offset;
-
-      // Compute Nth scalar
-      tk::real yn = 1.0 - y[0];
-      for (int i=1; i<m_ncomp; ++i) yn -= y[i];
-
-      // Generate Gaussian random numbers with zero mean and unit variance
-      tk::real dW[m_ncomp];
-      //rndstr()->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-      //                    m_str[tid], m_ncomp, dW, 0.0, 1.0);
-
-      // Advance first m_ncomp (K=N-1) scalars
-      for (int i=0; i<m_ncomp; ++i) {
-        tk::real d = m_k[i]*y[i]*yn*dt;
-        if (d > 0.0) d = sqrt(d); else d = 0.0;
-        y[i] += 0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
-      }
+//       // Get access to particle scalars
+//       tk::real* y = m_particles + p*m_nprop + m_offset;
+// 
+//       // Compute Nth scalar
+//       tk::real yn = 1.0 - y[0];
+//       for (int i=1; i<m_ncomp; ++i) yn -= y[i];
+// 
+//       // Generate Gaussian random numbers with zero mean and unit variance
+//       tk::real dW[m_ncomp];
+//       //rndstr()->gaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
+//       //                    m_str[tid], m_ncomp, dW, 0.0, 1.0);
+// 
+//       // Advance first m_ncomp (K=N-1) scalars
+//       for (int i=0; i<m_ncomp; ++i) {
+//         tk::real d = m_k[i]*y[i]*yn*dt;
+//         if (d > 0.0) d = sqrt(d); else d = 0.0;
+//         y[i] += 0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
+//       }
     }
 
   private:

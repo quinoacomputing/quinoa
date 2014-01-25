@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Tue Jan 14 09:03:29 2014
+  \date      Fri 24 Jan 2014 08:34:20 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -12,6 +12,7 @@
 #define Factory_h
 
 #include <list>
+#include <functional>
 
 namespace tk {
 

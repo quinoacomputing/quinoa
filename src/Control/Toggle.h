@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 07:39:29 PM MST
+  \date      Fri 24 Jan 2014 08:34:41 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -82,7 +82,7 @@ class Toggle {
     //! \return    The enum of option as returned
     template< typename C, typename F, typename... Args >
     Enum add( F& factory, Enum e, const Args&... args ) const {
-      factory[e] = std::bind( boost::factory<C*>(), std::move(args)... );
+      factory[e] = std::bind( boost::factory<C*>(), std::cref(args)... );
       return e;
     }
 
