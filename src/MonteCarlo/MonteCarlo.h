@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:03:26 PM MST
+  \date      Fri 24 Jan 2014 07:26:56 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -19,6 +19,7 @@
 namespace quinoa {
 
 //! MonteCarlo
+
 class MonteCarlo {
 
   public:
@@ -31,6 +32,9 @@ class MonteCarlo {
     //! Run
     virtual void run() = 0;
 
+    //! Return data layout policy
+    const char* layoutPolicy() const noexcept { return m_particles.major(); }
+
   protected:
     //! Constructor: protected, designed to be base-only
     explicit MonteCarlo( const Base& base ) :
@@ -38,8 +42,8 @@ class MonteCarlo {
       m_npar( base.control.get< tag::component, tag::npar >() ),
       m_term( base.control.get< tag::incpar, tag::term >() ),
       m_totalTime( base.timer.create("Total solution") ),
-      m_particles( new tk::real [ m_npar * base.control.nprop() ] ),
-      m_statistics( base, m_particles.get() ),
+      m_particles( m_npar, base.control.nprop() ),
+      m_statistics( base, m_particles ),
       m_glob( base.control.get< tag::cmd, tag::io, tag::glob >() ),
       m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics ) {}
 
@@ -72,8 +76,8 @@ class MonteCarlo {
     TxtStatWriter& statWriter() noexcept { return m_stat; }
 
     //! Accessor to particle properties pointer
-    //! \return Raw pointer to particle properties array
-    tk::real* particles() const noexcept { return m_particles.get(); }
+    //! \return Particle properties array
+    const ParProps& particles() const noexcept { return m_particles; }
 
     //! Accessor to max run time
     //! \return Max run time
@@ -97,7 +101,7 @@ class MonteCarlo {
     const uint64_t m_npar;                          //!< Number of particles
     const tk::real m_term;                          //!< Maximum run time
     const tk::TimerIdx m_totalTime;                 //!< Timer for total run    
-    const std::unique_ptr< tk::real[] > m_particles;//!< Particle properties
+    const ParProps m_particles;                     //!< Particle properties
 
     Statistics m_statistics;                        //!< Statistics estimator
     GlobWriter m_glob;                              //!< Glob file writer

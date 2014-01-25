@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Model.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 10:03:31 PM MST
+  \date      Thu Jan 23 16:47:40 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model
   \details   Model
@@ -40,9 +40,6 @@ class Model {
 
     //! Return initialization policy
     virtual const std::string& initPolicy() const noexcept = 0;
-
-    //! Return data layout policy
-    virtual const std::string& layoutPolicy() const noexcept = 0;
 
     //! Return coefficients policy
     virtual const std::string& coeffPolicy() const noexcept = 0;

@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/SDE/LayoutPolicy.h
+  \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Wed 22 Jan 2014 09:21:24 PM MST
+  \date      Sat 25 Jan 2014 01:10:50 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Data layout policies
-  \details   Data layout policies
+  \brief     Particle-, and property-major data layout policies
+  \details   Particle-, and property-major data layout policies
 */
 //******************************************************************************
 #ifndef LayoutPolicy_h
@@ -13,53 +13,135 @@
 
 namespace quinoa {
 
-//! Tags to select particle-, or property-major data layout policies
+//! Tags for selecting particle-, or property-major data layout policies
 const bool ParticleMajor = true;
 const bool PropertyMajor = false;
 
-//! Zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
+//! Zero-runtime-cost data-layout wrappers for particle properties with
+//! type-based compile-time dispatch
 template< bool Major >
-class Data {
+class ParticleProperties {
 
   private:
+    //! Don't permit copy constructor
+    ParticleProperties(const ParticleProperties&) = delete;
+    //! Don't permit copy assigment
+    ParticleProperties& operator=(const ParticleProperties&) = delete;
+    //! Don't permit move constructor
+    ParticleProperties(ParticleProperties&&) = delete;
+    //! Don't permit move assigment
+    ParticleProperties& operator=(ParticleProperties&&) = delete;
+
    //! Transform a compile-time bool into a type
    template< bool m >
    struct int2type {
      enum { value = m };
    };
 
-   // Overloads for particle-, and property-major accesses
-   inline
-   tk::real& access( int particle, int property, int2type<ParticleMajor> ) {
-     return *(m_ptr + particle*m_nprop + m_offset + property);
+   // Overloads for particle-, and property-major data accesses
+   inline tk::real& access( int particle, int property, int offset,
+                            int2type<ParticleMajor> ) const
+   {
+     return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
-   inline
-   tk::real& access( int particle, int property, int2type<PropertyMajor> ) {
-     return *(m_ptr + particle*m_nprop + m_offset + property);
+   inline tk::real& access( int particle, int property, int offset,
+                            int2type<PropertyMajor> ) const
+   {
+     return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
 
-   tk::real* const m_ptr;
-   const int m_nprop;
-   const int m_offset;
+   // Overloads for particle-, and property-major const ptr accesses
+   inline const tk::real*
+   cptr_access( int property, int offset, int2type<ParticleMajor> ) const {
+     return m_ptr.get() + offset + property;
+   }
+   inline const tk::real*
+   cptr_access( int property, int offset, int2type<PropertyMajor> ) const {
+     return m_ptr.get() + offset + property;
+   }
+
+   // Overloads for particle-, and property-major major queries
+   inline const char* major( int2type<ParticleMajor> ) const {
+     return "particle";
+   }
+   inline const char* major( int2type<PropertyMajor> ) const {
+     return "property";
+   }
+
+   const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
+   const int m_nprop;                         //!< Number of particle properties
 
   public:
     //! Constructor
-    Data( tk::real* const ptr, int nprop, int offset ) :
-      m_ptr(ptr), m_nprop(nprop), m_offset(offset) {}
+    ParticleProperties( uint64_t npar, int nprop ) :
+      m_ptr( new tk::real [ npar * nprop ] ), m_nprop(nprop) {}
 
-    //! Access dispatch
-    inline tk::real& operator()( int particle, int property ) {
-      return access( particle, property, int2type<Major>() );
+    //! Data access dispatch
+    inline tk::real&
+    operator()( int particle, int property, int offset ) const {
+      return access( particle, property, offset, int2type<Major>() );
     }
+
+    //! Const ptr access dispatch
+    inline const tk::real*
+    cptr( int property, int offset ) const {
+      return cptr_access( property, offset, int2type<Major>() );
+    }
+
+    //! Major access dispatch
+    inline const char* major() const { return major( int2type<Major>() ); }
 };
 
 } // quinoa::
 
+// Initial version of zero-runtime-cost data-layout wrappers with type-based
+// compile-time dispatch:
+//
+// Tags for selecting particle-, or property-major data layout policies
+// const bool ParticleMajor = true;
+// const bool PropertyMajor = false;
+// 
+// template< bool Major >
+// class Data {
+// 
+//   private:
+//    // Transform a compile-time bool into a type
+//    template< bool m >
+//    struct int2type {
+//      enum { value = m };
+//    };
+// 
+//    // Overloads for particle-, and property-major accesses
+//    inline
+//    tk::real& access( int particle, int property, int2type<ParticleMajor> ) {
+//      return *(m_ptr + particle*m_nprop + m_offset + property);
+//    }
+//    inline
+//    tk::real& access( int particle, int property, int2type<PropertyMajor> ) {
+//      // This is the same for now, not callsed, irrelevant in zero-cost-test
+//      return *(m_ptr + particle*m_nprop + m_offset + property);
+//    }
+// 
+//    tk::real* const m_ptr;
+//    const int m_nprop;
+//    const int m_offset;
+// 
+//   public:
+//     // Constructor
+//     Data( tk::real* const ptr, int nprop, int offset ) :
+//       m_ptr(ptr), m_nprop(nprop), m_offset(offset) {}
+// 
+//     // Access dispatch
+//     inline tk::real& operator()( int particle, int property ) {
+//       return access( particle, property, int2type<Major>() );
+//     }
+// };
+// 
 // Test of zero-cost:
 // ------------------
 //   * Add to Dirichlet constructor:
 //
-//       Data<Layout> d( particles, m_nprop, m_offset );
+//       ParticleProperties<Layout> d( particles, m_nprop, m_offset );
 //       Model::aa = d( 34, 3 );
 //       Model::bb = *(m_particles + 34*m_nprop + m_offset + 3);
 //
@@ -110,8 +192,9 @@ class Data {
 //      movsd   XMM0, QWORD PTR [RDX + 8*RDI + 24]
 //      movsd   QWORD PTR [RCX + 16], XMM0
 //
-// Line 42 translate to register loads and a function call into quinoa::Data,
-// while line 43 translates to some integer arithmetic of the address and loads.
+// Line 42 translate to register loads and a function call into
+// quinoa::ParticleProperties, while line 43 translates to some integer
+// arithmetic of the address and loads.
 //
 // -----------------------------------------------------------------------------
 // From the Intel® 64 and IA-32 Architectures Software Developer Manual:

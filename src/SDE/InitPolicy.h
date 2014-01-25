@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 20 Jan 2014 09:54:18 PM MST
+  \date      Fri 24 Jan 2014 07:39:27 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -19,7 +19,7 @@ namespace quinoa {
 
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
-  InitRaw( std::string& policy, tk::real* const particles, uint64_t npar,
+  InitRaw( std::string& policy, const ParProps& particles, uint64_t npar,
            int nprop, int offset, int ncomp )
   {
     policy = "raw";
@@ -28,7 +28,7 @@ struct InitRaw {
 
 //! Zero initialization policy: zero particle properties
 struct InitZero {
-  InitZero( std::string& policy, tk::real* const particles, uint64_t npar,
+  InitZero( std::string& policy, const ParProps& particles, uint64_t npar,
             int nprop, int offset, int ncomp )
   {
     policy = "zero";
@@ -36,7 +36,7 @@ struct InitZero {
     #pragma omp parallel for
     #endif
     for (uint64_t p=0; p<npar; ++p) {
-      memset( particles + p*nprop + offset, 0, ncomp*sizeof(tk::real) );
+      //memset( particles + p*nprop + offset, 0, ncomp*sizeof(tk::real) );
     }
   }
 };

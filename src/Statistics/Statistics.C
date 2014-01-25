@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:14:57 PM MST
+  \date      Sat 25 Jan 2014 01:00:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -21,7 +21,7 @@
 
 using quinoa::Statistics;
 
-Statistics::Statistics(const Base& base, const tk::real* const particles) :
+Statistics::Statistics(const Base& base, const ParProps& particles) :
   m_base(base),
   m_nthreads(base.paradigm.nthreads()),
   m_npar(base.control.get< tag::component, tag::npar >()),
@@ -42,6 +42,8 @@ Statistics::Statistics(const Base& base, const tk::real* const particles) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  const auto& control = base.control;
+
   // Prepare for computing ordinary moments
   for (auto& product : m_statistics) {
     if (ordinary(product)) {
@@ -53,9 +55,8 @@ Statistics::Statistics(const Base& base, const tk::real* const particles) :
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(m_particles +
-                                    base.control.termOffset(term.quantity) +
-                                    term.field);
+        m_instOrd[m_nord].push_back(
+          m_particles.cptr( control.termOffset(term.quantity), term.field));
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
         m_nameOrdinary.back() += m_ordFieldName.back()
@@ -84,9 +85,8 @@ Statistics::Statistics(const Base& base, const tk::real* const particles) :
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(m_particles +
-                                      base.control.termOffset(term.quantity) +
-                                      term.field);
+          m_instCen[m_ncen].push_back(
+            m_particles.cptr(control.termOffset(term.quantity), term.field));
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
             m_ordinary.get() + (!isupper(term.name) ? mean(term) : m_nord));

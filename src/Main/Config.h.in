@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Tue 17 Dec 2013 08:34:16 PM MST
+  \date      Thu Jan 23 16:22:03 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -33,6 +33,9 @@ namespace tk {
 #define BUILD_HOSTNAME               "@HOSTNAME@"
 #define BUILD_TYPE                   "@BUILD_TYPE@"
 #define BUILD_DATE                   "@BUILD_DATE@"
+
+// Compile-time options
+#cmakedefine LAYOUT_PARTICLE
 
 // Optional TPLs
 #cmakedefine HAS_MKL
