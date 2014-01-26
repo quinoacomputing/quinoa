@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Wed 22 Jan 2014 09:33:33 PM MST
+  \date      Sat 25 Jan 2014 06:27:27 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -100,18 +100,6 @@ class QuinoaPrint : public tk::Print {
         tk::Option< OptionType > opt;
         // Echo option "group : value" as subsection title
         subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>() ) );
-        // Echo initialization policy
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Init policy"
-                                           % model->initPolicy();
-//         // Echo data layout policy
-//         std::cout << m_item_name_value_fmt % m_item_indent
-//                                            % "Data layout policy"
-//                                            % model->layoutPolicy();
-        // Echo coefficients policy
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Coefficients policy"
-                                           % model->coeffPolicy();
         // Echo equation type and RNG if model is stochastic
         if (model->stochastic()) {
           std::cout << m_item_name_value_fmt % m_item_indent
@@ -127,6 +115,14 @@ class QuinoaPrint : public tk::Print {
                                              % "Equation"
                                              % "deterministic";
         }
+        // Echo initialization policy
+        std::cout << m_item_name_value_fmt % m_item_indent
+                                           % "Init policy"
+                                           % model->initPolicy();
+        // Echo coefficients policy
+        std::cout << m_item_name_value_fmt % m_item_indent
+                                           % "Coefficients policy"
+                                           % model->coeffPolicy();
         // Echo number of components
         std::cout << m_item_name_value_fmt % m_item_indent
                                            % "Number of components"

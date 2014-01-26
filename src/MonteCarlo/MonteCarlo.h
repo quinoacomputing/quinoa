@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:44:44 PM MST
+  \date      Sat 25 Jan 2014 06:18:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -28,9 +28,6 @@ class MonteCarlo {
 
     //! Run
     virtual void run() = 0;
-
-    //! Return data layout policy
-    const char* layoutPolicy() const noexcept { return m_particles.major(); }
 
   protected:
     //! Constructor: protected, designed to be base-only

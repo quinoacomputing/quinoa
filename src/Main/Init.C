@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 06:06:08 PM MST
+  \date      Sat 25 Jan 2014 06:27:46 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -156,6 +156,12 @@ void tk::echoBuildEnv( const Print& print,
   print.item("Release", RELEASE);
   print.item("Revision", GIT_COMMIT);
   print.item("CMake build type", BUILD_TYPE);
+
+#ifdef LAYOUT_PARTICLE
+  print.item("Particle data layout policy", "particle");
+#else
+  print.item("Particle data layout policy", "property");
+#endif
 
 #ifdef NDEBUG
   print.item("Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
