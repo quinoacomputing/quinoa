@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 06:18:45 PM MST
+  \date      Sat 25 Jan 2014 06:36:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -39,7 +39,8 @@ class MonteCarlo {
       m_particles( m_npar, base.control.nprop() ),
       m_statistics( base, m_particles ),
       m_glob( base.control.get< tag::cmd, tag::io, tag::glob >() ),
-      m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics ) {}
+      m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
+    {}
 
     //! Constant accessor to control object
     //! \return Control object
