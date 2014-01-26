@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:15:28 PM MST
+  \date      Sat 25 Jan 2014 05:09:36 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -72,7 +72,6 @@ MKLRNG::uniform(int tid, int num, double* r) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // method should be exposed to user
   vdRngUniform(m_uniform_method, m_stream[tid], num, r, 0.0, 1.0);
 }
 
@@ -83,6 +82,5 @@ MKLRNG::gaussian(int tid, int num, double* r) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // method should be exposed to user
   vdRngGaussian(m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0);
 }

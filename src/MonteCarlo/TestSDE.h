@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 12:28:22 PM MST
+  \date      Sat 25 Jan 2014 05:46:18 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -25,9 +25,6 @@ class TestSDE : public MonteCarlo {
 
     //! Destructor
     ~TestSDE() override = default;
-
-    //! Initialize
-    void init() override;
 
     //! Run
     void run() override;
