@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:07:21 PM MST
+  \date      Sat 25 Jan 2014 06:19:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -62,14 +62,6 @@ class ParticleProperties {
      return m_ptr.get() + offset + property;
    }
 
-   // Overloads for particle-, and property-major major queries
-   inline const char* major( int2type<ParticleMajor> ) const {
-     return "particle";
-   }
-   inline const char* major( int2type<PropertyMajor> ) const {
-     return "property";
-   }
-
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
    const int m_nprop;                         //!< Number of particle properties
 
@@ -93,9 +85,6 @@ class ParticleProperties {
 
     //! Ptr access dispatch
     inline tk::real* ptr() const { return m_ptr.get(); }
-
-    //! Major access dispatch
-    inline const char* major() const { return major( int2type<Major>() ); }
 };
 
 } // quinoa::
