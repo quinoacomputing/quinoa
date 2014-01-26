@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:39:20 PM MST
+  \date      Sat 25 Jan 2014 05:45:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -24,9 +24,6 @@ class HomRT : public Physics {
 
     //! Destructor
     ~HomRT() override = default;
-
-    //! Initialize model
-    void init() override;
 
     //! Run
     void run() override;

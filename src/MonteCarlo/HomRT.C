@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:08:02 PM MST
+  \date      Sat 25 Jan 2014 05:45:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -60,7 +60,7 @@ HomRT::run()
   }
 
   // Time stepping loop
-  while (fabs(t-term()) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
 
     // Advance particles
     //advance(dt);
@@ -86,7 +86,7 @@ HomRT::run()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > term()) t = term();
+    if (t > m_term) t = m_term;
   } // Time stepping loop
 }
 
@@ -113,7 +113,7 @@ HomRT::advance(tk::real dt)
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<npar(); ++p) {
+    for (p=0; p<m_npar; ++p) {
 
       //mass()->advance(p, tid, dt);
       //hydro()->advance(p, tid, dt);
@@ -197,15 +197,4 @@ HomRT::outJpdf(const tk::real t)
   // Output joint PDF
   PDFWriter jpdfFile(filename);
   jpdfFile.writeGmsh(jpdf);
-}
-
-void
-HomRT::init()
-//******************************************************************************
-//  Initialize homogeneous Rayleigh-Taylor
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//  mass()->init();
-//  hydro()->init();
 }

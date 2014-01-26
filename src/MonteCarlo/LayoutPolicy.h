@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:14:48 PM MST
+  \date      Sat 25 Jan 2014 05:07:21 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -77,7 +77,7 @@ class ParticleProperties {
     //! Constructor
     ParticleProperties( uint64_t npar, int nprop ) :
       m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
-      m_nprop(nprop) {}
+      m_nprop( nprop ) {}
 
     //! Data access dispatch
     inline tk::real&
@@ -91,6 +91,9 @@ class ParticleProperties {
       return cptr_access( property, offset, int2type<Major>() );
     }
 
+    //! Ptr access dispatch
+    inline tk::real* ptr() const { return m_ptr.get(); }
+
     //! Major access dispatch
     inline const char* major() const { return major( int2type<Major>() ); }
 };
@@ -99,6 +102,7 @@ class ParticleProperties {
 
 // Initial version of zero-runtime-cost data-layout wrappers with type-based
 // compile-time dispatch:
+// -------------------------------------------------------------------------
 //
 // Tags for selecting particle-, or property-major data layout policies
 // const bool ParticleMajor = true;

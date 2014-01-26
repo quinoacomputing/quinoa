@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:50:42 PM MST
+  \date      Sat 25 Jan 2014 05:44:14 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -25,9 +25,6 @@ class HomMix : public Physics {
 
     //! Destructor
     ~HomMix() override = default;
-
-    //! Initialize
-    void init() override;
 
     //! Run
     void run() override;

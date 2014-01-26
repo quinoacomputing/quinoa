@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:07:05 PM MST
+  \date      Sat 25 Jan 2014 06:04:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -56,7 +56,7 @@ HomMix::run()
   const auto glbi  = control().get<tag::interval, tag::glob>();
   const auto stai  = control().get<tag::interval, tag::plot>();
 
-  //timer().start(m_totalTime);
+  timer().start( m_totalTime );
 
   // Echo headers
   if (nstep) {
@@ -65,8 +65,8 @@ HomMix::run()
   }
 
   // Time stepping loop
-  while (fabs(t - term()) > std::numeric_limits<tk::real>::epsilon() &&
-         it < nstep) {
+  tk::real eps = std::numeric_limits< tk::real >::epsilon();
+  while (fabs(t - m_term) > eps && it < nstep) {
 
     // Advance particles
     advance(dt);
@@ -92,8 +92,8 @@ HomMix::run()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > term()) t = term();
-  } // Time stepping loop
+    if (t > m_term) t = m_term;
+  }
 }
 
 void
@@ -103,26 +103,21 @@ HomMix::advance(tk::real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  uint64_t p;
-  int tid;
-
   #ifdef _OPENMP
-  #pragma omp parallel private(tid, p)
+  #pragma omp parallel
   #endif
   {
     #ifdef _OPENMP
-    tid = omp_get_thread_num();
+    int tid = omp_get_thread_num();
     #else
-    tid = 0;
+    int tid = 0;
     #endif
 
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<npar(); ++p) {
-
-      //mix()->advance(p, tid, dt);
-
+    for (uint64_t p=0; p<m_npar; ++p) {
+      mix()->advance(p, tid, dt);
     }
   }
 }
@@ -134,6 +129,7 @@ HomMix::reportHeader() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  std::cout << "Start solving Homogeneous Material Mixing...\n" << std::endl;
   std::cout << "      it             t            dt"
                "        ETE        ETA   out\n"
             << "------------------------------------"
@@ -160,24 +156,24 @@ HomMix::report(const uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
-//   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
-// 
-//   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
-//             << std::scientific << std::setprecision(6) << std::setw(12) << t
-//             << "  " << dt << "  " << std::setfill('0')
-//             << std::setw(3) << ete.h.count() << ":"
-//             << std::setw(2) << ete.m.count() << ":"
-//             << std::setw(2) << ete.s.count() << "  "
-//             << std::setw(3) << eta.h.count() << ":"
-//             << std::setw(2) << eta.m.count() << ":"
-//             << std::setw(2) << eta.s.count() << "  ";
-// 
-//   if (wroteGlob) std::cout << "G";
-//   if (wroteJpdf) std::cout << "J";
-//   if (wroteStat) std::cout << "P";
-// 
-//   std::cout << std::endl;
+  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
+  timer().eta( m_totalTime, m_term, t, nstep, it, ete, eta );
+
+  std::cout << std::setfill(' ') << std::setw(8) << it << "  "
+            << std::scientific << std::setprecision(6) << std::setw(12) << t
+            << "  " << dt << "  " << std::setfill('0')
+            << std::setw(3) << ete.h.count() << ":"
+            << std::setw(2) << ete.m.count() << ":"
+            << std::setw(2) << ete.s.count() << "  "
+            << std::setw(3) << eta.h.count() << ":"
+            << std::setw(2) << eta.m.count() << ":"
+            << std::setw(2) << eta.s.count() << "  ";
+
+  if (wroteGlob) std::cout << "G";
+  if (wroteJpdf) std::cout << "J";
+  if (wroteStat) std::cout << "P";
+
+  std::cout << std::endl;
 }
 
 void
@@ -203,35 +199,4 @@ IGNORE(t);
 //   // Output joint PDF
 //   PDFWriter jpdfFile(filename);
 //   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomMix::init()
-//******************************************************************************
-//  Initialize homogeneous material mix
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  uint64_t p;
-  int tid;
-
-  #ifdef _OPENMP
-  #pragma omp parallel private(tid, p)
-  #endif
-  {
-    #ifdef _OPENMP
-    tid = omp_get_thread_num();
-    #else
-    tid = 0;
-    #endif
-
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
-    for (p=0; p<npar(); ++p) {
-
-      //mix()->init(p, tid);
-
-    }
-  }
 }

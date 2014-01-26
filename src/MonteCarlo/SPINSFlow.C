@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/SPINSFlow.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:35:54 PM MST
+  \date      Sat 25 Jan 2014 05:45:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -17,15 +17,6 @@ void
 SPINSFlow::run()
 //******************************************************************************
 //  Run
-//! \author  J. Bakosi
-//******************************************************************************
-{
-}
-
-void
-SPINSFlow::init()
-//******************************************************************************
-//  Initialize the physics
 //! \author  J. Bakosi
 //******************************************************************************
 {

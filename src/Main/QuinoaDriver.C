@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:12:47 PM MST
+  \date      Sat 25 Jan 2014 05:46:38 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -128,7 +128,6 @@ QuinoaDriver::execute() const
 
   //! Initialize and execute physics (if any)
   if (m_physics) {
-    m_physics->init();
     m_physics->run();
   }
 }

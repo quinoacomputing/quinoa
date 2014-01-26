@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/SPINSFlow.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:35:32 PM MST
+  \date      Sat 25 Jan 2014 05:45:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -24,9 +24,6 @@ class SPINSFlow : public Physics {
 
     //! Destructor
     ~SPINSFlow() override = default;
-
-    //! Initialize
-    void init() override;
 
     //! Run
     void run() override;

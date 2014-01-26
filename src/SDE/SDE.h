@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:38:31 AM MST
+  \date      Sat 25 Jan 2014 05:25:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -66,6 +66,7 @@ class SDE : public Model {
     const int m_nprop;                 //!< Total number of particle properties
     const int m_offset;                //!< Offset SDE operates from
     const int m_ncomp;                 //!< Number of components
+    std::unique_ptr< tk::RNG > m_rng;  //!< Random number generator
 
   private:
     //! Don't permit copy constructor
@@ -82,7 +83,6 @@ class SDE : public Model {
       m_rng = std::unique_ptr< tk::RNG >( base.rng[ m_rngType ]() );
     }
 
-    std::unique_ptr< tk::RNG > m_rng;           //!< Random number generator
     std::string m_initPolicy;                   //!< Initialization policy name
 };
 

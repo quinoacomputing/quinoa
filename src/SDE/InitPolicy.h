@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:39:27 AM MST
+  \date      Sat 25 Jan 2014 05:42:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -36,7 +36,7 @@ struct InitZero {
     #pragma omp parallel for
     #endif
     for (uint64_t p=0; p<npar; ++p) {
-      //memset( particles + p*nprop + offset, 0, ncomp*sizeof(tk::real) );
+      memset( particles.ptr() + p*nprop + offset, 0, ncomp*sizeof(tk::real) );
     }
   }
 };

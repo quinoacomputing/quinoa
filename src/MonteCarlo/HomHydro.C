@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:07:20 PM MST
+  \date      Sat 25 Jan 2014 05:45:05 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -58,7 +58,7 @@ HomHydro::run()
   }
 
   // Time stepping loop
-  while (fabs(t-term()) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
+  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
 
     // Advance particles
     advance(dt);
@@ -84,7 +84,7 @@ HomHydro::run()
     // Increase timestep and iteration counter
     t += dt;
     ++it;
-    if (t > term()) t = term();
+    if (t > m_term) t = m_term;
   } // Time stepping loop
 }
 
@@ -111,7 +111,7 @@ HomHydro::advance(tk::real dt)
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<npar(); ++p) {
+    for (p=0; p<m_npar; ++p) {
 
       //hydro()->advance(p, tid, dt);
 
@@ -195,14 +195,4 @@ HomHydro::outJpdf(const tk::real t)
 //   // Output joint PDF
 //   PDFWriter jpdfFile(filename);
 //   jpdfFile.writeGmsh(&jpdf);
-}
-
-void
-HomHydro::init()
-//******************************************************************************
-//  Initialize homogeneous hydrodynamics
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  //hydro()->init();
 }

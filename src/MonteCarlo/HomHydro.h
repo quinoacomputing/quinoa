@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:50:21 PM MST
+  \date      Sat 25 Jan 2014 05:45:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -24,9 +24,6 @@ class HomHydro : public Physics {
 
     //! Destructor
     ~HomHydro() override = default;
-
-    //! Initialize
-    void init() override;
 
     //! Run
     void run() override;

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:26:56 AM MST
+  \date      Sat 25 Jan 2014 05:44:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -25,9 +25,6 @@ class MonteCarlo {
   public:
     //! Destructor
     virtual ~MonteCarlo() = default;
-
-    //! Initialize
-    virtual void init() = 0;
 
     //! Run
     virtual void run() = 0;
@@ -83,9 +80,11 @@ class MonteCarlo {
     //! \return Max run time
     const tk::real& term() const noexcept { return m_term; }
 
-    //! Accessor to number of particles
-    //! \return Number of particles
-    const uint64_t& npar() const noexcept { return m_npar; }
+    const Base& m_base;                             //!< Essentials
+    const uint64_t m_npar;                          //!< Number of particles
+    const tk::real m_term;                          //!< Maximum run time
+    const tk::TimerIdx m_totalTime;                 //!< Timer for total run    
+    const ParProps m_particles;                     //!< Particle properties
 
   private:
     //! Don't permit copy constructor
@@ -96,12 +95,6 @@ class MonteCarlo {
     MonteCarlo(MonteCarlo&&) = delete;
     //! Don't permit move assigment
     MonteCarlo& operator=(MonteCarlo&&) = delete;
-
-    const Base& m_base;                             //!< Essentials
-    const uint64_t m_npar;                          //!< Number of particles
-    const tk::real m_term;                          //!< Maximum run time
-    const tk::TimerIdx m_totalTime;                 //!< Timer for total run    
-    const ParProps m_particles;                     //!< Particle properties
 
     Statistics m_statistics;                        //!< Statistics estimator
     GlobWriter m_glob;                              //!< Glob file writer
