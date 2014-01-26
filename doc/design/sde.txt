@@ -101,6 +101,22 @@ General requirements:
 
     - What new requirements and constraints does spatial inhomogeneity entail?
 
+Requirements on MonteCarlo base:
+================================
+
+ * Possible policies of a MonteCarlo base class:
+
+    - Data-layout policy:
+      -------------------
+      Specifies which data layout policy is used internally to access particle
+      data.
+      Possible data-layout policies:
+       o Particle-major
+       o Property-major
+      Is it possible to implement this policy via a thin data-access interface
+      with zero run-time cost, no code-duplication and in a way that is
+      invisible to derived SDE classes? Zero-cost possible.
+
 Requirements on SDE base:
 =========================
 
@@ -143,17 +159,6 @@ Requirements on SDE base:
        o Milstein
        o Runge-Kutta (with various orders)
        o Various other explicit and implicit integrators, see Kloeden & Platen
-
-   - Data-layout policy:
-     -------------------
-     Specifies which data layout policy is used internally to access particle
-     data.
-     Possible data-layout policies:
-       o Particle-major
-       o Property-major
-     Is it possible to implement this policy via a thin data-access interface
-     with zero run-time cost, no code-duplication and in a way that is invisible
-     to derived SDE classes?
 
  * Specific SDE types (e.g., Ornstein-Uhlenbeck, Dirichlet, skew-normal, etc),
    should derive from the SDE base class, forwarding base class policies, i.e.,
