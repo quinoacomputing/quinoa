@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:26:40 PM MST
+  \date      Sun 26 Jan 2014 11:43:45 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -53,14 +53,35 @@ class Dirichlet : public SDE< Init > {
     using sde::m_ncomp;
     using sde::m_rng;
 
+//     //! Advance particles
+//     void advance(int p, int tid, tk::real dt) override {
+//       // Get access to particle scalars
+//       tk::real* y = m_particles.ptr() + p*m_nprop + m_offset;
+// 
+//       // Compute Nth scalar
+//       tk::real yn = 1.0 - y[0];
+//       for (int i=1; i<m_ncomp; ++i) yn -= y[i];
+// 
+//       // Generate Gaussian random numbers with zero mean and unit variance
+//       tk::real dW[m_ncomp];
+//       m_rng->gaussian( tid, m_ncomp, dW );
+// 
+//       // Advance first m_ncomp (K=N-1) scalars
+//       for (int i=0; i<m_ncomp; ++i) {
+//         tk::real d = m_k[i]*y[i]*yn*dt;
+//         if (d > 0.0) d = sqrt(d); else d = 0.0;
+//         y[i] += 0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
+//       }
+//     }
+
     //! Advance particles
     void advance(int p, int tid, tk::real dt) override {
       // Get access to particle scalars
-      tk::real* y = m_particles.ptr() + p*m_nprop + m_offset;
+      //tk::real* y = m_particles.ptr() + p*m_nprop + m_offset;
 
       // Compute Nth scalar
-      tk::real yn = 1.0 - y[0];
-      for (int i=1; i<m_ncomp; ++i) yn -= y[i];
+      tk::real yn = 1.0 - m_particles(p, 0, m_offset);
+      for (int i=1; i<m_ncomp; ++i) yn -= m_particles(p, i, m_offset);
 
       // Generate Gaussian random numbers with zero mean and unit variance
       tk::real dW[m_ncomp];
@@ -68,9 +89,11 @@ class Dirichlet : public SDE< Init > {
 
       // Advance first m_ncomp (K=N-1) scalars
       for (int i=0; i<m_ncomp; ++i) {
-        tk::real d = m_k[i]*y[i]*yn*dt;
+        tk::real d = m_k[i] * m_particles(p, i, m_offset) * yn * dt;
         if (d > 0.0) d = sqrt(d); else d = 0.0;
-        y[i] += 0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
+        m_particles(p, i, m_offset) +=
+          0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i]) * m_particles(p, i, m_offset) )*dt
+        + d*dW[i];
       }
     }
 
