@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 01:20:13 PM MST
+  \date      Mon 27 Jan 2014 02:14:26 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -46,41 +46,43 @@ class ParticleProperties {
 
    // Overloads for the various data accesses
    inline tk::real& access( int particle, int property, int offset,
-                            int2type< ParEqComp > ) const {
+                            int2type< ParEqComp > ) const noexcept {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
    inline tk::real& access( int particle, int property, int offset,
-                            int2type< ParCompEq > ) const {
+                            int2type< ParCompEq > ) const noexcept {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
 
-   // Overloads for particle-, and property-major const ptr accesses
+   // Overloads for the various const ptr accesses
    inline const tk::real*
-   cptr_access( int property, int offset, int2type< ParEqComp > ) const {
+   cptr_access( int property, int offset, int2type< ParEqComp > ) const
+   noexcept {
      return m_ptr.get() + offset + property;
    }
    inline const tk::real*
-   cptr_access( int property, int offset, int2type< ParCompEq > ) const {
+   cptr_access( int property, int offset, int2type< ParCompEq > ) const
+   noexcept {
      return m_ptr.get() + offset + property;
    }
 
-   // Overloads for the names of data lauouts
-   inline std::string major( int2type< ParEqComp > ) const {
+   // Overloads for the name-queries of data lauouts
+   inline const char* major( int2type< ParEqComp > ) const noexcept {
      return "[ particle ] [ equation ] [ component ]";
    }
-   inline std::string major( int2type< ParCompEq > ) const {
+   inline const char* major( int2type< ParCompEq > ) const noexcept {
      return "[ particle ] [ component ] [ equation ]";
    }
-   inline std::string major( int2type< EqCompPar > ) const {
+   inline const char* major( int2type< EqCompPar > ) const noexcept {
      return "[ equation ] [ component ] [ particle ]";
    }
-   inline std::string major( int2type< EqParComp > ) const {
+   inline const char* major( int2type< EqParComp > ) const noexcept {
      return "[ equation ] [ particle ] [ component ]";
    }
-   inline std::string major( int2type< CompEqPar > ) const {
+   inline const char* major( int2type< CompEqPar > ) const noexcept {
      return "[ component ] [ equation ] [ particle ]";
    }
-   inline std::string major( int2type< CompParEq > ) const {
+   inline const char* major( int2type< CompParEq > ) const noexcept {
      return "[ component ] [ particle ] [ equation ]";
    }
 
@@ -95,21 +97,23 @@ class ParticleProperties {
 
     //! Data access dispatch
     inline tk::real&
-    operator()( int particle, int property, int offset ) const {
+    operator()( int particle, int property, int offset ) const noexcept {
       return access( particle, property, offset, int2type< Layout >() );
     }
 
     //! Const ptr access dispatch
     inline const tk::real*
-    cptr( int property, int offset ) const {
+    cptr( int property, int offset ) const noexcept {
       return cptr_access( property, offset, int2type< Layout >() );
     }
 
     //! Ptr access dispatch
-    inline tk::real* ptr() const { return m_ptr.get(); }
+    inline tk::real* ptr() const noexcept { return m_ptr.get(); }
 
     //! Layout name dispatch
-    inline std::string major() const { return major( int2type< Layout >() ); }
+    inline const char* major() const noexcept {
+      return major( int2type< Layout >() );
+    }
 };
 
 } // quinoa::
