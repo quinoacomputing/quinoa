@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Sun 26 Jan 2014 12:37:26 PM MST
+  \date      Mon 27 Jan 2014 02:33:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE
@@ -65,11 +65,10 @@ class Dirichlet : public SDE< Init > {
 
       // Advance first m_ncomp (K=N-1) scalars
       for (int i=0; i<m_ncomp; ++i) {
-        tk::real d = m_k[i] * m_particles(p, i, m_offset) * yn * dt;
+        tk::real& par = m_particles( p, i, m_offset );
+        tk::real d = m_k[i] * par * yn * dt;
         if (d > 0.0) d = sqrt(d); else d = 0.0;
-        m_particles(p, i, m_offset) +=
-          0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i]) * m_particles(p, i, m_offset) )*dt
-        + d*dW[i];
+        par += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * par )*dt + d*dW[i];
       }
     }
 
