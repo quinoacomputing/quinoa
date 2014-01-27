@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:25:59 AM MST
+  \date      Mon 27 Jan 2014 04:23:34 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -23,7 +23,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics(const Base& base, const ParProps& particles);
+    explicit Statistics( const Base& base, const ParProps& particles );
 
     //! Destructor
     virtual ~Statistics() = default;
@@ -80,28 +80,25 @@ class Statistics {
     //! Return true if string is all lower case
     bool isLower(const std::string&s) const;
 
-    const Base& m_base;                       //!< Essentials
     const uint64_t m_nthreads;                //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
-    const ParProps& m_particles;              //!< Particles
     const int m_nprop;                        //!< Number of particle properties
-    const std::vector<ctr::Product> m_statistics;//!< Requested tatistics
 
     //! Instantaneous variable pointers for computing ordinary moments
-    std::vector<std::vector<const tk::real*>> m_instOrd;
-    std::unique_ptr<tk::real[]> m_ordinary;   //!< Ordinary moments
-    std::vector<bool> m_plotOrdinary;         //!< Whether to plot ord moments
+    std::vector< std::vector< const tk::real* > > m_instOrd;
+    std::unique_ptr< tk::real[] > m_ordinary; //!< Ordinary moments
+    std::vector< bool > m_plotOrdinary;       //!< Whether to plot ord moments
     //! Ordinary moment field names
-    std::vector<ctr::FieldName> m_ordFieldName;
-    std::vector<std::string> m_nameOrdinary;  //!< Ordinary moment names
+    std::vector< ctr::FieldName > m_ordFieldName;
+    std::vector< std::string > m_nameOrdinary;//!< Ordinary moment names
     int m_nord;                               //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
-    std::vector<std::vector<const tk::real*>> m_instCen;
-    std::unique_ptr<tk::real[]> m_central;    //!< Central moments
+    std::vector< std::vector< const tk::real* > > m_instCen;
+    std::unique_ptr< tk::real[] > m_central;  //!< Central moments
     //! Ordinary moments about which to compute central moments
-    std::vector<std::vector<const tk::real*>> m_center;
-    std::vector<std::string> m_nameCentral;   //!< Central moment names
+    std::vector< std::vector< const tk::real* > > m_center;
+    std::vector< std::string > m_nameCentral; //!< Central moment names
     int m_ncen;                               //!< Number of central moments
 };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:23:53 PM MST
+  \date      Mon 27 Jan 2014 04:22:07 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -21,19 +21,11 @@
 
 using quinoa::Statistics;
 
-Statistics::Statistics(const Base& base, const ParProps& particles) :
-  m_base(base),
-  m_nthreads(base.paradigm.nthreads()),
-  m_npar(base.control.get< tag::component, tag::npar >()),
-  m_particles(particles),
-  m_nprop(base.control.nprop()),
-  m_statistics(base.control.get< tag::stat >()),
-  m_instOrd(),
-  m_ordFieldName(),
-  m_nameOrdinary(),
+Statistics::Statistics( const Base& base, const ParProps& particles ) :
+  m_nthreads( base.paradigm.nthreads() ),
+  m_npar( base.control.get< tag::component, tag::npar >() ),
+  m_nprop( base.control.nprop() ),
   m_nord(0),
-  m_instCen(),
-  m_nameCentral(),
   m_ncen(0)
 //******************************************************************************
 //  Constructor
@@ -43,24 +35,25 @@ Statistics::Statistics(const Base& base, const ParProps& particles) :
 //******************************************************************************
 {
   const auto& control = base.control;
+  const auto& statistics = base.control.get< tag::stat >();
 
   // Prepare for computing ordinary moments
-  for (auto& product : m_statistics) {
+  for (auto& product : statistics) {
     if (ordinary(product)) {
 
-      m_instOrd.push_back(std::vector<const tk::real*>());
-      m_plotOrdinary.push_back(false);
-      m_nameOrdinary.push_back(std::string());
-      m_ordFieldName.push_back(ctr::FieldName());
+      m_instOrd.push_back( std::vector< const tk::real* >() );
+      m_plotOrdinary.push_back( false );
+      m_nameOrdinary.push_back( std::string() );
+      m_ordFieldName.push_back( ctr::FieldName() );
 
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(
-          m_particles.cptr( control.termOffset(term.quantity), term.field));
+          particles.cptr( control.termOffset( term.quantity ), term.field ) );
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
         m_nameOrdinary.back() += m_ordFieldName.back()
-                               = ctr::FieldName(term.name, term.field);
+                               = ctr::FieldName( term.name, term.field );
       }
 
       ++m_nord;
@@ -76,21 +69,21 @@ Statistics::Statistics(const Base& base, const ParProps& particles) :
     m_ordinary[m_nord] = 0.0;
 
     // Prepare for computing central moments
-    for (auto& product : m_statistics) {
+    for (auto& product : statistics) {
       if (!ordinary(product)) {
 
-        m_instCen.push_back(std::vector<const tk::real*>());
-        m_center.push_back(std::vector<const tk::real*>());
-        m_nameCentral.push_back(std::string());
+        m_instCen.push_back( std::vector< const tk::real* >() );
+        m_center.push_back( std::vector< const tk::real* >() );
+        m_nameCentral.push_back( std::string() );
 
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(
-            m_particles.cptr(control.termOffset(term.quantity), term.field));
+            particles.cptr( control.termOffset( term.quantity ), term.field ) );
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
             m_ordinary.get() + (!isupper(term.name) ? mean(term) : m_nord));
-          m_nameCentral.back() += ctr::FieldName(term.name, term.field);
+          m_nameCentral.back() += ctr::FieldName( term.name, term.field );
         }
 
         ++m_ncen;
@@ -106,7 +99,7 @@ Statistics::Statistics(const Base& base, const ParProps& particles) :
 }
 
 bool
-Statistics::ordinary(const std::vector<ctr::Term>& product) const
+Statistics::ordinary( const std::vector< ctr::Term >& product ) const
 //******************************************************************************
 //  Find out whether product only contains ordinary moment terms
 //! \param[in]  product   Vector of terms
@@ -123,23 +116,23 @@ Statistics::ordinary(const std::vector<ctr::Term>& product) const
 }
 
 int
-Statistics::mean(const ctr::Term& term) const
+Statistics::mean( const ctr::Term& term ) const
 //******************************************************************************
 //  Return mean for fluctuation
 //! \param[in]  term      Term (a fluctuation) whose mean to search for
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int size = m_ordFieldName.size();
-  for (int i=0; i<size; ++i) {
+  auto size = m_ordFieldName.size();
+  for (decltype(size) i=0; i<size; ++i) {
     if (m_ordFieldName[i].name == toupper(term.name) &&
         m_ordFieldName[i].field == term.field) {
        return i;
     }
   }
 
-  Throw(tk::ExceptType::FATAL,
-        std::string("Cannot find mean for variable ") + term);
+  Throw( tk::ExceptType::FATAL,
+         std::string("Cannot find mean for variable ") + term );
 }
 
 bool
@@ -150,9 +143,9 @@ Statistics::plotOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, tk::ExceptType::FATAL,
-         "Request for an unavailable ordinary moment");
-  return m_plotOrdinary[m];
+  Assert( m < m_nord, tk::ExceptType::FATAL,
+          "Request for an unavailable ordinary moment" );
+  return m_plotOrdinary[ m ];
 }
 
 const std::string&
@@ -163,9 +156,9 @@ Statistics::nameOrdinary(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_nord, tk::ExceptType::FATAL,
-         "Request for an unavailable ordinary moment");
-  return m_nameOrdinary[m];
+  Assert( m < m_nord, tk::ExceptType::FATAL,
+          "Request for an unavailable ordinary moment" );
+  return m_nameOrdinary[ m ];
 }
 
 const std::string&
@@ -176,9 +169,9 @@ Statistics::nameCentral(const int m) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(m < m_ncen, tk::ExceptType::FATAL,
-         "Request for an unavailable central moment");
-  return m_nameCentral[m];
+  Assert( m < m_ncen, tk::ExceptType::FATAL,
+          "Request for an unavailable central moment" );
+  return m_nameCentral[ m ];
 }
 
 void
@@ -188,47 +181,42 @@ Statistics::estimateOrdinary()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  uint64_t p;
-  int tid, i;
-  size_t s, j;
-  tk::real prod;
-
   #ifdef _OPENMP
-  #pragma omp parallel private(tid, p, i, s, j, prod)
+  #pragma omp parallel
   #endif
   {
     #ifdef _OPENMP
-    tid = omp_get_thread_num();
+    auto tid = omp_get_thread_num();
     #else
-    tid = 0;
+    auto tid = 0;
     #endif
 
     // Zero ordinary moment accumulators
-    memset(m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(tk::real));
+    memset( m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(tk::real) );
 
     // Accumulate ordinary moments
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<m_npar; ++p) {
-      for (i=0; i<m_nord; ++i) {
-        prod = *(m_instOrd[i][0] + p*m_nprop);
-        s = m_instOrd[i].size();
-        for (j=1; j<s; ++j) prod *= *(m_instOrd[i][j] + p*m_nprop);
+    for (uint64_t p=0; p<m_npar; ++p) {
+      for (int i=0; i<m_nord; ++i) {
+        auto prod = *(m_instOrd[i][0] + p*m_nprop);
+        auto s = m_instOrd[i].size();
+        for (decltype(s) j=1; j<s; ++j) prod *= *(m_instOrd[i][j] + p*m_nprop);
         m_ordinary[tid*(m_nord+1) + i] += prod;
       }
     }
   } // omp parallel
 
   // Collect ordinary moments from all threads
-  for (p=1; p<m_nthreads; ++p) {
-    for (i=0; i<m_nord; ++i) {
+  for (uint64_t p=1; p<m_nthreads; ++p) {
+    for (int i=0; i<m_nord; ++i) {
       m_ordinary[i] += m_ordinary[p*(m_nord+1) + i];
     }
   }
 
   // Finish computing ordinary moments
-  for (i=0; i<m_nord; ++i) {
+  for (int i=0; i<m_nord; ++i) {
     m_ordinary[i] /= m_npar;
   }
 }
@@ -240,19 +228,14 @@ Statistics::estimateCentral()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  uint64_t p;
-  int tid, i;
-  size_t s, j;
-  tk::real prod;
-
   #ifdef _OPENMP
-  #pragma omp parallel private(tid, p, i, s, j, prod)
+  #pragma omp parallel
   #endif
   {
     #ifdef _OPENMP
-    tid = omp_get_thread_num();
+    auto tid = omp_get_thread_num();
     #else
-    tid = 0;
+    auto tid = 0;
     #endif
 
     // Zero central moment accumulators
@@ -262,11 +245,11 @@ Statistics::estimateCentral()
     #ifdef _OPENMP
     #pragma omp for
     #endif
-    for (p=0; p<m_npar; ++p) {
-      for (i=0; i<m_ncen; ++i) {
-        prod = *(m_instCen[i][0] + p*m_nprop);
-        s = m_instCen[i].size();
-        for (j=1; j<s; ++j) {
+    for (uint64_t p=0; p<m_npar; ++p) {
+      for (int i=0; i<m_ncen; ++i) {
+        auto prod = *(m_instCen[i][0] + p*m_nprop);
+        auto s = m_instCen[i].size();
+        for (decltype(s) j=1; j<s; ++j) {
           prod *= *(m_instCen[i][j] + p*m_nprop) - *(m_center[i][j]);
         }
         m_central[tid*m_ncen + i] += prod;
@@ -275,14 +258,14 @@ Statistics::estimateCentral()
   } // omp parallel
 
   // Collect central moments from all threads
-  for (p=1; p<m_nthreads; ++p) {
-    for (i=0; i<m_ncen; ++i) {
+  for (uint64_t p=1; p<m_nthreads; ++p) {
+    for (int i=0; i<m_ncen; ++i) {
       m_central[i] += m_central[p*m_ncen + i];
     }
   }
 
   // Finish computing central moments
-  for (i=0; i<m_ncen; ++i) {
+  for (int i=0; i<m_ncen; ++i) {
     m_central[i] /= m_npar;
   }
 }
