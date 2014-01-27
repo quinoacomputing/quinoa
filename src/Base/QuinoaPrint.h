@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 06:27:27 PM MST
+  \date      Mon 27 Jan 2014 09:25:53 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -128,10 +128,6 @@ class QuinoaPrint : public tk::Print {
                                            % "Number of components"
                                            % model->ncomp();
       }
-    }
-
-    template< class M >
-    void Model( const M* const model ) const {
     }
 
   private:
