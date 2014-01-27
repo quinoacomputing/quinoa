@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 07:24:47 AM MST
+  \date      Mon 27 Jan 2014 01:24:30 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -29,22 +29,30 @@ struct Base {
   tk::RNGFactory& rng;
 
   //! Initializer constructor
-  Base(QuinoaPrint& Print,
-       tk::Paradigm& Paradigm,
-       ctr::InputDeck& Control,
-       tk::Timer& Timer,
-       tk::RNGFactory& Rng) : print(Print),
-                              paradigm(Paradigm),
-                              control(Control),
-                              timer(Timer),
-                              rng(Rng) {}
+  Base( QuinoaPrint& Print,
+        tk::Paradigm& Paradigm,
+        ctr::InputDeck& Control,
+        tk::Timer& Timer,
+        tk::RNGFactory& Rng ) : print( Print ),
+                                paradigm( Paradigm ),
+                                control( Control ),
+                                timer( Timer ),
+                                rng( Rng ) {}
 };
 
 //! Select data layout policy for particle properties
-#ifdef LAYOUT_PARTICLE
-using ParProps = ParticleProperties< ParticleMajor >;
-#else
-using ParProps = ParticleProperties< PropertyMajor >;
+#ifdef LAYOUT_PAR_EQ_COMP
+using ParProps = ParticleProperties< ParEqComp >;
+#elif LAYOUT_PAR_COMP_EQ
+using ParProps = ParticleProperties< ParCompEq >;
+#elif LAYOUT_EQ_COMP_PAR
+using ParProps = ParticleProperties< EqCompPar >;
+#elif LAYOUT_EQ_PAR_COMP
+using ParProps = ParticleProperties< EqParComp >;
+#elif LAYOUT_COMP_EQ_PAR
+using ParProps = ParticleProperties< CompEqPar >;
+#elif LAYOUT_COMP_PAR_EQ
+using ParProps = ParticleProperties< CompParEq >;
 #endif
 
 } // quinoa::
@@ -60,15 +68,15 @@ struct Base {
   tk::RNGFactory& rng;
 
   //! Initializer constructor
-  Base(RNGTestPrint& Print,
-       tk::Paradigm& Paradigm,
-       ctr::InputDeck& Control,
-       tk::Timer& Timer,
-       tk::RNGFactory& Rng) : print(Print),
-                              paradigm(Paradigm),
-                              control(Control),
-                              timer(Timer),
-                              rng(Rng) {}
+  Base( RNGTestPrint& Print,
+        tk::Paradigm& Paradigm,
+        ctr::InputDeck& Control,
+        tk::Timer& Timer,
+        tk::RNGFactory& Rng ) : print( Print ),
+                                paradigm( Paradigm ),
+                                control( Control ),
+                                timer( Timer ),
+                                rng( Rng ) {}
 };
 
 } // rngtest::

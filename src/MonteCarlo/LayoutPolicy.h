@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 07:50:58 AM MST
+  \date      Mon 27 Jan 2014 01:20:13 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -16,12 +16,16 @@
 namespace quinoa {
 
 //! Tags for selecting particle-, or property-major data layout policies
-const bool ParticleMajor = true;
-const bool PropertyMajor = false;
+const uint8_t ParEqComp = 0;
+const uint8_t ParCompEq = 1;
+const uint8_t EqCompPar = 2;
+const uint8_t EqParComp = 3;
+const uint8_t CompEqPar = 4;
+const uint8_t CompParEq = 5;
 
 //! Zero-runtime-cost data-layout wrappers for particle properties with
 //! type-based compile-time dispatch
-template< bool Major >
+template< uint8_t Layout >
 class ParticleProperties {
 
   private:
@@ -34,32 +38,50 @@ class ParticleProperties {
     //! Don't permit move assigment
     ParticleProperties& operator=(ParticleProperties&&) = delete;
 
-   //! Transform a compile-time bool into a type
-   template< bool m >
+   //! Transform a compile-time uint8_t into a type
+   template< uint8_t m >
    struct int2type {
      enum { value = m };
    };
 
-   // Overloads for particle-, and property-major data accesses
+   // Overloads for the various data accesses
    inline tk::real& access( int particle, int property, int offset,
-                            int2type<ParticleMajor> ) const
-   {
+                            int2type< ParEqComp > ) const {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
    inline tk::real& access( int particle, int property, int offset,
-                            int2type<PropertyMajor> ) const
-   {
+                            int2type< ParCompEq > ) const {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
 
    // Overloads for particle-, and property-major const ptr accesses
    inline const tk::real*
-   cptr_access( int property, int offset, int2type<ParticleMajor> ) const {
+   cptr_access( int property, int offset, int2type< ParEqComp > ) const {
      return m_ptr.get() + offset + property;
    }
    inline const tk::real*
-   cptr_access( int property, int offset, int2type<PropertyMajor> ) const {
+   cptr_access( int property, int offset, int2type< ParCompEq > ) const {
      return m_ptr.get() + offset + property;
+   }
+
+   // Overloads for the names of data lauouts
+   inline std::string major( int2type< ParEqComp > ) const {
+     return "[ particle ] [ equation ] [ component ]";
+   }
+   inline std::string major( int2type< ParCompEq > ) const {
+     return "[ particle ] [ component ] [ equation ]";
+   }
+   inline std::string major( int2type< EqCompPar > ) const {
+     return "[ equation ] [ component ] [ particle ]";
+   }
+   inline std::string major( int2type< EqParComp > ) const {
+     return "[ equation ] [ particle ] [ component ]";
+   }
+   inline std::string major( int2type< CompEqPar > ) const {
+     return "[ component ] [ equation ] [ particle ]";
+   }
+   inline std::string major( int2type< CompParEq > ) const {
+     return "[ component ] [ particle ] [ equation ]";
    }
 
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
@@ -74,17 +96,20 @@ class ParticleProperties {
     //! Data access dispatch
     inline tk::real&
     operator()( int particle, int property, int offset ) const {
-      return access( particle, property, offset, int2type<Major>() );
+      return access( particle, property, offset, int2type< Layout >() );
     }
 
     //! Const ptr access dispatch
     inline const tk::real*
     cptr( int property, int offset ) const {
-      return cptr_access( property, offset, int2type<Major>() );
+      return cptr_access( property, offset, int2type< Layout >() );
     }
 
     //! Ptr access dispatch
     inline tk::real* ptr() const { return m_ptr.get(); }
+
+    //! Layout name dispatch
+    inline std::string major() const { return major( int2type< Layout >() ); }
 };
 
 } // quinoa::
