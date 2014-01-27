@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 02:21:57 PM MST
+  \date      Mon 27 Jan 2014 03:43:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -19,17 +19,6 @@
 #include <Statistics.h>
 
 using quinoa::HomRT;
-
-HomRT::HomRT( const Base& base ) : Physics( base )
-//******************************************************************************
-//  Constructor
-//! \param[in]  base     Essentials
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//  ErrChk( mass(), tk::ExceptType::FATAL, "No mass model specified" );
-//  ErrChk( hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified" );
-}
 
 void
 HomRT::run()

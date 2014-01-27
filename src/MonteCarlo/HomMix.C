@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Sun 26 Jan 2014 12:36:47 PM MST
+  \date      Mon 27 Jan 2014 03:41:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -25,16 +25,6 @@
 #include <HomMix.h>
 
 using quinoa::HomMix;
-
-HomMix::HomMix(const Base& base) : Physics( base )
-//******************************************************************************
-//  Constructor
-//! \param[in]  base     Essentials
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//  ErrChk( mix(), tk::ExceptType::FATAL, "No material mix model specified" );
-}
 
 void
 HomMix::run()
@@ -117,7 +107,7 @@ HomMix::advance(tk::real dt)
     #pragma omp for
     #endif
     for (uint64_t p=0; p<m_npar; ++p) {
-      mix()->advance(p, tid, dt);
+      mix()->advance( p, tid, dt );
     }
   }
 }
