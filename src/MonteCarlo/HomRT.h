@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:45:44 PM MST
+  \date      Mon 27 Jan 2014 03:43:50 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -20,7 +20,10 @@ class HomRT : public Physics {
 
   public:
     //! Constructor
-    explicit HomRT(const Base& base);
+    explicit HomRT( const Base& base ) : Physics( base ) {
+      ErrChk( mass(), tk::ExceptType::FATAL, "No mass model specified" );
+      ErrChk( hydro(), tk::ExceptType::FATAL, "No hydro model specified" );
+    }
 
     //! Destructor
     ~HomRT() override = default;

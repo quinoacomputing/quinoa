@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 02:18:46 PM MST
+  \date      Mon 27 Jan 2014 03:42:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -18,16 +18,6 @@
 #include <HomHydro.h>
 
 using quinoa::HomHydro;
-
-HomHydro::HomHydro(const Base& base) : Physics(base)
-//******************************************************************************
-//  Constructor
-//! \param[in]  base     Essentials
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//  ErrChk(hydro(), tk::ExceptType::FATAL, "No hydrodynamics model specified");
-}
 
 void
 HomHydro::run()
