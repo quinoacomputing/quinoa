@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:46:38 PM MST
+  \date      Mon 27 Jan 2014 01:58:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -111,6 +111,11 @@ QuinoaDriver::initFactories(const tk::Print& print)
   tk::regist< SPINSFlow >( m_physicsFactory, regPhys, physics,
                            ctr::PhysicsType::SPINSFLOW, *m_base );
   print.list("Registered physics", physics, regPhys);
+
+  print.list( "Data layout policy",
+              std::list< std::string > { ParProps(0,0).major(),
+                                         "(Change CMake variable LAYOUT to "
+                                         "change the data layout policy)" } );
 }
 
 void
@@ -126,7 +131,7 @@ QuinoaDriver::execute() const
     m_geometry->fill();
   }
 
-  //! Initialize and execute physics (if any)
+  //! Run physics (if any)
   if (m_physics) {
     m_physics->run();
   }

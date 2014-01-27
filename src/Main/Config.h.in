@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Thu Jan 23 16:22:03 2014
+  \date      Mon 27 Jan 2014 01:12:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -35,7 +35,12 @@ namespace tk {
 #define BUILD_DATE                   "@BUILD_DATE@"
 
 // Compile-time options
-#cmakedefine LAYOUT_PARTICLE
+#cmakedefine LAYOUT_PAR_EQ_COMP
+#cmakedefine LAYOUT_PAR_COMP_EQ
+#cmakedefine LAYOUT_EQ_COMP_PAR
+#cmakedefine LAYOUT_EQ_PAR_COMP
+#cmakedefine LAYOUT_COMP_EQ_PAR
+#cmakedefine LAYOUT_COMP_PAR_EQ
 
 // Optional TPLs
 #cmakedefine HAS_MKL

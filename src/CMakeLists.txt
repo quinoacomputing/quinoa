@@ -91,24 +91,38 @@ endif()
 
 # Set data layout for particle properties
 # Available options
-set(LAYOUT_VALUES "particle" "property")
+set(LAYOUT_VALUES "par-eq-comp" "par-comp-eq"
+                  "eq-comp-par" "eq-par-comp"
+                  "comp-eq-par" "comp-par-eq")
 # Initialize all to off
-set(LAYOUT_PARTICLE off)  # 0
-set(LAYOUT_PROPERTY off)  # 1
+set(LAYOUT_PAR_EQ_COMP off)  # 0
+set(LAYOUT_PAR_COMP_EQ off)  # 1
+set(LAYOUT_EQ_COMP_PAR off)  # 2
+set(LAYOUT_EQ_PAR_COMP off)  # 3
+set(LAYOUT_COMP_EQ_PAR off)  # 4
+set(LAYOUT_COMP_PAR_EQ off)  # 5
 # Set default and select from list
-set(LAYOUT "particle" CACHE STRING "Select data layout for particle properties. Default: particle(-major). Available options: ${LAYOUT_VALUES}")
+set(LAYOUT "par-eq-comp" CACHE STRING "Select data layout for particle properties. Default: (particle, equation, component). Available options: the 6 permutations.")
 SET_PROPERTY (CACHE LAYOUT PROPERTY STRINGS ${LAYOUT_VALUES})
 STRING (TOLOWER ${LAYOUT} LAYOUT)
 LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
 # Evaluate selected option and put in a define for it
 IF (${LAYOUT_INDEX} EQUAL 0)
-  set(LAYOUT_PARTICLE on)
+  set(LAYOUT_PAR_EQ_COMP on)
 ELSEIF (${LAYOUT_INDEX} EQUAL 1)
-  set(LAYOUT_PROPERTY on)
+  set(LAYOUT_PAR_COMP_EQ on)
+ELSEIF (${LAYOUT_INDEX} EQUAL 2)
+  set(LAYOUT_EQ_COMP_PAR on)
+ELSEIF (${LAYOUT_INDEX} EQUAL 3)
+  set(LAYOUT_EQ_PAR_COMP on)
+ELSEIF (${LAYOUT_INDEX} EQUAL 4)
+  set(LAYOUT_COMP_EQ_PAR on)
+ELSEIF (${LAYOUT_INDEX} EQUAL 5)
+  set(LAYOUT_COMP_PAR_EQ on)
 ELSEIF (${LAYOUT_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Data layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
+  MESSAGE(FATAL_ERROR "Particle properties data layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
 ENDIF()
-message(STATUS "Data layout for particle properties (LAYOUT): " ${LAYOUT})
+message(STATUS "Particle properties data layout (LAYOUT): " ${LAYOUT})
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
