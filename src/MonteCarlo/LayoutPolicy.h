@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:02:50 PM MST
+  \date      Mon 27 Jan 2014 04:35:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -45,24 +45,24 @@ class ParticleProperties {
    };
 
    // Overloads for the various data accesses
-   inline tk::real& access( int particle, int property, int offset,
-                            int2type< ParEqComp > ) const noexcept {
+   inline tk::real&
+   access( int particle, int property, int offset, int2type< ParEqComp > ) const
+   noexcept {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
-   inline tk::real& access( int particle, int property, int offset,
-                            int2type< ParCompEq > ) const noexcept {
+   inline tk::real&
+   access( int particle, int property, int offset, int2type< ParCompEq > ) const
+   noexcept {
      return *(m_ptr.get() + particle*m_nprop + offset + property);
    }
 
    // Overloads for the various const ptr accesses
    inline const tk::real*
-   cptr_access( int property, int offset, int2type< ParEqComp > ) const
-   noexcept {
+   cptr( int property, int offset, int2type< ParEqComp > ) const noexcept {
      return m_ptr.get() + offset + property;
    }
    inline const tk::real*
-   cptr_access( int property, int offset, int2type< ParCompEq > ) const
-   noexcept {
+   cptr( int property, int offset, int2type< ParCompEq > ) const noexcept {
      return m_ptr.get() + offset + property;
    }
 
@@ -106,7 +106,7 @@ class ParticleProperties {
     //! Const ptr access dispatch
     inline const tk::real*
     cptr( int property, int offset ) const noexcept {
-      return cptr_access( property, offset, int2type< Layout >() );
+      return cptr( property, offset, int2type< Layout >() );
     }
 
     //! Ptr access
