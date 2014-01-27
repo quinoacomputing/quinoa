@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 18 Jan 2014 08:26:49 AM MST
+  \date      Mon 27 Jan 2014 11:44:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -131,43 +131,12 @@ class Print {
     void raw(const T& raw) const { std::cout << raw; }
 
     //! Print all fields of MKL RNG parameters
-    template< class MapType >
     void MKLParams( const std::vector< ctr::RNGType >& vec,
-                    const MapType& map ) const
-    {
-      ctr::RNG rng;
-      for (auto& r : vec) {
-        if (rng.lib(r) == ctr::RNGLibType::MKL) {
-          subsection( rng.name(r) );
-          const auto& m = map.find(r);
-          if (m == map.end()) {   // no parameter map entry, print defaults
-            echoMKLParams( ctr::MKLRNGParam() );
-          } else {
-            echoMKLParams( m->second );
-          }
-        }
-      }
-    }
+                    const ctr::MKLRNGParameters& map ) const;
 
     //! Print all fields of RNGSSE parameters
-    template< class MapType >
     void RNGSSEParams( const std::vector< ctr::RNGType >& vec,
-                       const MapType& map ) const
-    {
-      ctr::RNG rng;
-      for (auto& r : vec) {
-        if (rng.lib(r) == ctr::RNGLibType::RNGSSE) {
-          subsection( rng.name(r) );
-          const auto& m = map.find(r);
-          if (m == map.end()) {   // no parameter map entry, print defaults
-            echoRNGSSEParams( ctr::RNGSSEParam(), rng, r );
-          } else {
-            echoRNGSSEParams( m->second, rng, r );
-          }
-        }
-      }
-    }
-
+                       const ctr::RNGSSEParameters& map ) const;
 
   protected:
     //! bullets
@@ -207,38 +176,13 @@ class Print {
     //! Don't permit move assigment
     Print& operator=(Print&&) = delete;
 
-    void echoMKLParams( const ctr::MKLRNGParam& p ) const {
-      Option< ctr::MKLUniformMethod > um;
-      Option< ctr::MKLGaussianMethod > gm;
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % "seed"
-                   % p.get<tag::seed>();
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % um.group()
-                   % um.name( p.get<tag::uniform_method>() );
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % gm.group()
-                   % gm.name( p.get<tag::gaussian_method>() );
-    }
+    //! Echo information on MKL random number generator
+    void echoMKLParams( const ctr::MKLRNGParam& p ) const;
 
+    //! Echo information on RNGSSE random number generator
     void echoRNGSSEParams( const ctr::RNGSSEParam& p,
                            const ctr::RNG& rng,
-                           const ctr::RNGType& r ) const {
-      std::cout << m_item_name_value_fmt
-                   % m_item_indent
-                   % "seed"
-                   % p.get<tag::seed>();
-      if ( rng.supportsSeq(r) ) {
-        Option< ctr::RNGSSESeqLen > seq;
-        std::cout << m_item_name_value_fmt
-                     % m_item_indent
-                     % seq.group()
-                     % seq.name( p.get<tag::seqlen>() );
-      }
-    }
+                           const ctr::RNGType& r ) const;
 };
 
 } // tk::

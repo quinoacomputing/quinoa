@@ -24,11 +24,11 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
-                      Base
                       Paradigm
                       LinearAlgebra
                       Geometry
                       MonteCarlo
+                      Base
                       IO
                       Mesh
                       Statistics

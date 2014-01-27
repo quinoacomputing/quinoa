@@ -6,6 +6,7 @@ add_library(Base
             Exception.C
             Handler.C
             Timer.C
+            Print.C
 )
 
 INSTALL(TARGETS Base
