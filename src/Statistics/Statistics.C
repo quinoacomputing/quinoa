@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 04:22:07 PM MST
+  \date      Mon 27 Jan 2014 04:38:32 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -95,7 +95,6 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
       m_central = tk::make_unique< tk::real[] >( m_nthreads*m_ncen );
     }
   }
-
 }
 
 bool
