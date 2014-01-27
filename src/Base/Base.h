@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 01:24:30 PM MST
+  \date      Mon 27 Jan 2014 04:28:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -41,17 +41,17 @@ struct Base {
 };
 
 //! Select data layout policy for particle properties
-#ifdef LAYOUT_PAR_EQ_COMP
+#if   defined LAYOUT_PAR_EQ_COMP
 using ParProps = ParticleProperties< ParEqComp >;
-#elif LAYOUT_PAR_COMP_EQ
+#elif defined LAYOUT_PAR_COMP_EQ
 using ParProps = ParticleProperties< ParCompEq >;
-#elif LAYOUT_EQ_COMP_PAR
+#elif defined LAYOUT_EQ_COMP_PAR
 using ParProps = ParticleProperties< EqCompPar >;
-#elif LAYOUT_EQ_PAR_COMP
+#elif defined LAYOUT_EQ_PAR_COMP
 using ParProps = ParticleProperties< EqParComp >;
-#elif LAYOUT_COMP_EQ_PAR
+#elif defined LAYOUT_COMP_EQ_PAR
 using ParProps = ParticleProperties< CompEqPar >;
-#elif LAYOUT_COMP_PAR_EQ
+#elif defined LAYOUT_COMP_PAR_EQ
 using ParProps = ParticleProperties< CompParEq >;
 #endif
 
