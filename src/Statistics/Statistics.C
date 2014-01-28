@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 04:38:32 PM MST
+  \date      Tue 28 Jan 2014 09:49:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -22,15 +22,15 @@
 using quinoa::Statistics;
 
 Statistics::Statistics( const Base& base, const ParProps& particles ) :
+  m_particles( particles ),
   m_nthreads( base.paradigm.nthreads() ),
   m_npar( base.control.get< tag::component, tag::npar >() ),
-  m_nprop( base.control.nprop() ),
   m_nord(0),
   m_ncen(0)
 //******************************************************************************
 //  Constructor
 //! \param[in]  base       Essentials
-//! \param[in]  particles  Particles
+//! \param[in]  particles  Particle properties
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -49,7 +49,7 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
       for (auto& term : product) {
         // Put in starting address of instantaneous variable
         m_instOrd[m_nord].push_back(
-          particles.cptr( control.termOffset( term.quantity ), term.field ) );
+          particles.cptr( term.field, control.termOffset( term.quantity ) ) );
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
         m_nameOrdinary.back() += m_ordFieldName.back()
@@ -79,7 +79,7 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
         for (auto& term : product) {
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(
-            particles.cptr( control.termOffset( term.quantity ), term.field ) );
+            particles.cptr( term.field, control.termOffset( term.quantity ) ) );
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
             m_ordinary.get() + (!isupper(term.name) ? mean(term) : m_nord));
@@ -199,13 +199,15 @@ Statistics::estimateOrdinary()
     #endif
     for (uint64_t p=0; p<m_npar; ++p) {
       for (int i=0; i<m_nord; ++i) {
-        auto prod = *(m_instOrd[i][0] + p*m_nprop);
+        auto prod = m_particles.cvar( m_instOrd[i][0], p );
         auto s = m_instOrd[i].size();
-        for (decltype(s) j=1; j<s; ++j) prod *= *(m_instOrd[i][j] + p*m_nprop);
+        for (decltype(s) j=1; j<s; ++j) {
+          prod *= m_particles.cvar( m_instOrd[i][j], p );
+        }
         m_ordinary[tid*(m_nord+1) + i] += prod;
       }
     }
-  } // omp parallel
+  }
 
   // Collect ordinary moments from all threads
   for (uint64_t p=1; p<m_nthreads; ++p) {
@@ -246,10 +248,10 @@ Statistics::estimateCentral()
     #endif
     for (uint64_t p=0; p<m_npar; ++p) {
       for (int i=0; i<m_ncen; ++i) {
-        auto prod = *(m_instCen[i][0] + p*m_nprop);
+        auto prod = m_particles.cvar( m_instCen[i][0], p );
         auto s = m_instCen[i].size();
         for (decltype(s) j=1; j<s; ++j) {
-          prod *= *(m_instCen[i][j] + p*m_nprop) - *(m_center[i][j]);
+          prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_center[i][j]);
         }
         m_central[tid*m_ncen + i] += prod;
       }

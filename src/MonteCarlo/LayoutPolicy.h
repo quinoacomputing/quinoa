@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 05:59:16 PM MST
+  \date      Tue 28 Jan 2014 10:50:36 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -15,13 +15,26 @@
 
 namespace quinoa {
 
+// Via the cmake variable LAYOUT, the following tags are used to select the
+// data layout for a logically 3-dimensional array that stores the particle
+// properties. There are a total of 6 permutations:
+//
+// ParEqComp: [ particle ] [ equation ] [ component ]
+// ParCompEq: [ particle ] [ component ] [ equation ]
+// EqCompPar: [ equation ] [ component ] [ particle ]
+// EqParComp: [ equation ] [ particle ] [ component ]
+// CompEqPar: [ component ] [ equation ] [ particle ]
+// CompParEq: [ component ] [ particle ] [ equation ]
+//
+// Of these 6 we only implement those where component follows equation. (For
+// those layouts where equation follows component the access would be
+// unnecessarily complicated by the potentially unequal number of components
+// for different equations.)
+
 //! Tags for selecting data layout policies
 const uint8_t ParEqComp = 0;
-const uint8_t ParCompEq = 1;
-const uint8_t EqCompPar = 2;
-const uint8_t EqParComp = 3;
-const uint8_t CompEqPar = 4;
-const uint8_t CompParEq = 5;
+const uint8_t EqCompPar = 1;
+const uint8_t EqParComp = 2;
 
 //! Zero-runtime-cost data-layout wrappers for particle properties with
 //! type-based compile-time dispatch
@@ -51,39 +64,42 @@ class ParticleProperties {
      return *(m_ptr.get() + particle*m_nprop + offset + component);
    }
    inline tk::real&
-   access( int particle, int component, int offset, int2type< ParCompEq > )
+   access( int particle, int component, int offset, int2type< EqCompPar > )
    const noexcept {
-     return *(m_ptr.get() + particle*m_nprop + offset + component);
+     return *(m_ptr.get() + (offset+component)*m_npar + particle);
    }
 
-   // Overloads for the various const ptr accesses
+   // Overloads for the various const ptr to physical variable accesses
    inline const tk::real*
    cptr( int component, int offset, int2type< ParEqComp > ) const noexcept {
-     return m_ptr.get() + offset + component;
+     return m_ptr.get() + component + offset;
    }
    inline const tk::real*
-   cptr( int component, int offset, int2type< ParCompEq > ) const noexcept {
-     return m_ptr.get() + offset + component;
+   cptr( int component, int offset, int2type< EqCompPar > ) const noexcept {
+     return m_ptr.get() + (offset+component)*m_npar;
+   }
+
+   // Overloads for the various const physical variable accesses
+   inline const tk::real&
+   cvar( const tk::real* const ptr, int particle, int2type< ParEqComp > ) const
+   noexcept {
+     return *(ptr + particle*m_nprop);
+   }
+   inline const tk::real&
+   cvar( const tk::real* const ptr, int particle, int2type< EqCompPar > ) const
+   noexcept {
+     return *(ptr + particle);
    }
 
    // Overloads for the name-queries of data lauouts
    inline const char* major( int2type< ParEqComp > ) const noexcept {
      return "[ particle ] [ equation ] [ component ]";
    }
-   inline const char* major( int2type< ParCompEq > ) const noexcept {
-     return "[ particle ] [ component ] [ equation ]";
-   }
    inline const char* major( int2type< EqCompPar > ) const noexcept {
      return "[ equation ] [ component ] [ particle ]";
    }
    inline const char* major( int2type< EqParComp > ) const noexcept {
      return "[ equation ] [ particle ] [ component ]";
-   }
-   inline const char* major( int2type< CompEqPar > ) const noexcept {
-     return "[ component ] [ equation ] [ particle ]";
-   }
-   inline const char* major( int2type< CompParEq > ) const noexcept {
-     return "[ component ] [ particle ] [ equation ]";
    }
 
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
@@ -103,10 +119,27 @@ class ParticleProperties {
       return access( particle, component, offset, int2type< Layout >() );
     }
 
-    //! Const ptr access dispatch
+    // cptr() and cvar() are intended to be used together in case component and
+    // offset would be expensive to compute for data access via the function
+    // call operator. In essence, cptr() returns part of the address known
+    // based on component and offset and intended to be used in a setup phase.
+    // Then cvar() takes this partial address and finishes the address
+    // calculation given the particle id. The following two data accesses are
+    // equivalent (modulo constness):
+    //  * real& value = operator()( par, comp, offs );
+    //  * const real* p = cptr( comp, offs );
+    //    const real& value = cvar( p, par );
+
+    //! Const ptr to physical variable access dispatch
     inline const tk::real*
     cptr( int component, int offset ) const noexcept {
       return cptr( component, offset, int2type< Layout >() );
+    }
+
+    //! Const physical variable access dispatch
+    inline const tk::real&
+    cvar( const tk::real* const ptr, int particle ) const noexcept {
+      return cvar( ptr, particle, int2type< Layout >() );
     }
 
     //! Ptr access

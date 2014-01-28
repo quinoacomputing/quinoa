@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:45:22 PM MST
+  \date      Tue 28 Jan 2014 08:35:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -118,7 +118,7 @@ class InputDeck :
     }
 
     //! Return offset for term::quantity
-    int termOffset(Quantity q) const noexcept {
+    int termOffset( Quantity q ) const noexcept {
       int offset = 0;
       if (q == Quantity::SCALAR)
         offset += get< tag::component, tag::nvelocity >();
