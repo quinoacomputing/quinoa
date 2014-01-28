@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 10:50:36 AM MST
+  \date      Tue 28 Jan 2014 11:46:55 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -40,6 +40,53 @@ const uint8_t EqParComp = 2;
 //! type-based compile-time dispatch
 template< uint8_t Layout >
 class ParticleProperties {
+
+  public:
+    //! Constructor
+    ParticleProperties( uint64_t npar, uint32_t nprop ) :
+      m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
+      m_npar( npar ),
+      m_nprop( nprop ) {}
+
+    //! Data access dispatch
+    inline tk::real&
+    operator()( int particle, int component, int offset ) const noexcept {
+      return access( particle, component, offset, int2type< Layout >() );
+    }
+
+    // cptr() and cvar() are intended to be used together in case component and
+    // offset would be expensive to compute for data access via the function
+    // call operator. In essence, cptr() returns part of the address known
+    // based on component and offset and intended to be used in a setup phase.
+    // Then cvar() takes this partial address and finishes the address
+    // calculation given the particle id. The following two data accesses are
+    // equivalent (modulo constness):
+    //  * real& value = operator()( par, comp, offs );
+    //  * const real* p = cptr( comp, offs );
+    //    const real& value = cvar( p, par );
+
+    //! Const ptr to physical variable access dispatch
+    inline const tk::real*
+    cptr( int component, int offset ) const noexcept {
+      return cptr( component, offset, int2type< Layout >() );
+    }
+
+    //! Const physical variable access dispatch
+    inline const tk::real&
+    cvar( const tk::real* const ptr, int particle ) const noexcept {
+      return cvar( ptr, particle, int2type< Layout >() );
+    }
+
+    //! Ptr access
+    inline tk::real* ptr() const noexcept { return m_ptr.get(); }
+
+    //! Size access
+    inline uint64_t size() const noexcept { return m_npar * m_nprop; }
+
+    //! Layout name dispatch
+    inline const char* major() const noexcept {
+      return major( int2type< Layout >() );
+    }
 
   private:
     //! Don't permit copy constructor
@@ -105,53 +152,6 @@ class ParticleProperties {
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
    const uint64_t m_npar;                     //!< Number of particles
    const uint32_t m_nprop;                    //!< Number of particle properties
-
-  public:
-    //! Constructor
-    ParticleProperties( uint64_t npar, uint32_t nprop ) :
-      m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
-      m_npar( npar ),
-      m_nprop( nprop ) {}
-
-    //! Data access dispatch
-    inline tk::real&
-    operator()( int particle, int component, int offset ) const noexcept {
-      return access( particle, component, offset, int2type< Layout >() );
-    }
-
-    // cptr() and cvar() are intended to be used together in case component and
-    // offset would be expensive to compute for data access via the function
-    // call operator. In essence, cptr() returns part of the address known
-    // based on component and offset and intended to be used in a setup phase.
-    // Then cvar() takes this partial address and finishes the address
-    // calculation given the particle id. The following two data accesses are
-    // equivalent (modulo constness):
-    //  * real& value = operator()( par, comp, offs );
-    //  * const real* p = cptr( comp, offs );
-    //    const real& value = cvar( p, par );
-
-    //! Const ptr to physical variable access dispatch
-    inline const tk::real*
-    cptr( int component, int offset ) const noexcept {
-      return cptr( component, offset, int2type< Layout >() );
-    }
-
-    //! Const physical variable access dispatch
-    inline const tk::real&
-    cvar( const tk::real* const ptr, int particle ) const noexcept {
-      return cvar( ptr, particle, int2type< Layout >() );
-    }
-
-    //! Ptr access
-    inline tk::real* ptr() const noexcept { return m_ptr.get(); }
-
-    //! Size access
-    inline uint64_t size() const noexcept { return m_npar * m_nprop; }
-
-    //! Layout name dispatch
-    inline const char* major() const noexcept {
-      return major( int2type< Layout >() );
-    }
 };
 
 } // quinoa::
