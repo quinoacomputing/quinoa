@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Base.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 04:28:17 PM MST
+  \date      Tue 28 Jan 2014 02:17:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Collection of essentials
   \details   Collection of essentials
@@ -41,18 +41,10 @@ struct Base {
 };
 
 //! Select data layout policy for particle properties
-#if   defined LAYOUT_PAR_EQ_COMP
+#if   defined LAYOUT_PARTICLE_MAJOR
 using ParProps = ParticleProperties< ParEqComp >;
-#elif defined LAYOUT_PAR_COMP_EQ
-using ParProps = ParticleProperties< ParCompEq >;
-#elif defined LAYOUT_EQ_COMP_PAR
+#elif defined LAYOUT_EQUATION_MAJOR
 using ParProps = ParticleProperties< EqCompPar >;
-#elif defined LAYOUT_EQ_PAR_COMP
-using ParProps = ParticleProperties< EqParComp >;
-#elif defined LAYOUT_COMP_EQ_PAR
-using ParProps = ParticleProperties< CompEqPar >;
-#elif defined LAYOUT_COMP_PAR_EQ
-using ParProps = ParticleProperties< CompParEq >;
 #endif
 
 } // quinoa::
