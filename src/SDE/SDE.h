@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:08:41 PM MST
+  \date      Mon 27 Jan 2014 06:01:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -64,7 +64,7 @@ class SDE : public Model {
     const tk::ctr::RNGType m_rngType;  //!< RNG used
     const ParProps& m_particles;       //!< Particle properties
     const uint64_t m_npar;             //!< Total number of particles
-    const int m_nprop;                 //!< Total number of particle properties
+    const uint32_t m_nprop;            //!< Total number of particle properties
     const int m_offset;                //!< Offset SDE operates from
     const int m_ncomp;                 //!< Number of components
     std::unique_ptr< tk::RNG > m_rng;  //!< Random number generator

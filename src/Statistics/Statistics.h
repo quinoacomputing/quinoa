@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 04:23:34 PM MST
+  \date      Mon 27 Jan 2014 06:02:20 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -82,7 +82,7 @@ class Statistics {
 
     const uint64_t m_nthreads;                //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
-    const int m_nprop;                        //!< Number of particle properties
+    const uint32_t m_nprop;                   //!< Number of particle properties
 
     //! Instantaneous variable pointers for computing ordinary moments
     std::vector< std::vector< const tk::real* > > m_instOrd;
