@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:39:03 PM MST
+  \date      Tue 28 Jan 2014 08:42:26 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -44,15 +44,15 @@ enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
 };
 
 //! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
-//! Internally the Numbering of field IDs starts from 0, but presented to the
+//! Internally the numbering of field IDs starts from 0, but presented to the
 //! user as starting from 1. Examples: 1st pressure fluctuation: {0, PRESSURE,
-//! CENTRAL, ...}, mean of 2nd scalar: {1, TRANSPORTED_SCALAR, ORDINARY, ...}.
+//! CENTRAL, ...}, mean of 2nd scalar: {1, SCALAR, ORDINARY, ...}.
 struct Term {
   int field;         //!< Field ID
   Quantity quantity; //!< Physical quantity
   Moment moment;     //!< Moment type: ordinary, central
   int name;          //!< Character code as name, converted only for output
-  bool plot;   //!< Shows whether the variable will be plotted
+  bool plot;         //!< Indicates whether the variable will be plotted
   // Conceptually, plot should be in Product, since plot will only be false for
   // a mean that was triggered by a central moment by one of the Terms of a
   // Product requesting the mean or a model. However, that would require
@@ -61,19 +61,12 @@ struct Term {
   // performance issue, plot is here in Term.
 
   //! Constructor
-  explicit Term(int f,
-                Quantity q,
-                Moment m,
-                char n,
-                bool p) : field(f),
-                          quantity(q),
-                          moment(m),
-                          name(n),
-                          plot(p) {}
+  explicit Term( int f, Quantity q, Moment m, char n, bool p ) :
+    field(f), quantity(q), moment(m), name(n), plot(p) {}
 
   //! Equal operator for finding unique elements, used by e.g., std::unique()
   //! Test only on field, quantity, and moment
-  bool operator== (const Term& term) const {
+  bool operator== ( const Term& term ) const {
     if (field == term.field &&
         quantity == term.quantity &&
         moment == term.moment) {
@@ -88,7 +81,7 @@ struct Term {
   //! Using operator >, instead of operator <, on plot ensures that if a Term is
   //! user-requested, i.e., plotted, and also triggered by e.g., a model, the
   //! user-requested Term will take precendence.
-  bool operator< (const Term& term) const {
+  bool operator< ( const Term& term ) const {
     // test on everything except name
     if (field < term.field) {
       return true;
@@ -106,7 +99,7 @@ struct Term {
   }
 
   //! Operator + for adding Term (name+field ID) to a std::string
-  friend std::string operator+ (const std::string& lhs, const Term& term) {
+  friend std::string operator+ ( const std::string& lhs, const Term& term ) {
     std::stringstream ss;
     ss << lhs << char(term.name) << term.field+1;
     std::string rhs = ss.str();
@@ -114,14 +107,14 @@ struct Term {
   }
 
   //! Operator << for writing Term to output streams
-  friend std::ostream& operator<< (std::ostream& os, const Term& term) {
+  friend std::ostream& operator<< ( std::ostream& os, const Term& term ) {
     os << char(term.name) << term.field+1;
     return os;
   }
 
   //! Operator << for writing vector<Term> to output streams
-  friend std::ostream& operator<< (std::ostream& os,
-                                   const std::vector<Term>& vec) {
+  friend std::ostream&
+  operator<< ( std::ostream& os, const std::vector< Term >& vec ) {
     os << "<";
     for (auto& w : vec) os << w;
     os << ">";
@@ -129,8 +122,8 @@ struct Term {
   }
 
   //! Operator <<= for writing requested vector<Term> to output streams
-  friend std::ostream& operator<<= (std::ostream& os,
-                                    const std::vector<Term>& vec) {
+  friend std::ostream&
+  operator<<= ( std::ostream& os, const std::vector< Term >& vec ) {
     if (vec[0].plot) {
       os << "<";
       for (auto& w : vec) os << w;
@@ -146,17 +139,17 @@ struct FieldName {
   int field;
 
   //! Constructor
-  explicit FieldName(const int n = 0, const int f = 0) :
+  explicit FieldName( const int n = 0, const int f = 0 ) :
     name(n), field(f) {}
 
   //! Operator << for writing FieldName to output streams
-  friend std::ostream& operator<< (std::ostream& os, const FieldName& fn) {
+  friend std::ostream& operator<< ( std::ostream& os, const FieldName& fn ) {
      os << char(fn.name) << fn.field+1;
      return os;
   }
 
   //! Operator += for adding FieldName to std::string
-  friend std::string& operator+= (std::string& os, const FieldName& fn) {
+  friend std::string& operator+= ( std::string& os, const FieldName& fn ) {
      std::stringstream ss;
      ss << os << char(fn.name) << fn.field+1;
      os = ss.str();

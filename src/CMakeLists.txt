@@ -91,18 +91,13 @@ endif()
 
 # Set data layout for particle properties
 # Available options
-set(LAYOUT_VALUES "par-eq-comp" "par-comp-eq"
-                  "eq-comp-par" "eq-par-comp"
-                  "comp-eq-par" "comp-par-eq")
+set(LAYOUT_VALUES "par-eq-comp" "eq-comp-par" "eq-par-comp")
 # Initialize all to off
 set(LAYOUT_PAR_EQ_COMP off)  # 0
-set(LAYOUT_PAR_COMP_EQ off)  # 1
-set(LAYOUT_EQ_COMP_PAR off)  # 2
-set(LAYOUT_EQ_PAR_COMP off)  # 3
-set(LAYOUT_COMP_EQ_PAR off)  # 4
-set(LAYOUT_COMP_PAR_EQ off)  # 5
+set(LAYOUT_EQ_COMP_PAR off)  # 1
+set(LAYOUT_EQ_PAR_COMP off)  # 2
 # Set default and select from list
-set(LAYOUT "par-eq-comp" CACHE STRING "Select data layout for particle properties. Default: (particle, equation, component). Available options: the 6 permutations.")
+set(LAYOUT "par-eq-comp" CACHE STRING "Particle properties layout. Default: (particle, equation, component). Available options: ${LAYOUT_VALUES}.")
 SET_PROPERTY (CACHE LAYOUT PROPERTY STRINGS ${LAYOUT_VALUES})
 STRING (TOLOWER ${LAYOUT} LAYOUT)
 LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
@@ -110,19 +105,13 @@ LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
 IF (${LAYOUT_INDEX} EQUAL 0)
   set(LAYOUT_PAR_EQ_COMP on)
 ELSEIF (${LAYOUT_INDEX} EQUAL 1)
-  set(LAYOUT_PAR_COMP_EQ on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 2)
   set(LAYOUT_EQ_COMP_PAR on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 3)
+ELSEIF (${LAYOUT_INDEX} EQUAL 2)
   set(LAYOUT_EQ_PAR_COMP on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 4)
-  set(LAYOUT_COMP_EQ_PAR on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 5)
-  set(LAYOUT_COMP_PAR_EQ on)
 ELSEIF (${LAYOUT_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Particle properties data layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
+  MESSAGE(FATAL_ERROR "Particle properties layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
 ENDIF()
-message(STATUS "Particle properties data layout (LAYOUT): " ${LAYOUT})
+message(STATUS "Particle properties layout (LAYOUT): " ${LAYOUT})
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
