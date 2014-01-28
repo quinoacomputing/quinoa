@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 04:35:42 PM MST
+  \date      Mon 27 Jan 2014 05:59:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -15,7 +15,7 @@
 
 namespace quinoa {
 
-//! Tags for selecting particle-, or property-major data layout policies
+//! Tags for selecting data layout policies
 const uint8_t ParEqComp = 0;
 const uint8_t ParCompEq = 1;
 const uint8_t EqCompPar = 2;
@@ -46,24 +46,24 @@ class ParticleProperties {
 
    // Overloads for the various data accesses
    inline tk::real&
-   access( int particle, int property, int offset, int2type< ParEqComp > ) const
-   noexcept {
-     return *(m_ptr.get() + particle*m_nprop + offset + property);
+   access( int particle, int component, int offset, int2type< ParEqComp > )
+   const noexcept {
+     return *(m_ptr.get() + particle*m_nprop + offset + component);
    }
    inline tk::real&
-   access( int particle, int property, int offset, int2type< ParCompEq > ) const
-   noexcept {
-     return *(m_ptr.get() + particle*m_nprop + offset + property);
+   access( int particle, int component, int offset, int2type< ParCompEq > )
+   const noexcept {
+     return *(m_ptr.get() + particle*m_nprop + offset + component);
    }
 
    // Overloads for the various const ptr accesses
    inline const tk::real*
-   cptr( int property, int offset, int2type< ParEqComp > ) const noexcept {
-     return m_ptr.get() + offset + property;
+   cptr( int component, int offset, int2type< ParEqComp > ) const noexcept {
+     return m_ptr.get() + offset + component;
    }
    inline const tk::real*
-   cptr( int property, int offset, int2type< ParCompEq > ) const noexcept {
-     return m_ptr.get() + offset + property;
+   cptr( int component, int offset, int2type< ParCompEq > ) const noexcept {
+     return m_ptr.get() + offset + component;
    }
 
    // Overloads for the name-queries of data lauouts
@@ -88,25 +88,25 @@ class ParticleProperties {
 
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
    const uint64_t m_npar;                     //!< Number of particles
-   const int m_nprop;                         //!< Number of particle properties
+   const uint32_t m_nprop;                    //!< Number of particle properties
 
   public:
     //! Constructor
-    ParticleProperties( uint64_t npar, int nprop ) :
+    ParticleProperties( uint64_t npar, uint32_t nprop ) :
       m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
       m_npar( npar ),
       m_nprop( nprop ) {}
 
     //! Data access dispatch
     inline tk::real&
-    operator()( int particle, int property, int offset ) const noexcept {
-      return access( particle, property, offset, int2type< Layout >() );
+    operator()( int particle, int component, int offset ) const noexcept {
+      return access( particle, component, offset, int2type< Layout >() );
     }
 
     //! Const ptr access dispatch
     inline const tk::real*
-    cptr( int property, int offset ) const noexcept {
-      return cptr( property, offset, int2type< Layout >() );
+    cptr( int component, int offset ) const noexcept {
+      return cptr( component, offset, int2type< Layout >() );
     }
 
     //! Ptr access
