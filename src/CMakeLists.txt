@@ -91,27 +91,24 @@ endif()
 
 # Set data layout for particle properties
 # Available options
-set(LAYOUT_VALUES "par-eq-comp" "eq-comp-par" "eq-par-comp")
+set(LAYOUT_VALUES "particle" "equation")
 # Initialize all to off
-set(LAYOUT_PAR_EQ_COMP off)  # 0
-set(LAYOUT_EQ_COMP_PAR off)  # 1
-set(LAYOUT_EQ_PAR_COMP off)  # 2
+set(LAYOUT_PARTICLE_MAJOR off)  # 0
+set(LAYOUT_EQUATION_MAJOR off)  # 1
 # Set default and select from list
-set(LAYOUT "par-eq-comp" CACHE STRING "Particle properties layout. Default: (particle, equation, component). Available options: ${LAYOUT_VALUES}.")
+set(LAYOUT "particle" CACHE STRING "Particle properties layout. Default: (particle-major). Available options: ${LAYOUT_VALUES}(-major).")
 SET_PROPERTY (CACHE LAYOUT PROPERTY STRINGS ${LAYOUT_VALUES})
 STRING (TOLOWER ${LAYOUT} LAYOUT)
 LIST (FIND LAYOUT_VALUES ${LAYOUT} LAYOUT_INDEX)
 # Evaluate selected option and put in a define for it
 IF (${LAYOUT_INDEX} EQUAL 0)
-  set(LAYOUT_PAR_EQ_COMP on)
+  set(LAYOUT_PARTICLE_MAJOR on)
 ELSEIF (${LAYOUT_INDEX} EQUAL 1)
-  set(LAYOUT_EQ_COMP_PAR on)
-ELSEIF (${LAYOUT_INDEX} EQUAL 2)
-  set(LAYOUT_EQ_PAR_COMP on)
+  set(LAYOUT_EQUATION_MAJOR on)
 ELSEIF (${LAYOUT_INDEX} EQUAL -1)
-  MESSAGE(FATAL_ERROR "Particle properties layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}")
+  MESSAGE(FATAL_ERROR "Particle properties layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}(-major).")
 ENDIF()
-message(STATUS "Particle properties layout (LAYOUT): " ${LAYOUT})
+message(STATUS "Particle properties layout (LAYOUT): " ${LAYOUT} "(-major)")
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

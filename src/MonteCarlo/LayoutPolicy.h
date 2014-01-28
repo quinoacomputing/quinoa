@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 11:46:55 AM MST
+  \date      Tue 28 Jan 2014 02:19:06 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -15,26 +15,9 @@
 
 namespace quinoa {
 
-// Via the cmake variable LAYOUT, the following tags are used to select the
-// data layout for a logically 3-dimensional array that stores the particle
-// properties. There are a total of 6 permutations:
-//
-// ParEqComp: [ particle ] [ equation ] [ component ]
-// ParCompEq: [ particle ] [ component ] [ equation ]
-// EqCompPar: [ equation ] [ component ] [ particle ]
-// EqParComp: [ equation ] [ particle ] [ component ]
-// CompEqPar: [ component ] [ equation ] [ particle ]
-// CompParEq: [ component ] [ particle ] [ equation ]
-//
-// Of these 6 we only implement those where component follows equation. (For
-// those layouts where equation follows component the access would be
-// unnecessarily complicated by the potentially unequal number of components
-// for different equations.)
-
 //! Tags for selecting data layout policies
 const uint8_t ParEqComp = 0;
 const uint8_t EqCompPar = 1;
-const uint8_t EqParComp = 2;
 
 //! Zero-runtime-cost data-layout wrappers for particle properties with
 //! type-based compile-time dispatch
@@ -140,13 +123,10 @@ class ParticleProperties {
 
    // Overloads for the name-queries of data lauouts
    inline const char* major( int2type< ParEqComp > ) const noexcept {
-     return "[ particle ] [ equation ] [ component ]";
+     return "particle-major";
    }
    inline const char* major( int2type< EqCompPar > ) const noexcept {
-     return "[ equation ] [ component ] [ particle ]";
-   }
-   inline const char* major( int2type< EqParComp > ) const noexcept {
-     return "[ equation ] [ particle ] [ component ]";
+     return "equation-major";
    }
 
    const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
