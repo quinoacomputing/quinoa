@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 11:44:08 AM MST
+  \date      Tue 28 Jan 2014 04:28:44 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -28,18 +28,18 @@ class Print {
 
   public:
     //! Constructor
-    explicit Print() = default;
+    explicit Print( std::ostream& stream = std::cout ) : m_stream( stream ) {}
 
     //! Destructor
     virtual ~Print() = default;
 
     //! Print header
     void header(const std::string& title) const {
-      std::cout << m_header_fmt % boost::io::group(std::setfill('='), "");
-      std::cout << std::endl;
-      std::cout << m_header_fmt % title;
-      std::cout << std::endl;
-      std::cout << m_header_fmt % boost::io::group(std::setfill('='), "");
+      m_stream << m_header_fmt % boost::io::group(std::setfill('='), "");
+      m_stream << std::endl;
+      m_stream << m_header_fmt % title;
+      m_stream << std::endl;
+      m_stream << m_header_fmt % boost::io::group(std::setfill('='), "");
     }
 
     //! Print part header: title
@@ -51,48 +51,48 @@ class Print {
       std::string upper(title);
       std::transform(title.begin(), title.end(), upper.begin(), ::toupper);
       upper = "< " + upper + " >";
-      std::cout << m_part_fmt % upper;
-      std::cout << m_part_underline_fmt % underline;
+      m_stream << m_part_fmt % upper;
+      m_stream << m_part_underline_fmt % underline;
     }
 
     //! Print section header: title
     void section(const std::string& title) const {
-      std::cout << m_section_title_fmt % m_section_indent
-                                       % m_section_bullet
-                                       % title;
-      std::cout << m_section_underline_fmt
-                   % m_section_indent
-                   % std::string(m_section_indent_size + 2 + title.size(),'-');
+      m_stream << m_section_title_fmt % m_section_indent
+                                      % m_section_bullet
+                                      % title;
+      m_stream << m_section_underline_fmt
+                  % m_section_indent
+                  % std::string(m_section_indent_size + 2 + title.size(),'-');
     }
     //! Print section header: title : value
     template<typename T>
     void section(const std::string& name, const T& value) const {
-      std::cout << m_section_title_value_fmt % m_section_indent
-                                             % m_section_bullet
-                                             % name
-                                             % value;
-      std::cout << m_section_underline_fmt
-                   % m_section_indent
-                   % std::string(m_section_indent_size + 3 + name.size() +
-                                 value.size(), '-');
+      m_stream << m_section_title_value_fmt % m_section_indent
+                                            % m_section_bullet
+                                            % name
+                                            % value;
+      m_stream << m_section_underline_fmt
+                  % m_section_indent
+                  % std::string(m_section_indent_size + 3 + name.size() +
+                                value.size(), '-');
     }
 
     //! Print subsection header: title
     void subsection(const std::string& title) const {
-      std::cout << m_subsection_title_fmt % m_subsection_indent
-                                          % m_subsection_bullet
-                                          % title;
+      m_stream << m_subsection_title_fmt % m_subsection_indent
+                                         % m_subsection_bullet
+                                         % title;
     }
 
     //! Print item: name
     void item(const std::string& name) const {
-      std::cout << m_item_name_fmt % m_item_indent % name;
+      m_stream << m_item_name_fmt % m_item_indent % name;
     }
 
     //! Print item: name : value
     template< typename T >
     void item(const std::string& name, const T& value) const {
-      std::cout << m_item_name_value_fmt % m_item_indent % name % value;
+      m_stream << m_item_name_value_fmt % m_item_indent % name % value;
     }
 
     //! Print list: name: entries...
@@ -100,7 +100,7 @@ class Print {
               const std::list< std::string >& entries) const {
       if (!entries.empty()) section( name );
       for (auto& e : entries) {
-        std::cout << m_list_item_fmt % m_item_indent % e;
+        m_stream << m_list_item_fmt % m_item_indent % e;
       }
     }
 
@@ -111,24 +111,27 @@ class Print {
               const std::list< Enum >& entries) const {
       if (!entries.empty()) section( name );
       for (auto& e : entries) {
-        std::cout << m_list_item_fmt % m_item_indent % opt.name(e);
+        m_stream << m_list_item_fmt % m_item_indent % opt.name(e);
       }
     }
 
     //! Print note
-    void note(const std::string& msg) const {
-      std::cout << m_note_fmt % m_section_indent % msg;
+    void note( const std::string& msg ) const {
+      m_stream << m_note_fmt % m_section_indent % msg;
     }
 
     //! Print end of part
-    void endpart() const { std::cout << "\n\n"; }
+    void endpart() const { m_stream << "\n\n"; }
 
     //! Print end of subsection
-    void endsubsection() const { std::cout << "\n"; }
+    void endsubsection() const { m_stream << "\n"; }
 
     //! Print raw
-    template<typename T>
-    void raw(const T& raw) const { std::cout << raw; }
+    template< typename T >
+    void raw( const T& raw ) const { m_stream << raw; }
+
+    //! Raw stream access
+    std::ostream& stream() const noexcept { return m_stream; }
 
     //! Print all fields of MKL RNG parameters
     void MKLParams( const std::vector< ctr::RNGType >& vec,
@@ -165,6 +168,9 @@ class Print {
     mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
+
+    // Steam object
+    std::ostream& m_stream;
 
   private:
     //! Don't permit copy constructor

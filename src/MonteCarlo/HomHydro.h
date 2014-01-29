@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:42:30 PM MST
+  \date      Tue 28 Jan 2014 05:04:54 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -40,16 +40,6 @@ class HomHydro : public Physics {
     //! Don't permit move assigment
     HomHydro& operator=(HomHydro&&) = delete;
     
-    //! One-liner report
-    void reportHeader();
-    void report(const uint64_t it,
-                const uint64_t nstep,
-                const tk::real t,
-                const tk::real dt,
-                const bool wroteJpdf,
-                const bool wroteGlob,
-                const bool wroteStat);
-
     //! Advance
     void advance(tk::real dt);
 

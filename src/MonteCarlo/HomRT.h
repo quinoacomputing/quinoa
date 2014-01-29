@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:43:50 PM MST
+  \date      Tue 28 Jan 2014 05:04:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous Rayleigh-Taylor
   \details   Homogeneous Rayleigh-Taylor
@@ -40,16 +40,6 @@ class HomRT : public Physics {
     HomRT(HomRT&&) = delete;
     //! Don't permit move assigment
     HomRT& operator=(HomRT&&) = delete;
-
-    //! One-liner report
-    void reportHeader() const;
-    void report(const uint64_t it,
-                const uint64_t nstep,
-                const tk::real t,
-                const tk::real dt,
-                const bool wroteJpdf,
-                const bool wroteGlob,
-                const bool wrotePlot);
 
     //! Advance
     void advance(tk::real dt);

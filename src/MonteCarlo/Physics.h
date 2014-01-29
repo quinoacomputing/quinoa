@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Wed Jan 15 15:24:57 2014
+  \date      Tue 28 Jan 2014 04:59:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -41,6 +41,18 @@ class Physics : public MonteCarlo {
   protected:
     //! Constructor: protected, designed to be base-only
     explicit Physics( const Base& base );
+
+    //! Standard header at start of time stepping that children can override
+    virtual void header() const;
+
+    //! Standard one-liner report that children can override
+    virtual void report( uint64_t it,
+                         uint64_t nstep,
+                         tk::real t,
+                         tk::real dt,
+                         bool wroteJpdf,
+                         bool wroteGlob,
+                         bool wrotePlot );
 
     const int m_nposition;                //!< Number of position components
     const int m_ndensity;                 //!< Number of density components

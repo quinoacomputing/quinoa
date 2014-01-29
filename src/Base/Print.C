@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 11:44:23 AM MST
+  \date      Tue 28 Jan 2014 03:56:15 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -23,20 +23,20 @@ Print::echoMKLParams( const ctr::MKLRNGParam& p ) const
   Option< ctr::MKLUniformMethod > um;
   Option< ctr::MKLGaussianMethod > gm;
 
-  std::cout << m_item_name_value_fmt
-               % m_item_indent
-               % "seed"
-               % p.get<tag::seed>();
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % "seed"
+              % p.get< tag::seed >();
 
-  std::cout << m_item_name_value_fmt
-               % m_item_indent
-               % um.group()
-               % um.name( p.get<tag::uniform_method>() );
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % um.group()
+              % um.name( p.get< tag::uniform_method >() );
 
-  std::cout << m_item_name_value_fmt
-               % m_item_indent
-               % gm.group()
-               % gm.name( p.get<tag::gaussian_method>() );
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % gm.group()
+              % gm.name( p.get< tag::gaussian_method >() );
 }
 
 void
@@ -48,17 +48,17 @@ Print::echoRNGSSEParams( const ctr::RNGSSEParam& p,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::cout << m_item_name_value_fmt
-               % m_item_indent
-               % "seed"
-               % p.get<tag::seed>();
+  m_stream << m_item_name_value_fmt
+              % m_item_indent
+              % "seed"
+              % p.get< tag::seed >();
 
   if ( rng.supportsSeq(r) ) {
     Option< ctr::RNGSSESeqLen > seq;
-    std::cout << m_item_name_value_fmt
-                 % m_item_indent
-                 % seq.group()
-                 % seq.name( p.get<tag::seqlen>() );
+    m_stream << m_item_name_value_fmt
+                % m_item_indent
+                % seq.group()
+                % seq.name( p.get< tag::seqlen >() );
   }
 }
 

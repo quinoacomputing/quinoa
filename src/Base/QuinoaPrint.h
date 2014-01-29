@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 09:25:53 AM MST
+  \date      Tue 28 Jan 2014 04:50:37 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -35,17 +35,17 @@ class QuinoaPrint : public tk::Print {
     template<typename OptionType, typename... tags>
     void Section() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
-        tk::Option<OptionType> opt;
+        tk::Option< OptionType > opt;
         auto& group = opt.group();
-        auto& value = opt.name(m_ctr.get<tags...>());
-        std::cout << m_section_title_value_fmt % m_section_indent
-                                               % m_section_bullet
-                                               % group
-                                               % value;
-        std::cout << m_section_underline_fmt
-                     % m_section_indent
-                     % std::string(m_section_indent_size + 3 +
-                                   group.size() + value.size(), '-');
+        auto& value = opt.name(m_ctr.get< tags... >());
+        m_stream << m_section_title_value_fmt % m_section_indent
+                                              % m_section_bullet
+                                              % group
+                                              % value;
+        m_stream << m_section_underline_fmt
+                    % m_section_indent
+                    % std::string( m_section_indent_size + 3 +
+                                   group.size() + value.size(), '-' );
       }
     }
 
@@ -53,9 +53,9 @@ class QuinoaPrint : public tk::Print {
     template<typename... tags>
     void Item(const std::string& name) const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>())
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % name
-                                           % m_ctr.get<tags...>();
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % name
+                                          % m_ctr.get<tags...>();
     }
 
     //! Print control option: 'group : option' only if differs from its default
@@ -63,9 +63,9 @@ class QuinoaPrint : public tk::Print {
     void Item() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % opt.group()
-                                           % opt.name(m_ctr.get<tags...>());
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % opt.group()
+                                          % opt.name(m_ctr.get<tags...>());
       }
     }
 
@@ -75,9 +75,9 @@ class QuinoaPrint : public tk::Print {
     //! <<= for outputing requested Term and vector<Term>.
     void RequestedStats(const std::string& msg) const {
       if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
-        std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<tag::stat>()) std::cout <<= v;
-        std::cout << '\n';
+        m_stream << m_item_name_fmt % m_item_indent % msg;
+        for (auto& v : m_ctr.get<tag::stat>()) m_stream <<= v;
+        m_stream << '\n';
       }
     }
 
@@ -87,9 +87,9 @@ class QuinoaPrint : public tk::Print {
     //! << for outputing estimated Term and vector<Term>.
     void EstimatedStats(const std::string& msg) const {
       if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
-        std::cout << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<tag::stat>()) std::cout << v;
-        std::cout << '\n';
+        m_stream << m_item_name_fmt % m_item_indent % msg;
+        for (auto& v : m_ctr.get<tag::stat>()) m_stream << v;
+        m_stream << '\n';
       }
     }
 
@@ -102,31 +102,31 @@ class QuinoaPrint : public tk::Print {
         subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>() ) );
         // Echo equation type and RNG if model is stochastic
         if (model->stochastic()) {
-          std::cout << m_item_name_value_fmt % m_item_indent
-                                             % "Equation"
-                                             % "stochastic";
+          m_stream << m_item_name_value_fmt % m_item_indent
+                                            % "Equation"
+                                            % "stochastic";
           tk::Option< tk::ctr::RNG > rng;
-          std::cout << m_item_name_value_fmt % m_item_indent
-                                             % rng.group()
-                                             % rng.name( model->rng() );
+          m_stream << m_item_name_value_fmt % m_item_indent
+                                            % rng.group()
+                                            % rng.name( model->rng() );
         } else {
           // Echo equation type if model is deterministic
-          std::cout << m_item_name_value_fmt % m_item_indent
-                                             % "Equation"
-                                             % "deterministic";
+          m_stream << m_item_name_value_fmt % m_item_indent
+                                            % "Equation"
+                                            % "deterministic";
         }
         // Echo initialization policy
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Init policy"
-                                           % model->initPolicy();
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % "Init policy"
+                                          % model->initPolicy();
         // Echo coefficients policy
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Coefficients policy"
-                                           % model->coeffPolicy();
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % "Coefficients policy"
+                                          % model->coeffPolicy();
         // Echo number of components
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % "Number of components"
-                                           % model->ncomp();
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % "Number of components"
+                                          % model->ncomp();
       }
     }
 
