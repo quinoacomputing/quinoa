@@ -2,10 +2,10 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:24:14 PM MST
+  \date      Wed Jan 29 14:56:55 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
-  \details   Dirichlet SDE
+  \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
 */
 //******************************************************************************
 #ifndef Dirichlet_h
@@ -16,7 +16,7 @@
 
 namespace quinoa {
 
-//! Dirichlet : Mix
+//! Dirichlet
 template< class Init, class Coefficients >
 class Dirichlet : public SDE< Init > {
 

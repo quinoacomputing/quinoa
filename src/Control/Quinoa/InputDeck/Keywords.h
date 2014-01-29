@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed 15 Jan 2014 08:29:23 PM MST
+  \date      Wed Jan 29 14:53:06 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -162,9 +162,7 @@ using hydro_glm = keyword<undefined_info,  h,y,d,r,o,'_',g,l,m >;
 
 // Keyword 'mix_iem'
 struct mix_iem_info {
-  static const char* name() { return
-    "Interaction by exchange with the mean";
-  }
+  static const char* name() { return "Interaction by exchange with the mean"; }
   static const char* help() { return
     "Material mix model, 'mix_iem', is short for interaction by exchange with "
     "the mean (IEM). It is a relaxation-type material mix model intended "
@@ -188,9 +186,7 @@ using mix_iecm = keyword<mix_iecm_info,  m,i,x,'_',i,e,c,m >;
 
 // Keyword 'mix_dir'
 struct mix_dir_info {
-  static const char* name() { return
-    "Dirichlet";
-  }
+  static const char* name() { return "Dirichlet"; }
   static const char* help() { return
     "Material mix model, 'mix_dir', is short for Dirichlet. It is a material "
     "mix model that explicitly satisfies the unit-sum requirement for all "
@@ -201,13 +197,11 @@ using mix_dir = keyword<mix_dir_info,  m,i,x,'_',d,i,r >;
 
 // Keyword 'mix_gendir'
 struct mix_gendir_info {
-  static const char* name() { return
-    "Generalized Dirichlet";
-  }
+  static const char* name() { return "Lochner's generalized Dirichlet"; }
   static const char* help() { return
-    "Material mix model, 'mix_gendir', is short for generalized Dirichlet. It "
-    "is a material mix model that explicitly satisfies the unit-sum "
-    "requirement for all statistical samples.";
+    "Material mix model, 'mix_gendir', is short for Lochner's generalized "
+    "Dirichlet. It is a material mix model that explicitly satisfies the "
+    "unit-sum requirement for all statistical samples.";
   }
 };
 using mix_gendir = keyword<mix_gendir_info,  m,i,x,'_',g,e,n,d,i,r >;
