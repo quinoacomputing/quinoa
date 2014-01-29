@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:35:09 PM MST
+  \date      Tue 28 Jan 2014 05:03:40 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -147,4 +147,63 @@ Physics::echo()
   print.RequestedStats( "Requested" );
   print.EstimatedStats( "Estimated" );
   print.endpart();
+}
+
+void
+Physics::header() const
+//******************************************************************************
+//  Echo standard header
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  tk::Option< ctr::Physics > phys;
+  auto& name = phys.name( control().get< tag::selected, tag::physics >() );
+
+  print().raw( "Start solving " + name + "\n\n" );
+  print().raw( "      it             t            dt"
+               "        ETE        ETA   out\n"
+               "------------------------------------"
+               "----------------------------\n" );
+}
+
+void
+Physics::report( uint64_t it,
+                 uint64_t nstep,
+                 tk::real t,
+                 tk::real dt,
+                 bool wroteJpdf,
+                 bool wroteGlob,
+                 bool wroteStat )
+//******************************************************************************
+//  Echo standard one-liner report
+//! \param[in]  it         Iteration counter
+//! \param[in]  nstep      Terminate time
+//! \param[in]  t          Time
+//! \param[in]  dt         Time step size
+//! \param[in]  wroteJpdf  True if joint PDF was output
+//! \param[in]  wroteGlob  True if glob was output
+//! \param[in]  wroteStat  True if statistics was output
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
+  timer().eta( m_totalTime, m_term, t, nstep, it, ete, eta );
+
+  print().stream() << std::setfill(' ') << std::setw(8) << it << "  "
+                   << std::scientific << std::setprecision(6)
+                   << std::setw(12) << t << "  "
+                   << dt << "  "
+                   << std::setfill('0')
+                   << std::setw(3) << ete.h.count() << ":"
+                   << std::setw(2) << ete.m.count() << ":"
+                   << std::setw(2) << ete.s.count() << "  "
+                   << std::setw(3) << eta.h.count() << ":"
+                   << std::setw(2) << eta.m.count() << ":"
+                   << std::setw(2) << eta.s.count() << "  ";
+
+  if (wroteGlob) print().raw( 'G' );
+  if (wroteJpdf) print().raw( 'J' );
+  if (wroteStat) print().raw( 'P' );
+
+  print().raw( '\n' );
 }

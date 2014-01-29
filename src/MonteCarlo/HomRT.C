@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:43:56 PM MST
+  \date      Tue 28 Jan 2014 05:04:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -44,7 +44,7 @@ HomRT::run()
 
   // Echo headers
   if (nstep) {
-    reportHeader();
+    header();
     statWriter().header();
   }
 
@@ -104,59 +104,6 @@ HomRT::advance(tk::real dt)
       hydro()->advance(p, tid, dt);
     }
   }
-}
-
-void
-HomRT::reportHeader() const
-//******************************************************************************
-//  Echo report header
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::cout << "      it             t            dt"
-               "        ETE        ETA   out\n"
-            << "------------------------------------"
-               "----------------------------" << std::endl;
-}
-
-void
-HomRT::report(const uint64_t it,
-              const uint64_t nstep,
-              const tk::real t,
-              const tk::real dt,
-              const bool wroteJpdf,
-              const bool wroteGlob,
-              const bool wroteStat)
-//******************************************************************************
-//  One-liner report
-//! \param[in]  it         Iteration counter
-//! \param[in]  nstep      Terminate time
-//! \param[in]  t          Time
-//! \param[in]  dt         Time step size
-//! \param[in]  wroteJpdf  True if joint PDF was output
-//! \param[in]  wroteGlob  True if glob was output
-//! \param[in]  wroteStat  True if statistics was output
-//! \author  J. Bakosi
-//******************************************************************************
-{
-//   tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
-//   timer().eta(m_totalTime, m_term, t, nstep, it, ete, eta);
-// 
-//   std::cout << std::setfill(' ') << std::setw(8) << it << "  "
-//             << std::scientific << std::setprecision(6) << std::setw(12) << t
-//             << "  " << dt << "  " << std::setfill('0')
-//             << std::setw(3) << ete.h.count() << ":"
-//             << std::setw(2) << ete.m.count() << ":"
-//             << std::setw(2) << ete.s.count() << "  "
-//             << std::setw(3) << eta.h.count() << ":"
-//             << std::setw(2) << eta.m.count() << ":"
-//             << std::setw(2) << eta.s.count() << "  ";
-// 
-//   if (wroteGlob) std::cout << "G";
-//   if (wroteJpdf) std::cout << "J";
-//   if (wroteStat) std::cout << "P";
-// 
-//   std::cout << std::endl;
 }
 
 void

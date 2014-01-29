@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:00:06 PM MST
+  \date      Tue 28 Jan 2014 03:53:39 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -38,14 +38,14 @@ class RNGTestPrint : public tk::Print {
         tk::Option< OptionType > opt;
         auto& group = opt.group();
         auto& value = opt.name( m_ctr.get< tags... >() );
-        std::cout << m_section_title_value_fmt % m_section_indent
-                                               % m_section_bullet
-                                               % group
-                                               % value;
-        std::cout << m_section_underline_fmt
-                     % m_section_indent
-                     % std::string( m_section_indent_size + 3 +
-                                    group.size() + value.size(), '-' );
+        m_stream << m_section_title_value_fmt % m_section_indent
+                                              % m_section_bullet
+                                              % group
+                                              % value;
+        m_stream << m_section_underline_fmt
+                    % m_section_indent
+                    % std::string( m_section_indent_size + 3 +
+                                   group.size() + value.size(), '-' );
       }
     }
 
@@ -59,14 +59,14 @@ class RNGTestPrint : public tk::Print {
         auto& value = bat.name( m_ctr.get< tag::selected, tag::battery >() );
         std::stringstream ss;
         ss << value << " (" << ntest << " tests, " << nstat << " stats)";
-        std::cout << m_section_title_value_fmt % m_section_indent
-                                               % m_section_bullet
-                                               % group
-                                               % ss.str();
-        std::cout << m_section_underline_fmt
-                     % m_section_indent
-                     % std::string( m_section_indent_size + 3 +
-                                    group.size() + value.size(), '-' );
+        m_stream << m_section_title_value_fmt % m_section_indent
+                                              % m_section_bullet
+                                              % group
+                                              % ss.str();
+        m_stream << m_section_underline_fmt
+                    % m_section_indent
+                    % std::string( m_section_indent_size + 3 +
+                                   group.size() + value.size(), '-' );
       }
     }
 
@@ -75,9 +75,9 @@ class RNGTestPrint : public tk::Print {
     void Item() const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         tk::Option<OptionType> opt;
-        std::cout << m_item_name_value_fmt % m_item_indent
-                                           % opt.group()
-                                           % opt.name(m_ctr.get<tags...>());
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % opt.group()
+                                          % opt.name(m_ctr.get<tags...>());
       }
     }
 
@@ -93,7 +93,7 @@ class RNGTestPrint : public tk::Print {
         for (Psize p=0; p<npval; ++p) {
           std::string name( tests[i]->name(p) );
           if (p>0) name += " *";
-          std::cout << m_list_item_fmt % m_item_indent % name;
+          m_stream << m_list_item_fmt % m_item_indent % name;
         }
       }
       raw( "\n" );
@@ -103,12 +103,12 @@ class RNGTestPrint : public tk::Print {
 
     //! Print statistical tests header (with legend)
     void statshead(const std::string& title) const {
-      std::cout << m_section_title_fmt % m_section_indent
-                                       % m_section_bullet
-                                       % title;
-      std::cout << m_section_underline_fmt
-                   % m_section_indent
-                   % std::string(m_section_indent_size + 2 + title.size(),'-');
+      m_stream << m_section_title_fmt % m_section_indent
+                                      % m_section_bullet
+                                      % title;
+      m_stream << m_section_underline_fmt
+                  % m_section_indent
+                  % std::string(m_section_indent_size + 2 + title.size(),'-');
       raw( m_item_indent +
            "Legend: [done/total/failed] Test, RNG : p-value\n\n" );
     }
@@ -130,10 +130,10 @@ class RNGTestPrint : public tk::Print {
       // Put in p-value if test failed
       if (test->fail(p)) pvalstr = "fail, p-value = " + test->pvalstr(p);
       // Output
-      std::cout << m_item_widename_value_fmt
-                   % m_item_indent
-                   % ss.str()
-                   % pvalstr;
+      m_stream << m_item_widename_value_fmt
+                  % m_item_indent
+                  % ss.str()
+                  % pvalstr;
     }
 
     //! Print failed statistical test names, RNGs, and p-values
@@ -166,10 +166,10 @@ class RNGTestPrint : public tk::Print {
             std::string newname( rng.name( tests[i]->rng() ) );
             std::string rngname( newname == oldname ? "" : (", " + newname) );
             oldname = newname;
-            std::cout << m_item_widename_value_fmt
-                         % m_item_indent
-                         % (tests[i]->name(p) + rngname)
-                         % tests[i]->pvalstr(p);
+            m_stream << m_item_widename_value_fmt
+                        % m_item_indent
+                        % (tests[i]->name(p) + rngname)
+                        % tests[i]->pvalstr(p);
           }
         }
       }
