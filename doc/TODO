@@ -40,8 +40,6 @@
     - Make coefficients policies optional
     - Document what is optional
 
-* Statistics::estimateOrdinary/Central: move variables to for-loop-local
-
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
