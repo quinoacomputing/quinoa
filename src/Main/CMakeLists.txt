@@ -34,7 +34,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Statistics
                       QuinoaControl
                       RNG
-                      SDE
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
