@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Sat 18 Jan 2014 07:50:10 AM MST
+  \date      Wed 29 Jan 2014 09:41:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -20,10 +20,12 @@
 namespace quinoa {
 
 //! Geometry factory type
-using GeometryFactory = std::map< ctr::GeometryType, std::function< Geometry*() > >;
+using GeometryFactory =
+  std::map< ctr::GeometryType, std::function< Geometry*() > >;
 
-//! Physics factory type
-using PhysicsFactory = std::map< ctr::PhysicsType, std::function< Physics*() > >;
+//! MonteCarlo factory type
+using MonteCarloFactory =
+  std::map< ctr::MonteCarloType, std::function< MonteCarlo*() > >;
 
 //! QuinoaDriver : Driver
 class QuinoaDriver : public tk::Driver {
@@ -53,12 +55,12 @@ class QuinoaDriver : public tk::Driver {
 
     //! Factories
     tk::RNGFactory m_RNGFactory;                 //!< RNG factory
-    PhysicsFactory m_physicsFactory;             //!< Physics factory
+    MonteCarloFactory m_MonteCarloFactory;       //!< MonteCarlo factory
     GeometryFactory m_geometryFactory;           //!< Geometry factory
 
     //! Pointers to selected options
     std::unique_ptr< Geometry > m_geometry;      //!< Geometry object
-    std::unique_ptr< Physics > m_physics;        //!< Physics object
+    std::unique_ptr< MonteCarlo > m_montecarlo;  //!< MonteCarlo object
 
     //! Pointers to essentials to be created
     std::unique_ptr< ctr::InputDeck > m_control; //!< Control

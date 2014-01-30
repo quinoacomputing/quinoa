@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed Jan 29 14:53:06 2014
+  \date      Wed 29 Jan 2014 09:17:04 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -143,6 +143,52 @@ struct spinsflow_info {
   }
 };
 using spinsflow = keyword<spinsflow_info,  s,p,i,n,s,f,l,o,w >;
+
+// Keyword 'testsde'
+struct testsde_info {
+  static const char* name() {
+    return "Test a stochastic differential equation"; }
+  static const char* help() { return
+    "Test a stochastic differential equation.";
+  }
+};
+using testsde = keyword<testsde_info,  t,e,s,t,s,d,e >;
+
+// Keyword 'dirichlet'
+struct dirichlet_info {
+  static const char* name() {
+    return "Dirichlet SDE"; }
+  static const char* help() { return
+    "A system of stochastic differential equations whose invariant is the "
+    "Dirichlet distribution. For more details, see "
+    "http://dx.doi.org/10.1155/2013/842981.";
+  }
+};
+using dirichlet = keyword<dirichlet_info,  d,i,r,i,c,h,l,e,t >;
+
+// Keyword 'generalized_dirichlet'
+struct generalized_dirichlet_info {
+  static const char* name() {
+    return "Lochner's generalized Dirichlet SDE"; }
+  static const char* help() { return
+    "A system of stochastic differential equations whose invariant is "
+    "Lochner's generalized Dirichlet distribution. For more details, see "
+    "http://dx.doi.org/10.1063/1.4822416.";
+  }
+};
+using generalized_dirichlet = keyword< generalized_dirichlet_info,
+                                g,e,n,e,r,a,l,i,z,e,d,'_',d,i,r,i,c,h,l,e,t >;
+
+// Keyword 'skewnormal'
+struct skewnormal_info {
+  static const char* name() {
+    return "Skew-normal SDE"; }
+  static const char* help() { return
+    "A single-variate stochastic differential equation whose invariant is the "
+    "skew-normal distribution.";
+  }
+};
+using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
 
 // Select position model:
 //   * Insviscid model
