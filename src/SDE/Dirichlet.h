@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed Jan 29 14:56:55 2014
+  \date      Wed Jan 29 16:50:09 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
@@ -25,12 +25,15 @@ class Dirichlet : public SDE< Init > {
     using sde = SDE< Init >;
 
     //! Constructor
-    explicit Dirichlet( const Base& base, const ParProps& particles ) :
+    explicit Dirichlet( const Base& base,
+                        const ParProps& particles,
+                        int offset,
+                        int ncomp ) :
       sde( base,
            base.control.get< tag::param, tag::dirichlet, tk::tag::rng >(),
            particles,
-           base.control.scalarOffset(),
-           base.control.get< tag::component, tag::nscalar >() ),
+           offset,
+           ncomp ),
       m_b( base.control.get< tag::component, tag::nscalar >() ),
       m_S( base.control.get< tag::component, tag::nscalar >() ),
       m_k( base.control.get< tag::component, tag::nscalar >() ),
@@ -48,7 +51,6 @@ class Dirichlet : public SDE< Init > {
 
     //! Pull base class data to scope
     using sde::m_particles;
-    using sde::m_nprop;
     using sde::m_offset;
     using sde::m_ncomp;
     using sde::m_rng;
