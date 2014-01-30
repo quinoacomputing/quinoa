@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed Jan 29 14:59:48 2014
+  \date      Wed Jan 29 16:24:49 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -29,7 +29,10 @@ struct GenDirCoeffConst {
                     std::vector< tk::real >& c )
   {
     policy = "constant";
-    b = b_; S = S_; k = k_; c = c_;
+    b = b_;
+    S = S_;
+    k = k_;
+    c = c_;
     ErrChk( b.size() == ncomp, tk::ExceptType::FATAL,
             "Wrong number of generalized Dirichlet model parameters 'b'");
     ErrChk( S.size() == ncomp, tk::ExceptType::FATAL,
