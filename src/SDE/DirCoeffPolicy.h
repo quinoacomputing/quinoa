@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 04:43:29 PM MST
+  \date      Wed Jan 29 16:24:34 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -27,7 +27,9 @@ struct DirCoeffConst {
                  std::vector< tk::real >& k )
   {
     policy = "constant";
-    b = b_; S = S_; k = k_;
+    b = b_;
+    S = S_;
+    k = k_;
     ErrChk( b.size() == ncomp, tk::ExceptType::FATAL,
             "Wrong number of Dirichlet model parameters 'b'");
     ErrChk( S.size() == ncomp, tk::ExceptType::FATAL,
