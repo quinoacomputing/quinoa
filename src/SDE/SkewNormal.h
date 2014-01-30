@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SkewNormal.h
   \author    J. Bakosi
-  \date      Wed 01 Jan 2014 02:02:00 PM MST
+  \date      Wed Jan 29 16:49:28 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE
@@ -12,18 +12,48 @@
 #define SkewNormal_h
 
 #include <SDE.h>
+#include <SkewNormalCoeffPolicy.h>
 
 namespace quinoa {
 
-//! SkewNormal : SDE
-class SkewNormal : public SDE {
+//! SkewNormal
+template< class Init, class Coefficients >
+class SkewNormal : public SDE< Init > {
 
   public:
-    //! Constructor
-    explicit SkewNormal() = default;
+    //! SDE base shorthand
+    using sde = SDE< Init >;
 
-    //! Destructor
-    ~SkewNormal() noexcept override = default;
+    //! Constructor
+    explicit SkewNormal( const Base& base,
+                         const ParProps& particles,
+                         int offset,
+                         int ncomp ) :
+      sde( base,
+           base.control.get< tag::param, tag::dirichlet, tk::tag::rng >(),
+           particles,
+           offset,
+           ncomp ),
+      m_coeff( m_coeffPolicy,
+               base.control.get< tag::param, tag::skewnormal, tag::sigma >(),
+               base.control.get< tag::param, tag::skewnormal, tag::timescale >(),
+               base.control.get< tag::param, tag::lambda, tag::lambda >(),
+               m_sigma, m_timescale, m_lambda ) {}
+
+    //! Return coefficients policy
+    const std::string& coeffPolicy() const noexcept override {
+      return m_coeffPolicy;
+    }
+
+    //! Pull base class data to scope
+    using sde::m_particles;
+    using sde::m_offset;
+    using sde::m_ncomp;
+    using sde::m_rng;
+
+    //! Advance particles
+    void advance(int p, int tid, tk::real dt) override {
+    }
 
   private:
     //! Don't permit copy constructor
@@ -34,6 +64,13 @@ class SkewNormal : public SDE {
     SkewNormal(SkewNormal&&) = delete;
     //! Don't permit move assigment
     SkewNormal& operator=(SkewNormal&&) = delete;
+
+    tk::real m_sigma;                   //!< SDE coefficients
+    tk::real m_timescale;
+    tk::real m_lambda;
+
+    std::string m_coeffPolicy;          //!< Coefficients policy name
+    Coefficients m_coeff;               //!< Coefficients policy
 };
 
 } // quinoa::
