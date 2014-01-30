@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 21 Jan 2014 07:38:04 PM MST
+  \date      Wed 29 Jan 2014 09:50:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -209,10 +209,10 @@ namespace deck {
   struct scan_geometry :
          select_option< keyword, ctr::Geometry, tag::geometry > {};
 
-  //! scan and store physics keyword and option
+  //! scan and store MonteCarlo keyword and option
   template< typename keyword >
-  struct scan_physics :
-         select_option< keyword, ctr::Physics, tag::physics > {};
+  struct scan_montecarlo :
+         select_option< keyword, ctr::MonteCarlo, tag::montecarlo > {};
 
   //! scan and store mass keyword and option
   template< typename keyword >
@@ -355,8 +355,8 @@ namespace deck {
          pegtl::sor< analytic_geometry,
                      discrete_geometry > {};
 
-  //! common to all physics
-  struct physics_common :
+  //! common to all monte-carlo
+  struct montecarlo_common :
          pegtl::sor< component< kw::npar, tag::npar >,
                      incpar< kw::nstep, tag::nstep >,
                      incpar< kw::term,  tag::term >,
@@ -397,61 +397,74 @@ namespace deck {
   struct freq :
          pegtl::sor< freq_gamma > {};
 
-  //! physics 'hommix' block
+  //! montecarlo physics 'hommix' block
   struct hommix :
-         pegtl::ifmust< scan_physics< kw::hommix >,
+         pegtl::ifmust< scan_montecarlo< kw::hommix >,
                         tk::grm::block< Stack,
                                         geometry,
-                                        physics_common,
+                                        montecarlo_common,
                                         mix,
                                         rngblock,
                                         statistics > > {};
 
-  //! physics 'homrt' block
+  //! montecarlo physics 'homrt' block
   struct homrt :
-         pegtl::ifmust< scan_physics< kw::homrt >,
+         pegtl::ifmust< scan_montecarlo< kw::homrt >,
                         tk::grm::block< Stack,
                                         geometry,
-                                        physics_common,
+                                        montecarlo_common,
                                         mass,
                                         hydro,
                                         freq,
                                         rngblock,
                                         statistics > > {};
 
-  //! physics 'homhydro' block
+  //! montecarlo physics 'homhydro' block
   struct homhydro :
-         pegtl::ifmust< scan_physics< kw::homhydro >,
+         pegtl::ifmust< scan_montecarlo< kw::homhydro >,
                         tk::grm::block< Stack,
                                         geometry,
-                                        physics_common,
+                                        montecarlo_common,
                                         hydro,
                                         freq,
                                         rngblock,
                                         statistics > > {};
 
-  //! physics 'spinsflow' block
+  //! montecarlo physics 'spinsflow' block
   struct spinsflow :
-         pegtl::ifmust< scan_physics< kw::spinsflow >,
+         pegtl::ifmust< scan_montecarlo< kw::spinsflow >,
                         tk::grm::block< Stack,
                                         geometry,
-                                        physics_common,
+                                        montecarlo_common,
                                         hydro,
                                         freq,
                                         mix,
                                         rngblock,
                                         statistics > > {};
 
-  //! physics types
+  //! 'testsde' block
+  struct testsde :
+         pegtl::ifmust< scan_montecarlo< kw::testsde >,
+                        tk::grm::block< Stack,
+                                        montecarlo_common,
+                                        mix,
+                                        rngblock,
+                                        statistics > > {};
+
+  //! montecarlo physics types
   struct physics :
          pegtl::sor< hommix,
                      homhydro,
                      homrt,
                      spinsflow > {};
 
+  //! montecarlo types
+  struct montecarlo :
+         pegtl::sor< testsde, physics > {};
+
   //! main keywords
   struct keywords :
-         pegtl::sor< title, physics > {};
+         pegtl::sor< title, montecarlo > {};
 
   //! ignore: comments and empty lines
   struct ignore :

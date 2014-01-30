@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 08:35:11 AM MST
+  \date      Wed 29 Jan 2014 09:55:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -39,7 +39,7 @@ class InputDeck :
       set< tag::title >( "" );
       // Default selections
       set< tag::selected, tag::geometry >( GeometryType::NO_GEOMETRY );
-      set< tag::selected, tag::physics >( PhysicsType::NO_PHYSICS );
+      set< tag::selected, tag::montecarlo >( MonteCarloType::NO_MONTECARLO );
       set< tag::selected, tag::position >( PositionType::NO_POSITION );
       set< tag::selected, tag::mass >( MassType::NO_MASS );
       set< tag::selected, tag::hydro >( HydroType::NO_HYDRO );

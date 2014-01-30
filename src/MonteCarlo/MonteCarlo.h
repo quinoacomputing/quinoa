@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 06:36:03 PM MST
+  \date      Wed 29 Jan 2014 09:41:08 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -23,14 +23,7 @@ namespace quinoa {
 class MonteCarlo {
 
   public:
-    //! Destructor
-    virtual ~MonteCarlo() = default;
-
-    //! Run
-    virtual void run() = 0;
-
-  protected:
-    //! Constructor: protected, designed to be base-only
+    //! Constructor
     explicit MonteCarlo( const Base& base ) :
       m_base( base ),
       m_npar( base.control.get< tag::component, tag::npar >() ),
@@ -42,6 +35,13 @@ class MonteCarlo {
       m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
     {}
 
+    //! Destructor
+    virtual ~MonteCarlo() = default;
+
+    //! Run
+    virtual void run() = 0;
+
+  protected:
     //! Constant accessor to control object
     //! \return Control object
     const ctr::InputDeck& control() const noexcept { return m_base.control; }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:36:59 2014
+  \date      Wed 29 Jan 2014 09:54:10 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -14,7 +14,7 @@
 #include <Types.h>
 #include <Quinoa/Tags.h>
 #include <Quinoa/Options/Geometry.h>
-#include <Quinoa/Options/Physics.h>
+#include <Quinoa/Options/MonteCarlo.h>
 #include <Quinoa/Options/Position.h>
 #include <Quinoa/Options/Mass.h>
 #include <Quinoa/Options/Hydro.h>
@@ -167,16 +167,16 @@ using Product = std::vector<Term>;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::geometry,  ctr::GeometryType,   //!< Selected geometry definition
-  tag::physics,   ctr::PhysicsType,    //!< Selected physics
-  tag::position,  ctr::PositionType,   //!< Selected position model
-  tag::mass,      ctr::MassType,       //!< Selected mass model
-  tag::hydro,     ctr::HydroType,      //!< Selected hydrodynamics model
-  tag::energy,    ctr::EnergyType,     //!< Selected internal energy model
-  tag::mix,       ctr::MixType,        //!< Selected material mix model
-  tag::frequency, ctr::FrequencyType,  //!< Selected turbulence frequency model
-  tag::mixrate,   ctr::MixRateType,    //!< Selected material mix rate model
-  tk::tag::rng,   std::vector< tk::ctr::RNGType > //!< Selected RNGs
+  tag::geometry,   ctr::GeometryType,   //!< Selected geometry definition
+  tag::montecarlo, ctr::MonteCarloType, //!< Selected physics
+  tag::position,   ctr::PositionType,   //!< Selected position model
+  tag::mass,       ctr::MassType,       //!< Selected mass model
+  tag::hydro,      ctr::HydroType,      //!< Selected hydrodynamics model
+  tag::energy,     ctr::EnergyType,     //!< Selected internal energy model
+  tag::mix,        ctr::MixType,        //!< Selected material mix model
+  tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
+  tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
+  tk::tag::rng,    std::vector< tk::ctr::RNGType > //!< Selected RNGs
 >;
 
 //! Time incrementation parameters storage

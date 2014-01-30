@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:34:33 2014
+  \date      Wed 29 Jan 2014 09:29:23 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -15,7 +15,7 @@ namespace quinoa {
 namespace tag {
 
 struct geometry {};
-struct physics {};
+struct montecarlo {};
 struct position {};
 struct mass {};
 struct hydro {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 01:58:40 PM MST
+  \date      Wed 29 Jan 2014 09:56:45 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -30,7 +30,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
 //! \param[in] print     Simple pretty printer
-//! \details   Instantiate geometry, physics, set initial conditions, etc.
+//! \details   Instantiate geometry, MonteCarlo, set initial conditions, etc.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -70,23 +70,23 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
     m_geometry = std::unique_ptr< Geometry >( m_geometryFactory[g]() );
   }
 
-  // Instantiate physics
-  ctr::PhysicsType p = m_control->get< tag::selected, tag::physics >();
-  if (p != ctr::PhysicsType::NO_PHYSICS) {
-    m_physics = std::unique_ptr< Physics >( m_physicsFactory[p]() );
+  // Instantiate MonteCarlo
+  ctr::MonteCarloType m = m_control->get< tag::selected, tag::montecarlo >();
+  if (m != ctr::MonteCarloType::NO_MONTECARLO) {
+    m_montecarlo = std::unique_ptr< MonteCarlo >( m_MonteCarloFactory[m]() );
   }
 
-  // Echo 'unspecified' if both geometry and physics are unspecified
-  if (!m_geometry && !m_physics) {
-    print.section( "Physics", std::string("unspecified") );
+  // Echo 'unspecified' if both geometry and MonteCarlo are unspecified
+  if (!m_geometry && !m_montecarlo) {
     print.section( "Geometry", std::string("unspecified") );
+    print.section( "MonteCarlo", std::string("unspecified") );
   }
 }
 
 void
 QuinoaDriver::initFactories(const tk::Print& print)
 //******************************************************************************
-//  Initialize geometry and physics factories
+//  Initialize geometry and MonteCarlo factories
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -99,18 +99,22 @@ QuinoaDriver::initFactories(const tk::Print& print)
                                   ctr::GeometryType::DISCRETE, *m_base );
   print.list("Registered geometries", geometry, regGeo);
 
-  // Register physics
-  ctr::Physics physics;
-  std::list< ctr::PhysicsType > regPhys;
-  tk::regist< HomMix >( m_physicsFactory, regPhys, physics,
-                        ctr::PhysicsType::HOMOGENEOUS_MIX, *m_base );
-  tk::regist< HomHydro >( m_physicsFactory, regPhys, physics,
-                          ctr::PhysicsType::HOMOGENEOUS_HYDRO, *m_base );
-  tk::regist< HomRT >( m_physicsFactory, regPhys, physics,
-                       ctr::PhysicsType::HOMOGENEOUS_RAYLEIGH_TAYLOR, *m_base );
-  tk::regist< SPINSFlow >( m_physicsFactory, regPhys, physics,
-                           ctr::PhysicsType::SPINSFLOW, *m_base );
-  print.list("Registered physics", physics, regPhys);
+  // Register MonteCarlo
+  ctr::MonteCarlo mc;
+  std::list< ctr::MonteCarloType > regMC;
+  tk::regist< HomMix >( m_MonteCarloFactory, regMC, mc,
+                        ctr::MonteCarloType::HOMOGENEOUS_MIX,
+                        *m_base );
+  tk::regist< HomHydro >( m_MonteCarloFactory, regMC, mc,
+                          ctr::MonteCarloType::HOMOGENEOUS_HYDRO,
+                          *m_base );
+  tk::regist< HomRT >( m_MonteCarloFactory, regMC, mc,
+                       ctr::MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR,
+                       *m_base );
+  tk::regist< SPINSFlow >( m_MonteCarloFactory, regMC, mc,
+                           ctr::MonteCarloType::SPINSFLOW,
+                           *m_base );
+  print.list("Registered MonteCarlo", mc, regMC);
 
   print.list( "Data layout policy",
               std::list< std::string > { ParProps(0,0).major(),
@@ -131,8 +135,8 @@ QuinoaDriver::execute() const
     m_geometry->fill();
   }
 
-  //! Run physics (if any)
-  if (m_physics) {
-    m_physics->run();
+  //! Run MonteCarlo (if any)
+  if (m_montecarlo) {
+    m_montecarlo->run();
   }
 }

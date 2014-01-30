@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Wed Jan 29 16:46:02 2014
+  \date      Wed 29 Jan 2014 09:52:09 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -112,7 +112,7 @@ Physics::echo()
   print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),
                       control.get< tag::param, tk::tag::rngsse >() );
 
-  print.Section< ctr::Physics, tag::selected, tag::physics >();
+  print.Section< ctr::MonteCarlo, tag::selected, tag::montecarlo >();
 
   print.subsection( "Output filenames" );
   print.item( "Input", control.get< tag::cmd, tag::io, tag::input >() );
@@ -166,8 +166,8 @@ Physics::header() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  tk::Option< ctr::Physics > phys;
-  auto& name = phys.name( control().get< tag::selected, tag::physics >() );
+  tk::Option< ctr::MonteCarlo > mc;
+  auto& name = mc.name( control().get< tag::selected, tag::montecarlo >() );
 
   print().raw( "Start solving " + name + "\n\n" );
   print().raw( "      it             t            dt"
