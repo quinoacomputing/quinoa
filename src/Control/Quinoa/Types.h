@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 08:42:26 AM MST
+  \date      Wed Jan 29 16:36:59 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -257,6 +257,14 @@ using GLMParameters = tk::tuple::tagged_tuple<
   tag::c0, tk::real
 >;
 
+//! Skew-normal parameters storage
+using SkewNormalParameters = tk::tuple::tagged_tuple<
+  tag::sigma,     tk::real,
+  tag::timescale, tk::real,
+  tag::lambda,    tk::real,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
@@ -266,7 +274,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::gendirichlet, GenDirichletParameters,
   tag::gamma,        GammaParameters,
   tag::slm,          SLMParameters,
-  tag::glm,          GLMParameters
+  tag::glm,          GLMParameters,
+  tag::skewnormal,   SkewNormalParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers

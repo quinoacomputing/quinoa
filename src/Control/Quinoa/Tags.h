@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:34:22 PM MST
+  \date      Wed Jan 29 16:34:33 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -56,6 +56,9 @@ struct c1 {};
 struct c2 {};
 struct c3 {};
 struct c4 {};
+struct lambda {};
+struct sigma {};
+struct timescale {};
 
 struct beta {};
 struct dirichlet {};
@@ -63,6 +66,7 @@ struct gendirichlet {};
 struct gamma {};
 struct slm {};
 struct glm {};
+struct skewnormal {};
 
 struct title {};
 struct selected {};
