@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:50:17 PM MST
+  \date      Fri Jan 31 10:44:39 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -234,6 +234,15 @@ namespace deck {
   struct scan_frequency :
          select_option< keyword, ctr::Frequency, tag::frequency > {};
 
+  //! scan and store_back sde keyword and option
+  template< typename keyword >
+  struct scan_sde :
+         tk::grm::scan< typename keyword::pegtl_string,
+                        tk::grm::store_back_option< Stack,
+                                                    ctr::SDE,
+                                                    tag::selected,
+                                                    tag::sde > > {};
+
   //! title
   struct title :
          pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
@@ -312,19 +321,19 @@ namespace deck {
                                         component< kw::nscalar, tag::nscalar >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
-                                             tag::gendirichlet,
+                                             tag::gendir,
                                              tk::tag::rng >,
                                         parameter_vector< kw::dir_B,
-                                                          tag::gendirichlet,
+                                                          tag::gendir,
                                                           tag::b >,
                                         parameter_vector< kw::dir_S,
-                                                          tag::gendirichlet,
+                                                          tag::gendir,
                                                           tag::S >,
                                         parameter_vector< kw::dir_kappa,
-                                                          tag::gendirichlet,
+                                                          tag::gendir,
                                                           tag::kappa >,
                                         parameter_vector< kw::gendir_C,
-                                                          tag::gendirichlet,
+                                                          tag::gendir,
                                                           tag::c > > > {};
 
   //! freq_gamma block
@@ -442,12 +451,62 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
+  //! dirichlet sde
+  struct dirichlet :
+         pegtl::ifmust< scan_sde< kw::dirichlet >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::ndirichlet >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::dirichlet,
+                                             tk::tag::rng >,
+                                        parameter_vector< kw::dir_B,
+                                                          tag::dirichlet,
+                                                          tag::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          tag::dirichlet,
+                                                          tag::S >,
+                                        parameter_vector< kw::dir_kappa,
+                                                          tag::dirichlet,
+                                                          tag::kappa > > > {};
+  //! generalized dirichlet sde
+  struct generalized_dirichlet :
+         pegtl::ifmust< scan_sde< kw::gendir >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::ngendir >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::gendir,
+                                             tk::tag::rng >,
+                                        parameter_vector< kw::dir_B,
+                                                          tag::gendir,
+                                                          tag::b >,
+                                        parameter_vector< kw::dir_S,
+                                                          tag::gendir,
+                                                          tag::S >,
+                                        parameter_vector< kw::dir_kappa,
+                                                          tag::gendir,
+                                                          tag::kappa >,
+                                        parameter_vector< kw::gendir_C,
+                                                          tag::gendir,
+                                                          tag::c > > > {};
+
+  //! stochastic differential equations
+  struct sde :
+         pegtl::sor< dirichlet,
+                     generalized_dirichlet/*,
+                     ornstein_uhlenbeck,
+                     lognormal,
+                     skewnormal,
+                     gamma,
+                     beta*/ > {};
+
   //! 'testsde' block
   struct testsde :
          pegtl::ifmust< scan_montecarlo< kw::testsde >,
                         tk::grm::block< Stack,
                                         montecarlo_common,
-                                        mix,
+                                        sde,
                                         rngblock,
                                         statistics > > {};
 

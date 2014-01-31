@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:54:10 PM MST
+  \date      Fri Jan 31 10:44:09 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -22,6 +22,7 @@
 #include <Quinoa/Options/Mix.h>
 #include <Quinoa/Options/Frequency.h>
 #include <Quinoa/Options/MixRate.h>
+#include <Quinoa/Options/SDE.h>
 #include <Options/RNG.h>
 
 namespace quinoa {
@@ -176,7 +177,8 @@ using selects = tk::tuple::tagged_tuple<
   tag::mix,        ctr::MixType,        //!< Selected material mix model
   tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
-  tk::tag::rng,    std::vector< tk::ctr::RNGType > //!< Selected RNGs
+  tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
+  tag::sde,        std::vector< ctr::SDEType >      //!< Selected SDEs
 >;
 
 //! Time incrementation parameters storage
@@ -193,7 +195,9 @@ using components = tk::tuple::tagged_tuple<
   tag::nvelocity,  uint32_t, //!< Number of velocity components in hydro model
   tag::nscalar,    uint32_t, //!< Number of mixing scalars in material mix model
   tag::nfrequency, uint32_t, //!< Number of frequencies in turb. frequency model
-  tag::npar,       uint64_t  //!< Total number of particles
+  tag::npar,       uint64_t, //!< Total number of particles
+  tag::ndirichlet, uint32_t, //!< Number of components in the Dirichlet SDE
+  tag::ngendir,    uint32_t  //!< Number of components in the gen. Dirichlet SDE
 >;
 
 //! Output intervals storage
@@ -265,13 +269,20 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
   tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
+//! Ornstein-Uhlenbeck parameters storage
+using OUParameters = tk::tuple::tagged_tuple<
+  tag::sigma,     tk::real,
+  tag::timescale, tk::real,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
   tk::tag::rngsse,   tk::ctr::RNGSSEParameters,         // RNGSSE RNG parameters
   tag::beta,         BetaParameters,
   tag::dirichlet,    DirichletParameters,
-  tag::gendirichlet, GenDirichletParameters,
+  tag::gendir,       GenDirichletParameters,
   tag::gamma,        GammaParameters,
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
