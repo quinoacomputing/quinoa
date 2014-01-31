@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Jan 31 10:44:09 2014
+  \date      Fri Jan 31 14:51:42 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -196,8 +196,9 @@ using components = tk::tuple::tagged_tuple<
   tag::nscalar,    uint32_t, //!< Number of mixing scalars in material mix model
   tag::nfrequency, uint32_t, //!< Number of frequencies in turb. frequency model
   tag::npar,       uint64_t, //!< Total number of particles
-  tag::ndirichlet, uint32_t, //!< Number of components in the Dirichlet SDE
-  tag::ngendir,    uint32_t  //!< Number of components in the gen. Dirichlet SDE
+  tag::ndirichlet, uint32_t, //!< Number of comps in the Dirichlet SDE
+  tag::ngendir,    uint32_t, //!< Number of comps in the gen. Dirichlet SDE
+  tag::nou,        uint32_t  //!< Number of comps in the Ornstein-Uhlenbeck SDE
 >;
 
 //! Output intervals storage
@@ -270,7 +271,7 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 >;
 
 //! Ornstein-Uhlenbeck parameters storage
-using OUParameters = tk::tuple::tagged_tuple<
+using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::sigma,     tk::real,
   tag::timescale, tk::real,
   tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
@@ -286,7 +287,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::gamma,        GammaParameters,
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
-  tag::skewnormal,   SkewNormalParameters
+  tag::skewnormal,   SkewNormalParameters,
+  tag::ou,           OrnsteinUhlenbeckParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers

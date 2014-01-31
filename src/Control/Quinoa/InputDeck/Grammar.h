@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jan 31 10:44:39 2014
+  \date      Fri Jan 31 14:51:23 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -406,7 +406,7 @@ namespace deck {
   struct freq :
          pegtl::sor< freq_gamma > {};
 
-  //! montecarlo physics 'hommix' block
+  //! MonteCarlo physics 'hommix' block
   struct hommix :
          pegtl::ifmust< scan_montecarlo< kw::hommix >,
                         tk::grm::block< Stack,
@@ -416,7 +416,7 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
-  //! montecarlo physics 'homrt' block
+  //! MonteCarlo physics 'homrt' block
   struct homrt :
          pegtl::ifmust< scan_montecarlo< kw::homrt >,
                         tk::grm::block< Stack,
@@ -428,7 +428,7 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
-  //! montecarlo physics 'homhydro' block
+  //! MonteCarlo physics 'homhydro' block
   struct homhydro :
          pegtl::ifmust< scan_montecarlo< kw::homhydro >,
                         tk::grm::block< Stack,
@@ -439,7 +439,7 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
-  //! montecarlo physics 'spinsflow' block
+  //! MonteCarlo physics 'spinsflow' block
   struct spinsflow :
          pegtl::ifmust< scan_montecarlo< kw::spinsflow >,
                         tk::grm::block< Stack,
@@ -451,7 +451,16 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
-  //! dirichlet sde
+  //! Ornstein-Uhlenbeck SDE
+  struct ornstein_uhlenbeck :
+         pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::nou >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::ou,
+                                             tk::tag::rng > > > {};
+  //! Dirichlet SDE
   struct dirichlet :
          pegtl::ifmust< scan_sde< kw::dirichlet >,
                         tk::grm::block< Stack,
@@ -469,7 +478,7 @@ namespace deck {
                                         parameter_vector< kw::dir_kappa,
                                                           tag::dirichlet,
                                                           tag::kappa > > > {};
-  //! generalized dirichlet sde
+  //! Generalized Dirichlet SDE
   struct generalized_dirichlet :
          pegtl::ifmust< scan_sde< kw::gendir >,
                         tk::grm::block< Stack,
@@ -494,8 +503,8 @@ namespace deck {
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
-                     generalized_dirichlet/*,
-                     ornstein_uhlenbeck,
+                     generalized_dirichlet,
+                     ornstein_uhlenbeck/*,
                      lognormal,
                      skewnormal,
                      gamma,
