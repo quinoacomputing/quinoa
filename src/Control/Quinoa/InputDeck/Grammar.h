@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:00:48 2014
+  \date      Fri Jan 31 15:27:25 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -295,8 +295,8 @@ namespace deck {
                            parameter< kw::SLM_C0, tag::slm, tag::c0 >,
                            component< kw::nvelocity, tag::nvelocity > > > {};
 
-  //! dir block
-  struct dir :
+  //! dirichlet mix model block
+  struct mix_dir :
          pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, tag::nscalar >,
@@ -304,18 +304,18 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::dirichlet,
                                              tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
+                                        parameter_vector< kw::sde_b,
                                                           tag::dirichlet,
                                                           tag::b >,
-                                        parameter_vector< kw::dir_S,
+                                        parameter_vector< kw::sde_S,
                                                           tag::dirichlet,
                                                           tag::S >,
-                                        parameter_vector< kw::dir_kappa,
+                                        parameter_vector< kw::sde_kappa,
                                                           tag::dirichlet,
                                                           tag::kappa > > > {};
 
-  //! gendir block
-  struct gendir :
+  //! Generalized Dirichlet mix model block
+  struct mix_gendir :
          pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
                                         component< kw::nscalar, tag::nscalar >,
@@ -323,20 +323,20 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::gendir,
                                              tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
+                                        parameter_vector< kw::sde_b,
                                                           tag::gendir,
                                                           tag::b >,
-                                        parameter_vector< kw::dir_S,
+                                        parameter_vector< kw::sde_S,
                                                           tag::gendir,
                                                           tag::S >,
-                                        parameter_vector< kw::dir_kappa,
+                                        parameter_vector< kw::sde_kappa,
                                                           tag::gendir,
                                                           tag::kappa >,
-                                        parameter_vector< kw::gendir_C,
+                                        parameter_vector< kw::sde_c,
                                                           tag::gendir,
                                                           tag::c > > > {};
 
-  //! freq_gamma block
+  //! Gamma turbulence frequency model block
   struct freq_gamma :
          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
@@ -349,8 +349,8 @@ namespace deck {
                           parameter< kw::freq_gamma_C4, tag::gamma, tag::c4 > >
                       > {};
 
-  //! beta block
-  struct beta :
+  //! Beta mass model block
+  struct mass_beta :
          pegtl::ifmust< scan_mass< kw::mass_beta >,
                         tk::grm::block<
                           Stack,
@@ -392,7 +392,7 @@ namespace deck {
 
   //! mass models
   struct mass :
-         pegtl::sor< beta > {};
+         pegtl::sor< mass_beta > {};
 
   //! hydro models
   struct hydro :
@@ -400,7 +400,7 @@ namespace deck {
 
   //! material mix models
   struct mix :
-         pegtl::sor< dir, gendir > {};
+         pegtl::sor< mix_dir, mix_gendir > {};
 
   //! turbulence frequency models
   struct freq :
@@ -481,6 +481,30 @@ namespace deck {
                                              tag::ou,
                                              tk::tag::rng > > > {};
 
+  //! Gamma SDE
+  struct gamma :
+         pegtl::ifmust< scan_sde< kw::gamma >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::ngamma >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::gamma,
+                                             tk::tag::rng > > > {};
+
+  //! Beta SDE
+  struct beta :
+         pegtl::ifmust< scan_sde< kw::beta >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::nbeta >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::beta,
+                                             tk::tag::rng >,
+                                        parameter< kw::sde_b, tag::beta, tag::b >,
+                                        parameter< kw::sde_S, tag::beta, tag::S >,
+                                        parameter< kw::sde_kappa,
+                                                   tag::beta,
+                                                   tag::kappa > > > {};
 
   //! Dirichlet SDE
   struct dirichlet :
@@ -491,13 +515,13 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::dirichlet,
                                              tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
+                                        parameter_vector< kw::sde_b,
                                                           tag::dirichlet,
                                                           tag::b >,
-                                        parameter_vector< kw::dir_S,
+                                        parameter_vector< kw::sde_S,
                                                           tag::dirichlet,
                                                           tag::S >,
-                                        parameter_vector< kw::dir_kappa,
+                                        parameter_vector< kw::sde_kappa,
                                                           tag::dirichlet,
                                                           tag::kappa > > > {};
   //! Generalized Dirichlet SDE
@@ -509,16 +533,16 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::gendir,
                                              tk::tag::rng >,
-                                        parameter_vector< kw::dir_B,
+                                        parameter_vector< kw::sde_b,
                                                           tag::gendir,
                                                           tag::b >,
-                                        parameter_vector< kw::dir_S,
+                                        parameter_vector< kw::sde_S,
                                                           tag::gendir,
                                                           tag::S >,
-                                        parameter_vector< kw::dir_kappa,
+                                        parameter_vector< kw::sde_kappa,
                                                           tag::gendir,
                                                           tag::kappa >,
-                                        parameter_vector< kw::gendir_C,
+                                        parameter_vector< kw::sde_c,
                                                           tag::gendir,
                                                           tag::c > > > {};
 
@@ -528,9 +552,9 @@ namespace deck {
                      generalized_dirichlet,
                      ornstein_uhlenbeck,
                      lognormal,
-                     skewnormal/*,
+                     skewnormal,
                      gamma,
-                     beta*/ > {};
+                     beta > {};
 
   //! 'testsde' block
   struct testsde :

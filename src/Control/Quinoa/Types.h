@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:00:09 2014
+  \date      Fri Jan 31 15:11:54 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -177,8 +177,8 @@ using selects = tk::tuple::tagged_tuple<
   tag::mix,        ctr::MixType,        //!< Selected material mix model
   tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
-  tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
-  tag::sde,        std::vector< ctr::SDEType >      //!< Selected SDEs
+  tag::sde,        std::vector< ctr::SDEType >,    //!< Selected SDEs
+  tk::tag::rng,    std::vector< tk::ctr::RNGType > //!< Selected RNGs
 >;
 
 //! Time incrementation parameters storage
@@ -196,11 +196,13 @@ using components = tk::tuple::tagged_tuple<
   tag::nscalar,     uint32_t, //!< N. of mixing scalars in material mix model
   tag::nfrequency,  uint32_t, //!< N. of frequencies in turb. frequency model
   tag::npar,        uint64_t, //!< Total number of particles
-  tag::ndirichlet,  uint32_t, //!< N. of comps in the Dirichlet SDE
-  tag::ngendir,     uint32_t, //!< N. of comps in the gen. Dirichlet SDE
-  tag::nou,         uint32_t, //!< N. of comps in the Ornstein-Uhlenbeck SDE
-  tag::nlognormal,  uint32_t, //!< N. of comps in the Log-normal SDE
-  tag::nskewnormal, uint32_t  //!< N. of comps in the Skew-normal SDE
+  tag::ndirichlet,  uint32_t, //!< N. of components in the Dirichlet SDE
+  tag::ngendir,     uint32_t, //!< N. of components in the gen. Dirichlet SDE
+  tag::nou,         uint32_t, //!< N. of components in the Ornstein-Uhlenbeck SDE
+  tag::nlognormal,  uint32_t, //!< N. of components in the Log-normal SDE
+  tag::nskewnormal, uint32_t, //!< N. of components in the Skew-normal SDE
+  tag::ngamma,      uint32_t, //!< N. of components in the gamma SDE
+  tag::nbeta,       uint32_t  //!< N. of components in the beta SDE
 >;
 
 //! Output intervals storage
@@ -225,6 +227,9 @@ using ios = tk::tuple::tagged_tuple<
 //! Beta mass model parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
   tag::atwood,     tk::real,
+  tag::b,          tk::real,
+  tag::S,          tk::real,
+  tag::kappa,      tk::real,
   tk::tag::rng,    tk::ctr::RNGType            //!< RNG used
 >;
 
@@ -290,15 +295,15 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
   tk::tag::rngsse,   tk::ctr::RNGSSEParameters,         // RNGSSE RNG parameters
-  tag::beta,         BetaParameters,
-  tag::dirichlet,    DirichletParameters,
-  tag::gendir,       GenDirichletParameters,
-  tag::gamma,        GammaParameters,
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
+  tag::dirichlet,    DirichletParameters,
+  tag::gendir,       GenDirichletParameters,
   tag::ou,           OrnsteinUhlenbeckParameters,
   tag::lognormal,    LogNormalParameters,
-  tag::skewnormal,   SkewNormalParameters
+  tag::skewnormal,   SkewNormalParameters,
+  tag::gamma,        GammaParameters,
+  tag::beta,         BetaParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers

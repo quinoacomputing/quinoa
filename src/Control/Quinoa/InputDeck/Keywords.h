@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri Jan 31 09:13:32 2014
+  \date      Fri Jan 31 15:26:16 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -338,10 +338,10 @@ using nfreq = keyword<undefined_info,  n,f,r,e,q >;
 using ncomp = keyword<undefined_info,  n,c,o,m,p >;
 
 // Dirichlet and generalized Dirichlet parameters
-using dir_B = keyword<undefined_info,  b >;
-using dir_S = keyword<undefined_info,  S >;
-using dir_kappa = keyword<undefined_info,  k,a,p,p,a >;
-using gendir_C = keyword<undefined_info,  C >;
+using sde_b = keyword<undefined_info,  b >;
+using sde_S = keyword<undefined_info,  S >;
+using sde_kappa = keyword<undefined_info,  k,a,p,p,a >;
+using sde_c = keyword<undefined_info,  c >;
 
 // Langevin model parameters
 using SLM_C0 = keyword<undefined_info,  C,'0' >;
