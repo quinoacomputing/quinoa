@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/SDE.h
   \author    J. Bakosi
-  \date      Fri Jan 31 14:53:35 2014
+  \date      Fri Jan 31 14:58:31 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE options and associations
   \details   SDE options and associations
@@ -24,6 +24,7 @@ namespace ctr {
 enum class SDEType : uint8_t { NO_SDE=0,
                                ORNSTEIN_UHLENBECK,
                                LOGNORMAL,
+                               SKEWNORMAL,
                                DIRICHLET,
                                GENDIR };
 
@@ -51,6 +52,7 @@ class SDE : public tk::Toggle<SDEType> {
     //! Get access to SDE keywords
     const kw::ornstein_uhlenbeck ou {};
     const kw::lognormal lognormal {};
+    const kw::skewnormal skewnormal {};
     const kw::dirichlet dir {};
     const kw::gendir gendir {};
 
@@ -59,6 +61,7 @@ class SDE : public tk::Toggle<SDEType> {
       { SDEType::NO_SDE, "n/a" },
       { SDEType::ORNSTEIN_UHLENBECK, ou.name() },
       { SDEType::LOGNORMAL, lognormal.name() },
+      { SDEType::SKEWNORMAL, skewnormal.name() },
       { SDEType::DIRICHLET, dir.name() },
       { SDEType::GENDIR, gendir.name() }
     };
@@ -67,7 +70,7 @@ class SDE : public tk::Toggle<SDEType> {
     const std::map<std::string, SDEType> values {
       { "no_sde", SDEType::NO_SDE },
       { ou.string(), SDEType::ORNSTEIN_UHLENBECK },
-      { lognormal.string(), SDEType::LOGNORMAL },
+      { skewnormal.string(), SDEType::SKEWNORMAL },
       { dir.string(), SDEType::DIRICHLET },
       { gendir.string(), SDEType::GENDIR }
     };

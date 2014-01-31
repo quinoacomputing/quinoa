@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Jan 31 14:56:52 2014
+  \date      Fri Jan 31 15:00:09 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -190,16 +190,17 @@ using incpars = tk::tuple::tagged_tuple<
 
 //! Components storage
 using components = tk::tuple::tagged_tuple<
-  tag::nposition,  uint32_t, //!< Number of position components in position model
-  tag::ndensity,   uint32_t, //!< Number of density components in mass model
-  tag::nvelocity,  uint32_t, //!< Number of velocity components in hydro model
-  tag::nscalar,    uint32_t, //!< Number of mixing scalars in material mix model
-  tag::nfrequency, uint32_t, //!< Number of frequencies in turb. frequency model
-  tag::npar,       uint64_t, //!< Total number of particles
-  tag::ndirichlet, uint32_t, //!< Number of comps in the Dirichlet SDE
-  tag::ngendir,    uint32_t, //!< Number of comps in the gen. Dirichlet SDE
-  tag::nou,        uint32_t, //!< Number of comps in the Ornstein-Uhlenbeck SDE
-  tag::nlognormal, uint32_t  //!< Number of comps in the Log-normal SDE
+  tag::nposition,   uint32_t, //!< N. of position components in position model
+  tag::ndensity,    uint32_t, //!< N. of density components in mass model
+  tag::nvelocity,   uint32_t, //!< N. of velocity components in hydro model
+  tag::nscalar,     uint32_t, //!< N. of mixing scalars in material mix model
+  tag::nfrequency,  uint32_t, //!< N. of frequencies in turb. frequency model
+  tag::npar,        uint64_t, //!< Total number of particles
+  tag::ndirichlet,  uint32_t, //!< N. of comps in the Dirichlet SDE
+  tag::ngendir,     uint32_t, //!< N. of comps in the gen. Dirichlet SDE
+  tag::nou,         uint32_t, //!< N. of comps in the Ornstein-Uhlenbeck SDE
+  tag::nlognormal,  uint32_t, //!< N. of comps in the Log-normal SDE
+  tag::nskewnormal, uint32_t  //!< N. of comps in the Skew-normal SDE
 >;
 
 //! Output intervals storage
@@ -263,14 +264,6 @@ using GLMParameters = tk::tuple::tagged_tuple<
   tag::c0, tk::real
 >;
 
-//! Skew-normal parameters storage
-using SkewNormalParameters = tk::tuple::tagged_tuple<
-  tag::sigma,     tk::real,
-  tag::timescale, tk::real,
-  tag::lambda,    tk::real,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
->;
-
 //! Ornstein-Uhlenbeck parameters storage
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::sigma,     tk::real,
@@ -285,6 +278,14 @@ using LogNormalParameters = tk::tuple::tagged_tuple<
   tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
+//! Skew-normal parameters storage
+using SkewNormalParameters = tk::tuple::tagged_tuple<
+  tag::sigma,     tk::real,
+  tag::timescale, tk::real,
+  tag::lambda,    tk::real,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
@@ -296,8 +297,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
   tag::ou,           OrnsteinUhlenbeckParameters,
-  tag::skewnormal,   SkewNormalParameters,
-  tag::lognormal,    LogNormalParameters
+  tag::lognormal,    LogNormalParameters,
+  tag::skewnormal,   SkewNormalParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers
