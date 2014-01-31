@@ -146,6 +146,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   #  3346: dynamic exception specifications are deprecated
   add_definitions("-diag-disable 111,193,304,367,383,444,869,981,1418,1599,2415,3346")
   add_definitions("-opt-report=0")
+  #add_definitions("-openmp-report")
 
 endif()
 
