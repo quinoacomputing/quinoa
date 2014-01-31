@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:55:35 PM MST
+  \date      Fri Jan 31 09:45:42 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -71,10 +71,10 @@ class InputDeck :
       set< tag::param, tag::dirichlet, tag::S >( std::vector< tk::real >() );
       set< tag::param, tag::dirichlet, tag::kappa >( std::vector< tk::real >() );
       // Default generalized Dirichlet mix model parameters
-      set< tag::param, tag::gendirichlet, tag::b >( std::vector< tk::real >() );
-      set< tag::param, tag::gendirichlet, tag::S >( std::vector< tk::real >() );
-      set< tag::param, tag::gendirichlet, tag::kappa >( std::vector< tk::real >() );
-      set< tag::param, tag::gendirichlet, tag::c >( std::vector< tk::real >() );
+      set< tag::param, tag::gendir, tag::b >( std::vector< tk::real >() );
+      set< tag::param, tag::gendir, tag::S >( std::vector< tk::real >() );
+      set< tag::param, tag::gendir, tag::kappa >( std::vector< tk::real >() );
+      set< tag::param, tag::gendir, tag::c >( std::vector< tk::real >() );
       // Default gamma mix model parameters
       set< tag::param, tag::gamma, tag::c1 >( 0.5 );
       set< tag::param, tag::gamma, tag::c2 >( 0.73 );

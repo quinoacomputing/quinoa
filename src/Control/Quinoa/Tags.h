@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:29:23 PM MST
+  \date      Fri Jan 31 09:43:15 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -34,6 +34,9 @@ struct nvelocity {};
 struct nscalar {};
 struct nfrequency {};
 struct npar {};
+struct ncomp {};
+struct ndirichlet {};
+struct ngendir {};
 
 struct tty {};
 struct dump {};
@@ -60,9 +63,10 @@ struct lambda {};
 struct sigma {};
 struct timescale {};
 
+struct sde {};
 struct beta {};
 struct dirichlet {};
-struct gendirichlet {};
+struct gendir {};
 struct gamma {};
 struct slm {};
 struct glm {};

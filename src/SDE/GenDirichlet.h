@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirichlet.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:48:34 2014
+  \date      Fri Jan 31 09:46:55 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -31,7 +31,7 @@ class GenDirichlet : public SDE< Init > {
                            int offset,
                            int ncomp ) :
       sde( base,
-           base.control.get< tag::param, tag::gendirichlet, tk::tag::rng >(),
+           base.control.get< tag::param, tag::gendir, tk::tag::rng >(),
            particles,
            offset,
            ncomp ),
@@ -41,10 +41,10 @@ class GenDirichlet : public SDE< Init > {
       m_c( base.control.get< tag::component, tag::nscalar >() ),
       m_coeff( m_coeffPolicy,
                base.control.get< tag::component, tag::nscalar >(),
-               base.control.get< tag::param, tag::gendirichlet, tag::b >(),
-               base.control.get< tag::param, tag::gendirichlet, tag::S >(),
-               base.control.get< tag::param, tag::gendirichlet, tag::kappa >(),
-               base.control.get< tag::param, tag::gendirichlet, tag::c >(),
+               base.control.get< tag::param, tag::gendir, tag::b >(),
+               base.control.get< tag::param, tag::gendir, tag::S >(),
+               base.control.get< tag::param, tag::gendir, tag::kappa >(),
+               base.control.get< tag::param, tag::gendir, tag::c >(),
                m_b, m_S, m_k, m_c ) {}
 
     //! Return coefficients policy

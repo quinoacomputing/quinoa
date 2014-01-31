@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:17:04 PM MST
+  \date      Fri Jan 31 09:13:32 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -167,7 +167,7 @@ struct dirichlet_info {
 using dirichlet = keyword<dirichlet_info,  d,i,r,i,c,h,l,e,t >;
 
 // Keyword 'generalized_dirichlet'
-struct generalized_dirichlet_info {
+struct gendir_info {
   static const char* name() {
     return "Lochner's generalized Dirichlet SDE"; }
   static const char* help() { return
@@ -176,8 +176,8 @@ struct generalized_dirichlet_info {
     "http://dx.doi.org/10.1063/1.4822416.";
   }
 };
-using generalized_dirichlet = keyword< generalized_dirichlet_info,
-                                g,e,n,e,r,a,l,i,z,e,d,'_',d,i,r,i,c,h,l,e,t >;
+using gendir =
+  keyword< gendir_info, g,e,n,e,r,a,l,i,z,e,d,'_',d,i,r,i,c,h,l,e,t >;
 
 // Keyword 'skewnormal'
 struct skewnormal_info {
@@ -189,6 +189,51 @@ struct skewnormal_info {
   }
 };
 using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
+
+// Keyword 'beta'
+struct beta_info {
+  static const char* name() {
+    return "Beta SDE"; }
+  static const char* help() { return
+    "A single-variate stochastic differential equation whose invariant is the "
+    "beta distribution.";
+  }
+};
+using beta = keyword< beta_info,  b,e,t,a >;
+
+// Keyword 'gamma'
+struct gamma_info {
+  static const char* name() {
+    return "Gamma SDE"; }
+  static const char* help() { return
+    "A single-variate stochastic differential equation whose invariant is the "
+    "gamma distribution.";
+  }
+};
+using gamma = keyword< gamma_info,  g,a,m,m,a >;
+
+// Keyword 'ornstein_uhlenbeck'
+struct ornstein_uhlenbeck_info {
+  static const char* name() {
+    return "Ornstein-Uhlenbeck SDE"; }
+  static const char* help() { return
+    "A single-variate stochastic differential equation whose invariant is the "
+    "normal distribution.";
+  }
+};
+using ornstein_uhlenbeck =
+  keyword< ornstein_uhlenbeck_info,  o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
+
+// Keyword 'lognormal'
+struct lognormal_info {
+  static const char* name() {
+    return "Log-normal SDE"; }
+  static const char* help() { return
+    "A single-variate stochastic differential equation whose invariant is the "
+    "log-normal distribution.";
+  }
+};
+using lognormal = keyword< lognormal_info,  l,o,g,n,o,r,m,a,l >;
 
 // Select position model:
 //   * Insviscid model
@@ -288,6 +333,9 @@ using nvelocity = keyword<undefined_info,  n,v,e,l,o,c,i,t,y >;
 using nscalar = keyword<undefined_info,  n,s,c,a,l,a,r >;
 // Number of particle turbulence frequency components
 using nfreq = keyword<undefined_info,  n,f,r,e,q >;
+
+// Number of components
+using ncomp = keyword<undefined_info,  n,c,o,m,p >;
 
 // Dirichlet and generalized Dirichlet parameters
 using dir_B = keyword<undefined_info,  b >;
