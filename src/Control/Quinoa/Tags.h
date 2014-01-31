@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:01:47 2014
+  \date      Fri Jan 31 15:17:06 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -40,6 +40,8 @@ struct ngendir {};
 struct nou {};
 struct nlognormal {};
 struct nskewnormal {};
+struct ngamma {};
+struct nbeta {};
 
 struct tty {};
 struct dump {};
