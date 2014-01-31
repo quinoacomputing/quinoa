@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Jan 31 14:51:42 2014
+  \date      Fri Jan 31 14:56:52 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -198,7 +198,8 @@ using components = tk::tuple::tagged_tuple<
   tag::npar,       uint64_t, //!< Total number of particles
   tag::ndirichlet, uint32_t, //!< Number of comps in the Dirichlet SDE
   tag::ngendir,    uint32_t, //!< Number of comps in the gen. Dirichlet SDE
-  tag::nou,        uint32_t  //!< Number of comps in the Ornstein-Uhlenbeck SDE
+  tag::nou,        uint32_t, //!< Number of comps in the Ornstein-Uhlenbeck SDE
+  tag::nlognormal, uint32_t  //!< Number of comps in the Log-normal SDE
 >;
 
 //! Output intervals storage
@@ -277,6 +278,13 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
 >;
 
+//! Log-normal parameters storage
+using LogNormalParameters = tk::tuple::tagged_tuple<
+  tag::sigma,     tk::real,
+  tag::timescale, tk::real,
+  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
@@ -287,8 +295,9 @@ using parameters = tk::tuple::tagged_tuple<
   tag::gamma,        GammaParameters,
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
+  tag::ou,           OrnsteinUhlenbeckParameters,
   tag::skewnormal,   SkewNormalParameters,
-  tag::ou,           OrnsteinUhlenbeckParameters
+  tag::lognormal,    LogNormalParameters
 >;
 
 //! PEGTL location type to use throughout all of Quinoa's parsers

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jan 31 14:51:23 2014
+  \date      Fri Jan 31 14:57:10 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -460,6 +460,17 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::ou,
                                              tk::tag::rng > > > {};
+
+  //! Log-normal SDE
+  struct lognormal :
+         pegtl::ifmust< scan_sde< kw::lognormal >,
+                        tk::grm::block< Stack,
+                                        component< kw::ncomp, tag::nlognormal >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::ou,
+                                             tk::tag::rng > > > {};
+
   //! Dirichlet SDE
   struct dirichlet :
          pegtl::ifmust< scan_sde< kw::dirichlet >,
@@ -504,8 +515,8 @@ namespace deck {
   struct sde :
          pegtl::sor< dirichlet,
                      generalized_dirichlet,
-                     ornstein_uhlenbeck/*,
-                     lognormal,
+                     ornstein_uhlenbeck,
+                     lognormal/*,
                      skewnormal,
                      gamma,
                      beta*/ > {};
