@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:03:29 PM MST
+  \date      Sat 01 Feb 2014 10:49:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -113,7 +113,7 @@ HomMix::advance(tk::real dt)
 }
 
 void
-HomMix::outJpdf(const tk::real t)
+HomMix::outJpdf(tk::real t)
 //******************************************************************************
 //  Output joint scalar PDF
 //! \param[in]  t    Time stamp

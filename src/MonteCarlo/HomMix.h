@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:00:26 PM MST
+  \date      Sat 01 Feb 2014 10:49:21 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -42,10 +42,10 @@ class HomMix : public Physics {
     HomMix& operator=(HomMix&&) = delete;
 
     //! Advance
-    void advance(tk::real dt);
+    void advance( tk::real dt );
 
     //! Output joint scalar PDF
-    void outJpdf(const tk::real t);
+    void outJpdf( tk::real t );
 };
 
 } // quinoa::
