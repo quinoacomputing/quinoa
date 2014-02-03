@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:56:45 PM MST
+  \date      Sat 01 Feb 2014 10:53:29 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -21,6 +21,7 @@
 #include <HomHydro.h>
 #include <HomRT.h>
 #include <SPINSFlow.h>
+#include <TestSDE.h>
 
 using quinoa::QuinoaDriver;
 
@@ -113,6 +114,9 @@ QuinoaDriver::initFactories(const tk::Print& print)
                        *m_base );
   tk::regist< SPINSFlow >( m_MonteCarloFactory, regMC, mc,
                            ctr::MonteCarloType::SPINSFLOW,
+                           *m_base );
+  tk::regist< TestSDE >( m_MonteCarloFactory, regMC, mc,
+                           ctr::MonteCarloType::TESTSDE,
                            *m_base );
   print.list("Registered MonteCarlo", mc, regMC);
 
