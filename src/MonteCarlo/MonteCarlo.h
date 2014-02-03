@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:41:08 PM MST
+  \date      Sat 01 Feb 2014 10:58:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -77,6 +77,18 @@ class MonteCarlo {
     //! Accessor to max run time
     //! \return Max run time
     const tk::real& term() const noexcept { return m_term; }
+
+    //! Standard header at start of time stepping that children can override
+    virtual void header() const;
+
+    //! Standard one-liner report that children can override
+    virtual void report( uint64_t it,
+                         uint64_t nstep,
+                         tk::real t,
+                         tk::real dt,
+                         bool wroteJpdf,
+                         bool wroteGlob,
+                         bool wrotePlot );
 
     const Base& m_base;                             //!< Essentials
     const uint64_t m_npar;                          //!< Number of particles
