@@ -49,7 +49,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 
 endif()
 
-#### PEGTL (Parsing Expression Grammar Template Library) ######################
+#### PEGTL (Parsing Expression Grammar Template Library) #######################
 # http://code.google.com/p/pegtl
 # Header only
 ExternalProject_Add(
@@ -89,6 +89,29 @@ ExternalProject_Add(
   LOG_CONFIGURE 1
   LOG_BUILD 1
   LOG_INSTALL 1
+)
+
+#### Boost.MPL extension: cartesian product ###################################
+# http://www.organicvectory.com
+# Header only
+ExternalProject_Add(
+  cartesian_product
+  PREFIX cartesian_product
+  URL ${PROJECT_SOURCE_DIR}/boost.mpl.cartesian_product.zip
+  URL_MD5 4bcfbdd61af85548e684198c0ee52b62
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+)
+# Header-only, copy include dir over
+ExternalProject_Get_Property(cartesian_product SOURCE_DIR)
+ExternalProject_Add_Step(
+  cartesian_product copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/boost/mpl
+          ${TPL_INSTALL_DIR}/include/boost/mpl
 )
 
 ##### Trilinos #################################################################

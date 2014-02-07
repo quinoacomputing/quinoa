@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:16:24 2013
+  \date      Thu 06 Feb 2014 04:33:29 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -14,6 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
+#include <Quinoa/InputDeck/Keywords.h>
 
 namespace quinoa {
 namespace ctr {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/SDE.h
   \author    J. Bakosi
-  \date      Fri Jan 31 14:58:31 2014
+  \date      Thu 06 Feb 2014 05:35:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE options and associations
   \details   SDE options and associations
@@ -12,10 +12,12 @@
 #define QuinoaSDEOptions_h
 
 #include <map>
-#include <list>
 
 #include <Model.h>
 #include <Toggle.h>
+#include <Quinoa/InputDeck/Keywords.h>
+#include <Quinoa/Options/InitPolicy.h>
+#include <Quinoa/Options/CoeffPolicy.h>
 
 namespace quinoa {
 namespace ctr {
@@ -29,15 +31,18 @@ enum class SDEType : uint8_t { NO_SDE=0,
                                GENDIR };
 
 //! SDE factory type
-using SDEFactory = std::map< SDEType, std::function<Model*()> >;
+using SDEKey = tk::tuple::tagged_tuple< tag::sde,         SDEType,
+                                        tag::initpolicy,  InitPolicyType,
+                                        tag::coeffpolicy, CoeffPolicyType >;
+using SDEFactory = std::map< SDEKey, std::function< Model*() > >;
 
 //! Class with base templated on the above enum class with associations
-class SDE : public tk::Toggle<SDEType> {
+class SDE : public tk::Toggle< SDEType > {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit SDE() : Toggle<SDEType>("SDE", names, values) {}
+    explicit SDE() : Toggle< SDEType >( "SDE", names, values ) {}
 
   private:
     //! Don't permit copy constructor

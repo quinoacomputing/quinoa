@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:50:09 2014
+  \date      Thu 06 Feb 2014 05:48:50 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
@@ -18,11 +18,11 @@ namespace quinoa {
 
 //! Dirichlet
 template< class Init, class Coefficients >
-class Dirichlet : public SDE< Init > {
+class Dirichlet : public SDE< Init, Coefficients > {
 
   public:
     //! SDE base shorthand
-    using sde = SDE< Init >;
+    using sde = SDE< Init, Coefficients >;
 
     //! Constructor
     explicit Dirichlet( const Base& base,
@@ -37,17 +37,11 @@ class Dirichlet : public SDE< Init > {
       m_b( base.control.get< tag::component, tag::nscalar >() ),
       m_S( base.control.get< tag::component, tag::nscalar >() ),
       m_k( base.control.get< tag::component, tag::nscalar >() ),
-      m_coeff( m_coeffPolicy,
-               base.control.get< tag::component, tag::nscalar >(),
+      m_coeff( base.control.get< tag::component, tag::nscalar >(),
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
                base.control.get< tag::param, tag::dirichlet, tag::S >(),
                base.control.get< tag::param, tag::dirichlet, tag::kappa >(),
                m_b, m_S, m_k ) {}
-
-    //! Return coefficients policy
-    const std::string& coeffPolicy() const noexcept override {
-      return m_coeffPolicy;
-    }
 
     //! Pull base class data to scope
     using sde::m_particles;
@@ -88,7 +82,6 @@ class Dirichlet : public SDE< Init > {
     std::vector< tk::real > m_S;
     std::vector< tk::real > m_k;
 
-    std::string m_coeffPolicy;          //!< Coefficients policy name
     Coefficients m_coeff;               //!< Coefficients policy
 };
 

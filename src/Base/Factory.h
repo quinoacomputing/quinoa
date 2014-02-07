@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:49:12 PM MST
+  \date      Thu 06 Feb 2014 08:55:59 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -12,24 +12,26 @@
 #define Factory_h
 
 #include <list>
-#include <functional>
+
+#include <boost/functional/factory.hpp>
 
 namespace tk {
 
-//! Register into factory
-//! \param[in] C       Type of the (derived) class constructor
-//! \param[in] F       Type of factory to add to
-//! \param[in] O       Type of option to add
-//! \param[in] E       Type of enum to add
-//! \param[in] Args... Types of variable number of arguments to constructor
-//! \param[in] f       Factory instance to add to
-//! \param[in] reg     List of enums to add enum to
-//! \param[in] o       Type of option to add
-//! \param[in] e       Enum key to factory's std::map
-//! \param[in] args    Variable number of arguments to constructor
+//! Register option into factory with enum key
 template< class C, class F, class O, typename E, typename... Args >
 void regist( F& f, std::list<E>& reg, const O& o, E e, Args&&... args ) {
   reg.push_back( o.template add<C>( f, e, std::forward<Args>(args)... ) );
+}
+
+template< class C, class Key, class Factory, typename... ConstructorArgs >
+void add( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
+  factory[ key ] = std::bind( boost::factory< C* >(),
+                              std::forward< ConstructorArgs >( args )... );
+}
+
+template< class C, class Key, class Factory, typename... ConstructorArgs >
+void regSDE( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
+  add< C >( factory, key, std::forward< ConstructorArgs >( args )... );
 }
 
 } // tk::

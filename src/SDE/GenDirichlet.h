@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirichlet.h
   \author    J. Bakosi
-  \date      Fri Jan 31 09:46:55 2014
+  \date      Thu 06 Feb 2014 05:48:56 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -19,11 +19,11 @@ namespace quinoa {
 
 //! Lochner's generalized Dirichlet
 template< class Init, class Coefficients >
-class GenDirichlet : public SDE< Init > {
+class GenDirichlet : public SDE< Init, Coefficients > {
 
   public:
     //! SDE base shorthand
-    using sde = SDE< Init >;
+    using sde = SDE< Init, Coefficients >;
 
     //! Constructor
     explicit GenDirichlet( const Base& base,
@@ -39,18 +39,12 @@ class GenDirichlet : public SDE< Init > {
       m_S( base.control.get< tag::component, tag::nscalar >() ),
       m_k( base.control.get< tag::component, tag::nscalar >() ),
       m_c( base.control.get< tag::component, tag::nscalar >() ),
-      m_coeff( m_coeffPolicy,
-               base.control.get< tag::component, tag::nscalar >(),
+      m_coeff( base.control.get< tag::component, tag::nscalar >(),
                base.control.get< tag::param, tag::gendir, tag::b >(),
                base.control.get< tag::param, tag::gendir, tag::S >(),
                base.control.get< tag::param, tag::gendir, tag::kappa >(),
                base.control.get< tag::param, tag::gendir, tag::c >(),
                m_b, m_S, m_k, m_c ) {}
-
-    //! Return coefficients policy
-    const std::string& coeffPolicy() const noexcept override {
-      return m_coeffPolicy;
-    }
 
     //! Pull base class data to scope
     using sde::m_particles;
@@ -104,7 +98,6 @@ class GenDirichlet : public SDE< Init > {
     std::vector< tk::real > m_k;
     std::vector< tk::real > m_c;
 
-    std::string m_coeffPolicy;          //!< Coefficients policy name
     Coefficients m_coeff;               //!< Coefficients policy
 };
 

@@ -2,24 +2,40 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 11:03:54 AM MST
+  \date      Thu 06 Feb 2014 06:02:48 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
 */
 //******************************************************************************
-
 #ifdef _OPENMP
 #include "omp.h"
 #endif // _OPENMP
+
+#include <boost/mpl/cartesian_product.hpp>
 
 #include <TestSDE.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
 #include <Statistics.h>
 #include <Macro.h>
+#include <Factory.h>
+#include <Dirichlet.h>
+#include <GenDirichlet.h>
 
 using quinoa::TestSDE;
+
+TestSDE::TestSDE( const Base& base ) : MonteCarlo( base )
+//******************************************************************************
+//  Constructor
+//! \param[in]  base     Essentials
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  //! Initialize factories
+  initFactories( print() );
+
+}
 
 void
 TestSDE::run()
@@ -130,4 +146,36 @@ IGNORE(t);
 //   // Output joint PDF
 //   PDFWriter jpdfFile(filename);
 //   jpdfFile.writeGmsh(&jpdf);
+}
+
+void
+TestSDE::initFactories(const tk::Print& print)
+//******************************************************************************
+//  Initialize factories
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Register SDEs
+  //ctr::SDE sde;
+  //std::list< ctr::SDEType > regSDE;
+
+  namespace mpl = boost::mpl;
+
+  // Construct vector of vectors for all possible policies
+  using DirPolicies = mpl::vector< InitPolicies, DirCoeffPolicies >;
+
+  // Register Dirichlet SDE for all combinations of policies
+  mpl::cartesian_product< DirPolicies >(
+    registerSDE< TestSDE, Dirichlet, tag::ndirichlet, ctr::SDEType >
+               ( this, ctr::SDEType::DIRICHLET ) );
+
+  // Construct vector of vectors for all possible policies
+  using GenDirPolicies = mpl::vector< InitPolicies, GenDirCoeffPolicies >;
+
+  // Register generalized Dirichlet SDE for all combinations of policies
+  mpl::cartesian_product< GenDirPolicies >(
+    registerSDE< TestSDE, GenDirichlet, tag::ngendir, ctr::SDEType >
+               ( this, ctr::SDEType::GENDIR ) );
+
+  //print.list("Registered SDEs", sde, regSDE);
 }

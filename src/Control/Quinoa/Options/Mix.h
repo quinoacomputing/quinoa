@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 07:15:55 PM MST
+  \date      Thu 06 Feb 2014 04:32:51 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -12,7 +12,6 @@
 #define QuinoaMixOptions_h
 
 #include <map>
-#include <list>
 
 #include <Model.h>
 #include <Toggle.h>
