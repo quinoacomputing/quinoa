@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:11:54 2014
+  \date      Fri 07 Feb 2014 06:51:48 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -230,24 +230,28 @@ using BetaParameters = tk::tuple::tagged_tuple<
   tag::b,          tk::real,
   tag::S,          tk::real,
   tag::kappa,      tk::real,
-  tk::tag::rng,    tk::ctr::RNGType            //!< RNG used
+  tk::tag::rng,    tk::ctr::RNGType
 >;
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
-  tag::b,         std::vector<tk::real>,
-  tag::S,         std::vector<tk::real>,
-  tag::kappa,     std::vector<tk::real>,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tag::b,           std::vector<tk::real>,
+  tag::S,           std::vector<tk::real>,
+  tag::kappa,       std::vector<tk::real>,
+  tk::tag::rng,     tk::ctr::RNGType,
+  tag::initpolicy,  ctr::InitPolicyType,
+  tag::coeffpolicy, ctr::CoeffPolicyType
 >;
 
 //! Generalized Dirichlet mix model parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
-  tag::b,         std::vector<tk::real>,
-  tag::S,         std::vector<tk::real>,
-  tag::kappa,     std::vector<tk::real>,
-  tag::c,         std::vector<tk::real>,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tag::b,           std::vector<tk::real>,
+  tag::S,           std::vector<tk::real>,
+  tag::kappa,       std::vector<tk::real>,
+  tag::c,           std::vector<tk::real>,
+  tk::tag::rng,     tk::ctr::RNGType,
+  tag::initpolicy,  ctr::InitPolicyType,
+  tag::coeffpolicy, ctr::CoeffPolicyType
 >;
 
 //! Gamma mix model parameters storage
@@ -256,7 +260,7 @@ using GammaParameters = tk::tuple::tagged_tuple<
   tag::c2,        tk::real,
   tag::c3,        tk::real,
   tag::c4,        tk::real,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tk::tag::rng,   tk::ctr::RNGType
 >;
 
 //! Simplified Langevin hydro model parameters storage
@@ -273,14 +277,14 @@ using GLMParameters = tk::tuple::tagged_tuple<
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::sigma,     tk::real,
   tag::timescale, tk::real,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tk::tag::rng,   tk::ctr::RNGType
 >;
 
 //! Log-normal parameters storage
 using LogNormalParameters = tk::tuple::tagged_tuple<
   tag::sigma,     tk::real,
   tag::timescale, tk::real,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tk::tag::rng,   tk::ctr::RNGType
 >;
 
 //! Skew-normal parameters storage
@@ -288,7 +292,7 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::sigma,     tk::real,
   tag::timescale, tk::real,
   tag::lambda,    tk::real,
-  tk::tag::rng,   tk::ctr::RNGType            //!< RNG used
+  tk::tag::rng,   tk::ctr::RNGType
 >;
 
 //! Parameters storage
