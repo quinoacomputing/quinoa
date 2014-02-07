@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:27:25 2014
+  \date      Fri 07 Feb 2014 06:47:31 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -451,6 +451,15 @@ namespace deck {
                                         rngblock,
                                         statistics > > {};
 
+  //! policy parameter
+  template< typename keyword, typename option, typename sde, typename... tags >
+  struct policy :
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           store_option< option, tag::param, sde, tags... >,
+                           pegtl::alpha > {};
+
+
   //! Ornstein-Uhlenbeck SDE
   struct ornstein_uhlenbeck :
          pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
@@ -515,6 +524,14 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::dirichlet,
                                              tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::dirichlet,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::dirichlet,
+                                                tag::coeffpolicy >,
                                         parameter_vector< kw::sde_b,
                                                           tag::dirichlet,
                                                           tag::b >,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 06:04:47 PM MST
+  \date      Fri 07 Feb 2014 06:19:56 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -398,6 +398,12 @@ using rngs = keyword<undefined_info,  r,n,g,s >;
 
 // RNG
 using rng = keyword<undefined_info,  r,n,g >;
+
+// Keyword 'init'
+using init = keyword<undefined_info,  i,n,i,t >;
+
+// Keyword 'coeff'
+using coeff = keyword<undefined_info,  c,o,e,f,f >;
 
 // Keyword 'raw': raw initialization policy
 struct raw_info {
