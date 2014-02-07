@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 04:28:44 PM MST
+  \date      Fri 07 Feb 2014 10:07:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -34,26 +34,10 @@ class Print {
     virtual ~Print() = default;
 
     //! Print header
-    void header(const std::string& title) const {
-      m_stream << m_header_fmt % boost::io::group(std::setfill('='), "");
-      m_stream << std::endl;
-      m_stream << m_header_fmt % title;
-      m_stream << std::endl;
-      m_stream << m_header_fmt % boost::io::group(std::setfill('='), "");
-    }
+    void header(const std::string& title) const;
 
     //! Print part header: title
-    void part(const std::string& title) const {
-      using std::operator+;
-      std::string::size_type half_length = title.size()/2 + 1;
-      std::string s(half_length, '-');
-      std::string underline(s + " o " + s);
-      std::string upper(title);
-      std::transform(title.begin(), title.end(), upper.begin(), ::toupper);
-      upper = "< " + upper + " >";
-      m_stream << m_part_fmt % upper;
-      m_stream << m_part_underline_fmt % underline;
-    }
+    void part(const std::string& title) const;
 
     //! Print section header: title
     void section(const std::string& title) const {
