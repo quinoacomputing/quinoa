@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:04:12 PM MST
+  \date      Thu 06 Feb 2014 05:00:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -21,13 +21,16 @@ class TestSDE : public MonteCarlo {
 
   public:
     //! Constructor
-    explicit TestSDE( const Base& base ) : MonteCarlo( base ) {}
+    explicit TestSDE( const Base& base );
 
     //! Destructor
     ~TestSDE() override = default;
 
     //! Run
     void run() override;
+
+    //! Factor accessor
+    ctr::SDEFactory& factory() noexcept { return m_SDEFactory; }
 
   private:
     //! Don't permit copy constructor
@@ -44,6 +47,15 @@ class TestSDE : public MonteCarlo {
 
     //! Output joint scalar PDF
     void outJpdf( tk::real t );
+
+    //! Initialize factories
+    void initFactories( const tk::Print& print );
+
+    //! Factory
+    ctr::SDEFactory m_SDEFactory;                       //!< SDE factory
+
+    //! Pointers to SDEs
+    std::vector< std::unique_ptr< Model > > m_sde;
 };
 
 } // quinoa::

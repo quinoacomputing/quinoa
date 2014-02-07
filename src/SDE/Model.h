@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Model.h
   \author    J. Bakosi
-  \date      Thu Jan 23 16:47:40 2014
+  \date      Thu 06 Feb 2014 05:43:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model
   \details   Model
@@ -39,10 +39,10 @@ class Model {
     virtual int ncomp() const noexcept = 0;
 
     //! Return initialization policy
-    virtual const std::string& initPolicy() const noexcept = 0;
+    virtual std::string initPolicy() const noexcept = 0;
 
     //! Return coefficients policy
-    virtual const std::string& coeffPolicy() const noexcept = 0;
+    virtual std::string coeffPolicy() const noexcept = 0;
 
   private:
     //! Don't permit copy constructor

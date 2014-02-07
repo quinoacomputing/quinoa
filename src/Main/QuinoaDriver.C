@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 10:53:29 AM MST
+  \date      Mon Feb  3 09:41:51 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -91,16 +91,16 @@ QuinoaDriver::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Register geometries
+  // Register geometry types
   ctr::Geometry geometry;
   std::list< ctr::GeometryType > regGeo;
   tk::regist< AnalyticGeometry >( m_geometryFactory, regGeo, geometry,
                                  ctr::GeometryType::ANALYTIC, *m_base );
   tk::regist< DiscreteGeometry >( m_geometryFactory, regGeo, geometry,
                                   ctr::GeometryType::DISCRETE, *m_base );
-  print.list("Registered geometries", geometry, regGeo);
+  print.list("Registered geometry types", geometry, regGeo);
 
-  // Register MonteCarlo
+  // Register MonteCarlo types
   ctr::MonteCarlo mc;
   std::list< ctr::MonteCarloType > regMC;
   tk::regist< HomMix >( m_MonteCarloFactory, regMC, mc,
@@ -116,9 +116,9 @@ QuinoaDriver::initFactories(const tk::Print& print)
                            ctr::MonteCarloType::SPINSFLOW,
                            *m_base );
   tk::regist< TestSDE >( m_MonteCarloFactory, regMC, mc,
-                           ctr::MonteCarloType::TESTSDE,
-                           *m_base );
-  print.list("Registered MonteCarlo", mc, regMC);
+                         ctr::MonteCarloType::TESTSDE,
+                         *m_base );
+  print.list("Registered MonteCarlo types", mc, regMC);
 
   print.list( "Data layout policy",
               std::list< std::string > { ParProps(0,0).major(),

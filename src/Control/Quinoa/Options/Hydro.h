@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Tue 14 Jan 2014 07:16:21 PM MST
+  \date      Thu 06 Feb 2014 04:32:35 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -12,7 +12,6 @@
 #define QuinoaHydroOptions_h
 
 #include <map>
-#include <list>
 
 #include <Model.h>
 #include <Toggle.h>

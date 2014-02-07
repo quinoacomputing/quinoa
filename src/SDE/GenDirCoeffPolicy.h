@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:24:49 2014
+  \date      Thu 06 Feb 2014 05:52:41 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -11,14 +11,28 @@
 #ifndef GenDirCoeffPolicy_h
 #define GenDirCoeffPolicy_h
 
+#include <boost/mpl/vector.hpp>
+
+#include <Types.h>
+#include <Quinoa/Options/CoeffPolicy.h>
+
 namespace quinoa {
 
 //! Generalized Dirichlet constant coefficients policity: constants in time
 struct GenDirCoeffConst {
 
+  GenDirCoeffConst() = default;
+
+  std::string policy() const noexcept {
+    return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT );
+  }
+
+  ctr::CoeffPolicyType type() const noexcept {
+    return ctr::CoeffPolicyType::CONSTANT;
+  }
+
   //! Constructor: initialize coefficients
-  GenDirCoeffConst( std::string& policy,
-                    unsigned int ncomp,
+  GenDirCoeffConst( unsigned int ncomp,
                     const std::vector< tk::real >& b_,
                     const std::vector< tk::real >& S_,
                     const std::vector< tk::real >& k_,
@@ -28,7 +42,6 @@ struct GenDirCoeffConst {
                     std::vector< tk::real >& k,
                     std::vector< tk::real >& c )
   {
-    policy = "constant";
     b = b_;
     S = S_;
     k = k_;
@@ -51,6 +64,9 @@ struct GenDirCoeffConst {
                    std::vector< tk::real >& c ) {}
 
 };
+
+//! List of all generalized Dirichlet's coefficients policies
+using GenDirCoeffPolicies = boost::mpl::vector< GenDirCoeffConst >;
 
 } // quinoa::
 

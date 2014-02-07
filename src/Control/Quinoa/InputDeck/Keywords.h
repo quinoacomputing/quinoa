@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri Jan 31 15:26:16 2014
+  \date      Thu 06 Feb 2014 06:04:47 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -147,9 +147,9 @@ using spinsflow = keyword<spinsflow_info,  s,p,i,n,s,f,l,o,w >;
 // Keyword 'testsde'
 struct testsde_info {
   static const char* name() {
-    return "Test a stochastic differential equation"; }
+    return "Stochastic differential equation testbed"; }
   static const char* help() { return
-    "Test a stochastic differential equation.";
+    "Test stochastic differential equation(s).";
   }
 };
 using testsde = keyword<testsde_info,  t,e,s,t,s,d,e >;
@@ -398,6 +398,27 @@ using rngs = keyword<undefined_info,  r,n,g,s >;
 
 // RNG
 using rng = keyword<undefined_info,  r,n,g >;
+
+// Keyword 'raw': raw initialization policy
+struct raw_info {
+  static const char* name() { return "Raw"; }
+  static const char* help() { return "Raw initialization policy."; }
+};
+using raw = keyword<raw_info, r,a,w >;
+
+// Keyword 'raw': zero initialization policy
+struct zero_info {
+  static const char* name() { return "Zero"; }
+  static const char* help() { return "Zero initialization policy."; }
+};
+using zero = keyword<zero_info, z,e,r,o >;
+
+// Keyword 'constant': constant coefficients policy
+struct constant_info {
+  static const char* name() { return "Constant"; }
+  static const char* help() { return "Constant coefficients policy."; }
+};
+using constant = keyword<constant_info, c,o,n,s,t,a,n,t >;
 
 } // kw::
 } // quinoa::

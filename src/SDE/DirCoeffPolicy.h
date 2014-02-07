@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:24:34 2014
+  \date      Thu 06 Feb 2014 05:39:11 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -11,14 +11,28 @@
 #ifndef DirCoeffPolicy_h
 #define DirCoeffPolicy_h
 
+#include <boost/mpl/vector.hpp>
+
+#include <Types.h>
+#include <Quinoa/Options/CoeffPolicy.h>
+
 namespace quinoa {
 
 //! Dirichlet constant coefficients policity: constants in time
 struct DirCoeffConst {
 
+  DirCoeffConst() = default;
+
+  std::string policy() const noexcept {
+    return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT );
+  }
+
+  ctr::CoeffPolicyType type() const noexcept {
+    return ctr::CoeffPolicyType::CONSTANT;
+  }
+
   //! Constructor: initialize coefficients
-  DirCoeffConst( std::string& policy,
-                 unsigned int ncomp,
+  DirCoeffConst( unsigned int ncomp,
                  const std::vector< tk::real >& b_,
                  const std::vector< tk::real >& S_,
                  const std::vector< tk::real >& k_,
@@ -26,7 +40,6 @@ struct DirCoeffConst {
                  std::vector< tk::real >& S,
                  std::vector< tk::real >& k )
   {
-    policy = "constant";
     b = b_;
     S = S_;
     k = k_;
@@ -43,8 +56,10 @@ struct DirCoeffConst {
                    std::vector< tk::real >& b,
                    std::vector< tk::real >& S,
                    std::vector< tk::real >& k ) {}
-
 };
+
+//! List of all Dirichlet's coefficients policies
+using DirCoeffPolicies = boost::mpl::vector< DirCoeffConst >;
 
 } // quinoa::
 

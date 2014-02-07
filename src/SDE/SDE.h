@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 06:01:20 PM MST
+  \date      Thu 06 Feb 2014 05:48:00 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -20,7 +20,7 @@
 namespace quinoa {
 
 //! SDE
-template< class Init >
+template< class Init, class Coefficients >
 class SDE : public Model {
 
   public:
@@ -34,8 +34,11 @@ class SDE : public Model {
     int ncomp() const noexcept override { return m_ncomp; }
 
     //! Return initialization policy
-    const std::string& initPolicy() const noexcept override {
-      return m_initPolicy;
+    std::string initPolicy() const noexcept override { return Init().policy(); }
+
+    //! Return coefficients policy
+    std::string coeffPolicy() const noexcept override {
+      return Coefficients().policy();
     }
 
   protected:
@@ -55,7 +58,7 @@ class SDE : public Model {
       Assert( m_rngType != tk::ctr::RNGType::NO_RNG, tk::ExceptType::FATAL,
               "Cannot instantiate class SDE without an RNG" );
       // Initialize particle properties (and throw away init policy)
-      Init( m_initPolicy, m_particles, m_npar, m_nprop, m_offset, m_ncomp,
+      Init( m_particles, m_npar, m_nprop, m_offset, m_ncomp,
             base.paradigm.nthreads() );
       // Instantiate RNG
       initRNG( base );
@@ -83,8 +86,6 @@ class SDE : public Model {
     void initRNG( const Base& base ) {
       m_rng = std::unique_ptr< tk::RNG >( base.rng[ m_rngType ]() );
     }
-
-    std::string m_initPolicy;                   //!< Initialization policy name
 };
 
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 10:58:03 AM MST
+  \date      Thu 06 Feb 2014 05:42:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -11,10 +11,13 @@
 #ifndef MonteCarlo_h
 #define MonteCarlo_h
 
+#include <boost/mpl/at.hpp>
+
 #include <Base.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
+#include <Factory.h>
 
 namespace quinoa {
 
@@ -41,10 +44,19 @@ class MonteCarlo {
     //! Run
     virtual void run() = 0;
 
-  protected:
+    //! Constant accessor to base
+    //! \return Pointer to base
+    const Base& base() const noexcept { return m_base; }
+
     //! Constant accessor to control object
     //! \return Control object
     const ctr::InputDeck& control() const noexcept { return m_base.control; }
+
+    //! Accessor to particle properties pointer
+    //! \return Particle properties array
+    const ParProps& particles() const noexcept { return m_particles; }
+
+  protected:
 
     //! Constant accessor to print object
     //! \return Print object
@@ -53,10 +65,6 @@ class MonteCarlo {
     //! Constant accessor to timer object pointer
     //! \return Pointer to timer object
     const tk::Timer& timer() const noexcept { return m_base.timer; }
-
-    //! Constant accessor to base
-    //! \return Pointer to base
-    const Base& base() const noexcept { return m_base; }
 
     //! Accessor to statistics estimator
     //! \return Pointer to statistics estimator
@@ -69,10 +77,6 @@ class MonteCarlo {
     //! Accessor to statistics file writer
     //! \return Pointer to statistics file writer
     TxtStatWriter& statWriter() noexcept { return m_stat; }
-
-    //! Accessor to particle properties pointer
-    //! \return Particle properties array
-    const ParProps& particles() const noexcept { return m_particles; }
 
     //! Accessor to max run time
     //! \return Max run time
@@ -89,6 +93,44 @@ class MonteCarlo {
                          bool wroteJpdf,
                          bool wroteGlob,
                          bool wrotePlot );
+
+    //! Register an SDE into an SDE factory - repeatedly called by
+    //! mpl::cartesian_product sweeping all combinations of the SDE policies
+    template< class Host,
+              template<class,class> class SDE,
+              class ncomp,
+              class SDEType >
+    struct registerSDE {
+
+      Host* const m_host;
+      const SDEType m_type;
+
+      registerSDE( Host* const host, SDEType type ) :
+        m_host( host ), m_type( type ) {}
+
+      template< typename U > void operator()( U ) {
+        namespace mpl = boost::mpl;
+
+        // Get Initialization policy: 1st type of mpl::vector U
+        using InitPolicy = typename mpl::at< U, mpl::int_<0> >::type;
+        // Get coefficients policy: 2nd type of mpl::vector U
+        using CoeffPolicy = typename mpl::at< U, mpl::int_<1> >::type;
+
+        // Build SDE key
+        ctr::SDEKey key;
+        key.get< tag::sde >() = m_type;
+        key.get< tag::initpolicy >() = InitPolicy().type();
+        key.get< tag::coeffpolicy >() = CoeffPolicy().type();
+
+        // Register SDE (with policies given by mpl::vector U) into SDE factory
+        tk::regSDE< SDE< InitPolicy, CoeffPolicy > >
+                  ( m_host->factory(), key,
+                    m_host->base(),
+                    std::cref( m_host->particles() ),
+                    m_host->control().scalarOffset(),
+                    m_host->control().template get< tag::component, ncomp >() );
+      }
+    };
 
     const Base& m_base;                             //!< Essentials
     const uint64_t m_npar;                          //!< Number of particles
