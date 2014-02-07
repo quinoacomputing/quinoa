@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 09:57:04 AM MST
+  \date      Fri 07 Feb 2014 10:10:03 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -158,16 +158,18 @@ TestSDE::initFactories(const QuinoaPrint& print)
   // Register SDEs
   namespace mpl = boost::mpl;
 
-  // Construct vector of vectors for all possible Dirichlet SDE policies
+  // Dirichlet SDE
+  // Construct vector of vectors for all possible policies
   using DirPolicies = mpl::vector< InitPolicies, DirCoeffPolicies >;
-  // Register Dirichlet SDE for all combinations of policies
+  // Register SDE for all combinations of policies
   mpl::cartesian_product< DirPolicies >(
     registerSDE< TestSDE, Dirichlet, tag::ndirichlet, ctr::SDEType >
                ( this, ctr::SDEType::DIRICHLET ) );
 
-  // Construct vector of vectors for all possible generalized Dirichlet policies
+  // Lochner's generalized Dirichlet SDE
+  // Construct vector of vectors for all possible policies
   using GenDirPolicies = mpl::vector< InitPolicies, GenDirCoeffPolicies >;
-  // Register generalized Dirichlet SDE for all combinations of policies
+  // Register SDE for all combinations of policies
   mpl::cartesian_product< GenDirPolicies >(
     registerSDE< TestSDE, GenDirichlet, tag::ngendir, ctr::SDEType >
                ( this, ctr::SDEType::GENDIR ) );
