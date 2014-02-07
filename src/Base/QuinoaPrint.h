@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 04:50:37 PM MST
+  \date      Fri 07 Feb 2014 09:53:29 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -13,6 +13,7 @@
 
 #include <Print.h>
 #include <Quinoa/InputDeck/InputDeck.h>
+#include <Quinoa/Options/SDE.h>
 
 namespace quinoa {
 
@@ -69,30 +70,6 @@ class QuinoaPrint : public tk::Print {
       }
     }
 
-    //! Echo requested statistics if differs from default.
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! <<= for outputing requested Term and vector<Term>.
-    void RequestedStats(const std::string& msg) const {
-      if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
-        m_stream << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<tag::stat>()) m_stream <<= v;
-        m_stream << '\n';
-      }
-    }
-
-    //! Echo estimated statistics if differs from default.
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! << for outputing estimated Term and vector<Term>.
-    void EstimatedStats(const std::string& msg) const {
-      if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
-        m_stream << m_item_name_fmt % m_item_indent % msg;
-        for (auto& v : m_ctr.get<tag::stat>()) m_stream << v;
-        m_stream << '\n';
-      }
-    }
-
     //! Print configuration of a model
     template< typename OptionType, typename... tags >
     void Model( const quinoa::Model* const model ) const {
@@ -130,6 +107,36 @@ class QuinoaPrint : public tk::Print {
       }
     }
 
+    //! Print list: name: option names with policies...
+    template< typename Factory >
+    void optionlist( const std::string& title, const Factory& factory ) const {
+      if (!factory.empty()) {
+        section( title );
+      }
+      for (const auto& f : factory) {
+        std::vector< std::string > entries = SDEPolicyNames( f.first );
+        std::stringstream ss;
+        for (const auto& e : entries) {
+          ss << e << " ";
+        }
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % SDEName( f.first )
+                                          % ss.str();
+      }
+    }
+
+    //! Echo requested statistics if differs from default.
+    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
+    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
+    //! <<= for outputing requested Term and vector<Term>.
+    void RequestedStats(const std::string& msg) const;
+ 
+    //! Echo estimated statistics if differs from default.
+    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
+    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
+    //! << for outputing estimated Term and vector<Term>.
+    void EstimatedStats(const std::string& msg) const;
+
   private:
     //! Don't permit copy constructor
     QuinoaPrint(const QuinoaPrint&) = delete;
@@ -139,6 +146,14 @@ class QuinoaPrint : public tk::Print {
     QuinoaPrint(QuinoaPrint&&) = delete;
     //! Don't permit move assigment
     QuinoaPrint& operator=(QuinoaPrint&&) = delete;
+
+    //! Return SDE name
+    std::string SDEName( const ctr::SDEKey& key ) const {
+      return ctr::SDE().name( key.get<tag::sde>() );
+    }
+
+    //! Return SDE policies names
+    std::vector< std::string > SDEPolicyNames( const ctr::SDEKey& key ) const;
 
     const ctr::InputDeck& m_ctr;         //!< Parsed control
 };

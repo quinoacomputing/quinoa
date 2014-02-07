@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 06:19:56 AM MST
+  \date      Fri 07 Feb 2014 09:55:09 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -169,7 +169,7 @@ using dirichlet = keyword<dirichlet_info,  d,i,r,i,c,h,l,e,t >;
 // Keyword 'generalized_dirichlet'
 struct gendir_info {
   static const char* name() {
-    return "Lochner's generalized Dirichlet SDE"; }
+    return "Generalized Dirichlet SDE"; }
   static const char* help() { return
     "A system of stochastic differential equations whose invariant is "
     "Lochner's generalized Dirichlet distribution. For more details, see "

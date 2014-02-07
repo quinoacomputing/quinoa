@@ -7,6 +7,7 @@ add_library(Base
             Handler.C
             Timer.C
             Print.C
+            QuinoaPrint.C
 )
 
 INSTALL(TARGETS Base
