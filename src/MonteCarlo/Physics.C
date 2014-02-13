@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 11:04:15 AM MST
+  \date      Tue 11 Feb 2014 11:41:51 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -79,14 +79,14 @@ Physics::initFactories(const tk::Print& print)
             ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
               base(),
               std::cref( particles() ),
-              control().scalarOffset(),
-              control().get< tag::component, tag::nscalar >() );
+              control().get< tag::component >().offset< tag::ndirichlet >(),
+              control().get< tag::component >().get< tag::ndirichlet >() );
   tk::regist< GenDirichlet< InitZero, GenDirCoeffConst > >
             ( m_mixFactory, regMix, mix, ctr::MixType::GENDIR,
               base(),
               std::cref( particles() ),
-              control().scalarOffset(),
-              control().get< tag::component, tag::nscalar >() );
+              control().get< tag::component >().offset< tag::ngendir >(),
+              control().get< tag::component >().get< tag::ngendir >() );
   print.list("Registered material mix models", mix, regMix);
 }
 
@@ -136,7 +136,7 @@ Physics::echo()
 //   print.Item< tag::component, tag::ndensity >( "Densities" );
 //   print.Item< tag::component, tag::nvelocity >( "Velocities" );
 //   print.Item< tag::component, tag::nfrequency >( "Turbulent frequencies" );
-  print.Item< tag::component, tag::npar >( "Particles" );
+  print.Item< tag::param, tag::npar >( "Particles" );
   print.endsubsection();
 
   print.subsection( "Increment parameters" );

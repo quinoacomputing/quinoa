@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:48:00 PM MST
+  \date      Wed 12 Feb 2014 12:12:24 AM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -50,8 +50,8 @@ class SDE : public Model {
                   int ncomp ) :
       m_rngType( rngType ),
       m_particles( particles ),
-      m_npar( base.control.get< tag::component, tag::npar >() ),
-      m_nprop( base.control.nprop() ),
+      m_npar( base.control.get< tag::param, tag::npar >() ),
+      m_nprop( base.control.get< tag::component >().nprop() ),
       m_offset( offset ),
       m_ncomp( ncomp )
     {

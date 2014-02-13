@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 06:51:48 AM MST
+  \date      Wed 12 Feb 2014 10:35:02 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -188,23 +188,6 @@ using incpars = tk::tuple::tagged_tuple<
   tag::dt,    tk::real   //!< Size of time step
 >;
 
-//! Components storage
-using components = tk::tuple::tagged_tuple<
-  tag::nposition,   uint32_t, //!< N. of position components in position model
-  tag::ndensity,    uint32_t, //!< N. of density components in mass model
-  tag::nvelocity,   uint32_t, //!< N. of velocity components in hydro model
-  tag::nscalar,     uint32_t, //!< N. of mixing scalars in material mix model
-  tag::nfrequency,  uint32_t, //!< N. of frequencies in turb. frequency model
-  tag::npar,        uint64_t, //!< Total number of particles
-  tag::ndirichlet,  uint32_t, //!< N. of components in the Dirichlet SDE
-  tag::ngendir,     uint32_t, //!< N. of components in the gen. Dirichlet SDE
-  tag::nou,         uint32_t, //!< N. of components in the Ornstein-Uhlenbeck SDE
-  tag::nlognormal,  uint32_t, //!< N. of components in the Log-normal SDE
-  tag::nskewnormal, uint32_t, //!< N. of components in the Skew-normal SDE
-  tag::ngamma,      uint32_t, //!< N. of components in the gamma SDE
-  tag::nbeta,       uint32_t  //!< N. of components in the beta SDE
->;
-
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,  uint32_t,  //!< TTY output interval
@@ -297,8 +280,9 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tk::tag::mklrng,   tk::ctr::MKLRNGParameters,         // MKL RNG parameters
-  tk::tag::rngsse,   tk::ctr::RNGSSEParameters,         // RNGSSE RNG parameters
+  tag::npar,         uint64_t,                    //!< Total number of particles
+  tk::tag::mklrng,   tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
+  tk::tag::rngsse,   tk::ctr::RNGSSEParameters,   //!< RNGSSE RNG parameters
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
   tag::dirichlet,    DirichletParameters,
