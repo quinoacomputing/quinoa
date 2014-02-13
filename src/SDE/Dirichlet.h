@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 07:50:45 PM CET
+  \date      Thu 13 Feb 2014 10:07:55 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
@@ -34,10 +34,10 @@ class Dirichlet : public SDE< Init, Coefficients > {
            particles,
            offset,
            ncomp ),
-      m_b( base.control.get< tag::component, tag::ndirichlet >() ),
-      m_S( base.control.get< tag::component, tag::ndirichlet >() ),
-      m_k( base.control.get< tag::component, tag::ndirichlet >() ),
-      m_coeff( base.control.get< tag::component, tag::ndirichlet >(),
+      m_b( ncomp ),
+      m_S( ncomp ),
+      m_k( ncomp ),
+      m_coeff( ncomp,
                base.control.get< tag::param, tag::dirichlet, tag::b >(),
                base.control.get< tag::param, tag::dirichlet, tag::S >(),
                base.control.get< tag::param, tag::dirichlet, tag::kappa >(),

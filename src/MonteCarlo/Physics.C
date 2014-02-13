@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Tue 11 Feb 2014 11:41:51 PM CET
+  \date      Thu 13 Feb 2014 10:34:44 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -61,33 +61,28 @@ Physics::initFactories(const tk::Print& print)
 //******************************************************************************
 {
   // Register mass models
-  ctr::Mass mass;
-  std::list< ctr::MassType > regMass;
-  // tk::regist()
-  print.list("Registered mass models", mass, regMass);
+  // tk::record<>()
+  // print.list< ctr::Mass >( "Registered mass models", m_MassFactory );
 
   // Register hydro models
-  ctr::Hydro hydro;
-  std::list< ctr::HydroType > regHydro;
-  // tk::regist()
-  print.list("Registered hydrodyanmics models", hydro, regHydro);
+  // tk::record<>()
+  // print.list< ctr::Hydro >( "Registered hydrod models", m_hydroFactory );
 
   // Register mix models
-  ctr::Mix mix;
-  std::list< ctr::MixType > regMix;
-  tk::regist< Dirichlet< InitZero, DirCoeffConst > >
-            ( m_mixFactory, regMix, mix, ctr::MixType::DIRICHLET,
+  const auto& comp = control().get< tag::component >();
+  tk::record< Dirichlet< InitZero, DirCoeffConst > >
+            ( m_mixFactory, ctr::MixType::DIRICHLET,
               base(),
               std::cref( particles() ),
-              control().get< tag::component >().offset< tag::ndirichlet >(),
-              control().get< tag::component >().get< tag::ndirichlet >() );
-  tk::regist< GenDirichlet< InitZero, GenDirCoeffConst > >
-            ( m_mixFactory, regMix, mix, ctr::MixType::GENDIR,
+              comp.offset< tag::nscalar >(),
+              comp.get< tag::nscalar >() );
+  tk::record< GenDirichlet< InitZero, GenDirCoeffConst > >
+            ( m_mixFactory, ctr::MixType::GENDIR,
               base(),
               std::cref( particles() ),
-              control().get< tag::component >().offset< tag::ngendir >(),
-              control().get< tag::component >().get< tag::ngendir >() );
-  print.list("Registered material mix models", mix, regMix);
+              comp.offset< tag::nscalar >(),
+              comp.get< tag::nscalar >() );
+  print.list< ctr::Mix >( "Registered material mix models", m_mixFactory );
 }
 
 void
@@ -106,7 +101,6 @@ Physics::echo()
   print.section( "Title", control.get< tag::title >() );
 
   print.section("Random number generators");
-
   print.MKLParams( control.get< tag::selected, tk::tag::rng >(),
                    control.get< tag::param, tk::tag::mklrng >() );
   print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),
@@ -122,24 +116,11 @@ Physics::echo()
   print.item( "PDF", control.get< tag::cmd, tag::io, tag::pdf >() );
   print.endsubsection();
 
-//   print.Item< ctr::Position, tag::selected, tag::position >();
-//   print.Item< ctr::Mass, tag::selected, tag::mass >();
-//   print.Item< ctr::Hydro, tag::selected, tag::hydro >();
-//   print.Item< ctr::Energy, tag::selected, tag::energy >();
   print.Model< ctr::Mix, tag::selected, tag::mix >( m_mix.get() );
-//   print.Item< ctr::Frequency, tag::selected, tag::frequency >();
-//   print.Item< ctr::MixRate, tag::selected, tag::mixrate >();
-  print.endsubsection();
-
-  print.subsection( "Number of components" );
-//   print.Item< tag::component, tag::nposition >( "Positions" );
-//   print.Item< tag::component, tag::ndensity >( "Densities" );
-//   print.Item< tag::component, tag::nvelocity >( "Velocities" );
-//   print.Item< tag::component, tag::nfrequency >( "Turbulent frequencies" );
-  print.Item< tag::param, tag::npar >( "Particles" );
   print.endsubsection();
 
   print.subsection( "Increment parameters" );
+  print.item( "Number of particles", control.get< tag::incpar, tag::npar >() );
   print.item( "Number of time steps", control.get< tag::incpar, tag::nstep >() );
   print.item( "Terminate time", control.get< tag::incpar, tag::term >() );
   print.item( "Initial time step size", control.get< tag::incpar, tag::dt >() );

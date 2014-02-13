@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:52:30 PM MST
+  \date      Thu 13 Feb 2014 08:53:41 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -13,8 +13,6 @@
 
 #include <map>
 #include <sstream>
-
-#include <boost/functional/factory.hpp>
 
 #include <Exception.h>
 
@@ -70,20 +68,6 @@ class Toggle {
       Assert(it != names.end(), ExceptType::FATAL,
              std::string("Cannot find name for value \"") + value + "\"");
       return it->second;
-    }
-
-    //! Register a Toggle into a factory
-    //! \param[in] C       Type of the (derived) class constructor
-    //! \param[in] F       Type of factory to add to
-    //! \param[in] Args... Types of variable number of arguments to constructor
-    //! \param[in] factory Factory instance
-    //! \param[in] e       Enum key to factory's std::map
-    //! \param[in] args    Variable number of arguments to constructor
-    //! \return    The enum of option as returned
-    template< typename C, typename F, typename... Args >
-    Enum add( F& factory, Enum e, Args&&... args ) const {
-      factory[e] = std::bind( boost::factory<C*>(), std::forward<Args>(args)... );
-      return e;
     }
 
   protected:

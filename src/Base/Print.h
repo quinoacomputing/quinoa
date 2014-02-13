@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 10:07:22 AM MST
+  \date      Thu 13 Feb 2014 10:43:11 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -89,13 +89,11 @@ class Print {
     }
 
     //! Print list: name: option names...
-    template< typename Enum, typename OptionType >
-    void list(const std::string& name,
-              const OptionType& opt,
-              const std::list< Enum >& entries) const {
-      if (!entries.empty()) section( name );
-      for (auto& e : entries) {
-        m_stream << m_list_item_fmt % m_item_indent % opt.name(e);
+    template< class Option, class Factory >
+    void list( const std::string& title, const Factory& factory ) const {
+      if (!factory.empty()) section( title );
+      for (const auto& f : factory) {
+        m_stream << m_list_item_fmt % m_item_indent % Option().name( f.first );
       }
     }
 

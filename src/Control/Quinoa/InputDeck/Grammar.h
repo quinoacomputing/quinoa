@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 11 Feb 2014 09:08:22 PM CET
+  \date      Thu 13 Feb 2014 10:28:13 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -366,7 +366,7 @@ namespace deck {
 
   //! common to all monte-carlo
   struct montecarlo_common :
-         pegtl::sor< control< kw::npar, tag::param, tag::npar >,
+         pegtl::sor< incpar< kw::npar, tag::npar >,
                      incpar< kw::nstep, tag::nstep >,
                      incpar< kw::term,  tag::term >,
                      incpar< kw::dt, tag::dt >,

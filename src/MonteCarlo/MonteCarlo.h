@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Wed 12 Feb 2014 12:40:54 AM CET
+  \date      Thu 13 Feb 2014 10:30:50 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -29,7 +29,7 @@ class MonteCarlo {
     //! Constructor
     explicit MonteCarlo( const Base& base ) :
       m_base( base ),
-      m_npar( base.control.get< tag::param, tag::npar >() ),
+      m_npar( base.control.get< tag::incpar, tag::npar >() ),
       m_term( base.control.get< tag::incpar, tag::term >() ),
       m_totalTime( base.timer.create("Total solution") ),
       m_particles( m_npar, base.control.get< tag::component >().nprop() ),
@@ -125,7 +125,7 @@ class MonteCarlo {
 
         // Register SDE (with policies given by mpl::vector U) into SDE factory
         const auto& comp = m_host->control().template get< tag::component >();
-        tk::regSDE< SDE< InitPolicy, CoeffPolicy > >
+        tk::record< SDE< InitPolicy, CoeffPolicy > >
                   ( m_host->factory(), key,
                     m_host->base(),
                     std::cref( m_host->particles() ),

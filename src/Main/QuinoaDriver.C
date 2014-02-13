@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon Feb  3 09:41:51 2014
+  \date      Thu 13 Feb 2014 09:32:21 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -51,12 +51,11 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   print.part("Factory");
 
   // Register random number generators
-  tk::ctr::RNG rng;
-  std::list< tk::ctr::RNGType > regRNG;
-  initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
+  initRNGFactory( m_RNGFactory, m_paradigm->nthreads(),
                   m_control->get< tag::param, tk::tag::mklrng >(),
                   m_control->get< tag::param, tk::tag::rngsse >() );
-  print.list("Registered random number generators", rng, regRNG);
+  print.list< tk::ctr::RNG >
+            ( "Registered random number generators", m_RNGFactory );
 
   // Bundle up essentials
   m_base = tk::make_unique< Base >( *m_print, *m_paradigm, *m_control,
@@ -92,33 +91,26 @@ QuinoaDriver::initFactories(const tk::Print& print)
 //******************************************************************************
 {
   // Register geometry types
-  ctr::Geometry geometry;
-  std::list< ctr::GeometryType > regGeo;
-  tk::regist< AnalyticGeometry >( m_geometryFactory, regGeo, geometry,
-                                 ctr::GeometryType::ANALYTIC, *m_base );
-  tk::regist< DiscreteGeometry >( m_geometryFactory, regGeo, geometry,
-                                  ctr::GeometryType::DISCRETE, *m_base );
-  print.list("Registered geometry types", geometry, regGeo);
+  tk::record< AnalyticGeometry >
+            ( m_geometryFactory, ctr::GeometryType::ANALYTIC, *m_base );
+  tk::record< DiscreteGeometry >
+            ( m_geometryFactory, ctr::GeometryType::DISCRETE, *m_base );
+  print.list< ctr::Geometry >("Registered geometry types", m_geometryFactory);
 
   // Register MonteCarlo types
-  ctr::MonteCarlo mc;
-  std::list< ctr::MonteCarloType > regMC;
-  tk::regist< HomMix >( m_MonteCarloFactory, regMC, mc,
-                        ctr::MonteCarloType::HOMOGENEOUS_MIX,
-                        *m_base );
-  tk::regist< HomHydro >( m_MonteCarloFactory, regMC, mc,
-                          ctr::MonteCarloType::HOMOGENEOUS_HYDRO,
-                          *m_base );
-  tk::regist< HomRT >( m_MonteCarloFactory, regMC, mc,
-                       ctr::MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR,
-                       *m_base );
-  tk::regist< SPINSFlow >( m_MonteCarloFactory, regMC, mc,
-                           ctr::MonteCarloType::SPINSFLOW,
-                           *m_base );
-  tk::regist< TestSDE >( m_MonteCarloFactory, regMC, mc,
-                         ctr::MonteCarloType::TESTSDE,
-                         *m_base );
-  print.list("Registered MonteCarlo types", mc, regMC);
+  tk::record< HomMix >
+    ( m_MonteCarloFactory, ctr::MonteCarloType::HOMOGENEOUS_MIX, *m_base );
+  tk::record< HomHydro >
+    ( m_MonteCarloFactory, ctr::MonteCarloType::HOMOGENEOUS_HYDRO, *m_base );
+  tk::record< HomRT >
+    ( m_MonteCarloFactory, ctr::MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR,
+      *m_base );
+  tk::record< SPINSFlow >
+    ( m_MonteCarloFactory, ctr::MonteCarloType::SPINSFLOW, *m_base );
+  tk::record< TestSDE >
+    ( m_MonteCarloFactory, ctr::MonteCarloType::TESTSDE, *m_base );
+  print.list< ctr::MonteCarlo >
+            ( "Registered MonteCarlo types", m_MonteCarloFactory );
 
   print.list( "Data layout policy",
               std::list< std::string > { ParProps(0,0).major(),
