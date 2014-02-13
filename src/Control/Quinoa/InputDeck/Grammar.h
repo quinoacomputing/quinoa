@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 06:47:31 AM MST
+  \date      Tue 11 Feb 2014 09:08:22 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -146,11 +146,11 @@ namespace deck {
                                          expectation< rbound > > > {};
 
   //! control parameter
-  template< typename keyword, typename tag, typename... tags >
+  template< typename keyword, typename... tags >
   struct control :
          tk::grm::process< Stack,
                            typename keyword::pegtl_string,
-                           tk::grm::Store< Stack, tag, tags... > > {};
+                           tk::grm::Store< Stack, tags... > > {};
 
   //! incrementation control parameter
   template< typename keyword, typename Tag >
@@ -366,7 +366,7 @@ namespace deck {
 
   //! common to all monte-carlo
   struct montecarlo_common :
-         pegtl::sor< component< kw::npar, tag::npar >,
+         pegtl::sor< control< kw::npar, tag::param, tag::npar >,
                      incpar< kw::nstep, tag::nstep >,
                      incpar< kw::term,  tag::term >,
                      incpar< kw::dt, tag::dt >,
@@ -550,6 +550,14 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::gendir,
                                              tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::gendir,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::gendir,
+                                                tag::coeffpolicy >,
                                         parameter_vector< kw::sde_b,
                                                           tag::gendir,
                                                           tag::b >,

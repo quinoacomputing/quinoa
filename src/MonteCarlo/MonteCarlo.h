@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:42:53 PM MST
+  \date      Wed 12 Feb 2014 12:40:54 AM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -29,10 +29,10 @@ class MonteCarlo {
     //! Constructor
     explicit MonteCarlo( const Base& base ) :
       m_base( base ),
-      m_npar( base.control.get< tag::component, tag::npar >() ),
+      m_npar( base.control.get< tag::param, tag::npar >() ),
       m_term( base.control.get< tag::incpar, tag::term >() ),
       m_totalTime( base.timer.create("Total solution") ),
-      m_particles( m_npar, base.control.nprop() ),
+      m_particles( m_npar, base.control.get< tag::component >().nprop() ),
       m_statistics( base, m_particles ),
       m_glob( base.control.get< tag::cmd, tag::io, tag::glob >() ),
       m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
@@ -94,8 +94,9 @@ class MonteCarlo {
                          bool wroteGlob,
                          bool wrotePlot );
 
-    //! Register an SDE into an SDE factory - repeatedly called by
-    //! mpl::cartesian_product sweeping all combinations of the SDE policies
+    //! Function object for register an SDE into an SDE factory - repeatedly
+    //! called by mpl::cartesian_product sweeping all combinations of the SDE
+    //! policies
     template< class Host,
               template<class,class> class SDE,
               class ncomp,
@@ -123,12 +124,13 @@ class MonteCarlo {
         key.get< tag::coeffpolicy >() = CoeffPolicy().type();
 
         // Register SDE (with policies given by mpl::vector U) into SDE factory
+        const auto& comp = m_host->control().template get< tag::component >();
         tk::regSDE< SDE< InitPolicy, CoeffPolicy > >
                   ( m_host->factory(), key,
                     m_host->base(),
                     std::cref( m_host->particles() ),
-                    m_host->control().scalarOffset(),
-                    m_host->control().template get< tag::component, ncomp >() );
+                    comp.template offset< ncomp >(),
+                    comp.template get< ncomp >() );
       }
     };
 

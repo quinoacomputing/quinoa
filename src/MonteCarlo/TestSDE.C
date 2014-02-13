@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 10:10:03 AM MST
+  \date      Wed 12 Feb 2014 12:15:33 AM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -35,6 +35,15 @@ TestSDE::TestSDE( const Base& base ) : MonteCarlo( base )
   //! Initialize factories
   initFactories( print() );
 
+  //! Instantiate SDEs
+  ctr::SDEKey key{ ctr::SDEType::DIRICHLET,
+                   ctr::InitPolicyType::RAW,
+                   ctr::CoeffPolicyType::CONSTANT };
+  m_sde.push_back( std::unique_ptr< Model >( m_SDEFactory[key]() ) );
+  ctr::SDEKey key2{ ctr::SDEType::GENDIR,
+                    ctr::InitPolicyType::RAW,
+                    ctr::CoeffPolicyType::CONSTANT };
+  m_sde.push_back( std::unique_ptr< Model >( m_SDEFactory[key2]() ) );
 }
 
 void

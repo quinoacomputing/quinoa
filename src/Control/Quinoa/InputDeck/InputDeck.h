@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri Jan 31 09:45:42 2014
+  \date      Wed 12 Feb 2014 10:35:23 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -16,6 +16,7 @@
 #include <Control.h>
 #include <Option.h>
 #include <Quinoa/CmdLine/CmdLine.h>
+#include <Quinoa/Components.h>
 
 namespace quinoa {
 namespace ctr {
@@ -26,7 +27,7 @@ class InputDeck :
                       tag::title,      std::string,
                       tag::selected,   selects,
                       tag::incpar,     incpars,
-                      tag::component,  components,
+                      tag::component,  comps< int >,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
@@ -51,19 +52,14 @@ class InputDeck :
       set< tag::incpar, tag::nstep >( std::numeric_limits< uint64_t >::max() );
       set< tag::incpar, tag::term >( 1.0 );
       set< tag::incpar, tag::dt >( 0.5 );
-      // Default number of components
-      set< tag::component, tag::nposition >( 0 );
-      set< tag::component, tag::ndensity >( 0 );
-      set< tag::component, tag::nvelocity >( 0 );
-      set< tag::component, tag::nscalar >( 0 );
-      set< tag::component, tag::nfrequency >( 0 );
-      set< tag::component, tag::npar >( 1 );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );
       set< tag::interval, tag::plot >( 1 );
       set< tag::interval, tag::pdf >( 1 );
       set< tag::interval, tag::glob >( 1 );
+      // Default number of particles
+      set< tag::param, tag::npar >( 1 );
       // Default beta mass model parameters
       set< tag::param, tag::beta, tag::atwood >( 0.5 );
       // Default Dirichlet mix model parameters
@@ -86,15 +82,6 @@ class InputDeck :
       set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default requested statistics
       set< tag::stat >( std::vector< Product >() );
-    }
-
-    //! Return total number of particle properties
-    uint32_t nprop() const noexcept {
-      return get< tag::component, tag::nposition >() +
-             get< tag::component, tag::ndensity >() +
-             get< tag::component, tag::nvelocity> () +
-             get< tag::component, tag::nscalar >() +
-             get< tag::component, tag::nfrequency >();
     }
 
     //! Return position offset
