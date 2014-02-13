@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 12 Feb 2014 10:35:02 PM CET
+  \date      Thu 13 Feb 2014 10:27:32 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -183,6 +183,7 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Time incrementation parameters storage
 using incpars = tk::tuple::tagged_tuple<
+  tag::npar,  uint64_t,  //!< Total number of particles
   tag::nstep, uint64_t,  //!< Number of time steps to take
   tag::term,  tk::real,  //!< Time to terminate time stepping
   tag::dt,    tk::real   //!< Size of time step
@@ -280,7 +281,6 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
-  tag::npar,         uint64_t,                    //!< Total number of particles
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
   tk::tag::rngsse,   tk::ctr::RNGSSEParameters,   //!< RNGSSE RNG parameters
   tag::slm,          SLMParameters,

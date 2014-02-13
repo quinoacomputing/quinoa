@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 09:55:09 AM MST
+  \date      Thu 13 Feb 2014 10:33:07 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -147,7 +147,7 @@ using spinsflow = keyword<spinsflow_info,  s,p,i,n,s,f,l,o,w >;
 // Keyword 'testsde'
 struct testsde_info {
   static const char* name() {
-    return "Stochastic differential equation testbed"; }
+    return "Stochastic differential equations testbed"; }
   static const char* help() { return
     "Test stochastic differential equation(s).";
   }
@@ -288,7 +288,7 @@ using mix_dir = keyword<mix_dir_info,  m,i,x,'_',d,i,r >;
 
 // Keyword 'mix_gendir'
 struct mix_gendir_info {
-  static const char* name() { return "Lochner's generalized Dirichlet"; }
+  static const char* name() { return "Generalized Dirichlet"; }
   static const char* help() { return
     "Material mix model, 'mix_gendir', is short for Lochner's generalized "
     "Dirichlet. It is a material mix model that explicitly satisfies the "

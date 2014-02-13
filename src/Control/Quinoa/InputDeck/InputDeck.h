@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 12 Feb 2014 10:35:23 PM CET
+  \date      Thu 13 Feb 2014 10:29:31 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -49,6 +49,7 @@ class InputDeck :
       set< tag::selected, tag::frequency >( FrequencyType::NO_FREQUENCY );
       set< tag::selected, tag::mixrate >( MixRateType::NO_MIXRATE );
       // Default time incrementation parameters
+      set< tag::incpar, tag::npar >( 1 );
       set< tag::incpar, tag::nstep >( std::numeric_limits< uint64_t >::max() );
       set< tag::incpar, tag::term >( 1.0 );
       set< tag::incpar, tag::dt >( 0.5 );
@@ -58,8 +59,6 @@ class InputDeck :
       set< tag::interval, tag::plot >( 1 );
       set< tag::interval, tag::pdf >( 1 );
       set< tag::interval, tag::glob >( 1 );
-      // Default number of particles
-      set< tag::param, tag::npar >( 1 );
       // Default beta mass model parameters
       set< tag::param, tag::beta, tag::atwood >( 0.5 );
       // Default Dirichlet mix model parameters

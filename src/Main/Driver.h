@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:16:08 PM MST
+  \date      Thu 13 Feb 2014 08:23:23 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -39,8 +39,6 @@ class Driver {
 
     //! Register random number generators into factory
     void initRNGFactory( tk::RNGFactory& factory,
-                         const tk::ctr::RNG& opt,
-                         std::list< tk::ctr::RNGType >& reg,
                          int nthreads,
                          const tk::ctr::MKLRNGParameters& mklparam,
                          const tk::ctr::RNGSSEParameters& rngsseparam );
@@ -58,16 +56,12 @@ class Driver {
    #ifdef HAS_MKL
    //! Register MKL RNGs into factory
    void regMKL( tk::RNGFactory& factory,
-                const tk::ctr::RNG& opt,
-                std::list< tk::ctr::RNGType >& reg,
                 int nthreads,
                 const tk::ctr::MKLRNGParameters& mklparam );
    #endif
 
    //! Register RNGSSE RNGs into factory
    void regRNGSSE( tk::RNGFactory& factory,
-                   const tk::ctr::RNG& opt,
-                   std::list< tk::ctr::RNGType >& reg,
                    int nthreads,
                    const tk::ctr::RNGSSEParameters& param );
 };

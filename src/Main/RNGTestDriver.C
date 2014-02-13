@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:14:14 PM MST
+  \date      Thu 13 Feb 2014 09:21:13 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -49,12 +49,12 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
   print.part("Factory");
 
   // Register random number generators
-  tk::ctr::RNG rng;
-  std::list< tk::ctr::RNGType > regRNG;
-  initRNGFactory( m_RNGFactory, rng, regRNG, m_paradigm->nthreads(),
+//  tk::ctr::RNG rng;
+//  std::list< tk::ctr::RNGType > regRNG;
+  initRNGFactory( m_RNGFactory, m_paradigm->nthreads(),
                   m_control->get< tag::param, tk::tag::mklrng >(),
                   m_control->get< tag::param, tk::tag::rngsse >() );
-  print.list("Registered random number generators", rng, regRNG);
+//  print.list("Registered random number generators", rng, regRNG);
 
   // Bundle up essentials
   m_base = tk::make_unique< Base >( *m_print, *m_paradigm, *m_control,
@@ -84,15 +84,15 @@ RNGTestDriver::initFactories(const tk::Print& print)
 //******************************************************************************
 {
   // Register batteries
-  ctr::Battery battery;
-  std::list< ctr::BatteryType > regBatt;
-  tk::regist< SmallCrush >( m_batteryFactory, regBatt, battery,
-                            ctr::BatteryType::SMALLCRUSH, *m_base );
-  tk::regist< Crush >( m_batteryFactory, regBatt, battery,
-                       ctr::BatteryType::CRUSH, *m_base );
-  tk::regist< BigCrush >( m_batteryFactory, regBatt, battery,
-                          ctr::BatteryType::BIGCRUSH, *m_base );
-  print.list("Registered batteries", battery, regBatt);
+//  ctr::Battery battery;
+//  std::list< ctr::BatteryType > regBatt;
+  tk::record< SmallCrush >
+            ( m_batteryFactory, ctr::BatteryType::SMALLCRUSH, *m_base );
+  tk::record< Crush >
+            ( m_batteryFactory, ctr::BatteryType::CRUSH, *m_base );
+  tk::record< BigCrush >
+            ( m_batteryFactory, ctr::BatteryType::BIGCRUSH, *m_base );
+//  print.list("Registered batteries", battery, regBatt);
 }
 
 void

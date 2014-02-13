@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 09:53:29 AM MST
+  \date      Thu 13 Feb 2014 09:27:43 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -108,11 +108,9 @@ class QuinoaPrint : public tk::Print {
     }
 
     //! Print list: name: option names with policies...
-    template< typename Factory >
+    template< class Factory >
     void optionlist( const std::string& title, const Factory& factory ) const {
-      if (!factory.empty()) {
-        section( title );
-      }
+      if (!factory.empty()) section( title );
       for (const auto& f : factory) {
         std::vector< std::string > entries = SDEPolicyNames( f.first );
         std::stringstream ss;
