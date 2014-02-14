@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 09:27:43 PM CET
+  \date      Fri 14 Feb 2014 10:30:37 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -74,36 +74,19 @@ class QuinoaPrint : public tk::Print {
     template< typename OptionType, typename... tags >
     void Model( const quinoa::Model* const model ) const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
-        tk::Option< OptionType > opt;
-        // Echo option "group : value" as subsection title
+        static tk::Option< OptionType > opt;
         subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>() ) );
-        // Echo equation type and RNG if model is stochastic
-        if (model->stochastic()) {
-          m_stream << m_item_name_value_fmt % m_item_indent
-                                            % "Equation"
-                                            % "stochastic";
-          tk::Option< tk::ctr::RNG > rng;
-          m_stream << m_item_name_value_fmt % m_item_indent
-                                            % rng.group()
-                                            % rng.name( model->rng() );
-        } else {
-          // Echo equation type if model is deterministic
-          m_stream << m_item_name_value_fmt % m_item_indent
-                                            % "Equation"
-                                            % "deterministic";
-        }
-        // Echo initialization policy
-        m_stream << m_item_name_value_fmt % m_item_indent
-                                          % "Init policy"
-                                          % model->initPolicy();
-        // Echo coefficients policy
-        m_stream << m_item_name_value_fmt % m_item_indent
-                                          % "Coefficients policy"
-                                          % model->coeffPolicy();
-        // Echo number of components
-        m_stream << m_item_name_value_fmt % m_item_indent
-                                          % "Number of components"
-                                          % model->ncomp();
+        printModel( model );
+      }
+    }
+
+    //! Print configuration of a model in vector
+    template< typename OptionType, typename... tags >
+    void Model( const quinoa::Model* const model, std::size_t i ) const {
+      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
+        static tk::Option< OptionType > opt;
+        subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>()[i] ) );
+        printModel( model );
       }
     }
 
@@ -144,6 +127,9 @@ class QuinoaPrint : public tk::Print {
     QuinoaPrint(QuinoaPrint&&) = delete;
     //! Don't permit move assigment
     QuinoaPrint& operator=(QuinoaPrint&&) = delete;
+
+    //! Print configuration of a model
+    void printModel( const quinoa::Model* const model ) const;
 
     //! Return SDE name
     std::string SDEName( const ctr::SDEKey& key ) const {
