@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:34:44 PM CET
+  \date      Fri 14 Feb 2014 10:08:44 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -117,7 +117,6 @@ Physics::echo()
   print.endsubsection();
 
   print.Model< ctr::Mix, tag::selected, tag::mix >( m_mix.get() );
-  print.endsubsection();
 
   print.subsection( "Increment parameters" );
   print.item( "Number of particles", control.get< tag::incpar, tag::npar >() );

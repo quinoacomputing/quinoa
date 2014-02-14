@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 08:33:48 AM MST
+  \date      Fri 14 Feb 2014 07:58:49 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -42,6 +42,17 @@ class TestSDE : public MonteCarlo {
     //! Don't permit move assigment
     TestSDE& operator=(TestSDE&&) = delete;
 
+    //! Instantiate an SDE
+    template< class SDE, class ncomp, class SDEType >
+    void instantiateSDE( const SDEType& sdetype ) {
+      if ( control().get< tag::component, ncomp >() ) {
+        ctr::SDEKey key{ sdetype,
+                         control().get< tag::param, SDE, tag::initpolicy >(),
+                         control().get< tag::param, SDE, tag::coeffpolicy >() };
+        m_sde.push_back( std::unique_ptr< Model >( m_SDEFactory[ key ]() ) );
+      }
+    }
+
     //! Advance
     void advance( tk::real dt );
 
@@ -50,6 +61,9 @@ class TestSDE : public MonteCarlo {
 
     //! Initialize factories
     void initFactories( const QuinoaPrint& print );
+
+    //! Echo information on test bed
+    void echo();
 
     //! Factory
     ctr::SDEFactory m_SDEFactory;                       //!< SDE factory

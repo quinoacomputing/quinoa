@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 09:35:58 AM MST
+  \date      Fri 14 Feb 2014 10:32:11 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -57,4 +57,42 @@ QuinoaPrint::SDEPolicyNames( const ctr::SDEKey& key ) const
   names.push_back( ctr::InitPolicy().name( key.get<tag::initpolicy>() ) );
   names.push_back( ctr::CoeffPolicy().name( key.get<tag::coeffpolicy>() ) );
   return names;
+}
+
+void
+QuinoaPrint::printModel( const quinoa::Model* const model ) const
+//******************************************************************************
+//  Echo configuration of a model
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Echo equation type and RNG if model is stochastic
+  if (model->stochastic()) {
+    m_stream << m_item_name_value_fmt % m_item_indent
+                                      % "Equation"
+                                      % "stochastic";
+    tk::Option< tk::ctr::RNG > rng;
+    m_stream << m_item_name_value_fmt % m_item_indent
+                                      % rng.group()
+                                      % rng.name( model->rng() );
+  } else {
+    // Echo equation type if model is deterministic
+    m_stream << m_item_name_value_fmt % m_item_indent
+                                      % "Equation"
+                                      % "deterministic";
+  }
+
+  // Echo initialization policy
+  m_stream << m_item_name_value_fmt % m_item_indent
+                                    % "Init policy"
+                                    % model->initPolicy();
+  // Echo coefficients policy
+  m_stream << m_item_name_value_fmt % m_item_indent
+                                    % "Coefficients policy"
+                                    % model->coeffPolicy();
+  // Echo number of components
+  m_stream << m_item_name_value_fmt % m_item_indent
+                                    % "Number of components"
+                                    % model->ncomp();
+  m_stream << '\n';
 }
