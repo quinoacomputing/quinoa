@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:29:31 PM CET
+  \date      Fri 14 Feb 2014 08:15:00 PM CET
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -81,26 +81,6 @@ class InputDeck :
       set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default requested statistics
       set< tag::stat >( std::vector< Product >() );
-    }
-
-    //! Return position offset
-    int positionOffset() const noexcept {
-      return 0;
-    }
-    //! Return density offset
-    int densityOffset() const noexcept {
-      return get< tag::component, tag::nposition >();
-    }
-    //! Return velocity offset
-    int velocityOffset() const noexcept {
-      return get< tag::component, tag::nposition >() +
-             get< tag::component, tag::ndensity >();
-    }
-    //! Return scalar offset
-    int scalarOffset() const noexcept {
-      return get< tag::component, tag::nposition >() +
-             get< tag::component, tag::ndensity >() +
-             get< tag::component, tag::nvelocity >();
     }
 
     //! Return offset for term::quantity
