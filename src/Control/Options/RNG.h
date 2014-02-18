@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:09:12 PM MST
+  \date      Tue Feb 18 09:49:46 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -252,32 +252,29 @@ class RNG : public tk::Toggle< RNGType > {
     };
 
     //! Enums -> sequence length options supported
-    // ICC: the name svec is not needed
-    using svec = std::vector< RNGSSESeqLenType >;
-    const std::map< RNGType, svec > support {
-        { RNGType::RNGSSE_GM29,    svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::MEDIUM,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GM31,    svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::MEDIUM,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GM55,    svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GQ581,   svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::MEDIUM,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GQ583,   svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::MEDIUM,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GQ584,   svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::MEDIUM,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_GM61,    svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::LONG } },
-        { RNGType::RNGSSE_LFSR113, svec { RNGSSESeqLenType::SHORT,
-                                          RNGSSESeqLenType::LONG } }
+    const std::map< RNGType, std::vector< RNGSSESeqLenType > > support {
+      { RNGType::RNGSSE_GM29,    { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::MEDIUM,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GM31,    { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::MEDIUM,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GM55,    { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GQ581,   { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::MEDIUM,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GQ583,   { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::MEDIUM,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GQ584,   { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::MEDIUM,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_GM61,    { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::LONG } },
+      { RNGType::RNGSSE_LFSR113, { RNGSSESeqLenType::SHORT,
+                                   RNGSSESeqLenType::LONG } }
     };
-
 };
 
 } // ctr::
