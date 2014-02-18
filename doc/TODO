@@ -58,6 +58,8 @@
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
 
+* TestSDE's and Physics' echo() is almost a repeat - reuse
+
 * RNG requirements (needs more explanation):
 
   Nth x Nppt x Nepp x Nt
