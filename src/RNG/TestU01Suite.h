@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:20:10 PM MST
+  \date      Tue 18 Feb 2014 06:29:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -65,7 +65,7 @@ class TestU01Suite : public Battery {
 
     //! Statistical tests wrappers
     static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
-               const std::tuple<long, long, int, long, int, int>& xargs);
+               const std::tuple<long, long, int, long, int, int>& xargs );
     static Pvals Collision( unif01_Gen* gen, sknuth_Res2* res,
                const std::tuple<long, long, int, long, int>& xargs );
     static Pvals Gap( unif01_Gen* gen, sres_Chi2* res,

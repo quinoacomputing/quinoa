@@ -58,9 +58,6 @@
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
 
-* In QuinoaPrint::Model() is opt created several times in a loop from e.g.,
-  TestSDE::echo()? Check if static is the right thing to do here.
-
 * RNG requirements (needs more explanation):
 
   Nth x Nppt x Nepp x Nt
