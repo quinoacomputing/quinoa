@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 10:30:37 PM CET
+  \date      Tue 18 Feb 2014 06:13:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -72,7 +72,7 @@ class QuinoaPrint : public tk::Print {
 
     //! Print configuration of a model
     template< typename OptionType, typename... tags >
-    void Model( const quinoa::Model* const model ) const {
+    void Model( const quinoa::Model& model ) const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         static tk::Option< OptionType > opt;
         subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>() ) );
@@ -82,7 +82,7 @@ class QuinoaPrint : public tk::Print {
 
     //! Print configuration of a model in vector
     template< typename OptionType, typename... tags >
-    void Model( const quinoa::Model* const model, std::size_t i ) const {
+    void Model( const quinoa::Model& model, std::size_t i ) const {
       if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
         static tk::Option< OptionType > opt;
         subsection( opt.group() + ": " + opt.name( m_ctr.get<tags...>()[i] ) );
@@ -129,7 +129,7 @@ class QuinoaPrint : public tk::Print {
     QuinoaPrint& operator=(QuinoaPrint&&) = delete;
 
     //! Print configuration of a model
-    void printModel( const quinoa::Model* const model ) const;
+    void printModel( const quinoa::Model& model ) const;
 
     //! Return SDE name
     std::string SDEName( const ctr::SDEKey& key ) const {
