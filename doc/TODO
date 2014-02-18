@@ -55,9 +55,6 @@
 
 * Any libs for concurrent containers? Would be nice for PDF/JPDF. TBB.
 
-* Pass ref model to QuinoaPrint::Model instead of ptr to express that model
-  should not be null - if it make sense.
-
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
 

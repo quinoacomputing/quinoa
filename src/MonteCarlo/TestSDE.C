@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 10:08:52 PM CET
+  \date      Tue 18 Feb 2014 06:12:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -215,7 +215,7 @@ TestSDE::echo()
   print.endsubsection();
 
   for (std::size_t i = 0, end = m_sde.size(); i<end; ++i) {
-    print.Model< ctr::SDE, tag::selected, tag::sde >( m_sde[i].get(), i );
+    print.Model< ctr::SDE, tag::selected, tag::sde >( *m_sde[i], i );
   }
 
   print.subsection( "Increment parameters" );
