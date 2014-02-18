@@ -1,6 +1,8 @@
 * Parser/Control:
     - Document remaining undocumented keywords
-    - Replace the overloads in Control.h with variadic ones
+    - Replace the overloads in Control.h with variadic ones: the implementation
+      of Field template may give a clue on how to do the variadic deep-access
+      for types in tagged tuple, see AA (Modern C++ Design) p69.
     - Warn on what is set ends up not being used
     - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
     - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
@@ -11,7 +13,7 @@
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
     - RNGSSE:
-        o Put in gaussian()
+        o Put in gaussian(): Gaussian distribution from uniform: STL
         o Can RNGSSE's generators take a seed?
         o Hook up SSE versions
         o Hook up GPU versions
@@ -39,6 +41,9 @@
     - Make children of SDEs optional
     - Make coefficients policies optional
     - Document what is optional
+    - Revisit MKL's link page:
+      http://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+    - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
@@ -49,6 +54,15 @@
 * valarrays eligible for more aggressive optimizations, especially on multicore?
 
 * Any libs for concurrent containers? Would be nice for PDF/JPDF. TBB.
+
+* Pass ref model to QuinoaPrint::Model instead of ptr to express that model
+  should not be null - if it make sense.
+
+* Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
+  2013/12/staticassert-better-template-error.html?m=1
+
+* In QuinoaPrint::Model() is opt created several times in a loop from e.g.,
+  TestSDE::echo()? Check if static is the right thing to do here.
 
 * RNG requirements (needs more explanation):
 
