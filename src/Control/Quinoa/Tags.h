@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:36:11 PM MST
+  \date      Wed 19 Feb 2014 05:30:15 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -70,6 +70,8 @@ struct timescale {};
 
 struct initpolicy {};
 struct coeffpolicy {};
+
+struct depvar {};
 
 struct sde {};
 struct beta {};

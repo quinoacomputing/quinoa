@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Tue 18 Feb 2014 06:12:18 AM MST
+  \date      Wed 19 Feb 2014 05:33:34 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -115,9 +115,9 @@ TestSDE::advance(tk::real dt)
   #endif
   {
     #ifdef _OPENMP
-    int tid = omp_get_thread_num();
+    //int tid = omp_get_thread_num();
     #else
-    int tid = 0;
+    //int tid = 0;
     #endif
 
     #ifdef _OPENMP

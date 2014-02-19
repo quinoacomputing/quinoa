@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 08:15:00 PM CET
+  \date      Wed 19 Feb 2014 05:56:35 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -62,10 +62,12 @@ class InputDeck :
       // Default beta mass model parameters
       set< tag::param, tag::beta, tag::atwood >( 0.5 );
       // Default Dirichlet mix model parameters
+      set< tag::param, tag::dirichlet, tag::depvar >( 'x' );
       set< tag::param, tag::dirichlet, tag::b >( std::vector< tk::real >() );
       set< tag::param, tag::dirichlet, tag::S >( std::vector< tk::real >() );
       set< tag::param, tag::dirichlet, tag::kappa >( std::vector< tk::real >() );
       // Default generalized Dirichlet mix model parameters
+      set< tag::param, tag::gendir, tag::depvar >( 'x' );
       set< tag::param, tag::gendir, tag::b >( std::vector< tk::real >() );
       set< tag::param, tag::gendir, tag::S >( std::vector< tk::real >() );
       set< tag::param, tag::gendir, tag::kappa >( std::vector< tk::real >() );

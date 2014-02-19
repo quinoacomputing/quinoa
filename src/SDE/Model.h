@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Model.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:43:53 PM MST
+  \date      Wed 19 Feb 2014 05:50:47 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Model
   \details   Model
@@ -37,6 +37,9 @@ class Model {
 
     //! Return number of components
     virtual int ncomp() const noexcept = 0;
+
+    //! Return dependent variable
+    virtual char depvar() const noexcept = 0;
 
     //! Return initialization policy
     virtual std::string initPolicy() const noexcept = 0;

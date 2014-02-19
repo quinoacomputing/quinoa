@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:27:32 PM CET
+  \date      Wed 19 Feb 2014 05:53:28 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -219,6 +219,7 @@ using BetaParameters = tk::tuple::tagged_tuple<
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
   tag::b,           std::vector<tk::real>,
   tag::S,           std::vector<tk::real>,
   tag::kappa,       std::vector<tk::real>,
@@ -229,6 +230,7 @@ using DirichletParameters = tk::tuple::tagged_tuple<
 
 //! Generalized Dirichlet mix model parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
   tag::b,           std::vector<tk::real>,
   tag::S,           std::vector<tk::real>,
   tag::kappa,       std::vector<tk::real>,
