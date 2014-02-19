@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:42:32 AM MST
+  \date      Wed Feb 19 15:29:38 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -39,6 +39,8 @@ namespace deck {
   using Stack = PEGTLInputDeck;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
+  //! Parser-lifetime storage for dependent variables selected
+  static std::set< char > depvars;
 
   // Quinoa's InputDeck actions
 
@@ -75,6 +77,20 @@ namespace deck {
   struct save_field : pegtl::action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
       field = stack.convert< int >( value ) - 1;  // field ID numbers start at 0
+    }
+  };
+
+  //! add depvar (dependent variable) to the selected ones
+  struct add_depvar : pegtl::action_base< add_depvar > {
+    static void apply(const std::string& value, Stack& stack) {
+      // put in new dependent variable to set of already selected ones
+      char newvar = stack.convert< char >( value );
+      // error out if depvar is already taken
+      if (depvars.find( newvar ) == depvars.end() ) {
+        depvars.insert( newvar );
+      } else {
+        tk::grm::handleError< Stack, tk::grm::Error::EXISTS >( stack, value );
+      }
     }
   };
 
@@ -206,6 +222,18 @@ namespace deck {
          tk::grm::scan< typename keyword::pegtl_string,
                         store_option< option, tag::selected, Tag >,
                         triggers... > {};
+
+  //! model parameter depvar (dependent variable)
+  template< typename model, typename Tag >
+  struct depvar :
+         pegtl::ifmust<
+           tk::grm::readkw< kw::depvar::pegtl_string >,
+           tk::grm::scan<
+             pegtl::sor< pegtl::alpha,
+                         pegtl::apply<
+                           tk::grm::error< Stack, tk::grm::Error::NOTALPHA > > >,
+             tk::grm::Store< Stack, tag::param, model, Tag >,
+             add_depvar > > {};
 
   //! scan and store geometry keyword and option
   template< typename keyword >
@@ -543,10 +571,7 @@ namespace deck {
   struct dirichlet :
          pegtl::ifmust< scan_sde< kw::dirichlet >,
                         tk::grm::block< Stack,
-                                        parameter< kw::depvar,
-                                                   pegtl::alpha,
-                                                   tag::dirichlet,
-                                                   tag::depvar >,
+                                        depvar< tag::dirichlet, tag::depvar >,
                                         component< kw::ncomp, tag::ndirichlet >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -573,6 +598,7 @@ namespace deck {
   struct generalized_dirichlet :
          pegtl::ifmust< scan_sde< kw::gendir >,
                         tk::grm::block< Stack,
+                                        depvar< tag::gendir, tag::depvar >,
                                         component< kw::ncomp, tag::ngendir >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
