@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Tue 18 Feb 2014 06:13:13 AM MST
+  \date      Wed 19 Feb 2014 05:54:08 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -66,6 +66,11 @@ QuinoaPrint::printModel( const quinoa::Model& model ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // Echo dependent variable
+  m_stream << m_item_name_value_fmt % m_item_indent
+                                    % "Dependent variable"
+                                    % model.depvar();
+
   // Echo equation type and RNG if model is stochastic
   if (model.stochastic()) {
     m_stream << m_item_name_value_fmt % m_item_indent
@@ -76,7 +81,7 @@ QuinoaPrint::printModel( const quinoa::Model& model ) const
                                       % rng.group()
                                       % rng.name( model.rng() );
   } else {
-    // Echo equation type if model is deterministic
+    // Only echo equation type if model is deterministic
     m_stream << m_item_name_value_fmt % m_item_indent
                                       % "Equation"
                                       % "deterministic";

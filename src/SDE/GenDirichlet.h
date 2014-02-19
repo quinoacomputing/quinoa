@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirichlet.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:15:50 PM CET
+  \date      Wed 19 Feb 2014 05:55:11 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -32,6 +32,7 @@ class GenDirichlet : public SDE< Init, Coefficients > {
                            int ncomp ) :
       sde( base,
            base.control.get< tag::param, tag::gendir, tk::tag::rng >(),
+           base.control.get< tag::param, tag::gendir, tag::depvar >(),
            particles,
            offset,
            ncomp ),

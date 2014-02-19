@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 09:56:16 PM CET
+  \date      Wed 19 Feb 2014 05:28:36 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -425,6 +425,15 @@ struct constant_info {
   static const char* help() { return "Constant coefficients policy."; }
 };
 using constant = keyword<constant_info, c,o,n,s,t,a,n,t >;
+
+// Keyword 'depvar': dependent variable in equations
+struct depvar_info {
+  static const char* name() { return "Dependent variable"; }
+  static const char* help() { return "Dependent variable in differential "
+                                     "equations."; }
+};
+using depvar = keyword< depvar_info, d,e,p,v,a,r >;
+
 
 } // kw::
 } // quinoa::

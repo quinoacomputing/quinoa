@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 07:38:21 PM CET
+  \date      Wed 19 Feb 2014 05:52:56 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -33,6 +33,9 @@ class SDE : public Model {
     //! Return number of components
     int ncomp() const noexcept override { return m_ncomp; }
 
+    //! Return dependent variable
+    char depvar() const noexcept override { return m_depvar; }
+
     //! Return initialization policy
     std::string initPolicy() const noexcept override { return Init().policy(); }
 
@@ -45,10 +48,12 @@ class SDE : public Model {
     //! Constructor: protected, designed to be base-only
     explicit SDE( const Base& base,
                   tk::ctr::RNGType rngType,
+                  char depvar,
                   const ParProps& particles,
                   int offset,
                   int ncomp ) :
       m_rngType( rngType ),
+      m_depvar( depvar ),
       m_particles( particles ),
       m_npar( base.control.get< tag::incpar, tag::npar >() ),
       m_nprop( base.control.get< tag::component >().nprop() ),
@@ -67,6 +72,7 @@ class SDE : public Model {
     }
 
     const tk::ctr::RNGType m_rngType;  //!< RNG used
+    const char m_depvar;               //!< Dependent variable
     const ParProps& m_particles;       //!< Particle properties
     const uint64_t m_npar;             //!< Total number of particles
     const uint32_t m_nprop;            //!< Total number of particle properties

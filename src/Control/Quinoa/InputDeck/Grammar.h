@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:22:55 AM MST
+  \date      Wed 19 Feb 2014 05:42:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -148,31 +148,32 @@ namespace deck {
                                          expectation< rbound > > > {};
 
   //! control parameter
-  template< typename keyword, typename... tags >
+  template< typename keyword, class kw_type, typename... tags >
   struct control :
          tk::grm::process< Stack,
                            typename keyword::pegtl_string,
-                           tk::grm::Store< Stack, tags... > > {};
+                           tk::grm::Store< Stack, tags... >,
+                           kw_type > {};
 
   //! incrementation control parameter
   template< typename keyword, typename Tag >
   struct incpar :
-         control< keyword, tag::incpar, Tag > {};
+         control< keyword, pegtl::digit, tag::incpar, Tag > {};
 
   //! component control parameter
   template< typename keyword, typename Tag >
   struct component :
-         control< keyword, tag::component, Tag > {};
+         control< keyword, pegtl::digit, tag::component, Tag > {};
 
   //! interval control parameter
   template< typename keyword, typename Tag >
   struct interval :
-         control< keyword, tag::interval, Tag > {};
+         control< keyword, pegtl::digit, tag::interval, Tag > {};
 
   //! model parameter
-  template< typename keyword, typename model, typename Tag >
+  template< typename keyword, typename kw_type, typename model, typename Tag >
   struct parameter :
-         control< keyword, tag::param, model, Tag > {};
+         control< keyword, kw_type, tag::param, model, Tag > {};
 
   //! model parameter vector
   template< typename keyword, typename...tags >
@@ -270,18 +271,15 @@ namespace deck {
 
   //! Fluctuating velocity in x direction
   struct u :
-         push_term< ctr::Quantity::VELOCITY_X,
-                    ctr::Moment::CENTRAL, 'u' > {};
+         push_term< ctr::Quantity::VELOCITY_X, ctr::Moment::CENTRAL, 'u' > {};
 
   //! Fluctuating velocity in y direction
   struct v :
-         push_term< ctr::Quantity::VELOCITY_Y,
-                    ctr::Moment::CENTRAL, 'v' > {};
+         push_term< ctr::Quantity::VELOCITY_Y, ctr::Moment::CENTRAL, 'v' > {};
 
   //! Fluctuating velocity in z direction
   struct w :
-         push_term< ctr::Quantity::VELOCITY_Z,
-                    ctr::Moment::CENTRAL, 'w' > {};
+         push_term< ctr::Quantity::VELOCITY_Z, ctr::Moment::CENTRAL, 'w' > {};
 
   //! slm block
   struct slm :
@@ -294,7 +292,10 @@ namespace deck {
                                       start_product, v, v,
                                       start_product, w, w >,
            tk::grm::block< Stack,
-                           parameter< kw::SLM_C0, tag::slm, tag::c0 >,
+                           parameter< kw::SLM_C0,
+                                      pegtl::digit,
+                                      tag::slm,
+                                      tag::c0 >,
                            component< kw::nvelocity, tag::nvelocity > > > {};
 
   //! dirichlet mix model block
@@ -345,11 +346,22 @@ namespace deck {
                           Stack,
                           component< kw::nfreq, tag::nfrequency >,
                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
-                          parameter< kw::freq_gamma_C1, tag::gamma, tag::c1 >,
-                          parameter< kw::freq_gamma_C2, tag::gamma, tag::c2 >,
-                          parameter< kw::freq_gamma_C3, tag::gamma, tag::c3 >,
-                          parameter< kw::freq_gamma_C4, tag::gamma, tag::c4 > >
-                      > {};
+                          parameter< kw::freq_gamma_C1,
+                                     pegtl::digit,
+                                     tag::gamma,
+                                     tag::c1 >,
+                          parameter< kw::freq_gamma_C2,
+                                     pegtl::digit,
+                                     tag::gamma,
+                                     tag::c2 >,
+                          parameter< kw::freq_gamma_C3,
+                                     pegtl::digit,
+                                     tag::gamma,
+                                     tag::c3 >,
+                          parameter< kw::freq_gamma_C4,
+                                     pegtl::digit,
+                                     tag::gamma,
+                                     tag::c4 > > > {};
 
   //! Beta mass model block
   struct mass_beta :
@@ -358,7 +370,10 @@ namespace deck {
                           Stack,
                           component< kw::ndensity, tag::ndensity >,
                           rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
-                          parameter< kw::Beta_At, tag::beta, tag::atwood > >
+                          parameter< kw::Beta_At,
+                                     pegtl::digit,
+                                     tag::beta,
+                                     tag::atwood > >
                       > {};
 
   //! geometry definition types
@@ -511,9 +526,16 @@ namespace deck {
                                              tk::ctr::RNG,
                                              tag::beta,
                                              tk::tag::rng >,
-                                        parameter< kw::sde_b, tag::beta, tag::b >,
-                                        parameter< kw::sde_S, tag::beta, tag::S >,
+                                        parameter< kw::sde_b,
+                                                   pegtl::digit,
+                                                   tag::beta,
+                                                   tag::b >,
+                                        parameter< kw::sde_S,
+                                                   pegtl::digit,
+                                                   tag::beta,
+                                                   tag::S >,
                                         parameter< kw::sde_kappa,
+                                                   pegtl::digit,
                                                    tag::beta,
                                                    tag::kappa > > > {};
 
@@ -521,6 +543,10 @@ namespace deck {
   struct dirichlet :
          pegtl::ifmust< scan_sde< kw::dirichlet >,
                         tk::grm::block< Stack,
+                                        parameter< kw::depvar,
+                                                   pegtl::alpha,
+                                                   tag::dirichlet,
+                                                   tag::depvar >,
                                         component< kw::ncomp, tag::ndirichlet >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
