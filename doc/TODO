@@ -45,6 +45,8 @@
       http://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
 
+* Instantiating via factories should use find() instead of operator[]().
+
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
