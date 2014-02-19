@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:28:13 PM CET
+  \date      Wed 19 Feb 2014 05:22:55 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -114,21 +114,23 @@ namespace deck {
   //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
   template< class keyword, ctr::Quantity q, ctr::Moment m >
   struct moment :
-         pegtl::sor < pegtl::ifapply< pegtl::seq< keyword,
-                                                  pegtl::ifapply< pegtl::digit,
-                                                                  save_field > >,
-                                      push_term< q, m > >,
-                      pegtl::ifapply< keyword, push_term< q, m > > > {};
+         pegtl::sor < pegtl::ifapply<
+                        pegtl::seq< typename keyword::pegtl_string,
+                                    pegtl::ifapply< pegtl::digit,
+                                                    save_field > >,
+                        push_term< q, m > >,
+                      pegtl::ifapply< typename keyword::pegtl_string,
+                                      push_term< q, m > > > {};
 
   //! terms recognized within an expectation and their mapping
   struct terms :
-         pegtl::sor< moment< kw::transported_scalar::pegtl_string,
+         pegtl::sor< moment< kw::transported_scalar,
                              ctr::Quantity::SCALAR,
                              ctr::Moment::ORDINARY >,
-                     moment< kw::transported_scalar_fluctuation::pegtl_string,
+                     moment< kw::transported_scalar_fluctuation,
                              ctr::Quantity::SCALAR,
                              ctr::Moment::CENTRAL >,
-                     moment< kw::velocity_x::pegtl_string,
+                     moment< kw::velocity_x,
                              ctr::Quantity::VELOCITY_X,
                              ctr::Moment::ORDINARY >,
                      tk::grm::unknown< Stack, tk::grm::Error::MOMENT > > {};
