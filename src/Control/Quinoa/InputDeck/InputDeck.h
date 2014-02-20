@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:56:35 AM MST
+  \date      Thu Feb 20 16:03:58 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -99,6 +99,30 @@ class InputDeck :
       if (q == Quantity::DENSITY)
         offset += 3 * get< tag::component, tag::nposition >();
       return offset;
+    }
+
+  private:
+    // capture map for pegtl::capture, the functions below make this class look
+    // like a std::map in pegtl::capture's view, see pegtl/rules_action.hh
+    pegtl::capture_map m_captured;
+
+  public:
+    //! type const_iterator for pegtl::capture
+    using const_iterator = pegtl::capture_map::const_iterator;
+
+    //! operator[] for pegtl::capture
+    pegtl::capture_map::mapped_type& operator[]( unsigned key ) {
+      return m_captured[ key ];
+    }
+
+    //! find() for pegtl::capture
+    const_iterator find( const unsigned& key ) const {
+      return m_captured.find( key );
+    }
+
+    //! end() for pegtl::capture
+    const_iterator end() const {
+      return m_captured.end();
     }
 
   private:

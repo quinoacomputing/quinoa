@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed Feb 19 15:29:38 2014
+  \date      Thu Feb 20 16:40:16 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -23,6 +23,7 @@
 #include <Grammar.h>
 #include <MKLGrammar.h>
 #include <RNGSSEGrammar.h>
+#include <CustomPEGTLCapture.h>
 
 namespace quinoa {
 namespace deck {
@@ -127,28 +128,40 @@ namespace deck {
 
   // Quinoa's InputDeck grammar
 
-  //! moment: 'keyword' optionally followed by a digit, pushed to vector of terms
+  //! moment: keyword optionally followed by a digit, pushed to vector of terms
   template< class keyword, ctr::Quantity q, ctr::Moment m >
   struct moment :
          pegtl::sor < pegtl::ifapply<
-                        pegtl::seq< typename keyword::pegtl_string,
+                        pegtl::seq< keyword,
                                     pegtl::ifapply< pegtl::digit,
                                                     save_field > >,
                         push_term< q, m > >,
-                      pegtl::ifapply< typename keyword::pegtl_string,
+                      pegtl::ifapply< keyword,
                                       push_term< q, m > > > {};
 
-  //! terms recognized within an expectation and their mapping
-  struct terms :
-         pegtl::sor< moment< kw::transported_scalar,
+  //! term accounts for both full variable and fluctuation
+  template< class Tag >
+  struct term :
+         pegtl::sor< moment< tk::pegtl::capture< Tag::id, &::toupper >,
                              ctr::Quantity::SCALAR,
                              ctr::Moment::ORDINARY >,
-                     moment< kw::transported_scalar_fluctuation,
+                     moment< tk::pegtl::capture< Tag::id, &::tolower >,
+                             ctr::Quantity::SCALAR,
+                             ctr::Moment::CENTRAL > > {};
+
+  //! terms recognized within an expectation
+  struct terms :
+         pegtl::sor< moment< kw::transported_scalar::pegtl_string,
+                             ctr::Quantity::SCALAR,
+                             ctr::Moment::ORDINARY >,
+                     moment< kw::transported_scalar_fluctuation::pegtl_string,
                              ctr::Quantity::SCALAR,
                              ctr::Moment::CENTRAL >,
-                     moment< kw::velocity_x,
+                     moment< kw::velocity_x::pegtl_string,
                              ctr::Quantity::VELOCITY_X,
                              ctr::Moment::ORDINARY >,
+                     term< tag::dirichlet >,
+                     term< tag::gendir >,
                      tk::grm::unknown< Stack, tk::grm::Error::MOMENT > > {};
 
   //! plow through terms in expectation until character 'rbound'
@@ -233,7 +246,8 @@ namespace deck {
                          pegtl::apply<
                            tk::grm::error< Stack, tk::grm::Error::NOTALPHA > > >,
              tk::grm::Store< Stack, tag::param, model, Tag >,
-             add_depvar > > {};
+             add_depvar,
+             pegtl::capture< model::id > > > {};
 
   //! scan and store geometry keyword and option
   template< typename keyword >
