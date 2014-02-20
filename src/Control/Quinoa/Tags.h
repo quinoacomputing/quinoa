@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:30:15 AM MST
+  \date      Wed 19 Feb 2014 07:03:31 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -74,9 +74,10 @@ struct coeffpolicy {};
 struct depvar {};
 
 struct sde {};
+
 struct beta {};
-struct dirichlet {};
-struct gendir {};
+struct dirichlet { enum { id = 0 }; };
+struct gendir { enum { id = 1 }; };
 struct gamma {};
 struct slm {};
 struct glm {};
