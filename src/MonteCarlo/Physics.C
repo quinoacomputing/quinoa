@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Tue 18 Feb 2014 06:14:03 AM MST
+  \date      Fri 21 Feb 2014 06:30:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -18,10 +18,10 @@
 using quinoa::Physics;
 
 Physics::Physics( const Base& base ) : MonteCarlo( base ),
-  m_nposition( base.control.get<tag::component, tag::nposition>() ),
-  m_ndensity( base.control.get<tag::component, tag::ndensity>() ),
-  m_nvelocity( base.control.get<tag::component, tag::nvelocity>() ),
-  m_nscalar( base.control.get<tag::component, tag::nscalar>() )
+  m_nposition( base.control.get<tag::component, tag::position>() ),
+  m_ndensity( base.control.get<tag::component, tag::mass>() ),
+  m_nvelocity( base.control.get<tag::component, tag::hydro>() ),
+  m_nscalar( base.control.get<tag::component, tag::mix>() )
 //******************************************************************************
 //  Constructor
 //! \param[in]  base     Essentials
@@ -74,14 +74,14 @@ Physics::initFactories(const tk::Print& print)
             ( m_mixFactory, ctr::MixType::DIRICHLET,
               base(),
               std::cref( particles() ),
-              comp.offset< tag::nscalar >(),
-              comp.get< tag::nscalar >() );
+              comp.offset< tag::dirichlet >(),
+              comp.get< tag::dirichlet >() );
   tk::record< GenDirichlet< InitZero, GenDirCoeffConst > >
             ( m_mixFactory, ctr::MixType::GENDIR,
               base(),
               std::cref( particles() ),
-              comp.offset< tag::nscalar >(),
-              comp.get< tag::nscalar >() );
+              comp.offset< tag::gendir >(),
+              comp.get< tag::gendir >() );
   print.list< ctr::Mix >( "Registered material mix models", m_mixFactory );
 }
 

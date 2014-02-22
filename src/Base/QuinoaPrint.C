@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:54:08 AM MST
+  \date      Fri 21 Feb 2014 08:32:59 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -21,9 +21,9 @@ QuinoaPrint::RequestedStats(const std::string& msg) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
+  if (m_ctr.get< tag::stat >() != ctr::InputDeckDefaults.get< tag::stat >()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : m_ctr.get<tag::stat>()) {
+    for ( auto& v : m_ctr.get< tag::stat >() ) {
       m_stream <<= v;
     }
     m_stream << '\n';

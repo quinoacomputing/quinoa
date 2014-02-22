@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 02:31:37 PM MST
+  \date      Sat 22 Feb 2014 02:28:24 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -60,7 +60,7 @@ InputDeckParser::unique( std::vector< ctr::Product >& statistics )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::sort(statistics.begin(), statistics.end());
-  auto it = std::unique(statistics.begin(), statistics.end());
-  statistics.resize(std::distance(statistics.begin(), it));
+  std::sort( begin(statistics), end(statistics) );
+  auto it = std::unique( begin(statistics), end(statistics) );
+  statistics.resize( std::distance( begin(statistics), it ) );
 }

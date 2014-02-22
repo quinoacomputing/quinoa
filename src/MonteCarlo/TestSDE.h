@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Fri 14 Feb 2014 07:58:49 PM CET
+  \date      Fri 21 Feb 2014 06:23:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -43,9 +43,9 @@ class TestSDE : public MonteCarlo {
     TestSDE& operator=(TestSDE&&) = delete;
 
     //! Instantiate an SDE
-    template< class SDE, class ncomp, class SDEType >
+    template< class SDE, class SDEType >
     void instantiateSDE( const SDEType& sdetype ) {
-      if ( control().get< tag::component, ncomp >() ) {
+      if ( control().get< tag::component, SDE >() ) {
         ctr::SDEKey key{ sdetype,
                          control().get< tag::param, SDE, tag::initpolicy >(),
                          control().get< tag::param, SDE, tag::coeffpolicy >() };

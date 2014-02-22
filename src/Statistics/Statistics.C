@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:30:05 PM CET
+  \date      Sat 22 Feb 2014 09:40:06 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -34,32 +34,55 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const auto& control = base.control;
-  const auto& statistics = base.control.get< tag::stat >();
+  // Setup std::map< depvar, offset >
+  OffsetMap offset;
+  boost::mpl::for_each< tags >( depvar( base, offset ) );
 
+  // Prepare for computing moments
+  setupOrdinary( base, offset );
+  setupCentral( base, offset );
+}
+
+void
+Statistics::setupOrdinary( const Base& base, const OffsetMap& offset )
+//******************************************************************************
+//  Prepare for computing ordinary moments
+//! \author J. Bakosi
+//******************************************************************************
+{
   // Prepare for computing ordinary moments
-  for (auto& product : statistics) {
+  for (const auto& product : base.control.get< tag::stat >()) {
     if (ordinary(product)) {
 
       m_instOrd.push_back( std::vector< const tk::real* >() );
       m_plotOrdinary.push_back( false );
       m_nameOrdinary.push_back( std::string() );
-      m_ordFieldName.push_back( ctr::FieldName() );
+      m_ordFieldVar.push_back( ctr::FieldVar() );
 
-      for (auto& term : product) {
+      for (const auto& term : product) {
+        auto it = offset.find( term.var );
+        Assert( it != end( offset ), tk::ExceptType::FATAL, "No such depvar" );
         // Put in starting address of instantaneous variable
-        m_instOrd[m_nord].push_back(
-          particles.cptr( term.field, control.termOffset( term.quantity ) ) );
+        m_instOrd[ m_nord ].push_back(
+          m_particles.cptr( term.field, it->second ) );
         if (term.plot) m_plotOrdinary.back() = true;
         // Put in term name+field
-        m_nameOrdinary.back() += m_ordFieldName.back()
-                               = ctr::FieldName( term.name, term.field );
+        m_nameOrdinary.back() +=
+          m_ordFieldVar.back() = ctr::FieldVar( term.var, term.field );
       }
 
       ++m_nord;
     }
   }
+}
 
+void
+Statistics::setupCentral( const Base& base, const OffsetMap& offset )
+//******************************************************************************
+//  Prepare for computing central moments
+//! \author J. Bakosi
+//******************************************************************************
+{
   if (m_nord) {
     // Storage for all the required ordinary moments
     // +1 for each thread's 0 as center for ordinary moments
@@ -69,21 +92,23 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
     m_ordinary[m_nord] = 0.0;
 
     // Prepare for computing central moments
-    for (auto& product : statistics) {
+    for (const auto& product : base.control.get< tag::stat >()) {
       if (!ordinary(product)) {
 
         m_instCen.push_back( std::vector< const tk::real* >() );
         m_center.push_back( std::vector< const tk::real* >() );
         m_nameCentral.push_back( std::string() );
 
-        for (auto& term : product) {
+        for (const auto& term : product) {
+          auto it = offset.find( term.var );
+          Assert( it != end( offset ), tk::ExceptType::FATAL, "No such depvar" );
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(
-            particles.cptr( term.field, control.termOffset( term.quantity ) ) );
+            m_particles.cptr( term.field, it->second ) );
           // Put in index of center for central, m_nord for ordinary moment
           m_center[m_ncen].push_back(
-            m_ordinary.get() + (!isupper(term.name) ? mean(term) : m_nord));
-          m_nameCentral.back() += ctr::FieldName( term.name, term.field );
+            m_ordinary.get() + (!isupper(term.var) ? mean(term) : m_nord));
+          m_nameCentral.back() += ctr::FieldVar( term.var, term.field );
         }
 
         ++m_ncen;
@@ -122,10 +147,10 @@ Statistics::mean( const ctr::Term& term ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto size = m_ordFieldName.size();
+  auto size = m_ordFieldVar.size();
   for (decltype(size) i=0; i<size; ++i) {
-    if (m_ordFieldName[i].name == toupper(term.name) &&
-        m_ordFieldName[i].field == term.field) {
+    if (m_ordFieldVar[i].var == toupper(term.var) &&
+        m_ordFieldVar[i].field == term.field) {
        return i;
     }
   }
@@ -135,7 +160,7 @@ Statistics::mean( const ctr::Term& term ) const
 }
 
 bool
-Statistics::plotOrdinary(const int m) const
+Statistics::plotOrdinary( int m ) const
 //******************************************************************************
 //  Find out whether ordinary moment is to be plotted
 //! \param[in]  m         Moment index
@@ -143,12 +168,12 @@ Statistics::plotOrdinary(const int m) const
 //******************************************************************************
 {
   Assert( m < m_nord, tk::ExceptType::FATAL,
-          "Request for an unavailable ordinary moment" );
+          "Request for unavailable ordinary moment" );
   return m_plotOrdinary[ m ];
 }
 
 const std::string&
-Statistics::nameOrdinary(const int m) const
+Statistics::nameOrdinary( int m ) const
 //******************************************************************************
 //  Return the name of ordinary moment
 //! \param[in]  m         Ordinary-moment index
@@ -156,12 +181,12 @@ Statistics::nameOrdinary(const int m) const
 //******************************************************************************
 {
   Assert( m < m_nord, tk::ExceptType::FATAL,
-          "Request for an unavailable ordinary moment" );
+          "Request for unavailable ordinary moment" );
   return m_nameOrdinary[ m ];
 }
 
 const std::string&
-Statistics::nameCentral(const int m) const
+Statistics::nameCentral( int m ) const
 //******************************************************************************
 //  Return the name of central moment
 //! \param[in]  m         Central-moment index
@@ -169,7 +194,7 @@ Statistics::nameCentral(const int m) const
 //******************************************************************************
 {
   Assert( m < m_ncen, tk::ExceptType::FATAL,
-          "Request for an unavailable central moment" );
+          "Request for unavailable central moment" );
   return m_nameCentral[ m ];
 }
 
@@ -256,7 +281,7 @@ Statistics::estimateCentral()
         m_central[tid*m_ncen + i] += prod;
       }
     }
-  } // omp parallel
+  }
 
   // Collect central moments from all threads
   for (uint64_t p=1; p<m_nthreads; ++p) {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu Feb 20 16:03:58 2014
+  \date      Fri 21 Feb 2014 10:35:58 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -27,7 +27,7 @@ class InputDeck :
                       tag::title,      std::string,
                       tag::selected,   selects,
                       tag::incpar,     incpars,
-                      tag::component,  comps< int >,
+                      tag::component,  ncomps< int >,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
@@ -83,22 +83,6 @@ class InputDeck :
       set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default requested statistics
       set< tag::stat >( std::vector< Product >() );
-    }
-
-    //! Return offset for term::quantity
-    int termOffset( Quantity q ) const noexcept {
-      int offset = 0;
-      if (q == Quantity::SCALAR)
-        offset += get< tag::component, tag::nvelocity >();
-      if (q == Quantity::VELOCITY_Z)
-        offset += get< tag::component, tag::nvelocity >();
-      if (q == Quantity::VELOCITY_Y)
-        offset += get< tag::component, tag::nvelocity >();
-      if (q == Quantity::VELOCITY_X)
-        offset += get< tag::component, tag::ndensity >();
-      if (q == Quantity::DENSITY)
-        offset += 3 * get< tag::component, tag::nposition >();
-      return offset;
     }
 
   private:

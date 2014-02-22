@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:53:28 AM MST
+  \date      Sat 22 Feb 2014 08:51:30 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -29,30 +29,18 @@ namespace quinoa {
 //! control and parsing
 namespace ctr {
 
-//! Quantities whose statistics can be estimated. If you change this, make sure
-//! you change Control::termOffset() as well.
-enum class Quantity : uint8_t { POSITION=0,
-                                DENSITY,
-                                VELOCITY_X,
-                                VELOCITY_Y,
-                                VELOCITY_Z,
-                                SCALAR
-};
-
-//! Moment specifies which type of moment is computed for a Quantity in a Term
+//! Moment specifies which type of moment is computed for a quantity in a Term
 enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
                               CENTRAL          //!< Fluctuation
 };
 
-//! Term is a Moment of a Quantity with a field ID to be ensemble averaged.
+//! Term is a Moment of a quantity with a field ID to be ensemble averaged.
 //! Internally the numbering of field IDs starts from 0, but presented to the
-//! user as starting from 1. Examples: 1st pressure fluctuation: {0, PRESSURE,
-//! CENTRAL, ...}, mean of 2nd scalar: {1, SCALAR, ORDINARY, ...}.
+//! user as starting from 1.
 struct Term {
   int field;         //!< Field ID
-  Quantity quantity; //!< Physical quantity
   Moment moment;     //!< Moment type: ordinary, central
-  int name;          //!< Character code as name, converted only for output
+  char var;          //!< Dependent variable
   bool plot;         //!< Indicates whether the variable will be plotted
   // Conceptually, plot should be in Product, since plot will only be false for
   // a mean that was triggered by a central moment by one of the Terms of a
@@ -62,15 +50,13 @@ struct Term {
   // performance issue, plot is here in Term.
 
   //! Constructor
-  explicit Term( int f, Quantity q, Moment m, char n, bool p ) :
-    field(f), quantity(q), moment(m), name(n), plot(p) {}
+  explicit Term( int f, Moment m, char v, bool p ) :
+    field(f), moment(m), var(v), plot(p) {}
 
   //! Equal operator for finding unique elements, used by e.g., std::unique()
-  //! Test only on field, quantity, and moment
+  //! Test only on field and moment
   bool operator== ( const Term& term ) const {
-    if (field == term.field &&
-        quantity == term.quantity &&
-        moment == term.moment) {
+    if (field == term.field && moment == term.moment && var == term.var) {
       return true;
     } else {
       return false;
@@ -78,38 +64,37 @@ struct Term {
   }
 
   //! Less than operator for ordering, used by e.g., std::sort().
-  //! Test on field, quantity, term, moment, and !plot.
+  //! Test on field, term, moment, and !plot.
   //! Using operator >, instead of operator <, on plot ensures that if a Term is
   //! user-requested, i.e., plotted, and also triggered by e.g., a model, the
   //! user-requested Term will take precendence.
   bool operator< ( const Term& term ) const {
-    // test on everything except name
+    // test on everything except var
     if (field < term.field) {
       return true;
-    } else if (field == term.field && quantity < term.quantity) {
+    } else if (field == term.field && moment < term.moment) {
       return true;
-    } else if (field == term.field && quantity == term.quantity &&
-               moment < term.moment) {
+    } else if (field == term.field && moment == term.moment && var < term.var) {
       return true;
-    } else if (field == term.field && quantity == term.quantity &&
-               moment == term.moment && plot > term.plot) {
+    } else if (field == term.field && moment == term.moment &&
+               var == term.var && plot > term.plot) {
       return true;
     } else {
       return false;
     }
   }
 
-  //! Operator + for adding Term (name+field ID) to a std::string
+  //! Operator + for adding Term (var+field ID) to a std::string
   friend std::string operator+ ( const std::string& lhs, const Term& term ) {
     std::stringstream ss;
-    ss << lhs << char(term.name) << term.field+1;
+    ss << lhs << char(term.var) << term.field+1;
     std::string rhs = ss.str();
     return rhs;
   }
 
   //! Operator << for writing Term to output streams
   friend std::ostream& operator<< ( std::ostream& os, const Term& term ) {
-    os << char(term.name) << term.field+1;
+    os << char(term.var) << term.field+1;
     return os;
   }
 
@@ -134,25 +119,25 @@ struct Term {
   }
 };
 
-//! Lighter-weight structure for field names
-struct FieldName {
-  int name;
+//! Lighter-weight (lighter than Term) structure for var+field
+struct FieldVar {
+  char var;
   int field;
 
   //! Constructor
-  explicit FieldName( const int n = 0, const int f = 0 ) :
-    name(n), field(f) {}
+  explicit FieldVar( const char n = '\0', const int f = 0 ) :
+    var(n), field(f) {}
 
-  //! Operator << for writing FieldName to output streams
-  friend std::ostream& operator<< ( std::ostream& os, const FieldName& fn ) {
-     os << char(fn.name) << fn.field+1;
+  //! Operator << for writing FieldVar to output streams
+  friend std::ostream& operator<< ( std::ostream& os, const FieldVar& fn ) {
+     os << char(fn.var) << fn.field+1;
      return os;
   }
 
-  //! Operator += for adding FieldName to std::string
-  friend std::string& operator+= ( std::string& os, const FieldName& fn ) {
+  //! Operator += for adding FieldVar to std::string
+  friend std::string& operator+= ( std::string& os, const FieldVar& fn ) {
      std::stringstream ss;
-     ss << os << char(fn.name) << fn.field+1;
+     ss << os << fn.var << fn.field+1;
      os = ss.str();
      return os;
   }
@@ -164,7 +149,7 @@ struct FieldName {
 //! E.g the third mixed central moment of three scalars needs three terms for
 //! ensemble averaging: (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the
 //! moment is \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
-using Product = std::vector<Term>;
+using Product = std::vector< Term >;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
@@ -208,45 +193,97 @@ using ios = tk::tuple::tagged_tuple<
   tag::stat,        std::string   //!< Statistics filename
 >;
 
-//! Beta mass model parameters storage
-using BetaParameters = tk::tuple::tagged_tuple<
-  tag::atwood,     tk::real,
-  tag::b,          tk::real,
-  tag::S,          tk::real,
-  tag::kappa,      tk::real,
-  tk::tag::rng,    tk::ctr::RNGType
+//! Position parameters storage
+using PositionParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char
+>;
+
+//! Mass parameters storage
+using MassParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char
+>;
+
+//! Hydro parameters storage
+using HydroParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char
+>;
+
+//! Mix parameters storage
+using MixParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char
+>;
+
+//! Frequency parameters storage
+using FrequencyParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char
 >;
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
   tag::depvar,      char,
-  tag::b,           std::vector<tk::real>,
-  tag::S,           std::vector<tk::real>,
-  tag::kappa,       std::vector<tk::real>,
+  tag::b,           std::vector< tk::real >,
+  tag::S,           std::vector< tk::real >,
+  tag::kappa,       std::vector< tk::real >,
   tk::tag::rng,     tk::ctr::RNGType,
   tag::initpolicy,  ctr::InitPolicyType,
   tag::coeffpolicy, ctr::CoeffPolicyType
 >;
 
-//! Generalized Dirichlet mix model parameters storage
+//! Generalized Dirichlet parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
   tag::depvar,      char,
-  tag::b,           std::vector<tk::real>,
-  tag::S,           std::vector<tk::real>,
-  tag::kappa,       std::vector<tk::real>,
-  tag::c,           std::vector<tk::real>,
+  tag::b,           std::vector< tk::real >,
+  tag::S,           std::vector< tk::real >,
+  tag::kappa,       std::vector< tk::real >,
+  tag::c,           std::vector< tk::real >,
   tk::tag::rng,     tk::ctr::RNGType,
   tag::initpolicy,  ctr::InitPolicyType,
   tag::coeffpolicy, ctr::CoeffPolicyType
 >;
 
-//! Gamma mix model parameters storage
+//! Ornstein-Uhlenbeck parameters storage
+using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
+  tag::sigma,       tk::real,
+  tag::timescale,   tk::real,
+  tk::tag::rng,     tk::ctr::RNGType
+>;
+
+//! Log-normal parameters storage
+using LogNormalParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
+  tag::sigma,       tk::real,
+  tag::timescale,   tk::real,
+  tk::tag::rng,     tk::ctr::RNGType
+>;
+
+//! Skew-normal parameters storage
+using SkewNormalParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
+  tag::sigma,       tk::real,
+  tag::timescale,   tk::real,
+  tag::lambda,      tk::real,
+  tk::tag::rng,     tk::ctr::RNGType
+>;
+
+//! Gamma parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
-  tag::c1,        tk::real,
-  tag::c2,        tk::real,
-  tag::c3,        tk::real,
-  tag::c4,        tk::real,
-  tk::tag::rng,   tk::ctr::RNGType
+  tag::depvar,      char,
+  tag::c1,          tk::real,
+  tag::c2,          tk::real,
+  tag::c3,          tk::real,
+  tag::c4,          tk::real,
+  tk::tag::rng,     tk::ctr::RNGType
+>;
+
+//! Beta parameters storage
+using BetaParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      char,
+  tag::atwood,      tk::real,
+  tag::b,           tk::real,
+  tag::S,           tk::real,
+  tag::kappa,       tk::real,
+  tk::tag::rng,     tk::ctr::RNGType
 >;
 
 //! Simplified Langevin hydro model parameters storage
@@ -259,32 +296,15 @@ using GLMParameters = tk::tuple::tagged_tuple<
   tag::c0, tk::real
 >;
 
-//! Ornstein-Uhlenbeck parameters storage
-using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
-  tag::sigma,     tk::real,
-  tag::timescale, tk::real,
-  tk::tag::rng,   tk::ctr::RNGType
->;
-
-//! Log-normal parameters storage
-using LogNormalParameters = tk::tuple::tagged_tuple<
-  tag::sigma,     tk::real,
-  tag::timescale, tk::real,
-  tk::tag::rng,   tk::ctr::RNGType
->;
-
-//! Skew-normal parameters storage
-using SkewNormalParameters = tk::tuple::tagged_tuple<
-  tag::sigma,     tk::real,
-  tag::timescale, tk::real,
-  tag::lambda,    tk::real,
-  tk::tag::rng,   tk::ctr::RNGType
->;
-
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   tk::tag::mklrng,   tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
   tk::tag::rngsse,   tk::ctr::RNGSSEParameters,   //!< RNGSSE RNG parameters
+  tag::position,     PositionParameters,
+  tag::mass,         MassParameters,
+  tag::hydro,        HydroParameters,
+  tag::mix,          MixParameters,
+  tag::frequency,    FrequencyParameters,
   tag::slm,          SLMParameters,
   tag::glm,          GLMParameters,
   tag::dirichlet,    DirichletParameters,

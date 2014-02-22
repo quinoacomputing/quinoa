@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu Feb 20 16:40:16 2014
+  \date      Sat 22 Feb 2014 09:40:18 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -54,20 +54,20 @@ namespace deck {
   };
 
   //! add matched value as Term into vector of Product in vector of statistics
-  template< ctr::Quantity q, ctr::Moment m, char name='\0' >
-  struct push_term : pegtl::action_base< push_term< q, m, name > > {
+  template< ctr::Moment m, char var='\0' >
+  struct push_term : pegtl::action_base< push_term< m, var > > {
     static void apply( const std::string& value, Stack& stack ) {
-      // If name is given, push name, otherwise push first char of value
-      char na(name ? name : value[0]);
-      // If name is given, it is triggered not user-requested
-      bool plot(name ? false : true);
+      // If var is given, it is triggered not user-requested
+      bool plot(var ? false : true);
+      // If var is given, push var, otherwise push first char of value
+      char v(var ? var : value[0]);
       // Use stats for shorthand of reference to stats vector
       std::vector< ctr::Product >& stats = stack.get< tag::stat >();
       // Push term into current product
-      stats.back().push_back( ctr::Term( field, q, m, na, plot ) );
+      stats.back().push_back( ctr::Term( field, m, v, plot ) );
       // If central moment, trigger mean
       if (m == ctr::Moment::CENTRAL) {
-        ctr::Term term( field, q, ctr::Moment::ORDINARY, toupper(na), false );
+        ctr::Term term( field, ctr::Moment::ORDINARY, toupper(v), false );
         stats.insert( stats.end() - 1, ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
@@ -129,36 +129,30 @@ namespace deck {
   // Quinoa's InputDeck grammar
 
   //! moment: keyword optionally followed by a digit, pushed to vector of terms
-  template< class keyword, ctr::Quantity q, ctr::Moment m >
+  template< class keyword, ctr::Moment m >
   struct moment :
          pegtl::sor < pegtl::ifapply<
                         pegtl::seq< keyword,
                                     pegtl::ifapply< pegtl::digit,
                                                     save_field > >,
-                        push_term< q, m > >,
-                      pegtl::ifapply< keyword,
-                                      push_term< q, m > > > {};
+                        push_term< m > >,
+                      pegtl::ifapply< keyword, push_term< m > > > {};
 
   //! term accounts for both full variable and fluctuation
   template< class Tag >
   struct term :
-         pegtl::sor< moment< tk::pegtl::capture< Tag::id, &::toupper >,
-                             ctr::Quantity::SCALAR,
+         pegtl::sor< moment< tk::pegtl::capture< Tag::id, &toupper >,
                              ctr::Moment::ORDINARY >,
-                     moment< tk::pegtl::capture< Tag::id, &::tolower >,
-                             ctr::Quantity::SCALAR,
+                     moment< tk::pegtl::capture< Tag::id, &tolower >,
                              ctr::Moment::CENTRAL > > {};
 
   //! terms recognized within an expectation
   struct terms :
          pegtl::sor< moment< kw::transported_scalar::pegtl_string,
-                             ctr::Quantity::SCALAR,
                              ctr::Moment::ORDINARY >,
                      moment< kw::transported_scalar_fluctuation::pegtl_string,
-                             ctr::Quantity::SCALAR,
                              ctr::Moment::CENTRAL >,
                      moment< kw::velocity_x::pegtl_string,
-                             ctr::Quantity::VELOCITY_X,
                              ctr::Moment::ORDINARY >,
                      term< tag::dirichlet >,
                      term< tag::gendir >,
@@ -313,15 +307,15 @@ namespace deck {
 
   //! Fluctuating velocity in x direction
   struct u :
-         push_term< ctr::Quantity::VELOCITY_X, ctr::Moment::CENTRAL, 'u' > {};
+         push_term< ctr::Moment::CENTRAL, 'u' > {};
 
   //! Fluctuating velocity in y direction
   struct v :
-         push_term< ctr::Quantity::VELOCITY_Y, ctr::Moment::CENTRAL, 'v' > {};
+         push_term< ctr::Moment::CENTRAL, 'v' > {};
 
   //! Fluctuating velocity in z direction
   struct w :
-         push_term< ctr::Quantity::VELOCITY_Z, ctr::Moment::CENTRAL, 'w' > {};
+         push_term< ctr::Moment::CENTRAL, 'w' > {};
 
   //! slm block
   struct slm :
@@ -338,13 +332,13 @@ namespace deck {
                                       pegtl::digit,
                                       tag::slm,
                                       tag::c0 >,
-                           component< kw::nvelocity, tag::nvelocity > > > {};
+                           component< kw::nvelocity, tag::hydro > > > {};
 
   //! dirichlet mix model block
   struct mix_dir :
          pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
-                                        component< kw::nscalar, tag::nscalar >,
+                                        component< kw::nscalar, tag::mix >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::dirichlet,
@@ -363,7 +357,7 @@ namespace deck {
   struct mix_gendir :
          pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
-                                        component< kw::nscalar, tag::nscalar >,
+                                        component< kw::nscalar, tag::mix >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::gendir,
@@ -386,7 +380,7 @@ namespace deck {
          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
                           Stack,
-                          component< kw::nfreq, tag::nfrequency >,
+                          component< kw::nfreq, tag::frequency >,
                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
                           parameter< kw::freq_gamma_C1,
                                      pegtl::digit,
@@ -410,7 +404,7 @@ namespace deck {
          pegtl::ifmust< scan_mass< kw::mass_beta >,
                         tk::grm::block<
                           Stack,
-                          component< kw::ndensity, tag::ndensity >,
+                          component< kw::ndensity, tag::mass >,
                           rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
                           parameter< kw::Beta_At,
                                      pegtl::digit,
@@ -523,7 +517,7 @@ namespace deck {
   struct ornstein_uhlenbeck :
          pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
                         tk::grm::block< Stack,
-                                        component< kw::ncomp, tag::nou >,
+                                        component< kw::ncomp, tag::ou >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::ou,
@@ -533,7 +527,7 @@ namespace deck {
   struct lognormal :
          pegtl::ifmust< scan_sde< kw::lognormal >,
                         tk::grm::block< Stack,
-                                        component< kw::ncomp, tag::nlognormal >,
+                                        component< kw::ncomp, tag::lognormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::ou,
@@ -543,7 +537,7 @@ namespace deck {
   struct skewnormal :
          pegtl::ifmust< scan_sde< kw::skewnormal >,
                         tk::grm::block< Stack,
-                                        component< kw::ncomp, tag::nskewnormal >,
+                                        component< kw::ncomp, tag::skewnormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::ou,
@@ -553,7 +547,7 @@ namespace deck {
   struct gamma :
          pegtl::ifmust< scan_sde< kw::gamma >,
                         tk::grm::block< Stack,
-                                        component< kw::ncomp, tag::ngamma >,
+                                        component< kw::ncomp, tag::gamma >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::gamma,
@@ -563,7 +557,7 @@ namespace deck {
   struct beta :
          pegtl::ifmust< scan_sde< kw::beta >,
                         tk::grm::block< Stack,
-                                        component< kw::ncomp, tag::nbeta >,
+                                        component< kw::ncomp, tag::beta >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::beta,
@@ -586,7 +580,7 @@ namespace deck {
          pegtl::ifmust< scan_sde< kw::dirichlet >,
                         tk::grm::block< Stack,
                                         depvar< tag::dirichlet, tag::depvar >,
-                                        component< kw::ncomp, tag::ndirichlet >,
+                                        component< kw::ncomp, tag::dirichlet >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::dirichlet,
@@ -613,7 +607,7 @@ namespace deck {
          pegtl::ifmust< scan_sde< kw::gendir >,
                         tk::grm::block< Stack,
                                         depvar< tag::gendir, tag::depvar >,
-                                        component< kw::ncomp, tag::ngendir >,
+                                        component< kw::ncomp, tag::gendir >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::gendir,
