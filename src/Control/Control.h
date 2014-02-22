@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri 24 Jan 2014 08:25:51 AM MST
+  \date      Fri 21 Feb 2014 09:10:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -105,11 +105,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
              template get<subtag>().
              template get<subsubtag>() = value;
     }
-
-//     template< typename tag >
-//     void swallow(typename Tuple::template nT<tag>&& value) noexcept {
-//       Tuple::template set<tag>( std::move(value) );
-//     }
 
     //! Convert and move value to slot
     //! TODO: Replace the overloads below with a variadic one

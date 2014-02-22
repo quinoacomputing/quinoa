@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 07:03:31 PM MST
+  \date      Fri 21 Feb 2014 06:19:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck tags
   \details   Quinoa's input dect tags
@@ -16,44 +16,20 @@ namespace tag {
 
 struct geometry {};
 struct montecarlo {};
-struct position {};
-struct mass {};
-struct hydro {};
-struct energy {};
-struct mix {};
-struct frequency {};
-struct mixrate {};
-
 struct nstep {};
 struct term {};
 struct dt {};
-
-struct nposition {};
-struct ndensity {};
-struct nvelocity {};
-struct nscalar {};
-struct nfrequency {};
 struct npar {};
 struct ncomp {};
-struct ndirichlet {};
-struct ngendir {};
-struct nou {};
-struct nlognormal {};
-struct nskewnormal {};
-struct ngamma {};
-struct nbeta {};
-
 struct tty {};
 struct dump {};
 struct plot {};
 struct pdf {};
 struct glob {};
-
 struct control {};
 struct input {};
 struct output {};
 struct stat {};
-
 struct atwood {};
 struct b {};
 struct S {};
@@ -67,23 +43,27 @@ struct c4 {};
 struct lambda {};
 struct sigma {};
 struct timescale {};
-
 struct initpolicy {};
 struct coeffpolicy {};
-
 struct depvar {};
-
 struct sde {};
 
-struct beta {};
 struct dirichlet { enum { id = 0 }; };
 struct gendir { enum { id = 1 }; };
+struct beta {};
 struct gamma {};
 struct slm {};
 struct glm {};
 struct ou {};
 struct lognormal {};
 struct skewnormal {};
+struct position {};
+struct mass {};
+struct hydro {};
+struct energy {};
+struct mix {};
+struct frequency {};
+struct mixrate {};
 
 struct title {};
 struct selected {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed Feb 19 15:29:20 2014
+  \date      Fri 21 Feb 2014 09:07:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -259,13 +259,13 @@ namespace grm {
                         insert >,
                         pegtl::one< rbound > > {};
 
-  //! process 'keyword' and call its 'insert' action if matches 'keywords'
+  //! process 'keyword' and call its 'insert' action if matches 'kw_type'
   template< class Stack, class keyword, class insert,
-            class keywords = pegtl::digit >
+            class kw_type = pegtl::digit >
   struct process :
          pegtl::ifmust< readkw< keyword >,
                         scan< pegtl::sor<
-                                keywords,
+                                kw_type,
                                 pegtl::apply< error< Stack,
                                                      Error::MISSING > > >,
                               insert > > {};
@@ -280,13 +280,13 @@ namespace grm {
                                     unknown< Stack, Error::QUOTED > > > {};
 
   //! process command line 'keyword' and call its 'insert' action if matches
-  //! 'keywords'
+  //! 'kw_type'
   template< class Stack, class keyword, class insert,
-            class keywords = pegtl::any >
+            class kw_type = pegtl::any >
   struct process_cmd :
          pegtl::ifmust< readcmd< Stack, keyword >,
                         scan< pegtl::sor<
-                                keywords,
+                                kw_type,
                                 pegtl::apply< error< Stack,
                                                      Error::MISSING > > >,
                               insert > > {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:33:34 AM MST
+  \date      Fri 21 Feb 2014 06:24:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -36,8 +36,8 @@ TestSDE::TestSDE( const Base& base ) : MonteCarlo( base )
   initFactories( print() );
 
   //! Instantiate SDEs
-  instantiateSDE< tag::dirichlet, tag::ndirichlet >( ctr::SDEType::DIRICHLET );
-  instantiateSDE< tag::gendir, tag::ngendir >( ctr::SDEType::GENDIR );
+  instantiateSDE< tag::dirichlet >( ctr::SDEType::DIRICHLET );
+  instantiateSDE< tag::gendir >( ctr::SDEType::GENDIR );
 
   //! Echo information on test bed
   echo();
@@ -169,7 +169,7 @@ TestSDE::initFactories(const QuinoaPrint& print)
   using DirPolicies = mpl::vector< InitPolicies, DirCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DirPolicies >(
-    registerSDE< TestSDE, Dirichlet, tag::ndirichlet, ctr::SDEType >
+    registerSDE< TestSDE, Dirichlet, tag::dirichlet, ctr::SDEType >
                ( this, ctr::SDEType::DIRICHLET ) );
 
   // Lochner's generalized Dirichlet SDE
@@ -177,7 +177,7 @@ TestSDE::initFactories(const QuinoaPrint& print)
   using GenDirPolicies = mpl::vector< InitPolicies, GenDirCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GenDirPolicies >(
-    registerSDE< TestSDE, GenDirichlet, tag::ngendir, ctr::SDEType >
+    registerSDE< TestSDE, GenDirichlet, tag::gendir, ctr::SDEType >
                ( this, ctr::SDEType::GENDIR ) );
 
   print.optionlist( "Registered SDEs and their policies", m_SDEFactory );
