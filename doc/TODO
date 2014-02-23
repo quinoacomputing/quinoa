@@ -9,6 +9,7 @@
     - Add stringstream-based throw
     - Would raw-string literals work for keywords in-code documentation?
     - Automatic generation of grammar/parser documentation
+    - Put in error trap if depvars are the same for two SDEs given
 
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
@@ -59,8 +60,6 @@
 
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
-
-* TestSDE's and Physics' echo() is almost a repeat - reuse
 
 * RNG requirements (needs more explanation):
 

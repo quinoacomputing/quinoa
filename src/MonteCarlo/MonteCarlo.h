@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:30:50 PM CET
+  \date      Sat 22 Feb 2014 06:25:12 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -93,6 +93,21 @@ class MonteCarlo {
                          bool wroteJpdf,
                          bool wroteGlob,
                          bool wrotePlot );
+
+    //! Echo information on RNGs that children can override
+    virtual void echoRNGs() const;
+
+    //! Echo information on IO filenames that children can override
+    virtual void echoIO() const;
+
+    //! Echo information on increment parameters that children can override
+    virtual void echoIncpar() const;
+
+    //! Echo information on intervals that children can override
+    virtual void echoIntervals() const;
+
+    //! Echo information on statistics that children can override
+    virtual void echoStatistics() const;
 
     //! Function object for register an SDE into an SDE factory - repeatedly
     //! called by mpl::cartesian_product sweeping all combinations of the SDE

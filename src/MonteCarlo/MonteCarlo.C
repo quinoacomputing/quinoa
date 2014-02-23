@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.C
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 11:00:00 AM MST
+  \date      Sat 22 Feb 2014 06:23:42 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MonteCarlo base
   \details   MonteCarlo base
@@ -70,4 +70,81 @@ MonteCarlo::report( uint64_t it,
   if (wroteStat) print().raw( 'P' );
 
   print().raw( '\n' );
+}
+
+void
+MonteCarlo::echoRNGs() const
+//******************************************************************************
+//  Standard echo RNGs
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print().section("Random number generators");
+  print().MKLParams( control().get< tag::selected, tk::tag::rng >(),
+                     control().get< tag::param, tk::tag::mklrng >() );
+  print().RNGSSEParams( control().get< tag::selected, tk::tag::rng >(),
+                        control().get< tag::param, tk::tag::rngsse >() );
+}
+
+void
+MonteCarlo::echoIO() const
+//******************************************************************************
+//  Standard echo IO filenames
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print().subsection( "Output filenames" );
+  print().item( "Input", control().get< tag::cmd, tag::io, tag::input >() );
+  print().item( "Output", control().get< tag::cmd, tag::io, tag::output >() );
+  print().item( "Glob", control().get< tag::cmd, tag::io, tag::glob >() );
+  print().item( "Statistics", control().get< tag::cmd, tag::io, tag::stat >() );
+  print().item( "PDF", control().get< tag::cmd, tag::io, tag::pdf >() );
+  print().endsubsection();
+}
+
+void
+MonteCarlo::echoIncpar() const
+//******************************************************************************
+//  Standard echo increment parameters
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print().subsection( "Increment parameters" );
+  print().item( "Number of particles",
+                control().get< tag::incpar, tag::npar >() );
+  print().item( "Number of time steps",
+                control().get< tag::incpar, tag::nstep >() );
+  print().item( "Terminate time",
+                control().get< tag::incpar, tag::term >() );
+  print().item( "Initial time step size",
+                control().get< tag::incpar, tag::dt >() );
+  print().endsubsection();
+}
+
+void
+MonteCarlo::echoIntervals() const
+//******************************************************************************
+//  Standard echo intervals
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print().subsection( "Output intervals" );
+  print().item( "TTY", control().get< tag::interval, tag::tty>() );
+  print().item( "Dump", control().get< tag::interval, tag::dump>() );
+  print().item( "Glob", control().get< tag::interval, tag::glob >() );
+  print().item( "Statistics", control().get< tag::interval, tag::plot >() );
+  print().item( "PDF", control().get< tag::interval, tag::pdf >() );
+  print().endsubsection();
+}
+
+void
+MonteCarlo::echoStatistics() const
+//******************************************************************************
+//  Standard echo statistics
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  print().subsection( "Statistics" );
+  print().RequestedStats( "Requested" );
+  print().EstimatedStats( "Estimated" );
 }
