@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Fri 21 Feb 2014 06:23:17 PM MST
+  \date      Sat 22 Feb 2014 06:09:25 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -62,7 +62,7 @@ class TestSDE : public MonteCarlo {
     //! Initialize factories
     void initFactories( const QuinoaPrint& print );
 
-    //! Echo information on test bed
+    //! Echo information on SDE test bed
     void echo();
 
     //! Factory
