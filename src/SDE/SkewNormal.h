@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SkewNormal.h
   \author    J. Bakosi
-  \date      Wed Jan 29 16:49:28 2014
+  \date      Mon 24 Feb 2014 08:12:33 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE
@@ -18,7 +18,7 @@ namespace quinoa {
 
 //! SkewNormal
 template< class Init, class Coefficients >
-class SkewNormal : public SDE< Init > {
+class SkewNormal : public SDE< Init, Coefficients > {
 
   public:
     //! SDE base shorthand

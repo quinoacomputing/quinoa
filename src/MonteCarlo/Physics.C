@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 06:25:49 PM MST
+  \date      Mon 24 Feb 2014 09:01:02 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -33,20 +33,20 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 
   // Instantiate mass model
   if (m_ndensity) {
-    ctr::MassType m = control().get<tag::selected, tag::mass>();
-    m_mass = std::unique_ptr< Model >( m_massFactory[m]() );
+    m_mass = tk::instantiate( m_massFactory,
+                              control().get< tag::selected, tag::mass >() );
   }
 
   // Instantiate hydrodynamics model
   if (m_nvelocity) {
-    ctr::HydroType m = control().get<tag::selected, tag::hydro>();
-    m_hydro = std::unique_ptr< Model >( m_hydroFactory[m]() );
+    m_hydro = tk::instantiate( m_hydroFactory,
+                               control().get< tag::selected, tag::hydro >() );
   }
 
   // Instantiate mix model
   if (m_nscalar) {
-    ctr::MixType m = control().get<tag::selected, tag::mix>();
-    m_mix = std::unique_ptr< Model >( m_mixFactory[m]() );
+    m_mix = tk::instantiate( m_mixFactory,
+                             control().get< tag::selected, tag::mix >() );
   }
 
   //! Echo information on physics to be created

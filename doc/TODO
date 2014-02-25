@@ -9,6 +9,8 @@
     - Would raw-string literals work for keywords in-code documentation?
     - Automatic generation of grammar/parser documentation
     - Put in error trap if depvars are the same for two SDEs given
+    - Using the defaults for an RNG in the rngs - end block should not require
+      an 'end', as that is not so user-friendly
 
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
@@ -44,8 +46,6 @@
     - Revisit MKL's link page:
       http://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
-
-* Instantiating via factories should use find() instead of operator[]().
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 

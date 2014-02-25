@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 06:09:25 PM MST
+  \date      Mon 24 Feb 2014 08:46:53 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -49,7 +49,7 @@ class TestSDE : public MonteCarlo {
         ctr::SDEKey key{ sdetype,
                          control().get< tag::param, SDE, tag::initpolicy >(),
                          control().get< tag::param, SDE, tag::coeffpolicy >() };
-        m_sde.push_back( std::unique_ptr< Model >( m_SDEFactory[ key ]() ) );
+        m_sde.push_back( tk::instantiate( m_SDEFactory, key ) );
       }
     }
 
