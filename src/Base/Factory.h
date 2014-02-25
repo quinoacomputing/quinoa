@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 09:18:43 PM CET
+  \date      Mon 24 Feb 2014 08:56:16 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -14,6 +14,8 @@
 #include <list>
 
 #include <boost/functional/factory.hpp>
+
+#include <Exception.h>
 
 namespace tk {
 
@@ -27,6 +29,19 @@ void add( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
 template< class C, class Key, class Factory, typename... ConstructorArgs >
 void record( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
   add< C >( factory, key, std::forward< ConstructorArgs >( args )... );
+}
+
+//! Instantiate object from factory
+//! Concept: Factory must have a mapped_value which must have a result_type ptr,
+//! e.g., std::map< Key, std::function< Obj*() > >
+template< class Factory, class Key,
+          class Obj = typename std::remove_pointer<
+                        typename Factory::mapped_type::result_type >::type >
+std::unique_ptr< Obj > instantiate( const Factory& factory, const Key& key ) {
+  auto it = factory.find( key );
+  Assert( it != end( factory ), tk::ExceptType::FATAL,
+          "No such object registered in factory" );
+  return std::unique_ptr< Obj >( it->second() );
 }
 
 } // tk::
