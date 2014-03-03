@@ -47,6 +47,8 @@
       http://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
     - Try libc++ by the clang/llvm guys: http://libcxx.llvm.org
+    - OpenMP runtime lib should not search based on MKL_SEARCH_PATH, i.e.,
+      decouple OpenMP from MKL
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
