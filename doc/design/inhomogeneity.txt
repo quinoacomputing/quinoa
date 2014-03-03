@@ -1,0 +1,109 @@
+Inhomogeneity strategy:
+=======================
+
+General discussion:
+-------------------
+Implementing spatial inhomogeneity can be approached using different
+strategies, but at the highest level I can think of two different paths:
+
+  (1) 3D-mesh-based, i.e., particle-in-cell-like (PIC) strategy, or
+
+  (2) Point-cloud-based, i.e., smoothed-particle-hydrodynamics-like (SPH)
+      strategy.
+
+Many more variants of these can be dreamed of, especially, considering the
+various parallelization and optimization strategies, as well as considering code
+simplicity, usability, applicability, and maintenance issues. Either approach
+contains a large amount of uncertainty since both require a significant level
+of research when it comes to PDF-like methods, hydrodynamics, and future
+architectures. What follows is more or less a random collection of thoughts
+about the details (pros and cons) of different strategies derived from the
+above two main approaches.
+
+Of course, both PIC-, and SPH-based approaches can (and may very well) be
+implemented (in the future), as a different physics, since the depending on
+the problem different algorithms may be optimal. The questions at this time is
+which one to implement first. In this view, therefore, the points are mostly
+for documentation, and not necessarily for making a decision.
+
+Advantages of a PIC-based strategy:
+-----------------------------------
+ * Can use all knowledge on mesh-based algorithms, e.g.,
+   - The 3D domain is already well-defined by the incoming mesh (i.e., existing
+     mesh generators take care of fine and coarse areas
+   - Can use adaptive mesh refinement, etc.
+   - Can develop (and leverage existing) hybrid algorithms (e.g., PDF, plasma)
+     that solve some quantities on the mesh, some others with particles
+   - Can use existing Eulerian-mesh-only algorithms for laminar (or turbulent)
+     flows as the mesh-based part
+   - Can leverage well-developed existing shock hydrodynamics algorithms for
+     the Eulerian-mesh based part
+ * Easier to generate particles into cells that prescribe fine and coarse areas
+   of the domain (task is outsourced to mesh generators)
+ * Have some experience with it (at least in 2D), would not really have to
+   start from scratch
+ * Less risky, would certainly work (at least for incompressible flow)
+ * Would potentially be easier to sell (in a proposal)
+
+Disadvantages of a PIC-based strategy:
+--------------------------------------
+ * Potentially more complex code and algorithm: need mesh-, as well as
+   particle-algorithms -- more maintenance, potentially less suitable for
+   future architectures
+ * Requires a good mesh generator; generation is still a potentially expensive
+   and complex operation
+ * Requires a mesh: loading, partitioning, and in general, dealing with a 3D
+   mesh in parallel is a highly non-trivial task -- lots of time spend on
+   non-novel issues, not yielding publications
+ * Need for large-scale linear algebra, expensive and hard-to-parallelize
+   iterative solvers and preconditioners
+ * Need for monstrous linear algebra packages like PETSc or Trilinos
+ * Meshes with particles need special strategies and algorithms for empty cells
+ * Needs particle tracking (i.e., which cell is a given particle in?)
+ * People will inevitably compare to what they are familiar with if they see a
+   mesh, deeming a PIC-based particle method too expensive with a roughly 500
+   particles per cell requirement. This is especially if the cost of solving
+   the pressure Poisson equation is 2%, as they compare apples and oranges when
+   comparing computing a single realization on a grid (with an Eulerian method)
+   and the full PDF (with a particle method)
+ * Might potentially be harder to sell (in a proposal) due to the "PIC, yeah,
+   been there, done that, got the T-shirt (i.e., a new PIC method method after
+   60-70 years, never really worked, will not work this time either"-like ideas
+   from the know-it-alls
+ * Less exciting
+ * Less innovative
+
+Advantages of a SPH-based strategy:
+-----------------------------------
+ * Potentially simpler code and algorithm: only need particle-algorithms --
+   shorter code, less maintenance, potentially more suitable for future
+   architectures
+ * Can potentially leverage progress in computer graphics and geometry (i.e.,
+   robotics, movies, etc.)
+ * Can potentially leverage physics hardware developed for games, e.g., PhysX
+ * Require only a boundary mesh from user (and optionally a description of fine
+   and coarse areas descriptions)
+ * Requires no mesh or mesh generator
+ * Requires potentially less memory (as no mesh is required)
+ * No need to deal with a mesh, no complex IO, no partitioning, no need for AMR
+ * No need for large-scale linear algebra, expensive and hard-to-parallelize
+   iterative solvers and preconditioners
+ * No need for monstrous linear algebra packages like PETSc or Trilinos
+ * Easier to show that the method is fundamentally different than mesh-based
+   ones
+ * More exciting
+ * Less explored, more potential for research and publications
+ * There is no mesh in real life
+
+Disadvantages of a SPH-based strategy:
+--------------------------------------
+ * The details of the 3D domain (i.e., coarse and fine areas, boundary-layers)
+   need detailed definition in code
+ * Harder to generate particles with prescribed fine and coarse areas (task is
+   not outsourced to mesh generators)
+ * Need a consistent, stable, and conservative numerical method (these issues
+   are less well-researched for particle methods)
+ * Can only leverage on a body of knowledge that is smaller than for mesh-based
+   methods: SPH, mesh-free methods, etc.
+ * Problems only pertinent to particle methods need to be dealt with, e.g.,
+   tension instability

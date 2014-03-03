@@ -1,0 +1,76 @@
+Concurrency strategies:
+=======================
+
+The strategy chosen for concurrency is probably the most decisive factor
+affecting performance. Obviously, it is impossible to pick a single concurrency
+strategy that is optimal for all types of physics (i.e., equation-sets planned
+to be implemented), algorithms, and problems. So here, we merely collect the
+main features of various algorithms from the viewpoint of concurrency. Due to
+the many factors affecting the performance of these algorithms (including not
+only the details of the various strategies, but also the as-of-yet unknown
+hardware they are and would be running on), no ranking will be attempted among
+the approaches. This is only a list of ideas.
+
+1. ALL-TO-ALL-STATS
+===================
+The inhomogeneity here is PIC-based (see doc/design/inhomogeneity.txt) and so
+this concurrency strategy requires a mesh. The idea is to only have to
+communicate the domain-statistics among distributed compute nodes and nothing
+else.  Concurrency is realized among particles (realizations) of which each
+compute node generates and advances a different set. Since the full domain,
+i.e., statistics of all cells that are required for advancing particles, require
+communication (and that is with all-to-all) at each time-step, this seems like
+an insane amount of communication and so prohibitive -- it may well be. However,
+this strategy does not require communication for anything else, e.g., particle
+properties, which is assumed to take up the bulk of memory and the bulk of
+computation cost.
+
+For example, for a PDF method for incompressible flow with elliptic relaxation,
+only about 5% of the computational time is spent on the two linear solvers
+(mean pressure and elliptic relaxation) and 92% on advancing the particles.
+
+Two important advantages of this strategy are:
+  (1) Perfect and non-changing load-balance for both particle updates and
+      (potential) field-solver(s), as the number of particles as well as the
+      mesh on a compute node remain the same throughout time stepping,
+  (2) The simplicity of the code: since only the mesh-based statistics require
+      communication, there is
+        * no need for graph-coloring algorithms,
+        * no need for complex parallel initial I/O and load-balancing,
+        * no need for distributed linear solvers (no hard-to-parallelize
+          dot-products, matrix-vector-products, preconditioners; no need for
+          monster linear algebra libraries: no petsc, no trilinos, etc.),
+        * no need for complex low-level compute-node-pair-wise load balancing,
+        * no need for communicating particles and their properties,
+        * no need for dynamic load-balancing (as would be absolutely required by
+          a geometry-based particle-communicating algorithm).
+
+Assumption:
+-----------
+Suppose the full mesh fits into a single compute node. This is obviously a
+limitation compared to those distributed concurrency strategies with geometric
+decomposition, which do not have this limitation. So let's see how much this a
+compromise on current hardware. In what follows, we only consider 3D
+unstructured mesh consisting of tetrahedra, but other types of grids should
+also work with this strategy. A single tetrahedron consists of 4 vertices, each
+of which with 3 components. Then the memory cost of a single tetrahedron is
+
+4 (vertices) x 3 (coordinates) x 8 (double floating point Bytes) = 96 Bytes.
+
+As for all unstructured grids, connectivity information must also be stored,
+which is an array of 5 integers (1 index + 4 vertex indices) for a tetrahedron.
+The memory usage of the connectivity is
+
+5 x 4 (size of int) = 20 Bytes.
+
+The approximate memory cost of a single tetrahedron cell is thus 116 Bytes.
+
+This means that in 32 GBytes (a common amount memory of a single node of a
+distributed-memory compute cluster), approximately, 296 million tetrahedra fit.
+Obviously, it's not only the mesh we need in memory, but this is a good
+approximate upper bound for this back-of-the-envelope memory-estimation for the
+all-to-all-stats strategy.
+
+Besides the mesh, those statistics that are required for the ongoing simulation
+(i.e., updating the particles) are also required to be stored in memory in the
+all-to-all-stats algorithm.
