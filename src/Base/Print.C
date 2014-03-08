@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.C
   \author    J. Bakosi
-  \date      Fri 07 Feb 2014 10:07:17 AM MST
+  \date      Sat 08 Mar 2014 06:42:14 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -45,6 +45,7 @@ Print::part(const std::string& title) const
   m_stream << m_part_underline_fmt % underline;
 }
 
+#ifdef HAS_MKL
 void
 Print::echoMKLParams( const ctr::MKLRNGParam& p ) const
 //******************************************************************************
@@ -70,6 +71,7 @@ Print::echoMKLParams( const ctr::MKLRNGParam& p ) const
               % gm.group()
               % gm.name( p.get< tag::gaussian_method >() );
 }
+#endif
 
 void
 Print::echoRNGSSEParams( const ctr::RNGSSEParam& p,
@@ -94,7 +96,7 @@ Print::echoRNGSSEParams( const ctr::RNGSSEParam& p,
   }
 }
 
-
+#ifdef HAS_MKL
 void
 Print::MKLParams( const std::vector< ctr::RNGType >& vec,
                   const ctr::MKLRNGParameters& map ) const
@@ -117,6 +119,7 @@ Print::MKLParams( const std::vector< ctr::RNGType >& vec,
     }
   }
 }
+#endif
 
 void
 Print::RNGSSEParams( const std::vector< ctr::RNGType >& vec,

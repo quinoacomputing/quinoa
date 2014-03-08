@@ -23,11 +23,14 @@
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
     - Regression tests
+    - Test build with optional libraries on/off (all permutations)
     - Test suite for exceptions:
         o Automatically switch each potential throw location into a throw and
           test for clean exit (e.g. with valgrind)
         o valgrind can return a different exit code based on errors detected
           using the command line argument --error-exitcode= to valgrind
+    - Memory testing: CMake/CTest/CDash has built-in support for automated
+      memory testing using valgrind
     - Clang's static-, address-, thread-, and memory-sanitizer
 
 * Build:
@@ -62,25 +65,3 @@
 
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
-
-* RNG requirements (needs more explanation):
-
-  Nth x Nppt x Nepp x Nt
-  Nth ~ Nn x (Nctpn + Natpn)
-
-  Nppt ~ 
-  Nepp ~ 10^1 -- 10^6
-  Nt ~ 10^9
-
-  NRG MRG32K3A: Nth = 10^19, L = 10^38
-      MT19937 : Nth = 10^19, L = 10^130
-
-  Titan:
-    Nth ~ 10^9
-    Nn = 2x10^4, Nctpn = 16, Natpn = 3x10^3
-  Sequioa:
-    Nth ~ 10^6
-    Nn = 1x10^5, Nctpn = 16
-  Tianhe-2:
-    Nth ~ 3x10^6
-    Nn = 1.6x10^4, Nctpn = 12, Nactpn = 3x61
