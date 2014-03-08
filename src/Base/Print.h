@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 10:43:11 PM CET
+  \date      Sat 08 Mar 2014 06:42:32 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -115,9 +115,11 @@ class Print {
     //! Raw stream access
     std::ostream& stream() const noexcept { return m_stream; }
 
+    #ifdef HAS_MKL
     //! Print all fields of MKL RNG parameters
     void MKLParams( const std::vector< ctr::RNGType >& vec,
                     const ctr::MKLRNGParameters& map ) const;
+    #endif
 
     //! Print all fields of RNGSSE parameters
     void RNGSSEParams( const std::vector< ctr::RNGType >& vec,
@@ -164,8 +166,10 @@ class Print {
     //! Don't permit move assigment
     Print& operator=(Print&&) = delete;
 
+    #ifdef HAS_MKL
     //! Echo information on MKL random number generator
     void echoMKLParams( const ctr::MKLRNGParam& p ) const;
+    #endif
 
     //! Echo information on RNGSSE random number generator
     void echoRNGSSEParams( const ctr::RNGSSEParam& p,

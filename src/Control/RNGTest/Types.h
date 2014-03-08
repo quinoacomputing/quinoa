@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:55:14 PM MST
+  \date      Sat 08 Mar 2014 06:43:05 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -34,7 +34,9 @@ using ios = tk::tuple::tagged_tuple<
 
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
+  #ifdef HAS_MKL
   tk::tag::mklrng,    tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
+  #endif
   tk::tag::rngsse,    tk::ctr::RNGSSEParameters    //!< RNGSSE parameters
 >;
 

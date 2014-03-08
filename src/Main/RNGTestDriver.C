@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 09:21:13 PM CET
+  \date      Sat 08 Mar 2014 06:56:52 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -19,7 +19,10 @@
 #include <SmallCrush.h>
 #include <Crush.h>
 #include <BigCrush.h>
+
+#ifdef HAS_MKL
 #include <MKLRNG.h>
+#endif
 
 using rngtest::RNGTestDriver;
 
@@ -52,7 +55,9 @@ RNGTestDriver::RNGTestDriver(int argc, char** argv, const tk::Print& print) :
 //  tk::ctr::RNG rng;
 //  std::list< tk::ctr::RNGType > regRNG;
   initRNGFactory( m_RNGFactory, m_paradigm->nthreads(),
+                  #ifdef HAS_MKL
                   m_control->get< tag::param, tk::tag::mklrng >(),
+                  #endif
                   m_control->get< tag::param, tk::tag::rngsse >() );
 //  print.list("Registered random number generators", rng, regRNG);
 
@@ -116,8 +121,10 @@ RNGTestDriver::echo()
     print.battery( m_ntest, m_battery->nstat() );
     m_battery->print();
     print.section("RNGs tested");
+    #ifdef HAS_MKL
     print.MKLParams( control.get< tag::selected, tk::tag::rng >(),
                      control.get< tag::param, tk::tag::mklrng >() );
+    #endif
     print.RNGSSEParams( control.get< tag::selected, tk::tag::rng >(),
                         control.get< tag::param, tk::tag::rngsse >() );
     print.raw("\n");

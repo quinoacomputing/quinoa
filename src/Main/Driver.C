@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.C
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 09:20:47 PM CET
+  \date      Sat 08 Mar 2014 07:01:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -24,7 +24,11 @@ extern "C" {
 }
 
 #include <Driver.h>
+
+#ifdef HAS_MKL
 #include <MKLRNG.h>
+#endif
+
 #include <Factory.h>
 
 using tk::Driver;
@@ -32,7 +36,9 @@ using tk::Driver;
 void
 Driver::initRNGFactory( tk::RNGFactory& factory,
                         int nthreads,
+                        #ifdef HAS_MKL
                         const tk::ctr::MKLRNGParameters& mklparam,
+                        #endif
                         const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
 //  Register random number generators into factory

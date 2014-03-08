@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 08:23:23 PM CET
+  \date      Sat 08 Mar 2014 06:49:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -40,7 +40,9 @@ class Driver {
     //! Register random number generators into factory
     void initRNGFactory( tk::RNGFactory& factory,
                          int nthreads,
+                         #ifdef HAS_MKL
                          const tk::ctr::MKLRNGParameters& mklparam,
+                         #endif
                          const tk::ctr::RNGSSEParameters& rngsseparam );
 
   private:

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 09:40:18 AM MST
+  \date      Sat 08 Mar 2014 06:53:22 AM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -21,7 +21,11 @@
 #include <Quinoa/Types.h>
 #include <Quinoa/InputDeck/Keywords.h>
 #include <Grammar.h>
+
+#ifdef HAS_MKL
 #include <MKLGrammar.h>
+#endif
+
 #include <RNGSSEGrammar.h>
 #include <CustomPEGTLCapture.h>
 
@@ -431,9 +435,12 @@ namespace deck {
 
   //! rngs
   struct rngs :
-         pegtl::sor< tk::mkl::rngs< Stack,
+         pegtl::sor<
+                     #ifdef HAS_MKL
+                     tk::mkl::rngs< Stack,
                                     tag::selected, tk::tag::rng,
                                     tag::param, tk::tag::mklrng >,
+                     #endif
                      tk::rngsse::rngs< Stack,
                                        tag::selected, tk::tag::rng,
                                        tag::param, tk::tag::rngsse > > {};
