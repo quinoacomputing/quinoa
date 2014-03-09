@@ -19,6 +19,9 @@
         o Can RNGSSE's generators take a seed?
         o Hook up SSE versions
         o Hook up GPU versions
+    - Find and add RNG library alternative to MKL and RNGSSE that works with
+      threads: MKL is non-free and RNGSSE does not work on Mac OS (probably due
+      to its assembly code)
 
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
@@ -34,6 +37,7 @@
     - Clang's static-, address-, thread-, and memory-sanitizer
 
 * Build:
+    - Add Mac OS build
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
       (https://github.com/ducakar/openzone/ uses pch cmake and clang)
