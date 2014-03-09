@@ -75,6 +75,9 @@ if (MKL_INTERFACE_LIBRARY AND
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
 else()
   message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- failed")
+  message(STATUS "------------------------------------------------------------")
+  message(STATUS "Intel MKL VSL RNGs will not be available!")
+  message(STATUS "------------------------------------------------------------")
   set(HAS_MKL off)
 endif()
 
