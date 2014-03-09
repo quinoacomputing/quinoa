@@ -30,19 +30,13 @@ MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
 set(BOOST_TOOLSET ${COMP})
 
 # Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
-  # clang-specific settings
-
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
-  # gcc-specific settings
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Boost's as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
 
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-
-  # intel-specific settings
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Link to thread-safe MPI library
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mt_mpi")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mt_mpi")
@@ -236,7 +230,7 @@ ExternalProject_Add(
   LOG_INSTALL 1
 )
 
-#### TestU01 ##################################################################
+#### TestU01-hack ##############################################################
 # http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
 # No need for MPI, use underlying compilers
 # This TPL-build can be used to hack TestU01. ExternalProject_Add will look for
