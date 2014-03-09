@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.C
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:04:49 PM MST
+  \date      Sat 08 Mar 2014 04:27:17 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <iomanip>
+#include <cmath>
 
 #include <Macro.h>
 #include <GlobWriter.h>
@@ -48,7 +49,8 @@ HomHydro::run()
   }
 
   // Time stepping loop
-  while (fabs(t-m_term) > std::numeric_limits<tk::real>::epsilon() && it<nstep) {
+  tk::real eps = std::numeric_limits< tk::real >::epsilon();
+  while (std::fabs(t - m_term) > eps && it < nstep) {
 
     // Advance particles
     advance(dt);

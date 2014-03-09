@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Sat 01 Feb 2014 10:49:30 AM MST
+  \date      Sat 08 Mar 2014 04:26:49 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -56,7 +56,7 @@ HomMix::run()
 
   // Time stepping loop
   tk::real eps = std::numeric_limits< tk::real >::epsilon();
-  while (fabs(t - m_term) > eps && it < nstep) {
+  while (std::fabs(t - m_term) > eps && it < nstep) {
 
     // Advance particles
     advance(dt);

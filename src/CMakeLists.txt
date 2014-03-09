@@ -74,7 +74,6 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
 if(HAS_CPP11)
   add_definitions("-std=c++11")
-  set (CMAKE_EXE_LINKER_FLAGS "-lstdc++")
 endif()
 
 check_cxx_compiler_flag(-Wall HAS_WALL)
@@ -87,6 +86,45 @@ if(HAS_PEDANTIC)
   add_definitions("-pedantic")
   # suppress warning: ISO C++ forbids variable length array
   add_definitions("-Wno-vla")
+endif()
+
+# Compiler-specific settings
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
+
+  # Experimental: use C++14, libc++, libc++abi - only works up to clang 3.3
+  # Use libc++ (http://libcxx.llvm.org)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  # Use libc++abi (http://libcxxabi.llvm.org)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
+  # Use the C++14 standard
+  add_definitions("-std=c++1y")
+
+  # Don't warn on variable-length arrays
+  add_definitions("-Wno-vla-extension")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+  add_definitions("-Wremarks")
+  # Suppress the following Intel compiler remarks:
+  #   111: statement is unreachable
+  #   193: zero used for undefined preprocessing identifier
+  #   304: access control not specified ("public" by default)
+  #   367: duplicate friend declaration
+  #   383: value copied to temporary, reference to temporary used
+  #   444: destructor for base class is not virtual
+  #   869: parameter was never referenced
+  #   981: operands are evaluated in unspecified order
+  #  1418: external function definition with no prior declaration
+  #  1599: declaration hides parameter
+  #  2415: variable of static storage duration was declared but never referenced
+  #  3346: dynamic exception specifications are deprecated
+  add_definitions("-diag-disable 111,193,304,367,383,444,869,981,1418,1599,2415,3346")
+  add_definitions("-opt-report=0")
+  #add_definitions("-openmp-report")
+
 endif()
 
 # Set data layout for particle properties
@@ -109,46 +147,6 @@ ELSEIF (${LAYOUT_INDEX} EQUAL -1)
   MESSAGE(FATAL_ERROR "Particle properties layout '${LAYOUT}' not supported, valid entries are ${LAYOUT_VALUES}(-major).")
 ENDIF()
 message(STATUS "Particle properties layout (LAYOUT): " ${LAYOUT} "(-major)")
-
-# Compiler-specific settings
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
-  # clang-specific settings
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
-  add_definitions("-Wno-vla-extension")
-
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-
-  # gcc-specific settings
-
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-
-  # intel-specific settings
-  check_cxx_compiler_flag(-Wremarks HAS_WREMARKS)
-  if(HAS_WREMARKS)
-    add_definitions("-Wremarks")
-  endif()
-
-  # Intel-specific compiler arguments:
-  # Suppress the following Intel compiler remarks:
-  #   111: statement is unreachable
-  #   193: zero used for undefined preprocessing identifier
-  #   304: access control not specified ("public" by default)
-  #   367: duplicate friend declaration
-  #   383: value copied to temporary, reference to temporary used
-  #   444: destructor for base class is not virtual
-  #   869: parameter was never referenced
-  #   981: operands are evaluated in unspecified order
-  #  1418: external function definition with no prior declaration
-  #  1599: declaration hides parameter
-  #  2415: variable of static storage duration was declared but never referenced
-  #  3346: dynamic exception specifications are deprecated
-  add_definitions("-diag-disable 111,193,304,367,383,444,869,981,1418,1599,2415,3346")
-  add_definitions("-opt-report=0")
-  #add_definitions("-openmp-report")
-
-endif()
 
 # Include third-party libraries configuration
 include(TPLs)
