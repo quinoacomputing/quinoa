@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/make_unique.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 02:48:27 PM MST
+  \date      Sun 09 Mar 2014 12:54:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Define make_unique for unique_ptr until C++14
   \details   Define make_unique for unique_ptr until C++14
@@ -14,6 +14,8 @@
 #include <memory>
 
 namespace tk {
+
+#if _LIBCPP_STD_VER <= 11        // libc++ has make_unique in C++1y mode
 
 // Taken from http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen,
 // generated on 2014-01-06.
@@ -49,6 +51,12 @@ template<typename _Tp>
 template<typename _Tp, typename... _Args>
   inline typename _MakeUniq<_Tp>::__invalid_type
   make_unique(_Args&&...) = delete;
+
+#else
+
+using std::make_unique;
+
+#endif
 
 } // tk::
 

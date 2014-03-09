@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 24 Feb 2014 08:56:16 PM MST
+  \date      Sat 08 Mar 2014 04:25:03 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -12,6 +12,7 @@
 #define Factory_h
 
 #include <list>
+#include <functional>
 
 #include <boost/functional/factory.hpp>
 

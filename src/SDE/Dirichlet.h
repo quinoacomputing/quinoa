@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:55:04 AM MST
+  \date      Sat 08 Mar 2014 04:27:52 PM MST
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Dirichlet_h
 #define Dirichlet_h
+
+#include <cmath>
 
 #include <SDE.h>
 #include <DirCoeffPolicy.h>
@@ -64,7 +66,7 @@ class Dirichlet : public SDE< Init, Coefficients > {
       for (int i=0; i<m_ncomp; ++i) {
         tk::real& par = m_particles( p, i, m_offset );
         tk::real d = m_k[i] * par * yn * dt;
-        d = (d > 0.0 ? sqrt(d) : 0.0);
+        d = (d > 0.0 ? std::sqrt(d) : 0.0);
         par += 0.5*m_b[i]*( m_S[i]*yn - (1.0-m_S[i]) * par )*dt + d*dW[i];
       }
     }
