@@ -74,6 +74,8 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
 if(HAS_CPP11)
   add_definitions("-std=c++11")
+else()
+  MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
 
 check_cxx_compiler_flag(-Wall HAS_WALL)
