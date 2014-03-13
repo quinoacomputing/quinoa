@@ -26,6 +26,7 @@
 * Testing:
     - Unit tests: GoogleTest, QuickTest, Template Unit Test
     - Regression tests
+    - Quantify code coverage by tests
     - Test build with optional libraries on/off (all permutations)
     - Test suite for exceptions:
         o Automatically switch each potential throw location into a throw and
@@ -38,6 +39,7 @@
 
 * Build:
     - Add Mac OS build
+    - Put in version-queries for recently added ADIOS and its TPLs
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
       (https://github.com/ducakar/openzone/ uses pch cmake and clang)

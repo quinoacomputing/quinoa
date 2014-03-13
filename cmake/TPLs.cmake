@@ -130,7 +130,9 @@ endif()
 set(Z_LIBRARY "NOTFOUND")
 find_library(Z_LIBRARY
              NAMES z
-             REQUIRED)
+             PATHS ${TPL_DIR}/lib
+             REQUIRED
+             NO_DEFAULT_PATH)
 
 #### Silo
 set(SILO_LIBRARY "NOTFOUND")
@@ -144,7 +146,7 @@ find_library(SILO_LIBRARY
 set(HDF5_LIBRARY "NOTFOUND")
 find_library(HDF5_LIBRARY
              NAMES hdf5
-             PATHS ${TPL_DIR}/lib
+             PATHS ${TPL_DIR}/hdf5ser/lib
              NO_DEFAULT_PATH
              REQUIRED)
 
