@@ -43,6 +43,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
 endif()
 
+# Convert CMAKE_DEBUG_TYPE to upper case so even if the user gives it via the
+# command line, the tests below work as intended
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
+
 # Forward cmake compiler flags to automake builds
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CFLAGS ${CMAKE_C_FLAGS})
