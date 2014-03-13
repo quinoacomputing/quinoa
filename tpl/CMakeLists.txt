@@ -33,7 +33,7 @@ set(BOOST_TOOLSET ${COMP})
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
-  # Boost's as build toolset wants 'gcc' for the gnu compiler
+  # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
@@ -42,6 +42,40 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mt_mpi")
 
 endif()
+
+# Forward cmake compiler flags to automake builds
+if(CMAKE_BUILD_TYPE STREQUAL "")
+  set(CFLAGS ${CMAKE_C_FLAGS})
+  set(CXXFLAGS ${CMAKE_CXX_FLAGS})
+  set(FFLAGS ${CMAKE_Fortran_FLAGS})
+endif()
+if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  set(CFLAGS ${CMAKE_C_FLAGS_DEBUG})
+  set(CXXFLAGS ${CMAKE_CXX_FLAGS_DEBUG})
+  set(FFLAGS ${CMAKE_Fortran_FLAGS_DEBUG})
+endif()
+if(CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+  set(CFLAGS ${CMAKE_C_FLAGS_RELEASE})
+  set(CXXFLAGS ${CMAKE_CXX_FLAGS_RELEASE})
+  set(FFLAGS ${CMAKE_Fortran_FLAGS_RELEASE})
+endif()
+if(CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")
+  set(CFLAGS ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+  set(CXXFLAGS ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+  set(FFLAGS ${CMAKE_Fortran_FLAGS_RELWITHDEBINFO})
+endif()
+if(CMAKE_BUILD_TYPE STREQUAL "MINSIZEREL")
+  set(CFLAGS ${CMAKE_C_FLAGS_MINSIZEREL})
+  set(CXXFLAGS ${CMAKE_CXX_FLAGS_MINSIZEREL})
+  set(FFLAGS ${CMAKE_Fortran_FLAGS_MINSIZEREL})
+endif()
+message(STATUS "C compiler flags: " ${CFLAGS})
+message(STATUS "C++ compiler flags: " ${CXXFLAGS})
+message(STATUS "Fortran compiler flags: " ${FFLAGS})
+
+# Define fine-grained targets
+set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
+             download patch configure build install test)
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
 # http://code.google.com/p/pegtl
@@ -131,17 +165,36 @@ ExternalProject_Add_Step(
 #  LOG_INSTALL 1
 #)
 
-#### HDF5 #####################################################################
+#### HDF5 serial ###############################################################
 # http://www.hdfgroup.org/HDF5
 ExternalProject_Add(
-  hdf5
-  PREFIX hdf5
+  hdf5ser
+  PREFIX hdf5ser
   URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
   URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5/src/hdf5/configure
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
+                    CC=${UNDERLYING_C_COMPILER}
+                    CFLAGS=${CMAKE_C_FLAGS}
+                    --prefix=${TPL_INSTALL_DIR}/hdf5ser
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### HDF5 parallel #############################################################
+# http://www.hdfgroup.org/HDF5
+ExternalProject_Add(
+  hdf5par
+  PREFIX hdf5par
+  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
+  URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
                     CC=${MPI_C_COMPILER}
                     CFLAGS=${CMAKE_C_FLAGS}
-                    --prefix=${TPL_INSTALL_DIR}
+                    --enable-parallel
+                    --prefix=${TPL_INSTALL_DIR}/hdf5par
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -153,7 +206,7 @@ ExternalProject_Add(
 ## http://vis.lbl.gov/Research/H5Part
 #ExternalProject_Add(
 #  h5part
-#  DEPENDS hdf5
+#  DEPENDS hdf5ser
 #  PREFIX h5part
 #  URL ${PROJECT_SOURCE_DIR}/H5Part-1.6.6.tar.gz
 #  URL_MD5 327c63d198e38a12565b74cffdf1f9d7
@@ -161,7 +214,7 @@ ExternalProject_Add(
 #                    CC=${MPI_C_COMPILER}
 #                    CFLAGS=${CMAKE_C_FLAGS}
 #                    --enable-parallel
-#                    --with-hdf5=${TPL_INSTALL_DIR}
+#                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
 #                    --prefix=${TPL_INSTALL_DIR}
 #  BUILD_IN_SOURCE 1
 #  LOG_DOWNLOAD 1
@@ -174,7 +227,7 @@ ExternalProject_Add(
 # https://wci.llnl.gov/codes/silo
 ExternalProject_Add(
   silo
-  DEPENDS hdf5
+  DEPENDS hdf5ser
   PREFIX silo
   URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
   URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
@@ -183,7 +236,159 @@ ExternalProject_Add(
                     CFLAGS=${CMAKE_C_FLAGS}
                     --enable-optimization
                     --disable-silex
-                    --with-hdf5=${TPL_INSTALL_DIR}/include,${TPL_INSTALL_DIR}/lib
+                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser/include,${TPL_INSTALL_DIR}/hdf5ser/lib
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### minixml ###################################################################
+# http://www.minixml.org/software.php
+ExternalProject_Add(
+  minixml
+  PREFIX minixml
+  URL ${PROJECT_SOURCE_DIR}/mxml-2.8.tar.gz
+  URL_MD5 d85ee6d30de053581242c4a86e79a5d2
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/minixml/src/minixml/configure
+                    CC=${UNDERLYING_C_COMPILER}
+                    CXX=${UNDERLYING_CXX_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    CXXFLAGS=${CXXFLAGS}
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### zlib ######################################################################
+# http://www.zlib.net
+ExternalProject_Add(
+  zlib
+  PREFIX zlib
+  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
+  URL_MD5 44d667c142d7cda120332623eab69f40
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### bzip2 #####################################################################
+# http://www.bzip.org
+ExternalProject_Add(
+  bzip2
+  PREFIX bzip2
+  URL ${PROJECT_SOURCE_DIR}/bzip2-1.0.6.tar.gz
+  URL_MD5 00b516f4704d4a7cb50a1d97e6e8e15b
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND make
+                CC=${UNDERLYING_C_COMPILER}
+                CFLAGS=${CFLAGS}
+                PREFIX=${TPL_INSTALL_DIR}
+                install
+  INSTALL_COMMAND ""
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### szip ######################################################################
+# http://www.hdfgroup.org/ftp/lib-external/szip
+ExternalProject_Add(
+  szip
+  PREFIX szip
+  URL ${PROJECT_SOURCE_DIR}/szip-2.1.tar.gz
+  URL_MD5 902f831bcefb69c6b635374424acbead
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/szip/src/szip/configure
+                    CC=${UNDERLYING_C_COMPILER}
+                    CXX=${UNDERLYING_CXX_COMPILER}
+                    FC=${UNDERLYING_Fortran_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    CXXFLAGS=${CXXFLAGS}
+                    FFLAGS=${FFLAGS}
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### ISOBAR ####################################################################
+# http://dx.doi.org/10.1145/2287076.2287086
+ExternalProject_Add(
+  isobar
+  PREFIX isobar
+  URL ${PROJECT_SOURCE_DIR}/isobar.0.3.0.tgz
+  URL_MD5 86d123b7028ed238c0e6e49c22e7272c
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${TPL_INSTALL_DIR}/lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${TPL_INSTALL_DIR}/include
+  BUILD_COMMAND make install
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/lib/libisobar.a
+                  ${TPL_INSTALL_DIR}/lib
+          COMMAND ${CMAKE_COMMAND} -E copy
+                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/include/isobar.h
+                  ${TPL_INSTALL_DIR}/include
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### APLOD #####################################################################
+# http://conferences.computer.org/sc/2012/papers/1000a088.pdf
+ExternalProject_Add(
+  aplod
+  PREFIX aplod
+  URL ${PROJECT_SOURCE_DIR}/aplod.0.1.tar.gz
+  URL_MD5 3e9749efb42a3d4d3165e884456812bc
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND make CXX=${UNDERLYING_CXX_COMPILER} CXXLAGS=${CXXFLAGS}
+  INSTALL_COMMAND make install prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### ADIOS #####################################################################
+# https://www.olcf.ornl.gov/center-projects/adios
+ExternalProject_Add(
+  adios
+  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par
+  PREFIX adios
+  URL ${PROJECT_SOURCE_DIR}/adios-1.6.0.tar.gz
+  URL_MD5 70073584c620b92d7842250ce778847f
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/adios/src/adios/configure
+                    CC=${MPI_C_COMPILER}
+                    CXX=${MPI_CXX_COMPILER}
+                    CFLAGS=${CFLAGS}
+                    CXXLAGS=${CXXFLAGS}
+                    --disable-fortran
+                    --enable-research-transports
+                    --enable-skel-timing
+                    --with-mxml=${TPL_INSTALL_DIR}
+                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
+                    --with-phdf5=${TPL_INSTALL_DIR}/hdf5par
+                    --with-zlib=${TPL_INSTALL_DIR}
+                    --with-bzip2=${TPL_INSTALL_DIR}
+                    --with-szip=${TPL_INSTALL_DIR}
+                    --with-isobar=${TPL_INSTALL_DIR}
+                    --with-aplod=${TPL_INSTALL_DIR}
                     --prefix=${TPL_INSTALL_DIR}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1

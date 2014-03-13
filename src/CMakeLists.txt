@@ -198,6 +198,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Paradigm
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
+                    ${TPL_DIR}/hdf5ser/include
                     ${PROJECT_BINARY_DIR}/Base
                     ${MPI_INCLUDE_PATH}
 )
