@@ -40,7 +40,6 @@
 * Build:
     - Add Mac OS build
     - Put in version-queries for recently added ADIOS and its TPLs
-    - Update boost
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
       (https://github.com/ducakar/openzone/ uses pch cmake and clang)
