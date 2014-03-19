@@ -43,7 +43,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
-                      #${MPI_LIBRARIES}
 )
 
 INSTALL(TARGETS ${QUINOA_EXECUTABLE}
