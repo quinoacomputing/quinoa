@@ -82,7 +82,7 @@ endmacro (add_compiler_flag)
 add_compiler_flag("-Wall")
 add_compiler_flag("-Wpedantic")
 add_compiler_flag("-Wextra")
-#add_compiler_flag("-Wshadow")
+add_compiler_flag("-Wshadow")
 add_compiler_flag("-Wformat")
 add_compiler_flag("-Wsign-compare")
 add_compiler_flag("-Wpointer-arith")
@@ -121,6 +121,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-vla-extension")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
+
+  add_compiler_flag("-Wno-literal-suffix")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   add_compiler_flag("-Wremarks")
