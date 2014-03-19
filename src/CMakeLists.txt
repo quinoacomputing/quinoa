@@ -63,6 +63,7 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 set(QUINOA_EXECUTABLE "quinoa")
 set(RNGTEST_EXECUTABLE "rngtest")
+set(GMSH2EXO_EXECUTABLE "gmsh2exo")
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -196,6 +197,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/SDE
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Paradigm
+                    ${QUINOA_SOURCE_DIR}/Utilities
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/hdf5ser/include
@@ -214,4 +216,5 @@ add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(Statistics)
+#add_subdirectory(Utilities)
 add_subdirectory(Main)

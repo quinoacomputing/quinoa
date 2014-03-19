@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Fri 27 Dec 2013 04:47:37 PM MST
+  \date      Wed Mar 19 07:58:21 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -11,7 +11,7 @@
 #ifndef RNGTestDriver_h
 #define RNGTestDriver_h
 
-#include <Driver.h>
+#include <RNGDriver.h>
 #include <Base.h>
 #include <Battery.h>
 
@@ -22,7 +22,7 @@ namespace rngtest {
 using BatteryFactory = std::map< ctr::BatteryType, std::function< Battery*() > >;
 
 //! RNGTestDriver base class
-class RNGTestDriver : public tk::Driver {
+class RNGTestDriver : public tk::RNGDriver {
 
   public:
     //! Constructor
