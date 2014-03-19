@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:38:42 2014
+  \date      Wed Mar 19 17:46:33 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -11,7 +11,16 @@
 #ifndef Keyword_h
 #define Keyword_h
 
+#ifndef __INTEL_COMPILER
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 #include <pegtl.hh>
+
+#ifndef __INTEL_COMPILER
+  #pragma GCC diagnostic pop
+#endif
 
 namespace tk {
 namespace kw {
