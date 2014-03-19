@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:16:15 PM MST
+  \date      Wed Mar 19 15:40:51 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -15,6 +15,7 @@
 
 #include <RNG.h>
 #include <Exception.h>
+#include <Macro.h>
 
 namespace tk {
 
@@ -56,10 +57,15 @@ class RNGSSE : public tk::RNG {
     //! Uniform RNG
     void uniform( int tid, int num, double* r) const override {
       r[0] = static_cast<double>( Generate( &m_stream[tid] ) ) / 4294967296.0;
+      IGNORE(num);
     }
 
     //! Gaussian RNG
-    void gaussian(int tid, int num, double* r) const override {}
+    void gaussian(int tid, int num, double* r) const override {
+      IGNORE(tid);
+      IGNORE(num);
+      IGNORE(r);
+    }
 
   private:
     //! Don't permit copy constructor

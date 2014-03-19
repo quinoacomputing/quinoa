@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:52:41 PM MST
+  \date      Wed Mar 19 15:43:05 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -61,7 +61,14 @@ struct GenDirCoeffConst {
                    std::vector< tk::real >& b,
                    std::vector< tk::real >& S,
                    std::vector< tk::real >& k,
-                   std::vector< tk::real >& c ) {}
+                   std::vector< tk::real >& c )
+  {
+    IGNORE(t);
+    IGNORE(b);
+    IGNORE(S);
+    IGNORE(k);
+    IGNORE(c);
+  }
 
 };
 

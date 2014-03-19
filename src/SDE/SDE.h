@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:52:56 AM MST
+  \date      Wed Mar 19 16:05:26 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -48,17 +48,17 @@ class SDE : public Model {
     //! Constructor: protected, designed to be base-only
     explicit SDE( const Base& base,
                   tk::ctr::RNGType rngType,
-                  char depvar,
+                  char depv,
                   const ParProps& particles,
                   int offset,
-                  int ncomp ) :
+                  int ncmp ) :
       m_rngType( rngType ),
-      m_depvar( depvar ),
+      m_depvar( depv ),
       m_particles( particles ),
       m_npar( base.control.get< tag::incpar, tag::npar >() ),
       m_nprop( base.control.get< tag::component >().nprop() ),
       m_offset( offset ),
-      m_ncomp( ncomp )
+      m_ncomp( ncmp )
     {
       Assert( m_rngType != tk::ctr::RNGType::NO_RNG, tk::ExceptType::FATAL,
               "Cannot instantiate class SDE without an RNG" );

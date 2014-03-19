@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 28 Dec 2013 07:32:12 PM MST
+  \date      Wed Mar 19 15:50:10 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -72,7 +72,7 @@ class Exception : public std::exception {
     explicit Exception(ExceptType except,
                        const std::string& message,
                        const std::string& file = "",
-                       const std::string& func = "",
+                       const std::string& function = "",
                        unsigned int line = 0) noexcept;
 
     //! Destructor

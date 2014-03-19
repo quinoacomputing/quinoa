@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:13:27 PM MST
+  \date      Wed Mar 19 16:19:41 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -29,15 +29,15 @@ class TestU01 : public StatTest {
 
   public:
     //! Constructor
-    explicit TestU01( const Rsize& id,
+    explicit TestU01( const Rsize& i,
                       const unif01_Gen* const gen,
-                      const tk::ctr::RNGType& rng,
+                      const tk::ctr::RNGType& r,
                       Names&& names,
                       RunFn runner,
                       Ts&&... xargs ) :
-      m_id( id ),
+      m_id( i ),
       m_gen( gen ),
-      m_rng( rng ),
+      m_rng( r ),
       m_npval( names.size() ),
       m_names( std::move(names) ),
       m_runner( runner ),
@@ -94,30 +94,30 @@ class TestU01 : public StatTest {
     //! Return humand-readable p-value (ala TestU01::bbattery.c::WritePval)
     std::string pvalstr( const Nsize& p ) const override {
       std::stringstream ss;
-      double pval = m_pvals[p];
-      if (pval < gofw_Suspectp) {
+      double val = m_pvals[p];
+      if (val < gofw_Suspectp) {
 
-        if ((pval >= 0.01) && (pval <= 0.99))
-          ss << pval;
-        else if (pval < gofw_Epsilonp)
+        if ((val >= 0.01) && (val <= 0.99))
+          ss << val;
+        else if (val < gofw_Epsilonp)
           ss << "eps";
-        else if (pval < 0.01)
-          ss << pval;
-        else if (pval >= 1.0 - gofw_Epsilonp1)
+        else if (val < 0.01)
+          ss << val;
+        else if (val >= 1.0 - gofw_Epsilonp1)
           ss << "1 - eps1";
-        else if (pval < 1.0 - 1.0e-4)
-          ss << pval;
+        else if (val < 1.0 - 1.0e-4)
+          ss << val;
         else
-          ss << 1.0 - pval;
+          ss << 1.0 - val;
 
-      } else if (pval > 1.0 - gofw_Suspectp) {
+      } else if (val > 1.0 - gofw_Suspectp) {
 
-        if (pval >= 1.0 - gofw_Epsilonp1)
+        if (val >= 1.0 - gofw_Epsilonp1)
           ss << "1 - eps1";
-        else if (pval >= 1.0 - 1.0e-4)
-          ss << "1 - " << 1.0 - pval;
+        else if (val >= 1.0 - 1.0e-4)
+          ss << "1 - " << 1.0 - val;
         else
-          ss << pval;
+          ss << val;
 
       }
       return ss.str();

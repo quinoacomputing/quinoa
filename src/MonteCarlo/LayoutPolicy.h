@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 02:19:06 PM MST
+  \date      Wed Mar 19 16:01:14 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -56,8 +56,8 @@ class ParticleProperties {
 
     //! Const physical variable access dispatch
     inline const tk::real&
-    cvar( const tk::real* const ptr, int particle ) const noexcept {
-      return cvar( ptr, particle, int2type< Layout >() );
+    cvar( const tk::real* const pt, int particle ) const noexcept {
+      return cvar( pt, particle, int2type< Layout >() );
     }
 
     //! Ptr access
@@ -111,14 +111,14 @@ class ParticleProperties {
 
    // Overloads for the various const physical variable accesses
    inline const tk::real&
-   cvar( const tk::real* const ptr, int particle, int2type< ParEqComp > ) const
+   cvar( const tk::real* const pt, int particle, int2type< ParEqComp > ) const
    noexcept {
-     return *(ptr + particle*m_nprop);
+     return *(pt + particle*m_nprop);
    }
    inline const tk::real&
-   cvar( const tk::real* const ptr, int particle, int2type< EqCompPar > ) const
+   cvar( const tk::real* const pt, int particle, int2type< EqCompPar > ) const
    noexcept {
-     return *(ptr + particle);
+     return *(pt + particle);
    }
 
    // Overloads for the name-queries of data lauouts

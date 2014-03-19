@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:10:16 PM MST
+  \date      Wed Mar 19 16:15:43 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -166,11 +166,11 @@ TestU01Suite::failed()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  StatTest::Psize failed = 0;
+  StatTest::Psize fail = 0;
   for (const auto& t : m_tests) {
-    failed += t->nfail();
+    fail += t->nfail();
   }
-  return failed;
+  return fail;
 }
 
 void
@@ -180,10 +180,10 @@ TestU01Suite::run()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const RNGTestPrint& print = m_base.print;
+  const RNGTestPrint& pr = m_base.print;
 
-  print.part( m_name );
-  print.statshead( "Statistics computed" );
+  pr.part( m_name );
+  pr.statshead( "Statistics computed" );
 
   swrite_Basic = FALSE;         // Want screen no putput from TestU01
 
@@ -191,7 +191,7 @@ TestU01Suite::run()
   using Rsize = StatTest::Rsize;
   using Tsize = TestContainer::size_type;
 
-  Tsize ntest = m_tests.size();
+  Tsize nt = m_tests.size();
   Psize ncomplete = 0;
   std::vector< Rsize > nfail( g_maxRNGs, 0);
   #ifdef _OPENMP
@@ -207,7 +207,7 @@ TestU01Suite::run()
     #ifdef _OPENMP
     #pragma omp for schedule(dynamic)
     #endif
-    for (Tsize i=0; i<ntest; ++i) {
+    for (Tsize i=0; i<nt; ++i) {
 
       // Get reference to ith test
       std::unique_ptr< StatTest >& test = m_tests[i];
@@ -234,7 +234,7 @@ TestU01Suite::run()
         }
 
         // Output one-liner
-        print.test< StatTest, TestContainer >
+        pr.test< StatTest, TestContainer >
                   ( ncomplete, nfail[test->id()], m_npval, test, p );
       }
     }
@@ -245,12 +245,12 @@ TestU01Suite::run()
 
   // Output summary of failed tests (for all RNGs tested)
   if (tfail) {
-    print.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
+    pr.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
   } else {
-    print.note("All tests passed");
+    pr.note("All tests passed");
   }
 
-  print.endpart();
+  pr.endpart();
 }
 
 void

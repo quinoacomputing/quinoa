@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:39:11 PM MST
+  \date      Wed Mar 19 15:43:10 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -55,7 +55,13 @@ struct DirCoeffConst {
   void operator()( const tk::real& t,
                    std::vector< tk::real >& b,
                    std::vector< tk::real >& S,
-                   std::vector< tk::real >& k ) {}
+                   std::vector< tk::real >& k )
+  {
+    IGNORE(t);
+    IGNORE(b);
+    IGNORE(S);
+    IGNORE(k);
+  }
 };
 
 //! List of all Dirichlet's coefficients policies

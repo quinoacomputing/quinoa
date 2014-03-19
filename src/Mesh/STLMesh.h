@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:01:15 2013
+  \date      Wed Mar 19 15:57:12 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration
@@ -32,7 +32,7 @@ class STLMesh {
     void alloc(const size_t num);
 
     //! Set/get mesh name
-    void setName(const std::string& name) { m_name = name; }
+    void setName(const std::string& n) { m_name = n; }
     const std::string& name() const noexcept { return m_name; }
 
     //! Coordinate array accessors

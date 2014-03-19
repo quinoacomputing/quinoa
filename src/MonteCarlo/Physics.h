@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 06:09:19 PM MST
+  \date      Wed Mar 19 16:10:46 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -58,7 +58,7 @@ class Physics : public MonteCarlo {
     Physics& operator=(Physics&&) = delete;
 
     //! Initialize factories
-    void initFactories(const tk::Print& print);
+    void initFactories();
 
     //! Echo information on physics
     void echo();

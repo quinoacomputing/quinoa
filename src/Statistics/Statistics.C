@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 09:40:06 AM MST
+  \date      Wed Mar 19 16:20:37 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -131,12 +131,12 @@ Statistics::ordinary( const std::vector< ctr::Term >& product ) const
 //******************************************************************************
 {
   // If and only if all terms are ordinary, the product is ordinary
-  bool ordinary = true;
+  bool ord = true;
   for (auto& term : product) {
     if (term.moment == ctr::Moment::CENTRAL)
-      ordinary = false;
+      ord = false;
   }
-  return ordinary;
+  return ord;
 }
 
 int

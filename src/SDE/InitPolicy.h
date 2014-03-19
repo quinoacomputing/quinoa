@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:18:52 PM MST
+  \date      Wed Mar 19 15:46:16 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -34,7 +34,15 @@ struct InitRaw {
   }
 
   InitRaw( const ParProps& particles, uint64_t npar, uint32_t nprop, int offset,
-           int ncomp, int nthreads ) {}
+           int ncomp, int nthreads )
+  {
+    IGNORE(particles);
+    IGNORE(npar);
+    IGNORE(nprop);
+    IGNORE(offset);
+    IGNORE(ncomp);
+    IGNORE(nthreads);
+  }
 };
 
 //! Zero initialization policy: zero particle properties
@@ -53,6 +61,10 @@ struct InitZero {
   InitZero( const ParProps& particles, uint64_t npar, uint32_t nprop,
             int offset, int ncomp, int nthreads )
   {
+    IGNORE(npar);
+    IGNORE(nprop);
+    IGNORE(offset);
+    IGNORE(ncomp);
     tk::real* ptr = particles.ptr();
     uint64_t size = particles.size();
 
