@@ -8,7 +8,13 @@ add_definitions()
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
                InitQuinoa.C
-               TPLInfo.C
+               TPLInfo/MKL.C
+               TPLInfo/Boost.C
+               TPLInfo/OpenMP.C
+               TPLInfo/Zoltan.C
+               TPLInfo/Silo.C
+               TPLInfo/HDF5.C
+               TPLInfo/Zlib.C
                RNGDriver.C
                QuinoaDriver.C
                Quinoa.C
@@ -55,7 +61,9 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
                InitRNGTest.C
-               TPLInfo.C
+               TPLInfo/MKL.C
+               TPLInfo/Boost.C
+               TPLInfo/OpenMP.C
                RNGDriver.C
                RNGTestDriver.C
                RNGTest.C
@@ -76,9 +84,6 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       Paradigm
                       RNGTestControl
                       RNG
-                      ${SILO_LIBRARY}
-                      ${HDF5_LIBRARY}
-                      ${Z_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
@@ -92,6 +97,41 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
+add_executable(${GMSH2EXO_EXECUTABLE}
+               Init.C
+               InitGmsh2Exo.C
+               TPLInfo/MKL.C
+               TPLInfo/Boost.C
+               TPLInfo/OpenMP.C
+               Gmsh2ExoDriver.C
+               Gmsh2Exo.C
+)
+
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${GMSH2EXO_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${GMSH2EXO_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+target_link_libraries(${GMSH2EXO_EXECUTABLE}
+                      Base
+                      Gmsh2ExoControl
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_THREAD_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${BOOST_SYSTEM_LIBRARY}
+)
+
+INSTALL(TARGETS ${GMSH2EXO_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Wed Mar 19 08:45:35 2014
+  \date      Wed Mar 19 11:53:16 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -22,7 +22,9 @@
 
 #include <Init.h>
 #include <Exception.h>
-#include <TPLInfo.h>
+#include <TPLInfo/MKL.h>
+#include <TPLInfo/Boost.h>
+#include <TPLInfo/OpenMP.h>
 
 std::string tk::workdir()
 //******************************************************************************

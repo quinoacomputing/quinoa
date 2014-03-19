@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Tue 18 Feb 2014 06:26:56 AM MST
+  \date      Wed Mar 19 10:32:44 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -11,20 +11,16 @@
 #ifndef QuinoaPrint_h
 #define QuinoaPrint_h
 
-#include <Print.h>
+#include <RNGPrint.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 #include <Quinoa/Options/SDE.h>
 
 namespace quinoa {
 
-//! QuinoaPrint : Print
-class QuinoaPrint : public tk::Print {
+//! QuinoaPrint : RNGPrint
+class QuinoaPrint : public tk::RNGPrint {
 
   public:
-    //! Bring vanilla overloads from base into scope in case local overloads fail
-    //using Print::section;
-    //using Print::item;
-
     //! Constructor
     explicit QuinoaPrint(const std::unique_ptr< ctr::InputDeck >& control) :
       m_ctr(*control) {}

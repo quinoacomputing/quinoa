@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 02:03:25 PM MST
+  \date      Wed Mar 19 09:03:01 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -11,17 +11,9 @@
 #ifndef Config_h
 #define Config_h
 
-namespace quinoa {
-
 #define QUINOA_EXECUTABLE            "@QUINOA_EXECUTABLE@"
-
-} // quinoa::
-
-namespace rngtest {
-
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
-
-} // rngtest::
+#define GMSH2EXO_EXECUTABLE          "@GMSH2EXO_EXECUTABLE@"
 
 namespace tk {
  

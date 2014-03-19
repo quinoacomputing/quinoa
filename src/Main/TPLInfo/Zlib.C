@@ -1,20 +1,30 @@
 //******************************************************************************
 /*!
-  \file      src/Main/InitRNGTest.C
+  \file      src/Main/TPLInfo/Zlib.C
   \author    J. Bakosi
-  \date      Wed Mar 19 11:49:06 2014
+  \date      Wed Mar 19 11:48:12 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     RNGTest-specific initialization for main
-  \details   RNGTest-specific initialization for main
+  \brief     Zlib info
+  \details   Zlib info
 */
 //******************************************************************************
 
-#include <InitRNGTest.h>
+#include <sstream>
 
-void rngtest::echoTPL(const tk::Print& print)
+#include <zlib.h>
+
+#include <Config.h>
+#include <TPLInfo/Zlib.h>
+
+void tk::echoZlib(const tk::Print& print, const std::string& title)
 //******************************************************************************
-//  Echo TPL version informaion for libs specific to RNGTest
+//  Echo Zlib compression library version information
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  std::stringstream version;
+  version << zlibVersion();
+
+  print.subsection(title);
+  print.item("Version", version.str());
 }
