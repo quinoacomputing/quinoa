@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 03:53:39 PM MST
+  \date      Wed Mar 19 10:33:31 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -16,8 +16,8 @@
 
 namespace rngtest {
 
-//! RNGTestPrint : Print
-class RNGTestPrint : public tk::Print {
+//! RNGTestPrint : RNGPrint
+class RNGTestPrint : public tk::RNGPrint {
 
   public:
     //! Bring vanilla overloads from base into scope in case local overloads fail

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:42:32 AM MST
+  \date      Wed Mar 19 10:28:29 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -19,7 +19,6 @@
 
 #include <tkTypes.h>
 #include <Option.h>
-#include <Options/RNG.h>
 
 namespace tk {
 
@@ -115,16 +114,6 @@ class Print {
     //! Raw stream access
     std::ostream& stream() const noexcept { return m_stream; }
 
-    #ifdef HAS_MKL
-    //! Print all fields of MKL RNG parameters
-    void MKLParams( const std::vector< ctr::RNGType >& vec,
-                    const ctr::MKLRNGParameters& map ) const;
-    #endif
-
-    //! Print all fields of RNGSSE parameters
-    void RNGSSEParams( const std::vector< ctr::RNGType >& vec,
-                       const ctr::RNGSSEParameters& map ) const;
-
   protected:
     //! bullets
     const char m_section_bullet = '*';
@@ -165,16 +154,6 @@ class Print {
     Print(Print&&) = delete;
     //! Don't permit move assigment
     Print& operator=(Print&&) = delete;
-
-    #ifdef HAS_MKL
-    //! Echo information on MKL random number generator
-    void echoMKLParams( const ctr::MKLRNGParam& p ) const;
-    #endif
-
-    //! Echo information on RNGSSE random number generator
-    void echoRNGSSEParams( const ctr::RNGSSEParam& p,
-                           const ctr::RNG& rng,
-                           const ctr::RNGType& r ) const;
 };
 
 } // tk::

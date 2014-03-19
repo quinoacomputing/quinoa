@@ -1,20 +1,24 @@
 //******************************************************************************
 /*!
-  \file      src/Main/InitRNGTest.C
+  \file      src/Main/InitGmsh2Exo.C
   \author    J. Bakosi
-  \date      Wed Mar 19 11:49:06 2014
+  \date      Wed Mar 19 11:53:04 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     RNGTest-specific initialization for main
-  \details   RNGTest-specific initialization for main
+  \brief     Gmsh2Exo-specific initialization for main
+  \details   Gmsh2Exo-specific initialization for main
 */
 //******************************************************************************
 
-#include <InitRNGTest.h>
+#include <InitGmsh2Exo.h>
 
-void rngtest::echoTPL(const tk::Print& print)
+void gmsh2exo::echoTPL(const tk::Print& print)
 //******************************************************************************
-//  Echo TPL version informaion for libs specific to RNGTest
+//  Echo TPL version informaion for libs specific to Gmsh2Exo
 //! \author  J. Bakosi
 //******************************************************************************
 {
+//   print.raw("\n");
+//   echoHDF5(print, "HDF5 library");
+//   print.raw("\n");
+//   echoZlib(print, "Zlib compression library");
 }

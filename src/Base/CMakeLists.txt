@@ -7,6 +7,7 @@ add_library(Base
             Handler.C
             Timer.C
             Print.C
+            RNGPrint.C
             QuinoaPrint.C
 )
 

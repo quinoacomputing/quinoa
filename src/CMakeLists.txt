@@ -79,17 +79,30 @@ else()
   MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
 
-check_cxx_compiler_flag(-Wall HAS_WALL)
-if(HAS_WALL)
-  add_definitions("-Wall")
-endif()
+macro (add_compiler_flag flag)
+  check_cxx_compiler_flag(${flag} COMPILER_HAS${flag})
+  if(COMPILER_HAS${flag})
+    add_definitions(${flag})
+  endif()
+endmacro (add_compiler_flag)
 
-check_cxx_compiler_flag(-pedantic HAS_PEDANTIC)
-if(HAS_PEDANTIC)
-  add_definitions("-pedantic")
-  # suppress warning: ISO C++ forbids variable length array
-  add_definitions("-Wno-vla")
-endif()
+add_compiler_flag("-Wall")
+add_compiler_flag("-Wpedantic")
+add_compiler_flag("-Wextra")
+add_compiler_flag("-Wshadow")
+add_compiler_flag("-Wformat")
+add_compiler_flag("-Wsign-compare")
+add_compiler_flag("-Wpointer-arith")
+add_compiler_flag("-Winvalid-pch")
+add_compiler_flag("-Wcast-align")
+add_compiler_flag("-Wwrite-strings")
+add_compiler_flag("-Wunused")
+add_compiler_flag("-Woverloaded-virtual")
+add_compiler_flag("-ansi")
+add_compiler_flag("-fdiagnostics-show-option")
+
+# suppress warning: ISO C++ forbids variable length array
+add_compiler_flag("-Wno-vla")
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
@@ -105,12 +118,12 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   add_definitions("-std=c++1y")
 
   # Don't warn on variable-length arrays
-  add_definitions("-Wno-vla-extension")
+  add_compiler_flag("-Wno-vla-extension")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
-  add_definitions("-Wremarks")
+  add_compiler_flag("-Wremarks")
   # Suppress the following Intel compiler remarks:
   #   111: statement is unreachable
   #   193: zero used for undefined preprocessing identifier
@@ -126,7 +139,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3346: dynamic exception specifications are deprecated
   add_definitions("-diag-disable 111,193,304,367,383,444,869,981,1418,1599,2415,3346")
   add_definitions("-opt-report=0")
-  #add_definitions("-openmp-report")
+  #add_compiler_flag("-openmp-report")
 
 endif()
 
@@ -216,5 +229,4 @@ add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(Statistics)
-#add_subdirectory(Utilities)
 add_subdirectory(Main)

@@ -38,3 +38,16 @@ INSTALL(TARGETS RNGTestControl
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development
 )
+
+project(Gmsh2ExoControl CXX)
+
+add_library(Gmsh2ExoControl
+            StringParser.C
+            Gmsh2Exo/CmdLine/Parser.C
+)
+
+INSTALL(TARGETS Gmsh2ExoControl
+  	RUNTIME DESTINATION bin COMPONENT Runtime
+  	LIBRARY DESTINATION lib COMPONENT Runtime
+ 	ARCHIVE DESTINATION lib COMPONENT Development
+)

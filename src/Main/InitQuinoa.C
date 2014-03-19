@@ -2,15 +2,17 @@
 /*!
   \file      src/Main/InitQuinoa.C
   \author    J. Bakosi
-  \date      Wed Mar 19 08:37:59 2014
+  \date      Wed Mar 19 11:48:53 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa-specific initialization for main
   \details   Quinoa-specific initialization for main
 */
 //******************************************************************************
 
-#include <TPLInfo.h>
 #include <InitQuinoa.h>
+#include <TPLInfo/Silo.h>
+#include <TPLInfo/HDF5.h>
+#include <TPLInfo/Zlib.h>
 
 void quinoa::echoTPL(const tk::Print& print)
 //******************************************************************************
