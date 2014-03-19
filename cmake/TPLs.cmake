@@ -17,8 +17,14 @@ find_library(MKL_INTERFACE_LIBRARY
              PATHS ${MKL_SEARCH_PATH}
              NO_DEFAULT_PATH)
 
-set(MKL_THREAD_LIBRARY "NOTFOUND")
-find_library(MKL_THREAD_LIBRARY
+set(MKL_SEQUENTIAL_LAYER_LIBRARY "NOTFOUND")
+find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
+             NAMES mkl_sequential
+             PATHS ${MKL_SEARCH_PATH}
+             NO_DEFAULT_PATH)
+
+set(MKL_THREADED_LAYER_LIBRARY "NOTFOUND")
+find_library(MKL_THREADED_LAYER_LIBRARY
              NAMES mkl_intel_thread
              PATHS ${MKL_SEARCH_PATH}
              NO_DEFAULT_PATH)
@@ -43,11 +49,18 @@ else()
   message(STATUS "  Could not find MKL interface library 'mkl_intel_ilp64'")
 endif()
 
-if (MKL_THREAD_LIBRARY)
-  message(STATUS "  Found MKL thread library '${MKL_THREAD_LIBRARY}'")
+if (MKL_SEQUENTIAL_LAYER_LIBRARY)
+  message(STATUS "  Found MKL sequential layer library '${MKL_SEQUENTIAL_LAYER_LIBRARY}'")
 else()
-  set(MKL_THREAD_LIBRARY "")
-  message(STATUS "  Could not find MKL thread library 'mkl_intel_thread'")
+  set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
+  message(STATUS "  Could not find MKL threaded layer library 'mkl_intel_thread'")
+endif()
+
+if (MKL_THREADED_LAYER_LIBRARY)
+  message(STATUS "  Found MKL threaded layer library '${MKL_THREADED_LAYER_LIBRARY}'")
+else()
+  set(MKL_THREADED_LAYER_LIBRARY "")
+  message(STATUS "  Could not find MKL threaded layer library 'mkl_intel_thread'")
 endif()
 
 if (MKL_CORE_LIBRARY)
@@ -61,18 +74,19 @@ if (INTEL_OMP_RUNTIME_LIBRARY)
   message(STATUS "  Found Intel OpenMP runtime library '${INTEL_OMP_RUNTIME_LIBRARY}'")
 else()
   set(INTEL_OMP_RUNTIME_LIBRARY "")
-  message(STATUS "  Could not find Intel OpenMP runtime library 'iomp5' required by MKL thread library 'mkl_intel_thread'")
+  message(STATUS "  Could not find Intel OpenMP runtime library 'iomp5' required by MKL threaded layer library 'mkl_intel_thread'")
 endif()
 
 # Define HAS_MKL macro and echo MKL status
 if (MKL_INTERFACE_LIBRARY AND
-    MKL_THREAD_LIBRARY AND
+    MKL_SEQUENTIAL_LAYER_LIBRARY AND
+    MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY AND
     INTEL_OMP_RUNTIME_LIBRARY)
   message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- works")
   set(HAS_MKL on)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
 else()
   message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- failed")
   message(STATUS "------------------------------------------------------------")
