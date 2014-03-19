@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:21:29 AM MST
+  \date      Wed Mar 19 12:35:17 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -117,7 +117,7 @@ STLTxtMeshReader::readFacets(const bool store,
       } else if (kw == "endsolid") {
         m_inFile >> solidname;       // read in solidname last time
         newfacet = false;            // solid finished, try to read next one
-        std::streampos back = m_inFile.tellg();
+        back = m_inFile.tellg();
         m_inFile >> kw;              // try to read on
         if (!m_inFile.eof()) m_inFile.seekg(back);
       } else {

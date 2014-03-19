@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed Mar 19 08:43:46 2014
+  \date      Wed Mar 19 13:21:45 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -36,10 +36,11 @@ void echoBuildEnv( const tk::Print& print,
 void echoRunEnv(const tk::Print& print, int argc, char** argv);
 
 //! Main()
-template< class Driver, void (*echoTPL)(const Print& print) >
-int Main(int argc, char* argv[],
-         const std::string& name,
-         const std::string& executable)
+template< class Driver >
+int Main( int argc, char* argv[],
+          const std::string& name,
+          const std::string& executable,
+          void (*echoTPL)(const Print&) = [](const Print&){} )
 {
   ErrCode error = ErrCode::SUCCESS;
 

@@ -7,7 +7,6 @@ add_definitions()
 
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
-               InitQuinoa.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -60,7 +59,6 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
-               InitRNGTest.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -104,7 +102,6 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
 
 add_executable(${GMSH2EXO_EXECUTABLE}
                Init.C
-               InitGmsh2Exo.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
