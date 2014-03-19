@@ -8,7 +8,8 @@ add_definitions()
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
                InitQuinoa.C
-               Driver.C
+               TPLInfo.C
+               RNGDriver.C
                QuinoaDriver.C
                Quinoa.C
 )
@@ -54,7 +55,8 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
                InitRNGTest.C
-               Driver.C
+               TPLInfo.C
+               RNGDriver.C
                RNGTestDriver.C
                RNGTest.C
 )
@@ -74,6 +76,9 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       Paradigm
                       RNGTestControl
                       RNG
+                      ${SILO_LIBRARY}
+                      ${HDF5_LIBRARY}
+                      ${Z_LIBRARY}
                       #${TESTU01_MYLIB_LIBRARY}
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InitRNGTest.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 05:00:18 PM MST
+  \date      Wed Mar 19 08:35:25 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest-specific initialization for main
   \details   RNGTest-specific initialization for main
@@ -14,12 +14,6 @@
 #include <Print.h>
 
 namespace rngtest {
-
-//! Echo Zoltan library version information
-void echoZoltan(const tk::Print& print, const std::string& title);
-
-//! Echo Silo library version information
-void echoSilo(const tk::Print& print, const std::string& title);
 
 //! Echo TPL version information
 void echoTPL(const tk::Print& print);

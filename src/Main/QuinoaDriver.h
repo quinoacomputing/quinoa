@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Wed 29 Jan 2014 09:41:49 PM MST
+  \date      Wed Mar 19 07:58:08 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -11,7 +11,7 @@
 #ifndef QuinoaDriver_h
 #define QuinoaDriver_h
 
-#include <Driver.h>
+#include <RNGDriver.h>
 #include <Base.h>
 #include <Geometry.h>
 #include <Physics.h>
@@ -28,7 +28,7 @@ using MonteCarloFactory =
   std::map< ctr::MonteCarloType, std::function< MonteCarlo*() > >;
 
 //! QuinoaDriver : Driver
-class QuinoaDriver : public tk::Driver {
+class QuinoaDriver : public tk::RNGDriver {
 
   public:
     //! Constructor

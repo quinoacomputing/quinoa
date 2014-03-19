@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 01:33:58 PM MST
+  \date      Wed Mar 19 08:45:35 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -16,18 +16,13 @@
 
 #include <Config.h>
 
-#ifdef HAS_MKL
-#include <mkl_service.h>
-#endif
-
-#include <boost/version.hpp>
-
 #ifdef HAS_BOOST_SYSTEM   // Boost.Asio requires the Boost.System library
 #include <boost/asio/ip/host_name.hpp>
 #endif
 
 #include <Init.h>
 #include <Exception.h>
+#include <TPLInfo.h>
 
 std::string tk::workdir()
 //******************************************************************************
@@ -72,62 +67,6 @@ std::string tk::curtime()
   str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
 
   return str;
-}
-
-#ifdef HAS_MKL
-void tk::echoMKL(const tk::Print& print, const std::string& title)
-//******************************************************************************
-//  Echo MKL (Intel Math Kernel Library) version information
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  MKLVersion vmkl;
-  mkl_get_version( &vmkl );
-
-  std::stringstream version;
-  version << vmkl.MajorVersion << "."
-          << vmkl.MinorVersion << "."
-          << vmkl.UpdateVersion;
-
-  print.subsection(title);
-  print.item("Version", version.str());
-  print.item("Status", vmkl.ProductStatus);
-  print.item("Build", vmkl.Build);
-  print.item("Platform", vmkl.Platform);
-  print.item("Processor", vmkl.Processor);
-}
-#endif
-
-void tk::echoBoost(const tk::Print& print, const std::string& title)
-//******************************************************************************
-//  Echo Boost C++ libraries version information
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::stringstream version;
-  version << (BOOST_VERSION / 100000) << "."
-          << ((BOOST_VERSION / 100) % 1000) << "."
-          << (BOOST_VERSION % 100);
-
-  print.subsection(title);
-  print.item("Version", version.str());
-}
-
-void tk::echoOpenMP(const tk::Print& print, const std::string& title)
-//******************************************************************************
-//  Echo OpenMP runtime version information
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::stringstream version;
-  #ifdef _OPENMP
-  version << _OPENMP;
-  #else
-  version << "n/a";
-  #endif
-
-  print.subsection(title);
-  print.item("Version", version.str());
 }
 
 void tk::echoHeader(const Print& print, const std::string& title)

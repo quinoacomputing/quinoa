@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:49:22 AM MST
+  \date      Wed Mar 19 08:05:20 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -11,23 +11,12 @@
 #ifndef Driver_h
 #define Driver_h
 
-#include <list>
-#include <map>
-
-#include <Options/RNG.h>
-#include <RNG.h>
-#include <RNGSSE.h>
-#include <tkTypes.h>
-
 namespace tk {
 
-//! Random number generator factory type
-using RNGFactory = std::map< tk::ctr::RNGType, std::function<tk::RNG*()> >;
-
-//! Driver base class
+//! Driver base
 class Driver {
 
-  public:
+  protected:
     //! Constructor
     explicit Driver() = default;
 
@@ -36,14 +25,6 @@ class Driver {
 
     //! Execute
     virtual void execute() const = 0;
-
-    //! Register random number generators into factory
-    void initRNGFactory( tk::RNGFactory& factory,
-                         int nthreads,
-                         #ifdef HAS_MKL
-                         const tk::ctr::MKLRNGParameters& mklparam,
-                         #endif
-                         const tk::ctr::RNGSSEParameters& rngsseparam );
 
   private:
     //! Don't permit copy constructor
@@ -54,18 +35,6 @@ class Driver {
     Driver(Driver&&) = delete;
     //! Don't permit move assignment
     Driver& operator=(Driver&&) = delete;
-
-   #ifdef HAS_MKL
-   //! Register MKL RNGs into factory
-   void regMKL( tk::RNGFactory& factory,
-                int nthreads,
-                const tk::ctr::MKLRNGParameters& mklparam );
-   #endif
-
-   //! Register RNGSSE RNGs into factory
-   void regRNGSSE( tk::RNGFactory& factory,
-                   int nthreads,
-                   const tk::ctr::RNGSSEParameters& param );
 };
 
 } // namespace tk

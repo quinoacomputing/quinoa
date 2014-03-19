@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Main/Driver.C
+  \file      src/Main/RNGDriver.C
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 07:01:22 AM MST
+  \date      Wed Mar 19 08:04:41 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Driver base
-  \details   Driver base
+  \brief     Driver with RNGs
+  \details   Driver with RNGs
 */
 //******************************************************************************
 
@@ -23,7 +23,7 @@ extern "C" {
   #include <mrg32k3a.h>
 }
 
-#include <Driver.h>
+#include <RNGDriver.h>
 
 #ifdef HAS_MKL
 #include <MKLRNG.h>
@@ -31,15 +31,15 @@ extern "C" {
 
 #include <Factory.h>
 
-using tk::Driver;
+using tk::RNGDriver;
 
 void
-Driver::initRNGFactory( tk::RNGFactory& factory,
-                        int nthreads,
-                        #ifdef HAS_MKL
-                        const tk::ctr::MKLRNGParameters& mklparam,
-                        #endif
-                        const tk::ctr::RNGSSEParameters& rngsseparam )
+RNGDriver::initRNGFactory( tk::RNGFactory& factory,
+                           int nthreads,
+                           #ifdef HAS_MKL
+                           const tk::ctr::MKLRNGParameters& mklparam,
+                           #endif
+                           const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
 //  Register random number generators into factory
 //! \author  J. Bakosi
@@ -53,9 +53,9 @@ Driver::initRNGFactory( tk::RNGFactory& factory,
 
 #ifdef HAS_MKL
 void
-Driver::regMKL( tk::RNGFactory& factory,
-                int nthreads,
-                const tk::ctr::MKLRNGParameters& param )
+RNGDriver::regMKL( tk::RNGFactory& factory,
+                   int nthreads,
+                   const tk::ctr::MKLRNGParameters& param )
 //******************************************************************************
 //  Register MKL random number generators into factory
 //! \author  J. Bakosi
@@ -106,9 +106,9 @@ Driver::regMKL( tk::RNGFactory& factory,
 #endif
 
 void
-Driver::regRNGSSE( tk::RNGFactory& factory,
-                   int nthreads,
-                   const tk::ctr::RNGSSEParameters& param )
+RNGDriver::regRNGSSE( tk::RNGFactory& factory,
+                      int nthreads,
+                      const tk::ctr::RNGSSEParameters& param )
 //******************************************************************************
 //  Register RNGSSE random number generators into factory
 //! \author  J. Bakosi
