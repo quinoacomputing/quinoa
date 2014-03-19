@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:23:42 AM MST
+  \date      Wed Mar 19 15:50:01 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -23,7 +23,7 @@ using tk::Exception;
 Exception::Exception(ExceptType except,
                      const std::string& message,
                      const std::string& file,
-                     const std::string& func,
+                     const std::string& function,
                      unsigned int line) noexcept
 //******************************************************************************
 //  Constructor: generate error message
@@ -38,7 +38,7 @@ try :
   m_trace(true),
 #endif
   m_file(std::move(file)),
-  m_func(std::move(func)),
+  m_func(std::move(function)),
   m_line(std::move(line)),
   m_message(std::move(message)),
   m_addrLength(0),

@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Mon 24 Feb 2014 08:46:53 PM MST
+  \date      Wed Mar 19 16:07:28 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -21,7 +21,7 @@ class TestSDE : public MonteCarlo {
 
   public:
     //! Constructor
-    explicit TestSDE( const Base& base );
+    explicit TestSDE( const Base& b );
 
     //! Destructor
     ~TestSDE() override = default;
@@ -60,7 +60,7 @@ class TestSDE : public MonteCarlo {
     void outJpdf( tk::real t );
 
     //! Initialize factories
-    void initFactories( const QuinoaPrint& print );
+    void initFactories();
 
     //! Echo information on SDE test bed
     void echo();

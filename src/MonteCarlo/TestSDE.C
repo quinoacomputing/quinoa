@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 06:26:08 PM MST
+  \date      Wed Mar 19 16:07:21 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -25,15 +25,15 @@
 
 using quinoa::TestSDE;
 
-TestSDE::TestSDE( const Base& base ) : MonteCarlo( base )
+TestSDE::TestSDE( const Base& b ) : MonteCarlo( b )
 //******************************************************************************
 //  Constructor
-//! \param[in]  base     Essentials
+//! \param[in]  b     Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
   //! Initialize factories
-  initFactories( print() );
+  initFactories();
 
   //! Instantiate SDEs
   instantiateSDE< tag::dirichlet >( ctr::SDEType::DIRICHLET );
@@ -110,6 +110,7 @@ TestSDE::advance(tk::real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  IGNORE(dt);
   #ifdef _OPENMP
   #pragma omp parallel
   #endif
@@ -155,7 +156,7 @@ IGNORE(t);
 }
 
 void
-TestSDE::initFactories(const QuinoaPrint& print)
+TestSDE::initFactories()
 //******************************************************************************
 //  Initialize factories
 //! \author  J. Bakosi
@@ -180,7 +181,7 @@ TestSDE::initFactories(const QuinoaPrint& print)
     registerSDE< TestSDE, GenDirichlet, tag::gendir, ctr::SDEType >
                ( this, ctr::SDEType::GENDIR ) );
 
-  print.optionlist( "Registered SDEs and their policies", m_SDEFactory );
+  print().optionlist( "Registered SDEs and their policies", m_SDEFactory );
 }
 
 void

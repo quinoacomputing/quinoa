@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:33:31 2014
+  \date      Wed Mar 19 15:59:51 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -118,17 +118,17 @@ class RNGTestPrint : public tk::RNGPrint {
     void test( const typename StatTest::Psize& ncomplete,
                const typename StatTest::Rsize& nfail,
                const typename StatTest::Psize& npval,
-               const typename TestContainer::value_type& test,
+               const typename TestContainer::value_type& tst,
                const typename StatTest::Psize& p ) const
     {
       // Construct info-line
       tk::Option< tk::ctr::RNG > rng;
       std::stringstream ss;
       ss << "[" << ncomplete << "/" << npval << "/" << nfail << "] "
-         << test->name(p) << ", " << rng.name(test->rng());
+         << tst->name(p) << ", " << rng.name(tst->rng());
       std::string pvalstr("pass");
       // Put in p-value if test failed
-      if (test->fail(p)) pvalstr = "fail, p-value = " + test->pvalstr(p);
+      if (tst->fail(p)) pvalstr = "fail, p-value = " + tst->pvalstr(p);
       // Output
       m_stream << m_item_widename_value_fmt
                   % m_item_indent
@@ -141,13 +141,13 @@ class RNGTestPrint : public tk::RNGPrint {
     void failed(
       const std::string& name,
       const typename std::vector< typename StatTest::Pvals >::size_type& total,
-      const typename std::vector< typename StatTest::Pvals >::size_type& failed,
+      const typename std::vector< typename StatTest::Pvals >::size_type& fail,
       const TestContainer& tests ) const
     {
       using Psize = typename StatTest::Psize;
       using Tsize = typename TestContainer::size_type;
       std::stringstream ss;
-      ss << name << " (" << failed << "/" << total << ")";
+      ss << name << " (" << fail << "/" << total << ")";
       section( ss.str() );
       raw( m_item_indent + "The following tests gave p-values outside "
                            "[0.001, 0.999]\n" +

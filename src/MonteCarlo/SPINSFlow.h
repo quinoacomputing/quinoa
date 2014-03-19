@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/SPINSFlow.h
   \author    J. Bakosi
-  \date      Mon 27 Jan 2014 03:44:45 PM MST
+  \date      Wed Mar 19 16:03:40 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Standalone-Particle Incompressible Navier-Stokes Flow
   \details   Standalone-Particle Incompressible Navier-Stokes Flow
@@ -20,7 +20,7 @@ class SPINSFlow : public Physics {
 
   public:
     //! Constructor
-    explicit SPINSFlow( const Base& base ) : Physics( base ) {
+    explicit SPINSFlow( const Base& b ) : Physics( b ) {
       ErrChk( hydro(), tk::ExceptType::FATAL, "No hydro model specified" );
     }
 

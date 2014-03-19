@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 06:25:12 PM MST
+  \date      Wed Mar 19 16:02:04 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -27,15 +27,15 @@ class MonteCarlo {
 
   public:
     //! Constructor
-    explicit MonteCarlo( const Base& base ) :
-      m_base( base ),
-      m_npar( base.control.get< tag::incpar, tag::npar >() ),
-      m_term( base.control.get< tag::incpar, tag::term >() ),
-      m_totalTime( base.timer.create("Total solution") ),
-      m_particles( m_npar, base.control.get< tag::component >().nprop() ),
-      m_statistics( base, m_particles ),
-      m_glob( base.control.get< tag::cmd, tag::io, tag::glob >() ),
-      m_stat( base.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
+    explicit MonteCarlo( const Base& b ) :
+      m_base( b ),
+      m_npar( b.control.get< tag::incpar, tag::npar >() ),
+      m_term( b.control.get< tag::incpar, tag::term >() ),
+      m_totalTime( b.timer.create("Total solution") ),
+      m_particles( m_npar, b.control.get< tag::component >().nprop() ),
+      m_statistics( b, m_particles ),
+      m_glob( b.control.get< tag::cmd, tag::io, tag::glob >() ),
+      m_stat( b.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
     {}
 
     //! Destructor

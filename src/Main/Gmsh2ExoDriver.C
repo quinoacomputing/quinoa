@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Gmsh2ExoDriver.C
   \author    J. Bakosi
-  \date      Wed Mar 19 09:00:59 2014
+  \date      Wed Mar 19 15:47:23 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2ExoDriver that drives Gmsh2Exo
   \details   Gmsh2ExoDriver that drives Gmsh2Exo
@@ -26,6 +26,9 @@ Gmsh2ExoDriver::Gmsh2ExoDriver(int argc, char** argv, const tk::Print& print)
 //! \author J. Bakosi
 //******************************************************************************
 {
+  IGNORE(argc);
+  IGNORE(argv);
+  IGNORE(print);
 }
 
 void

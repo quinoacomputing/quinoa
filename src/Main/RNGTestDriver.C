@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:56:52 AM MST
+  \date      Wed Mar 19 15:48:22 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -88,6 +88,7 @@ RNGTestDriver::initFactories(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  IGNORE(print);
   // Register batteries
 //  ctr::Battery battery;
 //  std::list< ctr::BatteryType > regBatt;

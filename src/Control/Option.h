@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Option.h
   \author    J. Bakosi
-  \date      Sun 15 Dec 2013 03:57:13 PM MST
+  \date      Wed Mar 19 15:55:13 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Option base
   \details   Option base
@@ -39,8 +39,8 @@ class Option {
     }
 
     //! Lookup option name
-    const std::string& name(typename Type::EnumType value) const {
-      return m_option.name(value);
+    const std::string& name(typename Type::EnumType val) const {
+      return m_option.name(val);
     }
 
   protected:

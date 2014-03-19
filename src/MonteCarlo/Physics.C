@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.C
   \author    J. Bakosi
-  \date      Mon 24 Feb 2014 09:01:02 PM MST
+  \date      Wed Mar 19 16:10:40 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Physics base
   \details   Physics base
@@ -17,19 +17,19 @@
 
 using quinoa::Physics;
 
-Physics::Physics( const Base& base ) : MonteCarlo( base ),
-  m_nposition( base.control.get<tag::component, tag::position>() ),
-  m_ndensity( base.control.get<tag::component, tag::mass>() ),
-  m_nvelocity( base.control.get<tag::component, tag::hydro>() ),
-  m_nscalar( base.control.get<tag::component, tag::mix>() )
+Physics::Physics( const Base& b ) : MonteCarlo( b ),
+  m_nposition( b.control.get<tag::component, tag::position>() ),
+  m_ndensity( b.control.get<tag::component, tag::mass>() ),
+  m_nvelocity( b.control.get<tag::component, tag::hydro>() ),
+  m_nscalar( b.control.get<tag::component, tag::mix>() )
 //******************************************************************************
 //  Constructor
-//! \param[in]  base     Essentials
+//! \param[in]  b     Essentials
 //! \author  J. Bakosi
 //******************************************************************************
 {
   //! Initialize factories
-  initFactories( print() );
+  initFactories();
 
   // Instantiate mass model
   if (m_ndensity) {
@@ -54,7 +54,7 @@ Physics::Physics( const Base& base ) : MonteCarlo( base ),
 }
 
 void
-Physics::initFactories(const tk::Print& print)
+Physics::initFactories()
 //******************************************************************************
 //  Initialize factories
 //! \author  J. Bakosi
@@ -82,7 +82,7 @@ Physics::initFactories(const tk::Print& print)
               std::cref( particles() ),
               comp.offset< tag::gendir >(),
               comp.get< tag::gendir >() );
-  print.list< ctr::Mix >( "Registered material mix models", m_mixFactory );
+  print().list< ctr::Mix >( "Registered material mix models", m_mixFactory );
 }
 
 void

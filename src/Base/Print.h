@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:28:29 2014
+  \date      Wed Mar 19 15:56:35 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -27,7 +27,7 @@ class Print {
 
   public:
     //! Constructor
-    explicit Print( std::ostream& stream = std::cout ) : m_stream( stream ) {}
+    explicit Print( std::ostream& str = std::cout ) : m_stream( str ) {}
 
     //! Destructor
     virtual ~Print() = default;
@@ -109,7 +109,7 @@ class Print {
 
     //! Print raw
     template< typename T >
-    void raw( const T& raw ) const { m_stream << raw; }
+    void raw( const T& r ) const { m_stream << r; }
 
     //! Raw stream access
     std::ostream& stream() const noexcept { return m_stream; }
