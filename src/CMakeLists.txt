@@ -72,13 +72,6 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 # Add compiler flags
 include(CheckCXXCompilerFlag)
 
-check_cxx_compiler_flag(-std=c++11 HAS_CPP11)
-if(HAS_CPP11)
-  add_definitions("-std=c++11")
-else()
-  MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
-endif()
-
 macro (add_compiler_flag flag)
   check_cxx_compiler_flag(${flag} COMPILER_HAS${flag})
   if(COMPILER_HAS${flag})
@@ -103,6 +96,13 @@ add_compiler_flag("-fdiagnostics-show-option")
 
 # suppress warning: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
+
+check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
+if(COMPILER_HAS_CPP11)
+  add_definitions("-std=c++11")
+else()
+  MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
+endif()
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings

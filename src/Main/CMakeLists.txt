@@ -44,8 +44,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_THREADED_LAYER_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
@@ -86,8 +86,8 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_THREADED_LAYER_LIBRARY}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
@@ -123,8 +123,8 @@ target_link_libraries(${GMSH2EXO_EXECUTABLE}
                       Base
                       Gmsh2ExoControl
                       ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_THREAD_LIBRARY}
                       ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 

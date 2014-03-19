@@ -52,8 +52,6 @@
     - Make children of SDEs optional
     - Make coefficients policies optional
     - Document what is optional
-    - Revisit MKL's link page:
-      http://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
 
 * Are cout warnings in destructors' catch blocks exception-safe?
