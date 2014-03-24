@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Mon Mar 24 13:57:36 2014
+  \date      Mon Mar 24 15:13:38 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -58,19 +58,19 @@ class GmshMesh {
     std::vector< int >& triangleId() { return m_triangleId; }
 
     //! Number of nodes accessor
-    int nnodes() const { return m_nnodes; }
+    std::size_t nnode() { return m_nodeId.size(); }
 
     //! Line elements connectivity accessor
-    std::vector<std::vector<int>>& linpoel() { return m_linpoel; }
+    std::vector< std::vector< int > >& linpoel() { return m_linpoel; }
 
     //! Line element tags accessor
-    std::vector<std::vector<int>>& lintag() { return m_lintag; }
+    std::vector< std::vector< int > >& lintag() { return m_lintag; }
 
     //! Triangles elements connectivity accessor
-    std::vector<std::vector<int>>& tinpoel() { return m_tinpoel; }
+    std::vector< std::vector< int > >& tinpoel() { return m_tinpoel; }
 
     //! Triangle element tags accessor
-    std::vector<std::vector<int>>& tritag() { return m_tritag; }
+    std::vector< std::vector< int > >& tritag() { return m_tritag; }
 
     //! Echo element tags and connectivity in all element sets
     void echoElemSets() const;
@@ -88,7 +88,6 @@ class GmshMesh {
     tk::real m_version;                      //!< Mesh version in mesh file
     int m_type;                              //!< File type in mesh file
     int m_datasize;                          //!< Data size in mesh file
-    int m_nnodes;                            //!< Number of nodes in mesh
 
     std::vector< tk::point > m_coord;        //!< Node coordinates
     std::vector< int > m_nodeId;             //!< Node Ids

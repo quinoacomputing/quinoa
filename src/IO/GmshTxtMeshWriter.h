@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:05:41 2013
+  \date      Mon Mar 24 14:49:24 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshTxtMeshWriter class declaration
   \details   GmshTxtMeshWriter class declaration
@@ -23,8 +23,7 @@ class GmshTxtMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
-    explicit GmshTxtMeshWriter(const std::string& filename,
-                               GmshMesh& mesh) :
+    explicit GmshTxtMeshWriter( const std::string& filename, GmshMesh& mesh ) :
       Writer(filename),
       m_mesh(mesh) {}
 

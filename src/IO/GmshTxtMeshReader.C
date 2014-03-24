@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.C
   \author    J. Bakosi
-  \date      Mon Mar 24 13:56:16 2014
+  \date      Mon Mar 24 15:08:27 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -21,14 +21,7 @@ using quinoa::GmshTxtMeshReader;
 GmshTxtMeshReader::GmshTxtMeshReader(const std::string filename,
                                      GmshMesh& mesh) :
   Reader(filename),
-  m_mesh(mesh),
-  m_GmshElemNodes(),
-  m_nnodes(0),
-  m_nLins(0),
-  m_nTris(0),
-  m_nodeCnt(0),
-  m_linCnt(0),
-  m_triCnt(0)
+  m_mesh(mesh)
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -136,13 +129,13 @@ GmshTxtMeshReader::readNodes()
 //******************************************************************************
 {
   // Read in number of nodes in this node set
-  int nnode;
+  std::size_t nnode;
   m_inFile >> nnode;
   ErrChk( nnode > 0, tk::ExceptType::FATAL,
           "Number of nodes must be greater than zero" );
 
   // Read in node ids and coordinates: node-number x-coord y-coord z-coord
-  for ( int i=0; i<nnode; ++i ) {
+  for ( std::size_t i=0; i<nnode; ++i ) {
     tk::point coord;
     int id;
     m_inFile >> id >> coord[0] >> coord[1] >> coord[2];
@@ -190,9 +183,9 @@ GmshTxtMeshReader::readElements()
     addElemTags( type, tags );
 
     // Read and add element node list (i.e. connectivity)
-    int nnodes = it->second;
-    std::vector< int > nodes( nnodes, 0 );
-    for (int j=0; j<nnodes; j++) {
+    int nnode = it->second;
+    std::vector< int > nodes( nnode, 0 );
+    for (int j=0; j<nnode; j++) {
       m_inFile >> nodes[j];
     }
     addElem(type, nodes);
