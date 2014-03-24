@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Mon Mar 24 13:31:07 2014
+  \date      Mon Mar 24 15:03:08 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -77,11 +77,9 @@ class GmshTxtMeshReader : public tk::Reader {
     //! Element types and their number of nodes
     std::map<int,int> m_GmshElemNodes;
 
-    int m_nnodes;                  //!< Number of nodes
-    int m_nLins;                   //!< Number of line elements
-    int m_nTris;                   //!< Number of triangle elements
+    int m_nlin;                    //!< Number of line elements
+    int m_ntri;                    //!< Number of triangle elements
 
-    int m_nodeCnt;                 //!< Counter for nodes added
     int m_linCnt;                  //!< Counter for line elems added
     int m_triCnt;                  //!< Counter for triangle elems added
 };
