@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Mon Oct  7 16:03:26 2013
+  \date      Mon Mar 24 13:57:36 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -45,54 +45,32 @@ class GmshMesh {
     //! Get mesh data size
     int getDatasize() const { return m_datasize; }
 
-    //! Allocate memory for mesh
-    void alloc(const int nnodes, const int nlins, const int ntris);
-
-    //! Reserve capacity to store element connectivities and tags
-    void reserveElem(const int nlines, const int ntriangles) noexcept;
-
-    //! Add a line element
-    void addLine(const std::vector<int>& nodes) { m_linpoel.push_back(nodes); }
-
-    //! Add a triangle element
-    void addTriangle(const std::vector<int>& nodes) {
-      m_tinpoel.push_back(nodes);
-    }
-
-    //! Add line element tags
-    void addLineTags(const std::vector<int>& tags) { m_lintag.push_back(tags); }
-
-    //! Add triangle element tags
-    void addTriangleTags(const std::vector<int>& tags) {
-      m_tritag.push_back(tags);
-    }
-
     //! Coords accessor
-    tk::real* getCoord() const { return m_coord.get(); }
+    std::vector< tk::point >& coord() { return m_coord; }
 
     //! NodeId accessor
-    int* getNodeId() const { return m_nodeId.get(); }
+    std::vector< int >& nodeId() { return m_nodeId; }
 
     //! Line element id accessor
-    int* getLineId() const { return m_lineId.get(); }
+    std::vector< int >& lineId() { return m_lineId; }
 
     //! Triangle element id accessor
-    int* getTriangleId() const { return m_triangleId.get(); }
+    std::vector< int >& triangleId() { return m_triangleId; }
 
     //! Number of nodes accessor
-    int getNnodes() const { return m_nnodes; }
+    int nnodes() const { return m_nnodes; }
 
     //! Line elements connectivity accessor
-    const std::vector<std::vector<int>> getLinpoel() const { return m_linpoel; }
+    std::vector<std::vector<int>>& linpoel() { return m_linpoel; }
 
     //! Line element tags accessor
-    const std::vector<std::vector<int>> getLintag() const { return m_lintag; }
+    std::vector<std::vector<int>>& lintag() { return m_lintag; }
 
     //! Triangles elements connectivity accessor
-    const std::vector<std::vector<int>> getTinpoel() const { return m_tinpoel; }
+    std::vector<std::vector<int>>& tinpoel() { return m_tinpoel; }
 
     //! Triangle element tags accessor
-    const std::vector<std::vector<int>> getTritag() const { return m_tritag; }
+    std::vector<std::vector<int>>& tritag() { return m_tritag; }
 
     //! Echo element tags and connectivity in all element sets
     void echoElemSets() const;
@@ -112,10 +90,10 @@ class GmshMesh {
     int m_datasize;                          //!< Data size in mesh file
     int m_nnodes;                            //!< Number of nodes in mesh
 
-    std::unique_ptr<tk::real[]> m_coord;     //!< Node coordinates
-    std::unique_ptr<int[]> m_nodeId;         //!< Node Ids
-    std::unique_ptr<int[]> m_lineId;         //!< Line element Ids
-    std::unique_ptr<int[]> m_triangleId;     //!< Triangle element Ids
+    std::vector< tk::point > m_coord;        //!< Node coordinates
+    std::vector< int > m_nodeId;             //!< Node Ids
+    std::vector< int > m_lineId;             //!< Line element Ids
+    std::vector< int > m_triangleId;         //!< Triangle element Ids
 
     std::vector<std::vector<int>> m_linpoel; //!< Line elements connectivity
     std::vector<std::vector<int>> m_tinpoel; //!< Triangle elements connectivity

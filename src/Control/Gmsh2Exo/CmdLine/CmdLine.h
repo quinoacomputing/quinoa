@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Gmsh2Exo/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:14:30 2014
+  \date      Mon Mar 24 11:20:22 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2Exo's command line
   \details   Gmsh2Exo's command line
@@ -28,7 +28,8 @@ class CmdLine :
     //! Constructor: set all defaults
     CmdLine() {
       // Default I/O parameters
-      set< tag::io, tag::control >("");
+      set< tag::io, tag::input >( "" );
+      set< tag::io, tag::output >( "out" );
     }
 
     //! Destructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Gmsh2ExoDriver.h
   \author    J. Bakosi
-  \date      Wed Mar 19 08:22:06 2014
+  \date      Mon Mar 24 12:13:31 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2ExoDriver that drives Gmsh2Exo
   \details   Gmsh2ExoDriver that drives Gmsh2Exo
@@ -12,7 +12,8 @@
 #define Gmsh2ExoDriver_h
 
 #include <Driver.h>
-#include <Base.h>
+#include <Print.h>
+#include <Gmsh2Exo/CmdLine/CmdLine.h>
 
 namespace gmsh2exo {
 
@@ -38,6 +39,8 @@ class Gmsh2ExoDriver : public tk::Driver {
     Gmsh2ExoDriver(Gmsh2ExoDriver&&) = delete;
     //! Don't permit move assignment
     Gmsh2ExoDriver& operator=(Gmsh2ExoDriver&&) = delete;
+
+    std::unique_ptr< ctr::CmdLine > m_cmdline;
 };
 
 } // gmsh2exo::

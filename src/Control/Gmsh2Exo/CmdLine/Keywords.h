@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Gmsh2Exo/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:16:15 2014
+  \date      Mon Mar 24 10:27:55 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2Exo's command line keywords
   \details   All keywords recognized by Gmsh2Exo's command line parser. The
@@ -29,8 +29,11 @@ using namespace pegtl::ascii;
 using tk::kw::cmdline_keyword;
 using tk::kw::undefined_info;
 
-// Keyword 'control', cmdline '--control' with alias '-c'
-using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;
+// Keyword 'input', cmdline '--input' with alias '-i'
+using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;
+
+// Keyword 'output', cmdline '--output' with alias '-o'
+using output = cmdline_keyword<undefined_info, o, o,u,t,p,u,t>;
 
 } // kw::
 } // gmsh2exo::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Gmsh2Exo/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed Mar 19 10:16:59 2014
+  \date      Mon Mar 24 11:21:26 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2Exo's comamnd line parser
   \details   Gmsh2Exo's comamnd line parser
@@ -47,8 +47,8 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
   print.item("Parsed command line", "success");
 
   // Make sure mandatory arguments are set
-  ErrChk( !(cmdline->get< tag::io, tag::control >().empty()),
+  ErrChk( !(cmdline->get< tag::io, tag::input >().empty()),
           tk::ExceptType::FATAL,
-          "Mandatory control file not specified. "
-          "Use '--control <filename>' or '-c <filename>'.");
+          "Mandatory input file not specified. "
+          "Use '--input <filename>' or '-i <filename>'.");
 }
