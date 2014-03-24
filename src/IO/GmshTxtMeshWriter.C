@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:19:25 AM MST
+  \date      Mon Mar 24 13:22:47 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -65,26 +65,26 @@ GmshTxtMeshWriter::writeNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outFile << "$Nodes" << std::endl;
-
-  // Get number of nodes, and pointers node ids and coordinates
-  int nnodes = m_mesh.getNnodes();
-  int* nodeId = m_mesh.getNodeId();
-  tk::real* coord = m_mesh.getCoord();
-
-  // Write out number of nodes
-  m_outFile << nnodes << std::endl;
-
-  // Write node ids and coordinates
-  for (int i=0; i<nnodes; ++i) {
-    // node-number x-coord y-coord z-coord
-    int i3 = i*3;
-    m_outFile << nodeId[i] << " " << std::setprecision(16)
-              << coord[i3] << " " << coord[i3+1] << " " << coord[i3+2]
-              << std::endl;
-  }
-
-  m_outFile << "$EndNodes" << std::endl;
+//   m_outFile << "$Nodes" << std::endl;
+// 
+//   // Get number of nodes, and pointers node ids and coordinates
+//   int nnodes = m_mesh.getNnodes();
+//   int* nodeId = m_mesh.getNodeId();
+//   tk::real* coord = m_mesh.getCoord();
+// 
+//   // Write out number of nodes
+//   m_outFile << nnodes << std::endl;
+// 
+//   // Write node ids and coordinates
+//   for (int i=0; i<nnodes; ++i) {
+//     // node-number x-coord y-coord z-coord
+//     int i3 = i*3;
+//     m_outFile << nodeId[i] << " " << std::setprecision(16)
+//               << coord[i3] << " " << coord[i3+1] << " " << coord[i3+2]
+//               << std::endl;
+//   }
+// 
+//   m_outFile << "$EndNodes" << std::endl;
 }
 
 void
@@ -94,52 +94,52 @@ GmshTxtMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using ST = std::vector<std::vector<int>>::size_type;
-
-  m_outFile << "$Elements" << std::endl;
-
-  // Get pointers to the element ids, connectivities, and tags
-  int* linId = m_mesh.getLineId();
-  int* triId = m_mesh.getTriangleId();
-  std::vector<std::vector<int>> linpoel = m_mesh.getLinpoel();
-  std::vector<std::vector<int>> lintag = m_mesh.getLintag();
-  std::vector<std::vector<int>> tinpoel = m_mesh.getTinpoel();
-  std::vector<std::vector<int>> tritag = m_mesh.getTritag();
-
-  // Get number of line and triangle elements
-  ST nlines = linpoel.size();
-  ST ntriangles = tinpoel.size();
-
-  // Write out number of nodes
-  m_outFile << nlines+ntriangles << std::endl;
-
-  // Write out line element ids, tags, and connectivity (node list)
-  for (ST i=0; i<nlines; i++) {
-    // elm-number elm-type number-of-tags < tag > ... node-number-list
-    m_outFile << linId[i] << " " << 1 << " " << lintag[i].size() << " ";
-
-    copy(lintag[i].begin(), lintag[i].end()-1,
-         std::ostream_iterator<int>(m_outFile," "));
-    m_outFile << lintag[i].back() << " ";
-
-    copy(linpoel[i].begin(), linpoel[i].end()-1,
-         std::ostream_iterator<int>(m_outFile," "));
-    m_outFile << linpoel[i].back() << std::endl;
-  }
-
-  // Write out triangle element ids, tags, and connectivity (node list)
-  for (ST i=0; i<ntriangles; i++) {
-    // elm-number elm-type number-of-tags < tag > ... node-number-list
-    m_outFile << triId[i] << " " << 2 << " " << tritag[i].size() << " ";
-
-    copy(tritag[i].begin(), tritag[i].end()-1,
-         std::ostream_iterator<int>(m_outFile," "));
-    m_outFile << tritag[i].back() << " ";
-
-    copy(tinpoel[i].begin(), tinpoel[i].end()-1,
-         std::ostream_iterator<int>(m_outFile," "));
-    m_outFile << tinpoel[i].back() << std::endl;
-  }
-
-  m_outFile << "$EndElements" << std::endl;
+//   using ST = std::vector<std::vector<int>>::size_type;
+// 
+//   m_outFile << "$Elements" << std::endl;
+// 
+//   // Get pointers to the element ids, connectivities, and tags
+//   int* linId = m_mesh.getLineId();
+//   int* triId = m_mesh.getTriangleId();
+//   std::vector<std::vector<int>> linpoel = m_mesh.getLinpoel();
+//   std::vector<std::vector<int>> lintag = m_mesh.getLintag();
+//   std::vector<std::vector<int>> tinpoel = m_mesh.getTinpoel();
+//   std::vector<std::vector<int>> tritag = m_mesh.getTritag();
+// 
+//   // Get number of line and triangle elements
+//   ST nlines = linpoel.size();
+//   ST ntriangles = tinpoel.size();
+// 
+//   // Write out number of nodes
+//   m_outFile << nlines+ntriangles << std::endl;
+// 
+//   // Write out line element ids, tags, and connectivity (node list)
+//   for (ST i=0; i<nlines; i++) {
+//     // elm-number elm-type number-of-tags < tag > ... node-number-list
+//     m_outFile << linId[i] << " " << 1 << " " << lintag[i].size() << " ";
+// 
+//     copy(lintag[i].begin(), lintag[i].end()-1,
+//          std::ostream_iterator<int>(m_outFile," "));
+//     m_outFile << lintag[i].back() << " ";
+// 
+//     copy(linpoel[i].begin(), linpoel[i].end()-1,
+//          std::ostream_iterator<int>(m_outFile," "));
+//     m_outFile << linpoel[i].back() << std::endl;
+//   }
+// 
+//   // Write out triangle element ids, tags, and connectivity (node list)
+//   for (ST i=0; i<ntriangles; i++) {
+//     // elm-number elm-type number-of-tags < tag > ... node-number-list
+//     m_outFile << triId[i] << " " << 2 << " " << tritag[i].size() << " ";
+// 
+//     copy(tritag[i].begin(), tritag[i].end()-1,
+//          std::ostream_iterator<int>(m_outFile," "));
+//     m_outFile << tritag[i].back() << " ";
+// 
+//     copy(tinpoel[i].begin(), tinpoel[i].end()-1,
+//          std::ostream_iterator<int>(m_outFile," "));
+//     m_outFile << tinpoel[i].back() << std::endl;
+//   }
+// 
+//   m_outFile << "$EndElements" << std::endl;
 }

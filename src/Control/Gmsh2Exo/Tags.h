@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Gmsh2Exo/Tags.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:12:31 2014
+  \date      Mon Mar 24 10:31:32 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2Exo's input deck tags
   \details   Gmsh2Exo's input deck tags
@@ -15,7 +15,8 @@ namespace gmsh2exo {
 namespace tag {
 
 struct io {};
-struct control {};
+struct input {};
+struct output {};
 
 } // tag::
 } // gmsh2exo::

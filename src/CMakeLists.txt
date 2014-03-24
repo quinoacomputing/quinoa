@@ -79,6 +79,7 @@ macro (add_compiler_flag flag)
   endif()
 endmacro (add_compiler_flag)
 
+# Try and use the following arguments for all compilers
 add_compiler_flag("-Wall")
 add_compiler_flag("-Wpedantic")
 add_compiler_flag("-Wextra")
@@ -94,7 +95,7 @@ add_compiler_flag("-Woverloaded-virtual")
 add_compiler_flag("-ansi")
 add_compiler_flag("-fdiagnostics-show-option")
 
-# suppress warning: ISO C++ forbids variable length array
+# Suppress warning for all compilers: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
 
 check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)

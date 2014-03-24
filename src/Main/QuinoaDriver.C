@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:57:23 AM MST
+  \date      Mon Mar 24 10:20:09 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -42,7 +42,7 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   // Parse input deck into m_control, transfer cmdline (no longer needed)
   InputDeckParser inputdeckParser(print, std::move(cmdline), m_control);
 
-  // Create pretty printer
+  // Create essentials
   m_print = tk::make_unique< QuinoaPrint >( m_control );
   m_paradigm = tk::make_unique< tk::Paradigm >( print );
   m_timer = tk::make_unique< tk::Timer >();

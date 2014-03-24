@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Gmsh2Exo/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:18:37 2014
+  \date      Mon Mar 24 10:29:37 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2Exo's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -38,17 +38,17 @@ namespace cmd {
 
   // Gmsh2Exo's CmdLine grammar
 
-  //! control (i.e., input deck) file
-  struct control :
+  //! io parameter
+  template< typename keyword, typename io_tag >
+  struct io :
          tk::grm::process_cmd< Stack,
-                               kw::control,
-                               tk::grm::Store< Stack,
-                                               tag::io,
-                                               tag::control > > {};
+                               keyword,
+                               tk::grm::Store< Stack, tag::io, io_tag > > {};
 
   //! command line keywords
   struct keywords :
-         pegtl::sor< control > {};
+         pegtl::sor< io< kw::input, tag::input >,
+                     io< kw::output, tag::output > > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :

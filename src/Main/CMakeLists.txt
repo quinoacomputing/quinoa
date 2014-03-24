@@ -121,6 +121,8 @@ endif()
 
 target_link_libraries(${GMSH2EXO_EXECUTABLE}
                       Base
+                      IO
+                      Mesh
                       Gmsh2ExoControl
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
