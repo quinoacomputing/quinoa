@@ -146,29 +146,6 @@ ExternalProject_Add_Step(
           ${TPL_INSTALL_DIR}/include/boost/mpl
 )
 
-##### Trilinos #################################################################
-## http://trilinos.sandia.gov
-#ExternalProject_Add(
-#  trilinos
-#  PREFIX trilinos
-#  URL ${PROJECT_SOURCE_DIR}/trilinos-11.2.4-Source.tar.gz
-#  URL_MD5 29abd4c5bd4bb39aef87e151bfe12541
-#  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-#             -D Trilinos_ENABLE_Zoltan:BOOL=ON
-#             -D TPL_ENABLE_MPI:BOOL=ON
-#             -D Trilinos_ENABLE_Fortran:BOOL=OFF
-#             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-#             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-#             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-#             -D CMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
-#             -D CMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
-#             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
 #### HDF5 serial ###############################################################
 # http://www.hdfgroup.org/HDF5
 ExternalProject_Add(
@@ -227,6 +204,76 @@ ExternalProject_Add(
 #  LOG_INSTALL 1
 #)
 
+#### zlib ######################################################################
+# http://www.zlib.net
+ExternalProject_Add(
+  zlib
+  PREFIX zlib
+  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
+  URL_MD5 44d667c142d7cda120332623eab69f40
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+#### NETCDF ####################################################################
+## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+ExternalProject_Add(
+  netcdf
+  DEPENDS hdf5ser
+  PREFIX netcdf
+  URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.1.1.tar.gz
+  URL_MD5 275c3b839088674c2f00fb3ac264bf11
+  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
+                    CC=${UNDERLYING_C_COMPILER}
+                    CFLAGS=${CMAKE_C_FLAGS}
+                    CPPFLAGS=${CMAKE_CXX_FLAGS}
+                    CPPFLAGS=-I${TPL_INSTALL_DIR}/hdf5ser/include
+                    LDFLAGS=-L${TPL_INSTALL_DIR}/hdf5ser/lib
+                    --disable-examples
+                    --enable-netcdf4
+                    --prefix=${TPL_INSTALL_DIR}
+  BUILD_IN_SOURCE 1
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
+##### Trilinos #################################################################
+## http://trilinos.sandia.gov
+ExternalProject_Add(
+  trilinos
+  DEPENDS netcdf
+  PREFIX trilinos
+  URL ${PROJECT_SOURCE_DIR}/trilinos-11.6.1-Source.tar.gz
+  URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
+  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+             -D Trilinos_ENABLE_Fortran:BOOL=OFF
+             -D Trilinos_ENABLE_Zoltan:BOOL=ON
+             -D TPL_ENABLE_MPI:BOOL=ON
+             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
+             -D TPL_ENABLE_Netcdf:BOOL=ON
+             -D Netcdf_LIBRARY_DIRS:PATH=${TPL_INSTALL_DIR}/lib
+             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${TPL_INSTALL_DIR}/include
+             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+             -D CMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+             -D CMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
+             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_INSTALL 1
+)
+
 #### Silo #####################################################################
 # https://wci.llnl.gov/codes/silo
 ExternalProject_Add(
@@ -262,23 +309,6 @@ ExternalProject_Add(
                     CFLAGS=${CFLAGS}
                     CXXFLAGS=${CXXFLAGS}
                     --prefix=${TPL_INSTALL_DIR}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
-
-#### zlib ######################################################################
-# http://www.zlib.net
-ExternalProject_Add(
-  zlib
-  PREFIX zlib
-  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
-  URL_MD5 44d667c142d7cda120332623eab69f40
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
-                    --prefix=${TPL_INSTALL_DIR}
-  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -386,8 +416,8 @@ ExternalProject_Add(
                     --enable-research-transports
                     --enable-skel-timing
                     --with-mxml=${TPL_INSTALL_DIR}
-                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
                     --with-phdf5=${TPL_INSTALL_DIR}/hdf5par
+                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
                     --with-zlib=${TPL_INSTALL_DIR}
                     --with-bzip2=${TPL_INSTALL_DIR}
                     --with-szip=${TPL_INSTALL_DIR}
