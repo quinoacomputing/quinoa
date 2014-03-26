@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed Mar 19 15:50:01 2014
+  \date      Wed Mar 26 13:52:12 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -193,11 +193,11 @@ Exception::echo(const char* msg) noexcept
   printf("\n>>> %s: %s\n", msg, what());
 
   if (m_trace) {
-    printf(">>> CALL TRACE: ==================================================="
-           "==\n");
+    printf(">>> CALL TRACE: (turn off: CMAKE_BUILD_TYPE=RELEASE) =============="
+           "=============\n");
     echoTrace();
-    printf(">>> ==============================================================="
-           "==\n");
+    printf(">>> END OF CALL TRACE (turn off: CMAKE_BUILD_TYPE=RELEASE) ========"
+           "=============\n");
   }
 }
 
