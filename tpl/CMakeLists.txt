@@ -21,10 +21,15 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# Set install directory based on compiler ID
-string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-set(TPL_INSTALL_DIR "${PROJECT_SOURCE_DIR}/install/${COMP}")
-MESSAGE(STATUS "Third-party library install dir: " ${TPL_INSTALL_DIR})
+# Set install directory based on compiler ID if was not given on command line
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
+  set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install/${COMP}" CACHE STRING
+      "Third-party install prefix." FORCE)
+  message(STATUS "CMAKE_INSTALL_PREFIX not specified, setting to '${PROJECT_SOURCE_DIR}/install/${COMP}'")
+else()
+  message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
+endif()
 
 # Set Boost's default toolset
 set(BOOST_TOOLSET ${COMP})
@@ -101,7 +106,7 @@ ExternalProject_Add_Step(
   DEPENDEES download
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}/include
-          ${TPL_INSTALL_DIR}/include/pegtl
+          ${CMAKE_INSTALL_PREFIX}/include/pegtl
 )
 
 #### Boost ####################################################################
@@ -112,9 +117,10 @@ ExternalProject_Add(
   URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
   URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
                     --with-libraries=system
-  BUILD_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam toolset=${BOOST_TOOLSET}
+  BUILD_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
+                toolset=${BOOST_TOOLSET}
   INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam install
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
@@ -143,7 +149,7 @@ ExternalProject_Add_Step(
   DEPENDEES download
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${SOURCE_DIR}/boost/mpl
-          ${TPL_INSTALL_DIR}/include/boost/mpl
+          ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
 )
 
 #### HDF5 serial ###############################################################
@@ -155,8 +161,8 @@ ExternalProject_Add(
   URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
                     CC=${UNDERLYING_C_COMPILER}
-                    CFLAGS=${CMAKE_C_FLAGS}
-                    --prefix=${TPL_INSTALL_DIR}/hdf5ser
+                    CFLAGS=${CFLAGS}
+                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5ser
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -173,9 +179,9 @@ ExternalProject_Add(
   URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
                     CC=${MPI_C_COMPILER}
-                    CFLAGS=${CMAKE_C_FLAGS}
+                    CFLAGS=${CFLAGS}
                     --enable-parallel
-                    --prefix=${TPL_INSTALL_DIR}/hdf5par
+                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5par
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -193,10 +199,10 @@ ExternalProject_Add(
 #  URL_MD5 327c63d198e38a12565b74cffdf1f9d7
 #  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/h5part/src/h5part/configure
 #                    CC=${MPI_C_COMPILER}
-#                    CFLAGS=${CMAKE_C_FLAGS}
+#                    CFLAGS=${CFLAGS}
 #                    --enable-parallel
-#                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
-#                    --prefix=${TPL_INSTALL_DIR}
+#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
 #  BUILD_IN_SOURCE 1
 #  LOG_DOWNLOAD 1
 #  LOG_CONFIGURE 1
@@ -212,7 +218,7 @@ ExternalProject_Add(
   URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
   URL_MD5 44d667c142d7cda120332623eab69f40
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
@@ -231,13 +237,13 @@ ExternalProject_Add(
   URL_MD5 275c3b839088674c2f00fb3ac264bf11
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
                     CC=${UNDERLYING_C_COMPILER}
-                    CFLAGS=${CMAKE_C_FLAGS}
-                    CPPFLAGS=${CMAKE_CXX_FLAGS}
-                    CPPFLAGS=-I${TPL_INSTALL_DIR}/hdf5ser/include
-                    LDFLAGS=-L${TPL_INSTALL_DIR}/hdf5ser/lib
+                    CFLAGS=${CFLAGS}
+                    CPPFLAGS=${CXXFLAGS}
+                    CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/hdf5ser/include
+                    LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
                     --disable-examples
                     --enable-netcdf4
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -260,14 +266,14 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${TPL_INSTALL_DIR}/lib
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${TPL_INSTALL_DIR}/include
+             -D Netcdf_LIBRARY_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/lib
+             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/include
              -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
              -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
-             -D CMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
@@ -284,11 +290,11 @@ ExternalProject_Add(
   URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
                     CC=${MPI_C_COMPILER}
-                    CFLAGS=${CMAKE_C_FLAGS}
+                    CFLAGS=${CFLAGS}
                     --enable-optimization
                     --disable-silex
-                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser/include,${TPL_INSTALL_DIR}/hdf5ser/lib
-                    --prefix=${TPL_INSTALL_DIR}
+                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser/include,${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -308,7 +314,7 @@ ExternalProject_Add(
                     CXX=${UNDERLYING_CXX_COMPILER}
                     CFLAGS=${CFLAGS}
                     CXXFLAGS=${CXXFLAGS}
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -327,7 +333,7 @@ ExternalProject_Add(
   BUILD_COMMAND make
                 CC=${UNDERLYING_C_COMPILER}
                 CFLAGS=${CFLAGS}
-                PREFIX=${TPL_INSTALL_DIR}
+                PREFIX=${CMAKE_INSTALL_PREFIX}
                 install
   INSTALL_COMMAND ""
   BUILD_IN_SOURCE 1
@@ -351,7 +357,7 @@ ExternalProject_Add(
                     CFLAGS=${CFLAGS}
                     CXXFLAGS=${CXXFLAGS}
                     FFLAGS=${FFLAGS}
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -366,15 +372,15 @@ ExternalProject_Add(
   PREFIX isobar
   URL ${PROJECT_SOURCE_DIR}/isobar.0.3.0.tgz
   URL_MD5 86d123b7028ed238c0e6e49c22e7272c
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${TPL_INSTALL_DIR}/lib
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${TPL_INSTALL_DIR}/include
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
   BUILD_COMMAND make install
   INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
                   ${PROJECT_BINARY_DIR}/isobar/src/isobar/lib/libisobar.a
-                  ${TPL_INSTALL_DIR}/lib
+                  ${CMAKE_INSTALL_PREFIX}/lib
           COMMAND ${CMAKE_COMMAND} -E copy
                   ${PROJECT_BINARY_DIR}/isobar/src/isobar/include/isobar.h
-                  ${TPL_INSTALL_DIR}/include
+                  ${CMAKE_INSTALL_PREFIX}/include
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -391,7 +397,7 @@ ExternalProject_Add(
   URL_MD5 3e9749efb42a3d4d3165e884456812bc
   CONFIGURE_COMMAND ""
   BUILD_COMMAND make CXX=${UNDERLYING_CXX_COMPILER} CXXLAGS=${CXXFLAGS}
-  INSTALL_COMMAND make install prefix=${TPL_INSTALL_DIR}
+  INSTALL_COMMAND make install prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -415,15 +421,15 @@ ExternalProject_Add(
                     --disable-fortran
                     --enable-research-transports
                     --enable-skel-timing
-                    --with-mxml=${TPL_INSTALL_DIR}
-                    --with-phdf5=${TPL_INSTALL_DIR}/hdf5par
-                    --with-hdf5=${TPL_INSTALL_DIR}/hdf5ser
-                    --with-zlib=${TPL_INSTALL_DIR}
-                    --with-bzip2=${TPL_INSTALL_DIR}
-                    --with-szip=${TPL_INSTALL_DIR}
-                    --with-isobar=${TPL_INSTALL_DIR}
-                    --with-aplod=${TPL_INSTALL_DIR}
-                    --prefix=${TPL_INSTALL_DIR}
+                    --with-mxml=${CMAKE_INSTALL_PREFIX}
+                    --with-phdf5=${CMAKE_INSTALL_PREFIX}/hdf5par
+                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
+                    --with-zlib=${CMAKE_INSTALL_PREFIX}
+                    --with-bzip2=${CMAKE_INSTALL_PREFIX}
+                    --with-szip=${CMAKE_INSTALL_PREFIX}
+                    --with-isobar=${CMAKE_INSTALL_PREFIX}
+                    --with-aplod=${CMAKE_INSTALL_PREFIX}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -441,7 +447,7 @@ ExternalProject_Add(
   URL_MD5 b78981ae65c3d801e2b878f2a38084b8
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
-             -D CMAKE_INSTALL_PREFIX:PATH=${TPL_INSTALL_DIR}
+             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
@@ -461,7 +467,7 @@ ExternalProject_Add(
                     CXX=${UNDERLYING_CXX_COMPILER}
                     F77=${UNDERLYING_FORTRAN_COMPILER}
                     CFLAGS=-Wno-error=return-type
-                    --prefix=${TPL_INSTALL_DIR}
+                    --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -487,7 +493,7 @@ ExternalProject_Add(
 #                    CXX=${UNDERLYING_CXX_COMPILER}
 #                    F77=${UNDERLYING_FORTRAN_COMPILER}
 #                    CFLAGS=-Wno-error=return-type
-#                    --prefix=${TPL_INSTALL_DIR}
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
 #  BUILD_IN_SOURCE 1
 #  LOG_DOWNLOAD 1
 #  LOG_CONFIGURE 1
