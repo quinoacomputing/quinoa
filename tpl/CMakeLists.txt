@@ -8,6 +8,10 @@ include(ExternalProject)
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
+# Disallow in-source builds
+include(DisallowInSourceBuilds)
+disallow_in_source_builds()
+
 # Find MPI and get its underlying compilers
 include(GetMPICompilers)
 get_mpi_compilers()
