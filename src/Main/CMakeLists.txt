@@ -105,6 +105,7 @@ add_executable(${GMSH2EXO_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
+               TPLInfo/ExodusII.C
                Gmsh2ExoDriver.C
                Gmsh2Exo.C
 )
