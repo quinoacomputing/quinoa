@@ -21,9 +21,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+# Set compiler id
+string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
+
 # Set install directory based on compiler ID if was not given on command line
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
   set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}/install/${COMP}" CACHE STRING
       "Third-party install prefix." FORCE)
   message(STATUS "CMAKE_INSTALL_PREFIX not specified, setting to '${PROJECT_SOURCE_DIR}/install/${COMP}'")
@@ -33,6 +35,9 @@ endif()
 
 # Set Boost's default toolset
 set(BOOST_TOOLSET ${COMP})
+
+# Set Boost's default build type
+string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
@@ -119,9 +124,14 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
                     --prefix=${CMAKE_INSTALL_PREFIX}
                     --with-libraries=system
-  BUILD_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
-                toolset=${BOOST_TOOLSET}
-  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam install
+  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
+                  toolset=${BOOST_TOOLSET}
+                  variant=${BOOST_BUILD_TYPE}
+                  cxxflags=${CXXFLAGS}
+                  cflags=${CFLAGS}
+                  --debug-building
+                  install
+  BUILD_COMMAND ""
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
