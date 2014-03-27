@@ -1,0 +1,78 @@
+Algorithm design:
+=================
+
+It is essential that the algorithms are aware of (and optimize for) the three
+(sometimes opposing) requirements:
+
+1. Performance (e.g., maximize FLOPS, minimize communication)
+
+2. Correctness (e.g., resilience against errors, fault tolerance)
+
+3. Power consumption
+
+Requirements:
+-------------
+Preferably, some kind of runtime mechanism should monitor all three aspects and
+dynamically influence the algorithm (e.g., performance: autotuning,
+redistribution; correctness/resilience: dynamic load-balancing on node failure;
+power: redistribution?). This requires good metrics and means of their
+measurements. We need to use libraries for measurements which must be portable.
+This capability must be designed into the algorithms preferably from the outset.
+
+Compile-time (user-selected), i.e., static, strategies (goals) are acceptable,
+but eventually the best would be a dynamically adapting behavior with respect to
+changes of the above three stacks based on runtime measurements and/or user
+input (based on either per problem or compile-time settings or both).
+
+Adaptation and its influence on the whole should be possible to turn off
+(preferably individually, i.e., one out of the three) at compile time for
+testing and debugging purposes.
+
+Options for runtime performance measurement:
+============================================
+
+1. Performance Application Programming Interface (PAPI)
+   ----------------------------------------------------
+   http://icl.cs.utk.edu/papi
+
+   Status: Seems to be pretty advanced, well-maintained, supporting many current
+   architectures.
+
+Options for runtime correctness/resilience measurement and fault tolerance:
+===========================================================================
+
+1. Fault-Tolerant MPI
+   ------------------
+   http://icl.cs.utk.edu/ftmpi
+
+2. Open MPI with Fault Tolerance Backplane (FTB)
+   ---------------------------------------------
+   http://www.crest.iu.edu/research/ft
+
+   Status: Already part of OpenMPI since v1.5.3, disabled by default.
+
+Options for runtime power measurement:
+======================================
+
+1. Likwid: lightweight performance tools
+   -------------------------------------
+   https://code.google.com/p/likwid
+
+   Likwid contains likwid-powermeter, which can read energy consumption of
+   processors and memory through MSR registers.
+
+   Status: API is not available, i.e., can only be used to measure the whole
+   application externally. Developer is very responsive, might be persuaded to
+   release library and API.
+
+2. Intel Power Gadget: power usage monitoring tool
+   -----------------------------------------------
+   http://software.intel.com/en-us/articles/intel-power-gadget-20
+
+   Power Gadget includes an application, driver, and libraries to monitor and
+   estimate real-time processor package power information in watts using the
+   energy counters in the processor on various platforms including notebooks,
+   desktops, and servers.
+
+   Status: Documentation does not exist, the linux library compiles but the
+   executable fails to compile.
