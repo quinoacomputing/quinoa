@@ -9,6 +9,10 @@ set(CMAKE_VERBOSE_MAKEFILE 1)
 # Quinoa cmake modules directory
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
+# Disallow in-source builds
+include(DisallowInSourceBuilds)
+disallow_in_source_builds()
+
 # Set version number: major.minor
 set(MAJOR_VER 0)
 set(MINOR_VER 1)
