@@ -457,6 +457,7 @@ ExternalProject_Add(
   URL_MD5 b78981ae65c3d801e2b878f2a38084b8
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
+             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -477,6 +478,9 @@ ExternalProject_Add(
                     CXX=${UNDERLYING_CXX_COMPILER}
                     F77=${UNDERLYING_FORTRAN_COMPILER}
                     CFLAGS=-Wno-error=return-type
+                    CPPFLAGS=${CFLAGS}
+                    CXXFLAGS=${CXXFLAGS}
+                    FFLAGS=${FFLAGS}
                     --prefix=${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
@@ -503,6 +507,9 @@ ExternalProject_Add(
 #                    CXX=${UNDERLYING_CXX_COMPILER}
 #                    F77=${UNDERLYING_FORTRAN_COMPILER}
 #                    CFLAGS=-Wno-error=return-type
+#                    CPPFLAGS=${CFLAGS}
+#                    CXXFLAGS=${CXXFLAGS}
+#                    FFLAGS=${FFLAGS}
 #                    --prefix=${CMAKE_INSTALL_PREFIX}
 #  BUILD_IN_SOURCE 1
 #  LOG_DOWNLOAD 1
