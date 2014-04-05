@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.h
   \author    J. Bakosi
-  \date      Wed Mar 19 07:59:31 2014
+  \date      Thu Mar 27 17:07:23 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -17,6 +17,7 @@
 #include <Options/RNG.h>
 #include <RNG.h>
 #include <RNGSSE.h>
+#include <Driver.h>
 #include <tkTypes.h>
 
 namespace tk {
@@ -25,7 +26,7 @@ namespace tk {
 using RNGFactory = std::map< tk::ctr::RNGType, std::function<tk::RNG*()> >;
 
 //! RNGDriver
-class RNGDriver {
+class RNGDriver : public Driver {
 
   public:
     //! Constructor

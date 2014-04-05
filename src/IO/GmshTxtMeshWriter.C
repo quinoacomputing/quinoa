@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshWriter.C
   \author    J. Bakosi
-  \date      Mon Mar 24 15:18:18 2014
+  \date      Sat 05 Apr 2014 01:57:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -93,17 +93,20 @@ GmshTxtMeshWriter::writeElements()
   m_outFile << "$Elements" << std::endl;
 
   // Get pointers to the element ids, connectivities, and tags
-  auto& linpoel = m_mesh.linpoel();
+  auto& lininpoel = m_mesh.lininpoel();
   auto& lintag = m_mesh.lintag();
-  auto& tinpoel = m_mesh.tinpoel();
+  auto& triinpoel = m_mesh.triinpoel();
   auto& tritag = m_mesh.tritag();
+  auto& tetinpoel = m_mesh.tetinpoel();
+  auto& tettag = m_mesh.tettag();
 
-  // Get number of line and triangle elements
-  ST nlines = linpoel.size();
-  ST ntriangles = tinpoel.size();
+  // Get number of elements
+  ST nlines = lininpoel.size();
+  ST ntriangles = triinpoel.size();
+  ST ntetrahedra = tetinpoel.size();
 
-  // Write out number of nodes
-  m_outFile << nlines+ntriangles << std::endl;
+  // Write out number of elements
+  m_outFile << nlines + ntriangles + ntetrahedra << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
   for (ST i=0; i<nlines; i++) {
@@ -115,9 +118,9 @@ GmshTxtMeshWriter::writeElements()
           std::ostream_iterator< int >( m_outFile, " " ) );
     m_outFile << lintag[i].back() << " ";
 
-    copy( linpoel[i].begin(), linpoel[i].end()-1,
+    copy( lininpoel[i].begin(), lininpoel[i].end()-1,
           std::ostream_iterator< int >( m_outFile, " ") );
-    m_outFile << linpoel[i].back() << std::endl;
+    m_outFile << lininpoel[i].back() << std::endl;
   }
 
   // Write out triangle element ids, tags, and connectivity (node list)
@@ -130,9 +133,24 @@ GmshTxtMeshWriter::writeElements()
          std::ostream_iterator<int>(m_outFile," "));
     m_outFile << tritag[i].back() << " ";
 
-    copy(tinpoel[i].begin(), tinpoel[i].end()-1,
+    copy(triinpoel[i].begin(), triinpoel[i].end()-1,
          std::ostream_iterator<int>(m_outFile," "));
-    m_outFile << tinpoel[i].back() << std::endl;
+    m_outFile << triinpoel[i].back() << std::endl;
+  }
+
+  // Write out terahedron element ids, tags, and connectivity (node list)
+  for (ST i=0; i<ntetrahedra; i++) {
+    // elm-number elm-type number-of-tags < tag > ... node-number-list
+    m_outFile << m_mesh.tetrahedronId()[i] << " " << 4 << " "
+              << tettag[i].size() << " ";
+
+    copy(tettag[i].begin(), tettag[i].end()-1,
+         std::ostream_iterator<int>(m_outFile," "));
+    m_outFile << tettag[i].back() << " ";
+
+    copy(tetinpoel[i].begin(), tetinpoel[i].end()-1,
+         std::ostream_iterator<int>(m_outFile," "));
+    m_outFile << tetinpoel[i].back() << std::endl;
   }
 
   m_outFile << "$EndElements" << std::endl;
