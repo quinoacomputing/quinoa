@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshTxtMeshReader.h
   \author    J. Bakosi
-  \date      Mon Mar 24 15:03:08 2014
+  \date      Sat 05 Apr 2014 12:03:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -45,23 +45,11 @@ class GmshTxtMeshReader : public tk::Reader {
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
 
-    //! Count up elements, nodes, physicals
-    void count();
-
-    //! Read "$Nodes--$EndNodes" section and count nodes
-    void countNodes();
-
     //! Read "$Nodes--$EndNodes" section
     void readNodes();
 
-    //! Read "$Elements--$EndElements" section and count elements
-    void countElements();
-
     //! Read "$Elements--$EndElements" section
     void readElements();
-
-    //! Read "$PhysicalNames--$EndPhysicalNames" section and count physicals
-    void countPhysicalNames();
 
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
@@ -76,12 +64,6 @@ class GmshTxtMeshReader : public tk::Reader {
 
     //! Element types and their number of nodes
     std::map<int,int> m_GmshElemNodes;
-
-    int m_nlin;                    //!< Number of line elements
-    int m_ntri;                    //!< Number of triangle elements
-
-    int m_linCnt;                  //!< Counter for line elems added
-    int m_triCnt;                  //!< Counter for triangle elems added
 };
 
 } // quinoa::

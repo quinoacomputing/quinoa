@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:50:45 2014
+  \date      Sat 05 Apr 2014 12:39:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -17,25 +17,6 @@
 #include <Exception.h>
 
 namespace tk {
-
-// Operators defined outside of class (still in namespace tk) to equate operator
-// scope with that of enums
-
-//! Operator << for writing Enum to output streams
-template< typename Enum, typename Ch, typename Tr >
-std::basic_ostream<Ch,Tr>& operator<< (std::basic_ostream<Ch,Tr>& os, Enum e) {
-  os << static_cast<unsigned int>(e);
-  return os;
-}
-
-//! Operator + for adding Enum to a std::string
-template< typename Enum, typename Ch, typename Tr >
-std::basic_string<Ch,Tr> operator+ (const std::basic_string<Ch,Tr>& lhs,
-                                    Enum e) {
-  std::stringstream ss;
-  ss << lhs << e;
-  return ss.str();
-}
 
 template< typename Enum >
 class Toggle {

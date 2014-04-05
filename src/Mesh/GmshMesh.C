@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.C
   \author    J. Bakosi
-  \date      Mon Mar 24 13:51:41 2014
+  \date      Sat 05 Apr 2014 02:06:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class definition
   \details   Gmsh mesh class definition
@@ -28,7 +28,7 @@ GmshMesh::echoElemSets() const
   // Echo all lines
   std::cout << "* Lines elements: " << std::endl;
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
-  ST num = m_linpoel.size();
+  ST num = m_lininpoel.size();
   for (ST i=0; i<num; i++) {
     std::cout << "  " << m_lineId[i] << " " << 1 << " {";
 
@@ -36,15 +36,15 @@ GmshMesh::echoElemSets() const
           std::ostream_iterator< int >( std::cout, ", " ) );
     std::cout << m_lintag[i].back() << "} {";
 
-    copy( m_linpoel[i].begin(), m_linpoel[i].end()-1,
+    copy( m_lininpoel[i].begin(), m_lininpoel[i].end()-1,
           std::ostream_iterator< int >( std::cout, ", " ) );
-    std::cout << m_linpoel[i].back() << "}" << std::endl;
+    std::cout << m_lininpoel[i].back() << "}" << std::endl;
   }
 
   // Echo all triangles
   std::cout << "* Triangles: " << std::endl;
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
-  num = m_tinpoel.size();
+  num = m_triinpoel.size();
   for (ST i=0; i<num; i++) {
     std::cout << "  " << m_triangleId[i] << " " << 2 << " {";
 
@@ -52,8 +52,24 @@ GmshMesh::echoElemSets() const
           std::ostream_iterator< int >( std::cout, ", " ) );
     std::cout << m_tritag[i].back() << "} {";
 
-    copy( m_tinpoel[i].begin(), m_tinpoel[i].end()-1,
+    copy( m_triinpoel[i].begin(), m_triinpoel[i].end()-1,
           std::ostream_iterator< int >( std::cout, ", " ) );
-    std::cout << m_tinpoel[i].back() << "}" << std::endl;
+    std::cout << m_triinpoel[i].back() << "}" << std::endl;
+  }
+
+  // Echo all tetrahedra
+  std::cout << "* Tetrahedra: " << std::endl;
+  std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
+  num = m_tetinpoel.size();
+  for (ST i=0; i<num; i++) {
+    std::cout << "  " << m_tetrahedronId[i] << " " << 4 << " {";
+
+    copy( m_tettag[i].begin(), m_tettag[i].end()-1,
+          std::ostream_iterator< int >( std::cout, ", " ) );
+    std::cout << m_tettag[i].back() << "} {";
+
+    copy( m_tetinpoel[i].begin(), m_tetinpoel[i].end()-1,
+          std::ostream_iterator< int >( std::cout, ", " ) );
+    std::cout << m_tetinpoel[i].back() << "}" << std::endl;
   }
 }

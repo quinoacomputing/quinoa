@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Gmsh2ExoDriver.C
   \author    J. Bakosi
-  \date      Mon Mar 24 15:18:58 2014
+  \date      Sat 05 Apr 2014 12:15:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2ExoDriver that drives Gmsh2Exo
   \details   Gmsh2ExoDriver that drives Gmsh2Exo
@@ -50,9 +50,9 @@ Gmsh2ExoDriver::execute() const
   inMesh.read();
 
   // Debug: echo element sets
-  // mesh.echoElemSets();
+  //mesh.echoElemSets();
 
   // Debug: output Gmsh mesh
-  // quinoa::GmshTxtMeshWriter outMesh( "out.msh", mesh );
-  // outMesh.write();
+  quinoa::GmshTxtMeshWriter outMesh( "out.msh", mesh );
+  outMesh.write();
 }
