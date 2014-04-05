@@ -53,6 +53,8 @@
     - Document what is optional
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
 
+* Add floating point exception handler, e.g., based on fenv.h
+
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
