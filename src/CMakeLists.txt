@@ -114,7 +114,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
 
-  # Experimental: use C++14, libc++, libc++abi - only works up to clang 3.3
+  # Experimental: use C++14, libc++, libc++abi
   # Use libc++ (http://libcxx.llvm.org)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   # Use libc++abi (http://libcxxabi.llvm.org)
