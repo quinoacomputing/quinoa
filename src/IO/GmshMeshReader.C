@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/IO/GmshTxtMeshReader.C
+  \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 02:01:03 PM MDT
+  \date      Sun 06 Apr 2014 10:22:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -13,59 +13,13 @@
 #include <cmath>
 
 #include <GmshMesh.h>
-#include <GmshTxtMeshReader.h>
+#include <GmshMeshReader.h>
 #include <Exception.h>
 
-using quinoa::GmshTxtMeshReader;
-
-GmshTxtMeshReader::GmshTxtMeshReader(const std::string filename,
-                                     GmshMesh& mesh) :
-  Reader(filename),
-  m_mesh(mesh)
-//******************************************************************************
-//  Constructor
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Gmsh element types and their number of nodes,
-  // all Gmsh-supported listed, Quinoa-supported uncommented
-  m_GmshElemNodes.emplace( 1, 2 );  // 2-node line
-  m_GmshElemNodes.emplace( 2, 3 );  // 3-node triangle
-  //           { 3,  4},  //! 4-node quadrangle
-  m_GmshElemNodes.emplace( 4, 4 );  // 4-node tetrahedron
-  //           { 5,  8},  //! 8-node hexahedron
-  //           { 6,  6},  //! 6-node prism
-  //           { 7,  5},  //! 5-node pyramid
-  //           { 8,  3},  //! 3-node second order line
-  //           { 9,  6},  //! 6-node second order triangle
-  //           {10,  9},  //! 9-node second order quadrangle
-  //           {11, 10},  //! 10-node second order tetrahedron
-  //           {12, 27},  //! 27-node second order hexahedron
-  //           {13, 18},  //! 18-node second order prism
-  //           {14, 14},  //! 14-node second order pyramid
-  m_GmshElemNodes.emplace( 15, 1 );  // 1-node point
-  //           {16,  8},  //! 8-node second order quadrangle
-  //           {17, 20},  //! 20-node second order hexahedron
-  //           {18, 15},  //! 15-node second order prism
-  //           {19, 13},  //! 13-node second order pyramid
-  //           {20,  9},  //! 9-node third order incomplete triangle
-  //           {21, 10},  //! 10-node third order triangle
-  //           {22, 12},  //! 12-node fourth order incomplete triangle
-  //           {23, 15},  //! 15-node fourth order triangle
-  //           {24, 15},  //! 15-node fifth order incomplete triangle
-  //           {25, 21},  //! 21-node fifth order complete triangle
-  //           {26,  4},  //! 4-node third order edge
-  //           {27,  5},  //! 5-node fourth order edge
-  //           {28,  6},  //! 6-node fifth order edge
-  //           {29, 20},  //! 20-node third order tetrahedron
-  //           {30, 35},  //! 35-node fourth order tetrahedron
-  //           {31, 56},  //! 56-node fifth order tetrahedron
-  //           {92, 64},  //! 64-node third order hexahedron
-  //           {93,125}   //! 125-node fourth order hexahedron
-}
+using quinoa::GmshMeshReader;
 
 void
-GmshTxtMeshReader::read()
+GmshMeshReader::read()
 //******************************************************************************
 //  Public interface for read Gmsh mesh
 //! \author J. Bakosi
@@ -78,9 +32,12 @@ GmshTxtMeshReader::read()
   while (!m_inFile.eof()) {
     std::string s;
     getline( m_inFile, s );
-    if (s=="$Nodes") readNodes();
-    else if (s=="$Elements") readElements();
-    else if (s=="$PhysicalNames") readPhysicalNames();
+    if (s=="$Nodes")
+      readNodes();
+    else if (s=="$Elements")
+      readElements();
+    else if (s=="$PhysicalNames")
+      readPhysicalNames();
   }
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
@@ -88,7 +45,7 @@ GmshTxtMeshReader::read()
 }
 
 void
-GmshTxtMeshReader::readMeshFormat()
+GmshMeshReader::readMeshFormat()
 //******************************************************************************
 //  Read mandatory "$MeshFormat--$EndMeshFormat" section
 //! \author J. Bakosi
@@ -105,28 +62,35 @@ GmshTxtMeshReader::readMeshFormat()
           m_filename );
 
   // Read in "version-number file-type data-size"
-  tk::real version;
-  int type, datasize;
-  m_inFile >> version >> type >> datasize;
-  ErrChk( ( fabs(version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
-            fabs(version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
-            tk::ExceptType::FATAL,
-            std::string("Unsupported mesh version '") + version + "' in file " +
-              m_filename );
-  ErrChk( type == 0,
-          tk::ExceptType::FATAL,
-          std::string("Unsupported mesh type '") + type + "' in file " +
-            m_filename );
-  ErrChk( datasize == sizeof(tk::real),
-          tk::ExceptType::FATAL,
-          std::string("Unsupported mesh datasize '") + datasize + "' in file " +
-            m_filename );
-  getline(m_inFile, s);  // finish reading the line
+  m_inFile >> m_version >> m_type >> m_datasize;
 
-  // Save version, type, datasize
-  m_mesh.setVersion( version );
-  m_mesh.setType( type );
-  m_mesh.setDatasize( datasize );
+  ErrChk( ( fabs(m_version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
+            fabs(m_version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
+            tk::ExceptType::FATAL,
+            std::string("Unsupported mesh version '") + m_version +
+            "' in file " + m_filename );
+
+  ErrChk( (m_type == 0 || m_type == 1),
+          tk::ExceptType::FATAL,
+          std::string("Unsupported mesh type '") + m_type + "' in file " +
+            m_filename );
+
+  ErrChk( m_datasize == sizeof(tk::real),
+          tk::ExceptType::FATAL,
+          std::string("Unsupported mesh datasize '") + m_datasize +
+          "' in file " + m_filename );
+
+  getline( m_inFile, s );  // finish reading the line
+
+  // if type == 1, file is binary: binary-read in binary "one"
+  if (isBinary()) {
+    int one;
+    m_inFile.read( reinterpret_cast<char*>(&one), sizeof(int) );
+    ErrChk( one == 1,
+            tk::ExceptType::FATAL,
+            "Endianness does not match in file " + m_filename );
+    getline( m_inFile, s );  // finish reading the line
+  }
 
   // Read in end of header: $EndMeshFormat
   getline( m_inFile, s );
@@ -135,7 +99,7 @@ GmshTxtMeshReader::readMeshFormat()
 }
 
 void
-GmshTxtMeshReader::readNodes()
+GmshMeshReader::readNodes()
 //******************************************************************************
 //  Read "$Nodes--$EndNodes" section
 //! \author J. Bakosi
@@ -146,16 +110,24 @@ GmshTxtMeshReader::readNodes()
   m_inFile >> nnode;
   ErrChk( nnode > 0, tk::ExceptType::FATAL,
           "Number of nodes must be greater than zero in file " + m_filename  );
+  std::string s;
+  if (isBinary()) getline( m_inFile, s );  // finish reading the line
 
   // Read in node ids and coordinates: node-number x-coord y-coord z-coord
   for ( std::size_t i=0; i<nnode; ++i ) {
-    tk::point coord;
     int id;
-    m_inFile >> id >> coord[0] >> coord[1] >> coord[2];
+    tk::point coord;
+
+    if (isASCII()) {
+      m_inFile >> id >> coord[0] >> coord[1] >> coord[2];
+    } else {
+      m_inFile.read( reinterpret_cast<char*>(&id), sizeof(int) );
+      m_inFile.read( reinterpret_cast<char*>(coord.data()), 3*sizeof(double) );
+    }
+
     m_mesh.nodeId().push_back( id );
     m_mesh.coord().push_back( coord );
   }
-  std::string s;
   getline( m_inFile, s );  // finish reading the last line
 
   // Read in end of header: $EndNodes
@@ -165,13 +137,15 @@ GmshTxtMeshReader::readNodes()
 }
 
 void
-GmshTxtMeshReader::readElements()
+GmshMeshReader::readElements()
 //******************************************************************************
 //  Read "$Elements--$EndElements" section
 //! \author J. Bakosi
 //******************************************************************************
 {
   using tk::operator+;
+
+  std::string s;
 
   // Read in number of elements in this element set
   int nel;
@@ -180,41 +154,67 @@ GmshTxtMeshReader::readElements()
           "Number of elements must be greater than zero in file " +
           m_filename );
 
+  getline( m_inFile, s );  // finish reading the last line
+
   // Read in element ids, tags, and element connectivity (node list)
-  for (int i=0; i<nel; ++i) {
-    // elm-number elm-type number-of-tags < tag > ... node-number-list
-    int id, type, ntags;
-    m_inFile >> id >> type >> ntags;
+  int n=1;
+  for (int i=0; i<nel; i+=n) {
+    int id, elmtype, ntags;
+
+    if (isASCII()) {
+      // elm-number elm-type number-of-tags < tag > ... node-number-list
+      m_inFile >> id >> elmtype >> ntags;
+    } else {
+      // elm-type num-of-elm-follow number-of-tags
+      m_inFile.read( reinterpret_cast<char*>(&elmtype), sizeof(int) );
+      m_inFile.read( reinterpret_cast<char*>(&n), sizeof(int) );
+      m_inFile.read( reinterpret_cast<char*>(&ntags), sizeof(int) );
+    }
 
     // Find element type, throw exception if not supported
-    auto it = m_GmshElemNodes.find( type );
-    ErrChk( it != m_GmshElemNodes.end(), tk::ExceptType::FATAL,
-            std::string("Unsupported element type ") + type +
+    const auto it = m_elemNodes.find( elmtype );
+    ErrChk( it != m_elemNodes.end(), tk::ExceptType::FATAL,
+            std::string("Unsupported element type ") + elmtype +
             " in mesh file: " + m_filename );
 
-    // Read and add element tags
-    std::vector<int> tags( ntags, 0 );
-    for (int j=0; j<ntags; j++) {
-      m_inFile >> tags[j];
-    }
-    addElemTags( type, tags );
+    for (int e=0; e<n; ++e) {
+      // Read element id if binary
+      if (isBinary()) {
+        m_inFile.read( reinterpret_cast<char*>(&id), sizeof(int) );
+      }
 
-    // Read and add element node list (i.e. connectivity)
-    int nnode = it->second;
-    std::vector< int > nodes( nnode, 0 );
-    for (int j=0; j<nnode; j++) {
-      m_inFile >> nodes[j];
-    }
-    addElem(type, nodes);
+      // Read and add element tags
+      std::vector<int> tags( ntags, 0 );
+      if (isASCII()) {
+        for (int j=0; j<ntags; j++)
+          m_inFile >> tags[j];
+      } else {
+        m_inFile.read(
+          reinterpret_cast<char*>(tags.data()), ntags*sizeof(int) );
+      }
+      addElemTags( elmtype, tags );
 
-    // Put in elemId and increase counter for different types of elements
-    switch (type) {
-      case 1: m_mesh.lineId().push_back( id ); break;
-      case 2: m_mesh.triangleId().push_back( id ); break;
-      case 4: m_mesh.tetrahedronId().push_back( id ); break;
+      // Read and add element node list (i.e. connectivity)
+      int nnode = it->second;
+      std::vector< int > nodes( nnode, 0 );
+      if (isASCII()) {
+        for (int j=0; j<nnode; j++)
+          m_inFile >> nodes[j];
+      } else {
+        m_inFile.read(
+          reinterpret_cast<char*>(nodes.data()), nnode*sizeof(int) );
+      }
+      addElem(elmtype, nodes);
+
+      // Put in elemId and increase counter for different types of elements
+      switch (elmtype) {
+        case  1: m_mesh.lineId().push_back( id ); break;
+        case  2: m_mesh.triangleId().push_back( id ); break;
+        case  4: m_mesh.tetrahedronId().push_back( id ); break;
+        case 15: break;     // ignore 1-node 'element' type
+      }
     }
   }
-  std::string s;
   getline( m_inFile, s );  // finish reading the last line
 
   // Read in end of header: $EndNodes
@@ -224,7 +224,7 @@ GmshTxtMeshReader::readElements()
 }
 
 void
-GmshTxtMeshReader::readPhysicalNames()
+GmshMeshReader::readPhysicalNames()
 //******************************************************************************
 //  Read "$PhysicalNames--$EndPhysicalNames" section
 //! \author J. Bakosi
@@ -235,47 +235,47 @@ GmshTxtMeshReader::readPhysicalNames()
 }
 
 void
-GmshTxtMeshReader::addElem( int type, const std::vector<int>& nodes )
+GmshMeshReader::addElem( int elmtype, const std::vector<int>& nodes )
 //******************************************************************************
 //  Add new element (connectivity) to given element type container
-//! \param[in]  type    Elem type (container) to add to (lines, triangles, etc)
+//! \param[in]  elmtype Elem type (container) to add to (lines, triangles, etc)
 //! \param[in]  nodes   Connectivity (node Ids) of the new element
 //! \author J. Bakosi
 //******************************************************************************
 {
   using tk::operator+;
 
-  switch ( type ) {
+  switch ( elmtype ) {
     case  1: m_mesh.lininpoel().push_back( nodes ); break;
     case  2: m_mesh.triinpoel().push_back( nodes ); break;
     case  4: m_mesh.tetinpoel().push_back( nodes ); break;
     case 15: break;     // ignore 1-node 'element' type
     default:
       Throw( tk::ExceptType::FATAL,
-             std::string("Unsupported element type ") + type +
+             std::string("Unsupported element type ") + elmtype +
              " in mesh file: " + m_filename );
   }
 }
 
 void
-GmshTxtMeshReader::addElemTags( int type, const std::vector< int >& tags )
+GmshMeshReader::addElemTags( int elmtype, const std::vector< int >& tags )
 //******************************************************************************
 //  Add new element tags to given element type
-//! \param[in]  type    Elem type (container) to add to (lines, triangles, etc)
+//! \param[in]  elmtype Elem type (container) to add to (lines, triangles, etc)
 //! \param[in]  tags    Vector of tags to be added
 //! \author J. Bakosi
 //******************************************************************************
 {
   using tk::operator+;
 
-  switch ( type ) {
+  switch ( elmtype ) {
     case  1: m_mesh.lintag().push_back( tags ); break;
     case  2: m_mesh.tritag().push_back( tags ); break;
     case  4: m_mesh.tettag().push_back( tags ); break;
     case 15: break;     // ignore 1-node 'element' type
     default:
       Throw( tk::ExceptType::FATAL,
-             std::string("Unsupported element type ") + type +
+             std::string("Unsupported element type ") + elmtype +
              " in mesh file: " + m_filename );
   }
 }
