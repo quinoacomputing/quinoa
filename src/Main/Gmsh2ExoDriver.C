@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Gmsh2ExoDriver.C
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 12:15:57 PM MDT
+  \date      Mon 07 Apr 2014 07:15:02 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh2ExoDriver that drives Gmsh2Exo
   \details   Gmsh2ExoDriver that drives Gmsh2Exo
@@ -14,8 +14,8 @@
 #include <Factory.h>
 #include <Gmsh2ExoDriver.h>
 #include <Gmsh2Exo/CmdLine/Parser.h>
-#include <GmshTxtMeshReader.h>
-#include <GmshTxtMeshWriter.h>
+#include <GmshMeshReader.h>
+#include <GmshMeshWriter.h>
 
 using gmsh2exo::Gmsh2ExoDriver;
 
@@ -43,7 +43,7 @@ Gmsh2ExoDriver::execute() const
   quinoa::GmshMesh mesh;
 
   // Create Gmsh mesh reader
-  quinoa::GmshTxtMeshReader
+  quinoa::GmshMeshReader
     inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
 
   // Read in Gmsh mesh
@@ -53,6 +53,6 @@ Gmsh2ExoDriver::execute() const
   //mesh.echoElemSets();
 
   // Debug: output Gmsh mesh
-  quinoa::GmshTxtMeshWriter outMesh( "out.msh", mesh );
+  quinoa::GmshMeshWriter outMesh( "out.msh", mesh );
   outMesh.write();
 }

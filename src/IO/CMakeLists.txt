@@ -4,13 +4,13 @@ project(IO CXX)
 
 add_library(IO
             Reader.C                    # readers
-            GmshTxtMeshReader.C
+            GmshMeshReader.C
             STLTxtMeshReader.C
             Writer.C                    # writers
             PDFWriter.C
             GlobWriter.C
             TxtStatWriter.C
-            GmshTxtMeshWriter.C
+            GmshMeshWriter.C
             SiloWriter.C
 )
 

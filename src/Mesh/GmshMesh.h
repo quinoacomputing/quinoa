@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 01:53:41 PM MDT
+  \date      Sun 06 Apr 2014 10:20:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -15,6 +15,7 @@
 #include <memory>
 
 #include <Types.h>
+#include <Exception.h>
 
 namespace quinoa {
 
@@ -23,27 +24,10 @@ class GmshMesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit GmshMesh() noexcept :
-       m_type(0),
-       m_datasize(0) {}
+    explicit GmshMesh() = default;
 
-    //! Set mesh version
-    void setVersion(const tk::real version) { m_version = version; }
-
-    //! Set mesh type
-    void setType(const int type) { m_type = type; }
-
-    //! Set mesh data size
-    void setDatasize(const int datasize) { m_datasize = datasize; }
-
-    //! Get mesh version
-    tk::real getVersion() const { return m_version; }
-
-    //! Get mesh type
-    int getType() const { return m_type; }
-
-    //! Get mesh data size
-    int getDatasize() const { return m_datasize; }
+    //! Destructor, default compiler generated
+    ~GmshMesh() noexcept = default;
 
     //! Coords accessor
     std::vector< tk::point >& coord() { return m_coord; }
@@ -94,24 +78,20 @@ class GmshMesh {
     //! Don't permit move assignment
     GmshMesh& operator=(GmshMesh&&) = delete;
 
-    tk::real m_version;                      //!< Mesh version in mesh file
-    int m_type;                              //!< File type in mesh file
-    int m_datasize;                          //!< Data size in mesh file
-
     std::vector< tk::point > m_coord;        //!< Node coordinates
     std::vector< int > m_nodeId;             //!< Node Ids
     std::vector< int > m_lineId;             //!< Line element Ids
     std::vector< int > m_triangleId;         //!< Triangle element Ids
     std::vector< int > m_tetrahedronId;      //!< Tetrahedron element Ids
 
-    std::vector<std::vector<int>> m_lininpoel;//!< Line elements connectivity
-    std::vector<std::vector<int>> m_lintag;   //!< Line element tags
+    std::vector< std::vector< int > > m_lininpoel;//!< Line elements conn.
+    std::vector< std::vector< int > > m_lintag;   //!< Line element tags
 
-    std::vector<std::vector<int>> m_triinpoel;//!< Triangle elements conn.
-    std::vector<std::vector<int>> m_tritag;   //!< Triangle element tags
+    std::vector< std::vector< int > > m_triinpoel;//!< Triangle elements conn.
+    std::vector< std::vector< int > > m_tritag;   //!< Triangle element tags
 
-    std::vector<std::vector<int>> m_tetinpoel;//!< Tetrahedron elements conn.
-    std::vector<std::vector<int>> m_tettag;   //!< Tetrahedron element tags
+    std::vector< std::vector< int > > m_tetinpoel;//!< Tetrahedron elements conn.
+    std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron element tags
 };
 
 } // quinoa::
