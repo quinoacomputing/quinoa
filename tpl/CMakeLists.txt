@@ -306,6 +306,7 @@ ExternalProject_Add(
                     CC=${MPI_C_COMPILER}
                     CFLAGS=${CFLAGS}
                     --enable-optimization
+                    --enable-shared
                     --disable-silex
                     --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser/include,${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
                     --prefix=${CMAKE_INSTALL_PREFIX}
