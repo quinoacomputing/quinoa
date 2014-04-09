@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/TestU01Suite.C
+  \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed Mar 19 16:15:43 2014
+  \date      Wed 09 Apr 2014 04:09:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite

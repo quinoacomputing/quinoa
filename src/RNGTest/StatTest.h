@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/StatTest.h
+  \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:08:40 PM MST
+  \date      Wed 09 Apr 2014 04:08:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base

@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/Battery.h
+  \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Thu 12 Dec 2013 08:50:56 PM MST
+  \date      Wed 09 Apr 2014 04:08:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base

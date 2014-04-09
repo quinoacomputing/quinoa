@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/SmallCrush.C
+  \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:11:35 PM MST
+  \date      Wed 09 Apr 2014 04:08:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
