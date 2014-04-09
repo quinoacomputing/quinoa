@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:14:10 PM MDT
+  \date      Tue 08 Apr 2014 07:58:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -20,14 +20,16 @@ using quinoa::GmshMeshWriter;
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
                                 GmshMesh& mesh,
                                 tk::real version,
-                                int type, 
+                                GmshMesh::FileType type,
                                 int datasize ) :
-  Writer(filename), m_mesh(mesh), m_type(type)
+  Writer( filename ), m_mesh( mesh ), m_type( type )
 //******************************************************************************
 //  Constructor: write mandatory "$MeshFormat" section
 //! \author J. Bakosi
 //******************************************************************************
 {
+  using tk::operator<<;
+
   // Write beginning of header: $MeshFormat
   m_outFile << "$MeshFormat\n";
   ErrChk( !m_outFile.bad(), tk::ExceptType::FATAL,
