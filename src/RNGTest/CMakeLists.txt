@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(RNG CXX)
+project(RNGTest CXX)
 
-if(HAS_MKL)
-  set (MKLRNG_SOURCE "MKLRNG.C")
-endif()
-
-add_library(RNG
-            ${MKLRNG_SOURCE}
+add_library(RNGTest
+            TestU01Suite.C
+            SmallCrush.C
+            Crush.C
+            BigCrush.C
 )
 
-INSTALL(TARGETS RNG
+INSTALL(TARGETS RNGTest
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development
