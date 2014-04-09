@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/TestU01Util.h
+  \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
-  \date      Fri 29 Nov 2013 06:05:49 PM MST
+  \date      Wed 09 Apr 2014 04:09:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Interfacing the TestU01 random number generator test suite
   \details   Interfacing the TestU01 random number generator test suite

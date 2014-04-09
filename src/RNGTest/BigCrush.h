@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/BigCrush.h
+  \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:14:18 PM MST
+  \date      Wed 09 Apr 2014 04:08:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery

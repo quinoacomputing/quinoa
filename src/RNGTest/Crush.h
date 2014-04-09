@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/RNG/Crush.h
+  \file      src/RNGTest/Crush.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:13:46 PM MST
+  \date      Wed 09 Apr 2014 04:08:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
