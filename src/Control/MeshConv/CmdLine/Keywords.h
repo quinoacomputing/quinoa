@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/CmdLine/Keywords.h
+  \file      src/Control/MeshConv/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Mon Mar 24 10:27:55 2014
+  \date      Tue 08 Apr 2014 09:26:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's command line keywords
-  \details   All keywords recognized by Gmsh2Exo's command line parser. The
+  \brief     MeshConv's command line keywords
+  \details   All keywords recognized by MeshConv's command line parser. The
   keywords are defined by specializing struct 'keyword', defined in
   Control/Keyword.h. Introducing a new keyword requires a more human readable
   (but still short) name as well as a short, few-line, help-like description.
 */
 //******************************************************************************
-#ifndef Gmsh2ExoCmdLineKeywords_h
-#define Gmsh2ExoCmdLineKeywords_h
+#ifndef MeshConvCmdLineKeywords_h
+#define MeshConvCmdLineKeywords_h
 
 //! Signal to compiler that we are building a list of keywords. This is used by
 //! the inline includes, such as *Keywords.h, below (if any) to make sure they
@@ -21,7 +21,7 @@
 
 #include <Keyword.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 //! List of keywords the parser understands
 namespace kw {
 
@@ -36,8 +36,8 @@ using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;
 using output = cmdline_keyword<undefined_info, o, o,u,t,p,u,t>;
 
 } // kw::
-} // gmsh2exo::
+} // meshconv::
 
 #undef Keywords
 
-#endif // Gmsh2ExoCmdLineKeywords_h
+#endif // MeshConvCmdLineKeywords_h

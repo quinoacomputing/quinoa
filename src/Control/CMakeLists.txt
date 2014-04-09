@@ -39,14 +39,15 @@ INSTALL(TARGETS RNGTestControl
  	ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-project(Gmsh2ExoControl CXX)
+project(MeshConvControl CXX)
 
-add_library(Gmsh2ExoControl
+add_library(MeshConvControl
             StringParser.C
-            Gmsh2Exo/CmdLine/Parser.C
+            Options/RNG.C
+            MeshConv/CmdLine/Parser.C
 )
 
-INSTALL(TARGETS Gmsh2ExoControl
+INSTALL(TARGETS MeshConvControl
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

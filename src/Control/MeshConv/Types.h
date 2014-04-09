@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/Types.h
+  \file      src/Control/MeshConv/Types.h
   \author    J. Bakosi
-  \date      Mon Mar 24 12:12:59 2014
+  \date      Tue 08 Apr 2014 09:04:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Types for Gmsh2Exo's parsers
-  \details   Types for Gmsh2Exo's parsers
+  \brief     Types for MeshConv's parsers
+  \details   Types for MeshConv's parsers
 */
 //******************************************************************************
-#ifndef Gmsh2ExoTypes_h
-#define Gmsh2ExoTypes_h
+#ifndef MeshConvTypes_h
+#define MeshConvTypes_h
 
 #include <pegtl.hh>
 
-#include <Gmsh2Exo/Tags.h>
+#include <MeshConv/Tags.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 //! control and parsing
 namespace ctr {
 
@@ -25,10 +25,10 @@ using ios = tk::tuple::tagged_tuple<
   tag::output,      std::string   //!< Output filename
 >;
 
-//! PEGTL location type to use throughout all of Gmsh2Exo's parsers
+//! PEGTL location type to use throughout all of MeshConv's parsers
 using Location = pegtl::ascii_location;
 
 } // ctr::
-} // gmsh2exo::
+} // meshconv::
 
-#endif // Gmsh2ExoTypes_h
+#endif // MeshConvTypes_h

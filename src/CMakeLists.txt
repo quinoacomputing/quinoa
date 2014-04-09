@@ -70,7 +70,7 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 set(QUINOA_EXECUTABLE "quinoa")
 set(RNGTEST_EXECUTABLE "rngtest")
-set(GMSH2EXO_EXECUTABLE "gmsh2exo")
+set(MESHCONV_EXECUTABLE "meshconv")
 
 # Get git revision
 include(GetGitRevisionDescription)
