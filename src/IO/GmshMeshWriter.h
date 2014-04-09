@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:11:13 PM MDT
+  \date      Tue 08 Apr 2014 07:56:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -26,7 +26,8 @@ class GmshMeshWriter : public tk::Writer {
     explicit GmshMeshWriter( const std::string& filename,
                              GmshMesh& mesh,
                              tk::real version = 2.2,
-                             int type = 1,   // default: write binary
+                             GmshMesh::FileType type =
+                               GmshMesh::FileType::BINARY, // default: binary
                              int datasize = sizeof(double) );
 
     //! Destructor, default compiler generated
@@ -55,8 +56,12 @@ class GmshMeshWriter : public tk::Writer {
     void writePhysicalNames();
 
     // Get mesh type
-    bool isASCII() const { return m_type == 0 ? true : false; }
-    bool isBinary() const { return m_type == 1 ? true : false; }
+    bool isASCII() const {
+      return m_type == GmshMesh::FileType::ASCII ? true : false;
+    }
+    bool isBinary() const {
+      return m_type == GmshMesh::FileType::BINARY ? true : false;
+    }
 
     // Write out element ids, tags, and connectivity (node list)
     template< class ElmId, class ElmTag, class ElmInpoel >
@@ -98,7 +103,7 @@ class GmshMeshWriter : public tk::Writer {
     }
 
     GmshMesh& m_mesh;                   //!< Mesh object
-    int m_type;                         //!< Mesh file type: 0:ASCII, 1:binary
+    GmshMesh::FileType m_type;          //!< Mesh file type: 0:ASCII, 1:binary
 };
 
 } // quinoa::

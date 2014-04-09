@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:09:10 PM MDT
+  \date      Tue 08 Apr 2014 08:04:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -27,10 +27,10 @@ class GmshMeshReader : public tk::Reader {
     //! Constructor
     explicit GmshMeshReader( const std::string filename, GmshMesh& mesh ) :
       Reader(filename),
-      m_version(0.0),       // 0.0: uninitialized
-      m_datasize(0),        //   0: uninitialized
-      m_type(-1),           //  -1: uninitialized, 0: ASCII, 1: binary
-      m_mesh(mesh) {}
+      m_version( 0.0 ),                        // 0.0: uninitialized
+      m_datasize( 0 ),                         //   0: uninitialized
+      m_type( GmshMesh::FileType::UNDEFINED ), //  -1: uninitialized
+      m_mesh( mesh ) {}
 
     //! Destructor, default compiler generated
     ~GmshMeshReader() noexcept override = default;
@@ -60,25 +60,21 @@ class GmshMeshReader : public tk::Reader {
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
 
-    //! Get mesh type
-    int type() const {
-      Assert( m_type != -1, tk::ExceptType::FATAL, "Mesh type is not yet set");
-      return m_type;
-    }
-
     // Get mesh type queries
     bool isASCII() const {
-      Assert( m_type != -1, tk::ExceptType::FATAL, "Mesh type is not yet set");
-      return m_type == 0 ? true : false;
+      Assert( m_type != GmshMesh::FileType::UNDEFINED, tk::ExceptType::FATAL,
+              "Mesh type is undefined");
+      return m_type == GmshMesh::FileType::ASCII ? true : false;
     }
     bool isBinary() const {
-      Assert( m_type != -1, tk::ExceptType::FATAL, "Mesh type is not yet set");
-      return m_type == 1 ? true : false;
+      Assert( m_type != GmshMesh::FileType::UNDEFINED, tk::ExceptType::FATAL,
+              "Mesh type is undefined");
+      return m_type == GmshMesh::FileType::BINARY ? true : false;
     }
 
     tk::real m_version;                 //!< Mesh version in mesh file
     int m_datasize;                     //!< Data size in mesh file
-    int m_type;                         //!< Mesh file type: 0:ASCII, 1:binary
+    GmshMesh::FileType m_type;          //!< Mesh file type: 0:ASCII, 1:binary
     GmshMesh& m_mesh;                   //!< Mesh object
 
     //! Push back p for different element types
@@ -103,10 +99,10 @@ class GmshMeshReader : public tk::Reader {
     //! all Gmsh-supported listed, Quinoa-supported uncommented,
     //! See Gmsh documentation for element ids as keys
     const std::map< int, int > m_elemNodes {
-      { GmshMesh::LIN,   2 },      // 2-node line
-      { GmshMesh::TRI,   3 },      // 3-node triangle
+      { GmshMesh::ElmType::LIN,   2 },      // 2-node line
+      { GmshMesh::ElmType::TRI,   3 },      // 3-node triangle
     //{             3,   4 },      // 4-node quadrangle
-      { GmshMesh::TET,   4 },      // 4-node tetrahedron
+      { GmshMesh::ElmType::TET,   4 },      // 4-node tetrahedron
     //{             5,   8 },      // 8-node hexahedron
     //{             6,   6 },      // 6-node prism
     //{             7,   5 },      // 5-node pyramid
@@ -117,7 +113,7 @@ class GmshMeshReader : public tk::Reader {
     //{            12,  27 },      // 27-node second order hexahedron
     //{            13,  18 },      // 18-node second order prism
     //{            14,  14 },      // 14-node second order pyramid
-      { GmshMesh::PNT,   1 }       // 1-node point
+      { GmshMesh::ElmType::PNT,   1 }       // 1-node point
     //{            16,   8 },      // 8-node second order quadrangle
     //{            17,  20 },      // 20-node second order hexahedron
     //{            18,  15 },      // 15-node second order prism

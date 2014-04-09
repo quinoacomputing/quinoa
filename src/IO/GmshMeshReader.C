@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 06:34:40 PM MDT
+  \date      Tue 08 Apr 2014 08:03:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -61,7 +61,12 @@ GmshMeshReader::readMeshFormat()
           m_filename );
 
   // Read in "version-number file-type data-size"
-  m_inFile >> m_version >> m_type >> m_datasize;
+  int type;
+  m_inFile >> m_version >> type >> m_datasize;
+  if (type == 0 )
+    m_type = GmshMesh::FileType::ASCII;
+  else if (type == 1 )
+    m_type = GmshMesh::FileType::BINARY;
 
   ErrChk( ( fabs(m_version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
             fabs(m_version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
@@ -69,7 +74,8 @@ GmshMeshReader::readMeshFormat()
             std::string("Unsupported mesh version '") + m_version +
             "' in file " + m_filename );
 
-  ErrChk( (m_type == 0 || m_type == 1),
+  ErrChk( ( m_type == GmshMesh::FileType::ASCII ||
+            m_type == GmshMesh::FileType::BINARY ),
           tk::ExceptType::FATAL,
           std::string("Unsupported mesh type '") + m_type + "' in file " +
             m_filename );
@@ -81,7 +87,7 @@ GmshMeshReader::readMeshFormat()
 
   getline( m_inFile, s );  // finish reading the line
 
-  // if type == 1, file is binary: binary-read in binary "one"
+  // if file is binary, binary-read in binary "one"
   if (isBinary()) {
     int one;
     m_inFile.read( reinterpret_cast<char*>(&one), sizeof(int) );
