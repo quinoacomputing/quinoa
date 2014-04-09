@@ -215,6 +215,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Geometry
                     ${QUINOA_SOURCE_DIR}/MonteCarlo
                     ${QUINOA_SOURCE_DIR}/RNG
+                    ${QUINOA_SOURCE_DIR}/RNGTest
                     ${QUINOA_SOURCE_DIR}/SDE
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Paradigm
@@ -236,5 +237,6 @@ add_subdirectory(Mesh)
 add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
+add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 add_subdirectory(Main)

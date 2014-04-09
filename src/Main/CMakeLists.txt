@@ -40,9 +40,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Statistics
                       QuinoaControl
                       RNG
-                      #${TESTU01_MYLIB_LIBRARY}
-                      ${TESTU01_PROBDIST_LIBRARY}
-                      ${TESTU01_LIBRARY}
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
@@ -83,9 +80,9 @@ endif()
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       Base
                       Paradigm
-                      RNGTestControl
                       RNG
-                      #${TESTU01_MYLIB_LIBRARY}
+                      RNGTestControl
+                      RNGTest
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -94,7 +91,6 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${INTEL_OMP_RUNTIME_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
-                      #${TBB_LIBRARY}
 )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
