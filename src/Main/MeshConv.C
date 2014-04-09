@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Main/Gmsh2Exo.C
+  \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Thu Mar 27 17:01:18 2014
+  \date      Tue 08 Apr 2014 09:28:58 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -11,14 +11,14 @@
 
 #include <Init.h>
 #include <Config.h>
-#include <Gmsh2ExoDriver.h>
+#include <MeshConvDriver.h>
 #include <TPLInfo/ExodusII.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 
 void echoTPL(const tk::Print& print)
 //******************************************************************************
-//  Echo TPL version informaion for libs specific to Gmsh2Exo
+//  Echo TPL version informaion for libs specific to MeshConv
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -26,7 +26,7 @@ void echoTPL(const tk::Print& print)
   echoExodusII(print, "ExodusII library");
 }
 
-} // gmsh2exo::
+} // meshconv::
 
 int main(int argc, char* argv[])
 //******************************************************************************
@@ -34,10 +34,10 @@ int main(int argc, char* argv[])
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  return tk::Main< gmsh2exo::Gmsh2ExoDriver >
+  return tk::Main< meshconv::MeshConvDriver >
                  ( argc,
                    argv,
                    "Quinoa: Gmsh to Exodus II mesh file converter",
                    GMSH2EXO_EXECUTABLE,
-                   gmsh2exo::echoTPL );
+                   meshconv::echoTPL );
 }

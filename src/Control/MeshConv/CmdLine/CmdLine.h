@@ -1,25 +1,25 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/CmdLine/CmdLine.h
+  \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon Mar 24 11:20:22 2014
+  \date      Tue 08 Apr 2014 09:25:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's command line
-  \details   Gmsh2Exo's command line
+  \brief     MeshConv's command line
+  \details   MeshConv's command line
 */
 //******************************************************************************
-#ifndef Gmsh2ExoCmdLine_h
-#define Gmsh2ExoCmdLine_h
+#ifndef MeshConvCmdLine_h
+#define MeshConvCmdLine_h
 
 #include <string>
 
 #include <Control.h>
-#include <Gmsh2Exo/Types.h>
+#include <MeshConv/Types.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 namespace ctr {
 
-//! CmdLine : Control< specialized to Gmsh2Exo >, see Types.h,
+//! CmdLine : Control< specialized to MeshConv >, see Types.h,
 class CmdLine :
   public tk::Control< // tag         type
                       tag::io,       ios > {
@@ -51,6 +51,6 @@ class CmdLine :
 static const CmdLine CmdLineDefaults;
 
 } // ctr::
-} // gmsh2exo::
+} // meshconv::
 
-#endif // Gmsh2ExoCmdLine_h
+#endif // MeshConvCmdLine_h

@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/CmdLine/Parser.h
+  \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:16:36 2014
+  \date      Tue 08 Apr 2014 09:27:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's command line parser
-  \details   Gmsh2Exo's command line parser
+  \brief     MeshConv's command line parser
+  \details   MeshConv's command line parser
 */
 //******************************************************************************
-#ifndef Gmsh2ExoCmdLineParser_h
-#define Gmsh2ExoCmdLineParser_h
+#ifndef MeshConvCmdLineParser_h
+#define MeshConvCmdLineParser_h
 
 #include <Print.h>
 #include <StringParser.h>
-#include <Gmsh2Exo/CmdLine/CmdLine.h>
+#include <MeshConv/CmdLine/CmdLine.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 
 //! CmdLineParser : StringParser
 class CmdLineParser : public tk::StringParser{
@@ -40,6 +40,6 @@ class CmdLineParser : public tk::StringParser{
     CmdLineParser& operator=(CmdLineParser&&) = delete;
 };
 
-} // gmsh2exo::
+} // meshconv::
 
-#endif // Gmsh2ExoCmdLineParser_h
+#endif // MeshConvCmdLineParser_h

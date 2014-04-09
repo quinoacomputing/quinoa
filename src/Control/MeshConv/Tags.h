@@ -1,17 +1,17 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/Tags.h
+  \file      src/Control/MeshConv/Tags.h
   \author    J. Bakosi
-  \date      Mon Mar 24 10:31:32 2014
+  \date      Tue 08 Apr 2014 09:25:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's input deck tags
-  \details   Gmsh2Exo's input deck tags
+  \brief     MeshConv's input deck tags
+  \details   MeshConv's input deck tags
 */
 //******************************************************************************
-#ifndef Gmsh2ExoInputDeckTags_h
-#define Gmsh2ExoInputDeckTags_h
+#ifndef MeshConvInputDeckTags_h
+#define MeshConvInputDeckTags_h
 
-namespace gmsh2exo {
+namespace meshconv {
 namespace tag {
 
 struct io {};
@@ -19,6 +19,6 @@ struct input {};
 struct output {};
 
 } // tag::
-} // gmsh2exo::
+} // meshconv::
 
-#endif // Gmsh2ExoInputDeckTags_h
+#endif // MeshConvInputDeckTags_h

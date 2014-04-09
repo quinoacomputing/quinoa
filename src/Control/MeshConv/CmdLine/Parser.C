@@ -1,20 +1,20 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/CmdLine/Parser.C
+  \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon Mar 24 11:21:26 2014
+  \date      Tue 08 Apr 2014 09:27:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's comamnd line parser
-  \details   Gmsh2Exo's comamnd line parser
+  \brief     MeshConv's comamnd line parser
+  \details   MeshConv's comamnd line parser
 */
 //******************************************************************************
 
 #include <make_unique.h>
 
-#include <Gmsh2Exo/CmdLine/Parser.h>
-#include <Gmsh2Exo/CmdLine/Grammar.h>
+#include <MeshConv/CmdLine/Parser.h>
+#include <MeshConv/CmdLine/Grammar.h>
 
-using gmsh2exo::CmdLineParser;
+using meshconv::CmdLineParser;
 
 CmdLineParser::CmdLineParser(int argc, char** argv,
                              const tk::Print& print,

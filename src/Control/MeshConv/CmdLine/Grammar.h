@@ -1,42 +1,42 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Gmsh2Exo/CmdLine/Grammar.h
+  \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon Mar 24 10:29:37 2014
+  \date      Tue 08 Apr 2014 09:26:31 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh2Exo's command line grammar definition
+  \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
   associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
   of advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef Gmsh2ExoCmdLineGrammar_h
-#define Gmsh2ExoCmdLineGrammar_h
+#ifndef MeshConvCmdLineGrammar_h
+#define MeshConvCmdLineGrammar_h
 
 #include <Macro.h>
 #include <Exception.h>
 #include <Grammar.h>
 #include <PEGTLParsed.h>
-#include <Gmsh2Exo/CmdLine/Keywords.h>
+#include <MeshConv/CmdLine/Keywords.h>
 
-namespace gmsh2exo {
+namespace meshconv {
 //! Grammar definition: state, actions, grammar
 namespace cmd {
 
-  //! PEGTLParsed type specialized to Gmsh2Exo's command line parser
+  //! PEGTLParsed type specialized to MeshConv's command line parser
   using PEGTLCmdLine =
     quinoa::ctr::PEGTLParsed< ctr::CmdLine,
                               pegtl::string_input< ctr::Location > >;
 
-  // Gmsh2Exo's CmdLine state
+  // MeshConv's CmdLine state
 
   //! Everything is stored in Stack during parsing
   using Stack = PEGTLCmdLine;
 
-  // Gmsh2Exo's CmdLine actions
+  // MeshConv's CmdLine actions
 
-  // Gmsh2Exo's CmdLine grammar
+  // MeshConv's CmdLine grammar
 
   //! io parameter
   template< typename keyword, typename io_tag >
@@ -55,6 +55,6 @@ namespace cmd {
          tk::grm::read_string< Stack, keywords > {};
 
 } // cmd::
-} // gmsh2exo::
+} // meshconv::
 
-#endif // Gmsh2ExoCmdLineGrammar_h
+#endif // MeshConvCmdLineGrammar_h

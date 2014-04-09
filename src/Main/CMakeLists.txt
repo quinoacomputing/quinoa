@@ -40,6 +40,9 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Statistics
                       QuinoaControl
                       RNG
+                      #${TESTU01_MYLIB_LIBRARY}
+                      ${TESTU01_PROBDIST_LIBRARY}
+                      ${TESTU01_LIBRARY}
                       ${SILO_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
@@ -100,38 +103,40 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
-add_executable(${GMSH2EXO_EXECUTABLE}
+add_executable(${MESHCONV_EXECUTABLE}
                Init.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
                TPLInfo/ExodusII.C
-               Gmsh2ExoDriver.C
-               Gmsh2Exo.C
+               MeshConvDriver.C
+               MeshConv.C
 )
 
 if(MPI_COMPILE_FLAGS)
-  set_target_properties(${GMSH2EXO_EXECUTABLE} PROPERTIES
+  set_target_properties(${MESHCONV_EXECUTABLE} PROPERTIES
                         COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
 endif()
 
 if(MPI_LINK_FLAGS)
-  set_target_properties(${GMSH2EXO_EXECUTABLE} PROPERTIES
+  set_target_properties(${MESHCONV_EXECUTABLE} PROPERTIES
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
-target_link_libraries(${GMSH2EXO_EXECUTABLE}
+target_link_libraries(${MESHCONV_EXECUTABLE}
                       Base
                       IO
                       Mesh
-                      Gmsh2ExoControl
+                      MeshConvControl
+                      Statistics
+                      ${SILO_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
-INSTALL(TARGETS ${GMSH2EXO_EXECUTABLE}
+INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development
