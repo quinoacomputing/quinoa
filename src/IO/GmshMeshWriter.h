@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Mon 07 Apr 2014 07:14:35 AM MDT
+  \date      Tue 08 Apr 2014 07:11:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -57,6 +57,45 @@ class GmshMeshWriter : public tk::Writer {
     // Get mesh type
     bool isASCII() const { return m_type == 0 ? true : false; }
     bool isBinary() const { return m_type == 1 ? true : false; }
+
+    // Write out element ids, tags, and connectivity (node list)
+    template< class ElmId, class ElmTag, class ElmInpoel >
+    void writeElemBlock( GmshMesh::ElmType type, ElmId& id, ElmTag& tag,
+                         ElmInpoel& inpoel )
+    {
+      auto n = inpoel.size();
+      if (isASCII()) {
+        for (std::size_t i=0; i<n; i++) {
+          // elm-number elm-type number-of-tags < tag > ... node-number-list
+          m_outFile << id[i] << " " << type << " " << tag[i].size() << " ";
+
+          copy( tag[i].begin(), tag[i].end()-1,
+                std::ostream_iterator< int >( m_outFile, " " ) );
+          m_outFile << tag[i].back() << " ";
+
+          copy( inpoel[i].begin(), inpoel[i].end()-1,
+                std::ostream_iterator< int >( m_outFile, " ") );
+          m_outFile << inpoel[i].back() << std::endl;
+        }
+      } else {
+        int ntags = tag[0].size();
+        // elm-type num-of-elm-follow number-of-tags
+        m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
+        m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
+        m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
+        for (std::size_t i=0; i<n; i++) {
+          // element id
+          m_outFile.write(
+            reinterpret_cast<char*>(&id[i]), sizeof(int) );
+          // element tags
+          m_outFile.write( reinterpret_cast<char*>(tag[i].data()),
+                           tag[i].size()*sizeof(int) );
+          // element node list (i.e. connectivity)
+          m_outFile.write( reinterpret_cast<char*>(inpoel[i].data()),
+                           inpoel[i].size()*sizeof(int) );
+        }
+      }
+    }
 
     GmshMesh& m_mesh;                   //!< Mesh object
     int m_type;                         //!< Mesh file type: 0:ASCII, 1:binary

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 07 Apr 2014 07:14:14 AM MDT
+  \date      Tue 08 Apr 2014 07:14:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -104,126 +104,21 @@ GmshMeshWriter::writeElements()
 {
   m_outFile << "$Elements" << std::endl;
 
-  // Get pointers to the element ids, connectivities, and tags
-  auto& lininpoel = m_mesh.lininpoel();
-  auto& lintag = m_mesh.lintag();
-  auto& triinpoel = m_mesh.triinpoel();
-  auto& tritag = m_mesh.tritag();
-  auto& tetinpoel = m_mesh.tetinpoel();
-  auto& tettag = m_mesh.tettag();
-
-  // Get number of elements
-  std::size_t nlines = lininpoel.size();
-  std::size_t ntriangles = triinpoel.size();
-  std::size_t ntetrahedra = tetinpoel.size();
-
   // Write out number of elements
-  m_outFile << nlines + ntriangles + ntetrahedra << std::endl;
+  m_outFile << m_mesh.lininpoel().size() + m_mesh.triinpoel().size() +
+               m_mesh.tetinpoel().size() << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  if (isASCII()) {
-    for (std::size_t i=0; i<nlines; i++) {
-      // elm-number elm-type number-of-tags < tag > ... node-number-list
-      m_outFile << m_mesh.lineId()[i] << " " << 1 << " " << lintag[i].size()
-                << " ";
-
-      copy( lintag[i].begin(), lintag[i].end()-1,
-            std::ostream_iterator< int >( m_outFile, " " ) );
-      m_outFile << lintag[i].back() << " ";
-
-      copy( lininpoel[i].begin(), lininpoel[i].end()-1,
-            std::ostream_iterator< int >( m_outFile, " ") );
-      m_outFile << lininpoel[i].back() << std::endl;
-    }
-  } else {
-    int type = 1;
-    int ntags = lintag[0].size();
-    // elm-type num-of-elm-follow number-of-tags
-    m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&nlines), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
-    for (std::size_t i=0; i<nlines; i++) {
-      // element id
-      m_outFile.write(
-        reinterpret_cast<char*>(&m_mesh.lineId()[i]), sizeof(int) );
-      // element tags
-      m_outFile.write( reinterpret_cast<char*>(lintag[i].data()),
-                       lintag[i].size()*sizeof(int) );
-      // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<char*>(lininpoel[i].data()),
-                       lininpoel[i].size()*sizeof(int) );
-    }
-  }
+  writeElemBlock( GmshMesh::LIN, m_mesh.lineId(), m_mesh.lintag(),
+                  m_mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  if (isASCII()) {
-    for (std::size_t i=0; i<ntriangles; i++) {
-      // elm-number elm-type number-of-tags < tag > ... node-number-list
-      m_outFile << m_mesh.triangleId()[i] << " " << 2 << " " << tritag[i].size()
-                << " ";
-
-      copy(tritag[i].begin(), tritag[i].end()-1,
-           std::ostream_iterator<int>(m_outFile," "));
-      m_outFile << tritag[i].back() << " ";
-
-      copy(triinpoel[i].begin(), triinpoel[i].end()-1,
-           std::ostream_iterator<int>(m_outFile," "));
-      m_outFile << triinpoel[i].back() << std::endl;
-    }
-  } else {
-    int type = 2;
-    int ntags = tritag[0].size();
-    // elm-type num-of-elm-follow number-of-tags
-    m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&ntriangles), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
-    for (std::size_t i=0; i<ntriangles; i++) {
-      // element id
-      m_outFile.write(
-        reinterpret_cast<char*>(&m_mesh.triangleId()[i]), sizeof(int) );
-      // element tags
-      m_outFile.write( reinterpret_cast<char*>(tritag[i].data()),
-                       tritag[i].size()*sizeof(int) );
-      // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<char*>(triinpoel[i].data()),
-                       triinpoel[i].size()*sizeof(int) );
-    }
-  }
+  writeElemBlock( GmshMesh::TRI, m_mesh.triangleId(), m_mesh.tritag(),
+                  m_mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  if (isASCII()) {
-    for (std::size_t i=0; i<ntetrahedra; i++) {
-      // elm-number elm-type number-of-tags < tag > ... node-number-list
-      m_outFile << m_mesh.tetrahedronId()[i] << " " << 4 << " "
-                << tettag[i].size() << " ";
-
-      copy(tettag[i].begin(), tettag[i].end()-1,
-           std::ostream_iterator<int>(m_outFile," "));
-      m_outFile << tettag[i].back() << " ";
-
-      copy(tetinpoel[i].begin(), tetinpoel[i].end()-1,
-           std::ostream_iterator<int>(m_outFile," "));
-      m_outFile << tetinpoel[i].back() << std::endl;
-    }
-  } else {
-    int type = 4;
-    int ntags = tettag[0].size();
-    // elm-type num-of-elm-follow number-of-tags
-    m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&ntetrahedra), sizeof(int) );
-    m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
-    for (std::size_t i=0; i<ntetrahedra; i++) {
-      // element id
-      m_outFile.write(
-        reinterpret_cast<char*>(&m_mesh.tetrahedronId()[i]), sizeof(int) );
-      // element tags
-      m_outFile.write( reinterpret_cast<char*>(tettag[i].data()),
-                       tettag[i].size()*sizeof(int) );
-      // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<char*>(tetinpoel[i].data()),
-                       tetinpoel[i].size()*sizeof(int) );
-    }
-  }
+  writeElemBlock( GmshMesh::TET, m_mesh.tetrahedronId(), m_mesh.tettag(),
+                  m_mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
   m_outFile << "$EndElements" << std::endl;
