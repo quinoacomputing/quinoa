@@ -32,6 +32,9 @@ endif()
 # Set build type
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+# Build shared-libs by default
+set(BUILD_SHARED_LIBS on)
+
 # Set default third-party libraries directory
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
 set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP})
