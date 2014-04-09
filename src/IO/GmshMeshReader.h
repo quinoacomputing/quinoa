@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Sun 06 Apr 2014 11:02:41 AM MDT
+  \date      Tue 08 Apr 2014 06:37:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -16,6 +16,7 @@
 
 #include <Reader.h>
 #include <GmshMesh.h>
+#include <Exception.h>
 
 namespace quinoa {
 
@@ -59,12 +60,6 @@ class GmshMeshReader : public tk::Reader {
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
 
-    //! Add new element
-    void addElem( int type, const std::vector< int >& nodes );
-
-    //! Add new element tags
-    void addElemTags( int type, const std::vector< int >& tags );
-
     //! Get mesh type
     int type() const {
       Assert( m_type != -1, tk::ExceptType::FATAL, "Mesh type is not yet set");
@@ -85,6 +80,24 @@ class GmshMeshReader : public tk::Reader {
     int m_datasize;                     //!< Data size in mesh file
     int m_type;                         //!< Mesh file type: 0:ASCII, 1:binary
     GmshMesh& m_mesh;                   //!< Mesh object
+
+    //! Push back p for different element types
+    template< class Pushed, class ElmType1, class ElmType2, class ElmType3 >
+    void push_back( int etype, const Pushed& p, ElmType1& e1, ElmType2& e2,
+                    ElmType3& e3 )
+    {
+      using tk::operator+;
+      switch ( etype ) {
+        case  1: e1.push_back( p ); break;
+        case  2: e2.push_back( p ); break;
+        case  4: e3.push_back( p ); break;
+        case 15: break;     // ignore 1-node 'element' type
+        default: Throw( tk::ExceptType::FATAL,
+                        std::string("Unsupported element type ") + etype +
+                        " in mesh file: " + m_filename );
+
+      }
+    }
 
     //! Gmsh element types and their number of nodes,
     //! all Gmsh-supported listed, Quinoa-supported uncommented,

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Sun 06 Apr 2014 10:22:33 PM MDT
+  \date      Tue 08 Apr 2014 06:34:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -14,7 +14,6 @@
 
 #include <GmshMesh.h>
 #include <GmshMeshReader.h>
-#include <Exception.h>
 
 using quinoa::GmshMeshReader;
 
@@ -192,7 +191,9 @@ GmshMeshReader::readElements()
         m_inFile.read(
           reinterpret_cast<char*>(tags.data()), ntags*sizeof(int) );
       }
-      addElemTags( elmtype, tags );
+      // Put in element tags for different types of elements
+      push_back( elmtype, tags, m_mesh.lintag(), m_mesh.tritag(),
+                 m_mesh.tettag() );
 
       // Read and add element node list (i.e. connectivity)
       int nnode = it->second;
@@ -204,15 +205,13 @@ GmshMeshReader::readElements()
         m_inFile.read(
           reinterpret_cast<char*>(nodes.data()), nnode*sizeof(int) );
       }
-      addElem(elmtype, nodes);
+      // Put in element connectivity for different types of elements
+      push_back( elmtype, nodes, m_mesh.lininpoel(), m_mesh.triinpoel(),
+                 m_mesh.tetinpoel() );
 
-      // Put in elemId and increase counter for different types of elements
-      switch (elmtype) {
-        case  1: m_mesh.lineId().push_back( id ); break;
-        case  2: m_mesh.triangleId().push_back( id ); break;
-        case  4: m_mesh.tetrahedronId().push_back( id ); break;
-        case 15: break;     // ignore 1-node 'element' type
-      }
+      // Put in elemId for different types of elements
+      push_back( elmtype, id, m_mesh.lineId(), m_mesh.triangleId(),
+                 m_mesh.tetrahedronId() );
     }
   }
   getline( m_inFile, s );  // finish reading the last line
@@ -232,50 +231,4 @@ GmshMeshReader::readPhysicalNames()
 {
   Throw(tk::ExceptType::WARNING,
       "Mesh section '$PhysicalNames -- $EndPhysicalNames' not yet implemented");
-}
-
-void
-GmshMeshReader::addElem( int elmtype, const std::vector<int>& nodes )
-//******************************************************************************
-//  Add new element (connectivity) to given element type container
-//! \param[in]  elmtype Elem type (container) to add to (lines, triangles, etc)
-//! \param[in]  nodes   Connectivity (node Ids) of the new element
-//! \author J. Bakosi
-//******************************************************************************
-{
-  using tk::operator+;
-
-  switch ( elmtype ) {
-    case  1: m_mesh.lininpoel().push_back( nodes ); break;
-    case  2: m_mesh.triinpoel().push_back( nodes ); break;
-    case  4: m_mesh.tetinpoel().push_back( nodes ); break;
-    case 15: break;     // ignore 1-node 'element' type
-    default:
-      Throw( tk::ExceptType::FATAL,
-             std::string("Unsupported element type ") + elmtype +
-             " in mesh file: " + m_filename );
-  }
-}
-
-void
-GmshMeshReader::addElemTags( int elmtype, const std::vector< int >& tags )
-//******************************************************************************
-//  Add new element tags to given element type
-//! \param[in]  elmtype Elem type (container) to add to (lines, triangles, etc)
-//! \param[in]  tags    Vector of tags to be added
-//! \author J. Bakosi
-//******************************************************************************
-{
-  using tk::operator+;
-
-  switch ( elmtype ) {
-    case  1: m_mesh.lintag().push_back( tags ); break;
-    case  2: m_mesh.tritag().push_back( tags ); break;
-    case  4: m_mesh.tettag().push_back( tags ); break;
-    case 15: break;     // ignore 1-node 'element' type
-    default:
-      Throw( tk::ExceptType::FATAL,
-             std::string("Unsupported element type ") + elmtype +
-             " in mesh file: " + m_filename );
-  }
 }
