@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:27:07 AM MDT
+  \date      Thu 10 Apr 2014 09:33:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -15,6 +15,7 @@
 
 #include <Writer.h>
 #include <GmshMesh.h>
+#include <GmshMeshIO.h>
 
 namespace quinoa {
 
@@ -26,8 +27,7 @@ class GmshMeshWriter : public tk::Writer {
     explicit GmshMeshWriter( const std::string& filename,
                              GmshMesh& mesh,
                              tk::real version = 2.2,
-                             GmshMesh::FileType type =
-                               GmshMesh::FileType::BINARY, // default: binary
+                             GmshFileType type = GmshFileType::BINARY,
                              int datasize = sizeof(double) );
 
     //! Destructor, default compiler generated
@@ -57,15 +57,15 @@ class GmshMeshWriter : public tk::Writer {
 
     // Get mesh type
     bool isASCII() const {
-      return m_type == GmshMesh::FileType::ASCII ? true : false;
+      return m_type == GmshFileType::ASCII ? true : false;
     }
     bool isBinary() const {
-      return m_type == GmshMesh::FileType::BINARY ? true : false;
+      return m_type == GmshFileType::BINARY ? true : false;
     }
 
     // Write out element ids, tags, and connectivity (node list)
     template< class ElmId, class ElmTag, class ElmInpoel >
-    void writeElemBlock( GmshMesh::ElmType type, ElmId& id, ElmTag& tag,
+    void writeElemBlock( GmshElemType type, ElmId& id, ElmTag& tag,
                          ElmInpoel& inpoel )
     {
       if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
@@ -105,7 +105,7 @@ class GmshMeshWriter : public tk::Writer {
     }
 
     GmshMesh& m_mesh;                   //!< Mesh object
-    GmshMesh::FileType m_type;          //!< Mesh file type: 0:ASCII, 1:binary
+    GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
 };
 
 } // quinoa::

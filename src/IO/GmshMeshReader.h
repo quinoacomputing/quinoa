@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:26:30 AM MDT
+  \date      Thu 10 Apr 2014 09:35:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -15,6 +15,7 @@
 
 #include <Reader.h>
 #include <GmshMesh.h>
+#include <GmshMeshIO.h>
 #include <Exception.h>
 
 namespace quinoa {
@@ -28,7 +29,7 @@ class GmshMeshReader : public tk::Reader {
       Reader(filename),
       m_version( 0.0 ),                        // 0.0: uninitialized
       m_datasize( 0 ),                         //   0: uninitialized
-      m_type( GmshMesh::FileType::UNDEFINED ), //  -1: uninitialized
+      m_type( GmshFileType::UNDEFINED ),       //  -1: uninitialized
       m_mesh( mesh ) {}
 
     //! Destructor, default compiler generated
@@ -61,19 +62,19 @@ class GmshMeshReader : public tk::Reader {
 
     // Get mesh type queries
     bool isASCII() const {
-      Assert( m_type != GmshMesh::FileType::UNDEFINED, tk::ExceptType::FATAL,
+      Assert( m_type != GmshFileType::UNDEFINED, tk::ExceptType::FATAL,
               "Mesh type is undefined");
-      return m_type == GmshMesh::FileType::ASCII ? true : false;
+      return m_type == GmshFileType::ASCII ? true : false;
     }
     bool isBinary() const {
-      Assert( m_type != GmshMesh::FileType::UNDEFINED, tk::ExceptType::FATAL,
+      Assert( m_type != GmshFileType::UNDEFINED, tk::ExceptType::FATAL,
               "Mesh type is undefined");
-      return m_type == GmshMesh::FileType::BINARY ? true : false;
+      return m_type == GmshFileType::BINARY ? true : false;
     }
 
     tk::real m_version;                 //!< Mesh version in mesh file
     int m_datasize;                     //!< Data size in mesh file
-    GmshMesh::FileType m_type;          //!< Mesh file type: 0:ASCII, 1:binary
+    GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
     GmshMesh& m_mesh;                   //!< Mesh object
 
     //! Push back p for different element types
@@ -83,10 +84,10 @@ class GmshMeshReader : public tk::Reader {
     {
       using tk::operator+;
       switch ( etype ) {
-        case GmshMesh::LIN: e1.push_back( p ); break;
-        case GmshMesh::TRI: e2.push_back( p ); break;
-        case GmshMesh::TET: e3.push_back( p ); break;
-        case GmshMesh::PNT: break;     // ignore 1-node 'point element' type
+        case GmshElemType::LIN: e1.push_back( p ); break;
+        case GmshElemType::TRI: e2.push_back( p ); break;
+        case GmshElemType::TET: e3.push_back( p ); break;
+        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
         default: Throw( tk::ExceptType::FATAL,
                         std::string("Unsupported element type ") + etype +
                         " in mesh file: " + m_filename );
@@ -98,10 +99,10 @@ class GmshMeshReader : public tk::Reader {
     //! all Gmsh-supported listed, Quinoa-supported uncommented,
     //! See Gmsh documentation for element ids as keys
     const std::map< int, int > m_elemNodes {
-      { GmshMesh::ElmType::LIN,   2 },      // 2-node line
-      { GmshMesh::ElmType::TRI,   3 },      // 3-node triangle
+      { GmshElemType::LIN,   2 },  // 2-node line
+      { GmshElemType::TRI,   3 },  // 3-node triangle
     //{             3,   4 },      // 4-node quadrangle
-      { GmshMesh::ElmType::TET,   4 },      // 4-node tetrahedron
+      { GmshElemType::TET,   4 },  // 4-node tetrahedron
     //{             5,   8 },      // 8-node hexahedron
     //{             6,   6 },      // 6-node prism
     //{             7,   5 },      // 5-node pyramid
@@ -112,7 +113,7 @@ class GmshMeshReader : public tk::Reader {
     //{            12,  27 },      // 27-node second order hexahedron
     //{            13,  18 },      // 18-node second order prism
     //{            14,  14 },      // 14-node second order pyramid
-      { GmshMesh::ElmType::PNT,   1 }       // 1-node point
+      { GmshElemType::PNT,   1 }   // 1-node point
     //{            16,   8 },      // 8-node second order quadrangle
     //{            17,  20 },      // 20-node second order hexahedron
     //{            18,  15 },      // 15-node second order prism
