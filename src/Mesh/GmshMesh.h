@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/GmshMesh.h
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:32:04 PM MDT
+  \date      Thu 10 Apr 2014 09:28:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh class declaration
   \details   Gmsh mesh class declaration
@@ -23,17 +23,6 @@ namespace quinoa {
 class GmshMesh {
 
   public:
-    // Identifiers of supported Gmsh elements
-    enum ElmType { LIN = 1,
-                   TRI = 2,
-                   TET = 4,
-                   PNT = 15 };
-
-    // Gmsh mesh file types
-    enum class FileType { UNDEFINED = -1,
-                          ASCII = 0,
-                          BINARY = 1 };
-
     //! Constructor: zero memory entry pointers held
     explicit GmshMesh() = default;
 

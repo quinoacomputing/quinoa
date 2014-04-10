@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 08:03:14 PM MDT
+  \date      Thu 10 Apr 2014 09:36:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -64,9 +64,9 @@ GmshMeshReader::readMeshFormat()
   int type;
   m_inFile >> m_version >> type >> m_datasize;
   if (type == 0 )
-    m_type = GmshMesh::FileType::ASCII;
+    m_type = GmshFileType::ASCII;
   else if (type == 1 )
-    m_type = GmshMesh::FileType::BINARY;
+    m_type = GmshFileType::BINARY;
 
   ErrChk( ( fabs(m_version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
             fabs(m_version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
@@ -74,8 +74,7 @@ GmshMeshReader::readMeshFormat()
             std::string("Unsupported mesh version '") + m_version +
             "' in file " + m_filename );
 
-  ErrChk( ( m_type == GmshMesh::FileType::ASCII ||
-            m_type == GmshMesh::FileType::BINARY ),
+  ErrChk( ( m_type == GmshFileType::ASCII || m_type == GmshFileType::BINARY ),
           tk::ExceptType::FATAL,
           std::string("Unsupported mesh type '") + m_type + "' in file " +
             m_filename );

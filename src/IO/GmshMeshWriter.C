@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:58:56 PM MDT
+  \date      Thu 10 Apr 2014 09:34:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -20,7 +20,7 @@ using quinoa::GmshMeshWriter;
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
                                 GmshMesh& mesh,
                                 tk::real version,
-                                GmshMesh::FileType type,
+                                GmshFileType type,
                                 int datasize ) :
   Writer( filename ), m_mesh( mesh ), m_type( type )
 //******************************************************************************
@@ -111,15 +111,15 @@ GmshMeshWriter::writeElements()
                m_mesh.tetinpoel().size() << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshMesh::LIN, m_mesh.lineId(), m_mesh.lintag(),
+  writeElemBlock( GmshElemType::LIN, m_mesh.lineId(), m_mesh.lintag(),
                   m_mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshMesh::TRI, m_mesh.triangleId(), m_mesh.tritag(),
+  writeElemBlock( GmshElemType::TRI, m_mesh.triangleId(), m_mesh.tritag(),
                   m_mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshMesh::TET, m_mesh.tetrahedronId(), m_mesh.tettag(),
+  writeElemBlock( GmshElemType::TET, m_mesh.tetrahedronId(), m_mesh.tettag(),
                   m_mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
