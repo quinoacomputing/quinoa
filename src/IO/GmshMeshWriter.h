@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 07:56:39 PM MDT
+  \date      Wed 09 Apr 2014 07:22:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -12,6 +12,7 @@
 #define GmshMeshWriter_h
 
 #include <string>
+#include <iostream>     // NOT NEEDED
 
 #include <Writer.h>
 #include <GmshMesh.h>
@@ -68,6 +69,8 @@ class GmshMeshWriter : public tk::Writer {
     void writeElemBlock( GmshMesh::ElmType type, ElmId& id, ElmTag& tag,
                          ElmInpoel& inpoel )
     {
+      if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
+
       auto n = inpoel.size();
       if (isASCII()) {
         for (std::size_t i=0; i<n; i++) {
