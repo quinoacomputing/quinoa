@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 07:22:09 PM MDT
+  \date      Thu 10 Apr 2014 09:27:07 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -12,7 +12,6 @@
 #define GmshMeshWriter_h
 
 #include <string>
-#include <iostream>     // NOT NEEDED
 
 #include <Writer.h>
 #include <GmshMesh.h>
