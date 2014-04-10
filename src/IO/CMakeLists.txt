@@ -6,6 +6,7 @@ add_library(IO
             Reader.C                    # readers
             GmshMeshReader.C
             STLTxtMeshReader.C
+            NetgenMeshReader.C
             Writer.C                    # writers
             PDFWriter.C
             GlobWriter.C
