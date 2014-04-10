@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 07:08:37 PM MDT
+  \date      Thu 10 Apr 2014 09:45:09 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -40,22 +40,19 @@ MeshConvDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Create Gmsh mesh
-  quinoa::GmshMesh mesh;
+  // Create 3D unstructured mesh
+  quinoa::UnsMesh mesh;
 
-  // Create Gmsh mesh reader
+  // Create mesh reader
   //quinoa::GmshMeshReader
   //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
   quinoa::NetgenMeshReader
     inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
 
-  // Read in Gmsh mesh
+  // Read in mesh
   inMesh.read();
 
-  // Debug: echo element sets
-  //mesh.echoElemSets();
-
-  // Debug: output Gmsh mesh
+  // Output mesh
   quinoa::GmshMeshWriter outMesh( "out.msh", mesh );
   outMesh.write();
 }

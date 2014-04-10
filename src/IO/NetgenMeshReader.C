@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 07:20:12 PM MDT
+  \date      Thu 10 Apr 2014 09:47:05 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition
@@ -12,7 +12,6 @@
 #include <limits>
 #include <cmath>
 
-#include <GmshMesh.h>
 #include <NetgenMeshReader.h>
 
 using quinoa::NetgenMeshReader;

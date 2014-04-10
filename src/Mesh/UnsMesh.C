@@ -1,23 +1,23 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/GmshMesh.C
+  \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 02:06:53 PM MDT
+  \date      Thu 10 Apr 2014 09:44:13 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh mesh class definition
-  \details   Gmsh mesh class definition
+  \brief     3D unstructured mesh class definition
+  \details   3D unstructured mesh class definition
 */
 //******************************************************************************
 
 #include <iostream>
 #include <iterator>
 
-#include <GmshMesh.h>
+#include <UnsMesh.h>
 
-using quinoa::GmshMesh;
+using quinoa::UnsMesh;
 
 void
-GmshMesh::echoElemSets() const
+UnsMesh::echoElemSets() const
 //******************************************************************************
 //  Echo element tags and connectivity in all element sets
 //! \author J. Bakosi

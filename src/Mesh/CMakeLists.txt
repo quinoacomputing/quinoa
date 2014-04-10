@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.5)
 project(Mesh CXX)
 
 add_library(Mesh
-            GmshMesh.C
+            UnsMesh.C
             STLMesh.C
 )
 
