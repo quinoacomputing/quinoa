@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:34:36 AM MDT
+  \date      Thu 10 Apr 2014 09:46:37 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -18,7 +18,7 @@
 using quinoa::GmshMeshWriter;
 
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
-                                GmshMesh& mesh,
+                                UnsMesh& mesh,
                                 tk::real version,
                                 GmshFileType type,
                                 int datasize ) :

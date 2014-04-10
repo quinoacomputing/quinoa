@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 08:15:36 PM MDT
+  \date      Thu 10 Apr 2014 09:46:54 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen reader class declaration
   \details   Netgen reader class declaration
@@ -15,7 +15,7 @@
 #include <map>
 
 #include <Reader.h>
-#include <GmshMesh.h>
+#include <UnsMesh.h>
 #include <Exception.h>
 
 namespace quinoa {
@@ -25,7 +25,7 @@ class NetgenMeshReader : public tk::Reader {
 
   public:
     //! Constructor
-    explicit NetgenMeshReader( const std::string filename, GmshMesh& mesh ) :
+    explicit NetgenMeshReader( const std::string filename, UnsMesh& mesh ) :
       Reader( filename ),
       m_mesh( mesh ) {}
 
@@ -51,7 +51,7 @@ class NetgenMeshReader : public tk::Reader {
     //! Read section
     void readElements();
 
-    GmshMesh& m_mesh;                   //!< Mesh object
+    UnsMesh& m_mesh;                   //!< Mesh object
 };
 
 } // quinoa::

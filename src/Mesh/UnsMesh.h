@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Mesh/GmshMesh.h
+  \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:28:36 AM MDT
+  \date      Thu 10 Apr 2014 09:43:45 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Gmsh mesh class declaration
-  \details   Gmsh mesh class declaration
+  \brief     3D unstructured mesh class declaration
+  \details   3D unstructured mesh class declaration
 */
 //******************************************************************************
-#ifndef GmshMesh_h
-#define GmshMesh_h
+#ifndef UnshMesh_h
+#define UnshMesh_h
 
 #include <vector>
 #include <memory>
@@ -19,15 +19,15 @@
 
 namespace quinoa {
 
-//! Gmsh mesh class
-class GmshMesh {
+//! 3D unstructured mesh class
+class UnsMesh {
 
   public:
     //! Constructor: zero memory entry pointers held
-    explicit GmshMesh() = default;
+    explicit UnsMesh() = default;
 
     //! Destructor, default compiler generated
-    ~GmshMesh() noexcept = default;
+    ~UnsMesh() noexcept = default;
 
     //! Coords accessor
     std::vector< tk::point >& coord() { return m_coord; }
@@ -70,13 +70,13 @@ class GmshMesh {
 
   private:
     //! Don't permit copy constructor
-    GmshMesh(const GmshMesh&) = delete;
+    UnsMesh(const UnsMesh&) = delete;
     //! Don't permit assigment constructor
-    GmshMesh& operator=(const GmshMesh&) = delete;
+    UnsMesh& operator=(const UnsMesh&) = delete;
     //! Don't permit move constructor
-    GmshMesh(GmshMesh&&) = delete;
+    UnsMesh(UnsMesh&&) = delete;
     //! Don't permit move assignment
-    GmshMesh& operator=(GmshMesh&&) = delete;
+    UnsMesh& operator=(UnsMesh&&) = delete;
 
     std::vector< tk::point > m_coord;        //!< Node coordinates
     std::vector< int > m_nodeId;             //!< Node Ids
@@ -96,4 +96,4 @@ class GmshMesh {
 
 } // quinoa::
 
-#endif // GmshMesh_h
+#endif // UnsMesh_h

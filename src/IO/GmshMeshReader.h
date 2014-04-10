@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:35:49 AM MDT
+  \date      Thu 10 Apr 2014 09:45:50 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Reader.h>
-#include <GmshMesh.h>
+#include <UnsMesh.h>
 #include <GmshMeshIO.h>
 #include <Exception.h>
 
@@ -25,7 +25,7 @@ class GmshMeshReader : public tk::Reader {
 
   public:
     //! Constructor
-    explicit GmshMeshReader( const std::string filename, GmshMesh& mesh ) :
+    explicit GmshMeshReader( const std::string filename, UnsMesh& mesh ) :
       Reader(filename),
       m_version( 0.0 ),                        // 0.0: uninitialized
       m_datasize( 0 ),                         //   0: uninitialized
@@ -75,7 +75,7 @@ class GmshMeshReader : public tk::Reader {
     tk::real m_version;                 //!< Mesh version in mesh file
     int m_datasize;                     //!< Data size in mesh file
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
-    GmshMesh& m_mesh;                   //!< Mesh object
+    UnsMesh& m_mesh;                    //!< Mesh object
 
     //! Push back p for different element types
     template< class Pushed, class ElmType1, class ElmType2, class ElmType3 >

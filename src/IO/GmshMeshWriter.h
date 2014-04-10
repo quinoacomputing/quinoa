@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:33:46 AM MDT
+  \date      Thu 10 Apr 2014 09:46:29 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -14,7 +14,7 @@
 #include <string>
 
 #include <Writer.h>
-#include <GmshMesh.h>
+#include <UnsMesh.h>
 #include <GmshMeshIO.h>
 
 namespace quinoa {
@@ -25,7 +25,7 @@ class GmshMeshWriter : public tk::Writer {
   public:
     //! Constructor
     explicit GmshMeshWriter( const std::string& filename,
-                             GmshMesh& mesh,
+                             UnsMesh& mesh,
                              tk::real version = 2.2,
                              GmshFileType type = GmshFileType::BINARY,
                              int datasize = sizeof(double) );
@@ -104,7 +104,7 @@ class GmshMeshWriter : public tk::Writer {
       }
     }
 
-    GmshMesh& m_mesh;                   //!< Mesh object
+    UnsMesh& m_mesh;                    //!< Mesh object
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
 };
 
