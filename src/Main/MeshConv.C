@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 09:28:58 PM MDT
+  \date      Fri 11 Apr 2014 10:13:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
   return tk::Main< meshconv::MeshConvDriver >
                  ( argc,
                    argv,
-                   "Quinoa: Gmsh to Exodus II mesh file converter",
-                   GMSH2EXO_EXECUTABLE,
+                   "Quinoa: Mesh file converter",
+                   MESHCONV_EXECUTABLE,
                    meshconv::echoTPL );
 }
