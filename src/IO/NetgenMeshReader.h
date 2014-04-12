@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:46:54 AM MDT
+  \date      Sat 12 Apr 2014 07:24:08 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen reader class declaration
   \details   Netgen reader class declaration
@@ -45,11 +45,14 @@ class NetgenMeshReader : public tk::Reader {
     //! Don't permit move assigment
     NetgenMeshReader& operator=(NetgenMeshReader&&) = delete;
 
-    //! Read section
+    //! Read nodes
     void readNodes();
 
-    //! Read section
+    //! Read elements, i.e., connectivity
     void readElements();
+
+    //! Read boundary conditions
+    void readBCs();
 
     UnsMesh& m_mesh;                   //!< Mesh object
 };
