@@ -12,6 +12,7 @@ add_library(IO
             GlobWriter.C
             TxtStatWriter.C
             GmshMeshWriter.C
+            NetgenMeshWriter.C
             SiloWriter.C
 )
 

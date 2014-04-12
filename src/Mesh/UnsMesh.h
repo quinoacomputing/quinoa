@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:43:45 AM MDT
+  \date      Sat 12 Apr 2014 07:29:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration
@@ -65,6 +65,9 @@ class UnsMesh {
     //! Tetrahedra element tags accessor
     std::vector< std::vector< int > >& tettag() { return m_tettag; }
 
+    //! Boundary conditions accessor
+    std::vector< std::vector< int > >& bc() { return m_bc; }
+
     //! Echo element tags and connectivity in all element sets
     void echoElemSets() const;
 
@@ -78,11 +81,11 @@ class UnsMesh {
     //! Don't permit move assignment
     UnsMesh& operator=(UnsMesh&&) = delete;
 
-    std::vector< tk::point > m_coord;        //!< Node coordinates
-    std::vector< int > m_nodeId;             //!< Node Ids
-    std::vector< int > m_lineId;             //!< Line element Ids
-    std::vector< int > m_triangleId;         //!< Triangle element Ids
-    std::vector< int > m_tetrahedronId;      //!< Tetrahedron element Ids
+    std::vector< tk::point > m_coord;             //!< Node coordinates
+    std::vector< int > m_nodeId;                  //!< Node Ids
+    std::vector< int > m_lineId;                  //!< Line element Ids
+    std::vector< int > m_triangleId;              //!< Triangle element Ids
+    std::vector< int > m_tetrahedronId;           //!< Tetrahedron element Ids
 
     std::vector< std::vector< int > > m_lininpoel;//!< Line elements conn.
     std::vector< std::vector< int > > m_lintag;   //!< Line element tags
@@ -92,6 +95,8 @@ class UnsMesh {
 
     std::vector< std::vector< int > > m_tetinpoel;//!< Tetrahedron elements conn.
     std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron element tags
+
+    std::vector< std::vector< int > > m_bc;       //!< Boundary conditions
 };
 
 } // quinoa::
