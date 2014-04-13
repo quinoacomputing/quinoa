@@ -57,7 +57,8 @@
   updating the particle properties, the order of the particle properties in
   memory should be use-selectable at compile time
 
-* Add floating point exception handler, e.g., based on fenv.h
+* Add floating point exception handler, e.g., based on fenv.h, see also:
+  http://neugierig.org/software/blog/2012/06/backtraces.html
 
 * Are cout warnings in destructors' catch blocks exception-safe?
 
