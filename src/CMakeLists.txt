@@ -35,12 +35,21 @@ set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 # Build shared-libs by default
 set(BUILD_SHARED_LIBS on)
 
-# Set default third-party libraries directory
-string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
-set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP})
-get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
-set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
-MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
+# If not specified on the command-line, set default third-party libraries
+# directory based on cmake-supplied compiler ID
+if (NOT TPL_DIR)
+  string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
+  set(REL_TPL_DIR ${PROJECT_SOURCE_DIR}/../tpl/install/${COMP})
+  get_filename_component(ABS_TPL_DIR ${REL_TPL_DIR} ABSOLUTE)
+  set(TPL_DIR ${ABS_TPL_DIR} CACHE STRING "Third-party libraries directory.")
+endif()
+
+# Echo status on third-party libraries directory
+if (TPL_DIR)
+  MESSAGE(STATUS "Third-party library dir: " ${TPL_DIR})
+else()
+  message(FATAL_ERROR "Third-party library dir '${TPL_DIR}' is not specified")
+endif()
 
 # Find MPI and get its underlying compilers
 include(GetMPICompilers)
