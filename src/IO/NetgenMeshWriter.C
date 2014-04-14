@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 12 Apr 2014 07:37:37 AM MDT
+  \date      Mon Apr 14 10:54:12 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh writer
   \details   Netgen mesh writer
@@ -12,6 +12,7 @@
 #include <iomanip>
 
 #include <NetgenMeshWriter.h>
+#include <Exception.h>
 
 using quinoa::NetgenMeshWriter;
 
