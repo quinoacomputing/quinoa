@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
-  \date      Sat 12 Apr 2014 07:24:08 AM MDT
+  \date      Mon Apr 14 11:01:00 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen reader class declaration
   \details   Netgen reader class declaration
@@ -11,12 +11,8 @@
 #ifndef NetgenMeshReader_h
 #define NetgenMeshReader_h
 
-#include <vector>
-#include <map>
-
 #include <Reader.h>
 #include <UnsMesh.h>
-#include <Exception.h>
 
 namespace quinoa {
 
