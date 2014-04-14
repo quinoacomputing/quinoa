@@ -1,9 +1,24 @@
-- Build tpls in empty tpl/build/<compiler>:
+Building quinoa requires three steps:
+-------------------------------------
 
-  $ CC=mpicc CXX=mpic++ cmake ../..
-  $ make -sj4
-    
-- Build quinoa in empty build/<compiler>:
-    
-  $ CC=mpicc CXX=mpic++ cmake -G Ninja ../../src
-  $ ninja
+1. Pick compilers:
+
+   $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+
+2. Build third-party libraries in empty build dir:
+
+   $ cmake <path-to-tpl-dir>
+   $ make
+
+   Note: if you don't set CMAKE_INSTALL_PREFIX, it will default to
+   <path-to-tpl-dir>/install/<compiler>
+
+3. Build quinoa in empty build dir:
+
+   $ cmake <path-to-src-dir>
+   $ make
+
+   Note: if you don't set TPL_DIR, it will default to
+   <path-to-tpl-dir>install/<compiler>
+
+   Note: the executables will be in <build>/Main
