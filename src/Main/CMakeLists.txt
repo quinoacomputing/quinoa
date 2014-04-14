@@ -41,6 +41,9 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       QuinoaControl
                       RNG
                       ${SILO_LIBRARY}
+                      ${NEMESIS_LIBRARY}
+                      ${EXODUS_LIBRARY}
+                      ${NETCDF_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -126,6 +129,9 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       MeshConvControl
                       Statistics
                       ${SILO_LIBRARY}
+                      ${NEMESIS_LIBRARY}
+                      ${EXODUS_LIBRARY}
+                      ${NETCDF_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}

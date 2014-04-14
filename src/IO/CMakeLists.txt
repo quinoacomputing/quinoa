@@ -13,6 +13,7 @@ add_library(IO
             TxtStatWriter.C
             GmshMeshWriter.C
             NetgenMeshWriter.C
+            ExodusIIMeshWriter.C
             SiloWriter.C
 )
 

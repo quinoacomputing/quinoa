@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Sat 12 Apr 2014 07:08:03 AM MDT
+  \date      Mon Apr 14 11:03:47 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -16,6 +16,7 @@
 #include <NetgenMeshReader.h>
 #include <NetgenMeshWriter.h>
 #include <GmshMeshWriter.h>
+#include <ExodusIIMeshWriter.h>
 
 using meshconv::MeshConvDriver;
 
@@ -53,6 +54,7 @@ MeshConvDriver::execute() const
 
   // Output mesh
   //quinoa::GmshMeshWriter outMesh( "out.msh", mesh );
-  quinoa::NetgenMeshWriter outMesh( "out.mesh", mesh );
+  //quinoa::NetgenMeshWriter outMesh( "out.mesh", mesh );
+  quinoa::ExodusIIMeshWriter outMesh( "out.exo", mesh );
   outMesh.write();
 }
