@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Mon Apr 14 10:54:06 2014
+  \date      Mon Apr 14 11:05:05 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen writer
   \details   Netgen writer
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef NetgenMeshWriter_h
 #define NetgenMeshWriter_h
+
+#include <string>
 
 #include <Writer.h>
 #include <UnsMesh.h>

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Sat 12 Apr 2014 07:29:11 AM MDT
+  \date      Mon Apr 14 15:34:48 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration
@@ -46,6 +46,11 @@ class UnsMesh {
 
     //! Number of nodes accessor
     std::size_t nnode() { return m_nodeId.size(); }
+
+    //! Total number of elements accessor
+    std::size_t nelem() {
+      return m_lininpoel.size() + m_triinpoel.size() + m_tetinpoel.size();
+    }
 
     //! Line elements connectivity accessor
     std::vector< std::vector< int > >& lininpoel() { return m_lininpoel; }

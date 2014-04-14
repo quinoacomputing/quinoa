@@ -156,6 +156,30 @@ find_library(SILO_LIBRARY
              NO_DEFAULT_PATH
              REQUIRED)
 
+#### ExodusII
+set(EXODUS_LIBRARY "NOTFOUND")
+find_library(EXODUS_LIBRARY
+             NAMES exodus
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH
+             REQUIRED)
+
+#### Nemesis
+set(NEMESIS_LIBRARY "NOTFOUND")
+find_library(NEMESIS_LIBRARY
+             NAMES nemesis
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH
+             REQUIRED)
+
+#### NetCDF
+set(NETCDF_LIBRARY "NOTFOUND")
+find_library(NETCDF_LIBRARY
+             NAMES netcdf
+             PATHS ${TPL_DIR}/lib
+             NO_DEFAULT_PATH
+             REQUIRED)
+
 #### HDF5
 set(HDF5_LIBRARY "NOTFOUND")
 find_library(HDF5_LIBRARY
