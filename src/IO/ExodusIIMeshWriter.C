@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Tue Apr 15 07:58:00 2014
+  \date      Tue Apr 15 08:15:59 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -130,7 +130,7 @@ ExodusIIMeshWriter::writeElemBlock( int elclass, int nnpe,
   // Write element connectivity
   for (std::size_t e=0; e<inpoel.size(); ++e) {
     ErrChk( ne_put_n_elem_conn( m_outFile, elclass, e+1, 1,
-            inpoel[e].data() ) == 0,
+            inpoel[e].data() ) == 0,    // 1-based element ids
     tk::ExceptType::FATAL,
     "Failed to write " + eltype + " element connectivity to file: " +
      m_filename );
