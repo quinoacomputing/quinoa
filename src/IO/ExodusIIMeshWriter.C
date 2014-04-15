@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Mon Apr 14 15:31:47 2014
+  \date      Tue Apr 15 07:58:00 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -14,6 +14,7 @@
 #include <exodusII.h>
 #include <ne_nemesisI.h>
 
+#include <Config.h>
 #include <ExodusIIMeshWriter.h>
 #include <Exception.h>
 
@@ -67,10 +68,18 @@ ExodusIIMeshWriter::writeHeader()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ErrChk( ex_put_init( m_outFile, "Written by Quinoa", 3, m_mesh.nnode(),
-                       m_mesh.tetinpoel().size(), 1, 0, 0 ) == 0,
-          tk::ExceptType::FATAL,
-          "Failed to write header to file: " + m_filename );
+  ErrChk(
+    ex_put_init( m_outFile,
+                 (std::string("Written by Quinoa::") +
+                   MESHCONV_EXECUTABLE).c_str(),
+                 3,     // number of dimentions
+                 m_mesh.nnode(),
+                 m_mesh.triinpoel().size() + m_mesh.tetinpoel().size(),
+                 2,     // number of element blocks
+                 0,     // number of node sets
+                 0 ) == 0,
+    tk::ExceptType::FATAL,
+    "Failed to write header to file: " + m_filename );
 }
 
 void
@@ -97,20 +106,33 @@ ExodusIIMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto& c = m_mesh.tetinpoel();
+  writeElemBlock( 1, 3, "TRIANGLES", m_mesh.triinpoel() );
+  writeElemBlock( 2, 4, "TETRAHEDRA", m_mesh.tetinpoel() );
+}
+
+void
+ExodusIIMeshWriter::writeElemBlock( int elclass, int nnpe,
+                                    const std::string& eltype,
+                                    std::vector< std::vector< int > >& inpoel )
+//******************************************************************************
+//  Write element block to ExodusII file
+//! \author J. Bakosi
+//******************************************************************************
+{
+  using tk::operator+;
 
   // Write element block information
-  int elclass = 1;
-  ErrChk( ex_put_elem_block( m_outFile, elclass, "TET", c.size(), 4, 0 ) == 0,
-            tk::ExceptType::FATAL,
-            "Failed to write element block to file: " + m_filename );
+  ErrChk( ex_put_elem_block( m_outFile, elclass, eltype.c_str(), inpoel.size(),
+                             nnpe, 0 ) == 0,
+    tk::ExceptType::FATAL,
+    "Failed to write " + eltype + " element block to file: " + m_filename );
 
   // Write element connectivity
-  for (std::size_t e=0; e<c.size(); ++e) {
-    std::vector< int > n( c[e] );
-    for (auto& i : n) ++i;      // 1-based node ids
-    ErrChk( ne_put_n_elem_conn( m_outFile, elclass, e+1, 1, n.data() ) == 0,
-            tk::ExceptType::FATAL,
-            "Failed to write element connectivity to file: " + m_filename );
+  for (std::size_t e=0; e<inpoel.size(); ++e) {
+    ErrChk( ne_put_n_elem_conn( m_outFile, elclass, e+1, 1,
+            inpoel[e].data() ) == 0,
+    tk::ExceptType::FATAL,
+    "Failed to write " + eltype + " element connectivity to file: " +
+     m_filename );
   }
 }
