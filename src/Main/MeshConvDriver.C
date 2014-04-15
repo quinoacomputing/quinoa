@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Mon Apr 14 11:03:47 2014
+  \date      Tue Apr 15 07:43:00 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -44,10 +44,10 @@ MeshConvDriver::execute() const
   quinoa::UnsMesh mesh;
 
   // Create mesh reader
-  //quinoa::GmshMeshReader
-  //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
-  quinoa::NetgenMeshReader
+  quinoa::GmshMeshReader
     inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
+  //quinoa::NetgenMeshReader
+  //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
 
   // Read in mesh
   inMesh.read();

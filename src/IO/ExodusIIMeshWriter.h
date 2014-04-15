@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Mon Apr 14 14:28:38 2014
+  \date      Tue Apr 15 07:52:14 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -51,6 +51,10 @@ class ExodusIIMeshWriter {
 
     //! Write elements
     void writeElements();
+
+    //! Write element block
+    void writeElemBlock( int elclass, int nnpe, const std::string& eltype,
+                         std::vector< std::vector< int > >& inpoel );
 
     const std::string m_filename;          //!< File name
 

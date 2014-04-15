@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:46:37 AM MDT
+  \date      Tue Apr 15 07:42:03 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -124,4 +124,49 @@ GmshMeshWriter::writeElements()
 
   if (isBinary()) m_outFile << std::endl;
   m_outFile << "$EndElements" << std::endl;
+}
+
+void
+GmshMeshWriter::writeElemBlock( GmshElemType type, std::vector< int >& id,
+                                std::vector< std::vector< int > >& tag,
+                                std::vector< std::vector< int > >& inpoel )
+//******************************************************************************
+//  Write element block: element ids, tags, and connectivity (node list)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
+
+  auto n = inpoel.size();
+  if (isASCII()) {
+    for (std::size_t i=0; i<n; i++) {
+      // elm-number elm-type number-of-tags < tag > ... node-number-list
+      m_outFile << id[i] << " " << type << " " << tag[i].size() << " ";
+
+      copy( tag[i].begin(), tag[i].end()-1,
+            std::ostream_iterator< int >( m_outFile, " " ) );
+      m_outFile << tag[i].back() << " ";
+
+      copy( inpoel[i].begin(), inpoel[i].end()-1,
+            std::ostream_iterator< int >( m_outFile, " ") );
+      m_outFile << inpoel[i].back() << std::endl;
+    }
+  } else {
+    int ntags = tag[0].size();
+    // elm-type num-of-elm-follow number-of-tags
+    m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
+    m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
+    m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
+    for (std::size_t i=0; i<n; i++) {
+      // element id
+      m_outFile.write(
+        reinterpret_cast<char*>(&id[i]), sizeof(int) );
+      // element tags
+      m_outFile.write( reinterpret_cast<char*>(tag[i].data()),
+                       tag[i].size()*sizeof(int) );
+      // element node list (i.e. connectivity)
+      m_outFile.write( reinterpret_cast<char*>(inpoel[i].data()),
+                       inpoel[i].size()*sizeof(int) );
+    }
+  }
 }
