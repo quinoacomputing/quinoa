@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Sat 12 Apr 2014 07:30:39 AM MDT
+  \date      Tue 15 Apr 2014 07:26:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition
@@ -82,10 +82,6 @@ NetgenMeshReader::readElements()
     std::vector< int > n( 4, 0 );
     // mat n[1-4], throw away mat
     m_inFile >> n[3] >> n[3] >> n[0] >> n[1] >> n[2];
-    n[0] -= 1;
-    n[1] -= 1;
-    n[2] -= 1;
-    n[3] -= 1;
     m_mesh.tetrahedronId().push_back( i );
     m_mesh.tettag().push_back( {1} );
     m_mesh.tetinpoel().push_back( n );
@@ -110,9 +106,6 @@ NetgenMeshReader::readBCs()
     std::vector< int > n( 4, 0 );
     // id n[1-3]
     m_inFile >> n[0] >> n[1] >> n[2] >> n[3];
-    n[1] -= 1;
-    n[2] -= 1;
-    n[3] -= 1;
     m_mesh.bc().push_back( n );
   }
 }

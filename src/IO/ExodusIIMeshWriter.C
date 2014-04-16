@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Tue Apr 15 08:15:59 2014
+  \date      Wed Apr 16 07:23:41 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -92,8 +92,8 @@ ExodusIIMeshWriter::writeNodes()
   auto& c = m_mesh.coord();
 
   for (std::size_t n=0; n<m_mesh.nnode(); ++n) {
-    ErrChk( ne_put_n_coord( m_outFile, n+1, 1, &c[n][0], &c[n][1],
-                            &c[n][2] ) == 0,    // 1-based node ids
+    ErrChk( ne_put_n_coord( m_outFile, m_mesh.nodeId()[n], 1, &c[n][0],
+                            &c[n][1], &c[n][2] ) == 0,
             tk::ExceptType::FATAL,
             "Failed to write coordinates to file: " + m_filename );
   }
