@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Tue Apr 15 07:43:00 2014
+  \date      Tue 15 Apr 2014 07:26:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -14,6 +14,7 @@
 #include <MeshConv/CmdLine/Parser.h>
 #include <GmshMeshReader.h>
 #include <NetgenMeshReader.h>
+#include <ExodusIIMeshReader.h>
 #include <NetgenMeshWriter.h>
 #include <GmshMeshWriter.h>
 #include <ExodusIIMeshWriter.h>
@@ -47,6 +48,8 @@ MeshConvDriver::execute() const
   quinoa::GmshMeshReader
     inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
   //quinoa::NetgenMeshReader
+  //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
+  //quinoa::ExodusIIMeshReader
   //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
 
   // Read in mesh
