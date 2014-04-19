@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Tue 15 Apr 2014 07:26:22 PM MDT
+  \date      Thu 17 Apr 2014 10:15:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition
@@ -27,8 +27,6 @@ NetgenMeshReader::read()
   readNodes();
   // Read elements
   readElements();
-  // Read boundary conditions
-  readBCs();
 
   // Clear failbit triggered by eof, so close() won't throw a false FAILED_CLOSE
   m_inFile.clear();
@@ -48,12 +46,14 @@ NetgenMeshReader::readNodes()
 
   // Read in node coordinates: x-coord y-coord z-coord
   for ( std::size_t i=0; i<nnode; ++i ) {
-    tk::point coord;
+    tk::real x, y, z;
 
-    m_inFile >> coord[0] >> coord[1] >> coord[2];
+    m_inFile >> x >> y >> z;
 
-    m_mesh.nodeId().push_back( i );
-    m_mesh.coord().push_back( coord );
+    m_mesh.nodeId().push_back( i+1 );
+    m_mesh.x().push_back( x );
+    m_mesh.y().push_back( y );
+    m_mesh.z().push_back( z );
   }
 
   std::string s;
@@ -68,44 +68,42 @@ NetgenMeshReader::readElements()
 //******************************************************************************
 {
   std::string s;
-
-  // Read in number of elements
   int nel;
+  int Nel=0;    // total number of elements
+
+  // Read in number of tetrahedra
   m_inFile >> nel;
   ErrChk( nel > 0, tk::ExceptType::FATAL,
-          "Number of elements must be greater than zero in file " +
-          m_filename );
-
+          "Number of tetrahedra (volume elements) must be greater than zero "
+          "in file " + m_filename );
   getline( m_inFile, s );  // finish reading the last line
 
+  // Read in tetrahedra element tags and connectivity
   for (int i=0; i<nel; ++i) {
-    std::vector< int > n( 4, 0 );
-    // mat n[1-4], throw away mat
-    m_inFile >> n[3] >> n[3] >> n[0] >> n[1] >> n[2];
-    m_mesh.tetrahedronId().push_back( i );
-    m_mesh.tettag().push_back( {1} );
+    int tag;
+    std::vector< int > n( 4 );
+    // tag n[1-4]
+    m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
+    m_mesh.tetId().push_back( ++Nel );
+    m_mesh.tettag().push_back( { tag } );
     m_mesh.tetinpoel().push_back( n );
   }
-}
 
-void
-NetgenMeshReader::readBCs()
-//******************************************************************************
-//  Read boundary conditions
-//! \author J. Bakosi
-//******************************************************************************
-{
-  std::string s;
-
-  // Read in number of boundary conditions
-  int nbc;
-  m_inFile >> nbc;
+  // Read in number of triangles
+  m_inFile >> nel;
+  ErrChk( nel > 0, tk::ExceptType::FATAL,
+          "Number of triangles (surface elements) must be greater than zero in "
+          "file " + m_filename );
   getline( m_inFile, s );  // finish reading the last line
 
-  for (int i=0; i<nbc; ++i) {
-    std::vector< int > n( 4, 0 );
-    // id n[1-3]
-    m_inFile >> n[0] >> n[1] >> n[2] >> n[3];
-    m_mesh.bc().push_back( n );
+  // Read in triangle element tags and connectivity
+  for (int i=0; i<nel; ++i) {
+    int tag;
+    std::vector< int > n( 3 );
+    // tag n[1-3]
+    m_inFile >> tag >> n[0] >> n[1] >> n[2];
+    m_mesh.triId().push_back( ++Nel );
+    m_mesh.tritag().push_back( { tag } );
+    m_mesh.triinpoel().push_back( n );
   }
 }

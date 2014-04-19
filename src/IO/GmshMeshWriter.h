@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Tue Apr 15 07:41:35 2014
+  \date      Thu 17 Apr 2014 09:09:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -26,8 +26,8 @@ class GmshMeshWriter : public tk::Writer {
     //! Constructor
     explicit GmshMeshWriter( const std::string& filename,
                              UnsMesh& mesh,
-                             tk::real version = 2.2,
                              GmshFileType type = GmshFileType::BINARY,
+                             tk::real version = 2.2,
                              int datasize = sizeof(double) );
 
     //! Destructor, default compiler generated

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Types.h
   \author    J. Bakosi
-  \date      Mon Mar 24 13:57:33 2014
+  \date      Thu 17 Apr 2014 07:05:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Toolkit-level type definitions
   \details   Toolkit-level type definitions
@@ -16,7 +16,6 @@
 namespace tk {
 
 using real = double;
-using point = std::array< tk::real, 3 >;
 
 } // tk::
 

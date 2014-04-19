@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:44:13 AM MDT
+  \date      Thu 17 Apr 2014 10:15:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class definition
   \details   3D unstructured mesh class definition
@@ -30,7 +30,7 @@ UnsMesh::echoElemSets() const
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
   ST num = m_lininpoel.size();
   for (ST i=0; i<num; i++) {
-    std::cout << "  " << m_lineId[i] << " " << 1 << " {";
+    std::cout << "  " << m_linId[i] << " " << 1 << " {";
 
     copy( m_lintag[i].begin(), m_lintag[i].end()-1,
           std::ostream_iterator< int >( std::cout, ", " ) );
@@ -46,7 +46,7 @@ UnsMesh::echoElemSets() const
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
   num = m_triinpoel.size();
   for (ST i=0; i<num; i++) {
-    std::cout << "  " << m_triangleId[i] << " " << 2 << " {";
+    std::cout << "  " << m_triId[i] << " " << 2 << " {";
 
     copy( m_tritag[i].begin(), m_tritag[i].end()-1,
           std::ostream_iterator< int >( std::cout, ", " ) );
@@ -62,7 +62,7 @@ UnsMesh::echoElemSets() const
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
   num = m_tetinpoel.size();
   for (ST i=0; i<num; i++) {
-    std::cout << "  " << m_tetrahedronId[i] << " " << 4 << " {";
+    std::cout << "  " << m_tetId[i] << " " << 4 << " {";
 
     copy( m_tettag[i].begin(), m_tettag[i].end()-1,
           std::ostream_iterator< int >( std::cout, ", " ) );
