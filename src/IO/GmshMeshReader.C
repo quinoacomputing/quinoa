@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:45:26 AM MDT
+  \date      Sat 19 Apr 2014 07:25:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -120,7 +120,7 @@ GmshMeshReader::readNodes()
   // Read in node ids and coordinates: node-number x-coord y-coord z-coord
   for ( std::size_t i=0; i<nnode; ++i ) {
     int id;
-    tk::point coord;
+    std::array< tk::real, 3 > coord;
 
     if (isASCII()) {
       m_inFile >> id >> coord[0] >> coord[1] >> coord[2];
@@ -130,7 +130,9 @@ GmshMeshReader::readNodes()
     }
 
     m_mesh.nodeId().push_back( id );
-    m_mesh.coord().push_back( coord );
+    m_mesh.x().push_back( coord[0] );
+    m_mesh.y().push_back( coord[1] );
+    m_mesh.z().push_back( coord[2] );
   }
   getline( m_inFile, s );  // finish reading the last line
 
@@ -157,7 +159,6 @@ GmshMeshReader::readElements()
   ErrChk( nel > 0, tk::ExceptType::FATAL,
           "Number of elements must be greater than zero in file " +
           m_filename );
-
   getline( m_inFile, s );  // finish reading the last line
 
   // Read in element ids, tags, and element connectivity (node list)
@@ -215,8 +216,7 @@ GmshMeshReader::readElements()
                  m_mesh.tetinpoel() );
 
       // Put in elemId for different types of elements
-      push_back( elmtype, id, m_mesh.lineId(), m_mesh.triangleId(),
-                 m_mesh.tetrahedronId() );
+      push_back( elmtype, id, m_mesh.linId(), m_mesh.triId(), m_mesh.tetId() );
     }
   }
   getline( m_inFile, s );  // finish reading the last line

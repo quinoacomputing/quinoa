@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon Apr 14 15:34:48 2014
+  \date      Sat 19 Apr 2014 08:39:21 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration
@@ -29,20 +29,22 @@ class UnsMesh {
     //! Destructor, default compiler generated
     ~UnsMesh() noexcept = default;
 
-    //! Coords accessor
-    std::vector< tk::point >& coord() { return m_coord; }
+    //! Coords accessors
+    std::vector< tk::real >& x() { return m_x; }
+    std::vector< tk::real >& y() { return m_y; }
+    std::vector< tk::real >& z() { return m_z; }
 
     //! NodeId accessor
     std::vector< int >& nodeId() { return m_nodeId; }
 
     //! Line element id accessor
-    std::vector< int >& lineId() { return m_lineId; }
+    std::vector< int >& linId() { return m_linId; }
 
     //! Triangle element id accessor
-    std::vector< int >& triangleId() { return m_triangleId; }
+    std::vector< int >& triId() { return m_triId; }
 
     //! Tetrahedron element id accessor
-    std::vector< int >& tetrahedronId() { return m_tetrahedronId; }
+    std::vector< int >& tetId() { return m_tetId; }
 
     //! Number of nodes accessor
     std::size_t nnode() { return m_nodeId.size(); }
@@ -50,6 +52,11 @@ class UnsMesh {
     //! Total number of elements accessor
     std::size_t nelem() {
       return m_lininpoel.size() + m_triinpoel.size() + m_tetinpoel.size();
+    }
+
+    //! Number of element blocks accessor
+    int neblk() {
+      return !m_lininpoel.empty() + !m_triinpoel.empty() + !m_tetinpoel.empty();
     }
 
     //! Line elements connectivity accessor
@@ -70,9 +77,6 @@ class UnsMesh {
     //! Tetrahedra element tags accessor
     std::vector< std::vector< int > >& tettag() { return m_tettag; }
 
-    //! Boundary conditions accessor
-    std::vector< std::vector< int > >& bc() { return m_bc; }
-
     //! Echo element tags and connectivity in all element sets
     void echoElemSets() const;
 
@@ -86,22 +90,26 @@ class UnsMesh {
     //! Don't permit move assignment
     UnsMesh& operator=(UnsMesh&&) = delete;
 
-    std::vector< tk::point > m_coord;             //!< Node coordinates
     std::vector< int > m_nodeId;                  //!< Node Ids
-    std::vector< int > m_lineId;                  //!< Line element Ids
-    std::vector< int > m_triangleId;              //!< Triangle element Ids
-    std::vector< int > m_tetrahedronId;           //!< Tetrahedron element Ids
 
-    std::vector< std::vector< int > > m_lininpoel;//!< Line elements conn.
-    std::vector< std::vector< int > > m_lintag;   //!< Line element tags
+    std::vector< tk::real > m_x;                  //!< Node coordinates
+    std::vector< tk::real > m_y;
+    std::vector< tk::real > m_z;
 
-    std::vector< std::vector< int > > m_triinpoel;//!< Triangle elements conn.
-    std::vector< std::vector< int > > m_tritag;   //!< Triangle element tags
+    //! Element ids
+    std::vector< int > m_linId;                   //!< Line
+    std::vector< int > m_triId;                   //!< Triangle
+    std::vector< int > m_tetId;                   //!< Tetrahedron
 
-    std::vector< std::vector< int > > m_tetinpoel;//!< Tetrahedron elements conn.
-    std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron element tags
+    //! Element connectivity
+    std::vector< std::vector< int > > m_lininpoel;//!< Line
+    std::vector< std::vector< int > > m_triinpoel;//!< Triangle
+    std::vector< std::vector< int > > m_tetinpoel;//!< Tetrahedron
 
-    std::vector< std::vector< int > > m_bc;       //!< Boundary conditions
+    //! Element tags
+    std::vector< std::vector< int > > m_lintag;   //!< Line
+    std::vector< std::vector< int > > m_tritag;   //!< Triangle
+    std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron
 };
 
 } // quinoa::

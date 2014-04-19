@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Mon Apr 14 11:05:05 2014
+  \date      Thu 17 Apr 2014 07:47:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen writer
   \details   Netgen writer
@@ -48,9 +48,6 @@ class NetgenMeshWriter : public tk::Writer {
 
     //! Write elements, i.e., connectivity
     void writeElements();
-
-    //! Write boundary conditions
-    void writeBCs();
 
     UnsMesh& m_mesh;                   //!< Mesh object
 };

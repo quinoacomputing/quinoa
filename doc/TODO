@@ -5,6 +5,8 @@
       for types in tagged tuple, see AA (Modern C++ Design) p69.
     - Warn on what is set ends up not being used
     - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
+    - The default output should be a less verbose one, ala 'no news is good
+      news', and the current more verbose one should only be for debugging
     - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
     - Would raw-string literals work for keywords in-code documentation?
     - Automatic generation of grammar/parser documentation
@@ -54,6 +56,14 @@
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
     - Find out prerequisites (i.e., everyting that is linked in) and document
       them in README.build
+
+MeshConv:
+    - Add side/node sets
+    - Add mandatory command line arguments: -i <filename> -o <filename>
+    - Detect of input file type based on header
+    - Detect of output file type based on file extension(?)
+    - Add of extra features, e.g., renumbering, partitioning, etc.
+    - Should STL mesh use UnsMesh instead?
 
 * As the estimation of statistics should be closer (i.e., immediately after)
   updating the particle properties, the order of the particle properties in

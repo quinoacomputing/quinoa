@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
-  \date      Mon Apr 14 10:54:12 2014
+  \date      Thu 17 Apr 2014 09:14:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh writer
   \details   Netgen mesh writer
@@ -27,8 +27,6 @@ NetgenMeshWriter::write()
   writeNodes();
   // Write elements
   writeElements();
-  // Write boundary conditions
-  writeBCs();
 }
 
 void
@@ -38,15 +36,15 @@ NetgenMeshWriter::writeNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Write iyt number of nodes
+  // Write out number of nodes
   m_outFile << m_mesh.nnode() << std::endl;
 
   // Write node coordinates: x-coord y-coord z-coord
   m_outFile << std::setprecision(6) << std::fixed;
   for ( std::size_t i=0; i<m_mesh.nnode(); ++i ) {
-    m_outFile << '\t' << m_mesh.coord()[i][0]
-              << '\t' << m_mesh.coord()[i][1]
-              << '\t' << m_mesh.coord()[i][2] << std::endl;
+    m_outFile << '\t' << m_mesh.x()[i]
+              << '\t' << m_mesh.y()[i]
+              << '\t' << m_mesh.z()[i] << std::endl;
   }
 }
 
@@ -57,33 +55,28 @@ NetgenMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Write out number of elements
+  // Write out number of tetrahedra
   m_outFile << m_mesh.tetinpoel().size() << std::endl;
 
-  // Write out element connectivity
+  // Write out tetrehadra element tags and connectivity
   for (std::size_t i=0; i<m_mesh.tetinpoel().size(); ++i) {
-    const auto& n = m_mesh.tetinpoel()[i];
-    // mat n[1-4]
-    m_outFile << '\t' << 1 << '\t' << n[3]+1 << '\t' << n[0]+1 << '\t'
-                                   << n[1]+1 << '\t' << n[2]+1 << std::endl;
+    // tag n[1-4]
+    m_outFile << '\t' << m_mesh.tettag()[i][0]
+              << '\t' << m_mesh.tetinpoel()[i][3]
+              << '\t' << m_mesh.tetinpoel()[i][0]
+              << '\t' << m_mesh.tetinpoel()[i][1]
+              << '\t' << m_mesh.tetinpoel()[i][2] << std::endl;
   }
-}
 
-void
-NetgenMeshWriter::writeBCs()
-//******************************************************************************
-//  Write boundary conditions
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Write out number of boundary conditions
-  m_outFile << m_mesh.bc().size() << std::endl;
+  // Write out number of triangles
+  m_outFile << m_mesh.triinpoel().size() << std::endl;
 
-  // Write out boundary conditions
-  for (std::size_t i=0; i<m_mesh.bc().size(); ++i) {
-    const auto& n = m_mesh.bc()[i];
-    // id n[1-4]
-    m_outFile << '\t' << n[0] << '\t' << n[1]+1 << '\t' << n[2]+1
-              << '\t' << n[3]+1 << std::endl;
+  // Write out triangle element tags and connectivity
+  for (std::size_t i=0; i<m_mesh.triinpoel().size(); ++i) {
+    // tag n[1-4]
+    m_outFile << '\t' << m_mesh.tritag()[i][0]
+              << '\t' << m_mesh.triinpoel()[i][0]
+              << '\t' << m_mesh.triinpoel()[i][1]
+              << '\t' << m_mesh.triinpoel()[i][2] << std::endl;
   }
 }

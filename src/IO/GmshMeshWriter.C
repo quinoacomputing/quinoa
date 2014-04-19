@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue Apr 15 07:42:03 2014
+  \date      Sat 19 Apr 2014 08:29:39 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -19,8 +19,8 @@ using quinoa::GmshMeshWriter;
 
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
                                 UnsMesh& mesh,
-                                tk::real version,
                                 GmshFileType type,
+                                tk::real version,
                                 int datasize ) :
   Writer( filename ), m_mesh( mesh ), m_type( type )
 //******************************************************************************
@@ -80,16 +80,17 @@ GmshMeshWriter::writeNodes()
   if (isASCII()) {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
       m_outFile << m_mesh.nodeId()[i] << " " << std::setprecision(16)
-                << m_mesh.coord()[i][0] << " "
-                << m_mesh.coord()[i][1] << " "
-                << m_mesh.coord()[i][2] << std::endl;
+                << m_mesh.x()[i] << " "
+                << m_mesh.y()[i] << " "
+                << m_mesh.z()[i] << std::endl;
     }
   } else {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
       m_outFile.write(
         reinterpret_cast<char*>(&m_mesh.nodeId()[i]), sizeof(int) );
-      m_outFile.write(
-        reinterpret_cast<char*>(m_mesh.coord()[i].data()), 3*sizeof(double) );
+      m_outFile.write(reinterpret_cast<char*>(&m_mesh.x()[i]), sizeof(double));
+      m_outFile.write(reinterpret_cast<char*>(&m_mesh.y()[i]), sizeof(double));
+      m_outFile.write(reinterpret_cast<char*>(&m_mesh.z()[i]), sizeof(double));
     }
     m_outFile << std::endl;
   }
@@ -111,15 +112,15 @@ GmshMeshWriter::writeElements()
                m_mesh.tetinpoel().size() << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::LIN, m_mesh.lineId(), m_mesh.lintag(),
+  writeElemBlock( GmshElemType::LIN, m_mesh.linId(), m_mesh.lintag(),
                   m_mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::TRI, m_mesh.triangleId(), m_mesh.tritag(),
+  writeElemBlock( GmshElemType::TRI, m_mesh.triId(), m_mesh.tritag(),
                   m_mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::TET, m_mesh.tetrahedronId(), m_mesh.tettag(),
+  writeElemBlock( GmshElemType::TET, m_mesh.tetId(), m_mesh.tettag(),
                   m_mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;

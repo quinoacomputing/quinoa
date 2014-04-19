@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Tue 15 Apr 2014 07:26:46 PM MDT
+  \date      Sat 19 Apr 2014 08:19:37 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -45,18 +45,18 @@ MeshConvDriver::execute() const
   quinoa::UnsMesh mesh;
 
   // Create mesh reader
-  quinoa::GmshMeshReader
-    inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
+  //quinoa::GmshMeshReader
+  //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
   //quinoa::NetgenMeshReader
   //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
-  //quinoa::ExodusIIMeshReader
-  //  inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
+  quinoa::ExodusIIMeshReader
+    inMesh( m_cmdline->get<tag::io, tag::input>(), mesh );
 
   // Read in mesh
   inMesh.read();
 
   // Output mesh
-  //quinoa::GmshMeshWriter outMesh( "out.msh", mesh );
+  //quinoa::GmshMeshWriter outMesh( "out.msh", mesh, quinoa::GmshFileType::ASCII );
   //quinoa::NetgenMeshWriter outMesh( "out.mesh", mesh );
   quinoa::ExodusIIMeshWriter outMesh( "out.exo", mesh );
   outMesh.write();

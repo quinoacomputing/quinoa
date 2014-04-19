@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Wed Apr 16 07:23:41 2014
+  \date      Sat 19 Apr 2014 08:23:25 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -72,10 +72,10 @@ ExodusIIMeshWriter::writeHeader()
     ex_put_init( m_outFile,
                  (std::string("Written by Quinoa::") +
                    MESHCONV_EXECUTABLE).c_str(),
-                 3,     // number of dimentions
+                 3,     // number of dimensions
                  m_mesh.nnode(),
                  m_mesh.triinpoel().size() + m_mesh.tetinpoel().size(),
-                 2,     // number of element blocks
+                 m_mesh.neblk(),
                  0,     // number of node sets
                  0 ) == 0,
     tk::ExceptType::FATAL,
@@ -89,14 +89,10 @@ ExodusIIMeshWriter::writeNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto& c = m_mesh.coord();
-
-  for (std::size_t n=0; n<m_mesh.nnode(); ++n) {
-    ErrChk( ne_put_n_coord( m_outFile, m_mesh.nodeId()[n], 1, &c[n][0],
-                            &c[n][1], &c[n][2] ) == 0,
-            tk::ExceptType::FATAL,
-            "Failed to write coordinates to file: " + m_filename );
-  }
+  ErrChk( ex_put_coord( m_outFile, m_mesh.x().data(), m_mesh.y().data(),
+                        m_mesh.z().data() ) == 0,
+          tk::ExceptType::FATAL,
+          "Failed to write coordinates to file: " + m_filename );
 }
 
 void
@@ -111,7 +107,8 @@ ExodusIIMeshWriter::writeElements()
 }
 
 void
-ExodusIIMeshWriter::writeElemBlock( int elclass, int nnpe,
+ExodusIIMeshWriter::writeElemBlock( int elclass,
+                                    int nnpe,
                                     const std::string& eltype,
                                     std::vector< std::vector< int > >& inpoel )
 //******************************************************************************
@@ -120,6 +117,8 @@ ExodusIIMeshWriter::writeElemBlock( int elclass, int nnpe,
 //******************************************************************************
 {
   using tk::operator+;
+
+  if (inpoel.empty()) return;
 
   // Write element block information
   ErrChk( ex_put_elem_block( m_outFile, elclass, eltype.c_str(), inpoel.size(),
