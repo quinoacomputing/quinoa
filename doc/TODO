@@ -16,6 +16,13 @@
 
 * RNGTest:
     - Time RNGs during batteries and output their cost as a result beside pvals
+    - Summary should be in order of increasing number of failed test - providing
+      a quality ranking starting with the best
+    - Another summary list should be in order of increasing computational cost -
+      providing a speed ranking starting with the best
+    - The default output should be a less verbose one, ala 'no news is good
+      news', and the current more verbose one should only be for debugging, i.e.
+      don't output tests passed only the failed ones
     - RNGSSE:
         o Put in gaussian(): Gaussian distribution from uniform: STL
         o Can RNGSSE's generators take a seed?
@@ -60,10 +67,10 @@
 MeshConv:
     - Add side/node sets
     - Add mandatory command line arguments: -i <filename> -o <filename>
-    - Detect of input file type based on header
-    - Detect of output file type based on file extension(?)
+    - Detect input file type based on header
+    - Detect output file type based on file extension
     - Add of extra features, e.g., renumbering, partitioning, etc.
-    - Should STL mesh use UnsMesh instead?
+    - Should STLMesh use UnsMesh instead?
 
 * As the estimation of statistics should be closer (i.e., immediately after)
   updating the particle properties, the order of the particle properties in
