@@ -44,7 +44,7 @@
           using the command line argument --error-exitcode= to valgrind
     - Memory testing: CMake/CTest/CDash has built-in support for automated
       memory testing using valgrind
-    - Clang's static-, address-, thread-, and memory-sanitizer
+    - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
 
 * Build:
     - Add Mac OS build
