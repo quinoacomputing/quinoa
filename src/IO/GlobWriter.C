@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:19:50 AM MST
+  \date      Wed Apr 23 11:20:25 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -15,7 +15,7 @@
 using quinoa::GlobWriter;
 
 void
-GlobWriter::write(const uint64_t it, const tk::real t)
+GlobWriter::writeGlob(const uint64_t it, const tk::real t)
 //******************************************************************************
 //  Write out glob file
 //! \param[in]  it         Iteration counter

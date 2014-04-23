@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:16:21 AM MDT
+  \date      Wed Apr 23 08:42:46 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader
@@ -24,7 +24,7 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         UnsMesh& mesh,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  m_filename(filename), m_mesh(mesh), m_inFile(0)
+  Reader(filename), m_filename(filename), m_mesh(mesh), m_inFile(0)
 //******************************************************************************
 //  Constructor: create Exodus II file
 //! \author J. Bakosi
@@ -39,7 +39,7 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
           "Failed to open file: " + filename );
 }
 
-ExodusIIMeshReader::~ExodusIIMeshReader()
+ExodusIIMeshReader::~ExodusIIMeshReader() noexcept
 //******************************************************************************
 //  Destructor
 //! \author J. Bakosi

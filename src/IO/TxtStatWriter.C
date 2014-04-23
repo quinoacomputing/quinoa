@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:00:28 PM MST
+  \date      Wed Apr 23 11:19:10 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -54,7 +54,7 @@ TxtStatWriter::header() const
 }
 
 void
-TxtStatWriter::write(const int it, const tk::real t)
+TxtStatWriter::writeStat(const int it, const tk::real t)
 //******************************************************************************
 //  Write out statistics
 //! \param[in]  it         Iteration counter

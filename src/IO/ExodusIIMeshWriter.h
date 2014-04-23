@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Tue Apr 15 07:52:14 2014
+  \date      Wed Apr 23 11:12:23 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -14,11 +14,12 @@
 #include <string>
 
 #include <UnsMesh.h>
+#include <Writer.h>
 
 namespace quinoa {
 
 //! ExodusIIMeshWriter
-class ExodusIIMeshWriter {
+class ExodusIIMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
@@ -28,10 +29,10 @@ class ExodusIIMeshWriter {
                                  int iowordsize = sizeof(double) );
 
     //! Destructor
-    ~ExodusIIMeshWriter();
+    ~ExodusIIMeshWriter() noexcept override;
 
     //! Write ExodusII mesh to file
-    void write();
+    void write() override;
 
   private:
     //! Don't permit copy constructor

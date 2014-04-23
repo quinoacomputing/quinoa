@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Tue 28 Jan 2014 05:04:35 PM MST
+  \date      Wed Apr 23 11:21:53 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -61,10 +61,10 @@ HomRT::run()
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glbi)) { globWriter().write(it,t); wroteGlob = true; }
+    if (!(it % glbi)) { globWriter().writeGlob(it,t); wroteGlob = true; }
 
     // Append statistics file at selected times
-    if (!(it % stai)) { statWriter().write(it,t); wroteStat = true; }
+    if (!(it % stai)) { statWriter().writeStat(it,t); wroteStat = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

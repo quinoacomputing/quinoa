@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 04:26:49 PM MST
+  \date      Wed Apr 23 11:21:11 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -68,10 +68,10 @@ HomMix::run()
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glbi)) { globWriter().write(it,t); wroteGlob = true; }
+    if (!(it % glbi)) { globWriter().writeGlob(it,t); wroteGlob = true; }
 
     // Append statistics file at selected times
-    if (!(it % stai)) { statWriter().write(it,t); wroteStat = true; }
+    if (!(it % stai)) { statWriter().writeStat(it,t); wroteStat = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

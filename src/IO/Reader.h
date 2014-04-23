@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:25:16 2013
+  \date      Wed Apr 23 10:47:45 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -13,23 +13,30 @@
 
 #include <fstream>
 
+#include <Exception.h>
+
 namespace tk {
 
 //! Reader base
 class Reader {
 
-  protected:
+  public:
+    //! Return first line (for detection of file type based on header)
+    std::string firstline();
+
     //! Constructor: Acquire file handle
-    explicit Reader(const std::string filename);
+    explicit Reader(const std::string& filename);
 
     //! Destructor: Release file handle
     virtual ~Reader() noexcept;
 
     //! Read interface
-    virtual void read() = 0;
+    virtual void read() {
+      Throw( ExceptType::WARNING, "Reader::read() is a no-op");
+    }
 
+  protected:
     const std::string m_filename;            //!< File name
-
     std::ifstream m_inFile;                  //!< File input stream
 
   private:

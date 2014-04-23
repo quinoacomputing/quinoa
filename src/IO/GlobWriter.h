@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GlobWriter.h
   \author    J. Bakosi
-  \date      Mon 13 Jan 2014 09:28:54 PM MST
+  \date      Wed Apr 23 11:20:15 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
@@ -30,7 +30,7 @@ class GlobWriter : public tk::Writer {
     ~GlobWriter() noexcept override = default;
 
     //! Write glob file
-    void write(const uint64_t it, const tk::real t);
+    void writeGlob(const uint64_t it, const tk::real t);
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:20:43 AM MST
+  \date      Wed Apr 23 09:49:45 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader class definition
   \details   Reader class definition
@@ -16,7 +16,7 @@
 
 using tk::Reader;
 
-Reader::Reader(const std::string filename) :
+Reader::Reader(const std::string& filename) :
   m_filename(filename)
 //******************************************************************************
 //  Constructor: Acquire file handle
@@ -75,4 +75,17 @@ Reader::~Reader() noexcept
       std::cout << ">>> UNKNOWN EXCEPTION in MeshReader destructor"
                 << std::endl;
     }
+}
+
+std::string
+Reader::firstline()
+//******************************************************************************
+//  Return first line (for detection of file type based on header)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::string s;
+  getline( m_inFile, s );               // read the first line
+  m_inFile.seekg( 0, std::ios::beg );   // seek back to the beginning of file
+  return s;
 }

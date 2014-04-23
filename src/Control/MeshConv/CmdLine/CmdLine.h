@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Tue 08 Apr 2014 09:25:59 PM MDT
+  \date      Wed Apr 23 11:39:42 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConv's command line
   \details   MeshConv's command line
@@ -29,7 +29,7 @@ class CmdLine :
     CmdLine() {
       // Default I/O parameters
       set< tag::io, tag::input >( "" );
-      set< tag::io, tag::output >( "out" );
+      set< tag::io, tag::output >( "" );
     }
 
     //! Destructor

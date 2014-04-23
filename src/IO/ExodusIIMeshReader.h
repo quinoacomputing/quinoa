@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:05:33 AM MDT
+  \date      Wed Apr 23 08:42:19 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader
@@ -14,11 +14,12 @@
 #include <string>
 
 #include <UnsMesh.h>
+#include <Reader.h>
 
 namespace quinoa {
 
 //! ExodusIIMeshReader
-class ExodusIIMeshReader {
+class ExodusIIMeshReader : public tk::Reader {
 
   public:
     //! Constructor
@@ -28,10 +29,10 @@ class ExodusIIMeshReader {
                                  int iowordsize = sizeof(double) );
 
     //! Destructor
-    ~ExodusIIMeshReader();
+    ~ExodusIIMeshReader() noexcept override;
 
     //! Read ExodusII mesh to file
-    void read();
+    void read() override;
 
   private:
     //! Don't permit copy constructor

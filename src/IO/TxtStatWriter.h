@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:00:14 PM MST
+  \date      Wed Apr 23 11:19:14 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -35,7 +35,7 @@ class TxtStatWriter : public tk::Writer {
     void header() const;
 
     //! Write statistics file
-    void write(const int it, const tk::real t);
+    void writeStat(const int it, const tk::real t);
 
   private:
     //! Don't permit copy constructor

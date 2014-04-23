@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Tue 31 Dec 2013 01:01:09 PM MST
+  \date      Wed Apr 23 11:13:08 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -14,18 +14,27 @@
 #include <string>
 #include <fstream>
 
+#include <Exception.h>
+
 namespace tk {
 
 //! Writer base class
 class Writer {
 
-  protected:
+  public:
     //! Constructor: Acquire file handle
     explicit Writer(const std::string& filename);
 
     //! Destructor: Release file handle
     virtual ~Writer() noexcept;
 
+    //! Write interface
+    virtual void write() {
+      Throw( ExceptType::WARNING,
+             "Writer::write() is a no-op and should be defined by a child");
+    }
+
+  protected:
     const std::string m_filename;          //!< File name
 
     mutable std::ofstream m_outFile;       //!< File output stream

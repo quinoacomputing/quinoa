@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 09:09:03 PM MDT
+  \date      Wed Apr 23 11:14:58 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     GmshMeshWriter class declaration
   \details   GmshMeshWriter class declaration
@@ -34,7 +34,7 @@ class GmshMeshWriter : public tk::Writer {
     ~GmshMeshWriter() noexcept override = default;
 
     //! Write Gmsh mesh to file
-    void write();
+    void write() override;
 
   private:
     //! Don't permit copy constructor
