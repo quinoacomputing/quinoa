@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed Mar 19 17:46:33 2014
+  \date      Wed Apr 23 11:35:28 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -57,6 +57,10 @@ struct cmdline_keyword : keyword<Info, Char, Chars...> {
   //! Accessor to keyword alias character as pegtl::string
   using pegtl_alias = pegtl::one<Alias>;
 
+  //! Accessor to keyword alias character as st::string
+  std::string alias() const {
+    return pegtl::escape(Alias);
+  }
 };
 
 // This will go away once all the keywords are documented

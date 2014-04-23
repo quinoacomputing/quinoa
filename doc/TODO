@@ -66,9 +66,6 @@
 
 MeshConv:
     - Add side/node sets
-    - Add mandatory command line arguments: -i <filename> -o <filename>
-    - Detect input file type based on header
-    - Detect output file type based on file extension
     - Add of extra features, e.g., renumbering, partitioning, etc.
     - Should STLMesh use UnsMesh instead?
 

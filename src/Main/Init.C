@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Wed Mar 19 11:53:16 2014
+  \date      Wed Apr 23 09:59:02 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -37,7 +37,7 @@ std::string tk::workdir()
   if (getcwd(cwd, sizeof(cwd)) != NULL) {
     return std::string(cwd);
   } else {
-    Throw(ExceptType::WARNING, std::string("Error from POSIX API's getcwd()"));
+    Throw(ExceptType::WARNING, "Error from POSIX API's getcwd()");
   }
 }
 

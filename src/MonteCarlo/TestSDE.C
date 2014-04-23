@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Wed Mar 19 16:07:21 2014
+  \date      Wed Apr 23 11:19:02 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE testbed
   \details   SDE testbed
@@ -85,10 +85,10 @@ TestSDE::run()
     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
 
     // Append glob file at selected times
-    if (!(it % glbi)) { globWriter().write(it,t); wroteGlob = true; }
+    if (!(it % glbi)) { globWriter().writeGlob(it,t); wroteGlob = true; }
 
     // Append statistics file at selected times
-    if (!(it % stai)) { statWriter().write(it,t); wroteStat = true; }
+    if (!(it % stai)) { statWriter().writeStat(it,t); wroteStat = true; }
 
     // Echo one-liner info
     if (!(it % ttyi)) {

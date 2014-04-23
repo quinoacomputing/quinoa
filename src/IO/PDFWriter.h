@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:13:11 2013
+  \date      Wed Apr 23 11:17:19 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     PDF writer
   \details   PDF writer
@@ -31,7 +31,7 @@ class PDFWriter : public tk::Writer {
     ~PDFWriter() noexcept override = default;
 
     //! Write PDF to file
-    void write(const tk::PDF& pdf);
+    void writeTxt(const tk::PDF& pdf);
 
     //! Write joint PDF to text file
     void writeTxt(const tk::JPDF& jpdf);

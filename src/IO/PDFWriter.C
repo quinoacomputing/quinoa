@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:20:26 AM MST
+  \date      Wed Apr 23 11:16:39 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -15,7 +15,7 @@
 using quinoa::PDFWriter;
 
 void
-PDFWriter::write(const tk::PDF& pdf)
+PDFWriter::writeTxt(const tk::PDF& pdf)
 //******************************************************************************
 //  Write out standardized PDF to file
 //! \param[in]  pdf  Univariate PDF

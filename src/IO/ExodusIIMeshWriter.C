@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:23:25 AM MDT
+  \date      Wed Apr 23 09:07:32 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -24,7 +24,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
                                         UnsMesh& mesh,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  m_filename(filename), m_mesh(mesh), m_outFile(0)
+  Writer(filename), m_filename(filename), m_mesh(mesh), m_outFile(0)
 //******************************************************************************
 //  Constructor: create Exodus II file
 //! \author J. Bakosi
@@ -39,7 +39,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
           "Failed to create file: " + filename );
 }
 
-ExodusIIMeshWriter::~ExodusIIMeshWriter()
+ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 //******************************************************************************
 //  Destructor
 //! \author J. Bakosi

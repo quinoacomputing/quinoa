@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 07:47:03 PM MDT
+  \date      Wed Apr 23 11:15:13 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen writer
   \details   Netgen writer
@@ -31,7 +31,7 @@ class NetgenMeshWriter : public tk::Writer {
     ~NetgenMeshWriter() noexcept override = default;
 
     //! Write Netgen mesh
-    void write();
+    void write() override;
 
   private:
     //! Don't permit copy constructor
