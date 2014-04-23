@@ -24,7 +24,7 @@ but eventually the best would be a dynamically adapting behavior with respect to
 changes of the above three stacks based on runtime measurements and/or user
 input (based on either per problem or compile-time settings or both).
 
-Adaptation and its influence on the whole should be possible to turn off
+Adaptation and its influence on the whole code should be possible to turn off
 (preferably individually, i.e., one out of the three) at compile time for
 testing and debugging purposes.
 
