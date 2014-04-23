@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:08:13 PM MDT
+  \date      Wed Apr 23 13:43:41 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -27,7 +27,7 @@ class BigCrush : public TestU01Suite {
     ~BigCrush() noexcept override = default;
 
     //! Add statistical tests to battery
-    void addTests( const StatTest::Rsize& id,
+    void addTests( std::size_t id,
                    const tk::ctr::RNGType& rng,
                    const Gen01Ptr& gen );
 

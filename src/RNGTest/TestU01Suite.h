@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:09:13 PM MDT
+  \date      Wed Apr 23 13:43:00 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -42,12 +42,12 @@ class TestU01Suite : public Battery {
     void print() const override;
 
     //! Return number of statistical tests in battery
-    Tsize ntest() const override {
+    std::size_t ntest() const override {
       return m_numRNGs ? m_tests.size() / m_numRNGs : 0;
     }
 
     //! Return number of statistics produced by battery
-    StatTest::Psize nstat() const override {
+    std::size_t nstat() const override {
       return m_numRNGs ? m_npval / m_numRNGs : 0;
     }
 
@@ -136,9 +136,8 @@ class TestU01Suite : public Battery {
     template< class Suite >
     void assignTests( Suite& suite )
     {
-      using Rsize = StatTest::Rsize;
       auto size = m_rngEnum.size();
-       for (Rsize r=0; r<size; ++r) {
+       for (std::size_t r=0; r<size; ++r) {
          if (m_rngEnum[r] != tk::ctr::RNGType::NO_RNG) {
            ++m_numRNGs;
            suite.addTests( r, m_rngEnum[r], m_rngPtr[r] );
@@ -149,7 +148,7 @@ class TestU01Suite : public Battery {
 
     //! Add statistical test to battery
     template< class TestType, class Result, typename... Ts >
-    void add( const StatTest::Rsize& id,
+    void add( std::size_t id,
               const Gen01Ptr& gen,
               const tk::ctr::RNGType& rng,
               StatTest::Names&& names,
@@ -190,7 +189,7 @@ class TestU01Suite : public Battery {
     std::vector< Gen01Ptr > m_rngPtr;
 
     //! Number of RNGs tested
-    std::vector< tk::ctr::RNGType >::size_type m_numRNGs;
+    std::size_t m_numRNGs;
 
     template< int id >
     void addRNG( tk::ctr::RNGType r,
@@ -209,11 +208,11 @@ class TestU01Suite : public Battery {
     void total();
 
     //! Count up number of failed tests
-    Pvals::size_type failed();
+    std::size_t failed();
 
     const std::string m_name;             //!< Test suite name
 
-    Pvals::size_type m_npval;             //!< Total number of stats
+    std::size_t m_npval;                  //!< Total number of stats
     TestContainer m_tests;                //!< Statistical tests
 };
 

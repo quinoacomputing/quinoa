@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:08:53 PM MDT
+  \date      Wed Apr 23 13:36:08 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -29,7 +29,7 @@ class TestU01 : public StatTest {
 
   public:
     //! Constructor
-    explicit TestU01( const Rsize& i,
+    explicit TestU01( std::size_t i,
                       const unif01_Gen* const gen,
                       const tk::ctr::RNGType& r,
                       Names&& names,
@@ -54,23 +54,23 @@ class TestU01 : public StatTest {
     }
 
     //! Test name accessor
-    const Names::value_type& name( const Nsize& i ) const override {
+    const Names::value_type& name( std::size_t i ) const override {
       Assert( i < m_names.size(), tk::ExceptType::FATAL,
               "Indexing outside of container bounds in TestU01::names()" );
       return m_names[i];
     }
 
     //! Number of results/test (i.e., p-values) accessor
-    const Nsize& nstat() const override { return m_npval; }
+    std::size_t nstat() const override { return m_npval; }
 
     //! RNG enum accessor
     const tk::ctr::RNGType& rng() const override { return m_rng; }
 
     //! RNG id accessor
-    const Rsize& id() const override { return m_id; }
+    std::size_t id() const override { return m_id; }
 
     //! Query whether test is failed
-    bool fail( const Nsize& p ) const override {
+    bool fail( std::size_t p ) const override {
       if ((m_pvals[p] <= gofw_Suspectp) || (m_pvals[p] >= 1.0-gofw_Suspectp))
         return true;
       else
@@ -78,21 +78,21 @@ class TestU01 : public StatTest {
     }
 
     //! Return number of failed tests
-    Psize nfail() const override {
-      Psize f = 0;
-      for (Psize p = 0; p<m_npval; ++p) {
+    std::size_t nfail() const override {
+      std::size_t f = 0;
+      for (std::size_t p = 0; p<m_npval; ++p) {
         if (fail(p)) ++f;
       }
       return f;
     }
 
     //! p-value accessor
-    double pval( const Nsize& p ) const override {
+    double pval( std::size_t p ) const override {
       return m_pvals[p];
     }
 
     //! Return humand-readable p-value (ala TestU01::bbattery.c::WritePval)
-    std::string pvalstr( const Nsize& p ) const override {
+    std::string pvalstr( std::size_t p ) const override {
       std::stringstream ss;
       double val = m_pvals[p];
       if (val < gofw_Suspectp) {
@@ -133,10 +133,10 @@ class TestU01 : public StatTest {
     //! Don't permit move assigment
     TestU01& operator=(TestU01&&) = delete;
 
-    const Rsize m_id;                          //!< RNG id
+    const std::size_t m_id;                    //!< RNG id
     const unif01_Gen* const m_gen;             //!< Raw ptr to TestU01 generator
     const tk::ctr::RNGType m_rng;              //!< RNG selected
-    const Psize m_npval;                       //!< Number of p-values produced
+    const std::size_t m_npval;                 //!< Number of p-values produced
     const Names m_names;                       //!< Name(s) of tests
     const RunFn m_runner;                      //!< Test runner function
     const Xargs m_xargs;                       //!< Extra args for run()

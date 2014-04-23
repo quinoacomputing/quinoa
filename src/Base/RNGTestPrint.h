@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:59:51 2014
+  \date      Wed Apr 23 13:41:21 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -50,8 +50,7 @@ class RNGTestPrint : public tk::RNGPrint {
     }
 
     //! Print battery option: 'group : option (info)' only if differs from def.
-    template< class Psize, class Tsize >
-    void battery( const Tsize& ntest, const Psize& nstat ) const {
+    void battery( std::size_t ntest, std::size_t nstat ) const {
       if (m_ctr.get< tag::selected, tag::battery >() !=
           ctr::InputDeckDefaults.get< tag::selected, tag::battery >() ) {
         tk::Option< ctr::Battery > bat;
@@ -83,14 +82,11 @@ class RNGTestPrint : public tk::RNGPrint {
 
     //! Print statistical test names
     template< class StatTest, class TestContainer >
-    void names( const TestContainer& tests,
-                const typename TestContainer::size_type& ntest ) const
+    void names( const TestContainer& tests, std::size_t ntest ) const
     {
-      using Psize = typename StatTest::Psize;
-      using Tsize = typename TestContainer::size_type;
-      for (Tsize i=0; i<ntest; ++i) {
+      for (std::size_t i=0; i<ntest; ++i) {
         auto npval = tests[i]->nstat();
-        for (Psize p=0; p<npval; ++p) {
+        for (std::size_t p=0; p<npval; ++p) {
           std::string name( tests[i]->name(p) );
           if (p>0) name += " *";
           m_stream << m_list_item_fmt % m_item_indent % name;
@@ -115,11 +111,11 @@ class RNGTestPrint : public tk::RNGPrint {
 
     //! Print a single test name, RNG and pass or fail + p-value
     template< class StatTest, class TestContainer >
-    void test( const typename StatTest::Psize& ncomplete,
-               const typename StatTest::Rsize& nfail,
-               const typename StatTest::Psize& npval,
+    void test( std::size_t ncomplete,
+               std::size_t nfail,
+               std::size_t npval,
                const typename TestContainer::value_type& tst,
-               const typename StatTest::Psize& p ) const
+               std::size_t p ) const
     {
       // Construct info-line
       tk::Option< tk::ctr::RNG > rng;
@@ -138,14 +134,9 @@ class RNGTestPrint : public tk::RNGPrint {
 
     //! Print failed statistical test names, RNGs, and p-values
     template< class StatTest, class TestContainer >
-    void failed(
-      const std::string& name,
-      const typename std::vector< typename StatTest::Pvals >::size_type& total,
-      const typename std::vector< typename StatTest::Pvals >::size_type& fail,
-      const TestContainer& tests ) const
+    void failed( const std::string& name, std::size_t total, std::size_t fail,
+                 const TestContainer& tests ) const
     {
-      using Psize = typename StatTest::Psize;
-      using Tsize = typename TestContainer::size_type;
       std::stringstream ss;
       ss << name << " (" << fail << "/" << total << ")";
       section( ss.str() );
@@ -156,11 +147,11 @@ class RNGTestPrint : public tk::RNGPrint {
            m_item_indent + "Legend: Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
-      Tsize ntest = tests.size();
+      std::size_t ntest = tests.size();
       std::string oldname;
-      for (Tsize i=0; i<ntest; ++i) {
+      for (std::size_t i=0; i<ntest; ++i) {
         auto npval = tests[i]->nstat();
-        for (Psize p=0; p<npval; ++p) {
+        for (std::size_t p=0; p<npval; ++p) {
           if ( tests[i]->fail(p) ) {
             tk::Option< tk::ctr::RNG > rng;
             std::string newname( rng.name( tests[i]->rng() ) );

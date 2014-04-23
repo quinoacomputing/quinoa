@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:09:04 PM MDT
+  \date      Wed Apr 23 13:48:43 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -159,14 +159,14 @@ TestU01Suite::total()
   }
 }
 
-rngtest::StatTest::Psize
+std::size_t
 TestU01Suite::failed()
 //******************************************************************************
 //  Count up number of failed tests
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  StatTest::Psize fail = 0;
+  std::size_t fail = 0;
   for (const auto& t : m_tests) {
     fail += t->nfail();
   }
@@ -185,15 +185,11 @@ TestU01Suite::run()
   pr.part( m_name );
   pr.statshead( "Statistics computed" );
 
-  swrite_Basic = FALSE;         // Want screen no putput from TestU01
+  swrite_Basic = FALSE;         // Want no screen putput from TestU01
 
-  using Psize = StatTest::Psize;
-  using Rsize = StatTest::Rsize;
-  using Tsize = TestContainer::size_type;
-
-  Tsize nt = m_tests.size();
-  Psize ncomplete = 0;
-  std::vector< Rsize > nfail( g_maxRNGs, 0);
+  std::size_t nt = m_tests.size();
+  std::size_t ncomplete = 0;
+  std::vector< std::size_t > nfail( g_maxRNGs, 0);
   #ifdef _OPENMP
   #pragma omp parallel
   #endif
@@ -207,7 +203,7 @@ TestU01Suite::run()
     #ifdef _OPENMP
     #pragma omp for schedule(dynamic)
     #endif
-    for (Tsize i=0; i<nt; ++i) {
+    for (std::size_t i=0; i<nt; ++i) {
 
       // Get reference to ith test
       std::unique_ptr< StatTest >& test = m_tests[i];
@@ -217,7 +213,7 @@ TestU01Suite::run()
 
       // Evaluate test
       auto npval = test->nstat();
-      for (Psize p=0; p<npval; ++p) {
+      for (std::size_t p=0; p<npval; ++p) {
 
         // Increase number tests completed
         #ifdef _OPENMP

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:08:01 PM MDT
+  \date      Wed Apr 23 13:26:51 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -34,13 +34,12 @@ class Battery {
 
     //! Container type for statistical tests
     using TestContainer = std::vector< std::unique_ptr< StatTest > >;
-    using Tsize = TestContainer::size_type;
 
     //! Return number of statistical tests in battery
-    virtual Tsize ntest() const = 0;
+    virtual std::size_t ntest() const = 0;
 
     //! Return number of statistics produced by battery
-    virtual StatTest::Psize nstat() const = 0;
+    virtual std::size_t nstat() const = 0;
 
   protected:
     const Base& m_base;                   //!< Essentials

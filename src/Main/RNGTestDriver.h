@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Wed Mar 19 07:58:21 2014
+  \date      Wed Apr 23 13:30:21 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -51,7 +51,7 @@ class RNGTestDriver : public tk::RNGDriver {
     void echo();
 
     //! Number of test to run
-    Battery::Tsize m_ntest;
+    std::size_t m_ntest;
 
     //! Factories
     tk::RNGFactory m_RNGFactory;                 //!< RNG factory
