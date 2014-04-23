@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:08:20 PM MDT
+  \date      Wed Apr 23 13:42:29 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -26,7 +26,7 @@ Crush::Crush(const Base& base) :
 }
 
 void
-Crush::addTests( const StatTest::Rsize& id,
+Crush::addTests( std::size_t id,
                  const tk::ctr::RNGType& rng,
                  const Gen01Ptr& gen )
 //******************************************************************************

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 10:15:35 PM MDT
+  \date      Wed Apr 23 13:39:33 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class definition
   \details   3D unstructured mesh class definition
@@ -23,13 +23,11 @@ UnsMesh::echoElemSets() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using ST = std::vector< std::vector< int > >::size_type;
-
   // Echo all lines
   std::cout << "* Lines elements: " << std::endl;
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
-  ST num = m_lininpoel.size();
-  for (ST i=0; i<num; i++) {
+  std::size_t num = m_lininpoel.size();
+  for (std::size_t i=0; i<num; i++) {
     std::cout << "  " << m_linId[i] << " " << 1 << " {";
 
     copy( m_lintag[i].begin(), m_lintag[i].end()-1,
@@ -45,7 +43,7 @@ UnsMesh::echoElemSets() const
   std::cout << "* Triangles: " << std::endl;
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
   num = m_triinpoel.size();
-  for (ST i=0; i<num; i++) {
+  for (std::size_t i=0; i<num; i++) {
     std::cout << "  " << m_triId[i] << " " << 2 << " {";
 
     copy( m_tritag[i].begin(), m_tritag[i].end()-1,
@@ -61,7 +59,7 @@ UnsMesh::echoElemSets() const
   std::cout << "* Tetrahedra: " << std::endl;
   std::cout << "  elm-num elm-type {tags} {nodelist} " << std::endl;
   num = m_tetinpoel.size();
-  for (ST i=0; i<num; i++) {
+  for (std::size_t i=0; i<num; i++) {
     std::cout << "  " << m_tetId[i] << " " << 4 << " {";
 
     copy( m_tettag[i].begin(), m_tettag[i].end()-1,

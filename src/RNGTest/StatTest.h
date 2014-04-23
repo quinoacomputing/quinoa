@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:08:44 PM MDT
+  \date      Wed Apr 23 13:36:43 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -28,34 +28,30 @@ class StatTest {
     using Names = std::vector< std::string >;      //!< For names of tests
     using RNGs = std::vector< tk::ctr::RNGType >;  //!< For names of tests
 
-    using Psize = Pvals::size_type;
-    using Nsize = Names::size_type;
-    using Rsize = RNGs::size_type;
-
     //! Run
     virtual void run() = 0;
 
     //! Test name accessor
-    virtual const Names::value_type& name( const Nsize& i ) const = 0;
+    virtual const Names::value_type& name( std::size_t i ) const = 0;
 
     //! Number of results/test accessor
-    virtual const Nsize& nstat() const = 0;
+    virtual std::size_t nstat() const = 0;
 
     //! RNG enum accessor
     virtual const tk::ctr::RNGType& rng() const = 0;
 
     //! RNG id accessor
-    virtual const Rsize& id() const = 0;
+    virtual std::size_t id() const = 0;
 
     //! Query whether test is failed
-    virtual bool fail( const Nsize& p ) const = 0;
+    virtual bool fail( std::size_t p ) const = 0;
 
     //! p-value accessors
-    virtual double pval( const Nsize& p ) const = 0;
-    virtual std::string pvalstr( const Nsize& p ) const = 0;
+    virtual double pval( std::size_t p ) const = 0;
+    virtual std::string pvalstr( std::size_t p ) const = 0;
 
     //! Return number of failed tests
-    virtual Psize nfail() const = 0;
+    virtual std::size_t nfail() const = 0;
 
   private:
     //! Don't permit copy constructor
