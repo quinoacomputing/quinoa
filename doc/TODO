@@ -91,3 +91,7 @@ MeshConv:
 
 * Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/
   2013/12/staticassert-better-template-error.html?m=1
+
+* Pass passing strings and other function argument types that need copies and do
+  not need to be modified by value, see http://stackoverflow.com/questions/
+  16724657/why-do-we-copy-then-move
