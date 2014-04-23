@@ -129,11 +129,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Experimental: use C++14, libc++, libc++abi
   # Use libc++ (http://libcxx.llvm.org)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   # Use libc++abi (http://libcxxabi.llvm.org)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
   # Use the C++14 standard
-  add_definitions("-std=c++1y")
+  #add_definitions("-std=c++1y")
 
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
