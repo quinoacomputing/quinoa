@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:49:24 2013
+  \date      Wed Apr 23 16:40:19 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -13,14 +13,13 @@
 
 #include <string>
 #include <chrono>
+#include <vector>
 
 #include <Types.h>
 
 namespace tk {
 
-using TimerIdx = int;
-
-const TimerIdx MAX_TIMERS = 32;
+using TimerId = std::size_t;
 
 //! Watch stores time in hours:minutes:seconds
 struct Watch {
@@ -42,38 +41,47 @@ class Timer {
     //! Timer struct
     struct Clock {
       std::string name;         //!< Timer name
-      bool used;                //!< In use or not
       clock::time_point start;  //!< Time stamp at start
-      clock::time_point now;    //!< Time stamp at a later time
     };
 
   public:
     //! Constructor
-    explicit Timer();
+    explicit Timer() = default;
 
     //! Destructor
     virtual ~Timer() noexcept = default;
 
     //! Create new timer
-    TimerIdx create(const std::string& label) const;
+    TimerId create( std::string label ) const;
+
+    //! Create new timer
+    TimerId create( const char* label ) const {
+      return create( std::string(label) );
+    }
 
     //! Start timer
-    void start(const TimerIdx id) const;
+    void start( TimerId id ) const;
+
+    //! Start all timer
+    void start() const;
 
     //! Return time elapsed between start and stop
-    real query(const TimerIdx id) const;
+    real query( TimerId id ) const;
 
     //! Return time elapsed between start and stop
-    void query(const TimerIdx id, Watch& watch) const;
+    void query( TimerId id, Watch& watch ) const;
 
     //! Estimate time for accomplishment
-    void eta(const TimerIdx id,
-             const real term,
-             const real time,
-             const uint64_t nstep,
-             const uint64_t it,
-             Watch& elapsedWatch,
-             Watch& estimatedWatch) const;
+    void eta( TimerId id,
+              const real term,
+              const real time,
+              const uint64_t nstep,
+              const uint64_t it,
+              Watch& elapsedWatch,
+              Watch& estimatedWatch ) const;
+
+    //! Return timer name
+    std::string name( TimerId id ) const;
 
   private:
     //! Don't permit copy constructor
@@ -85,7 +93,7 @@ class Timer {
     //! Don't permit move assigment
     Timer& operator=(Timer&&) = delete;
 
-    mutable Clock m_timer[MAX_TIMERS];      //!< Timers
+    mutable std::vector< Clock > m_timer;      //!< Timers
 };
 
 } // tk::

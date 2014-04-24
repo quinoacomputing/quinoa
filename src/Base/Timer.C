@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:31:01 AM MST
+  \date      Thu 24 Apr 2014 06:49:37 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -16,21 +16,8 @@
 
 using tk::Timer;
 
-Timer::Timer()
-//******************************************************************************
-//  Constructor
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  Clock zero = { "", false, clock::now(), clock::now() };
-
-  for (int i=0; i<MAX_TIMERS; ++i) {
-    m_timer[i] = zero;
-  }
-}
-
-tk::TimerIdx
-Timer::create(const std::string& label) const
+tk::TimerId
+Timer::create( std::string label ) const
 //******************************************************************************
 //  Create new timer
 //! \param[in]  label  Name of timer
@@ -38,60 +25,62 @@ Timer::create(const std::string& label) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert(label.size() > 0, ExceptType::FATAL,
-         "Must give a nonempty string as timer name");
+  Assert( label.size() > 0, ExceptType::FATAL,
+          "Must give a non-empty string as timer name" );
 
-  // Find an unused timer
-  bool found = false;
-  TimerIdx id=0, i=0;
-  while (!found && i<MAX_TIMERS) {
-    if (!m_timer[i].used) {
-      found = true;
-      id = i;
-    }
-    ++i;
-  }
+  m_timer.push_back( { std::move(label), clock::now() } );
 
-  Assert(found, ExceptType::FATAL, "Cannot find an unused timer");
-
-  m_timer[id].name = label;
-  m_timer[id].used = true;
-
-  return id;
+  return m_timer.size()-1;
 }
 
 void
-Timer::start(const TimerIdx id) const
+Timer::start( TimerId id ) const
 //******************************************************************************
 //  Start timer
 //! \param[in]  id     Timer index
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( m_timer.size() > id, ExceptType::FATAL,
+          "Attempt to start a non-existent timer" );
+
   m_timer[id].start = clock::now();
 }
 
+void
+Timer::start() const
+//******************************************************************************
+//  Start all registered timers
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !m_timer.empty(), ExceptType::WARNING,
+          "There are not registered timers" );
+
+  for (auto& t : m_timer) t.start = clock::now();
+}
+
 tk::real
-Timer::query(const TimerIdx id) const
+Timer::query( TimerId id ) const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as real
 //! \param[in]  id     Timer index
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get time stamp
-  m_timer[id].now = clock::now();
+  Assert( m_timer.size() > id, ExceptType::FATAL,
+          "Attempt to query a non-existent timer" );
 
   // Compute time difference between start and now in real
   dsec elapsed =
-    std::chrono::duration_cast< dsec >( m_timer[id].now - m_timer[id].start );
+    std::chrono::duration_cast< dsec >( clock::now() - m_timer[id].start );
 
   // Return elapsed time
   return elapsed.count();
 }
 
 void
-Timer::query(const TimerIdx id, Watch& watch) const
+Timer::query( TimerId id, Watch& watch ) const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as h:m:s
 //! \param[in]  id     Timer index
@@ -99,16 +88,16 @@ Timer::query(const TimerIdx id, Watch& watch) const
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( m_timer.size() > id, ExceptType::FATAL,
+          "Attempt to query a non-existent timer" );
+
   using std::chrono::duration_cast;
   using std::chrono::hours;
   using std::chrono::minutes;
   using std::chrono::seconds;
 
-  // Get time stamp
-  m_timer[id].now = clock::now();
-
   // Compute time difference between start and now in seconds
-  dsec elapsed = (m_timer[id].now - m_timer[id].start) / 1000.0;
+  dsec elapsed = (clock::now() - m_timer[id].start) / 1000.0;
 
   // Put elapsed time in watch as hours:minutes:seconds
   watch.h = duration_cast< hours >( elapsed );
@@ -117,13 +106,13 @@ Timer::query(const TimerIdx id, Watch& watch) const
 }
 
 void
-Timer::eta(const TimerIdx id,
-           const tk::real term,
-           const tk::real time,
-           const uint64_t nstep,
-           const uint64_t it,
-           Watch& elapsedWatch,
-           Watch& estimatedWatch) const
+Timer::eta( TimerId id,
+            const tk::real term,
+            const tk::real time,
+            const uint64_t nstep,
+            const uint64_t it,
+            Watch& elapsedWatch,
+            Watch& estimatedWatch ) const
 //******************************************************************************
 //  Estimate time for accomplishment
 //! \param[in]  id              Timer index
@@ -136,6 +125,9 @@ Timer::eta(const TimerIdx id,
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( m_timer.size() > id, ExceptType::FATAL,
+          "Attempt to query a non-existent timer" );
+
   using std::chrono::duration_cast;
   using std::chrono::hours;
   using std::chrono::minutes;
@@ -144,14 +136,14 @@ Timer::eta(const TimerIdx id,
   dsec elapsed, estimated;
 
   if (it == 0) {
+
     // First iteration, just return zero
     elapsed = estimated = clock::duration::zero();
+
   } else {
-    // Get time stamp
-    m_timer[id].now = clock::now();
 
     // Compute time difference between start and now in seconds
-    elapsed = (m_timer[id].now - m_timer[id].start) / 1000.0;
+    elapsed = (clock::now() - m_timer[id].start) / 1000.0;
 
     // Estimate time until term in seconds
     dsec est_term = elapsed * (term-time) / time;
@@ -160,6 +152,7 @@ Timer::eta(const TimerIdx id,
 
     // Time stepping will stop at term or nstep, whichever is sooner
     estimated = min(est_term, est_nstep);
+
   }
 
   // Put elapsed time in watch as hours:minutes:seconds
@@ -170,4 +163,18 @@ Timer::eta(const TimerIdx id,
   estimatedWatch.h = duration_cast<hours>(estimated);
   estimatedWatch.m = duration_cast<minutes>(estimated) % hours(1);
   estimatedWatch.s = duration_cast<seconds>(estimated) % minutes(1);
+}
+
+std::string
+Timer::name( TimerId id ) const
+//******************************************************************************
+//  Return timer name
+//! \param[in]  id     Timer index
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( m_timer.size() > id, ExceptType::FATAL,
+          "Attempt to query a non-existent timer" );
+
+  return m_timer[id].name;
 }
