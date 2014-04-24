@@ -15,11 +15,6 @@
       an 'end', as that is not so user-friendly
 
 * RNGTest:
-    - Time RNGs during batteries and output their cost as a result beside pvals
-    - Summary should be in order of increasing number of failed test - providing
-      a quality ranking starting with the best
-    - Another summary list should be in order of increasing computational cost -
-      providing a speed ranking starting with the best
     - The default output should be a less verbose one, ala 'no news is good
       news', and the current more verbose one should only be for debugging, i.e.
       don't output tests passed only the failed ones
@@ -80,7 +75,7 @@ MeshConv:
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
 
-* Fix Timer. See STL 5.7. Also add clocks info. See STL 5.7.3.
+* Also add clocks info to timer. See STL 5.7.3.
 
 * valarrays eligible for more aggressive optimizations, especially on multicore?
 

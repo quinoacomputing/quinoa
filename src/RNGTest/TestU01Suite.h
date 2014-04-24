@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:43:00 2014
+  \date      Thu Apr 24 11:13:53 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -136,11 +136,12 @@ class TestU01Suite : public Battery {
     template< class Suite >
     void assignTests( Suite& suite )
     {
-      auto size = m_rngEnum.size();
+      auto size = m_rngprops.size();
        for (std::size_t r=0; r<size; ++r) {
-         if (m_rngEnum[r] != tk::ctr::RNGType::NO_RNG) {
+         auto& rng = m_rngprops[r];
+         if (rng.id != tk::ctr::RNGType::NO_RNG) {
            ++m_numRNGs;
-           suite.addTests( r, m_rngEnum[r], m_rngPtr[r] );
+           suite.addTests( r, rng.id, rng.ptr );
          }
        }
       total();  // Count up total number of statistics expected
@@ -178,19 +179,45 @@ class TestU01Suite : public Battery {
     //! Don't permit move assigment
     TestU01Suite& operator=(TestU01Suite&&) = delete;
 
-    // TestU01 external RNGs associated to quinoa's RNGs. This could be one
-    // std::map, however, using two equal-sized std::vectors instead. This is
-    // due to the constraints on passing the RNGs as global wrappers to TestU01.
-    // Only those entries of the std::vectors are initialized and used that are
-    // requested by the user (know only at runtime). RNGs are always assigned to
-    // the same position (hence std::vector instead of std::map), regardless of
-    // requested or not. See also TestU01Suite constructor.
-    std::vector< tk::ctr::RNGType > m_rngEnum;
-    std::vector< Gen01Ptr > m_rngPtr;
+    //! RNG properties
+    struct RNGProps {
+       using TimerIds = std::vector< tk::TimerId >;
+       using Times = std::vector< tk::real >;
+
+      // The first two fields, id and ptr, represent TestU01 external RNGs
+      // associated to quinoa's RNGs. This could also be a single std::map,
+      // however, using two equal-sized std::vectors instead. This is
+      // due to the constraints on passing the RNGs as global wrappers to
+      // TestU01. Only those entries of the std::vectors are initialized and
+      // used that are requested by the user (know only at runtime). RNGs are
+      // always assigned to the same position (hence std::vector instead of
+      // std::map), regardless of requested or not. See also TestU01Suite
+      // constructor.
+      tk::ctr::RNGType id;
+      Gen01Ptr ptr;
+
+      // Timer ids and measured time as tk::real in seconds
+      TimerIds timer;           // size: number of threads
+      Times time;               // size: number of threads
+
+      // Fill constructor, all arguments optional
+      RNGProps( tk::ctr::RNGType i = tk::ctr::RNGType::NO_RNG,
+                Gen01Ptr&& p = nullptr,
+                TimerIds&& r = { 0 },
+                Times&& t = { 0.0 } ) :
+        id( i ),
+        ptr( std::forward< Gen01Ptr >( p ) ),
+        timer( std::forward< TimerIds >( r ) ),
+        time( std::forward< Times >( t ) ) {}
+    };
+
+    //! Properties of all RNGs tested
+    std::vector< RNGProps > m_rngprops;
 
     //! Number of RNGs tested
     std::size_t m_numRNGs;
 
+    //! Register a RNG for testing
     template< int id >
     void addRNG( tk::ctr::RNGType r,
                  double (*wrap)(void*,void*),
@@ -198,22 +225,36 @@ class TestU01Suite : public Battery {
     {
       // Create new RNG and store its pointer in global scope
       g_rng[id] = std::unique_ptr< tk::RNG >( m_base.rng[r]() );
-      // Create new TestU01 external RNG and associate global-scope wrapper
-      char* const name = const_cast<char*>( tk::ctr::RNG().name(r).c_str() );
-      m_rngEnum[id] = r;
-      m_rngPtr[id] = Gen01Ptr( unif01_CreateExternGen01(name, wrap, wrap_bits) );
-    }
+      // Get RNG's name
+      std::string name( tk::ctr::RNG().name(r) );
+      // Create per-thread timers named '<rng_name> <thread_id>' and zero times
+      using tk::operator+;
+      auto nthreads = m_base.paradigm.nthreads();
+      RNGProps::TimerIds ids( nthreads );
+      RNGProps::Times times( nthreads );
+      for ( int i=0; i<nthreads; ++i ) {
+        ids[i] = m_base.timer.create( name + std::string(" ") + i );
+        times[i] = 0.0;
+      }
+      // Fill RNG properties for given id
+      m_rngprops[id] = {
+        r,
+        Gen01Ptr( unif01_CreateExternGen01( const_cast<char*>(name.c_str()),
+                                            wrap, wrap_bits ) ),
+        std::move( ids ),
+        std::move( times ) };
+   }
 
-    //! Count up total number of statistics expected
-    void total();
+   //! Count up total number of statistics expected
+   void total();
 
-    //! Count up number of failed tests
-    std::size_t failed();
+   //! Count up number of failed tests
+   std::size_t failed();
 
-    const std::string m_name;             //!< Test suite name
+   const std::string m_name;             //!< Test suite name
 
-    std::size_t m_npval;                  //!< Total number of stats
-    TestContainer m_tests;                //!< Statistical tests
+   std::size_t m_npval;                  //!< Total number of stats
+   TestContainer m_tests;                //!< Statistical tests
 };
 
 } // rngtest::

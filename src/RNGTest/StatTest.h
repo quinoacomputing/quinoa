@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:36:43 2014
+  \date      Thu 24 Apr 2014 06:46:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -26,7 +26,6 @@ class StatTest {
     //! Container types
     using Pvals = std::vector< double >;           //!< For storing p-values
     using Names = std::vector< std::string >;      //!< For names of tests
-    using RNGs = std::vector< tk::ctr::RNGType >;  //!< For names of tests
 
     //! Run
     virtual void run() = 0;

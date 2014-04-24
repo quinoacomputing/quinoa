@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:02:04 2014
+  \date      Thu Apr 24 11:12:44 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -152,7 +152,7 @@ class MonteCarlo {
     const Base& m_base;                             //!< Essentials
     const uint64_t m_npar;                          //!< Number of particles
     const tk::real m_term;                          //!< Maximum run time
-    const tk::TimerIdx m_totalTime;                 //!< Timer for total run    
+    const tk::TimerId m_totalTime;                  //!< Timer for total run
     const ParProps m_particles;                     //!< Particle properties
 
   private:

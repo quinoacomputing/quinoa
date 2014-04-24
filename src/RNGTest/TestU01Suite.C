@@ -2,12 +2,14 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed Apr 23 13:48:43 2014
+  \date      Thu Apr 24 10:49:31 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
 */
 //******************************************************************************
+
+#include <cmath>
 
 extern "C" {
   #include <smarsa.h>
@@ -39,7 +41,7 @@ static double uniform(void*, void*)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  static_assert(g_maxRNGs >= id, "RNG id >= max RNGs");
+  static_assert( g_maxRNGs >= id, "RNG id >= max RNGs" );
   double r;
   g_rng[id]->uniform( g_tid, 1, &r );
   return r;
@@ -52,7 +54,7 @@ static unsigned long uniform_bits(void*, void*)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  static_assert(g_maxRNGs >= id, "RNG id >= max RNGs");
+  static_assert( g_maxRNGs >= id, "RNG id >= max RNGs" );
   double r;
   g_rng[id]->uniform( g_tid, 1, &r );
   return static_cast<unsigned long>(r * unif01_NORM32);
@@ -72,13 +74,12 @@ TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
 {
   using tk::ctr::RNGType;
 
-  // Resize std::vector triples to given fixed size (g_rng done in global scope)
+  // Resize RNG properties vector to given fixed size (g_rng in global scope),
   // (assignTests() will leverage on the default enum)
-  m_rngEnum.resize( g_maxRNGs, RNGType::NO_RNG );
-  m_rngPtr.reserve( g_maxRNGs );
+  m_rngprops.resize( g_maxRNGs );
 
   // Get vector of selected RNGs
-  const std::vector< RNGType > rngs =
+  const std::vector< RNGType >& rngs =
     m_base.control.get< tag::selected, tk::tag::rng >();
 
   // Instantiate selected RNGs. The ids below must be literals as this is done
@@ -181,15 +182,17 @@ TestU01Suite::run()
 //******************************************************************************
 {
   const RNGTestPrint& pr = m_base.print;
+  const tk::Timer& timer = m_base.timer;
 
   pr.part( m_name );
   pr.statshead( "Statistics computed" );
 
-  swrite_Basic = FALSE;         // Want no screen putput from TestU01
+  swrite_Basic = FALSE;         // want no screen putput from TestU01
 
   std::size_t nt = m_tests.size();
   std::size_t ncomplete = 0;
-  std::vector< std::size_t > nfail( g_maxRNGs, 0);
+  std::array< std::size_t, g_maxRNGs > nfail{{ 0 }};
+
   #ifdef _OPENMP
   #pragma omp parallel
   #endif
@@ -203,13 +206,29 @@ TestU01Suite::run()
     #ifdef _OPENMP
     #pragma omp for schedule(dynamic)
     #endif
-    for (std::size_t i=0; i<nt; ++i) {
+    for ( std::size_t i=0; i<nt; ++i ) {
 
       // Get reference to ith test
       std::unique_ptr< StatTest >& test = m_tests[i];
 
+      // Get RNG id being tested
+      auto id = test->id();
+
+      // Get RNG properties
+      auto& props = m_rngprops[id];
+
+      // Start timer for RNG
+      timer.start( props.timer[g_tid] );
+
       // Run test
       test->run();
+
+      // Query and accumulate elapsed time for RNG
+      tk::real time = timer.query( props.timer[g_tid] );
+      #ifdef _OPENMP
+      #pragma omp atomic
+      #endif
+      props.time[g_tid] += time;
 
       // Evaluate test
       auto npval = test->nstat();
@@ -222,16 +241,16 @@ TestU01Suite::run()
         ++ncomplete;
 
         // Increase number of failed tests for RNG
-        if (test->fail(p)) {
+        if ( test->fail(p) ) {
           #ifdef _OPENMP
           #pragma omp atomic
           #endif
-          ++nfail[ test->id() ];
+          ++nfail[id];
         }
 
         // Output one-liner
         pr.test< StatTest, TestContainer >
-                  ( ncomplete, nfail[test->id()], m_npval, test, p );
+               ( ncomplete, nfail[id], m_npval, test, p );
       }
     }
   }
@@ -245,6 +264,33 @@ TestU01Suite::run()
   } else {
     pr.note("All tests passed");
   }
+
+  // Compute sum of measured times spent by all threads per RNG
+  std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
+  std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
+  tk::ctr::RNG rng;
+  std::size_t i=0;
+  for (const auto& r : m_rngprops) {
+    rngtimes.push_back( { 0.0, rng.name(r.id) } );
+    rngnfail.push_back( { nfail[i], rng.name(r.id) } );
+    for (const auto& t : r.time) {
+      rngtimes.back().first += t;
+    }
+    if ( std::fabs(rngtimes.back().first) <     // remove if not tested
+         std::numeric_limits<tk::real>::epsilon() ) {
+      rngtimes.pop_back();
+      rngnfail.pop_back();
+    }
+    ++i;
+  }
+
+  // Output measured times per RNG in order of computational cost
+  pr.cost( "Measured times in seconds in increasing order (low is good)",
+           rngtimes );
+
+  // Output number of failed tests per RNG in order of decreasing quality
+  pr.rank( "Generators ranks in order of decreasing quality (low is good)",
+           rngnfail );
 
   pr.endpart();
 }

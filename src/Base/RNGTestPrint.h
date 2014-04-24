@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:41:21 2014
+  \date      Thu Apr 24 10:31:02 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -105,8 +105,10 @@ class RNGTestPrint : public tk::RNGPrint {
       m_stream << m_section_underline_fmt
                   % m_section_indent
                   % std::string(m_section_indent_size + 2 + title.size(),'-');
-      raw( m_item_indent +
-           "Legend: [done/total/failed] Test, RNG : p-value\n\n" );
+      raw( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
+           m_item_indent + "(eps  means a value < 1.0e-300)\n" +
+           m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
+
     }
 
     //! Print a single test name, RNG and pass or fail + p-value
@@ -163,6 +165,30 @@ class RNGTestPrint : public tk::RNGPrint {
                         % tests[i]->pvalstr(p);
           }
         }
+      }
+    }
+
+    //! Print RNGs and their measured runtimes (taking a copy of rngtimes for
+    //! sorting)
+    void cost( const std::string& name,
+               std::vector< std::pair< tk::real, std::string > > rngtimes )
+    const {
+      std::sort( begin(rngtimes), end(rngtimes) );
+      section( name );
+      for (const auto& t : rngtimes) {
+        item( t.second, t.first );
+      }
+    }
+
+    //! Print RNGs and their number of failed tests (taking a copy of rngnfail
+    //! for sorting)
+    void rank( const std::string& name,
+               std::vector< std::pair< std::size_t, std::string > > rngnfail )
+    const {
+      std::sort( begin(rngnfail), end(rngnfail) );
+      section( name );
+      for (const auto& t : rngnfail) {
+        item( t.second, t.first );
       }
     }
 
