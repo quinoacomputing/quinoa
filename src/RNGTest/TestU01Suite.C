@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu Apr 24 10:49:31 2014
+  \date      Thu Apr 24 13:30:35 2014
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -285,11 +285,13 @@ TestU01Suite::run()
   }
 
   // Output measured times per RNG in order of computational cost
-  pr.cost( "Measured times in seconds in increasing order (low is good)",
+  pr.cost( "Generator cost",
+           "Measured times in seconds in increasing order (low is good)",
            rngtimes );
 
   // Output number of failed tests per RNG in order of decreasing quality
-  pr.rank( "Generators ranks in order of decreasing quality (low is good)",
+  pr.rank( "Generator quality",
+           "Number of failed tests in increasing order (low is good)",
            rngnfail );
 
   pr.endpart();
