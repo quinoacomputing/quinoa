@@ -159,6 +159,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   add_definitions("-opt-report=0")
   #add_compiler_flag("-openmp-report")
 
+  # Link to thread-safe MPI library
+  add_compiler_flag("-mt_mpi")
+
 endif()
 
 # Set data layout for particle properties
