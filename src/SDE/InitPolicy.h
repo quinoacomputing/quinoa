@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:46:16 2014
+  \date      Thu 24 Apr 2014 09:17:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Initialization policies
   \details   Initialization policies
@@ -15,6 +15,7 @@
 
 #include <boost/mpl/vector.hpp>
 
+#include <Macro.h>
 #include <Types.h>
 #include <Quinoa/Options/InitPolicy.h>
 

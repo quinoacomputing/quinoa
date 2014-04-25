@@ -39,7 +39,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Mesh
                       Statistics
                       QuinoaControl
-                      RNG
+                      ${RNG}
                       ${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
@@ -83,7 +83,7 @@ endif()
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       Base
                       Paradigm
-                      RNG
+                      ${RNG}
                       RNGTestControl
                       RNGTest
                       ${TESTU01_PROBDIST_LIBRARY}
