@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu Apr 24 10:31:02 2014
+  \date      Thu 24 Apr 2014 09:57:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -168,25 +168,33 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print RNGs and their measured runtimes (taking a copy of rngtimes for
-    //! sorting)
+    //! Print RNGs and their measured runtimes
+    //! (taking a copy of rngtimes for sorting)
     void cost( const std::string& name,
+               const std::string& costnote,
                std::vector< std::pair< tk::real, std::string > > rngtimes )
     const {
       std::sort( begin(rngtimes), end(rngtimes) );
       section( name );
+      raw( m_item_indent + costnote + "\n\n" );
+      tk::real fastest = rngtimes[0].first;
       for (const auto& t : rngtimes) {
-        item( t.second, t.first );
+        std::stringstream ss;
+        ss << t.first << "  ("
+           << std::setprecision(3) << t.first/fastest << "x)";
+        item( t.second, ss.str() );
       }
     }
 
-    //! Print RNGs and their number of failed tests (taking a copy of rngnfail
-    //! for sorting)
+    //! Print RNGs and their number of failed tests
+    //! (taking a copy of rngnfail for sorting)
     void rank( const std::string& name,
+               const std::string& ranknote,
                std::vector< std::pair< std::size_t, std::string > > rngnfail )
     const {
       std::sort( begin(rngnfail), end(rngnfail) );
       section( name );
+      raw( m_item_indent + ranknote + "\n\n" );
       for (const auto& t : rngnfail) {
         item( t.second, t.first );
       }
