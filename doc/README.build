@@ -5,7 +5,7 @@ Building quinoa requires three steps:
 
    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
 
-2. Build third-party libraries in empty build dir:
+2. Build third-party libraries in empty build dir: (fastest in /tmp)
 
    $ cmake <path-to-tpl-dir>
    $ make
