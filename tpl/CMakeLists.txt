@@ -43,6 +43,18 @@ set(BOOST_TOOLSET ${COMP})
 # Set Boost's default build type
 string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
+# Charm++/AMPI build architecture
+if(NOT CHARM_ARCH)
+  set(CHARM_ARCH "mpi-linux-x86_64" CACHE STRING "Select Charm++/AMPI target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
+  message(STATUS "CHARM_ARCH not specified, setting to 'mpi-linux-x86_64'")
+endif()
+
+# Charm++/AMPI compiler
+if(NOT CHARM_COMPILER)
+  set(CHARM_COMPILER "mpicxx" CACHE STRING "Select compiler used to build Charm++/AMPI with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
+  message(STATUS "CHARM_COMPILER not specified, setting to 'mpicxx'")
+endif()
+
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
@@ -88,13 +100,46 @@ if(CMAKE_BUILD_TYPE STREQUAL "MINSIZEREL")
   set(CXXFLAGS "${CXXFLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}")
   set(FFLAGS "${FFLAGS} ${CMAKE_Fortran_FLAGS_MINSIZEREL}")
 endif()
-message(STATUS "C compiler flags: " ${CFLAGS})
-message(STATUS "C++ compiler flags: " ${CXXFLAGS})
-message(STATUS "Fortran compiler flags: " ${FFLAGS})
+
+# Remove first empty character of compiler flag strings
+STRING(REGEX REPLACE "^ " "" CFLAGS ${CFLAGS})
+STRING(REGEX REPLACE "^ " "" CXXFLAGS ${CXXFLAGS})
+STRING(REGEX REPLACE "^ " "" FFLAGS ${FFLAGS})
+
+# Echo compiler flags string used
+message(STATUS "C compiler flags: '${CFLAGS}'")
+message(STATUS "C++ compiler flags: '${CXXFLAGS}'")
+message(STATUS "Fortran compiler flags: '${FFLAGS}'")
 
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
+
+#### Charm++, AMPI #############################################################
+# http://charm.cs.illinois.edu
+ExternalProject_Add(
+  charm
+  PREFIX charm
+  URL ${PROJECT_SOURCE_DIR}/charm-6.5.1.tar.gz
+  URL_MD5 034d99458474a3ab96d8bede8a691a5d
+  # Move unpacked tarball to install dir and build there
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    ${PROJECT_BINARY_DIR}/charm/src/charm
+                    ${CMAKE_INSTALL_PREFIX}/charm
+  # Build in install dir and leave stuff there - no install step
+  BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
+  # Build AMPI which triggers building Charm++
+  BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
+                AMPI
+                ${CHARM_ARCH}
+                ${CHARM_COMPILER}
+                -j4
+                ${CXXFLAGS}
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+)
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
 # http://code.google.com/p/pegtl
