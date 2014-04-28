@@ -7,7 +7,10 @@ set(__get_mpi_compilers YES)
 function(get_mpi_compilers)
 
   # Find MPI
-  find_package(MPI REQUIRED)
+  find_package(MPI)
+  set(MPI_C_FOUND ${MPI_C_FOUND} PARENT_SCOPE)
+  set(MPI_CXX_FOUND ${MPI_CXX_FOUND} PARENT_SCOPE)
+  set(MPI_Fortran_FOUND ${MPI_Fortran_FOUND} PARENT_SCOPE)
 
   # Find out underlying C compiler
   execute_process(
@@ -69,7 +72,7 @@ function(get_mpi_compilers)
     set(UNDERLYING_FORTRAN_COMPILER "${UNDERLYING_FORTRAN_COMPILER}" PARENT_SCOPE)
   endif()
 
-  # Echo compilers
+  # Echo MPI wrappers
   if (MPI_C_COMPILER)
     MESSAGE(STATUS "MPI C wrapper: " ${MPI_C_COMPILER})
     if(NOT IS_ABSOLUTE ${MPI_C_COMPILER})
@@ -100,6 +103,7 @@ function(get_mpi_compilers)
     endif()
   endif()
 
+  # Echo underlying compilers
   if (UNDERLYING_C_COMPILER)
     MESSAGE(STATUS "Underlying C compiler: " ${UNDERLYING_C_COMPILER})
   endif()
