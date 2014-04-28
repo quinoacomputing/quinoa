@@ -13,17 +13,11 @@ include(DisallowInSourceBuilds)
 disallow_in_source_builds()
 
 # Find MPI and get its underlying compilers
+# The get_mpi_compilers cmake function uses the built-in CMake functionality to
+# find the MPI wrappers and based on the wrappers detects the underyling
+# compilers.
 include(GetMPICompilers)
 get_mpi_compilers()
-
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
-  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
-    "MinSizeRel" "RelWithDebInfo")
-endif()
 
 # Set compiler id
 string(TOLOWER "${CMAKE_CXX_COMPILER_ID}" COMP)
@@ -37,23 +31,66 @@ else()
   message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 endif()
 
-# Set Boost's default toolset
-set(BOOST_TOOLSET ${COMP})
-
-# Set Boost's default build type
-string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
-
-# Charm++/AMPI build architecture
+# Set Charm++/AMPI build architecture: if MPI is detected, use it
 if(NOT CHARM_ARCH)
-  set(CHARM_ARCH "mpi-linux-x86_64" CACHE STRING "Select Charm++/AMPI target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
-  message(STATUS "CHARM_ARCH not specified, setting to 'mpi-linux-x86_64'")
+  if(MPI_CXX_FOUND)
+    set(CHARM_ARCHITECTURE "mpi-linux-x86_64")
+    message(STATUS "CHARM_ARCH not specified and MPI found, setting to '${CHARM_ARCHITECTURE}'")
+  else()
+    set(CHARM_ARCHITECTURE "net-linux-x86_64")
+    message(STATUS "CHARM_ARCH not specified and MPI not found, setting to '${CHARM_ARCHITECTURE}'")
+  endif()
+
+  set(CHARM_ARCH ${CHARM_ARCHITECTURE} CACHE STRING "Select Charm++/AMPI target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
 
-# Charm++/AMPI compiler
+# Set Charm++/AMPI compiler (the compiler used to build Charm++/AMPI): if MPI
+# is detected use it
 if(NOT CHARM_COMPILER)
-  set(CHARM_COMPILER "mpicxx" CACHE STRING "Select compiler used to build Charm++/AMPI with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
-  message(STATUS "CHARM_COMPILER not specified, setting to 'mpicxx'")
+  if(MPI_CXX_FOUND)
+    set(CHARM_COMP "mpicxx")
+    message(STATUS "CHARM_COMPILER not specified and MPI found, setting to '${CHARM_COMP}'")
+  else()
+    set(CHARM_COMP "")
+    message(STATUS "CHARM_COMPILER not specified and MPI not found, letting Charm++ build use its default compiler")
+  endif()
+
+  set(CHARM_COMPILER ${CHARM_COMP} CACHE STRING "Select compiler used to build Charm++/AMPI with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
+
+# Set Charm++/AMPI compiler wrappers
+set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampicc)
+set(CHARM_AMPI_CXX_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampicxx)
+set(CHARM_AMPI_FORTRAN_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampif90)
+
+# Echo Charm++ underlying compilers
+MESSAGE(STATUS "Charm++/AMPI C compiler: " ${CHARM_AMPI_C_COMPILER})
+MESSAGE(STATUS "Charm++/AMPI C++ compiler: " ${CHARM_AMPI_CXX_COMPILER})
+MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_FORTRAN_COMPILER})
+
+# Compilers
+# =========
+# There are three sets of compilers, given by the following CMake variables:
+#
+# 1. The underlying compiler suite
+#
+#    UNDERLYING_C_COMPILER
+#    UNDERLYING_CXX_COMPILER
+#    UNDERLYING_FORTRAN_COMPILER
+#
+# 2. The MPI wrappers (of the underlying compilers)
+#
+#    MPI_C_COMPILER
+#    MPI_CXX_COMPILER
+#    MPI_Fortran_COMPILER
+#
+# 3. The Charm++/AMPI wrappers (of the MPI wrappers or around the underlying
+#    compilers, depending on CHARM_COMPILER, the compiler used to build Charm++
+#    and AMPI
+#
+#    CHARM_AMPI_C_COMPILER
+#    CHARM_AMPI_CXX_COMPILER
+#    CHARM_AMPI_FORTRAN_COMPILER
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
@@ -70,11 +107,28 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
 endif()
 
+# Set a default build type if none was specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "CMAKE_BUILD_TYPE not specified, setting to 'DEBUG'")
+  set(CMAKE_BUILD_TYPE DEBUG CACHE STRING "Build type." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
+endif()
+
+# Set Boost's default toolset
+set(BOOST_TOOLSET ${COMP})
+
+# Set Boost's default build type
+string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
+
 # Convert CMAKE_DEBUG_TYPE to upper case so even if the user gives it via the
 # command line, the tests below work as intended
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
-# Forward cmake compiler flags to automake builds
+# Forward cmake compiler flags to automake builds by setting our own variables
+# CFLAGS, CXXFLAGS, and FFLAGS. Only these flags should then be used by the
+# individual external projects builds below.
 if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CFLAGS "${CFLAGS} ${CMAKE_C_FLAGS}")
   set(CXXFLAGS "${CXXFLAGS} ${CMAKE_CXX_FLAGS}")
