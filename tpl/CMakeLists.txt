@@ -16,7 +16,7 @@ disallow_in_source_builds()
 # The get_mpi_compilers cmake function uses the built-in CMake functionality to
 # find the MPI wrappers and based on the wrappers detects the underyling
 # compilers.
-include(GetMPICompilers)
+include(MPICompilers)
 get_mpi_compilers()
 
 # Set compiler id
@@ -59,9 +59,9 @@ if(NOT CHARM_COMPILER)
 endif()
 
 # Set Charm++/AMPI compiler wrappers
-set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampicc)
-set(CHARM_AMPI_CXX_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampicxx)
-set(CHARM_AMPI_FORTRAN_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/ampif90)
+set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicc)
+set(CHARM_AMPI_CXX_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicxx)
+set(CHARM_AMPI_FORTRAN_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampif90)
 
 # Echo Charm++ underlying compilers
 MESSAGE(STATUS "Charm++/AMPI C compiler: " ${CHARM_AMPI_C_COMPILER})

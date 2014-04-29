@@ -81,11 +81,11 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
-                      Base
-                      Paradigm
                       ${RNG}
                       RNGTestControl
                       RNGTest
+                      Paradigm
+                      Base
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -95,6 +95,12 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
+
+add_custom_command(OUTPUT rngtest.decl.h rngtest.def.h
+                   DEPENDS ${CMAKE_SOURCE_DIR}/Main/rngtest.ci
+                   COMMAND ${CHARM_COMPILER} ${CMAKE_SOURCE_DIR}/Main/rngtest.ci)
+add_custom_target(rngtestCharmModule DEPENDS rngtest.decl.h rngtest.def.h)
+add_dependencies(${RNGTEST_EXECUTABLE} rngtestCharmModule)
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
