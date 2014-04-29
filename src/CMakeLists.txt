@@ -33,7 +33,7 @@ endif()
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Build shared-libs by default
-set(BUILD_SHARED_LIBS on)
+#set(BUILD_SHARED_LIBS on)
 
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
@@ -52,8 +52,19 @@ else()
 endif()
 
 # Find MPI and get its underlying compilers
-include(GetMPICompilers)
+include(MPICompilers)
 get_mpi_compilers()
+
+# Set compilers
+set(COMPILER ${UNDERLYING_CXX_COMPILER})
+set(MPI_COMPILER ${MPI_CXX_COMPILER})
+set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
+set(AMPI_COMPILER ${TPL_DIR}/charm/bin/ampicxx)
+message(STATUS "Charm++ compiler: " ${CHARM_COMPILER})
+message(STATUS "Charm++/AMPI compiler: " ${AMPI_COMPILER})
+
+set(CMAKE_C_COMPILER ${CHARM_COMPILER} CACHE STRING "C compiler" FORCE)
+set(CMAKE_CXX_COMPILER ${CHARM_COMPILER} CACHE STRING "CXX compiler" FORCE)
 
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
@@ -65,10 +76,6 @@ endif()
 
 # Query build hostname
 site_name(HOSTNAME)
-
-# Set compiler
-set(MPI_COMPILER "${MPI_CXX_COMPILER}")
-set(COMPILER "${UNDERLYING_CXX_COMPILER}")
 
 # Grab current date to stick into the binary
 execute_process(
@@ -111,6 +118,8 @@ add_compiler_flag("-Wunused")
 add_compiler_flag("-Woverloaded-virtual")
 add_compiler_flag("-ansi")
 add_compiler_flag("-fdiagnostics-show-option")
+
+#add_compiler_flag("-default-to-aout")
 
 # Suppress warning for all compilers: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
@@ -236,7 +245,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/hdf5ser/include
-                    ${PROJECT_BINARY_DIR}/Base
+                    ${PROJECT_BINARY_DIR}/Base  # for Config.h
+                    ${PROJECT_BINARY_DIR}/Main  # for Charm++ modules
                     ${MPI_INCLUDE_PATH}
 )
 
