@@ -131,23 +131,26 @@ else()
   MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
 
+# Include function that allows to set standard C++ library
+include(libstdcxx)
+
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
 
-  # Experimental: use C++14, libc++, libc++abi
-  # Use libc++ (http://libcxx.llvm.org)
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-  # Use libc++abi (http://libcxxabi.llvm.org)
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
-  # Use the C++14 standard
-  #add_definitions("-std=c++1y")
+  # Set libc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libc++")
+
+  # Experimental: use the C++14 standard
+  add_definitions("-std=c++1y")
 
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
+  # Set libstdc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libstdc++")
 
   add_compiler_flag("-Wno-literal-suffix")
 
@@ -171,6 +174,18 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Link to thread-safe MPI library
   add_compiler_flag("-mt_mpi")
 
+  # Set libstdc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libstdc++")
+
+endif()
+
+# Set compiler flags for use of libc++ (If nothing is given, libstdc++ is the
+# default thus does not require anything special.)
+if(LIBCXX_CPP)
+   # Use libc++ (http://libcxx.llvm.org)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+   # Use libc++abi (http://libcxxabi.llvm.org)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
 endif()
 
 # Set data layout for particle properties

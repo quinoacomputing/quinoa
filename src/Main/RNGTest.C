@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue Apr 29 10:54:38 2014
+  \date      Thu 01 May 2014 10:02:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -28,9 +28,10 @@ void echoTPL(const tk::Print& /*print*/)
 
 /*readonly*/ CProxy_Main mainProxy;
 
-struct Main : CBase_Main {
+class Main : public CBase_Main {
   int numRecv;
 
+  public:
   Main( CkArgMsg* msg ) : numRecv(0)
   {
     delete msg;
@@ -54,7 +55,8 @@ struct Main : CBase_Main {
   }
 };
 
-struct ArrayA : CBase_ArrayA {
+class ArrayA : public CBase_ArrayA {
+  public:
   ArrayA() {
     CkPrintf("ArrayA: created element %d\n", thisIndex);
   }
@@ -62,7 +64,8 @@ struct ArrayA : CBase_ArrayA {
   void e() { contribute(CkCallback(CkReductionTarget(Main, finished), mainProxy)); }
 };
 
-struct ArrayB : CBase_ArrayB {
+class ArrayB : public CBase_ArrayB {
+  public:
   ArrayB() {
     CkPrintf("ArrayB: created element (%d,%d)\n", thisIndex.x, thisIndex.y);
   }
@@ -70,7 +73,8 @@ struct ArrayB : CBase_ArrayB {
   void e() { contribute(CkCallback(CkReductionTarget(Main, finished), mainProxy)); }
 };
 
-struct ArrayC : CBase_ArrayC {
+class ArrayC : public CBase_ArrayC {
+  public:
   ArrayC() {
     CkPrintf("ArrayB: created element (%d,%d,%d)\n", thisIndex.x, thisIndex.y, thisIndex.z);
   }
@@ -78,19 +82,22 @@ struct ArrayC : CBase_ArrayC {
   void e() { contribute(CkCallback(CkReductionTarget(Main, finished), mainProxy)); }
 };
 
-struct ArrayD : CBase_ArrayD {
+class ArrayD : public CBase_ArrayD {
+  public:
   ArrayD() {}
   ArrayD(CkMigrateMessage*) { }
   void e() { }
 };
 
-struct ArrayE : CBase_ArrayE {
+class ArrayE : public CBase_ArrayE {
+  public:
   ArrayE() {}
   ArrayE(CkMigrateMessage*) { }
   void e() { }
 };
 
-struct ArrayF : CBase_ArrayF {
+class ArrayF : public CBase_ArrayF {
+  public:
   ArrayF() {}
   ArrayF(CkMigrateMessage*) { }
   void e() { }
