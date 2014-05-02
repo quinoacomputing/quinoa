@@ -96,11 +96,15 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
+# Add custom command generating .decl.h and .def.h from .ci
 add_custom_command(OUTPUT rngtest.decl.h rngtest.def.h
                    DEPENDS ${CMAKE_SOURCE_DIR}/Main/rngtest.ci
                    COMMAND ${CHARM_COMPILER} ${CMAKE_SOURCE_DIR}/Main/rngtest.ci)
 add_custom_target(rngtestCharmModule DEPENDS rngtest.decl.h rngtest.def.h)
 add_dependencies(${RNGTEST_EXECUTABLE} rngtestCharmModule)
+
+# Ignore some warnings for a file including charm-generated .decl.h and .def.h
+set_source_files_properties(RNGTest.C PROPERTIES COMPILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align")
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

@@ -92,18 +92,30 @@ MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_FORTRAN_COMPILER})
 #    CHARM_AMPI_CXX_COMPILER
 #    CHARM_AMPI_FORTRAN_COMPILER
 
+# Set Boost's default toolset
+set(BOOST_TOOLSET ${COMP})
+
+# Include function that allows to set standard C++ library
+include(libstdcxx)
+
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+  # Set libc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libc++")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
+  # Set libstdc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libstdc++")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Link to thread-safe MPI libraries
   set(CFLAGS "${CFLAGS} -mt_mpi")
   set(CXXFLAGS "${CXXFLAGS} -mt_mpi")
   set(FFLAGS "${FFLAGS} -mt_mpi")
+  # Set libstdc++ as the default standard C++ library and allow selection
+  setlibstdcxx("libstdc++")
 
 endif()
 
@@ -115,9 +127,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
     "MinSizeRel" "RelWithDebInfo")
 endif()
-
-# Set Boost's default toolset
-set(BOOST_TOOLSET ${COMP})
 
 # Set Boost's default build type
 string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
@@ -160,6 +169,13 @@ STRING(REGEX REPLACE "^ " "" CFLAGS ${CFLAGS})
 STRING(REGEX REPLACE "^ " "" CXXFLAGS ${CXXFLAGS})
 STRING(REGEX REPLACE "^ " "" FFLAGS ${FFLAGS})
 
+# Set compiler flags for use of libc++ (If nothing is given, libstdc++ is the
+# default thus does not require anything special.)
+if(LIBCXX_CPP)
+  set(CXXFLAGS_LIBCPP "-stdlib=libc++")
+  set(CXXFLAGS_LIBCPPABI "-lc++abi")
+endif()
+
 # Echo compiler flags string used
 message(STATUS "C compiler flags: '${CFLAGS}'")
 message(STATUS "C++ compiler flags: '${CXXFLAGS}'")
@@ -189,6 +205,7 @@ ExternalProject_Add(
                 ${CHARM_COMPILER}
                 -j4
                 ${CXXFLAGS}
+                ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}
   INSTALL_COMMAND ""
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
