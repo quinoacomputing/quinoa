@@ -33,7 +33,7 @@ endif()
 set(BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
 # Build shared-libs by default
-#set(BUILD_SHARED_LIBS on)
+set(BUILD_SHARED_LIBS on)
 
 # If not specified on the command-line, set default third-party libraries
 # directory based on cmake-supplied compiler ID
@@ -261,7 +261,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/hdf5ser/include
                     ${PROJECT_BINARY_DIR}/Base  # for Config.h
-                    ${PROJECT_BINARY_DIR}/Main  # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/Main  # for Charm++ modules in Main
                     ${MPI_INCLUDE_PATH}
 )
 
