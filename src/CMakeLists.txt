@@ -105,7 +105,7 @@ endmacro (add_compiler_flag)
 
 # Try and use the following arguments for all compilers
 add_compiler_flag("-Wall")
-add_compiler_flag("-Wpedantic")
+add_compiler_flag("-pedantic")
 add_compiler_flag("-Wextra")
 add_compiler_flag("-Wshadow")
 add_compiler_flag("-Wformat")
