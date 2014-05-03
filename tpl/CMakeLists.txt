@@ -203,7 +203,7 @@ ExternalProject_Add(
                 AMPI
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
-                -j4
+                -j8
                 ${CXXFLAGS}
                 ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}
   INSTALL_COMMAND ""
