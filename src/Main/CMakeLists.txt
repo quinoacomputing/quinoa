@@ -100,7 +100,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 )
 
 # Add custom dependencies for RNGTest's main Charm++ module
-addCharmModule( "Main" "rngtest" "RNGTest.C" )
+addCharmModule( "Main" "rngtest" "RNGTest" "${RNGTEST_EXECUTABLE}" )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
