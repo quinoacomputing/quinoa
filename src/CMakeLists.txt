@@ -63,8 +63,8 @@ set(AMPI_COMPILER ${TPL_DIR}/charm/bin/ampicxx)
 message(STATUS "Charm++ compiler: " ${CHARM_COMPILER})
 message(STATUS "Charm++/AMPI compiler: " ${AMPI_COMPILER})
 
-set(CMAKE_C_COMPILER ${CHARM_COMPILER} CACHE STRING "C compiler" FORCE)
-set(CMAKE_CXX_COMPILER ${CHARM_COMPILER} CACHE STRING "CXX compiler" FORCE)
+#set(CMAKE_C_COMPILER ${CHARM_COMPILER} CACHE STRING "C compiler" FORCE)
+#set(CMAKE_CXX_COMPILER ${CHARM_COMPILER} CACHE STRING "CXX compiler" FORCE)
 
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
@@ -99,7 +99,7 @@ include(CheckCXXCompilerFlag)
 macro (add_compiler_flag flag)
   check_cxx_compiler_flag(${flag} COMPILER_HAS${flag})
   if(COMPILER_HAS${flag})
-    add_definitions(${flag})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
   endif()
 endmacro (add_compiler_flag)
 
@@ -126,7 +126,7 @@ add_compiler_flag("-Wno-vla")
 
 check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
 if(COMPILER_HAS_CPP11)
-  add_definitions("-std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 else()
   MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
@@ -143,7 +143,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   setlibstdcxx("libc++")
 
   # Experimental: use the C++14 standard
-  add_definitions("-std=c++1y")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
@@ -167,8 +167,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  1418: external function definition with no prior declaration
   #  2415: variable of static storage duration was declared but never referenced
   #  3346: dynamic exception specifications are deprecated
-  add_definitions("-diag-disable 111,193,304,383,444,869,981,1418,2415,3346")
-  add_definitions("-opt-report=0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,383,444,869,981,1418,2415,3346")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -opt-report=0")
   #add_compiler_flag("-openmp-report")
 
   # Link to thread-safe MPI library
@@ -187,6 +187,10 @@ if(LIBCXX_CPP)
    # Use libc++abi (http://libcxxabi.llvm.org)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
 endif()
+
+# Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
+include(get_compiler_flags)
+get_compiler_flags()
 
 # Set data layout for particle properties
 # Available options
@@ -243,6 +247,11 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
+#get_cmake_property(_variableNames VARIABLES)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+
 include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/IO
@@ -261,7 +270,6 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/hdf5ser/include
                     ${PROJECT_BINARY_DIR}/Base  # for Config.h
-                    ${PROJECT_BINARY_DIR}/Main  # for Charm++ modules in Main
                     ${MPI_INCLUDE_PATH}
 )
 
