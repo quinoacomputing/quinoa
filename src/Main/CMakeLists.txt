@@ -70,7 +70,6 @@ add_executable(${RNGTEST_EXECUTABLE}
                TPLInfo/OpenMP.C
                RNGDriver.C
                RNGTestDriver.C
-               RNGTest.C
 )
 
 if(MPI_COMPILE_FLAGS)

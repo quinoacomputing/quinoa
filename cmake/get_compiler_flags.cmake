@@ -45,8 +45,14 @@ macro(get_compiler_flags)
   endif()
 
   # Echo compiler flags string used
-  message(STATUS "C compiler flags: '${CFLAGS}'")
-  message(STATUS "C++ compiler flags: '${CXXFLAGS}'")
-  message(STATUS "Fortran compiler flags: '${FFLAGS}'")
+  if (CFLAGS)
+    message(STATUS "C compiler flags: '${CFLAGS}'")
+  endif()
+  if (CXXFLAGS)
+    message(STATUS "C++ compiler flags: '${CXXFLAGS}'")
+  endif()
+  if (FFLAGS)
+    message(STATUS "Fortran compiler flags: '${FFLAGS}'")
+  endif()
 
 endmacro()
