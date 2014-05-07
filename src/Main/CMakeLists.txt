@@ -70,6 +70,7 @@ add_executable(${RNGTEST_EXECUTABLE}
                TPLInfo/OpenMP.C
                RNGDriver.C
                RNGTestDriver.C
+               RNGTest.C
 )
 
 if(MPI_COMPILE_FLAGS)
@@ -99,7 +100,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 )
 
 # Add custom dependencies for RNGTest's main Charm++ module
-addCharmModule( "Main" "rngtest" "RNGTest" "${RNGTEST_EXECUTABLE}" )
+addCharmModule( "Main" "rngtest" "RNGTest.C" "${RNGTEST_EXECUTABLE}" )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
