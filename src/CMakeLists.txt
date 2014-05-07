@@ -263,6 +263,8 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${TPL_DIR}/hdf5ser/include
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/Base  # for Config.h
+                    ${PROJECT_BINARY_DIR}/Main
+                    ${PROJECT_BINARY_DIR}/RNGTest
                     ${MPI_INCLUDE_PATH}
 )
 
