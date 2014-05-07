@@ -63,9 +63,6 @@ set(AMPI_COMPILER ${TPL_DIR}/charm/bin/ampicxx)
 message(STATUS "Charm++ compiler: " ${CHARM_COMPILER})
 message(STATUS "Charm++/AMPI compiler: " ${AMPI_COMPILER})
 
-#set(CMAKE_C_COMPILER ${CHARM_COMPILER} CACHE STRING "C compiler" FORCE)
-#set(CMAKE_CXX_COMPILER ${CHARM_COMPILER} CACHE STRING "CXX compiler" FORCE)
-
 # Find OpenMP and set its compiler flag
 find_package(OpenMP)
 if(OPENMP_FOUND)
