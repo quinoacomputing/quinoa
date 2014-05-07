@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:26:51 2014
+  \date      Wed 07 May 2014 03:13:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base

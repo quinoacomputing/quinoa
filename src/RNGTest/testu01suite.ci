@@ -1,0 +1,11 @@
+module testu01suite {
+
+  namespace rngtest {
+
+    array [1D] TestChareContainer {
+      entry TestChareContainer();
+    }
+
+  } // rngtest::
+
+}

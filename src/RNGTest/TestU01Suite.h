@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Thu Apr 24 11:13:53 2014
+  \date      Wed 07 May 2014 05:19:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -25,11 +25,35 @@ extern "C" {
 
 #include <Battery.h>
 #include <TestU01Util.h>
+#include <testu01suite.decl.h>
 
 namespace rngtest {
 
+//! TestChareContainer
+class TestChareContainer : public CBase_TestChareContainer {
+
+  public:
+    //! Constructor
+    explicit TestChareContainer() {}
+
+    //! Migrator
+    TestChareContainer( CkMigrateMessage* ) {}
+
+  private:
+    //! Don't permit copy constructor
+    TestChareContainer(const TestChareContainer&) = delete;
+    //! Don't permit copy assigment
+    TestChareContainer& operator=(const TestChareContainer&) = delete;
+    //! Don't permit move constructor
+    TestChareContainer(TestChareContainer&&) = delete;
+    //! Don't permit move assigment
+    TestChareContainer& operator=(TestChareContainer&&) = delete;
+};
+
+
 //! Global pointers to RNGs (in TestU01Suite.C)
 extern std::vector< std::unique_ptr< tk::RNG > > g_rng;
+
 
 //! TestU01 random number generator test suite
 class TestU01Suite : public Battery {
@@ -255,6 +279,7 @@ class TestU01Suite : public Battery {
 
    std::size_t m_npval;                  //!< Total number of stats
    TestContainer m_tests;                //!< Statistical tests
+   TestChareContainer m_charetests;      //!< Statistical tests
 };
 
 } // rngtest::

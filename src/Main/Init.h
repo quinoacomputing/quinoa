@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed Mar 19 13:21:45 2014
+  \date      Wed 07 May 2014 02:45:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains

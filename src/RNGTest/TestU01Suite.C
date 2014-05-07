@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Thu Apr 24 13:30:35 2014
+  \date      Wed 07 May 2014 04:46:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -793,3 +793,5 @@ TestU01Suite::AutoCor( unif01_Gen* gen, sres_Basic* res,
                    get<3>(xargs), get<4>(xargs) );
   return Pvals( { res->pVal2[gofw_Sum] } );
 }
+
+#include <testu01suite.def.h>
