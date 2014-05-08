@@ -42,7 +42,6 @@
     - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
 
 * Build:
-    - Add Mac OS build
     - Put in version-queries for recently added ADIOS and its TPLs
     - Reduce build deps with ninja build dependency map
     - Explore dynamic libs, precompiled headers
@@ -58,6 +57,12 @@
     - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
     - Find out prerequisites (i.e., everyting that is linked in) and document
       them in README.build
+    - Platforms:
+        * pinto-intel: fix noexcepts
+        * darwin-gnu
+        * helios-gnu
+        * titan-gnu
+        * mac-clang
 
 MeshConv:
     - Add side/node sets
