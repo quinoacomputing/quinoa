@@ -503,7 +503,7 @@ ExternalProject_Add(
 # https://www.olcf.ornl.gov/center-projects/adios
 ExternalProject_Add(
   adios
-  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par
+  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par netcdf
   PREFIX adios
   URL ${PROJECT_SOURCE_DIR}/adios-1.6.0.tar.gz
   URL_MD5 70073584c620b92d7842250ce778847f
@@ -518,6 +518,7 @@ ExternalProject_Add(
                     --with-mxml=${CMAKE_INSTALL_PREFIX}
                     --with-phdf5=${CMAKE_INSTALL_PREFIX}/hdf5par
                     --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
+                    --with-netcdf=${CMAKE_INSTALL_PREFIX}
                     --with-zlib=${CMAKE_INSTALL_PREFIX}
                     --with-bzip2=${CMAKE_INSTALL_PREFIX}
                     --with-szip=${CMAKE_INSTALL_PREFIX}
