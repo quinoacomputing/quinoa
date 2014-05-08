@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 07 May 2014 05:19:27 PM MDT
+  \date      Wed 07 May 2014 10:43:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -80,7 +80,8 @@ class TestU01Suite : public Battery {
     explicit TestU01Suite(const Base& base, const std::string& name);
 
     //! Destructor
-    ~TestU01Suite() noexcept override = default;
+    // ICC should be default
+    ~TestU01Suite() override {}
 
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:41:55 2014
+  \date      Wed 07 May 2014 10:43:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -24,7 +24,7 @@ class SmallCrush : public TestU01Suite {
     explicit SmallCrush(const Base& base);
 
     //! Destructor
-    ~SmallCrush() noexcept override = default;
+    ~SmallCrush() override = default;
 
     //! Add statistical tests to battery
     void addTests( std::size_t id,
