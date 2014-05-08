@@ -2,44 +2,49 @@
 
 #### MKL (optional)
 message(STATUS "Check for optional MKL (Intel Math Kernel Library)")
-
-# Add MKLROOT variable to cache, initialize with MKLROOT environment variable
-set(MKLROOT $ENV{MKLROOT} CACHE STRING "Root of optional MKL library. Clear this variable to disable MKL.")
-
-message(STATUS "  MKLROOT = ${MKLROOT}")
-set(MKL_SEARCH_PATH)
-list(APPEND MKL_SEARCH_PATH ${MKLROOT}/lib/intel64)
+message(STATUS "  MKLROOT = $ENV{MKLROOT}")
+message(STATUS "  INTEL = $ENV{INTEL}")
 
 # Attempt to find libraries
 set(MKL_INTERFACE_LIBRARY "NOTFOUND")
 find_library(MKL_INTERFACE_LIBRARY
              NAMES mkl_intel_ilp64
-             PATHS ${MKL_SEARCH_PATH}
+             PATHS $ENV{MKLROOT}/lib/intel64
+                   $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 set(MKL_SEQUENTIAL_LAYER_LIBRARY "NOTFOUND")
 find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
              NAMES mkl_sequential
-             PATHS ${MKL_SEARCH_PATH}
+             PATHS $ENV{MKLROOT}/lib/intel64
+                   $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 set(MKL_THREADED_LAYER_LIBRARY "NOTFOUND")
 find_library(MKL_THREADED_LAYER_LIBRARY
              NAMES mkl_intel_thread
-             PATHS ${MKL_SEARCH_PATH}
+             PATHS $ENV{MKLROOT}/lib/intel64
+                   $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 set(MKL_CORE_LIBRARY "NOTFOUND")
 find_library(MKL_CORE_LIBRARY
              NAMES mkl_core
-             PATHS ${MKL_SEARCH_PATH}
+             PATHS $ENV{MKLROOT}/lib/intel64
+                   $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
 set(INTEL_OMP_RUNTIME_LIBRARY "NOTFOUND")
 find_library(INTEL_OMP_RUNTIME_LIBRARY
              NAMES iomp5
-             PATHS ${MKL_SEARCH_PATH}/../../../compiler/lib/intel64
+             PATHS $ENV{MKLROOT}/../compiler/lib/intel64
+                   $ENV{INTEL}/compiler/lib/intel64
              NO_DEFAULT_PATH)
+
+find_path(MKL_INCLUDE_PATH mkl.h
+          $ENV{MKLROOT}/include
+          $ENV{INTEL}/mkl/include
+          NO_DEFAULT_PATH)
 
 # Echo find libraries status
 if (MKL_INTERFACE_LIBRARY)
