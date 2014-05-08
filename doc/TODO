@@ -71,6 +71,10 @@ MeshConv:
 * Add floating point exception handler, e.g., based on fenv.h, see also:
   http://neugierig.org/software/blog/2012/06/backtraces.html
 
+* Fix destructors: If no exception-specification is provided, the
+  exception-specification is one that that would be used by the
+  implicitly-declared destructor. In most cases, this is noexcept(true).
+
 * Are cout warnings in destructors' catch blocks exception-safe?
 
 * Use noexcept and conditional noexcept. See STL 3.1.7.
