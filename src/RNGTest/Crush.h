@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:41:36 2014
+  \date      Wed 07 May 2014 10:43:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -24,7 +24,7 @@ class Crush : public TestU01Suite {
     explicit Crush(const Base& base);
 
     //! Destructor
-    ~Crush() noexcept override = default;
+    ~Crush() override = default;
 
     //! Add statistical tests to battery
     void addTests( std::size_t id,

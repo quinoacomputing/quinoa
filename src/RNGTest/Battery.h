@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Wed 07 May 2014 03:13:02 PM MDT
+  \date      Wed 07 May 2014 10:42:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery base
   \details   Battery base
@@ -24,7 +24,8 @@ class Battery {
     explicit Battery(const Base& base) : m_base(base) {}
 
     //! Destructor
-    virtual ~Battery() noexcept = default;
+    // ICC should be default
+    virtual ~Battery() {}
 
     //! Run battery of RNG tests
     virtual void run() = 0;
