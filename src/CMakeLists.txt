@@ -265,6 +265,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${PROJECT_BINARY_DIR}/Base  # for Config.h
                     ${PROJECT_BINARY_DIR}/Main
                     ${PROJECT_BINARY_DIR}/RNGTest
+                    ${MKL_INCLUDE_PATH}
                     ${MPI_INCLUDE_PATH}
 )
 
