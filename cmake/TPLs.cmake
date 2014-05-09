@@ -2,39 +2,32 @@
 
 #### MKL (optional)
 message(STATUS "Check for optional MKL (Intel Math Kernel Library)")
-message(STATUS "  MKLROOT = $ENV{MKLROOT}")
-message(STATUS "  INTEL = $ENV{INTEL}")
 
-# Attempt to find libraries
-set(MKL_INTERFACE_LIBRARY "NOTFOUND")
+# Attempt to find MKL libraries
 find_library(MKL_INTERFACE_LIBRARY
              NAMES mkl_intel_ilp64
              PATHS $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-set(MKL_SEQUENTIAL_LAYER_LIBRARY "NOTFOUND")
 find_library(MKL_SEQUENTIAL_LAYER_LIBRARY
              NAMES mkl_sequential
              PATHS $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-set(MKL_THREADED_LAYER_LIBRARY "NOTFOUND")
 find_library(MKL_THREADED_LAYER_LIBRARY
              NAMES mkl_intel_thread
              PATHS $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-set(MKL_CORE_LIBRARY "NOTFOUND")
 find_library(MKL_CORE_LIBRARY
              NAMES mkl_core
              PATHS $ENV{MKLROOT}/lib/intel64
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-set(INTEL_OMP_RUNTIME_LIBRARY "NOTFOUND")
 find_library(INTEL_OMP_RUNTIME_LIBRARY
              NAMES iomp5
              PATHS $ENV{MKLROOT}/../compiler/lib/intel64
@@ -45,42 +38,6 @@ find_path(MKL_INCLUDE_PATH mkl.h
           $ENV{MKLROOT}/include
           $ENV{INTEL}/mkl/include
           NO_DEFAULT_PATH)
-
-# Echo find libraries status
-if (MKL_INTERFACE_LIBRARY)
-  message(STATUS "  Found MKL interface library '${MKL_INTERFACE_LIBRARY}'")
-else()
-  set(MKL_INTERFACE_LIBRARY "")
-  message(STATUS "  Could not find MKL interface library 'mkl_intel_ilp64'")
-endif()
-
-if (MKL_SEQUENTIAL_LAYER_LIBRARY)
-  message(STATUS "  Found MKL sequential layer library '${MKL_SEQUENTIAL_LAYER_LIBRARY}'")
-else()
-  set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
-  message(STATUS "  Could not find MKL threaded layer library 'mkl_intel_thread'")
-endif()
-
-if (MKL_THREADED_LAYER_LIBRARY)
-  message(STATUS "  Found MKL threaded layer library '${MKL_THREADED_LAYER_LIBRARY}'")
-else()
-  set(MKL_THREADED_LAYER_LIBRARY "")
-  message(STATUS "  Could not find MKL threaded layer library 'mkl_intel_thread'")
-endif()
-
-if (MKL_CORE_LIBRARY)
-  message(STATUS "  Found MKL core library '${MKL_CORE_LIBRARY}'")
-else()
-  set(MKL_CORE_LIBRARY "")
-  message(STATUS "  Could not find MKL core library 'mkl_core'")
-endif()
-
-if (INTEL_OMP_RUNTIME_LIBRARY)
-  message(STATUS "  Found Intel OpenMP runtime library '${INTEL_OMP_RUNTIME_LIBRARY}'")
-else()
-  set(INTEL_OMP_RUNTIME_LIBRARY "")
-  message(STATUS "  Could not find Intel OpenMP runtime library 'iomp5' required by MKL threaded layer library 'mkl_intel_thread'")
-endif()
 
 # Define HAS_MKL macro and echo MKL status
 if (MKL_INTERFACE_LIBRARY AND
@@ -93,10 +50,7 @@ if (MKL_INTERFACE_LIBRARY AND
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
 else()
-  message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- failed")
-  message(STATUS "------------------------------------------------------------")
-  message(STATUS "Intel MKL VSL RNGs will not be available!")
-  message(STATUS "------------------------------------------------------------")
+  message(WARNING " Check for optional MKL (Intel Math Kernel Library) -- failed:\n Intel MKL VSL RNGs will not be available!")
   set(HAS_MKL off)
 endif()
 
