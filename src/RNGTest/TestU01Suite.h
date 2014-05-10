@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 07 May 2014 10:43:01 PM MDT
+  \date      Sat 10 May 2014 10:19:07 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -25,31 +25,16 @@ extern "C" {
 
 #include <Battery.h>
 #include <TestU01Util.h>
-#include <testu01suite.decl.h>
+#include <smallcrush.decl.h>
 
 namespace rngtest {
 
-//! TestChareContainer
-class TestChareContainer : public CBase_TestChareContainer {
-
+class chareBirthdaySpacings : public CBase_chareBirthdaySpacings {
   public:
-    //! Constructor
-    explicit TestChareContainer() {}
-
-    //! Migrator
-    TestChareContainer( CkMigrateMessage* ) {}
-
-  private:
-    //! Don't permit copy constructor
-    TestChareContainer(const TestChareContainer&) = delete;
-    //! Don't permit copy assigment
-    TestChareContainer& operator=(const TestChareContainer&) = delete;
-    //! Don't permit move constructor
-    TestChareContainer(TestChareContainer&&) = delete;
-    //! Don't permit move assigment
-    TestChareContainer& operator=(TestChareContainer&&) = delete;
+    chareBirthdaySpacings( TestU01< sres_Poisson, sres_CreatePoisson,
+                                    sres_DeletePoisson,
+                                    long, long, int, long, int, int >& test ) {}
 };
-
 
 //! Global pointers to RNGs (in TestU01Suite.C)
 extern std::vector< std::unique_ptr< tk::RNG > > g_rng;
@@ -86,7 +71,7 @@ class TestU01Suite : public Battery {
     //! TestU01 external generator type with a custom deleter by TestU01
     using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
 
-    using Pvals = StatTest::Pvals;
+    using Pvals = std::vector< double >;
 
     //! Statistical tests wrappers
     static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
@@ -175,19 +160,27 @@ class TestU01Suite : public Battery {
     //! Add statistical test to battery
     template< class TestType, class Result, typename... Ts >
     void add( std::size_t id,
-              const Gen01Ptr& gen,
-              const tk::ctr::RNGType& rng,
-              StatTest::Names&& names,
-              Pvals (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
+              Gen01Ptr& gen,
+              tk::ctr::RNGType rng,
+              std::vector< std::string >&& names,
+              std::vector< double >
+                (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
     {
-      m_tests.push_back( 
-        tk::make_unique< TestType >( id,
-                                     gen.get(),
-                                     std::move(rng),
-                                     std::move(names),
-                                     runner,
-                                     std::forward<Ts>(xargs)... ) );
+      TestType t( id,
+                  gen.get(),
+                  std::move(rng),
+                  std::move(names),
+                  runner,
+                  std::forward<Ts>(xargs)... );
+      CProxy_chareBirthdaySpacings b = CProxy_chareBirthdaySpacings::ckNew( t );
+//       m_tests.push_back( 
+//         tk::make_unique< TestType >( id,
+//                                      gen.get(),
+//                                      std::move(rng),
+//                                      std::move(names),
+//                                      runner,
+//                                      std::forward<Ts>(xargs)... ) );
     }
 
     static const long THOUSAND = 1000;
@@ -276,11 +269,10 @@ class TestU01Suite : public Battery {
    //! Count up number of failed tests
    std::size_t failed();
 
-   const std::string m_name;             //!< Test suite name
+   const std::string m_name;               //!< Test suite name
 
-   std::size_t m_npval;                  //!< Total number of stats
-   TestContainer m_tests;                //!< Statistical tests
-   TestChareContainer m_charetests;      //!< Statistical tests
+   std::size_t m_npval;                    //!< Total number of stats
+   TestContainer m_tests;                  //!< Statistical tests
 };
 
 } // rngtest::

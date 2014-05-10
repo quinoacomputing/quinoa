@@ -2,16 +2,16 @@
 /*!
   \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
-  \date      Wed 09 Apr 2014 04:09:22 PM MDT
+  \date      Thu 08 May 2014 09:03:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Interfacing the TestU01 random number generator test suite
   \details   Interfacing the TestU01 random number generator test suite
 */
 //******************************************************************************
-#ifndef TestU01Wrap_h
-#define TestU01Wrap_h
+#ifndef TestU01Util_h
+#define TestU01Util_h
 
-#include <Battery.h>
+#include <memory>
 
 namespace rngtest {
 
@@ -29,4 +29,4 @@ using TestU01Ptr = std::unique_ptr< Ptr, Eraser< Ptr, Deleter > >;
 
 } // rngtest::
 
-#endif // TestU01Wrap_h
+#endif // TestU01Util_h
