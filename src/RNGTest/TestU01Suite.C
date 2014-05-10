@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 07 May 2014 04:46:47 PM MDT
+  \date      Sat 10 May 2014 10:19:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -63,7 +63,7 @@ static unsigned long uniform_bits(void*, void*)
 } // rngtest::
 
 using rngtest::TestU01Suite;
-using Pvals = rngtest::StatTest::Pvals;
+using Pvals = std::vector< double >;
 
 TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
   : Battery( base ), m_numRNGs(0), m_name( name )
@@ -794,4 +794,4 @@ TestU01Suite::AutoCor( unif01_Gen* gen, sres_Basic* res,
   return Pvals( { res->pVal2[gofw_Sum] } );
 }
 
-#include <testu01suite.def.h>
+#include <smallcrush.def.h>

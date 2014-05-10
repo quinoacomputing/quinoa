@@ -1,9 +1,13 @@
 module testu01suite {
 
+  include "TestU01.h";
+
   namespace rngtest {
 
-    array [1D] TestChareContainer {
-      entry TestChareContainer();
+    chare chareBirthdaySpacings {
+      entry chareBirthdaySpacings( TestU01< sres_Poisson, sres_CreatePoisson,
+                                            sres_DeletePoisson,
+                                       long, long, int, long, int, int >& test );
     }
 
   } // rngtest::

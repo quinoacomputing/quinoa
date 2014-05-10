@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Thu 24 Apr 2014 06:46:35 AM MDT
+  \date      Fri 09 May 2014 06:27:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -23,15 +23,11 @@ class StatTest {
     //! Destructor
     virtual ~StatTest() noexcept = default;
 
-    //! Container types
-    using Pvals = std::vector< double >;           //!< For storing p-values
-    using Names = std::vector< std::string >;      //!< For names of tests
-
     //! Run
     virtual void run() = 0;
 
     //! Test name accessor
-    virtual const Names::value_type& name( std::size_t i ) const = 0;
+    virtual const std::string& name( std::size_t i ) const = 0;
 
     //! Number of results/test accessor
     virtual std::size_t nstat() const = 0;

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:36:08 2014
+  \date      Sat 10 May 2014 10:08:32 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -12,6 +12,7 @@
 #define TestU01_h
 
 #include <StatTest.h>
+#include <pup.h>
 
 namespace rngtest {
 
@@ -25,14 +26,16 @@ class TestU01 : public StatTest {
     using Xargs = std::tuple< Ts... >;
 
     //! Test runner function pointer type
-    using RunFn = StatTest::Pvals (*)( unif01_Gen*, Result*, const Xargs& );
+    using RunFn = std::vector<double> (*)( unif01_Gen*, Result*, const Xargs& );
 
   public:
+    TestU01() {}
+
     //! Constructor
     explicit TestU01( std::size_t i,
-                      const unif01_Gen* const gen,
-                      const tk::ctr::RNGType& r,
-                      Names&& names,
+                      unif01_Gen* const gen,
+                      tk::ctr::RNGType r,
+                      std::vector< std::string >&& names,
                       RunFn runner,
                       Ts&&... xargs ) :
       m_id( i ),
@@ -48,13 +51,20 @@ class TestU01 : public StatTest {
     //! Destructor
     ~TestU01() noexcept override = default;
 
+     void pup( PUP::er& p ) {
+      // remember to pup your superclass if there is one
+      p | m_id;
+      //p | m_gen;
+      //p | m_rng;
+    }
+
     //! Run test, awful that TestU01 does not guarantee the constness of gen
     void run() override {
       m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
     }
 
     //! Test name accessor
-    const Names::value_type& name( std::size_t i ) const override {
+    const std::string& name( std::size_t i ) const override {
       Assert( i < m_names.size(), tk::ExceptType::FATAL,
               "Indexing outside of container bounds in TestU01::names()" );
       return m_names[i];
@@ -133,15 +143,15 @@ class TestU01 : public StatTest {
     //! Don't permit move assigment
     TestU01& operator=(TestU01&&) = delete;
 
-    const std::size_t m_id;                    //!< RNG id
-    const unif01_Gen* const m_gen;             //!< Raw ptr to TestU01 generator
-    const tk::ctr::RNGType m_rng;              //!< RNG selected
-    const std::size_t m_npval;                 //!< Number of p-values produced
-    const Names m_names;                       //!< Name(s) of tests
-    const RunFn m_runner;                      //!< Test runner function
-    const Xargs m_xargs;                       //!< Extra args for run()
+    std::size_t m_id;                    //!< RNG id
+    unif01_Gen* m_gen;             //!< Raw ptr to TestU01 generator
+    tk::ctr::RNGType m_rng;              //!< RNG selected
+    std::size_t m_npval;                 //!< Number of p-values produced
+    std::vector< std::string > m_names;  //!< Name(s) of tests
+    RunFn m_runner;                      //!< Test runner function
+    Xargs m_xargs;                       //!< Extra args for run()
 
-    StatTest::Pvals m_pvals;                   //!< p-value(s)
+    std::vector< double > m_pvals;             //!< p-value(s)
 
     //! TestU01 results type with a custom deleter by TestU01
     using ResultPtr = TestU01Ptr< Result, Deleter >;

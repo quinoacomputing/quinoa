@@ -12,7 +12,6 @@ add_library(RNGTest
             BigCrush.C
 )
 
-# Add custom dependencies for RNGTest's testu01suite Charm++ module
 addCharmModule( "testu01suite" "RNGTest" )
 removeWarnings( "TestU01Suite.C;SmallCrush.C;Crush.C;BigCrush.C" )
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Wed 07 May 2014 10:43:17 PM MDT
+  \date      Sat 10 May 2014 10:19:10 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -28,8 +28,8 @@ class SmallCrush : public TestU01Suite {
 
     //! Add statistical tests to battery
     void addTests( std::size_t id,
-                   const tk::ctr::RNGType& rng,
-                   const Gen01Ptr& gen );
+                   tk::ctr::RNGType& rng,
+                   Gen01Ptr& gen );
 
   private:
     //! Don't permit copy constructor
