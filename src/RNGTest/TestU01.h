@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Wed 14 May 2014 01:01:47 PM MDT
+  \date      Wed 14 May 2014 03:30:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -15,6 +15,17 @@
 #include <StatTest.h>
 
 #include <pup_stl.h>
+
+//! Custom PUP operator for TestU01's unif01_Gen struct (POD) in unif01.h
+PUPbytes( unif01_Gen )
+
+//! Custom PUP operator for enum class, based on PUPenum macro in Charm's pup.h
+inline void operator|( PUP::er& p, tk::ctr::RNGType& e ) {
+  using underlying_type = std::underlying_type< tk::ctr::RNGType >::type;
+  underlying_type v = static_cast< underlying_type >( e );
+  p | v;
+  e = static_cast< tk::ctr::RNGType >( v );
+}
 
 namespace rngtest {
 
@@ -65,23 +76,34 @@ class TestU01 : public StatTest {
     //! Destructor
     ~TestU01() override = default;
 
+    //! Custom PUP operator for ResultPtr
+    void pupResultPtr( PUP::er& p, ResultPtr& t ) {
+      Result* r = t.release();
+      typename ResultPtr::deleter_type d = t.get_deleter();
+      //! Based on PUPfunctionpointer macro in Charm's pup.h
+      p( (char*)(&t), sizeof(ResultPtr) );
+      t = ResultPtr( Creator() );
+    }
+
     //! Pack-Unpack
     virtual void pup( PUP::er& p ) {
       p | m_host;
       p | m_id;
-      //p | m_gen;
-      //p | m_rng;
+      p | *m_gen;
+      p | m_rng;
       p | m_npval;
       p | m_names;
-      //p | m_runner;
+      //! Based on PUPfunctionpointer macro in Charm's pup.h
+      p( (char*)(&m_runner), sizeof(RunFn) );
       //p | m_xargs;
       p | m_pvals;
-      //p | m_res;
+      pupResultPtr( p, m_res );
     }
 
     //! Run test, awful that TestU01 does not guarantee the constness of gen
     virtual void run( std::size_t id ) {
       std::cout << "run: " << id << std::endl;
+      std::cout << m_gen << std::endl;
       //m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
       m_host.evaluate( id );
     }
