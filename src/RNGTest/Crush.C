@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Thu 08 May 2014 08:55:58 PM MDT
+  \date      Wed 14 May 2014 07:13:56 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <Crush.h>
-#include <TestU01.h>
 
 using rngtest::Crush;
 

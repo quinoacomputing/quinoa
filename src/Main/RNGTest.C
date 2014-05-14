@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 07 May 2014 02:44:27 PM MDT
+  \date      Wed 14 May 2014 12:27:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa random number generator test suite
   \details   Quinoa random number generator test suite
@@ -41,10 +41,8 @@ class Main : public CBase_Main {
                 RNGTEST_EXECUTABLE,
                 rngtest::echoTPL );
       delete msg;
-
-      mainProxy = thisProxy;
-
-      CkExit();
+      //mainProxy = thisProxy;
+      //CkExit();
     }
 
     // Destructor

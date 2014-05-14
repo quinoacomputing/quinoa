@@ -12,7 +12,7 @@ add_library(RNGTest
             BigCrush.C
 )
 
-addCharmModule( "testu01suite" "RNGTest" )
+addCharmModule( "testu01" "RNGTest" )
 removeWarnings( "TestU01Suite.C;SmallCrush.C;Crush.C;BigCrush.C" )
 
 INSTALL(TARGETS RNGTest

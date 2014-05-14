@@ -1,7 +1,9 @@
 mainmodule rngtest {
+
   readonly CProxy_Main mainProxy;
 
   mainchare Main {
     entry Main( CkArgMsg* );
   }
+
 }

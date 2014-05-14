@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 10 May 2014 10:19:31 AM MDT
+  \date      Wed 14 May 2014 12:36:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -60,13 +60,17 @@ static unsigned long uniform_bits(void*, void*)
   return static_cast<unsigned long>(r * unif01_NORM32);
 }
 
+template<> PUP::able::PUP_ID
+TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+         long, long, int, long, int, int >::my_PUP_ID = 0;
+
 } // rngtest::
 
 using rngtest::TestU01Suite;
 using Pvals = std::vector< double >;
 
 TestU01Suite::TestU01Suite( const Base& base, const std::string& name )
-  : Battery( base ), m_numRNGs(0), m_name( name )
+  : Battery( base ), m_name( name ), m_numRNGs( 0 ), m_ncomplete( 0 )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
@@ -190,7 +194,6 @@ TestU01Suite::run()
   swrite_Basic = FALSE;         // want no screen putput from TestU01
 
   std::size_t nt = m_tests.size();
-  std::size_t ncomplete = 0;
   std::array< std::size_t, g_maxRNGs > nfail{{ 0 }};
 
   #ifdef _OPENMP
@@ -221,80 +224,81 @@ TestU01Suite::run()
       timer.start( props.timer[g_tid] );
 
       // Run test
-      test->run();
+      //test->run();
+      CProxy_TestRunner::ckNew( *test, i );
 
-      // Query and accumulate elapsed time for RNG
-      tk::real time = timer.query( props.timer[g_tid] );
-      #ifdef _OPENMP
-      #pragma omp atomic
-      #endif
-      props.time[g_tid] += time;
-
-      // Evaluate test
-      auto npval = test->nstat();
-      for (std::size_t p=0; p<npval; ++p) {
-
-        // Increase number tests completed
-        #ifdef _OPENMP
-        #pragma omp atomic
-        #endif
-        ++ncomplete;
-
-        // Increase number of failed tests for RNG
-        if ( test->fail(p) ) {
-          #ifdef _OPENMP
-          #pragma omp atomic
-          #endif
-          ++nfail[id];
-        }
-
-        // Output one-liner
-        pr.test< StatTest, TestContainer >
-               ( ncomplete, nfail[id], m_npval, test, p );
-      }
+//       // Query and accumulate elapsed time for RNG
+//       tk::real time = timer.query( props.timer[g_tid] );
+//       #ifdef _OPENMP
+//       #pragma omp atomic
+//       #endif
+//       props.time[g_tid] += time;
+// 
+//       // Evaluate test
+//       auto npval = test->nstat();
+//       for (std::size_t p=0; p<npval; ++p) {
+// 
+// //         // Increase number tests completed
+// //         #ifdef _OPENMP
+// //         #pragma omp atomic
+// //         #endif
+// //         ++ncomplete;
+// 
+//         // Increase number of failed tests for RNG
+//         if ( test->fail(p) ) {
+//           #ifdef _OPENMP
+//           #pragma omp atomic
+//           #endif
+//           ++nfail[id];
+//         }
+// 
+//         // Output one-liner
+//         pr.test< StatTest, TestContainer >
+//                ( m_ncomplete, nfail[id], m_npval, test, p );
+//       }
     }
   }
 
-  // Count up number of total failed tests (for all RNGs tested)
-  auto tfail = failed();
-
-  // Output summary of failed tests (for all RNGs tested)
-  if (tfail) {
-    pr.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
-  } else {
-    pr.note("All tests passed");
-  }
-
-  // Compute sum of measured times spent by all threads per RNG
-  std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
-  std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
-  tk::ctr::RNG rng;
-  std::size_t i=0;
-  for (const auto& r : m_rngprops) {
-    rngtimes.push_back( { 0.0, rng.name(r.id) } );
-    rngnfail.push_back( { nfail[i], rng.name(r.id) } );
-    for (const auto& t : r.time) {
-      rngtimes.back().first += t;
-    }
-    if ( std::fabs(rngtimes.back().first) <     // remove if not tested
-         std::numeric_limits<tk::real>::epsilon() ) {
-      rngtimes.pop_back();
-      rngnfail.pop_back();
-    }
-    ++i;
-  }
-
-  // Output measured times per RNG in order of computational cost
-  pr.cost( "Generator cost",
-           "Measured times in seconds in increasing order (low is good)",
-           rngtimes );
-
-  // Output number of failed tests per RNG in order of decreasing quality
-  pr.rank( "Generator quality",
-           "Number of failed tests in increasing order (low is good)",
-           rngnfail );
-
-  pr.endpart();
+//   // Count up number of total failed tests (for all RNGs tested)
+//   auto tfail = failed();
+// 
+//   // Output summary of failed tests (for all RNGs tested)
+//   if (tfail) {
+//     pr.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
+//   } else {
+//     pr.note("All tests passed");
+//   }
+// 
+//   // Compute sum of measured times spent by all threads per RNG
+//   std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
+//   std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
+//   tk::ctr::RNG rng;
+//   std::size_t i=0;
+//   for (const auto& r : m_rngprops) {
+//     rngtimes.push_back( { 0.0, rng.name(r.id) } );
+//     rngnfail.push_back( { nfail[i], rng.name(r.id) } );
+//     for (const auto& t : r.time) {
+//       rngtimes.back().first += t;
+//     }
+//     if ( std::fabs(rngtimes.back().first) <     // remove if not tested
+//          std::numeric_limits<tk::real>::epsilon() ) {
+//       rngtimes.pop_back();
+//       rngnfail.pop_back();
+//     }
+//     ++i;
+//   }
+// 
+//   // Output measured times per RNG in order of computational cost
+//   pr.cost( "Generator cost",
+//            "Measured times in seconds in increasing order (low is good)",
+//            rngtimes );
+// 
+//   // Output number of failed tests per RNG in order of decreasing quality
+//   pr.rank( "Generator quality",
+//            "Number of failed tests in increasing order (low is good)",
+//            rngnfail );
+// 
+//   pr.endpart();
 }
 
 void
@@ -794,4 +798,4 @@ TestU01Suite::AutoCor( unif01_Gen* gen, sres_Basic* res,
   return Pvals( { res->pVal2[gofw_Sum] } );
 }
 
-#include <smallcrush.def.h>
+#include <testu01.def.h>
