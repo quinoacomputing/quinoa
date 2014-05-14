@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sat 10 May 2014 10:19:07 AM MDT
+  \date      Wed 14 May 2014 12:36:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -24,24 +24,16 @@ extern "C" {
 }
 
 #include <Battery.h>
-#include <TestU01Util.h>
-#include <smallcrush.decl.h>
+#include <testu01.decl.h>
+#include <TestU01.h>
 
 namespace rngtest {
-
-class chareBirthdaySpacings : public CBase_chareBirthdaySpacings {
-  public:
-    chareBirthdaySpacings( TestU01< sres_Poisson, sres_CreatePoisson,
-                                    sres_DeletePoisson,
-                                    long, long, int, long, int, int >& test ) {}
-};
 
 //! Global pointers to RNGs (in TestU01Suite.C)
 extern std::vector< std::unique_ptr< tk::RNG > > g_rng;
 
-
 //! TestU01 random number generator test suite
-class TestU01Suite : public Battery {
+class TestU01Suite : public Battery, public CBase_TestU01Suite {
 
   public:
     //! Run battery of RNG tests
@@ -60,9 +52,20 @@ class TestU01Suite : public Battery {
       return m_numRNGs ? m_npval / m_numRNGs : 0;
     }
 
+    /*entry*/ void evaluate( std::size_t id ) {
+      CkPrintf("evaluate: %d\n", id);
+      CkPrintf("ntest: %d\n", ntest());
+      if ( ++m_ncomplete == 1/*ntest()*/ ) {
+        CkPrintf("All tests evaluated.\n");
+        CkExit();
+      } else {
+        
+      }
+    }
+
   protected:
     //! Constructor
-    explicit TestU01Suite(const Base& base, const std::string& name);
+    explicit TestU01Suite( const Base& base, const std::string& name );
 
     //! Destructor
     // ICC should be default
@@ -167,20 +170,14 @@ class TestU01Suite : public Battery {
                 (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
               Ts&&... xargs )
     {
-      TestType t( id,
-                  gen.get(),
-                  std::move(rng),
-                  std::move(names),
-                  runner,
-                  std::forward<Ts>(xargs)... );
-      CProxy_chareBirthdaySpacings b = CProxy_chareBirthdaySpacings::ckNew( t );
-//       m_tests.push_back( 
-//         tk::make_unique< TestType >( id,
-//                                      gen.get(),
-//                                      std::move(rng),
-//                                      std::move(names),
-//                                      runner,
-//                                      std::forward<Ts>(xargs)... ) );
+      m_tests.push_back(
+        tk::make_unique< TestType >( thishandle,
+                                     id,
+                                     gen.get(),
+                                     std::move(rng),
+                                     std::move(names),
+                                     runner,
+                                     std::forward<Ts>(xargs)... ) );
     }
 
     static const long THOUSAND = 1000;
@@ -229,12 +226,6 @@ class TestU01Suite : public Battery {
         time( std::forward< Times >( t ) ) {}
     };
 
-    //! Properties of all RNGs tested
-    std::vector< RNGProps > m_rngprops;
-
-    //! Number of RNGs tested
-    std::size_t m_numRNGs;
-
     //! Register a RNG for testing
     template< int id >
     void addRNG( tk::ctr::RNGType r,
@@ -261,18 +252,20 @@ class TestU01Suite : public Battery {
                                             wrap, wrap_bits ) ),
         std::move( ids ),
         std::move( times ) };
-   }
+    }
 
-   //! Count up total number of statistics expected
-   void total();
+    //! Count up total number of statistics expected
+    void total();
 
-   //! Count up number of failed tests
-   std::size_t failed();
+    //! Count up number of failed tests
+    std::size_t failed();
 
-   const std::string m_name;               //!< Test suite name
-
-   std::size_t m_npval;                    //!< Total number of stats
-   TestContainer m_tests;                  //!< Statistical tests
+    std::string m_name;                 //!< Test suite name
+    std::vector< RNGProps > m_rngprops; //!< Properties of all RNGs tested
+    std::size_t m_numRNGs;              //!< Number of RNGs tested
+    std::size_t m_npval;                //!< Total number of stats
+    TestContainer m_tests;              //!< Statistical tests
+    std::size_t m_ncomplete;            //!< Count number of completed tests
 };
 
 } // rngtest::

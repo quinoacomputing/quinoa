@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
-  \date      Thu 08 May 2014 08:55:49 PM MDT
+  \date      Wed 14 May 2014 07:13:48 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <BigCrush.h>
-#include <TestU01.h>
 
 using rngtest::BigCrush;
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Sat 10 May 2014 10:08:32 AM MDT
+  \date      Wed 14 May 2014 01:01:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -11,8 +11,10 @@
 #ifndef TestU01_h
 #define TestU01_h
 
+#include <TestU01Util.h>
 #include <StatTest.h>
-#include <pup.h>
+
+#include <pup_stl.h>
 
 namespace rngtest {
 
@@ -23,21 +25,27 @@ template< class Result,                             //!< Results type
           typename... Ts >                          //!< Extra runner args types
 class TestU01 : public StatTest {
 
+    //! Test extra arguments type
     using Xargs = std::tuple< Ts... >;
 
     //! Test runner function pointer type
     using RunFn = std::vector<double> (*)( unif01_Gen*, Result*, const Xargs& );
 
+    //! TestU01 results type with a custom deleter by TestU01
+    using ResultPtr = TestU01Ptr< Result, Deleter >;
+
   public:
-    TestU01() {}
+    PUPable_decl_template( TestU01 );
 
     //! Constructor
-    explicit TestU01( std::size_t i,
+    explicit TestU01( CProxy_TestU01Suite handle,
+                      std::size_t i,
                       unif01_Gen* const gen,
                       tk::ctr::RNGType r,
                       std::vector< std::string >&& names,
                       RunFn runner,
                       Ts&&... xargs ) :
+      m_host( handle ),
       m_id( i ),
       m_gen( gen ),
       m_rng( r ),
@@ -46,21 +54,36 @@ class TestU01 : public StatTest {
       m_runner( runner ),
       m_xargs( std::forward<Ts>(xargs)... ),
       m_pvals( names.size(), -1.0 ),
-      m_res( ResultPtr( Creator() ) ) {}
+      m_res( ResultPtr( Creator() ) )
+    {
+      register_PUP_ID("TestU01");
+    }
+
+    //! Migrator
+    TestU01( CkMigrateMessage* m = 0 ) {}
 
     //! Destructor
-    ~TestU01() noexcept override = default;
+    ~TestU01() override = default;
 
-     void pup( PUP::er& p ) {
-      // remember to pup your superclass if there is one
+    //! Pack-Unpack
+    virtual void pup( PUP::er& p ) {
+      p | m_host;
       p | m_id;
       //p | m_gen;
       //p | m_rng;
+      p | m_npval;
+      p | m_names;
+      //p | m_runner;
+      //p | m_xargs;
+      p | m_pvals;
+      //p | m_res;
     }
 
     //! Run test, awful that TestU01 does not guarantee the constness of gen
-    void run() override {
-      m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
+    virtual void run( std::size_t id ) {
+      std::cout << "run: " << id << std::endl;
+      //m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
+      m_host.evaluate( id );
     }
 
     //! Test name accessor
@@ -81,6 +104,8 @@ class TestU01 : public StatTest {
 
     //! Query whether test is failed
     bool fail( std::size_t p ) const override {
+std::cout << "p = " << p << std::endl;
+std::cout << "size = " << m_pvals.size() << std::endl;
       if ((m_pvals[p] <= gofw_Suspectp) || (m_pvals[p] >= 1.0-gofw_Suspectp))
         return true;
       else
@@ -143,22 +168,32 @@ class TestU01 : public StatTest {
     //! Don't permit move assigment
     TestU01& operator=(TestU01&&) = delete;
 
-    std::size_t m_id;                    //!< RNG id
-    unif01_Gen* m_gen;             //!< Raw ptr to TestU01 generator
-    tk::ctr::RNGType m_rng;              //!< RNG selected
-    std::size_t m_npval;                 //!< Number of p-values produced
-    std::vector< std::string > m_names;  //!< Name(s) of tests
-    RunFn m_runner;                      //!< Test runner function
-    Xargs m_xargs;                       //!< Extra args for run()
+    CProxy_TestU01Suite m_host;         //!< Host proxy handle
+    std::size_t m_id;                   //!< RNG id (hardcoded global)
+    unif01_Gen* m_gen;                  //!< Raw ptr to TestU01 generator
+    tk::ctr::RNGType m_rng;             //!< RNG selected
+    std::size_t m_npval;                //!< Number of p-values produced
+    std::vector< std::string > m_names; //!< Name(s) of tests
+    RunFn m_runner;                     //!< Test runner function
+    Xargs m_xargs;                      //!< Extra args for run()
+    std::vector< double > m_pvals;      //!< p-value(s)
+    ResultPtr m_res;                    //!< TestU01 results
+};
 
-    std::vector< double > m_pvals;             //!< p-value(s)
-
-    //! TestU01 results type with a custom deleter by TestU01
-    using ResultPtr = TestU01Ptr< Result, Deleter >;
-    //! TestU01 results struct (wrapped to std::unique_ptr)
-    ResultPtr m_res;
+//! Runner for TestU01 statistical tests
+class TestRunner : public Chare {
+  public:
+    TestRunner( CkMigrateMessage* m ) {}
+    TestRunner( StatTest& test, std::size_t id ) {
+      test.run( id );
+      delete this;
+    }
 };
 
 } // rngtest::
+
+// #define CK_TEMPLATES_ONLY
+// #include <testu01.def.h>
+// #undef CK_TEMPLATES_ONLY
 
 #endif // TestU01_h

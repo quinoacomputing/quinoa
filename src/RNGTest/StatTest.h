@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Fri 09 May 2014 06:27:11 AM MDT
+  \date      Wed 14 May 2014 07:40:38 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -11,20 +11,22 @@
 #ifndef StatTest_h
 #define StatTest_h
 
+#include <charm++.h>
+
 namespace rngtest {
 
 //! StatTest base
-class StatTest {
+class StatTest : public PUP::able {
 
   public:
     //! Constructor
     explicit StatTest() = default;
 
     //! Destructor
-    virtual ~StatTest() noexcept = default;
+    virtual ~StatTest() = default;
 
     //! Run
-    virtual void run() = 0;
+    virtual void run( std::size_t id ) = 0;
 
     //! Test name accessor
     virtual const std::string& name( std::size_t i ) const = 0;
@@ -47,6 +49,8 @@ class StatTest {
 
     //! Return number of failed tests
     virtual std::size_t nfail() const = 0;
+
+    PUPable_abstract( StatTest );
 
   private:
     //! Don't permit copy constructor

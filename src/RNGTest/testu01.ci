@@ -1,0 +1,18 @@
+module testu01 {
+
+  namespace rngtest {
+
+    PUPable TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                     long, long, int, long, int, int >;
+
+    chare TestRunner {
+      entry TestRunner( CkReference< StatTest > test, std::size_t id );
+    }
+
+    chare TestU01Suite {
+      entry void evaluate( std::size_t id );
+    }
+
+  } // rngtest::
+
+}
