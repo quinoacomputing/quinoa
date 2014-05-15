@@ -163,8 +163,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
   #  2415: variable of static storage duration was declared but never referenced
+  #  2547: path was specified as both a system and non-system include directory
   #  3346: dynamic exception specifications are deprecated
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,383,444,869,981,1418,2415,3346")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,383,444,869,981,1418,2415,2547,3346")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -opt-report=0")
   #add_compiler_flag("-openmp-report")
 
