@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Wed 14 May 2014 03:30:48 PM MDT
+  \date      Thu 15 May 2014 08:04:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -13,19 +13,10 @@
 
 #include <TestU01Util.h>
 #include <StatTest.h>
+#include <PUPUtil.h>
 
-#include <pup_stl.h>
-
-//! Custom PUP operator for TestU01's unif01_Gen struct (POD) in unif01.h
+//! PUP operator for TestU01's unif01_Gen struct as POD (defined in unif01.h)
 PUPbytes( unif01_Gen )
-
-//! Custom PUP operator for enum class, based on PUPenum macro in Charm's pup.h
-inline void operator|( PUP::er& p, tk::ctr::RNGType& e ) {
-  using underlying_type = std::underlying_type< tk::ctr::RNGType >::type;
-  underlying_type v = static_cast< underlying_type >( e );
-  p | v;
-  e = static_cast< tk::ctr::RNGType >( v );
-}
 
 namespace rngtest {
 
@@ -66,9 +57,7 @@ class TestU01 : public StatTest {
       m_xargs( std::forward<Ts>(xargs)... ),
       m_pvals( names.size(), -1.0 ),
       m_res( ResultPtr( Creator() ) )
-    {
-      register_PUP_ID("TestU01");
-    }
+    { register_PUP_ID( "TestU01" ); }
 
     //! Migrator
     TestU01( CkMigrateMessage* m = 0 ) {}
@@ -76,32 +65,28 @@ class TestU01 : public StatTest {
     //! Destructor
     ~TestU01() override = default;
 
-    //! Custom PUP operator for ResultPtr
-    void pupResultPtr( PUP::er& p, ResultPtr& t ) {
-      Result* r = t.release();
-      typename ResultPtr::deleter_type d = t.get_deleter();
-      //! Based on PUPfunctionpointer macro in Charm's pup.h
+    //! PUP routine for ResultPtr
+    void PUP_ResultPtr( PUP::er& p, ResultPtr& t ) {
       p( (char*)(&t), sizeof(ResultPtr) );
-      t = ResultPtr( Creator() );
+      //if (p.isUnpacking()) t = ResultPtr( Creator() );        // Needed?
     }
 
     //! Pack-Unpack
-    virtual void pup( PUP::er& p ) {
+    void pup( PUP::er& p ) override {
       p | m_host;
       p | m_id;
-      p | *m_gen;
+      p | *m_gen;       //! Test if this is okay as POD
       p | m_rng;
       p | m_npval;
       p | m_names;
-      //! Based on PUPfunctionpointer macro in Charm's pup.h
       p( (char*)(&m_runner), sizeof(RunFn) );
-      //p | m_xargs;
+      p | m_xargs;
       p | m_pvals;
-      pupResultPtr( p, m_res );
+      PUP_ResultPtr( p, m_res );
     }
 
     //! Run test, awful that TestU01 does not guarantee the constness of gen
-    virtual void run( std::size_t id ) {
+    void run( std::size_t id ) override {
       std::cout << "run: " << id << std::endl;
       std::cout << m_gen << std::endl;
       //m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
@@ -126,8 +111,6 @@ class TestU01 : public StatTest {
 
     //! Query whether test is failed
     bool fail( std::size_t p ) const override {
-std::cout << "p = " << p << std::endl;
-std::cout << "size = " << m_pvals.size() << std::endl;
       if ((m_pvals[p] <= gofw_Suspectp) || (m_pvals[p] >= 1.0-gofw_Suspectp))
         return true;
       else
@@ -202,7 +185,9 @@ std::cout << "size = " << m_pvals.size() << std::endl;
     ResultPtr m_res;                    //!< TestU01 results
 };
 
-//! Runner for TestU01 statistical tests
+//! Runner chare for TestU01 statistical tests, this wrapper used for virtual
+//! dispatch for base StatTest, see also section "Subclass allocation via
+//! PUP::able" in http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
 class TestRunner : public Chare {
   public:
     TestRunner( CkMigrateMessage* m ) {}
@@ -213,9 +198,5 @@ class TestRunner : public Chare {
 };
 
 } // rngtest::
-
-// #define CK_TEMPLATES_ONLY
-// #include <testu01.def.h>
-// #undef CK_TEMPLATES_ONLY
 
 #endif // TestU01_h
