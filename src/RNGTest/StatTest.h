@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Wed 14 May 2014 07:40:38 AM MDT
+  \date      Thu 15 May 2014 07:25:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -25,7 +25,7 @@ class StatTest : public PUP::able {
     //! Destructor
     virtual ~StatTest() = default;
 
-    //! Run
+    //! Run test
     virtual void run( std::size_t id ) = 0;
 
     //! Test name accessor
@@ -43,13 +43,18 @@ class StatTest : public PUP::able {
     //! Query whether test is failed
     virtual bool fail( std::size_t p ) const = 0;
 
-    //! p-value accessors
+    //! p-value accessor as double
     virtual double pval( std::size_t p ) const = 0;
+
+    //! p-value accessor as std::string
     virtual std::string pvalstr( std::size_t p ) const = 0;
 
     //! Return number of failed tests
     virtual std::size_t nfail() const = 0;
 
+    //! Enable PUP for virtual function pointers,
+    //! see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
+    //! section "Subclass allocation via PUP::able"
     PUPable_abstract( StatTest );
 
   private:
