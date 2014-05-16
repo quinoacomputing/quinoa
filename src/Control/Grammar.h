@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 21 Feb 2014 09:07:52 AM MST
+  \date      Fri 16 May 2014 09:25:35 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -299,11 +299,16 @@ namespace grm {
                                    ignore,
                                    unknown< Stack, Error::KEYWORD > > > {};
 
-  //! read_string entry point: parse 'keywords' until end of string
+  //! process but ignore Charm++'s charmrun arguments starting with '+'
+  struct charmarg :
+         pegtl::pad< pegtl::one<'+'>, pegtl::space > {};
+
+  //! read_string entry point: parse 'keywords' and 'charmarg' til end of string
   template< class Stack, typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
                        pegtl::sor< keywords,
+                                   charmarg,
                                    unknown< Stack, Error::KEYWORD > > > {};
 
   //! insert RNG parameter
