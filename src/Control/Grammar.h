@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 May 2014 09:25:35 AM MDT
+  \date      Fri 16 May 2014 11:15:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -35,6 +35,7 @@ namespace grm {
                                EXISTS,
                                NOTALPHA };
 
+  //! Associate parser errors to error messages
   static const std::map< Error, std::string > err_msg( {
     { Error::KEYWORD, "Unknown keyword" },
     { Error::MOMENT, "Unknown term in moment" },
@@ -48,25 +49,50 @@ namespace grm {
     { Error::EXISTS, "Dependent variable already used" },
     { Error::NOTALPHA, "Variable not alphanumeric" }
   } );
-  
+
+  //! Parser warning types
+  enum class Warning : uint8_t { CHARMARG };
+
+  //! Associate parser warnings to warning messages
+  static const std::map< Warning, std::string > warn_msg( {
+    { Warning::CHARMARG, "Charm++ arguments (starting with '+') are ignored" }
+  } );
+
   //! parser error handler
   template< class Stack, Error key >
   static void handleError( const Stack& stack, const std::string& value ) {
     const auto& msg = err_msg.find(key);
     if (msg != err_msg.end()) {
+      std::stringstream ss;
       if (!value.empty()) {
-        std::stringstream ss;
         ss << "Error while parsing '" << value << "' at " << stack.location()
            << ". " << msg->second << ".";
-        Throw(ExceptType::FATAL, ss.str());
       } else {
-        std::stringstream ss;
         ss << "Error while parsing at " << stack.location() << ". "
            << msg->second << ".";
-        Throw(ExceptType::FATAL, ss.str());
       }
+      Throw(ExceptType::FATAL, ss.str());
     } else {
       Throw(ExceptType::FATAL, "Unknown parser error.");
+    }
+  }
+
+  //! emit parser warning
+  template< class Stack, Warning key >
+  static void handleWarning( const Stack& stack, const std::string& value ) {
+    const auto& msg = warn_msg.find(key);
+    if (msg != warn_msg.end()) {
+      std::stringstream ss;
+      if (!value.empty()) {
+        ss << "Warning while parsing '" << value << "' at " << stack.location()
+           << ": " << msg->second << ".";
+      } else {
+        ss << "Warning while parsing at " << stack.location() << ": "
+           << msg->second << ".";
+      }
+      std::cout << ss.str() << std::endl;
+    } else {
+      std::cout << "Unknown parser waring." << std::endl;
     }
   }
 
@@ -93,6 +119,14 @@ namespace grm {
   struct error : pegtl::action_base< error<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
       handleError< Stack, key >( stack, value );
+    }
+  };
+
+  //! warning dispatch
+  template< class Stack, Warning key >
+  struct warning : pegtl::action_base< warning<Stack,key> > {
+    static void apply(const std::string& value, Stack& stack) {
+      handleWarning< Stack, key >( stack, value );
     }
   };
 
@@ -300,15 +334,17 @@ namespace grm {
                                    unknown< Stack, Error::KEYWORD > > > {};
 
   //! process but ignore Charm++'s charmrun arguments starting with '+'
+  template< class Stack >
   struct charmarg :
-         pegtl::pad< pegtl::one<'+'>, pegtl::space > {};
+         pegtl::ifmust< readkw< pegtl::pad< pegtl::one<'+'>, pegtl::space > >,
+                        pegtl::apply< warning< Stack, Warning::CHARMARG > > > {};
 
   //! read_string entry point: parse 'keywords' and 'charmarg' til end of string
   template< class Stack, typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
                        pegtl::sor< keywords,
-                                   charmarg,
+                                   charmarg< Stack >,
                                    unknown< Stack, Error::KEYWORD > > > {};
 
   //! insert RNG parameter
