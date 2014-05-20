@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 07 May 2014 02:45:23 PM MDT
+  \date      Tue 20 May 2014 06:22:00 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -57,15 +57,15 @@ int Main( int argc, char* argv[],
     Print print;
 
     // Echo program name
-    echoHeader(print, name);
+    echoHeader( print, name );
 
     // Echo environment
-    print.part("Environment");
-    echoBuildEnv(print, executable, echoTPL);  //!< Build environment
-    echoRunEnv(print, argc, argv);             //!< Runtime environment
+    print.part( "Environment" );
+    echoBuildEnv( print, executable, echoTPL ); //!< Build environment
+    echoRunEnv( print, argc, argv );            //!< Runtime environment
 
     // Create driver
-    Driver driver(argc, argv, print);
+    Driver driver( argc, argv, print );
 
     // Execute
     driver.execute();
@@ -75,7 +75,7 @@ int Main( int argc, char* argv[],
     }
 
   // Return error code
-  return static_cast<int>(error);
+  return static_cast< int >( error );
 }
 
 } // tk::
