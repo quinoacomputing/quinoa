@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 04:25:03 PM MST
+  \date      Mon 26 May 2014 04:47:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -20,16 +20,12 @@
 
 namespace tk {
 
-template< class C, class Key, class Factory, typename... ConstructorArgs >
-void add( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
-  factory[ key ] = std::bind( boost::factory< C* >(),
-                              std::forward< ConstructorArgs >( args )... );
-}
-
 //! Register class into factory with given key
 template< class C, class Key, class Factory, typename... ConstructorArgs >
 void record( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
-  add< C >( factory, key, std::forward< ConstructorArgs >( args )... );
+  factory.emplace( key,
+                   std::bind( boost::factory< C* >(),
+                              std::forward< ConstructorArgs >( args )... ) );
 }
 
 //! Instantiate object from factory
@@ -43,6 +39,18 @@ std::unique_ptr< Obj > instantiate( const Factory& factory, const Key& key ) {
   Assert( it != end( factory ), tk::ExceptType::FATAL,
           "No such object registered in factory" );
   return std::unique_ptr< Obj >( it->second() );
+}
+
+//! Register model class of host into factory with given key
+template< class Host, class ModelConstructor, class Factory, class Key,
+          typename... ModelConstrArgs >
+void recordModel( Factory& factory, const Key& key, ModelConstrArgs&&... args ) {
+  // Bind model constructor to its arguments
+  std::function< ModelConstructor*() > c =
+    std::bind( boost::factory< ModelConstructor* >(),
+               std::forward< ModelConstrArgs >( args )... );
+  // Bind host to std::function of model constructor and place in factory
+  factory.emplace( key, std::bind( boost::factory< Host* >(), std::move(c) ) );
 }
 
 } // tk::
