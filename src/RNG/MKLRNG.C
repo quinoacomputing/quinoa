@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 05:09:36 PM MST
+  \date      Mon 26 May 2014 04:12:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -23,9 +23,9 @@ MKLRNG::MKLRNG( int nthreads,
                 unsigned int seed,
                 int uniform_method,
                 int gaussian_method ) :
-  m_uniform_method(uniform_method),
-  m_gaussian_method(gaussian_method),
-  m_nthreads(nthreads)
+  m_uniform_method( uniform_method ),
+  m_gaussian_method( gaussian_method ),
+  m_nthreads( nthreads )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
@@ -50,7 +50,7 @@ MKLRNG::MKLRNG( int nthreads,
   }
 }
 
-MKLRNG::~MKLRNG() noexcept
+MKLRNG::~MKLRNG()
 //******************************************************************************
 //  Destructor
 //! \details No-throw guarantee: this member function never throws exceptions.
@@ -66,7 +66,7 @@ MKLRNG::~MKLRNG() noexcept
 }
 
 void
-MKLRNG::uniform(int tid, int num, double* r) const
+MKLRNG::uniform( int tid, int num, double* r ) const
 //******************************************************************************
 // Call MKL's uniform RNG
 //! \author  J. Bakosi
@@ -76,7 +76,7 @@ MKLRNG::uniform(int tid, int num, double* r) const
 }
 
 void
-MKLRNG::gaussian(int tid, int num, double* r) const
+MKLRNG::gaussian( int tid, int num, double* r ) const
 //******************************************************************************
 // Call MKL's Gaussian RNG
 //! \author  J. Bakosi

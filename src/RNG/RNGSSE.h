@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:40:51 2014
+  \date      Mon 26 May 2014 07:12:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -13,7 +13,6 @@
 
 #include <make_unique.h>
 
-#include <RNG.h>
 #include <Exception.h>
 #include <Macro.h>
 
@@ -21,7 +20,7 @@ namespace tk {
 
 //! RNGSSE-based random number generator
 template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
-class RNGSSE : public tk::RNG {
+class RNGSSE {
 
     using InitFn = void (*)(State*, SeqNumType);
 
@@ -51,17 +50,16 @@ class RNGSSE : public tk::RNG {
     }
 
     //! Destructor
-    // ICC: should be '= default'
-    ~RNGSSE() noexcept override {}
+    ~RNGSSE() = default;
 
     //! Uniform RNG
-    void uniform( int tid, int num, double* r) const override {
+    void uniform( int tid, int num, double* r) const {
       r[0] = static_cast<double>( Generate( &m_stream[tid] ) ) / 4294967296.0;
       IGNORE(num);
     }
 
     //! Gaussian RNG
-    void gaussian(int tid, int num, double* r) const override {
+    void gaussian(int tid, int num, double* r) const {
       IGNORE(tid);
       IGNORE(num);
       IGNORE(r);

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 10:25:37 PM MST
+  \date      Mon 26 May 2014 04:11:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -16,12 +16,11 @@
 #include <mkl_vsl_types.h>
 
 #include <Options/RNG.h>
-#include <RNG.h>
 
 namespace tk {
 
 //! MKL-based random number generator
-class MKLRNG : public RNG {
+class MKLRNG {
 
   public:
     //! Constructor
@@ -32,13 +31,13 @@ class MKLRNG : public RNG {
                      int gaussian_method );
 
     //! Destructor
-    ~MKLRNG() noexcept override;
+    ~MKLRNG();
 
     //! Uniform RNG
-    void uniform(int tid, int num, double* r) const override;
+    void uniform( int tid, int num, double* r ) const;
 
     //! Gaussian RNG
-    void gaussian(int tid, int num, double* r) const override;
+    void gaussian( int tid, int num, double* r ) const;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.h
   \author    J. Bakosi
-  \date      Mon 19 May 2014 09:29:32 PM MDT
+  \date      Mon 26 May 2014 04:52:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -11,19 +11,17 @@
 #ifndef RNGDriver_h
 #define RNGDriver_h
 
-#include <list>
 #include <map>
 
-#include <Options/RNG.h>
-#include <RNG.h>
-#include <RNGSSE.h>
 #include <Driver.h>
 #include <tkTypes.h>
+#include <RNG.h>
+#include <Options/RNG.h>
 
 namespace tk {
 
 //! Random number generator factory type
-using RNGFactory = std::map< tk::ctr::RNGType, std::function< tk::RNG*() > >;
+using RNGFactory = std::map< ctr::RNGType, std::function< RNG*() > >;
 
 //! RNGDriver
 class RNGDriver : public Driver {
@@ -32,19 +30,17 @@ class RNGDriver : public Driver {
     //! Constructor
     explicit RNGDriver() = default;
 
-    //! Destructor
-    virtual ~RNGDriver() noexcept = default;
-
-    //! Execute
-    virtual void execute() const = 0;
-
     //! Register random number generators into factory
-    void initRNGFactory( tk::RNGFactory& factory,
-                         int nthreads,
-                         #ifdef HAS_MKL
-                         const tk::ctr::MKLRNGParameters& mklparam,
-                         #endif
-                         const tk::ctr::RNGSSEParameters& rngsseparam );
+    void initFactory( RNGFactory& factory,
+                      int nthreads,
+                      #ifdef HAS_MKL
+                      const ctr::MKLRNGParameters& mklparam,
+                      #endif
+                      const ctr::RNGSSEParameters& rngsseparam );
+
+    //! Instantiate all registered RNGs
+    std::vector< std::unique_ptr< tk::RNG > >
+      instantiateAll( const tk::RNGFactory& factory );
 
   private:
     //! Don't permit copy constructor
@@ -58,15 +54,15 @@ class RNGDriver : public Driver {
 
    #ifdef HAS_MKL
    //! Register MKL RNGs into factory
-   void regMKL( tk::RNGFactory& factory,
+   void regMKL( RNGFactory& factory,
                 int nthreads,
-                const tk::ctr::MKLRNGParameters& mklparam );
+                const ctr::MKLRNGParameters& mklparam );
    #endif
 
    //! Register RNGSSE RNGs into factory
-   void regRNGSSE( tk::RNGFactory& factory,
+   void regRNGSSE( RNGFactory& factory,
                    int nthreads,
-                   const tk::ctr::RNGSSEParameters& param );
+                   const ctr::RNGSSEParameters& param );
 };
 
 } // namespace tk
