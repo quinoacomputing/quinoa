@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.h
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:52:42 PM MDT
+  \date      Tue 27 May 2014 10:50:04 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -21,7 +21,7 @@
 namespace tk {
 
 //! Random number generator factory type
-using RNGFactory = std::map< ctr::RNGType, std::function< RNG*() > >;
+using RNGFactory = std::map< ctr::RNGType, std::function< RNG() > >;
 
 //! RNGDriver
 class RNGDriver : public Driver {
@@ -39,7 +39,7 @@ class RNGDriver : public Driver {
                       const ctr::RNGSSEParameters& rngsseparam );
 
     //! Instantiate all registered RNGs
-    std::vector< std::unique_ptr< tk::RNG > >
+    std::vector< tk::RNG >
       instantiateAll( const tk::RNGFactory& factory );
 
   private:

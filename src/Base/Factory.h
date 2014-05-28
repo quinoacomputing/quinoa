@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:47:49 PM MDT
+  \date      Tue 27 May 2014 10:50:53 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -15,6 +15,7 @@
 #include <functional>
 
 #include <boost/functional/factory.hpp>
+#include <boost/functional/value_factory.hpp>
 
 #include <Exception.h>
 
@@ -22,10 +23,10 @@ namespace tk {
 
 //! Register class into factory with given key
 template< class C, class Key, class Factory, typename... ConstructorArgs >
-void record( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
-  factory.emplace( key,
-                   std::bind( boost::factory< C* >(),
-                              std::forward< ConstructorArgs >( args )... ) );
+void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
+  f.emplace( key,
+             std::bind( boost::factory< C* >(),
+                        std::forward< ConstructorArgs >( args )... ) );
 }
 
 //! Instantiate object from factory
@@ -34,9 +35,9 @@ void record( Factory& factory, const Key& key, ConstructorArgs&&... args ) {
 template< class Factory, class Key,
           class Obj = typename std::remove_pointer<
                         typename Factory::mapped_type::result_type >::type >
-std::unique_ptr< Obj > instantiate( const Factory& factory, const Key& key ) {
-  auto it = factory.find( key );
-  Assert( it != end( factory ), tk::ExceptType::FATAL,
+std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
+  auto it = f.find( key );
+  Assert( it != end( f ), tk::ExceptType::FATAL,
           "No such object registered in factory" );
   return std::unique_ptr< Obj >( it->second() );
 }
@@ -44,13 +45,13 @@ std::unique_ptr< Obj > instantiate( const Factory& factory, const Key& key ) {
 //! Register model class of host into factory with given key
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename... ModelConstrArgs >
-void recordModel( Factory& factory, const Key& key, ModelConstrArgs&&... args ) {
+void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
   // Bind model constructor to its arguments
-  std::function< ModelConstructor*() > c =
-    std::bind( boost::factory< ModelConstructor* >(),
+  std::function< ModelConstructor() > c =
+    std::bind( boost::value_factory< ModelConstructor >(),
                std::forward< ModelConstrArgs >( args )... );
   // Bind host to std::function of model constructor and place in factory
-  factory.emplace( key, std::bind( boost::factory< Host* >(), std::move(c) ) );
+  f.emplace( key, std::bind( boost::value_factory< Host >(), std::move(c) ) );
 }
 
 } // tk::
