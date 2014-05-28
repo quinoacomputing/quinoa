@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.C
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:42:16 PM MDT
+  \date      Tue 27 May 2014 10:12:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -51,17 +51,15 @@ RNGDriver::initFactory( tk::RNGFactory& factory,
   regRNGSSE( factory, nthreads, rngsseparam );
 }
 
-std::vector< std::unique_ptr< tk::RNG > >
+std::vector< tk::RNG >
 RNGDriver::instantiateAll( const tk::RNGFactory& factory )
 //******************************************************************************
 //  Instantiate all registered RNGs from factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::vector< std::unique_ptr< tk::RNG > > rng;
-  for (const auto& r : factory) {
-    rng.push_back( std::unique_ptr< tk::RNG >( r.second() ) );
-  }
+  std::vector< tk::RNG > rng;
+  for (const auto& r : factory) rng.emplace_back( r.second() );
   return rng;
 }
 

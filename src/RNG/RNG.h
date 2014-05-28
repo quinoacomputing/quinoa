@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:35:44 PM MDT
+  \date      Wed 28 May 2014 07:45:21 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -16,24 +16,25 @@
 
 namespace tk {
 
-//! Random number generator. The class below enables runtime polymorphism
-//! without client-side inheritance: inheritance is confined to the internals of
-//! the class below, inivisble to client-code. Credit goes to Sean Parent at
-//! Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
+//! Random number generator. The class below uses runtime polymorphism without
+//! client-side inheritance: inheritance is confined to the internals of the
+//! class below, inivisble to client-code. Credit goes to Sean Parent at Adobe:
+//! https://github.com/sean-parent/sean-parent.github.com/wiki/
 //! Papers-and-Presentations
 class RNG {
 
   public:
     //! Constructor taking an object modeling Concept (see below)
     template< typename T >
-    explicit RNG( T x ) : self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
+    explicit RNG( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
-    //! execution and thus usage from a factory.
+    //! execution of the constructor, i.e., as late as inside this class'
+    //! constructor, and thus usage from a factory.
     template< typename T >
-    explicit RNG( std::function<T*()> x ) :
-      self( tk::make_unique< Model<T*> >( std::move(x()) ) ) {}
+    explicit RNG( std::function<T()> x ) :
+      self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to uniform RNG
     void uniform( int tid, int num, double* r ) const {
@@ -45,20 +46,22 @@ class RNG {
       self->gaussian( tid, num, r );
     }
 
-  private:
-    //! Don't permit copy constructor
-    RNG(const RNG&) = delete;
-    //! Don't permit copy assigment
-    RNG& operator=(const RNG&) = delete;
-    //! Don't permit move constructor
-    RNG(RNG&&) = delete;
-    //! Don't permit move assigment
-    RNG& operator=(RNG&&) = delete;
+    //! Copy assignment
+    RNG& operator=( const RNG& x )
+    { RNG tmp(x); *this = std::move(tmp); return *this; }
+    //! Copy constructor
+    RNG( const RNG& x ) : self( x.self->copy() ) {}
+    //! Move assignment
+    RNG& operator=( RNG&& ) noexcept = default;
+    //! Move constructor
+    RNG( RNG&& ) noexcept = default;
 
+  private:
     //! Concept is a pure virtual base class specifying the requirements of
     //! polymorphic objects deriving from it
     struct Concept {
       virtual ~Concept() = default;
+      virtual Concept* copy() const = 0;
       virtual void uniform( int, int, double* ) const = 0;
       virtual void gaussian( int, int, double* ) const = 0;
     };
@@ -68,12 +71,11 @@ class RNG {
     template< typename T >
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
-      void uniform( int tid, int num, double* r ) const override {
-        data->uniform( tid, num, r );
-      }
-      void gaussian( int tid, int num, double* r ) const override {
-        data->gaussian( tid, num, r );
-      }
+      Concept* copy() const { return new Model( *this ); }
+      void uniform( int tid, int num, double* r ) const override
+      { data.uniform( tid, num, r ); }
+      void gaussian( int tid, int num, double* r ) const override
+      { data.gaussian( tid, num, r ); }
       T data;
     };
 
