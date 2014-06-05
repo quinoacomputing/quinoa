@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/Paradigm.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 03:32:17 PM MDT
+  \date      Sun 25 May 2014 06:12:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
@@ -21,22 +21,23 @@ class Paradigm {
 
   public:
     //! Constructor
-    explicit Paradigm(const Print& print);
+    explicit Paradigm() = default;
+    explicit Paradigm( const Print& print ) { info( print ); }
 
     //! Destructor
-    virtual ~Paradigm() noexcept = default;
+    virtual ~Paradigm() = default;
+
+    //! Output info on compute environment
+    void info( const tk::Print& print );
 
     //! Query if OpenMP is available
-    bool availOpenMP() const noexcept { return m_omp.available(); }
+    bool ompAvailable() const noexcept { return OpenMP().available(); }
 
     //! Query if OpenMP is used
-    bool usedOpenMP() const noexcept { return m_omp.used(); }
-
-    //! Const accessor to OpenMP object
-    const OpenMP* getOpenMP() const noexcept { return &m_omp; }
+    bool ompUsed() const noexcept { return OpenMP().used(); }
 
     //! Accessor to number of OpenMP threads
-    int nthreads() const noexcept { return m_omp.nthreads(); }
+    int ompNthreads() const noexcept { return OpenMP().nthreads(); }
 
   private:
     //! Don't permit copy constructor
@@ -47,8 +48,6 @@ class Paradigm {
     Paradigm(Paradigm&&) = delete;
     //! Don't permit move assigment
     Paradigm& operator=(Paradigm&&) = delete;
-
-    const OpenMP m_omp;            //!< OpenMP
 };
 
 } // tk::

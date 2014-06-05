@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon Mar 24 10:20:09 2014
+  \date      Sun 01 Jun 2014 11:45:27 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -51,11 +51,11 @@ QuinoaDriver::QuinoaDriver(int argc, char** argv, const tk::Print& print)
   print.part("Factory");
 
   // Register random number generators
-  initRNGFactory( m_RNGFactory, m_paradigm->nthreads(),
-                  #ifdef HAS_MKL
-                  m_control->get< tag::param, tk::tag::mklrng >(),
-                  #endif
-                  m_control->get< tag::param, tk::tag::rngsse >() );
+  initFactory( m_RNGFactory, m_paradigm->ompNthreads(),
+               #ifdef HAS_MKL
+               m_control->get< tag::param, tk::tag::rngmkl >(),
+               #endif
+               m_control->get< tag::param, tk::tag::rngsse >() );
   print.list< tk::ctr::RNG >
             ( "Registered random number generators", m_RNGFactory );
 

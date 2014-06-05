@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Thu 15 May 2014 07:25:51 AM MDT
+  \date      Tue 20 May 2014 06:41:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -12,6 +12,8 @@
 #define StatTest_h
 
 #include <charm++.h>
+
+#include <Options/RNG.h>
 
 namespace rngtest {
 
@@ -66,6 +68,20 @@ class StatTest : public PUP::able {
     StatTest(StatTest&&) = delete;
     //! Don't permit move assigment
     StatTest& operator=(StatTest&&) = delete;
+};
+
+//! Runner chare for statistical tests deriving from StatTest. This wrapper is
+//! used for virtual dispatch of tests with base StatTest. See also section
+//! "Subclass allocation via PUP::able" in
+//! http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
+class StatTestRunner : public Chare {
+  public:
+    StatTestRunner( CkMigrateMessage* ) {}
+    StatTestRunner( StatTest& test, std::size_t id ) {
+      std::cout << "StatTestRunner::TestRunner()" << std::endl;
+      test.run( id );
+      delete this;
+    }
 };
 
 } // rngtest::

@@ -2,22 +2,21 @@
 /*!
   \file      src/Paradigm/Paradigm.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:21:56 AM MST
+  \date      Sun 25 May 2014 06:05:49 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parallel programming paradigms
   \details   Parallel programming paradigms
 */
 //******************************************************************************
 
-#include <iostream>
-
 #include <Paradigm.h>
 
 using tk::Paradigm;
 
-Paradigm::Paradigm(const Print& print)
+void
+Paradigm::info( const Print& print )
 //******************************************************************************
-//  Constructor
+//  Output info on compute environment
 //! \param[in] print     Simple pretty printer
 //! \author  J. Bakosi
 //******************************************************************************
@@ -25,13 +24,14 @@ Paradigm::Paradigm(const Print& print)
   print.section("Compute environment");
 
   // OpenMP
-  if (m_omp.available()) {
+  OpenMP omp;
+  if (omp.available()) {
     print.item("OpenMP", "found");
-    if (m_omp.used()) {
-      print.item("Using threads", "yes");
-      print.item("Number of threads", m_omp.nthreads());
+    if (omp.used()) {
+      print.item("Using OpenMP threads", "yes");
+      print.item("Number of OpenMP threads", omp.nthreads());
     } else {
-      print.item("Using threads", "no");
+      print.item("Using OpenMP threads", "no");
     }
   } else {
     print.item("OpenMP", "not found");

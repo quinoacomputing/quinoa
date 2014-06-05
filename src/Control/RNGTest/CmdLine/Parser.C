@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:37:25 2014
+  \date      Wed 28 May 2014 08:47:56 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -13,6 +13,14 @@
 
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/CmdLine/Grammar.h>
+
+namespace tk {
+namespace grm {
+
+tk::Print g_print;
+
+} // grm::
+} // tk::
 
 using rngtest::CmdLineParser;
 
@@ -32,6 +40,9 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
   // PEGTLCmdLine derives from CmdLine and has location() used during parsing
   std::unique_ptr< cmd::PEGTLCmdLine >
     pcmdline( tk::make_unique< cmd::PEGTLCmdLine >( input ) );
+
+  // Reset parser's output stream to that of print's
+  tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging

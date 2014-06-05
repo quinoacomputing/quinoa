@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:05:26 2014
+  \date      Mon 26 May 2014 04:43:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -66,7 +66,7 @@ class SDE : public Model {
               "SDE need at least one scalar to advance" );
       // Initialize particle properties (and throw away init policy)
       Init( m_particles, m_npar, m_nprop, m_offset, m_ncomp,
-            base.paradigm.nthreads() );
+            base.paradigm.ompNthreads() );
       // Instantiate RNG
       initRNG( base );
     }

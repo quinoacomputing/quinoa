@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 14 May 2014 12:36:47 PM MDT
+  \date      Tue 03 Jun 2014 09:09:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -12,35 +12,196 @@
 #define TestU01Suite_h
 
 extern "C" {
-  #include <unif01.h>
-  #include <sres.h>
-  #include <sstring.h>
-  #include <sknuth.h>
-  #include <swalk.h>
-  #include <smarsa.h>
-  #include <snpair.h>
-  #include <scomp.h>
-  #include <sspectral.h>
+  #include <swrite.h>
 }
 
+#include <array>
+
+#include <Base.h>
+#include <Options/RNG.h>
+#include <PUPUtil.h>
 #include <Battery.h>
-#include <testu01.decl.h>
-#include <TestU01.h>
+#include <TestU01Util.h>
+#include <testu01suite.decl.h>
 
 namespace rngtest {
 
-//! Global pointers to RNGs (in TestU01Suite.C)
-extern std::vector< std::unique_ptr< tk::RNG > > g_rng;
+extern const std::size_t g_maxRNGs;
+extern int g_tid;
 
 //! TestU01 random number generator test suite
-class TestU01Suite : public Battery, public CBase_TestU01Suite {
+//! Suite is a policy specific to a test suite, see use cases below
+template< class Suite >
+class TestU01Suite : public Battery {
 
   public:
+    PUPable_decl_template( TestU01Suite );
+
+    //! Constructor
+    explicit TestU01Suite( const Base& base ) :
+      m_numRNGs( 1 ),
+      m_rng( base.control.get< tag::selected, tk::tag::rng >() ),
+      m_npval(0),
+      m_ncomplete( 0 )
+    {
+      Suite suite;
+      m_name = suite.policy();
+      //assignTests();
+      PUPable_reg( TestU01Suite );
+    }
+
+    //! Destructor
+    ~TestU01Suite() override = default;
+
+    //! Migrator
+    TestU01Suite( CkMigrateMessage* m = 0 ) {}
+
+//     // Add a suite of tests for each RNG tested
+//     void assignTests() {
+//       for (std::size_t sel=0; sel<m_rng.size(); ++sel)
+//         suite.addTests( sel, m_rng, m_tests );
+//     }
+
+    //! Pack/Unpack statistical tests polymorfic pointers
+    void pup_tests( PUP::er& p ) {
+      auto size = tk::pup_container_size( p, m_tests );
+      if ( p.isUnpacking() ) m_tests.resize( size );
+      //assignTests();
+    }
+
+    //! Pack/Unpack
+    void pup( PUP::er& p ) override {
+      //pup_vector( p, m_rng );
+      p | m_npval;
+      p | m_ncomplete;
+      p | m_name;
+      pup_tests( p );
+    }
+
     //! Run battery of RNG tests
-    void run() override;
+    void run() override {
+      std::cout << "TestU01Suite::run()" << std::endl;
+//  const RNGTestPrint& pr = *g_base.print;
+//  const tk::Timer& timer = *g_base.timer;
+
+//   pr.part( m_name );
+//   pr.statshead( "Statistics computed" );
+
+      swrite_Basic = FALSE;         // want no screen putput from TestU01
+
+      std::size_t nt = m_tests.size();
+      //std::array< std::size_t, g_maxRNGs > nfail{{ 0 }};
+
+      #ifdef _OPENMP
+      #pragma omp parallel
+      #endif
+      {
+        #ifdef _OPENMP
+        //g_tid = omp_get_thread_num();
+        #else
+        //g_tid = 0;
+        #endif
+
+        #ifdef _OPENMP
+        #pragma omp for schedule(dynamic)
+        #endif
+        for ( std::size_t i=0; i<nt; ++i ) {
+
+          // Get reference to ith test
+          std::unique_ptr< StatTest >& test = m_tests[i];
+
+          // Get RNG id being tested
+          auto id = test->id();
+
+          // Get RNG properties
+          //auto& props = m_rngprops[id];
+
+//       // Start timer for RNG
+//       timer.start( props.timer[g_tid] );
+
+      // Run test
+      //test->run();
+//      CProxy_StatTestRunner::ckNew( *test, i );
+
+//       // Query and accumulate elapsed time for RNG
+//       tk::real time = timer.query( props.timer[g_tid] );
+//       #ifdef _OPENMP
+//       #pragma omp atomic
+//       #endif
+//       props.time[g_tid] += time;
+// 
+//       // Evaluate test
+//       auto npval = test->nstat();
+//       for (std::size_t p=0; p<npval; ++p) {
+// 
+// //         // Increase number tests completed
+// //         #ifdef _OPENMP
+// //         #pragma omp atomic
+// //         #endif
+// //         ++ncomplete;
+// 
+//         // Increase number of failed tests for RNG
+//         if ( test->fail(p) ) {
+//           #ifdef _OPENMP
+//           #pragma omp atomic
+//           #endif
+//           ++nfail[id];
+//         }
+// 
+//         // Output one-liner
+//         pr.test< StatTest, TestContainer >
+//                ( m_ncomplete, nfail[id], m_npval, test, p );
+//       }
+        }
+      }
+
+//   // Count up number of total failed tests (for all RNGs tested)
+//   auto tfail = failed();
+// 
+//   // Output summary of failed tests (for all RNGs tested)
+//   if (tfail) {
+//     pr.failed< StatTest >("Failed statistics", m_npval, tfail, m_tests);
+//   } else {
+//     pr.note("All tests passed");
+//   }
+// 
+//   // Compute sum of measured times spent by all threads per RNG
+//   std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
+//   std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
+//   tk::ctr::RNG rng;
+//   std::size_t i=0;
+//   for (const auto& r : m_rngprops) {
+//     rngtimes.push_back( { 0.0, rng.name(r.id) } );
+//     rngnfail.push_back( { nfail[i], rng.name(r.id) } );
+//     for (const auto& t : r.time) {
+//       rngtimes.back().first += t;
+//     }
+//     if ( std::fabs(rngtimes.back().first) <     // remove if not tested
+//          std::numeric_limits<tk::real>::epsilon() ) {
+//       rngtimes.pop_back();
+//       rngnfail.pop_back();
+//     }
+//     ++i;
+//   }
+// 
+//   // Output measured times per RNG in order of computational cost
+//   pr.cost( "Generator cost",
+//            "Measured times in seconds in increasing order (low is good)",
+//            rngtimes );
+// 
+//   // Output number of failed tests per RNG in order of decreasing quality
+//   pr.rank( "Generator quality",
+//            "Number of failed tests in increasing order (low is good)",
+//            rngnfail );
+// 
+//   pr.endpart();
+    }
 
     //! Print list of registered statistical tests
-    void print() const override;
+    void print( const RNGTestPrint& print ) const override {
+     // Output test names (only for the first RNG tested, the rest are repeats)
+     print.names< StatTest >( m_tests, ntest() );
+    }
 
     //! Return number of statistical tests in battery
     std::size_t ntest() const override {
@@ -52,137 +213,17 @@ class TestU01Suite : public Battery, public CBase_TestU01Suite {
       return m_numRNGs ? m_npval / m_numRNGs : 0;
     }
 
-    /*entry*/ void evaluate( std::size_t id ) {
-      CkPrintf("evaluate: %d\n", id);
-      CkPrintf("ntest: %d\n", ntest());
+    void evaluate( std::size_t id ) override {
+      std::cout << "TestU01Suite::evaluate( " << id << " )" << std::endl;
+      std::cout << "m_name.size(): " << m_name.size() << std::endl;
+      //std::cout << "ntest: " << ntest() << std::endl;
       if ( ++m_ncomplete == 1/*ntest()*/ ) {
         CkPrintf("All tests evaluated.\n");
         CkExit();
       } else {
-        
+        CkPrintf("Waiting for more tests.\n");
       }
     }
-
-  protected:
-    //! Constructor
-    explicit TestU01Suite( const Base& base, const std::string& name );
-
-    //! Destructor
-    // ICC should be default
-    ~TestU01Suite() override {}
-
-    //! TestU01 external generator type with a custom deleter by TestU01
-    using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
-
-    using Pvals = std::vector< double >;
-
-    //! Statistical tests wrappers
-    static Pvals BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
-               const std::tuple<long, long, int, long, int, int>& xargs );
-    static Pvals Collision( unif01_Gen* gen, sknuth_Res2* res,
-               const std::tuple<long, long, int, long, int>& xargs );
-    static Pvals Gap( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, double, double>& xargs );
-    static Pvals SimpPoker( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int, int>& xargs );
-    static Pvals CouponCollector( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals MaxOft( unif01_Gen* gen, sknuth_Res1* res,
-               const std::tuple<long, long, int, int, int, gofw_TestType,
-                                gofw_TestType>& xargs );
-    static Pvals WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, long, double, double>& xargs );
-    static Pvals MatrixRank( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int, int, int>& xargs );
-    static Pvals HammingIndep( unif01_Gen* gen, sstring_Res* res,
-               const std::tuple<long, long, int, int, int, int>& xargs );
-    static Pvals RandomWalk1( unif01_Gen* gen, swalk_Res* res,
-               const std::tuple<long, long, int, int, long, long>& xargs );
-    static Pvals SerialOver( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long,long, int, long, int>& xargs );
-    static Pvals CollisionOver( unif01_Gen* gen, smarsa_Res* res,
-               const std::tuple<long, long, int, long, int>& xargs );
-    static Pvals ClosePairs( unif01_Gen* gen, snpair_Res* res,
-               const std::tuple<long, long, int, int, int, int, int>& xargs );
-    static Pvals ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals Run( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals Permutation( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals SampleProd( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals SampleMean( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, int>& xargs );
-    static Pvals SampleCorr( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, long, int, int, int>& xargs );
-    static Pvals SumCollector( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, double>& xargs );
-    static Pvals Savir2( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, long, int>& xargs );
-    static Pvals GCD( unif01_Gen* gen, smarsa_Res2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals LinearComp( unif01_Gen* gen, scomp_Res* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals LempelZiv( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, int, int, int>& xargs );
-    static Pvals Fourier3( unif01_Gen* gen, sspectral_Res* res,
-               const std::tuple<long, int, int, int>& xargs );
-    static Pvals LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
-               const std::tuple<long, long, int, int, long>& xargs );
-    static Pvals PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals HammingWeight2( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, int, int, long>& xargs );
-    static Pvals HammingCorr( unif01_Gen* gen, sstring_Res* res,
-               const std::tuple<long, long, int, int, int>& xargs );
-    static Pvals StringRun( unif01_Gen* gen, sstring_Res3* res,
-               const std::tuple<long, long, int, int>& xargs );
-    static Pvals AutoCor( unif01_Gen* gen, sres_Basic* res,
-               const std::tuple<long, long, int, int, int>& xargs );
-
-    //! Assign statistical tests to selected RNGs
-    template< class Suite >
-    void assignTests( Suite& suite )
-    {
-      auto size = m_rngprops.size();
-       for (std::size_t r=0; r<size; ++r) {
-         auto& rng = m_rngprops[r];
-         if (rng.id != tk::ctr::RNGType::NO_RNG) {
-           ++m_numRNGs;
-           suite.addTests( r, rng.id, rng.ptr );
-         }
-       }
-      total();  // Count up total number of statistics expected
-    }
-
-    //! Add statistical test to battery
-    template< class TestType, class Result, typename... Ts >
-    void add( std::size_t id,
-              Gen01Ptr& gen,
-              tk::ctr::RNGType rng,
-              std::vector< std::string >&& names,
-              std::vector< double >
-                (*runner)(unif01_Gen*, Result*, const std::tuple<Ts...>&),
-              Ts&&... xargs )
-    {
-      m_tests.push_back(
-        tk::make_unique< TestType >( thishandle,
-                                     id,
-                                     gen.get(),
-                                     std::move(rng),
-                                     std::move(names),
-                                     runner,
-                                     std::forward<Ts>(xargs)... ) );
-    }
-
-    static const long THOUSAND = 1000;
-    static const long MILLION = THOUSAND * THOUSAND;
-    static const long BILLION = THOUSAND * MILLION;
 
   private:
     //! Don't permit copy constructor
@@ -194,78 +235,25 @@ class TestU01Suite : public Battery, public CBase_TestU01Suite {
     //! Don't permit move assigment
     TestU01Suite& operator=(TestU01Suite&&) = delete;
 
-    //! RNG properties
-    struct RNGProps {
-       using TimerIds = std::vector< tk::TimerId >;
-       using Times = std::vector< tk::real >;
-
-      // The first two fields, id and ptr, represent TestU01 external RNGs
-      // associated to quinoa's RNGs. This could also be a single std::map,
-      // however, using two equal-sized std::vectors instead. This is
-      // due to the constraints on passing the RNGs as global wrappers to
-      // TestU01. Only those entries of the std::vectors are initialized and
-      // used that are requested by the user (know only at runtime). RNGs are
-      // always assigned to the same position (hence std::vector instead of
-      // std::map), regardless of requested or not. See also TestU01Suite
-      // constructor.
-      tk::ctr::RNGType id;
-      Gen01Ptr ptr;
-
-      // Timer ids and measured time as tk::real in seconds
-      TimerIds timer;           // size: number of threads
-      Times time;               // size: number of threads
-
-      // Fill constructor, all arguments optional
-      RNGProps( tk::ctr::RNGType i = tk::ctr::RNGType::NO_RNG,
-                Gen01Ptr&& p = nullptr,
-                TimerIds&& r = { 0 },
-                Times&& t = { 0.0 } ) :
-        id( i ),
-        ptr( std::forward< Gen01Ptr >( p ) ),
-        timer( std::forward< TimerIds >( r ) ),
-        time( std::forward< Times >( t ) ) {}
-    };
-
-    //! Register a RNG for testing
-    template< int id >
-    void addRNG( tk::ctr::RNGType r,
-                 double (*wrap)(void*,void*),
-                 unsigned long (*wrap_bits)(void*,void*) )
-    {
-      // Create new RNG and store its pointer in global scope
-      g_rng[id] = std::unique_ptr< tk::RNG >( m_base.rng[r]() );
-      // Get RNG's name
-      std::string name( tk::ctr::RNG().name(r) );
-      // Create per-thread timers named '<rng_name> <thread_id>' and zero times
-      using tk::operator+;
-      auto nthreads = m_base.paradigm.nthreads();
-      RNGProps::TimerIds ids( nthreads );
-      RNGProps::Times times( nthreads );
-      for ( int i=0; i<nthreads; ++i ) {
-        ids[i] = m_base.timer.create( name + std::string(" ") + i );
-        times[i] = 0.0;
-      }
-      // Fill RNG properties for given id
-      m_rngprops[id] = {
-        r,
-        Gen01Ptr( unif01_CreateExternGen01( const_cast<char*>(name.c_str()),
-                                            wrap, wrap_bits ) ),
-        std::move( ids ),
-        std::move( times ) };
+    //! Count up total number of statistics expected
+    void total() {
+      m_npval = 0;
+      for (auto& t : m_tests) m_npval += t->nstat();
     }
 
-    //! Count up total number of statistics expected
-    void total();
-
     //! Count up number of failed tests
-    std::size_t failed();
+    std::size_t failed() {
+      std::size_t fail = 0;
+      for (auto& t : m_tests) fail += t->nfail();
+      return fail;
+    }
 
-    std::string m_name;                 //!< Test suite name
-    std::vector< RNGProps > m_rngprops; //!< Properties of all RNGs tested
-    std::size_t m_numRNGs;              //!< Number of RNGs tested
+    std::size_t m_numRNGs;
+    std::vector< ctr::RNGType > m_rng;  //!< Selected RNGs (from control)
     std::size_t m_npval;                //!< Total number of stats
-    TestContainer m_tests;              //!< Statistical tests
     std::size_t m_ncomplete;            //!< Count number of completed tests
+    std::string m_name;                 //!< Test suite name
+    std::vector< std::unique_ptr< StatTest > > m_tests; //!< Statistical tests
 };
 
 } // rngtest::

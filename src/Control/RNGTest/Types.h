@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:43:05 AM MST
+  \date      Sun 01 Jun 2014 12:49:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
@@ -11,6 +11,8 @@
 #ifndef RNGTestTypes_h
 #define RNGTestTypes_h
 
+#include <tkTags.h>
+#include <tkTypes.h>
 #include <RNGTest/Tags.h>
 #include <RNGTest/Options/Battery.h>
 #include <Options/RNG.h>
@@ -35,7 +37,7 @@ using ios = tk::tuple::tagged_tuple<
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
-  tk::tag::mklrng,    tk::ctr::MKLRNGParameters,   //!< MKL RNG parameters
+  tk::tag::rngmkl,    tk::ctr::RNGMKLParameters,   //!< MKL RNG parameters
   #endif
   tk::tag::rngsse,    tk::ctr::RNGSSEParameters    //!< RNGSSE parameters
 >;

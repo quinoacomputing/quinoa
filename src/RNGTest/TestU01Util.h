@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
-  \date      Thu 08 May 2014 09:03:30 PM MDT
+  \date      Wed 21 May 2014 03:13:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Interfacing the TestU01 random number generator test suite
   \details   Interfacing the TestU01 random number generator test suite
@@ -12,6 +12,10 @@
 #define TestU01Util_h
 
 #include <memory>
+
+extern "C" {
+  #include <unif01.h>
+}
 
 namespace rngtest {
 
@@ -26,6 +30,9 @@ struct Eraser {
 //! TestU01 pointer type with a custom deleter
 template< class Ptr, void (*Deleter)(Ptr *) >
 using TestU01Ptr = std::unique_ptr< Ptr, Eraser< Ptr, Deleter > >;
+
+//! TestU01 external generator type with a custom deleter by TestU01
+using Gen01Ptr = TestU01Ptr< unif01_Gen, unif01_DeleteExternGen01 >;
 
 } // rngtest::
 

@@ -1,9 +1,25 @@
 mainmodule rngtest {
 
-  readonly CProxy_Main mainProxy;
+  extern module testu01;
+  extern module testu01suite;
 
-  mainchare Main {
-    entry Main( CkArgMsg* );
-  }
+  namespace rngtest {
 
+    readonly CProxy_Main mainProxy;
+    readonly tk::ctr::RNGMKLParameters g_rngmklparam;
+    readonly tk::ctr::RNGSSEParameters g_rngsseparam;
+    readonly std::vector< tk::ctr::RNGType > g_selectedrng;
+    readonly std::map< tk::ctr::RNGType, tk::RNG > g_rng;
+
+    mainchare Main {
+      entry Main( CkArgMsg* msg );
+      entry [reductiontarget] void finalize();
+    }
+
+//    chare test { entry test(); }
+    array [1D]  ArrayA { entry ArrayA(); entry void e(); }
+    array [2D]  ArrayB { entry ArrayB(); entry void e(); }
+    array [3D]  ArrayC { entry ArrayC(); entry void e(); }
+
+  } // rngtest::
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue Feb 18 09:49:46 2014
+  \date      Tue 03 Jun 2014 07:15:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -53,9 +53,11 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , MKL_SFMT19937
                              , MKL_SOBOL
                              , MKL_NIEDERR
-                             , MKL_IABSTRACT
-                             , MKL_DABSTRACT
-                             , MKL_SABSTRACT
+  // MKL VSL's abstract RNGs are for use with external (i.e., external to MKL or
+  // user-defined generator via call-back functions), disabled for now
+                             //, MKL_IABSTRACT
+                             //, MKL_DABSTRACT
+                             //, MKL_SABSTRACT
                              , MKL_NONDETERM
                              #endif
 };
@@ -149,9 +151,9 @@ class RNG : public tk::Toggle< RNGType > {
     const tk::kw::mkl_sfmt19937 mkl_sfmt19937 {};
     const tk::kw::mkl_sobol mkl_sobol {};
     const tk::kw::mkl_niederr mkl_niederr {};
-    const tk::kw::mkl_iabstract mkl_iabstract {};
-    const tk::kw::mkl_dabstract mkl_dabstract {};
-    const tk::kw::mkl_sabstract mkl_sabstract {};
+    //const tk::kw::mkl_iabstract mkl_iabstract {};
+    //const tk::kw::mkl_dabstract mkl_dabstract {};
+    //const tk::kw::mkl_sabstract mkl_sabstract {};
     const tk::kw::mkl_nondeterm mkl_nondeterm {};
     #endif
 
@@ -180,9 +182,9 @@ class RNG : public tk::Toggle< RNGType > {
       , { RNGType::MKL_SFMT19937, mkl_sfmt19937.name() }
       , { RNGType::MKL_SOBOL, mkl_sobol.name() }
       , { RNGType::MKL_NIEDERR, mkl_niederr.name() }
-      , { RNGType::MKL_IABSTRACT, mkl_iabstract.name() }
-      , { RNGType::MKL_DABSTRACT, mkl_dabstract.name() }
-      , { RNGType::MKL_SABSTRACT, mkl_sabstract.name() }
+      //, { RNGType::MKL_IABSTRACT, mkl_iabstract.name() }
+      //, { RNGType::MKL_DABSTRACT, mkl_dabstract.name() }
+      //, { RNGType::MKL_SABSTRACT, mkl_sabstract.name() }
       , { RNGType::MKL_NONDETERM, mkl_nondeterm.name() }
       #endif
     };
@@ -212,9 +214,9 @@ class RNG : public tk::Toggle< RNGType > {
       , { mkl_sfmt19937.string(), RNGType::MKL_SFMT19937 }
       , { mkl_sobol.string(), RNGType::MKL_SOBOL }
       , { mkl_niederr.string(), RNGType::MKL_NIEDERR }
-      , { mkl_iabstract.string(), RNGType::MKL_IABSTRACT }
-      , { mkl_dabstract.string(), RNGType::MKL_DABSTRACT }
-      , { mkl_sabstract.string(), RNGType::MKL_SABSTRACT }
+      //, { mkl_iabstract.string(), RNGType::MKL_IABSTRACT }
+      //, { mkl_dabstract.string(), RNGType::MKL_DABSTRACT }
+      //, { mkl_sabstract.string(), RNGType::MKL_SABSTRACT }
       , { mkl_nondeterm.string(), RNGType::MKL_NONDETERM }
       #endif
     };
@@ -244,9 +246,9 @@ class RNG : public tk::Toggle< RNGType > {
       , { RNGType::MKL_SFMT19937, VSL_BRNG_SFMT19937 }
       , { RNGType::MKL_SOBOL, VSL_BRNG_SOBOL }
       , { RNGType::MKL_NIEDERR, VSL_BRNG_NIEDERR }
-      , { RNGType::MKL_IABSTRACT, VSL_BRNG_IABSTRACT }
-      , { RNGType::MKL_DABSTRACT, VSL_BRNG_DABSTRACT }
-      , { RNGType::MKL_SABSTRACT, VSL_BRNG_SABSTRACT }
+      //, { RNGType::MKL_IABSTRACT, VSL_BRNG_IABSTRACT }
+      //, { RNGType::MKL_DABSTRACT, VSL_BRNG_DABSTRACT }
+      //, { RNGType::MKL_SABSTRACT, VSL_BRNG_SABSTRACT }
       , { RNGType::MKL_NONDETERM, VSL_BRNG_NONDETERM }
       #endif
     };

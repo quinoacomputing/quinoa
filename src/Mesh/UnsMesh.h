@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:39:21 AM MDT
+  \date      Thu 29 May 2014 05:57:42 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration
@@ -16,6 +16,7 @@
 
 #include <Types.h>
 #include <Exception.h>
+#include <Print.h>
 
 namespace quinoa {
 
@@ -78,7 +79,7 @@ class UnsMesh {
     std::vector< std::vector< int > >& tettag() { return m_tettag; }
 
     //! Echo element tags and connectivity in all element sets
-    void echoElemSets() const;
+    void echoElemSets( const tk::Print& print ) const;
 
   private:
     //! Don't permit copy constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 05:31:17 PM MDT
+  \date      Wed 28 May 2014 04:00:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line parser
   \details   RNGTest's command line parser
@@ -22,9 +22,9 @@ class CmdLineParser : public tk::StringParser{
 
   public:
     //! Constructor
-    explicit CmdLineParser(int argc, char** argv,
-                           const tk::Print& print,
-                           std::unique_ptr< ctr::CmdLine >& cmdline);
+    explicit CmdLineParser( int argc, char** argv,
+                            const tk::Print& print,
+                            std::unique_ptr< ctr::CmdLine >& cmdline );
 
     //! Destructor
     ~CmdLineParser() noexcept override = default;

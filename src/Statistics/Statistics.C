@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed Mar 19 16:20:37 2014
+  \date      Mon 26 May 2014 04:43:34 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -23,7 +23,7 @@ using quinoa::Statistics;
 
 Statistics::Statistics( const Base& base, const ParProps& particles ) :
   m_particles( particles ),
-  m_nthreads( base.paradigm.nthreads() ),
+  m_nthreads( base.paradigm.ompNthreads() ),
   m_npar( base.control.get< tag::incpar, tag::npar >() ),
   m_nord(0),
   m_ncen(0)

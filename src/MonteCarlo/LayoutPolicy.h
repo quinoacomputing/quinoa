@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:01:14 2014
+  \date      Wed 21 May 2014 08:58:26 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -11,7 +11,7 @@
 #ifndef LayoutPolicy_h
 #define LayoutPolicy_h
 
-#include<make_unique.h>
+#include <make_unique.h>
 
 namespace quinoa {
 

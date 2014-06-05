@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:53:22 AM MST
+  \date      Sun 01 Jun 2014 11:46:14 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -439,7 +439,7 @@ namespace deck {
                      #ifdef HAS_MKL
                      tk::mkl::rngs< Stack,
                                     tag::selected, tk::tag::rng,
-                                    tag::param, tk::tag::mklrng >,
+                                    tag::param, tk::tag::rngmkl >,
                      #endif
                      tk::rngsse::rngs< Stack,
                                        tag::selected, tk::tag::rng,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:56:35 2014
+  \date      Sun 01 Jun 2014 12:42:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -17,7 +17,6 @@
 
 #include <boost/format.hpp>
 
-#include <tkTypes.h>
 #include <Option.h>
 
 namespace tk {
@@ -32,74 +31,93 @@ class Print {
     //! Destructor
     virtual ~Print() = default;
 
+    //! Save pointer to stream
+    std::streambuf* save() const { return m_stream.rdbuf(); }
+
+    //! Reset stream to streambuf
+    std::streambuf* reset( std::streambuf* buf ) const
+    { return m_stream.rdbuf( buf ); }
+
+    //! Reset stream ostream
+    std::streambuf* reset( std::ostream& os ) const
+    { return m_stream.rdbuf( os.rdbuf() ); }
+
+    //! Define operator << for any type
+    template <typename T>
+    friend const Print& operator<<( const Print& os, const T& t )
+    { os.m_stream << t; return os; }
+
+    //! Define operator << for function pointer taking ostream returning ostream
+    friend const Print& operator<<( const Print& os,
+                                    std::ostream& (*pf)(std::ostream&) )
+    { os.m_stream << pf; return os; }
+
     //! Print header
-    void header(const std::string& title) const;
+    void header( const std::string& title ) const;
 
     //! Print part header: title
-    void part(const std::string& title) const;
+    void part( const std::string& title ) const;
 
     //! Print section header: title
-    void section(const std::string& title) const {
+    void section( const std::string& title ) const {
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
                                       % title;
       m_stream << m_section_underline_fmt
                   % m_section_indent
-                  % std::string(m_section_indent_size + 2 + title.size(),'-');
+                  % std::string(m_section_indent.size() + 2 + title.size(),'-');
     }
     //! Print section header: title : value
     template<typename T>
-    void section(const std::string& name, const T& value) const {
+    void section( const std::string& name, const T& value ) const {
       m_stream << m_section_title_value_fmt % m_section_indent
                                             % m_section_bullet
                                             % name
                                             % value;
       m_stream << m_section_underline_fmt
                   % m_section_indent
-                  % std::string(m_section_indent_size + 3 + name.size() +
+                  % std::string(m_section_indent.size() + 3 + name.size() +
                                 value.size(), '-');
     }
 
     //! Print subsection header: title
-    void subsection(const std::string& title) const {
+    void subsection( const std::string& title ) const {
       m_stream << m_subsection_title_fmt % m_subsection_indent
                                          % m_subsection_bullet
                                          % title;
     }
 
     //! Print item: name
-    void item(const std::string& name) const {
-      m_stream << m_item_name_fmt % m_item_indent % name;
-    }
+    void item( const std::string& name ) const
+    { m_stream << m_item_name_fmt % m_item_indent % name; }
 
     //! Print item: name : value
     template< typename T >
-    void item(const std::string& name, const T& value) const {
-      m_stream << m_item_name_value_fmt % m_item_indent % name % value;
-    }
+    void item( const std::string& name, const T& value ) const
+    { m_stream << m_item_name_value_fmt % m_item_indent % name % value; }
 
     //! Print list: name: entries...
-    void list(const std::string& name,
-              const std::list< std::string >& entries) const {
-      if (!entries.empty()) section( name );
-      for (auto& e : entries) {
-        m_stream << m_list_item_fmt % m_item_indent % e;
+    void list( const std::string& name,
+               const std::list< std::string >& entries ) const {
+      if (!entries.empty()) {
+        section( name );
+        for (auto& e : entries) m_stream << m_list_item_fmt % m_item_indent % e;
       }
     }
 
     //! Print list: name: option names...
     template< class Option, class Factory >
     void list( const std::string& title, const Factory& factory ) const {
-      if (!factory.empty()) section( title );
-      for (const auto& f : factory) {
-        m_stream << m_list_item_fmt % m_item_indent % Option().name( f.first );
+      if (!factory.empty()) {
+        section( title );
+        for (const auto& f : factory)
+          m_stream << m_list_item_fmt % m_item_indent % Option().name(f.first);
       }
     }
 
     //! Print note
-    void note( const std::string& msg ) const {
-      m_stream << m_note_fmt % m_section_indent % msg;
-    }
+    void note( const std::string& msg ) const
+    { m_stream << m_note_fmt % m_section_indent % msg; }
 
     //! Print end of part
     void endpart() const { m_stream << "\n\n"; }
@@ -114,6 +132,10 @@ class Print {
     //! Raw stream access
     std::ostream& stream() const noexcept { return m_stream; }
 
+    //! Implicit conversion to ostream: allows *this in stl algorithms via an
+    //! std::osteam_iterator, e.g., std::ostream_iterator< int >( print, ", " )
+    operator std::ostream&() const noexcept { return m_stream; }
+
   protected:
     //! bullets
     const char m_section_bullet = '*';
@@ -123,9 +145,6 @@ class Print {
     const std::string m_subsection_indent =
       std::operator+(m_section_indent,"  ");
     const std::string m_item_indent = std::operator+(m_subsection_indent,"  ");
-    //! indent sizes
-    const std::string::size_type m_section_indent_size =
-      m_section_indent.size();
 
     //! Format strings
     using format = boost::format;

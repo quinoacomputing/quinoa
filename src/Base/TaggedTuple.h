@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 07:44:45 PM CET
+  \date      Mon 02 Jun 2014 04:43:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
@@ -14,6 +14,7 @@
 #define TaggedTuple_h
 
 #include <tuple>
+#include <PUPUtil.h>
 
 namespace tk {
 //! tagged tuple allowing tag-based access to tuple members with arbitrary types
@@ -62,17 +63,27 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   //! Rvalue accessor
   template<typename S> nT<S>& get() {
     return std::get<index<S, Ss...>::value>(*this); }
-  //! Set (potentially swallow) value
+  //! Sink value
   template<typename S> void set(nT<S>&& value) {
     std::get<index<S, Ss...>::value>(*this) = std::forward<nT<S>>(value); }
+  //! Pack/Unpack
+  void pup( PUP::er& p ) { tk::pup_tuple( p, *this ); }
+  friend void
+  operator|( PUP::er& p, tt_impl<typelist<Ss...>, typelist<Ts...>>& t ) {
+    t.pup(p); }
 };
 
 //! tagged_tuple
 template<typename... Ts> struct tagged_tuple :
   tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>> {
+  //! Constructor
   template<typename... Args> tagged_tuple(Args &&...args) :
     tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>>(
       std::forward<Args>(args)...) {}
+  //! Pack/Unpack
+  void pup( PUP::er& p ) {
+    tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>>::pup(p); }
+  friend void operator|( PUP::er& p, tagged_tuple<Ts...>& t ) { t.pup(p); }
 };
 
 //! tagged_tuple_size = std::tuple_size/2

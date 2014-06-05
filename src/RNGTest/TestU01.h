@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Thu 15 May 2014 08:04:49 AM MDT
+  \date      Sun 25 May 2014 05:41:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -11,20 +11,29 @@
 #ifndef TestU01_h
 #define TestU01_h
 
+extern "C" {
+  #include <sres.h>
+  #include <sknuth.h>
+}
+
+#include <Base.h>
+#include <RNG.h>
 #include <TestU01Util.h>
 #include <StatTest.h>
 #include <PUPUtil.h>
+#include <TestU01PUP.h>
+#include <testu01.decl.h>
 
-//! PUP operator for TestU01's unif01_Gen struct as POD (defined in unif01.h)
+//! PUP operator for TestU01's unif01_Gen struct as POD
 PUPbytes( unif01_Gen )
 
 namespace rngtest {
 
 //! TestU01 : StatTest
-template< class Result,                             //!< Results type
-          Result* (*Creator)(void),                 //!< Results creator
-          void (*Deleter)(Result *),                //!< Results deleter
-          typename... Ts >                          //!< Extra runner args types
+template< class Result,                 //!< Results type
+          Result* (*Creator)(void),     //!< Results creator
+          void (*Deleter)(Result *),    //!< Results deleter
+          typename... Ts >              //!< Extra runner args types
 class TestU01 : public StatTest {
 
     //! Test extra arguments type
@@ -40,24 +49,19 @@ class TestU01 : public StatTest {
     PUPable_decl_template( TestU01 );
 
     //! Constructor
-    explicit TestU01( CProxy_TestU01Suite handle,
-                      std::size_t i,
-                      unif01_Gen* const gen,
-                      tk::ctr::RNGType r,
-                      std::vector< std::string >&& names,
+    explicit TestU01( std::vector< std::string >&& names,
                       RunFn runner,
                       Ts&&... xargs ) :
-      m_host( handle ),
-      m_id( i ),
-      m_gen( gen ),
-      m_rng( r ),
       m_npval( names.size() ),
       m_names( std::move(names) ),
       m_runner( runner ),
       m_xargs( std::forward<Ts>(xargs)... ),
       m_pvals( names.size(), -1.0 ),
-      m_res( ResultPtr( Creator() ) )
-    { register_PUP_ID( "TestU01" ); }
+      m_res( ResultPtr(Creator()) )
+    {
+      //initRNG( base ),
+      PUPable_reg( TestU01 );
+    }
 
     //! Migrator
     TestU01( CkMigrateMessage* m = 0 ) {}
@@ -65,32 +69,29 @@ class TestU01 : public StatTest {
     //! Destructor
     ~TestU01() override = default;
 
-    //! PUP routine for ResultPtr
-    void PUP_ResultPtr( PUP::er& p, ResultPtr& t ) {
-      p( (char*)(&t), sizeof(ResultPtr) );
-      //if (p.isUnpacking()) t = ResultPtr( Creator() );        // Needed?
-    }
-
-    //! Pack-Unpack
+//     //! Pack/Unpack RunFn (function pointer)
+//     void PUP_RunFn( PUP::er& p, RunFn r ) {
+//     }
+// 
+    //! Pack/Unpack
     void pup( PUP::er& p ) override {
-      p | m_host;
-      p | m_id;
-      p | *m_gen;       //! Test if this is okay as POD
-      p | m_rng;
-      p | m_npval;
-      p | m_names;
-      p( (char*)(&m_runner), sizeof(RunFn) );
-      p | m_xargs;
-      p | m_pvals;
-      PUP_ResultPtr( p, m_res );
+//       //p | *m_gen;       //! Test if this is okay as POD
+//       p | m_rng;
+//       p | m_npval;
+//       PUP_vector( p, m_names );
+//       PUP_RunFn( p, m_runner );
+//       p | m_xargs;
+//       PUP_vector( p, m_pvals );
+//       PUP_unique_ptr( p, m_res, ResultPtr(Creator()) );
     }
 
-    //! Run test, awful that TestU01 does not guarantee the constness of gen
+    //! Run test
     void run( std::size_t id ) override {
-      std::cout << "run: " << id << std::endl;
-      std::cout << m_gen << std::endl;
+      std::cout << "TestU01::run( " << id << " )" << std::endl;
+      //std::cout << m_gen << std::endl;
+      // TestU01 does not guarantee the constness of gen
       //m_pvals = m_runner( const_cast<unif01_Gen*>(m_gen), m_res.get(), m_xargs );
-      m_host.evaluate( id );
+      //m_host->evaluate( id );
     }
 
     //! Test name accessor
@@ -104,10 +105,10 @@ class TestU01 : public StatTest {
     std::size_t nstat() const override { return m_npval; }
 
     //! RNG enum accessor
-    const tk::ctr::RNGType& rng() const override { return m_rng; }
+    const tk::ctr::RNGType& rng() const override { return m_id; }
 
     //! RNG id accessor
-    std::size_t id() const override { return m_id; }
+    std::size_t id() const override { return m_gid; }
 
     //! Query whether test is failed
     bool fail( std::size_t p ) const override {
@@ -173,28 +174,16 @@ class TestU01 : public StatTest {
     //! Don't permit move assigment
     TestU01& operator=(TestU01&&) = delete;
 
-    CProxy_TestU01Suite m_host;         //!< Host proxy handle
-    std::size_t m_id;                   //!< RNG id (hardcoded global)
-    unif01_Gen* m_gen;                  //!< Raw ptr to TestU01 generator
-    tk::ctr::RNGType m_rng;             //!< RNG selected
     std::size_t m_npval;                //!< Number of p-values produced
     std::vector< std::string > m_names; //!< Name(s) of tests
     RunFn m_runner;                     //!< Test runner function
     Xargs m_xargs;                      //!< Extra args for run()
     std::vector< double > m_pvals;      //!< p-value(s)
     ResultPtr m_res;                    //!< TestU01 results
-};
 
-//! Runner chare for TestU01 statistical tests, this wrapper used for virtual
-//! dispatch for base StatTest, see also section "Subclass allocation via
-//! PUP::able" in http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
-class TestRunner : public Chare {
-  public:
-    TestRunner( CkMigrateMessage* m ) {}
-    TestRunner( StatTest& test, std::size_t id ) {
-      test.run( id );
-      delete this;
-    }
+    std::size_t m_gid;                  //!< RNG global id
+    tk::ctr::RNGType m_id;              //!< RNG selected
+    Gen01Ptr m_gen;                     //!< Pointer to generator
 };
 
 } // rngtest::

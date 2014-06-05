@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGPrint.C
   \author    J. Bakosi
-  \date      Wed Mar 19 10:34:11 2014
+  \date      Sun 01 Jun 2014 11:37:52 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -15,7 +15,7 @@ using tk::RNGPrint;
 
 #ifdef HAS_MKL
 void
-RNGPrint::echoMKLParams( const ctr::MKLRNGParam& p ) const
+RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
 //******************************************************************************
 //  Echo information on MKL random number generator
 //! \author J. Bakosi
@@ -67,7 +67,7 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
 #ifdef HAS_MKL
 void
 RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
-                     const ctr::MKLRNGParameters& map ) const
+                     const ctr::RNGMKLParameters& map ) const
 //******************************************************************************
 //  Print all fields of MKL RNG parameters
 //! \author J. Bakosi
@@ -80,7 +80,7 @@ RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
       subsection( rng.name(r) );
       const auto& m = map.find(r);
       if (m == map.end()) {   // no parameter map entry, print defaults
-        echoMKLParams( ctr::MKLRNGParam() );
+        echoMKLParams( ctr::RNGMKLParam() );
       } else {
         echoMKLParams( m->second );
       }

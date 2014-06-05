@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Wed Mar 19 08:05:20 2014
+  \date      Mon 26 May 2014 04:50:01 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver base
   \details   Driver base
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef Driver_h
 #define Driver_h
+
+#include <Exception.h>
 
 namespace tk {
 
@@ -21,10 +23,13 @@ class Driver {
     explicit Driver() = default;
 
     //! Destructor
-    virtual ~Driver() noexcept = default;
+    virtual ~Driver() = default;
 
     //! Execute
-    virtual void execute() const = 0;
+    virtual void execute() const {
+      Throw( ExceptType::WARNING,
+             "Driver::execute() called; override not required and undefined" );
+    }
 
   private:
     //! Don't permit copy constructor
