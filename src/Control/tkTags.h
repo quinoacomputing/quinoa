@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/tkTags.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:33:15 PM MST
+  \date      Sun 01 Jun 2014 11:46:02 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     tk Tags
   \details   tk Tags
@@ -19,7 +19,7 @@ struct uniform_method {};
 struct gaussian_method {};
 
 struct rng {};
-struct mklrng {};
+struct rngmkl {};
 struct rngsse {};
 struct seqlen {};
 

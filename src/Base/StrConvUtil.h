@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 01:29:00 PM MDT
+  \date      Mon 02 Jun 2014 06:04:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     String conversion utilities
   \details   String conversion utilities
@@ -15,11 +15,21 @@
 
 namespace tk {
 
-//! Operator << for writing T (casting to unsigned int) to output streams
-template< typename T, typename Ch, typename Tr >
-std::basic_ostream< Ch, Tr >&
+//! Operator << for writing enum class value to output streams
+template< typename T, typename Ch, typename Tr,
+          typename std::enable_if< std::is_enum<T>::value, int >::type = 0 >
+inline std::basic_ostream< Ch, Tr >&
 operator<< ( std::basic_ostream< Ch, Tr >& os, const T& e ) {
   os << static_cast< unsigned int >( e );
+  return os;
+}
+
+//! Delegate operator << to default for writing non-enums to output streams
+template< typename T, typename Ch, typename Tr,
+          typename std::enable_if< !std::is_enum<T>::value, int >::type = 0 >
+inline std::basic_ostream< Ch, Tr >&
+operator<< ( std::basic_ostream< Ch, Tr >& os, const T& t ) {
+  os << t;
   return os;
 }
 

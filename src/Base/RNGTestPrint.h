@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 24 Apr 2014 09:57:30 PM MDT
+  \date      Thu 29 May 2014 10:58:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -11,7 +11,8 @@
 #ifndef RNGTestPrint_h
 #define RNGTestPrint_h
 
-#include <Print.h>
+#include <Types.h>
+#include <RNGPrint.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 
 namespace rngtest {
@@ -44,7 +45,7 @@ class RNGTestPrint : public tk::RNGPrint {
                                               % value;
         m_stream << m_section_underline_fmt
                     % m_section_indent
-                    % std::string( m_section_indent_size + 3 +
+                    % std::string( m_section_indent.size() + 3 +
                                    group.size() + value.size(), '-' );
       }
     }
@@ -64,7 +65,7 @@ class RNGTestPrint : public tk::RNGPrint {
                                               % ss.str();
         m_stream << m_section_underline_fmt
                     % m_section_indent
-                    % std::string( m_section_indent_size + 3 +
+                    % std::string( m_section_indent.size() + 3 +
                                    group.size() + value.size(), '-' );
       }
     }
@@ -92,7 +93,7 @@ class RNGTestPrint : public tk::RNGPrint {
           m_stream << m_list_item_fmt % m_item_indent % name;
         }
       }
-      raw( "\n" );
+      raw( '\n' );
       raw( m_item_indent + "Note: Tests followed by an asterisk (*) are\n" +
            m_item_indent + "statistics computed from the preceding test.\n" );
     }
@@ -104,7 +105,7 @@ class RNGTestPrint : public tk::RNGPrint {
                                       % title;
       m_stream << m_section_underline_fmt
                   % m_section_indent
-                  % std::string(m_section_indent_size + 2 + title.size(),'-');
+                  % std::string(m_section_indent.size() + 2 + title.size(),'-');
       raw( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );

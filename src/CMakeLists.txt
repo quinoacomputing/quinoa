@@ -145,11 +145,23 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
 
+  # Suppress the following warnings for Charm++ hostfiles including the
+  # Charm-generated .decl.h and .def.h:
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align")
+  # Ignore warnings for linking with a Charm++ module
+  set(PARTOF_FLAGS "-Wno-unused-parameter")
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
 
   add_compiler_flag("-Wno-literal-suffix")
+
+  # Suppress the following warnings for Charm++ hostfiles including the
+  # Charm-generated .decl.h and .def.h:
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align")
+  # Ignore warnings for linking with a Charm++ module
+  set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   add_compiler_flag("-Wremarks")
@@ -175,7 +187,30 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
 
+  # Suppress the following Intel compiler warnings/remarks for Charm++
+  # hostfiles including the Charm-generated .decl.h and .def.h:
+  #  177: variable was declared but never referenced
+  #  181: argument of type "unsigned char *" is incompatible with format
+  #       "%c", expecting argument of type "char *"
+  # 1572: floating-point equality and inequality comparisons are unreliable
+  # 1599: declaration hides variable
+  # 1720: function "<class>::operator new" has no corresponding member
+  #       operator delete (to be called if an exception is thrown during
+  #       initialization of an allocated object)
+  # 1944: declaration shadows a member of 'this'
+  # 2259: non-pointer conversion from "int" to "unsigned char" may lose
+  #       significant bits
+  # 3280: declaration hides member
+  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,3280")
+  # Ignore warnings for linking with a Charm++ module
+  set(PARTOF_FLAGS "-Wno-unused-parameter")
+
 endif()
+
+# Echo Charm++ hostfile extra compiler flags
+message(STATUS "Charm++ host extra compiler flags: ${HOSTFILE_FLAGS}")
+# Echo Charm++ module extra link flags
+message(STATUS "Charm++ module extra linker flags: ${PARTOF_FLAGS}")
 
 # Set compiler flags for use of libc++ (If nothing is given, libstdc++ is the
 # default thus does not require anything special.)
@@ -279,7 +314,6 @@ add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
 add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
-add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 add_subdirectory(Main)

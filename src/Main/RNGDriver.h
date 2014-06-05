@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.h
   \author    J. Bakosi
-  \date      Tue 27 May 2014 10:50:04 AM MDT
+  \date      Tue 03 Jun 2014 10:15:10 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -34,13 +34,14 @@ class RNGDriver : public Driver {
     void initFactory( RNGFactory& factory,
                       int nthreads,
                       #ifdef HAS_MKL
-                      const ctr::MKLRNGParameters& mklparam,
+                      const ctr::RNGMKLParameters& mklparam,
                       #endif
                       const ctr::RNGSSEParameters& rngsseparam );
 
-    //! Instantiate all registered RNGs
-    std::vector< tk::RNG >
-      instantiateAll( const tk::RNGFactory& factory );
+    //! Instantiate selected RNGs
+    std::map< tk::ctr::RNGType, tk::RNG >
+    createSelected( const tk::RNGFactory& factory,
+                    const std::vector< ctr::RNGType >& selected );
 
   private:
     //! Don't permit copy constructor
@@ -56,7 +57,7 @@ class RNGDriver : public Driver {
    //! Register MKL RNGs into factory
    void regMKL( RNGFactory& factory,
                 int nthreads,
-                const ctr::MKLRNGParameters& mklparam );
+                const ctr::RNGMKLParameters& mklparam );
    #endif
 
    //! Register RNGSSE RNGs into factory

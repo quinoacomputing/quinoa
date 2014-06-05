@@ -42,7 +42,6 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Mesh
                       Statistics
                       QuinoaControl
-                      ${RNG}
                       ${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
@@ -101,7 +100,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
-removeWarnings( "RNGTest.C;RNGTestDriver.C" )
+removeWarnings( "RNGTest.C;RNGDriver.C;RNGTestDriver.C" )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

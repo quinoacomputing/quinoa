@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Wed Apr 23 09:59:02 2014
+  \date      Wed 28 May 2014 08:25:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -90,42 +90,42 @@ void tk::echoBuildEnv( const Print& print,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.section("Build environment");
-  print.item("Hostname", BUILD_HOSTNAME);
-  print.item("Executable", executable);
-  print.item("Version", VERSION);
-  print.item("Release", RELEASE);
-  print.item("Revision", GIT_COMMIT);
-  print.item("CMake build type", BUILD_TYPE);
+  print.section( "Build environment" );
+  print.item( "Hostname", BUILD_HOSTNAME );
+  print.item( "Executable", executable );
+  print.item( "Version", VERSION );
+  print.item( "Release", RELEASE );
+  print.item( "Revision", GIT_COMMIT );
+  print.item( "CMake build type", BUILD_TYPE );
 
 #ifdef NDEBUG
-  print.item("Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
-  print.item("Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)");
+  print.item( "Asserts", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
+  print.item( "Exception trace", "off (turn on: CMAKE_BUILD_TYPE=DEBUG)" );
 #else
-  print.item("Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
-  print.item("Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)");
+  print.item( "Asserts", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
+  print.item( "Exception trace", "on (turn off: CMAKE_BUILD_TYPE=RELEASE)" );
 #endif
 
-  print.item("MPI C++ wrapper", MPI_COMPILER);
-  print.item("Underlying C++ compiler", COMPILER);
-  print.item("Build date", BUILD_DATE);
+  print.item( "MPI C++ wrapper", MPI_COMPILER );
+  print.item( "Underlying C++ compiler", COMPILER );
+  print.item( "Build date", BUILD_DATE );
 
   // TPLs used by all executables
-  print.raw("\n");
-  echoOpenMP(print, "OpenMP runtime");
-  print.raw("\n");
+  print << '\n';
+  echoOpenMP( print, "OpenMP runtime" );
+  print << '\n';
 
 #ifdef HAS_MKL
-  echoMKL(print, "Intel Math Kernel Library");
+  echoMKL( print, "Intel Math Kernel Library" );
 #else
-  print.item("Intel Math Kernel Library", "n/a");
+  print.item( "Intel Math Kernel Library", "n/a" );
 #endif
 
-  print.raw("\n");
-  echoBoost(print, "Boost C++ Libraries");
+  print << '\n';
+  echoBoost( print, "Boost C++ Libraries" );
 
   // TPLs used by this executable
-  echoTPL(print);
+  echoTPL( print );
 }
 
 void tk::echoRunEnv(const Print& print, int argc, char** argv)
@@ -145,12 +145,12 @@ void tk::echoRunEnv(const Print& print, int argc, char** argv)
   print.item("Executable (rel. to work dir)", argv[0]);
 
   print.item("Command line arguments");
-  print.raw('\'');
+  print << '\'';
   if (argc>1) {
     for (auto i=1; i<argc-1; ++i) {
-      print.raw(std::string(argv[i]) + ' ');
+      print << std::string(argv[i]) + ' ';
     }
-    print.raw(std::string(argv[argc-1]));
+    print << std::string(argv[argc-1]);
   }
-  print.raw("'\n");
+  print << "'\n";
 }

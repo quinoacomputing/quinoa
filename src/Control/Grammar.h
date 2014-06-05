@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 May 2014 11:15:30 AM MDT
+  \date      Wed 28 May 2014 10:04:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -19,6 +19,11 @@
 namespace tk {
 //! Grammar definition: state, actions, grammar
 namespace grm {
+
+  //! Parser's printer: this should be defined once per library in global-scope
+  //! by a parser. It is defined in Control/<executable>/CmdLine/Parser.C, since
+  //! every executable has at least a command line parser.
+  extern Print g_print;
 
   // Common auxiliary functions
 
@@ -90,9 +95,9 @@ namespace grm {
         ss << "Warning while parsing at " << stack.location() << ": "
            << msg->second << ".";
       }
-      std::cout << ss.str() << std::endl;
+      g_print << ss.str() << std::endl;
     } else {
-      std::cout << "Unknown parser waring." << std::endl;
+      g_print << "Unknown parser waring." << std::endl;
     }
   }
 
@@ -104,10 +109,10 @@ namespace grm {
     tk::Option< OptionType > opt;
     //! Emit warning on overwrite
     if (stack.template get< tags... >() != defaults.template get< tags... >()) {
-      std::cout << "\n>>> PARSER WARNING: Multiple definitions for '"
-                << opt.group() << "' option. Overwriting '"
-                << opt.name( stack.template get< tags... >() ) << "' with '"
-                << opt.name( opt.value( value ) ) << "'.\n\n";
+      g_print << "\n>>> PARSER WARNING: Multiple definitions for '"
+              << opt.group() << "' option. Overwriting '"
+              << opt.name( stack.template get< tags... >() ) << "' with '"
+              << opt.name( opt.value( value ) ) << "'.\n\n";
     }
     stack.template set< tags... >( opt.value( value ) );
   }

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 07:25:51 AM MDT
+  \date      Mon 26 May 2014 04:43:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -11,6 +11,7 @@
 
 #include <limits>
 #include <cmath>
+#include <array>
 
 #include <UnsMesh.h>
 #include <GmshMeshReader.h>

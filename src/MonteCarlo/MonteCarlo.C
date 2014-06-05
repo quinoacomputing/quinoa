@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.C
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:52:21 AM MST
+  \date      Sun 01 Jun 2014 11:45:33 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MonteCarlo base
   \details   MonteCarlo base
@@ -82,7 +82,7 @@ MonteCarlo::echoRNGs() const
   print().section("Random number generators");
   #ifdef HAS_MKL
   print().MKLParams( control().get< tag::selected, tk::tag::rng >(),
-                     control().get< tag::param, tk::tag::mklrng >() );
+                     control().get< tag::param, tk::tag::rngmkl >() );
   #endif
   print().RNGSSEParams( control().get< tag::selected, tk::tag::rng >(),
                         control().get< tag::param, tk::tag::rngsse >() );

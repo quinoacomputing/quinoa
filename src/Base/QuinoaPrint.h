@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:32:44 2014
+  \date      Thu 29 May 2014 10:58:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -41,7 +41,7 @@ class QuinoaPrint : public tk::RNGPrint {
                                               % value;
         m_stream << m_section_underline_fmt
                     % m_section_indent
-                    % std::string( m_section_indent_size + 3 +
+                    % std::string( m_section_indent.size() + 3 +
                                    group.size() + value.size(), '-' );
       }
     }

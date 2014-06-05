@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 08 Mar 2014 06:47:51 AM MST
+  \date      Sun 01 Jun 2014 11:45:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -68,7 +68,7 @@ namespace deck {
                      #ifdef HAS_MKL
                      tk::mkl::rngs< Stack,
                                     tag::selected, tk::tag::rng,
-                                    tag::param, tk::tag::mklrng >,
+                                    tag::param, tk::tag::rngmkl >,
                      #endif
                      tk::rngsse::rngs< Stack,
                                        tag::selected, tk::tag::rng,

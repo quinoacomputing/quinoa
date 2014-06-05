@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGDriver.C
   \author    J. Bakosi
-  \date      Tue 27 May 2014 10:12:24 PM MDT
+  \date      Wed 04 Jun 2014 10:14:03 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver with RNGs
   \details   Driver with RNGs
@@ -37,7 +37,7 @@ void
 RNGDriver::initFactory( tk::RNGFactory& factory,
                         int nthreads,
                         #ifdef HAS_MKL
-                        const tk::ctr::MKLRNGParameters& mklparam,
+                        const tk::ctr::RNGMKLParameters& mklparam,
                         #endif
                         const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
@@ -51,15 +51,20 @@ RNGDriver::initFactory( tk::RNGFactory& factory,
   regRNGSSE( factory, nthreads, rngsseparam );
 }
 
-std::vector< tk::RNG >
-RNGDriver::instantiateAll( const tk::RNGFactory& factory )
+std::map< tk::ctr::RNGType, tk::RNG >
+RNGDriver::createSelected( const tk::RNGFactory& factory,
+                           const std::vector< tk::ctr::RNGType >& selected )
 //******************************************************************************
-//  Instantiate all registered RNGs from factory
+//  Instantiate selected RNGs from factory and place them in map
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::vector< tk::RNG > rng;
-  for (const auto& r : factory) rng.emplace_back( r.second() );
+  std::map< tk::ctr::RNGType, tk::RNG > rng;
+  for (const auto& s : selected) {
+    const auto r = factory.find(s);
+    if (r != end(factory)) rng.emplace( s, r->second() );
+    else Throw( tk::ExceptType::FATAL, "RNG not found in factory" );
+  }
   return rng;
 }
 
@@ -67,7 +72,7 @@ RNGDriver::instantiateAll( const tk::RNGFactory& factory )
 void
 RNGDriver::regMKL( tk::RNGFactory& factory,
                    int nthreads,
-                   const tk::ctr::MKLRNGParameters& param )
+                   const tk::ctr::RNGMKLParameters& param )
 //******************************************************************************
 //  Register MKL random number generators into factory
 //! \author  J. Bakosi
@@ -110,9 +115,9 @@ RNGDriver::regMKL( tk::RNGFactory& factory,
   regMKLRNG( RNGType::MKL_SFMT19937 );
   regMKLRNG( RNGType::MKL_SOBOL );
   regMKLRNG( RNGType::MKL_NIEDERR );
-  regMKLRNG( RNGType::MKL_IABSTRACT );
-  regMKLRNG( RNGType::MKL_DABSTRACT );
-  regMKLRNG( RNGType::MKL_SABSTRACT );
+  //regMKLRNG( RNGType::MKL_IABSTRACT );
+  //regMKLRNG( RNGType::MKL_DABSTRACT );
+  //regMKLRNG( RNGType::MKL_SABSTRACT );
   regMKLRNG( RNGType::MKL_NONDETERM );
 }
 #endif

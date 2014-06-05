@@ -4,13 +4,11 @@ module testu01 {
 
     PUPable TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
                      long, long, int, long, int, int >;
+    PUPable TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                     long, long, int, long, int >;
 
-    chare TestRunner {
-      entry TestRunner( CkReference< StatTest > test, std::size_t id );
-    }
-
-    chare TestU01Suite {
-      entry void evaluate( std::size_t id );
+    chare StatTestRunner {
+      entry StatTestRunner( CkReference< StatTest > test, std::size_t id );
     }
 
   } // rngtest::

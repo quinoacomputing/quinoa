@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Wed Apr 23 13:30:21 2014
+  \date      Mon 26 May 2014 04:52:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -21,17 +21,14 @@ namespace rngtest {
 //! Battery factory type
 using BatteryFactory = std::map< ctr::BatteryType, std::function< Battery*() > >;
 
-//! RNGTestDriver base class
+//! RNGTestDriver
 class RNGTestDriver : public tk::RNGDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver(int argc, char** argv, const tk::Print& print);
+    explicit RNGTestDriver( int argc, char** argv, const tk::Print& print );
 
-    //! Destructor
-    ~RNGTestDriver() noexcept override = default;
-
-    //! Solve
+    //! Execute driver
     void execute() const override;
 
   private:
@@ -46,6 +43,20 @@ class RNGTestDriver : public tk::RNGDriver {
 
     //! Initialize factories
     void initFactories(const tk::Print& print);
+
+//     //! Create all global-scope RNG wrappers based on user selection
+//     void initRNGs();
+// 
+//     //! Register a single global-scope RNG wrapper
+//     template< std::size_t gid >
+//     void registerRNG( tk::ctr::RNGType r ) {
+//       auto it = m_base->rng.find( r );
+//       if ( it != m_base->rng.end() ) {
+//         g_rng[gid] = std::unique_ptr< tk::RNG >( it->second() );
+//       } else {
+//         Throw( tk::ExceptType::FATAL, "RNG not found in factory" );
+//       }
+//     }
 
     //! Echo information on random number test suite
     void echo();

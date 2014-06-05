@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.5)
 
 project(QuinoaControl CXX)
 
+include(charm)
+
 if(HAS_MKL)
   set (MKLRNG_SOURCES "Options/MKLUniformMethod.C"
                       "Options/MKLGaussianMethod.C")
@@ -32,6 +34,8 @@ add_library(RNGTestControl
             Options/RNG.C
             ${MKLRNG_SOURCES}
 )
+
+removeWarnings( "RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C;Options/RNG.C" )
 
 INSTALL(TARGETS RNGTestControl
   	RUNTIME DESTINATION bin COMPONENT Runtime

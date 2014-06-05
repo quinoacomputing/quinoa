@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Sat 10 May 2014 10:19:10 AM MDT
+  \date      Sat 24 May 2014 09:11:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -11,25 +11,22 @@
 #ifndef SmallCrush_h
 #define SmallCrush_h
 
-#include <TestU01Util.h>
-#include <TestU01Suite.h>
+#include <TestU01SuitePolicy.h>
 
 namespace rngtest {
 
-//! SmallCrush : TestU01Suite
-class SmallCrush : public TestU01Suite {
+//! SmallCrush : TestU01SuitePolicy
+class SmallCrush : public TestU01SuitePolicy {
 
   public:
     //! Constructor
-    explicit SmallCrush(const Base& base);
+    explicit SmallCrush() = default;
 
-    //! Destructor
-    ~SmallCrush() override = default;
+    //! Return string identifying policy
+    const std::string& policy() const;
 
     //! Add statistical tests to battery
-    void addTests( std::size_t id,
-                   tk::ctr::RNGType& rng,
-                   Gen01Ptr& gen );
+    void addTests( std::vector< std::unique_ptr< StatTest > >& tests );
 
   private:
     //! Don't permit copy constructor

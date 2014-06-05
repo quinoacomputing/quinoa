@@ -1,0 +1,15 @@
+module testu01suite {
+
+  namespace rngtest {
+
+    PUPable TestU01Suite< SmallCrush >;
+    PUPable TestU01Suite< Crush >;
+    PUPable TestU01Suite< BigCrush >;
+
+    chare BatteryRunner {
+      entry void BatteryRunner( CkReference< Battery > battery );
+    }
+
+  } // rngtest::
+
+}

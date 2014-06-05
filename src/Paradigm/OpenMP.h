@@ -2,7 +2,7 @@
 /*!
   \file      src/Paradigm/OpenMP.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 03:32:05 PM MDT
+  \date      Sun 25 May 2014 06:11:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     OpenMP specifics
   \details   OpenMP specifics
@@ -11,13 +11,9 @@
 #ifndef OpenMP_h
 #define OpenMP_h
 
-#include <Exception.h>
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-#include <OpenMP.h>
 
 namespace tk {
 
@@ -26,31 +22,40 @@ class OpenMP {
 
   public:
     //! Constructor
-    explicit OpenMP() :
-      #ifdef _OPENMP
-        m_available(true),
-        m_used(true),
-        m_nthreads(omp_get_max_threads())
-      #else  // _OPENMP
-        m_available(false),
-        m_used(false),
-        m_nthreads(1)
-      #endif // _OPENMP
-    { Assert(m_nthreads != 0, ExceptType::FATAL, "Need at least one thread"); }
+    explicit OpenMP() = default;
 
     //! Destructor
-    ~OpenMP() noexcept = default;
+    ~OpenMP() = default;
 
     //! Return true if compiled with OpenMP
     //! \return true if compiled with OpenMP enabled
-    bool available() const noexcept { return m_available; }
+    bool available() const noexcept {
+      #ifdef _OPENMP
+      return true;
+      #else
+      return false;
+      #endif
+    }
 
     //! Query if OpenMP is used
     //! \return true if OpenMP is used
-    bool used() const noexcept { return m_used; }
+    bool used() const noexcept {
+      #ifdef _OPENMP
+      return true;
+      #else
+      return false;
+      #endif
+    }
 
     //! Constant accessor to number of OpenMP threads
-    int nthreads() const noexcept { return m_nthreads; }
+    //! \return the number of OpenMP threads used
+    int nthreads() const noexcept {
+      #ifdef _OPENMP
+        return omp_get_max_threads();
+      #else
+        return 1;
+      #endif
+    }
 
   private:
     //! Don't permit copy constructor
@@ -61,10 +66,6 @@ class OpenMP {
     OpenMP(OpenMP&&) = delete;
     //! Don't permit move assigment
     OpenMP& operator=(OpenMP&&) = delete;
-
-    const bool m_available;           //!< True if OpenMP is available
-    const bool m_used;                //!< True if OpenMP is used
-    const int m_nthreads;             //!< Number of OpenMP threads
 };
 
 } // tk::

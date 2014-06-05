@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:46:31 PM MST
+  \date      Tue 03 Jun 2014 08:27:47 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL grammar
   \details   MKL grammar
@@ -27,9 +27,9 @@ namespace mkl {
                      kw::mkl_sfmt19937::pegtl_string,
                      kw::mkl_sobol::pegtl_string,
                      kw::mkl_niederr::pegtl_string,
-                     kw::mkl_iabstract::pegtl_string,
-                     kw::mkl_dabstract::pegtl_string,
-                     kw::mkl_sabstract::pegtl_string,
+                     //kw::mkl_iabstract::pegtl_string,
+                     //kw::mkl_dabstract::pegtl_string,
+                     //kw::mkl_sabstract::pegtl_string,
                      kw::mkl_nondeterm::pegtl_string > {};
 
   //! MKL RNG seed
