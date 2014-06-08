@@ -1,15 +1,14 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(Statistics CXX)
+project(RNG CXX)
 
-add_library(Statistics
-            Statistics.C
-            JPDF.C
+add_library(RNG
+            RNGStack.C
 )
 
-removeWarnings( "Statistics.C" )
+removeWarnings( "RNGStack.C" )
 
-INSTALL(TARGETS Statistics
+INSTALL(TARGETS RNG
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime
  	ARCHIVE DESTINATION lib COMPONENT Development

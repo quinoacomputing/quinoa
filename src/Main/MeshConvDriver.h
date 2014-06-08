@@ -2,64 +2,41 @@
 /*!
   \file      src/Main/MeshConvDriver.h
   \author    J. Bakosi
-  \date      Wed Apr 23 10:50:16 2014
+  \date      Sun 08 Jun 2014 03:37:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     MeshConvDriver that drives MeshConv
-  \details   MeshConvDriver that drives MeshConv
+  \brief     Mesh converter driver
+  \details   Mesh converter driver
 */
 //******************************************************************************
 #ifndef MeshConvDriver_h
 #define MeshConvDriver_h
 
-#include <Driver.h>
-#include <Print.h>
 #include <Reader.h>
 #include <Writer.h>
 #include <UnsMesh.h>
-#include <MeshConv/CmdLine/CmdLine.h>
 
 namespace meshconv {
 
-//! Mesh readers
-enum class MeshReaderType : uint8_t { GMSH=0,
-                                      NETGEN,
-                                      EXODUSII };
-
-//! Mesh reader factory type
-using MeshReaderFactory =
-  std::map< MeshReaderType, std::function<tk::Reader*()> >;
-
-//! Mesh writers
-enum class MeshWriterType : uint8_t { GMSH=0,
-                                      NETGEN,
-                                      EXODUSII };
-
-//! Mesh writer factory type
-using MeshWriterFactory =
-  std::map< MeshWriterType, std::function<tk::Writer*()> >;
-
-//! MeshConvDriver : Driver
-class MeshConvDriver : public tk::Driver {
+//! Mesh converter driver used polymorphically with Driver
+class MeshConvDriver {
 
   public:
     //! Constructor
-    explicit MeshConvDriver(int argc, char** argv, const tk::Print& print);
-
-    //! Destructor
-    ~MeshConvDriver() noexcept override = default;
+    explicit MeshConvDriver( int argc, char** argv );
 
     //! Execute
-    void execute() const override;
+    void execute() const;
 
   private:
-    //! Don't permit copy constructor
-    MeshConvDriver(const MeshConvDriver&) = delete;
-    //! Don't permit assigment constructor
-    MeshConvDriver& operator=(const MeshConvDriver&) = delete;
-    //! Don't permit move constructor
-    MeshConvDriver(MeshConvDriver&&) = delete;
-    //! Don't permit move assignment
-    MeshConvDriver& operator=(MeshConvDriver&&) = delete;
+    //! Mesh readers
+    enum class MeshReaderType : uint8_t { GMSH=0,
+                                          NETGEN,
+                                          EXODUSII };
+
+    //! Mesh writers
+    enum class MeshWriterType : uint8_t { GMSH=0,
+                                          NETGEN,
+                                          EXODUSII };
 
     //! Detect input mesh file type
     MeshReaderType detectInput() const;
@@ -67,10 +44,8 @@ class MeshConvDriver : public tk::Driver {
     //! Determine output mesh file type
     MeshWriterType pickOutput() const;
 
-    std::unique_ptr< ctr::CmdLine > m_cmdline;
-    quinoa::UnsMesh m_mesh;             //!< Unstructured mesh to store mesh
-    MeshReaderFactory m_readers;        //!< Mesh readers factory
-    MeshWriterFactory m_writers;        //!< Mesh writers factory
+    std::string m_input;                //!< Input file name
+    std::string m_output;               //!< Output file name
 };
 
 } // meshconv::

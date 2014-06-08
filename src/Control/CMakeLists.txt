@@ -35,7 +35,7 @@ add_library(RNGTestControl
             ${MKLRNG_SOURCES}
 )
 
-removeWarnings( "RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C;Options/RNG.C" )
+removeWarnings( "RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C;MeshConv/CmdLine/Parser.C;Options/RNG.C" )
 
 INSTALL(TARGETS RNGTestControl
   	RUNTIME DESTINATION bin COMPONENT Runtime

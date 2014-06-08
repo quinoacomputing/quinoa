@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Thu 29 May 2014 10:58:49 AM MDT
+  \date      Sat 07 Jun 2014 08:12:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -26,8 +26,7 @@ class RNGTestPrint : public tk::RNGPrint {
     using Print::item;
 
     //! Constructor
-    explicit RNGTestPrint(const std::unique_ptr< ctr::InputDeck >& control) :
-      m_ctr(*control) {}
+    explicit RNGTestPrint( const ctr::InputDeck& control ) : m_ctr( control ) {}
 
     //! Destructor
     ~RNGTestPrint() override = default;
@@ -86,9 +85,9 @@ class RNGTestPrint : public tk::RNGPrint {
     void names( const TestContainer& tests, std::size_t ntest ) const
     {
       for (std::size_t i=0; i<ntest; ++i) {
-        auto npval = tests[i]->nstat();
+        auto npval = tests[i].nstat();
         for (std::size_t p=0; p<npval; ++p) {
-          std::string name( tests[i]->name(p) );
+          std::string name( tests[i].name(p) );
           if (p>0) name += " *";
           m_stream << m_list_item_fmt % m_item_indent % name;
         }

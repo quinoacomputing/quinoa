@@ -18,6 +18,8 @@ add_library(IO
             SiloWriter.C
 )
 
+removeWarnings( "TxtStatWriter.C" )
+
 INSTALL(TARGETS IO
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

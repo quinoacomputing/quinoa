@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/RNGTest/TestU01SuitePolicy.C
+  \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Wed 21 May 2014 03:33:16 PM MDT
+  \date      Sat 07 Jun 2014 07:12:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     TestU01 suite policy base
-  \details   TestU01 suite policy base
+  \brief     Stack of TestU01 tests
+  \details   Stack of TestU01 tests
 */
 //******************************************************************************
 
@@ -15,12 +15,156 @@ extern "C" {
   #include <bbattery.h>
 }
 
-#include <TestU01SuitePolicy.h>
+#include <TestU01Stack.h>
+#include <TestU01Util.h>
+#include <RNG.h>
 
-using rngtest::TestU01SuitePolicy;
+namespace rngtest {
+
+extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
+extern std::vector< tk::ctr::RNGType > g_selectedrng;
+
+//! Global thread id
+static int g_tid;
+#ifdef _OPENMP
+#pragma omp threadprivate(g_tid)
+#endif
+
+template< tk::ctr::RawRNGType id >
+static double uniform( void*, void* )
+//******************************************************************************
+//  Global-scope TestU01 uniform RNG wrapper
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  double r;
+  const auto rng = g_rng.find( id );
+  if (rng != end(g_rng)) rng->second.uniform( g_tid, 1, &r );
+  else Throw( tk::ExceptType::FATAL, "RNG not found" );
+  return r;
+}
+
+template< tk::ctr::RawRNGType id >
+static unsigned long uniform_bits( void*, void* )
+//******************************************************************************
+//  Global-scope TestU01 uniform RNG bits wrapper
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  double r;
+  const auto rng = g_rng.find( id );
+  if (rng != end(g_rng)) rng->second.uniform( g_tid, 1, &r );
+  else Throw( tk::ExceptType::FATAL, "RNG not found" );
+  return static_cast<unsigned long>(r * unif01_NORM32);
+}
+
+} // rngtest::
+
+using rngtest::TestU01Stack;
+
+TestU01Stack::TestU01Stack()
+//******************************************************************************
+//  Constructor
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  //! Associate RNGs to global-scope wrappers. Admittedly, the code below is
+  //! ugly and looks stupid at first sight. However, this is a translation of
+  //! runtime information (user-selected RNGs) to compile-time information:
+  //! associating RNG ids from an enum class tk::ctr::RNGType::value to a
+  //! compile-time constant underlying_type value facilitating a different pair
+  //! of global-scope RNG wrappers (uniform and uniform_bits) with code reuse.
+  //! Note that uniform and uniform_bits wrappers must be global-scope as they
+  //! are used as external generators to TestU01. Templating them on the id
+  //! enables the compiler generate a different wrapper for a different RNG
+  //! facilitating simultaneous calls to any or all wrappers as they are unique
+  //! functions.
+  for (const auto& r : g_selectedrng) {
+    using tk::ctr::RNGType;
+    using tk::ctr::raw;
+    #ifdef HAS_MKL
+    if (r == RNGType::MKL_MCG31)
+      addRNG< raw(RNGType::MKL_MCG31) >( r );
+    else if (r == RNGType::MKL_R250)
+      addRNG< raw(RNGType::MKL_R250) >( r );
+    else if (r == RNGType::MKL_MRG32K3A)
+      addRNG< raw(RNGType::MKL_MRG32K3A) >( r );
+    else if (r == RNGType::MKL_MCG59)
+      addRNG< raw(RNGType::MKL_MCG59) >( r );
+    else if (r == RNGType::MKL_WH)
+      addRNG< raw(RNGType::MKL_WH) >( r );
+    else if (r == RNGType::MKL_MT19937)
+      addRNG< raw(RNGType::MKL_MT19937) >( r );
+    else if (r == RNGType::MKL_MT2203)
+      addRNG< raw(RNGType::MKL_MT2203) >( r );
+    else if (r == RNGType::MKL_SFMT19937)
+      addRNG< raw(RNGType::MKL_SFMT19937) >( r );
+    else if (r == RNGType::MKL_SOBOL)
+      addRNG< raw(RNGType::MKL_SOBOL) >( r );
+    else if (r == RNGType::MKL_NIEDERR)
+      addRNG< raw(RNGType::MKL_NIEDERR) >( r );
+    //else if (r == RNGType::MKL_IABSTRACT)
+    //  addRNG< raw(RNGType::MKL_IABSTRACT) >( r );
+    //else if (r == RNGType::MKL_DABSTRACT)
+    //  addRNG< raw(RNGType::MKL_DABSTRACT) >( r );
+    //else if (r == RNGType::MKL_SABSTRACT)
+    //  addRNG< raw(RNGType::MKL_SABSTRACT) >( r );
+    else if (r == RNGType::MKL_NONDETERM)
+      addRNG< raw(RNGType::MKL_NONDETERM) >( r );
+    else
+    #endif
+    if (r == RNGType::RNGSSE_GM19)         
+      addRNG< raw(RNGType::RNGSSE_GM19) >( r );
+    else if (r == RNGType::RNGSSE_GM29)    
+      addRNG< raw(RNGType::RNGSSE_GM29) >( r );
+    else if (r == RNGType::RNGSSE_GM31)    
+      addRNG< raw(RNGType::RNGSSE_GM31) >( r );
+    else if (r == RNGType::RNGSSE_GM55)    
+      addRNG< raw(RNGType::RNGSSE_GM55) >( r );
+    else if (r == RNGType::RNGSSE_GM61)    
+      addRNG< raw(RNGType::RNGSSE_GM61) >( r );
+    else if (r == RNGType::RNGSSE_GQ581)   
+      addRNG< raw(RNGType::RNGSSE_GQ581) >( r );
+    else if (r == RNGType::RNGSSE_GQ583)   
+      addRNG< raw(RNGType::RNGSSE_GQ583) >( r );
+    else if (r == RNGType::RNGSSE_GQ584)   
+      addRNG< raw(RNGType::RNGSSE_GQ584) >( r );
+    else if (r == RNGType::RNGSSE_MT19937) 
+      addRNG< raw(RNGType::RNGSSE_MT19937) >( r );
+    else if (r == RNGType::RNGSSE_LFSR113) 
+      addRNG< raw(RNGType::RNGSSE_LFSR113) >( r );
+    else if (r == RNGType::RNGSSE_MRG32K3A)
+      addRNG< raw(RNGType::RNGSSE_MRG32K3A) >( r );
+  }
+}
+
+template< tk::ctr::RawRNGType id >
+void TestU01Stack::addRNG( tk::ctr::RNGType r )
+//******************************************************************************
+//! Create TestU01 RNG wrapper
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_rngprops.emplace(
+    r,
+    unif01_CreateExternGen01( const_cast<char*>(tk::ctr::RNG().name(r).c_str()),
+                              uniform< id >, uniform_bits< id > ) );
+}
+
+const TestU01Stack::RNGProps&
+TestU01Stack::rngprops( tk::ctr::RNGType r ) const
+//******************************************************************************
+//! Find RNG properties based on RNG id
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto prop = m_rngprops.find( r );
+  if (prop == end(m_rngprops)) Throw( tk::ExceptType::FATAL, "RNG not found" );
+  return prop->second;
+}
 
 std::vector< double >
-TestU01SuitePolicy::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
+TestU01Stack::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
   const std::tuple<long, long, int, long, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's BirthdaySpacings test
@@ -35,7 +179,7 @@ TestU01SuitePolicy::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Collision( unif01_Gen* gen, sknuth_Res2* res,
+TestU01Stack::Collision( unif01_Gen* gen, sknuth_Res2* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Collision test
@@ -49,7 +193,7 @@ TestU01SuitePolicy::Collision( unif01_Gen* gen, sknuth_Res2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Gap( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::Gap( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, double, double>& xargs )
 //******************************************************************************
 //  Run Knuth's Gap test
@@ -63,7 +207,7 @@ TestU01SuitePolicy::Gap( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SimpPoker( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::SimpPoker( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Simplified Poker test
@@ -77,7 +221,7 @@ TestU01SuitePolicy::SimpPoker( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Coupon Collector test
@@ -91,7 +235,7 @@ TestU01SuitePolicy::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
+TestU01Stack::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
   const std::tuple<long, long, int, int, int, gofw_TestType,
                    gofw_TestType>& xargs )
 //******************************************************************************
@@ -107,7 +251,7 @@ TestU01SuitePolicy::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, long, double, double>& xargs )
 //******************************************************************************
 //  Run Matsumoto's Weight Distribution test
@@ -121,7 +265,7 @@ TestU01SuitePolicy::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Matrix Rank test
@@ -135,7 +279,7 @@ TestU01SuitePolicy::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::HammingIndep( unif01_Gen* gen, sstring_Res* res,
+TestU01Stack::HammingIndep( unif01_Gen* gen, sstring_Res* res,
   const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run L'Ecuyer's Hamming Independence test
@@ -149,7 +293,7 @@ TestU01SuitePolicy::HammingIndep( unif01_Gen* gen, sstring_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
+TestU01Stack::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
   const std::tuple<long, long, int, int, long, long>& xargs )
 //******************************************************************************
 //  Run Random Walk 1 test
@@ -167,7 +311,7 @@ TestU01SuitePolicy::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SerialOver( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::SerialOver( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Serial Over test, t = 2
@@ -181,7 +325,7 @@ TestU01SuitePolicy::SerialOver( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
+TestU01Stack::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Serial Over test, t = 2
@@ -195,7 +339,7 @@ TestU01SuitePolicy::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::ClosePairs( unif01_Gen* gen, snpair_Res* res,
+TestU01Stack::ClosePairs( unif01_Gen* gen, snpair_Res* res,
   const std::tuple<long, long, int, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run the close-pairs test, t = 2
@@ -222,7 +366,7 @@ TestU01SuitePolicy::ClosePairs( unif01_Gen* gen, snpair_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
+TestU01Stack::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run the close-pairs test using bit match distance, t = 2
@@ -236,7 +380,7 @@ TestU01SuitePolicy::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Run( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::Run( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Run test
@@ -250,7 +394,7 @@ TestU01SuitePolicy::Run( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Permutation( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::Permutation( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Permutation test
@@ -264,7 +408,7 @@ TestU01SuitePolicy::Permutation( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
+TestU01Stack::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Collision test with permutations
@@ -278,7 +422,7 @@ TestU01SuitePolicy::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SampleProd( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::SampleProd( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Sample Products test
@@ -292,7 +436,7 @@ TestU01SuitePolicy::SampleProd( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SampleMean( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::SampleMean( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int>& xargs )
 //******************************************************************************
 //  Run Sample Mean test
@@ -305,7 +449,7 @@ TestU01SuitePolicy::SampleMean( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SampleCorr( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::SampleCorr( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Sample Autocorrelation test
@@ -319,7 +463,7 @@ TestU01SuitePolicy::SampleCorr( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Maurer's "universal" test
@@ -334,7 +478,7 @@ TestU01SuitePolicy::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::SumCollector( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::SumCollector( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, double>& xargs )
 //******************************************************************************
 //  Run Sum Collector test
@@ -348,7 +492,7 @@ TestU01SuitePolicy::SumCollector( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Savir2( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::Savir2( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's modified Savir test
@@ -362,7 +506,7 @@ TestU01SuitePolicy::Savir2( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::GCD( unif01_Gen* gen, smarsa_Res2* res,
+TestU01Stack::GCD( unif01_Gen* gen, smarsa_Res2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's greatest common divisor test
@@ -376,7 +520,7 @@ TestU01SuitePolicy::GCD( unif01_Gen* gen, smarsa_Res2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::LinearComp( unif01_Gen* gen, scomp_Res* res,
+TestU01Stack::LinearComp( unif01_Gen* gen, scomp_Res* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Linear Complexity test
@@ -391,7 +535,7 @@ TestU01SuitePolicy::LinearComp( unif01_Gen* gen, scomp_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::LempelZiv( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::LempelZiv( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Lempel-Ziv Compressibility test
@@ -405,7 +549,7 @@ TestU01SuitePolicy::LempelZiv( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::Fourier3( unif01_Gen* gen, sspectral_Res* res,
+TestU01Stack::Fourier3( unif01_Gen* gen, sspectral_Res* res,
   const std::tuple<long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Fourier3 test
@@ -419,7 +563,7 @@ TestU01SuitePolicy::Fourier3( unif01_Gen* gen, sspectral_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
+TestU01Stack::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
   const std::tuple<long, long, int, int, long>& xargs )
 //******************************************************************************
 //  Run Longest Head Run test
@@ -434,7 +578,7 @@ TestU01SuitePolicy::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Periods In Strings test
@@ -448,7 +592,7 @@ TestU01SuitePolicy::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int, long>& xargs )
 //******************************************************************************
 //  Run Hamming Weight 2 test
@@ -462,7 +606,7 @@ TestU01SuitePolicy::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::HammingCorr( unif01_Gen* gen, sstring_Res* res,
+TestU01Stack::HammingCorr( unif01_Gen* gen, sstring_Res* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Hamming Weight Correlation test
@@ -476,7 +620,7 @@ TestU01SuitePolicy::HammingCorr( unif01_Gen* gen, sstring_Res* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::StringRun( unif01_Gen* gen, sstring_Res3* res,
+TestU01Stack::StringRun( unif01_Gen* gen, sstring_Res3* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run String Run test
@@ -491,7 +635,7 @@ TestU01SuitePolicy::StringRun( unif01_Gen* gen, sstring_Res3* res,
 }
 
 std::vector< double >
-TestU01SuitePolicy::AutoCor( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::AutoCor( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Autocorrelation test

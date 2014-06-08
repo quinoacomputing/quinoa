@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:11:24 PM MDT
+  \date      Sat 07 Jun 2014 07:15:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -11,32 +11,26 @@
 #ifndef BigCrush_h
 #define BigCrush_h
 
-#include <TestU01SuitePolicy.h>
+#include <Option.h>
+#include <Battery.h>
+#include <TestU01Stack.h>
 
 namespace rngtest {
 
-//! BigCrush : TestU01Suite
-class BigCrush : public TestU01SuitePolicy {
+//! BigCrush
+class BigCrush {
 
   public:
-    //! Constructor
-    explicit BigCrush() = default;
-
-    //! Return string identifying policy
-    const std::string& policy() const;
+    //! Return string identifying test suite name
+    const std::string& name() const { return
+      tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::BIGCRUSH );
+    }
 
     //! Add statistical tests to battery
-    void addTests( std::vector< std::unique_ptr< StatTest > >& tests );
+    void addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r );
 
   private:
-    //! Don't permit copy constructor
-    BigCrush(const BigCrush&) = delete;
-    //! Don't permit copy assigment
-    BigCrush& operator=(const BigCrush&) = delete;
-    //! Don't permit move constructor
-    BigCrush(BigCrush&&) = delete;
-    //! Don't permit move assigment
-    BigCrush& operator=(BigCrush&&) = delete;
+    const TestU01Stack stack;
 };
 
 } // rngtest::

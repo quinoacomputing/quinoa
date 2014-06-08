@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:11:32 PM MDT
+  \date      Sat 07 Jun 2014 06:36:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -10,24 +10,11 @@
 //******************************************************************************
 
 #include <BigCrush.h>
-#include <Battery.h>
-#include <Option.h>
 
 using rngtest::BigCrush;
 
-const std::string&
-BigCrush::policy() const
-//******************************************************************************
-//  Return string identifying policy
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  return
-    tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::BIGCRUSH );
-}
-
 void
-BigCrush::addTests( std::vector< std::unique_ptr< StatTest > >& tests )
+BigCrush::addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r )
 //******************************************************************************
 // Add statistical tests to battery
 //! \author  J. Bakosi

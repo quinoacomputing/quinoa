@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:13:08 PM MDT
+  \date      Sat 07 Jun 2014 07:14:04 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -10,48 +10,42 @@
 //******************************************************************************
 
 #include <SmallCrush.h>
-#include <Option.h>
-#include <Battery.h>
 #include <TestU01.h>
 
 using rngtest::SmallCrush;
 
-const std::string&
-SmallCrush::policy() const
-//******************************************************************************
-//  Return string identifying policy
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  return
-    tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::SMALLCRUSH );
-}
-
 void
-SmallCrush::addTests( std::vector< std::unique_ptr< StatTest > >& tests )
+SmallCrush::addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r )
 //******************************************************************************
 // Add statistical tests to battery
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Find RNG properties
+  auto gen = stack.rngprops(r).ptr.get();
+
+  static const long THOUSAND = 1000;
+  static const long MILLION = THOUSAND * THOUSAND;
+  static const long BILLION = THOUSAND * MILLION;
+
   // Marsaglia's BirthdaySpacings
   #ifdef USE_LONGLONG
-  add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
-                long, long, int, long, int, int > >
-     ( tests, {"Birthday Spacings"}, BirthdaySpacings,
-       1L, 5L * MILLION, 0, 1073741824L, 2, 1 );
+  stack.add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                      long, long, int, long, int, int > >
+           ( tests, r, gen, {"Birthday Spacings"}, stack.BirthdaySpacings,
+             1L, 5L * MILLION, 0, 1073741824L, 2, 1 );
   #else
-  add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
-                long, long, int, long, int, int > >
-     ( tests, {"Birthday Spacings"}, BirthdaySpacings,
-       10L, MILLION / 2, 0, 67108864L, 2, 1 );
+  stack.add< TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                      long, long, int, long, int, int > >
+           ( tests, r, gen, {"Birthday Spacings"}, stack.BirthdaySpacings,
+             10L, MILLION / 2, 0, 67108864L, 2, 1 );
   #endif
 
   // Knuth's Collision
 //   add< TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
 //                 long, long, int, long, int > >
-//      ( tests, id, gen, rng, {"Collision"},
-//        Collision, 1L, 5L * MILLION, 0, 65536L, 2 );
+//      ( tests, r, gen, {"Collision"}, Collision,
+//        1L, 5L * MILLION, 0, 65536L, 2 );
 
 //   // Knuth's Gap
 //   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
@@ -95,14 +89,14 @@ SmallCrush::addTests( std::vector< std::unique_ptr< StatTest > >& tests )
 //                 long, long, int, int, int, int > >
 //        ( tests, id, gen, rng, {"Hamming Independence"},
 //          HammingIndep, 1L, MILLION/2, 20, 10, 300, 0 );
-// 
+
 //   // Random Walk 1
 //   add< TestU01< swalk_Res, swalk_CreateRes, swalk_DeleteRes,
 //                 long, long, int, int, long, long > >
-//        ( tests, id, gen, rng, {"Random Walk 1 Stat H",
-//                         "Random Walk 1 Stat M",
-//                         "Random Walk 1 Stat J",
-//                         "Random Walk 1 Stat R",
-//                         "Random Walk 1 Stat C"},
+//        ( tests, r, gen, {"Random Walk 1 Stat H",
+//                          "Random Walk 1 Stat M",
+//                          "Random Walk 1 Stat J",
+//                          "Random Walk 1 Stat R",
+//                          "Random Walk 1 Stat C"},
 //          RandomWalk1, 1L, static_cast<long>(MILLION), 0, 30, 150L, 150L );
 }

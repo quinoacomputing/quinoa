@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:56:27 PM MST
+  \date      Sat 07 Jun 2014 08:08:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -36,20 +36,6 @@ class InputDeck :
       // Default I/O parameters
       set< tag::io, tag::control >( "" );
     }
-
-    //! Destructor
-    ~InputDeck() noexcept override = default;
-
-    //! Instruct compiler to generate copy assigment
-    InputDeck& operator=(const InputDeck&) = default;
-
-  private:
-    //! Don't permit copy constructor
-    InputDeck(const InputDeck&) = delete;
-    //! Don't permit move constructor
-    InputDeck(InputDeck&&) = delete;
-    //! Don't permit move assigment
-    InputDeck& operator=(InputDeck&&) = delete;
 };
 
 //! InputDeck defaults

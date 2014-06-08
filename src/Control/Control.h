@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Fri 21 Feb 2014 09:10:05 AM MST
+  \date      Sat 07 Jun 2014 08:09:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -27,15 +27,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
     using Tuple = tuple::tagged_tuple<Ts...>;
 
   public:
-    //! Constructor: set defaults
-    explicit Control() = default;
-
-    //! Destructor
-    virtual ~Control() noexcept = default;
-
-    //! Instruct compiler to generate copy assigment
-    Control& operator=(const Control&) = default;
-
     //! Const-ref accessor
     //! TODO: Replace the overloads below with a variadic one
     //! Const-ref accessor to single element at 1st level
@@ -247,14 +238,6 @@ class Control : public tuple::tagged_tuple<Ts...> {
       ss << val;
       return ss.str();
     }
-
-  private:
-    //! Don't permit copy constructor
-    Control(const Control&) = delete;
-    //! Don't permit move constructor
-    Control(Control&&) = delete;
-    //! Don't permit move assigment
-    Control& operator=(Control&&) = delete;
 };
 
 } // tk::

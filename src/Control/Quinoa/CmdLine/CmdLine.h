@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:40:56 PM MST
+  \date      Sat 07 Jun 2014 08:10:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -34,20 +34,6 @@ class CmdLine : public tk::Control< // tag    type
       set< tag::io, tag::glob >( "glob" );
       set< tag::io, tag::stat >( "stat" );
     }
-
-    //! Destructor
-    ~CmdLine() noexcept override = default;
-
-    //! Instruct compiler to generate copy assigment
-    CmdLine& operator=(const CmdLine&) = default;
-
-  private:
-    //! Don't permit copy constructor
-    CmdLine(const CmdLine&) = delete;
-    //! Don't permit move constructor
-    CmdLine(CmdLine&&) = delete;
-    //! Don't permit move assigment
-    CmdLine& operator=(CmdLine&&) = delete;
 };
 
 //! CmdLine defaults

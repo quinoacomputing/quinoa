@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:39:42 2014
+  \date      Sun 08 Jun 2014 03:42:24 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConv's command line
   \details   MeshConv's command line
@@ -31,20 +31,6 @@ class CmdLine :
       set< tag::io, tag::input >( "" );
       set< tag::io, tag::output >( "" );
     }
-
-    //! Destructor
-    ~CmdLine() noexcept override = default;
-
-    //! Instruct compiler to generate copy assigment
-    CmdLine& operator=(const CmdLine&) = default;
-
-  private:
-    //! Don't permit copy constructor
-    CmdLine(const CmdLine&) = delete;
-    //! Don't permit move constructor
-    CmdLine(CmdLine&&) = delete;
-    //! Don't permit move assigment
-    CmdLine& operator=(CmdLine&&) = delete;
 };
 
 //! CmdLine defaults

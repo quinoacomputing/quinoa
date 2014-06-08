@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Wed 28 May 2014 12:17:03 PM MDT
+  \date      Sat 07 Jun 2014 01:31:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -39,7 +39,7 @@ class RNGSSE {
               ExceptType::FATAL, "nullptr passed to RNGSSE constructor" );
       Assert( nthreads > 0, ExceptType::FATAL, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
-      m_stream = make_unique< State[] >( nthreads );
+      m_stream = tk::make_unique< State[] >( nthreads );
       // Initialize thread-streams
       for (SeqNumType i=0; i<nthreads; ++i) m_init( &m_stream[i], i );
     }
@@ -62,7 +62,7 @@ class RNGSSE {
     RNGSSE& operator=( const RNGSSE& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = make_unique< State[] >( x.m_nthreads );
+      m_stream = tk::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) m_init( &m_stream[i], i );
       return *this;
     }
@@ -74,7 +74,7 @@ class RNGSSE {
     RNGSSE& operator=( RNGSSE&& x ) {
       m_nthreads = x.m_nthreads;
       m_init = x.m_init;
-      m_stream = make_unique< State[] >( x.m_nthreads );
+      m_stream = tk::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
         memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );

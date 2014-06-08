@@ -1,19 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Main/RNGDriver.h
+  \file      src/Main/RNGStack.h
   \author    J. Bakosi
-  \date      Tue 03 Jun 2014 10:15:10 PM MDT
+  \date      Sun 08 Jun 2014 01:45:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Driver with RNGs
-  \details   Driver with RNGs
+  \brief     Stack of random number generators
+  \details   Stack of random number generators
 */
 //******************************************************************************
-#ifndef RNGDriver_h
-#define RNGDriver_h
+#ifndef RNGStack_h
+#define RNGStack_h
 
 #include <map>
 
-#include <Driver.h>
 #include <tkTypes.h>
 #include <RNG.h>
 #include <Options/RNG.h>
@@ -23,13 +22,10 @@ namespace tk {
 //! Random number generator factory type
 using RNGFactory = std::map< ctr::RNGType, std::function< RNG() > >;
 
-//! RNGDriver
-class RNGDriver : public Driver {
+//! RNGStack
+class RNGStack {
 
   public:
-    //! Constructor
-    explicit RNGDriver() = default;
-
     //! Register random number generators into factory
     void initFactory( RNGFactory& factory,
                       int nthreads,
@@ -39,20 +35,11 @@ class RNGDriver : public Driver {
                       const ctr::RNGSSEParameters& rngsseparam );
 
     //! Instantiate selected RNGs
-    std::map< tk::ctr::RNGType, tk::RNG >
+    std::map< std::underlying_type<tk::ctr::RNGType>::type, tk::RNG >
     createSelected( const tk::RNGFactory& factory,
                     const std::vector< ctr::RNGType >& selected );
 
   private:
-    //! Don't permit copy constructor
-    RNGDriver(const RNGDriver&) = delete;
-    //! Don't permit assigment constructor
-    RNGDriver& operator=(const RNGDriver&) = delete;
-    //! Don't permit move constructor
-    RNGDriver(RNGDriver&&) = delete;
-    //! Don't permit move assignment
-    RNGDriver& operator=(RNGDriver&&) = delete;
-
    #ifdef HAS_MKL
    //! Register MKL RNGs into factory
    void regMKL( RNGFactory& factory,
@@ -68,4 +55,4 @@ class RNGDriver : public Driver {
 
 } // namespace tk
 
-#endif // RNGDriver_h
+#endif // RNGStack_h

@@ -1,16 +1,18 @@
 module testu01 {
 
-  namespace rngtest {
+//   include "StatTest.h";
 
-    PUPable TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
-                     long, long, int, long, int, int >;
-    PUPable TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
-                     long, long, int, long, int >;
-
-    chare StatTestRunner {
-      entry StatTestRunner( CkReference< StatTest > test, std::size_t id );
-    }
-
-  } // rngtest::
+//   namespace rngtest {
+// 
+//     PUPable TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+//                      long, long, int, long, int, int >;
+//     PUPable TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+//                      long, long, int, long, int >;
+// 
+//     chare StatTestRunner {
+//       entry StatTestRunner( CkReference< StatTest > test, std::size_t id );
+//     }
+// 
+//   } // rngtest::
 
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:11:40 PM MDT
+  \date      Sat 07 Jun 2014 07:15:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -11,32 +11,26 @@
 #ifndef SmallCrush_h
 #define SmallCrush_h
 
-#include <TestU01SuitePolicy.h>
+#include <Option.h>
+#include <Battery.h>
+#include <TestU01Stack.h>
 
 namespace rngtest {
 
-//! SmallCrush : TestU01SuitePolicy
-class SmallCrush : public TestU01SuitePolicy {
+//! SmallCrush
+class SmallCrush {
 
   public:
-    //! Constructor
-    explicit SmallCrush() = default;
-
-    //! Return string identifying policy
-    const std::string& policy() const;
+    //! Return string identifying test suite name
+    const std::string& name() const { return
+      tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::SMALLCRUSH );
+    }
 
     //! Add statistical tests to battery
-    void addTests( std::vector< std::unique_ptr< StatTest > >& tests );
+    void addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r );
 
   private:
-    //! Don't permit copy constructor
-    SmallCrush(const SmallCrush&) = delete;
-    //! Don't permit copy assigment
-    SmallCrush& operator=(const SmallCrush&) = delete;
-    //! Don't permit move constructor
-    SmallCrush(SmallCrush&&) = delete;
-    //! Don't permit move assigment
-    SmallCrush& operator=(SmallCrush&&) = delete;
+    const TestU01Stack stack;
 };
 
 } // rngtest::
