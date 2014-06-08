@@ -17,7 +17,6 @@ add_executable(${QUINOA_EXECUTABLE}
                TPLInfo/Silo.C
                TPLInfo/HDF5.C
                TPLInfo/Zlib.C
-               RNGDriver.C
                QuinoaDriver.C
                Quinoa.C
 )
@@ -42,6 +41,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Mesh
                       Statistics
                       QuinoaControl
+                      RNG
                       ${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
@@ -67,7 +67,6 @@ add_executable(${RNGTEST_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
-               RNGDriver.C
                RNGTestDriver.C
                RNGTest.C
 )
@@ -83,7 +82,7 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
-                      ${RNG}
+                      RNG
                       RNGTestControl
                       RNGTest
                       Paradigm
@@ -100,7 +99,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
-removeWarnings( "RNGTest.C;RNGDriver.C;RNGTestDriver.C" )
+removeWarnings( "RNGTest.C;RNGTestDriver.C" )
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -143,6 +142,8 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
+
+removeWarnings( "MeshConvDriver.C" )
 
 INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

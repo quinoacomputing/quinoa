@@ -2,46 +2,75 @@
 /*!
   \file      src/Main/Driver.h
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:50:01 PM MDT
+  \date      Sun 08 Jun 2014 01:16:53 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Driver base
-  \details   Driver base
+  \brief     Driver
+  \details   Driver
 */
 //******************************************************************************
 #ifndef Driver_h
 #define Driver_h
 
-#include <Exception.h>
+#include <make_unique.h>
 
 namespace tk {
 
-//! Driver base
+//! Driver. The class below uses runtime polymorphism without client-side
+//! inheritance: inheritance is confined to the internals of the class below,
+//! inivisble to client-code. The class exclusively deals with ownership
+//! enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+//! https://github.com/sean-parent/sean-parent.github.com/wiki/
+//! Papers-and-Presentations
 class Driver {
 
-  protected:
-    //! Constructor
-    explicit Driver() = default;
+  public:
+    //! Constructor taking an object modeling Concept (see below)
+    template< typename T >
+    explicit Driver( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
 
-    //! Destructor
-    virtual ~Driver() = default;
+    //! Constructor taking a function pointer to a constructor of an object
+    //! modeling Concept (see below). Passing std::function allows late
+    //! execution of the constructor, i.e., as late as inside this class'
+    //! constructor, and thus usage from a factory.
+    template< typename T >
+    explicit Driver( std::function<T()> x ) :
+      self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
-    //! Execute
-    virtual void execute() const {
-      Throw( ExceptType::WARNING,
-             "Driver::execute() called; override not required and undefined" );
-    }
+    //! Public interface to execute
+    void execute() const { self->execute(); }
+
+    //! Copy assignment
+    Driver& operator=( const Driver& x )
+    { Driver tmp(x); *this = std::move(tmp); return *this; }
+    //! Copy constructor
+    Driver( const Driver& x ) : self( x.self->copy() ) {}
+    //! Move assignment
+    Driver& operator=( Driver&& ) noexcept = default;
+    //! Move constructor
+    Driver( Driver&& ) noexcept = default;
 
   private:
-    //! Don't permit copy constructor
-    Driver(const Driver&) = delete;
-    //! Don't permit assigment constructor
-    Driver& operator=(const Driver&) = delete;
-    //! Don't permit move constructor
-    Driver(Driver&&) = delete;
-    //! Don't permit move assignment
-    Driver& operator=(Driver&&) = delete;
+    //! Concept is a pure virtual base class specifying the requirements of
+    //! polymorphic objects deriving from it
+    struct Concept {
+      virtual ~Concept() = default;
+      virtual Concept* copy() const = 0;
+      virtual void execute() const = 0;
+    };
+
+    //! Model models the Concept above by deriving from it and overriding the
+    //! the virtual functions required by Concept
+    template< typename T >
+    struct Model : Concept {
+      Model( T x ) : data( std::move(x) ) {}
+      Concept* copy() const { return new Model( *this ); }
+      void execute() const override { data.execute(); }
+      T data;
+    };
+
+    std::unique_ptr< Concept > self;    //!< Base pointer used polymorphically
 };
 
-} // namespace tk
+} // tk::
 
 #endif // Driver_h

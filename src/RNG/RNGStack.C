@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/Main/RNGDriver.C
+  \file      src/Main/RNGStack.C
   \author    J. Bakosi
-  \date      Wed 04 Jun 2014 10:14:03 AM MDT
+  \date      Sun 08 Jun 2014 01:47:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Driver with RNGs
-  \details   Driver with RNGs
+  \brief     Stack of random number generators
+  \details   Stack of random number generators
 */
 //******************************************************************************
 
@@ -23,7 +23,7 @@ extern "C" {
   #include <mrg32k3a.h>
 }
 
-#include <RNGDriver.h>
+#include <RNGStack.h>
 #include <Factory.h>
 #include <RNGSSE.h>
 
@@ -31,15 +31,15 @@ extern "C" {
   #include <MKLRNG.h>
 #endif
 
-using tk::RNGDriver;
+using tk::RNGStack;
 
 void
-RNGDriver::initFactory( tk::RNGFactory& factory,
-                        int nthreads,
-                        #ifdef HAS_MKL
-                        const tk::ctr::RNGMKLParameters& mklparam,
-                        #endif
-                        const tk::ctr::RNGSSEParameters& rngsseparam )
+RNGStack::initFactory( tk::RNGFactory& factory,
+                       int nthreads,
+                       #ifdef HAS_MKL
+                       const tk::ctr::RNGMKLParameters& mklparam,
+                       #endif
+                       const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
 //  Register random number generators into factory for each supported library
 //! \author  J. Bakosi
@@ -51,18 +51,19 @@ RNGDriver::initFactory( tk::RNGFactory& factory,
   regRNGSSE( factory, nthreads, rngsseparam );
 }
 
-std::map< tk::ctr::RNGType, tk::RNG >
-RNGDriver::createSelected( const tk::RNGFactory& factory,
-                           const std::vector< tk::ctr::RNGType >& selected )
+std::map< tk::ctr::RawRNGType, tk::RNG >
+RNGStack::createSelected( const tk::RNGFactory& factory,
+                          const std::vector< tk::ctr::RNGType >& selected )
 //******************************************************************************
 //  Instantiate selected RNGs from factory and place them in map
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::map< tk::ctr::RNGType, tk::RNG > rng;
+  using tk::ctr::RawRNGType;
+  std::map< RawRNGType, tk::RNG > rng;
   for (const auto& s : selected) {
     const auto r = factory.find(s);
-    if (r != end(factory)) rng.emplace( s, r->second() );
+    if (r != end(factory)) rng.emplace(static_cast<RawRNGType>(s), r->second());
     else Throw( tk::ExceptType::FATAL, "RNG not found in factory" );
   }
   return rng;
@@ -70,9 +71,9 @@ RNGDriver::createSelected( const tk::RNGFactory& factory,
 
 #ifdef HAS_MKL
 void
-RNGDriver::regMKL( tk::RNGFactory& factory,
-                   int nthreads,
-                   const tk::ctr::RNGMKLParameters& param )
+RNGStack::regMKL( tk::RNGFactory& factory,
+                  int nthreads,
+                  const tk::ctr::RNGMKLParameters& param )
 //******************************************************************************
 //  Register MKL random number generators into factory
 //! \author  J. Bakosi
@@ -123,9 +124,9 @@ RNGDriver::regMKL( tk::RNGFactory& factory,
 #endif
 
 void
-RNGDriver::regRNGSSE( tk::RNGFactory& factory,
-                      int nthreads,
-                      const tk::ctr::RNGSSEParameters& param )
+RNGStack::regRNGSSE( tk::RNGFactory& factory,
+                     int nthreads,
+                     const tk::ctr::RNGSSEParameters& param )
 //******************************************************************************
 //  Register RNGSSE random number generators into factory
 //! \author  J. Bakosi

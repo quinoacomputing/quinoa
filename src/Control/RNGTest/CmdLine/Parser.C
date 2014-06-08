@@ -2,14 +2,12 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 28 May 2014 08:47:56 PM MDT
+  \date      Sat 07 Jun 2014 07:53:26 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
 */
 //******************************************************************************
-
-#include <make_unique.h>
 
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/CmdLine/Grammar.h>
@@ -24,9 +22,9 @@ tk::Print g_print;
 
 using rngtest::CmdLineParser;
 
-CmdLineParser::CmdLineParser(int argc, char** argv,
-                             const tk::Print& print,
-                             std::unique_ptr< ctr::CmdLine >& cmdline) :
+CmdLineParser::CmdLineParser( int argc, char** argv,
+                              const tk::Print& print,
+                              ctr::CmdLine& cmdline ) :
   StringParser( argc, argv )
 //******************************************************************************
 //  Contructor: parse command line
@@ -36,10 +34,9 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
   // Create PEGTL string input from std::string (i.e. concatenated argv[])
   pegtl::string_input< ctr::Location > input( m_string );
 
-  // Create std::unique_ptr behind which to store parsed command line data:
-  // PEGTLCmdLine derives from CmdLine and has location() used during parsing
-  std::unique_ptr< cmd::PEGTLCmdLine >
-    pcmdline( tk::make_unique< cmd::PEGTLCmdLine >( input ) );
+  // Create PEGTLCmdLine to store parsed command line data which derives from
+  // CmdLine and has location() used during parsing
+  cmd::PEGTLCmdLine cmd( input );
 
   // Reset parser's output stream to that of print's
   tk::grm::g_print.reset( print.save() );
@@ -48,17 +45,17 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
-  pegtl::dummy_parse< cmd::read_string >( input, *pcmdline );
+  pegtl::dummy_parse< cmd::read_string >( input, cmd );
 
-  // Strip cmdline (and its underlying tagged tuple) from PEGTL instruments by
-  // creating a unique_ptr to the base class (CmdLine) and transfer it out
-  cmdline = std::unique_ptr< ctr::CmdLine >( std::move(pcmdline) );
+  // Strip command line (and its underlying tagged tuple) from PEGTL instruments
+  // and transfer it out
+  cmdline = cmd;
 
   // If we got here, parser succeeded
   print.item("Parsed command line", "success");
 
   // Make sure mandatory arguments are set
-  ErrChk( !(cmdline->get< tag::io, tag::control >().empty()),
+  ErrChk( !(cmdline.get< tag::io, tag::control >().empty()),
           tk::ExceptType::FATAL,
           "Mandatory control file not specified. "
           "Use '--" + kw::control().string() + " <filename>' or '-" +

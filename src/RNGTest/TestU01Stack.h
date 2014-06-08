@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/RNGTest/TestU01SuitePolicy.h
+  \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:12:21 PM MDT
+  \date      Sat 07 Jun 2014 07:18:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     TestU01SuitePolicy base
-  \details   TestU01SuitePolicy base
+  \brief     Stack of TestU01 tests
+  \details   Stack of TestU01 tests
 */
 //******************************************************************************
-#ifndef TestU01SuitePolicy_h
-#define TestU01SuitePolicy_h
+#ifndef TestU01Stack_h
+#define TestU01Stack_h
 
 extern "C" {
   #include <sres.h>
@@ -24,41 +24,34 @@ extern "C" {
 
 #include <vector>
 
-#include <make_unique.h>
-#include <Base.h>
 #include <StatTest.h>
 #include <TestU01Util.h>
 
 namespace rngtest {
 
-//! TestU01SuitePolicy
-class TestU01SuitePolicy {
+//! TestU01Stack
+class TestU01Stack {
 
   public:
     //! Constructor
-    explicit TestU01SuitePolicy() = default;
-
-    //! Destructor
-    virtual ~TestU01SuitePolicy() = default;
+    explicit TestU01Stack();
 
     //! Add statistical test to battery
     template< class TestType, class Result, typename... Ts >
-    void add( std::vector< std::unique_ptr< StatTest > >& tests,
+    void add( std::vector< StatTest >& tests,
+              tk::ctr::RNGType r,
+              unif01_Gen* const gen,
               std::vector< std::string >&& names,
               std::vector< double >
                 (*runner)( unif01_Gen*, Result*, const std::tuple<Ts...>& ),
-              Ts&&... xargs ) {
-      tests.push_back(
-        tk::make_unique< TestType >( std::move(names),
-                                     runner,
-                                     std::forward<Ts>(xargs)... ) );
+              Ts&&... xargs ) const
+    {
+      tests.emplace_back(
+        TestType( r, gen, std::move(names), runner,
+                  std::forward<Ts>(xargs)... ) );
     }
 
-    static const long THOUSAND = 1000;
-    static const long MILLION = THOUSAND * THOUSAND;
-    static const long BILLION = THOUSAND * MILLION;
-
-    //! TestU01 statistical tests wrappers
+    //! Stack of TestU01 statistical tests wrappers
 
     static std::vector< double >
     BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
@@ -193,17 +186,22 @@ class TestU01SuitePolicy {
     AutoCor( unif01_Gen* gen, sres_Basic* res,
       const std::tuple<long, long, int, int, int>& xargs );
 
+    //! RNG properties
+    struct RNGProps {
+      Gen01Ptr ptr;             //!< TestU01 RNG wrapper
+      RNGProps( unif01_Gen* p ) : ptr( Gen01Ptr(p) ) {}
+    };
+
+    //! Find RNG properties based on RNG id
+    const RNGProps& rngprops( tk::ctr::RNGType r ) const;
+
   private:
-    //! Don't permit copy constructor
-    TestU01SuitePolicy(const TestU01SuitePolicy&) = delete;
-    //! Don't permit copy assigment
-    TestU01SuitePolicy& operator=(const TestU01SuitePolicy&) = delete;
-    //! Don't permit move constructor
-    TestU01SuitePolicy(TestU01SuitePolicy&&) = delete;
-    //! Don't permit move assigment
-    TestU01SuitePolicy& operator=(TestU01SuitePolicy&&) = delete;
+    //! Create TestU01 RNG wrapper
+    template< tk::ctr::RawRNGType id > void addRNG( tk::ctr::RNGType r );
+
+    std::map< tk::ctr::RNGType, RNGProps > m_rngprops; //!< Selected RNG props
 };
 
 } // rngtest::
 
-#endif // TestU01SuitePolicy_h
+#endif // TestU01Stack_h

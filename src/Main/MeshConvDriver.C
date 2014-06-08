@@ -2,14 +2,16 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:41:13 2014
+  \date      Sun 08 Jun 2014 04:09:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
 */
 //******************************************************************************
 
+#include <Print.h>
 #include <Exception.h>
+#include <Handler.h>
 #include <Factory.h>
 #include <MeshConvDriver.h>
 #include <MeshConv/CmdLine/Parser.h>
@@ -22,33 +24,27 @@
 
 using meshconv::MeshConvDriver;
 
-MeshConvDriver::MeshConvDriver(int argc, char** argv, const tk::Print& print)
+MeshConvDriver::MeshConvDriver( int argc, char** argv )
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
-//! \param[in] print     Simple pretty printer
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Parse command line into cmdline
-  CmdLineParser cmdParser(argc, argv, print, m_cmdline);
+  try {
 
-  // Register mesh readers
-  tk::record< quinoa::GmshMeshReader >( m_readers, MeshReaderType::GMSH,
-    m_cmdline->get<tag::io, tag::input>(), std::ref(m_mesh) );
-  tk::record< quinoa::NetgenMeshReader >( m_readers, MeshReaderType::NETGEN,
-    m_cmdline->get<tag::io, tag::input>(), std::ref(m_mesh) );
-  tk::record< quinoa::ExodusIIMeshReader >( m_readers, MeshReaderType::EXODUSII,
-    m_cmdline->get<tag::io, tag::input>(), std::ref(m_mesh) );
+    ctr::CmdLine cmdline;
 
-  // Register mesh writers
-  tk::record< quinoa::GmshMeshWriter >( m_writers, MeshWriterType::GMSH,
-    m_cmdline->get<tag::io, tag::output>(), std::ref(m_mesh) );
-  tk::record< quinoa::NetgenMeshWriter >( m_writers, MeshWriterType::NETGEN,
-    m_cmdline->get<tag::io, tag::output>(), std::ref(m_mesh) );
-  tk::record< quinoa::ExodusIIMeshWriter >( m_writers, MeshWriterType::EXODUSII,
-    m_cmdline->get<tag::io, tag::output>(), std::ref(m_mesh) );
+    // Parse command line into cmdline
+    CmdLineParser cmdParser( argc, argv, tk::Print(), cmdline );
+
+    // Save input file name
+    m_input = cmdline.get< tag::io, tag::input>();
+    // Save output file name
+    m_output = cmdline.get< tag::io, tag::output>();
+
+  } catch (...) { tk::processException(); }
 }
 
 void
@@ -58,20 +54,43 @@ MeshConvDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Create mesh reader
-  std::unique_ptr< tk::Reader > m_reader =
-    tk::instantiate( m_readers, detectInput() );
-  // Create mesh writer
-  std::unique_ptr< tk::Writer > m_writer =
-    tk::instantiate( m_writers, pickOutput() );
+  try {
 
-  // Read in mesh
-  m_reader->read();
-  // Write out mesh
-  m_writer->write();
+    //! Mesh readers factory
+    std::map< MeshReaderType, std::function<tk::Reader*()> > readers;
+
+    //! Mesh writers factory
+    std::map< MeshWriterType, std::function<tk::Writer*()> > writers;
+
+    //! Create unstructured mesh to store mesh
+    quinoa::UnsMesh mesh;
+
+    // Register mesh readers
+    tk::record< quinoa::GmshMeshReader >( readers, MeshReaderType::GMSH,
+                                          m_input, std::ref(mesh) );
+    tk::record< quinoa::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
+                                            m_input, std::ref(mesh) );
+    tk::record< quinoa::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
+                                              m_input, std::ref(mesh) );
+
+    // Register mesh writers
+    tk::record< quinoa::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+                                          m_output, std::ref(mesh) );
+    tk::record< quinoa::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
+                                            m_output, std::ref(mesh) );
+    tk::record< quinoa::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
+                                              m_output, std::ref(mesh) );
+
+    // Read in mesh
+    tk::instantiate( readers, detectInput() )->read();
+
+    // Write out mesh
+    tk::instantiate( writers, pickOutput() )->write();
+
+  } catch (...) { tk::processException(); }
 }
 
-meshconv::MeshReaderType
+MeshConvDriver::MeshReaderType
 MeshConvDriver::detectInput() const
 //******************************************************************************
 //  Detect input mesh file type
@@ -79,8 +98,7 @@ MeshConvDriver::detectInput() const
 //******************************************************************************
 {
   // Get first three letters from input file
-  std::string s(
-    tk::Reader(m_cmdline->get<tag::io,tag::input>()).firstline().substr(0,3) );
+  std::string s( tk::Reader( m_input ).firstline().substr(0,3) );
 
   if ( s == "$Me" ) {
 
@@ -100,7 +118,7 @@ MeshConvDriver::detectInput() const
 
       Throw( tk::ExceptType::RUNTIME,
              "Input mesh file type could not be determined from header: " +
-             m_cmdline->get<tag::io,tag::input>() );
+             m_input );
 
     }
 
@@ -113,7 +131,7 @@ MeshConvDriver::detectInput() const
   }
 }
 
-meshconv::MeshWriterType
+MeshConvDriver::MeshWriterType
 MeshConvDriver::pickOutput() const
 //******************************************************************************
 //  Determine output mesh file type
@@ -121,7 +139,7 @@ MeshConvDriver::pickOutput() const
 //******************************************************************************
 {
   // Get extension of input file name
-  std::string fn = m_cmdline->get< tag::io, tag::output >();
+  std::string fn = m_output;
   std::string ext( fn.substr(fn.find_last_of(".") + 1) );
 
   if ( ext == "msh" ) {
@@ -140,8 +158,7 @@ MeshConvDriver::pickOutput() const
 
     Throw( tk::ExceptType::RUNTIME,
            "Output mesh file type could not be determined from extension of "
-           "filename '" +
-           m_cmdline->get<tag::io,tag::output>() + "'; valid extensions are: "
+           "filename '" + m_output + "'; valid extensions are: "
            "'msh' for Gmsh, 'exo' or 'h5' for ExodusII, 'mesh' for Netgen's "
            "neutral" );
 

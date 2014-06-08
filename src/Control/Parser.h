@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Parser.h
   \author    J. Bakosi
-  \date      Sun 27 Oct 2013 05:01:08 PM MDT
+  \date      Sat 07 Jun 2014 07:54:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Parser base
   \details   Parser base
@@ -21,17 +21,7 @@ class Parser {
     explicit Parser() = default;
 
     //! Destructor
-    virtual ~Parser() noexcept = default;
-
-  private:
-    //! Don't permit copy constructor
-    Parser(const Parser&) = delete;
-    //! Don't permit copy assigment
-    Parser& operator=(const Parser&) = delete;
-    //! Don't permit move constructor
-    Parser(Parser&&) = delete;
-    //! Don't permit move assigment
-    Parser& operator=(Parser&&) = delete;
+    virtual ~Parser() = default;
 };
 
 } // namespace tk

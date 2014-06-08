@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Tue 20 May 2014 06:22:00 AM MDT
+  \date      Fri 06 Jun 2014 01:09:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -25,7 +25,7 @@ std::string workdir();
 std::string curtime();
 
 //! Echo program title
-void echoHeader(const tk::Print& print, const std::string& title);
+void echoHeader( const tk::Print& print, const std::string& title );
 
 //! Echo build environment
 void echoBuildEnv( const tk::Print& print,
@@ -33,25 +33,23 @@ void echoBuildEnv( const tk::Print& print,
                    void (*echoTPL)(const Print& print) );
 
 //! Echo runtime environment
-void echoRunEnv(const tk::Print& print, int argc, char** argv);
+void echoRunEnv( const tk::Print& print, int argc, char** argv );
 
 //! Main()
 template< class Driver >
-int Main( int argc, char* argv[],
-          const std::string& name,
-          const std::string& executable,
-          void (*echoTPL)(const Print&) = [](const Print&){} )
+Driver Main( int argc, char* argv[],
+             const std::string& name,
+             const std::string& executable,
+             void (*echoTPL)(const Print&) = [](const Print&){} )
 {
-  ErrCode error = ErrCode::SUCCESS;
-
   try {
 
     // Install our own new-handler
-    std::set_new_handler(newHandler);
+    std::set_new_handler( newHandler );
     // Install our own terminate-handler
-    std::set_terminate(terminateHandler);
+    std::set_terminate( terminateHandler );
     // Install our own unexpected-handler
-    std::set_unexpected(unexpectedHandler);
+    std::set_unexpected( unexpectedHandler );
 
     // Create pretty printer
     Print print;
@@ -64,18 +62,10 @@ int Main( int argc, char* argv[],
     echoBuildEnv( print, executable, echoTPL ); //!< Build environment
     echoRunEnv( print, argc, argv );            //!< Runtime environment
 
-    // Create driver
-    Driver driver( argc, argv, print );
+  } catch (...) { processException(); }
 
-    // Execute
-    driver.execute();
-
-  } catch (...) {
-      error = processException();
-    }
-
-  // Return error code
-  return static_cast< int >( error );
+  // Create and return driver
+  return Driver( argc, argv );
 }
 
 } // tk::

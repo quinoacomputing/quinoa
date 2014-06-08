@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Wed 28 May 2014 12:16:54 PM MDT
+  \date      Sat 07 Jun 2014 01:31:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -53,12 +53,12 @@ class MKLRNG {
 
     //! Uniform RNG
     void uniform( int tid, int num, double* r ) const {
-      vdRngUniform(m_uniform_method, m_stream[tid], num, r, 0.0, 1.0);
+      vdRngUniform( m_uniform_method, m_stream[tid], num, r, 0.0, 1.0 );
     }
 
     //! Gaussian RNG
     void gaussian( int tid, int num, double* r ) const {
-      vdRngGaussian(m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0);
+      vdRngGaussian( m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0 );
     }
 
     //! Copy assignment
@@ -68,7 +68,7 @@ class MKLRNG {
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
       m_nthreads = x.m_nthreads;
-      m_stream = make_unique< VSLStreamStatePtr[] >( x.m_nthreads );
+      m_stream = tk::make_unique< VSLStreamStatePtr[] >( x.m_nthreads );
       for (auto i=0; i<x.m_nthreads; ++i) {
         vslNewStream( &m_stream[i], x.m_brng, x.m_seed );
         vslLeapfrogStream( m_stream[i], i, x.m_nthreads );
@@ -87,7 +87,7 @@ class MKLRNG {
       m_uniform_method = x.m_uniform_method;
       m_gaussian_method = x.m_gaussian_method;
       m_nthreads = x.m_nthreads;
-      m_stream = make_unique< VSLStreamStatePtr[] >( x.m_nthreads );
+      m_stream = tk::make_unique< VSLStreamStatePtr[] >( x.m_nthreads );
       for (auto i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
         x.m_stream[i] = nullptr;

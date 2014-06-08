@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 12:42:04 PM MDT
+  \date      Sat 07 Jun 2014 11:14:12 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -110,8 +110,9 @@ class Print {
     void list( const std::string& title, const Factory& factory ) const {
       if (!factory.empty()) {
         section( title );
+        Option option;
         for (const auto& f : factory)
-          m_stream << m_list_item_fmt % m_item_indent % Option().name(f.first);
+          m_stream << m_list_item_fmt % m_item_indent % option.name( f.first );
       }
     }
 
@@ -120,7 +121,7 @@ class Print {
     { m_stream << m_note_fmt % m_section_indent % msg; }
 
     //! Print end of part
-    void endpart() const { m_stream << "\n\n"; }
+    void endpart() const { m_stream << '\n'; }
 
     //! Print end of subsection
     void endsubsection() const { m_stream << "\n"; }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:55:41 PM MST
+  \date      Sat 07 Jun 2014 07:38:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line
   \details   RNGTest's command line
@@ -30,20 +30,6 @@ class CmdLine :
       // Default I/O parameters
       set< tag::io, tag::control >("");
     }
-
-    //! Destructor
-    ~CmdLine() noexcept override = default;
-
-    //! Instruct compiler to generate copy assigment
-    CmdLine& operator=(const CmdLine&) = default;
-
-  private:
-    //! Don't permit copy constructor
-    CmdLine(const CmdLine&) = delete;
-    //! Don't permit move constructor
-    CmdLine(CmdLine&&) = delete;
-    //! Don't permit move assigment
-    CmdLine& operator=(CmdLine&&) = delete;
 };
 
 //! CmdLine defaults

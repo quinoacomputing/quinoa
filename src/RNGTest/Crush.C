@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Sat 24 May 2014 09:11:52 PM MDT
+  \date      Sat 07 Jun 2014 06:36:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -10,24 +10,11 @@
 //******************************************************************************
 
 #include <Crush.h>
-#include <Battery.h>
-#include <Option.h>
 
 using rngtest::Crush;
 
-const std::string&
-Crush::policy() const
-//******************************************************************************
-//  Return string identifying policy
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  return
-    tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::CRUSH );
-}
-
 void
-Crush::addTests( std::vector< std::unique_ptr< StatTest > >& tests )
+Crush::addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r )
 //******************************************************************************
 // Add statistical tests to battery
 //! \author  J. Bakosi

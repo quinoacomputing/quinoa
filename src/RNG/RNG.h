@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Wed 28 May 2014 07:45:21 AM MDT
+  \date      Sat 07 Jun 2014 10:12:58 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator base
   \details   Random number generator base
@@ -12,14 +12,14 @@
 #define RNG_h
 
 #include <make_unique.h>
-#include <Types.h>
 
 namespace tk {
 
 //! Random number generator. The class below uses runtime polymorphism without
 //! client-side inheritance: inheritance is confined to the internals of the
-//! class below, inivisble to client-code. Credit goes to Sean Parent at Adobe:
-//! https://github.com/sean-parent/sean-parent.github.com/wiki/
+//! class below, inivisble to client-code. The class exclusively deals with
+//! ownership enabling client-side value semantics. Credit goes to Sean Parent
+//! at Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
 //! Papers-and-Presentations
 class RNG {
 
@@ -37,14 +37,12 @@ class RNG {
       self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to uniform RNG
-    void uniform( int tid, int num, double* r ) const {
-      self->uniform( tid, num, r );
-    }
+    void uniform( int tid, int num, double* r ) const
+    { self->uniform( tid, num, r ); }
 
     //! Public interface to Gaussian RNG
-    void gaussian( int tid, int num, double* r ) const {
-      self->gaussian( tid, num, r );
-    }
+    void gaussian( int tid, int num, double* r ) const
+    { self->gaussian( tid, num, r ); }
 
     //! Copy assignment
     RNG& operator=( const RNG& x )
@@ -79,7 +77,7 @@ class RNG {
       T data;
     };
 
-    std::unique_ptr< Concept > self;
+    std::unique_ptr< Concept > self;    //!< Base pointer used polymorphically
 };
 
 } // namespace tk

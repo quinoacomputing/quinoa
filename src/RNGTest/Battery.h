@@ -2,75 +2,95 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sat 24 May 2014 01:28:08 PM MDT
+  \date      Fri 06 Jun 2014 11:48:21 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     Battery base
-  \details   Battery base
+  \brief     Battery
+  \details   Battery
 */
 //******************************************************************************
 #ifndef Battery_h
 #define Battery_h
 
-#include <charm++.h>
-
-#include <StatTest.h>
+#include <make_unique.h>
 #include <RNGTestPrint.h>
 
 namespace rngtest {
 
-//! Battery
-class Battery : public PUP::able {
+//! Battery. The class below uses runtime polymorphism without client-side
+//! inheritance: inheritance is confined to the internals of the class below,
+//! inivisble to client-code. The class exclusively deals with ownership
+//! enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+//! https://github.com/sean-parent/sean-parent.github.com/wiki/
+//! Papers-and-Presentations
+class Battery {
 
   public:
-    //! Constructor
-    explicit Battery() = default;
+    //! Constructor taking and object modeling Concept (see below)
+    template< typename T >
+    explicit Battery( T x ) :
+      self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
-    //! Destructor
-    virtual ~Battery() = default;
+    //! Constructor taking a function pointer to a constructor of an object
+    //! modeling Concept (see below). Passing std::function allows late
+    //! execution of the constructor, i.e., as late as inside this class'
+    //! constructor, and thus usage from a factory.
+    template< typename T >
+    explicit Battery( std::function<T()> x ) :
+      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
 
-    //! Run battery of RNG tests
-    virtual void run() = 0;
+    //! Public interface to running a battery of RNG tests
+    void run() const { self->run(); }
 
-    //! Print list of registered statistical tests
-    virtual void print( const RNGTestPrint& print ) const = 0;
+    //! Public interface to printing list of registered statistical tests
+    void print( const RNGTestPrint& p ) const { self->print(p); }
 
-    //! Return number of statistical tests in battery
-    virtual std::size_t ntest() const = 0;
+    //! Public interface to evaluating a statistical test
+    void evaluate( std::size_t id ) const { self->evaluate(id); }
 
-    //! Return number of statistics produced by battery
-    virtual std::size_t nstat() const = 0;
+    //! Public interface to returning number of statistical tests in battery
+    std::size_t ntest() const { return self->ntest(); }
 
-    //! Evaluate a statistical test
-    virtual void evaluate( std::size_t id ) = 0;
+    //! Public interface to returning number of statistics produced by battery
+    std::size_t nstat() const { return self->nstat(); }
 
-    //! Enable PUP for virtual function pointers,
-    //! see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html,
-    //! section "Subclass allocation via PUP::able"
-    PUPable_abstract( Battery );  
+    //! Copy assignment
+    Battery& operator=( const Battery& x )
+    { Battery tmp(x); *this = std::move(tmp); return *this; }
+    //! Copy constructor
+    Battery( const Battery& x ) : self( x.self->copy() ) {}
+    //! Move assignment
+    Battery& operator=( Battery&& ) noexcept = default;
+    //! Move constructor
+    Battery( Battery&& ) noexcept = default;
 
   private:
-    //! Don't permit copy constructor
-    Battery(const Battery&) = delete;
-    //! Don't permit copy assigment
-    Battery& operator=(const Battery&) = delete;
-    //! Don't permit move constructor
-    Battery(Battery&&) = delete;
-    //! Don't permit move assigment
-    Battery& operator=(Battery&&) = delete;
-};
+    //! Concept is a pure virtual base class specifying the requirements of
+    //! polymorphic objects deriving from it
+    struct Concept {
+      virtual ~Concept() = default;
+      virtual Concept* copy() const = 0;
+      virtual void run() const = 0;
+      virtual void print( const RNGTestPrint& p ) const = 0;
+      virtual void evaluate( std::size_t id ) const = 0;
+      virtual std::size_t ntest() const = 0;
+      virtual std::size_t nstat() const = 0;
+    };
 
-//! Runner chare for statistical test batteries (a full suite of statistical
-//! tests) deriving from Battery. This wrapper is used for virtual dispatch of
-//! batteries with base Battery. See also section "Subclass allocation via
-//! PUP::able" in http://charm.cs.illinois.edu/manuals/html/charm++/manual.html.
-class BatteryRunner : public Chare {
-  public:
-    BatteryRunner( CkMigrateMessage* ) {}
-    BatteryRunner( Battery& battery ) {
-      std::cout << "BatteryRunner::BatteryRunner()" << std::endl;
-      //battery.run();
-      delete this;
-    }
+    //! Model models the Concept above by deriving from it and overriding the
+    //! the virtual functions required by Concept
+    template< typename T >
+    struct Model : Concept {
+      Model( T x ) : data( std::move(x) ) {}
+      Concept* copy() const { return new Model( *this ); }
+      void run() const override { data.run(); }
+      void print( const RNGTestPrint& p ) const override { data.print(p); }
+      void evaluate( std::size_t id ) const override { data.evaluate(id); }
+      std::size_t ntest() const override { return data.ntest(); }
+      std::size_t nstat() const override { return data.nstat(); }
+      T data;
+    };
+
+    std::unique_ptr< Concept > self;    //!< Base pointer used polymorphically
 };
 
 } // rngtest::
