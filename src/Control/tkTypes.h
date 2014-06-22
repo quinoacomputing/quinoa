@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/tkTypes.h
   \author    J. Bakosi
-  \date      Tue 03 Jun 2014 09:05:47 PM MDT
+  \date      Sat 21 Jun 2014 05:01:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Types for tk control
   \details   Types for tk control
@@ -15,7 +15,6 @@
 #include <tkTags.h>
 #include <Options/RNG.h>
 #include <Options/RNGSSESeqLen.h>
-#include <PUPUtil.h>
 
 #ifdef HAS_MKL
 #include <Options/MKLUniformMethod.h>
@@ -44,10 +43,8 @@ using RNGMKLParam = tuple::tagged_tuple<
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;
 #endif
 
-//! Pack/Unpack RNG parameters
-template< class ParamType >
-inline void operator|( PUP::er& p, std::map< RNGType, ParamType >& m )
-{ pup( p, m ); }
+//! Forward overload to generic std::map packer in tk::
+using tk::operator|;
 
 } // ctr::
 } // tk::

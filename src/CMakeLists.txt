@@ -156,10 +156,11 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   setlibstdcxx("libstdc++")
 
   add_compiler_flag("-Wno-literal-suffix")
+  add_compiler_flag("-fdiagnostics-color")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align")
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-cast-align")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
@@ -183,6 +184,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
 
   # Link to thread-safe MPI library
   add_compiler_flag("-mt_mpi")
+
+  # Use the g++ 4.8 headers
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gxx-name=g++-4.8")
 
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")

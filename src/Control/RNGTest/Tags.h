@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:34:42 PM MST
+  \date      Sat 21 Jun 2014 04:56:14 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's input deck tags
   \details   RNGTest's input deck tags
@@ -22,6 +22,12 @@ struct battery {};
 struct generator {};
 struct cmd {};
 struct param {};
+
+// TestU01 statistical test tags
+struct BirthdaySpacings {};
+struct Collision {};
+struct SerialOver {};
+struct RandomWalk1 {};
 
 } // tag::
 } // rngtest::

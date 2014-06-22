@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 08:08:20 PM MDT
+  \date      Wed 11 Jun 2014 01:55:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -29,17 +29,16 @@ class InputDeck :
                       tag::param,      parameters > {
 
   public:
-    //! Constructor: set defaults
-    InputDeck() {
-      // Default title
-      set< tag::title >( "" );
-      // Default I/O parameters
-      set< tag::io, tag::control >( "" );
+    //! Pack/Unpack
+    void pup( PUP::er& p ) {
+      tk::Control< tag::title,      std::string,
+                   tag::selected,   selects,
+                   tag::io,         ios,
+                   tag::cmd,        CmdLine,
+                   tag::param,      parameters >::pup(p);
     }
+    friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }
 };
-
-//! InputDeck defaults
-static const InputDeck InputDeckDefaults;
 
 } // ctr::
 } // rngtest::

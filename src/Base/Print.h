@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 11:14:12 AM MDT
+  \date      Sat 21 Jun 2014 04:29:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -38,7 +38,7 @@ class Print {
     std::streambuf* reset( std::streambuf* buf ) const
     { return m_stream.rdbuf( buf ); }
 
-    //! Reset stream ostream
+    //! Reset stream to ostream
     std::streambuf* reset( std::ostream& os ) const
     { return m_stream.rdbuf( os.rdbuf() ); }
 
@@ -162,7 +162,7 @@ class Print {
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
 
-    // Steam object
+    // Stream object
     std::ostream& m_stream;
 
   private:

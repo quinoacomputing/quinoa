@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Tue 27 May 2014 10:50:53 AM MDT
+  \date      Mon 16 Jun 2014 10:11:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -36,7 +36,7 @@ template< class Factory, class Key,
           class Obj = typename std::remove_pointer<
                         typename Factory::mapped_type::result_type >::type >
 std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
-  auto it = f.find( key );
+  const auto it = f.find( key );
   Assert( it != end( f ), tk::ExceptType::FATAL,
           "No such object registered in factory" );
   return std::unique_ptr< Obj >( it->second() );
@@ -52,6 +52,27 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
                std::forward< ModelConstrArgs >( args )... );
   // Bind host to std::function of model constructor and place in factory
   f.emplace( key, std::bind( boost::value_factory< Host >(), std::move(c) ) );
+}
+
+//! Register Charm++ model class of host into factory with given key. We bind a
+//! host constructor to its arguments of which the first one is a std::function
+//! holding a model constructor type (modeling, i.e., used polymorhically with
+//! host), the second one is a key followed by an optional number of others
+//! (possibly zero) with arbitrary types. Note that the model constructor is
+//! nullptr and only used to forward its type to the call site inside
+//! std::function. The host constructor function is then placed into the factory.
+//! This is because Charm++ chares do not explicitly invoke constructors,
+//! only call ckNew() on their proxy, which requires all constructor arguments
+//! to be present and forwarded to the actual constructor that is only called at
+//! a later point in time. This can then be used by those constructors of hosts
+//! that invoke the model constructors' proxies' ckNew() and ignore the
+//! std::function. See, e.g., rngtest::Battery().
+template< class Host, class ModelConstructor, class Factory, class Key,
+          typename... ModelConstrArgs >
+void recordCharmModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
+  f.emplace( key, std::bind( boost::value_factory< Host >(),
+                             std::function< ModelConstructor() >(),
+                             key, std::forward< ModelConstrArgs >( args )...) );
 }
 
 } // tk::

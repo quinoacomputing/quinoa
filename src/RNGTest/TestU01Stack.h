@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 07:18:40 PM MDT
+  \date      Sat 21 Jun 2014 05:28:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -10,6 +10,10 @@
 //******************************************************************************
 #ifndef TestU01Stack_h
 #define TestU01Stack_h
+
+#include <vector>
+
+#include <boost/functional/value_factory.hpp>
 
 extern "C" {
   #include <sres.h>
@@ -22,10 +26,9 @@ extern "C" {
   #include <sspectral.h>
 }
 
-#include <vector>
-
 #include <StatTest.h>
 #include <TestU01Util.h>
+#include <RNGTest/Tags.h>
 
 namespace rngtest {
 
@@ -37,18 +40,23 @@ class TestU01Stack {
     explicit TestU01Stack();
 
     //! Add statistical test to battery
-    template< class TestType, class Result, typename... Ts >
-    void add( std::vector< StatTest >& tests,
+    template< class TestType, class Proxy, typename... Ts >
+    void add( Proxy& proxy,
+              std::vector< std::function< StatTest() > >& tests,
               tk::ctr::RNGType r,
               unif01_Gen* const gen,
               std::vector< std::string >&& names,
-              std::vector< double >
-                (*runner)( unif01_Gen*, Result*, const std::tuple<Ts...>& ),
               Ts&&... xargs ) const
     {
+      using Model = TestType;
+      using Host = StatTest;
+      using Props = typename TestType::Props;
       tests.emplace_back(
-        TestType( r, gen, std::move(names), runner,
-                  std::forward<Ts>(xargs)... ) );
+        std::bind( boost::value_factory< Host >(),
+                   std::function< Model() >(),
+                   std::forward< Props >(
+                     Props( proxy, r, std::move(names), gen,
+                            std::forward<Ts>(xargs)... ) ) ) );
     }
 
     //! Stack of TestU01 statistical tests wrappers
@@ -96,7 +104,7 @@ class TestU01Stack {
 
     static std::vector< double >
     SerialOver( unif01_Gen* gen, sres_Basic* res,
-      const std::tuple<long,long, int, long, int>& xargs );
+      const std::tuple<long, long, int, long, int>& xargs );
 
     static std::vector< double >
     CollisionOver( unif01_Gen* gen, smarsa_Res* res,
@@ -188,12 +196,41 @@ class TestU01Stack {
 
     //! RNG properties
     struct RNGProps {
-      Gen01Ptr ptr;             //!< TestU01 RNG wrapper
+      Gen01Ptr ptr;     //!< TestU01 RNG wrapper
       RNGProps( unif01_Gen* p ) : ptr( Gen01Ptr(p) ) {}
     };
 
     //! Find RNG properties based on RNG id
     const RNGProps& rngprops( tk::ctr::RNGType r ) const;
+
+    //! Compile-time tag-based access to individual wrappers
+    //! Associate tags (empty structs) to test wrappers
+    tk::tuple::tagged_tuple<
+
+      tag::BirthdaySpacings,
+      std::vector< double > (*)( unif01_Gen*, sres_Poisson*,
+        const std::tuple<long, long, int, long, int, int>& ),
+
+      tag::Collision,
+      std::vector< double > (*)( unif01_Gen*, sknuth_Res2*,
+        const std::tuple<long, long, int, long, int>& ),
+
+      tag::SerialOver,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, long, int>& ),
+
+      tag::RandomWalk1,
+      std::vector< double > (*)( unif01_Gen*, swalk_Res*,
+        const std::tuple<long, long, int, int, long, long>& )
+
+    > runner {
+
+      this->BirthdaySpacings,
+      this->Collision,
+      this->SerialOver,
+      this->RandomWalk1
+
+    };
 
   private:
     //! Create TestU01 RNG wrapper

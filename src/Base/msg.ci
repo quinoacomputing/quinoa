@@ -1,0 +1,26 @@
+//******************************************************************************
+/*!
+  \file      src/Base/msg.ci
+  \author    J. Bakosi
+  \date      Sat 21 Jun 2014 05:39:14 PM MDT
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \brief     Charm++ module interface file for custom message types
+  \details   Charm++ module interface file for custom message types
+*/
+//******************************************************************************
+
+module msg {
+
+  namespace tk {
+
+    // List all possible specializations of templated message to instantiate
+    // registration and delivery of code for the individual specializations
+    message Msg< std::size_t >;
+
+    template< typename T > message Msg;
+
+    message StringsMsg;
+
+  } // tk::
+
+}

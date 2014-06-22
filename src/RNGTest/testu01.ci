@@ -1,18 +1,48 @@
+//******************************************************************************
+/*!
+  \file      src/RNGTest/testu01.ci
+  \author    J. Bakosi
+  \date      Sat 21 Jun 2014 05:36:10 PM MDT
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \brief     Charm++ module interface file for TestU01 statistical tests
+  \details   Charm++ module interface file for TestU01 statistical tests
+*/
+//******************************************************************************
+
 module testu01 {
 
-//   include "StatTest.h";
+  extern module testu01suite;
+  extern module msg;
 
-//   namespace rngtest {
-// 
-//     PUPable TestU01< sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
-//                      long, long, int, long, int, int >;
-//     PUPable TestU01< sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
-//                      long, long, int, long, int >;
-// 
-//     chare StatTestRunner {
-//       entry StatTestRunner( CkReference< StatTest > test, std::size_t id );
-//     }
-// 
-//   } // rngtest::
+  namespace rngtest {
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+    chare TestU01<
+            TestU01Props< tag::BirthdaySpacings, CProxy_TestU01Suite,
+                          sres_Poisson, sres_CreatePoisson, sres_DeletePoisson,
+                          long, long, int, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::Collision, CProxy_TestU01Suite,
+                          sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                          long, long, int, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::SerialOver, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::RandomWalk1, CProxy_TestU01Suite,
+                          swalk_Res, swalk_CreateRes, swalk_DeleteRes,
+                          long, long, int, int, long, long > >;
+
+    template< class TestU01Props >
+    chare TestU01 {
+      entry TestU01( const TestU01Props& props );
+      entry void run( std::size_t id );
+      entry [threaded] void npval( CkFuture f );
+      entry [threaded] void name( CkFuture f );
+    }
+
+  } // rngtest::
 
 }

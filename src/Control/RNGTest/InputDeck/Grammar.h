@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 11:45:40 AM MDT
+  \date      Wed 11 Jun 2014 01:37:40 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -29,6 +29,9 @@
 #include <RNGSSEGrammar.h>
 
 namespace rngtest {
+
+extern ctr::InputDeck g_inputdeck_defaults;
+
 namespace deck {
 
   //! PEGTLParsed type specialized to RNGTest's input deck parser
@@ -50,7 +53,7 @@ namespace deck {
   struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
-                           ( stack, value, ctr::InputDeckDefaults );
+                           ( stack, value, g_inputdeck_defaults );
     }
   };
 

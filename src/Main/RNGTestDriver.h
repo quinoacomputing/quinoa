@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 01:36:49 PM MDT
+  \date      Mon 16 Jun 2014 07:26:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -28,9 +28,6 @@ class RNGTestDriver {
 
     //! Execute driver
     void execute();
-
-  private:
-    ctr::InputDeck m_control;
 };
 
 } // rngtest::

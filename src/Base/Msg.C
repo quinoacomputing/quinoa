@@ -1,14 +1,14 @@
 //******************************************************************************
 /*!
-  \file      src/RNGTest/TestU01Suite.C
+  \file      src/Base/Msg.C
   \author    J. Bakosi
-  \date      Tue 10 Jun 2014 06:39:07 PM MDT
+  \date      Wed 18 Jun 2014 09:17:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \brief     TestU01 suite
-  \details   TestU01 suite
+  \brief     Custom Charm++ message types
+  \details   Custom Charm++ message types
 */
 //******************************************************************************
 
-#include <TestU01Suite.h>
+#include <Msg.h>
 
-#include <testu01suite.def.h>
+#include <msg.def.h>
