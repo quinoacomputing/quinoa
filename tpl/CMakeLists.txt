@@ -140,6 +140,7 @@ get_compiler_flags()
 if(LIBCXX_CPP)
   set(CXXFLAGS_LIBCPP "-stdlib=libc++")
   set(CXXFLAGS_LIBCPPABI "-lc++abi")
+  set(CXXFLAGS "${CXXFLAGS} ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}")
 endif()
 
 # Define fine-grained targets
@@ -250,8 +251,8 @@ ExternalProject_Add_Step(
 ExternalProject_Add(
   hdf5ser
   PREFIX hdf5ser
-  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
-  URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
+  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
+  URL_MD5 c03426e9e77d7766944654280b467289
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CFLAGS=${CFLAGS}
@@ -268,8 +269,8 @@ ExternalProject_Add(
 ExternalProject_Add(
   hdf5par
   PREFIX hdf5par
-  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.11.tar.gz
-  URL_MD5 1a4cc04f7dbe34e072ddcf3325717504
+  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
+  URL_MD5 c03426e9e77d7766944654280b467289
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
                     CC=${MPI_C_COMPILER}
                     CFLAGS=${CFLAGS}
@@ -326,12 +327,11 @@ ExternalProject_Add(
   netcdf
   DEPENDS hdf5ser
   PREFIX netcdf
-  URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.1.1.tar.gz
-  URL_MD5 275c3b839088674c2f00fb3ac264bf11
+  URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.2.tar.gz
+  URL_MD5 2fd2365e1fe9685368cd6ab0ada532a0
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CFLAGS=${CFLAGS}
-                    CPPFLAGS=${CXXFLAGS}
                     CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/hdf5ser/include
                     LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
                     --disable-examples
