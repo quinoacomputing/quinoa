@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 07:12:33 PM MDT
+  \date      Tue 17 Jun 2014 07:21:46 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -16,16 +16,16 @@ extern "C" {
 }
 
 #include <TestU01Stack.h>
-#include <TestU01Util.h>
 #include <RNG.h>
+#include <RNGTest/InputDeck/InputDeck.h>
 
 namespace rngtest {
 
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
-extern std::vector< tk::ctr::RNGType > g_selectedrng;
+extern ctr::InputDeck g_inputdeck;
 
 //! Global thread id
-static int g_tid;
+static int g_tid = 0;
 #ifdef _OPENMP
 #pragma omp threadprivate(g_tid)
 #endif
@@ -58,6 +58,17 @@ static unsigned long uniform_bits( void*, void* )
   return static_cast<unsigned long>(r * unif01_NORM32);
 }
 
+template< tk::ctr::RawRNGType id >
+inline unif01_Gen* createTestU01Gen( const std::string& name )
+//******************************************************************************
+//  Global-scope create TestU01 external generator
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  return unif01_CreateExternGen01( const_cast<char*>(name.c_str()),
+                                   uniform< id >, uniform_bits< id > );
+}
+
 } // rngtest::
 
 using rngtest::TestU01Stack;
@@ -68,18 +79,17 @@ TestU01Stack::TestU01Stack()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //! Associate RNGs to global-scope wrappers. Admittedly, the code below is
-  //! ugly and looks stupid at first sight. However, this is a translation of
-  //! runtime information (user-selected RNGs) to compile-time information:
-  //! associating RNG ids from an enum class tk::ctr::RNGType::value to a
-  //! compile-time constant underlying_type value facilitating a different pair
-  //! of global-scope RNG wrappers (uniform and uniform_bits) with code reuse.
-  //! Note that uniform and uniform_bits wrappers must be global-scope as they
-  //! are used as external generators to TestU01. Templating them on the id
-  //! enables the compiler generate a different wrapper for a different RNG
-  //! facilitating simultaneous calls to any or all wrappers as they are unique
-  //! functions.
-  for (const auto& r : g_selectedrng) {
+  // Associate RNGs to global-scope wrappers. Admittedly, the code below is ugly
+  // and looks stupid at first sight. However, this is a translation of runtime
+  // information (user-selected RNGs) to compile-time information: associating
+  // RNG ids from an enum class, tk::ctr::RNGType::value, to a compile-time
+  // constant, underlying_type value, facilitating a different pair of
+  // global-scope RNG wrappers (uniform and uniform_bits) with code reuse. Note
+  // that uniform and uniform_bits wrappers must be global-scope as they are
+  // used as external generators to TestU01. Templating them on the id enables
+  // the compiler generate a different wrapper for a different RNG facilitating
+  // simultaneous calls to any or all wrappers as they are unique functions.
+  for (const auto& r : g_inputdeck.get< tag::selected, tk::tag::rng >()) {
     using tk::ctr::RNGType;
     using tk::ctr::raw;
     #ifdef HAS_MKL
@@ -145,10 +155,7 @@ void TestU01Stack::addRNG( tk::ctr::RNGType r )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_rngprops.emplace(
-    r,
-    unif01_CreateExternGen01( const_cast<char*>(tk::ctr::RNG().name(r).c_str()),
-                              uniform< id >, uniform_bits< id > ) );
+  m_rngprops.emplace( r, createTestU01Gen< id >( tk::ctr::RNG().name(r) ) );
 }
 
 const TestU01Stack::RNGProps&

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGPrint.h
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 12:42:34 PM MDT
+  \date      Wed 11 Jun 2014 01:40:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -21,12 +21,6 @@ namespace tk {
 class RNGPrint : public Print {
 
   public:
-    //! Constructor
-    explicit RNGPrint() = default;
-
-    //! Destructor
-    ~RNGPrint() override = default;
-
     #ifdef HAS_MKL
     //! Print all fields of MKL RNG parameters
     void MKLParams( const std::vector< ctr::RNGType >& vec,
@@ -38,15 +32,6 @@ class RNGPrint : public Print {
                        const ctr::RNGSSEParameters& map ) const;
 
   private:
-    //! Don't permit copy constructor
-    RNGPrint(const RNGPrint&) = delete;
-    //! Don't permit copy assigment
-    RNGPrint& operator=(const RNGPrint&) = delete;
-    //! Don't permit move constructor
-    RNGPrint(RNGPrint&&) = delete;
-    //! Don't permit move assigment
-    RNGPrint& operator=(RNGPrint&&) = delete;
-
     #ifdef HAS_MKL
     //! Echo information on MKL random number generator
     void echoMKLParams( const ctr::RNGMKLParam& p ) const;

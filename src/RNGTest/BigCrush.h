@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 07:15:48 PM MDT
+  \date      Mon 16 Jun 2014 11:22:12 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -13,7 +13,8 @@
 
 #include <Option.h>
 #include <Battery.h>
-#include <TestU01Stack.h>
+#include <StatTest.h>
+#include <testu01suite.decl.h>
 
 namespace rngtest {
 
@@ -27,10 +28,9 @@ class BigCrush {
     }
 
     //! Add statistical tests to battery
-    void addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r );
-
-  private:
-    const TestU01Stack stack;
+    void addTests( std::vector< std::function< StatTest() > >& tests,
+                   tk::ctr::RNGType rng,
+                   CProxy_TestU01Suite& proxy );
 };
 
 } // rngtest::

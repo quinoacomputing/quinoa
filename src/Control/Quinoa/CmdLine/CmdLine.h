@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 08:10:24 PM MDT
+  \date      Wed 11 Jun 2014 01:51:25 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -26,7 +26,6 @@ class CmdLine : public tk::Control< // tag    type
   public:
     //! Constructor: set all defaults
     CmdLine() {
-      // Default I/O parameters
       set< tag::io, tag::control >( "" );
       set< tag::io, tag::input >( "" );
       set< tag::io, tag::output >( "out" );
@@ -35,9 +34,6 @@ class CmdLine : public tk::Control< // tag    type
       set< tag::io, tag::stat >( "stat" );
     }
 };
-
-//! CmdLine defaults
-static const CmdLine CmdLineDefaults;
 
 } // ctr::
 } // quinoa::

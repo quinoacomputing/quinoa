@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 08:12:48 PM MDT
+  \date      Sat 21 Jun 2014 10:17:36 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -17,6 +17,9 @@
 
 namespace rngtest {
 
+extern ctr::InputDeck g_inputdeck_defaults;
+extern ctr::InputDeck g_inputdeck;
+
 //! RNGTestPrint : RNGPrint
 class RNGTestPrint : public tk::RNGPrint {
 
@@ -25,19 +28,14 @@ class RNGTestPrint : public tk::RNGPrint {
     using Print::section;
     using Print::item;
 
-    //! Constructor
-    explicit RNGTestPrint( const ctr::InputDeck& control ) : m_ctr( control ) {}
-
-    //! Destructor
-    ~RNGTestPrint() override = default;
-
     //! Print control option: 'group : option' only if differs from its default
     template< class OptionType, typename... tags >
     void Section() const {
-      if (m_ctr.get< tags... >() != ctr::InputDeckDefaults.get< tags... >()) {
+      if (g_inputdeck.get< tags... >() !=
+            g_inputdeck_defaults.get< tags... >()) {
         tk::Option< OptionType > opt;
         auto& group = opt.group();
-        auto& value = opt.name( m_ctr.get< tags... >() );
+        auto& value = opt.name( g_inputdeck.get< tags... >() );
         m_stream << m_section_title_value_fmt % m_section_indent
                                               % m_section_bullet
                                               % group
@@ -49,13 +47,24 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
+    //! Print control option: 'group : option' only if differs from its default
+    template<typename OptionType, typename... tags>
+    void Item() const {
+      if (g_inputdeck.get<tags...>() != g_inputdeck_defaults.get<tags...>()) {
+        tk::Option<OptionType> opt;
+        m_stream << m_item_name_value_fmt % m_item_indent
+                                          % opt.group()
+                                          % opt.name(g_inputdeck.get<tags...>());
+      }
+    }
+
     //! Print battery option: 'group : option (info)' only if differs from def.
     void battery( std::size_t ntest, std::size_t nstat ) const {
-      if (m_ctr.get< tag::selected, tag::battery >() !=
-          ctr::InputDeckDefaults.get< tag::selected, tag::battery >() ) {
-        tk::Option< ctr::Battery > bat;
-        auto& group = bat.group();
-        auto& value = bat.name( m_ctr.get< tag::selected, tag::battery >() );
+      if (g_inputdeck.get< tag::selected, tag::battery >() !=
+          g_inputdeck_defaults.get< tag::selected, tag::battery >() ) {
+        tk::Option< ctr::Battery > b;
+        auto& group = b.group();
+        auto& value = b.name( g_inputdeck.get< tag::selected, tag::battery >() );
         std::stringstream ss;
         ss << value << " (" << ntest << " tests, " << nstat << " stats)";
         m_stream << m_section_title_value_fmt % m_section_indent
@@ -69,36 +78,14 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print control option: 'group : option' only if differs from its default
-    template<typename OptionType, typename... tags>
-    void Item() const {
-      if (m_ctr.get<tags...>() != ctr::InputDeckDefaults.get<tags...>()) {
-        tk::Option<OptionType> opt;
-        m_stream << m_item_name_value_fmt % m_item_indent
-                                          % opt.group()
-                                          % opt.name(m_ctr.get<tags...>());
-      }
-    }
-
-    //! Print statistical test names
-    template< class StatTest, class TestContainer >
-    void names( const TestContainer& tests, std::size_t ntest ) const
-    {
-      for (std::size_t i=0; i<ntest; ++i) {
-        auto npval = tests[i].nstat();
-        for (std::size_t p=0; p<npval; ++p) {
-          std::string name( tests[i].name(p) );
-          if (p>0) name += " *";
-          m_stream << m_list_item_fmt % m_item_indent % name;
-        }
-      }
-      raw( '\n' );
-      raw( m_item_indent + "Note: Tests followed by an asterisk (*) are\n" +
-           m_item_indent + "statistics computed from the preceding test.\n" );
+    //! Print statistical test name(s)
+    void names( const std::vector< std::string >& testnames ) const {
+      for (const auto& n : testnames)
+        m_stream << m_list_item_fmt % m_item_indent % n;
     }
 
     //! Print statistical tests header (with legend)
-    void statshead(const std::string& title) const {
+    void statshead( const std::string& title ) const {
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
                                       % title;
@@ -199,18 +186,6 @@ class RNGTestPrint : public tk::RNGPrint {
         item( t.second, t.first );
       }
     }
-
-  private:
-    //! Don't permit copy constructor
-    RNGTestPrint(const RNGTestPrint&) = delete;
-    //! Don't permit copy assigment
-    RNGTestPrint& operator=(const RNGTestPrint&) = delete;
-    //! Don't permit move constructor
-    RNGTestPrint(RNGTestPrint&&) = delete;
-    //! Don't permit move assigment
-    RNGTestPrint& operator=(RNGTestPrint&&) = delete;
-
-    const ctr::InputDeck& m_ctr;         //!< Parsed control
 };
 
 } // rngtest::

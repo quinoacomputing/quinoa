@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 28 May 2014 10:04:03 PM MDT
+  \date      Wed 11 Jun 2014 04:47:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -21,7 +21,7 @@ namespace tk {
 namespace grm {
 
   //! Parser's printer: this should be defined once per library in global-scope
-  //! by a parser. It is defined in Control/<executable>/CmdLine/Parser.C, since
+  //! by a parser. It is defined in Control/[executable]/CmdLine/Parser.C, since
   //! every executable has at least a command line parser.
   extern Print g_print;
 

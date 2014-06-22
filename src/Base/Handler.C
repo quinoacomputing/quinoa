@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Mon Oct  7 08:07:54 2013
+  \date      Tue 17 Jun 2014 07:18:52 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -10,10 +10,13 @@
 //******************************************************************************
 
 #include <Handler.h>
+#include <rngtest.decl.h>
+
+extern CProxy_Main mainProxy;
 
 namespace tk {
 
-ErrCode processException() noexcept
+void processException()
 //******************************************************************************
 // Process an exception
 //! \details This function can be used to process an exception. The following
@@ -24,32 +27,30 @@ ErrCode processException() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  ErrCode error = ErrCode::SUCCESS;
-
   try {
     throw;      // rethrow exception to deal with it here
   }
     // Catch Quina::Exceptions
-    catch (Exception& qe) {
-      error = qe.handleException();
+    catch ( Exception& qe ) {
+      qe.handleException();
     }
     // Catch std::exception and transform it into Quinoa::Exception without
     // file:line:func information
-    catch (std::exception& se) {
+    catch ( std::exception& se ) {
       Exception qe(ExceptType::RUNTIME, se.what());
-      error = qe.handleException();
+      qe.handleException();
     }
     // Catch uncaught exception
     catch (...) {
       Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
-      error = qe.handleException();
+      qe.handleException();
     }
 
-  // Return error code
-  return error;
+  // Tell the runtime system to exit
+  mainProxy.finalize();
 }
 
-void newHandler() noexcept
+void newHandler()
 //******************************************************************************
 // Quinoa's own new handler
 //! \details This function is automatically called by allocation functions
@@ -61,12 +62,10 @@ void newHandler() noexcept
 {
   try {
     Throw(ExceptType::FATAL, "Cannot allocate memory");
-  } catch (...) {
-      processException();
-    }
+  } catch (...) { processException(); }
 }
 
-void terminateHandler() noexcept
+void terminateHandler()
 //******************************************************************************
 // Quinoa's own terminate handler
 //! \details This function is automatically called when the exception handling
@@ -81,12 +80,10 @@ void terminateHandler() noexcept
 {
   try {
     Throw(ExceptType::FATAL, "Terminate called by uncaught exception");
-  } catch (...) {
-      processException();
-    }
+  } catch (...) { processException(); }
 }
 
-void unexpectedHandler () noexcept
+void unexpectedHandler()
 //******************************************************************************
 // Quinoa's own unexpected handler
 //! \details This function is automatically called when a function throws an
@@ -102,9 +99,7 @@ void unexpectedHandler () noexcept
     Throw(ExceptType::FATAL,
           "Unexpected exception. "
           "Exception specifiers are deprecated since C++11.");
-  } catch (...) {
-      processException();
-    }
+  } catch (...) { processException(); }
 }
 
 } // tk::

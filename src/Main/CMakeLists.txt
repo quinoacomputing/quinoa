@@ -83,8 +83,8 @@ endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
                       RNG
-                      RNGTestControl
                       RNGTest
+                      RNGTestControl
                       Paradigm
                       Base
                       ${TESTU01_PROBDIST_LIBRARY}

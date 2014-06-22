@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Thu 05 Jun 2014 07:39:05 AM MDT
+  \date      Sat 21 Jun 2014 04:41:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ Pack/UnPack utilities
   \details   Charm++ Pack/UnPack utilities
@@ -17,12 +17,12 @@
 namespace tk {
 
 //! Pack/Unpack enum class
-template< typename Enum >
-inline void pup( PUP::er& p, Enum& e ) {
-  using underlying_type = typename std::underlying_type< Enum >::type;
+template< typename E >
+inline void pup( PUP::er& p, E& e ) {
+  using underlying_type = typename std::underlying_type< E >::type;
   underlying_type v = static_cast< underlying_type >( e );
   p | v;
-  e = static_cast< Enum >( v );
+  e = static_cast< E >( v );
 }
 
 //! Use the enum class pack/unpack only for enums
@@ -40,6 +40,22 @@ template< class A, class B >
 inline void pup( PUP::er& p, typename std::pair< A, B >& v ) {
   p | v.first;
   p | v.second;
+}
+
+// Pack/Unpack the length of an STL container
+template< class Container >
+inline std::size_t pup_container_size( PUP::er& p, Container &c ) {
+  auto size = c.size();
+  p | size;
+  return size;
+}
+
+//! Pack/Unpack std::vector of T
+template< class T >
+inline void operator|( PUP::er& p, std::vector< T >& v ) {
+  auto size = pup_container_size( p, v );
+  if (p.isUnpacking()) v.resize( size );
+  for (auto& t : v) p | t;
 }
 
 //! PUP_tuple_impl: specialization for empty std::tuple
@@ -62,19 +78,11 @@ inline void pup_tuple( PUP::er& p, std::tuple< Ts... >& t ) {
   pup_tuple_impl( p, t );
 }
 template< typename... Ts >
-inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup(p,t); }
-
-// Pack/Unpack the length of an STL container
-template< class Container >
-inline std::size_t pup_container_size( PUP::er& p, Container &c ) {
-  auto size = c.size();
-  p | size;
-  return size; 
-}
+inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup_tuple(p,t); }
 
 //! Pack/Unpack std::map
 template< typename KeyType, typename ValueType >
-inline void pup( PUP::er& p, std::map< KeyType, ValueType >& m ) {
+inline void operator|( PUP::er& p, std::map< KeyType, ValueType >& m ) {
   auto size = pup_container_size( p, m );
   if (p.isUnpacking()) {
     for (std::size_t s=0; s<size; ++s) {
@@ -130,13 +138,6 @@ inline void pup( PUP::er& p, std::map< KeyType, ValueType >& m ) {
 //   for (auto& t : v) pup_unique_ptr( p, t, std::move(args)... );
 // }
 
-//! PUP std::vector of T
-template< class T >
-void pup_vector( PUP::er& p, std::vector< T >& v ) {
-  auto size = pup_container_size( p, v );
-  if (p.isUnpacking()) v.resize( size );
-  for (auto& t : v) p | t;
-}
 
 // //! PUP std::map of std::unqiue_ptr
 // template< class K, class T, typename... Args >

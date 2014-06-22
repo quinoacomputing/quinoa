@@ -2,10 +2,13 @@
 /*!
   \file      src/SDE/Dirichlet.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:08:53 2014
+  \date      Wed 11 Jun 2014 04:53:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet SDE
-  \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981
+  \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
+             \f[\mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
+             (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
+             Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1 \f]
 */
 //******************************************************************************
 #ifndef Dirichlet_h

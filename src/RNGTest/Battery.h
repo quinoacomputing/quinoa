@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Fri 06 Jun 2014 11:48:21 AM MDT
+  \date      Sat 21 Jun 2014 05:18:59 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery
   \details   Battery
@@ -11,8 +11,11 @@
 #ifndef Battery_h
 #define Battery_h
 
+#include <functional>
+
 #include <make_unique.h>
-#include <RNGTestPrint.h>
+#include <CharmUtil.h>
+#include <RNGTest/Options/Battery.h>
 
 namespace rngtest {
 
@@ -25,33 +28,54 @@ namespace rngtest {
 class Battery {
 
   public:
-    //! Constructor taking and object modeling Concept (see below)
+    //! Constructor taking an object modeling Concept (see below). The object
+    //! of class T was pre-constructed.
     template< typename T >
     explicit Battery( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
-    //! Constructor taking a function pointer to a constructor of an object
-    //! modeling Concept (see below). Passing std::function allows late
-    //! execution of the constructor, i.e., as late as inside this class'
-    //! constructor, and thus usage from a factory.
-    template< typename T >
+    //! Constructor taking a std::function holding a constructor bound to its
+    //! arguments of an object modeling Concept (see below). Passing
+    //! std::function allows late execution of the constructor of T, i.e., as
+    //! late as inside this class' constructor, and thus usage from a factory.
+    //! Object of T is constructed here. This overload is disabled for Charm++
+    //! chare objects defining typedef 'Proxy', see also below.
+    template< typename T,
+      typename std::enable_if< !tk::HasProxy<T>::value, int >::type = 0 >
     explicit Battery( std::function<T()> x ) :
       self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
+
+    //! Constructor taking a function pointer to a constructor of an object
+    //! modeling Concept (see below). Passing std::function allows late
+    //! execution of the constructor of T, i.e., at some future time, and thus
+    //! usage from a factory. Note that the value of the first function
+    //! argument, std::function<T()>, is not used here, but its constructor
+    //! type, T, is used to enable the compiler to deduce the model constructor
+    //! type, used to create its Charm proxy, defined by T::Proxy. The actual
+    //! constructor of T is not called here but at some future time by the
+    //! Charm++ runtime system, here only an asynchrounous ckNew() is called,
+    //! i.e., a message (or request) for a future call to T's constructor. This
+    //! overload is only enabled for Charm++ chare objects defining typedef
+    //! 'Proxy', which must define the Charm++ proxy. All optional constructor
+    //! arguments are forwarded to ckNew() and thus to T's constructor. If
+    //! it was somehow possible to obtain all bound arguments' types and values
+    //! from an already-bound std::function, we could use those instead of
+    //! having to explicitly forward the model constructor arguments via this
+    //! host constructor. See also tk::recordCharmModel().
+    template< typename T, typename... ConstrArgs,
+      typename std::enable_if< tk::HasProxy<T>::value, int >::type = 0 >
+    explicit Battery( std::function<T()> c, ConstrArgs... args ) :
+      self( tk::make_unique< Model< typename T::Proxy > >
+            (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
+      Assert( c == nullptr, tk::ExceptType::FATAL,
+             "std::function arg to Battery Charm constructor must be nullptr" );
+    }
 
     //! Public interface to running a battery of RNG tests
     void run() const { self->run(); }
 
-    //! Public interface to printing list of registered statistical tests
-    void print( const RNGTestPrint& p ) const { self->print(p); }
-
     //! Public interface to evaluating a statistical test
     void evaluate( std::size_t id ) const { self->evaluate(id); }
-
-    //! Public interface to returning number of statistical tests in battery
-    std::size_t ntest() const { return self->ntest(); }
-
-    //! Public interface to returning number of statistics produced by battery
-    std::size_t nstat() const { return self->nstat(); }
 
     //! Copy assignment
     Battery& operator=( const Battery& x )
@@ -69,11 +93,8 @@ class Battery {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void run() const = 0;
-      virtual void print( const RNGTestPrint& p ) const = 0;
-      virtual void evaluate( std::size_t id ) const = 0;
-      virtual std::size_t ntest() const = 0;
-      virtual std::size_t nstat() const = 0;
+      virtual void run() = 0;
+      virtual void evaluate( std::size_t id ) = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -82,11 +103,8 @@ class Battery {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void run() const override { data.run(); }
-      void print( const RNGTestPrint& p ) const override { data.print(p); }
-      void evaluate( std::size_t id ) const override { data.evaluate(id); }
-      std::size_t ntest() const override { return data.ntest(); }
-      std::size_t nstat() const override { return data.nstat(); }
+      void run() override { data.run(); }
+      void evaluate( std::size_t id ) override { data.evaluate(id); }
       T data;
     };
 

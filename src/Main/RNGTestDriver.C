@@ -2,27 +2,21 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 09:36:30 AM MDT
+  \date      Thu 19 Jun 2014 11:01:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
-#include <make_unique.h>
-
 #include <Print.h>
 #include <Handler.h>
 #include <Factory.h>
-#include <RNG.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/InputDeck/Parser.h>
-#include <RNGTest/InputDeck/InputDeck.h>
 #include <TestU01Suite.h>
-#include <SmallCrush.h>
-#include <Crush.h>
-#include <BigCrush.h>
+#include <TestStack.h>
 
 #ifdef HAS_MKL
 #include <MKLRNG.h>
@@ -30,13 +24,8 @@
 
 namespace rngtest {
 
-#ifdef HAS_MKL
-extern tk::ctr::RNGMKLParameters g_rngmklparam;
-#endif
-
-extern tk::ctr::RNGSSEParameters g_rngsseparam;
-
-extern std::vector< tk::ctr::RNGType > g_selectedrng;
+extern ctr::InputDeck g_inputdeck;
+extern TestStack g_testStack;
 
 } // rngtest::
 
@@ -50,6 +39,7 @@ RNGTestDriver::RNGTestDriver( int argc, char** argv )
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // All global-scope data to be migrated to all PEs initialized here
   try {
 
     // Create simple pretty printer
@@ -59,19 +49,13 @@ RNGTestDriver::RNGTestDriver( int argc, char** argv )
     ctr::CmdLine cmdline;
     CmdLineParser cmdParser( argc, argv, print, cmdline );
 
-    // Parse input deck into m_control, transfer cmdline (no longer needed)
-    InputDeckParser inputdeckParser( print, cmdline, m_control );
+    // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
+    InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
+
+    // Initialize statistical test stack
+    g_testStack = TestStack();
 
     print.endpart();
-
-    // Save RNG parameters to global-scope (needed for migrating the RNGs)
-    #ifdef HAS_MKL
-    g_rngmklparam = m_control.get< tag::param, tk::tag::rngmkl >();
-    #endif
-    g_rngsseparam = m_control.get< tag::param, tk::tag::rngsse >();
-
-    // Save selected RNGs to global-scope (needed for migrating the RNGs)
-    g_selectedrng = m_control.get< tag::selected, tk::tag::rng >();
 
   } catch (...) { tk::processException(); }
 }
@@ -92,48 +76,26 @@ RNGTestDriver::execute()
 
     // Register batteries
     BatteryFactory bf;
-    tk::recordModel< Battery, TestU01Suite< SmallCrush > >
-                   ( bf, ctr::BatteryType::SMALLCRUSH );
-    tk::recordModel< Battery, TestU01Suite< Crush > >
-                   ( bf, ctr::BatteryType::CRUSH );
-    tk::recordModel< Battery, TestU01Suite< BigCrush > >
-                   ( bf, ctr::BatteryType::BIGCRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, ctr::BatteryType::SMALLCRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, ctr::BatteryType::CRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, ctr::BatteryType::BIGCRUSH );
     print.list< ctr::Battery >( "Registered batteries", bf );
 
     //! Echo information on random number generator test suite to be created
     print.endpart();
     print.part("Problem");
 
-    if ( !m_control.get< tag::title >().empty() )
-      print.section("Title", m_control.get< tag::title >());
+    if ( !g_inputdeck.get< tag::title >().empty() )
+      print.section("Title", g_inputdeck.get< tag::title >());
 
     // Instantiate and run battery
-    const auto s = bf.find( m_control.get< tag::selected, tag::battery >() );
+    const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );
     if (s != end(bf)) {
       Battery battery( s->second() );
-
-      // Query number of tests to run
-      auto ntest = battery.ntest();
-
-      if (ntest) {
-        // Create RNGTest-specific pretty printer
-        RNGTestPrint rngprint( m_control );
-
-        rngprint.battery( ntest, battery.nstat() );
-        battery.print( rngprint );
-        rngprint.section("RNGs tested");
-        #ifdef HAS_MKL
-        rngprint.MKLParams( m_control.get< tag::selected, tk::tag::rng >(),
-                            m_control.get< tag::param, tk::tag::rngmkl >() );
-        #endif
-        rngprint.RNGSSEParams( m_control.get< tag::selected, tk::tag::rng >(),
-                               m_control.get< tag::param, tk::tag::rngsse >() );
-        rngprint.raw('\n');
-    
-        //if (battery && m_ntest) //battery->run();
-        //  CProxy_BatteryRunner::ckNew( *m_battery );
-
-      } else Throw( tk::ExceptType::FATAL, "No tests in selected battery" );
+      battery.run();
     } else Throw( tk::ExceptType::FATAL, "Battery not found in factory" );
 
   } catch (...) { tk::processException(); }

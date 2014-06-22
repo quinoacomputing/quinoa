@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sat 09 Nov 2013 03:10:52 PM MST
+  \date      Sat 21 Jun 2014 04:58:22 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -16,6 +16,7 @@
 
 #include <Toggle.h>
 #include <RNGTest/InputDeck/Keywords.h>
+#include <PUPUtil.h>
 
 namespace rngtest {
 namespace ctr {
@@ -25,6 +26,9 @@ enum class BatteryType : uint8_t { NO_BATTERY=0,
                                    SMALLCRUSH,
                                    CRUSH,
                                    BIGCRUSH };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, BatteryType& b ) { tk::pup( p, b ); }
 
 //! Class with base templated on the above enum class with associations
 class Battery : public tk::Toggle< BatteryType > {

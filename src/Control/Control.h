@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 08:09:48 PM MDT
+  \date      Tue 10 Jun 2014 11:05:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Control base
   \details   Control base
@@ -238,6 +238,10 @@ class Control : public tuple::tagged_tuple<Ts...> {
       ss << val;
       return ss.str();
     }
+
+    //! Pack/Unpack
+    void pup( PUP::er& p ) { Tuple::pup(p); }
+    friend void operator|( PUP::er& p, Control<Ts...>& c ) { c.pup(p); }
 };
 
 } // tk::

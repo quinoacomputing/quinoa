@@ -11,9 +11,11 @@ add_library(Base
             Print.C
             RNGPrint.C
             QuinoaPrint.C
+            Msg.C
 )
 
-removeWarnings( "QuinoaPrint.C;RNGPrint.C" )
+addCharmModule( "msg" "Base" )
+removeWarnings( "QuinoaPrint.C;RNGPrint.C;Handler.C;Msg.C" )
 
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION bin COMPONENT Runtime

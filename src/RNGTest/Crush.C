@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 06:36:05 PM MDT
+  \date      Sat 21 Jun 2014 05:22:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -10,22 +10,43 @@
 //******************************************************************************
 
 #include <Crush.h>
+#include <TestU01.h>
+
+namespace rngtest {
+
+extern TestStack g_testStack;
+
+} // rngtest::
 
 using rngtest::Crush;
 
 void
-Crush::addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r )
+Crush::addTests( std::vector< std::function< StatTest() > >& tests,
+                 tk::ctr::RNGType rng,
+                 CProxy_TestU01Suite& proxy )
 //******************************************************************************
 // Add statistical tests to battery
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   // Marsaglia's Serial Over, t = 2
-//   add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
-//                 long, long, int, long, int > >
-//      ( tests, id, gen, rng, StatTest::Names( {"Serial Over t=2"} ),
-//        SerialOver, 1L, 500L * MILLION, 0, 4096L, 2 );
-// 
+  // Select test stack
+  const auto& stack = g_testStack.TestU01;
+
+  // Find RNG properties
+  auto gen = stack.rngprops(rng).ptr.get();
+
+  static const long THOUSAND = 1000;
+  static const long MILLION = THOUSAND * THOUSAND;
+  static const long BILLION = THOUSAND * MILLION;
+
+  // Marsaglia's Serial Over, t = 2
+  stack.add< TestU01< TestU01Props< tag::SerialOver, CProxy_TestU01Suite,
+                                    sres_Basic, sres_CreateBasic,
+                                    sres_DeleteBasic,
+                                    long, long, int, long, int > > >
+     ( proxy, tests, rng, gen, {"Serial Over t=2"},
+       1L, 500L * MILLION, 0, 4096L, 2 );
+
 //   // Marsaglia's Serial Over, t = 4
 //   add< TestU01< sres_Basic, sres_CreateBasic, sres_DeleteBasic,
 //                 long, long, int, long, int > >

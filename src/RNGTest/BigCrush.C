@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 06:36:40 PM MDT
+  \date      Mon 16 Jun 2014 11:21:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -10,11 +10,20 @@
 //******************************************************************************
 
 #include <BigCrush.h>
+#include <TestU01.h>
+
+namespace rngtest {
+
+extern TestStack g_testStack;
+
+} // rngtest::
 
 using rngtest::BigCrush;
 
 void
-BigCrush::addTests( std::vector< StatTest >& tests, tk::ctr::RNGType r )
+BigCrush::addTests( std::vector< std::function< StatTest() > >& tests,
+                    tk::ctr::RNGType rng,
+                    CProxy_TestU01Suite& proxy )
 //******************************************************************************
 // Add statistical tests to battery
 //! \author  J. Bakosi
