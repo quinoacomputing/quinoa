@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:17:24 2013
+  \date      Sun 22 Jun 2014 10:29:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's command line keywords
   \details   All keywords recognized by RNGTest's command line parser. The
@@ -27,10 +27,15 @@ namespace kw {
 
 using namespace pegtl::ascii;
 using tk::kw::cmdline_keyword;
-using tk::kw::undefined_info;
 
 // Keyword 'control', cmdline '--control' with alias '-c'
-using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;
+struct control_info {
+  static const char* name() { return "control"; }
+  static const char* help() { return
+    "This option is used to define the control file containing user input.";
+  }
+};
+using control = cmdline_keyword< control_info, c, c,o,n,t,r,o,l >;
 
 } // kw::
 } // rngtest::

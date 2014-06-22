@@ -1,0 +1,171 @@
+/*!
+  \page      Layout
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 04:49:03 PM MDT
+  \brief     Data layout design
+  \details
+
+Outset
+------
+How should the particle properties should be stored in memory? This is the
+single largest chunk of data that a particle-based code will have. The layout
+determines how the data is accessed and potentially has a first-degree effect on
+overall efficiency.
+
+Possibilities
+-------------
+1. __Particle-major__, in which various physical properties, e.g., position,
+velocity, energy, etc., of a single particle are close to each other in memory.
+For example: [ x1, y1, z1, ..., x2, y2, z2, ..., x3, y3, z3, ... ] where the x*
+are governed by one SDE (e.g., position), the y* are governed by another SDE
+(e.g., velocity), and the z* are governed by a third SDE (e.g., energy), etc.
+Here the first letter denotes a physical quantity, while the second is the
+particle number.  If the algorithm that advances the properties in time applies
+one SDE at a time, the SDEs will access data by having to jump a distance that
+corresponds to the number of scalar physical variables per particle.  In the
+example, the update will have to jump as x1, x2, x3, ... are updated.
+
+2. __Property-major__, in which the same type of physical properties are close
+to each other in memory. For example, [ x1, x2, x3, ..., y1, y2, y3, ..., z1,
+z2, z3, ... ]. The legend here is the same as in particle-major: the first
+letter denotes a physical quantity, while the second is the particle number. If
+the algorithm that advances the properties in time applies one SDE at a time,
+the SDEs will access data contiguously in memory as the properties are
+contiguously stored.
+
+Discussion
+----------
+
+A property-major storage, case 2. above, seems to be the most efficient at first
+sight, as it stores data, as it is read and written by the SDE algorithms,
+contiguously. However, data access is contiguous only if the particle properties
+are independent, i.e., if there is no coupling among the SDEs. Unfortunately,
+this is rarely the case, at least not for fluid dynamics.  For example, position
+is used by the velocity update, and velocity is required by the energy update.
+Depending on the physical approximation, density (or mass) may be required for
+all SDEs. The stronger the SDEs are coupled the more very-far-reads are required
+for a given update. These far-reads are potentially almost always cache misses,
+as the property-major storage stores the physical variables for the same
+particle very far in memory, e.g., the distance between x1 and y1 is the number
+of particles. While the particle-major storage, case 1.  above, inherently
+stores data non-contiguously, the distance between properties of a single
+particle is relatively small, i.e., the number of properties, which may incure
+less cache misses as several particle with all of their properties could fit
+into cache.
+
+Assuming strong coupling among the variables, the particle-major storage will be
+favored, but it would be nice if the design allowed for both layouts, so
+depending on the type of equations (e.g., non-fluid-dynamics) the most
+appropriate layout could be selected. If such a design is maintanable, there is
+still a question wether the data layout selection should be done at compile-, or
+run-time.
+
+Have looked at https://code.google.com/p/blaze-lib, which implements row-, and
+column-major matrix classes based on a template argument. See, e.g.,
+blaze-1.5/blaze/math/dense/StaticMatrix.h, which reveals that the template
+argument (bool) SO selects between row-, or column-major internal storage.  Then
+SO is used at both compile-time (e.g., by the class-user, when instantiating the
+type of the matrix), as well as run-time (e.g., the implementation of
+isDefault()). Both compile-time and run-time usage of the SO template arguments
+are problematic:
+
+  - The compile-time usage duplicates a lot of code by having to provide similar
+  implementations for the element-access operator() of StaticMatrix specialized
+  to column-major. There is a generic implementation for SO for everthing that
+  is agnostic of SO, and there is a specialization when SO = column-major.
+
+  - The run-time usage also duplicates code by doing an if-test on SO in, e.g.,
+  isDefault(). Is there a better way of doing this? If there are only two types
+  of data layout (particle-, and property-major), code duplication should not be
+  too much of an issue. However, the implementation of particle-property data
+  access must be absolutely zero run-time cost. This means the selection must be
+  at compile-time and the element access must be absolutely invisible to the
+  derived SDE classes. In other words, there must be no re-implementation of a
+  time-integrator for an SDE just because the data access is different.
+
+Requirements
+------------
+
+Is it possible to implement this policy via a thin data-access interface with
+zero run-time cost, no code-duplication and in a way that is invisible to
+derived SDE classes?
+
+Zero-cost possible: see [layout assembly](_layout_01assembly.html).
+
+Zero-cost is achieved via type-based compile-time polymorphism. This is
+controlled via the cmake variable LAYOUT.
+
+Since class MonteCarlo stores the particle data, it should be this class that is
+configured via a data-layout policy. Physics classes derive from MonteCarlo and
+hold one or more Models (from which SDEs inherit) and access particle data.
+Neither physics or SDE classes may know anything about the underlying data
+layout. This is to allow a single implementation of member functions
+manipulating particle properties.
+
+The particle data is a logically 3-dimensional array that stores the particle
+properties. In principle there are a total of 6 permutations:
+
+    1. ParEqComp: [ particle ] [ equation ] [ component ]
+    2. ParCompEq: [ particle ] [ component ] [ equation ]
+    3. EqCompPar: [ equation ] [ component ] [ particle ]
+    4. EqParComp: [ equation ] [ particle ] [ component ]
+    5. CompEqPar: [ component ] [ equation ] [ particle ]
+    6. CompParEq: [ component ] [ particle ] [ equation ]
+
+Of these 6 we only consider those where component follows equation. (For those
+layouts where equation follows component the access would be unnecessarily
+complicated by the potentially unequal number of components for different
+equations.) This decision leaves us with
+
+    1. ParEqComp: [ particle ] [ equation ] [ component ]
+    3. EqCompPar: [ equation ] [ component ] [ particle ]
+    4. EqParComp: [ equation ] [ particle ] [ component ]
+
+Access is based on the 3 coordinates: particle, component, and offset.  Particle
+is the particle ID, component denotes the given component of a vector equation,
+e.g., velocity has 3 components, a mix model governed by the Dirichlet SDE has
+K=N-1 scalars (components), and offset is determined by the relative position of
+the given equation compared to other equations. Using these 3 coordinates the
+index calculations for the above 3 cases are:
+
+    1. ParEqComp: [ particle ] [ equation ] [ component ]
+
+         baseptr + particle*nprop + offset + component,
+
+where nprop is the total number of particle properties, e.g., 3 positions, 3
+velocities, 5 scalars -> nprop = 11.
+
+    3. EqCompPar: [ equation ] [ component ] [ particle ]
+
+         baseptr + (offset+component)*npar + particle,
+
+where npar is the total number of particles.
+
+    4. EqParComp: [ equation ] [ particle ] [ component ]
+
+         baseptr + offset*npar + nce*particle + component,
+
+where nce is the number of components for the given equation. Since this would
+require another function argument (besides particle, component, and offset), and
+it costs an integer-multiply more than the other two layouts, we dismiss this
+layout, and only implement:
+
+    1. ParEqComp - Particle-major
+    3. EqCompPar - Equation-major
+
+These options are exposed via the cmake variable LAYOUT and can be switched
+before a build by setting LAYOUT to either 'particle' or 'equation'.
+
+Requirements on MonteCarlo base
+-------------------------------
+
+Policies of a MonteCarlo base class:
+
+ 1. Data-layout policy:
+
+    Specifies which data layout policy is used internally to access particle
+    data. Data-layout policies:
+       - Particle-major
+       - Equation-major
+*/

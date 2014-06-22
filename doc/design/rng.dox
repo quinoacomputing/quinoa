@@ -1,0 +1,31 @@
+/*!
+  \page      RNG
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 05:20:53 PM MDT
+  \brief     Random number generators design
+  \details
+
+RNG requirements (needs more explanation)
+-----------------------------------------
+
+    Nth x Nppt x Nepp x Nt
+    Nth ~ Nn x (Nctpn + Natpn)
+
+    Nppt ~ 
+    Nepp ~ 10^1 -- 10^6
+    Nt ~ 10^9
+
+    NRG MRG32K3A: Nth = 10^19, L = 10^38
+        MT19937 : Nth = 10^19, L = 10^130
+
+    Titan:
+      Nth ~ 10^9
+      Nn = 2x10^4, Nctpn = 16, Natpn = 3x10^3
+    Sequioa:
+      Nth ~ 10^6
+      Nn = 1x10^5, Nctpn = 16
+    Tianhe-2:
+      Nth ~ 3x10^6
+      Nn = 1.6x10^4, Nctpn = 12, Nactpn = 3x61
+*/

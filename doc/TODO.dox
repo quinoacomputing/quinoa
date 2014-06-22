@@ -1,0 +1,113 @@
+/*!
+  \page      TODO
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 05:12:16 PM MDT
+  \brief     Current to-do list
+  \details
+
+Parser/Control
+--------------
+ - Document remaining undocumented keywords
+ - Replace the overloads in Control.h with variadic ones: the implementation
+   of Field template may give a clue on how to do the variadic deep-access
+   for types in tagged tuple, see AA (Modern C++ Design) p69.
+ - Warn on what is set ends up not being used
+ - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
+ - The default output should be a less verbose one, ala 'no news is good
+   news', and the current more verbose one should only be for debugging
+ - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
+ - Would raw-string literals work for keywords in-code documentation?
+ - Automatic generation of grammar/parser documentation
+ - Put in error trap if depvars are the same for two SDEs given
+ - Using the defaults for an RNG in the rngs - end block should not require
+   an 'end', as that is not so user-friendly
+
+RNGTest
+-------
+ - The default output should be a less verbose one, ala 'no news is good
+   news', and the current more verbose one should only be for debugging, i.e.
+   don't output tests passed only the failed ones
+ - RNGSSE:
+    + Put in gaussian(): Gaussian distribution from uniform: STL
+    + Can RNGSSE's generators take a seed?
+    + Hook up SSE versions
+    + Hook up GPU versions
+ - Find and add RNG library alternative to MKL and RNGSSE that works with
+   threads: MKL is non-free and RNGSSE does not work on Mac OS (probably due
+   to its assembly code), cuRAND?
+
+Testing
+-------
+ - Unit tests: GoogleTest, QuickTest, Template Unit Test
+ - Regression tests
+ - Quantify code coverage by tests
+ - Test build with optional libraries on/off (all permutations)
+ - Test suite for exceptions:
+    + Automatically switch each potential throw location into a throw and
+      test for clean exit (e.g. with valgrind)
+    + valgrind can return a different exit code based on errors detected
+      using the command line argument --error-exitcode= to valgrind
+ - Memory testing: CMake/CTest/CDash has built-in support for automated
+   memory testing using valgrind
+ - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
+
+Build
+-----
+ - Put in version-queries for ADIOS and its TPLs
+ - Reduce build deps with ninja build dependency map
+ - Explore dynamic libs, precompiled headers
+   (https://github.com/ducakar/openzone/ uses pch cmake and clang)
+ - Revisit intel-specific compiler arguments; make all non-global if possible
+ - Switch as many TPLs to optional as make sense
+ - Echo "all optional libraries found" or what's missing at what path
+ - Make executables optional
+ - Make children of MonteCarlo optional
+ - Make children of SDEs optional
+ - Make coefficients policies optional
+ - Document what is optional
+ - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
+ - Find out prerequisites (i.e., everyting that is linked in) and document
+   them in README.build
+ - Platforms:
+    + pinto-intel: fix noexcepts
+    + darwin-gnu
+    + helios-gnu
+    + titan-gnu
+    + mac-clang
+
+MeshConv
+--------
+ - Add side/node sets
+ - Add of extra features, e.g., renumbering, partitioning, etc.
+ - Should STLMesh use UnsMesh instead?
+
+Uncategorized
+-------------
+
+ - As the estimation of statistics should be closer (i.e., immediately after)
+   updating the particle properties, the order of the particle properties in
+   memory should be use-selectable at compile time
+
+ - Add floating point exception handler, e.g., based on fenv.h, see also:
+   http://neugierig.org/software/blog/2012/06/backtraces.html
+
+ - Fix destructors: If no exception-specification is provided, the
+   exception-specification is one that that would be used by the
+   implicitly-declared destructor. In most cases, this is noexcept(true).
+
+ - Are cout warnings in destructors' catch blocks exception-safe?
+
+ - Use noexcept and conditional noexcept. See STL 3.1.7.
+
+ - Also add clocks info to timer. See STL 5.7.3.
+
+ - valarrays eligible for more aggressive optimizations, especially on multicore?
+
+ - Any libs for concurrent containers? Would be nice for PDF/JPDF. TBB, NVIDIA
+   Thrust?
+
+ - Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/2013/12/staticassert-better-template-error.html?m=1
+
+ - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
+*/

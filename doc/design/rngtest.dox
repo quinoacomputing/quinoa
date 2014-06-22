@@ -1,0 +1,158 @@
+/*!
+  \page      RNGTest
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 04:53:17 PM MDT
+  \brief     Random number generator test suite design
+  \details
+
+RNGTest
+-------
+RNGTest is used to subject the various random number generators (RNG) to a
+battery of statistical tests. These tests give a quantitative ranking of the
+various generators with respect to their quality and computational cost.
+
+Requirements, features
+----------------------
+Works with different libraries of RNGs: currently Intel's MKL's vector
+statistical library (VSL) RNGs and RNGSSE's RNGs. References:
+ - MKL: https://software.intel.com/en-us/intel-mkl
+ - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022,
+           http://dx.doi.org/10.1016/j.cpc.2013.04.007
+
+There are a large number of other RNG libraries available. An important
+requirement is the ability to generate from parallel streams.
+
+Works with different libraries of statistical tests: currently TestU01's
+smallCrush, Crush, and BigCrush are supported and the design allows for other
+libraries for statistical tests. Reference for TestU01:
+http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+
+The batteries work in parallel: User selects a number of RNGs (with optionally
+specifying options for each, e.g., seed, sequence length, etc.) and a battery of
+statistical tests. The tests are then run concurrently.
+
+As the tests of the battery are run, the various RNGs are timed separately,
+providing a 'generator cost' ranking. The number of passed and failed tests
+provide a 'generator quality' ranking.
+
+Concurrency
+-----------
+At this time, concurrency of RNGTest is via OpenMP, i.e., node-level
+parallelism. Porting to [Charm++](http://charm.cs.illinois.edu) would be
+desirable, which requires serializable objects. Charm++ discourages pointers,
+function pointers, references, while encourages stateless objects (or objects
+with as little and simple state as possible).
+
+Inheritance and runtime polymorphism
+------------------------------------
+Batteries inherit from the base 'Battery'. All currently supported TestU01
+batteries, 'SmallCrush', 'Crush', and 'BigCrush', inherit from 'TestU01Suite', a
+common base, which inherits from 'Battery'. The inheritance of the batteries is
+to facilitate code reuse and polymorphism.  No templates are used for the
+batteries.
+
+Since the individual statistical tests of TestU01 are very similar in structure,
+they are all defined in TestU01Suite and not in the most derived SmallCrush,
+Crush, and BigCrush. The reason is that these various batteries only differ in
+the kinds of tests being run and their arguments, e.g., larger sample sizes for
+a more stringent suite, such as BigCrush.
+
+Individual statistical tests inherit from the base 'StatTest'. TestU01
+statistical tests are very similar but have some differences, e.g., the C
+library function used to create the resuls struct, the number and type of
+parameters, etc. Since there is a large number of tests in each TestU01 battery,
+a great amount of code can be reused by templating TestU01 which still inherits
+from StatTest, so providing polymorphism.
+
+RNGs are also orgainzed into a base class 'RNG' and derived classes for MKL and
+RNGSSE generators to facilitate runtime polymorphism. This used not only in
+RNGTest but other parts of the code, e.g., used for Monte Carlo simulations.
+
+As discussed above, there are three different dimensions of runtime polymorphism
+in RNGTest: (1) the RNGs, (2) the statistical tests, and (3) the test suites.
+
+Instantiation using factories: In those cases where the instantiation of the
+object (i.e., which object to instantiate) depends on user input (RNGs and test
+suites), polymorphism is facilitated by factories. Factories are std::maps
+(associative containers) that hold function objects and enable lookup based on a
+key, e.g., an enum based on user input. Function objects are essentially smart
+function pointers, holding various derived-class constructors and their
+constructor arguments These function pointers and their arguments (i.e., how to
+invoke them) are stored by std::function, but the object is not instantiated.
+The object is instantiated after a lookup (based on a key), after which the
+constructor is called thereby instantiating the derived object. For RNGs this
+map is RNGFactory, for test suites it is BatteryFactory.
+
+Instantiation without factory: In the case when all registered objects have to
+instantiated, there is no need for a factory, the base class pointers are
+initialized by instantiating derived objects and held in a vector. This is the
+case for statistical tests.
+
+Global-scope wrappers
+---------------------
+In RNGTest both the RNGs and the statistical test suites are provided by
+third-party libraries. This constrains how the RNGs must be called by the
+batteries as the RNGs must be passed, as external generators, to the statistical
+test suites. Since the currently only supported set of batteries (TestU01) are a
+C library, this is done through global-scope wrappers.
+
+The RNGs, wrapped through the base 'RNG' and children 'MKLRNG' and 'RNGSSERNG',
+are invoked via the polymorphic base. While the RNGs are instantiated via
+RNGFactory (discussed above), to be able to call any of the instantiated RNGs at
+the same time, we need as many base class pointers as the maximum number of RNGs
+- currently 25. In principle, this requires 25 global-scope almost identical
+wrappers so that we can pass them into TestU01. Note that the function signature
+TestU01 accepts is the same for all RNGs. Templating the global-scope wrappers
+on an integer, however, allows to write the wrapper only once and let the
+compiler generate the 25 slightly different wrappers, differring only in which
+polymorphic RNG needs to be called by TestU01. This requires the global-scope
+wrappers to rely on a global-scope vector of polymorphic RNG pointers and a
+global-scope thread id, as the function signature TestU01 accepts does not allow
+this information (which RNG I want it to call from some list and which parallel
+thread-stream I want the next number from). The current solution thus holds a
+global-scope std::vector of std::unique_ptr of RNG base class pointers into
+which the global-scope wrappers index into based on an integer template
+argument. This works well with a lot of code-reuse.
+
+Porting to Charm++
+------------------
+The above features, facilitating polymorphism, code reuse, e.g., factories,
+etc., would be certainly desirable to keep in
+[Charm++](http://charm.cs.illinois.edu). However, the Charm++ implementation
+imposes additional challenges, especially in the view of the constrains yielding
+to the global-scope wrappers. Some challenges specific to a Charm++
+implementation:
+
+ - The global-scope trickery, especially with the polymorphic base class 'RNG'
+   pointers, is a challenge as any global-scope object in Charm++ must be
+initialized in the main chare and must be serializable so that the runtime
+system can migrate them to across the network. This means that the vector of
+base 'RNG' pointers should be re-creatable after migration. This may also mean
+that its factory must also be in global scope and migratable. How to migrate
+std::function is a question.
+
+ - Conveniently holding references to Base is hardly an option with Charm++
+   objects that should be migratable. Making Base migratable is not a viable
+option and seems wasteful when only a small part of the data is needed by a
+class. Passing and storing only what's needed certainly seems like a more
+walkable route.
+
+ - All migratable objects must have as little state as possible. This is for
+   reasons of code complexity (less PUP routines to write and maintain), as well
+as computational cost (less data to migrate).
+
+ - Runtime polymophism among migratable objects is possible in Charm++ via
+   abstract classes deriving from PUP::able and wrapper chares.
+
+ - Converting each statistical test in a suite seems like the most
+   straightforward to start with when porting to Charm++. However, class TestU01
+currently holds some nontrivial state which requires custom PUP routines and is
+also polymorphic with base StatTest. Furthermore, once a test was finished there
+should be a way to pass the control flow back to the invoking suite to evaluate
+the just-finished test. Does this require the suite be a chare object as well?
+(That is also polymorphic and holds some nontrivially migratable state.) How
+much Charm++ helps already with these issues? E.g., PUP routines for STL
+containers exist, but some are not optimal and don't use the latest C++
+standard.
+*/

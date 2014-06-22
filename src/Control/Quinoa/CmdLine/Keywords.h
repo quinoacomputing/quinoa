@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 10:57:20 AM MST
+  \date      Sun 22 Jun 2014 10:29:52 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -30,7 +30,13 @@ using tk::kw::cmdline_keyword;
 using tk::kw::undefined_info;
 
 // Keyword 'control', cmdline '--control' with alias '-c'
-using control = cmdline_keyword<undefined_info, c, c,o,n,t,r,o,l>;
+struct control_info {
+  static const char* name() { return "control"; }
+  static const char* help() { return
+    "This option is used to define the control file containing user input.";
+  }
+};
+using control = cmdline_keyword< control_info, c, c,o,n,t,r,o,l >;
 
 // Keyword 'input', cmdline '--input' with alias '-i'
 using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;
