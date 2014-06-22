@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 03:56:04 PM MDT
+  \date      Sun 22 Jun 2014 10:36:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConv's command line keywords
   \details   All keywords recognized by MeshConv's command line parser. The
@@ -28,13 +28,24 @@ namespace kw {
 
 using namespace pegtl::ascii;
 using tk::kw::cmdline_keyword;
-using tk::kw::undefined_info;
 
 // Keyword 'input', cmdline '--input' with alias '-i'
-using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;
+struct input_info {
+  static const char* name() { return "input"; }
+  static const char* help() { return
+    "This option is used to define the input file.";
+  }
+};
+using input = cmdline_keyword< input_info, i, i,n,p,u,t >;
 
 // Keyword 'output', cmdline '--output' with alias '-o'
-using output = cmdline_keyword<undefined_info, o, o,u,t,p,u,t>;
+struct output_info {
+  static const char* name() { return "output"; }
+  static const char* help() { return
+    "This option is used to define the output file.";
+  }
+};
+using output = cmdline_keyword< output_info, o, o,u,t,p,u,t >;
 
 } // kw::
 } // meshconv::

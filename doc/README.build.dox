@@ -1,0 +1,35 @@
+/*!
+  \page      Build
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 05:19:07 PM MDT
+  \brief     How to build
+  \details
+
+Building quinoa requires three steps:
+-------------------------------------
+
+1. __Pick compilers:__
+~~~
+    $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+~~~
+
+2. __Build third-party libraries in empty build dir:__
+~~~
+    $ cmake <path-to-tpl-dir>
+    $ make
+~~~
+   \note Fastest in a non-networked mount, e.g., /tmp
+   \note If you don't set CMAKE_INSTALL_PREFIX, it will default to
+   <path-to-tpl-dir>/install/<compiler>.
+
+3. __Build quinoa in empty build dir:__
+~~~
+    $ cmake <path-to-src-dir>
+    $ make
+~~~
+   \note If you don't set TPL_DIR, it will default to
+   <path-to-tpl-dir>install/<compiler>.
+
+   \note The executables will be in <build>/Main.
+*/

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
-  \date      Fri Jan 31 09:19:57 2014
+  \date      Sun 22 Jun 2014 10:34:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
@@ -21,8 +21,18 @@ namespace kw {
 
 using namespace pegtl::ascii;
 
-// Random number generator seed
-using seed = keyword<kw::undefined_info, s,e,e,d >;
+// Keyword 'seed'
+struct seed_info {
+  static const char* name() { return "seed"; }
+  static const char* help() { return
+    "This keyword is used to denote the random number generator seed, if "
+    "applicable. Example:\n"
+    "\trngsse_gm55\n"
+    "\t  seed 1234\n"
+    "\tend";
+  }
+};
+using seed = keyword< seed_info, s,e,e,d >;
 
 } // kw::
 } // tk::

@@ -1,5 +1,13 @@
-Concurrency strategies:
-=======================
+/*!
+  \page      Concurrency
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 04:48:21 PM MDT
+  \brief     Concurrency design
+  \details
+
+Concurrency strategies
+======================
 
 The strategy chosen for concurrency is probably the most decisive factor
 affecting performance. Obviously, it is impossible to pick a single concurrency
@@ -11,8 +19,8 @@ only the details of the various strategies, but also the as-of-yet unknown
 hardware they are and would be running on), no ranking will be attempted among
 the approaches. This is only a list of ideas.
 
-1. ALL-TO-ALL-STATS
-===================
+ALL-TO-ALL-STATS
+----------------
 The inhomogeneity here is PIC-based (see doc/design/inhomogeneity.txt) and so
 this concurrency strategy requires a mesh. The idea is to only have to
 communicate the domain-statistics among distributed compute nodes and nothing
@@ -34,26 +42,26 @@ cost of field solver is almost negligible.
 
 Two important advantages of this strategy are:
 
-  (1) Perfect and non-changing load-balance for both particle updates and
-      field-solvers, as the number of particles as well as the mesh on a compute
-      node remain the same throughout time stepping,
+  1. Perfect and non-changing load-balance for both particle updates and
+     field-solvers, as the number of particles as well as the mesh on a compute
+     node remain the same throughout time stepping,
 
-  (2) Simplicity of the code: since only the mesh-based statistics require
-      communication, there is
-        * a single large chunk of contiguous array need to be communicated (a
+  2. Simplicity of the code: since only the mesh-based statistics require
+     communication, there is
+        - a single large chunk of contiguous array need to be communicated (a
           single all-to-all per time step),
-        * no need for graph-coloring algorithms,
-        * no need for complex parallel initial I/O and initial load-balancing,
-        * no need for distributed linear solvers (no hard-to-parallelize
+        - no need for graph-coloring algorithms,
+        - no need for complex parallel initial I/O and initial load-balancing,
+        - no need for distributed linear solvers (no hard-to-parallelize
           dot-products, matrix-vector-products, preconditioners; no need for
           monster linear algebra libraries: no petsc, no trilinos, etc.),
-        * no need for complex low-level compute-node-pair-wise load balancing,
-        * no need for communicating particles and their properties,
-        * no need for dynamic load-balancing (as would be absolutely required by
+        - no need for complex low-level compute-node-pair-wise load balancing,
+        - no need for communicating particles and their properties,
+        - no need for dynamic load-balancing (as would be absolutely required by
           a geometry-based particle-communicating algorithm),
 
-  (3) Due to simplicity of code, adaptive mesh refinement (AMR) is easier to
-      implement, and separate from the existing field solver.
+  3. Due to simplicity of code, adaptive mesh refinement (AMR) is easier to
+     implement, and separate from the existing field solver.
 
 This strategy requires the full Eulerian mesh fit into a single compute node.
 This is obviously a limitation compared to those distributed concurrency
@@ -66,13 +74,13 @@ the analysis should not change in outcome. A single tetrahedron consists of 4
 vertices, each of which has 3 components. Then the memory cost of a single
 tetrahedron is
 
-4 (vertices) x 3 (coordinates) x 8 (double floating point Bytes) = 96 Bytes.
+    4 (vertices) x 3 (coordinates) x 8 (double floating point Bytes) = 96 Bytes.
 
 As for all unstructured grids, connectivity information must also be stored,
 which is an array of 5 integers (1 index + 4 vertex indices) for a tetrahedron.
 The memory usage of the connectivity is
 
-5 x 4 (size of int) = 20 Bytes.
+    5 x 4 (size of int) = 20 Bytes.
 
 The approximate memory cost of a single tetrahedron cell is thus 116 Bytes.
 
@@ -82,70 +90,61 @@ Obviously, it's not only the mesh we need in memory, but this is a good
 approximate upper bound for this back-of-the-envelope memory-estimation for the
 all-to-all-stats strategy.
 
-Besides the mesh, those statistics that are required for the ongoing simulation
-(i.e., updating the particles) are also required to be stored in memory. We
+Besides the mesh, those statistics that are required for the ongoing simulation,
+i.e., updating the particles, are also required to be stored in memory. We
 examine two different algorithms, an existing one and a hypothetical one:
 
-    ----------------------------------------------------------------------------
-    (1) Standalone PDF method for incompressible flow with elliptic relaxation
-    (i.e., wall-resolution, see http://dx.doi.org/10.1016/j.jcp.2008.02.024)
-    ----------------------------------------------------------------------------
+1. __Standalone PDF method for incompressible flow with elliptic relaxation,__
+   i.e., wall-resolution, see http://dx.doi.org/10.1016/j.jcp.2008.02.024
 
-    The memory usage of the particle properties per cell:
+   The memory usage of the particle properties per cell:
 
-      * position:                  3 x 8 Bytes
-      * velocity:                  3 x 8 Bytes
-      ----------------------------------------
+        position:                  3 x 8 Bytes
+        velocity:                  3 x 8 Bytes
                                total: 48 Bytes
 
     The memory usage of statistics (defined at grid points or cell-centers) per
     cell that need to be communicated:
 
-      * mean velocity:             3 x 8 Bytes
-      * mean turbulence frequency:     8 Bytes
-      * Reynolds stress tensor:    6 x 8 Bytes
-      ----------------------------------------
+        mean velocity:             3 x 8 Bytes
+        mean turbulence frequency:     8 Bytes
+        Reynolds stress tensor:    6 x 8 Bytes
                                total: 80 Bytes
 
     The memory usage of statistics per cell that do not need to be communicated
     (but still need to be stored in a compute node's memory, at grid points or
     cell-centers):
 
-      * mean pressure:                 8 Bytes
-      * wiggly-p_{ij}:             9 x 8 Bytes
-      ----------------------------------------
+        mean pressure:                 8 Bytes
+        wiggly-p_{ij}:             9 x 8 Bytes
                                total: 80 Bytes
 
     We assume 500 particles per cell. Thus the total memory usage of a single
     cell with particles is
 
-    48 x 500 + 116 + 160 = 24,176 Bytes or approximately 24 KB
+        48 x 500 + 116 + 160 = 24,176 Bytes or approximately 24 KB
 
     This means that in 32 GB, approximately, 1.4 million cells fit (each with
     500 particles).
 
-    ----------------------------------------------------------------------------
-    (2) Standalone PDF method for compressible flow (hypothetical algorithm
-    with no turbulence model, does not yet exist, we can only guess what
-    statistics are needed)
-    ----------------------------------------------------------------------------
+2. __Standalone PDF method for compressible flow__ (hypothetical algorithm with
+   no turbulence model, does not yet exist, we can only guess what statistics
+   are needed)
 
     The memory usage of the particle properties per cell:
 
-      * position:                  3 x 8 Bytes
-      * density:                       8 Bytes
-      * velocity:                  3 x 8 Bytes
-      * energy:                        8 Bytes
-      ----------------------------------------
+        position:                  3 x 8 Bytes
+        density:                       8 Bytes
+        velocity:                  3 x 8 Bytes
+        energy:                        8 Bytes
                                total: 64 Bytes
 
     The memory usage of statistics (defined at grid points or cell-centers) per
     cell that need to be communicated:
 
-      * mean density:                  8 Bytes
-      * mean velocity:             3 x 8 Bytes
-      * mean energy:                   8 Bytes
-      ----------------------------------------
+        mean density:                  8 Bytes
+        mean velocity:             3 x 8 Bytes
+        mean energy:                   8 Bytes
                                total: 40 Bytes
 
     The memory usage of statistics per cell that do not need to be communicated
@@ -157,7 +156,7 @@ examine two different algorithms, an existing one and a hypothetical one:
     We assume 500 particles per cell. Thus the total memory usage of a single
     cell with particles is
 
-    64 x 500 + 116 + 40 = 32,160 Bytes or approximately 32 KB
+        64 x 500 + 116 + 40 = 32,160 Bytes or approximately 32 KB
 
     This means that in 32 GB, approximately, 1.0 million cells fit (each with
     500 particles).
@@ -165,49 +164,50 @@ examine two different algorithms, an existing one and a hypothetical one:
 Obviously, the larger the mesh, the more communication occurs, however, in one
 single large chunk per time step.
 
-Communication cost estimate:
-----------------------------
+Communication cost estimate
+---------------------------
 Here is a cost estimate of the necessary all-to-all communication, compared to
 one-to-one communication required by a geometric concurrency strategy:
 
-1. Geometric decomposition, point-to-point:
-Using a geometric decomposition of a mesh with N^3 cells requires only
-point-to- point (p2p) communications but of particles and their properties. If
-the computational domain is a cube with sides of N cells, each cell has n
-particles with r physical properties, and we assume explicit time stepping with
-approximately unit CFL (i.e., approximately all particles leave their cell on a
-compute node boundary and therefore must be communicated), the cost of
-communication is
+1. __Geometric decomposition, point-to-point:__
+   Using a geometric decomposition of a mesh with N^3 cells requires only
+   point-to-point (p2p) communications but of particles and their properties.
+   If the computational domain is a cube with sides of N cells, each cell has n
+   particles with r physical properties, and we assume explicit time stepping
+   with approximately unit CFL (i.e., approximately all particles leave their
+   cell on a compute node boundary and therefore must be communicated), the cost
+   of communication is
 
-C(geo+p2p) = N^2 * n * r log2(P)
+    \f[ C(\textrm{geo+p2p}) = N^2 * n * r * \log_2(P) \f]
 
-Here P is the number of compute nodes (among which communication is required).
-The N^2 comes from the geometric nature of subdivision of the N^3 domain: every
-slice will add a communication cost of a N^2-cost surface (along which
-communication must take place). The geometric decomposition also results in
-doubling the number of compute nodes with each division, hence the
-log2(P)-dependence. Typical values of n are in the range of 100-500, while r
-could be as few as 6 (incompressible flow: 3 position + 3 velocity components),
-and as many as 100s (single-material flow + chemistry with approximately 90
-species).
+    Here P is the number of compute nodes (among which communication is
+    required). The N^2 comes from the geometric nature of subdivision of the N^3
+    domain: every slice will add a communication cost of a N^2-cost surface
+    (along which communication must take place). The geometric decomposition
+    also results in doubling the number of compute nodes with each division,
+    hence the log2(P)-dependence. Typical values of n are in the range of
+    100-500, while r could be as few as 6 (incompressible flow: 3 position + 3
+    velocity components), and as many as 100s (single-material flow + chemistry
+    with approximately 90 species).
 
-2. Particle-array-slices, all-to-all:
-Using an all-to-all decomposition (i.e., only on the particle properties are
-subdivided), yields a communication cost of
+2. __Particle-array-slices, all-to-all:__
+   Using an all-to-all decomposition (i.e., only on the particle properties are
+   subdivided), yields a communication cost of
 
-C(par+a2a) = N^3 * r * (P-1)
+   \f[ C(par+a2a) = N^3 * r * (P-1) \f]
 
-since the particles are not communication, but the statistics (at least the
-means) must still be communicated. (However, higher order-statistics might
-still be required for advanced mixing models, further increasing communication
-costs.)
+   since the particles are not communication, but the statistics (at least the
+   means) must still be communicated. (However, higher order-statistics might
+   still be required for advanced mixing models, further increasing communication
+   costs.)
 
-Plotting the above two cost-functions (using N=100, n=100, r=100),
+   Plotting the above two cost-functions (using N=100, n=100, r=100),
 
-plot [1:1e+7] 1.0e+8*log(x)/log(2), 1.0e8*(x-1)
+       gnuplot> plot [1:1e+7] 1.0e+8*log(x)/log(2), 1.0e8*(x-1)
 
-reveals that, not surprisingly, the all-to-all strategy is prohibitively
-expensive, for all number of compute nodes. Additionally, the non-geometric
-strategy has the major limitation that the full mesh must fit into every
-compute node's memory. This major limitation combined with the prohibitive
-communication cost renders the all-to-all strategy not worthwhile.
+   reveals that, not surprisingly, the all-to-all strategy is prohibitively
+   expensive, for all number of compute nodes. Additionally, the non-geometric
+   strategy has the major limitation that the full mesh must fit into every
+   compute node's memory. This major limitation combined with the prohibitive
+   communication cost renders the all-to-all strategy not worthwhile.
+*/

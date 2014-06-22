@@ -1,0 +1,68 @@
+/*!
+  \page      Input/Output
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sun 22 Jun 2014 04:48:43 PM MDT
+  \brief     I/O design
+  \details
+
+Input/Output for PIC-based inhomogeneity strategy
+=================================================
+
+For more on PIC-based inhomogeneity strategy, see the document on the
+[inhomogeneity strategies](_inhomogeneity.html).
+
+Input format requirements
+-------------------------
+An algorithm based on a PIC-based inhomogeneity strategy requires an Eulerian
+mesh. Examples of supported mesh generators:
+
+  - Gmsh, http://www.geuz.org/gmsh
+  - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
+  - Cubit, https://cubit.sandia.gov
+  - Hexpress/Hybrid,
+    http://www.numeca.com/en/products/automeshtm/hexpresstmhybrid
+  - Any other generator that outputs the input formats below
+
+Input mesh file formats supported:
+  - Gmsh ASCII
+  - Gmsh Binary
+  - Netgen Neutral
+  - ExodusII HDF5 (.h5 from Hexpress/Hybrid)
+  - Quinoa native (based on ADIOS schema and .bp)
+
+Output types
+------------
+  1. Eulerian-mesh (field)
+  2. Checkpoint-Restart (particle and/or field)
+  3. Glob (text)
+  4. Statistics (text)
+  5. PDF, Joint PDF, Marginal PDF, Conditional PDF, etc. (text, Gmsh)
+
+Input/Output requirements:
+--------------------------
+  1. __Fields I/O:__
+     - For large binary fields I/O we will use ExodusII HDF5 (single file and
+       multiple files), and Quinoa's native mesh format based on ADIOS schema
+       and .bp format.
+     - For Exodus I/O we will use the Seacas/ExodusII library in Trilinos.
+
+  2. __Particles I/O:__
+     - For large binary particle I/O we will explore H5Part (http://vis.lbl.gov/
+       Research/H5Part), a particle-centric I/O format based on HDF5.
+     - We may also develop a native particles format based on ADIOS schema and
+       .bp format.
+
+  3. __Fields + Particles I/O:__
+     - For large binary field + particle I/O (same or separate file) we will use
+       the ADIOS library (https://www.olcf.ornl.gov/center-projects/adios),
+       which facilitates both file-based and stream-based I/O.
+     - The stream-based ADIOS I/O API can be used for both file-based and
+       stream-based I/O, the latter facilitating staging and in-situ
+       visualization (and debugging), e.g., via DataSpaces, NSSI, DataTap,
+       DIMES, FlexPath, ParaView/Catalyst (this latter is not yet available).
+     - We will develop our native fields + particles format based on ADIOS
+       schema and .bp format.
+     - Using the ADIOS visualization schema (or pulling our own) we will need
+       to write our own ParaView reader plugin(s).
+*/
