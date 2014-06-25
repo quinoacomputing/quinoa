@@ -1,12 +1,10 @@
 /*!
-  \page      "Layout assembly"
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:06:49 PM MDT
-  \brief     Particle data layout performance test -- assembly code
-  \details
+  \page      layout_assembly Layout assembly
 
-See also [layout benchmark](_layout_01benchmark.html).
+Particle data layout performance test -- assembly code
+======================================================
+
+See also [layout benchmark](layout_benchmark.html).
 
 Initial version of zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
 --------------------------------------------------------------------------------
@@ -97,6 +95,7 @@ Generated DEBUG assembly code of the assignments of aa (line 42) and bb (line
 gnu and intel generate very similar code:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
      .loc    143 42 20  # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:42:20
 .Ltmp27038:
      lea     RDI, QWORD PTR [RBP - 56]
@@ -120,6 +119,7 @@ gnu and intel generate very similar code:
      movsxd  RDI, DWORD PTR [RCX + 52]
      movsd   XMM0, QWORD PTR [RDX + 8*RDI + 24]
      movsd   QWORD PTR [RCX + 16], XMM0
+...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Line 42 translates to register loads and a function call into
@@ -168,6 +168,7 @@ Generated RELWITHDEBINFO assembly code of the assignments of aa (line 42) and bb
 --x86-asm-syntax=intel, gnu and intel generate very similar optimized code:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
      .loc    144 42 20  # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:42:20
      movsd   XMM0, QWORD PTR [R14 + 8*RAX + 24]
      movsd   QWORD PTR [R13 + 8], XMM0
@@ -175,6 +176,7 @@ Generated RELWITHDEBINFO assembly code of the assignments of aa (line 42) and bb
      mov     RCX, QWORD PTR [R13 + 32]
      movsd   XMM0, QWORD PTR [RCX + 8*RAX + 24]
      movsd   QWORD PTR [R13 + 16], XMM0
+...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Both lines 42 and 43 translate to very similar SSE loads with pointer
@@ -194,4 +196,9 @@ Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
 > quadword of an XMM register or vice versa, or between XMM registers.
 > Alignment of the memory address is not required, unless alignment checking is
 > enabled.
+
+<hr>
+  \date      Wed 25 Jun 2014 08:44:51 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

@@ -1,10 +1,5 @@
 /*!
-  \page      Input/Output
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:48:43 PM MDT
-  \brief     I/O design
-  \details
+  \page      io Input/Output strategy
 
 Input/Output for PIC-based inhomogeneity strategy
 =================================================
@@ -65,4 +60,9 @@ Input/Output requirements:
        schema and .bp format.
      - Using the ADIOS visualization schema (or pulling our own) we will need
        to write our own ParaView reader plugin(s).
+
+<hr>
+  \date      Wed 25 Jun 2014 08:44:40 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

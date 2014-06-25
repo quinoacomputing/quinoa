@@ -1,22 +1,14 @@
 /*!
-  \page      Algorithm
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:48:11 PM MDT
-  \brief     Algorithm design
-  \details
-
-Algorithm design
-================
+  \page      algorithm Algoritm design
 
 It is essential that the algorithms are aware of (and optimize for) the three
 (sometimes opposing) requirements:
 
-1. Performance (e.g., maximize FLOPS, minimize communication)
+1. __Performance__ (e.g., maximize FLOPS, minimize communication)
 
-2. Correctness (e.g., resilience against errors, fault tolerance)
+2. __Correctness__ (e.g., resilience against errors, fault tolerance)
 
-3. Power consumption
+3. __Power consumption__
 
 Requirements
 ------------
@@ -84,4 +76,9 @@ Options for runtime power measurement
 
    _Status_ Documentation does not exist, the linux library compiles but the
    executable fails to compile.
+
+<hr>
+  \date      Wed 25 Jun 2014 08:43:42 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

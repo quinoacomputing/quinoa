@@ -1,10 +1,5 @@
 /*!
-  \page      Layout
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:49:03 PM MDT
-  \brief     Data layout design
-  \details
+  \page      layout Data layout design
 
 Outset
 ------
@@ -168,4 +163,9 @@ Policies of a MonteCarlo base class:
     data. Data-layout policies:
        - Particle-major
        - Equation-major
+
+<hr>
+  \date      Wed 25 Jun 2014 08:45:12 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

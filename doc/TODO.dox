@@ -1,14 +1,8 @@
 /*!
-  \page      TODO
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 05:12:16 PM MDT
-  \brief     Current to-do list
-  \details
+  \page      todo To-do list
 
 Parser/Control
 --------------
- - Document remaining undocumented keywords
  - Replace the overloads in Control.h with variadic ones: the implementation
    of Field template may give a clue on how to do the variadic deep-access
    for types in tagged tuple, see AA (Modern C++ Design) p69.
@@ -17,8 +11,6 @@ Parser/Control
  - The default output should be a less verbose one, ala 'no news is good
    news', and the current more verbose one should only be for debugging
  - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
- - Would raw-string literals work for keywords in-code documentation?
- - Automatic generation of grammar/parser documentation
  - Put in error trap if depvars are the same for two SDEs given
  - Using the defaults for an RNG in the rngs - end block should not require
    an 'end', as that is not so user-friendly
@@ -67,8 +59,7 @@ Build
  - Make coefficients policies optional
  - Document what is optional
  - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
- - Find out prerequisites (i.e., everyting that is linked in) and document
-   them in README.build
+ - Add support for PGI (if C++11 is complete)
  - Platforms:
     + pinto-intel: fix noexcepts
     + darwin-gnu
@@ -81,6 +72,15 @@ MeshConv
  - Add side/node sets
  - Add of extra features, e.g., renumbering, partitioning, etc.
  - Should STLMesh use UnsMesh instead?
+
+Documentation
+-------------
+ - Find out build prerequisites (i.e., everyting that is linked in) and document
+   them in README.build
+ - Document remaining undocumented keywords
+ - Would raw-string literals work for keywords in-code documentation?
+ - Automatic generation of grammar/parser documentation
+ - Fill details on TPL page
 
 Uncategorized
 -------------
@@ -110,4 +110,9 @@ Uncategorized
  - Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/2013/12/staticassert-better-template-error.html?m=1
 
  - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
+
+<hr>
+  \date      Wed 25 Jun 2014 08:42:42 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

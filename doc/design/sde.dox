@@ -1,10 +1,5 @@
 /*!
-  \page      SDE
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 05:02:15 PM MDT
-  \brief     Stochastic differential equations design
-  \details
+  \page      sde Stochastic differential equations design
 
 General requirements
 --------------------
@@ -98,4 +93,9 @@ Requirements on SDE Dirichlet
    + What new requirements and constraints does spatial inhomogeneity entail?
      This may only affect a functional coefficients policy that is used to
      define a spatially inhomogeneous Dirichlet SDE model.
+
+<hr>
+  \date      Wed 25 Jun 2014 08:45:48 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

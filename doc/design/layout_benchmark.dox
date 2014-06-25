@@ -1,12 +1,10 @@
 /*!
-  \page      "Layout benchmark"
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:23:18 PM MDT
-  \brief     Particle data layout performance tests -- input file and algorithms
-  \details
+  \page      layout_benchmark Layout benchmark
 
-See also [layout assembly](_layout_01assembly.html).
+Particle data layout performance tests -- input file and algorithms
+===================================================================
+
+See also [layout assembly](layout_assembly.html).
 
 Control file used for benchmark
 -------------------------------
@@ -201,4 +199,8 @@ at compile time. Access will be abstracted (and optimized) away.
 
 For the implementation see the [layout policy](_layout_policy_8h_source.html).
 
+<hr>
+  \date      Wed 25 Jun 2014 08:45:00 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */
