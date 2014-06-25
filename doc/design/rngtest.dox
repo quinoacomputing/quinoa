@@ -1,13 +1,6 @@
 /*!
-  \page      RNGTest
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:53:17 PM MDT
-  \brief     Random number generator test suite design
-  \details
+  \page      rngtest_design Random number generator test suite design
 
-RNGTest
--------
 RNGTest is used to subject the various random number generators (RNG) to a
 battery of statistical tests. These tests give a quantitative ranking of the
 various generators with respect to their quality and computational cost.
@@ -155,4 +148,9 @@ the just-finished test. Does this require the suite be a chare object as well?
 much Charm++ helps already with these issues? E.g., PUP routines for STL
 containers exist, but some are not optimal and don't use the latest C++
 standard.
+
+<hr>
+  \date      Wed 25 Jun 2014 08:45:39 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

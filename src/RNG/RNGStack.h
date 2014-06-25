@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Main/RNGStack.h
+  \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 01:45:23 PM MDT
+  \date      Tue 24 Jun 2014 07:47:20 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of random number generators
   \details   Stack of random number generators

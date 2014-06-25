@@ -1,13 +1,5 @@
 /*!
-  \page      Inhomogeneity
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:48:32 PM MDT
-  \brief     Inhomogeneity strategy
-  \details
-
-Inhomogeneity strategy
-=======================
+  \page      inhomogeneity Inhomogeneity strategy
 
 General discussion
 -------------------
@@ -115,4 +107,9 @@ Disadvantages of a SPH-based strategy
    methods: SPH, mesh-free methods, etc.
  - Problems only pertinent to particle methods need to be dealt with, e.g.,
    tension instability
+
+<hr>
+  \date      Wed 25 Jun 2014 08:44:22 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */

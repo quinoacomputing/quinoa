@@ -1,13 +1,5 @@
 /*!
-  \page      Concurrency
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
-  \date      Sun 22 Jun 2014 04:48:21 PM MDT
-  \brief     Concurrency design
-  \details
-
-Concurrency strategies
-======================
+  \page      concurrency Concurrency design
 
 The strategy chosen for concurrency is probably the most decisive factor
 affecting performance. Obviously, it is impossible to pick a single concurrency
@@ -210,4 +202,9 @@ one-to-one communication required by a geometric concurrency strategy:
    strategy has the major limitation that the full mesh must fit into every
    compute node's memory. This major limitation combined with the prohibitive
    communication cost renders the all-to-all strategy not worthwhile.
+
+<hr>
+  \date      Wed 25 Jun 2014 08:44:02 AM MDT
+  \author    J. Bakosi
+  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
 */
