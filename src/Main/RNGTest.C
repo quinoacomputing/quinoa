@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:05:00 PM MDT
+  \date      Wed 25 Jun 2014 02:40:43 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -80,10 +80,22 @@ std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 //! Statistical test wrappers, grouped by test libraries
 TestStack g_testStack;
 
-//! Pack/Unpack selected RNGs
+//! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG
+//! stack since it needs to (re-)bind function pointers on different processing
+//! elements. Therefore we circumvent Charm's usual pack/unpack for this type,
+//! and thus sizing does not make sense: sizing is a no-op. We could initialize
+//! the stack in RNGTestDriver's constructor and let this function re-create the
+//! stack only when unpacking, but that leads to repeating the same code twice:
+//! once in RNGTestDriver's constructor, once here. Another option is to use
+//! this pack/unpack routine to both initially create (when packing) and to
+//! re-create (when unpacking) the stack, which eliminates the need for
+//! pre-creating the object in RNGTestDriver's constructor and therefore
+//! eliminates the repeated code. This explains the guard for sizing: the code
+//! below is called for packing only (in serial) and packing and unpacking (in
+//! parallel).
 inline
 void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
-  if (p.isUnpacking()) {
+  if (!p.isSizing()) {
     tk::RNGFactory factory;
     tk::RNGStack stack;
     stack.initFactory( factory, tk::Paradigm().ompNthreads(),
@@ -96,9 +108,21 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
   }
 }
 
-//! Pack/Unpack test stack
+//! Pack/Unpack test stack. This Pack/Unpack method (re-)creates the full test
+//! stack since it needs to (re-)bind function pointers on different processing
+//! elements. Therefore we circumvent Charm's usual pack/unpack for this type,
+//! and thus sizing does not make sense: sizing is a no-op. We could initialize
+//! the stack in RNGTestDriver's constructor and let this function re-create the
+//! stack only when unpacking, but that leads to repeating the same code twice:
+//! once in RNGTestDriver's constructor, once here. Another option is to use
+//! this pack/unpack routine to both initially create (when packing) and to
+//! re-create (when unpacking) the stack, which eliminates the need for
+//! pre-creating the object in RNGTestDriver's constructor and therefore
+//! eliminates the repeated code. This explains the guard for sizing: the code
+//! below is called for packing only (in serial) and packing and unpacking (in
+//! parallel).
 inline void operator|( PUP::er& p, TestStack& stack )
-{ if (p.isUnpacking()) stack = TestStack(); }
+{ if (!p.isSizing()) stack = TestStack(); }
 
 } // rngtest::
 

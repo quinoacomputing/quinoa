@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:24:24 PM MDT
+  \date      Sat 28 Jun 2014 05:18:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -74,7 +74,7 @@ class StatTest {
     }
 
     //! Public interface to running the test
-    void run( std::size_t id ) const { self->run(id); }
+    void run() const { self->run(); }
 
     //! Public interface to contribute number of results/test, i.e., p-values
     void npval( CkFuture f ) const { self->npval(f); }
@@ -98,7 +98,7 @@ class StatTest {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void run( std::size_t id ) = 0;
+      virtual void run() = 0;
       virtual void npval( CkFuture f ) = 0;
       virtual void name( CkFuture f ) = 0;
     };
@@ -109,7 +109,7 @@ class StatTest {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void run( std::size_t id ) override { data.run(id); }
+      void run() override { data.run(); }
       void npval( CkFuture f ) override { data.npval(f); }
       void name( CkFuture f ) override { data.name(f); }
       T data;

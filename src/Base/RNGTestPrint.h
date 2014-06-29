@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 10:17:36 AM MDT
+  \date      Sat 28 Jun 2014 10:13:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -98,27 +98,49 @@ class RNGTestPrint : public tk::RNGPrint {
 
     }
 
-    //! Print a single test name, RNG and pass or fail + p-value
-    template< class StatTest, class TestContainer >
+    //! Print one-liner info for test. Columns:
+    //! [done/total/failed]
+    //!   - done: number of tests completed so far (note that a test may produce
+    //!     more than one statistics and thus p-values)
+    //!   - total: total number of tests: number of tests in the suite times the
+    //!     number of RNGs tested (note that a test may produce more than one
+    //!     statistics and thus p-values)
+    //!   - failed: number of failed tests by a given RNG so far
+    //! name of the statistical test name
+    //! name of RNG
+    //! result of test: "pass" or "fail, p-value = ..."
     void test( std::size_t ncomplete,
-               std::size_t nfail,
-               std::size_t npval,
-               const typename TestContainer::value_type& tst,
-               std::size_t p ) const
+               std::size_t ntest,
+               std::map< std::string, std::size_t >& nfail,
+               const std::vector< std::vector< std::string > >& status ) const
     {
-      // Construct info-line
-      tk::Option< tk::ctr::RNG > rng;
-      std::stringstream ss;
-      ss << "[" << ncomplete << "/" << npval << "/" << nfail << "] "
-         << tst->name(p) << ", " << rng.name(tst->rng());
-      std::string pvalstr("pass");
-      // Put in p-value if test failed
-      if (tst->fail(p)) pvalstr = "fail, p-value = " + tst->pvalstr(p);
-      // Output
-      m_stream << m_item_widename_value_fmt
-                  % m_item_indent
-                  % ss.str()
-                  % pvalstr;
+      // Assumed fields for status:
+      // status[0]: vector of name(s) of the test(s),
+      //            length: number of p-values
+      // status[1]: vector of p-value strings: "pass" or "fail, p-value = ...",
+      //            length: number of p-values
+      // status[2]: vector of length 1: RNG name used to run the test
+
+      const auto& numfail = nfail.find( status[2][0] );
+      Assert( numfail != nfail.end(), tk::ExceptType::FATAL, "Cannot find RNG" );
+
+      // Lambda to count number of failed tests
+      auto nfailed = [ &numfail, &status ]() {
+        for (const auto& p : status[1]) if (p.size() > 4) ++numfail->second;
+        return numfail->second;
+      };
+
+      // Construct and echo info-line for all statistics resulted from test
+      for (std::size_t t=0; t<status[0].size(); ++t) {
+        std::stringstream ss;
+        ss << "[" << ncomplete << "/" << ntest << "/" << nfailed()
+           << "] " << status[0][t];
+        if (t==0) ss << ", " << status[2][0];
+        m_stream << m_item_widename_value_fmt
+                    % m_item_indent
+                    % ss.str()
+                    % status[1][t];
+      }
     }
 
     //! Print failed statistical test names, RNGs, and p-values

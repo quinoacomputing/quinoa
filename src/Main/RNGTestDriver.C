@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 19 Jun 2014 11:01:49 AM MDT
+  \date      Thu 26 Jun 2014 07:58:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -16,7 +16,6 @@
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/InputDeck/Parser.h>
 #include <TestU01Suite.h>
-#include <TestStack.h>
 
 #ifdef HAS_MKL
 #include <MKLRNG.h>
@@ -25,7 +24,6 @@
 namespace rngtest {
 
 extern ctr::InputDeck g_inputdeck;
-extern TestStack g_testStack;
 
 } // rngtest::
 
@@ -51,9 +49,6 @@ RNGTestDriver::RNGTestDriver( int argc, char** argv )
 
     // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
     InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
-
-    // Initialize statistical test stack
-    g_testStack = TestStack();
 
     print.endpart();
 
@@ -94,8 +89,7 @@ RNGTestDriver::execute()
     // Instantiate and run battery
     const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );
     if (s != end(bf)) {
-      Battery battery( s->second() );
-      battery.run();
+      Battery( s->second() );
     } else Throw( tk::ExceptType::FATAL, "Battery not found in factory" );
 
   } catch (...) { tk::processException(); }
