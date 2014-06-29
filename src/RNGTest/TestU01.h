@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 05:40:57 PM MDT
+  \date      Sun 29 Jun 2014 05:07:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -15,7 +15,6 @@
 
 #include <testu01.decl.h>
 #include <TestU01Props.h>
-#include <Msg.h>
 
 namespace rngtest {
 
@@ -33,19 +32,11 @@ class TestU01 : public CBase_TestU01< TestU01Props > {
     //! Run test then evaluate it
     void run() { m_props.proxy().evaluate( m_props.run() ); }
 
-    //! Contribute number of results/test, i.e., p-values
-    void npval( CkFuture f ) {
-      using Msg = tk::Msg< std::size_t >;
-      Msg* n = new Msg( m_props.npval() );
-      CkSendToFuture( f, n );
-    }
+    //! Query and contribute number of results/test, i.e., p-values
+    void npval() { m_props.proxy().npval( m_props.npval() ); }
 
-    //! Contribute test name
-    void name( CkFuture f ) const {
-      using Msg = tk::StringsMsg;
-      Msg* n = new Msg( m_props.names() );
-      CkSendToFuture( f, n );
-    }
+    //! Query and contribute test name(s)
+    void names() { m_props.proxy().names( m_props.names() ); }
 
 //     //! RNG enum accessor
 //     const tk::ctr::RNGType& rng() const { return m_id; }

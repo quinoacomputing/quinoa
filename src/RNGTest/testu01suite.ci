@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01suite.ci
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 09:25:41 PM MDT
+  \date      Sun 29 Jun 2014 05:06:07 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for TestU01 statistical test suites
   \details   Charm++ module interface file for TestU01 statistical test suites
@@ -12,7 +12,6 @@
 module testu01suite {
 
   extern module testu01;
-  extern module msg;
 
   include "RNGTest/Options/Battery.h";
 
@@ -21,8 +20,9 @@ module testu01suite {
     chare TestU01Suite {
       initnode void nodeInit();
       entry TestU01Suite( ctr::BatteryType suite );
-      entry void evaluate(
-                   const std::vector< std::vector< std::string > >& status );
+      entry void evaluate( std::vector< std::vector< std::string > > status );
+      entry void npval( std::size_t n );
+      entry void names( std::vector< std::string > n );
     }
 
   } // rngtest::

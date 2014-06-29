@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 10:10:05 PM MDT
+  \date      Sun 29 Jun 2014 04:43:37 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical test properties
   \details   TestU01 statistical test properties
@@ -135,12 +135,7 @@ class TestU01Props {
     std::size_t npval() const { return m_names.size(); }
 
     //! Test name(s) accessor
-    std::string names() const {
-      // serialize vector of strings into a single semi-colon-separated string
-      std::string names;
-      for (const auto& n : m_names) names += n + ";";
-      return names;
-    }
+    std::vector< std::string > names() const { return m_names; }
 
 //     //! Test name accessor
 //     std::string name( std::size_t p ) const {

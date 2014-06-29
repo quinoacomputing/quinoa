@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 09:24:19 PM MDT
+  \date      Sun 29 Jun 2014 04:42:21 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery
   \details   Battery
@@ -74,8 +74,14 @@ class Battery {
     }
 
     //! Public interface to evaluating a statistical test
-    void evaluate( const std::vector< std::vector< std::string > >& status )
-    const { self->evaluate( status ); }
+    void evaluate( std::vector< std::vector< std::string > > status ) const
+    { self->evaluate( status ); }
+
+    //! Public interface to collecting the number of statistics from a test
+    void npval( std::size_t n ) const { self->npval( n ); }
+
+    //! Public interface to collecting test name(s) from a test
+    void names( std::vector< std::string > n ) const { self->names( n ); }
 
     //! Copy assignment
     Battery& operator=( const Battery& x )
@@ -93,8 +99,10 @@ class Battery {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void evaluate( const std::vector< std::vector< std::string > >&
+      virtual void evaluate( std::vector< std::vector< std::string > >
                                status ) = 0;
+      virtual void npval( std::size_t n ) = 0;
+      virtual void names( std::vector< std::string > n ) = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -103,8 +111,10 @@ class Battery {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void evaluate( const std::vector< std::vector< std::string > >& status )
+      void evaluate( std::vector< std::vector< std::string > > status )
         override { data.evaluate( status ); }
+      void npval( std::size_t n ) override { data.npval( n ); }
+      void names( std::vector< std::string > n ) override { data.names( n ); }
       T data;
     };
 

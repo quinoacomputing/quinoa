@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 05:21:42 PM MDT
+  \date      Sun 29 Jun 2014 05:06:15 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests
@@ -12,7 +12,6 @@
 module testu01 {
 
   extern module testu01suite;
-  extern module msg;
 
   namespace rngtest {
 
@@ -39,8 +38,8 @@ module testu01 {
     chare TestU01 {
       entry TestU01( const TestU01Props& props );
       entry void run();
-      entry void npval( CkFuture f );
-      entry void name( CkFuture f );
+      entry void npval();
+      entry void names();
     }
 
   } // rngtest::
