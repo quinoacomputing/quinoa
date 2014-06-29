@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 05:18:15 PM MDT
+  \date      Sun 29 Jun 2014 05:05:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -77,10 +77,10 @@ class StatTest {
     void run() const { self->run(); }
 
     //! Public interface to contribute number of results/test, i.e., p-values
-    void npval( CkFuture f ) const { self->npval(f); }
+    void npval() const { self->npval(); }
 
-    //! Public interface to test name
-    void name( CkFuture f ) const { self->name(f); }
+    //! Public interface to test name(s)
+    void names() const { self->names(); }
 
     //! Copy assignment
     StatTest& operator=( const StatTest& x )
@@ -99,8 +99,8 @@ class StatTest {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void run() = 0;
-      virtual void npval( CkFuture f ) = 0;
-      virtual void name( CkFuture f ) = 0;
+      virtual void npval() = 0;
+      virtual void names() = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -110,8 +110,8 @@ class StatTest {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
       void run() override { data.run(); }
-      void npval( CkFuture f ) override { data.npval(f); }
-      void name( CkFuture f ) override { data.name(f); }
+      void npval() override { data.npval(); }
+      void names() override { data.names(); }
       T data;
     };
 
