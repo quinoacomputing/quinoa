@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Crush.h
   \author    J. Bakosi
-  \date      Mon 16 Jun 2014 11:20:07 AM MDT
+  \date      Sat 28 Jun 2014 02:53:45 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Crush battery
   \details   Crush battery
@@ -23,7 +23,7 @@ class Crush {
 
   public:
     //! Return string identifying test suite name
-    const std::string& name() const { return
+    std::string name() const { return
       tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::CRUSH );
     }
 

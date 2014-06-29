@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Mon 16 Jun 2014 11:19:14 AM MDT
+  \date      Sat 28 Jun 2014 02:52:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -23,7 +23,7 @@ class SmallCrush {
 
   public:
     //! Return string identifying test suite name
-    const std::string& name() const { return
+    std::string name() const { return
       tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::SMALLCRUSH );
     }
 

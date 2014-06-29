@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/msg.ci
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:39:14 PM MDT
+  \date      Sun 29 Jun 2014 08:21:31 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for custom message types
   \details   Charm++ module interface file for custom message types
@@ -20,6 +20,8 @@ module msg {
     template< typename T > message Msg;
 
     message StringsMsg;
+
+    template< std::size_t Size > message VecStrsMsg;
 
   } // tk::
 

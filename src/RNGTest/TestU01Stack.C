@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Tue 17 Jun 2014 07:21:46 AM MDT
+  \date      Sun 29 Jun 2014 08:28:40 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -37,10 +37,12 @@ static double uniform( void*, void* )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  double r;
+  double r = 0.0;
   const auto rng = g_rng.find( id );
-  if (rng != end(g_rng)) rng->second.uniform( g_tid, 1, &r );
-  else Throw( tk::ExceptType::FATAL, "RNG not found" );
+  if (rng != end(g_rng))
+    rng->second.uniform( g_tid, 1, &r );
+  else
+    Throw( tk::ExceptType::FATAL, "RNG not found" );
   return r;
 }
 
@@ -51,10 +53,12 @@ static unsigned long uniform_bits( void*, void* )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  double r;
+  double r = 0.0;
   const auto rng = g_rng.find( id );
-  if (rng != end(g_rng)) rng->second.uniform( g_tid, 1, &r );
-  else Throw( tk::ExceptType::FATAL, "RNG not found" );
+  if (rng != end(g_rng))
+    rng->second.uniform( g_tid, 1, &r );
+  else
+    Throw( tk::ExceptType::FATAL, "RNG not found" );
   return static_cast<unsigned long>(r * unif01_NORM32);
 }
 

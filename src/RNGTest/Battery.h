@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:18:59 PM MDT
+  \date      Sat 28 Jun 2014 09:24:19 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery
   \details   Battery
@@ -12,6 +12,8 @@
 #define Battery_h
 
 #include <functional>
+
+#include <charm++.h>
 
 #include <make_unique.h>
 #include <CharmUtil.h>
@@ -71,11 +73,9 @@ class Battery {
              "std::function arg to Battery Charm constructor must be nullptr" );
     }
 
-    //! Public interface to running a battery of RNG tests
-    void run() const { self->run(); }
-
     //! Public interface to evaluating a statistical test
-    void evaluate( std::size_t id ) const { self->evaluate(id); }
+    void evaluate( const std::vector< std::vector< std::string > >& status )
+    const { self->evaluate( status ); }
 
     //! Copy assignment
     Battery& operator=( const Battery& x )
@@ -93,8 +93,8 @@ class Battery {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void run() = 0;
-      virtual void evaluate( std::size_t id ) = 0;
+      virtual void evaluate( const std::vector< std::vector< std::string > >&
+                               status ) = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -103,8 +103,8 @@ class Battery {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void run() override { data.run(); }
-      void evaluate( std::size_t id ) override { data.evaluate(id); }
+      void evaluate( const std::vector< std::vector< std::string > >& status )
+        override { data.evaluate( status ); }
       T data;
     };
 

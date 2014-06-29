@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 04:29:36 PM MDT
+  \date      Sat 28 Jun 2014 10:32:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -164,16 +164,6 @@ class Print {
 
     // Stream object
     std::ostream& m_stream;
-
-  private:
-    //! Don't permit copy constructor
-    Print(const Print&) = delete;
-    //! Don't permit copy assigment
-    Print& operator=(const Print&) = delete;
-    //! Don't permit move constructor
-    Print(Print&&) = delete;
-    //! Don't permit move assigment
-    Print& operator=(Print&&) = delete;
 };
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 01:31:21 PM MDT
+  \date      Thu 26 Jun 2014 07:49:30 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -62,7 +62,7 @@ class MKLRNG {
     }
 
     //! Copy assignment
-    MKLRNG& operator=( const MKLRNG& x) {
+    MKLRNG& operator=( const MKLRNG& x ) {
       m_brng = x.m_brng;
       m_seed = x.m_seed;
       m_uniform_method = x.m_uniform_method;
@@ -109,7 +109,7 @@ class MKLRNG {
       m_gaussian_method( 0 ),
       m_nthreads( 0 ),
       m_stream( nullptr )
-    { *this = std::move( x ); }
+    { *this = std::move(x); }
 
   private:
     //! Delete all thread streams
