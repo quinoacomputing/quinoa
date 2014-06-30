@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 05:07:21 PM MDT
+  \date      Mon 30 Jun 2014 06:41:44 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
@@ -58,49 +58,6 @@ class TestU01 : public CBase_TestU01< TestU01Props > {
 //       for (std::size_t p = 0; p<m_npval; ++p) if (fail(p)) ++f;
 //       return f;
 //     }
-// 
-//     //! p-value accessor
-//     double pval( std::size_t p ) const { return m_pvals[p]; }
-// 
-//     //! Return human-readable p-value (based on TestU01::bbattery.c::WritePval)
-//     std::string pvalstr( std::size_t p ) const {
-//       std::stringstream ss;
-//       double val = m_pvals[p];
-//       if (val < gofw_Suspectp) {
-//         if ((val >= 0.01) && (val <= 0.99))
-//           ss << val;
-//         else if (val < gofw_Epsilonp)
-//           ss << "eps";
-//         else if (val < 0.01)
-//           ss << val;
-//         else if (val >= 1.0 - gofw_Epsilonp1)
-//           ss << "1 - eps1";
-//         else if (val < 1.0 - 1.0e-4)
-//           ss << val;
-//         else
-//           ss << 1.0 - val;
-//       } else if (val > 1.0 - gofw_Suspectp) {
-//         if (val >= 1.0 - gofw_Epsilonp1)
-//           ss << "1 - eps1";
-//         else if (val >= 1.0 - 1.0e-4)
-//           ss << "1 - " << 1.0 - val;
-//         else
-//           ss << val;
-//       }
-//       return ss.str();
-//     }
-
-//     //! Copy assignment
-//     TestU01& operator=( const TestU01& x) {
-//       m_props = x.m_props;
-//       return *this;
-//     }
-//     //! Copy constructor: in terms of copy assignment
-//     TestU01( const TestU01& x ) { operator=(x); }
-//     //! Move assignment
-//     TestU01& operator=( TestU01&& ) noexcept = default;
-//     //! Move constructor
-//     TestU01( TestU01&& ) noexcept = default;
 
   private:
     TestU01Props m_props;               //!< TestU01 test properties
