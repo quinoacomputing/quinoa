@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 30 Jun 2014 07:00:26 AM MDT
+  \date      Mon 30 Jun 2014 08:22:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -38,7 +38,7 @@ TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
               "Non-TestU01 RNG test suite passed to TestU01Suite" );
 
   // Construct all tests and store handles
-  for (const auto& t : m_testFactory) m_tests.emplace_back( t() );
+  for (const auto& t : m_ctrs) m_tests.emplace_back( t() );
 
   // Collect number of results from all tests (one per RNG)
   for (std::size_t i=0; i<ntest(); ++i) m_tests[i].npval();
@@ -52,6 +52,7 @@ TestU01Suite::npval( std::size_t n )
 //******************************************************************************
 {
   m_npval += n;
+
   if ( ++m_ntest == ntest() ) {
     m_print.battery( ntest(), m_npval );
     // Collect test names from all tests (one per RNG)
@@ -68,6 +69,7 @@ TestU01Suite::names( std::vector< std::string > n )
 //******************************************************************************
 {
   m_print.names( n );
+
   if ( ++m_ntest == ntest() ) {
     m_print.section( "RNGs tested" );
     #ifdef HAS_MKL
@@ -106,8 +108,62 @@ TestU01Suite::evaluate( std::vector< std::vector< std::string > > status )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_print.test( ++m_ncomplete, m_testFactory.size(), m_nfail, status );
-  if ( m_ncomplete == m_testFactory.size() ) mainProxy.finalize();
+  m_print.test( ++m_ncomplete, m_ctrs.size(), m_nfail, status );
+
+  // Store information on failed test for final assessment
+  for (std::size_t p=0; p<status[1].size(); ++p)
+    if (status[1][p].size() > 4)
+      m_failed.emplace_back( status[0][p], status[2][0], status[1][p] );
+
+  if ( m_ncomplete == m_ctrs.size() ) assessment();
+}
+
+void
+TestU01Suite::assessment()
+//******************************************************************************
+// Output final assessment
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Output summary of failed tests for all RNGs tested
+  if ( !m_failed.empty() )
+    m_print.failed( "Failed statistics", m_npval, m_failed );
+  else
+    m_print.note("All tests passed");
+
+//   // Compute sum of measured times spent by all threads per RNG
+//   std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
+//   std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
+//   tk::ctr::RNG rng;
+//   std::size_t i=0;
+//   for (const auto& r : m_rngprops) {
+//     rngtimes.push_back( { 0.0, rng.name(r.id) } );
+//     rngnfail.push_back( { nfail[i], rng.name(r.id) } );
+//     for (const auto& t : r.time) {
+//       rngtimes.back().first += t;
+//     }
+//     if ( std::fabs(rngtimes.back().first) <     // remove if not tested
+//          std::numeric_limits<tk::real>::epsilon() ) {
+//       rngtimes.pop_back();
+//       rngnfail.pop_back();
+//     }
+//     ++i;
+//   }
+// 
+//   // Output measured times per RNG in order of computational cost
+//   pr.cost( "Generator cost",
+//            "Measured times in seconds in increasing order (low is good)",
+//            rngtimes );
+// 
+//   // Output number of failed tests per RNG in order of decreasing quality
+//   pr.rank( "Generator quality",
+//            "Number of failed tests in increasing order (low is good)",
+//            rngnfail );
+
+  m_print.endpart();
+
+  // Quit
+  mainProxy.finalize();
 }
 
 std::size_t
@@ -118,7 +174,7 @@ TestU01Suite::ntest() const
 //******************************************************************************
 {
   const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
-  return m_testFactory.size() / rngs.size();
+  return m_ctrs.size() / rngs.size();
 }
 
 #include <testu01suite.def.h>

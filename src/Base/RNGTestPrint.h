@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 10:13:57 PM MDT
+  \date      Mon 30 Jun 2014 08:19:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -106,7 +106,7 @@ class RNGTestPrint : public tk::RNGPrint {
     //!     number of RNGs tested (note that a test may produce more than one
     //!     statistics and thus p-values)
     //!   - failed: number of failed tests by a given RNG so far
-    //! name of the statistical test name
+    //! name of the statistical test
     //! name of RNG
     //! result of test: "pass" or "fail, p-value = ..."
     void test( std::size_t ncomplete,
@@ -143,13 +143,15 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print failed statistical test names, RNGs, and p-values
-    template< class StatTest, class TestContainer >
-    void failed( const std::string& name, std::size_t total, std::size_t fail,
-                 const TestContainer& tests ) const
+    //! Print failed statistical test names, RNGs, and p-values. Concept
+    //! requirement on Failed: must have public fields test, rng, and pval.
+    template< class Failed >
+    void failed( const std::string& title,
+                 std::size_t npval,
+                 const std::vector< Failed >& nfail ) const
     {
       std::stringstream ss;
-      ss << name << " (" << fail << "/" << total << ")";
+      ss << title << " (" << nfail.size() << "/" << npval << ")";
       section( ss.str() );
       raw( m_item_indent + "The following tests gave p-values outside "
                            "[0.001, 0.999]\n" +
@@ -158,22 +160,15 @@ class RNGTestPrint : public tk::RNGPrint {
            m_item_indent + "Legend: Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
-      std::size_t ntest = tests.size();
       std::string oldname;
-      for (std::size_t i=0; i<ntest; ++i) {
-        auto npval = tests[i]->nstat();
-        for (std::size_t p=0; p<npval; ++p) {
-          if ( tests[i]->fail(p) ) {
-            tk::Option< tk::ctr::RNG > rng;
-            std::string newname( rng.name( tests[i]->rng() ) );
-            std::string rngname( newname == oldname ? "" : (", " + newname) );
-            oldname = newname;
-            m_stream << m_item_widename_value_fmt
-                        % m_item_indent
-                        % (tests[i]->name(p) + rngname)
-                        % tests[i]->pvalstr(p);
-          }
-        }
+      for (const auto& f : nfail) {
+        std::string newname( f.rng );
+        std::string rngname( newname == oldname ? "" : (", " + newname) );
+        oldname = newname;
+        m_stream << m_item_widename_value_fmt
+                    % m_item_indent
+                    % (f.test + rngname)
+                    % f.pval;
       }
     }
 

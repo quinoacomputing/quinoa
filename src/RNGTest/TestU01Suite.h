@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Mon 30 Jun 2014 07:00:28 AM MDT
+  \date      Mon 30 Jun 2014 08:11:03 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -57,23 +57,34 @@ class TestU01Suite : public CBase_TestU01Suite {
       const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
       ErrChk( !rngs.empty(), tk::ExceptType::FATAL, "No RNGs selected" );
       Suite suite;
-      for (const auto& s : rngs) suite.addTests( m_testFactory, s, thisProxy );
+      for (const auto& s : rngs) suite.addTests( m_ctrs, s, thisProxy );
       return suite.name();
     }
 
     //! Return number of statistical tests
     std::size_t ntest() const;
 
-    RNGTestPrint m_print;               //!< Pretty printer
-    //! Bound statistical tests constructors
-    std::vector< std::function< StatTest() > > m_testFactory;
+    //! Output final assessment
+    void assessment();
+
+    RNGTestPrint m_print;              //!< Pretty printer
+    std::vector< std::function< StatTest() > > m_ctrs; //! Tests constructors
     std::vector< StatTest > m_tests;   //!< Constructed statistical tests
     std::string m_name;                //!< Test suite name
     std::size_t m_npval;               //!< Number of results from all tests
     std::size_t m_ncomplete;           //!< Number of completed tests
     std::size_t m_ntest;               //!< Number of tests info received from
-    //! Number of failed tests per RNG
-    std::map< std::string, std::size_t > m_nfail;
+    std::map< std::string, std::size_t > m_nfail; //! Number of failed tests/RNG
+
+    struct Failed {
+      std::string test;
+      std::string rng;
+      std::string pval;
+      // Construct with moving test name and pval string, copy RNG name
+      Failed( std::string t, std::string r, std::string p ) :
+        test( std::move(t) ), rng( r ), pval( std::move(p) ) {}
+    };
+    std::vector< Failed > m_failed;    //!< Details of failed tests
 };
 
 } // rngtest::
