@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 04:43:37 PM MDT
+  \date      Wed 02 Jul 2014 08:40:24 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical test properties
   \details   TestU01 statistical test properties
@@ -18,13 +18,11 @@
 #include <Options/RNG.h>
 #include <TestU01Util.h>
 #include <TestStack.h>
+#include <TestU01Wrappers.h>
 
 namespace rngtest {
 
 extern TestStack g_testStack;
-
-template< tk::ctr::RawRNGType id >
-extern unif01_Gen* createTestU01Gen( const std::string& name );
 
 //! TestU01 properties used to initialize TestU01 tests. Used to abstract away
 //! the initialization for TestU01 statistical tests. Needed because of the move
@@ -53,7 +51,8 @@ class TestU01Props {
     explicit TestU01Props() :
       m_rng( tk::ctr::RNGType::NO_RNG ),
       m_runner( g_testStack.TestU01.runner.get<Test>() ),
-      m_res( ResultPtr(Creator()) ) {}
+      m_res( ResultPtr(Creator()) ),
+      m_time( 0.0 ) {}
 
     //! Constructor
     explicit TestU01Props( Proxy& proxy,
@@ -67,7 +66,8 @@ class TestU01Props {
       m_xargs( std::forward<Ts>(xargs)... ),
       m_gen( gen ),
       m_runner( g_testStack.TestU01.runner.get<Test>() ),
-      m_res( ResultPtr(Creator()) ) {}
+      m_res( ResultPtr(Creator()) ),
+      m_time( 0.0 ) {}
 
     //! Copy assignment
     TestU01Props& operator=( const TestU01Props& x) {
@@ -78,6 +78,7 @@ class TestU01Props {
       m_gen = x.m_gen;
       m_runner = x.m_runner;
       m_res = ResultPtr(Creator());
+      m_time = x.m_time;
       return *this;
     }
     //! Copy constructor: in terms of copy assignment
@@ -99,20 +100,27 @@ class TestU01Props {
         m_runner = g_testStack.TestU01.runner.get<Test>();
         m_res = ResultPtr(Creator());
       }
+      p | m_time;
     }
     friend void operator|( PUP::er& p, TestU01Props& c ) { c.pup(p); }
 
     //! Host proxy accessor
     Proxy& proxy() noexcept { return m_proxy; }
 
+    //! Number of results/test (i.e., p-values) accessor
+    std::size_t npval() const { return m_names.size(); }
+
+    //! Test name(s) accessor
+    std::vector< std::string > names() const { return m_names; }
+
     //! Run test and return its status as a vector of vector of strings. The
     //! return type could potentially be a more specific type, e.g., a struct
     //! with fields RNGType, and a vector of strings for the p-values, and the
     //! names. Instead we return a more generic vector of vector of strings
-    //! type. This helps keeping the corresponding argument to Battery::
-    //! evaluate() generic, which may come in handy when other test libraries
-    //! are added in the future. The return value is thus the following in a
-    //! vector of vectors
+    //! type. This helps keeping the corresponding argument to
+    //! Battery::evaluate() generic, which may come in handy when other test
+    //! libraries are added in the future. The return value is thus the
+    //! following in a vector of vectors:
     //! 0: Name(s) of statistics (note that a test may produce more than one
     //!    statistics and thus p-values)
     //! 1: p-value strings: "pass" or "fail, p-value = ..." for all tests run
@@ -120,7 +128,11 @@ class TestU01Props {
     //!    p-values)
     //! 2: RNG name used to run the test: sub-vector length = 1
     std::vector< std::vector< std::string > > run() {
+      // Run and time statistical test
+      tk::Timer timer;
       const auto pvals = m_runner( m_gen, m_res.get(), m_xargs );
+      m_time = timer.dsec();
+      // Construct status
       std::vector< std::string > pvalstrs;
       for (std::size_t p=0; p<m_names.size(); ++p) {
         if ( fail(pvals[p]) )
@@ -131,29 +143,9 @@ class TestU01Props {
       return { m_names, pvalstrs, { tk::ctr::RNG().name(m_rng) } };
     }
 
-    //! Number of results/test (i.e., p-values) accessor
-    std::size_t npval() const { return m_names.size(); }
-
-    //! Test name(s) accessor
-    std::vector< std::string > names() const { return m_names; }
-
-//     //! Test name accessor
-//     std::string name( std::size_t p ) const {
-//       Assert( p < m_names.size(), tk::ExceptType::FATAL,
-//               "Indexing outside of container bounds in TestU01Props::name()" );
-//       return m_names[p];
-//     }
-// 
-//     //! RNG name accessor
-//     std::string rngname() const { return m_rngname; }
-
-    //! Query whether test is failed
-    bool fail( double val ) const {
-      if ((val <= gofw_Suspectp) || (val >= 1.0-gofw_Suspectp))
-        return true;
-      else
-        return false;
-    }
+    //! Test time accessor
+    std::pair< std::string, tk::real > time()
+    { return { tk::ctr::RNG().name(m_rng), m_time }; }
 
   private:
     //! Pack/Unpack TestU01 external generator pointer
@@ -229,6 +221,14 @@ class TestU01Props {
         g = createTestU01Gen< raw(RNGType::RNGSSE_MRG32K3A) >( rngname );
     }
 
+    //! Query whether test is failed
+    bool fail( double val ) const {
+      if ((val <= gofw_Suspectp) || (val >= 1.0-gofw_Suspectp))
+        return true;
+      else
+        return false;
+    }
+
     //! Return humand-readable p-value (ala TestU01::bbattery.c::WritePval)
     std::string pval( double val ) const {
       std::stringstream ss;
@@ -262,11 +262,12 @@ class TestU01Props {
 
     Proxy m_proxy;                      //!< Host proxy
     tk::ctr::RNGType m_rng;             //!< RNG id
-    std::vector< std::string > m_names; //!< name(s) of tests
-    Xargs m_xargs;                      //!< extra args for run()
-    unif01_Gen* m_gen;                  //!< pointer to generator
-    RunFn m_runner;                     //!< test runner function
-    ResultPtr m_res;                    //!< testU01 results
+    std::vector< std::string > m_names; //!< Name(s) of tests
+    Xargs m_xargs;                      //!< Extra args for run()
+    unif01_Gen* m_gen;                  //!< Pointer to generator
+    RunFn m_runner;                     //!< Test runner function
+    ResultPtr m_res;                    //!< TestU01 results
+    tk::real m_time;                    //!< Test run time measured in seconds
 };
 
 } // rngtest::

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Mon 30 Jun 2014 08:22:33 PM MDT
+  \date      Wed 02 Jul 2014 08:47:57 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <TestU01Suite.h>
+#include <TestStack.h>
 #include <RNGTest/Options/Battery.h>
 #include <SmallCrush.h>
 #include <Crush.h>
@@ -17,6 +18,12 @@
 #include <rngtest.decl.h>
 
 extern CProxy_Main mainProxy;
+
+namespace rngtest {
+
+extern TestStack g_testStack;
+
+} // rngtest::
 
 using rngtest::TestU01Suite;
 
@@ -71,7 +78,10 @@ TestU01Suite::names( std::vector< std::string > n )
   m_print.names( n );
 
   if ( ++m_ntest == ntest() ) {
-    m_print.section( "RNGs tested" );
+    const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
+    std::stringstream ss;
+    ss << "RNGs tested (" << rngs.size() << ")";
+    m_print.section( ss.str() );
     #ifdef HAS_MKL
     m_print.MKLParams( g_inputdeck.get< tag::selected, tk::tag::rng >(),
                        g_inputdeck.get< tag::param, tk::tag::rngmkl >() );
@@ -80,7 +90,9 @@ TestU01Suite::names( std::vector< std::string > n )
                           g_inputdeck.get< tag::param, tk::tag::rngsse >() );
     m_print.raw('\n');
     m_print.part( m_name );
-    m_print.statshead( "Statistics computed" );
+    m_print.statshead( "Statistics computed",
+                       m_npval*rngs.size(),
+                       m_ctrs.size() );
 
     // Run battery of RNG tests
     for (const auto& t : m_tests) t.run();
@@ -115,50 +127,47 @@ TestU01Suite::evaluate( std::vector< std::vector< std::string > > status )
     if (status[1][p].size() > 4)
       m_failed.emplace_back( status[0][p], status[2][0], status[1][p] );
 
-  if ( m_ncomplete == m_ctrs.size() ) assessment();
+  if ( m_ncomplete == m_ctrs.size() ) {
+    // Collect measured test run times
+    m_ncomplete = 0;
+    for (const auto& t : m_tests) t.time();
+  }
 }
 
 void
-TestU01Suite::assessment()
+TestU01Suite::time( std::pair< std::string, tk::real > t )
+//******************************************************************************
+// Collect test times measured in seconds from a statistical test
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  m_time[ t.first ] += t.second;
+
+  if ( ++m_ncomplete == m_ctrs.size() ) assess();
+}
+
+void
+TestU01Suite::assess()
 //******************************************************************************
 // Output final assessment
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Output summary of failed tests for all RNGs tested
-  if ( !m_failed.empty() )
-    m_print.failed( "Failed statistics", m_npval, m_failed );
-  else
-    m_print.note("All tests passed");
+  if ( !m_failed.empty() ) {
+    const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
+    m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
+  } else m_print.note("All tests passed");
 
-//   // Compute sum of measured times spent by all threads per RNG
-//   std::vector< std::pair< tk::real, std::string > > rngtimes;   // times & names
-//   std::vector< std::pair< std::size_t, std::string > > rngnfail;// nfail & names
-//   tk::ctr::RNG rng;
-//   std::size_t i=0;
-//   for (const auto& r : m_rngprops) {
-//     rngtimes.push_back( { 0.0, rng.name(r.id) } );
-//     rngnfail.push_back( { nfail[i], rng.name(r.id) } );
-//     for (const auto& t : r.time) {
-//       rngtimes.back().first += t;
-//     }
-//     if ( std::fabs(rngtimes.back().first) <     // remove if not tested
-//          std::numeric_limits<tk::real>::epsilon() ) {
-//       rngtimes.pop_back();
-//       rngnfail.pop_back();
-//     }
-//     ++i;
-//   }
-// 
-//   // Output measured times per RNG in order of computational cost
-//   pr.cost( "Generator cost",
-//            "Measured times in seconds in increasing order (low is good)",
-//            rngtimes );
-// 
-//   // Output number of failed tests per RNG in order of decreasing quality
-//   pr.rank( "Generator quality",
-//            "Number of failed tests in increasing order (low is good)",
-//            rngnfail );
+  // Output measured times per RNG in order of computational cost
+  m_print.cost( "Generator cost",
+                "Measured times in seconds in increasing order (low is good)",
+                m_time );
+
+  // Output number of failed tests per RNG in order of decreasing quality
+  m_print.rank( "Generator quality",
+                "Number of failed tests in increasing order (low is good)",
+                m_nfail );
 
   m_print.endpart();
 

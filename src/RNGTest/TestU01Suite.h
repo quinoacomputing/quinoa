@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Mon 30 Jun 2014 08:11:03 PM MDT
+  \date      Wed 02 Jul 2014 08:05:11 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -50,6 +50,9 @@ class TestU01Suite : public CBase_TestU01Suite {
     //! Evaluate a statistical test
     void evaluate( std::vector< std::vector< std::string > > status );
 
+    //! Collect test run time from a test
+    void time( std::pair< std::string, tk::real > t );
+
  private:
     //! Add all statistical tests to suite, return suite name
     template< class Suite >
@@ -57,7 +60,7 @@ class TestU01Suite : public CBase_TestU01Suite {
       const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
       ErrChk( !rngs.empty(), tk::ExceptType::FATAL, "No RNGs selected" );
       Suite suite;
-      for (const auto& s : rngs) suite.addTests( m_ctrs, s, thisProxy );
+      for (const auto& r : rngs) suite.addTests( m_ctrs, r, thisProxy );
       return suite.name();
     }
 
@@ -65,7 +68,7 @@ class TestU01Suite : public CBase_TestU01Suite {
     std::size_t ntest() const;
 
     //! Output final assessment
-    void assessment();
+    void assess();
 
     RNGTestPrint m_print;              //!< Pretty printer
     std::vector< std::function< StatTest() > > m_ctrs; //! Tests constructors
@@ -75,6 +78,7 @@ class TestU01Suite : public CBase_TestU01Suite {
     std::size_t m_ncomplete;           //!< Number of completed tests
     std::size_t m_ntest;               //!< Number of tests info received from
     std::map< std::string, std::size_t > m_nfail; //! Number of failed tests/RNG
+    std::map< std::string, tk::real > m_time;   //!< Measured time/RNG
 
     struct Failed {
       std::string test;

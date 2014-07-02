@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 25 Jun 2014 02:40:43 PM MDT
+  \date      Tue 01 Jul 2014 08:17:51 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -98,7 +98,7 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
   if (!p.isSizing()) {
     tk::RNGFactory factory;
     tk::RNGStack stack;
-    stack.initFactory( factory, tk::Paradigm().ompNthreads(),
+    stack.initFactory( factory, CkNumPes(),
                        #ifdef HAS_MKL
                        g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
                        #endif

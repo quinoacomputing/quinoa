@@ -6,7 +6,7 @@ macro(get_compiler_flags)
 
   # Forward cmake compiler flags to automake builds by setting our own variables
   # CFLAGS, CXXFLAGS, and FFLAGS. Only these flags should then be used by the
-  # individual external projects builds below.
+  # individual external projects builds.
   if(CMAKE_BUILD_TYPE STREQUAL "")
     set(CFLAGS "${CFLAGS} ${CMAKE_C_FLAGS}")
     set(CXXFLAGS "${CXXFLAGS} ${CMAKE_CXX_FLAGS}")

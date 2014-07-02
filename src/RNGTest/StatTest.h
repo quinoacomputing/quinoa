@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 05:05:12 PM MDT
+  \date      Wed 02 Jul 2014 07:39:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -73,14 +73,17 @@ class StatTest {
              "std::function arg to StatTest Charm constructor must be nullptr" );
     }
 
-    //! Public interface to running the test
-    void run() const { self->run(); }
-
     //! Public interface to contribute number of results/test, i.e., p-values
     void npval() const { self->npval(); }
 
-    //! Public interface to test name(s)
+    //! Public interface to contribute test name(s)
     void names() const { self->names(); }
+
+    //! Public interface to running a test
+    void run() const { self->run(); }
+
+    //! Public interface to contributing a test's run time measured in seconds
+    void time() const { self->time(); }
 
     //! Copy assignment
     StatTest& operator=( const StatTest& x )
@@ -98,9 +101,10 @@ class StatTest {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void run() = 0;
       virtual void npval() = 0;
       virtual void names() = 0;
+      virtual void run() = 0;
+      virtual void time() = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -109,9 +113,10 @@ class StatTest {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void run() override { data.run(); }
       void npval() override { data.npval(); }
       void names() override { data.names(); }
+      void run() override { data.run(); }
+      void time() override { data.time(); }
       T data;
     };
 

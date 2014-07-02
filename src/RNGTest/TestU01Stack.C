@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 08:28:40 AM MDT
+  \date      Wed 02 Jul 2014 06:39:59 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -17,61 +17,12 @@ extern "C" {
 
 #include <TestU01Stack.h>
 #include <RNG.h>
+#include <TestU01Wrappers.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 
 namespace rngtest {
 
-extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 extern ctr::InputDeck g_inputdeck;
-
-//! Global thread id
-static int g_tid = 0;
-#ifdef _OPENMP
-#pragma omp threadprivate(g_tid)
-#endif
-
-template< tk::ctr::RawRNGType id >
-static double uniform( void*, void* )
-//******************************************************************************
-//  Global-scope TestU01 uniform RNG wrapper
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  double r = 0.0;
-  const auto rng = g_rng.find( id );
-  if (rng != end(g_rng))
-    rng->second.uniform( g_tid, 1, &r );
-  else
-    Throw( tk::ExceptType::FATAL, "RNG not found" );
-  return r;
-}
-
-template< tk::ctr::RawRNGType id >
-static unsigned long uniform_bits( void*, void* )
-//******************************************************************************
-//  Global-scope TestU01 uniform RNG bits wrapper
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  double r = 0.0;
-  const auto rng = g_rng.find( id );
-  if (rng != end(g_rng))
-    rng->second.uniform( g_tid, 1, &r );
-  else
-    Throw( tk::ExceptType::FATAL, "RNG not found" );
-  return static_cast<unsigned long>(r * unif01_NORM32);
-}
-
-template< tk::ctr::RawRNGType id >
-inline unif01_Gen* createTestU01Gen( const std::string& name )
-//******************************************************************************
-//  Global-scope create TestU01 external generator
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  return unif01_CreateExternGen01( const_cast<char*>(name.c_str()),
-                                   uniform< id >, uniform_bits< id > );
-}
 
 } // rngtest::
 
@@ -159,19 +110,20 @@ void TestU01Stack::addRNG( tk::ctr::RNGType r )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  m_rngprops.emplace( r, createTestU01Gen< id >( tk::ctr::RNG().name(r) ) );
+  m_generator.emplace( r,
+    Gen01Ptr( createTestU01Gen<id>( tk::ctr::RNG().name(r) ) ) );
 }
 
-const TestU01Stack::RNGProps&
-TestU01Stack::rngprops( tk::ctr::RNGType r ) const
+unif01_Gen*
+TestU01Stack::generator( tk::ctr::RNGType r ) const
 //******************************************************************************
-//! Find RNG properties based on RNG id
+//! Find TestU01 RNG wrapper based on RNG id
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const auto prop = m_rngprops.find( r );
-  if (prop == end(m_rngprops)) Throw( tk::ExceptType::FATAL, "RNG not found" );
-  return prop->second;
+  const auto& gen = m_generator.find( r );
+  if (gen == end(m_generator)) Throw( tk::ExceptType::FATAL, "RNG not found" );
+  return gen->second.get();
 }
 
 std::vector< double >
