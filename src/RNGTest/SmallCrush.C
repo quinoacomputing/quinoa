@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 02:49:02 PM MDT
+  \date      Wed 02 Jul 2014 06:39:19 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -33,7 +33,7 @@ SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
   const auto& stack = g_testStack.TestU01;
 
   // Find RNG properties
-  auto gen = stack.rngprops(rng).ptr.get();
+  auto gen = stack.generator(rng);
 
   static const long THOUSAND = 1000;
   static const long MILLION = THOUSAND * THOUSAND;

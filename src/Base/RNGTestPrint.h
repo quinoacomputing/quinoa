@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon 30 Jun 2014 08:19:46 PM MDT
+  \date      Wed 02 Jul 2014 08:45:41 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -14,6 +14,7 @@
 #include <Types.h>
 #include <RNGPrint.h>
 #include <RNGTest/InputDeck/InputDeck.h>
+#include <flip_map.h>
 
 namespace rngtest {
 
@@ -74,7 +75,7 @@ class RNGTestPrint : public tk::RNGPrint {
         m_stream << m_section_underline_fmt
                     % m_section_indent
                     % std::string( m_section_indent.size() + 3 +
-                                   group.size() + value.size(), '-' );
+                                   group.size() + ss.str().size(), '-' );
       }
     }
 
@@ -85,13 +86,18 @@ class RNGTestPrint : public tk::RNGPrint {
     }
 
     //! Print statistical tests header (with legend)
-    void statshead( const std::string& title ) const {
+    void statshead( const std::string& title,
+                    std::size_t npval,
+                    std::size_t ntest ) const {
+      std::stringstream ss;
+      ss << title << " (" << npval << " stats from " << ntest << " tests)";
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
-                                      % title;
+                                      % ss.str();
       m_stream << m_section_underline_fmt
                   % m_section_indent
-                  % std::string(m_section_indent.size() + 2 + title.size(),'-');
+                  % std::string( m_section_indent.size() + 2 + ss.str().size(),
+                                 '-');
       raw( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
@@ -143,8 +149,8 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print failed statistical test names, RNGs, and p-values. Concept
-    //! requirement on Failed: must have public fields test, rng, and pval.
+    //! Print failed statistical test names, RNGs, and p-values. Requirements on
+    //! class Failed: must have public fields test, rng, and pval.
     template< class Failed >
     void failed( const std::string& title,
                  std::size_t npval,
@@ -172,36 +178,34 @@ class RNGTestPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print RNGs and their measured runtimes
-    //! (taking a copy of rngtimes for sorting)
+    //! Print RNGs and their measured run times
     void cost( const std::string& name,
                const std::string& costnote,
-               std::vector< std::pair< tk::real, std::string > > rngtimes )
-    const {
-      std::sort( begin(rngtimes), end(rngtimes) );
+               std::map< std::string, tk::real > t ) const
+    {
+      Assert( !t.empty(), tk::ExceptType::FATAL, "Empty map passed to cost()" );
+      std::multimap< tk::real, std::string > times = tk::flip_map( t );
       section( name );
       raw( m_item_indent + costnote + "\n\n" );
-      tk::real fastest = rngtimes[0].first;
-      for (const auto& t : rngtimes) {
+      tk::real fastest = times.begin()->first;
+      for (const auto& t : times) {
         std::stringstream ss;
-        ss << t.first << "  ("
-           << std::setprecision(3) << t.first/fastest << "x)";
+        ss << t.first << "  (" << std::setprecision(3) << t.first/fastest
+           << "x)";
         item( t.second, ss.str() );
       }
     }
 
     //! Print RNGs and their number of failed tests
-    //! (taking a copy of rngnfail for sorting)
     void rank( const std::string& name,
                const std::string& ranknote,
-               std::vector< std::pair< std::size_t, std::string > > rngnfail )
-    const {
-      std::sort( begin(rngnfail), end(rngnfail) );
+               std::map< std::string, std::size_t > f ) const
+    {
+      Assert( !f.empty(), tk::ExceptType::FATAL, "Empty map passed to rank()" );
+      std::multimap< std::size_t, std::string > nfail = tk::flip_map( f );
       section( name );
       raw( m_item_indent + ranknote + "\n\n" );
-      for (const auto& t : rngnfail) {
-        item( t.second, t.first );
-      }
+      for (const auto& t : nfail) item( t.second, t.first );
     }
 };
 

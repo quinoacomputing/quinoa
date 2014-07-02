@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:28:57 PM MDT
+  \date      Wed 02 Jul 2014 07:43:28 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -26,6 +26,7 @@ extern "C" {
   #include <sspectral.h>
 }
 
+#include <Timer.h>
 #include <StatTest.h>
 #include <TestU01Util.h>
 #include <RNGTest/Tags.h>
@@ -194,21 +195,15 @@ class TestU01Stack {
     AutoCor( unif01_Gen* gen, sres_Basic* res,
       const std::tuple<long, long, int, int, int>& xargs );
 
-    //! RNG properties
-    struct RNGProps {
-      Gen01Ptr ptr;     //!< TestU01 RNG wrapper
-      RNGProps( unif01_Gen* p ) : ptr( Gen01Ptr(p) ) {}
-    };
-
-    //! Find RNG properties based on RNG id
-    const RNGProps& rngprops( tk::ctr::RNGType r ) const;
-
-    //! Compile-time tag-based access to individual wrappers
-    //! Associate tags (empty structs) to test wrappers
+    //! Compile-time tag-based access to individual wrappers. The tagged_tuple
+    //! below is practically a compile-time map that associates tags (empty
+    //! structs) to test wrappers. This is used to find the test wrapper
+    //! function pointers after migration over the network. See also
+    //! TestU01Props::pup().
     tk::tuple::tagged_tuple<
 
-      tag::BirthdaySpacings,
-      std::vector< double > (*)( unif01_Gen*, sres_Poisson*,
+      tag::BirthdaySpacings,                                // tag
+      std::vector< double > (*)( unif01_Gen*, sres_Poisson*,// function ptr type
         const std::tuple<long, long, int, long, int, int>& ),
 
       tag::Collision,
@@ -225,18 +220,21 @@ class TestU01Stack {
 
     > runner {
 
-      this->BirthdaySpacings,
+      this->BirthdaySpacings,   // bind to member function wrappers
       this->Collision,
       this->SerialOver,
       this->RandomWalk1
 
     };
 
+    //! Find RNG properties based on RNG id
+    unif01_Gen* generator( tk::ctr::RNGType r ) const;
+
   private:
     //! Create TestU01 RNG wrapper
     template< tk::ctr::RawRNGType id > void addRNG( tk::ctr::RNGType r );
 
-    std::map< tk::ctr::RNGType, RNGProps > m_rngprops; //!< Selected RNG props
+    std::map< tk::ctr::RNGType, Gen01Ptr > m_generator; //!< RNG wrappers
 };
 
 } // rngtest::
