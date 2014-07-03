@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 07:55:10 AM MDT
+  \date      Thu 03 Jul 2014 04:33:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests
@@ -33,6 +33,34 @@ module testu01 {
             TestU01Props< tag::RandomWalk1, CProxy_TestU01Suite,
                           swalk_Res, swalk_CreateRes, swalk_DeleteRes,
                           long, long, int, int, long, long > >;
+    chare TestU01<
+            TestU01Props< tag::Gap, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, double, double > >;
+    chare TestU01<
+            TestU01Props< tag::SimplePoker, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::CouponCollector, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::MaxOft, CProxy_TestU01Suite,
+                          sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
+                          long, long, int, int, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::WeightDistrib, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, long, double, double > >;
+    chare TestU01<
+            TestU01Props< tag::MatrixRank, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::HammingIndep, CProxy_TestU01Suite,
+                          sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                          long, long, int, int, int, int > >;
 
     template< class TestU01Props >
     chare TestU01 {
