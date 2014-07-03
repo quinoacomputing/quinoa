@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Fri 06 Jun 2014 01:09:55 PM MDT
+  \date      Thu 03 Jul 2014 06:23:54 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -24,8 +24,13 @@ std::string workdir();
 //! Wrapper for the standard C library's gettimeofday() from
 std::string curtime();
 
+//! Executable types for which an ascii logo is available in Print
+enum class HeaderType : uint8_t { QUINOA=0,
+                                  RNGTEST,
+                                  MESHCONV };
+
 //! Echo program title
-void echoHeader( const tk::Print& print, const std::string& title );
+void echoHeader( const tk::Print& print, HeaderType header );
 
 //! Echo build environment
 void echoBuildEnv( const tk::Print& print,
@@ -35,10 +40,10 @@ void echoBuildEnv( const tk::Print& print,
 //! Echo runtime environment
 void echoRunEnv( const tk::Print& print, int argc, char** argv );
 
-//! Main()
+//! Generic Main() used for all executables for code-reuse and a consistent look
 template< class Driver >
 Driver Main( int argc, char* argv[],
-             const std::string& name,
+             HeaderType header,
              const std::string& executable,
              void (*echoTPL)(const Print&) = [](const Print&){} )
 {
@@ -54,8 +59,8 @@ Driver Main( int argc, char* argv[],
     // Create pretty printer
     Print print;
 
-    // Echo program name
-    echoHeader( print, name );
+    // Echo program header
+    echoHeader( print, header );
 
     // Echo environment
     print.part( "Environment" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 01 Jul 2014 08:17:51 AM MDT
+  \date      Thu 03 Jul 2014 06:13:17 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -132,9 +132,9 @@ class Main : public CBase_Main {
   public:
     Main( CkArgMsg* msg ) :
       m_driver( tk::Main< rngtest::RNGTestDriver >( msg->argc, msg->argv,
-                "Quinoa: Random number generator (RNG) test suite",
-                 RNGTEST_EXECUTABLE,
-                 rngtest::echoTPL ) )
+                  tk::HeaderType::RNGTEST,
+                  RNGTEST_EXECUTABLE,
+                  rngtest::echoTPL ) )
     {
       delete msg;
       mainProxy = thisProxy;

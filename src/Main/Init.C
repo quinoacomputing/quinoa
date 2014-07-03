@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Wed 28 May 2014 08:25:33 PM MDT
+  \date      Thu 03 Jul 2014 06:22:49 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -71,13 +71,20 @@ std::string tk::curtime()
   return str;
 }
 
-void tk::echoHeader(const Print& print, const std::string& title)
+void tk::echoHeader( const Print& print, HeaderType header )
 //******************************************************************************
-//  Echo program title
+//  Echo program header
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.header(title);
+  if ( header == HeaderType::QUINOA )
+    print.headerQuinoa();
+  else if ( header == HeaderType::RNGTEST )
+    print.headerRNGTest();
+  else if ( header == HeaderType::MESHCONV )
+    print.headerMeshConv();
+  else
+    Throw( ExceptType::WARNING, "Header not available" );
 }
 
 void tk::echoBuildEnv( const Print& print,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 10:32:15 AM MDT
+  \date      Thu 03 Jul 2014 06:21:15 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -52,8 +52,14 @@ class Print {
                                     std::ostream& (*pf)(std::ostream&) )
     { os.m_stream << pf; return os; }
 
-    //! Print header
-    void header( const std::string& title ) const;
+    //! Print Quinoa header
+    void headerQuinoa() const;
+
+    //! Print RNGTest header
+    void headerRNGTest() const;
+
+    //! Print MeshConv header
+    void headerMeshConv() const;
 
     //! Print part header: title
     void part( const std::string& title ) const;
