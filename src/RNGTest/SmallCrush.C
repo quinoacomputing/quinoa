@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 06:39:19 AM MDT
+  \date      Thu 03 Jul 2014 04:32:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SmallCrush battery
   \details   SmallCrush battery
@@ -64,58 +64,73 @@ SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
            ( proxy, tests, rng, gen, {"Collision"},
              1L, 5L * MILLION, 0, 65536L, 2 );
 
-//   // Knuth's Gap
-//   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
-//                 long, long, int, double, double > >
-//        ( proxy, tests, id, gen, rng, {"Gap"},
-//          Gap, 1L, MILLION / 5, 22, 0.0, 0.00390625 );
-// 
-//   // Knuth's Simple Poker
-//   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
-//                 long, long, int, int, int > >
-//        ( proxy, tests, id, gen, rng, {"Simplified Poker"},
-//          SimpPoker, 1L, 2L * MILLION / 5, 24, 64, 64 );
-// 
-//   // Knuth's Coupon Collector
-//   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
-//                 long, long, int, int > >
-//        ( proxy, tests, id, gen, rng, {"Coupon Collector"},
-//          CouponCollector, 1L, MILLION / 2, 26, 16 );
-// 
-//   // Knuth's Maximum-of-t
-//   add< TestU01< sknuth_Res1, sknuth_CreateRes1, sknuth_DeleteRes1,
-//                 long, long, int, int, int, gofw_TestType, gofw_TestType > >
-//        ( proxy, tests, id, gen, rng, {"Maximum-of-t", "Maximum-of-t Anderson-Darling"},
-//          MaxOft, 1L, 2L * MILLION, 0, static_cast<int>(MILLION / 10), 6,
-//                  gofw_Mean, gofw_Mean );
-// 
-//   // Weight Distribution
-//   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
-//                 long, long, int, long, double, double > >
-//        ( proxy, tests, id, gen, rng, {"Weight Distribution"},
-//          WeightDistrib, 1L, MILLION / 5, 27, 256L, 0.0, 0.125 );
-// 
-//   // Marsaglia's Matrix Rank
-//   add< TestU01< sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
-//                 long, long, int, int, int, int > >
-//        ( proxy, tests, id, gen, rng, {"Matrix Rank"},
-//          MatrixRank, 1L, 20L * THOUSAND, 20, 10, 60, 60 );
-// 
-//   // Hamming independence
-//   add< TestU01< sstring_Res, sstring_CreateRes, sstring_DeleteRes,
-//                 long, long, int, int, int, int > >
-//        ( proxy, tests, id, gen, rng, {"Hamming Independence"},
-//          HammingIndep, 1L, MILLION/2, 20, 10, 300, 0 );
+  // Knuth's Gap
+  stack.add< TestU01< TestU01Props< tag::Gap, CProxy_TestU01Suite,
+                                    sres_Chi2, sres_CreateChi2,
+                                    sres_DeleteChi2,
+                                    long, long, int, double, double > > >
+           ( proxy, tests, rng, gen, {"Gap"},
+             1L, MILLION / 5, 22, 0.0, 0.00390625 );
+
+  // Knuth's Simple Poker
+  stack.add< TestU01< TestU01Props< tag::SimplePoker, CProxy_TestU01Suite,
+                                    sres_Chi2, sres_CreateChi2,
+                                    sres_DeleteChi2,
+                                    long, long, int, int, int > > >
+           ( proxy, tests, rng, gen, {"Simplified Poker"},
+             1L, 2L * MILLION / 5, 24, 64, 64 );
+
+  // Knuth's Coupon Collector
+  stack.add< TestU01< TestU01Props< tag::CouponCollector, CProxy_TestU01Suite,
+                                    sres_Chi2, sres_CreateChi2,
+                                    sres_DeleteChi2,
+                                    long, long, int, int > > >
+           ( proxy, tests, rng, gen, {"Coupon Collector"},
+             1L, MILLION / 2, 26, 16 );
+
+  // Knuth's Maximum-of-t
+  stack.add< TestU01< TestU01Props< tag::MaxOft, CProxy_TestU01Suite,
+                                    sknuth_Res1, sknuth_CreateRes1,
+                                    sknuth_DeleteRes1,
+                                    long, long, int, int, int, int, int > > >
+           ( proxy, tests, rng, gen, {"Maximum-of-t",
+                                      "Maximum-of-t Anderson-Darling"},
+             1L, 2L * MILLION, 0, static_cast<int>(MILLION / 10), 6, gofw_Mean,
+             gofw_Mean );
+
+  // Weight Distribution
+  stack.add< TestU01< TestU01Props< tag::WeightDistrib, CProxy_TestU01Suite,
+                                    sres_Chi2, sres_CreateChi2,
+                                    sres_DeleteChi2,
+                                    long, long, int, long, double, double > > >
+           ( proxy, tests, rng, gen, {"Weight Distribution"},
+             1L, MILLION / 5, 27, 256L, 0.0, 0.125 );
+
+  // Marsaglia's Matrix Rank
+  stack.add< TestU01< TestU01Props< tag::MatrixRank, CProxy_TestU01Suite,
+                                    sres_Chi2, sres_CreateChi2,
+                                    sres_DeleteChi2,
+                                    long, long, int, int, int, int > > >
+           ( proxy, tests, rng, gen, {"Matrix Rank"},
+             1L, 20L * THOUSAND, 20, 10, 60, 60 );
+
+  // Hamming independence
+  stack.add< TestU01< TestU01Props< tag::HammingIndep, CProxy_TestU01Suite,
+                                    sstring_Res, sstring_CreateRes,
+                                    sstring_DeleteRes,
+                                    long, long, int, int, int, int > > >
+           ( proxy, tests, rng, gen, {"Hamming Independence"},
+             1L, MILLION/2, 20, 10, 300, 0 );
 
   // Random Walk 1
   stack.add< TestU01< TestU01Props< tag::RandomWalk1, CProxy_TestU01Suite,
                                     swalk_Res, swalk_CreateRes,
                                     swalk_DeleteRes,
                                     long, long, int, int, long, long > > >
-       ( proxy, tests, rng, gen, {"Random Walk 1 Stat H",
-                                  "Random Walk 1 Stat M",
-                                  "Random Walk 1 Stat J",
-                                  "Random Walk 1 Stat R",
-                                  "Random Walk 1 Stat C"},
-         1L, static_cast<long>(MILLION), 0, 30, 150L, 150L );
+           ( proxy, tests, rng, gen, {"Random Walk 1 Stat H",
+                                      "Random Walk 1 Stat M",
+                                      "Random Walk 1 Stat J",
+                                      "Random Walk 1 Stat R",
+                                      "Random Walk 1 Stat C"},
+             1L, static_cast<long>(MILLION), 0, 30, 150L, 150L );
 }

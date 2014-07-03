@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:37:36 PM MDT
+  \date      Thu 03 Jul 2014 03:44:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ utilities
   \details   Charm++ utilities
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef CharmUtil_h
 #define CharmUtil_h
+
+#include <boost/type_traits/detail/ice_and.hpp>
 
 namespace tk {
 
@@ -25,6 +27,12 @@ struct HasProxy {
   public:
     static const bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
+
+//! Type trait querying whether T is a strongly typed enum
+template< typename T >
+using is_enum_class = typename boost::type_traits::ice_and<
+                        std::is_enum< T >::value,
+                        !std::is_convertible< T, uint8_t >::value >;
 
 } // tk::
 

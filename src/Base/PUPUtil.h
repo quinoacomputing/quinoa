@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 04:41:19 PM MDT
+  \date      Thu 03 Jul 2014 04:57:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ Pack/UnPack utilities
   \details   Charm++ Pack/UnPack utilities
@@ -13,6 +13,7 @@
 
 #include <make_unique.h>
 #include <pup_stl.h>
+#include <CharmUtil.h>
 
 namespace tk {
 
@@ -25,12 +26,12 @@ inline void pup( PUP::er& p, E& e ) {
   e = static_cast< E >( v );
 }
 
-//! Use the enum class pack/unpack only for enums
+//! Use the enum class pack/unpack only for strongly typed enums
 template< typename T,
           typename std::enable_if< std::is_enum<T>::value, int >::type = 0 >
 inline void operator|( PUP::er& p, T& e ) { pup(p,e); }
 
-//! Delegate pack/unpack to parent scope operator| for non-enums
+//! Delegate pack/unpack to parent scope operator| for non-strongly-typed enums
 template< typename T,
           typename std::enable_if< !std::is_enum<T>::value, int >::type = 0 >
 inline void operator|( PUP::er& p, T& e ) { ::operator|(p,e); }

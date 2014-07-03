@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 06:39:59 AM MDT
+  \date      Thu 03 Jul 2014 04:33:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -170,7 +170,7 @@ TestU01Stack::Gap( unif01_Gen* gen, sres_Chi2* res,
 }
 
 std::vector< double >
-TestU01Stack::SimpPoker( unif01_Gen* gen, sres_Chi2* res,
+TestU01Stack::SimplePoker( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Simplified Poker test
@@ -199,8 +199,7 @@ TestU01Stack::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
 
 std::vector< double >
 TestU01Stack::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
-  const std::tuple<long, long, int, int, int, gofw_TestType,
-                   gofw_TestType>& xargs )
+  const std::tuple<long, long, int, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Maximum-of-t test
 //! \author  J. Bakosi

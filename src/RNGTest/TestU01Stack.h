@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 07:43:28 AM MDT
+  \date      Thu 03 Jul 2014 04:38:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -75,7 +75,7 @@ class TestU01Stack {
       const std::tuple<long, long, int, double, double>& xargs );
 
     static std::vector< double >
-    SimpPoker( unif01_Gen* gen, sres_Chi2* res,
+    SimplePoker( unif01_Gen* gen, sres_Chi2* res,
       const std::tuple<long, long, int, int, int>& xargs );
 
     static std::vector< double >
@@ -84,8 +84,7 @@ class TestU01Stack {
 
     static std::vector< double >
     MaxOft( unif01_Gen* gen, sknuth_Res1* res,
-      const std::tuple<long, long, int, int, int, gofw_TestType,
-                       gofw_TestType>& xargs );
+      const std::tuple<long, long, int, int, int, int, int>& xargs );
 
     static std::vector< double >
     WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
@@ -216,14 +215,49 @@ class TestU01Stack {
 
       tag::RandomWalk1,
       std::vector< double > (*)( unif01_Gen*, swalk_Res*,
-        const std::tuple<long, long, int, int, long, long>& )
+        const std::tuple<long, long, int, int, long, long>& ),
+
+      tag::Gap,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, double, double>& ),
+
+      tag::SimplePoker,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int, int>& ),
+
+      tag::CouponCollector,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::MaxOft,
+      std::vector< double > (*)( unif01_Gen*, sknuth_Res1*,
+        const std::tuple<long, long, int, int, int, int, int>& ),
+
+      tag::WeightDistrib,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, long, double, double>& ),
+
+      tag::MatrixRank,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int, int, int>& ),
+
+      tag::HammingIndep,
+      std::vector< double > (*)( unif01_Gen*, sstring_Res*,
+        const std::tuple<long, long, int, int, int, int>& )
 
     > runner {
 
       this->BirthdaySpacings,   // bind to member function wrappers
       this->Collision,
       this->SerialOver,
-      this->RandomWalk1
+      this->RandomWalk1,
+      this->Gap,
+      this->SimplePoker,
+      this->CouponCollector,
+      this->MaxOft,
+      this->WeightDistrib,
+      this->MatrixRank,
+      this->HammingIndep
 
     };
 
