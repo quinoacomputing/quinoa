@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 08:47:57 AM MDT
+  \date      Sat 05 Jul 2014 07:40:56 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -159,17 +159,17 @@ TestU01Suite::assess()
     m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
   } else m_print.note("All tests passed");
 
-  // Output measured times per RNG in order of computational cost
-  m_print.cost( "Generator cost",
-                "Measured times in seconds in increasing order (low is good)",
-                m_time );
-
-  // Output number of failed tests per RNG in order of decreasing quality
-  m_print.rank( "Generator quality",
-                "Number of failed tests in increasing order (low is good)",
-                m_nfail );
-
-  m_print.endpart();
+  // Cost and quality assessment only for more than one RNG
+  if (m_time.size() > 1) {
+    // Output measured times per RNG in order of computational cost
+    m_print.cost( "Generator cost",
+                  "Measured times in seconds in increasing order (low is good)",
+                  m_time );
+    // Output number of failed tests per RNG in order of decreasing quality
+    m_print.rank( "Generator quality",
+                  "Number of failed tests in increasing order (low is good)",
+                  m_nfail );
+  }
 
   // Quit
   mainProxy.finalize();

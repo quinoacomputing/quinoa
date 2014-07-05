@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Tue 01 Jul 2014 08:38:32 PM MDT
+  \date      Sat 05 Jul 2014 07:32:52 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Timer
   \details   Timer
@@ -20,7 +20,7 @@ Watch
 Timer::hms() const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as h:m:s
-//! \param[out] watch  Watch holding time in hours:minutes:seconds
+//! \return  Watch holding time in hours:minutes:seconds
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -30,7 +30,7 @@ Timer::hms() const
   using std::chrono::seconds;
 
   // Compute time difference between start and now in seconds
-  Dsec elapsed = (clock::now() - m_start) / 1000.0;
+  Dsec elapsed = clock::now() - m_start;
 
   // Put elapsed time in watch as hours:minutes:seconds
   Watch watch( duration_cast< hours >( elapsed ),
@@ -72,7 +72,7 @@ Timer::eta( const tk::real term,
   } else {
 
     // Compute time difference between start and now in seconds
-    elapsed = (clock::now() - m_start) / 1000.0;
+    elapsed = clock::now() - m_start;
 
     // Estimate time until term in seconds
     Dsec est_term = elapsed * (term-time) / time;
