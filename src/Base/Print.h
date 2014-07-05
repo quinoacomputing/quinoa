@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 07:47:25 AM MDT
+  \date      Sat 05 Jul 2014 10:40:30 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -14,6 +14,7 @@
 #include <iostream>
 #include <iomanip>
 #include <list>
+#include <map>
 
 #include <boost/format.hpp>
 
@@ -131,9 +132,11 @@ class Print {
 
     //! Print elapsed time
     template< class ClockFormat >
-    void time( const std::string& title, const ClockFormat& clock ) {
+    void time( const std::string& title,
+               const std::map< std::string, ClockFormat >& clock ) const
+    {
       section( title );
-      item( "Total time", clock );
+      for (const auto& c : clock) item( c.first, c.second );
       endsubsection();
     }
 

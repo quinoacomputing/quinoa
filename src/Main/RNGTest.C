@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 07:41:22 AM MDT
+  \date      Sat 05 Jul 2014 10:53:27 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -134,7 +134,8 @@ class Main : public CBase_Main {
       m_driver( tk::Main< rngtest::RNGTestDriver >( msg->argc, msg->argv,
                   tk::HeaderType::RNGTEST,
                   RNGTEST_EXECUTABLE,
-                  rngtest::echoTPL ) )
+                  rngtest::echoTPL ) ),
+      m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;
       mainProxy = thisProxy;
@@ -143,20 +144,29 @@ class Main : public CBase_Main {
       // necessary so that this->execute() can access already migrated
       // global-scope data.
       CProxy_execute::ckNew();
+      // Start new timer measuring the migration of global-scope data
+      m_timer.emplace_back();
     }
 
-    void execute() { m_driver.execute(); }
+    void execute() {
+      m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
+      m_driver.execute();
+    }
 
     void finalize() {
       tk::Print print;
-      print.time( "Timer (h:m:s)", m_timer.hms() );
+      m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+      print.time( "Timers (h:m:s)", m_timestamp );
       print.endpart();
       CkExit();
     }
 
   private:
-    rngtest::RNGTestDriver m_driver;
-    tk::Timer m_timer;
+    rngtest::RNGTestDriver m_driver;                    //!< Driver
+    std::vector< tk::Timer > m_timer;                   //!< Timers
+
+    //! Time stamps in h:m:s with labels
+    std::map< std::string, tk::Watch > m_timestamp;
 };
 
 //! Charm++ chare execute: by the time this object is constructed, the Charm++
