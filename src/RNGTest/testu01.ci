@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 04:33:20 PM MDT
+  \date      Fri 04 Jul 2014 07:02:41 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests
@@ -24,10 +24,6 @@ module testu01 {
     chare TestU01<
             TestU01Props< tag::Collision, CProxy_TestU01Suite,
                           sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
-                          long, long, int, long, int > >;
-    chare TestU01<
-            TestU01Props< tag::SerialOver, CProxy_TestU01Suite,
-                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
                           long, long, int, long, int > >;
     chare TestU01<
             TestU01Props< tag::RandomWalk1, CProxy_TestU01Suite,
@@ -61,6 +57,98 @@ module testu01 {
             TestU01Props< tag::HammingIndep, CProxy_TestU01Suite,
                           sstring_Res, sstring_CreateRes, sstring_DeleteRes,
                           long, long, int, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::SerialOver, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::CollisionOver, CProxy_TestU01Suite,
+                          smarsa_Res, smarsa_CreateRes, smarsa_DeleteRes,
+                          long, long, int, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::ClosePairs, CProxy_TestU01Suite,
+                          snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                          long, long, int, int, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::ClosePairsBitMatch, CProxy_TestU01Suite,
+                          snpair_Res, snpair_CreateRes, snpair_DeleteRes,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::Run, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::Permutation, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::CollisionPermut, CProxy_TestU01Suite,
+                          sknuth_Res2, sknuth_CreateRes2, sknuth_DeleteRes2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::SampleProd, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::SampleMean, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::SampleCorr, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::AppearanceSpacings, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, long, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::SumCollector, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, double > >;
+    chare TestU01<
+            TestU01Props< tag::Savir2, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, long, int > >;
+    chare TestU01<
+            TestU01Props< tag::GCD, CProxy_TestU01Suite,
+                          smarsa_Res2, smarsa_CreateRes2, smarsa_DeleteRes2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::LinearComp, CProxy_TestU01Suite,
+                          scomp_Res, scomp_CreateRes, scomp_DeleteRes,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::LempelZiv, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::Fourier3, CProxy_TestU01Suite,
+                          sspectral_Res, sspectral_CreateRes, sspectral_DeleteRes,
+                          long, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::LongestHeadRun, CProxy_TestU01Suite,
+                          sstring_Res2, sstring_CreateRes2, sstring_DeleteRes2,
+                          long, long, int, int, long > >;
+    chare TestU01<
+            TestU01Props< tag::PeriodsInStrings, CProxy_TestU01Suite,
+                          sres_Chi2, sres_CreateChi2, sres_DeleteChi2,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::HammingWeight2, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, int, long > >;
+    chare TestU01<
+            TestU01Props< tag::HammingCorr, CProxy_TestU01Suite,
+                          sstring_Res, sstring_CreateRes, sstring_DeleteRes,
+                          long, long, int, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::StringRun, CProxy_TestU01Suite,
+                          sstring_Res3, sstring_CreateRes3, sstring_DeleteRes3,
+                          long, long, int, int > >;
+    chare TestU01<
+            TestU01Props< tag::AutoCorr, CProxy_TestU01Suite,
+                          sres_Basic, sres_CreateBasic, sres_DeleteBasic,
+                          long, long, int, int, int > >;
 
     template< class TestU01Props >
     chare TestU01 {

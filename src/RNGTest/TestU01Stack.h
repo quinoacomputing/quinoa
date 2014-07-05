@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 04:38:42 PM MDT
+  \date      Fri 04 Jul 2014 07:00:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -191,7 +191,7 @@ class TestU01Stack {
       const std::tuple<long, long, int, int>& xargs );
 
     static std::vector< double >
-    AutoCor( unif01_Gen* gen, sres_Basic* res,
+    AutoCorr( unif01_Gen* gen, sres_Basic* res,
       const std::tuple<long, long, int, int, int>& xargs );
 
     //! Compile-time tag-based access to individual wrappers. The tagged_tuple
@@ -207,10 +207,6 @@ class TestU01Stack {
 
       tag::Collision,
       std::vector< double > (*)( unif01_Gen*, sknuth_Res2*,
-        const std::tuple<long, long, int, long, int>& ),
-
-      tag::SerialOver,
-      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
         const std::tuple<long, long, int, long, int>& ),
 
       tag::RandomWalk1,
@@ -243,13 +239,104 @@ class TestU01Stack {
 
       tag::HammingIndep,
       std::vector< double > (*)( unif01_Gen*, sstring_Res*,
-        const std::tuple<long, long, int, int, int, int>& )
+        const std::tuple<long, long, int, int, int, int>& ),
+
+      tag::SerialOver,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, long, int>& ),
+
+      tag::CollisionOver,
+      std::vector< double > (*)( unif01_Gen*, smarsa_Res*,
+        const std::tuple<long, long, int, long, int>& ),
+
+      tag::ClosePairs,
+      std::vector< double > (*)( unif01_Gen*, snpair_Res*,
+        const std::tuple<long, long, int, int, int, int, int>& ),
+
+      tag::ClosePairsBitMatch,
+      std::vector< double > (*)( unif01_Gen*, snpair_Res*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::Run,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::Permutation,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::CollisionPermut,
+      std::vector< double > (*)( unif01_Gen*, sknuth_Res2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::SampleProd,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::SampleMean,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int>& ),
+
+      tag::SampleCorr,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::AppearanceSpacings,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, long, int, int, int>& ),
+
+      tag::SumCollector,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, double>& ),
+
+      tag::Savir2,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, long, int>& ),
+
+      tag::GCD,
+      std::vector< double > (*)( unif01_Gen*, smarsa_Res2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::LinearComp,
+      std::vector< double > (*)( unif01_Gen*, scomp_Res*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::LempelZiv,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, int, int, int>& ),
+
+      tag::Fourier3,
+      std::vector< double > (*)( unif01_Gen*, sspectral_Res*,
+        const std::tuple<long, int, int, int>& ),
+
+      tag::LongestHeadRun,
+      std::vector< double > (*)( unif01_Gen*, sstring_Res2*,
+        const std::tuple<long, long, int, int, long>& ),
+
+      tag::PeriodsInStrings,
+      std::vector< double > (*)( unif01_Gen*, sres_Chi2*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::HammingWeight2,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, int, long>& ),
+
+      tag::HammingCorr,
+      std::vector< double > (*)( unif01_Gen*, sstring_Res*,
+        const std::tuple<long, long, int, int, int>& ),
+
+      tag::StringRun,
+      std::vector< double > (*)( unif01_Gen*, sstring_Res3*,
+        const std::tuple<long, long, int, int>& ),
+
+      tag::AutoCorr,
+      std::vector< double > (*)( unif01_Gen*, sres_Basic*,
+        const std::tuple<long, long, int, int, int>& )
 
     > runner {
 
       this->BirthdaySpacings,   // bind to member function wrappers
       this->Collision,
-      this->SerialOver,
       this->RandomWalk1,
       this->Gap,
       this->SimplePoker,
@@ -257,7 +344,30 @@ class TestU01Stack {
       this->MaxOft,
       this->WeightDistrib,
       this->MatrixRank,
-      this->HammingIndep
+      this->HammingIndep,
+      this->SerialOver,
+      this->CollisionOver,
+      this->ClosePairs,
+      this->ClosePairsBitMatch,
+      this->Run,
+      this->Permutation,
+      this->CollisionPermut,
+      this->SampleProd,
+      this->SampleMean,
+      this->SampleCorr,
+      this->AppearanceSpacings,
+      this->SumCollector,
+      this->Savir2,
+      this->GCD,
+      this->LinearComp,
+      this->LempelZiv,
+      this->Fourier3,
+      this->LongestHeadRun,
+      this->PeriodsInStrings,
+      this->HammingWeight2,
+      this->HammingCorr,
+      this->StringRun,
+      this->AutoCorr
 
     };
 

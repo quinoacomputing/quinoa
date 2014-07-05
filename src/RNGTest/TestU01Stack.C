@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 04:33:06 PM MDT
+  \date      Fri 04 Jul 2014 07:00:13 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -597,7 +597,7 @@ TestU01Stack::StringRun( unif01_Gen* gen, sstring_Res3* res,
 }
 
 std::vector< double >
-TestU01Stack::AutoCor( unif01_Gen* gen, sres_Basic* res,
+TestU01Stack::AutoCorr( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Autocorrelation test
