@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01suite.ci
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 07:56:07 AM MDT
+  \date      Sat 05 Jul 2014 11:13:58 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Charm++ module interface file for TestU01 statistical test suites
   \details   Charm++ module interface file for TestU01 statistical test suites
@@ -23,7 +23,8 @@ module testu01suite {
       entry TestU01Suite( ctr::BatteryType suite );
       entry void npval( std::size_t n );
       entry void names( std::vector< std::string > n );
-      entry void evaluate( std::vector< std::vector< std::string > > status );
+      entry [expedited] // expedited so one-liners are printed when tests finish
+        void evaluate( std::vector< std::vector< std::string > > status );
       entry void time( std::pair< std::string, tk::real > t );
     }
 
