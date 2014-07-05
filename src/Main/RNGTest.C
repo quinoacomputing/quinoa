@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 06:13:17 AM MDT
+  \date      Sat 05 Jul 2014 07:41:22 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -146,10 +146,17 @@ class Main : public CBase_Main {
     }
 
     void execute() { m_driver.execute(); }
-    void finalize() { CkExit(); }
+
+    void finalize() {
+      tk::Print print;
+      print.time( "Timer (h:m:s)", m_timer.hms() );
+      print.endpart();
+      CkExit();
+    }
 
   private:
     rngtest::RNGTestDriver m_driver;
+    tk::Timer m_timer;
 };
 
 //! Charm++ chare execute: by the time this object is constructed, the Charm++

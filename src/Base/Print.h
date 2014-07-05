@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 06:21:15 AM MDT
+  \date      Sat 05 Jul 2014 07:47:25 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -18,6 +18,7 @@
 #include <boost/format.hpp>
 
 #include <Option.h>
+#include <Timer.h>
 
 namespace tk {
 
@@ -102,6 +103,12 @@ class Print {
     void item( const std::string& name, const T& value ) const
     { m_stream << m_item_name_value_fmt % m_item_indent % name % value; }
 
+    //! Print item: h:m:s
+    void item( const std::string& name, const Watch& watch ) const {
+      m_stream << m_item_name_watch_fmt % m_item_indent % name
+                  % watch.hrs.count() % watch.min.count() % watch.sec.count();
+    }
+
     //! Print list: name: entries...
     void list( const std::string& name,
                const std::list< std::string >& entries ) const {
@@ -120,6 +127,14 @@ class Print {
         for (const auto& f : factory)
           m_stream << m_list_item_fmt % m_item_indent % option.name( f.first );
       }
+    }
+
+    //! Print elapsed time
+    template< class ClockFormat >
+    void time( const std::string& title, const ClockFormat& clock ) {
+      section( title );
+      item( "Total time", clock );
+      endsubsection();
     }
 
     //! Print note
@@ -164,6 +179,7 @@ class Print {
     mutable format m_note_fmt = format("\n%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
+    mutable format m_item_name_watch_fmt = format("%s%-30s : %d:%d:%d\n");
     mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
