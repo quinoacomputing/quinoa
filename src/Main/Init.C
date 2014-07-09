@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 06:22:49 AM MDT
+  \date      Tue 08 Jul 2014 02:46:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -34,11 +34,10 @@ std::string tk::workdir()
 {
   char cwd[1024];
 
-  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+  if (getcwd(cwd, sizeof(cwd)) != NULL)
     return std::string(cwd);
-  } else {
-    Throw(ExceptType::WARNING, "Error from POSIX API's getcwd()");
-  }
+  else
+    Throw( "Error from POSIX API's getcwd()" );
 }
 
 std::string tk::curtime()
@@ -53,16 +52,14 @@ std::string tk::curtime()
   // Obtain current time as seconds elapsed since the Epoch
   current_time = time(NULL);
 
-  if (current_time == ((time_t)-1)) {
-    Throw(ExceptType::WARNING, "Failure to compute the current time.");
-  }
+  if (current_time == ((time_t)-1))
+    Throw( "Failure to compute the current time" );
 
   // Convert to local time format
   c_time_string = ctime(&current_time);
 
-  if (c_time_string == NULL) {
-    Throw(ExceptType::WARNING, "Failure to convert the current time.");
-  }
+  if (c_time_string == NULL)
+    Throw( "Failure to convert the current time" );
 
   // Convert to std::string and remove trailing newline
   std::string str(c_time_string);
@@ -84,7 +81,7 @@ void tk::echoHeader( const Print& print, HeaderType header )
   else if ( header == HeaderType::MESHCONV )
     print.headerMeshConv();
   else
-    Throw( ExceptType::WARNING, "Header not available" );
+    Throw( "Header not available" );
 }
 
 void tk::echoBuildEnv( const Print& print,

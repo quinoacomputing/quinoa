@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed Mar 26 13:52:12 2014
+  \date      Sat 05 Jul 2014 09:24:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -20,26 +20,24 @@
 
 using tk::Exception;
 
-Exception::Exception(ExceptType except,
-                     const std::string& message,
-                     const std::string& file,
-                     const std::string& function,
-                     unsigned int line) noexcept
+Exception::Exception( std::string&& message,
+                      std::string&& file,
+                      std::string&& function,
+                      unsigned int line ) noexcept
 //******************************************************************************
 //  Constructor: generate error message
 //! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 try :
-  m_except(std::move(except)),
 #ifdef NDEBUG
-  m_trace(false),
+  m_trace( false ),
 #else
-  m_trace(true),
+  m_trace( true ),
 #endif
-  m_file(std::move(file)),
-  m_func(std::move(function)),
-  m_line(std::move(line)),
+  m_file( std::move(file) ),
+  m_func( std::move(function) ),
+  m_line( std::move(line) ),
   m_message(std::move(message)),
   m_addrLength(0),
   m_symbolList(nullptr)
@@ -61,13 +59,12 @@ try :
 } // Catch std::exception
   catch (exception& se) {
     // Emit warning and continue
-    std::cout << "RUNTIME ERROR in Exception constructor: " << se.what()
-              << std::endl;
+    printf( "RUNTIME ERROR in Exception constructor: %s\n", se.what() );
   }
   // Catch uncaught exceptions
   catch (...) {
     // Emit warning and continue
-    std::cout << "UNKNOWN EXCEPTION in Exception constructor" << std::endl;
+    printf( "UNKNOWN EXCEPTION in Exception constructor\n" );
   }
 
 Exception::~Exception() noexcept
@@ -182,15 +179,15 @@ Exception::echoTrace() noexcept
   free(funcname);
 }
 
-void
-Exception::echo(const char* msg) noexcept
+tk::ErrCode
+Exception::handleException() noexcept
 //******************************************************************************
-//  Echo message
+//  Handle Exception: Print cumulative message
 //! \details No-throw guarantee: this member function never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf("\n>>> %s: %s\n", msg, what());
+  printf("\n>>> %s\n", what());
 
   if (m_trace) {
     printf(">>> CALL TRACE: (turn off: CMAKE_BUILD_TYPE=RELEASE) =============="
@@ -199,49 +196,6 @@ Exception::echo(const char* msg) noexcept
     printf(">>> END OF CALL TRACE (turn off: CMAKE_BUILD_TYPE=RELEASE) ========"
            "=============\n");
   }
-}
-
-using tk::ErrCode;
-
-ErrCode
-Exception::handleException() noexcept
-//******************************************************************************
-//  Handle Exception: Print cumulative message
-//! \details No-throw guarantee: this member function never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if (m_except == ExceptType::WARNING) {
-
-    echo("WARNING");
-    return ErrCode::FAILURE;
-
-  } else if (m_except == ExceptType::CUMULATIVE) {
-
-    echo("CUMULATIVE ERROR");
-    return ErrCode::FAILURE;
-
-  } else if (m_except == ExceptType::ERROR) {
-
-    echo("ERROR");
-    return ErrCode::FAILURE;
-
-  } else if (m_except == ExceptType::FATAL) {
-
-    echo("FATAL ERROR");
-    return ErrCode::FAILURE;
-
-  } else if (m_except == ExceptType::RUNTIME) {
-
-    echo("RUNTIME ERROR");
-    return ErrCode::FAILURE;
-
-  } else if (m_except == ExceptType::UNCAUGHT) {
-
-    echo("UNKNOWN ERROR");
-    return ErrCode::FAILURE;
-
-  } else {
-    return ErrCode::FAILURE;
-  }
+ 
+  return tk::ErrCode::FAILURE;
 }

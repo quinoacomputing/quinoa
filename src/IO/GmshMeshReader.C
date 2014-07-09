@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:43:05 PM MDT
+  \date      Sat 05 Jul 2014 08:57:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -57,7 +57,7 @@ GmshMeshReader::readMeshFormat()
 
   // Read in beginning of header: $MeshFormat
   getline( m_inFile, s );
-  ErrChk( s == "$MeshFormat", tk::ExceptType::FATAL,
+  ErrChk( s == "$MeshFormat",
           std::string("Unsupported mesh format '") + s + "' in file " +
           m_filename );
 
@@ -71,17 +71,14 @@ GmshMeshReader::readMeshFormat()
 
   ErrChk( ( fabs(m_version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
             fabs(m_version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
-            tk::ExceptType::FATAL,
             std::string("Unsupported mesh version '") + m_version +
             "' in file " + m_filename );
 
   ErrChk( ( m_type == GmshFileType::ASCII || m_type == GmshFileType::BINARY ),
-          tk::ExceptType::FATAL,
           std::string("Unsupported mesh type '") + m_type + "' in file " +
             m_filename );
 
   ErrChk( m_datasize == sizeof(tk::real),
-          tk::ExceptType::FATAL,
           std::string("Unsupported mesh datasize '") + m_datasize +
           "' in file " + m_filename );
 
@@ -92,14 +89,13 @@ GmshMeshReader::readMeshFormat()
     int one;
     m_inFile.read( reinterpret_cast<char*>(&one), sizeof(int) );
     ErrChk( one == 1,
-            tk::ExceptType::FATAL,
             "Endianness does not match in file " + m_filename );
     getline( m_inFile, s );  // finish reading the line
   }
 
   // Read in end of header: $EndMeshFormat
   getline( m_inFile, s );
-  ErrChk( s == "$EndMeshFormat", tk::ExceptType::FATAL,
+  ErrChk( s == "$EndMeshFormat",
           "'$EndMeshFormat' keyword is missing in file " + m_filename );
 }
 
@@ -113,7 +109,7 @@ GmshMeshReader::readNodes()
   // Read in number of nodes in this node set
   std::size_t nnode;
   m_inFile >> nnode;
-  ErrChk( nnode > 0, tk::ExceptType::FATAL,
+  ErrChk( nnode > 0,
           "Number of nodes must be greater than zero in file " + m_filename  );
   std::string s;
   if (isBinary()) getline( m_inFile, s );  // finish reading the line
@@ -139,7 +135,7 @@ GmshMeshReader::readNodes()
 
   // Read in end of header: $EndNodes
   getline( m_inFile, s );
-  ErrChk( s == "$EndNodes", tk::ExceptType::FATAL,
+  ErrChk( s == "$EndNodes",
           "'$EndNodes' keyword is missing in file" + m_filename );
 }
 
@@ -157,8 +153,7 @@ GmshMeshReader::readElements()
   // Read in number of elements in this element set
   int nel;
   m_inFile >> nel;
-  ErrChk( nel > 0, tk::ExceptType::FATAL,
-          "Number of elements must be greater than zero in file " +
+  ErrChk( nel > 0, "Number of elements must be greater than zero in file " +
           m_filename );
   getline( m_inFile, s );  // finish reading the last line
 
@@ -179,7 +174,7 @@ GmshMeshReader::readElements()
 
     // Find element type, throw exception if not supported
     const auto it = m_elemNodes.find( elmtype );
-    ErrChk( it != m_elemNodes.end(), tk::ExceptType::FATAL,
+    ErrChk( it != m_elemNodes.end(),
             std::string("Unsupported element type ") + elmtype +
             " in mesh file: " + m_filename );
 
@@ -224,7 +219,7 @@ GmshMeshReader::readElements()
 
   // Read in end of header: $EndNodes
   getline( m_inFile, s );
-  ErrChk( s == "$EndElements", tk::ExceptType::FATAL,
+  ErrChk( s == "$EndElements",
           "'$EndElements' keyword is missing in file" + m_filename );
 }
 
@@ -235,6 +230,5 @@ GmshMeshReader::readPhysicalNames()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Throw(tk::ExceptType::WARNING,
-      "Mesh section '$PhysicalNames -- $EndPhysicalNames' not yet implemented");
+  Throw( "Mesh section '$PhysicalNames -- $EndPhysicalNames' not implemented" );
 }

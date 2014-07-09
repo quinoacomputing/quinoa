@@ -200,7 +200,8 @@ at compile time. Access will be abstracted (and optimized) away.
 For the implementation see the [layout policy](_layout_policy_8h_source.html).
 
 <hr>
-  \date      Wed 25 Jun 2014 08:45:00 AM MDT
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+<div><small>
+<em>Page last updated:</em> Tue 08 Jul 2014 03:27:01 PM MDT
+<em>Copyright &copy; 2005-2012, Jozsef Bakosi, All rights reserved.</em>
+</small></div>
 */

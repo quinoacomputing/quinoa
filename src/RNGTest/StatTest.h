@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 07:39:17 AM MDT
+  \date      Sat 05 Jul 2014 09:03:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistical test base
   \details   Statistical test base
@@ -69,8 +69,8 @@ class StatTest {
     explicit StatTest( std::function<T()> c, ConstrArgs... args ) :
       self( tk::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
-      Assert( c == nullptr, tk::ExceptType::FATAL,
-             "std::function arg to StatTest Charm constructor must be nullptr" );
+      Assert( c == nullptr, "std::function argument to StatTest Charm "
+                            "constructor must be nullptr" );
     }
 
     //! Public interface to contribute number of results/test, i.e., p-values

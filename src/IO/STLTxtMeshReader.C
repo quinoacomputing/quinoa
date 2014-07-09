@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Wed Mar 19 12:35:17 2014
+  \date      Sat 05 Jul 2014 09:01:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition
@@ -35,8 +35,7 @@ STLTxtMeshReader::read()
 {
   // Count up number of vertices in STL mesh
   size_t nnodes = readFacets(COUNT);
-  Assert(nnodes % 3 == 0, tk::ExceptType::FATAL,
-         "Number of nodes in STL file must be divisible by 3");
+  Assert(nnodes % 3 == 0, "Number of nodes in STL file must be divisible by 3");
 
   // Allocate memory to store coordinates and face list
   m_mesh.alloc(nnodes);
@@ -121,10 +120,9 @@ STLTxtMeshReader::readFacets(const bool store,
         m_inFile >> kw;              // try to read on
         if (!m_inFile.eof()) m_inFile.seekg(back);
       } else {
-        Throw(tk::ExceptType::FATAL,
-              "Corruption in ASCII STL file while parsing keyword '" + kw +
-              "': keyword 'endfacet' must be followed by either 'facet' or "
-              "'endsolid'");
+        Throw( "Corruption in ASCII STL file while parsing keyword '" + kw +
+               "': keyword 'endfacet' must be followed by either 'facet' or "
+               "'endsolid'" );
       }
     }   // while (newfacet)
   }   // while (newsolid)

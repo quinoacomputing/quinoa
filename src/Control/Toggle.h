@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 12:39:35 PM MDT
+  \date      Sat 05 Jul 2014 09:12:51 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Options and associations
   \details   Options and associations
@@ -32,8 +32,8 @@ class Toggle {
     //! Lookup Enum value based on keyword, Enum must exist
     Enum value(const std::string keyword) const {
       auto it = values.find(keyword);
-      Assert(it != values.end(), ExceptType::FATAL,
-            "Cannot find value for keyword \"" + keyword + "\"");
+      Assert( it != values.end(),
+             "Cannot find value for keyword \"" + keyword + "\"" );
       return it->second;
     }
 
@@ -46,8 +46,8 @@ class Toggle {
     //! Lookup option name based on Enum
     const std::string& name(Enum val) const {
       auto it = names.find(val);
-      Assert(it != names.end(), ExceptType::FATAL,
-             std::string("Cannot find name for value \"") + val + "\"");
+      Assert( it != names.end(),
+              std::string("Cannot find name for value \"") + val + "\"" );
       return it->second;
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Wrappers.h
   \author    J. Bakosi
-  \date      Tue 01 Jul 2014 11:24:11 AM MDT
+  \date      Sat 05 Jul 2014 09:04:00 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 global-scope wrappers
   \details   TestU01 global-scope wrappers. For more info on why these functions
@@ -29,7 +29,7 @@ static inline double uniform( void*, void* )
   if (rng != end(g_rng))
     rng->second.uniform( CkMyPe(), 1, &r );
   else
-    Throw( tk::ExceptType::FATAL, "RNG not found" );
+    Throw( "RNG not found" );
   return r;
 }
 
@@ -45,7 +45,7 @@ static inline unsigned long uniform_bits( void*, void* )
   if (rng != end(g_rng))
     rng->second.uniform( CkMyPe(), 1, &r );
   else
-    Throw( tk::ExceptType::FATAL, "RNG not found" );
+    Throw( "RNG not found" );
   return static_cast<unsigned long>(r * unif01_NORM32);
 }
 

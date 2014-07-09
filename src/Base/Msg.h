@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Msg.h
   \author    J. Bakosi
-  \date      Fri 27 Jun 2014 07:18:30 PM MDT
+  \date      Sat 05 Jul 2014 09:06:35 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Custom Charm++ message types
   \details   Custom Charm++ message types
@@ -71,8 +71,8 @@ struct VecStrsMsg : public CMessage_VecStrsMsg< Size > {
   using value_type = std::vector< std::vector< std::string > >;
   //! Constructor
   explicit VecStrsMsg( const std::vector< std::string >& v ) {
-    Assert( Size <= v.size(), tk::ExceptType::FATAL, "Size of input vector to "
-            "VecStrsMsg is larger than specified in template argument" );
+    Assert( Size <= v.size(), "Size of input vector to VecStrsMsg is larger "
+                              "than specified in template argument" );
     for (std::size_t i=0; i<Size; ++i)
       strncpy( strings[i], v[i].c_str(), CSTYLE_STRLEN );
   }

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Mon Oct  7 10:02:41 2013
+  \date      Sat 05 Jul 2014 09:03:42 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration
@@ -54,9 +54,9 @@ class STLTxtMeshReader : public tk::Reader {
       //! Operator >> for reading a keyword and hande error
       friend std::ifstream& operator>> (std::ifstream& is, STLKeyword& kw) {
         is >> kw.read;
-        ErrChk(kw.read == kw.correct, tk::ExceptType::FATAL,
-               "Corruption in ASCII STL file while parsing keyword '" +
-               kw.read + "', should be '" + kw.correct + "'");
+        ErrChk( kw.read == kw.correct,
+                "Corruption in ASCII STL file while parsing keyword '" +
+                kw.read + "', should be '" + kw.correct + "'" );
         return is;
       }
     };

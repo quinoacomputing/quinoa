@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Thu 26 Jun 2014 07:58:28 PM MDT
+  \date      Sun 06 Jul 2014 08:32:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -29,7 +29,8 @@ extern ctr::InputDeck g_inputdeck;
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver( int argc, char** argv )
+RNGTestDriver::RNGTestDriver( int argc, char** argv, const RNGTestPrint& print )
+ : m_print( print )
 //******************************************************************************
 //  Constructor
 //! \param[in] argc      Argument count from command line
@@ -40,17 +41,14 @@ RNGTestDriver::RNGTestDriver( int argc, char** argv )
   // All global-scope data to be migrated to all PEs initialized here
   try {
 
-    // Create simple pretty printer
-    tk::Print print;
-
     // Parse command line into cmdline
     ctr::CmdLine cmdline;
-    CmdLineParser cmdParser( argc, argv, print, cmdline );
+    CmdLineParser cmdParser( argc, argv, m_print, cmdline );
 
     // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
-    InputDeckParser inputdeckParser( print, cmdline, g_inputdeck );
+    InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
 
-    print.endpart();
+    m_print.endpart();
 
   } catch (...) { tk::processException(); }
 }
@@ -64,10 +62,7 @@ RNGTestDriver::execute()
 {
   try {
 
-    // Create simple pretty printer
-    tk::Print print;
-
-    print.part("Factory");
+    m_print.part("Factory");
 
     // Register batteries
     BatteryFactory bf;
@@ -77,20 +72,20 @@ RNGTestDriver::execute()
                         ( bf, ctr::BatteryType::CRUSH );
     tk::recordCharmModel< Battery, TestU01Suite >
                         ( bf, ctr::BatteryType::BIGCRUSH );
-    print.list< ctr::Battery >( "Registered batteries", bf );
+    m_print.list< ctr::Battery >( "Registered batteries", bf );
 
     //! Echo information on random number generator test suite to be created
-    print.endpart();
-    print.part("Problem");
+    m_print.endpart();
+    m_print.part("Problem");
 
     if ( !g_inputdeck.get< tag::title >().empty() )
-      print.section("Title", g_inputdeck.get< tag::title >());
+      m_print.section("Title", g_inputdeck.get< tag::title >());
 
     // Instantiate and run battery
     const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );
     if (s != end(bf)) {
       Battery( s->second() );
-    } else Throw( tk::ExceptType::FATAL, "Battery not found in factory" );
+    } else Throw( "Battery not found in factory" );
 
   } catch (...) { tk::processException(); }
 }

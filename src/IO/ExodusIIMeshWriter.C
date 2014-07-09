@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Wed Apr 23 09:07:32 2014
+  \date      Sat 05 Jul 2014 09:26:27 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -35,8 +35,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
                          &cpuwordsize,
                          &iowordsize );
 
-  ErrChk( m_outFile > 0, tk::ExceptType::FATAL,
-          "Failed to create file: " + filename );
+  ErrChk( m_outFile > 0, "Failed to create file: " + filename );
 }
 
 ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
@@ -46,7 +45,7 @@ ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 //******************************************************************************
 {
   if ( ex_close(m_outFile) < 0 )
-    std::cout << "WARNING: Failed to close file: " << m_filename << std::endl;
+    printf( ">>> WARNING: Failed to close file: %s\n", m_filename );
 }
 
 void
@@ -78,7 +77,6 @@ ExodusIIMeshWriter::writeHeader()
                  m_mesh.neblk(),
                  0,     // number of node sets
                  0 ) == 0,
-    tk::ExceptType::FATAL,
     "Failed to write header to file: " + m_filename );
 }
 
@@ -91,7 +89,6 @@ ExodusIIMeshWriter::writeNodes()
 {
   ErrChk( ex_put_coord( m_outFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
-          tk::ExceptType::FATAL,
           "Failed to write coordinates to file: " + m_filename );
 }
 
@@ -123,15 +120,13 @@ ExodusIIMeshWriter::writeElemBlock( int elclass,
   // Write element block information
   ErrChk( ex_put_elem_block( m_outFile, elclass, eltype.c_str(), inpoel.size(),
                              nnpe, 0 ) == 0,
-    tk::ExceptType::FATAL,
     "Failed to write " + eltype + " element block to file: " + m_filename );
 
   // Write element connectivity
   for (std::size_t e=0; e<inpoel.size(); ++e) {
     ErrChk( ne_put_n_elem_conn( m_outFile, elclass, e+1, 1,
-            inpoel[e].data() ) == 0,    // 1-based element ids
-    tk::ExceptType::FATAL,
-    "Failed to write " + eltype + " element connectivity to file: " +
-     m_filename );
+                                inpoel[e].data() ) == 0,    // 1-based element ids
+            "Failed to write " + eltype + " element connectivity to file: " +
+            m_filename );
   }
 }

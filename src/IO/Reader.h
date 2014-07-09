@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.h
   \author    J. Bakosi
-  \date      Wed Apr 23 10:47:45 2014
+  \date      Sat 05 Jul 2014 09:02:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -31,9 +31,7 @@ class Reader {
     virtual ~Reader() noexcept;
 
     //! Read interface
-    virtual void read() {
-      Throw( ExceptType::WARNING, "Reader::read() is a no-op");
-    }
+    virtual void read() { Throw( "Reader::read() is a no-op"); }
 
   protected:
     const std::string m_filename;            //!< File name

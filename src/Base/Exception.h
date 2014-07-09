@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 01:28:10 PM MDT
+  \date      Sat 05 Jul 2014 09:21:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -51,16 +51,6 @@ namespace tk {
 #define ErrChk(expr, ...) \
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
-//! Exception types
-enum class ExceptType : uint8_t {
-                        WARNING=0,   //!< produces a warning
-                        CUMULATIVE,  //!< only several will produce a warning
-                        ERROR,       //!< produce error but will not interrupt
-                        FATAL,       //!< fatal error, will interrupt
-                        RUNTIME,     //!< std::runtime_error, will interrupt
-                        UNCAUGHT     //!< uncaught: will interrupt
-};
-
 //! Error codes for the OS (or whatever calls Quinoa)
 enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
                      FAILURE = EXIT_FAILURE  //!< Exceptions occurred
@@ -71,11 +61,10 @@ class Exception : public std::exception {
 
   public:
     //! Constructor
-    explicit Exception(ExceptType except,
-                       const std::string& message,
-                       const std::string& file = "",
-                       const std::string& function = "",
-                       unsigned int line = 0) noexcept;
+    explicit Exception( std::string&& message,
+                        std::string&& file = "",
+                        std::string&& function = "",
+                        unsigned int line = 0 ) noexcept;
 
     //! Destructor
     virtual ~Exception() noexcept;
@@ -88,9 +77,6 @@ class Exception : public std::exception {
 
     //! Handle Exception
     virtual ErrCode handleException() noexcept;
-
-    //! Echo message
-    void echo(const char* msg) noexcept;
 
     //! Accessor to function name
     const std::string& func() const noexcept { return m_func; }
@@ -113,7 +99,6 @@ class Exception : public std::exception {
     //! Demangle and Echo call trace
     void echoTrace() noexcept;
 
-    const ExceptType m_except;  //!< Exception type (WARNING, etc.)
     const bool m_trace;         //!< True if to also echo trace
     const std::string m_file;   //!< Source file where exception is occurred
     const std::string m_func;   //!< Function name where exception is occurred

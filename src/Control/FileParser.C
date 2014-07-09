@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:34:35 AM MST
+  \date      Sat 05 Jul 2014 09:11:36 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     File parser
   \details   File parser
@@ -26,13 +26,13 @@ FileParser::FileParser(const std::string& filename) : m_filename(filename)
 //******************************************************************************
 {
   //! Make sure there is a filename
-  Assert(!filename.empty(), ExceptType::FATAL, "No filename specified");
+  Assert( !filename.empty(), "No filename specified" );
 
   std::ifstream q;
 
   // Check if file exists, throw exception if it does not
   q.open(filename, std::ifstream::in);
-  ErrChk(q.good(), ExceptType::FATAL, "Failed to open file: " + filename);
+  ErrChk( q.good(), "Failed to open file: " + filename );
 
   // Attempt to read a character, throw if it fails
   // It is curious that on some systems opening a directory instead of a file
@@ -42,9 +42,9 @@ FileParser::FileParser(const std::string& filename) : m_filename(filename)
   // stackoverflow.com/questions/9591036/
   // ifstream-open-doesnt-set-error-bits-when-argument-is-a-directory.
   q.get();
-  ErrChk(q.good(), ExceptType::FATAL, "Failed to read from file: " + filename);
+  ErrChk( q.good(), "Failed to read from file: " + filename );
 
   // Close it
   q.close();
-  ErrChk(!q.fail(), ExceptType::FATAL, "Failed to close file: " + filename);
+  ErrChk( !q.fail(), "Failed to close file: " + filename );
 }

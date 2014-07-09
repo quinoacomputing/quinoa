@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 08:05:11 AM MDT
+  \date      Sun 06 Jul 2014 08:33:44 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -58,7 +58,7 @@ class TestU01Suite : public CBase_TestU01Suite {
     template< class Suite >
     std::string addTests() {
       const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
-      ErrChk( !rngs.empty(), tk::ExceptType::FATAL, "No RNGs selected" );
+      ErrChk( !rngs.empty(), "No RNGs selected" );
       Suite suite;
       for (const auto& r : rngs) suite.addTests( m_ctrs, r, thisProxy );
       return suite.name();

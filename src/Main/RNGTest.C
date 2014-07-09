@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 10:53:27 AM MDT
+  \date      Sun 06 Jul 2014 08:07:57 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -14,6 +14,7 @@
 #include <Paradigm.h>
 #include <RNG.h>
 #include <RNGStack.h>
+#include <RNGTestPrint.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/InputDeck/InputDeck.h>
 #include <TestStack.h>
@@ -131,10 +132,12 @@ class Main : public CBase_Main {
 
   public:
     Main( CkArgMsg* msg ) :
-      m_driver( tk::Main< rngtest::RNGTestDriver >( msg->argc, msg->argv,
-                  tk::HeaderType::RNGTEST,
-                  RNGTEST_EXECUTABLE,
-                  rngtest::echoTPL ) ),
+      m_driver( tk::Main< rngtest::RNGTestDriver >
+                        ( msg->argc, msg->argv,
+                          tk::HeaderType::RNGTEST,
+                          RNGTEST_EXECUTABLE,
+                          m_print,
+                          rngtest::echoTPL ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;
@@ -154,14 +157,14 @@ class Main : public CBase_Main {
     }
 
     void finalize() {
-      tk::Print print;
       m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-      print.time( "Timers (h:m:s)", m_timestamp );
-      print.endpart();
+      m_print.time( "Timers (h:m:s)", m_timestamp );
+      m_print.endpart();
       CkExit();
     }
 
   private:
+    rngtest::RNGTestPrint m_print;                      //!< Pretty printer
     rngtest::RNGTestDriver m_driver;                    //!< Driver
     std::vector< tk::Timer > m_timer;                   //!< Timers
 

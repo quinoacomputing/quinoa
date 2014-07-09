@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:50:57 AM MDT
+  \date      Sat 05 Jul 2014 08:58:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -62,13 +62,11 @@ class GmshMeshReader : public tk::Reader {
 
     // Get mesh type queries
     bool isASCII() const {
-      Assert( m_type != GmshFileType::UNDEFINED, tk::ExceptType::FATAL,
-              "Mesh type is undefined");
+      Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::ASCII ? true : false;
     }
     bool isBinary() const {
-      Assert( m_type != GmshFileType::UNDEFINED, tk::ExceptType::FATAL,
-              "Mesh type is undefined");
+      Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::BINARY ? true : false;
     }
 
@@ -88,8 +86,7 @@ class GmshMeshReader : public tk::Reader {
         case GmshElemType::TRI: e2.push_back( p ); break;
         case GmshElemType::TET: e3.push_back( p ); break;
         case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
-        default: Throw( tk::ExceptType::FATAL,
-                        std::string("Unsupported element type ") + etype +
+        default: Throw( std::string("Unsupported element type ") + etype +
                         " in mesh file: " + m_filename );
 
       }

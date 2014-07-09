@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 01:31:33 PM MDT
+  \date      Sat 05 Jul 2014 08:53:55 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGSSE-based random number generator
   \details   RNGSSE-based random number generator
@@ -35,9 +35,8 @@ class RNGSSE {
        m_nthreads( nthreads ),
        m_init( seqlen == ctr::RNGSSESeqLenType::LONG ? fnLong :
                seqlen == ctr::RNGSSESeqLenType::MEDIUM ? fnMed : fnShort ) {
-      Assert( m_init != nullptr,
-              ExceptType::FATAL, "nullptr passed to RNGSSE constructor" );
-      Assert( nthreads > 0, ExceptType::FATAL, "Need at least one thread" );
+      Assert( m_init != nullptr, "nullptr passed to RNGSSE constructor" );
+      Assert( nthreads > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
       m_stream = tk::make_unique< State[] >( nthreads );
       // Initialize thread-streams
@@ -52,7 +51,7 @@ class RNGSSE {
 
     //! Gaussian RNG
     void gaussian( int tid, int num, double* r ) const {
-      Throw( ExceptType::WARNING, "RNGSSE::gaussian undefined" );
+      Throw( "RNGSSE::gaussian undefined" );
       IGNORE(tid);
       IGNORE(num);
       IGNORE(r);
