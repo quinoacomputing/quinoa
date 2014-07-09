@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:20:54 AM MST
+  \date      Sat 05 Jul 2014 09:02:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
@@ -33,7 +33,7 @@ quinoa::SiloError(char* msg)
   // Echo and throw
   std::stringstream ss;
   ss << "Silo library writer error: " << str;
-  Throw(tk::ExceptType::FATAL, ss.str());
+  Throw( ss.str() );
 }
 
 using quinoa::SiloWriter;
@@ -61,8 +61,7 @@ SiloWriter::SiloWriter(const std::string& filename,
 
   // Create Silo file
   m_dbfile = DBCreate(filename.c_str(), 0, DB_LOCAL, filename.c_str(), DB_HDF5);
-  ErrChk(m_dbfile != NULL, tk::ExceptType::FATAL,
-        "Cannot create Silo file" + filename);
+  ErrChk( m_dbfile != NULL, "Cannot create Silo file" + filename );
 }
 
 SiloWriter::~SiloWriter() noexcept

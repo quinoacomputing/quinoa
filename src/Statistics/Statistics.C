@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:43:34 PM MDT
+  \date      Sat 05 Jul 2014 08:53:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Statistics
   \details   Statistics
@@ -61,7 +61,7 @@ Statistics::setupOrdinary( const Base& base, const OffsetMap& offset )
 
       for (const auto& term : product) {
         auto it = offset.find( term.var );
-        Assert( it != end( offset ), tk::ExceptType::FATAL, "No such depvar" );
+        Assert( it != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable
         m_instOrd[ m_nord ].push_back(
           m_particles.cptr( term.field, it->second ) );
@@ -101,7 +101,7 @@ Statistics::setupCentral( const Base& base, const OffsetMap& offset )
 
         for (const auto& term : product) {
           auto it = offset.find( term.var );
-          Assert( it != end( offset ), tk::ExceptType::FATAL, "No such depvar" );
+          Assert( it != end( offset ), "No such depvar" );
           // Put in starting address of instantaneous variable
           m_instCen[m_ncen].push_back(
             m_particles.cptr( term.field, it->second ) );
@@ -155,8 +155,7 @@ Statistics::mean( const ctr::Term& term ) const
     }
   }
 
-  Throw( tk::ExceptType::FATAL,
-         std::string("Cannot find mean for variable ") + term );
+  Throw( std::string("Cannot find mean for variable ") + term );
 }
 
 bool
@@ -167,8 +166,7 @@ Statistics::plotOrdinary( int m ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( m < m_nord, tk::ExceptType::FATAL,
-          "Request for unavailable ordinary moment" );
+  Assert( m < m_nord, "Request for unavailable ordinary moment" );
   return m_plotOrdinary[ m ];
 }
 
@@ -180,8 +178,7 @@ Statistics::nameOrdinary( int m ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( m < m_nord, tk::ExceptType::FATAL,
-          "Request for unavailable ordinary moment" );
+  Assert( m < m_nord, "Request for unavailable ordinary moment" );
   return m_nameOrdinary[ m ];
 }
 
@@ -193,8 +190,7 @@ Statistics::nameCentral( int m ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( m < m_ncen, tk::ExceptType::FATAL,
-          "Request for unavailable central moment" );
+  Assert( m < m_ncen, "Request for unavailable central moment" );
   return m_nameCentral[ m ];
 }
 

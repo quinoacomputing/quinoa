@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Tue 24 Jun 2014 07:47:25 AM MDT
+  \date      Sat 05 Jul 2014 08:54:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of random number generators
   \details   Stack of random number generators
@@ -64,7 +64,7 @@ RNGStack::createSelected( const tk::RNGFactory& factory,
   for (const auto& s : selected) {
     const auto r = factory.find(s);
     if (r != end(factory)) rng.emplace(static_cast<RawRNGType>(s), r->second());
-    else Throw( tk::ExceptType::FATAL, "RNG not found in factory" );
+    else Throw( "RNG not found in factory" );
   }
   return rng;
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 04:09:42 PM MDT
+  \date      Sat 05 Jul 2014 08:52:32 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -116,8 +116,7 @@ MeshConvDriver::detectInput() const
 
     } catch ( std::invalid_argument ) {
 
-      Throw( tk::ExceptType::RUNTIME,
-             "Input mesh file type could not be determined from header: " +
+      Throw( "Input mesh file type could not be determined from header: " +
              m_input );
 
     }
@@ -156,8 +155,7 @@ MeshConvDriver::pickOutput() const
 
   } else {
 
-    Throw( tk::ExceptType::RUNTIME,
-           "Output mesh file type could not be determined from extension of "
+    Throw( "Output mesh file type could not be determined from extension of "
            "filename '" + m_output + "'; valid extensions are: "
            "'msh' for Gmsh, 'exo' or 'h5' for ExodusII, 'mesh' for Netgen's "
            "neutral" );

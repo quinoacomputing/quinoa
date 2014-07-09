@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 04:07:27 PM MDT
+  \date      Sat 05 Jul 2014 09:13:05 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MeshConv's comamnd line parser
   \details   MeshConv's comamnd line parser
@@ -58,12 +58,10 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 
   // Make sure mandatory arguments are set
   ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
-          tk::ExceptType::FATAL,
           "Mandatory input file not specified. "
           "Use '--" + kw::input().string() + " <filename>' or '-" +
           kw::input().alias() + " <filename>'.");
   ErrChk( !(cmdline.get< tag::io, tag::output >().empty()),
-          tk::ExceptType::FATAL,
           "Mandatory output file not specified. "
           "Use '--" + kw::output().string() + " <filename>' or '-" +
           kw::output().alias() + " <filename>'.");

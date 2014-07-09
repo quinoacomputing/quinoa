@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 04:42:21 PM MDT
+  \date      Sat 05 Jul 2014 09:04:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Battery
   \details   Battery
@@ -69,8 +69,8 @@ class Battery {
     explicit Battery( std::function<T()> c, ConstrArgs... args ) :
       self( tk::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {
-      Assert( c == nullptr, tk::ExceptType::FATAL,
-             "std::function arg to Battery Charm constructor must be nullptr" );
+      Assert( c == nullptr, "std::function argument to Battery Charm "
+                            "constructor must be nullptr" );
     }
 
     //! Public interface to evaluating a statistical test

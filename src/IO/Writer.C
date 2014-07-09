@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.C
   \author    J. Bakosi
-  \date      Sun 10 Nov 2013 06:19:37 AM MST
+  \date      Sat 05 Jul 2014 09:29:29 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class definition
   \details   Writer base class definition
@@ -24,9 +24,8 @@ Writer::Writer(const std::string& filename) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_outFile.open(m_filename, std::ofstream::out);
-  ErrChk(m_outFile.good(), ExceptType::FATAL,
-         "Failed to open file: " + m_filename);
+  m_outFile.open( m_filename, std::ofstream::out );
+  ErrChk( m_outFile.good(), "Failed to open file: " + m_filename );
 }
 
 Writer::~Writer() noexcept
@@ -40,18 +39,18 @@ Writer::~Writer() noexcept
 
     m_outFile.close();
 
-    if (m_outFile.fail())
-      std::cout << "WARNING: Failed to close file: " << m_filename << std::endl;
+    if ( m_outFile.fail() )
+      printf( ">>> WARNING: Failed to close file: %s\n", m_filename );
 
   } // emit only a warning on error
-    catch (Exception& e) {
-      e.echo("WARNING");
+    catch ( Exception& e ) {
+      e.echo( "WARNING" );
     }
-    catch (std::exception& e) {
-      std::cout << ">>> std::exception in Writer destructor: " << e.what()
-                << std::endl;
+    catch ( std::exception& e ) {
+      printf( ">>> WARNING: std::exception in Writer destructor: %s\n",
+              e.what() );
     }
     catch (...) {
-      std::cout << "UNKNOWN EXCEPTION in Writer destructor" << std::endl;
+      printf( ">>> WARNING: UNKNOWN EXCEPTION in Writer destructor\n" );
     }
 }

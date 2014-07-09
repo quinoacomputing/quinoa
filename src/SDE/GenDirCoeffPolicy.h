@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:43:05 2014
+  \date      Sat 05 Jul 2014 09:08:50 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -46,14 +46,14 @@ struct GenDirCoeffConst {
     S = S_;
     k = k_;
     c = c_;
-    ErrChk( b.size() == ncomp, tk::ExceptType::FATAL,
-            "Wrong number of generalized Dirichlet model parameters 'b'");
-    ErrChk( S.size() == ncomp, tk::ExceptType::FATAL,
-            "Wrong number of generalized Dirichlet model parameters 'S'");
-    ErrChk( k.size() == ncomp, tk::ExceptType::FATAL,
-            "Wrong number of generalized Dirichlet model parameters 'k'");
-    ErrChk( c.size() == ncomp*(ncomp-1)/2, tk::ExceptType::FATAL,
-            "Wrong number of generalized Dirichlet model parameters 'c'");
+    ErrChk( b.size() == ncomp,
+            "Wrong number of generalized Dirichlet SDE parameters 'b'");
+    ErrChk( S.size() == ncomp,
+            "Wrong number of generalized Dirichlet SDE parameters 'S'");
+    ErrChk( k.size() == ncomp,
+            "Wrong number of generalized Dirichlet SDE parameters 'k'");
+    ErrChk( c.size() == ncomp*(ncomp-1)/2,
+            "Wrong number of generalized Dirichlet SDE parameters 'c'");
   }
 
   //! Function call: no-op for constant coefficients

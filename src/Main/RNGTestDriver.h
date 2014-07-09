@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Mon 16 Jun 2014 07:26:46 PM MDT
+  \date      Sun 06 Jul 2014 08:12:20 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -12,6 +12,7 @@
 #define RNGTestDriver_h
 
 #include <Battery.h>
+#include <RNGTestPrint.h>
 
 //! Everything that contributes to the rngtest executable
 namespace rngtest {
@@ -24,10 +25,13 @@ class RNGTestDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver( int argc, char** argv );
+    explicit RNGTestDriver( int argc, char** argv, const RNGTestPrint& print );
 
     //! Execute driver
     void execute();
+
+  private:
+    const RNGTestPrint& m_print;
 };
 
 } // rngtest::

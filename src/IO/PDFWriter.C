@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:16:39 2014
+  \date      Sat 05 Jul 2014 08:59:17 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -57,8 +57,7 @@ PDFWriter::writeGmsh(const tk::JPDF& jpdf)
 {
   // Output mesh header: mesh version, file type, data size
   m_outFile << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
-  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
-         "Failed to write to file: " + m_filename);
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 
   auto f = jpdf.getMap();
   tk::real binsize = jpdf.getBinsize();
@@ -111,6 +110,5 @@ PDFWriter::writeGmsh(const tk::JPDF& jpdf)
   }
 
   m_outFile << "$NodetData\n";
-  ErrChk(!m_outFile.bad(), tk::ExceptType::FATAL,
-         "Failed to write to file: " + m_filename);
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 }

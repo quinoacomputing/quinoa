@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Thu 29 May 2014 10:58:30 AM MDT
+  \date      Mon 07 Jul 2014 02:16:02 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -24,9 +24,6 @@ class QuinoaPrint : public tk::RNGPrint {
     //! Constructor
     explicit QuinoaPrint(const std::unique_ptr< ctr::InputDeck >& control) :
       m_ctr(*control) {}
-
-    //! Destructor
-    ~QuinoaPrint() override = default;
 
     //! Print control option: 'group : option' only if differs from its default
     template<typename OptionType, typename... tags>

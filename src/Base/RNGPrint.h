@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGPrint.h
   \author    J. Bakosi
-  \date      Wed 11 Jun 2014 01:40:17 PM MDT
+  \date      Sun 06 Jul 2014 08:31:46 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Printer with RNGs
   \details   Printer with RNGs

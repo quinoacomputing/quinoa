@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Handler.C
   \author    J. Bakosi
-  \date      Sun 29 Jun 2014 05:13:54 PM MDT
+  \date      Sat 05 Jul 2014 09:06:08 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Handler functions
   \details   Handler functions
@@ -37,12 +37,12 @@ void processException()
     // Catch std::exception and transform it into Quinoa::Exception without
     // file:line:func information
     catch ( std::exception& se ) {
-      Exception qe(ExceptType::RUNTIME, se.what());
+      Exception qe( se.what() );
       qe.handleException();
     }
     // Catch uncaught exception
     catch (...) {
-      Exception qe(ExceptType::UNCAUGHT, "Non-standard exception");
+      Exception qe( "Non-standard exception" );
       qe.handleException();
     }
 
@@ -61,7 +61,7 @@ void newHandler()
 //******************************************************************************
 {
   try {
-    Throw(ExceptType::FATAL, "Cannot allocate memory");
+    Throw( "Cannot allocate memory" );
   } catch (...) { processException(); }
 }
 
@@ -79,7 +79,7 @@ void terminateHandler()
 //******************************************************************************
 {
   try {
-    Throw(ExceptType::FATAL, "Terminate called by uncaught exception");
+    Throw( "Terminate called by uncaught exception" );
   } catch (...) { processException(); }
 }
 
@@ -96,9 +96,8 @@ void unexpectedHandler()
 //******************************************************************************
 {
   try {
-    Throw(ExceptType::FATAL,
-          "Unexpected exception. "
-          "Exception specifiers are deprecated since C++11.");
+    Throw( "Unexpected exception. Exception specifiers are deprecated since "
+           "C++11" );
   } catch (...) { processException(); }
 }
 

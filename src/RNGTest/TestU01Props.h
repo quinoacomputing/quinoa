@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 08:40:24 AM MDT
+  \date      Sat 05 Jul 2014 09:05:18 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 statistical test properties
   \details   TestU01 statistical test properties
@@ -161,12 +161,11 @@ class TestU01Props {
       // Templating createTestU01Gen on the id enables the compiler generate a
       // different wrapper for a different RNG facilitating simultaneous calls
       // to any or all wrappers as they are unique functions.
-      using tk::ExceptType;
       using tk::ctr::RNGType;
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);
-      Assert(!rngname.empty(), ExceptType::FATAL, "Empty RNG name not allowed");
-      Assert(m_rng != RNGType::NO_RNG, ExceptType::FATAL, "No RNG type allowed");
+      Assert( !rngname.empty(), "Empty RNG name not allowed");
+      Assert( m_rng != RNGType::NO_RNG, "No RNG type allowed");
       #ifdef HAS_MKL
       if (m_rng == RNGType::MKL_MCG31)
         g = createTestU01Gen< raw(RNGType::MKL_MCG31) >( rngname );

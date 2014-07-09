@@ -10,7 +10,7 @@ Requirements, features
 Works with different libraries of RNGs: currently Intel's MKL's vector
 statistical library (VSL) RNGs and RNGSSE's RNGs. References:
  - MKL: https://software.intel.com/en-us/intel-mkl
- - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022,
+ - RNGSSE: http://dx.doi.org/10.1016/j.cpc.2011.03.022 and
            http://dx.doi.org/10.1016/j.cpc.2013.04.007
 
 There are a large number of other RNG libraries available. An important
@@ -94,7 +94,7 @@ The RNGs, wrapped through the base 'RNG' and children 'MKLRNG' and 'RNGSSERNG',
 are invoked via the polymorphic base. While the RNGs are instantiated via
 RNGFactory (discussed above), to be able to call any of the instantiated RNGs at
 the same time, we need as many base class pointers as the maximum number of RNGs
-- currently 25. In principle, this requires 25 global-scope almost identical
+-- currently 25. In principle, this requires 25 global-scope almost identical
 wrappers so that we can pass them into TestU01. Note that the function signature
 TestU01 accepts is the same for all RNGs. Templating the global-scope wrappers
 on an integer, however, allows to write the wrapper only once and let the
@@ -150,7 +150,8 @@ containers exist, but some are not optimal and don't use the latest C++
 standard.
 
 <hr>
-  \date      Wed 25 Jun 2014 08:45:39 AM MDT
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+<div><small>
+<em>Page last updated:</em> Tue 08 Jul 2014 03:27:08 PM MDT
+<em>Copyright &copy; 2005-2012, Jozsef Bakosi, All rights reserved.</em>
+</small></div>
 */

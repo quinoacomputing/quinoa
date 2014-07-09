@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 07:40:56 AM MDT
+  \date      Mon 07 Jul 2014 08:41:45 AM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -28,7 +28,7 @@ extern TestStack g_testStack;
 using rngtest::TestU01Suite;
 
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
-  m_npval(0), m_ncomplete(0), m_ntest(0)
+   m_npval(0), m_ncomplete(0), m_ntest(0)
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -41,8 +41,7 @@ TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
     m_name = addTests< Crush >();
   else if ( suite == ctr::BatteryType::BIGCRUSH )
     m_name = addTests< BigCrush >();
-  else Throw( tk::ExceptType::FATAL,
-              "Non-TestU01 RNG test suite passed to TestU01Suite" );
+  else Throw( "Non-TestU01 RNG test suite passed to TestU01Suite" );
 
   // Construct all tests and store handles
   for (const auto& t : m_ctrs) m_tests.emplace_back( t() );
@@ -157,7 +156,7 @@ TestU01Suite::assess()
   if ( !m_failed.empty() ) {
     const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
     m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
-  } else m_print.note("All tests passed");
+  } else m_print.note< tk::QUIET >("All tests passed");
 
   // Cost and quality assessment only for more than one RNG
   if (m_time.size() > 1) {

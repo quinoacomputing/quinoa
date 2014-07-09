@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:38:33 2014
+  \date      Sat 05 Jul 2014 09:13:12 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -48,7 +48,6 @@ CmdLineParser::CmdLineParser(int argc, char** argv,
 
   // Make sure mandatory arguments are set
   ErrChk( !(cmdline->get<tag::io, tag::control>().empty()),
-          tk::ExceptType::FATAL,
           "Mandatory control file not specified. "
           "Use '--" + kw::control().string() + " <filename>' or '-" +
           kw::control().alias() + " <filename>'.");

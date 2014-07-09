@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 10:40:30 AM MDT
+  \date      Tue 08 Jul 2014 03:21:06 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Print
   \details   Print
@@ -17,155 +17,274 @@
 #include <map>
 
 #include <boost/format.hpp>
+#include <boost/iostreams/stream.hpp>
 
 #include <Option.h>
 #include <Timer.h>
 
 namespace tk {
 
+//! Output verbosity. C-style enum as this is used for template argument.
+enum Style { QUIET=0, VERBOSE=1 };
+
+//! Null-sink for quiet output
+static boost::iostreams::stream< boost::iostreams::null_sink >
+  null( ( boost::iostreams::null_sink() ) );
+
 //! Print base
 class Print {
 
   public:
-    //! Constructor
-    explicit Print( std::ostream& str = std::cout ) : m_stream( str ) {}
-
-    //! Destructor
-    virtual ~Print() = default;
+    //! Constructor: Quiet output by default, only stuff written to qstr shown.
+    //! Instantiate with str = std::cout for verbose output. Any member function
+    //! can be called by overriding the default stream via the template
+    //! argument, Style C-style enum.
+    explicit Print( std::ostream& str = null, std::ostream& qstr = std::cout ) :
+      m_stream( str ), m_qstream( qstr ) {}
 
     //! Save pointer to stream
-    std::streambuf* save() const { return m_stream.rdbuf(); }
+    template< Style s = VERBOSE >
+    std::streambuf* save() const { return stream<s>().rdbuf(); }
 
     //! Reset stream to streambuf
-    std::streambuf* reset( std::streambuf* buf ) const
-    { return m_stream.rdbuf( buf ); }
+    template< Style s = VERBOSE >
+    std::streambuf* reset( std::streambuf* buf )
+    { return stream<s>().rdbuf( buf ); }
 
-    //! Reset stream to ostream
-    std::streambuf* reset( std::ostream& os ) const
-    { return m_stream.rdbuf( os.rdbuf() ); }
+    //! Reset stream to ostream passed as argument
+    template< Style s = VERBOSE >
+    std::streambuf* reset( std::ostream& os )
+    { return stream<s>().rdbuf( os.rdbuf() ); }
 
-    //! Define operator << for any type
-    template <typename T>
+    //! Operator << for printing any type to the verbose stream
+    template< typename T >
     friend const Print& operator<<( const Print& os, const T& t )
     { os.m_stream << t; return os; }
 
-    //! Define operator << for function pointer taking ostream returning ostream
+    //! Operator % for printing any type to the quiet stream
+    template< typename T >
+    friend const Print& operator%( const Print& os, const T& t )
+    { os.m_qstream << t; return os; }
+
+    //! Operator << for a function pointer taking ostream returning ostream.
+    //! This is so that several of operators of << can be chained together.
     friend const Print& operator<<( const Print& os,
-                                    std::ostream& (*pf)(std::ostream&) )
-    { os.m_stream << pf; return os; }
+      std::ostream& (*pf)(std::ostream&) ) { os.m_stream << pf; return os; }
 
-    //! Print Quinoa header
-    void headerQuinoa() const;
-
-    //! Print RNGTest header
-    void headerRNGTest() const;
-
-    //! Print MeshConv header
-    void headerMeshConv() const;
+    //! Operator % for a function pointer taking ostream returning ostream.
+    //! This is so that several of operators of % can be chained together.
+    friend const Print& operator%( const Print& os,
+      std::ostream& (*pf)(std::ostream&) ) { os.m_qstream << pf; return os; }
 
     //! Print part header: title
-    void part( const std::string& title ) const;
+    template< Style s = VERBOSE >
+    void part( const std::string& title ) const {
+      using std::operator+;
+      std::size_t half_length = title.size()/2 + 1;
+      std::string str( half_length, '-' );
+      std::string underline( str + " o " + str );
+      std::string upper( title );
+      std::transform( begin(title), end(title), begin(upper), ::toupper );
+      upper = "< " + upper + " >";
+      stream<s>() << m_part_fmt % upper;
+      stream<s>() << m_part_underline_fmt % underline;
+    }
 
     //! Print section header: title
+    template< Style s = VERBOSE >
     void section( const std::string& title ) const {
-      m_stream << m_section_title_fmt % m_section_indent
-                                      % m_section_bullet
-                                      % title;
-      m_stream << m_section_underline_fmt
-                  % m_section_indent
-                  % std::string(m_section_indent.size() + 2 + title.size(),'-');
+      stream<s>() << m_section_title_fmt % m_section_indent % m_section_bullet
+                     % title;
+      stream<s>() << m_section_underline_fmt % m_section_indent
+               % std::string( m_section_indent.size() + 2 + title.size(), '-' );
     }
+
     //! Print section header: title : value
-    template<typename T>
+    template< Style s = VERBOSE, typename T >
     void section( const std::string& name, const T& value ) const {
-      m_stream << m_section_title_value_fmt % m_section_indent
-                                            % m_section_bullet
-                                            % name
-                                            % value;
-      m_stream << m_section_underline_fmt
-                  % m_section_indent
-                  % std::string(m_section_indent.size() + 3 + name.size() +
-                                value.size(), '-');
+      stream<s>() << m_section_title_value_fmt % m_section_indent
+                     % m_section_bullet % name % value;
+      stream<s>() << m_section_underline_fmt % m_section_indent
+                     % std::string( m_section_indent.size() + 3 + name.size() +
+                                    value.size(), '-' );
     }
 
     //! Print subsection header: title
+    template< Style s = VERBOSE >
     void subsection( const std::string& title ) const {
-      m_stream << m_subsection_title_fmt % m_subsection_indent
-                                         % m_subsection_bullet
-                                         % title;
+      stream<s>() << m_subsection_title_fmt % m_subsection_indent
+                     % m_subsection_bullet % title;
     }
 
     //! Print item: name
+    template< Style s = VERBOSE >
     void item( const std::string& name ) const
-    { m_stream << m_item_name_fmt % m_item_indent % name; }
+    { stream<s>() << m_item_name_fmt % m_item_indent % name; }
 
     //! Print item: name : value
-    template< typename T >
+    template< Style s = VERBOSE, typename T >
     void item( const std::string& name, const T& value ) const
-    { m_stream << m_item_name_value_fmt % m_item_indent % name % value; }
+    { stream<s>() << m_item_name_value_fmt % m_item_indent % name % value; }
 
     //! Print item: h:m:s
+    template< Style s = VERBOSE >
     void item( const std::string& name, const Watch& watch ) const {
-      m_stream << m_item_name_watch_fmt % m_item_indent % name
-                  % watch.hrs.count() % watch.min.count() % watch.sec.count();
+      stream<s>() << m_item_name_watch_fmt % m_item_indent % name
+                   % watch.hrs.count() % watch.min.count() % watch.sec.count();
     }
 
     //! Print list: name: entries...
+    template< Style s = VERBOSE >
     void list( const std::string& name,
                const std::list< std::string >& entries ) const {
       if (!entries.empty()) {
-        section( name );
-        for (auto& e : entries) m_stream << m_list_item_fmt % m_item_indent % e;
+        section<s>( name );
+        for (auto& e : entries)
+          stream<s>() << m_list_item_fmt % m_item_indent % e;
       }
     }
 
     //! Print list: name: option names...
-    template< class Option, class Factory >
+    template< class Option, Style s = VERBOSE, class Factory >
     void list( const std::string& title, const Factory& factory ) const {
-      if (!factory.empty()) {
-        section( title );
+      if ( !factory.empty() ) {
+        section<s>( title );
         Option option;
         for (const auto& f : factory)
-          m_stream << m_list_item_fmt % m_item_indent % option.name( f.first );
+          stream<s>() << m_list_item_fmt % m_item_indent % option.name(f.first);
       }
     }
 
     //! Print elapsed time
-    template< class ClockFormat >
+    template< Style s = VERBOSE, class ClockFormat >
     void time( const std::string& title,
                const std::map< std::string, ClockFormat >& clock ) const
     {
-      section( title );
-      for (const auto& c : clock) item( c.first, c.second );
-      endsubsection();
+      section<s>( title );
+      for (const auto& c : clock) item<s>( c.first, c.second );
+      endsubsection<s>();
     }
 
     //! Print note
+    template< Style s = VERBOSE >
     void note( const std::string& msg ) const
-    { m_stream << m_note_fmt % m_section_indent % msg; }
+    { stream<s>() << m_note_fmt % m_section_indent % msg; }
 
     //! Print end of part
-    void endpart() const { m_stream << '\n'; }
+    template< Style s = VERBOSE >
+    void endpart() const { stream<s>() << '\n'; }
 
     //! Print end of subsection
-    void endsubsection() const { m_stream << "\n"; }
+    template< Style s = VERBOSE >
+    void endsubsection() const { stream<s>() << '\n'; }
 
     //! Print raw
-    template< typename T >
-    void raw( const T& r ) const { m_stream << r; }
-
-    //! Raw stream access
-    std::ostream& stream() const noexcept { return m_stream; }
+    template< Style s = VERBOSE, typename T >
+    void raw( const T& r ) const { stream<s>() << r; }
 
     //! Implicit conversion to ostream: allows *this in stl algorithms via an
     //! std::osteam_iterator, e.g., std::ostream_iterator< int >( print, ", " )
-    operator std::ostream&() const noexcept { return m_stream; }
+    template< Style s = VERBOSE >
+    operator std::ostream&() const noexcept { return stream<s>(); }
+
+    //! Print Quinoa header
+    template< Style s = VERBOSE >
+    void headerQuinoa() const {
+      stream<s>() << R"(
+      ,::,`                                                            `.        
+   .;;;'';;;:                                                          ;;#       
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;       
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'      
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'      
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.     
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+     
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;     
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@    
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;    
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'   
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'   
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.  
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+  
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;; 
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.                                                                     
+   .;@+@';;;;;;'                                                                 
+    `     '#''@`                                                               )"
+      << std::endl;
+    }
+
+    //! Print RNGTest header
+    template< Style s = VERBOSE >
+    void headerRNGTest() const {
+       stream<s>() << R"(
+      ,::,`                                                            `.        
+   .;;;'';;;:                                                          ;;#       
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;       
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'      
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'      
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.     
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+     
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;     
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@    
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;    
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'   
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'   
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.  
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+  
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;; 
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.       __________ _______    __________________             __       
+   .;@+@';;;;;;'   \______   \\      \  /  _____\__    _______   ______/  |_     
+    `     '#''@`    |       _//   |   \/   \  ___ |    |_/ __ \ /  ___\   __\    
+                    |    |   /    |    \    \_\  \|    |\  ___/ \___ \ |  |      
+                    |____|_  \____|__  /\______  /|____| \___  /____  >|__|      
+                           \/        \/        \/            \/     \/         )"
+      << std::endl;
+    }
+
+    //! Print MeshConv header
+    template< Style s = VERBOSE >
+    void headerMeshConv() const {
+      stream<s>() << R"(
+      ,::,`                                                            `.        
+   .;;;'';;;:                                                          ;;#       
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;       
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'      
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'      
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.     
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+     
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;     
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@    
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;    
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'   
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'   
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.  
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+  
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;; 
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.        _____                .__    _________                        
+   .;@+@';;;;;;'   /     \   ____   _____|  |__ \_   ___ \  ____   _______  __   
+    `     '#''@`  /  \ /  \_/ __ \ /  ___|  |  \/    \  \/ /  _ \ /    \  \/ /   
+                 /    Y    \  ___/ \___ \|   Y  \     \___(  <_> |   |  \   /    
+                 \____|__  /\___  /____  |___|  /\______  /\____/|___|  /\_/     
+                         \/     \/     \/     \/        \/            \/       )"
+      << std::endl;
+    }
 
   protected:
-    //! bullets
+
+    //! Return verbose or quiet stream depending on style template argument
+    template< Style s = VERBOSE >
+    std::ostream& stream() noexcept { return s ? m_stream : m_qstream; }
+
+    //! Return verbose or quiet stream depending on style template argument
+    template< Style s = VERBOSE >
+    std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
+
+    //! Bullets
     const char m_section_bullet = '*';
     const char m_subsection_bullet = '<';
-    //! indents
+    //! Indents
     const std::string m_section_indent = " ";
     const std::string m_subsection_indent =
       std::operator+(m_section_indent,"  ");
@@ -187,8 +306,9 @@ class Print {
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");
 
-    // Stream object
-    std::ostream& m_stream;
+    // Stream objects
+    std::ostream& m_stream;     //!< Verbose stream
+    std::ostream& m_qstream;    //!< Quiet stream
 };
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 19 Apr 2014 08:29:39 AM MDT
+  \date      Sat 05 Jul 2014 09:00:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
@@ -32,13 +32,11 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 
   // Write beginning of header: $MeshFormat
   m_outFile << "$MeshFormat\n";
-  ErrChk( !m_outFile.bad(), tk::ExceptType::FATAL,
-          "Failed to write to file: " + m_filename );
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 
   // Write "version-number file-type data-size"
   m_outFile << version << " " << type << " " << datasize << "\n";
-  ErrChk( !m_outFile.bad(), tk::ExceptType::FATAL,
-          "Failed to write to file: " + m_filename );
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 
   if (isBinary()) {
     int one = 1;
@@ -48,8 +46,7 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 
   // Write end of header: $EndMeshFormat
   m_outFile << "$EndMeshFormat" << std::endl;
-  ErrChk( !m_outFile.bad(), tk::ExceptType::FATAL,
-          "Failed to write to file: " + m_filename );
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 }
 
 void

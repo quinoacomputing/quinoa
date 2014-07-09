@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 26 Jun 2014 07:49:30 PM MDT
+  \date      Sat 05 Jul 2014 08:56:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -32,7 +32,7 @@ class MKLRNG {
       m_uniform_method( uniform_method ),
       m_gaussian_method( gaussian_method ),
       m_nthreads( nthreads ) {
-      Assert(nthreads > 0, tk::ExceptType::FATAL, "Need at least one thread");
+      Assert( nthreads > 0, "Need at least one thread" );
       // Allocate array of stream-pointers for threads
       m_stream = tk::make_unique< VSLStreamStatePtr[] >( nthreads );
       // Initialize thread-streams for block-splitting. These MKL VSL functions

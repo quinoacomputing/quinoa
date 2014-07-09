@@ -14,6 +14,7 @@ Parser/Control
  - Put in error trap if depvars are the same for two SDEs given
  - Using the defaults for an RNG in the rngs - end block should not require
    an 'end', as that is not so user-friendly
+ - Hook up -v command line option for verbose output (default stays quiet)
 
 RNGTest
 -------
@@ -61,11 +62,12 @@ Build
  - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
  - Add support for PGI (if C++11 is complete)
  - Platforms:
-    + pinto-intel: fix noexcepts
     + darwin-gnu
     + helios-gnu
     + titan-gnu
     + mac-clang
+    + win-gnu: http://tdm-gcc.tdragon.net/download
+    + win-mingw: http://sourceforge.net/projects/mingwbuilds
 
 MeshConv
 --------
@@ -85,6 +87,8 @@ Documentation
 Uncategorized
 -------------
 
+ - Use composition in Print instead of inheritance
+
  - As the estimation of statistics should be closer (i.e., immediately after)
    updating the particle properties, the order of the particle properties in
    memory should be use-selectable at compile time
@@ -95,8 +99,6 @@ Uncategorized
  - Fix destructors: If no exception-specification is provided, the
    exception-specification is one that that would be used by the
    implicitly-declared destructor. In most cases, this is noexcept(true).
-
- - Are cout warnings in destructors' catch blocks exception-safe?
 
  - Use noexcept and conditional noexcept. See STL 3.1.7.
 
@@ -112,7 +114,8 @@ Uncategorized
  - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
 
 <hr>
-  \date      Wed 25 Jun 2014 08:42:42 AM MDT
-  \author    J. Bakosi
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+<div><small>
+<em>Page last updated:</em> Tue 08 Jul 2014 10:26:13 PM MDT
+<em>Copyright &copy; 2005-2012, Jozsef Bakosi, All rights reserved.</em>
+</small></div>
 */

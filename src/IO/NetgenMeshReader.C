@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 10:15:12 PM MDT
+  \date      Sat 05 Jul 2014 08:58:48 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition
@@ -41,7 +41,7 @@ NetgenMeshReader::readNodes()
 {
   std::size_t nnode;
   m_inFile >> nnode;
-  ErrChk( nnode > 0, tk::ExceptType::FATAL,
+  ErrChk( nnode > 0,
           "Number of nodes must be greater than zero in file " + m_filename  );
 
   // Read in node coordinates: x-coord y-coord z-coord
@@ -73,7 +73,7 @@ NetgenMeshReader::readElements()
 
   // Read in number of tetrahedra
   m_inFile >> nel;
-  ErrChk( nel > 0, tk::ExceptType::FATAL,
+  ErrChk( nel > 0,
           "Number of tetrahedra (volume elements) must be greater than zero "
           "in file " + m_filename );
   getline( m_inFile, s );  // finish reading the last line
@@ -91,7 +91,7 @@ NetgenMeshReader::readElements()
 
   // Read in number of triangles
   m_inFile >> nel;
-  ErrChk( nel > 0, tk::ExceptType::FATAL,
+  ErrChk( nel > 0,
           "Number of triangles (surface elements) must be greater than zero in "
           "file " + m_filename );
   getline( m_inFile, s );  // finish reading the last line

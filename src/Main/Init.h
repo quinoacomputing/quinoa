@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 06:23:54 AM MDT
+  \date      Sun 06 Jul 2014 08:14:54 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -41,10 +41,11 @@ void echoBuildEnv( const tk::Print& print,
 void echoRunEnv( const tk::Print& print, int argc, char** argv );
 
 //! Generic Main() used for all executables for code-reuse and a consistent look
-template< class Driver >
+template< class Driver, class Printer >
 Driver Main( int argc, char* argv[],
              HeaderType header,
              const std::string& executable,
+             const Printer& print,
              void (*echoTPL)(const Print&) = [](const Print&){} )
 {
   try {
@@ -55,9 +56,6 @@ Driver Main( int argc, char* argv[],
     std::set_terminate( terminateHandler );
     // Install our own unexpected-handler
     std::set_unexpected( unexpectedHandler );
-
-    // Create pretty printer
-    Print print;
 
     // Echo program header
     echoHeader( print, header );
@@ -70,7 +68,7 @@ Driver Main( int argc, char* argv[],
   } catch (...) { processException(); }
 
   // Create and return driver
-  return Driver( argc, argv );
+  return Driver( argc, argv, print );
 }
 
 } // tk::

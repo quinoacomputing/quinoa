@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 08:45:41 AM MDT
+  \date      Mon 07 Jul 2014 02:28:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -91,14 +91,15 @@ class RNGTestPrint : public tk::RNGPrint {
                     std::size_t ntest ) const {
       std::stringstream ss;
       ss << title << " (" << npval << " stats from " << ntest << " tests)";
-      m_stream << m_section_title_fmt % m_section_indent
-                                      % m_section_bullet
-                                      % ss.str();
-      m_stream << m_section_underline_fmt
-                  % m_section_indent
-                  % std::string( m_section_indent.size() + 2 + ss.str().size(),
+      m_qstream << m_section_title_fmt % m_section_indent
+                                       % m_section_bullet
+                                       % ss.str();
+      m_qstream << m_section_underline_fmt
+                   % m_section_indent
+                   % std::string( m_section_indent.size() + 2 + ss.str().size(),
                                  '-');
-      raw( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
+      raw< tk::QUIET >
+         ( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
 
@@ -128,7 +129,7 @@ class RNGTestPrint : public tk::RNGPrint {
       // status[2]: vector of length 1: RNG name used to run the test
 
       const auto& numfail = nfail.find( status[2][0] );
-      Assert( numfail != nfail.end(), tk::ExceptType::FATAL, "Cannot find RNG" );
+      Assert( numfail != nfail.end(), "Cannot find RNG" );
 
       // Lambda to count number of failed tests
       auto nfailed = [ &numfail, &status ]() {
@@ -142,10 +143,8 @@ class RNGTestPrint : public tk::RNGPrint {
         ss << "[" << ncomplete << "/" << ntest << "/" << nfailed()
            << "] " << status[0][t];
         if (t==0) ss << ", " << status[2][0];
-        m_stream << m_item_widename_value_fmt
-                    % m_item_indent
-                    % ss.str()
-                    % status[1][t];
+        (status[1][t] != "pass" ? m_qstream : m_stream) <<
+          m_item_widename_value_fmt % m_item_indent % ss.str() % status[1][t];
       }
     }
 
@@ -183,16 +182,16 @@ class RNGTestPrint : public tk::RNGPrint {
                const std::string& costnote,
                std::map< std::string, tk::real > t ) const
     {
-      Assert( !t.empty(), tk::ExceptType::FATAL, "Empty map passed to cost()" );
+      Assert( !t.empty(), "Empty map passed to cost()" );
       std::multimap< tk::real, std::string > times = tk::flip_map( t );
-      section( name );
-      raw( m_item_indent + costnote + "\n\n" );
+      section< tk::QUIET >( name );
+      raw< tk::QUIET >( m_item_indent + costnote + "\n\n" );
       tk::real fastest = times.begin()->first;
       for (const auto& t : times) {
         std::stringstream ss;
         ss << t.first << "  (" << std::setprecision(3) << t.first/fastest
            << "x)";
-        item( t.second, ss.str() );
+        item< tk::QUIET >( t.second, ss.str() );
       }
     }
 
@@ -201,11 +200,11 @@ class RNGTestPrint : public tk::RNGPrint {
                const std::string& ranknote,
                std::map< std::string, std::size_t > f ) const
     {
-      Assert( !f.empty(), tk::ExceptType::FATAL, "Empty map passed to rank()" );
+      Assert( !f.empty(), "Empty map passed to rank()" );
       std::multimap< std::size_t, std::string > nfail = tk::flip_map( f );
-      section( name );
-      raw( m_item_indent + ranknote + "\n\n" );
-      for (const auto& t : nfail) item( t.second, t.first );
+      section< tk::QUIET >( name );
+      raw< tk::QUIET >( m_item_indent + ranknote + "\n\n" );
+      for (const auto& t : nfail) item< tk::QUIET >( t.second, t.first );
     }
 };
 

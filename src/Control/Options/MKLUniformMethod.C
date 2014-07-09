@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.C
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:58:49 PM MST
+  \date      Sat 05 Jul 2014 09:10:33 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -24,8 +24,8 @@ MKLUniformMethod::param( MKLUniformMethodType m ) const
 
   auto it = method.find( m );
 
-  Assert(it != method.end(), tk::ExceptType::FATAL,
-         std::string("Cannot find parameter for MKLUniformMethod \"") + m + "\"");
+  Assert( it != method.end(),
+          std::string("Cannot find parameter for MKLUniformMethod \"") + m + "\"");
 
   return it->second;
 }

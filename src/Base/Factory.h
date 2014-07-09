@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 16 Jun 2014 10:11:15 PM MDT
+  \date      Sat 05 Jul 2014 09:06:47 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Factory utils
   \details   Factory utils
@@ -37,8 +37,7 @@ template< class Factory, class Key,
                         typename Factory::mapped_type::result_type >::type >
 std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
   const auto it = f.find( key );
-  Assert( it != end( f ), tk::ExceptType::FATAL,
-          "No such object registered in factory" );
+  Assert( it != end( f ), "No such object registered in factory" );
   return std::unique_ptr< Obj >( it->second() );
 }
 

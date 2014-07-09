@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Mon 26 May 2014 04:43:48 PM MDT
+  \date      Sat 05 Jul 2014 09:09:09 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     SDE
   \details   SDE
@@ -60,10 +60,9 @@ class SDE : public Model {
       m_offset( offset ),
       m_ncomp( ncmp )
     {
-      Assert( m_rngType != tk::ctr::RNGType::NO_RNG, tk::ExceptType::FATAL,
+      Assert( m_rngType != tk::ctr::RNGType::NO_RNG,
               "Cannot instantiate class SDE without an RNG" );
-      Assert( m_ncomp > 0, tk::ExceptType::FATAL,
-              "SDE need at least one scalar to advance" );
+      Assert( m_ncomp > 0, "SDE need at least one scalar to advance" );
       // Initialize particle properties (and throw away init policy)
       Init( m_particles, m_npar, m_nprop, m_offset, m_ncomp,
             base.paradigm.ompNthreads() );

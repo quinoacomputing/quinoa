@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:43:10 2014
+  \date      Sat 05 Jul 2014 09:08:11 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -43,12 +43,9 @@ struct DirCoeffConst {
     b = b_;
     S = S_;
     k = k_;
-    ErrChk( b.size() == ncomp, tk::ExceptType::FATAL,
-            "Wrong number of Dirichlet model parameters 'b'");
-    ErrChk( S.size() == ncomp, tk::ExceptType::FATAL,
-             "Wrong number of Dirichlet model parameters 'S'");
-    ErrChk( k.size() == ncomp, tk::ExceptType::FATAL,
-             "Wrong number of Dirichlet model parameters 'k'");
+    ErrChk( b.size() == ncomp, "Wrong number of Dirichlet SDE parameters 'b'");
+    ErrChk( S.size() == ncomp, "Wrong number of Dirichlet SDE parameters 'S'");
+    ErrChk( k.size() == ncomp, "Wrong number of Dirichlet SDE parameters 'k'");
   }
 
   //! Function call: no-op for constant coefficients

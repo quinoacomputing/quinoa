@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Fri 04 Jul 2014 07:00:13 PM MDT
+  \date      Sat 05 Jul 2014 09:04:28 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -122,7 +122,7 @@ TestU01Stack::generator( tk::ctr::RNGType r ) const
 //******************************************************************************
 {
   const auto& gen = m_generator.find( r );
-  if (gen == end(m_generator)) Throw( tk::ExceptType::FATAL, "RNG not found" );
+  if (gen == end(m_generator)) Throw( "RNG not found" );
   return gen->second.get();
 }
 

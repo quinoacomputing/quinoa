@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Writer.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:13:08 2014
+  \date      Sat 05 Jul 2014 08:51:23 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -30,8 +30,7 @@ class Writer {
 
     //! Write interface
     virtual void write() {
-      Throw( ExceptType::WARNING,
-             "Writer::write() is a no-op and should be defined by a child");
+      Throw( "Writer::write() is a no-op and should be defined by a child" );
     }
 
   protected:

@@ -386,9 +386,8 @@ table.memberdecls {
 }
 
 .memtemplate {
-  font-size: 80%;
-  color: #4665A2;
-  font-weight: normal;
+  font-size: 100%;
+  font-weight: bold;
   margin-left: 9px;
 }
 

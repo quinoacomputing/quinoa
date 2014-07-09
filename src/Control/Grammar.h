@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 11 Jun 2014 04:47:07 PM MDT
+  \date      Mon 07 Jul 2014 04:18:39 PM MDT
   \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
   \brief     Common of grammars
   \details   Common of grammars
@@ -71,14 +71,14 @@ namespace grm {
       std::stringstream ss;
       if (!value.empty()) {
         ss << "Error while parsing '" << value << "' at " << stack.location()
-           << ". " << msg->second << ".";
+           << ". " << msg->second;
       } else {
         ss << "Error while parsing at " << stack.location() << ". "
-           << msg->second << ".";
+           << msg->second;
       }
-      Throw(ExceptType::FATAL, ss.str());
+      Throw( ss.str() );
     } else {
-      Throw(ExceptType::FATAL, "Unknown parser error.");
+      Throw( "Unknown parser error" );
     }
   }
 
@@ -109,7 +109,7 @@ namespace grm {
     tk::Option< OptionType > opt;
     //! Emit warning on overwrite
     if (stack.template get< tags... >() != defaults.template get< tags... >()) {
-      g_print << "\n>>> PARSER WARNING: Multiple definitions for '"
+      g_print << "\n>>> WARNING: Multiple definitions for '"
               << opt.group() << "' option. Overwriting '"
               << opt.name( stack.template get< tags... >() ) << "' with '"
               << opt.name( opt.value( value ) ) << "'.\n\n";
