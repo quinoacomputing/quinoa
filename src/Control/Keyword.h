@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:35:28 2014
+  \date      Sat 12 Jul 2014 04:56:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -15,9 +15,7 @@
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
-
 #include <pegtl.hh>
-
 #ifndef __INTEL_COMPILER
   #pragma GCC diagnostic pop
 #endif

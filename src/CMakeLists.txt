@@ -156,6 +156,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   setlibstdcxx("libstdc++")
 
   add_compiler_flag("-Wno-literal-suffix")
+  add_compiler_flag("-Wno-unused-local-typedefs")
   add_compiler_flag("-fdiagnostics-color")
 
   # Suppress the following warnings for Charm++ hostfiles including the

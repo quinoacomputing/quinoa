@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 06:23:29 AM MDT
+  \date      Sat 12 Jul 2014 06:32:07 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -368,6 +368,7 @@ class TestU01Stack {
       HammingCorr,
       StringRun,
       AutoCorr
+
     };
 
     //! Find RNG properties based on RNG id
