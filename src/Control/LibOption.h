@@ -3,7 +3,7 @@
   \file      src/Control/LibOption.h
   \author    J. Bakosi
   \date      Sat 26 Oct 2013 08:21:20 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Library option
   \details   Library option
 */

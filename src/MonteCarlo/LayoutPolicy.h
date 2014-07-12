@@ -3,7 +3,7 @@
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
   \date      Wed 21 May 2014 08:58:26 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
 */

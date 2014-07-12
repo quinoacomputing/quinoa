@@ -3,7 +3,7 @@
   \file      src/Main/Init.C
   \author    J. Bakosi
   \date      Tue 08 Jul 2014 02:46:51 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for mains
   \details   Common initialization for mains
 */

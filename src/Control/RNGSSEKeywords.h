@@ -3,7 +3,7 @@
   \file      src/Control/RNGSSEKeywords.h
   \author    J. Bakosi
   \date      Fri 27 Dec 2013 08:16:32 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNG keywords for RNGSSE lib
   \details   Random number generator selector keywords for those generators
   available in the RNGSSE library's. The keywords are defined by specializing

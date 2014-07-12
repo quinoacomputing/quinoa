@@ -3,7 +3,7 @@
   \file      src/Base/msg.ci
   \author    J. Bakosi
   \date      Sun 29 Jun 2014 08:21:31 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for custom message types
   \details   Charm++ module interface file for custom message types
 */

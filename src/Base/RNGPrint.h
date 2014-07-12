@@ -2,8 +2,8 @@
 /*!
   \file      src/Base/RNGPrint.h
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:31:46 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sat 12 Jul 2014 04:19:42 AM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
 */
@@ -21,6 +21,11 @@ namespace tk {
 class RNGPrint : public Print {
 
   public:
+    //! Constructor
+    template< tk::Style s = tk::VERBOSE >
+    explicit RNGPrint( std::ostream& str = tk::null,
+                       std::ostream& qstr = std::cout ) : Print( str, qstr ) {}
+
     #ifdef HAS_MKL
     //! Print all fields of MKL RNG parameters
     void MKLParams( const std::vector< ctr::RNGType >& vec,

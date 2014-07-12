@@ -3,7 +3,7 @@
   \file      src/Statistics/Distribution.h
   \author    J. Bakosi
   \date      Mon 07 Oct 2013 08:44:48 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distribution estimator base
   \details   Distribution estimator base
 */

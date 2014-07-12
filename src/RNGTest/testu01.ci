@@ -3,7 +3,7 @@
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
   \date      Fri 04 Jul 2014 07:02:41 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests
 */

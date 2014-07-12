@@ -3,7 +3,7 @@
   \file      src/Control/Parser.h
   \author    J. Bakosi
   \date      Sat 07 Jun 2014 07:54:54 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Parser base
   \details   Parser base
 */

@@ -3,7 +3,7 @@
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
   \date      Thu 16 Jan 2014 09:46:59 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
 */

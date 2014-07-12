@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
   \date      Sat 22 Feb 2014 08:15:49 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
 */

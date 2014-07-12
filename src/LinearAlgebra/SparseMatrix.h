@@ -3,7 +3,7 @@
   \file      src/LinearAlgebra/SparseMatrix.h
   \author    J. Bakosi
   \date      Mon Oct  7 10:18:12 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Sparse matrix declaration
   \details   Sparse matrix base class declaration
 */

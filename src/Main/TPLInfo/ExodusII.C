@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/ExodusII.C
   \author    J. Bakosi
   \date      Thu Mar 27 16:22:56 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     ExodusII library API info
   \details   ExodusII library API info
 */

@@ -3,7 +3,7 @@
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
   \date      Sun 06 Jul 2014 08:07:57 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
 */

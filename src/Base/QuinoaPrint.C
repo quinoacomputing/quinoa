@@ -3,7 +3,7 @@
   \file      src/Base/QuinoaPrint.C
   \author    J. Bakosi
   \date      Fri 21 Feb 2014 08:32:59 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
 */

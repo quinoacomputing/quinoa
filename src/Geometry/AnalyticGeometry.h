@@ -3,7 +3,7 @@
   \file      src/Geometry/AnalyticGeometry.h
   \author    J. Bakosi
   \date      Mon Oct  7 08:22:12 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Analytic geometry definition
   \details   Analytic geometry definition
 */

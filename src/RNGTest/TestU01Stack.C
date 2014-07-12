@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:04:28 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
 */

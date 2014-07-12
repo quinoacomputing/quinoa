@@ -3,7 +3,7 @@
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 08:58:48 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition
 */

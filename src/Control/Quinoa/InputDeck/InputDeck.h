@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Fri 21 Feb 2014 10:35:58 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
 */

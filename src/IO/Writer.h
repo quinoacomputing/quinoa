@@ -3,7 +3,7 @@
   \file      src/IO/Writer.h
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 08:51:23 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Writer base class declaration
   \details   Writer base class declaration
 */

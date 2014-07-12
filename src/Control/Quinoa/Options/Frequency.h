@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
   \date      Mon Oct  7 09:16:31 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
 */

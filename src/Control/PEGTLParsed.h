@@ -3,7 +3,7 @@
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
   \date      Sat 07 Jun 2014 08:08:32 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments
 */

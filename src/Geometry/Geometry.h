@@ -3,7 +3,7 @@
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
   \date      Mon Oct  7 08:22:39 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Geometry base
   \details   Geometry base
 */

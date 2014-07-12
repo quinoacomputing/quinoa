@@ -3,7 +3,7 @@
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:02:32 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Silo (https://wci.llnl.gov/codes/silo) writer
   \details   Silo (https://wci.llnl.gov/codes/silo) writer
 */

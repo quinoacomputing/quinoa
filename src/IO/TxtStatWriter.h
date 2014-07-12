@@ -3,7 +3,7 @@
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
   \date      Wed Apr 23 11:19:14 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Text statistics writer
   \details   Text statistics writer
 */

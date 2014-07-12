@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
   \date      Wed 02 Jul 2014 07:39:31 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 statistical tests
   \details   TestU01 statistical tests
 */

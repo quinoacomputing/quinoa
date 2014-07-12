@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/InitPolicy.h
   \author    J. Bakosi
   \date      Thu 06 Feb 2014 04:33:49 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE initialization policy options and associations
   \details   SDE initialization policy options and associations
 */

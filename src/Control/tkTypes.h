@@ -3,7 +3,7 @@
   \file      src/Control/tkTypes.h
   \author    J. Bakosi
   \date      Sat 21 Jun 2014 05:01:15 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for tk control
   \details   Types for tk control
 */

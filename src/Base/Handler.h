@@ -3,7 +3,7 @@
   \file      src/Base/Handler.h
   \author    J. Bakosi
   \date      Tue 17 Jun 2014 07:19:06 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Handler functions
   \details   Handler functions
 */

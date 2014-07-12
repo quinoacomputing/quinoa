@@ -3,7 +3,7 @@
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
   \date      Wed Apr 23 11:21:53 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
 */

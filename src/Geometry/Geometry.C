@@ -3,7 +3,7 @@
   \file      src/Geometry/Geometry.C
   \author    J. Bakosi
   \date      Thu 16 Jan 2014 10:02:24 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Geometry base
   \details   Geometry base
 */

@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Wrappers.h
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:04:00 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 global-scope wrappers
   \details   TestU01 global-scope wrappers. For more info on why these functions
              are in global-scope, see Main/RNGTest.C, for more info on why they

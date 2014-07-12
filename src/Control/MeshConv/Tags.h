@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/Tags.h
   \author    J. Bakosi
   \date      Tue 08 Apr 2014 09:25:03 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConv's input deck tags
   \details   MeshConv's input deck tags
 */

@@ -3,7 +3,7 @@
   \file      src/SDE/SkewNormal.h
   \author    J. Bakosi
   \date      Mon 24 Feb 2014 08:12:33 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE
 */

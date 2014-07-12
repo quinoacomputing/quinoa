@@ -3,7 +3,7 @@
   \file      src/Base/Timer.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 07:32:52 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Timer
   \details   Timer
 */

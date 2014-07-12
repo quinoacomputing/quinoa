@@ -3,7 +3,7 @@
   \file      src/Base/Macro.h
   \author    J. Bakosi
   \date      Mon Oct  7 08:08:07 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Macro definitions
   \details   Macro definitions
 */

@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/Silo.C
   \author    J. Bakosi
   \date      Wed Mar 19 11:40:48 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Silo info
   \details   Silo info
 */

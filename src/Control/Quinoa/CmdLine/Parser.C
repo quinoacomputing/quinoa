@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:13:12 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
 */
