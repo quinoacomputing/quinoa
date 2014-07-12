@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/SharedKeywords.h
   \author    J. Bakosi
-  \date      Fri 13 Dec 2013 06:23:24 PM MST
+  \date      Sat 12 Jul 2014 06:39:43 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Shared keywords are shared among different executables
   \details   Shared keywords are shared among different executables
@@ -12,7 +12,7 @@
 #define SharedKeywords_h
 
 // Base keywords recognized by all input deck parsers
-#include <BaseKeywords.h>
+#include <InputDeckBaseKeywords.h>
 
 // Keywords common to random number generators
 #include <RNGKeywords.h>

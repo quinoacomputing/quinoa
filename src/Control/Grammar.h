@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 07 Jul 2014 04:18:39 PM MDT
+  \date      Sat 12 Jul 2014 09:52:45 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -156,6 +156,14 @@ namespace grm {
   struct Store_back : pegtl::action_base< Store_back<Stack,tag,tags...> > {
     static void apply(const std::string& value, Stack& stack) {
       stack.template store_back<tag,tags...>(value);
+    }
+  };
+
+  //! put true in switch in state at position given by tags
+  template< class Stack, typename tag, typename... tags >
+  struct Store_switch : pegtl::action_base< Store_switch<Stack,tag,tags...> > {
+    static void apply(const std::string& value, Stack& stack) {
+      stack.template set<tag,tags...>(true);
     }
   };
 
@@ -329,6 +337,13 @@ namespace grm {
                                 pegtl::apply< error< Stack,
                                                      Error::MISSING > > >,
                               insert > > {};
+
+  //! process command line switch 'keyword'
+  template< class Stack, class keyword, typename tag, typename... tags >
+  struct process_cmd_switch :
+         pegtl::ifmust<
+           readcmd< Stack, keyword >,
+           pegtl::apply< Store_switch< Stack, tag, tags... > > > {};
 
   //! read_file entry point: parse 'keywords' and 'ignore' until eof
   template< class Stack, typename keywords, typename ignore >

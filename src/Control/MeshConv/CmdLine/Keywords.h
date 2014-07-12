@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Sun 22 Jun 2014 10:36:40 AM MDT
+  \date      Sat 12 Jul 2014 06:44:42 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConv's command line keywords
   \details   All keywords recognized by MeshConv's command line parser. The
@@ -20,7 +20,7 @@
 #define Keywords
 
 #include <Keyword.h>
-#include <BaseKeywords.h>
+#include <CmdLineBaseKeywords.h>
 
 namespace meshconv {
 //! List of keywords the parser understands

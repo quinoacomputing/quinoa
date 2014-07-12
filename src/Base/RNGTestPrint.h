@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 04:20:08 AM MDT
+  \date      Sat 12 Jul 2014 10:36:28 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -26,7 +26,6 @@ class RNGTestPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
-    template< tk::Style s = tk::VERBOSE >
     explicit RNGTestPrint( std::ostream& str = tk::null,
                            std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
@@ -149,7 +148,7 @@ class RNGTestPrint : public tk::RNGPrint {
         ss << "[" << ncomplete << "/" << ntest << "/" << nfailed()
            << "] " << status[0][t];
         if (t==0) ss << ", " << status[2][0];
-        (status[1][t] != "pass" ? m_qstream : m_stream) <<
+        (status[1][t] == "pass" ? m_stream : m_qstream) <<
           m_item_widename_value_fmt % m_item_indent % ss.str() % status[1][t];
       }
     }

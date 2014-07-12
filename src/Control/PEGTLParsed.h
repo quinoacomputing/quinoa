@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/PEGTLParsed.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 08:08:32 PM MDT
+  \date      Sat 12 Jul 2014 09:46:26 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Class to equip parsed classes with PEGTL instruments
   \details   Class to equip parsed classes with PEGTL instruments
@@ -29,7 +29,7 @@ class PEGTLParsed : public Parsed {
 
     //! Constructor setting command line
     explicit PEGTLParsed( const Input& input, const Cmd& cl ) : m_input(input)
-    { Parsed::template set< cmdtag >( cl );}
+    { Parsed::template set< cmdtag >( cl ); }
 
     //! PEGTL location accessor
     const typename Input::location_type location() const

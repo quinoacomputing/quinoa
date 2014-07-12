@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:12:20 PM MDT
+  \date      Sat 12 Jul 2014 10:12:33 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Driver random number test suite driver
   \details   Driver random number test suite driver
@@ -25,7 +25,8 @@ class RNGTestDriver {
 
   public:
     //! Constructor
-    explicit RNGTestDriver( int argc, char** argv, const RNGTestPrint& print );
+    explicit RNGTestDriver( const RNGTestPrint& print,
+                            const ctr::CmdLine& cmdline );
 
     //! Execute driver
     void execute();

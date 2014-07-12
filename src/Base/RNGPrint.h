@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/RNGPrint.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 04:19:42 AM MDT
+  \date      Sat 12 Jul 2014 09:50:26 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -22,7 +22,6 @@ class RNGPrint : public Print {
 
   public:
     //! Constructor
-    template< tk::Style s = tk::VERBOSE >
     explicit RNGPrint( std::ostream& str = tk::null,
                        std::ostream& qstr = std::cout ) : Print( str, qstr ) {}
 

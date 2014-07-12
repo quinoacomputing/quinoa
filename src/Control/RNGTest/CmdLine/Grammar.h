@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:57:56 PM MST
+  \date      Sat 12 Jul 2014 10:42:46 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -38,7 +38,13 @@ namespace cmd {
 
   // RNGTest's CmdLine grammar
 
-  //! control (i.e., input deck) file
+  //! verbose (i.e., verbose or quiet output)
+  struct verbose :
+         tk::grm::process_cmd_switch< Stack,
+                                      tk::kw::verbose,
+                                      tk::tag::verbose > {};
+
+  //! control (i.e., input deck) file name
   struct control :
          tk::grm::process_cmd< Stack,
                                kw::control,
@@ -48,7 +54,7 @@ namespace cmd {
 
   //! command line keywords
   struct keywords :
-         pegtl::sor< control > {};
+         pegtl::sor< verbose, control > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :
