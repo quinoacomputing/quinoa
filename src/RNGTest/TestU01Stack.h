@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Fri 04 Jul 2014 07:00:09 PM MDT
+  \date      Sat 12 Jul 2014 06:23:29 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -335,40 +335,39 @@ class TestU01Stack {
 
     > runner {
 
-      this->BirthdaySpacings,   // bind to member function wrappers
-      this->Collision,
-      this->RandomWalk1,
-      this->Gap,
-      this->SimplePoker,
-      this->CouponCollector,
-      this->MaxOft,
-      this->WeightDistrib,
-      this->MatrixRank,
-      this->HammingIndep,
-      this->SerialOver,
-      this->CollisionOver,
-      this->ClosePairs,
-      this->ClosePairsBitMatch,
-      this->Run,
-      this->Permutation,
-      this->CollisionPermut,
-      this->SampleProd,
-      this->SampleMean,
-      this->SampleCorr,
-      this->AppearanceSpacings,
-      this->SumCollector,
-      this->Savir2,
-      this->GCD,
-      this->LinearComp,
-      this->LempelZiv,
-      this->Fourier3,
-      this->LongestHeadRun,
-      this->PeriodsInStrings,
-      this->HammingWeight2,
-      this->HammingCorr,
-      this->StringRun,
-      this->AutoCorr
-
+      BirthdaySpacings,   // bind to member function wrappers
+      Collision,
+      RandomWalk1,
+      Gap,
+      SimplePoker,
+      CouponCollector,
+      MaxOft,
+      WeightDistrib,
+      MatrixRank,
+      HammingIndep,
+      SerialOver,
+      CollisionOver,
+      ClosePairs,
+      ClosePairsBitMatch,
+      Run,
+      Permutation,
+      CollisionPermut,
+      SampleProd,
+      SampleMean,
+      SampleCorr,
+      AppearanceSpacings,
+      SumCollector,
+      Savir2,
+      GCD,
+      LinearComp,
+      LempelZiv,
+      Fourier3,
+      LongestHeadRun,
+      PeriodsInStrings,
+      HammingWeight2,
+      HammingCorr,
+      StringRun,
+      AutoCorr
     };
 
     //! Find RNG properties based on RNG id
