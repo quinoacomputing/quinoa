@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Tue 08 Jul 2014 02:46:51 PM MDT
+  \date      Sat 12 Jul 2014 10:57:27 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -132,29 +132,31 @@ void tk::echoBuildEnv( const Print& print,
   echoTPL( print );
 }
 
-void tk::echoRunEnv(const Print& print, int argc, char** argv)
+void tk::echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
 //******************************************************************************
 //  Echo runtime environment
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.section("Run-time environment");
+  print.section( "Run-time environment" );
 
   #ifdef HAS_BOOST_SYSTEM
-  print.item("Hostname", boost::asio::ip::host_name());
+  print.item( "Hostname", boost::asio::ip::host_name() );
   #endif
 
-  print.item("Date, time", curtime());
-  print.item("Work directory", workdir());
-  print.item("Executable (rel. to work dir)", argv[0]);
+  print.item( "Date, time", curtime() );
+  print.item( "Work directory", workdir() );
+  print.item( "Executable (rel. to work dir)", argv[0] );
 
-  print.item("Command line arguments");
+  print.item("Command line arguments" );
   print << '\'';
   if (argc>1) {
     for (auto i=1; i<argc-1; ++i) {
-      print << std::string(argv[i]) + ' ';
+      print << std::string( argv[i] ) + ' ';
     }
-    print << std::string(argv[argc-1]);
+    print << std::string( argv[argc-1] );
   }
   print << "'\n";
+
+  print.item( "Output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
 }

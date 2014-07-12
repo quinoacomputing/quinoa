@@ -8,19 +8,13 @@ Parser/Control
    for types in tagged tuple, see AA (Modern C++ Design) p69.
  - Warn on what is set ends up not being used
  - Add logger: Useful? Requirements? Pantheios? Glog? Boost.Log?
- - The default output should be a less verbose one, ala 'no news is good
-   news', and the current more verbose one should only be for debugging
  - Operator << for tagged tuple (e.g., for debugging purposes)? See STL 5.1.3
  - Put in error trap if depvars are the same for two SDEs given
  - Using the defaults for an RNG in the rngs - end block should not require
    an 'end', as that is not so user-friendly
- - Hook up -v command line option for verbose output (default stays quiet)
 
 RNGTest
 -------
- - The default output should be a less verbose one, ala 'no news is good
-   news', and the current more verbose one should only be for debugging, i.e.
-   don't output tests passed only the failed ones
  - RNGSSE:
     + Put in gaussian(): Gaussian distribution from uniform: STL
     + Can RNGSSE's generators take a seed?
@@ -125,7 +119,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 12 Jul 2014 06:28:18 AM MDT
+<em>Page last updated:</em> Sat 12 Jul 2014 11:02:47 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:32:39 PM MDT
+  \date      Sat 12 Jul 2014 10:12:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -29,21 +29,16 @@ extern ctr::InputDeck g_inputdeck;
 
 using rngtest::RNGTestDriver;
 
-RNGTestDriver::RNGTestDriver( int argc, char** argv, const RNGTestPrint& print )
- : m_print( print )
+RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
+                              const ctr::CmdLine& cmdline ) :
+  m_print( print )
 //******************************************************************************
 //  Constructor
-//! \param[in] argc      Argument count from command line
-//! \param[in] argv      Argument vector from command line
 //! \author J. Bakosi
 //******************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here
   try {
-
-    // Parse command line into cmdline
-    ctr::CmdLine cmdline;
-    CmdLineParser cmdParser( argc, argv, m_print, cmdline );
 
     // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
     InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );

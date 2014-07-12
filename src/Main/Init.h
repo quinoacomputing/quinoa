@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:14:54 PM MDT
+  \date      Sat 12 Jul 2014 10:55:07 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -15,6 +15,7 @@
 
 #include <Handler.h>
 #include <Print.h>
+#include <tkTags.h>
 
 namespace tk {
 
@@ -38,11 +39,12 @@ void echoBuildEnv( const tk::Print& print,
                    void (*echoTPL)(const Print& print) );
 
 //! Echo runtime environment
-void echoRunEnv( const tk::Print& print, int argc, char** argv );
+void echoRunEnv( const tk::Print& print, int argc, char** argv, bool verbose );
 
-//! Generic Main() used for all executables for code-reuse and a consistent look
-template< class Driver, class Printer >
+//! Generic Main() used for all executables for code-reuse and a uniform output
+template< class Driver, class Printer, class CmdLine >
 Driver Main( int argc, char* argv[],
+             const CmdLine& cmdline,
              HeaderType header,
              const std::string& executable,
              const Printer& print,
@@ -62,13 +64,15 @@ Driver Main( int argc, char* argv[],
 
     // Echo environment
     print.part( "Environment" );
-    echoBuildEnv( print, executable, echoTPL ); //!< Build environment
-    echoRunEnv( print, argc, argv );            //!< Runtime environment
+    // Build environment
+    echoBuildEnv( print, executable, echoTPL );
+    // Runtime environment
+    echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
 
   } catch (...) { processException(); }
 
   // Create and return driver
-  return Driver( argc, argv, print );
+  return Driver( print, cmdline );
 }
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 07:52:48 PM MDT
+  \date      Sat 12 Jul 2014 10:22:36 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -15,7 +15,7 @@
 using rngtest::InputDeckParser;
 
 InputDeckParser::InputDeckParser( const tk::Print& print,
-                                  ctr::CmdLine& cmdline,
+                                  const ctr::CmdLine& cmdline,
                                   ctr::InputDeck& inputdeck ) :
   FileParser( cmdline.get< tag::io, tag::control >() )
 //******************************************************************************

@@ -2,21 +2,22 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:07:57 PM MDT
+  \date      Sat 12 Jul 2014 10:51:24 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
 */
 //******************************************************************************
 
-#include <Init.h>
 #include <Config.h>
 #include <Paradigm.h>
 #include <RNG.h>
 #include <RNGStack.h>
 #include <RNGTestPrint.h>
 #include <RNGTestDriver.h>
+#include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/InputDeck/InputDeck.h>
+#include <Init.h>
 #include <TestStack.h>
 #include <rngtest.decl.h>
 #include <PUPUtil.h>
@@ -132,8 +133,14 @@ class Main : public CBase_Main {
 
   public:
     Main( CkArgMsg* msg ) :
+      // Parse command line into m_cmdline using default simple pretty printer
+      m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
+      // Create pretty printer initializing output streams based on command line
+      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : tk::null ),
+      // Create RNGTest driver
       m_driver( tk::Main< rngtest::RNGTestDriver >
                         ( msg->argc, msg->argv,
+                          m_cmdline,
                           tk::HeaderType::RNGTEST,
                           RNGTEST_EXECUTABLE,
                           m_print,
@@ -164,6 +171,8 @@ class Main : public CBase_Main {
     }
 
   private:
+    rngtest::ctr::CmdLine m_cmdline;                    //!< Command line
+    rngtest::CmdLineParser m_cmdParser;                 //!< Command line parser
     rngtest::RNGTestPrint m_print;                      //!< Pretty printer
     rngtest::RNGTestDriver m_driver;                    //!< Driver
     std::vector< tk::Timer > m_timer;                   //!< Timers
