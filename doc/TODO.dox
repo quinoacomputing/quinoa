@@ -36,19 +36,6 @@ RNGTest
    However, with Charm now we also have exceptions originating, asynchronously,
    from non-try blocks. Being able catch those exceptions as well, without
    resorting to terminate would be very helpful. This needs to be revisited.
- - gcc build broken: we get:
-
-     In file included from
-     /home/jbakosi/code/quinoa/src/RNGTest/TestU01Suite.h:28:0, from
-     /home/jbakosi/code/quinoa/src/RNGTest/SmallCrush.h:15, from
-     /home/jbakosi/code/quinoa/src/RNGTest/SmallCrush.C:12:
-     /home/jbakosi/code/quinoa/src/RNGTest/TestU01.h: In member function ‘virtual
-     void rngtest::TestU01<Result, Creator, Deleter, Ts>::pup(PUP::er&)’:
-     /home/jbakosi/code/quinoa/src/RNGTest/TestU01.h:71:9: error: no match for
-     ‘operator|’ (operand types are ‘PUP::er’ and ‘std::size_t {aka long unsigned
-     int}’) p | m_id;
-
-     which may be related to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57739
 
 Testing
 -------
@@ -138,7 +125,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 11 Jul 2014 09:41:50 PM MDT
+<em>Page last updated:</em> Sat 12 Jul 2014 06:28:18 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */
