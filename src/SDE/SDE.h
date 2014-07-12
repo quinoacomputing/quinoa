@@ -3,7 +3,7 @@
   \file      src/SDE/SDE.h
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:09:09 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE
   \details   SDE
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Base.h
   \author    J. Bakosi
   \date      Sun 08 Jun 2014 01:49:44 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Collection of essentials
   \details   Collection of essentials
 */

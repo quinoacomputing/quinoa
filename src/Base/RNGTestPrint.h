@@ -2,8 +2,8 @@
 /*!
   \file      src/Base/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Mon 07 Jul 2014 02:28:28 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Sat 12 Jul 2014 04:20:08 AM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
 */
@@ -25,6 +25,12 @@ extern ctr::InputDeck g_inputdeck;
 class RNGTestPrint : public tk::RNGPrint {
 
   public:
+    //! Constructor
+    template< tk::Style s = tk::VERBOSE >
+    explicit RNGTestPrint( std::ostream& str = tk::null,
+                           std::ostream& qstr = std::cout ) :
+      RNGPrint( str, qstr ) {}
+
     //! Bring vanilla overloads from base into scope in case local overloads fail
     using Print::section;
     using Print::item;

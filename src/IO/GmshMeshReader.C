@@ -3,7 +3,7 @@
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 08:57:48 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
 */

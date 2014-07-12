@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
   \date      Sun 01 Jun 2014 12:49:45 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for RNGTest's parsers
   \details   Types for RNGTest's parsers
 */

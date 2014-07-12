@@ -3,7 +3,7 @@
   \file      src/Control/BaseKeywords.h
   \author    J. Bakosi
   \date      Fri 22 Nov 2013 05:19:02 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
 */

@@ -3,7 +3,7 @@
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 08:52:32 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
 */

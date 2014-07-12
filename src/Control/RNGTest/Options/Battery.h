@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
   \date      Sat 21 Jun 2014 04:58:22 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
 */

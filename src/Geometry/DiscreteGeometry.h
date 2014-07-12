@@ -3,7 +3,7 @@
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
   \date      Mon Oct  7 08:22:22 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
 */

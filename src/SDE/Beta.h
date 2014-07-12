@@ -3,7 +3,7 @@
   \file      src/SDE/Beta.h
   \author    J. Bakosi
   \date      Wed 01 Jan 2014 01:06:58 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Beta SDE
   \details   Beta SDE
 */

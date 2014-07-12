@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
   \date      Fri 04 Jul 2014 06:59:27 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's input deck tags
   \details   RNGTest's input deck tags
 */

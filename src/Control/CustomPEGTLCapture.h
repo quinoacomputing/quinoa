@@ -3,7 +3,7 @@
   \file      src/Control/CustomPEGTLCapture.h
   \author    J. Bakosi
   \date      Thu Feb 20 16:05:58 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Custom capture struct for PEGTL with std::transform
   \details   Custom capture struct for PEGTL with std::transform
 */

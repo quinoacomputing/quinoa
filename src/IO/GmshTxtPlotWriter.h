@@ -3,7 +3,7 @@
   \file      src/IO/GmshTxtPlotWriter.h
   \author    J. Bakosi
   \date      Mon Oct  7 08:24:15 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     GmshTxtPlotWriter class declaration
   \details   GmshTxtPlotWriter class declaration
 */

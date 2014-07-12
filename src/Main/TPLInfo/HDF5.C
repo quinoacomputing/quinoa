@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/HDF5.C
   \author    J. Bakosi
   \date      Wed Mar 19 16:33:50 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     HDF5 info
   \details   HDF5 info
 */

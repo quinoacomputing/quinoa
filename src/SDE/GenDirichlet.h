@@ -3,7 +3,7 @@
   \file      src/SDE/GenDirichlet.h
   \author    J. Bakosi
   \date      Wed Mar 19 16:09:12 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
              see http://dx.doi.org/10.1063/1.4822416

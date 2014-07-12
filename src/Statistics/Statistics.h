@@ -3,7 +3,7 @@
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
   \date      Sat 22 Feb 2014 07:11:29 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Statistics
 */

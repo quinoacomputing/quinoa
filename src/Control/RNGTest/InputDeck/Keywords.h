@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/Keywords.h
   \author    J. Bakosi
   \date      Sun 10 Nov 2013 06:38:27 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \details   All keywords recognized by Quinoa's random number generator (RNG)
   test suite input deck parser. The keywords are defined by specializing struct
   'keyword', defined in Control/Keyword.h. Introducing a new keyword requires a

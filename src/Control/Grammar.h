@@ -3,7 +3,7 @@
   \file      src/Control/Grammar.h
   \author    J. Bakosi
   \date      Mon 07 Jul 2014 04:18:39 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
 */

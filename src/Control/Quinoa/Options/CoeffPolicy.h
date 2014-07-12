@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/CoeffPolicy.h
   \author    J. Bakosi
   \date      Thu 06 Feb 2014 05:35:20 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE coefficients policy options and associations
   \details   SDE coefficients policy options and associations
 */

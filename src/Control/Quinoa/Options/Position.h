@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
   \date      Mon Oct  7 09:17:11 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Position model options and associations
   \details   Position model options and associations
 */

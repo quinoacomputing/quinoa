@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
   \date      Sun 08 Jun 2014 04:05:34 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConv's command line parser
   \details   MeshConv's command line parser
 */

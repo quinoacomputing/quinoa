@@ -3,7 +3,7 @@
   \file      src/Control/tkTags.h
   \author    J. Bakosi
   \date      Sun 01 Jun 2014 11:46:02 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     tk Tags
   \details   tk Tags
 */

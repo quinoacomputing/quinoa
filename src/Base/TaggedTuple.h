@@ -3,7 +3,7 @@
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
   \date      Mon 02 Jun 2014 04:43:15 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access, credit goes to
              ecatmur@stackoverflow.com, for more details, see

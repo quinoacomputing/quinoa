@@ -3,7 +3,7 @@
   \file      src/Base/make_unique.h
   \author    J. Bakosi
   \date      Sat 05 Apr 2014 08:54:34 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Define make_unique for unique_ptr until C++14
   \details   Define make_unique for unique_ptr until C++14
 */

@@ -3,7 +3,7 @@
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
   \date      Thu Apr 24 11:12:44 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Monte Carlo
   \details   Monte Carlo
 */

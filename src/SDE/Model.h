@@ -3,7 +3,7 @@
   \file      src/SDE/Model.h
   \author    J. Bakosi
   \date      Wed 19 Feb 2014 05:50:47 AM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Model
   \details   Model
 */

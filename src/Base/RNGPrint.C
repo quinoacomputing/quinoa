@@ -2,8 +2,8 @@
 /*!
   \file      src/Base/RNGPrint.C
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 11:37:52 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \date      Fri 11 Jul 2014 10:10:22 PM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
 */

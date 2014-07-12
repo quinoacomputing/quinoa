@@ -3,7 +3,7 @@
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
   \date      Wed Apr 23 11:17:19 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
 */

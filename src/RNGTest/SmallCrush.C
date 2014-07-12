@@ -3,7 +3,7 @@
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
   \date      Thu 03 Jul 2014 04:32:36 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     SmallCrush battery
   \details   SmallCrush battery
 */

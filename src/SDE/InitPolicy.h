@@ -3,7 +3,7 @@
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
   \date      Thu 24 Apr 2014 09:17:47 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Initialization policies
   \details   Initialization policies
 */

@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/OpenMP.C
   \author    J. Bakosi
   \date      Thu Mar 27 17:01:27 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     OpenMP info
   \details   OpenMP info
 */

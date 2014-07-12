@@ -3,7 +3,7 @@
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
   \date      Thu 16 Jan 2014 08:58:24 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
 */

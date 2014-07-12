@@ -3,7 +3,7 @@
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
   \date      Wed Mar 19 16:10:46 2014
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Physics base
   \details   Physics base
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Print.h
   \author    J. Bakosi
   \date      Tue 08 Jul 2014 03:21:06 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
 */

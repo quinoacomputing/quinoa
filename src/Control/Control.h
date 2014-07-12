@@ -3,7 +3,7 @@
   \file      src/Control/Control.h
   \author    J. Bakosi
   \date      Tue 10 Jun 2014 11:05:30 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Control base
   \details   Control base
 */

@@ -3,7 +3,7 @@
   \file      src/MonteCarlo/MonteCarlo.C
   \author    J. Bakosi
   \date      Sun 01 Jun 2014 11:45:33 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     MonteCarlo base
   \details   MonteCarlo base
 */

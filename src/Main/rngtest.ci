@@ -3,7 +3,7 @@
   \file      src/Main/rngtest.ci
   \author    J. Bakosi
   \date      Wed 25 Jun 2014 02:55:57 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for rngtest
   \details   Charm++ module interface file for rngtest
 */

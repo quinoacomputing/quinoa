@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
   \date      Sun 01 Jun 2014 11:46:18 AM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
 */

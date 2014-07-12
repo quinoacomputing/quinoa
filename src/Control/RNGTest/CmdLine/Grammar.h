@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
   \date      Thu 16 Jan 2014 09:57:56 PM MST
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

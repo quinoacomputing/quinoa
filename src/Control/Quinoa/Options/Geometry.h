@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Geometry.h
   \author    J. Bakosi
   \date      Mon Oct  7 09:16:38 2013
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Geometry options and associations
   \details   Geometry options and associations
 */

@@ -3,7 +3,7 @@
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
   \date      Mon 07 Oct 2013 08:47:24 PM MDT
-  \copyright Copyright 2005-2012, Jozsef Bakosi, All rights reserved.
+  \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
 */
