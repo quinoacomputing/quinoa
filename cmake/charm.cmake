@@ -24,11 +24,6 @@ function(addCharmModule MODULE PARTOF)
 
   # Ignore warnings for linking of PARTOF
   set_property(TARGET ${PARTOF} APPEND_STRING PROPERTY LINK_FLAGS ${PARTOF_FLAGS})
-  # Adding a RULE_LAUNCH_LINK prefixes the link line with a given command, which
-  # is given here by a shell script that hijacks the link line, replaces the
-  # linker by the charmc wrapper and links, see also the hijacking script.
-  set_target_properties(${PARTOF} PROPERTIES RULE_LAUNCH_LINK
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/charmlink.sh ${CHARM_COMPILER}")
 
   # Echo status on adding Charm++ module
   message(STATUS "Charm++ module ${MODULE}.ci linking to ${CMAKE_CURRENT_SOURCE_DIR}/${PARTOF}")
