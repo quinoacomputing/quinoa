@@ -101,6 +101,11 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
 removeWarnings( "RNGTest.C;RNGTestDriver.C" )
 
+# Link Charm++ executable $RNGTEST_EXECUTABLE with the charmc wrapper
+STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+       ${CHARM_COMPILER}
+       CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime

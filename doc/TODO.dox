@@ -63,8 +63,6 @@ Build
  - Document what is optional
  - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
  - Add support for PGI (if C++11 is complete)
- - Ninja does not work with Charm++. See Charm email list subject "Build with
-   Ninja"
  - Platforms:
     + darwin-gnu
     + helios-gnu
@@ -119,7 +117,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 12 Jul 2014 11:02:47 AM MDT
+<em>Page last updated:</em> Mon 14 Jul 2014 09:43:46 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */
