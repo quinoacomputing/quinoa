@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 11:46:14 AM MDT
+  \date      Mon 14 Jul 2014 09:15:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -206,6 +206,7 @@ namespace deck {
   template< typename keyword, typename...tags >
   struct parameter_vector :
          tk::grm::vector< Stack,
+                          tk::kw::end,
                           typename keyword::pegtl_string,
                           tk::grm::Store_back< Stack, tag::param, tags... > > {};
 
@@ -297,17 +298,19 @@ namespace deck {
   //! analytic_geometry block
   struct analytic_geometry:
          pegtl::ifmust< scan_geometry< kw::analytic_geometry >,
-                        tk::grm::block< Stack > > {};
+                        tk::grm::block< Stack, tk::kw::end > > {};
 
   //! discrete_geometry block
   struct discrete_geometry:
          pegtl::ifmust< scan_geometry< kw::discrete_geometry >,
-                        tk::grm::block< Stack > > {};
+                        tk::grm::block< Stack, tk::kw::end > > {};
 
   //! statistics block
   struct statistics :
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
-                        tk::grm::block< Stack, parse_expectations<'<','>'> > > {};
+                        tk::grm::block< Stack,
+                                        tk::kw::end,
+                                        parse_expectations<'<','>'> > > {};
 
   //! Fluctuating velocity in x direction
   struct u :
@@ -332,6 +335,7 @@ namespace deck {
                                       start_product, v, v,
                                       start_product, w, w >,
            tk::grm::block< Stack,
+                           tk::kw::end,
                            parameter< kw::SLM_C0,
                                       pegtl::digit,
                                       tag::slm,
@@ -342,6 +346,7 @@ namespace deck {
   struct mix_dir :
          pegtl::ifmust< scan_mix< kw::mix_dir >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::nscalar, tag::mix >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -361,6 +366,7 @@ namespace deck {
   struct mix_gendir :
          pegtl::ifmust< scan_mix< kw::mix_gendir >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::nscalar, tag::mix >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -384,6 +390,7 @@ namespace deck {
          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
                         tk::grm::block<
                           Stack,
+                          tk::kw::end,
                           component< kw::nfreq, tag::frequency >,
                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
                           parameter< kw::freq_gamma_C1,
@@ -408,6 +415,7 @@ namespace deck {
          pegtl::ifmust< scan_mass< kw::mass_beta >,
                         tk::grm::block<
                           Stack,
+                          tk::kw::end,
                           component< kw::ndensity, tag::mass >,
                           rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
                           parameter< kw::Beta_At,
@@ -448,7 +456,7 @@ namespace deck {
   // RNGs block
   struct rngblock :
          pegtl::ifmust< tk::grm::readkw< kw::rngs::pegtl_string >,
-                        tk::grm::block< Stack, rngs > > {};
+                        tk::grm::block< Stack, tk::kw::end, rngs > > {};
 
   //! mass models
   struct mass :
@@ -470,6 +478,7 @@ namespace deck {
   struct hommix :
          pegtl::ifmust< scan_montecarlo< kw::hommix >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         geometry,
                                         montecarlo_common,
                                         mix,
@@ -480,6 +489,7 @@ namespace deck {
   struct homrt :
          pegtl::ifmust< scan_montecarlo< kw::homrt >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         geometry,
                                         montecarlo_common,
                                         mass,
@@ -492,6 +502,7 @@ namespace deck {
   struct homhydro :
          pegtl::ifmust< scan_montecarlo< kw::homhydro >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         geometry,
                                         montecarlo_common,
                                         hydro,
@@ -503,6 +514,7 @@ namespace deck {
   struct spinsflow :
          pegtl::ifmust< scan_montecarlo< kw::spinsflow >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         geometry,
                                         montecarlo_common,
                                         hydro,
@@ -524,6 +536,7 @@ namespace deck {
   struct ornstein_uhlenbeck :
          pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::ncomp, tag::ou >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -534,6 +547,7 @@ namespace deck {
   struct lognormal :
          pegtl::ifmust< scan_sde< kw::lognormal >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::ncomp, tag::lognormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -544,6 +558,7 @@ namespace deck {
   struct skewnormal :
          pegtl::ifmust< scan_sde< kw::skewnormal >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::ncomp, tag::skewnormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -554,6 +569,7 @@ namespace deck {
   struct gamma :
          pegtl::ifmust< scan_sde< kw::gamma >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::ncomp, tag::gamma >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -564,6 +580,7 @@ namespace deck {
   struct beta :
          pegtl::ifmust< scan_sde< kw::beta >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         component< kw::ncomp, tag::beta >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
@@ -586,6 +603,7 @@ namespace deck {
   struct dirichlet :
          pegtl::ifmust< scan_sde< kw::dirichlet >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         depvar< tag::dirichlet, tag::depvar >,
                                         component< kw::ncomp, tag::dirichlet >,
                                         rng< kw::rng,
@@ -613,6 +631,7 @@ namespace deck {
   struct generalized_dirichlet :
          pegtl::ifmust< scan_sde< kw::gendir >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         depvar< tag::gendir, tag::depvar >,
                                         component< kw::ncomp, tag::gendir >,
                                         rng< kw::rng,
@@ -654,6 +673,7 @@ namespace deck {
   struct testsde :
          pegtl::ifmust< scan_montecarlo< kw::testsde >,
                         tk::grm::block< Stack,
+                                        tk::kw::end,
                                         montecarlo_common,
                                         sde,
                                         rngblock,

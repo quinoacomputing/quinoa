@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:46:59 PM MST
+  \date      Mon 14 Jul 2014 08:56:27 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -91,6 +91,7 @@ namespace rngsse {
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
+                           tk::kw::end,
                            seed< Stack, sel, vec, tags... >,
                            seqlen< Stack, sel, vec, tags... > > > {};
 

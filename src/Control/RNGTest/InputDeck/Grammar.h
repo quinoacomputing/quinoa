@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 11 Jun 2014 01:37:40 PM MDT
+  \date      Mon 14 Jul 2014 08:56:33 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -84,7 +84,7 @@ namespace deck {
                                        store_option< ctr::Battery,
                                                      tag::selected,
                                                      tag::battery > >,
-                        tk::grm::block< Stack, rngs > > {};
+                        tk::grm::block< Stack, tk::kw::end, rngs > > {};
 
   //! batteries
   struct battery :

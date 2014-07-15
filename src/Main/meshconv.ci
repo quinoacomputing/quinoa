@@ -1,0 +1,23 @@
+//******************************************************************************
+/*!
+  \file      src/Main/meshconv.ci
+  \author    J. Bakosi
+  \date      Tue 15 Jul 2014 08:30:39 AM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for meshconv
+  \details   Charm++ module interface file for meshconv
+*/
+//******************************************************************************
+
+mainmodule meshconv {
+
+  readonly CProxy_Main mainProxy;
+
+  mainchare Main {
+    entry Main( CkArgMsg* msg );
+    entry void execute();
+    entry void finalize();
+  }
+
+  chare execute { entry execute(); }
+}

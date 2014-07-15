@@ -18,8 +18,10 @@ function(addCharmModule MODULE PARTOF)
                      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci
                      COMMAND ${CHARM_COMPILER}
                              ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci)
+  # Add custom target dependency for Charm++ module
   add_custom_target(${MODULE}CharmModule
                     DEPENDS ${MODULE}.decl.h ${MODULE}.def.h)
+  # Add dependency of PARTOF on new Charm++ module
   add_dependencies(${PARTOF} ${MODULE}CharmModule)
 
   # Ignore warnings for linking of PARTOF

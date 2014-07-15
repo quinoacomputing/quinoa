@@ -8,6 +8,13 @@ add_definitions()
 # Include function for adding Charm++ modules
 include(charm)
 
+# Link executables with the charmc wrapper
+STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
+       ${CHARM_COMPILER}
+       CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+
+removeWarnings( "Handler.C")
+
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
                TPLInfo/MKL.C
@@ -64,6 +71,7 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
+               Handler.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -99,12 +107,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
-removeWarnings( "RNGTest.C;RNGTestDriver.C" )
-
-# Link Charm++ executable $RNGTEST_EXECUTABLE with the charmc wrapper
-STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
-       ${CHARM_COMPILER}
-       CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
+removeWarnings( "RNGTest.C;RNGTestDriver.C")
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -114,6 +117,7 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
 
 add_executable(${MESHCONV_EXECUTABLE}
                Init.C
+               Handler.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -148,7 +152,9 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
-removeWarnings( "MeshConvDriver.C" )
+# Add custom dependencies for MeshConv's main Charm++ module
+addCharmModule( "meshconv" "${MESHCONV_EXECUTABLE}" )
+removeWarnings( "MeshConv.C;MeshConvDriver.C" )
 
 INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

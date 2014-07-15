@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:51:24 AM MDT
+  \date      Tue 15 Jul 2014 08:57:37 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -160,7 +160,7 @@ class Main : public CBase_Main {
 
     void execute() {
       m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
-      m_driver.execute();
+      m_driver.execute();       // fires up async chares
     }
 
     void finalize() {

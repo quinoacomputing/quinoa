@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:26:27 PM MDT
+  \date      Mon 14 Jul 2014 08:28:43 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer
@@ -45,7 +45,7 @@ ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 //******************************************************************************
 {
   if ( ex_close(m_outFile) < 0 )
-    printf( ">>> WARNING: Failed to close file: %s\n", m_filename );
+    printf( ">>> WARNING: Failed to close file: %s\n", m_filename.c_str() );
 }
 
 void
