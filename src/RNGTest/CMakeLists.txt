@@ -16,6 +16,12 @@ add_library(RNGTest
 
 addCharmModule( "testu01" "RNGTest" )
 addCharmModule( "testu01suite" "RNGTest" )
+
+# Add extra dependency of RNGTest on rngtestCharmModule. This is required as one
+# of the dependencies of RNGTest, e.g., TestU01Suite, refers to the main Charm++
+# proxy defined in the Charm++ module rngtest (in Main/RNGTest.C).
+add_dependencies("RNGTest" "rngtestCharmModule")
+
 removeWarnings( "TestU01Suite.C;TestU01Stack.C;SmallCrush.C;Crush.C;BigCrush.C;TestU01.C" )
 
 INSTALL(TARGETS RNGTest

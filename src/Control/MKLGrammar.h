@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Tue 03 Jun 2014 08:27:47 AM MDT
+  \date      Mon 14 Jul 2014 08:56:20 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MKL grammar
   \details   MKL grammar
@@ -68,6 +68,7 @@ namespace mkl {
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
+                           tk::kw::end,
                            seed< Stack, sel, vec, tags... >,
                            uniform_method< Stack, sel, vec, tags... >,
                            gaussian_method< Stack, sel, vec, tags... > > > {};

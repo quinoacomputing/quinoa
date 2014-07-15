@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:52:32 PM MDT
+  \date      Tue 15 Jul 2014 09:46:06 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -24,25 +24,19 @@
 
 using meshconv::MeshConvDriver;
 
-MeshConvDriver::MeshConvDriver( int argc, char** argv )
+MeshConvDriver::MeshConvDriver( const tk::Print& print,
+                                const ctr::CmdLine& cmdline )
 //******************************************************************************
 //  Constructor
-//! \param[in] argc      Argument count from command line
-//! \param[in] argv      Argument vector from command line
 //! \author J. Bakosi
 //******************************************************************************
 {
   try {
 
-    ctr::CmdLine cmdline;
-
-    // Parse command line into cmdline
-    CmdLineParser cmdParser( argc, argv, tk::Print(), cmdline );
-
     // Save input file name
-    m_input = cmdline.get< tag::io, tag::input>();
+    m_input = cmdline.get< tag::io, tag::input >();
     // Save output file name
-    m_output = cmdline.get< tag::io, tag::output>();
+    m_output = cmdline.get< tag::io, tag::output >();
 
   } catch (...) { tk::processException(); }
 }

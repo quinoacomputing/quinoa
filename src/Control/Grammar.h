@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 09:52:45 AM MDT
+  \date      Mon 14 Jul 2014 08:58:46 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -275,24 +275,25 @@ namespace grm {
                                              pegtl::one<'-'> > >,
                      pegtl::digit > {};
 
-  //! plow through 'tokens' until kw::end
-  template< class Stack, typename... tokens >
+  //! plow through 'tokens' until 'endkeyword'
+  template< class Stack, class endkeyword, typename... tokens >
   struct block :
-         pegtl::until< readkw< kw::end::pegtl_string >,
+         pegtl::until< readkw< typename endkeyword::pegtl_string >,
                        pegtl::sor< comment,
                                    tokens...,
                                    unknown< Stack, Error::KEYWORD > > > {};
 
-  //! plow through vector of values between keywords 'key' and kw::end, calling
-  //! 'insert' for each if matches and allowing comments between values
-  template< class Stack, class key, class insert, class value = number >
+  //! plow through vector of values between keywords 'key' and 'endkeyword',
+  //! calling 'insert' for each if matches and allowing comments between values
+  template< class Stack, class key, class insert, class endkeyword,
+            class value = number >
   struct vector :
          pegtl::ifmust< readkw< key >,
-                        pegtl::until< readkw< kw::end::pegtl_string >,
-                                      pegtl::sor< comment,
-                                                  scan< value, insert >,
-                                                  unknown<Stack,
-                                                          Error::LIST> > > > {};
+                        pegtl::until<
+                          readkw< typename endkeyword::pegtl_string >,
+                          pegtl::sor< comment,
+                                      scan< value, insert >,
+                                      unknown< Stack, Error::LIST > > > > {};
 
   //! scan string between characters 'lbound' and 'rbound' and if matches apply
   //! action 'insert'

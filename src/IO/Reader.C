@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:30:16 PM MDT
+  \date      Mon 14 Jul 2014 08:25:04 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader class definition
@@ -60,10 +60,10 @@ Reader::~Reader() noexcept
 
   } // emit only a warning on error
     catch (Exception& e) {
-      e.echo("WARNING");
+      e.handleException();
     }
     catch (std::exception& e) {
-      printf( ">>> WARNING: std::exception in MeshReader destructor: %s\n"
+      printf( ">>> WARNING: std::exception in MeshReader destructor: %s\n",
               e.what() );
     }
     catch (...) {

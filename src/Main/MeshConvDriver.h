@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.h
   \author    J. Bakosi
-  \date      Sun 08 Jun 2014 03:37:20 PM MDT
+  \date      Mon 14 Jul 2014 09:19:44 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver
@@ -14,6 +14,7 @@
 #include <Reader.h>
 #include <Writer.h>
 #include <UnsMesh.h>
+#include <MeshConv/CmdLine/CmdLine.h>
 
 namespace meshconv {
 
@@ -22,7 +23,8 @@ class MeshConvDriver {
 
   public:
     //! Constructor
-    explicit MeshConvDriver( int argc, char** argv );
+    explicit MeshConvDriver( const tk::Print& print,
+                             const ctr::CmdLine& cmdline );
 
     //! Execute
     void execute() const;
