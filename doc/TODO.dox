@@ -94,6 +94,8 @@ Uncategorized
    updating the particle properties, the order of the particle properties in
    memory should be user-selectable at compile time
 
+ - Use std::to_string() to convert a number to a string
+
  - Add floating point exception handler, e.g., based on fenv.h, see also:
    http://neugierig.org/software/blog/2012/06/backtraces.html
 
@@ -116,7 +118,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 22 Jul 2014 06:40:35 AM MDT
+<em>Page last updated:</em> Tue 22 Jul 2014 04:35:58 PM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */
