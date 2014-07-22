@@ -29,13 +29,14 @@ RNGTest
    (synchronous) cases, where the exception originates from a try-block.
    However, with Charm now we also have exceptions originating, asynchronously,
    from non-try blocks. Being able catch those exceptions as well, without
-   resorting to terminate would be very helpful. This needs to be revisited.
+   resorting to terminate would be very helpful. Need local-scope try-catch
+   blocks as Charm++ is not aware of exceptions.
 
 Testing
 -------
- - Unit tests: GoogleTest, QuickTest, Template Unit Test, Boost.Test
- - Regression tests
+ - Unit tests: Write Charm++ unittest executable using Template Unit Test
  - Quantify code coverage by tests
+ - Regression tests with KitWare's CTest
  - Test build with optional libraries on/off (all permutations)
  - Test suite for exceptions:
     + Automatically switch each potential throw location into a throw and
@@ -45,7 +46,6 @@ Testing
  - Memory testing: CMake/CTest/CDash has built-in support for automated
    memory testing using valgrind
  - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
- - Automatic test generators? See clang.
 
 Build
 -----
@@ -116,7 +116,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 17 Jul 2014 10:19:35 AM MDT
+<em>Page last updated:</em> Tue 22 Jul 2014 06:40:35 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */
