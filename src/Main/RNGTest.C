@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 15 Jul 2014 08:57:37 AM MDT
+  \date      Tue 22 Jul 2014 04:19:36 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -36,42 +36,42 @@ void echoTPL(const tk::Print& /*print*/)
 {
 }
 
-// Global-scope data. Initialized by the main chare and distibuted to all PEs by
-// the Charm++ runtime system. Though semantically not const, all these global
-// data should be considered read-only. See also http://charm.cs.illinois.edu/
-// manuals/html/charm++/manual.html. The data below is global-scope because they
-// must be available to all PEs which could be on different machines. In a
-// previous non-Charm++ design, most of this data was held at class-level, but
-// since the generators in g_rng must be possible to be called from
-// global-scope, as external generators to TestU01, it is easier to make g_rng
-// global-scope, as well the additional data required to initialize it,
-// contained in g_inputdeck (storing all parsed user input).  This is required
-// for serializing during migration of g_rng across the network.
-//
-// Note that the container (std::map) holding tk::RNG objects uses value
-// semantics which is safer and generally less error-prone than reference
-// semantics. At the same time tk::RNG is used in a polymorphic fashion with
-// various classes that adhere to the concepts required by Concept defined
-// inside tk::RNG. tk::RNG does not define a default, i.e., non-templated
-// constructor, since then the "derived" class object could not be initialized
-// rendering the class tk::RNG empty-constructed, which invites abuse and
-// ill-defined behavior. As such, the "derived" class type comes through the
-// constructors and thus would not be available for a pack/unpack migrator
-// required by Charm++ from within. Templating the class tk::RNG is not an
-// option since then we could not hold tk::RNG objects in a simple std::vector.
-// As a result of the above requirements, the tk::RNG objects in g_rng are
-// migrated (here in global-scope) by reinstantiating RNGStack, which
-// reinstatiates the RNG factory, from which the RNGs selected by the user are
-// instantiated.
-//
-// Note also that RNGFactory associates tk::ctr::RNG ids (enum class values) to
-// function pointers (std::function objects pointing to tk::RNG constructors
-// bound with their arguments). Since function pointers cannot simply be
-// serialized and migrated via the network, they must also be recreated on
-// remote machines.  This initial migration of global-scope data is done by the
-// Charm++ runtime once the main chare constructor is finished -- see the
-// RNGTestDriver constructor, which initializes the data required for the
-// migration).
+//! Global-scope data. Initialized by the main chare and distibuted to all PEs by
+//! the Charm++ runtime system. Though semantically not const, all these global
+//! data should be considered read-only. See also http://charm.cs.illinois.edu/
+//! manuals/html/charm++/manual.html. The data below is global-scope because they
+//! must be available to all PEs which could be on different machines. In a
+//! previous non-Charm++ design, most of this data was held at class-level, but
+//! since the generators in g_rng must be possible to be called from
+//! global-scope, as external generators to TestU01, it is easier to make g_rng
+//! global-scope, as well the additional data required to initialize it,
+//! contained in g_inputdeck (storing all parsed user input).  This is required
+//! for serializing during migration of g_rng across the network.
+//!
+//! Note that the container (std::map) holding tk::RNG objects uses value
+//! semantics which is safer and generally less error-prone than reference
+//! semantics. At the same time tk::RNG is used in a polymorphic fashion with
+//! various classes that adhere to the concepts required by Concept defined
+//! inside tk::RNG. tk::RNG does not define a default, i.e., non-templated
+//! constructor, since then the "derived" class object could not be initialized
+//! rendering the class tk::RNG empty-constructed, which invites abuse and
+//! ill-defined behavior. As such, the "derived" class type comes through the
+//! constructors and thus would not be available for a pack/unpack migrator
+//! required by Charm++ from within. Templating the class tk::RNG is not an
+//! option since then we could not hold tk::RNG objects in a simple std::vector.
+//! As a result of the above requirements, the tk::RNG objects in g_rng are
+//! migrated (here in global-scope) by reinstantiating RNGStack, which
+//! reinstatiates the RNG factory, from which the RNGs selected by the user are
+//! instantiated.
+//!
+//! Note also that RNGFactory associates tk::ctr::RNG ids (enum class values) to
+//! function pointers (std::function objects pointing to tk::RNG constructors
+//! bound with their arguments). Since function pointers cannot simply be
+//! serialized and migrated via the network, they must also be recreated on
+//! remote machines.  This initial migration of global-scope data is done by the
+//! Charm++ runtime once the main chare constructor is finished -- see the
+//! RNGTestDriver constructor, which initializes the data required for the
+//! migration).
 
 //! Defaults of input deck, facilitates detection what is set by user
 ctr::InputDeck g_inputdeck_defaults;
