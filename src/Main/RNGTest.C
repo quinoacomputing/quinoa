@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:10:13 AM MDT
+  \date      Wed 23 Jul 2014 03:33:08 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -17,13 +17,13 @@
 #include <RNGTestDriver.h>
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/InputDeck/InputDeck.h>
-#include <Init.h>
 #include <TestStack.h>
-#include <rngtest.decl.h>
 #include <PUPUtil.h>
 #include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
 #include <TPLInfo/OpenMP.h>
+#include <rngtest.decl.h>
+#include <Init.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
