@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed Mar 19 13:19:41 2014
+  \date      Wed 23 Jul 2014 10:10:25 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -15,6 +15,9 @@
 #include <TPLInfo/Silo.h>
 #include <TPLInfo/HDF5.h>
 #include <TPLInfo/Zlib.h>
+#include <TPLInfo/MKL.h>
+#include <TPLInfo/Boost.h>
+#include <TPLInfo/OpenMP.h>
 
 namespace quinoa {
 
@@ -24,13 +27,16 @@ void echoTPL(const tk::Print& print)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //print.raw("\n");
   //echoZoltan(print, "Zoltan library");
-  print.raw("\n");
+  echoOpenMP( print, "OpenMP runtime" );
+#ifdef HAS_MKL
+  echoMKL( print, "Intel Math Kernel Library" );
+#else
+  print.item( "Intel Math Kernel Library", "n/a" );
+#endif
+  echoBoost( print, "Boost C++ Libraries" );
   tk::echoSilo(print, "Silo library");
-  print.raw("\n");
   tk::echoHDF5(print, "HDF5 library");
-  print.raw("\n");
   tk::echoZlib(print, "Zlib compression library");
 }
 

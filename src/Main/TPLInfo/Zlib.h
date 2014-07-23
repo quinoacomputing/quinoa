@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/Zlib.h
   \author    J. Bakosi
-  \date      Wed Mar 19 11:47:27 2014
+  \date      Wed 23 Jul 2014 10:13:48 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Zlib info
   \details   Zlib info
@@ -18,7 +18,7 @@
 namespace tk {
 
 //! Echo Zlib compression library version information
-void echoZlib(const tk::Print& print, const std::string& title);
+void echoZlib( const tk::Print& print, const std::string& title );
 
 } // tk::
 

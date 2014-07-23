@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/Silo.C
   \author    J. Bakosi
-  \date      Wed Mar 19 11:40:48 2014
+  \date      Wed 23 Jul 2014 10:09:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Silo info
   \details   Silo info
@@ -16,7 +16,7 @@
 #include <Config.h>
 #include <TPLInfo/Silo.h>
 
-void tk::echoSilo(const tk::Print& print, const std::string& title)
+void tk::echoSilo( const tk::Print& print, const std::string& title )
 //******************************************************************************
 //  Echo Silo library version information
 //! \author  J. Bakosi
@@ -25,6 +25,7 @@ void tk::echoSilo(const tk::Print& print, const std::string& title)
   std::stringstream version;
   version << std::string( DBVersion() );
 
+  print << '\n';
   print.subsection(title);
   print.item("Version", version.str());
 }

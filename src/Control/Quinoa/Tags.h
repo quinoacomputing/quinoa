@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Fri 21 Feb 2014 06:19:16 PM MST
+  \date      Wed 23 Jul 2014 07:16:24 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Quinoa's input deck tags
-  \details   Quinoa's input dect tags
+  \brief     Quinoa's tags
+  \details   Quinoa's tags
 */
 //******************************************************************************
 #ifndef QuinoaTags_h

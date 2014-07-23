@@ -1,51 +1,41 @@
 //******************************************************************************
 /*!
-  \file      src/Main/MeshConv.C
+  \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:06:40 AM MDT
+  \date      Wed 23 Jul 2014 10:22:58 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Gmsh to Exodus II mesh file converter
-  \details   Gmsh to Exodus II mesh file converter
+  \brief     UnitTest: Quinoa's unit test suite
+  \details   UnitTest: Quinoa's unit test suite
 */
 //******************************************************************************
 
 #include <Config.h>
+#include <Paradigm.h>
+#include <UnitTestPrint.h>
+#include <UnitTestDriver.h>
+#include <UnitTest/CmdLine/Parser.h>
 #include <Init.h>
-#include <MeshConvDriver.h>
-#include <TPLInfo/ExodusII.h>
-#include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
 #include <TPLInfo/OpenMP.h>
-#include <MeshConv/CmdLine/Parser.h>
-#include <meshconv.decl.h>
+#include <unittest.decl.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
-namespace meshconv {
+namespace unittest {
 
-void echoTPL( const tk::Print& print )
+void echoTPL(const tk::Print& print)
 //******************************************************************************
-//  Echo TPL version informaion for libs specific to MeshConv
+//  Echo TPL version informaion for libs specific to UnitTest
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print << '\n';
   echoOpenMP( print, "OpenMP runtime" );
-  print << '\n';
-#ifdef HAS_MKL
-  echoMKL( print, "Intel Math Kernel Library" );
-#else
-  print.item( "Intel Math Kernel Library", "n/a" );
-#endif
-  print << '\n';
   echoBoost( print, "Boost C++ Libraries" );
-  print << '\n';
-  echoExodusII( print, "ExodusII library" );
 }
 
-} // meshconv::
+} // unittest::
 
 //! Charm++ main chare
 class Main : public CBase_Main {
@@ -56,14 +46,14 @@ class Main : public CBase_Main {
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
       m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : tk::null ),
-      // Create MeshConv driver
-      m_driver( tk::Main< meshconv::MeshConvDriver >
+      // Create UnitTest driver
+      m_driver( tk::Main< unittest::UnitTestDriver >
                         ( msg->argc, msg->argv,
                           m_cmdline,
-                          tk::HeaderType::MESHCONV,
-                          MESHCONV_EXECUTABLE,
+                          tk::HeaderType::UNITTEST,
+                          UNITTEST_EXECUTABLE,
                           m_print,
-                          meshconv::echoTPL ) ),
+                          unittest::echoTPL ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;
@@ -79,8 +69,7 @@ class Main : public CBase_Main {
 
     void execute() {
       m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
-      m_driver.execute();       // does not fire up async chares
-      finalize();
+      m_driver.execute();       // fires up async chares
     }
 
     void finalize() {
@@ -91,11 +80,11 @@ class Main : public CBase_Main {
     }
 
   private:
-    meshconv::ctr::CmdLine m_cmdline;           //!< Command line
-    meshconv::CmdLineParser m_cmdParser;        //!< Command line parser
-    tk::Print m_print;                          //!< Pretty printer
-    meshconv::MeshConvDriver m_driver;          //!< Driver
-    std::vector< tk::Timer > m_timer;           //!< Timers
+    unittest::ctr::CmdLine m_cmdline;                   //!< Command line
+    unittest::CmdLineParser m_cmdParser;                //!< Command line parser
+    unittest::UnitTestPrint m_print;                    //!< Pretty printer
+    unittest::UnitTestDriver m_driver;                  //!< Driver
+    std::vector< tk::Timer > m_timer;                   //!< Timers
 
     //! Time stamps in h:m:s with labels
     std::map< std::string, tk::Watch > m_timestamp;
@@ -106,4 +95,4 @@ class Main : public CBase_Main {
 //! which happens after the main chare constructor has finished.
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
-#include <meshconv.def.h>
+#include <unittest.def.h>

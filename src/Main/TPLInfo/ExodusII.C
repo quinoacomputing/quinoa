@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/ExodusII.C
   \author    J. Bakosi
-  \date      Thu Mar 27 16:22:56 2014
+  \date      Wed 23 Jul 2014 10:08:25 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     ExodusII library API info
   \details   ExodusII library API info
@@ -16,7 +16,7 @@
 
 #include <exodusII.h>
 
-void tk::echoExodusII(const tk::Print& print, const std::string& title)
+void tk::echoExodusII( const tk::Print& print, const std::string& title )
 //******************************************************************************
 //  Echo ExodusII library API version information
 //! \author  J. Bakosi
@@ -27,6 +27,7 @@ void tk::echoExodusII(const tk::Print& print, const std::string& title)
   std::stringstream nem_file_ver;
   nem_file_ver << NEMESIS_FILE_VERSION;
 
+  print << '\n';
   print.subsection(title);
   print.item("ExodusII API version", ex_api_ver.str());
   print.item("Nemesis file version", nem_file_ver.str());

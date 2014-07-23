@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/QuinoaPrint.h
+  \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon 07 Jul 2014 02:16:02 PM MDT
+  \date      Wed 23 Jul 2014 10:32:33 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer

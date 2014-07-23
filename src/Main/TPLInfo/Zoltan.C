@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/Zoltan.C
   \author    J. Bakosi
-  \date      Thu Mar 27 16:11:29 2014
+  \date      Wed 23 Jul 2014 10:09:56 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Zoltan info
   \details   Zoltan info
@@ -16,7 +16,7 @@
 
 //#include <zoltan.h>
 
-// void tk::echoZoltan(const tk::Print& print, const std::string& title)
+// void tk::echoZoltan( const tk::Print& print, const std::string& title )
 // //******************************************************************************
 // //  Echo Zoltan library version information
 // //! \author  J. Bakosi
@@ -25,6 +25,7 @@
 //   std::stringstream version;
 //   version << ZOLTAN_VERSION_NUMBER;
 // 
+//   print << '\n';
 //   print.subsection(title);
 //   print.item("Version", version.str());
 // }

@@ -125,7 +125,8 @@ Charm++ design
 Before porting to Charm++ RNGTest used OpenMP for concurrency. The last commit
 before porting to Charm++ is 49f86e6edfda64d4725ef2d87210f2db95d696aa and the
 commit where the Charm++ port is fully functional is
-ab31f576656907d73c3a38db72864482759c668f.
+ab31f576656907d73c3a38db72864482759c668f. Note that during Charm++ port of
+rngtest target quinoa does not build.
 
 The discussion below details only _some_ of details encountered during the
 Charm++ port of rngtest. More documentation can be found in the source code
@@ -234,7 +235,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 22 Jul 2014 04:44:26 PM MDT
+<em>Page last updated:</em> Wed 23 Jul 2014 10:31:33 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

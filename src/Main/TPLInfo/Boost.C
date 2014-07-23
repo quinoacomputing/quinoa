@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/Boost.C
   \author    J. Bakosi
-  \date      Wed Mar 19 11:35:40 2014
+  \date      Wed 23 Jul 2014 10:08:10 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Boost info
   \details   Boost info
@@ -16,7 +16,7 @@
 
 #include <boost/version.hpp>
 
-void tk::echoBoost(const tk::Print& print, const std::string& title)
+void tk::echoBoost( const tk::Print& print, const std::string& title )
 //******************************************************************************
 //  Echo Boost C++ libraries version information
 //! \author  J. Bakosi
@@ -27,6 +27,7 @@ void tk::echoBoost(const tk::Print& print, const std::string& title)
           << ((BOOST_VERSION / 100) % 1000) << "."
           << (BOOST_VERSION % 100);
 
+  print << '\n';
   print.subsection(title);
   print.item("Version", version.str());
 }

@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/tkTags.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 09:02:13 AM MDT
+  \date      Wed 23 Jul 2014 07:18:46 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     tk Tags
-  \details   tk Tags
+  \brief     Toolkit Tags
+  \details   Toolkit Tags
 */
 //******************************************************************************
 #ifndef tkTags_h

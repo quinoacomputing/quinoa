@@ -198,6 +198,29 @@ ExternalProject_Add_Step(
           ${CMAKE_INSTALL_PREFIX}/include/pegtl
 )
 
+#### TUT (Template Unit Test Framework) ########################################
+# http:://tut-framework.sourceforge.net
+# Header only
+ExternalProject_Add(
+  tut
+  PREFIX tut
+  URL ${PROJECT_SOURCE_DIR}/tut-framework-2013-12-18.tar.gz
+  URL_MD5 49ac872ee8d6066fd5ee499b38adbb11
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD 1
+)
+# Header-only, copy include dir over
+ExternalProject_Get_Property(tut SOURCE_DIR)
+ExternalProject_Add_Step(
+  tut copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/include
+          ${CMAKE_INSTALL_PREFIX}/include/tut
+)
+
 #### Boost ####################################################################
 # http://www.boost.org
 ExternalProject_Add(
