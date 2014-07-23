@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:12:44 AM MDT
+  \date      Wed 23 Jul 2014 03:34:14 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -10,12 +10,13 @@
 //******************************************************************************
 
 #include <Print.h>
-#include <Handler.h>
 #include <Factory.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/CmdLine/Parser.h>
 #include <RNGTest/InputDeck/Parser.h>
 #include <TestU01Suite.h>
+#include <rngtest.decl.h>
+#include <Handler.h>
 
 #ifdef HAS_MKL
 #include <MKLRNG.h>

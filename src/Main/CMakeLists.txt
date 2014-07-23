@@ -15,11 +15,8 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
        ${CHARM_COMPILER}
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
-removeWarnings( "Handler.C")
-
 ### Quinoa executable ##########################################################
 add_executable(${QUINOA_EXECUTABLE}
-               Init.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -75,8 +72,6 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 
 ### RNGTest executable #########################################################
 add_executable(${RNGTEST_EXECUTABLE}
-               Init.C
-               Handler.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
@@ -123,8 +118,6 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
 
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
-               Init.C
-               Handler.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
                UnitTestDriver.C
@@ -161,8 +154,6 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
 
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
-               Init.C
-               Handler.C
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C

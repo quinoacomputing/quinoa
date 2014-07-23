@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:15:29 AM MDT
+  \date      Wed 23 Jul 2014 03:34:28 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
@@ -10,11 +10,11 @@
 //******************************************************************************
 
 #include <Print.h>
-#include <Handler.h>
 #include <Factory.h>
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
 #include <unittest.decl.h>
+#include <Handler.h>
 
 extern CProxy_Main mainProxy;
 

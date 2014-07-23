@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:06:40 AM MDT
+  \date      Wed 23 Jul 2014 03:43:58 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <Config.h>
-#include <Init.h>
 #include <MeshConvDriver.h>
 #include <TPLInfo/ExodusII.h>
 #include <TPLInfo/MKL.h>
@@ -18,6 +17,7 @@
 #include <TPLInfo/OpenMP.h>
 #include <MeshConv/CmdLine/Parser.h>
 #include <meshconv.decl.h>
+#include <Init.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable

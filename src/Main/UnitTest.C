@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:22:58 AM MDT
+  \date      Wed 23 Jul 2014 03:33:04 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -14,10 +14,10 @@
 #include <UnitTestPrint.h>
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
-#include <Init.h>
 #include <TPLInfo/Boost.h>
 #include <TPLInfo/OpenMP.h>
 #include <unittest.decl.h>
+#include <Init.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
