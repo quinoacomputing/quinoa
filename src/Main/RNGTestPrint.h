@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Base/RNGTestPrint.h
+  \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:36:28 AM MDT
+  \date      Tue 22 Jul 2014 10:32:23 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer

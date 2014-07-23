@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:12:33 AM MDT
+  \date      Tue 22 Jul 2014 10:21:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Driver random number test suite driver
-  \details   Driver random number test suite driver
+  \brief     Random number generator test suite driver
+  \details   Random number generator test suite driver
 */
 //******************************************************************************
 #ifndef RNGTestDriver_h

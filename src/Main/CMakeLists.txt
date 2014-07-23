@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.5)
 
-project(${QUINOA_EXECUTABLE} CXX)
+project(quinoa CXX)
+
+### Quinoa executables build configuration #####################################
 
 # Basic configuration
 add_definitions()
@@ -15,6 +17,7 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
 
 removeWarnings( "Handler.C")
 
+### Quinoa executable ##########################################################
 add_executable(${QUINOA_EXECUTABLE}
                Init.C
                TPLInfo/MKL.C
@@ -25,6 +28,7 @@ add_executable(${QUINOA_EXECUTABLE}
                TPLInfo/HDF5.C
                TPLInfo/Zlib.C
                QuinoaDriver.C
+               QuinoaPrint.C
                Quinoa.C
 )
 
@@ -69,6 +73,7 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
+### RNGTest executable #########################################################
 add_executable(${RNGTEST_EXECUTABLE}
                Init.C
                Handler.C
@@ -76,6 +81,7 @@ add_executable(${RNGTEST_EXECUTABLE}
                TPLInfo/Boost.C
                TPLInfo/OpenMP.C
                RNGTestDriver.C
+               RNGPrint.C
                RNGTest.C
 )
 
@@ -107,7 +113,7 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
 
 # Add custom dependencies for RNGTest's main Charm++ module
 addCharmModule( "rngtest" "${RNGTEST_EXECUTABLE}" )
-removeWarnings( "RNGTest.C;RNGTestDriver.C")
+removeWarnings( "RNGTest.C;RNGTestDriver.C;RNGPrint.C")
 
 INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -115,6 +121,7 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
+### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
                Init.C
                Handler.C
