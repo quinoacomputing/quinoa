@@ -7,13 +7,10 @@ include(charm)
 add_library(Base
             Exception.C
             Timer.C
-            RNGPrint.C
-            QuinoaPrint.C
 #            Msg.C
 )
 
 #addCharmModule( "msg" "Base" )
-removeWarnings( "QuinoaPrint.C;RNGPrint.C" )
 
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION bin COMPONENT Runtime

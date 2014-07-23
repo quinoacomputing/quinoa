@@ -301,6 +301,7 @@ include_directories(${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Utilities
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
+                    ${TPL_DIR}/include/tut
                     ${TPL_DIR}/hdf5ser/include
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/Base  # for Config.h
