@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:55:07 AM MDT
+  \date      Wed 23 Jul 2014 10:23:14 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains
@@ -28,6 +28,7 @@ std::string curtime();
 //! Executable types for which an ascii logo is available in Print
 enum class HeaderType : uint8_t { QUINOA=0,
                                   RNGTEST,
+                                  UNITTEST,
                                   MESHCONV };
 
 //! Echo program title

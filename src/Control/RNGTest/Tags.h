@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/RNGTest/Tags.h
   \author    J. Bakosi
-  \date      Fri 04 Jul 2014 06:59:27 PM MDT
+  \date      Wed 23 Jul 2014 07:16:35 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     RNGTest's input deck tags
-  \details   RNGTest's input deck tags
+  \brief     RNGTest's tags
+  \details   RNGTest's tags
 */
 //******************************************************************************
 #ifndef RNGTestInputDeckTags_h

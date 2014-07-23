@@ -121,6 +121,44 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
+## UnitTest executable ########################################################
+add_executable(${UNITTEST_EXECUTABLE}
+               Init.C
+               Handler.C
+               TPLInfo/Boost.C
+               TPLInfo/OpenMP.C
+               UnitTestDriver.C
+               UnitTest.C
+)
+
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${UNITTEST_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${UNITTEST_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+target_link_libraries(${UNITTEST_EXECUTABLE}
+                      #UnitTest
+                      UnitTestControl
+                      Paradigm
+                      Base
+                      ${BOOST_SYSTEM_LIBRARY}
+)
+
+# Add custom dependencies for UnitTest's main Charm++ module
+addCharmModule( "unittest" "${UNITTEST_EXECUTABLE}" )
+removeWarnings( "UnitTest.C;UnitTestDriver.C")
+
+INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
                Init.C

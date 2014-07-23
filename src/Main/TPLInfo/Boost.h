@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/Boost.h
   \author    J. Bakosi
-  \date      Wed Mar 19 11:07:59 2014
+  \date      Wed 23 Jul 2014 10:12:49 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Boost info
   \details   Boost info
@@ -18,7 +18,7 @@
 namespace tk {
 
 //! Echo Boost library version information
-void echoBoost(const tk::Print& print, const std::string& title);
+void echoBoost( const tk::Print& print, const std::string& title );
 
 } // tk::
 

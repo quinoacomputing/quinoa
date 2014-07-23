@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Fri 11 Apr 2014 10:13:26 PM MDT
+  \date      Wed 23 Jul 2014 10:23:55 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -13,6 +13,7 @@
 
 #define QUINOA_EXECUTABLE            "@QUINOA_EXECUTABLE@"
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
+#define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
 
 namespace tk {

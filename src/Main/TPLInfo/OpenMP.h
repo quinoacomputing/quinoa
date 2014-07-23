@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/OpenMP.h
   \author    J. Bakosi
-  \date      Wed Mar 19 11:13:17 2014
+  \date      Wed 23 Jul 2014 10:13:32 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     OpenMP info
   \details   OpenMP info
@@ -18,7 +18,7 @@
 namespace tk {
 
 //! Echo OpenMP runtime version information
-void echoOpenMP(const tk::Print& print, const std::string& title);
+void echoOpenMP( const tk::Print& print, const std::string& title );
 
 } // tk::
 

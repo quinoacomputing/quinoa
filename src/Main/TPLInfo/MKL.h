@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/MKL.h
   \author    J. Bakosi
-  \date      Wed Mar 19 10:53:01 2014
+  \date      Wed 23 Jul 2014 10:13:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MKL info
   \details   MKL info
@@ -19,7 +19,7 @@ namespace tk {
 
 #ifdef HAS_MKL
 //! Echo MKL (Intel Math Kernel Library) version information
-void echoMKL(const tk::Print& print, const std::string& title);
+void echoMKL( const tk::Print& print, const std::string& title );
 #endif
 
 } // tk::

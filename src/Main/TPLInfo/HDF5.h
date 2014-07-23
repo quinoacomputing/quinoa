@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/TPLInfo/HDF5.h
   \author    J. Bakosi
-  \date      Wed Mar 19 11:43:39 2014
+  \date      Wed 23 Jul 2014 10:13:10 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     HDF5 info
   \details   HDF5 info
@@ -18,7 +18,7 @@
 namespace tk {
 
 //! Echo HDF5 library version information
-void echoHDF5(const tk::Print& print, const std::string& title);
+void echoHDF5( const tk::Print& print, const std::string& title );
 
 } // tk::
 

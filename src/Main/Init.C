@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.C
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:57:27 AM MDT
+  \date      Wed 23 Jul 2014 10:25:07 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for mains
   \details   Common initialization for mains
@@ -22,9 +22,6 @@
 
 #include <Init.h>
 #include <Exception.h>
-#include <TPLInfo/MKL.h>
-#include <TPLInfo/Boost.h>
-#include <TPLInfo/OpenMP.h>
 
 std::string tk::workdir()
 //******************************************************************************
@@ -78,6 +75,8 @@ void tk::echoHeader( const Print& print, HeaderType header )
     print.headerQuinoa();
   else if ( header == HeaderType::RNGTEST )
     print.headerRNGTest();
+  else if ( header == HeaderType::UNITTEST )
+    print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
     print.headerMeshConv();
   else
@@ -114,21 +113,7 @@ void tk::echoBuildEnv( const Print& print,
   print.item( "Underlying C++ compiler", COMPILER );
   print.item( "Build date", BUILD_DATE );
 
-  // TPLs used by all executables
-  print << '\n';
-  echoOpenMP( print, "OpenMP runtime" );
-  print << '\n';
-
-#ifdef HAS_MKL
-  echoMKL( print, "Intel Math Kernel Library" );
-#else
-  print.item( "Intel Math Kernel Library", "n/a" );
-#endif
-
-  print << '\n';
-  echoBoost( print, "Boost C++ Libraries" );
-
-  // TPLs used by this executable
+  // Echo info on TPLs used
   echoTPL( print );
 }
 

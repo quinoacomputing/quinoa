@@ -84,6 +84,7 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 # Set names of executables
 set(QUINOA_EXECUTABLE "quinoa")
 set(RNGTEST_EXECUTABLE "rngtest")
+set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")
 
 # Get git revision
@@ -322,5 +323,6 @@ add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
+#add_subdirectory(UnitTest)
 add_subdirectory(Statistics)
 add_subdirectory(Main)

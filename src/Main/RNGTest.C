@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 22 Jul 2014 04:19:36 PM MDT
+  \date      Wed 23 Jul 2014 10:10:13 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -21,6 +21,9 @@
 #include <TestStack.h>
 #include <rngtest.decl.h>
 #include <PUPUtil.h>
+#include <TPLInfo/MKL.h>
+#include <TPLInfo/Boost.h>
+#include <TPLInfo/OpenMP.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
@@ -28,12 +31,19 @@ CProxy_Main mainProxy;
 
 namespace rngtest {
 
-void echoTPL(const tk::Print& /*print*/)
+void echoTPL( const tk::Print& print )
 //******************************************************************************
-//  Echo TPL version informaion for libs specific to RNGTest
+//  Echo TPL version informaion
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  echoOpenMP( print, "OpenMP runtime" );
+#ifdef HAS_MKL
+  echoMKL( print, "Intel Math Kernel Library" );
+#else
+  print.item( "Intel Math Kernel Library", "n/a" );
+#endif
+  echoBoost( print, "Boost C++ Libraries" );
 }
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs by
