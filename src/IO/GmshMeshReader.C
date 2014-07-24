@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:57:48 PM MDT
+  \date      Thu 24 Jul 2014 10:08:17 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition
@@ -51,8 +51,7 @@ GmshMeshReader::readMeshFormat()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using tk::operator+;
-
+  using tk::operator<<;
   std::string s;
 
   // Read in beginning of header: $MeshFormat
@@ -71,16 +70,16 @@ GmshMeshReader::readMeshFormat()
 
   ErrChk( ( fabs(m_version-2.2) < std::numeric_limits<tk::real>::epsilon() ||
             fabs(m_version-2.0) < std::numeric_limits<tk::real>::epsilon() ),
-            std::string("Unsupported mesh version '") + m_version +
-            "' in file " + m_filename );
+            std::string("Unsupported mesh version '") << m_version <<
+            "' in file " << m_filename );
 
   ErrChk( ( m_type == GmshFileType::ASCII || m_type == GmshFileType::BINARY ),
-          std::string("Unsupported mesh type '") + m_type + "' in file " +
+            std::string("Unsupported mesh type '") << m_type << "' in file " <<
             m_filename );
 
   ErrChk( m_datasize == sizeof(tk::real),
-          std::string("Unsupported mesh datasize '") + m_datasize +
-          "' in file " + m_filename );
+          std::string("Unsupported mesh datasize '") << m_datasize <<
+          "' in file " << m_filename );
 
   getline( m_inFile, s );  // finish reading the line
 
@@ -146,7 +145,7 @@ GmshMeshReader::readElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  using tk::operator+;
+  using tk::operator<<;
 
   std::string s;
 
@@ -175,8 +174,8 @@ GmshMeshReader::readElements()
     // Find element type, throw exception if not supported
     const auto it = m_elemNodes.find( elmtype );
     ErrChk( it != m_elemNodes.end(),
-            std::string("Unsupported element type ") + elmtype +
-            " in mesh file: " + m_filename );
+            std::string("Unsupported element type ") << elmtype <<
+            " in mesh file: " << m_filename );
 
     for (int e=0; e<n; ++e) {
       // Read element id if binary

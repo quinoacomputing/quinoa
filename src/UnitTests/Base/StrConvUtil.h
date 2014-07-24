@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTests/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 09:05:28 AM MDT
+  \date      Thu 24 Jul 2014 10:31:30 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -57,10 +57,10 @@ void StrConvUtil_object::test< 2 >() {
   ensure_equals( "non-enum-class item output to stream", ss.str(), "blah" );
 }
 
-//! Test tk::operator<< used for concatenating to std::basic_string
+//! Test tk::operator<< used for concatenating to std::basic_string for lvalues
 template<> template<>
 void StrConvUtil_object::test< 3 >() {
-  set_test_name( "tk::operator<<( std::basic_string )" );
+  set_test_name( "tk::operator<<( std::basic_string& )" );
 
   using tk::operator<<;
   std::string s;
@@ -72,28 +72,27 @@ void StrConvUtil_object::test< 3 >() {
   ensure_equals( "concatenating const char* to std::string",
                  s, "1233.14 blah" );
   s << std::string("string");
-  ensure_equals( "concatenating const char* to std::string",
+  ensure_equals( "concatenating std::string to std::string",
                  s, "1233.14 blahstring" );
   s = "";
   ensure_equals( "std::string empty after concatenations", s.size(), 0UL );
 }
 
-//! Test tk::operator+ used for concatenating to std::basic_string
+//! Test tk::operator<< used for concatenating to std::basic_string for rvalues
 template<> template<>
 void StrConvUtil_object::test< 4 >() {
-  set_test_name( "tk::operator+( std::basic_string )" );
+  set_test_name( "tk::operator<<( std::basic_string&& )" );
 
-  using tk::operator+;
-  std::string s;
-  s + 123;
-  ensure_equals( "concatenating integer to std::string", s, "123" );
-  s + 3.14;
-  ensure_equals( "concatenating double to std::string", s, "1233.14" );
-  s + " blah";
+  using tk::operator<<;
+  // lhs to operator<< are rvalues
+  ensure_equals( "concatenating integer to std::string",
+                 std::string( "start" ) << 123, "start123" );
+  ensure_equals( "concatenating double to std::string",
+                 std::string( "start" ) << 3.14, "start3.14" );
   ensure_equals( "concatenating const char* to std::string",
-                 s, "1233.14 blah" );
-  s = "";
-  ensure_equals( "std::string empty after concatenations", s.size(), 0UL );
+                 std::string( "start" ) << " blah", "start blah" );
+  ensure_equals( "concatenating const char* to std::string",
+                 std::string( "start" ) << std::string("blah"), "startblah" );
 }
 
 } // tut::

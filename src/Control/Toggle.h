@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:12:51 PM MDT
+  \date      Thu 24 Jul 2014 09:30:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Options and associations
   \details   Options and associations
@@ -33,7 +33,7 @@ class Toggle {
     Enum value(const std::string keyword) const {
       auto it = values.find(keyword);
       Assert( it != values.end(),
-             "Cannot find value for keyword \"" + keyword + "\"" );
+             std::string("Cannot find value for keyword \"") + keyword + "\"" );
       return it->second;
     }
 
@@ -47,7 +47,7 @@ class Toggle {
     const std::string& name(Enum val) const {
       auto it = names.find(val);
       Assert( it != names.end(),
-              std::string("Cannot find name for value \"") + val + "\"" );
+              std::string("Cannot find name for value \"") << val << "\"" );
       return it->second;
     }
 

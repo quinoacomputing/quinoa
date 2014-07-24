@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:11:06 PM MDT
+  \date      Thu 24 Jul 2014 09:20:42 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -20,12 +20,10 @@ RNG::param( RNGType rng ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using tk::operator+;
-
   auto it = brng.find(rng);
 
   Assert( it != brng.end(),
-          std::string("Cannot find parameter for RNG \"") + rng + "\"" );
+          std::string("Cannot find parameter for RNG \"") << rng << "\"" );
 
   return it->second;
 }
@@ -37,12 +35,10 @@ RNG::lib( RNGType rng ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using tk::operator+;
-
   auto it = names.find(rng);
 
   Assert( it != names.end(),
-          std::string("Cannot find name for RNG \"") + rng + "\"" );
+          std::string("Cannot find name for RNG \"") << rng << "\"" );
 
   if (found("MKL", it->second)) {
     return RNGLibType::MKL;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 09:00:55 AM MDT
+  \date      Thu 24 Jul 2014 10:25:07 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     String conversion utilities
   \details   String conversion utilities
@@ -33,7 +33,7 @@ operator<< ( std::basic_ostream< Ch, Tr >& os, const T& t ) {
   return os;
 }
 
-//! Operator << for adding (concatenating) T to a std::basic_string
+//! Operator << for adding (concatenating) T to a std::basic_string for lvalues
 template< typename T, typename Ch, typename Tr >
 std::basic_string< Ch, Tr >
 operator<< ( std::basic_string< Ch, Tr >& lhs, const T& e ) {
@@ -43,11 +43,11 @@ operator<< ( std::basic_string< Ch, Tr >& lhs, const T& e ) {
   return lhs;
 }
 
-//! Operator + for adding (concatenating) T to a std::basic_string
+//! Operator << for adding (concatenating) T to a std::basic_string for rvalues
 template< typename T, typename Ch, typename Tr >
 std::basic_string< Ch, Tr >
-operator+ ( std::basic_string< Ch, Tr >& lhs, const T& e ) {
-  return lhs << e;      // implement in terms of operator<<
+operator<< ( std::basic_string< Ch, Tr >&& lhs, const T& e ) {
+  return lhs << e;
 }
 
 } // tk::
