@@ -145,6 +145,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
+  # Don't warn on defined but unused functions
+  add_compiler_flag("-Wno-unused-function")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
@@ -158,6 +160,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   add_compiler_flag("-Wno-literal-suffix")
   add_compiler_flag("-Wno-unused-local-typedefs")
+  add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-fdiagnostics-color")
 
   # Suppress the following warnings for Charm++ hostfiles including the
@@ -286,7 +289,8 @@ if("${isSystemDir}" STREQUAL "-1")
    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif("${isSystemDir}" STREQUAL "-1")
 
-include_directories(${QUINOA_SOURCE_DIR}/Base
+include_directories(${QUINOA_SOURCE_DIR}
+                    ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/LinearAlgebra
@@ -323,6 +327,5 @@ add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
-#add_subdirectory(UnitTest)
 add_subdirectory(Statistics)
 add_subdirectory(Main)
