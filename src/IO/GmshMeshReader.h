@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:58:11 PM MDT
+  \date      Thu 24 Jul 2014 10:04:47 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh reader class declaration
   \details   Gmsh reader class declaration
@@ -80,14 +80,14 @@ class GmshMeshReader : public tk::Reader {
     void push_back( int etype, const Pushed& p, ElmType1& e1, ElmType2& e2,
                     ElmType3& e3 )
     {
-      using tk::operator+;
+      using tk::operator<<;
       switch ( etype ) {
         case GmshElemType::LIN: e1.push_back( p ); break;
         case GmshElemType::TRI: e2.push_back( p ); break;
         case GmshElemType::TET: e3.push_back( p ); break;
         case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
-        default: Throw( std::string("Unsupported element type ") + etype +
-                        " in mesh file: " + m_filename );
+        default: Throw( std::string("Unsupported element type ") << etype <<
+                        " in mesh file: " << m_filename );
 
       }
     }

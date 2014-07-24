@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:10:43 PM MDT
+  \date      Thu 24 Jul 2014 09:31:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options
   \details   Quinoa's random number generator options
@@ -20,12 +20,11 @@ MKLGaussianMethod::param( MKLGaussianMethodType m ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  using tk::operator+;
-
   auto it = method.find( m );
 
-  Assert(it != method.end(),
-         std::string("Cannot find parameter for MKLGaussianMethod \"") + m + "\"");
+  Assert( it != method.end(),
+          std::string("Cannot find parameter for MKLGaussianMethod \"")
+          << m << "\"" );
 
   return it->second;
 }
