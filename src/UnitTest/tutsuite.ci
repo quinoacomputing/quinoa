@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tutsuite.ci
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 01:01:19 PM MDT
+  \date      Fri 25 Jul 2014 03:41:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for Template Unit Test suite
   \details   Charm++ module interface file for Template Unit Test suite
@@ -27,7 +27,7 @@ module tutsuite {
     chare TUTSuite {
       entry TUTSuite( const ctr::CmdLine& cmdline );
       entry [expedited] // expedited so one-liners are printed when tests finish
-        void evaluate();
+        void evaluate( std::vector< std::string > status );
     }
 
   } // unittest::
