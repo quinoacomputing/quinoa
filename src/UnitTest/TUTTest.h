@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTTest.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 01:08:13 PM MDT
+  \date      Fri 25 Jul 2014 04:55:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test unit test
   \details   Template Unit Test unit test
@@ -24,17 +24,12 @@ class TUTTest : public CBase_TUTTest< Proxy > {
 
   public:
     //! Constructor: run test then evaluate it
-    explicit TUTTest( Proxy& proxy, const std::string& groupname, int t ) :
-      m_proxy( proxy )
-    {
-      std::cout << groupname << ":" << t << std::endl;
-      //tut::test_result result;      
-      //g_runner.get().run_test( groupname, t, result );
-      proxy.evaluate();
+    explicit TUTTest( Proxy& proxy, const std::string& groupname, int t ) {
+      tut::test_result tr;
+      g_runner.get().run_test( groupname, t, tr );
+      proxy.evaluate( { tr.group, tr.name, std::to_string(tr.result),
+                        tr.message, tr.exception_typeid } );
     }
-
-  private:
-    Proxy m_proxy;
 };
 
 } // unittest::

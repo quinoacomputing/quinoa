@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 08:06:14 AM MDT
+  \date      Fri 25 Jul 2014 04:51:25 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -31,7 +31,7 @@ StrConvUtil_group StrConvUtil( "Base/StrConvUtil" );
 //! Test tk::operator<< used for writing enum class value to output stream
 template<> template<>
 void StrConvUtil_object::test< 1 >() {
-  set_test_name( "tk::operator<<( enum class ) casting to unsigned int" );
+  set_test_name( "tk::operator<<( enum class )" );
 
   enum class Enum { FIRST=3, SECOND, THIRD };
   using tk::operator<<;

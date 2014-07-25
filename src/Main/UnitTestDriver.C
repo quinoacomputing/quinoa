@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 09:32:45 AM MDT
+  \date      Fri 25 Jul 2014 04:36:22 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
@@ -40,7 +40,7 @@ UnitTestDriver::execute()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_print.part("Factory");
+  m_print.part( "Factory" );
 
   // Instantiate and run unit test suite
   CProxy_TUTSuite::ckNew( m_cmdline );

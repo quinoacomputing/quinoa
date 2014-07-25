@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 09:05:22 AM MDT
+  \date      Fri 25 Jul 2014 04:38:35 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -89,7 +89,7 @@ TestU01Suite::names( std::vector< std::string > n )
     #endif
     m_print.RNGSSEParams( g_inputdeck.get< tag::selected, tk::tag::rng >(),
                           g_inputdeck.get< tag::param, tk::tag::rngsse >() );
-    m_print.raw('\n');
+    m_print.endpart();
     m_print.part( m_name );
     m_print.statshead( "Statistics computed",
                        m_npval*rngs.size(),
