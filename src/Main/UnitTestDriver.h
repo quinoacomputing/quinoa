@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 09:57:57 AM MDT
+  \date      Fri 25 Jul 2014 09:20:30 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit test driver
   \details   Unit test driver
@@ -17,7 +17,7 @@
 //! Everything that contributes to the unittest executable
 namespace unittest {
 
-//! Random number generator test suite driver used polymorphically with Driver
+//! Unit test suite driver used polymorphically with Driver
 class UnitTestDriver {
 
   public:
@@ -30,6 +30,7 @@ class UnitTestDriver {
 
   private:
     const UnitTestPrint& m_print;
+    const ctr::CmdLine& m_cmdline;
 };
 
 } // unittest::

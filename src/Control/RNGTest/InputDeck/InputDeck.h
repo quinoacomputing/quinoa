@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 11 Jun 2014 01:55:00 PM MDT
+  \date      Fri 25 Jul 2014 09:26:42 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -20,13 +20,12 @@ namespace ctr {
 
 //! InputDeck : Control< specialized to RNGTest >, see Types.h
 //! This is also where the command line parser stores
-class InputDeck :
-  public tk::Control< // tag           type
-                      tag::title,      std::string,
-                      tag::selected,   selects,
-                      tag::io,         ios,
-                      tag::cmd,        CmdLine,
-                      tag::param,      parameters > {
+class InputDeck : public tk::Control< // tag           type
+                                      tag::title,      std::string,
+                                      tag::selected,   selects,
+                                      tag::io,         ios,
+                                      tag::cmd,        CmdLine,
+                                      tag::param,      parameters > {
 
   public:
     //! Pack/Unpack

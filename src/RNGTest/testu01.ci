@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01.ci
   \author    J. Bakosi
-  \date      Fri 04 Jul 2014 07:02:41 PM MDT
+  \date      Fri 25 Jul 2014 12:58:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for TestU01 statistical tests
   \details   Charm++ module interface file for TestU01 statistical tests
@@ -11,6 +11,11 @@
 
 module testu01 {
 
+  // Note that template chare TestU01 depends on chare TestU01Suite and in turn
+  // TestU01Suite depends on TestU01 (see also the interface file
+  // testu01suite.ci). This is a mutual dependency and it is made to work with
+  // one of the chares (TestU01) being a template chare. Note: if this extern
+  // module dependency is removed the code does not compile.
   extern module testu01suite;
 
   namespace rngtest {

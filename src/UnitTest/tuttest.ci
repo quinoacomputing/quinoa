@@ -1,0 +1,35 @@
+//******************************************************************************
+/*!
+  \file      src/UnitTest/tuttest.ci
+  \author    J. Bakosi
+  \date      Fri 25 Jul 2014 01:02:55 PM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for Template Unit Test unit tests
+  \details   Charm++ module interface file for Template Unit Test unit tests
+*/
+//******************************************************************************
+
+module tuttest {
+
+  // Note that template chare TUTTest depends on chare TUTSuite and in turn
+  // TUTSuite depends on TUTTest (see also the interface file tutsuite.ci). This
+  // is a mutual dependency and it is made to work with one of the chares
+  // (TUTTest) being a template chare. Note: if this extern module dependency is
+  // removed the code does not compile. See also the Charm++ manual on more
+  // information on template chares.
+  extern module tutsuite;
+
+  namespace unittest {
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+    chare TUTTest< CProxy_TUTSuite >;
+
+    template< class Proxy >
+    chare TUTTest {
+      entry TUTTest( Proxy& proxy, const std::string& groupname, int test );
+    }
+
+  } // unittest::
+
+}

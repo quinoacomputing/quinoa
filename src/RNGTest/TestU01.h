@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 07:39:31 AM MDT
+  \date      Thu 24 Jul 2014 03:13:52 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     TestU01 statistical tests
-  \details   TestU01 statistical tests
+  \brief     TestU01 statistical test
+  \details   TestU01 statistical test
 */
 //******************************************************************************
 #ifndef TestU01_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:39:38 AM MDT
+  \date      Fri 25 Jul 2014 09:05:22 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -28,9 +28,9 @@ extern TestStack g_testStack;
 using rngtest::TestU01Suite;
 
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
-   m_print( rngtest::g_inputdeck.get< rngtest::tag::cmd, tk::tag::verbose >() ?
-            std::cout : tk::null ),
-   m_npval(0), m_ncomplete(0), m_ntest(0)
+  m_print( rngtest::g_inputdeck.get< rngtest::tag::cmd, tk::tag::verbose >() ?
+           std::cout : tk::null ),
+  m_npval(0), m_ncomplete(0), m_ntest(0)
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi

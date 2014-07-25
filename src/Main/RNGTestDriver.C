@@ -2,14 +2,13 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 03:34:14 PM MDT
+  \date      Fri 25 Jul 2014 09:23:13 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
 */
 //******************************************************************************
 
-#include <Print.h>
 #include <Factory.h>
 #include <RNGTestDriver.h>
 #include <RNGTest/CmdLine/Parser.h>
@@ -58,24 +57,20 @@ RNGTestDriver::execute()
 {
   try {
 
-    m_print.part("Factory");
+    m_print.part( "Factory" );
 
     // Register batteries
     BatteryFactory bf;
-    tk::recordCharmModel< Battery, TestU01Suite >
-                        ( bf, ctr::BatteryType::SMALLCRUSH );
-    tk::recordCharmModel< Battery, TestU01Suite >
-                        ( bf, ctr::BatteryType::CRUSH );
-    tk::recordCharmModel< Battery, TestU01Suite >
-                        ( bf, ctr::BatteryType::BIGCRUSH );
+    using ctr::BatteryType;
+    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::SMALLCRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::CRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::BIGCRUSH );
     m_print.list< ctr::Battery >( "Registered batteries", bf );
-
-    //! Echo information on random number generator test suite to be created
     m_print.endpart();
-    m_print.part("Problem");
 
+    m_print.part( "Problem" );
     if ( !g_inputdeck.get< tag::title >().empty() )
-      m_print.section("Title", g_inputdeck.get< tag::title >());
+      m_print.section( "Title", g_inputdeck.get< tag::title >() );
 
     // Instantiate and run battery
     const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );

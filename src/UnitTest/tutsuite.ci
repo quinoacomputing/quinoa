@@ -1,0 +1,35 @@
+//******************************************************************************
+/*!
+  \file      src/UnitTest/tutsuite.ci
+  \author    J. Bakosi
+  \date      Fri 25 Jul 2014 01:01:19 PM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for Template Unit Test suite
+  \details   Charm++ module interface file for Template Unit Test suite
+*/
+//******************************************************************************
+
+module tutsuite {
+
+  // Note that chare TUTSuite depends on chare TUTTest and in turn TUTTest
+  // depends on TUTSuite (see also the interface file tuttest.ci). This is a
+  // mutual dependency and it is made to work with one of the chares (TUTTest)
+  // being a template chare. Note: if this extern module dependency is removed,
+  // the code still compiles but Charm++ generates the wrong code yielding
+  // segfaults. See also the Charm++ manual on more information on template
+  // chares.
+  extern module tuttest;
+
+  include "UnitTest/CmdLine/CmdLine.h";
+
+  namespace unittest {
+
+    chare TUTSuite {
+      entry TUTSuite( const ctr::CmdLine& cmdline );
+      entry [expedited] // expedited so one-liners are printed when tests finish
+        void evaluate();
+    }
+
+  } // unittest::
+
+}

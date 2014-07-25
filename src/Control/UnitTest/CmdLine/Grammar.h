@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 07:21:59 AM MDT
+  \date      Thu 24 Jul 2014 11:25:57 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -44,18 +44,9 @@ namespace cmd {
                                       tk::kw::verbose,
                                       tk::tag::verbose > {};
 
-  //! io parameter
-  template< typename keyword, typename io_tag >
-  struct io :
-         tk::grm::process_cmd< Stack,
-                               keyword,
-                               tk::grm::Store< Stack, tag::io, io_tag > > {};
-
   //! command line keywords
   struct keywords :
-         pegtl::sor< verbose,
-                     io< kw::input, tag::input >,
-                     io< kw::output, tag::output > > {};
+         pegtl::sor< verbose > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :
