@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:22:37 AM MDT
+  \date      Thu 24 Jul 2014 11:59:37 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -142,9 +142,8 @@ class Print {
     }
 
     //! Print list: name: entries...
-    template< Style s = VERBOSE >
-    void list( const std::string& name,
-               const std::list< std::string >& entries ) const {
+    template< Style s = VERBOSE, class Container >
+    void list( const std::string& name, const Container& entries ) const {
       if (!entries.empty()) {
         section<s>( name );
         for (auto& e : entries)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 03:43:58 PM MDT
+  \date      Thu 24 Jul 2014 11:41:12 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -31,18 +31,15 @@ void echoTPL( const tk::Print& print )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print << '\n';
   echoOpenMP( print, "OpenMP runtime" );
-  print << '\n';
 #ifdef HAS_MKL
   echoMKL( print, "Intel Math Kernel Library" );
 #else
   print.item( "Intel Math Kernel Library", "n/a" );
 #endif
-  print << '\n';
   echoBoost( print, "Boost C++ Libraries" );
-  print << '\n';
   echoExodusII( print, "ExodusII library" );
+  print.endpart();
 }
 
 } // meshconv::

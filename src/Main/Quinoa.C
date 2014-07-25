@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:10:25 AM MDT
+  \date      Thu 24 Jul 2014 11:41:30 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -38,6 +38,7 @@ void echoTPL(const tk::Print& print)
   tk::echoSilo(print, "Silo library");
   tk::echoHDF5(print, "HDF5 library");
   tk::echoZlib(print, "Zlib compression library");
+  print.endpart();
 }
 
 } // quinoa::

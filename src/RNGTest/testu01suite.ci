@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/testu01suite.ci
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:33:01 PM MDT
+  \date      Fri 25 Jul 2014 12:58:48 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for TestU01 statistical test suites
   \details   Charm++ module interface file for TestU01 statistical test suites
@@ -11,6 +11,13 @@
 
 module testu01suite {
 
+  // Note that chare TestU01Suite depends on chare TestU01 and in turn TestU01
+  // depends on TestU01Suite (see also the interface file testu01.ci). This is a
+  // mutual dependency and it is made to work with one of the chares (TestU01)
+  // being a template chare. Note: if this extern module dependency is removed,
+  // the code still compiles but Charm++ generates the wrong code yielding
+  // segfaults. See also the Charm++ manual on more information on template
+  // chares.
   extern module testu01;
 
   include "Types.h";

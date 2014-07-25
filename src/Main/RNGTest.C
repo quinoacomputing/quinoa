@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 03:33:08 PM MDT
+  \date      Thu 24 Jul 2014 11:40:56 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -44,6 +44,7 @@ void echoTPL( const tk::Print& print )
   print.item( "Intel Math Kernel Library", "n/a" );
 #endif
   echoBoost( print, "Boost C++ Libraries" );
+  print.endpart();
 }
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs by

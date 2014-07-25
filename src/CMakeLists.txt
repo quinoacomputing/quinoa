@@ -300,6 +300,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/MonteCarlo
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${QUINOA_SOURCE_DIR}/RNGTest
+                    ${QUINOA_SOURCE_DIR}/UnitTest
                     ${QUINOA_SOURCE_DIR}/SDE
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/Paradigm
@@ -309,9 +310,10 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/hdf5ser/include
                     ${TPL_DIR}/charm/include
-                    ${PROJECT_BINARY_DIR}/Base  # for Config.h
-                    ${PROJECT_BINARY_DIR}/Main
-                    ${PROJECT_BINARY_DIR}/RNGTest
+                    ${PROJECT_BINARY_DIR}/Base          # for Config.h
+                    ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${MKL_INCLUDE_PATH}
                     ${MPI_INCLUDE_PATH}
 )
@@ -327,5 +329,6 @@ add_subdirectory(Paradigm)
 add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
+add_subdirectory(UnitTest)
 add_subdirectory(Statistics)
 add_subdirectory(Main)

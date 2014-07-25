@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 07:22:43 AM MDT
+  \date      Thu 24 Jul 2014 11:26:11 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's command line keywords
   \details   All keywords recognized by UnitTest's command line parser. The
@@ -28,24 +28,6 @@ namespace kw {
 
 using namespace pegtl::ascii;
 using tk::kw::cmdline_keyword;
-
-// Keyword 'input', cmdline '--input' with alias '-i'
-struct input_info {
-  static const char* name() { return "input"; }
-  static const char* help() { return
-    "This option is used to define the input file.";
-  }
-};
-using input = cmdline_keyword< input_info, i, i,n,p,u,t >;
-
-// Keyword 'output', cmdline '--output' with alias '-o'
-struct output_info {
-  static const char* name() { return "output"; }
-  static const char* help() { return
-    "This option is used to define the output file.";
-  }
-};
-using output = cmdline_keyword< output_info, o, o,u,t,p,u,t >;
 
 } // kw::
 } // unittest::

@@ -135,7 +135,7 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
-                      #UnitTest
+                      UnitTest
                       UnitTestControl
                       Paradigm
                       Base

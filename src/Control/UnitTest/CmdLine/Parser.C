@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:16:23 AM MDT
+  \date      Thu 24 Jul 2014 11:26:31 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's comamnd line parser
   \details   UnitTest's comamnd line parser
@@ -55,14 +55,4 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
 
   // If we got here, parser succeeded
   print.item("Parsed command line", "success");
-
-//   // Make sure mandatory arguments are set
-//   ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
-//           "Mandatory input file not specified. "
-//           "Use '--" + kw::input().string() + " <filename>' or '-" +
-//           kw::input().alias() + " <filename>'.");
-//   ErrChk( !(cmdline.get< tag::io, tag::output >().empty()),
-//           "Mandatory output file not specified. "
-//           "Use '--" + kw::output().string() + " <filename>' or '-" +
-//           kw::output().alias() + " <filename>'.");
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
-  \date      Sun 06 Jul 2014 08:33:44 PM MDT
+  \date      Fri 25 Jul 2014 09:40:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   TestU01 random number generator test suite
@@ -78,7 +78,7 @@ class TestU01Suite : public CBase_TestU01Suite {
     std::size_t m_ncomplete;           //!< Number of completed tests
     std::size_t m_ntest;               //!< Number of tests info received from
     std::map< std::string, std::size_t > m_nfail; //! Number of failed tests/RNG
-    std::map< std::string, tk::real > m_time;   //!< Measured time/RNG
+    std::map< std::string, tk::real > m_time;     //!< Measured time/RNG
 
     struct Failed {
       std::string test;

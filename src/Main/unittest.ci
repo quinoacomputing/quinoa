@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/unittest.ci
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 09:58:49 AM MDT
+  \date      Fri 25 Jul 2014 08:55:40 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for unittest
   \details   Charm++ module interface file for unittest
@@ -11,7 +11,15 @@
 
 mainmodule unittest {
 
+  extern module tutsuite;
+
   readonly CProxy_Main mainProxy;
+
+  namespace unittest {
+
+    readonly tut::test_runner_singleton g_runner;
+
+  } // unittest::
 
   mainchare Main {
     entry Main( CkArgMsg* msg );

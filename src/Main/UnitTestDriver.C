@@ -2,34 +2,24 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 08:13:23 AM MDT
+  \date      Fri 25 Jul 2014 09:32:45 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
 */
 //******************************************************************************
 
-#include <Print.h>
-#include <Factory.h>
 #include <UnitTestDriver.h>
-#include <UnitTest/CmdLine/Parser.h>
+#include <TUTSuite.h>
 #include <unittest.decl.h>
 #include <Handler.h>
-
-#include <tut/tut_reporter.hpp>
-
-// Include unit test groups
-#include <UnitTests/Base/flip_map.h>
-#include <UnitTests/Base/make_list.h>
-#include <UnitTests/Base/StrConvUtil.h>
-
-extern CProxy_Main mainProxy;
 
 using unittest::UnitTestDriver;
 
 UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
                                 const ctr::CmdLine& cmdline ) :
-  m_print( print )
+  m_print( print ),
+  m_cmdline( cmdline )
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -46,17 +36,12 @@ UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
 void
 UnitTestDriver::execute()
 //******************************************************************************
-//  Run battery
+//  Run unit test suite
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::cout << "=============";
-  tut::reporter reporter;
-  tut::runner.get().set_callback( &reporter );
-  tut::runner.get().run_tests();
-  std::cout << "status: " << reporter.all_ok() << std::endl;
-  std::cout << "=============\n";
+  m_print.part("Factory");
 
-  // Quit
-  mainProxy.finalize();  
+  // Instantiate and run unit test suite
+  CProxy_TUTSuite::ckNew( m_cmdline );
 }
