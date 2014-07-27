@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 11:40:56 AM MDT
+  \date      Sat 26 Jul 2014 09:43:38 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -189,7 +189,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                   //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Watch > m_timestamp;
+    std::map< std::string, tk::Timer::Watch > m_timestamp;
 };
 
 //! Charm++ chare execute: by the time this object is constructed, the Charm++

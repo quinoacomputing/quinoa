@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 04:51:25 PM MDT
+  \date      Sat 26 Jul 2014 07:18:18 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -65,14 +65,13 @@ void StrConvUtil_object::test< 3 >() {
   using tk::operator<<;
   std::string s;
   s << 123;
-  ensure_equals( "concatenating integer to std::string", s, "123" );
+  ensure_equals( "concatenate integer to std::string", s, "123" );
   s << 3.14;
-  ensure_equals( "concatenating double to std::string", s, "1233.14" );
+  ensure_equals( "concatenate double to std::string", s, "1233.14" );
   s << " blah";
-  ensure_equals( "concatenating const char* to std::string",
-                 s, "1233.14 blah" );
+  ensure_equals( "concatenate const char* to std::string", s, "1233.14 blah" );
   s << std::string("string");
-  ensure_equals( "concatenating std::string to std::string",
+  ensure_equals( "concatenat std::string to std::string",
                  s, "1233.14 blahstring" );
   s = "";
   ensure_equals( "std::string empty after concatenations", s.size(), 0UL );
@@ -85,13 +84,13 @@ void StrConvUtil_object::test< 4 >() {
 
   using tk::operator<<;
   // lhs to operator<< are rvalues
-  ensure_equals( "concatenating integer to std::string",
+  ensure_equals( "concatenate integer to std::string",
                  std::string( "start" ) << 123, "start123" );
-  ensure_equals( "concatenating double to std::string",
+  ensure_equals( "concatenate double to std::string",
                  std::string( "start" ) << 3.14, "start3.14" );
-  ensure_equals( "concatenating const char* to std::string",
+  ensure_equals( "concatenate const char* to std::string",
                  std::string( "start" ) << " blah", "start blah" );
-  ensure_equals( "concatenating const char* to std::string",
+  ensure_equals( "concatenate const char* to std::string",
                  std::string( "start" ) << std::string("blah"), "startblah" );
 }
 
