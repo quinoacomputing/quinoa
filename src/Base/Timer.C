@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 07:32:52 AM MDT
+  \date      Sat 26 Jul 2014 09:13:27 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Timer
   \details   Timer
@@ -14,9 +14,8 @@
 #include <Timer.h>
 
 using tk::Timer;
-using tk::Watch;
 
-Watch
+tk::Timer::Watch
 Timer::hms() const
 //******************************************************************************
 //  Return time elapsed between start and stop for timer as h:m:s
@@ -25,9 +24,6 @@ Timer::hms() const
 //******************************************************************************
 {
   using std::chrono::duration_cast;
-  using std::chrono::hours;
-  using std::chrono::minutes;
-  using std::chrono::seconds;
 
   // Compute time difference between start and now in seconds
   Dsec elapsed = clock::now() - m_start;
@@ -40,17 +36,13 @@ Timer::hms() const
 }
 
 void
-Timer::eta( const tk::real term,
-            const tk::real time,
-            const uint64_t nstep,
-            const uint64_t it,
-            Watch& elapsedWatch,
-            Watch& estimatedWatch ) const
+Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
+            Watch& elapsedWatch, Watch& estimatedWatch ) const
 //******************************************************************************
 //  Estimate time for accomplishment
-//! \param[in]  term            Time to terminate time stepping
+//! \param[in]  term            Time at which to terminate time stepping
 //! \param[in]  time            Current time
-//! \param[in]  nstep           Number time steps to take
+//! \param[in]  nstep           Max number of time steps to take
 //! \param[in]  it              Current iteration
 //! \param[out] elapsedWatch    Elapsed time in h:m:s
 //! \param[out] estimatedWatch  Estimated time for accomplishmet in h:m:s
@@ -58,9 +50,6 @@ Timer::eta( const tk::real term,
 //******************************************************************************
 {
   using std::chrono::duration_cast;
-  using std::chrono::hours;
-  using std::chrono::minutes;
-  using std::chrono::seconds;
 
   Dsec elapsed, estimated;
 

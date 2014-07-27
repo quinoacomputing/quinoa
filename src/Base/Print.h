@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 06:34:40 PM MDT
+  \date      Sat 26 Jul 2014 09:49:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -136,7 +136,7 @@ class Print {
 
     //! Print item: h:m:s
     template< Style s = VERBOSE >
-    void item( const std::string& name, const Watch& watch ) const {
+    void item( const std::string& name, const tk::Timer::Watch& watch ) const {
       stream<s>() << m_item_name_watch_fmt % m_item_indent % name
                    % watch.hrs.count() % watch.min.count() % watch.sec.count();
     }
@@ -175,7 +175,7 @@ class Print {
     //! Print note
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
-    { stream<s>() << m_note_fmt % m_section_indent % msg << std::flush; }
+    { stream<s>() << m_note_fmt % m_section_indent % msg; }
 
     //! Print end of part
     template< Style s = VERBOSE >

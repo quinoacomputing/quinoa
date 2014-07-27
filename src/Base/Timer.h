@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Tue 01 Jul 2014 08:38:20 PM MDT
+  \date      Sat 26 Jul 2014 09:39:31 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Timer
   \details   Timer
@@ -17,30 +17,37 @@
 
 namespace tk {
 
-//! Watch stores time in hours:minutes:seconds
-struct Watch {
-  std::chrono::hours hrs;
-  std::chrono::minutes min;
-  std::chrono::seconds sec;
-  Watch( std::chrono::hours&& h,
-         std::chrono::minutes&& m,
-         std::chrono::seconds&& s ) :
-    hrs( std::move(h) ), min( std::move(m) ), sec( std::move(s) ) {}
-};
-
 //! Timer
 class Timer {
 
   private:
-    // Shorthand for clock, set clock type
-    using clock = std::chrono::high_resolution_clock;
-
-    // Shorthand for real duration
     using Dsec = std::chrono::duration< real >;
+    using hours = std::chrono::hours;
+    using minutes = std::chrono::minutes;
+    using seconds = std::chrono::seconds;
 
   public:
+    // Shorthand for clock, setting clock type
+    using clock = std::chrono::high_resolution_clock;
+
+    //! Watch stores time in hours:minutes:seconds
+    struct Watch {
+      hours hrs;
+      minutes min;
+      seconds sec;
+      //! Zero constructor
+      explicit Watch() :
+        hrs( std::chrono::duration_cast< hours >( clock::duration::zero()) ),
+        min( std::chrono::duration_cast< minutes >( clock::duration::zero() ) ),
+        sec( std::chrono::duration_cast< seconds >( clock::duration::zero() ) )
+      {}
+      //! Fill constructor
+      explicit Watch( hours&& h, minutes&& m, seconds&& s ) :
+        hrs( std::move(h) ), min( std::move(m) ), sec( std::move(s) ) {}
+    };
+
     //! Constructor
-    Timer() : m_start( clock::now() ) {}
+    explicit Timer() : m_start( clock::now() ) {}
 
     //! Return time elapsed between start and stop as a real number
     real dsec() const {
@@ -51,12 +58,8 @@ class Timer {
     Watch hms() const;
 
     //! Estimate time for accomplishment
-    void eta( const real term,
-              const real time,
-              const uint64_t nstep,
-              const uint64_t it,
-              Watch& elapsedWatch,
-              Watch& estimatedWatch ) const;
+    void eta( real term, real time, uint64_t nstep, uint64_t it,
+              Watch& elapsedWatch, Watch& estimatedWatch ) const;
 
   private:
     clock::time_point m_start;  //!< Time stamp at start

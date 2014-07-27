@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 11:54:47 AM MDT
+  \date      Sat 26 Jul 2014 08:56:11 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -23,6 +23,7 @@
 #include <tests/Base/flip_map.h>
 #include <tests/Base/make_list.h>
 #include <tests/Base/StrConvUtil.h>
+#include <tests/Base/Timer.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
@@ -118,7 +119,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                   //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Watch > m_timestamp;
+    std::map< std::string, tk::Timer::Watch > m_timestamp;
 };
 
 //! Charm++ chare execute: by the time this object is constructed, the Charm++
