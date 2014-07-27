@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 04:55:32 PM MDT
+  \date      Sat 26 Jul 2014 06:26:43 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -26,7 +26,9 @@ using unittest::TUTSuite;
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tk::tag::verbose >() ? std::cout : tk::null ),
   m_maxTestsInGroup( 50 ),
-  m_ncomplete( 0 )
+  m_nrun( 0 ),
+  m_ncomplete( 0 ),
+  m_nfail( 0 )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -54,13 +56,29 @@ TUTSuite::evaluate( std::vector< std::string > status )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ++m_ncomplete;
-  m_print.test( status );
+  ++m_nrun;     // increase number tests run (including dummies)
 
-  if ( m_ncomplete == m_ngroup*m_maxTestsInGroup ) {
-    //std::cout << "status: " << reporter.all_ok() << std::endl;
+  // Evaluate test
+  if (status[2] != "8") {             // if not dummy
+    ++m_ncomplete;                    // increase number of tests completed
+    if (status[2] != "0") ++m_nfail;  // count number of failed tests
+  }
+
+  // Echo one-liner info on result of test
+  m_print.test( m_ncomplete, m_nfail, status );
+
+  if ( m_nrun == m_ngroup*m_maxTestsInGroup ) {
+    // Echo final assessment
+    if (m_nfail == 0) {
+      m_print.note< tk::QUIET >
+                  ( "All " + std::to_string(m_ncomplete) + " tests passed" );
+    } else {
+      m_print.note< tk::QUIET >
+                  ( std::to_string(m_nfail) + " of " +
+                    std::to_string(m_ncomplete) + " tests failed" );
+    }
     // Quit
-    mainProxy.finalize();  
+    mainProxy.finalize();
   }
 }
 

@@ -34,7 +34,6 @@ RNGTest
 
 Testing
 -------
- - Unit tests: Write Charm++ unittest executable using Template Unit Test
  - Quantify code coverage by tests
  - Regression tests with KitWare's CTest
  - Test build with optional libraries on/off (all permutations)
@@ -121,7 +120,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 23 Jul 2014 10:35:03 AM MDT
+<em>Page last updated:</em> Sat 26 Jul 2014 06:44:52 PM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

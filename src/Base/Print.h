@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 11:59:37 AM MDT
+  \date      Sat 26 Jul 2014 06:34:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -175,7 +175,7 @@ class Print {
     //! Print note
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
-    { stream<s>() << m_note_fmt % m_section_indent % msg; }
+    { stream<s>() << m_note_fmt % m_section_indent % msg << std::flush; }
 
     //! Print end of part
     template< Style s = VERBOSE >
@@ -334,7 +334,7 @@ class Print {
     mutable format m_section_title_value_fmt = format("\n%s%c %s: %s\n");
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_list_item_fmt = format("%s%-30s\n");
-    mutable format m_note_fmt = format("\n%s%-30s\n");
+    mutable format m_note_fmt = format("%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-30s : %d:%d:%d\n");

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Tue 22 Jul 2014 10:32:23 PM MDT
+  \date      Sat 26 Jul 2014 06:37:09 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -96,15 +96,14 @@ class RNGTestPrint : public tk::RNGPrint {
                     std::size_t ntest ) const {
       std::stringstream ss;
       ss << title << " (" << npval << " stats from " << ntest << " tests)";
-      m_qstream << m_section_title_fmt % m_section_indent
-                                       % m_section_bullet
-                                       % ss.str();
-      m_qstream << m_section_underline_fmt
-                   % m_section_indent
-                   % std::string( m_section_indent.size() + 2 + ss.str().size(),
-                                 '-');
-      raw< tk::QUIET >
-         ( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
+      m_stream << m_section_title_fmt % m_section_indent
+                                      % m_section_bullet
+                                      % ss.str();
+      m_stream << m_section_underline_fmt
+                  % m_section_indent
+                  % std::string( m_section_indent.size() + 2 + ss.str().size(),
+                                '-');
+      raw( m_item_indent + "Legend: [done/total/failed] Test, RNG : p-value\n" +
            m_item_indent + "(eps  means a value < 1.0e-300)\n" +
            m_item_indent + "(eps1 means a value < 1.0e-15)\n\n" );
 

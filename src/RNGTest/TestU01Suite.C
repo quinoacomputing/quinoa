@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 04:38:35 PM MDT
+  \date      Sat 26 Jul 2014 06:13:10 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -158,7 +158,7 @@ TestU01Suite::assess()
   if ( !m_failed.empty() ) {
     const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
     m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
-  } else m_print.note< tk::QUIET >("All tests passed");
+  } else m_print.note< tk::QUIET >( "All tests passed" );
 
   // Cost and quality assessment only for more than one RNG
   if (m_time.size() > 1) {

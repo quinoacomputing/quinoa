@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 04:54:27 PM MDT
+  \date      Sat 26 Jul 2014 06:10:52 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -26,21 +26,20 @@ class UnitTestPrint : public tk::Print {
     //! Constructor
     explicit UnitTestPrint( std::ostream& str = tk::null,
                             std::ostream& qstr = std::cout ) :
-      Print( str, qstr ), m_ncomplete(0), m_nfail(0) {}
+      Print( str, qstr ) {}
 
     //! Print unit tests header (with legend)
     void unithead( const std::string& title, std::size_t ngroup ) const {
       std::stringstream ss;
       ss << title << " (from " << ngroup << " test groups)";
-      m_qstream << m_section_title_fmt % m_section_indent
-                                       % m_section_bullet
-                                       % ss.str();
-      m_qstream << m_section_underline_fmt
-                   % m_section_indent
-                   % std::string( m_section_indent.size() + 2 + ss.str().size(),
-                                 '-');
-      raw< tk::QUIET >
-         ( m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
+      m_stream << m_section_title_fmt % m_section_indent
+                                      % m_section_bullet
+                                      % ss.str();
+      m_stream << m_section_underline_fmt
+                  % m_section_indent
+                  % std::string( m_section_indent.size() + 2 + ss.str().size(),
+                                '-');
+      raw( m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
     }
 
     //! Print one-liner info for test. Columns:
@@ -56,11 +55,13 @@ class UnitTestPrint : public tk::Print {
     //!   status[2]: result (tut::test_result::result_type as string)
     //!   status[3]: exception message for failed test
     //!   status[4]: exception type id for failed test
-    void test( const std::vector< std::string >& status ) {
+    void test( std::size_t ncomplete,
+               std::size_t nfail,
+               const std::vector< std::string >& status )
+    {
       if (status[2] != "8") {             // if not dummy
-        if (status[2] != "0") ++m_nfail;  // count number of failed tests
         std::stringstream ss;
-        ss << "[" << ++m_ncomplete << "/" << m_nfail << "] " << status[0] << ":"
+        ss << "[" << ncomplete << "/" << nfail << "] " << status[0] << ":"
            << status[1];
         (status[2] == "0" ? m_stream : m_qstream) <<
           m_item_widename_value_fmt % m_item_indent % ss.str()
@@ -69,9 +70,6 @@ class UnitTestPrint : public tk::Print {
     }
 
   private:
-    std::size_t m_ncomplete;            //!< Count number of completed tests
-    std::size_t m_nfail;                //!< Count number of failed tests
-
     //! Return human-readable test result based on result code
     std::string result( const std::string& code,
                         const std::string& msg,
