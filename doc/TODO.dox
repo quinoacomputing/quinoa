@@ -61,7 +61,8 @@ Build
  - Make coefficients policies optional
  - Document what is optional
  - Consider safe mode STL for development: -D_GLIBCXX_DEBUG, see STL 6.12.1
- - Setup separate distribution of modules/executables. Via sub-repos?
+ - Setup separate distribution of modules/executables. Via sub-repos? See
+   http://stackoverflow.com/questions/359424/detach-subdirectory-into-separate-git-repository/359759#359759
  - Add support for PGI (if C++11 is complete)
  - Platforms:
     + darwin-gnu
@@ -120,7 +121,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 26 Jul 2014 06:44:52 PM MDT
+<em>Page last updated:</em> Mon 28 Jul 2014 08:03:28 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

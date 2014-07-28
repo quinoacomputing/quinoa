@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 08:56:11 PM MDT
+  \date      Mon 28 Jul 2014 01:45:01 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -24,6 +24,7 @@
 #include <tests/Base/make_list.h>
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Timer.h>
+#include <tests/Base/CharmUtil.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
