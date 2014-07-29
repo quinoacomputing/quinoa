@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 05:32:04 PM MDT
+  \date      Tue 29 Jul 2014 11:11:18 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
@@ -15,6 +15,12 @@
 #include <Handler.h>
 
 using unittest::UnitTestDriver;
+
+namespace unittest {
+
+extern CProxy_TUTSuite g_suiteProxy;
+
+} // unittest::
 
 UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
                                 const ctr::CmdLine& cmdline ) :
@@ -29,22 +35,17 @@ UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
   try {
 
     m_print.endpart();
+    m_print.part( "Factory" );
+
+    // Instantiate and run unit test suite. We only support Template Unit Test
+    // suites at this point, so no factory instantiation, simply fire up a
+    // Charm++ chare TUTSuite, which fires up and evaluates all unit tests
+    // included in Main/UnitTest.C. Store proxy handle in global-scope to make
+    // it available to individual unit tests that fire up Charm++ chares so they
+    // can call back to the test suite. Since this is called inside the main
+    // chare constructor, the Charm++ runtime system distributes the handle
+    // along with all other global-scope data.
+    g_suiteProxy = CProxy_TUTSuite::ckNew( m_cmdline );
 
   } catch (...) { tk::processException(); }
-}
-
-void
-UnitTestDriver::execute()
-//******************************************************************************
-//  Run unit test suite
-//! \author J. Bakosi
-//******************************************************************************
-{
-  m_print.part( "Factory" );
-
-  // Instantiate and run unit test suite. We only support Template Unit Test
-  // suites at this point, so no factory instantiation, simply fire up a Charm++
-  // chare TUTSuite, which fires up and evaluates all unit tests included in
-  // Main/UnitTest.C.
-  CProxy_TUTSuite::ckNew( m_cmdline );
 }

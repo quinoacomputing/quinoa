@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Mon 28 Jul 2014 01:53:00 PM MDT
+  \date      Mon 28 Jul 2014 02:33:32 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -35,7 +35,7 @@ Timer_group Timer( "Base/Timer" );
 template<> template<>
 void Timer_object::test< 1 >() {
   set_test_name( "measure 0.1s using dsec() with " + std::to_string(precision) +
-                 " sec prec" );
+                 "s prec" );
 
   tk::Timer timer;
   usleep( 100000 );    // in micro-seconds, sleep for 0.1 second
@@ -47,7 +47,7 @@ void Timer_object::test< 1 >() {
 template<> template<>
 void Timer_object::test< 2 >() {
   set_test_name( "measure 0.1s using hms() with " + std::to_string(precision) +
-                 " sec prec" );
+                 "s prec" );
 
   tk::Timer timer;
   usleep( 100000 );    // in micro-seconds, sleep for 0.1 second

@@ -1,0 +1,25 @@
+//******************************************************************************
+/*!
+  \file      src/UnitTest/charmchild.ci
+  \author    J. Bakosi
+  \date      Tue 29 Jul 2014 05:11:33 PM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for polymorphic test chare VChild
+  \details   Charm++ module interface file for polymorphic test chare VChild
+*/
+//******************************************************************************
+
+module charmchild {
+
+  include "Types.h";
+
+  namespace tut {
+
+    chare CharmChild {
+      entry CharmChild();
+      entry CharmChild( tk::real a );
+    }
+
+  } // tut::
+
+}
