@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 09:23:13 AM MDT
+  \date      Tue 29 Jul 2014 09:35:10 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTestDriver that drives the random number generator test suite
   \details   RNGTestDriver that drives the random number generator test suite
@@ -62,9 +62,15 @@ RNGTestDriver::execute()
     // Register batteries
     BatteryFactory bf;
     using ctr::BatteryType;
-    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::SMALLCRUSH );
-    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::CRUSH );
-    tk::recordCharmModel< Battery, TestU01Suite >( bf, BatteryType::BIGCRUSH );
+    // Note that TestU01Suite constructors take the BatteryType (enum class)
+    // value as their argument, which happens to be the same as the key in the
+    // factory - hence the double-specification of the battery type below.
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, BatteryType::SMALLCRUSH, BatteryType::SMALLCRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, BatteryType::CRUSH, BatteryType::CRUSH );
+    tk::recordCharmModel< Battery, TestU01Suite >
+                        ( bf, BatteryType::BIGCRUSH, BatteryType::BIGCRUSH );
     m_print.list< ctr::Battery >( "Registered batteries", bf );
     m_print.endpart();
 
@@ -75,7 +81,7 @@ RNGTestDriver::execute()
     // Instantiate and run battery
     const auto s = bf.find( g_inputdeck.get< tag::selected, tag::battery >() );
     if (s != end(bf)) {
-      Battery( s->second() );
+      s->second();
     } else Throw( "Battery not found in factory" );
 
   } catch (...) { tk::processException(); }

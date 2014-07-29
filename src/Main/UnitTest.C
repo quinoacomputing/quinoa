@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 28 Jul 2014 01:45:01 PM MDT
+  \date      Tue 29 Jul 2014 12:54:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -25,6 +25,7 @@
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Timer.h>
 #include <tests/Base/CharmUtil.h>
+#include <tests/Base/Factory.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
@@ -63,6 +64,10 @@ void echoTPL(const tk::Print& print)
 //! This explains the guard for sizing: the code below is called for packing
 //! only (in serial) and packing and unpacking (in parallel).
 tut::test_runner_singleton g_runner;
+
+//! Test suite Charm++ proxy facilitating call-back to unit test suite by
+//! individual unit tests spawning Charm++ chares
+CProxy_TUTSuite g_suiteProxy;
 
 //! Pack/Unpack test runner
 inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
@@ -128,4 +133,5 @@ class Main : public CBase_Main {
 //! which happens after the main chare constructor has finished.
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
+#include <charmchild.def.h>
 #include <unittest.def.h>

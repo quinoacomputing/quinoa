@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 06:26:43 PM MDT
+  \date      Tue 29 Jul 2014 05:05:36 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -28,7 +28,9 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_maxTestsInGroup( 50 ),
   m_nrun( 0 ),
   m_ncomplete( 0 ),
-  m_nfail( 0 )
+  m_nfail( 0 ),
+  m_nskip( 0 ),
+  m_nwarn( 0 )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -56,26 +58,38 @@ TUTSuite::evaluate( std::vector< std::string > status )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  ++m_nrun;     // increase number tests run (including dummies)
+  // Increase number tests run (including dummies)
+  ++m_nrun;
 
   // Evaluate test
-  if (status[2] != "8") {             // if not dummy
-    ++m_ncomplete;                    // increase number of tests completed
-    if (status[2] != "0") ++m_nfail;  // count number of failed tests
+  if (status[2] != "8") {             // only care about non-dummy tests
+    ++m_ncomplete;                    // count number of tests completed
+    if (status[2] == "3")             // count number of tests with a warning
+      ++m_nwarn;
+    else if (status[2] == "7")        // count number of skipped tests
+      ++m_nskip;
+    else if (status[2] != "0")        // count number of failed tests
+      ++m_nfail;
   }
 
   // Echo one-liner info on result of test
   m_print.test( m_ncomplete, m_nfail, status );
 
-  if ( m_nrun == m_ngroup*m_maxTestsInGroup ) {
+  if ( m_nrun == m_ngroup * m_maxTestsInGroup + 2 ) {
     // Echo final assessment
-    if (m_nfail == 0) {
+    if (!m_nfail && !m_nwarn && !m_nskip) {
       m_print.note< tk::QUIET >
                   ( "All " + std::to_string(m_ncomplete) + " tests passed" );
     } else {
+      std::string skip, warn, fail;
+      if (m_nwarn) warn = "finished with a warning: " + std::to_string(m_nwarn);
+      if (m_nskip) skip = std::string(m_nwarn ? ", " : "") +
+                   "skipped: " + std::to_string(m_nskip);
+      if (m_nfail) fail = std::string(m_nskip ? ", " : "") +
+                   "failed: " + std::to_string(m_nfail);
       m_print.note< tk::QUIET >
-                  ( std::to_string(m_nfail) + " of " +
-                    std::to_string(m_ncomplete) + " tests failed" );
+                  ( "Of " + std::to_string(m_ncomplete) + " tests total: " +
+                    warn + skip + fail );
     }
     // Quit
     mainProxy.finalize();
