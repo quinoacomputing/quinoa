@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 06:45:26 PM MDT
+  \date      Thu 31 Jul 2014 09:35:58 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -46,24 +46,42 @@ struct Factory_common {
   //! https://github.com/sean-parent/sean-parent.github.com/wiki/
   //! Papers-and-Presentations
   struct VBase {
+    //! Constructor taking an object modeling Concept (see below). The object
+    //! of class T was pre-constructed.
+    template< typename T >
+    explicit VBase( T x ) :
+      self( tk::make_unique< Model<T> >( std::move(x) ) ), ctor( "val" ) {}
+
     //! Constructor taking a function pointer to a constructor of an object
     //! modeling Concept (see below). Passing std::function allows late
     //! execution of the constructor, i.e., as late as inside this struct's
     //! constructor, and thus usage from a factory.
     template< typename T >
     explicit VBase( std::function<T()> x ) :
-      self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
-    //! Public interface to querying the constructor type invoked
+      self( tk::make_unique< Model<T> >( std::move(x()) ) ), ctor( "fun" ) {}
+
+    //! Public interface to querying the child constructor type invoked
     std::string Type() const { return self->Type(); }
     //! Copy assignment
     VBase& operator=( const VBase& x )
-    { VBase tmp(x); *this = std::move(tmp); return *this; }
+    { VBase tmp(x); *this = std::move(tmp); assg = "cpy"; return *this; }
     //! Copy constructor
-    VBase( const VBase& x ) : self( x.self->copy() ) {}
-    //! Move assignment
-    VBase& operator=( VBase&& ) noexcept = default;
-    //! Move constructor
-    VBase( VBase&& ) noexcept = default;
+    VBase( const VBase& x ) : self( x.self->copy() ), ctor( "cpy" ) {}
+    //! Move assignment: could be default
+    VBase& operator=( VBase&& x ) noexcept {
+      self = std::move( x.self );
+      ctor = std::move( x.ctor );
+      assg = "mov";
+      return *this;
+    }
+    //! Move constructor: could be default, but in terms of move assignment
+    VBase( VBase&& x ) noexcept { *this = std::move(x); ctor = "mov"; }
+
+    //! Accessor to ctor type
+    std::string ctortype() const { return ctor; }
+    //! Accessor to assignment type
+    std::string assgntype() const { return assg; }
+
     //! Concept is a pure virtual base struct specifying the requirements of
     //! polymorphic objects deriving from it
     struct Concept {
@@ -71,6 +89,7 @@ struct Factory_common {
       virtual Concept* copy() const = 0;
       virtual std::string Type() const = 0;
     };
+
     //! Model models the Concept above by deriving from it and overriding the
     //! the virtual functions required by Concept
     template< typename T >
@@ -80,8 +99,12 @@ struct Factory_common {
       std::string Type() const override { return data.Type(); }
       T data;
     };
+
     std::unique_ptr< Concept > self;    //!< VBase pointer used polymorphically
+    std::string ctor;
+    std::string assg;
   };
+
   //! Child struct used polymorphically with VBase
   struct VChild {
     VChild() : type( "def" ) {}
@@ -89,6 +112,7 @@ struct Factory_common {
     std::string Type() const { return type; }
     std::string type;
   };
+
   using ValueFactory = std::map< int, std::function< VBase() > >;
 }; // Factory_common
 
@@ -217,6 +241,115 @@ void Factory_object::test< 6 >() {
     fail( "cannot find key in factory" );
 }
 
+//! Test value constructor of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 7 >() {
+  set_test_name( "val-ctor of concept-based polymorphic base" );
+
+  auto c = VChild();
+  VBase a( c );
+
+  ensure_equals( "value constructor used to instantiate concept-based "
+                 "polymorphic base via child", a.ctortype(), "val" );
+}
+
+//! Test std::function constructor of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 8 >() {
+  set_test_name( "func-ctor of concept-based polymorphic base" );
+
+  std::function< VChild() > f = boost::value_factory< VChild >();
+  VBase a( f );
+  ensure_equals( "std::function constructor used to instantiate concept-based "
+                 "polymorphic base via child", a.ctortype(), "fun" );
+}
+
+//! Test copy cnstructor of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 9 >() {
+  set_test_name( "copy-ctor of concept-based polymorphic base" );
+
+  auto c = VChild();
+  VBase a( c );
+  std::vector< VBase > v;
+  v.push_back( a );
+  ensure_equals( "copy constructor used to push_back a concept-based "
+                 "polymorphic base to a std::vector", v[0].ctortype(), "cpy" );
+}
+
+//! Test move cnstructor of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 10 >() {
+  set_test_name( "move-ctor of concept-based polymorphic base" );
+
+  auto c = VChild();
+  std::vector< VBase > v;
+  v.emplace_back( VBase( c ) );
+  ensure_equals( "move constructor used to emplace_back a concept-based "
+                 "polymorphic base to a std::vector", v[0].ctortype(), "mov" );
+
+  //std::function< void(void) > f = VChild;
+  //std::vector< std::function< VBase() > > v;
+  //std::function< VChild() > f = boost::value_factory< VChild >();
+  //v.emplace_back( f );
+}
+
+//! Test copy assignment of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 11 >() {
+  set_test_name( "copy-assgn of concept-based polymorphic base" );
+
+  auto c1 = VChild();
+  auto c2 = VChild( 23 );
+  VBase b1( c1 );
+  VBase b2( c2 );
+  b2 = b1;
+  ensure_equals( "copy assignment used to copy a concept-based polymorphic "
+                 "base", b2.assgntype(), "cpy" );
+}
+
+//! Test move assignment of VBase. This test does not necessarily test
+//! functionality in Base/Factory.h, but functionality in the class, used for
+//! concept-based polymorphism, used in conjunction with the functions in
+//! Base/Factory. It also provides a simple example of how to use the
+//! functionality tested.
+template<> template<>
+void Factory_object::test< 12 >() {
+  set_test_name( "move-assgn of concept-based polymorphic base" );
+
+  auto c1 = VChild();
+  auto c2 = VChild( 23 );
+  VBase b1( c1 );
+  VBase b2( c2 );
+  b2 = std::move( b1 );
+  ensure_equals( "move assignment used to move a concept-based polymorphic "
+                 "base", b2.assgntype(), "mov" );
+  ensure( "move assignment assigns std::unique_ptr in concept-based polymorphic"
+          " base", b2.self.get() != nullptr );
+  ensure( "move assignment leaves its std::unique_ptr as nullptr in "
+          "concept-based polymorphic base", b1.self == nullptr );
+}
+
 //! For testing boost::value_factory (runtime polymorphism using value
 //! semantics) with Charm++ children. Not in Factory_common so Charm++ can find
 //! it. The struct below uses runtime polymorphism without client-side
@@ -310,7 +443,7 @@ using ValueFactory = std::map< int, std::function< VBase() > >;
 //! Test if tk::recordCharmModel correctly registers a default child constructor
 //! in value factory
 template<> template<>
-void Factory_object::test< 7 >() {
+void Factory_object::test< 13 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
   // signals that this is only the first part of this test: the part up to
   // firing up an asynchronous Charm++ chare. The second part creates a new test
@@ -333,7 +466,7 @@ void Factory_object::test< 7 >() {
 //! Test if tk::recordCharmModel correctly registers a child constructor in
 //! value factory
 template<> template<>
-void Factory_object::test< 8 >() {
+void Factory_object::test< 14 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
   // signals that this is only the first part of this test: the part up to
   // firing up an asynchronous Charm++ chare. The second part creates a new test
@@ -342,7 +475,7 @@ void Factory_object::test< 8 >() {
   set_test_name( "Charm++ child ctor(real) in value factory 1" );
 
   tut::ValueFactory f;
-  // key: 2, ctor arg:23.2
+  // key: 2, ctor arg: 23.2
   tk::recordCharmModel< tut::VBase, tut::CharmChild >( f, 2, 23.2 );
   ensure_equals( "recorded 1 Charm++ child ctor(real) in value factory",
                  f.size(), 1UL );
