@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 06:10:52 PM MDT
+  \date      Fri 01 Aug 2014 11:33:00 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -24,7 +24,7 @@ class UnitTestPrint : public tk::Print {
 
   public:
     //! Constructor
-    explicit UnitTestPrint( std::ostream& str = tk::null,
+    explicit UnitTestPrint( std::ostream& str = std::clog,
                             std::ostream& qstr = std::cout ) :
       Print( str, qstr ) {}
 

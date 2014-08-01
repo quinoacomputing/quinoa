@@ -42,6 +42,7 @@ migration).
   \section organization Organization
     Quinoa consists of the following tools:
     \li \ref quinoa - Computational tool
+    \li \ref unittest - Unit test suite
     \li \ref rngtest - Random number generator test suite
     \li \ref meshconv - Mesh file converter
 
@@ -75,7 +76,7 @@ migration).
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 12 Jul 2014 06:31:04 AM MDT
+<em>Page last updated:</em> Fri 01 Aug 2014 07:53:44 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 09:49:06 PM MDT
+  \date      Fri 01 Aug 2014 11:49:54 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -12,20 +12,12 @@
 #define Print_h
 
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <list>
 #include <map>
 
 #include <boost/format.hpp>
-
-#ifndef __INTEL_COMPILER
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wshadow"
-#endif
-#include <boost/iostreams/stream.hpp>
-#ifndef __INTEL_COMPILER
-  #pragma GCC diagnostic pop
-#endif
 
 #include <Option.h>
 #include <Timer.h>
@@ -35,10 +27,6 @@ namespace tk {
 //! Output verbosity. C-style enum as this is used for template argument.
 enum Style { QUIET=0, VERBOSE=1 };
 
-//! Null-sink for quiet output
-static boost::iostreams::stream< boost::iostreams::null_sink >
-  null( ( boost::iostreams::null_sink() ) );
-
 //! Print base
 class Print {
 
@@ -46,9 +34,20 @@ class Print {
     //! Constructor: Quiet output by default, only stuff written to qstr shown.
     //! Instantiate with str = std::cout for verbose output. Any member function
     //! can be called by overriding the default stream via the template
-    //! argument, Style C-style enum.
-    explicit Print( std::ostream& str = null, std::ostream& qstr = std::cout ) :
-      m_stream( str ), m_qstream( qstr ) {}
+    //! argument, Style, a C-style enum. Note: By default, str == std::clog.
+    //! This is used to initialize str to a local stringstream into which all
+    //! verbose output goes by default, i.e., it will not be shown. This
+    //! solution is chosen instead of trickery with null-streams, as
+    //! boost:formatted output into null-streams caused invalid reads in
+    //! valgrind. This way quiet output (formatted or not) simply goes into a
+    //! local stringstream. In other words, the default argument to str,
+    //! std::clog, is only used to detect whether client code passed a default
+    //! argument or not: if it did not, the string stream is usde for verbose
+    //! output, if it did, the specified stream is used for the verbose output.
+    explicit Print( std::ostream& str = std::clog,
+                    std::ostream& qstr = std::cout ) :
+      m_stream( str.rdbuf() == std::clog.rdbuf() ? m_null : str ),
+      m_qstream( qstr ) {}
 
     //! Save pointer to stream
     template< Style s = VERBOSE >
@@ -56,13 +55,11 @@ class Print {
 
     //! Reset stream to streambuf
     template< Style s = VERBOSE >
-    std::streambuf* reset( std::streambuf* buf )
-    { return stream<s>().rdbuf( buf ); }
-
-    //! Reset stream to ostream passed as argument
-    template< Style s = VERBOSE >
-    std::streambuf* reset( std::ostream& os )
-    { return stream<s>().rdbuf( os.rdbuf() ); }
+    std::streambuf* reset( std::streambuf* buf ) {
+      if (stream<s>().rdbuf() == std::cout.rdbuf())
+        m_qstream << "Warning: overwriting std::cout! Doing as requested...\n";
+      return stream<s>().rdbuf( buf );
+    }
 
     //! Operator << for printing any type to the verbose stream
     template< typename T >
@@ -108,8 +105,8 @@ class Print {
     }
 
     //! Print section header: title : value
-    template< Style s = VERBOSE, typename T >
-    void section( const std::string& name, const T& value ) const {
+    template< Style s = VERBOSE >
+    void section( const std::string& name, const std::string& value ) const {
       stream<s>() << m_section_title_value_fmt % m_section_indent
                      % m_section_bullet % name % value;
       stream<s>() << m_section_underline_fmt % m_section_indent
@@ -189,10 +186,13 @@ class Print {
     template< Style s = VERBOSE, typename T >
     void raw( const T& r ) const { stream<s>() << r; }
 
-    //! Implicit conversion to ostream: allows *this in stl algorithms via an
-    //! std::osteam_iterator, e.g., std::ostream_iterator< int >( print, ", " )
+    //! Return verbose or quiet stream depending on style template argument
     template< Style s = VERBOSE >
-    operator std::ostream&() const noexcept { return stream<s>(); }
+    std::ostream& stream() noexcept { return s ? m_stream : m_qstream; }
+
+    //! Return verbose or quiet stream depending on style template argument
+    template< Style s = VERBOSE >
+    std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
 
     //! Print Quinoa header
     template< Style s = VERBOSE >
@@ -308,15 +308,6 @@ class Print {
     }
 
   protected:
-
-    //! Return verbose or quiet stream depending on style template argument
-    template< Style s = VERBOSE >
-    std::ostream& stream() noexcept { return s ? m_stream : m_qstream; }
-
-    //! Return verbose or quiet stream depending on style template argument
-    template< Style s = VERBOSE >
-    std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
-
     //! Bullets
     const char m_section_bullet = '*';
     const char m_subsection_bullet = '<';
@@ -343,6 +334,7 @@ class Print {
     mutable format m_section_underline_fmt = format("%s%s\n");
 
     // Stream objects
+    std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 06:37:09 PM MDT
+  \date      Fri 01 Aug 2014 11:41:56 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -26,7 +26,7 @@ class RNGTestPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
-    explicit RNGTestPrint( std::ostream& str = tk::null,
+    explicit RNGTestPrint( std::ostream& str = std::clog,
                            std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
 

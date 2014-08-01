@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 05:05:36 PM MDT
+  \date      Fri 01 Aug 2014 11:34:12 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -24,13 +24,14 @@ extern tut::test_runner_singleton g_runner;
 using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
-  m_print( cmdline.get< tk::tag::verbose >() ? std::cout : tk::null ),
+  m_print( cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
   m_maxTestsInGroup( 50 ),
   m_nrun( 0 ),
   m_ncomplete( 0 ),
   m_nfail( 0 ),
   m_nskip( 0 ),
-  m_nwarn( 0 )
+  m_nwarn( 0 ),
+  m_nexcp( 0 )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -68,6 +69,8 @@ TUTSuite::evaluate( std::vector< std::string > status )
       ++m_nwarn;
     else if (status[2] == "7")        // count number of skipped tests
       ++m_nskip;
+    else if (status[2] == "2")        // count number of tests throwing
+      ++m_nexcp;
     else if (status[2] != "0")        // count number of failed tests
       ++m_nfail;
   }
@@ -77,19 +80,21 @@ TUTSuite::evaluate( std::vector< std::string > status )
 
   if ( m_nrun == m_ngroup * m_maxTestsInGroup + 2 ) {
     // Echo final assessment
-    if (!m_nfail && !m_nwarn && !m_nskip) {
+    if (!m_nfail && !m_nwarn && !m_nskip && !m_nexcp) {
       m_print.note< tk::QUIET >
                   ( "All " + std::to_string(m_ncomplete) + " tests passed" );
     } else {
-      std::string skip, warn, fail;
+      std::string skip, warn, fail, excp;
       if (m_nwarn) warn = "finished with a warning: " + std::to_string(m_nwarn);
       if (m_nskip) skip = std::string(m_nwarn ? ", " : "") +
                    "skipped: " + std::to_string(m_nskip);
+      if (m_nexcp) excp = std::string(m_nskip ? ", " : "") +
+                   "threw exception: " + std::to_string(m_nexcp);
       if (m_nfail) fail = std::string(m_nskip ? ", " : "") +
                    "failed: " + std::to_string(m_nfail);
       m_print.note< tk::QUIET >
                   ( "Of " + std::to_string(m_ncomplete) + " tests total: " +
-                    warn + skip + fail );
+                    warn + skip + excp + fail );
     }
     // Quit
     mainProxy.finalize();

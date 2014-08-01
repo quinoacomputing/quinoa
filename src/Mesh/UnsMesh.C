@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Thu 29 May 2014 06:09:24 AM MDT
+  \date      Fri 01 Aug 2014 09:21:29 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     3D unstructured mesh class definition
   \details   3D unstructured mesh class definition
@@ -31,11 +31,11 @@ UnsMesh::echoElemSets( const tk::Print& print ) const
     print << "  " << m_linId[i] << " " << 1 << " {";
 
     copy( m_lintag[i].begin(), m_lintag[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_lintag[i].back() << "} {";
 
     copy( m_lininpoel[i].begin(), m_lininpoel[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_lininpoel[i].back() << "}" << std::endl;
   }
 
@@ -47,11 +47,11 @@ UnsMesh::echoElemSets( const tk::Print& print ) const
     print << "  " << m_triId[i] << " " << 2 << " {";
 
     copy( m_tritag[i].begin(), m_tritag[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_tritag[i].back() << "} {";
 
     copy( m_triinpoel[i].begin(), m_triinpoel[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_triinpoel[i].back() << "}" << std::endl;
   }
 
@@ -63,11 +63,11 @@ UnsMesh::echoElemSets( const tk::Print& print ) const
     print << "  " << m_tetId[i] << " " << 4 << " {";
 
     copy( m_tettag[i].begin(), m_tettag[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_tettag[i].back() << "} {";
 
     copy( m_tetinpoel[i].begin(), m_tetinpoel[i].end()-1,
-          std::ostream_iterator< int >( print, ", " ) );
+          std::ostream_iterator< int >( print.stream(), ", " ) );
     print << m_tetinpoel[i].back() << "}" << std::endl;
   }
 }

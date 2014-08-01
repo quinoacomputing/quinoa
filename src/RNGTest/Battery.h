@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:04:18 PM MDT
+  \date      Thu 31 Jul 2014 07:52:23 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Battery
   \details   Battery
@@ -17,7 +17,6 @@
 
 #include <make_unique.h>
 #include <CharmUtil.h>
-#include <RNGTest/Options/Battery.h>
 
 namespace rngtest {
 

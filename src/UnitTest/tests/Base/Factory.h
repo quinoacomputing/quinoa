@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Thu 31 Jul 2014 09:35:58 AM MDT
+  \date      Thu 31 Jul 2014 07:57:49 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -303,11 +303,6 @@ void Factory_object::test< 10 >() {
   v.emplace_back( VBase( c ) );
   ensure_equals( "move constructor used to emplace_back a concept-based "
                  "polymorphic base to a std::vector", v[0].ctortype(), "mov" );
-
-  //std::function< void(void) > f = VChild;
-  //std::vector< std::function< VBase() > > v;
-  //std::function< VChild() > f = boost::value_factory< VChild >();
-  //v.emplace_back( f );
 }
 
 //! Test copy assignment of VBase. This test does not necessarily test
