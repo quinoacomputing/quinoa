@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 12:54:00 PM MDT
+  \date      Fri 01 Aug 2014 11:34:36 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -26,6 +26,7 @@
 #include <tests/Base/Timer.h>
 #include <tests/Base/CharmUtil.h>
 #include <tests/Base/Factory.h>
+#include <tests/Base/Print.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
@@ -83,7 +84,7 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : tk::null ),
+      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
       // Create UnitTest driver
       m_driver( tk::Main< unittest::UnitTestDriver >
                         ( msg->argc, msg->argv,

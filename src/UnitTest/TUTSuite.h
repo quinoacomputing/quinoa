@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 04:35:00 PM MDT
+  \date      Thu 31 Jul 2014 03:31:55 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -38,6 +38,7 @@ class TUTSuite : public CBase_TUTSuite {
     std::size_t m_nfail;        //!< Number of failed tests
     std::size_t m_nskip;        //!< Number of skipped tests
     std::size_t m_nwarn;        //!< Number of tests with a warning
+    std::size_t m_nexcp;        //!< Number of tests with an exception
 };
 
 } // unittest::

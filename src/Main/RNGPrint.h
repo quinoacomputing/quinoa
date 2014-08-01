@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
-  \date      Tue 22 Jul 2014 10:32:03 PM MDT
+  \date      Fri 01 Aug 2014 11:42:15 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -22,7 +22,7 @@ class RNGPrint : public Print {
 
   public:
     //! Constructor
-    explicit RNGPrint( std::ostream& str = tk::null,
+    explicit RNGPrint( std::ostream& str = std::clog,
                        std::ostream& qstr = std::cout ) : Print( str, qstr ) {}
 
     #ifdef HAS_MKL
