@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:24:32 PM MDT
+  \date      Fri 01 Aug 2014 02:44:50 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Exception base class definition
   \details   Exception base class definition
@@ -38,9 +38,9 @@ try :
   m_file( std::move(file) ),
   m_func( std::move(function) ),
   m_line( std::move(line) ),
-  m_message(std::move(message)),
-  m_addrLength(0),
-  m_symbolList(nullptr)
+  m_message( std::move(message) ),
+  m_addrLength( 0 ),
+  m_symbolList( nullptr )
 {
 
   // Construct exception message

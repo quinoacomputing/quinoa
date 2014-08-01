@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 12:30:16 PM MDT
+  \date      Fri 01 Aug 2014 02:15:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -28,6 +28,7 @@
 #include <tests/Base/Factory.h>
 #include <tests/Base/Print.h>
 #include <tests/Base/TaggedTuple.h>
+#include <tests/Base/Exception.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable

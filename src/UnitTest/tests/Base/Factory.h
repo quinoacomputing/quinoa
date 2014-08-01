@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Thu 31 Jul 2014 07:57:49 PM MDT
+  \date      Fri 01 Aug 2014 02:36:53 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -182,7 +182,8 @@ void Factory_object::test< 3 >() {
 }
 
 //! Test if instantiate correctly throws an exception if key does not exist in
-//! factory (only test in DEBUG mode, RELEASE would result in undefined behavior
+//! factory (only test in DEBUG mode, RELEASE would result in undefined
+//! behavior)
 template<> template<>
 void Factory_object::test< 4 >() {
   set_test_name( "instantiate non-existent object from factory" );
