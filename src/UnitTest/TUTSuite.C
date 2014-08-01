@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:34:12 AM MDT
+  \date      Fri 01 Aug 2014 02:43:53 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -90,7 +90,7 @@ TUTSuite::evaluate( std::vector< std::string > status )
                    "skipped: " + std::to_string(m_nskip);
       if (m_nexcp) excp = std::string(m_nskip ? ", " : "") +
                    "threw exception: " + std::to_string(m_nexcp);
-      if (m_nfail) fail = std::string(m_nskip ? ", " : "") +
+      if (m_nfail) fail = std::string(m_nexcp ? ", " : "") +
                    "failed: " + std::to_string(m_nfail);
       m_print.note< tk::QUIET >
                   ( "Of " + std::to_string(m_ncomplete) + " tests total: " +

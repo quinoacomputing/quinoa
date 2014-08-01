@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:21:02 PM MDT
+  \date      Fri 01 Aug 2014 02:45:07 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Exception base class declaration
   \details   Exception base class declaration
@@ -51,7 +51,7 @@ namespace tk {
 #define ErrChk(expr, ...) \
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
-//! Error codes for the OS (or whatever calls Quinoa)
+//! Error codes for the OS (or whatever calls us)
 enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
                      FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
