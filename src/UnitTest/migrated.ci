@@ -1,0 +1,29 @@
+//******************************************************************************
+/*!
+  \file      src/UnitTest/migrated.ci
+  \author    J. Bakosi
+  \date      Mon 04 Aug 2014 06:52:07 AM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for migrated test chare Migrated
+  \details   Charm++ module interface file for migrated test chare Migrated
+*/
+//******************************************************************************
+
+module migrated {
+
+  include "tests/Base/MigratedTypes.h";
+
+  namespace tut {
+
+    chare Migrated {
+      entry Migrated( charm::Enum_default e );
+      entry Migrated( charm::Enum_uint8_t e );
+      entry Migrated( charm::Enum_cstyle e );
+      entry Migrated( charm::Pair p );
+      entry Migrated( charm::Vector v );
+      entry Migrated( charm::Tuple t );
+    }
+
+  } // tut::
+
+}
