@@ -42,6 +42,4 @@ function(removeWarnings HOSTFILES)
   set_property(SOURCE ${HOSTFILES} APPEND_STRING PROPERTY COMPILE_FLAGS
                ${HOSTFILE_FLAGS})
 
-  message(STATUS "Charm++ host(s): ${HOSTFILES}")
-
 endfunction(removeWarnings)
