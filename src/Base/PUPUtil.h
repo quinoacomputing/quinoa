@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 04:57:32 PM MDT
+  \date      Mon 04 Aug 2014 08:45:31 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \details   Charm++ Pack/UnPack utilities
@@ -59,6 +59,24 @@ inline void operator|( PUP::er& p, std::vector< T >& v ) {
   for (auto& t : v) p | t;
 }
 
+//! Pack/Unpack std::map
+template< typename KeyType, typename ValueType >
+inline void operator|( PUP::er& p, std::map< KeyType, ValueType >& m ) {
+  auto size = pup_container_size( p, m );
+  if (p.isUnpacking()) {
+    for (std::size_t s=0; s<size; ++s) {
+      std::pair< KeyType, ValueType > node;
+      pup( p, node );
+      m.emplace( node );
+    }
+  } else {
+    for (auto& t : m) {
+      std::pair< KeyType, ValueType > node( t );
+      pup( p, node );
+    }
+  }
+}
+
 //! PUP_tuple_impl: specialization for empty std::tuple
 template< std::size_t I = 0, typename... Tp >
 typename std::enable_if< I == sizeof...(Tp), void >::type
@@ -80,24 +98,6 @@ inline void pup_tuple( PUP::er& p, std::tuple< Ts... >& t ) {
 }
 template< typename... Ts >
 inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup_tuple(p,t); }
-
-//! Pack/Unpack std::map
-template< typename KeyType, typename ValueType >
-inline void operator|( PUP::er& p, std::map< KeyType, ValueType >& m ) {
-  auto size = pup_container_size( p, m );
-  if (p.isUnpacking()) {
-    for (std::size_t s=0; s<size; ++s) {
-      std::pair< KeyType, ValueType > node;
-      pup( p, node );
-      m.emplace( node );
-    }
-  } else {
-    for (auto& t : m) {
-      std::pair< KeyType, ValueType > node( t );
-      pup( p, node );
-    }
-  }
-}
 
 // //! PUP std::unique_ptr using make_unqiue and constructor arguments
 // template< class T, class Deleter, typename... Args >

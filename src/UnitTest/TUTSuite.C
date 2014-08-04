@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 02:43:53 PM MDT
+  \date      Mon 04 Aug 2014 07:01:58 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -78,7 +78,7 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // Echo one-liner info on result of test
   m_print.test( m_ncomplete, m_nfail, status );
 
-  if ( m_nrun == m_ngroup * m_maxTestsInGroup + 2 ) {
+  if ( m_nrun == m_ngroup * m_maxTestsInGroup + 8 ) {
     // Echo final assessment
     if (!m_nfail && !m_nwarn && !m_nskip && !m_nexcp) {
       m_print.note< tk::QUIET >

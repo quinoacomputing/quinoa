@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tutsuite.ci
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 04:20:08 PM MDT
+  \date      Sat 02 Aug 2014 12:25:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for Template Unit Test suite
   \details   Charm++ module interface file for Template Unit Test suite
@@ -20,10 +20,12 @@ module tutsuite {
   // chares.
   extern module tuttest;
 
-  // TUTSuite spawns chare CharmChild. If this is not included as an extern
-  // module, Charm++ generates bad code and valgrind detects memory errors as
-  // CharmChild chares are fired up from unit tests inside TUTSuite.
+  // TUTSuite spawns chares defined in the modules defined below as extern. If
+  // this is not included, Charm++ generates bad code and valgrind detects
+  // memory errors as CharmChild chares are fired up from unit tests inside
+  // TUTSuite.
   extern module charmchild;
+  extern module migrated;
 
   include "UnitTest/CmdLine/CmdLine.h";
 
