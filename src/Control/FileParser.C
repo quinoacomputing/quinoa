@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:11:36 PM MDT
+  \date      Mon 04 Aug 2014 09:23:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -16,7 +16,7 @@
 
 using tk::FileParser;
 
-FileParser::FileParser(const std::string& filename) : m_filename(filename)
+FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 //******************************************************************************
 //  Constructor
 //! \param[in]     filename      File to parse
