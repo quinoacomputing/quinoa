@@ -2,10 +2,10 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 09:23:01 PM MDT
+  \date      Tue 05 Aug 2014 10:49:02 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Unit tests for Control/FileParser.h
-  \details   Unit tests for Control/FileParser.h
+  \brief     Unit tests for Control/FileParser
+  \details   Unit tests for Control/FileParser
 */
 //******************************************************************************
 #ifndef test_FileParser_h
