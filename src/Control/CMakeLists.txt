@@ -54,6 +54,7 @@ project(UnitTestControl CXX)
 
 add_library(UnitTestControl
             StringParser.C
+            FileParser.C
             UnitTest/CmdLine/Parser.C
 )
 

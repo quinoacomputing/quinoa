@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 07:01:58 AM MDT
+  \date      Mon 04 Aug 2014 09:26:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -87,11 +87,11 @@ TUTSuite::evaluate( std::vector< std::string > status )
       std::string skip, warn, fail, excp;
       if (m_nwarn) warn = "finished with a warning: " + std::to_string(m_nwarn);
       if (m_nskip) skip = std::string(m_nwarn ? ", " : "") +
-                   "skipped: " + std::to_string(m_nskip);
-      if (m_nexcp) excp = std::string(m_nskip ? ", " : "") +
-                   "threw exception: " + std::to_string(m_nexcp);
-      if (m_nfail) fail = std::string(m_nexcp ? ", " : "") +
-                   "failed: " + std::to_string(m_nfail);
+                          "skipped: " + std::to_string(m_nskip);
+      if (m_nexcp) excp = std::string(m_nskip || m_nwarn ? ", " : "") +
+                          "threw exception: " + std::to_string(m_nexcp);
+      if (m_nfail) fail = std::string(m_nexcp || m_nskip || m_nwarn ?
+                          ", " : "") + "failed: " + std::to_string(m_nfail);
       m_print.note< tk::QUIET >
                   ( "Of " + std::to_string(m_ncomplete) + " tests total: " +
                     warn + skip + excp + fail );

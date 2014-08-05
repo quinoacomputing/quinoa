@@ -2,12 +2,14 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sat 02 Aug 2014 04:07:47 PM MDT
+  \date      Mon 04 Aug 2014 09:03:49 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
 */
 //******************************************************************************
+
+#include <pup_stl.h>
 
 #include <Config.h>
 #include <Paradigm.h>
@@ -30,6 +32,7 @@
 #include <tests/Base/TaggedTuple.h>
 #include <tests/Base/Exception.h>
 #include <tests/Base/PUPUtil.h>
+#include <tests/Control/FileParser.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
@@ -73,9 +76,16 @@ tut::test_runner_singleton g_runner;
 //! individual unit tests spawning Charm++ chares
 CProxy_TUTSuite g_suiteProxy;
 
+//! UnitTest executable name. So that FileParser's unit tests can access a file
+//! for opening.
+std::string g_executable;
+
 //! Pack/Unpack test runner
 inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
 { if (!p.isSizing()) runner = tut::test_runner_singleton(); }
+
+//! Pack/Unpack: delegate to Charm++
+inline void operator|( PUP::er& p, std::string& s ) { ::operator|( p, s ); }
 
 } // unittest::
 
@@ -98,6 +108,8 @@ class Main : public CBase_Main {
                           unittest::echoTPL ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
+      // Save executable name to global-scope string so FileParser can access it
+      unittest::g_executable = msg->argv[0];
       delete msg;
       mainProxy = thisProxy;
       // Fire up an asynchronous execute object, which when created at some

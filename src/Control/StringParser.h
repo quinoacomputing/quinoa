@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 07:54:16 PM MDT
+  \date      Mon 04 Aug 2014 02:04:13 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     String parser
   \details   String parser
@@ -13,12 +13,10 @@
 
 #include <string>
 
-#include <Parser.h>
-
 namespace tk {
 
-//! StringParser : Parser
-class StringParser : public Parser {
+//! StringParser
+class StringParser {
 
   protected:
     //! Constructor from std::string
