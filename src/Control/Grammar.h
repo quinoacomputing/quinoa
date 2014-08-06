@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 08:58:46 PM MDT
+  \date      Wed 06 Aug 2014 09:46:57 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -14,7 +14,6 @@
 #include <sstream>
 
 #include <Exception.h>
-#include <Option.h>
 
 namespace tk {
 //! Grammar definition: state, actions, grammar
@@ -102,11 +101,11 @@ namespace grm {
   }
 
   //! put option in state at position given by tags
-  template< class Stack, class OptionType, class DefaultStack, class... tags >
+  template< class Stack, class Option, class DefaultStack, class... tags >
   static void store_option( Stack& stack,
                             const std::string& value,
                             const DefaultStack& defaults ) {
-    tk::Option< OptionType > opt;
+    Option opt;
     //! Emit warning on overwrite
     if (stack.template get< tags... >() != defaults.template get< tags... >()) {
       g_print << "\n>>> WARNING: Multiple definitions for '"
@@ -168,11 +167,11 @@ namespace grm {
   };
 
   //! push back option in state at position given by tags
-  template< class Stack, class OptionType, typename tag, typename... tags >
+  template< class Stack, class Option, typename tag, typename... tags >
   struct store_back_option :
-  pegtl::action_base< store_back_option<Stack, OptionType, tag, tags...> > {
+  pegtl::action_base< store_back_option<Stack, Option, tag, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
-      tk::Option< OptionType > opt;
+      Option opt;
       if (opt.exist( value ))
         stack.template push_back<tag,tags...>( opt.value( value ) );
       else
@@ -195,20 +194,19 @@ namespace grm {
   };
 
   //! convert and insert option value to map at position given by tags
-  template< class Stack, class OptionType, typename field, typename sel,
+  template< class Stack, class Option, typename field, typename sel,
             typename vec, typename tag, typename... tags >
   struct insert_option :
-  pegtl::action_base< insert_option< Stack, OptionType, field, sel, vec, tag,
+  pegtl::action_base< insert_option< Stack, Option, field, sel, vec, tag,
                                      tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
-      tk::Option< OptionType > opt;
-      using EnumType = typename OptionType::EnumType;
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
-      stack.template insert_opt< key_type, field, EnumType, tag, tags... >
-                               ( key, opt.value(value) );
+      stack.template
+        insert_opt< key_type, field, typename Option::EnumType, tag, tags... >
+                  ( key, Option().value(value) );
     }
   };
 

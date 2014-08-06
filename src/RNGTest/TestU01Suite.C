@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:42:36 AM MDT
+  \date      Wed 06 Aug 2014 09:48:40 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -108,7 +108,7 @@ TestU01Suite::names( std::vector< std::string > n )
     // part of the status, we just match the RNG name for counting failed
     // tests per RNG and keep the status more generic. See also the
     // discussion on the return type in TestU01Props::run().
-    tk::Option< tk::ctr::RNG > rng;
+    tk::ctr::RNG rng;
     for (const auto& r : g_inputdeck.get< tag::selected, tk::tag::rng >() )
       m_nfail[ rng.name(r) ] = 0;
   }

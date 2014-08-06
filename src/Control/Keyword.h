@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 04:56:23 AM MDT
+  \date      Wed 06 Aug 2014 09:28:48 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -50,15 +50,13 @@ struct keyword {
 
 //! A cmdline_keyword is a keyword that adds a character alias to a keyword.
 template< typename Info, int Alias, int Char, int... Chars >
-struct cmdline_keyword : keyword<Info, Char, Chars...> {
+struct cmdline_keyword : keyword< Info, Char, Chars... > {
 
   //! Accessor to keyword alias character as pegtl::string
-  using pegtl_alias = pegtl::one<Alias>;
+  using pegtl_alias = pegtl::one< Alias >;
 
   //! Accessor to keyword alias character as st::string
-  std::string alias() const {
-    return pegtl::escape(Alias);
-  }
+  std::string alias() const { return pegtl::escape( Alias ); }
 };
 
 // This will go away once all the keywords are documented

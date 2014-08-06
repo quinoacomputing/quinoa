@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:41:56 AM MDT
+  \date      Wed 06 Aug 2014 09:40:19 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
@@ -35,11 +35,11 @@ class RNGTestPrint : public tk::RNGPrint {
     using Print::item;
 
     //! Print control option: 'group : option' only if differs from its default
-    template< class OptionType, typename... tags >
+    template< class Option, typename... tags >
     void Section() const {
       if (g_inputdeck.get< tags... >() !=
             g_inputdeck_defaults.get< tags... >()) {
-        tk::Option< OptionType > opt;
+        Option opt;
         auto& group = opt.group();
         auto& value = opt.name( g_inputdeck.get< tags... >() );
         m_stream << m_section_title_value_fmt % m_section_indent
@@ -54,10 +54,10 @@ class RNGTestPrint : public tk::RNGPrint {
     }
 
     //! Print control option: 'group : option' only if differs from its default
-    template<typename OptionType, typename... tags>
+    template< class Option, typename... tags>
     void Item() const {
       if (g_inputdeck.get<tags...>() != g_inputdeck_defaults.get<tags...>()) {
-        tk::Option<OptionType> opt;
+        Option opt;
         m_stream << m_item_name_value_fmt % m_item_indent
                                           % opt.group()
                                           % opt.name(g_inputdeck.get<tags...>());
@@ -68,7 +68,7 @@ class RNGTestPrint : public tk::RNGPrint {
     void battery( std::size_t ntest, std::size_t nstat ) const {
       if (g_inputdeck.get< tag::selected, tag::battery >() !=
           g_inputdeck_defaults.get< tag::selected, tag::battery >() ) {
-        tk::Option< ctr::Battery > b;
+        ctr::Battery b;
         auto& group = b.group();
         auto& value = b.name( g_inputdeck.get< tag::selected, tag::battery >() );
         std::stringstream ss;
