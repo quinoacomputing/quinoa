@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:42:50 AM MDT
+  \date      Wed 06 Aug 2014 11:52:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -327,7 +327,7 @@ class Print {
     mutable format m_note_fmt = format("%s%-30s\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
-    mutable format m_item_name_watch_fmt = format("%s%-30s : %d:%d:%d\n");
+    mutable format m_item_name_watch_fmt = format("%s%-65s : %d:%d:%d\n");
     mutable format m_item_widename_value_fmt = format("%s%-65s : %s\n");
     mutable format m_part_underline_fmt = format("      %|=68|\n");
     mutable format m_section_underline_fmt = format("%s%s\n");

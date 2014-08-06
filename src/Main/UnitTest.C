@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:58:27 AM MDT
+  \date      Wed 06 Aug 2014 11:49:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -127,7 +127,8 @@ class Main : public CBase_Main {
     }
 
     void execute() {
-      m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
+      m_timestamp.emplace( "Migration of global-scope data + fire up all tests",
+                           m_timer[1].hms() );
       m_driver.execute();       // fires up async chares
     }
 
