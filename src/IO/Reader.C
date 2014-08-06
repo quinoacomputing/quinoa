@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/Reader.C
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 08:25:04 PM MDT
+  \date      Wed 06 Aug 2014 02:53:38 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader class definition
@@ -16,16 +16,18 @@
 
 using tk::Reader;
 
-Reader::Reader(const std::string& filename) :
-  m_filename(filename)
+Reader::Reader( const std::string& filename ) : m_filename( filename )
 //******************************************************************************
 //  Constructor: Acquire file handle
 //! \author J. Bakosi
 //******************************************************************************
 {
+  //! Make sure there is a filename
+  Assert( !filename.empty(), "No filename specified" );
+
   // Check if file exists, throw exception if it does not
-  m_inFile.open(filename, std::ifstream::in);
-  ErrChk (m_inFile.good(), "Failed to open file: " + filename );
+  m_inFile.open( filename, std::ifstream::in );
+  ErrChk( m_inFile.good(), "Failed to open file: " + filename );
 
   // Attempt to read a character, throw if it fails
   // It is curious that on some systems opening a directory instead of a file
@@ -42,7 +44,7 @@ Reader::Reader(const std::string& filename) :
   ErrChk( !m_inFile.fail(), "Failed to close file: " + filename );
 
   // Re-open
-  m_inFile.open(filename, std::ifstream::in);
+  m_inFile.open( filename, std::ifstream::in );
   ErrChk( m_inFile.good(), "Failed to open file: " + filename );
 }
 

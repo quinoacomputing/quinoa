@@ -34,7 +34,7 @@ RNGTest
 
 Testing
 -------
- - Quantify code coverage by tests
+ - Quantify code coverage by tests, e.g., COVTOOL: http://covtool.sourceforge.net
  - Regression tests with KitWare's CTest
  - Test build with optional libraries on/off (all permutations)
  - Test suite for exceptions:
@@ -121,7 +121,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 28 Jul 2014 08:03:28 AM MDT
+<em>Page last updated:</em> Wed 06 Aug 2014 12:54:49 PM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */
