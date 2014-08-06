@@ -138,7 +138,13 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
                       Paradigm
+                      Mesh
+                      IO
                       Base
+                      ${SILO_LIBRARY}
+                      ${NEMESIS_LIBRARY}
+                      ${EXODUS_LIBRARY}
+                      ${NETCDF_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 09:23:54 PM MDT
+  \date      Wed 06 Aug 2014 03:03:19 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -31,7 +31,7 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
   std::ifstream q;
 
   // Check if file exists, throw exception if it does not
-  q.open(filename, std::ifstream::in);
+  q.open( filename, std::ifstream::in );
   ErrChk( q.good(), "Failed to open file: " + filename );
 
   // Attempt to read a character, throw if it fails
