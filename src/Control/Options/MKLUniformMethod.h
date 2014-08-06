@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 03:43:38 PM MDT
+  \date      Wed 06 Aug 2014 10:44:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -44,20 +44,17 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
           { tk::kw::accurate().string(), MKLUniformMethodType::ACCURATE } } ) {}
 
     //! Return parameter based on Enum
-    const ParamType& param( MKLUniformMethodType rng ) const;
+    const ParamType& param( MKLUniformMethodType m ) const {
+      auto it = method.find( m );
+      Assert( it != end(method),
+              std::string("Cannot find parameter for MKLUniformMethod \"")
+              << m << "\"" );
+      return it->second;
+    }
 
   private:
-    //! Don't permit copy constructor
-    MKLUniformMethod(const MKLUniformMethod&) = delete;
-    //! Don't permit copy assigment
-    MKLUniformMethod& operator=(const MKLUniformMethod&) = delete;
-    //! Don't permit move constructor
-    MKLUniformMethod(MKLUniformMethod&&) = delete;
-    //! Don't permit move assigment
-    MKLUniformMethod& operator=(MKLUniformMethod&&) = delete;
-
     //! Enums -> MKL VSL RNG UNIFORM METHOD parameters
-    const std::map< MKLUniformMethodType, ParamType > method {
+    std::map< MKLUniformMethodType, ParamType > method {
       { MKLUniformMethodType::STANDARD, VSL_RNG_METHOD_UNIFORM_STD },
       { MKLUniformMethodType::ACCURATE, VSL_RNG_METHOD_UNIFORM_STD_ACCURATE }
     };

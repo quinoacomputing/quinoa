@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 03:46:50 PM MDT
+  \date      Wed 06 Aug 2014 10:42:41 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -46,20 +46,17 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
           { tk::kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
 
     //! Return parameter based on Enum
-    const ParamType& param( MKLGaussianMethodType rng ) const;
+    const ParamType& param( MKLGaussianMethodType m ) const {
+      auto it = method.find( m );
+      Assert( it != end(method),
+              std::string("Cannot find parameter for MKLGaussianMethod \"")
+              << m << "\"" );
+      return it->second;
+    }
 
   private:
-    //! Don't permit copy constructor
-    MKLGaussianMethod(const MKLGaussianMethod&) = delete;
-    //! Don't permit copy assigment
-    MKLGaussianMethod& operator=(const MKLGaussianMethod&) = delete;
-    //! Don't permit move constructor
-    MKLGaussianMethod(MKLGaussianMethod&&) = delete;
-    //! Don't permit move assigment
-    MKLGaussianMethod& operator=(MKLGaussianMethod&&) = delete;
-
     //! Enums -> MKL VSL RNG GAUSSIAN METHOD parameters
-    const std::map< MKLGaussianMethodType, ParamType > method {
+    std::map< MKLGaussianMethodType, ParamType > method {
       { MKLGaussianMethodType::BOXMULLER, VSL_RNG_METHOD_GAUSSIAN_BOXMULLER },
       { MKLGaussianMethodType::BOXMULLER2, VSL_RNG_METHOD_GAUSSIAN_BOXMULLER2 },
       { MKLGaussianMethodType::ICDF, VSL_RNG_METHOD_GAUSSIAN_ICDF }

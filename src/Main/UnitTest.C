@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 11:06:36 AM MDT
+  \date      Wed 06 Aug 2014 10:58:27 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -35,6 +35,9 @@
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
 #include <tests/Control/Toggle.h>
+#include <tests/Control/Options/MKLGaussianMethod.h>
+#include <tests/Control/Options/MKLUniformMethod.h>
+#include <tests/Control/Options/RNG.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable

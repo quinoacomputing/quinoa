@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 07:44:18 AM MDT
+  \date      Wed 06 Aug 2014 10:50:59 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -414,7 +414,7 @@ struct CharmChild : CBase_CharmChild {
     // If we got here, the second part of this test succeeded. Construct and
     // send back a new test result, with tag "2", signaling the second part.
     tut::test_result tr( "Base/Factory", 7, 
-                         "default Charm++ child ctor in value factory 2",
+                         "default Charm++ child ctor in val-factory 2",
                           tut::test_result::result_type::ok );
     unittest::g_suiteProxy.evaluate(
       { tr.group, tr.name, std::to_string(tr.result), tr.message,
@@ -445,7 +445,7 @@ void Factory_object::test< 13 >() {
   // firing up an asynchronous Charm++ chare. The second part creates a new test
   // result, sending it back to the suite if successful. If that chare never
   // executes, the suite will hang waiting for that chare to call back.
-  set_test_name( "default Charm++ child ctor in value factory 1" );
+  set_test_name( "default Charm++ child ctor in val-factory 1" );
 
   tut::ValueFactory f;
   tk::recordCharmModel< tut::VBase, tut::CharmChild >( f, 2 );  // key: 2

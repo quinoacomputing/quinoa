@@ -6,22 +6,13 @@ project(Control CXX)
 
 include(charm)
 
-if(HAS_MKL)
-  set (MKLRNG_SOURCES "Options/MKLUniformMethod.C"
-                      "Options/MKLGaussianMethod.C")
-endif()
-
 #### RNGTest control ###########################################################
 add_library(QuinoaControl
             FileParser.C
             StringParser.C
             Quinoa/InputDeck/Parser.C
             Quinoa/CmdLine/Parser.C
-            Options/RNG.C
-            ${MKLRNG_SOURCES}
 )
-
-removeWarnings("Options/RNG.C")
 
 INSTALL(TARGETS QuinoaControl
         RUNTIME DESTINATION bin COMPONENT Runtime
@@ -37,8 +28,6 @@ add_library(RNGTestControl
             StringParser.C
             RNGTest/InputDeck/Parser.C
             RNGTest/CmdLine/Parser.C
-            Options/RNG.C
-            ${MKLRNG_SOURCES}
 )
 
 removeWarnings("RNGTest/InputDeck/Parser.C;RNGTest/CmdLine/Parser.C")
@@ -71,7 +60,6 @@ project(MeshConvControl CXX)
 
 add_library(MeshConvControl
             StringParser.C
-            Options/RNG.C
             MeshConv/CmdLine/Parser.C
 )
 
