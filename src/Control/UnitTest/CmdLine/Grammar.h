@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 11:25:57 AM MDT
+  \date      Wed 06 Aug 2014 10:09:52 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -26,8 +26,7 @@ namespace cmd {
 
   //! PEGTLParsed type specialized to UnitTest's command line parser
   using PEGTLCmdLine =
-    quinoa::ctr::PEGTLParsed< ctr::CmdLine,
-                              pegtl::string_input< ctr::Location > >;
+    tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
 
   // UnitTest's CmdLine state
 
