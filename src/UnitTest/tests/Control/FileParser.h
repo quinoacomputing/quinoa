@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 04:02:51 PM MDT
+  \date      Wed 06 Aug 2014 11:42:02 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -97,10 +97,10 @@ void FileParser_object::test< 3 >() {
   }
 }
 
-//! Test if constructor throws exception if it cannot read from file
+//! Test if constructor throws exception if cannot read from file
 template<> template<>
 void FileParser_object::test< 4 >() {
-  set_test_name( "ctor throws if it cannot read from file" );
+  set_test_name( "ctor throws if cannot read from file" );
 
   // Correctly throws exception if cannot read from file
   try {

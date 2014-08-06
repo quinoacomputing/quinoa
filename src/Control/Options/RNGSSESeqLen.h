@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 08:21:44 AM MDT
+  \date      Wed 06 Aug 2014 10:52:12 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -40,16 +40,6 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
         { { tk::kw::seq_short().string(), RNGSSESeqLenType::SHORT },
           { tk::kw::seq_med().string(), RNGSSESeqLenType::MEDIUM },
           { tk::kw::seq_long().string(), RNGSSESeqLenType::LONG } } ) {}
-
-  private:
-    //! Don't permit copy constructor
-    RNGSSESeqLen(const RNGSSESeqLen&) = delete;
-    //! Don't permit copy assigment
-    RNGSSESeqLen& operator=(const RNGSSESeqLen&) = delete;
-    //! Don't permit move constructor
-    RNGSSESeqLen(RNGSSESeqLen&&) = delete;
-    //! Don't permit move assigment
-    RNGSSESeqLen& operator=(RNGSSESeqLen&&) = delete;
 };
 
 } // ctr::

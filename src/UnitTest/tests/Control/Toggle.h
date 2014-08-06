@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:24:03 AM MDT
+  \date      Wed 06 Aug 2014 10:22:52 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
@@ -19,7 +19,7 @@ namespace tut {
 //! All tests in group inherited from this base
 struct Toggle_common {
   enum class Enum { F1, F2, F3, F4 };
-  //! Toggle only hasa protected constructor, designed to be base class only
+  //! Toggle only has a protected constructor, designed to be base class only
   struct toggle : tk::Toggle< Enum > {
      // The child constructor must initialize all state data Toggle holds: a
      // std::string, a std::map< Enum, std::string >, and its inverse, a

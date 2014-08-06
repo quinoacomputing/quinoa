@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 08:21:21 AM MDT
+  \date      Wed 06 Aug 2014 11:21:57 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -149,7 +149,12 @@ class RNG : public tk::Toggle< RNGType > {
         } ) {}
 
     //! Return parameter based on Enum
-    const ParamType& param( RNGType rng ) const;
+    const ParamType& param( RNGType rng ) const {
+      auto it = brng.find( rng );
+      Assert( it != end(brng),
+              std::string("Cannot find parameter for RNG \"") << rng << "\"" );
+      return it->second;
+    }
  
     //! Return field from RNG parameters bundle: if user has specified it,
     //! return it, if user did not specify it, return default
@@ -161,43 +166,39 @@ class RNG : public tk::Toggle< RNGType > {
     }
 
     //! Return RNG library type based on Enum
-    RNGLibType lib( RNGType rng ) const;
+    RNGLibType lib( RNGType rng ) const {
+      const auto& n = name( rng );
+      if ( found( "MKL", n ) ) return RNGLibType::MKL;
+      else if ( found( "RNGSSE", n ) ) return RNGLibType::RNGSSE;
+      else if ( found( "PRAND", n) ) return RNGLibType::PRAND;
+      else return RNGLibType::NO_LIB;
+    }
 
     //! Return whether RNG supports sequence option
-    bool supportsSeq( RNGType rng ) const {
-      auto it = support.find( rng );
-      if ( it != support.end() ) return true;
-      else return false;
-    }
+    bool supportsSeq( RNGType rng ) const
+    { return support.find( rng ) != end( support ) ? true : false; }
 
     //! Return whether RNG supports sequence option given
     template< class OptionType >
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
-      if ( it != support.end() )
+      if ( it != end( support ) ) {
         for (auto& o : it->second)
           if (o == option) return true;
+      }
       return false;
     }
 
   private:
-    //! Don't permit copy constructor
-    RNG(const RNG&) = delete;
-    //! Don't permit copy assigment
-    RNG& operator=(const RNG&) = delete;
-    //! Don't permit move constructor
-    RNG(RNG&&) = delete;
-    //! Don't permit move assigment
-    RNG& operator=(RNG&&) = delete;
-
     //! Search for 'kw' in 'str'
     //! \param[in]  kw   Keyword to search for
     //! \param[in]  str  String to search in
     //! \return     True if found, false if not
-    bool found(const std::string& kw, const std::string& str) const;
+    bool found(const std::string& kw, const std::string& str) const
+    { return str.find( kw ) != std::string::npos ? true : false; }
 
     //! Enums -> MKL VSL BRNG parameters
-    const std::map<RNGType, ParamType> brng {
+    std::map<RNGType, ParamType> brng {
         { RNGType::NO_RNG, -1 }
       , { RNGType::RNGSSE_GM19, 0 }
       , { RNGType::RNGSSE_GM29, 1 }
@@ -229,7 +230,7 @@ class RNG : public tk::Toggle< RNGType > {
     };
 
     //! Enums -> sequence length options supported
-    const std::map< RNGType, std::vector< RNGSSESeqLenType > > support {
+    std::map< RNGType, std::vector< RNGSSESeqLenType > > support {
       { RNGType::RNGSSE_GM29,    { RNGSSESeqLenType::SHORT,
                                    RNGSSESeqLenType::MEDIUM,
                                    RNGSSESeqLenType::LONG } },
