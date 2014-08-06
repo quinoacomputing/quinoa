@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Fri 06 Jun 2014 08:24:23 PM MDT
+  \date      Wed 06 Aug 2014 08:21:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -53,8 +53,10 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , MKL_SFMT19937
                              , MKL_SOBOL
                              , MKL_NIEDERR
-  // MKL VSL's abstract RNGs are for use with external (i.e., external to MKL or
-  // user-defined generator via call-back functions), disabled for now
+                             // MKL VSL's abstract RNGs are for use with
+                             // external (i.e., external to MKL or user-defined
+                             // generator via call-back functions), disabled for
+                             // now
                              //, MKL_IABSTRACT
                              //, MKL_DABSTRACT
                              //, MKL_SABSTRACT
@@ -84,10 +86,70 @@ class RNG : public tk::Toggle< RNGType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit RNG() :
-      Toggle< RNGType >( "Random number generator", names, values ) {}
+      Toggle< RNGType >( "Random number generator",
+        //! Enums -> names
+        { { RNGType::NO_RNG, "n/a" }
+        , { RNGType::RNGSSE_GM19, tk::kw::rngsse_gm19().name() }
+        , { RNGType::RNGSSE_GM29, tk::kw::rngsse_gm29().name() }
+        , { RNGType::RNGSSE_GM31, tk::kw::rngsse_gm31().name() }
+        , { RNGType::RNGSSE_GM55, tk::kw::rngsse_gm55().name() }
+        , { RNGType::RNGSSE_GM61, tk::kw::rngsse_gm61().name() }
+        , { RNGType::RNGSSE_GQ581, tk::kw::rngsse_gq581().name() }
+        , { RNGType::RNGSSE_GQ583, tk::kw::rngsse_gq583().name() }
+        , { RNGType::RNGSSE_GQ584, tk::kw::rngsse_gq584().name() }
+        , { RNGType::RNGSSE_MT19937, tk::kw::rngsse_mt19937().name() }
+        , { RNGType::RNGSSE_LFSR113, tk::kw::rngsse_lfsr113().name() }
+        , { RNGType::RNGSSE_MRG32K3A, tk::kw::rngsse_mrg32k3a().name() }
+        #ifdef HAS_MKL
+        , { RNGType::MKL_MCG31, tk::kw::mkl_mcg31().name() }
+        , { RNGType::MKL_R250, tk::kw::mkl_r250().name() }
+        , { RNGType::MKL_MRG32K3A, tk::kw::mkl_mrg32k3a().name() }
+        , { RNGType::MKL_MCG59, tk::kw::mkl_mcg59().name() }
+        , { RNGType::MKL_WH, tk::kw::mkl_wh().name() }
+        , { RNGType::MKL_MT19937, tk::kw::mkl_mt19937().name() }
+        , { RNGType::MKL_MT2203, tk::kw::mkl_mt2203().name() }
+        , { RNGType::MKL_SFMT19937, tk::kw::mkl_sfmt19937().name() }
+        , { RNGType::MKL_SOBOL, tk::kw::mkl_sobol().name() }
+        , { RNGType::MKL_NIEDERR, tk::kw::mkl_niederr().name() }
+        //, { RNGType::MKL_IABSTRACT, tk::kw::mkl_iabstract().name() }
+        //, { RNGType::MKL_DABSTRACT, tk::kw::mkl_dabstract().name() }
+        //, { RNGType::MKL_SABSTRACT, tk::kw::mkl_sabstract().name() }
+        , { RNGType::MKL_NONDETERM, tk::kw::mkl_nondeterm().name() }
+        #endif
+        },
+        //! keywords -> Enums
+        { { "no_rng", RNGType::NO_RNG }
+        , { tk::kw::rngsse_gm19().string(), RNGType::RNGSSE_GM19 }
+        , { tk::kw::rngsse_gm29().string(), RNGType::RNGSSE_GM29 }
+        , { tk::kw::rngsse_gm31().string(), RNGType::RNGSSE_GM31 }
+        , { tk::kw::rngsse_gm55().string(), RNGType::RNGSSE_GM55 }
+        , { tk::kw::rngsse_gm61().string(), RNGType::RNGSSE_GM61 }
+        , { tk::kw::rngsse_gq581().string(), RNGType::RNGSSE_GQ581 }
+        , { tk::kw::rngsse_gq583().string(), RNGType::RNGSSE_GQ583 }
+        , { tk::kw::rngsse_gq584().string(), RNGType::RNGSSE_GQ584 }
+        , { tk::kw::rngsse_mt19937().string(), RNGType::RNGSSE_MT19937 }
+        , { tk::kw::rngsse_lfsr113().string(), RNGType::RNGSSE_LFSR113 }
+        , { tk::kw::rngsse_mrg32k3a().string(), RNGType::RNGSSE_MRG32K3A }
+        #ifdef HAS_MKL
+        , { tk::kw::mkl_mcg31().string(), RNGType::MKL_MCG31 }
+        , { tk::kw::mkl_r250().string(), RNGType::MKL_R250 }
+        , { tk::kw::mkl_mrg32k3a().string(), RNGType::MKL_MRG32K3A }
+        , { tk::kw::mkl_mcg59().string(), RNGType::MKL_MCG59 }
+        , { tk::kw::mkl_wh().string(), RNGType::MKL_WH }
+        , { tk::kw::mkl_mt19937().string(), RNGType::MKL_MT19937 }
+        , { tk::kw::mkl_mt2203().string(), RNGType::MKL_MT2203 }
+        , { tk::kw::mkl_sfmt19937().string(), RNGType::MKL_SFMT19937 }
+        , { tk::kw::mkl_sobol().string(), RNGType::MKL_SOBOL }
+        , { tk::kw::mkl_niederr().string(), RNGType::MKL_NIEDERR }
+        //, { tk::kw::mkl_iabstract().string(), RNGType::MKL_IABSTRACT }
+        //, { tk::kw::mkl_dabstract().string(), RNGType::MKL_DABSTRACT }
+        //, { tk::kw::mkl_sabstract().string(), RNGType::MKL_SABSTRACT }
+        , { tk::kw::mkl_nondeterm().string(), RNGType::MKL_NONDETERM }
+        #endif
+        } ) {}
 
     //! Return parameter based on Enum
-    const ParamType& param(RNGType rng) const;
+    const ParamType& param( RNGType rng ) const;
  
     //! Return field from RNG parameters bundle: if user has specified it,
     //! return it, if user did not specify it, return default
@@ -133,99 +195,6 @@ class RNG : public tk::Toggle< RNGType > {
     //! \param[in]  str  String to search in
     //! \return     True if found, false if not
     bool found(const std::string& kw, const std::string& str) const;
-
-    //! Get access to RNG keywords
-    const tk::kw::rngsse_gm19 rngsse_gm19 {};
-    const tk::kw::rngsse_gm29 rngsse_gm29 {};
-    const tk::kw::rngsse_gm31 rngsse_gm31 {};
-    const tk::kw::rngsse_gm55 rngsse_gm55 {};
-    const tk::kw::rngsse_gm61 rngsse_gm61 {};
-    const tk::kw::rngsse_gq581 rngsse_gq581 {};
-    const tk::kw::rngsse_gq583 rngsse_gq583 {};
-    const tk::kw::rngsse_gq584 rngsse_gq584 {};
-    const tk::kw::rngsse_mt19937 rngsse_mt19937 {};
-    const tk::kw::rngsse_lfsr113 rngsse_lfsr113 {};
-    const tk::kw::rngsse_mrg32k3a rngsse_mrg32k3a {};
-    #ifdef HAS_MKL
-    const tk::kw::mkl_mcg31 mkl_mcg31 {};
-    const tk::kw::mkl_r250 mkl_r250 {};
-    const tk::kw::mkl_mrg32k3a mkl_mrg32k3a {};
-    const tk::kw::mkl_mcg59 mkl_mcg59 {};
-    const tk::kw::mkl_wh mkl_wh {};
-    const tk::kw::mkl_mt19937 mkl_mt19937 {};
-    const tk::kw::mkl_mt2203 mkl_mt2203 {};
-    const tk::kw::mkl_sfmt19937 mkl_sfmt19937 {};
-    const tk::kw::mkl_sobol mkl_sobol {};
-    const tk::kw::mkl_niederr mkl_niederr {};
-    //const tk::kw::mkl_iabstract mkl_iabstract {};
-    //const tk::kw::mkl_dabstract mkl_dabstract {};
-    //const tk::kw::mkl_sabstract mkl_sabstract {};
-    const tk::kw::mkl_nondeterm mkl_nondeterm {};
-    #endif
-
-    //! Enums -> names
-    const std::map<RNGType, std::string> names {
-        { RNGType::NO_RNG, "n/a" }
-      , { RNGType::RNGSSE_GM19, rngsse_gm19.name() }
-      , { RNGType::RNGSSE_GM29, rngsse_gm29.name() }
-      , { RNGType::RNGSSE_GM31, rngsse_gm31.name() }
-      , { RNGType::RNGSSE_GM55, rngsse_gm55.name() }
-      , { RNGType::RNGSSE_GM61, rngsse_gm61.name() }
-      , { RNGType::RNGSSE_GQ581, rngsse_gq581.name() }
-      , { RNGType::RNGSSE_GQ583, rngsse_gq583.name() }
-      , { RNGType::RNGSSE_GQ584, rngsse_gq584.name() }
-      , { RNGType::RNGSSE_MT19937, rngsse_mt19937.name() }
-      , { RNGType::RNGSSE_LFSR113, rngsse_lfsr113.name() }
-      , { RNGType::RNGSSE_MRG32K3A, rngsse_mrg32k3a.name() }
-      #ifdef HAS_MKL
-      , { RNGType::MKL_MCG31, mkl_mcg31.name() }
-      , { RNGType::MKL_R250, mkl_r250.name() }
-      , { RNGType::MKL_MRG32K3A, mkl_mrg32k3a.name() }
-      , { RNGType::MKL_MCG59, mkl_mcg59.name() }
-      , { RNGType::MKL_WH, mkl_wh.name() }
-      , { RNGType::MKL_MT19937, mkl_mt19937.name() }
-      , { RNGType::MKL_MT2203, mkl_mt2203.name() }
-      , { RNGType::MKL_SFMT19937, mkl_sfmt19937.name() }
-      , { RNGType::MKL_SOBOL, mkl_sobol.name() }
-      , { RNGType::MKL_NIEDERR, mkl_niederr.name() }
-      //, { RNGType::MKL_IABSTRACT, mkl_iabstract.name() }
-      //, { RNGType::MKL_DABSTRACT, mkl_dabstract.name() }
-      //, { RNGType::MKL_SABSTRACT, mkl_sabstract.name() }
-      , { RNGType::MKL_NONDETERM, mkl_nondeterm.name() }
-      #endif
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, RNGType> values {
-        { "no_rng", RNGType::NO_RNG }
-      , { rngsse_gm19.string(), RNGType::RNGSSE_GM19 }
-      , { rngsse_gm29.string(), RNGType::RNGSSE_GM29 }
-      , { rngsse_gm31.string(), RNGType::RNGSSE_GM31 }
-      , { rngsse_gm55.string(), RNGType::RNGSSE_GM55 }
-      , { rngsse_gm61.string(), RNGType::RNGSSE_GM61 }
-      , { rngsse_gq581.string(), RNGType::RNGSSE_GQ581 }
-      , { rngsse_gq583.string(), RNGType::RNGSSE_GQ583 }
-      , { rngsse_gq584.string(), RNGType::RNGSSE_GQ584 }
-      , { rngsse_mt19937.string(), RNGType::RNGSSE_MT19937 }
-      , { rngsse_lfsr113.string(), RNGType::RNGSSE_LFSR113 }
-      , { rngsse_mrg32k3a.string(), RNGType::RNGSSE_MRG32K3A }
-      #ifdef HAS_MKL
-      , { mkl_mcg31.string(), RNGType::MKL_MCG31 }
-      , { mkl_r250.string(), RNGType::MKL_R250 }
-      , { mkl_mrg32k3a.string(), RNGType::MKL_MRG32K3A }
-      , { mkl_mcg59.string(), RNGType::MKL_MCG59 }
-      , { mkl_wh.string(), RNGType::MKL_WH }
-      , { mkl_mt19937.string(), RNGType::MKL_MT19937 }
-      , { mkl_mt2203.string(), RNGType::MKL_MT2203 }
-      , { mkl_sfmt19937.string(), RNGType::MKL_SFMT19937 }
-      , { mkl_sobol.string(), RNGType::MKL_SOBOL }
-      , { mkl_niederr.string(), RNGType::MKL_NIEDERR }
-      //, { mkl_iabstract.string(), RNGType::MKL_IABSTRACT }
-      //, { mkl_dabstract.string(), RNGType::MKL_DABSTRACT }
-      //, { mkl_sabstract.string(), RNGType::MKL_SABSTRACT }
-      , { mkl_nondeterm.string(), RNGType::MKL_NONDETERM }
-      #endif
-    };
 
     //! Enums -> MKL VSL BRNG parameters
     const std::map<RNGType, ParamType> brng {

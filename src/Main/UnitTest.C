@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 10:49:51 AM MDT
+  \date      Tue 05 Aug 2014 11:06:36 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -34,6 +34,7 @@
 #include <tests/Base/PUPUtil.h>
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
+#include <tests/Control/Toggle.h>
 
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable

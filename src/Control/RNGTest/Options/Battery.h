@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 04:58:22 PM MDT
+  \date      Tue 05 Aug 2014 03:52:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -12,7 +12,6 @@
 #define RNGTestBatteryOptions_h
 
 #include <map>
-#include <list>
 
 #include <Toggle.h>
 #include <RNGTest/InputDeck/Keywords.h>
@@ -37,38 +36,17 @@ class Battery : public tk::Toggle< BatteryType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Battery() :
-      Toggle< BatteryType >("RNG battery", names, values) {}
-
-  private:
-    //! Don't permit copy constructor
-    Battery(const Battery&) = delete;
-    //! Don't permit copy assigment
-    Battery& operator=(const Battery&) = delete;
-    //! Don't permit move constructor
-    Battery(Battery&&) = delete;
-    //! Don't permit move assigment
-    Battery& operator=(Battery&&) = delete;
-
-    //! Get access to battery keywords
-    const kw::smallcrush smallcrush {};
-    const kw::crush crush {};
-    const kw::bigcrush bigcrush {};
-
-    //! Enums -> names
-    const std::map<BatteryType, std::string> names {
-      { BatteryType::NO_BATTERY, "n/a" },
-      { BatteryType::SMALLCRUSH, smallcrush.name() },
-      { BatteryType::CRUSH, crush.name() },
-      { BatteryType::BIGCRUSH, bigcrush.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, BatteryType> values {
-      { "no_battery", BatteryType::NO_BATTERY },
-      { smallcrush.string(), BatteryType::SMALLCRUSH },
-      { crush.string(), BatteryType::CRUSH },
-      { bigcrush.string(), BatteryType::BIGCRUSH }
-    };
+      Toggle< BatteryType >( "RNG battery",
+        //! Enums -> names
+        { { BatteryType::NO_BATTERY, "n/a" },
+          { BatteryType::SMALLCRUSH, kw::smallcrush().name() },
+          { BatteryType::CRUSH, kw::crush().name() },
+          { BatteryType::BIGCRUSH, kw::bigcrush().name() } },
+        //! keywords -> Enums
+        { { "no_battery", BatteryType::NO_BATTERY },
+          { kw::smallcrush().string(), BatteryType::SMALLCRUSH },
+          { kw::crush().string(), BatteryType::CRUSH },
+          { kw::bigcrush().string(), BatteryType::BIGCRUSH } } ) {}
 };
 
 } // ctr::

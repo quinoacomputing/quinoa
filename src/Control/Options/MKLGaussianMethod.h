@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:58:39 PM MST
+  \date      Tue 05 Aug 2014 03:46:50 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -32,14 +32,21 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
   public:
     using ParamType = int;
 
-  public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit MKLGaussianMethod() :
-      Toggle< MKLGaussianMethodType >("Gaussian method", names, values) {}
+      Toggle< MKLGaussianMethodType >( "Gaussian method",
+        //! Enums -> names
+        { { MKLGaussianMethodType::BOXMULLER, tk::kw::boxmuller().name() },
+          { MKLGaussianMethodType::BOXMULLER2, tk::kw::boxmuller2().name() },
+          { MKLGaussianMethodType::ICDF, tk::kw::icdf().name() } },
+        //! keywords -> Enums
+        { { tk::kw::boxmuller().string(), MKLGaussianMethodType::BOXMULLER },
+          { tk::kw::boxmuller2().string(), MKLGaussianMethodType::BOXMULLER2 },
+          { tk::kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
 
     //! Return parameter based on Enum
-    const ParamType& param(MKLGaussianMethodType rng) const;
+    const ParamType& param( MKLGaussianMethodType rng ) const;
 
   private:
     //! Don't permit copy constructor
@@ -50,25 +57,6 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     MKLGaussianMethod(MKLGaussianMethod&&) = delete;
     //! Don't permit move assigment
     MKLGaussianMethod& operator=(MKLGaussianMethod&&) = delete;
-
-    //! Get access to MKL Gaussian method keywords
-    const tk::kw::boxmuller boxmuller{};
-    const tk::kw::boxmuller2 boxmuller2 {};
-    const tk::kw::icdf icdf {};
-
-    //! Enums -> names
-    const std::map< MKLGaussianMethodType, std::string > names {
-      { MKLGaussianMethodType::BOXMULLER, boxmuller.name() },
-      { MKLGaussianMethodType::BOXMULLER2, boxmuller2.name() },
-      { MKLGaussianMethodType::ICDF, icdf.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map< std::string, MKLGaussianMethodType > values {
-      { boxmuller.string(), MKLGaussianMethodType::BOXMULLER },
-      { boxmuller2.string(), MKLGaussianMethodType::BOXMULLER2 },
-      { icdf.string(), MKLGaussianMethodType::ICDF }
-    };
 
     //! Enums -> MKL VSL RNG GAUSSIAN METHOD parameters
     const std::map< MKLGaussianMethodType, ParamType > method {
