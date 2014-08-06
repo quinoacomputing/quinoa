@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 08:56:27 PM MDT
+  \date      Wed 06 Aug 2014 09:47:49 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -23,15 +23,14 @@ namespace rngsse {
   struct insert_seq : pegtl::action_base< insert_seq< Stack, Option, field, sel,
                                                       vec, tag, tags... > > {
     static void apply( const std::string& value, Stack& stack ) {
-      ctr::RNG rng;
-      tk::Option< ctr::RNGSSESeqLen > opt;
+      ctr::RNGSSESeqLen opt;
       using EnumType = ctr::RNGSSESeqLen::EnumType;
       // get recently inserted key from <sel,vec>
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
       // Error out if RNG does not support option specified
-      if ( !rng.supportsOpt( key, opt.value(value) ) ) {
+      if ( !ctr::RNG().supportsOpt( key, opt.value(value) ) ) {
         grm::handleError< Stack, grm::Error::UNSUPPORTED >( stack, value );
       }
       stack.template insert_opt< key_type, field, EnumType, tag, tags... >

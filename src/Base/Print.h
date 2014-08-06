@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:49:54 AM MDT
+  \date      Wed 06 Aug 2014 09:42:50 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -19,7 +19,6 @@
 
 #include <boost/format.hpp>
 
-#include <Option.h>
 #include <Timer.h>
 
 namespace tk {

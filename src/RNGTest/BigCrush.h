@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Sat 28 Jun 2014 02:53:55 PM MDT
+  \date      Wed 06 Aug 2014 09:50:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     BigCrush battery
   \details   BigCrush battery
@@ -11,7 +11,6 @@
 #ifndef BigCrush_h
 #define BigCrush_h
 
-#include <Option.h>
 #include <Battery.h>
 #include <StatTest.h>
 #include <testu01suite.decl.h>
@@ -23,9 +22,8 @@ class BigCrush {
 
   public:
     //! Return string identifying test suite name
-    std::string name() const { return
-      tk::Option< ctr::Battery >().name( rngtest::ctr::BatteryType::BIGCRUSH );
-    }
+    std::string name() const
+    { return ctr::Battery().name( rngtest::ctr::BatteryType::BIGCRUSH ); }
 
     //! Add statistical tests to battery
     void addTests( std::vector< std::function< StatTest() > >& tests,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Tue 22 Jul 2014 10:32:14 PM MDT
+  \date      Wed 06 Aug 2014 09:51:19 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -21,8 +21,8 @@ RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Option< ctr::MKLUniformMethod > um;
-  Option< ctr::MKLGaussianMethod > gm;
+  ctr::MKLUniformMethod um;
+  ctr::MKLGaussianMethod gm;
 
   m_stream << m_item_name_value_fmt
               % m_item_indent
@@ -56,7 +56,7 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
               % p.get< tag::seed >();
 
   if ( rng.supportsSeq(r) ) {
-    Option< ctr::RNGSSESeqLen > seq;
+    ctr::RNGSSESeqLen seq;
     m_stream << m_item_name_value_fmt
                 % m_item_indent
                 % seq.group()
