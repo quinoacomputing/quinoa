@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:19:10 2014
+  \date      Tue 05 Aug 2014 04:48:26 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -13,26 +13,8 @@
 #include <iomanip>
 
 #include <TxtStatWriter.h>
-#include <Statistics.h>
 
 using quinoa::TxtStatWriter;
-
-TxtStatWriter::TxtStatWriter(const std::string& filename,
-                             const Statistics& statistics) :
-  Writer(filename),
-  m_statistics(statistics),
-  m_nord(statistics.nord()),
-  m_ncen(statistics.ncen()),
-  m_ordinary(statistics.ordinary()),
-  m_central(statistics.central())
-//******************************************************************************
-//  Constructor
-//! \param[in]  filename     Filename of txt statistics output
-//! \param[in]  statistics   Statistics estimator
-//! \author J. Bakosi
-//******************************************************************************
-{
-}
 
 void
 TxtStatWriter::header() const
@@ -44,11 +26,11 @@ TxtStatWriter::header() const
   m_outFile << "#     it             t";
 
   for (int i=0; i<m_nord; ++i)
-    if (m_statistics.plotOrdinary(i))
-      m_outFile << std::setw(12) << '<' << m_statistics.nameOrdinary(i) << ">";
+    if ( m_plotOrdinary[i] )
+      m_outFile << std::setw(12) << '<' << m_nameOrdinary[i] << ">";
 
   for (int i=0; i<m_ncen; ++i)
-    m_outFile << std::setw(10) << '<' << m_statistics.nameCentral(i) << ">";
+    m_outFile << std::setw(10) << '<' << m_nameCentral[i] << ">";
 
   m_outFile << std::endl;
 }
@@ -68,7 +50,7 @@ TxtStatWriter::writeStat(const int it, const tk::real t)
 
   // Output ordinary moments
   for (int i=0; i<m_nord; ++i) {
-    if (m_statistics.plotOrdinary(i))
+    if ( m_plotOrdinary[i] )
       m_outFile << (m_ordinary[i]>0 ? " " : "") << m_ordinary[i] << "  ";
   }
 

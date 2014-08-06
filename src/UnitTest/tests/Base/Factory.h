@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 02:36:53 PM MDT
+  \date      Wed 06 Aug 2014 07:44:18 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -203,7 +203,7 @@ void Factory_object::test< 4 >() {
     // exception thrown, test ok
   }
   #else
-  skip( "in RELEASE mode" );
+  skip( "in RELEASE mode, would yield undefined behavior" );
   #endif
 }
 

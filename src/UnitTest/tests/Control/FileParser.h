@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 10:49:02 AM MDT
+  \date      Tue 05 Aug 2014 04:02:51 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -10,8 +10,6 @@
 //******************************************************************************
 #ifndef test_FileParser_h
 #define test_FileParser_h
-
-#include <iostream>
 
 #include <tut/tut.hpp>
 #include <FileParser.h>
@@ -40,7 +38,7 @@ using FileParser_object = FileParser_group::object;
 //! Define test group
 FileParser_group FileParser( "Control/FileParser" );
 
-//! Test definition for group
+//! Test definitions for group
 
 //! Test if constructor finds and can open an existing file (the executable)
 template<> template<>

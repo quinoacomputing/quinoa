@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/flip_map.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 03:11:27 PM MDT
+  \date      Tue 05 Aug 2014 04:02:31 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/flip_map.h
   \details   Unit tests for Base/flip_map.h
@@ -26,7 +26,7 @@ using flip_map_object = flip_map_group::object;
 //! Define test group
 flip_map_group flip_map( "Base/flip_map" );
 
-//! Test definition for group
+//! Test definitions for group
 
 //! Test tk::flip_pair used to invert a std::pair
 template<> template<>

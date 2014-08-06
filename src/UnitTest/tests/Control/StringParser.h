@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/StringParser.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 11:03:52 AM MDT
+  \date      Tue 05 Aug 2014 04:02:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
@@ -11,16 +11,8 @@
 #ifndef test_StringParser_h
 #define test_StringParser_h
 
-#include <iostream>
-
 #include <tut/tut.hpp>
 #include <StringParser.h>
-
-namespace unittest {
-
-extern std::string g_executable;
-
-} // unittest::
 
 namespace tut {
 
@@ -42,7 +34,7 @@ using StringParser_object = StringParser_group::object;
 //! Define test group
 StringParser_group StringParser( "Control/StringParser" );
 
-//! Test definition for group
+//! Test definitions for group
 
 //! Test if constructor stores string passed in as std::string
 template<> template<>

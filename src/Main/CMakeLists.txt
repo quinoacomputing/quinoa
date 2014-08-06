@@ -177,7 +177,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       IO
                       Mesh
                       MeshConvControl
-                      Statistics
                       ${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}

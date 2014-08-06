@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 08:58:24 PM MST
+  \date      Wed 06 Aug 2014 08:21:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -31,7 +31,15 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit RNGSSESeqLen() :
-      Toggle< RNGSSESeqLenType >("sequence length", names, values) {}
+      Toggle< RNGSSESeqLenType >( "sequence length",
+        //! Enums -> names
+        { { RNGSSESeqLenType::SHORT, tk::kw::seq_short().name() },
+          { RNGSSESeqLenType::MEDIUM, tk::kw::seq_med().name() },
+          { RNGSSESeqLenType::LONG, tk::kw::seq_long().name() } },
+        //! keywords -> Enums
+        { { tk::kw::seq_short().string(), RNGSSESeqLenType::SHORT },
+          { tk::kw::seq_med().string(), RNGSSESeqLenType::MEDIUM },
+          { tk::kw::seq_long().string(), RNGSSESeqLenType::LONG } } ) {}
 
   private:
     //! Don't permit copy constructor
@@ -42,25 +50,6 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
     RNGSSESeqLen(RNGSSESeqLen&&) = delete;
     //! Don't permit move assigment
     RNGSSESeqLen& operator=(RNGSSESeqLen&&) = delete;
-
-    //! Get access to RNGSSE sequence length keywords
-    const tk::kw::seq_short seq_short {};
-    const tk::kw::seq_med seq_med {};
-    const tk::kw::seq_long seq_long {};
-
-    //! Enums -> names
-    const std::map< RNGSSESeqLenType, std::string > names {
-      { RNGSSESeqLenType::SHORT, seq_short.name() },
-      { RNGSSESeqLenType::MEDIUM, seq_med.name() },
-      { RNGSSESeqLenType::LONG, seq_long.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map< std::string, RNGSSESeqLenType > values {
-      { seq_short.string(), RNGSSESeqLenType::SHORT },
-      { seq_med.string(), RNGSSESeqLenType::MEDIUM },
-      { seq_long.string(), RNGSSESeqLenType::LONG }
-    };
 };
 
 } // ctr::
