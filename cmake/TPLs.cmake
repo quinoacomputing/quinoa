@@ -28,12 +28,6 @@ find_library(MKL_CORE_LIBRARY
                    $ENV{INTEL}/mkl/lib/intel64
              NO_DEFAULT_PATH)
 
-find_library(INTEL_OMP_RUNTIME_LIBRARY
-             NAMES iomp5
-             PATHS $ENV{MKLROOT}/../compiler/lib/intel64
-                   $ENV{INTEL}/compiler/lib/intel64
-             NO_DEFAULT_PATH)
-
 find_path(MKL_INCLUDE_PATH mkl.h
           $ENV{MKLROOT}/include
           $ENV{INTEL}/mkl/include
@@ -43,8 +37,7 @@ find_path(MKL_INCLUDE_PATH mkl.h
 if (MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
     MKL_THREADED_LAYER_LIBRARY AND
-    MKL_CORE_LIBRARY AND
-    INTEL_OMP_RUNTIME_LIBRARY)
+    MKL_CORE_LIBRARY)
   message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- works")
   set(HAS_MKL on)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")

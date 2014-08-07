@@ -19,7 +19,6 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
 add_executable(${QUINOA_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
-               TPLInfo/OpenMP.C
                TPLInfo/Zoltan.C
                TPLInfo/Silo.C
                TPLInfo/HDF5.C
@@ -40,7 +39,6 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
-                      Paradigm
                       #LinearAlgebra
                       #Geometry
                       #MonteCarlo
@@ -58,8 +56,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
-                      ${MKL_THREADED_LAYER_LIBRARY}
-                      ${INTEL_OMP_RUNTIME_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
@@ -78,7 +75,6 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 add_executable(${RNGTEST_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
-               TPLInfo/OpenMP.C
                RNGTestDriver.C
                RNGPrint.C
                RNGTest.C
@@ -98,14 +94,12 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       RNG
                       RNGTest
                       RNGTestControl
-                      Paradigm
                       Base
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
-                      ${MKL_THREADED_LAYER_LIBRARY}
-                      ${INTEL_OMP_RUNTIME_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
@@ -123,7 +117,6 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
                TPLInfo/Boost.C
-               TPLInfo/OpenMP.C
                UnitTestDriver.C
                UnitTest.C
 )
@@ -141,7 +134,6 @@ endif()
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
-                      Paradigm
                       Mesh
                       IO
                       Base
@@ -166,7 +158,6 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
 add_executable(${MESHCONV_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
-               TPLInfo/OpenMP.C
                TPLInfo/ExodusII.C
                MeshConvDriver.C
                MeshConv.C

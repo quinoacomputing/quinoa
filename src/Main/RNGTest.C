@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:41:04 AM MDT
+  \date      Wed 06 Aug 2014 09:42:22 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -10,7 +10,6 @@
 //******************************************************************************
 
 #include <Config.h>
-#include <Paradigm.h>
 #include <RNG.h>
 #include <RNGStack.h>
 #include <RNGTestPrint.h>
@@ -21,7 +20,6 @@
 #include <PUPUtil.h>
 #include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
-#include <TPLInfo/OpenMP.h>
 #include <rngtest.decl.h>
 #include <Init.h>
 
@@ -37,7 +35,6 @@ void echoTPL( const tk::Print& print )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  echoOpenMP( print, "OpenMP runtime" );
 #ifdef HAS_MKL
   echoMKL( print, "Intel Math Kernel Library" );
 #else

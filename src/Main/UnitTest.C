@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:12:46 PM MDT
+  \date      Wed 06 Aug 2014 09:42:08 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -12,12 +12,10 @@
 #include <pup_stl.h>
 
 #include <Config.h>
-#include <Paradigm.h>
 #include <UnitTestPrint.h>
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
 #include <TPLInfo/Boost.h>
-#include <TPLInfo/OpenMP.h>
 #include <unittest.decl.h>
 #include <Init.h>
 
@@ -52,7 +50,6 @@ void echoTPL( const tk::Print& print )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  echoOpenMP( print, "OpenMP runtime" );
   echoBoost( print, "Boost C++ Libraries" );
   print.endpart();
 }

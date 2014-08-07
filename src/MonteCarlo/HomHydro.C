@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:27:56 PM MDT
+  \date      Wed 06 Aug 2014 09:38:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -88,23 +88,10 @@ HomHydro::advance(tk::real dt)
 //******************************************************************************
 {
   IGNORE(dt);
-//   #ifdef _OPENMP
-//   #pragma omp parallel
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     int tid = omp_get_thread_num();
-//     #else
 //     int tid = 0;
-//     #endif
-// 
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
 //     for (uint64_t p=0; p<m_npar; ++p) {
 //       hydro()->advance(p, tid, dt);
 //     }
-//   }
 }
 
 void

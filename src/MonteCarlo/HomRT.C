@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomRT.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:30:14 PM MDT
+  \date      Wed 06 Aug 2014 09:38:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -88,24 +88,12 @@ HomRT::advance(tk::real dt)
 //******************************************************************************
 {
   IGNORE(dt);
-//   #ifdef _OPENMP
-//   #pragma omp parallel
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     int tid = omp_get_thread_num();
-//     #else
 //     int tid = 0;
-//     #endif
 // 
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
 //     for (uint64_t p=0; p<m_npar; ++p) {
 //       mass()->advance(p, tid, dt);
 //       hydro()->advance(p, tid, dt);
 //     }
-//   }
 }
 
 void

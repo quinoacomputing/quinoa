@@ -2,15 +2,12 @@
 /*!
   \file      src/MonteCarlo/TestSDE.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:32:40 PM MDT
+  \date      Wed 06 Aug 2014 09:38:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE testbed
   \details   SDE testbed
 */
 //******************************************************************************
-#ifdef _OPENMP
-#include "omp.h"
-#endif // _OPENMP
 
 #include <boost/mpl/cartesian_product.hpp>
 
@@ -111,23 +108,11 @@ TestSDE::advance(tk::real dt)
 //******************************************************************************
 {
 //   IGNORE(dt);
-//   #ifdef _OPENMP
-//   #pragma omp parallel
-//   #endif
-//   {
-//     #ifdef _OPENMP
-//     //int tid = omp_get_thread_num();
-//     #else
 //     //int tid = 0;
-//     #endif
 // 
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
 //     for (uint64_t p=0; p<m_npar; ++p) {
 //       //sde()->advance( p, tid, dt );
 //     }
-//   }
 }
 
 void
