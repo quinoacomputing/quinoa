@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Sat 07 Jun 2014 10:12:58 AM MDT
+  \date      Wed 06 Aug 2014 09:42:52 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator base
   \details   Random number generator base
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef RNG_h
 #define RNG_h
+
+#include <functional>
 
 #include <make_unique.h>
 

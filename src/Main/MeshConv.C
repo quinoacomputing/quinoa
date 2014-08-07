@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:41:24 AM MDT
+  \date      Wed 06 Aug 2014 09:34:07 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -14,7 +14,6 @@
 #include <TPLInfo/ExodusII.h>
 #include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
-#include <TPLInfo/OpenMP.h>
 #include <MeshConv/CmdLine/Parser.h>
 #include <meshconv.decl.h>
 #include <Init.h>
@@ -31,7 +30,6 @@ void echoTPL( const tk::Print& print )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  echoOpenMP( print, "OpenMP runtime" );
 #ifdef HAS_MKL
   echoMKL( print, "Intel Math Kernel Library" );
 #else

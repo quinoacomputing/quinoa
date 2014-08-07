@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 05:17:11 PM MDT
+  \date      Wed 06 Aug 2014 09:36:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Statistics
@@ -11,10 +11,6 @@
 
 #include <cstring>
 #include <algorithm>
-
-#ifdef _OPENMP
-#include "omp.h"
-#endif // _OPENMP
 
 #include <Statistics.h>
 
@@ -200,23 +196,12 @@ Statistics::estimateOrdinary()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  #ifdef _OPENMP
-  #pragma omp parallel
-  #endif
-  {
-    #ifdef _OPENMP
-    auto tid = omp_get_thread_num();
-    #else
     auto tid = 0;
-    #endif
 
     // Zero ordinary moment accumulators
     memset( m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(tk::real) );
 
 //     // Accumulate ordinary moments
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
 //     for (uint64_t p=0; p<m_npar; ++p) {
 //       for (int i=0; i<m_nord; ++i) {
 //         auto prod = m_particles.cvar( m_instOrd[i][0], p );
@@ -227,7 +212,6 @@ Statistics::estimateOrdinary()
 //         m_ordinary[tid*(m_nord+1) + i] += prod;
 //       }
 //     }
-  }
 
   // Collect ordinary moments from all threads
   for (uint64_t p=1; p<m_nthreads; ++p) {
@@ -249,23 +233,12 @@ Statistics::estimateCentral()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  #ifdef _OPENMP
-  #pragma omp parallel
-  #endif
-  {
-    #ifdef _OPENMP
-    auto tid = omp_get_thread_num();
-    #else
     auto tid = 0;
-    #endif
 
     // Zero central moment accumulators
     memset(m_central.get() + tid*m_ncen, 0, m_ncen*sizeof(tk::real));
 
 //     // Accumulate central moments
-//     #ifdef _OPENMP
-//     #pragma omp for
-//     #endif
 //     for (uint64_t p=0; p<m_npar; ++p) {
 //       for (int i=0; i<m_ncen; ++i) {
 //         auto prod = m_particles.cvar( m_instCen[i][0], p );
@@ -276,7 +249,6 @@ Statistics::estimateCentral()
 //         m_central[tid*m_ncen + i] += prod;
 //       }
 //     }
-  }
 
   // Collect central moments from all threads
   for (uint64_t p=1; p<m_nthreads; ++p) {

@@ -2,7 +2,7 @@
 /*!
   \file      src/LinearAlgebra/SymCompRowMatrix.C
   \author    J. Bakosi
-  \date      Sat 25 Jan 2014 03:36:11 PM MST
+  \date      Wed 06 Aug 2014 09:39:01 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
@@ -15,10 +15,6 @@
 #include <memory>
 
 #include <make_unique.h>
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #include <SymCompRowMatrix.h>
 
@@ -135,9 +131,6 @@ SymCompRowMatrix::add(int row, int column, int i, real value)
       j = m_ia[rmdof+i+1]-1;
     }
 
-  #ifdef _OPENMP
-  #pragma omp atomic
-  #endif
   m_a[m_ia[rmdof+i]-1+idx] += value;
 }
 
@@ -159,9 +152,6 @@ SymCompRowMatrix::add(int row, int column, real value)
       j = m_ia[row+1]-1;
     }
 
-  #ifdef _OPENMP
-  #pragma omp atomic
-  #endif
   m_a[m_ia[row]-1+idx] += value;
 }
 

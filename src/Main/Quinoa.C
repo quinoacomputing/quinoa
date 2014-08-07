@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:18:44 PM MDT
+  \date      Wed 06 Aug 2014 09:42:03 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -12,7 +12,6 @@
 #include <pup_stl.h>
 
 #include <Config.h>
-#include <Paradigm.h>
 #include <QuinoaPrint.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/CmdLine/Parser.h>
@@ -21,7 +20,6 @@
 #include <TPLInfo/Zlib.h>
 #include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
-#include <TPLInfo/OpenMP.h>
 #include <quinoa.decl.h>
 #include <Init.h>
 
@@ -37,7 +35,6 @@ void echoTPL( const tk::Print& print )
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  echoOpenMP( print, "OpenMP runtime" );
   #ifdef HAS_MKL
   echoMKL( print, "Intel Math Kernel Library" );
   #else

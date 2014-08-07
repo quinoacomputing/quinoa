@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8.5)
 
-project(QUINOA C CXX)
+project(QUINOA CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE 1)
 
@@ -62,14 +62,6 @@ set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
 set(AMPI_COMPILER ${TPL_DIR}/charm/bin/ampicxx)
 message(STATUS "Charm++ compiler: " ${CHARM_COMPILER})
 message(STATUS "Charm++/AMPI compiler: " ${AMPI_COMPILER})
-
-# Find OpenMP and set its compiler flag
-find_package(OpenMP)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
 
 # Query build hostname
 site_name(HOSTNAME)
@@ -185,7 +177,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  3346: dynamic exception specifications are deprecated
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,383,444,869,981,1418,2415,2547,3346")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -opt-report=0")
-  #add_compiler_flag("-openmp-report")
 
   # Link to thread-safe MPI library
   add_compiler_flag("-mt_mpi")
@@ -303,7 +294,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/UnitTest
                     ${QUINOA_SOURCE_DIR}/SDE
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Paradigm
                     ${QUINOA_SOURCE_DIR}/Utilities
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
@@ -325,7 +315,6 @@ add_subdirectory(Control)
 add_subdirectory(IO)
 #add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)
-add_subdirectory(Paradigm)
 #add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)

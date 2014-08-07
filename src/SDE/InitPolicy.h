@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 05:21:54 PM MDT
+  \date      Wed 06 Aug 2014 09:36:58 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Initialization policies
   \details   Initialization policies
@@ -74,18 +74,8 @@ struct InitZero {
     uint64_t chunk = size/nthreads;
 
     // Each processor zeros its own portion
-    #ifdef _OPENMP
-    #pragma omp parallel
-    #endif
-    {
-      #ifdef _OPENMP
-      int myid = omp_get_thread_num();
-      #else
-      int myid = 0;
-      #endif
-
-      memset( ptr + chunk*myid, 0, chunk*sizeof(tk::real) );
-    }
+    int myid = 0;
+    memset( ptr + chunk*myid, 0, chunk*sizeof(tk::real) );
 
     // Zero remaining portion
     memset( ptr + chunk*nthreads, 0, (size % nthreads)*sizeof(tk::real) );
