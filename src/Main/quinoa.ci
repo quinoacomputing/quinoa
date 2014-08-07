@@ -1,0 +1,30 @@
+//******************************************************************************
+/*!
+  \file      src/Main/quinoa.ci
+  \author    J. Bakosi
+  \date      Wed 06 Aug 2014 04:09:56 PM MDT
+  \copyright 2005-2014, Jozsef Bakosi.
+  \brief     Charm++ module interface file for quinoa
+  \details   Charm++ module interface file for quinoa
+*/
+//******************************************************************************
+
+mainmodule quinoa {
+
+  readonly CProxy_Main mainProxy;
+
+  namespace quinoa {
+
+    readonly ctr::InputDeck g_inputdeck_defaults;
+    readonly ctr::InputDeck g_inputdeck;
+
+  } // quinoa::
+
+  mainchare Main {
+    entry Main( CkArgMsg* msg );
+    entry void execute();
+    entry void finalize();
+  }
+
+  chare execute { entry execute(); }
+}

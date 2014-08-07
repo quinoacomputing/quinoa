@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:17:11 2013
+  \date      Wed 06 Aug 2014 03:31:51 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -25,40 +25,21 @@ enum class PositionType : uint8_t { NO_POSITION=0,
                                     VISCOUS };
 
 //! Class with base templated on the above enum class with associations
-class Position : public tk::Toggle<PositionType> {
+class Position : public tk::Toggle< PositionType > {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Position() : Toggle<PositionType>("Position", names, values) {}
-
-  private:
-    //! Don't permit copy constructor
-    Position(const Position&) = delete;
-    //! Don't permit copy assigment
-    Position& operator=(const Position&) = delete;
-    //! Don't permit move constructor
-    Position(Position&&) = delete;
-    //! Don't permit move assigment
-    Position& operator=(Position&&) = delete;
-
-    //! Get access to position keywords
-    const kw::pos_inviscid inviscid {};
-    const kw::pos_viscous viscous {};
-
-    //! Enums -> names
-    const std::map<PositionType, std::string> names {
-      { PositionType::NO_POSITION, "n/a" },
-      { PositionType::INVISCID, inviscid.name() },
-      { PositionType::VISCOUS, viscous.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, PositionType> values {
-      { "no_position", PositionType::NO_POSITION },
-      { inviscid.string(), PositionType::INVISCID },
-      { viscous.string(), PositionType::INVISCID }
-    };
+    explicit Position() :
+      Toggle< PositionType >( "Position",
+      //! Enums -> names
+      { { PositionType::NO_POSITION, "n/a" },
+        { PositionType::INVISCID, kw::pos_inviscid().name() },
+        { PositionType::VISCOUS, kw::pos_viscous().name() } },
+      //! keywords -> Enums
+      { { "no_position", PositionType::NO_POSITION },
+        { kw::pos_inviscid().string(), PositionType::INVISCID },
+        { kw::pos_viscous().string(), PositionType::INVISCID } } ) {}
 };
 
 } // ctr::

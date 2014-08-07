@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.C
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 11:45:33 AM MDT
+  \date      Wed 06 Aug 2014 04:34:26 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MonteCarlo base
   \details   MonteCarlo base
@@ -20,14 +20,14 @@ MonteCarlo::header() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  tk::Option< ctr::MonteCarlo > mc;
-  auto& name = mc.name( control().get< tag::selected, tag::montecarlo >() );
-
-  print().raw( "Start solving " + name + "\n\n" );
-  print().raw( "      it             t            dt"
-               "        ETE        ETA   out\n"
-               "------------------------------------"
-               "----------------------------\n" );
+//   ctr::MonteCarlo mc;
+//   auto& name = mc.name( control().get< tag::selected, tag::montecarlo >() );
+// 
+//   print().raw( "Start solving " + name + "\n\n" );
+//   print().raw( "      it             t            dt"
+//                "        ETE        ETA   out\n"
+//                "------------------------------------"
+//                "----------------------------\n" );
 }
 
 void
@@ -50,26 +50,26 @@ MonteCarlo::report( uint64_t it,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
-  timer().eta( m_totalTime, m_term, t, nstep, it, ete, eta );
-
-  print().stream() << std::setfill(' ') << std::setw(8) << it << "  "
-                   << std::scientific << std::setprecision(6)
-                   << std::setw(12) << t << "  "
-                   << dt << "  "
-                   << std::setfill('0')
-                   << std::setw(3) << ete.h.count() << ":"
-                   << std::setw(2) << ete.m.count() << ":"
-                   << std::setw(2) << ete.s.count() << "  "
-                   << std::setw(3) << eta.h.count() << ":"
-                   << std::setw(2) << eta.m.count() << ":"
-                   << std::setw(2) << eta.s.count() << "  ";
-
-  if (wroteGlob) print().raw( 'G' );
-  if (wroteJpdf) print().raw( 'J' );
-  if (wroteStat) print().raw( 'P' );
-
-  print().raw( '\n' );
+//   tk::Watch ete, eta;       // estimated time elapsed and to accomplishment
+//   timer().eta( m_totalTime, m_term, t, nstep, it, ete, eta );
+// 
+//   print().stream() << std::setfill(' ') << std::setw(8) << it << "  "
+//                    << std::scientific << std::setprecision(6)
+//                    << std::setw(12) << t << "  "
+//                    << dt << "  "
+//                    << std::setfill('0')
+//                    << std::setw(3) << ete.h.count() << ":"
+//                    << std::setw(2) << ete.m.count() << ":"
+//                    << std::setw(2) << ete.s.count() << "  "
+//                    << std::setw(3) << eta.h.count() << ":"
+//                    << std::setw(2) << eta.m.count() << ":"
+//                    << std::setw(2) << eta.s.count() << "  ";
+// 
+//   if (wroteGlob) print().raw( 'G' );
+//   if (wroteJpdf) print().raw( 'J' );
+//   if (wroteStat) print().raw( 'P' );
+// 
+//   print().raw( '\n' );
 }
 
 void
@@ -79,13 +79,13 @@ MonteCarlo::echoRNGs() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print().section("Random number generators");
-  #ifdef HAS_MKL
-  print().MKLParams( control().get< tag::selected, tk::tag::rng >(),
-                     control().get< tag::param, tk::tag::rngmkl >() );
-  #endif
-  print().RNGSSEParams( control().get< tag::selected, tk::tag::rng >(),
-                        control().get< tag::param, tk::tag::rngsse >() );
+//   print().section("Random number generators");
+//   #ifdef HAS_MKL
+//   print().MKLParams( control().get< tag::selected, tk::tag::rng >(),
+//                      control().get< tag::param, tk::tag::rngmkl >() );
+//   #endif
+//   print().RNGSSEParams( control().get< tag::selected, tk::tag::rng >(),
+//                         control().get< tag::param, tk::tag::rngsse >() );
 }
 
 void
@@ -95,13 +95,13 @@ MonteCarlo::echoIO() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print().subsection( "Output filenames" );
-  print().item( "Input", control().get< tag::cmd, tag::io, tag::input >() );
-  print().item( "Output", control().get< tag::cmd, tag::io, tag::output >() );
-  print().item( "Glob", control().get< tag::cmd, tag::io, tag::glob >() );
-  print().item( "Statistics", control().get< tag::cmd, tag::io, tag::stat >() );
-  print().item( "PDF", control().get< tag::cmd, tag::io, tag::pdf >() );
-  print().endsubsection();
+//   print().subsection( "Output filenames" );
+//   print().item( "Input", control().get< tag::cmd, tag::io, tag::input >() );
+//   print().item( "Output", control().get< tag::cmd, tag::io, tag::output >() );
+//   print().item( "Glob", control().get< tag::cmd, tag::io, tag::glob >() );
+//   print().item( "Statistics", control().get< tag::cmd, tag::io, tag::stat >() );
+//   print().item( "PDF", control().get< tag::cmd, tag::io, tag::pdf >() );
+//   print().endsubsection();
 }
 
 void
@@ -111,16 +111,16 @@ MonteCarlo::echoIncpar() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print().subsection( "Increment parameters" );
-  print().item( "Number of particles",
-                control().get< tag::incpar, tag::npar >() );
-  print().item( "Number of time steps",
-                control().get< tag::incpar, tag::nstep >() );
-  print().item( "Terminate time",
-                control().get< tag::incpar, tag::term >() );
-  print().item( "Initial time step size",
-                control().get< tag::incpar, tag::dt >() );
-  print().endsubsection();
+//   print().subsection( "Increment parameters" );
+//   print().item( "Number of particles",
+//                 control().get< tag::incpar, tag::npar >() );
+//   print().item( "Number of time steps",
+//                 control().get< tag::incpar, tag::nstep >() );
+//   print().item( "Terminate time",
+//                 control().get< tag::incpar, tag::term >() );
+//   print().item( "Initial time step size",
+//                 control().get< tag::incpar, tag::dt >() );
+//   print().endsubsection();
 }
 
 void
@@ -130,13 +130,13 @@ MonteCarlo::echoIntervals() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print().subsection( "Output intervals" );
-  print().item( "TTY", control().get< tag::interval, tag::tty>() );
-  print().item( "Dump", control().get< tag::interval, tag::dump>() );
-  print().item( "Glob", control().get< tag::interval, tag::glob >() );
-  print().item( "Statistics", control().get< tag::interval, tag::plot >() );
-  print().item( "PDF", control().get< tag::interval, tag::pdf >() );
-  print().endsubsection();
+//   print().subsection( "Output intervals" );
+//   print().item( "TTY", control().get< tag::interval, tag::tty>() );
+//   print().item( "Dump", control().get< tag::interval, tag::dump>() );
+//   print().item( "Glob", control().get< tag::interval, tag::glob >() );
+//   print().item( "Statistics", control().get< tag::interval, tag::plot >() );
+//   print().item( "PDF", control().get< tag::interval, tag::pdf >() );
+//   print().endsubsection();
 }
 
 void
@@ -146,7 +146,7 @@ MonteCarlo::echoStatistics() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print().subsection( "Statistics" );
-  print().RequestedStats( "Requested" );
-  print().EstimatedStats( "Estimated" );
+//   print().subsection( "Statistics" );
+//   print().RequestedStats( "Requested" );
+//   print().EstimatedStats( "Estimated" );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 07:11:29 AM MST
+  \date      Wed 06 Aug 2014 05:21:17 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Statistics
@@ -12,9 +12,9 @@
 #define Statistics_h
 
 #include <Types.h>
-#include <Base.h>
 #include <Distribution.h>
 #include <Quinoa/Types.h>
+#include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
 
@@ -23,7 +23,7 @@ class Statistics {
 
   public:
     //! Constructor
-    explicit Statistics( const Base& base, const ParProps& particles );
+    explicit Statistics();
 
     //! Destructor
     virtual ~Statistics() = default;
@@ -83,20 +83,20 @@ class Statistics {
 
     //! Function object for creating a run-time std::map< depvar, offset >
     struct depvar {
-      const Base& m_base;
-      OffsetMap& m_map;
-      depvar( const Base& base, OffsetMap& map ) : m_base(base), m_map(map) {}
-      template< typename U > void operator()( U ) {
-        m_map[ m_base.control.get< tag::param, U, tag::depvar >() ] =
-          m_base.control.get< tag::component >().template offset< U >();
-      }
+//       const Base& m_base;
+//       OffsetMap& m_map;
+//       depvar( const Base& base, OffsetMap& map ) : m_base(base), m_map(map) {}
+//       template< typename U > void operator()( U ) {
+//         m_map[ m_base.control.get< tag::param, U, tag::depvar >() ] =
+//           m_base.control.get< tag::component >().template offset< U >();
+//       }
     };
 
     //! Setup ordinary moments
-    void setupOrdinary( const Base& base, const OffsetMap& offset );
+    void setupOrdinary( const OffsetMap& offset );
 
     //! Setup central moments
-    void setupCentral( const Base& base, const OffsetMap& offset );
+    void setupCentral( const OffsetMap& offset );
 
     //! Estimate ordinary moments
     void estimateOrdinary();
@@ -116,7 +116,7 @@ class Statistics {
     //! Return true if string is all lower case
     bool isLower( const std::string&s ) const;
 
-    const ParProps& m_particles;              //!< Particle properties
+//    const ParProps& m_particles;              //!< Particle properties
     const uint64_t m_nthreads;                //!< Number of threads
     const uint64_t m_npar;                    //!< Number of particles
 

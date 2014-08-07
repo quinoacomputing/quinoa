@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/SDE.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:35:59 PM MST
+  \date      Wed 06 Aug 2014 09:28:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE options and associations
   \details   SDE options and associations
@@ -42,43 +42,22 @@ class SDE : public tk::Toggle< SDEType > {
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit SDE() : Toggle< SDEType >( "SDE", names, values ) {}
-
-  private:
-    //! Don't permit copy constructor
-    SDE(const SDE&) = delete;
-    //! Don't permit copy assigment
-    SDE& operator=(const SDE&) = delete;
-    //! Don't permit move constructor
-    SDE(SDE&&) = delete;
-    //! Don't permit move assigment
-    SDE& operator=(SDE&&) = delete;
-
-    //! Get access to SDE keywords
-    const kw::ornstein_uhlenbeck ou {};
-    const kw::lognormal lognormal {};
-    const kw::skewnormal skewnormal {};
-    const kw::dirichlet dir {};
-    const kw::gendir gendir {};
-
-    //! Enums -> names
-    const std::map<SDEType, std::string> names {
-      { SDEType::NO_SDE, "n/a" },
-      { SDEType::ORNSTEIN_UHLENBECK, ou.name() },
-      { SDEType::LOGNORMAL, lognormal.name() },
-      { SDEType::SKEWNORMAL, skewnormal.name() },
-      { SDEType::DIRICHLET, dir.name() },
-      { SDEType::GENDIR, gendir.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, SDEType> values {
-      { "no_sde", SDEType::NO_SDE },
-      { ou.string(), SDEType::ORNSTEIN_UHLENBECK },
-      { skewnormal.string(), SDEType::SKEWNORMAL },
-      { dir.string(), SDEType::DIRICHLET },
-      { gendir.string(), SDEType::GENDIR }
-    };
+    explicit SDE() :
+      Toggle< SDEType >( "SDE",
+        //! Enums -> names
+        { { SDEType::NO_SDE, "n/a" },
+          { SDEType::ORNSTEIN_UHLENBECK, kw::ornstein_uhlenbeck().name() },
+          { SDEType::LOGNORMAL, kw::lognormal().name() },
+          { SDEType::SKEWNORMAL, kw::skewnormal().name() },
+          { SDEType::DIRICHLET, kw::dirichlet().name() },
+          { SDEType::GENDIR, kw::gendir().name() } },
+        //! keywords -> Enums
+        { { "no_sde", SDEType::NO_SDE },
+          { kw::ornstein_uhlenbeck().string(), SDEType::ORNSTEIN_UHLENBECK },
+          { kw::lognormal().string(), SDEType::LOGNORMAL },
+          { kw::skewnormal().string(), SDEType::SKEWNORMAL },
+          { kw::dirichlet().string(), SDEType::DIRICHLET },
+          { kw::gendir().string(), SDEType::GENDIR } } ) {}
 };
 
 } // ctr::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 05:35:20 PM MST
+  \date      Wed 06 Aug 2014 03:33:32 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE coefficients policy options and associations
   \details   SDE coefficients policy options and associations
@@ -29,31 +29,11 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit CoeffPolicy() :
-      Toggle< CoeffPolicyType >
-            ( "SDE coefficients policy", names, values ) {}
-
-  private:
-    //! Don't permit copy constructor
-    CoeffPolicy(const CoeffPolicy&) = delete;
-    //! Don't permit copy assigment
-    CoeffPolicy& operator=(const CoeffPolicy&) = delete;
-    //! Don't permit move constructor
-    CoeffPolicy(CoeffPolicy&&) = delete;
-    //! Don't permit move assigment
-    CoeffPolicy& operator=(CoeffPolicy&&) = delete;
-
-    //! Get access to coefficients policy keywords
-    const kw::constant constant {};
-
-    //! Enums -> names
-    const std::map<CoeffPolicyType, std::string> names {
-      { CoeffPolicyType::CONSTANT, constant.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, CoeffPolicyType> values {
-      { constant.string(), CoeffPolicyType::CONSTANT }
-    };
+      Toggle< CoeffPolicyType >( "SDE coefficients policy",
+        //! Enums -> names
+        { { CoeffPolicyType::CONSTANT, kw::constant().name() } },
+        //! keywords -> Enums
+        {  { kw::constant().string(), CoeffPolicyType::CONSTANT } } ) {}
 };
 
 } // ctr::

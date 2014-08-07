@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 09:15:45 PM MDT
+  \date      Wed 06 Aug 2014 04:47:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -16,7 +16,6 @@
 
 #include <Macro.h>
 #include <Exception.h>
-#include <Option.h>
 #include <PEGTLParsed.h>
 #include <Quinoa/Types.h>
 #include <Quinoa/InputDeck/Keywords.h>
@@ -30,13 +29,17 @@
 #include <CustomPEGTLCapture.h>
 
 namespace quinoa {
+
+extern ctr::InputDeck g_inputdeck_defaults;
+
 namespace deck {
 
   //! PEGTLParsed type specialized to Quinoa's input deck parser
-  using PEGTLInputDeck = ctr::PEGTLParsed< ctr::InputDeck,
-                                           pegtl::file_input< ctr::Location >,
-                                           tag::cmd,
-                                           ctr::CmdLine >;
+  using PEGTLInputDeck =
+    tk::ctr::PEGTLParsed< ctr::InputDeck,
+                          pegtl::file_input< ctr::Location >,
+                          tag::cmd,
+                          ctr::CmdLine >;
 
   // Quinoa's InputDeck state
 
@@ -100,29 +103,28 @@ namespace deck {
   };
 
   //! put option in state at position given by tags
-  template< class OptionType, typename... tags >
-  struct store_option : pegtl::action_base< store_option<OptionType,tags...> > {
+  template< class Option, typename... tags >
+  struct store_option : pegtl::action_base< store_option< Option, tags... > > {
     static void apply(const std::string& value, Stack& stack) {
-      tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
-                           ( stack, value, ctr::InputDeckDefaults );
+      tk::grm::store_option< Stack, Option, ctr::InputDeck, tags... >
+                           ( stack, value, g_inputdeck_defaults );
     }
   };
 
   //! put option in state at position given by tags if among the selected
-  template< class OptionType, typename sel, typename vec, typename... tags >
+  template< class Option, typename sel, typename vec, typename... tags >
   struct check_store_option :
-  pegtl::action_base< check_store_option< OptionType, sel, vec, tags... > >
+  pegtl::action_base< check_store_option< Option, sel, vec, tags... > >
   {
     static void apply(const std::string& value, Stack& stack) {
       // error out if chosen item does not exist in selected vector
-      tk::Option< OptionType > opt;
       bool exists = false;
       for (const auto& r : stack.template get< sel, vec >()) {
-        if (opt.value(value) == r) exists = true;
+        if (Option().value(value) == r) exists = true;
       }
       if (exists) {
-        tk::grm::store_option< Stack, OptionType, ctr::InputDeck, tags... >
-                             ( stack, value, ctr::InputDeckDefaults );
+        tk::grm::store_option< Stack, Option, ctr::InputDeck, tags... >
+                             ( stack, value, g_inputdeck_defaults );
       } else {
         tk::grm::handleError< Stack, tk::grm::Error::NOTSELECTED >
                             ( stack, value );
@@ -206,9 +208,9 @@ namespace deck {
   template< typename keyword, typename...tags >
   struct parameter_vector :
          tk::grm::vector< Stack,
-                          tk::kw::end,
                           typename keyword::pegtl_string,
-                          tk::grm::Store_back< Stack, tag::param, tags... > > {};
+                          tk::grm::Store_back< Stack, tag::param, tags... >,
+                          tk::kw::end > {};
 
   //! rng parameter
   template< typename keyword, typename option, typename model, typename... tags >

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Thu 16 Jan 2014 09:53:13 PM MST
+  \date      Wed 06 Aug 2014 09:24:13 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -23,8 +23,8 @@ namespace quinoa {
 namespace cmd {
 
   //! PEGTLParsed type specialized to Quinoa's command line parser
-  using PEGTLCmdLine = ctr::PEGTLParsed< ctr::CmdLine,
-                                         pegtl::string_input< ctr::Location > >;
+  using PEGTLCmdLine =
+    tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
 
   // Quinoa's CmdLine state
 
@@ -35,6 +35,12 @@ namespace cmd {
 
   // Quinoa's CmdLine grammar
 
+  //! verbose (i.e., verbose or quiet output)
+  struct verbose :
+         tk::grm::process_cmd_switch< Stack,
+                                      tk::kw::verbose,
+                                      tk::tag::verbose > {};
+
   //! io parameter
   template< typename keyword, typename io_tag >
   struct io :
@@ -44,7 +50,8 @@ namespace cmd {
 
   //! command line keywords
   struct keywords :
-         pegtl::sor< io< kw::control, tag::control >,
+         pegtl::sor< verbose,
+                     io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,
                      io< kw::pdf, tag::pdf >,

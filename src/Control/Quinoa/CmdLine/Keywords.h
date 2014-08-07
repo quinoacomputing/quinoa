@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Sun 22 Jun 2014 10:29:52 AM MDT
+  \date      Wed 06 Aug 2014 09:25:25 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -20,6 +20,7 @@
 #define Keywords
 
 #include <Keyword.h>
+#include <CmdLineBaseKeywords.h>
 
 namespace quinoa {
 //! List of keywords the parser understands

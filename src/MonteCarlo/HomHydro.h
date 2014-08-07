@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomHydro.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:09:49 PM MDT
+  \date      Wed 06 Aug 2014 05:17:33 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous hydrodynamics
   \details   Homogeneous hydrodynamics
@@ -20,7 +20,7 @@ class HomHydro : public Physics {
 
   public:
     //! Constructor
-    explicit HomHydro( const Base& b ) : Physics( b ) {
+    explicit HomHydro() {
       ErrChk( hydro(), "No hydro model specified" );
     }
 

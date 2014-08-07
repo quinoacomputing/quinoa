@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/SDE.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:09:09 PM MDT
+  \date      Wed 06 Aug 2014 05:23:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE
   \details   SDE
@@ -14,7 +14,7 @@
 #include <cstdint>
 
 #include <Model.h>
-#include <Base.h>
+#include <RNG.h>
 #include <InitPolicy.h>
 
 namespace quinoa {
@@ -46,8 +46,7 @@ class SDE : public Model {
 
   protected:
     //! Constructor: protected, designed to be base-only
-    explicit SDE( const Base& base,
-                  tk::ctr::RNGType rngType,
+    explicit SDE( tk::ctr::RNGType rngType,
                   char depv,
                   const ParProps& particles,
                   int offset,
@@ -55,8 +54,8 @@ class SDE : public Model {
       m_rngType( rngType ),
       m_depvar( depv ),
       m_particles( particles ),
-      m_npar( base.control.get< tag::incpar, tag::npar >() ),
-      m_nprop( base.control.get< tag::component >().nprop() ),
+      m_npar( 1/*base.control.get< tag::incpar, tag::npar >()*/ ),
+      m_nprop( 1/*base.control.get< tag::component >().nprop()*/ ),
       m_offset( offset ),
       m_ncomp( ncmp )
     {
@@ -64,10 +63,10 @@ class SDE : public Model {
               "Cannot instantiate class SDE without an RNG" );
       Assert( m_ncomp > 0, "SDE need at least one scalar to advance" );
       // Initialize particle properties (and throw away init policy)
-      Init( m_particles, m_npar, m_nprop, m_offset, m_ncomp,
-            base.paradigm.ompNthreads() );
+//       Init( m_particles, m_npar, m_nprop, m_offset, m_ncomp,
+//             base.paradigm.ompNthreads() );
       // Instantiate RNG
-      initRNG( base );
+      initRNG();
     }
 
     const tk::ctr::RNGType m_rngType;  //!< RNG used
@@ -90,8 +89,8 @@ class SDE : public Model {
     SDE& operator=(SDE&&) = delete;
 
     //! Instantiate random number genrator
-    void initRNG( const Base& base ) {
-      m_rng = std::unique_ptr< tk::RNG >( base.rng[ m_rngType ]() );
+    void initRNG() {
+//      m_rng = std::unique_ptr< tk::RNG >( base.rng[ m_rngType ]() );
     }
 };
 

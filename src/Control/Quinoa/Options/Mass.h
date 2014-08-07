@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 04:32:40 PM MST
+  \date      Wed 06 Aug 2014 03:41:04 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -28,37 +28,19 @@ enum class MassType : uint8_t { NO_MASS=0,
 using MassFactory = std::map< MassType, std::function<Model*()> >;
 
 //! Class with base templated on the above enum class with associations
-class Mass : public tk::Toggle<MassType> {
+class Mass : public tk::Toggle< MassType > {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
-    explicit Mass() : Toggle<MassType>("Mass", names, values) {}
-
-  private:
-    //! Don't permit copy constructor
-    Mass(const Mass&) = delete;
-    //! Don't permit copy assigment
-    Mass& operator=(const Mass&) = delete;
-    //! Don't permit move constructor
-    Mass(Mass&&) = delete;
-    //! Don't permit move assigment
-    Mass& operator=(Mass&&) = delete;
-
-    //! Get access to mass keywords
-    const kw::mass_beta beta {};
-
-    //! Enums -> names
-    const std::map<MassType, std::string> names {
-      { MassType::NO_MASS, "n/a" },
-      { MassType::BETA, beta.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, MassType> values {
-      { "no_mass", MassType::NO_MASS },
-      { beta.string(), MassType::BETA }
-    };
+    explicit Mass() :
+      Toggle< MassType >( "Mass",
+        //! Enums -> names
+        { { MassType::NO_MASS, "n/a" },
+          { MassType::BETA, kw::mass_beta().name() } },
+        //! keywords -> Enums
+        { { "no_mass", MassType::NO_MASS },
+          { kw::mass_beta().string(), MassType::BETA } } ) {}
 };
 
 } // ctr::

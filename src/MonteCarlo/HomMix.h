@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:09:41 PM MDT
+  \date      Wed 06 Aug 2014 05:06:47 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -12,7 +12,6 @@
 #define HomMix_h
 
 #include <Physics.h>
-#include <Base.h>
 
 namespace quinoa {
 
@@ -21,7 +20,7 @@ class HomMix : public Physics {
 
   public:
     //! Constructor
-    explicit HomMix( const Base& b ) : Physics( b ) {
+    explicit HomMix() : Physics() {
       ErrChk( mix(), "No material mix model specified" );
     }
 
