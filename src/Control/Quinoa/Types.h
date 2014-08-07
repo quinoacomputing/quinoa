@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:01:49 PM MDT
+  \date      Thu 07 Aug 2014 03:27:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -15,7 +15,6 @@
 #include <tkTypes.h>
 #include <Types.h>
 #include <Quinoa/Tags.h>
-#include <Quinoa/Options/Geometry.h>
 #include <Quinoa/Options/MonteCarlo.h>
 #include <Quinoa/Options/Position.h>
 #include <Quinoa/Options/Mass.h>
@@ -168,7 +167,6 @@ using Product = std::vector< Term >;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::geometry,   ctr::GeometryType,   //!< Selected geometry definition
   tag::montecarlo, ctr::MonteCarloType, //!< Selected physics
   tag::position,   ctr::PositionType,   //!< Selected position model
   tag::mass,       ctr::MassType,       //!< Selected mass model

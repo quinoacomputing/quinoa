@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 07:16:24 AM MDT
+  \date      Thu 07 Aug 2014 03:30:21 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -14,7 +14,6 @@
 namespace quinoa {
 namespace tag {
 
-struct geometry {};
 struct montecarlo {};
 struct nstep {};
 struct term {};

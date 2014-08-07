@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:47:00 PM MDT
+  \date      Thu 07 Aug 2014 03:27:50 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -250,11 +250,6 @@ namespace deck {
              add_depvar,
              pegtl::capture< model::id > > > {};
 
-  //! scan and store geometry keyword and option
-  template< typename keyword >
-  struct scan_geometry :
-         select_option< keyword, ctr::Geometry, tag::geometry > {};
-
   //! scan and store MonteCarlo keyword and option
   template< typename keyword >
   struct scan_montecarlo :
@@ -296,16 +291,6 @@ namespace deck {
                                            Stack,
                                            tk::grm::Set< Stack,
                                                          tag::title > > > {};
-
-  //! analytic_geometry block
-  struct analytic_geometry:
-         pegtl::ifmust< scan_geometry< kw::analytic_geometry >,
-                        tk::grm::block< Stack, tk::kw::end > > {};
-
-  //! discrete_geometry block
-  struct discrete_geometry:
-         pegtl::ifmust< scan_geometry< kw::discrete_geometry >,
-                        tk::grm::block< Stack, tk::kw::end > > {};
 
   //! statistics block
   struct statistics :
@@ -426,11 +411,6 @@ namespace deck {
                                      tag::atwood > >
                       > {};
 
-  //! geometry definition types
-  struct geometry :
-         pegtl::sor< analytic_geometry,
-                     discrete_geometry > {};
-
   //! common to all monte-carlo
   struct montecarlo_common :
          pegtl::sor< incpar< kw::npar, tag::npar >,
@@ -481,7 +461,6 @@ namespace deck {
          pegtl::ifmust< scan_montecarlo< kw::hommix >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
-                                        geometry,
                                         montecarlo_common,
                                         mix,
                                         rngblock,
@@ -492,7 +471,6 @@ namespace deck {
          pegtl::ifmust< scan_montecarlo< kw::homrt >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
-                                        geometry,
                                         montecarlo_common,
                                         mass,
                                         hydro,
@@ -505,7 +483,6 @@ namespace deck {
          pegtl::ifmust< scan_montecarlo< kw::homhydro >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
-                                        geometry,
                                         montecarlo_common,
                                         hydro,
                                         freq,
@@ -517,7 +494,6 @@ namespace deck {
          pegtl::ifmust< scan_montecarlo< kw::spinsflow >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
-                                        geometry,
                                         montecarlo_common,
                                         hydro,
                                         freq,
