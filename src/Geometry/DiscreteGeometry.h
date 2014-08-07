@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/DiscreteGeometry.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:22:22 2013
+  \date      Wed 06 Aug 2014 05:10:23 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Discrete geometry definition
   \details   Discrete geometry definition
@@ -21,7 +21,7 @@ class DiscreteGeometry : public Geometry {
 
   public:
     //! Constructor
-    explicit DiscreteGeometry(const Base& base);
+    explicit DiscreteGeometry();
 
     //! Destructor
     ~DiscreteGeometry() noexcept override {}

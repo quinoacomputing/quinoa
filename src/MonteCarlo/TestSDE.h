@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/TestSDE.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:07:28 2014
+  \date      Wed 06 Aug 2014 04:28:56 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE testbed
   \details   SDE testbed
@@ -45,12 +45,12 @@ class TestSDE : public MonteCarlo {
     //! Instantiate an SDE
     template< class SDE, class SDEType >
     void instantiateSDE( const SDEType& sdetype ) {
-      if ( control().get< tag::component, SDE >() ) {
-        ctr::SDEKey key{ sdetype,
-                         control().get< tag::param, SDE, tag::initpolicy >(),
-                         control().get< tag::param, SDE, tag::coeffpolicy >() };
-        m_sde.push_back( tk::instantiate( m_SDEFactory, key ) );
-      }
+//       if ( control().get< tag::component, SDE >() ) {
+//         ctr::SDEKey key{ sdetype,
+//                          control().get< tag::param, SDE, tag::initpolicy >(),
+//                          control().get< tag::param, SDE, tag::coeffpolicy >() };
+//         m_sde.push_back( tk::instantiate( m_SDEFactory, key ) );
+//       }
     }
 
     //! Advance

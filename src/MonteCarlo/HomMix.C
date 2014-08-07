@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/HomMix.C
   \author    J. Bakosi
-  \date      Wed Apr 23 11:21:11 2014
+  \date      Wed 06 Aug 2014 04:30:53 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Homogeneous material mixing
   \details   Homogeneous material mixing
@@ -33,57 +33,57 @@ HomMix::run()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  uint64_t it = 0;
-  tk::real t = 0.0;
-  bool wroteJpdf = false;
-  bool wroteGlob = false;
-  bool wroteStat = false;
-
-  const auto nstep = control().get<tag::incpar, tag::nstep>();
-  const auto dt    = control().get<tag::incpar, tag::dt>();
-  const auto ttyi  = control().get<tag::interval, tag::tty>();
-  const auto pdfi  = control().get<tag::interval, tag::pdf>();
-  const auto glbi  = control().get<tag::interval, tag::glob>();
-  const auto stai  = control().get<tag::interval, tag::plot>();
-
-  timer().start( m_totalTime );
-
-  // Echo headers
-  if (nstep) {
-    header();
-    statWriter().header();
-  }
-
-  // Time stepping loop
-  tk::real eps = std::numeric_limits< tk::real >::epsilon();
-  while (std::fabs(t - m_term) > eps && it < nstep) {
-
-    // Advance particles
-    advance(dt);
-
-    // Accumulate statistics
-    statistics().accumulate();
-
-    // Output pdf at selected times
-    if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
-
-    // Append glob file at selected times
-    if (!(it % glbi)) { globWriter().writeGlob(it,t); wroteGlob = true; }
-
-    // Append statistics file at selected times
-    if (!(it % stai)) { statWriter().writeStat(it,t); wroteStat = true; }
-
-    // Echo one-liner info
-    if (!(it % ttyi)) {
-      report(it, nstep, t, dt, wroteJpdf, wroteGlob, wroteStat);
-      wroteJpdf = wroteGlob = wroteStat = false;
-    }
-
-    // Increase timestep and iteration counter
-    t += dt;
-    ++it;
-    if (t > m_term) t = m_term;
-  }
+//   uint64_t it = 0;
+//   tk::real t = 0.0;
+//   bool wroteJpdf = false;
+//   bool wroteGlob = false;
+//   bool wroteStat = false;
+// 
+//   const auto nstep = control().get<tag::incpar, tag::nstep>();
+//   const auto dt    = control().get<tag::incpar, tag::dt>();
+//   const auto ttyi  = control().get<tag::interval, tag::tty>();
+//   const auto pdfi  = control().get<tag::interval, tag::pdf>();
+//   const auto glbi  = control().get<tag::interval, tag::glob>();
+//   const auto stai  = control().get<tag::interval, tag::plot>();
+// 
+//   timer().start( m_totalTime );
+// 
+//   // Echo headers
+//   if (nstep) {
+//     header();
+//     statWriter().header();
+//   }
+// 
+//   // Time stepping loop
+//   tk::real eps = std::numeric_limits< tk::real >::epsilon();
+//   while (std::fabs(t - m_term) > eps && it < nstep) {
+// 
+//     // Advance particles
+//     advance(dt);
+// 
+//     // Accumulate statistics
+//     statistics().accumulate();
+// 
+//     // Output pdf at selected times
+//     if (!(it % pdfi)) { outJpdf(t); wroteJpdf = true; }
+// 
+//     // Append glob file at selected times
+//     if (!(it % glbi)) { globWriter().writeGlob(it,t); wroteGlob = true; }
+// 
+//     // Append statistics file at selected times
+//     if (!(it % stai)) { statWriter().writeStat(it,t); wroteStat = true; }
+// 
+//     // Echo one-liner info
+//     if (!(it % ttyi)) {
+//       report(it, nstep, t, dt, wroteJpdf, wroteGlob, wroteStat);
+//       wroteJpdf = wroteGlob = wroteStat = false;
+//     }
+// 
+//     // Increase timestep and iteration counter
+//     t += dt;
+//     ++it;
+//     if (t > m_term) t = m_term;
+//   }
 }
 
 void
@@ -93,23 +93,24 @@ HomMix::advance(tk::real dt)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  #ifdef _OPENMP
-  #pragma omp parallel
-  #endif
-  {
-    #ifdef _OPENMP
-    int tid = omp_get_thread_num();
-    #else
-    int tid = 0;
-    #endif
-
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
-    for (uint64_t p=0; p<m_npar; ++p) {
-      mix()->advance( p, tid, dt );
-    }
-  }
+IGNORE(dt);
+//   #ifdef _OPENMP
+//   #pragma omp parallel
+//   #endif
+//   {
+//     #ifdef _OPENMP
+//     int tid = omp_get_thread_num();
+//     #else
+//     int tid = 0;
+//     #endif
+// 
+//     #ifdef _OPENMP
+//     #pragma omp for
+//     #endif
+//     for (uint64_t p=0; p<m_npar; ++p) {
+//       mix()->advance( p, tid, dt );
+//     }
+//   }
 }
 
 void

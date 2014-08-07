@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 12:09:23 PM MDT
+  \date      Wed 06 Aug 2014 03:12:46 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -46,7 +46,7 @@ CProxy_Main mainProxy;
 
 namespace unittest {
 
-void echoTPL(const tk::Print& print)
+void echoTPL( const tk::Print& print )
 //******************************************************************************
 //  Echo TPL version informaion for libs specific to UnitTest
 //! \author  J. Bakosi

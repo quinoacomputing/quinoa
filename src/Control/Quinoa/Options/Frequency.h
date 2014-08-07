@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:16:31 2013
+  \date      Wed 06 Aug 2014 03:36:27 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -24,38 +24,19 @@ enum class FrequencyType : uint8_t { NO_FREQUENCY=0,
                                      GAMMA };
 
 //! Class with base templated on the above enum class with associations
-class Frequency : public tk::Toggle<FrequencyType> {
+class Frequency : public tk::Toggle< FrequencyType > {
 
   public:
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit Frequency() :
-      Toggle<FrequencyType>("Turbulence frequency", names, values) {}
-
-  private:
-    //! Don't permit copy constructor
-    Frequency(const Frequency&) = delete;
-    //! Don't permit copy assigment
-    Frequency& operator=(const Frequency&) = delete;
-    //! Don't permit move constructor
-    Frequency(Frequency&&) = delete;
-    //! Don't permit move assigment
-    Frequency& operator=(Frequency&&) = delete;
-
-    //! Get access to frequency keywords
-    const kw::freq_gamma freq_gamma {};
-
-    //! Enums -> names
-    const std::map<FrequencyType, std::string> names {
-      { FrequencyType::NO_FREQUENCY, "n/a" },
-      { FrequencyType::GAMMA, freq_gamma.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, FrequencyType> values {
-      { "no_frequency", FrequencyType::NO_FREQUENCY },
-      { freq_gamma.string(), FrequencyType::GAMMA }
-    };
+      Toggle< FrequencyType >( "Turbulence frequency",
+        //! Enums -> names
+        { { FrequencyType::NO_FREQUENCY, "n/a" },
+          { FrequencyType::GAMMA, kw::freq_gamma().name() } },
+        //! keywords -> Enums
+        { { "no_frequency", FrequencyType::NO_FREQUENCY },
+          { kw::freq_gamma().string(), FrequencyType::GAMMA } } ) {}
 };
 
 } // ctr::

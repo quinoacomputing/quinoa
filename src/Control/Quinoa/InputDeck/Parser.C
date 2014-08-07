@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Sat 22 Feb 2014 02:28:24 PM MST
+  \date      Wed 06 Aug 2014 04:37:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -16,10 +16,10 @@
 
 using quinoa::InputDeckParser;
 
-InputDeckParser::InputDeckParser(const tk::Print& print,
-                                 std::unique_ptr< ctr::CmdLine > cmdline,
-                                 std::unique_ptr< ctr::InputDeck >& inputdeck) :
-  FileParser( cmdline->get<tag::io, tag::control>() )
+InputDeckParser::InputDeckParser( const tk::Print& print,
+                                  const ctr::CmdLine& cmdline,
+                                  ctr::InputDeck& inputdeck ) :
+  FileParser( cmdline.get< tag::io, tag::control >() )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
@@ -30,26 +30,25 @@ InputDeckParser::InputDeckParser(const tk::Print& print,
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );
 
-  // Create std::unique_ptr behind which to store parsed input deck data:
-  // PEGTLInputDeck derives from InputDeck and has location() used during parse
-  std::unique_ptr< deck::PEGTLInputDeck >
-    pid( tk::make_unique< deck::PEGTLInputDeck >( input, *cmdline ) );
+  // Create PEGTLInputDeck to store parsed input deck data which derives from
+  // InputDeck and has location() used during parse
+  deck::PEGTLInputDeck id( input, cmdline );
 
   // Parse input file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
-  pegtl::dummy_parse< deck::read_file >( input, *pid );
+  pegtl::dummy_parse< deck::read_file >( input, id );
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
-  // by creating a unique_ptr to the base class (InputDeck) and transfer it out
-  inputdeck = std::unique_ptr< ctr::InputDeck >( std::move(pid) );
+  // and transfer it out
+  inputdeck = id;
 
   // Filter out repeated statistics
-  unique( inputdeck->get< tag::stat >() );
+  unique( inputdeck.get< tag::stat >() );
 
   // If we got here, parser succeeded
-  print.item("Parsed control file", "success");
+  print.item( "Parsed control file", "success" );
 }
 
 void

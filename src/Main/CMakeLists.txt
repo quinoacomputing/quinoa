@@ -41,19 +41,19 @@ endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Paradigm
-                      LinearAlgebra
-                      Geometry
-                      MonteCarlo
+                      #LinearAlgebra
+                      #Geometry
+                      #MonteCarlo
                       Base
-                      IO
-                      Mesh
-                      Statistics
+                      #IO
+                      #Mesh
+                      #Statistics
                       QuinoaControl
-                      RNG
+                      #RNG
                       ${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARY}
-                      ${EXODUS_LIBRARY}
-                      ${NETCDF_LIBRARY}
+                      #${NEMESIS_LIBRARY}
+                      #${EXODUS_LIBRARY}
+                      #${NETCDF_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -63,6 +63,10 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${RNGSSE_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
+
+# Add custom dependencies for Quinoa's main Charm++ module
+addCharmModule( "quinoa" "${QUINOA_EXECUTABLE}" )
+removeWarnings( "QuinoaDriver.C;QuinoaPrint.C;Quinoa.C")
 
 INSTALL(TARGETS ${QUINOA_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime

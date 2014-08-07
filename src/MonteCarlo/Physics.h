@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/Physics.h
   \author    J. Bakosi
-  \date      Wed Mar 19 16:10:46 2014
+  \date      Wed 06 Aug 2014 05:21:24 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Physics base
   \details   Physics base
@@ -11,7 +11,6 @@
 #ifndef Physics_h
 #define Physics_h
 
-#include <Base.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
@@ -23,9 +22,6 @@ namespace quinoa {
 class Physics : public MonteCarlo {
 
   public:
-    //! Destructor
-    ~Physics() override = default;
-
     //! Accessor to mass model
     //! \return Pointer to mass model
     Model* mass() const noexcept { return m_mass.get(); }
@@ -40,7 +36,7 @@ class Physics : public MonteCarlo {
 
   protected:
     //! Constructor: protected, designed to be base-only
-    explicit Physics( const Base& base );
+    explicit Physics();
 
     const int m_nposition;                //!< Number of position components
     const int m_ndensity;                 //!< Number of density components
@@ -48,15 +44,6 @@ class Physics : public MonteCarlo {
     const int m_nscalar;                  //!< Number of scalar components
 
   private:
-    //! Don't permit copy constructor
-    Physics(const Physics&) = delete;
-    //! Don't permit copy assigment
-    Physics& operator=(const Physics&) = delete;
-    //! Don't permit move constructor
-    Physics(Physics&&) = delete;
-    //! Don't permit move assigment
-    Physics& operator=(Physics&&) = delete;
-
     //! Initialize factories
     void initFactories();
 

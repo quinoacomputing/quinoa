@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/LayoutPolicy.h
   \author    J. Bakosi
-  \date      Wed 21 May 2014 08:58:26 AM MDT
+  \date      Wed 06 Aug 2014 05:20:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Particle-, and property-major data layout policies
   \details   Particle-, and property-major data layout policies
@@ -12,6 +12,8 @@
 #define LayoutPolicy_h
 
 #include <make_unique.h>
+
+#include <Types.h>
 
 namespace quinoa {
 
@@ -133,6 +135,13 @@ class ParticleProperties {
    const uint64_t m_npar;                     //!< Number of particles
    const uint32_t m_nprop;                    //!< Number of particle properties
 };
+
+//! Select data layout policy for particle properties
+#if   defined LAYOUT_PARTICLE_MAJOR
+using ParProps = ParticleProperties< ParEqComp >;
+#elif defined LAYOUT_EQUATION_MAJOR
+using ParProps = ParticleProperties< EqCompPar >;
+#endif
 
 } // quinoa::
 

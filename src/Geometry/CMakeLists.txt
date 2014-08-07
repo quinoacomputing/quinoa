@@ -7,6 +7,8 @@ add_library(Geometry
             DiscreteGeometry.C
 )
 
+removeWarnings( "Geometry.C;DiscreteGeometry.C")
+
 INSTALL(TARGETS Geometry
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 10:32:40 AM MDT
+  \date      Wed 06 Aug 2014 04:51:35 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -21,9 +21,10 @@ QuinoaPrint::RequestedStats(const std::string& msg) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_ctr.get< tag::stat >() != ctr::InputDeckDefaults.get< tag::stat >()) {
+  if (g_inputdeck.get< tag::stat >() != g_inputdeck_defaults.get< tag::stat >())
+  {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for ( auto& v : m_ctr.get< tag::stat >() ) {
+    for ( auto& v : g_inputdeck.get< tag::stat >() ) {
       m_stream <<= v;
     }
     m_stream << '\n';
@@ -37,9 +38,9 @@ QuinoaPrint::EstimatedStats(const std::string& msg) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (m_ctr.get<tag::stat>() != ctr::InputDeckDefaults.get<tag::stat>()) {
+  if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : m_ctr.get<tag::stat>()) {
+    for (auto& v : g_inputdeck.get<tag::stat>()) {
        m_stream << v;
     }
     m_stream << '\n';
@@ -76,7 +77,7 @@ QuinoaPrint::printModel( const quinoa::Model& model ) const
     m_stream << m_item_name_value_fmt % m_item_indent
                                       % "Equation"
                                       % "stochastic";
-    tk::Option< tk::ctr::RNG > rng;
+    tk::ctr::RNG rng;
     m_stream << m_item_name_value_fmt % m_item_indent
                                       % rng.group()
                                       % rng.name( model.rng() );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:53:39 PM MDT
+  \date      Wed 06 Aug 2014 05:17:11 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Statistics
@@ -16,15 +16,14 @@
 #include "omp.h"
 #endif // _OPENMP
 
-#include <Base.h>
 #include <Statistics.h>
 
 using quinoa::Statistics;
 
-Statistics::Statistics( const Base& base, const ParProps& particles ) :
-  m_particles( particles ),
-  m_nthreads( base.paradigm.ompNthreads() ),
-  m_npar( base.control.get< tag::incpar, tag::npar >() ),
+Statistics::Statistics() :
+//   m_particles( particles ),
+  m_nthreads( 1/*base.paradigm.ompNthreads()*/ ),
+  m_npar( 1/*base.control.get< tag::incpar, tag::npar >()*/ ),
   m_nord(0),
   m_ncen(0)
 //******************************************************************************
@@ -34,50 +33,50 @@ Statistics::Statistics( const Base& base, const ParProps& particles ) :
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Setup std::map< depvar, offset >
-  OffsetMap offset;
-  boost::mpl::for_each< tags >( depvar( base, offset ) );
-
-  // Prepare for computing moments
-  setupOrdinary( base, offset );
-  setupCentral( base, offset );
+//   // Setup std::map< depvar, offset >
+//   OffsetMap offset;
+//   boost::mpl::for_each< tags >( depvar( base, offset ) );
+// 
+//   // Prepare for computing moments
+//   setupOrdinary( base, offset );
+//   setupCentral( base, offset );
 }
 
 void
-Statistics::setupOrdinary( const Base& base, const OffsetMap& offset )
+Statistics::setupOrdinary( const OffsetMap& offset )
 //******************************************************************************
 //  Prepare for computing ordinary moments
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Prepare for computing ordinary moments
-  for (const auto& product : base.control.get< tag::stat >()) {
-    if (ordinary(product)) {
-
-      m_instOrd.push_back( std::vector< const tk::real* >() );
-      m_plotOrdinary.push_back( false );
-      m_nameOrdinary.push_back( std::string() );
-      m_ordFieldVar.push_back( ctr::FieldVar() );
-
-      for (const auto& term : product) {
-        auto it = offset.find( term.var );
-        Assert( it != end( offset ), "No such depvar" );
-        // Put in starting address of instantaneous variable
-        m_instOrd[ m_nord ].push_back(
-          m_particles.cptr( term.field, it->second ) );
-        if (term.plot) m_plotOrdinary.back() = true;
-        // Put in term name+field
-        m_nameOrdinary.back() +=
-          m_ordFieldVar.back() = ctr::FieldVar( term.var, term.field );
-      }
-
-      ++m_nord;
-    }
-  }
+//   for (const auto& product : base.control.get< tag::stat >()) {
+//     if (ordinary(product)) {
+// 
+//       m_instOrd.push_back( std::vector< const tk::real* >() );
+//       m_plotOrdinary.push_back( false );
+//       m_nameOrdinary.push_back( std::string() );
+//       m_ordFieldVar.push_back( ctr::FieldVar() );
+// 
+//       for (const auto& term : product) {
+//         auto it = offset.find( term.var );
+//         Assert( it != end( offset ), "No such depvar" );
+//         // Put in starting address of instantaneous variable
+//         m_instOrd[ m_nord ].push_back(
+//           m_particles.cptr( term.field, it->second ) );
+//         if (term.plot) m_plotOrdinary.back() = true;
+//         // Put in term name+field
+//         m_nameOrdinary.back() +=
+//           m_ordFieldVar.back() = ctr::FieldVar( term.var, term.field );
+//       }
+// 
+//       ++m_nord;
+//     }
+//   }
 }
 
 void
-Statistics::setupCentral( const Base& base, const OffsetMap& offset )
+Statistics::setupCentral( const OffsetMap& offset )
 //******************************************************************************
 //  Prepare for computing central moments
 //! \author J. Bakosi
@@ -91,29 +90,29 @@ Statistics::setupCentral( const Base& base, const OffsetMap& offset )
     // Put in zero as index of center for ordinary moments in central products
     m_ordinary[m_nord] = 0.0;
 
-    // Prepare for computing central moments
-    for (const auto& product : base.control.get< tag::stat >()) {
-      if (!ordinary(product)) {
-
-        m_instCen.push_back( std::vector< const tk::real* >() );
-        m_center.push_back( std::vector< const tk::real* >() );
-        m_nameCentral.push_back( std::string() );
-
-        for (const auto& term : product) {
-          auto it = offset.find( term.var );
-          Assert( it != end( offset ), "No such depvar" );
-          // Put in starting address of instantaneous variable
-          m_instCen[m_ncen].push_back(
-            m_particles.cptr( term.field, it->second ) );
-          // Put in index of center for central, m_nord for ordinary moment
-          m_center[m_ncen].push_back(
-            m_ordinary.get() + (!isupper(term.var) ? mean(term) : m_nord));
-          m_nameCentral.back() += ctr::FieldVar( term.var, term.field );
-        }
-
-        ++m_ncen;
-      }
-    }
+//     // Prepare for computing central moments
+//     for (const auto& product : base.control.get< tag::stat >()) {
+//       if (!ordinary(product)) {
+// 
+//         m_instCen.push_back( std::vector< const tk::real* >() );
+//         m_center.push_back( std::vector< const tk::real* >() );
+//         m_nameCentral.push_back( std::string() );
+// 
+//         for (const auto& term : product) {
+//           auto it = offset.find( term.var );
+//           Assert( it != end( offset ), "No such depvar" );
+//           // Put in starting address of instantaneous variable
+//           m_instCen[m_ncen].push_back(
+//             m_particles.cptr( term.field, it->second ) );
+//           // Put in index of center for central, m_nord for ordinary moment
+//           m_center[m_ncen].push_back(
+//             m_ordinary.get() + (!isupper(term.var) ? mean(term) : m_nord));
+//           m_nameCentral.back() += ctr::FieldVar( term.var, term.field );
+//         }
+// 
+//         ++m_ncen;
+//       }
+//     }
 
     if (m_ncen) {
       // Storage for all the required central moments
@@ -214,20 +213,20 @@ Statistics::estimateOrdinary()
     // Zero ordinary moment accumulators
     memset( m_ordinary.get() + tid*(m_nord+1), 0, m_nord*sizeof(tk::real) );
 
-    // Accumulate ordinary moments
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
-    for (uint64_t p=0; p<m_npar; ++p) {
-      for (int i=0; i<m_nord; ++i) {
-        auto prod = m_particles.cvar( m_instOrd[i][0], p );
-        auto s = m_instOrd[i].size();
-        for (decltype(s) j=1; j<s; ++j) {
-          prod *= m_particles.cvar( m_instOrd[i][j], p );
-        }
-        m_ordinary[tid*(m_nord+1) + i] += prod;
-      }
-    }
+//     // Accumulate ordinary moments
+//     #ifdef _OPENMP
+//     #pragma omp for
+//     #endif
+//     for (uint64_t p=0; p<m_npar; ++p) {
+//       for (int i=0; i<m_nord; ++i) {
+//         auto prod = m_particles.cvar( m_instOrd[i][0], p );
+//         auto s = m_instOrd[i].size();
+//         for (decltype(s) j=1; j<s; ++j) {
+//           prod *= m_particles.cvar( m_instOrd[i][j], p );
+//         }
+//         m_ordinary[tid*(m_nord+1) + i] += prod;
+//       }
+//     }
   }
 
   // Collect ordinary moments from all threads
@@ -263,20 +262,20 @@ Statistics::estimateCentral()
     // Zero central moment accumulators
     memset(m_central.get() + tid*m_ncen, 0, m_ncen*sizeof(tk::real));
 
-    // Accumulate central moments
-    #ifdef _OPENMP
-    #pragma omp for
-    #endif
-    for (uint64_t p=0; p<m_npar; ++p) {
-      for (int i=0; i<m_ncen; ++i) {
-        auto prod = m_particles.cvar( m_instCen[i][0], p );
-        auto s = m_instCen[i].size();
-        for (decltype(s) j=1; j<s; ++j) {
-          prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_center[i][j]);
-        }
-        m_central[tid*m_ncen + i] += prod;
-      }
-    }
+//     // Accumulate central moments
+//     #ifdef _OPENMP
+//     #pragma omp for
+//     #endif
+//     for (uint64_t p=0; p<m_npar; ++p) {
+//       for (int i=0; i<m_ncen; ++i) {
+//         auto prod = m_particles.cvar( m_instCen[i][0], p );
+//         auto s = m_instCen[i].size();
+//         for (decltype(s) j=1; j<s; ++j) {
+//           prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_center[i][j]);
+//         }
+//         m_central[tid*m_ncen + i] += prod;
+//       }
+//     }
   }
 
   // Collect central moments from all threads

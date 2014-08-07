@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 21 Feb 2014 10:35:58 AM MST
+  \date      Wed 06 Aug 2014 08:53:37 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -14,7 +14,6 @@
 #include <limits>
 
 #include <Control.h>
-#include <Option.h>
 #include <Quinoa/CmdLine/CmdLine.h>
 #include <Quinoa/Components.h>
 
@@ -95,33 +94,30 @@ class InputDeck :
     using const_iterator = pegtl::capture_map::const_iterator;
 
     //! operator[] for pegtl::capture
-    pegtl::capture_map::mapped_type& operator[]( unsigned key ) {
-      return m_captured[ key ];
-    }
+    pegtl::capture_map::mapped_type& operator[]( unsigned key )
+    { return m_captured[ key ]; }
 
     //! find() for pegtl::capture
-    const_iterator find( const unsigned& key ) const {
-      return m_captured.find( key );
-    }
+    const_iterator find( const unsigned& key ) const
+    { return m_captured.find( key ); }
 
     //! end() for pegtl::capture
-    const_iterator end() const {
-      return m_captured.end();
+    const_iterator end() const { return m_captured.end(); }
+
+    //! Pack/Unpack
+    void pup( PUP::er& p ) {
+      tk::Control< tag::title,      std::string,
+                   tag::selected,   selects,
+                   tag::incpar,     incpars,
+                   tag::component,  ncomps< int >,
+                   tag::interval,   intervals,
+                   tag::cmd,        CmdLine,
+                   tag::param,      parameters,
+                   tag::stat,       std::vector< Product > >::pup(p);
+      // p | m_captured;
     }
-
-  private:
-    //! Don't permit copy constructor
-    InputDeck(const InputDeck&) = delete;
-    //! Don't permit copy assigment
-    InputDeck& operator=(const InputDeck&) = delete;
-    //! Don't permit move constructor
-    InputDeck(InputDeck&&) = delete;
-    //! Don't permit move assigment
-    InputDeck& operator=(InputDeck&&) = delete;
+    friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }
 };
-
-//! InputDeck defaults
-static const InputDeck InputDeckDefaults;
 
 } // ctr::
 } // quinoa::

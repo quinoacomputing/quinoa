@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:11:53 PM MDT
+  \date      Wed 06 Aug 2014 03:53:51 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -52,7 +52,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   cmdline = cmd;
 
   // If we got here, parser succeeded
-  print.item("Parsed command line", "success");
+  print.item( "Parsed command line", "success" );
 
   // Make sure mandatory arguments are set
   ErrChk( !(cmdline.get< tag::io, tag::control >().empty()),

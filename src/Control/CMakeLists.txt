@@ -14,6 +14,8 @@ add_library(QuinoaControl
             Quinoa/CmdLine/Parser.C
 )
 
+removeWarnings("Quinoa/InputDeck/Parser.C;Quinoa/CmdLine/Parser.C")
+
 INSTALL(TARGETS QuinoaControl
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime

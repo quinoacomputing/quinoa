@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MixRate.h
   \author    J. Bakosi
-  \date      Mon Oct  7 09:17:01 2013
+  \date      Wed 06 Aug 2014 03:44:41 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -30,32 +30,13 @@ class MixRate : public tk::Toggle<MixRateType> {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit MixRate() :
-      Toggle<MixRateType>("Material mix rate", names, values) {}
-
-  private:
-    //! Don't permit copy constructor
-    MixRate(const MixRate&) = delete;
-    //! Don't permit copy assigment
-    MixRate& operator=(const MixRate&) = delete;
-    //! Don't permit move constructor
-    MixRate(MixRate&&) = delete;
-    //! Don't permit move assigment
-    MixRate& operator=(MixRate&&) = delete;
-
-    //! Get access to mixrate keywords
-    const kw::mixrate_gamma gamma {};
-
-    //! Enums -> names
-    const std::map<MixRateType, std::string> names {
-      { MixRateType::NO_MIXRATE, "n/a" },
-      { MixRateType::GAMMA, gamma.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, MixRateType> values {
-      { "no_mixrate", MixRateType::NO_MIXRATE },
-      { gamma.string(), MixRateType::GAMMA }
-    };
+      Toggle< MixRateType >( "Material mix rate",
+      //! Enums -> names
+      { { MixRateType::NO_MIXRATE, "n/a" },
+        { MixRateType::GAMMA, kw::mixrate_gamma().name() } },
+      //! keywords -> Enums
+      { { "no_mixrate", MixRateType::NO_MIXRATE },
+        { kw::mixrate_gamma().string(), MixRateType::GAMMA } } ) {}
 };
 
 } // ctr::

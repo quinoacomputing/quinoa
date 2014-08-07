@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 06 Feb 2014 04:33:49 PM MST
+  \date      Wed 06 Aug 2014 03:39:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     SDE initialization policy options and associations
   \details   SDE initialization policy options and associations
@@ -30,33 +30,13 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit InitPolicy() :
-      Toggle< InitPolicyType >( "Initialization Policy", names, values ) {}
-
-  private:
-    //! Don't permit copy constructor
-    InitPolicy(const InitPolicy&) = delete;
-    //! Don't permit copy assigment
-    InitPolicy& operator=(const InitPolicy&) = delete;
-    //! Don't permit move constructor
-    InitPolicy(InitPolicy&&) = delete;
-    //! Don't permit move assigment
-    InitPolicy& operator=(InitPolicy&&) = delete;
-
-    //! Get access to InitPolicy keywords
-    const kw::raw raw {};
-    const kw::zero zero {};
-
-    //! Enums -> names
-    const std::map<InitPolicyType, std::string> names {
-      { InitPolicyType::RAW, raw.name() },
-      { InitPolicyType::ZERO, zero.name() }
-    };
-
-    //! keywords -> Enums
-    const std::map<std::string, InitPolicyType> values {
-      { raw.string(), InitPolicyType::RAW },
-      { zero.string(), InitPolicyType::ZERO }
-    };
+      Toggle< InitPolicyType >( "Initialization Policy",
+        //! Enums -> names
+        { { InitPolicyType::RAW, kw::raw().name() },
+          { InitPolicyType::ZERO, kw::zero().name() } },
+        //! keywords -> Enums
+        { { kw::raw().string(), InitPolicyType::RAW },
+          { kw::zero().string(), InitPolicyType::ZERO } } ) {}
 };
 
 } // ctr::

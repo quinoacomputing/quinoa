@@ -12,6 +12,8 @@ add_library(MonteCarlo
             SPINSFlow.C
 )
 
+removeWarnings( "MonteCarlo.C;TestSDE.C;Physics.C;HomMix.C;HomHydro.C;HomRT.C;SPINSFlow.C")
+
 INSTALL(TARGETS MonteCarlo
   	RUNTIME DESTINATION bin COMPONENT Runtime
   	LIBRARY DESTINATION lib COMPONENT Runtime

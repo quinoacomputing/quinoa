@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/InitPolicy.h
   \author    J. Bakosi
-  \date      Thu 24 Apr 2014 09:17:47 PM MDT
+  \date      Wed 06 Aug 2014 05:21:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Initialization policies
   \details   Initialization policies
@@ -17,6 +17,7 @@
 
 #include <Macro.h>
 #include <Types.h>
+#include <LayoutPolicy.h>
 #include <Quinoa/Options/InitPolicy.h>
 
 namespace quinoa {

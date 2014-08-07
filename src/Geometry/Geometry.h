@@ -2,7 +2,7 @@
 /*!
   \file      src/Geometry/Geometry.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:22:39 2013
+  \date      Wed 06 Aug 2014 05:09:32 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Geometry base
   \details   Geometry base
@@ -11,8 +11,6 @@
 #ifndef Geometry_h
 #define Geometry_h
 
-#include <Base.h>
-
 namespace quinoa {
 
 //! Geometry base
@@ -20,7 +18,7 @@ class Geometry {
 
   public:
     //! Constructor
-    explicit Geometry(const Base& base);
+    explicit Geometry();
 
     //! Destructor
     virtual ~Geometry() noexcept = default;
@@ -34,8 +32,6 @@ class Geometry {
   protected:
     //! Echo information on geometry
     void echo();
-
-    const Base& m_base;                      //!< Essentials
 
   private:
     //! Don't permit copy constructor

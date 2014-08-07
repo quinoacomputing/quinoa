@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Sun 01 Jun 2014 11:46:18 AM MDT
+  \date      Wed 06 Aug 2014 09:01:49 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -11,6 +11,8 @@
 #ifndef QuinoaTypes_h
 #define QuinoaTypes_h
 
+#include <tkTags.h>
+#include <tkTypes.h>
 #include <Types.h>
 #include <Quinoa/Tags.h>
 #include <Quinoa/Options/Geometry.h>
@@ -24,6 +26,7 @@
 #include <Quinoa/Options/MixRate.h>
 #include <Quinoa/Options/SDE.h>
 #include <Options/RNG.h>
+#include <PUPUtil.h>
 
 namespace quinoa {
 //! control and parsing
@@ -48,6 +51,18 @@ struct Term {
   // Product to be a vector<struct>, which then would need custom comparitors
   // for std::sort() and std::unique() in Parser::unique(). Since this is not a
   // performance issue, plot is here in Term.
+
+  //! Pack/Unpack
+  void pup( PUP::er& p ) {
+    p | field;
+    tk::pup( p, moment );
+    p | var;
+    p | plot;
+  }
+  friend void operator|( PUP::er& p, Term& t ) { t.pup(p); } 
+
+  //! Empty constructor
+  explicit Term() : field(0), moment(Moment::ORDINARY), var(0), plot(false) {}
 
   //! Constructor
   explicit Term( int f, Moment m, char v, bool p ) :

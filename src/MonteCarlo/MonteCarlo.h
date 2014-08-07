@@ -2,7 +2,7 @@
 /*!
   \file      src/MonteCarlo/MonteCarlo.h
   \author    J. Bakosi
-  \date      Thu Apr 24 11:12:44 2014
+  \date      Wed 06 Aug 2014 05:07:03 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Monte Carlo
   \details   Monte Carlo
@@ -13,7 +13,6 @@
 
 #include <boost/mpl/at.hpp>
 
-#include <Base.h>
 #include <Statistics.h>
 #include <GlobWriter.h>
 #include <TxtStatWriter.h>
@@ -27,16 +26,14 @@ class MonteCarlo {
 
   public:
     //! Constructor
-    explicit MonteCarlo( const Base& b ) :
-      m_base( b ),
-      m_npar( b.control.get< tag::incpar, tag::npar >() ),
-      m_term( b.control.get< tag::incpar, tag::term >() ),
-      m_totalTime( b.timer.create("Total solution") ),
-      m_particles( m_npar, b.control.get< tag::component >().nprop() ),
-      m_statistics( b, m_particles ),
-      m_glob( b.control.get< tag::cmd, tag::io, tag::glob >() ),
-      m_stat( b.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
-    {}
+    explicit MonteCarlo() {}
+//       m_base( b ),
+//       m_npar( b.control.get< tag::incpar, tag::npar >() ),
+//       m_term( b.control.get< tag::incpar, tag::term >() ),
+//       m_particles( m_npar, b.control.get< tag::component >().nprop() ),
+//       m_statistics( b, m_particles ),
+//       m_glob( b.control.get< tag::cmd, tag::io, tag::glob >() ),
+//       m_stat( b.control.get< tag::cmd, tag::io, tag::stat >(), m_statistics )
 
     //! Destructor
     virtual ~MonteCarlo() = default;
@@ -44,43 +41,43 @@ class MonteCarlo {
     //! Run
     virtual void run() = 0;
 
-    //! Constant accessor to base
-    //! \return Pointer to base
-    const Base& base() const noexcept { return m_base; }
+//     //! Constant accessor to base
+//     //! \return Pointer to base
+//     const Base& base() const noexcept { return m_base; }
+// 
+//     //! Constant accessor to control object
+//     //! \return Control object
+//     const ctr::InputDeck& control() const noexcept { return m_base.control; }
 
-    //! Constant accessor to control object
-    //! \return Control object
-    const ctr::InputDeck& control() const noexcept { return m_base.control; }
-
-    //! Accessor to particle properties pointer
-    //! \return Particle properties array
-    const ParProps& particles() const noexcept { return m_particles; }
+//     //! Accessor to particle properties pointer
+//     //! \return Particle properties array
+//     const ParProps& particles() const noexcept { return m_particles; }
 
   protected:
 
-    //! Constant accessor to print object
-    //! \return Print object
-    const QuinoaPrint& print() const noexcept { return m_base.print; }
+//     //! Constant accessor to print object
+//     //! \return Print object
+//     const QuinoaPrint& print() const noexcept { return m_base.print; }
+// 
+//     //! Constant accessor to timer object pointer
+//     //! \return Pointer to timer object
+//     const tk::Timer& timer() const noexcept { return m_base.timer; }
 
-    //! Constant accessor to timer object pointer
-    //! \return Pointer to timer object
-    const tk::Timer& timer() const noexcept { return m_base.timer; }
+//     //! Accessor to statistics estimator
+//     //! \return Pointer to statistics estimator
+//     Statistics& statistics() noexcept { return m_statistics; }
+// 
+//     //! Accessor to glob file writer
+//     //! \return Pointer to glob file writer
+//     GlobWriter& globWriter() noexcept { return m_glob; }
+// 
+//     //! Accessor to statistics file writer
+//     //! \return Pointer to statistics file writer
+//     TxtStatWriter& statWriter() noexcept { return m_stat; }
 
-    //! Accessor to statistics estimator
-    //! \return Pointer to statistics estimator
-    Statistics& statistics() noexcept { return m_statistics; }
-
-    //! Accessor to glob file writer
-    //! \return Pointer to glob file writer
-    GlobWriter& globWriter() noexcept { return m_glob; }
-
-    //! Accessor to statistics file writer
-    //! \return Pointer to statistics file writer
-    TxtStatWriter& statWriter() noexcept { return m_stat; }
-
-    //! Accessor to max run time
-    //! \return Max run time
-    const tk::real& term() const noexcept { return m_term; }
+//     //! Accessor to max run time
+//     //! \return Max run time
+//     const tk::real& term() const noexcept { return m_term; }
 
     //! Standard header at start of time stepping that children can override
     virtual void header() const;
@@ -138,22 +135,21 @@ class MonteCarlo {
         key.get< tag::initpolicy >() = InitPolicy().type();
         key.get< tag::coeffpolicy >() = CoeffPolicy().type();
 
-        // Register SDE (with policies given by mpl::vector U) into SDE factory
-        const auto& comp = m_host->control().template get< tag::component >();
-        tk::record< SDE< InitPolicy, CoeffPolicy > >
-                  ( m_host->factory(), key,
-                    m_host->base(),
-                    std::cref( m_host->particles() ),
-                    comp.template offset< ncomp >(),
-                    comp.template get< ncomp >() );
+//         // Register SDE (with policies given by mpl::vector U) into SDE factory
+//         const auto& comp = m_host->control().template get< tag::component >();
+//         tk::record< SDE< InitPolicy, CoeffPolicy > >
+//                   ( m_host->factory(), key,
+//                     m_host->base(),
+//                     std::cref( m_host->particles() ),
+//                     comp.template offset< ncomp >(),
+//                     comp.template get< ncomp >() );
       }
     };
 
-    const Base& m_base;                             //!< Essentials
-    const uint64_t m_npar;                          //!< Number of particles
-    const tk::real m_term;                          //!< Maximum run time
-    const tk::TimerId m_totalTime;                  //!< Timer for total run
-    const ParProps m_particles;                     //!< Particle properties
+//     const Base& m_base;                             //!< Essentials
+//     const uint64_t m_npar;                          //!< Number of particles
+//     const tk::real m_term;                          //!< Maximum run time
+//     const ParProps m_particles;                     //!< Particle properties
 
   private:
     //! Don't permit copy constructor
@@ -165,9 +161,9 @@ class MonteCarlo {
     //! Don't permit move assigment
     MonteCarlo& operator=(MonteCarlo&&) = delete;
 
-    Statistics m_statistics;                        //!< Statistics estimator
-    GlobWriter m_glob;                              //!< Glob file writer
-    TxtStatWriter m_stat;                           //!< Statistics file writer
+//     Statistics m_statistics;                        //!< Statistics estimator
+//     GlobWriter m_glob;                              //!< Glob file writer
+//     TxtStatWriter m_stat;                           //!< Statistics file writer
 };
 
 } // quinoa::
