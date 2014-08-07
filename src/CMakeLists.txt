@@ -287,7 +287,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/Geometry
                     ${QUINOA_SOURCE_DIR}/MonteCarlo
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${QUINOA_SOURCE_DIR}/RNGTest
@@ -311,7 +310,6 @@ include_directories(${QUINOA_SOURCE_DIR}
 # Components
 add_subdirectory(Base)
 add_subdirectory(Control)
-#add_subdirectory(Geometry)
 add_subdirectory(IO)
 #add_subdirectory(LinearAlgebra)
 add_subdirectory(Mesh)

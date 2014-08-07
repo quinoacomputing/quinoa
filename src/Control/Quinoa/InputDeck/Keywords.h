@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed 19 Feb 2014 05:28:36 AM MST
+  \date      Thu 07 Aug 2014 03:28:19 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -29,55 +29,6 @@ namespace kw {
 using namespace pegtl::ascii;
 using tk::kw::keyword;
 using tk::kw::undefined_info;
-
-// Keyword 'analytic_geometry'
-struct analytic_geometry_info {
-  static const char* name() { return "Analytic"; }
-  static const char* help() { return
-    "This option is used to define the beginning of an analytical geometry "
-    "definition block. Analytical geometry definitions describe a 3D geometry "
-    "using available primitives. Example:\n"
-    "\tanalytical_geometry\n"
-    "\t  box 0.0 0.0 0.0  1.1 1.2 1.3 end # opposite corners: x1 y1 z1 x2 y2 "
-    "z2\n"
-    "\tend";
-  }
-};
-using analytic_geometry =
-  keyword< analytic_geometry_info, a,n,a,l,y,t,i,c,'_',g,e,o,m,e,t,r,y >;
-
-// Keyword 'discrete_geometry'
-struct discrete_geometry_info {
-  static const char* name() { return "Discrete"; }
-  static const char* help() { return
-    "This option is used to define the beginning of a discrete geometry "
-    "definition block. Discrete geometry definitions are used to specify "
-    "various parameters that influence the generation of point clouds within a "
-    "closed geometry specified by discrete surfaces. Example:\n"
-    "\tdiscrete_geometry\n"
-    "\t  ...\n"
-    "\tend";
-  }
-};
-using discrete_geometry =
-  keyword< discrete_geometry_info, d,i,s,c,r,e,t,e,'_',g,e,o,m,e,t,r,y >;
-
-// Keyword 'brick'
-struct brick_info {
-  static const char* name() { return "Brick primitive"; }
-  static const char* help() { return
-    "A brick primitive is one of the available geometric primitives that can "
-    "be used to define a 3D geometry in the analytical way, i.e., inside an "
-    "analytic_geometry ... end block. The 'brick' keyword is used to begin a "
-    "brick ... end block. At this time a brick can only be described by the "
-    "coordinates of its oppposite points by their x,y,z coordinates. Example:\n"
-    "\tanalytical_geometry\n"
-    "\t  box 0.0 0.0 0.0  1.1 1.2 1.3 end # opposite corners: x1 y1 z1 x2 y2 "
-    "z2\n"
-    "\tend";
-  }
-};
-using brick = keyword< brick_info, b,r,i,c,k >;
 
 // Keyword 'hommix'
 struct hommix_info {

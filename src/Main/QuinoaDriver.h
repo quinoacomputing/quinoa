@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:08:07 PM MDT
+  \date      Thu 07 Aug 2014 03:30:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -17,10 +17,6 @@
 //! Everything that contributes to the quinoa executable
 namespace quinoa {
 
-// //! Geometry factory type
-// using GeometryFactory =
-//   std::map< ctr::GeometryType, std::function< Geometry*() > >;
-// 
 // //! MonteCarlo factory type
 // using MonteCarloFactory =
 //   std::map< ctr::MonteCarloType, std::function< MonteCarlo*() > >;
@@ -43,10 +39,8 @@ class QuinoaDriver {
 //     //! Factories
 //     tk::RNGFactory m_RNGFactory;                 //!< RNG factory
 //     MonteCarloFactory m_MonteCarloFactory;       //!< MonteCarlo factory
-//     GeometryFactory m_geometryFactory;           //!< Geometry factory
 // 
 //     //! Pointers to selected options
-//     std::unique_ptr< Geometry > m_geometry;      //!< Geometry object
 //     std::unique_ptr< MonteCarlo > m_montecarlo;  //!< MonteCarlo object
 
     const QuinoaPrint& m_print;

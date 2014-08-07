@@ -40,7 +40,6 @@ endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       #LinearAlgebra
-                      #Geometry
                       #MonteCarlo
                       Base
                       #IO

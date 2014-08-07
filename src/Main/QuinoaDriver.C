@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:08:03 PM MDT
+  \date      Thu 07 Aug 2014 03:30:42 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -32,7 +32,7 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
 //! \param[in] argc      Argument count from command line
 //! \param[in] argv      Argument vector from command line
 //! \param[in] print     Simple pretty printer
-//! \details   Instantiate geometry, MonteCarlo, set initial conditions, etc.
+//! \details   Instantiate MonteCarlo, set initial conditions, etc.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -77,21 +77,14 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
 //   //! Initialize factories
 //   initFactories( print );
 // 
-//   // Instantiate geometry
-//   ctr::GeometryType g = m_control->get< tag::selected, tag::geometry >();
-//   if (g != ctr::GeometryType::NO_GEOMETRY) {
-//     m_geometry = std::unique_ptr< Geometry >( m_geometryFactory[g]() );
-//   }
-// 
 //   // Instantiate MonteCarlo
 //   ctr::MonteCarloType m = m_control->get< tag::selected, tag::montecarlo >();
 //   if (m != ctr::MonteCarloType::NO_MONTECARLO) {
 //     m_montecarlo = std::unique_ptr< MonteCarlo >( m_MonteCarloFactory[m]() );
 //   }
 // 
-//   // Echo 'unspecified' if both geometry and MonteCarlo are unspecified
-//   if (!m_geometry && !m_montecarlo) {
-//     print.section( "Geometry", std::string("unspecified") );
+//   // Echo 'unspecified' if MonteCarlo is unspecified
+//   if (!m_montecarlo) {
 //     print.section( "MonteCarlo", std::string("unspecified") );
 //   }
 }
@@ -99,17 +92,10 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
 void
 QuinoaDriver::initFactories(const tk::Print& print)
 //******************************************************************************
-//  Initialize geometry and MonteCarlo factories
+//  Initialize MonteCarlo factory
 //! \author  J. Bakosi
 //******************************************************************************
 {
-//   // Register geometry types
-//   tk::record< AnalyticGeometry >
-//             ( m_geometryFactory, ctr::GeometryType::ANALYTIC, *m_base );
-//   tk::record< DiscreteGeometry >
-//             ( m_geometryFactory, ctr::GeometryType::DISCRETE, *m_base );
-//   print.list< ctr::Geometry >("Registered geometry types", m_geometryFactory);
-// 
 //   // Register MonteCarlo types
 //   tk::record< HomMix >
 //     ( m_MonteCarloFactory, ctr::MonteCarloType::HOMOGENEOUS_MIX, *m_base );
@@ -138,12 +124,6 @@ QuinoaDriver::execute()
 //! \author J. Bakosi
 //******************************************************************************
 {
-//   //! Initialize and execute geometry (if any)
-//   if (m_geometry) {
-//     m_geometry->init();
-//     m_geometry->fill();
-//   }
-// 
 //   //! Run MonteCarlo (if any)
 //   if (m_montecarlo) {
 //     m_montecarlo->run();
