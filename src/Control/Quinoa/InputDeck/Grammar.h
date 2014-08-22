@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:27:50 PM MDT
+  \date      Mon 18 Aug 2014 09:59:36 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -53,10 +53,18 @@ namespace deck {
   // Quinoa's InputDeck actions
 
   //! start new product in vector of statistics
+  template< typename... tags >
+  struct start_parameter_vector :
+  pegtl::action_base< start_parameter_vector< tags... > > {
+    static void apply(const std::string&, Stack& stack) {
+      stack.push_back< tags... >( std::vector< tk::real >() );
+    }
+  };
+
+  //! start new product in vector of statistics
   struct start_product : pegtl::action_base< start_product > {
-    static void apply(const std::string& value, Stack& stack) {
+    static void apply(const std::string&, Stack& stack) {
       stack.push_back< tag::stat >( ctr::Product() );
-      IGNORE(value);   // suppress compiler warning: parameter never referenced
     }
   };
 
@@ -123,8 +131,8 @@ namespace deck {
         if (Option().value(value) == r) exists = true;
       }
       if (exists) {
-        tk::grm::store_option< Stack, Option, ctr::InputDeck, tags... >
-                             ( stack, value, g_inputdeck_defaults );
+        tk::grm::store_back_option< Stack, Option, tags... >().apply( value,
+                                                                      stack );
       } else {
         tk::grm::handleError< Stack, tk::grm::Error::NOTSELECTED >
                             ( stack, value );
@@ -184,15 +192,18 @@ namespace deck {
                            tk::grm::Store< Stack, tags... >,
                            kw_type > {};
 
-  //! incrementation control parameter
+  //! discretization control parameter
   template< typename keyword, typename Tag >
-  struct incpar :
-         control< keyword, pegtl::digit, tag::incpar, Tag > {};
+  struct discr :
+         control< keyword, pegtl::digit, tag::discr, Tag > {};
 
   //! component control parameter
   template< typename keyword, typename Tag >
   struct component :
-         control< keyword, pegtl::digit, tag::component, Tag > {};
+         tk::grm::process< Stack,
+                           typename keyword::pegtl_string,
+                           tk::grm::Store_back< Stack, tag::component, Tag >,
+                           pegtl::digit > {};
 
   //! interval control parameter
   template< typename keyword, typename Tag >
@@ -207,13 +218,16 @@ namespace deck {
   //! model parameter vector
   template< typename keyword, typename...tags >
   struct parameter_vector :
-         tk::grm::vector< Stack,
-                          typename keyword::pegtl_string,
-                          tk::grm::Store_back< Stack, tag::param, tags... >,
-                          tk::kw::end > {};
+         tk::grm::vector<
+           Stack,
+           typename keyword::pegtl_string,
+           tk::grm::Store_back_back< Stack, tag::param, tags... >,
+           tk::kw::end,
+           pegtl::apply< start_parameter_vector< tag::param, tags... > > > {};
 
   //! rng parameter
-  template< typename keyword, typename option, typename model, typename... tags >
+  template< typename keyword, typename option, typename model,
+            typename... tags >
   struct rng :
          tk::grm::process< Stack,
                            typename keyword::pegtl_string,
@@ -246,7 +260,7 @@ namespace deck {
              pegtl::sor< pegtl::alpha,
                          pegtl::apply<
                            tk::grm::error< Stack, tk::grm::Error::NOTALPHA > > >,
-             tk::grm::Store< Stack, tag::param, model, Tag >,
+             tk::grm::Store_back< Stack, tag::param, model, Tag >,
              add_depvar,
              pegtl::capture< model::id > > > {};
 
@@ -280,9 +294,9 @@ namespace deck {
   struct scan_sde :
          tk::grm::scan< typename keyword::pegtl_string,
                         tk::grm::store_back_option< Stack,
-                                                    ctr::SDE,
+                                                    ctr::DiffEq,
                                                     tag::selected,
-                                                    tag::sde > > {};
+                                                    tag::diffeq > > {};
 
   //! title
   struct title :
@@ -413,10 +427,11 @@ namespace deck {
 
   //! common to all monte-carlo
   struct montecarlo_common :
-         pegtl::sor< incpar< kw::npar, tag::npar >,
-                     incpar< kw::nstep, tag::nstep >,
-                     incpar< kw::term,  tag::term >,
-                     incpar< kw::dt, tag::dt >,
+         pegtl::sor< discr< kw::npar, tag::npar >,
+                     discr< kw::nstep, tag::nstep >,
+                     discr< kw::term, tag::term >,
+                     discr< kw::dt, tag::dt >,
+                     discr< kw::virtualization, tag::virtualization >,
                      interval< kw::glbi, tag::glob >,
                      interval< kw::pdfi, tag::pdf >,
                      interval< kw::stai, tag::plot >,
@@ -504,10 +519,11 @@ namespace deck {
   //! policy parameter
   template< typename keyword, typename option, typename sde, typename... tags >
   struct policy :
-         tk::grm::process< Stack,
-                           typename keyword::pegtl_string,
-                           store_option< option, tag::param, sde, tags... >,
-                           pegtl::alpha > {};
+         tk::grm::process<
+           Stack,
+           typename keyword::pegtl_string,
+           tk::grm::store_back_option< Stack, option, tag::param, sde, tags... >,
+           pegtl::alpha > {};
 
 
   //! Ornstein-Uhlenbeck SDE

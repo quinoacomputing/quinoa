@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:42:22 PM MDT
+  \date      Tue 12 Aug 2014 03:13:21 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -76,7 +76,7 @@ void echoTPL( const tk::Print& print )
 //! function pointers (std::function objects pointing to tk::RNG constructors
 //! bound with their arguments). Since function pointers cannot simply be
 //! serialized and migrated via the network, they must also be recreated on
-//! remote machines.  This initial migration of global-scope data is done by the
+//! remote machines. This initial migration of global-scope data is done by the
 //! Charm++ runtime once the main chare constructor is finished -- see the
 //! RNGTestDriver constructor, which initializes the data required for the
 //! migration).
@@ -106,15 +106,12 @@ TestStack g_testStack;
 inline
 void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
   if (!p.isSizing()) {
-    tk::RNGFactory factory;
-    tk::RNGStack stack;
-    stack.initFactory( factory, CkNumPes(),
-                       #ifdef HAS_MKL
-                       g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
-                       #endif
-                       g_inputdeck.get< tag::param, tk::tag::rngsse >() );
-    rng = stack.createSelected(
-            factory, g_inputdeck.get< tag::selected, tk::tag::rng >() );
+    tk::RNGStack stack(
+      #ifdef HAS_MKL
+      g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
+      #endif
+      g_inputdeck.get< tag::param, tk::tag::rngsse >() );
+    rng = stack.selected( g_inputdeck.get< tag::selected, tk::tag::rng >() );
   }
 }
 

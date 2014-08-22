@@ -114,6 +114,7 @@ add_compiler_flag("-fdiagnostics-show-option")
 # Suppress warning for all compilers: ISO C++ forbids variable length array
 add_compiler_flag("-Wno-vla")
 
+# Require a C++11 compiler
 check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
 if(COMPILER_HAS_CPP11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -253,7 +254,7 @@ include(TPLs)
 # Configure a header file to pass info to the code
 configure_file(
   "${PROJECT_SOURCE_DIR}/Main/Config.h.in"
-  "${PROJECT_BINARY_DIR}/Base/Config.h"
+  "${PROJECT_BINARY_DIR}/Main/Config.h"
 )
 
 # Remove build hostname from cmake cache
@@ -283,23 +284,22 @@ endif("${isSystemDir}" STREQUAL "-1")
 include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
+                    ${QUINOA_SOURCE_DIR}/DiffEq
+                    ${QUINOA_SOURCE_DIR}/Integrator
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
-                    ${QUINOA_SOURCE_DIR}/MonteCarlo
                     ${QUINOA_SOURCE_DIR}/RNG
                     ${QUINOA_SOURCE_DIR}/RNGTest
-                    ${QUINOA_SOURCE_DIR}/UnitTest
-                    ${QUINOA_SOURCE_DIR}/SDE
                     ${QUINOA_SOURCE_DIR}/Statistics
-                    ${QUINOA_SOURCE_DIR}/Utilities
+                    ${QUINOA_SOURCE_DIR}/UnitTest
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/hdf5ser/include
                     ${TPL_DIR}/charm/include
-                    ${PROJECT_BINARY_DIR}/Base          # for Config.h
+                    ${PROJECT_BINARY_DIR}/Integrator    # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
@@ -310,12 +310,13 @@ include_directories(${QUINOA_SOURCE_DIR}
 # Components
 add_subdirectory(Base)
 add_subdirectory(Control)
+add_subdirectory(DiffEq)
+add_subdirectory(Integrator)
 add_subdirectory(IO)
 #add_subdirectory(LinearAlgebra)
+add_subdirectory(Main)
 add_subdirectory(Mesh)
-#add_subdirectory(MonteCarlo)
 add_subdirectory(RNG)
 add_subdirectory(RNGTest)
-add_subdirectory(UnitTest)
 #add_subdirectory(Statistics)
-add_subdirectory(Main)
+add_subdirectory(UnitTest)

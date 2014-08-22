@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:46:57 AM MDT
+  \date      Mon 18 Aug 2014 09:16:01 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -158,6 +158,16 @@ namespace grm {
     }
   };
 
+  //! convert and push back value to vector of back of vector in state at
+  //! position given by tags
+  template< class Stack, typename tag, typename...tags >
+  struct Store_back_back :
+  pegtl::action_base< Store_back_back< Stack, tag, tags... > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      stack.template store_back_back< tag, tags... >( value );
+    }
+  };
+
   //! put true in switch in state at position given by tags
   template< class Stack, typename tag, typename... tags >
   struct Store_switch : pegtl::action_base< Store_switch<Stack,tag,tags...> > {
@@ -284,9 +294,10 @@ namespace grm {
   //! plow through vector of values between keywords 'key' and 'endkeyword',
   //! calling 'insert' for each if matches and allowing comments between values
   template< class Stack, class key, class insert, class endkeyword,
-            class value = number >
+            class starter, class value = number >
   struct vector :
          pegtl::ifmust< readkw< key >,
+                        starter,
                         pegtl::until<
                           readkw< typename endkeyword::pegtl_string >,
                           pegtl::sor< comment,

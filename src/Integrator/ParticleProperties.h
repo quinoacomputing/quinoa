@@ -1,19 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/MonteCarlo/LayoutPolicy.h
+  \file      src/Integrator/ParticleProperties.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 05:20:40 PM MDT
+  \date      Tue 12 Aug 2014 04:22:58 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Particle-, and property-major data layout policies
-  \details   Particle-, and property-major data layout policies
+  \brief     ParticleProperties for storing particle data with accessors
+  \details   ParticleProperties for storing particle data with accessors for
+             particle-, and property-major data layout policies
 */
 //******************************************************************************
-#ifndef LayoutPolicy_h
-#define LayoutPolicy_h
+#ifndef ParticleProperties_h
+#define ParticleProperties_h
 
 #include <make_unique.h>
 
 #include <Types.h>
+#include <Config.h>
 
 namespace quinoa {
 
@@ -28,16 +30,15 @@ class ParticleProperties {
 
   public:
     //! Constructor
-    ParticleProperties( uint64_t npar, uint32_t nprop ) :
+    explicit ParticleProperties( uint64_t npar = 0, uint32_t nprop = 0) :
       m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
       m_npar( npar ),
       m_nprop( nprop ) {}
 
     //! Data access dispatch
     inline tk::real&
-    operator()( int particle, int component, int offset ) const noexcept {
-      return access( particle, component, offset, int2type< Layout >() );
-    }
+    operator()( int particle, int component, int offset ) const noexcept
+    { return access( particle, component, offset, int2type< Layout >() ); }
 
     // cptr() and cvar() are intended to be used together in case component and
     // offset would be expensive to compute for data access via the function
@@ -52,42 +53,30 @@ class ParticleProperties {
 
     //! Const ptr to physical variable access dispatch
     inline const tk::real*
-    cptr( int component, int offset ) const noexcept {
-      return cptr( component, offset, int2type< Layout >() );
-    }
+    cptr( int component, int offset ) const noexcept
+    { return cptr( component, offset, int2type< Layout >() ); }
 
     //! Const physical variable access dispatch
     inline const tk::real&
-    cvar( const tk::real* const pt, int particle ) const noexcept {
-      return cvar( pt, particle, int2type< Layout >() );
-    }
+    cvar( const tk::real* const pt, int particle ) const noexcept
+    { return cvar( pt, particle, int2type< Layout >() ); }
 
     //! Ptr access
     inline tk::real* ptr() const noexcept { return m_ptr.get(); }
 
-    //! Size access
+    //! Total Size access
     inline uint64_t size() const noexcept { return m_npar * m_nprop; }
 
+    //! Data size access
+    inline uint64_t npar() const noexcept { return m_npar; }
+
     //! Layout name dispatch
-    inline const char* major() const noexcept {
-      return major( int2type< Layout >() );
-    }
+    inline const char* major() const noexcept
+    { return major( int2type< Layout >() ); }
 
   private:
-    //! Don't permit copy constructor
-    ParticleProperties(const ParticleProperties&) = delete;
-    //! Don't permit copy assigment
-    ParticleProperties& operator=(const ParticleProperties&) = delete;
-    //! Don't permit move constructor
-    ParticleProperties(ParticleProperties&&) = delete;
-    //! Don't permit move assigment
-    ParticleProperties& operator=(ParticleProperties&&) = delete;
-
-   //! Transform a compile-time uint8_t into a type
-   template< uint8_t m >
-   struct int2type {
-     enum { value = m };
-   };
+   //! Transform a compile-time uint8_t into a type, used for dispatch
+   template< uint8_t m > struct int2type { enum { value = m }; };
 
    // Overloads for the various data accesses
    inline tk::real&
@@ -136,7 +125,7 @@ class ParticleProperties {
    const uint32_t m_nprop;                    //!< Number of particle properties
 };
 
-//! Select data layout policy for particle properties
+//! Select data layout policy for particle properties at compile-time
 #if   defined LAYOUT_PARTICLE_MAJOR
 using ParProps = ParticleProperties< ParEqComp >;
 #elif defined LAYOUT_EQUATION_MAJOR
@@ -145,4 +134,4 @@ using ParProps = ParticleProperties< EqCompPar >;
 
 } // quinoa::
 
-#endif // LayoutPolicy_h
+#endif // ParticleProperties_h

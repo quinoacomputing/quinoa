@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Quinoa/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:39:45 PM MDT
+  \date      Mon 11 Aug 2014 09:34:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     SDE initialization policy options and associations
-  \details   SDE initialization policy options and associations
+  \brief     Differential equation initialization policy options
+  \details   Differential equation initialization policy options
 */
 //******************************************************************************
 #ifndef QuinoaInitPolicyOptions_h
@@ -19,7 +19,7 @@
 namespace quinoa {
 namespace ctr {
 
-//! InitPolicy types
+//! Differential equation initializion policies
 enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO };
 

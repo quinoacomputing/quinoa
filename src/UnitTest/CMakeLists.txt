@@ -6,8 +6,8 @@ project(UnitTest CXX)
 include(charm)
 
 add_library(UnitTest
-            TUTTest.C
             TUTSuite.C
+            TUTTest.C
 )
 
 addCharmModule( "tuttest" "UnitTest" )

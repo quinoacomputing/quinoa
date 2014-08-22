@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 09:13:27 PM MDT
+  \date      Fri 15 Aug 2014 11:34:14 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Timer
   \details   Timer
@@ -74,11 +74,30 @@ Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
   }
 
   // Put elapsed time in watch as hours:minutes:seconds
-  elapsedWatch.hrs = duration_cast<hours>(elapsed);
-  elapsedWatch.min = duration_cast<minutes>(elapsed) % hours(1);
-  elapsedWatch.sec = duration_cast<seconds>(elapsed) % minutes(1);
+  elapsedWatch.hrs = duration_cast< hours >( elapsed );
+  elapsedWatch.min = duration_cast< minutes >( elapsed ) % hours(1);
+  elapsedWatch.sec = duration_cast< seconds >( elapsed ) % minutes(1);
   // Put estimated time in watch as hours:minutes:seconds
-  estimatedWatch.hrs = duration_cast<hours>(estimated);
-  estimatedWatch.min = duration_cast<minutes>(estimated) % hours(1);
-  estimatedWatch.sec = duration_cast<seconds>(estimated) % minutes(1);
+  estimatedWatch.hrs = duration_cast< hours >( estimated );
+  estimatedWatch.min = duration_cast< minutes >( estimated ) % hours(1);
+  estimatedWatch.sec = duration_cast< seconds >( estimated ) % minutes(1);
 }
+
+namespace tk {
+
+Timer::Watch
+hms( tk::real stamp )
+//******************************************************************************
+//! Convert existing time stamp as a real to Watch (global-scope)
+//! \author J. Bakosi
+//******************************************************************************
+{
+  using std::chrono::duration_cast;
+  const auto d = Timer::Dsec( stamp );
+  return
+    Timer::Watch( duration_cast< Timer::hours >( d ),
+                  duration_cast< Timer::minutes >( d ) % Timer::hours(1),
+                  duration_cast< Timer::seconds >( d ) % Timer::minutes(1) );
+}
+
+} // tk::

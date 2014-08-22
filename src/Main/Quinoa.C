@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:42:03 PM MDT
+  \date      Fri 15 Aug 2014 11:50:50 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -12,6 +12,9 @@
 #include <pup_stl.h>
 
 #include <Config.h>
+#include <RNG.h>
+#include <RNGStack.h>
+#include <DiffEqStack.h>
 #include <QuinoaPrint.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/CmdLine/Parser.h>
@@ -58,6 +61,57 @@ void echoTPL( const tk::Print& print )
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
+//! Random number generators selected by user
+std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
+//! Differential equations selected by user
+std::vector< DiffEq > g_diffeqs;
+
+//! Distributor Charm++ proxy facilitating call-back to Distributor by the
+//! individual integrators
+CProxy_Distributor g_DistributorProxy;
+
+//! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG
+//! stack since it needs to (re-)bind function pointers on different processing
+//! elements. Therefore we circumvent Charm's usual pack/unpack for this type,
+//! and thus sizing does not make sense: sizing is a no-op. We could initialize
+//! the stack in RNGTestDriver's constructor and let this function re-create the
+//! stack only when unpacking, but that leads to repeating the same code twice:
+//! once in RNGTestDriver's constructor, once here. Another option is to use
+//! this pack/unpack routine to both initially create (when packing) and to
+//! re-create (when unpacking) the stack, which eliminates the need for
+//! pre-creating the object in RNGTestDriver's constructor and therefore
+//! eliminates the repeated code. This explains the guard for sizing: the code
+//! below is called for packing only (in serial) and packing and unpacking (in
+//! parallel).
+inline
+void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
+  if (!p.isSizing()) {
+    tk::RNGStack stack(
+      #ifdef HAS_MKL
+      g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
+      #endif
+      g_inputdeck.get< tag::param, tk::tag::rngsse >() );
+    rng = stack.selected( g_inputdeck.get< tag::selected, tk::tag::rng >() );
+  }
+}
+
+//! Pack/Unpack selected differential equations. This Pack/Unpack method
+//! (re-)creates the DiffEq factory since it needs to (re-)bind function
+//! pointers on different processing elements. Therefore we circumvent Charm's
+//! usual pack/unpack for this type, and thus sizing does not make sense: sizing
+//! is a no-op. We could initialize the factory in QuinoaDriver's constructor
+//! and let this function re-create the stack only when unpacking, but that
+//! leads to repeating the same code twice: once in QuinoaDriver's constructor,
+//! once here. Another option is to use this pack/unpack routine to both
+//! initially create (when packing) and to re-create (when unpacking) the
+//! factory, which eliminates the need for pre-creating the object in
+//! QuinoaDriver's constructor and therefore eliminates the repeated code. This
+//! explains the guard for sizing: the code below is called for packing only (in
+//! serial) and packing and unpacking (in parallel).
+inline
+void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
+  if (!p.isSizing()) eqs = DiffEqStack().selected();
+}
 
 } // quinoa::
 
@@ -93,8 +147,7 @@ class Main : public CBase_Main {
 
     void execute() {
       m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
-      m_driver.execute();       // does not (yet) fire up async chares
-      finalize();               // so call finalize right away
+      m_driver.execute();       // fires up async chares
     }
 
     void finalize() {
@@ -103,6 +156,10 @@ class Main : public CBase_Main {
       m_print.endpart();
       CkExit();
     }
+
+    //! Add time stamp contributing to final timers output
+    void timestamp( std::string label, tk::real stamp )
+    { m_timestamp.emplace( label, tk::hms( stamp ) ); }
 
   private:
     quinoa::ctr::CmdLine m_cmdline;                   //!< Command line

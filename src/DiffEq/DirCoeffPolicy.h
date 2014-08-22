@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:08:11 PM MDT
+  \date      Mon 18 Aug 2014 10:06:33 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -21,16 +21,8 @@ namespace quinoa {
 //! Dirichlet constant coefficients policity: constants in time
 struct DirCoeffConst {
 
+  //! Constructor: default for accessing policy name, type, etc.
   DirCoeffConst() = default;
-
-  std::string policy() const noexcept {
-    return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT );
-  }
-
-  ctr::CoeffPolicyType type() const noexcept {
-    return ctr::CoeffPolicyType::CONSTANT;
-  }
-
   //! Constructor: initialize coefficients
   DirCoeffConst( unsigned int ncomp,
                  const std::vector< tk::real >& b_,
@@ -48,17 +40,17 @@ struct DirCoeffConst {
     ErrChk( k.size() == ncomp, "Wrong number of Dirichlet SDE parameters 'k'");
   }
 
+  std::string policy() const noexcept
+  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+
+  ctr::CoeffPolicyType type() const noexcept
+  { return ctr::CoeffPolicyType::CONSTANT; }
+
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real& t,
-                   std::vector< tk::real >& b,
-                   std::vector< tk::real >& S,
-                   std::vector< tk::real >& k )
-  {
-    IGNORE(t);
-    IGNORE(b);
-    IGNORE(S);
-    IGNORE(k);
-  }
+                   std::vector< tk::real >&,
+                   std::vector< tk::real >&,
+                   std::vector< tk::real >& ) {}
 };
 
 //! List of all Dirichlet's coefficients policies

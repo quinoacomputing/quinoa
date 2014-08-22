@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:30:21 PM MDT
+  \date      Mon 11 Aug 2014 12:48:13 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -45,7 +45,8 @@ struct timescale {};
 struct initpolicy {};
 struct coeffpolicy {};
 struct depvar {};
-struct sde {};
+struct diffeq {};
+struct virtualization {};
 
 struct dirichlet { enum { id = 0 }; };
 struct gendir { enum { id = 1 }; };
@@ -66,7 +67,7 @@ struct mixrate {};
 
 struct title {};
 struct selected {};
-struct incpar {};
+struct discr {};
 struct component {};
 struct interval {};
 struct io {};

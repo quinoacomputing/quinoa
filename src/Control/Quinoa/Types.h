@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:27:16 PM MDT
+  \date      Sat 16 Aug 2014 08:16:59 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -23,7 +23,9 @@
 #include <Quinoa/Options/Mix.h>
 #include <Quinoa/Options/Frequency.h>
 #include <Quinoa/Options/MixRate.h>
-#include <Quinoa/Options/SDE.h>
+#include <Quinoa/Options/DiffEq.h>
+#include <Quinoa/Options/InitPolicy.h>
+#include <Quinoa/Options/CoeffPolicy.h>
 #include <Options/RNG.h>
 #include <PUPUtil.h>
 
@@ -175,16 +177,17 @@ using selects = tk::tuple::tagged_tuple<
   tag::mix,        ctr::MixType,        //!< Selected material mix model
   tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
-  tag::sde,        std::vector< ctr::SDEType >,    //!< Selected SDEs
-  tk::tag::rng,    std::vector< tk::ctr::RNGType > //!< Selected RNGs
+  tag::diffeq,     std::vector< ctr::DiffEqType >,  //!< Selected diff eqs
+  tk::tag::rng,    std::vector< tk::ctr::RNGType >  //!< Selected RNGs
 >;
 
-//! Time incrementation parameters storage
-using incpars = tk::tuple::tagged_tuple<
-  tag::npar,  uint64_t,  //!< Total number of particles
-  tag::nstep, uint64_t,  //!< Number of time steps to take
-  tag::term,  tk::real,  //!< Time to terminate time stepping
-  tag::dt,    tk::real   //!< Size of time step
+//! Discretization parameters storage
+using discretization = tk::tuple::tagged_tuple<
+  tag::npar,           uint64_t,  //!< Total number of particles
+  tag::nstep,          uint64_t,  //!< Number of time steps to take
+  tag::term,           tk::real,  //!< Time to terminate time stepping
+  tag::dt,             tk::real,  //!< Size of time step
+  tag::virtualization, tk::real   //!< Virtualization parameter
 >;
 
 //! Output intervals storage
@@ -208,95 +211,95 @@ using ios = tk::tuple::tagged_tuple<
 
 //! Position parameters storage
 using PositionParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char
+  tag::depvar,      std::vector< char >
 >;
 
 //! Mass parameters storage
 using MassParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char
+  tag::depvar,      std::vector< char >
 >;
 
 //! Hydro parameters storage
 using HydroParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char
+  tag::depvar,      std::vector< char >
 >;
 
 //! Mix parameters storage
 using MixParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char
+  tag::depvar,      std::vector< char >
 >;
 
 //! Frequency parameters storage
 using FrequencyParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char
+  tag::depvar,      std::vector< char >
 >;
 
 //! Dirichlet mix model parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
-  tag::b,           std::vector< tk::real >,
-  tag::S,           std::vector< tk::real >,
-  tag::kappa,       std::vector< tk::real >,
-  tk::tag::rng,     tk::ctr::RNGType,
-  tag::initpolicy,  ctr::InitPolicyType,
-  tag::coeffpolicy, ctr::CoeffPolicyType
+  tag::depvar,      std::vector< char >,
+  tag::b,           std::vector< std::vector< tk::real > >,
+  tag::S,           std::vector< std::vector< tk::real > >,
+  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Generalized Dirichlet parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
-  tag::b,           std::vector< tk::real >,
-  tag::S,           std::vector< tk::real >,
-  tag::kappa,       std::vector< tk::real >,
-  tag::c,           std::vector< tk::real >,
-  tk::tag::rng,     tk::ctr::RNGType,
-  tag::initpolicy,  ctr::InitPolicyType,
-  tag::coeffpolicy, ctr::CoeffPolicyType
+  tag::depvar,      std::vector< char >,
+  tag::b,           std::vector< std::vector< tk::real > >,
+  tag::S,           std::vector< std::vector< tk::real > >,
+  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tag::c,           std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Ornstein-Uhlenbeck parameters storage
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
+  tag::depvar,      std::vector< char >,
   tag::sigma,       tk::real,
   tag::timescale,   tk::real,
-  tk::tag::rng,     tk::ctr::RNGType
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >
 >;
 
 //! Log-normal parameters storage
 using LogNormalParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
+  tag::depvar,      std::vector< char >,
   tag::sigma,       tk::real,
   tag::timescale,   tk::real,
-  tk::tag::rng,     tk::ctr::RNGType
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >
 >;
 
 //! Skew-normal parameters storage
 using SkewNormalParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
+  tag::depvar,      std::vector< char >,
   tag::sigma,       tk::real,
   tag::timescale,   tk::real,
   tag::lambda,      tk::real,
-  tk::tag::rng,     tk::ctr::RNGType
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >
 >;
 
 //! Gamma parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
+  tag::depvar,      std::vector< char >,
   tag::c1,          tk::real,
   tag::c2,          tk::real,
   tag::c3,          tk::real,
   tag::c4,          tk::real,
-  tk::tag::rng,     tk::ctr::RNGType
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >
 >;
 
 //! Beta parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      char,
+  tag::depvar,      std::vector< char >,
   tag::atwood,      tk::real,
   tag::b,           tk::real,
   tag::S,           tk::real,
   tag::kappa,       tk::real,
-  tk::tag::rng,     tk::ctr::RNGType
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >
 >;
 
 //! Simplified Langevin hydro model parameters storage
@@ -331,7 +334,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::beta,         BetaParameters
 >;
 
-//! PEGTL location type to use throughout all of Quinoa's parsers
+//! PEGTL location type to use throughout Quinoa's parsers
 using Location = pegtl::ascii_location;
 
 } // ctr::
