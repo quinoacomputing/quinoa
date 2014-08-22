@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:30:54 PM MDT
+  \date      Fri 15 Aug 2014 10:12:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -17,10 +17,6 @@
 //! Everything that contributes to the quinoa executable
 namespace quinoa {
 
-// //! MonteCarlo factory type
-// using MonteCarloFactory =
-//   std::map< ctr::MonteCarloType, std::function< MonteCarlo*() > >;
-
 //! Quinoa driver used polymorphically with Driver
 class QuinoaDriver {
 
@@ -30,19 +26,9 @@ class QuinoaDriver {
                            const ctr::CmdLine& cmdline );
 
     //! Execute driver
-    void execute();
+    void execute() {}
 
   private:
-    //! Initialize factories
-    void initFactories( const tk::Print& print );
-
-//     //! Factories
-//     tk::RNGFactory m_RNGFactory;                 //!< RNG factory
-//     MonteCarloFactory m_MonteCarloFactory;       //!< MonteCarlo factory
-// 
-//     //! Pointers to selected options
-//     std::unique_ptr< MonteCarlo > m_montecarlo;  //!< MonteCarlo object
-
     const QuinoaPrint& m_print;
 };
 

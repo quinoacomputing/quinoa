@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Thu 31 Jul 2014 07:52:23 PM MDT
+  \date      Sun 17 Aug 2014 06:54:42 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Battery
   \details   Battery
@@ -31,8 +31,7 @@ class Battery {
   public:
     //! Constructor taking an object modeling Concept (see below). The object
     //! of class T was pre-constructed.
-    template< typename T >
-    explicit Battery( T x ) :
+    template< typename T > explicit Battery( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
     //! Constructor taking a std::function holding a constructor bound to its

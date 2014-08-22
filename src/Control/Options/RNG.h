@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 11:21:57 AM MDT
+  \date      Tue 12 Aug 2014 10:25:04 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -198,7 +198,7 @@ class RNG : public tk::Toggle< RNGType > {
     { return str.find( kw ) != std::string::npos ? true : false; }
 
     //! Enums -> MKL VSL BRNG parameters
-    std::map<RNGType, ParamType> brng {
+    std::map< RNGType, ParamType > brng {
         { RNGType::NO_RNG, -1 }
       , { RNGType::RNGSSE_GM19, 0 }
       , { RNGType::RNGSSE_GM29, 1 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 08:48:46 PM MDT
+  \date      Fri 22 Aug 2014 07:19:06 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -11,8 +11,13 @@
 #ifndef QuinoaPrint_h
 #define QuinoaPrint_h
 
+#include <algorithm>
+
+#include <boost/algorithm/string/replace.hpp>
+
 #include <RNGPrint.h>
-#include <Quinoa/Options/SDE.h>
+#include <DiffEq.h>
+#include <Quinoa/Options/DiffEq.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 
 namespace quinoa {
@@ -69,65 +74,78 @@ class QuinoaPrint : public tk::RNGPrint {
       }
     }
 
-    //! Print configuration of a model
-    template< typename Option, typename... tags >
-    void Model( const quinoa::Model& model ) const {
-      if (g_inputdeck.get< tags... >() !=
-            g_inputdeck_defaults.get< tags... >() ) {
-        Option opt;
-        subsection( opt.group() + ": " +
-                    opt.name( g_inputdeck.get< tags... >() ) );
-        printModel( model );
-      }
-    }
-
-    //! Print configuration of a model in vector
-    template< typename Option, typename... tags >
-    void Model( const quinoa::Model& model, std::size_t i ) const {
-      if (g_inputdeck.get< tags... >() !=
-            g_inputdeck_defaults.get< tags... >() ) {
-        Option opt;
-        subsection( opt.group() + ": " +
-                    opt.name( g_inputdeck.get< tags... >()[i] ) );
-        printModel( model );
-      }
-    }
-
-    //! Print list: name: option names with policies...
+    //! Print list: name: option names with policies
     template< class Factory >
-    void optionlist( const std::string& title, const Factory& factory ) const {
-      if (!factory.empty()) section( title );
-      for (const auto& f : factory) {
-        std::vector< std::string > entries = SDEPolicyNames( f.first );
-        std::stringstream ss;
-        for (const auto& e : entries) ss << e << " ";
-        m_stream << m_item_name_value_fmt
-                    % m_item_indent % SDEName( f.first ) % ss.str();
+    void eqlist( const std::string& title,
+                 const Factory& factory,
+                 std::size_t ntypes ) const {
+      if (!factory.empty()) {
+        section( title );
+        item( "Unique equation types", ntypes );
+        item( "With all policy combinations", factory.size() );
+        raw( '\n' );
+        raw( m_item_indent + "Legend: equation name : "
+                             "i: initialization policy, " +
+                             "c: coefficients policy\n\n" );
+        std::string oldeqname;
+        for (const auto& f : factory) {
+          std::vector< std::string > entries = DiffEqPolicyNames( f.first );
+          std::stringstream ss;
+          for (const auto& e : entries) ss << e << " ";
+          const auto eqname = DiffEqName( f.first );
+          if ( oldeqname != eqname )
+            m_stream << m_item_name_value_fmt % m_item_indent % eqname % ss.str();
+          else
+            m_stream << m_item_name_value_fmt % m_item_indent % "" % ss.str();
+          oldeqname = eqname;
+        }
       }
+    }
+
+    //! Print time integration header
+    void inthead( const std::string& title, const std::string& name,
+                  const std::string& legend, const std::string& head ) const {
+      section( title, name );
+      std::string l( legend );
+      boost::replace_all( l, "\n", "\n" + m_item_indent );
+      raw( m_item_indent + l + head );
     }
 
     //! Echo requested statistics if differs from default.
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! <<= for outputing requested Term and vector<Term>.
-    void RequestedStats(const std::string& msg) const;
+    //! <<= for outputing requested Term and vector< Term >.
+    void RequestedStats( const std::string& msg ) const;
  
     //! Echo estimated statistics if differs from default.
     //! Fields of vector<vector< struct{field, name, plot} >> must exist.
     //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! << for outputing estimated Term and vector<Term>.
-    void EstimatedStats(const std::string& msg) const;
+    //! << for outputing estimated Term and vector< Term >.
+    void EstimatedStats( const std::string& msg ) const;
+
+    //! Print configuration of a stack of differential equations
+    void diffeqs( const std::string& title,
+      const std::vector< std::vector< std::pair< std::string, std::string > > >&
+        info ) const;
 
   private:
-    //! Print configuration of a model
-    void printModel( const quinoa::Model& model ) const;
+    //! Return differential equation name
+    template< class Key >
+    std::string DiffEqName ( const Key& key ) const
+    { return ctr::DiffEq().name( key.template get< tag::diffeq >() ); }
 
-    //! Return SDE name
-    std::string SDEName( const ctr::SDEKey& key ) const
-    { return ctr::SDE().name( key.get<tag::sde>() ); }
-
-    //! Return SDE policies names
-    std::vector< std::string > SDEPolicyNames( const ctr::SDEKey& key ) const;
+    //! Extract differential equation policy names from diff eq key
+   template< class Key >
+   std::vector< std::string > DiffEqPolicyNames( const Key& key ) const {
+     std::vector< std::string > names;
+     names.push_back(
+       std::string("i:") +
+       ctr::InitPolicy().name( key.template get< tag::initpolicy >() ) + ',' );
+     names.push_back(
+       std::string("c:") +
+       ctr::CoeffPolicy().name( key.template get< tag::coeffpolicy >() ) );
+     return names;
+   }
 };
 
 } // quinoa::

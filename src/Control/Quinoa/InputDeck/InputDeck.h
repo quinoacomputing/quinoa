@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:28:34 PM MDT
+  \date      Mon 18 Aug 2014 10:16:25 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -25,8 +25,8 @@ class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      std::string,
                       tag::selected,   selects,
-                      tag::incpar,     incpars,
-                      tag::component,  ncomps< int >,
+                      tag::discr,      discretization,
+                      tag::component,  ncomps< unsigned int >,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
@@ -47,10 +47,12 @@ class InputDeck :
       set< tag::selected, tag::frequency >( FrequencyType::NO_FREQUENCY );
       set< tag::selected, tag::mixrate >( MixRateType::NO_MIXRATE );
       // Default time incrementation parameters
-      set< tag::incpar, tag::npar >( 1 );
-      set< tag::incpar, tag::nstep >( std::numeric_limits< uint64_t >::max() );
-      set< tag::incpar, tag::term >( 1.0 );
-      set< tag::incpar, tag::dt >( 0.5 );
+      set< tag::discr, tag::npar >( 1 );
+      set< tag::discr, tag::nstep >( std::numeric_limits< uint64_t >::max() );
+      set< tag::discr, tag::term >( 1.0 );
+      set< tag::discr, tag::dt >( 0.5 );
+      set< tag::discr, tag::dt >( 0.5 );
+      set< tag::discr, tag::virtualization >( 0.0 );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );
@@ -59,17 +61,6 @@ class InputDeck :
       set< tag::interval, tag::glob >( 1 );
       // Default beta mass model parameters
       set< tag::param, tag::beta, tag::atwood >( 0.5 );
-      // Default Dirichlet mix model parameters
-      set< tag::param, tag::dirichlet, tag::depvar >( 'x' );
-      set< tag::param, tag::dirichlet, tag::b >( std::vector< tk::real >() );
-      set< tag::param, tag::dirichlet, tag::S >( std::vector< tk::real >() );
-      set< tag::param, tag::dirichlet, tag::kappa >( std::vector< tk::real >() );
-      // Default generalized Dirichlet mix model parameters
-      set< tag::param, tag::gendir, tag::depvar >( 'x' );
-      set< tag::param, tag::gendir, tag::b >( std::vector< tk::real >() );
-      set< tag::param, tag::gendir, tag::S >( std::vector< tk::real >() );
-      set< tag::param, tag::gendir, tag::kappa >( std::vector< tk::real >() );
-      set< tag::param, tag::gendir, tag::c >( std::vector< tk::real >() );
       // Default gamma mix model parameters
       set< tag::param, tag::gamma, tag::c1 >( 0.5 );
       set< tag::param, tag::gamma, tag::c2 >( 0.73 );
@@ -107,8 +98,8 @@ class InputDeck :
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      std::string,
                    tag::selected,   selects,
-                   tag::incpar,     incpars,
-                   tag::component,  ncomps< int >,
+                   tag::discr,      discretization,
+                   tag::component,  ncomps< unsigned int >,
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,

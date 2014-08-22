@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:42:52 PM MDT
+  \date      Tue 12 Aug 2014 05:04:15 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Random number generator base
   \details   Random number generator base
@@ -39,12 +39,12 @@ class RNG {
       self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to uniform RNG
-    void uniform( int tid, int num, double* r ) const
-    { self->uniform( tid, num, r ); }
+    void uniform( int stream, int num, double* r ) const
+    { self->uniform( stream, num, r ); }
 
     //! Public interface to Gaussian RNG
-    void gaussian( int tid, int num, double* r ) const
-    { self->gaussian( tid, num, r ); }
+    void gaussian( int stream, int num, double* r ) const
+    { self->gaussian( stream, num, r ); }
 
     //! Copy assignment
     RNG& operator=( const RNG& x )
@@ -72,10 +72,10 @@ class RNG {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void uniform( int tid, int num, double* r ) const override
-      { data.uniform( tid, num, r ); }
-      void gaussian( int tid, int num, double* r ) const override
-      { data.gaussian( tid, num, r ); }
+      void uniform( int stream, int num, double* r ) const override
+      { data.uniform( stream, num, r ); }
+      void gaussian( int stream, int num, double* r ) const override
+      { data.gaussian( stream, num, r ); }
       T data;
     };
 

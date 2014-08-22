@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 07 Aug 2014 03:28:19 PM MDT
+  \date      Fri 15 Aug 2014 09:55:00 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -98,9 +98,9 @@ using spinsflow = keyword<spinsflow_info,  s,p,i,n,s,f,l,o,w >;
 // Keyword 'testsde'
 struct testsde_info {
   static const char* name() {
-    return "Stochastic differential equations testbed"; }
+    return "Differential equations testbed"; }
   static const char* help() { return
-    "Test stochastic differential equation(s).";
+    "Test ordinary and stochastic differential equations.";
   }
 };
 using testsde = keyword<testsde_info,  t,e,s,t,s,d,e >;
@@ -108,7 +108,7 @@ using testsde = keyword<testsde_info,  t,e,s,t,s,d,e >;
 // Keyword 'dirichlet'
 struct dirichlet_info {
   static const char* name() {
-    return "Dirichlet"; }
+    return "Dirichlet SDE"; }
   static const char* help() { return
     "A system of stochastic differential equations whose invariant is the "
     "Dirichlet distribution. For more details, see "
@@ -120,7 +120,7 @@ using dirichlet = keyword<dirichlet_info,  d,i,r,i,c,h,l,e,t >;
 // Keyword 'generalized_dirichlet'
 struct gendir_info {
   static const char* name() {
-    return "Generalized Dirichlet"; }
+    return "Generalized Dirichlet SDE"; }
   static const char* help() { return
     "A system of stochastic differential equations whose invariant is "
     "Lochner's generalized Dirichlet distribution. For more details, see "
@@ -325,6 +325,9 @@ using density_fluctuation = keyword<undefined_info,  r >;
   
 // Total number of particles
 using npar = keyword<undefined_info,  n,p,a,r >;
+
+// Virtualization parameter
+using virtualization = keyword< undefined_info,  v,i,r,t,u,a,l,i,z,a,t,i,o,n >;
 
 // TTY (screen) output interval
 using ttyi = keyword<undefined_info,  t,t,y,i >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Tue 10 Jun 2014 11:05:30 PM MDT
+  \date      Sat 16 Aug 2014 09:28:15 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Control base
   \details   Control base
@@ -178,6 +178,39 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subtag>
                               ::template nT<subsubtag>
                               ::value_type>( value ));
+    }
+
+    //! Convert and push back value to vector of back of vector at slot
+    //! TODO: Replace the overloads below with a variadic one
+    //! Convert and push back value to vector of back of vector at tag at 1st
+    //! level
+    template< typename tag >
+    void store_back_back(const std::string& value) {
+      Tuple::template get<tag>().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::value_type>( value ) );
+    }
+    //! Convert and push back value to vector of back of vector at tag at 2nd
+    //! level
+    template< typename tag, typename subtag >
+    void store_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::value_type>( value ) );
+    }
+    //! Convert and push back value to vector of back of vector at tag at 3rd
+    //! level
+    template< typename tag, typename subtag, typename subsubtag >
+    void store_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::template nT<subsubtag>
+                              ::value_type::value_type>( value ) );
     }
 
     //! Convert and insert value to field of map at slot

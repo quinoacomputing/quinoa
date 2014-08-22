@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:51:35 PM MDT
+  \date      Wed 20 Aug 2014 08:48:16 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -10,9 +10,15 @@
 //******************************************************************************
 
 #include <QuinoaPrint.h>
-#include <Quinoa/Options/SDE.h>
+#include <Quinoa/Options/DiffEq.h>
 
 using quinoa::QuinoaPrint;
+
+namespace quinoa {
+
+extern std::vector< DiffEq > g_diffeqs;
+
+} // quinoa::
 
 void
 QuinoaPrint::RequestedStats(const std::string& msg) const
@@ -21,12 +27,9 @@ QuinoaPrint::RequestedStats(const std::string& msg) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (g_inputdeck.get< tag::stat >() != g_inputdeck_defaults.get< tag::stat >())
-  {
+  if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for ( auto& v : g_inputdeck.get< tag::stat >() ) {
-      m_stream <<= v;
-    }
+    for ( auto& v : g_inputdeck.get< tag::stat >() ) m_stream <<= v;
     m_stream << '\n';
   }
 }
@@ -40,65 +43,30 @@ QuinoaPrint::EstimatedStats(const std::string& msg) const
 {
   if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : g_inputdeck.get<tag::stat>()) {
-       m_stream << v;
-    }
+    for (auto& v : g_inputdeck.get<tag::stat>()) m_stream << v;
     m_stream << '\n';
   }
 }
 
-std::vector< std::string >
-QuinoaPrint::SDEPolicyNames( const ctr::SDEKey& key ) const
-//******************************************************************************
-//  Return SDE policies names
-//! \author J. Bakosi
-//******************************************************************************
-{
-  std::vector< std::string > names;
-  names.push_back( ctr::InitPolicy().name( key.get<tag::initpolicy>() ) );
-  names.push_back( ctr::CoeffPolicy().name( key.get<tag::coeffpolicy>() ) );
-  return names;
-}
-
 void
-QuinoaPrint::printModel( const quinoa::Model& model ) const
+QuinoaPrint::diffeqs( const std::string& title,
+  const std::vector< std::vector< std::pair< std::string, std::string > > >&
+    info ) const
 //******************************************************************************
-//  Echo configuration of a model
+//  Print configuration of a stack of differential equations
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Echo dependent variable
-  m_stream << m_item_name_value_fmt % m_item_indent
-                                    % "Dependent variable"
-                                    % model.depvar();
-
-  // Echo equation type and RNG if model is stochastic
-  if (model.stochastic()) {
-    m_stream << m_item_name_value_fmt % m_item_indent
-                                      % "Equation"
-                                      % "stochastic";
-    tk::ctr::RNG rng;
-    m_stream << m_item_name_value_fmt % m_item_indent
-                                      % rng.group()
-                                      % rng.name( model.rng() );
-  } else {
-    // Only echo equation type if model is deterministic
-    m_stream << m_item_name_value_fmt % m_item_indent
-                                      % "Equation"
-                                      % "deterministic";
+  if ( !info.empty() ) {
+    std::stringstream ss;
+    ss << title << " (" << g_diffeqs.size() << ")";
+    section( ss.str() );
+    for (std::size_t e=0; e<info.size(); ++e) {
+      subsection( info[e][0].first );
+      for (std::size_t l=1; l<info[e].size(); ++l)
+        m_stream << m_item_name_value_fmt % m_item_indent
+                    % info[e][l].first % info[e][l].second;
+      if (e < info.size()-1) endsubsection();
+    }
   }
-
-  // Echo initialization policy
-  m_stream << m_item_name_value_fmt % m_item_indent
-                                    % "Init policy"
-                                    % model.initPolicy();
-  // Echo coefficients policy
-  m_stream << m_item_name_value_fmt % m_item_indent
-                                    % "Coefficients policy"
-                                    % model.coeffPolicy();
-  // Echo number of components
-  m_stream << m_item_name_value_fmt % m_item_indent
-                                    % "Number of components"
-                                    % model.ncomp();
-  m_stream << '\n';
 }

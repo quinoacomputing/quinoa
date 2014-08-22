@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:42:52 PM MDT
+  \date      Sun 10 Aug 2014 09:12:12 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -13,7 +13,6 @@
 
 #include <map>
 
-#include <Model.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
@@ -26,9 +25,6 @@ enum class MixType : uint8_t { NO_MIX=0,
                                IECM,
                                DIRICHLET,
                                GENDIR };
-
-//! Material mix model factory type
-using MixFactory = std::map< MixType, std::function<Model*()> >;
 
 //! Class with base templated on the above enum class with associations
 class Mix : public tk::Toggle< MixType > {

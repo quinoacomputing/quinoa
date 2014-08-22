@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.h
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 08:05:41 AM MDT
+  \date      Mon 11 Aug 2014 04:49:22 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit test driver
   \details   Unit test driver
@@ -30,7 +30,6 @@ class UnitTestDriver {
 
   private:
     const UnitTestPrint& m_print;
-    const ctr::CmdLine& m_cmdline;
 };
 
 } // unittest::

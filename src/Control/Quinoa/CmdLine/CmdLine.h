@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 08:51:20 PM MDT
+  \date      Mon 11 Aug 2014 09:57:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -34,6 +34,13 @@ class CmdLine : public tk::Control< // tag            type
       set< tag::io, tag::stat >( "stat" );
       set< tk::tag::verbose >( false ); // Use quiet output by default
     }
+
+    //! Pack/Unpack
+    void pup( PUP::er& p ) {
+      tk::Control< tag::io,          ios,
+                   tk::tag::verbose, bool >::pup(p);
+    }
+    friend void operator|( PUP::er& p, CmdLine& c ) { c.pup(p); }
 };
 
 } // ctr::

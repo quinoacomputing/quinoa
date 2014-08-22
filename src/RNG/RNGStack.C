@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:54:28 PM MDT
+  \date      Tue 12 Aug 2014 05:10:27 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   Stack of random number generators
@@ -23,6 +23,8 @@ extern "C" {
   #include <mrg32k3a.h>
 }
 
+#include <charm++.h>
+
 #include <RNGStack.h>
 #include <Factory.h>
 #include <RNGSSE.h>
@@ -33,27 +35,24 @@ extern "C" {
 
 using tk::RNGStack;
 
-void
-RNGStack::initFactory( tk::RNGFactory& factory,
-                       int nthreads,
-                       #ifdef HAS_MKL
-                       const tk::ctr::RNGMKLParameters& mklparam,
-                       #endif
-                       const tk::ctr::RNGSSEParameters& rngsseparam )
+RNGStack::RNGStack(
+                    #ifdef HAS_MKL
+                    const tk::ctr::RNGMKLParameters& mklparam,
+                    #endif
+                    const tk::ctr::RNGSSEParameters& rngsseparam )
 //******************************************************************************
-//  Register random number generators into factory for each supported library
+//  Constructor: register generators into factory for each supported library
 //! \author  J. Bakosi
 //******************************************************************************
 {
   #ifdef HAS_MKL
-  regMKL( factory, nthreads, mklparam );
+  regMKL( CkNumPes(), mklparam );
   #endif
-  regRNGSSE( factory, nthreads, rngsseparam );
+  regRNGSSE( CkNumPes(), rngsseparam );
 }
 
 std::map< tk::ctr::RawRNGType, tk::RNG >
-RNGStack::createSelected( const tk::RNGFactory& factory,
-                          const std::vector< tk::ctr::RNGType >& selected )
+RNGStack::selected( const std::vector< tk::ctr::RNGType >& sel ) const
 //******************************************************************************
 //  Instantiate selected RNGs from factory and place them in map
 //! \author  J. Bakosi
@@ -61,9 +60,10 @@ RNGStack::createSelected( const tk::RNGFactory& factory,
 {
   using tk::ctr::RawRNGType;
   std::map< RawRNGType, tk::RNG > rng;
-  for (const auto& s : selected) {
-    const auto r = factory.find(s);
-    if (r != end(factory)) rng.emplace(static_cast<RawRNGType>(s), r->second());
+  for (const auto& s : sel) {
+    const auto r = m_factory.find(s);
+    if (r != end(m_factory))
+      rng.emplace( static_cast< RawRNGType >( s ), r->second() );
     else Throw( "RNG not found in factory" );
   }
   return rng;
@@ -71,9 +71,7 @@ RNGStack::createSelected( const tk::RNGFactory& factory,
 
 #ifdef HAS_MKL
 void
-RNGStack::regMKL( tk::RNGFactory& factory,
-                  int nthreads,
-                  const tk::ctr::RNGMKLParameters& param )
+RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
 //******************************************************************************
 //  Register MKL random number generators into factory
 //! \author  J. Bakosi
@@ -97,8 +95,8 @@ RNGStack::regMKL( tk::RNGFactory& factory,
   //! Lambda to register a MKL random number generator into factory
   auto regMKLRNG = [&]( RNGType rng ) {
     recordModel< tk::RNG, tk::MKLRNG >
-      ( factory, rng,
-        nthreads,
+      ( m_factory, rng,
+        nstreams,
         opt.param( rng ),
         opt.param< tk::tag::seed >( rng, s_def, param ),
         um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
@@ -124,9 +122,7 @@ RNGStack::regMKL( tk::RNGFactory& factory,
 #endif
 
 void
-RNGStack::regRNGSSE( tk::RNGFactory& factory,
-                     int nthreads,
-                     const tk::ctr::RNGSSEParameters& param )
+RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
 //******************************************************************************
 //  Register RNGSSE random number generators into factory
 //! \author  J. Bakosi
@@ -145,59 +141,59 @@ RNGStack::regRNGSSE( tk::RNGFactory& factory,
 
   // Register RNGSSE RNGs
   recordModel< RNG, RNGSSE< gm19_state, unsigned, gm19_generate_ > >
-    ( factory, RNGType::RNGSSE_GM19,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GM19,
+      nstreams,
       &gm19_init_sequence_ );
 
   recordModel< RNG, RNGSSE< gm29_state, unsigned, &gm29_generate_ > >
-    ( factory, RNGType::RNGSSE_GM29,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GM29,
+      nstreams,
       &gm29_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GM29, l_def, param ),
       &gm29_init_long_sequence_,
       &gm29_init_medium_sequence_ );
 
   recordModel< RNG, RNGSSE< gm31_state, unsigned, gm31_generate_ > >
-    ( factory, RNGType::RNGSSE_GM31,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GM31,
+      nstreams,
       &gm31_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GM31, l_def, param ),
       &gm31_init_long_sequence_,
       &gm31_init_medium_sequence_ );
 
   recordModel< RNG, RNGSSE< gm55_state, unsigned long long, gm55_generate_ > >
-    ( factory, RNGType::RNGSSE_GM55,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GM55,
+      nstreams,
       &gm55_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GM55, l_def, param ),
       &gm55_init_long_sequence_ );
 
   recordModel< RNG, RNGSSE< gm61_state, unsigned long long, gm61_generate_ > >
-    ( factory, RNGType::RNGSSE_GM61,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GM61,
+      nstreams,
       &gm61_init_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GM61, l_def, param ),
       &gm61_init_long_sequence_ );
 
   recordModel< RNG, RNGSSE< gq58x1_state, unsigned, gq58x1_generate_ > >
-    ( factory, RNGType::RNGSSE_GQ581,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GQ581,
+      nstreams,
       &gq58x1_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GQ581, l_def, param ),
       &gq58x1_init_long_sequence_,
       &gq58x1_init_medium_sequence_ );
 
   recordModel< RNG, RNGSSE< gq58x3_state, unsigned, gq58x3_generate_ > >
-    ( factory, RNGType::RNGSSE_GQ583,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GQ583,
+      nstreams,
       &gq58x3_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GQ583, l_def, param ),
       &gq58x3_init_long_sequence_,
       &gq58x3_init_medium_sequence_ );
 
   recordModel< RNG, RNGSSE< gq58x4_state, unsigned, gq58x4_generate_ > >
-    ( factory, RNGType::RNGSSE_GQ584,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_GQ584,
+      nstreams,
       &gq58x4_init_short_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_GQ584, l_def, param ),
       &gq58x4_init_long_sequence_,
@@ -205,21 +201,21 @@ RNGStack::regRNGSSE( tk::RNGFactory& factory,
 
   recordModel< RNG,
                RNGSSE< mt19937_state, unsigned long long, mt19937_generate_ > >
-    ( factory, RNGType::RNGSSE_MT19937,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_MT19937,
+      nstreams,
       &mt19937_init_sequence_ );
 
   recordModel< RNG,
                RNGSSE< lfsr113_state, unsigned long long, lfsr113_generate_ > >
-    ( factory, RNGType::RNGSSE_LFSR113,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_LFSR113,
+      nstreams,
       &lfsr113_init_sequence_,
       opt.param< seqlen >( RNGType::RNGSSE_LFSR113, l_def, param ),
       &lfsr113_init_long_sequence_ );
 
   recordModel< RNG,
                RNGSSE<mrg32k3a_state, unsigned long long, mrg32k3a_generate_> >
-    ( factory, RNGType::RNGSSE_MRG32K3A,
-      nthreads,
+    ( m_factory, RNGType::RNGSSE_MRG32K3A,
+      nstreams,
       &mrg32k3a_init_sequence_ );
 }

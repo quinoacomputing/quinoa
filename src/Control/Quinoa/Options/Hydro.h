@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:43:17 PM MDT
+  \date      Sun 10 Aug 2014 09:12:03 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -13,7 +13,6 @@
 
 #include <map>
 
-#include <Model.h>
 #include <Toggle.h>
 #include <Quinoa/InputDeck/Keywords.h>
 
@@ -24,9 +23,6 @@ namespace ctr {
 enum class HydroType : uint8_t { NO_HYDRO=0,
                                  SLM,
                                  GLM };
-
-//! Hydrodynamics model factory type
-using HydroFactory = std::map< HydroType, std::function<Model*()> >;
 
 //! Class with base templated on the above enum class with associations
 class Hydro : public tk::Toggle< HydroType > {

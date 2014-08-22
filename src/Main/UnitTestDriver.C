@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Tue 29 Jul 2014 11:11:18 AM MDT
+  \date      Mon 11 Aug 2014 04:49:34 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
@@ -24,8 +24,7 @@ extern CProxy_TUTSuite g_suiteProxy;
 
 UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
                                 const ctr::CmdLine& cmdline ) :
-  m_print( print ),
-  m_cmdline( cmdline )
+  m_print( print )
 //******************************************************************************
 //  Constructor
 //! \author J. Bakosi
@@ -45,7 +44,7 @@ UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
     // can call back to the test suite. Since this is called inside the main
     // chare constructor, the Charm++ runtime system distributes the handle
     // along with all other global-scope data.
-    g_suiteProxy = CProxy_TUTSuite::ckNew( m_cmdline );
+    g_suiteProxy = CProxy_TUTSuite::ckNew( cmdline );
 
   } catch (...) { tk::processException(); }
 }

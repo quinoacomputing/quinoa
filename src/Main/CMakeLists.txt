@@ -39,18 +39,19 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
-                      #LinearAlgebra
-                      #MonteCarlo
                       Base
-                      #IO
-                      #Mesh
+                      DiffEq
+                      Integrator
+                      IO
+                      #LinearAlgebra
+                      Mesh
                       #Statistics
                       QuinoaControl
-                      #RNG
+                      RNG
                       ${SILO_LIBRARY}
-                      #${NEMESIS_LIBRARY}
-                      #${EXODUS_LIBRARY}
-                      #${NETCDF_LIBRARY}
+                      ${NEMESIS_LIBRARY}
+                      ${EXODUS_LIBRARY}
+                      ${NETCDF_LIBRARY}
                       ${HDF5_LIBRARY}
                       ${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
