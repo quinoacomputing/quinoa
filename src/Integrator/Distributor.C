@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Wed 20 Aug 2014 09:25:20 AM MDT
+  \date      Fri 22 Aug 2014 10:41:17 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -59,7 +59,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Print out info on load distirubtion
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
-                g_inputdeck.get< tag::discr, tag::virtualization >() );
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
   m_print.item( "Load (number of particles)",
                 g_inputdeck.get< tag::discr, tag::npar >() );
   m_print.item( "Number of processing elements", CkNumPes() );
@@ -118,7 +118,7 @@ Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
   //      npes = number of hardware processing elements
 
   // Get virtualization parameter
-  const auto v = g_inputdeck.get< tag::discr, tag::virtualization >();
+  const auto v = g_inputdeck.get< tag::cmd, tag::virtualization >();
   Assert( v > -std::numeric_limits< tk::real >::epsilon() &&
           v < 1.0+std::numeric_limits< tk::real >::epsilon(),
           "Virtualization parameter must be between [0.0...1.0]" );

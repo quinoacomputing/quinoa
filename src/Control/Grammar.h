@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 09:16:01 PM MDT
+  \date      Fri 22 Aug 2014 10:52:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -341,12 +341,11 @@ namespace grm {
   template< class Stack, class keyword, class insert,
             class kw_type = pegtl::any >
   struct process_cmd :
-         pegtl::ifmust< readcmd< Stack, keyword >,
-                        scan< pegtl::sor<
-                                kw_type,
-                                pegtl::apply< error< Stack,
-                                                     Error::MISSING > > >,
-                              insert > > {};
+         pegtl::ifmust<
+           readcmd< Stack, keyword >,
+           scan< pegtl::sor< kw_type,
+                             pegtl::apply< error< Stack, Error::MISSING > > >,
+                 insert > > {};
 
   //! process command line switch 'keyword'
   template< class Stack, class keyword, typename tag, typename... tags >

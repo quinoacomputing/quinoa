@@ -12,6 +12,8 @@ Parser/Control
  - Put in error trap if depvars are the same for two SDEs given
  - Using the defaults for an RNG in the rngs - end block should not require
    an 'end', as that is not so user-friendly
+ - Add type field to keyword and possibly others.
+ - Add command line help with short and long help on keywords.
 
 RNGTest
 -------
@@ -121,7 +123,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 06 Aug 2014 12:54:49 PM MDT
+<em>Page last updated:</em> Fri 22 Aug 2014 10:17:55 PM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

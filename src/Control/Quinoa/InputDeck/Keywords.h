@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 09:55:00 AM MDT
+  \date      Fri 22 Aug 2014 10:40:26 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -325,9 +325,6 @@ using density_fluctuation = keyword<undefined_info,  r >;
   
 // Total number of particles
 using npar = keyword<undefined_info,  n,p,a,r >;
-
-// Virtualization parameter
-using virtualization = keyword< undefined_info,  v,i,r,t,u,a,l,i,z,a,t,i,o,n >;
 
 // TTY (screen) output interval
 using ttyi = keyword<undefined_info,  t,t,y,i >;

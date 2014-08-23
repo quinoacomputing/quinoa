@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Sat 16 Aug 2014 08:16:59 PM MDT
+  \date      Fri 22 Aug 2014 10:37:33 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -186,8 +186,7 @@ using discretization = tk::tuple::tagged_tuple<
   tag::npar,           uint64_t,  //!< Total number of particles
   tag::nstep,          uint64_t,  //!< Number of time steps to take
   tag::term,           tk::real,  //!< Time to terminate time stepping
-  tag::dt,             tk::real,  //!< Size of time step
-  tag::virtualization, tk::real   //!< Virtualization parameter
+  tag::dt,             tk::real   //!< Size of time step
 >;
 
 //! Output intervals storage
