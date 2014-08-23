@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 09:59:36 PM MDT
+  \date      Fri 22 Aug 2014 10:40:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -431,7 +431,6 @@ namespace deck {
                      discr< kw::nstep, tag::nstep >,
                      discr< kw::term, tag::term >,
                      discr< kw::dt, tag::dt >,
-                     discr< kw::virtualization, tag::virtualization >,
                      interval< kw::glbi, tag::glob >,
                      interval< kw::pdfi, tag::pdf >,
                      interval< kw::stai, tag::plot >,

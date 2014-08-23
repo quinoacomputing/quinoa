@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:24:13 PM MDT
+  \date      Fri 22 Aug 2014 10:47:02 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -41,6 +41,13 @@ namespace cmd {
                                       tk::kw::verbose,
                                       tk::tag::verbose > {};
 
+  //! virtualization parameter
+  struct virtualization :
+         tk::grm::process_cmd< Stack,
+                               kw::virtualization,
+                               tk::grm::Store< Stack, tag::virtualization >,
+                               tk::grm::number > {};
+
   //! io parameter
   template< typename keyword, typename io_tag >
   struct io :
@@ -51,6 +58,7 @@ namespace cmd {
   //! command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     virtualization,
                      io< kw::control, tag::control >,
                      io< kw::input, tag::input >,
                      io< kw::output, tag::output >,

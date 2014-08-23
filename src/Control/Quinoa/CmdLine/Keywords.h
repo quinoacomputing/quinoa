@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:25:25 PM MDT
+  \date      Fri 22 Aug 2014 10:34:53 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
@@ -38,6 +38,28 @@ struct control_info {
   }
 };
 using control = cmdline_keyword< control_info, c, c,o,n,t,r,o,l >;
+
+// Keyword 'virtualization', cmdline '--virtualization' with alias '-u'
+struct virtualization_info {
+  static const char* name() { return "virtualization"; }
+  static const char* help() { return
+    "This option is used to define the degree of virtualization "
+    "(over-decomposition). The virtualization parameter, is a real number "
+    "between 0.0 and 1.0, inclusive, which controls the degree of "
+    "virtualization or over-decomposition. Independent of the value of "
+    "virtualization the work is approximately evenly distributed among the "
+    "available processing elements. For zero virtualization (no "
+    "over-decomposition), the work is simply decomposed into "
+    "total_work/numPEs, which yields the smallest number of Charm++ chares and "
+    "the largest chunks of work units. The other extreme is unity "
+    "virtualization, which decomposes the total work into the smallest size "
+    "work units possible, yielding the largest number of Charm++ chares. "
+    "Obviously, the optimum will be between 0.0 and 1.0, depending on the "
+    "problem.";
+  }
+};
+using virtualization = cmdline_keyword< virtualization_info,
+                                        u, v,i,r,t,u,a,l,i,z,a,t,i,o,n >;
 
 // Keyword 'input', cmdline '--input' with alias '-i'
 using input = cmdline_keyword<undefined_info, i, i,n,p,u,t>;

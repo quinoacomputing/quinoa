@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 10:16:25 PM MDT
+  \date      Fri 22 Aug 2014 10:37:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -52,7 +52,6 @@ class InputDeck :
       set< tag::discr, tag::term >( 1.0 );
       set< tag::discr, tag::dt >( 0.5 );
       set< tag::discr, tag::dt >( 0.5 );
-      set< tag::discr, tag::virtualization >( 0.0 );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );
