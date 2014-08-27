@@ -6,7 +6,7 @@ project(Control CXX)
 
 include(charm)
 
-#### RNGTest control ###########################################################
+#### Quinoa control ############################################################
 add_library(QuinoaControl
             FileParser.C
             StringParser.C

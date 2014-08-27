@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 04:37:05 PM MDT
+  \date      Tue 26 Aug 2014 06:26:44 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -39,6 +39,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
   pegtl::dummy_parse< deck::read_file >( input, id );
+
+  // Echo errors and warnings accumulated during parsing
+  echoErrors( print, id.get< tk::tag::error >() );
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

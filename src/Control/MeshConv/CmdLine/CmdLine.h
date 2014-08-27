@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 09:30:38 PM MDT
+  \date      Fri 22 Aug 2014 10:52:30 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConv's command line
   \details   MeshConv's command line
@@ -23,7 +23,8 @@ namespace ctr {
 class CmdLine :
   public tk::Control< // tag            type
                       tag::io,          ios,
-                      tk::tag::verbose, bool > {
+                      tk::tag::verbose, bool,
+                      tk::tag::error,   std::vector< std::string > > {
   public:
     //! Constructor: set defaults. Anything not set here initialized by the
     //! compiler using the default constructor for the corresponding type.

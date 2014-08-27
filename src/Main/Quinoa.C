@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 11:50:50 AM MDT
+  \date      Tue 26 Aug 2014 12:30:17 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -119,7 +119,8 @@ void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
 class Main : public CBase_Main {
 
   public:
-    Main( CkArgMsg* msg ) :
+    Main( CkArgMsg* msg )
+    try :
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -143,23 +144,52 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    }
+    } catch (...) { processException(); }
 
+    //! Execute driver created and initialized by constructor
     void execute() {
-      m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
+      m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
       m_driver.execute();       // fires up async chares
     }
 
+    //! Normal exit point
     void finalize() {
-      m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-      m_print.time( "Timers (h:m:s)", m_timestamp );
-      m_print.endpart();
+      if (!m_timer.empty()) {
+        m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+        m_print.time( "Timers (h:m:s)", m_timestamp );
+        m_print.endpart();
+      }
       CkExit();
     }
 
     //! Add time stamp contributing to final timers output
     void timestamp( std::string label, tk::real stamp )
     { m_timestamp.emplace( label, tk::hms( stamp ) ); }
+
+    //! Process an exception
+    void processException() {
+      try {
+        throw;      // rethrow exception to deal with it here
+      }
+        // Catch Quina::Exceptions
+        catch ( tk::Exception& qe ) {
+          qe.handleException();
+        }
+        // Catch std::exception and transform it into Quinoa::Exception without
+        // file:line:func information
+        catch ( std::exception& se ) {
+          tk::Exception qe( se.what() );
+          qe.handleException();
+        }
+        // Catch uncaught exception
+        catch (...) {
+          tk::Exception qe( "Non-standard exception" );
+          qe.handleException();
+        }
+
+      // Tell the runtime system to exit
+      finalize();
+    }
 
   private:
     quinoa::ctr::CmdLine m_cmdline;                   //!< Command line

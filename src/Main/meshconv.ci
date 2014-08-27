@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/meshconv.ci
   \author    J. Bakosi
-  \date      Tue 15 Jul 2014 08:30:39 AM MDT
+  \date      Tue 26 Aug 2014 12:18:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for meshconv
   \details   Charm++ module interface file for meshconv
@@ -17,6 +17,7 @@ mainmodule meshconv {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize();
+    entry void processException();
   }
 
   chare execute { entry execute(); }

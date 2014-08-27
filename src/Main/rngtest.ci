@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/rngtest.ci
   \author    J. Bakosi
-  \date      Wed 25 Jun 2014 02:55:57 PM MDT
+  \date      Tue 26 Aug 2014 12:17:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for rngtest
   \details   Charm++ module interface file for rngtest
@@ -28,6 +28,7 @@ mainmodule rngtest {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize();
+    entry void processException();
   }
 
   chare execute { entry execute(); }

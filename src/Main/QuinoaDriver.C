@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 10:21:30 AM MDT
+  \date      Tue 26 Aug 2014 12:30:20 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -11,8 +11,7 @@
 
 #include <QuinoaDriver.h>
 #include <Quinoa/InputDeck/Parser.h>
-#include <quinoa.decl.h>
-#include <Handler.h>
+#include <integrator.decl.h>
 
 namespace quinoa {
 
@@ -32,23 +31,20 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
 //******************************************************************************
 {
   // All global-scope data to be migrated to all PEs initialized here (if any)
-  try {
 
-    // Parse input deck into g_inputdeck
-    InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
+  // Parse input deck into g_inputdeck
+  InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
 
-    m_print.endpart();
-    m_print.part( "Factory" );
+  m_print.endpart();
+  m_print.part( "Factory" );
 
-    // Instantiate Distributor chare which drives the time-integration of
-    // differential equations via several integrator chares. We only support a
-    // single type of Distributor class at this point, so no factory
-    // instantiation, simply fire up a Charm++ chare Distributor, which fires up
-    // integrators. Store proxy handle in global-scope to make it available to
-    // individual integrators so they can call back to Distributor. Since this
-    // is called inside the main chare constructor, the Charm++ runtime system
-    // distributes the handle along with all other global-scope data.
-    g_DistributorProxy = CProxy_Distributor::ckNew( cmdline );
-
-  } catch (...) { tk::processException(); }
+  // Instantiate Distributor chare which drives the time-integration of
+  // differential equations via several integrator chares. We only support a
+  // single type of Distributor class at this point, so no factory
+  // instantiation, simply fire up a Charm++ chare Distributor, which fires up
+  // integrators. Store proxy handle in global-scope to make it available to
+  // individual integrators so they can call back to Distributor. Since this
+  // is called inside the main chare constructor, the Charm++ runtime system
+  // distributes the handle along with all other global-scope data.
+  g_DistributorProxy = CProxy_Distributor::ckNew( cmdline );
 }

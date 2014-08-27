@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:40:44 AM MDT
+  \date      Wed 27 Aug 2014 10:14:54 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -105,7 +105,8 @@ namespace deck {
       if (depvars.find( newvar ) == depvars.end() ) {
         depvars.insert( newvar );
       } else {
-        tk::grm::handleError< Stack, tk::grm::Error::EXISTS >( stack, value );
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::EXISTS >
+                        ( stack, value );
       }
     }
   };
@@ -134,8 +135,8 @@ namespace deck {
         tk::grm::store_back_option< Stack, Option, tags... >().apply( value,
                                                                       stack );
       } else {
-        tk::grm::handleError< Stack, tk::grm::Error::NOTSELECTED >
-                            ( stack, value );
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOTSELECTED >
+                        ( stack, value );
       }
     }
   };
@@ -170,7 +171,9 @@ namespace deck {
                              ctr::Moment::ORDINARY >,
                      term< tag::dirichlet >,
                      term< tag::gendir >,
-                     tk::grm::unknown< Stack, tk::grm::Error::MOMENT > > {};
+                     tk::grm::unknown< Stack,
+                                       tk::grm::MsgKey::MOMENT,
+                                       tk::grm::error > > {};
 
   //! plow through terms in expectation until character 'rbound'
   template< char rbound >
@@ -259,7 +262,7 @@ namespace deck {
            tk::grm::scan<
              pegtl::sor< pegtl::alpha,
                          pegtl::apply<
-                           tk::grm::error< Stack, tk::grm::Error::NOTALPHA > > >,
+                           tk::grm::error< Stack, tk::grm::MsgKey::NOTALPHA > > >,
              tk::grm::Store_back< Stack, tag::param, model, Tag >,
              add_depvar,
              pegtl::capture< model::id > > > {};

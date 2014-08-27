@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 03:43:45 PM MDT
+  \date      Tue 26 Aug 2014 12:25:59 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConvDriver that drives MeshConv
   \details   MeshConvDriver that drives MeshConv
@@ -21,7 +21,6 @@
 #include <GmshMeshWriter.h>
 #include <ExodusIIMeshWriter.h>
 #include <meshconv.decl.h>
-#include <Handler.h>
 
 using meshconv::MeshConvDriver;
 
@@ -32,14 +31,10 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
 //! \author J. Bakosi
 //******************************************************************************
 {
-  try {
-
-    // Save input file name
-    m_input = cmdline.get< tag::io, tag::input >();
-    // Save output file name
-    m_output = cmdline.get< tag::io, tag::output >();
-
-  } catch (...) { tk::processException(); }
+  // Save input file name
+  m_input = cmdline.get< tag::io, tag::input >();
+  // Save output file name
+  m_output = cmdline.get< tag::io, tag::output >();
 }
 
 void
@@ -49,40 +44,36 @@ MeshConvDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  try {
+  //! Mesh readers factory
+  std::map< MeshReaderType, std::function<tk::Reader*()> > readers;
 
-    //! Mesh readers factory
-    std::map< MeshReaderType, std::function<tk::Reader*()> > readers;
+  //! Mesh writers factory
+  std::map< MeshWriterType, std::function<tk::Writer*()> > writers;
 
-    //! Mesh writers factory
-    std::map< MeshWriterType, std::function<tk::Writer*()> > writers;
+  //! Create unstructured mesh to store mesh
+  quinoa::UnsMesh mesh;
 
-    //! Create unstructured mesh to store mesh
-    quinoa::UnsMesh mesh;
-
-    // Register mesh readers
-    tk::record< quinoa::GmshMeshReader >( readers, MeshReaderType::GMSH,
+  // Register mesh readers
+  tk::record< quinoa::GmshMeshReader >( readers, MeshReaderType::GMSH,
+                                        m_input, std::ref(mesh) );
+  tk::record< quinoa::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
                                           m_input, std::ref(mesh) );
-    tk::record< quinoa::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
+  tk::record< quinoa::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
                                             m_input, std::ref(mesh) );
-    tk::record< quinoa::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
-                                              m_input, std::ref(mesh) );
 
-    // Register mesh writers
-    tk::record< quinoa::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+  // Register mesh writers
+  tk::record< quinoa::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+                                        m_output, std::ref(mesh) );
+  tk::record< quinoa::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
                                           m_output, std::ref(mesh) );
-    tk::record< quinoa::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
+  tk::record< quinoa::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
                                             m_output, std::ref(mesh) );
-    tk::record< quinoa::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
-                                              m_output, std::ref(mesh) );
 
-    // Read in mesh
-    tk::instantiate( readers, detectInput() )->read();
+  // Read in mesh
+  tk::instantiate( readers, detectInput() )->read();
 
-    // Write out mesh
-    tk::instantiate( writers, pickOutput() )->write();
-
-  } catch (...) { tk::processException(); }
+  // Write out mesh
+  tk::instantiate( writers, pickOutput() )->write();
 }
 
 MeshConvDriver::MeshReaderType

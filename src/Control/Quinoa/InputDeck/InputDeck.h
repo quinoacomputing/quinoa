@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:37:23 AM MDT
+  \date      Fri 22 Aug 2014 10:51:56 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -30,7 +30,8 @@ class InputDeck :
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
-                      tag::stat,       std::vector< Product > > {
+                      tag::stat,       std::vector< Product >,
+                      tk::tag::error,  std::vector< std::string > > {
 
   public:
     //! Constructor: set all defaults
@@ -102,7 +103,8 @@ class InputDeck :
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
-                   tag::stat,       std::vector< Product > >::pup(p);
+                   tag::stat,       std::vector< Product >,
+                   tk::tag::error,  std::vector< std::string > >::pup(p);
       // p | m_captured;
     }
     friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }

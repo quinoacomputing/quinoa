@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:52:21 AM MDT
+  \date      Wed 27 Aug 2014 10:51:20 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include <Exception.h>
+#include <tkTags.h>
 
 namespace tk {
 //! Grammar definition: state, actions, grammar
@@ -26,77 +27,65 @@ namespace grm {
 
   // Common auxiliary functions
 
+  //! C-style enum indicating warning or error (used as template argument)
+  enum MsgType { ERROR=0, WARNING };
+
   //! Parser error types
-  enum class Error : uint8_t { KEYWORD,
-                               MOMENT,
-                               QUOTED,
-                               LIST,
-                               ALIAS,
-                               MISSING,
-                               UNSUPPORTED,
-                               NOOPTION,
-                               NOTSELECTED,
-                               EXISTS,
-                               NOTALPHA };
+  enum class MsgKey : uint8_t { KEYWORD,
+                                MOMENT,
+                                QUOTED,
+                                LIST,
+                                ALIAS,
+                                MISSING,
+                                UNSUPPORTED,
+                                NOOPTION,
+                                NOTSELECTED,
+                                EXISTS,
+                                NOTALPHA,
+                                CHARMARG };
 
   //! Associate parser errors to error messages
-  static const std::map< Error, std::string > err_msg( {
-    { Error::KEYWORD, "Unknown keyword" },
-    { Error::MOMENT, "Unknown term in moment" },
-    { Error::QUOTED, "Must be double-quoted" },
-    { Error::LIST, "Unknown value in list" },
-    { Error::ALIAS, "Alias keyword too long" },
-    { Error::MISSING, "Required field missing" },
-    { Error::UNSUPPORTED, "Option not supported" },
-    { Error::NOOPTION, "Option does not exist" },
-    { Error::NOTSELECTED, "Option is not among the selected ones" },
-    { Error::EXISTS, "Dependent variable already used" },
-    { Error::NOTALPHA, "Variable not alphanumeric" }
+  static const std::map< MsgKey, std::string > message( {
+    { MsgKey::KEYWORD, "Unknown keyword." },
+    { MsgKey::MOMENT, "Unknown term in moment." },
+    { MsgKey::QUOTED, "Must be double-quoted." },
+    { MsgKey::LIST, "Unknown value in list." },
+    { MsgKey::ALIAS, "Alias keyword too long. Use either a full-length keyword "
+      "with double-hyphens, e.g., --keyword, or its alias, a single character, "
+      "with a single hyphen, e.g., -k." },
+    { MsgKey::MISSING, "Required field missing." },
+    { MsgKey::UNSUPPORTED, "Option not supported." },
+    { MsgKey::NOOPTION, "Option does not exist." },
+    { MsgKey::NOTSELECTED, "Option is not among the selected ones." },
+    { MsgKey::EXISTS, "Dependent variable already used." },
+    { MsgKey::NOTALPHA, "Variable not alphanumeric." },
+    { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
+      "for the Charm++ runtime system. Did you forget to prefix the command "
+      "line with charmrun? If this warning persists even after running with "
+      "charmrun, then Charm++ does not understand it either. See the Charm++ "
+      "manual at http://charm.cs.illinois.edu/manuals/html/charm++/manual.html."}
   } );
 
-  //! Parser warning types
-  enum class Warning : uint8_t { CHARMARG };
-
-  //! Associate parser warnings to warning messages
-  static const std::map< Warning, std::string > warn_msg( {
-    { Warning::CHARMARG, "Charm++ arguments (starting with '+') are ignored" }
-  } );
-
-  //! parser error handler
-  template< class Stack, Error key >
-  static void handleError( const Stack& stack, const std::string& value ) {
-    const auto& msg = err_msg.find(key);
-    if (msg != err_msg.end()) {
+  //! parser error and warning message handler
+  template< class Stack, MsgType type, MsgKey key >
+  static void Message( Stack& stack, const std::string& value ) {
+    const auto& msg = message.find(key);
+    if (msg != message.end()) {
       std::stringstream ss;
+      const std::string typestr( type == MsgType::ERROR ? "Error" : "Warning" );
       if (!value.empty()) {
-        ss << "Error while parsing '" << value << "' at " << stack.location()
-           << ". " << msg->second;
+        ss << typestr << " while parsing '" << value << "' at "
+           << stack.location() << ". " << msg->second;
       } else {
-        ss << "Error while parsing at " << stack.location() << ". "
+        ss << typestr << " while parsing at " << stack.location() << ". "
            << msg->second;
       }
-      Throw( ss.str() );
+      stack.template push_back< tag::error >( ss.str() );
     } else {
-      Throw( "Unknown parser error" );
-    }
-  }
-
-  //! emit parser warning
-  template< class Stack, Warning key >
-  static void handleWarning( const Stack& stack, const std::string& value ) {
-    const auto& msg = warn_msg.find(key);
-    if (msg != warn_msg.end()) {
-      std::stringstream ss;
-      if (!value.empty()) {
-        ss << "Warning while parsing '" << value << "' at " << stack.location()
-           << ": " << msg->second << ".";
-      } else {
-        ss << "Warning while parsing at " << stack.location() << ": "
-           << msg->second << ".";
-      }
-      g_print << ss.str() << std::endl;
-    } else {
-      g_print << "Unknown parser waring." << std::endl;
+      stack.template push_back< tag::error >
+        ( std::string("Unknown parser ") + 
+          (type == MsgType::ERROR ? "error" : "warning" ) +
+          " with no location information." );
     }
   }
 
@@ -118,19 +107,19 @@ namespace grm {
 
   // Common PEGTL actions
 
-  //! error dispatch
-  template< class Stack, Error key >
+  //! error message dispatch
+  template< class Stack, MsgKey key >
   struct error : pegtl::action_base< error<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
-      handleError< Stack, key >( stack, value );
+      Message< Stack, ERROR, key >( stack, value );
     }
   };
 
-  //! warning dispatch
-  template< class Stack, Warning key >
+  //! warning message dispatch
+  template< class Stack, MsgKey key >
   struct warning : pegtl::action_base< warning<Stack,key> > {
     static void apply(const std::string& value, Stack& stack) {
-      handleWarning< Stack, key >( stack, value );
+      Message< Stack, WARNING, key >( stack, value );
     }
   };
 
@@ -185,7 +174,7 @@ namespace grm {
       if (opt.exist( value ))
         stack.template push_back<tag,tags...>( opt.value( value ) );
       else
-        handleError< Stack, Error::NOOPTION >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
     }
   };
 
@@ -228,10 +217,10 @@ namespace grm {
          pegtl::seq< token, pegtl::until< pegtl::at< erased > > > {};
 
   // match unknown keyword and handle error
-  template< class Stack, Error key >
+  template< class Stack, MsgKey key, template<class,MsgKey> class msg >
   struct unknown :
          pegtl::pad< pegtl::ifapply< trim< pegtl::any, pegtl::space >,
-                                     error< Stack, key > >,
+                                     msg< Stack, key > >,
                      pegtl::blank,
                      pegtl::space > {};
 
@@ -241,7 +230,7 @@ namespace grm {
          pegtl::seq< pegtl::one<'-'>,
                      typename keyword::pegtl_alias,
                      pegtl::sor< pegtl::space,
-                                 unknown< Stack, Error::ALIAS > > > {};
+                                 pegtl::apply< error< Stack, MsgKey::ALIAS > > > > {};
 
   //! match verbose cmdline keyword
   template< class keyword >
@@ -286,10 +275,11 @@ namespace grm {
   //! plow through 'tokens' until 'endkeyword'
   template< class Stack, class endkeyword, typename... tokens >
   struct block :
-         pegtl::until< readkw< typename endkeyword::pegtl_string >,
-                       pegtl::sor< comment,
-                                   tokens...,
-                                   unknown< Stack, Error::KEYWORD > > > {};
+         pegtl::until<
+           readkw< typename endkeyword::pegtl_string >,
+           pegtl::sor< comment,
+                       tokens...,
+                       unknown< Stack, MsgKey::KEYWORD, error > > > {};
 
   //! plow through vector of values between keywords 'key' and 'endkeyword',
   //! calling 'insert' for each if matches and allowing comments between values
@@ -300,9 +290,10 @@ namespace grm {
                         starter,
                         pegtl::until<
                           readkw< typename endkeyword::pegtl_string >,
-                          pegtl::sor< comment,
-                                      scan< value, insert >,
-                                      unknown< Stack, Error::LIST > > > > {};
+                          pegtl::sor<
+                            comment,
+                            scan< value, insert >,
+                            unknown< Stack, MsgKey::LIST, error > > > > {};
 
   //! scan string between characters 'lbound' and 'rbound' and if matches apply
   //! action 'insert'
@@ -312,7 +303,7 @@ namespace grm {
                         pegtl::ifapply<
                           pegtl::sor< trim< pegtl::not_one< lbound >,
                                             pegtl::one< rbound > >,
-                                      unknown< Stack, Error::QUOTED > >,
+                                      unknown< Stack, MsgKey::QUOTED, error > >,
                         insert >,
                         pegtl::one< rbound > > {};
 
@@ -324,7 +315,7 @@ namespace grm {
                         scan< pegtl::sor<
                                 kw_type,
                                 pegtl::apply< error< Stack,
-                                                     Error::MISSING > > >,
+                                                     MsgKey::MISSING > > >,
                               insert > > {};
 
   //! process 'keyword' and call its 'insert' action for string matched
@@ -333,8 +324,9 @@ namespace grm {
             char rbound='"' >
   struct process_quoted :
          pegtl::ifmust< readkw< keyword >,
-                        pegtl::sor< quoted< Stack, insert, lbound, rbound >,
-                                    unknown< Stack, Error::QUOTED > > > {};
+                        pegtl::sor<
+                          quoted< Stack, insert, lbound, rbound >,
+                          unknown< Stack, MsgKey::QUOTED, error > > > {};
 
   //! process command line 'keyword' and call its 'insert' action if matches
   //! 'kw_type'
@@ -344,7 +336,7 @@ namespace grm {
          pegtl::ifmust<
            readcmd< Stack, keyword >,
            scan< pegtl::sor< kw_type,
-                             pegtl::apply< error< Stack, Error::MISSING > > >,
+                             pegtl::apply< error< Stack, MsgKey::MISSING > > >,
                  insert > > {};
 
   //! process command line switch 'keyword'
@@ -358,23 +350,25 @@ namespace grm {
   template< class Stack, typename keywords, typename ignore >
   struct read_file :
          pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   ignore,
-                                   unknown< Stack, Error::KEYWORD > > > {};
+                       pegtl::sor<
+                         keywords,
+                         ignore,
+                         unknown< Stack, MsgKey::KEYWORD, error > > > {};
 
   //! process but ignore Charm++'s charmrun arguments starting with '+'
   template< class Stack >
   struct charmarg :
-         pegtl::ifmust< readkw< pegtl::pad< pegtl::one<'+'>, pegtl::space > >,
-                        pegtl::apply< warning< Stack, Warning::CHARMARG > > > {};
+         pegtl::seq< pegtl::one<'+'>,
+                     unknown< Stack, MsgKey::CHARMARG, warning > > {};
 
-  //! read_string entry point: parse 'keywords' and 'charmarg' til end of string
+  //! read_string entry point: parse 'keywords' until end of string
   template< class Stack, typename keywords >
   struct read_string :
          pegtl::until< pegtl::eof,
-                       pegtl::sor< keywords,
-                                   charmarg< Stack >,
-                                   unknown< Stack, Error::KEYWORD > > > {};
+                       pegtl::sor<
+                         keywords,
+                         charmarg< Stack >,
+                         unknown< Stack, MsgKey::KEYWORD, error > > > {};
 
   //! insert RNG parameter
   template< typename Stack, typename keyword, typename option, typename field,

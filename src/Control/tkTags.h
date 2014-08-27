@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/tkTags.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 07:18:46 AM MDT
+  \date      Fri 22 Aug 2014 10:35:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Toolkit Tags
   \details   Toolkit Tags
@@ -22,6 +22,7 @@ struct rngmkl {};
 struct rngsse {};
 struct seqlen {};
 struct verbose {};
+struct error {};
 
 } // tag::
 } // tk::
