@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/quinoa.ci
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 10:54:51 AM MDT
+  \date      Tue 26 Aug 2014 11:59:41 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for quinoa
   \details   Charm++ module interface file for quinoa
@@ -31,6 +31,7 @@ mainmodule quinoa {
     entry void execute();
     entry void finalize();
     entry void timestamp( std::string label, tk::real stamp );
+    entry void processException();
   }
 
   chare execute { entry execute(); }

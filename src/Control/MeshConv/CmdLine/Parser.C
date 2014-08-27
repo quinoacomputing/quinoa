@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:13:05 PM MDT
+  \date      Tue 26 Aug 2014 06:10:36 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MeshConv's comamnd line parser
   \details   MeshConv's comamnd line parser
@@ -48,6 +48,9 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
+
+  // Echo errors and warnings accumulated during parsing
+  echoErrors( print, cmd.get< tk::tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

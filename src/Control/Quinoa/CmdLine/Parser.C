@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:55:25 PM MDT
+  \date      Tue 26 Aug 2014 11:18:24 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's comamnd line parser
   \details   Quinoa's comamnd line parser
@@ -46,6 +46,9 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
+
+  // Echo errors and warnings accumulated during parsing
+  echoErrors( print, cmd.get< tk::tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

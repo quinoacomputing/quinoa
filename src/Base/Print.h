@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 11:52:39 AM MDT
+  \date      Sun 24 Aug 2014 09:11:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Print
   \details   Print
@@ -41,7 +41,7 @@ class Print {
     //! valgrind. This way quiet output (formatted or not) simply goes into a
     //! local stringstream. In other words, the default argument to str,
     //! std::clog, is only used to detect whether client code passed a default
-    //! argument or not: if it did not, the string stream is usde for verbose
+    //! argument or not: if it did not, the string stream is used for verbose
     //! output, if it did, the specified stream is used for the verbose output.
     explicit Print( std::ostream& str = std::clog,
                     std::ostream& qstr = std::cout ) :

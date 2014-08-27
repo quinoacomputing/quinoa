@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 12 Aug 2014 03:13:21 PM MDT
+  \date      Tue 26 Aug 2014 12:16:47 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -137,7 +137,8 @@ inline void operator|( PUP::er& p, TestStack& stack )
 class Main : public CBase_Main {
 
   public:
-    Main( CkArgMsg* msg ) :
+    Main( CkArgMsg* msg )
+    try :
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
@@ -161,7 +162,7 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    }
+    } catch (...) { processException(); }
 
     void execute() {
       m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
@@ -169,10 +170,37 @@ class Main : public CBase_Main {
     }
 
     void finalize() {
-      m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-      m_print.time( "Timers (h:m:s)", m_timestamp );
-      m_print.endpart();
+      if (!m_timer.empty()) {
+        m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+        m_print.time( "Timers (h:m:s)", m_timestamp );
+        m_print.endpart();
+      }
       CkExit();
+    }
+
+    //! Process an exception
+    void processException() {
+      try {
+        throw;      // rethrow exception to deal with it here
+      }
+        // Catch Quina::Exceptions
+        catch ( tk::Exception& qe ) {
+          qe.handleException();
+        }
+        // Catch std::exception and transform it into Quinoa::Exception without
+        // file:line:func information
+        catch ( std::exception& se ) {
+          tk::Exception qe( se.what() );
+          qe.handleException();
+        }
+        // Catch uncaught exception
+        catch (...) {
+          tk::Exception qe( "Non-standard exception" );
+          qe.handleException();
+        }
+
+      // Tell the runtime system to exit
+      finalize();
     }
 
   private:

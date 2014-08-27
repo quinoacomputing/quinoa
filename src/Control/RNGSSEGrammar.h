@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:47:49 AM MDT
+  \date      Sat 23 Aug 2014 08:46:35 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -31,7 +31,8 @@ namespace rngsse {
       const key_type& key = stack.template get< sel, vec >().back();
       // Error out if RNG does not support option specified
       if ( !ctr::RNG().supportsOpt( key, opt.value(value) ) ) {
-        grm::handleError< Stack, grm::Error::UNSUPPORTED >( stack, value );
+        grm::Message< Stack, grm::ERROR, grm::MsgKey::UNSUPPORTED >
+                    ( stack, value );
       }
       stack.template insert_opt< key_type, field, EnumType, tag, tags... >
                                ( key, opt.value(value) );

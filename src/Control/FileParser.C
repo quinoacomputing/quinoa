@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:03:19 PM MDT
+  \date      Tue 26 Aug 2014 06:13:01 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -47,4 +47,46 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
   // Close it
   q.close();
   ErrChk( !q.fail(), "Failed to close file: " + filename );
+}
+
+void
+FileParser::echoErrors( const tk::Print& print,
+                        const std::vector< std::string >& errors )
+//******************************************************************************
+//  Echo errors accumulated during parsing
+//! \param[in] errors Vector of strings of errors
+//! \author  J. Bakosi
+//******************************************************************************
+{
+//   // Underline errors
+//   std::string pos( m_string.size(), ' ' );
+//   for (const auto& e : errors)
+//     if (e.find( "Error" ) != std::string::npos ||
+//         e.find( "Warning" ) != std::string::npos) {
+//       auto sloc = e.find( "at 1," );
+//       if (sloc != std::string::npos) {  // if we have location info
+//         // skip "at 1,"
+//         sloc += 5;
+//         // find a dot starting from after "at 1,"
+//         const auto eloc = e.find_first_of( '.', sloc );
+//         // compute location of error by extracting it from error message
+//         const std::size_t errloc = std::stoi( e.substr( sloc, eloc-sloc ) ) - 1;
+//         // find beginning of erroneous argument
+//         sloc = m_string.rfind( ' ', errloc-1 );
+//         // special-handle the first argument which has no space in front of it
+//         if (sloc == std::string::npos) sloc = 0; else ++sloc;
+//         // underline error
+//         for (std::size_t i=sloc; i<errloc; ++i) pos[i] = '^';
+//       }
+//     }
+// 
+//   // Output errors underlined (if any) to quiet stream, list errors, and exit
+//   if (!errors.empty()) {
+//     print % '\n';
+//     print % ">>> Parsed command line: '" % m_string % "'\n";
+//     print % ">>>                       " % pos % "\n";
+//     for (const auto& e : errors) print % ">>> " % e % std::endl;   // messages
+//     // Exit if there were any errors
+//     Throw( "Error(s) occurred, listed above, while parsing the command line\n" );
+//   }
 }

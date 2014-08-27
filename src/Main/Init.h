@@ -2,15 +2,10 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 23 Jul 2014 03:41:24 PM MDT
+  \date      Tue 26 Aug 2014 12:22:51 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains.
-             Note that including this header requires the upstream definition of
-             mainProxy, i.e., it must be included after a Charm++-generated
-             decl.h that declares the main charm module unique to an executable.
-             This is not very elegant, but this way the code below is reused
-             among different executables.
 */
 //******************************************************************************
 #ifndef Init_h
@@ -29,7 +24,6 @@
 #include <Exception.h>
 #include <Print.h>
 #include <tkTags.h>
-#include <Handler.h>
 
 namespace tk {
 
@@ -163,57 +157,6 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
   print.item( "Output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
 }
 
-static void newHandler()
-//******************************************************************************
-// Quinoa's own new handler
-//! \details This function is automatically called by allocation functions
-//! whenever a memory allocation attempt fails. We simply throw an Exception
-//! (derived from std::exception, that produces a trace. Exception safety:
-//! no-throw guarantee: this function never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  try {
-    Throw( "Cannot allocate memory" );
-  } catch (...) { processException(); }
-}
-
-static void terminateHandler()
-//******************************************************************************
-// Quinoa's own terminate handler
-//! \details This function is automatically called when the exception handling
-//! process has to be abandoned for some reason. This happens when no catch
-//! handler can be found for a thrown exception, or for some other exceptional
-//! circumstance that makes impossible to continue the exception handling
-//! process.We simply throw an Exception (derived from std::exception, that
-//! produces a trace. Exception safety: no-throw guarantee: this function never
-//! throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  try {
-    Throw( "Terminate called by uncaught exception" );
-  } catch (...) { processException(); }
-}
-
-static void unexpectedHandler()
-//******************************************************************************
-// Quinoa's own unexpected handler
-//! \details This function is automatically called when a function throws an
-//! exception that is not in its dynamic-exception-specification (i.e., in its
-//! throw specifier). The use of dynamic-exception-specifiers is deprecated
-//! (since C++11). We simply throw an Exception (derived from std::exception,
-//! that produces a trace. Exception safety: no-throw guarantee: this function
-//! never throws exceptions.
-//! \author J. Bakosi
-//******************************************************************************
-{
-  try {
-    Throw( "Unexpected exception. Exception specifiers are deprecated since "
-           "C++11" );
-  } catch (...) { processException(); }
-}
-
 //! Generic Main() used for all executables for code-reuse and a uniform output
 template< class Driver, class Printer, class CmdLine >
 Driver Main( int argc, char* argv[],
@@ -223,26 +166,15 @@ Driver Main( int argc, char* argv[],
              const Printer& print,
              void (*echoTPL)(const Print&) = [](const Print&){} )
 {
-  try {
+  // Echo program header
+  echoHeader( print, header );
 
-    // Install our own new-handler
-    std::set_new_handler( newHandler );
-    // Install our own terminate-handler
-    std::set_terminate( terminateHandler );
-    // Install our own unexpected-handler
-    std::set_unexpected( unexpectedHandler );
-
-    // Echo program header
-    echoHeader( print, header );
-
-    // Echo environment
-    print.part( "Environment" );
-    // Build environment
-    echoBuildEnv( print, executable, echoTPL );
-    // Runtime environment
-    echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
-
-  } catch (...) { processException(); }
+  // Echo environment
+  print.part( "Environment" );
+  // Build environment
+  echoBuildEnv( print, executable, echoTPL );
+  // Runtime environment
+  echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
 
   // Create and return driver
   return Driver( print, cmdline );

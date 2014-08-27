@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:43:33 AM MDT
+  \date      Fri 22 Aug 2014 10:53:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGTest's command line
   \details   RNGTest's command line
@@ -20,9 +20,11 @@ namespace rngtest {
 namespace ctr {
 
 //! CmdLine : Control< specialized to RNGTest >, see Types.h,
-class CmdLine : public tk::Control< // tag            type
-                                    tag::io,          ios,
-                                    tk::tag::verbose, bool > {
+class CmdLine : public tk::Control<
+                  // tag            type
+                  tag::io,          ios,
+                  tk::tag::verbose, bool,
+                  tk::tag::error,   std::vector< std::string > > {
   public:
     //! Constructor: set defaults. Anything not set here initialized by the
     //! compiler using the default constructor for the corresponding type.
