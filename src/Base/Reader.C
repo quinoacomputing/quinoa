@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 01:19:21 PM MDT
+  \date      Thu 28 Aug 2014 03:57:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader class definition
@@ -94,9 +94,9 @@ Reader::lines()
 //******************************************************************************
 {
   std::string s;
-  std::vector< std::string > lines;
-  while ( std::getline( m_inFile, s ) ) lines.emplace_back( s );
-  return lines;
+  std::vector< std::string > ls;
+  while ( std::getline( m_inFile, s ) ) ls.emplace_back( s );
+  return ls;
 }
 
 std::string
