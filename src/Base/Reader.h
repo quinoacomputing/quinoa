@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/IO/Reader.h
+  \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 02:45:39 PM MDT
+  \date      Thu 28 Aug 2014 12:20:07 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration
@@ -12,6 +12,7 @@
 #define Reader_h
 
 #include <fstream>
+#include <vector>
 
 #include <Exception.h>
 
@@ -32,6 +33,12 @@ class Reader {
 
     //! Return first line (for detection of file type based on header)
     std::string firstline();
+
+    //! Read a given line from file
+    std::string line( std::size_t lineNum );
+
+    //! Read file and return a string for each line
+    std::vector< std::string > lines();
 
   protected:
     const std::string m_filename;            //!< File name

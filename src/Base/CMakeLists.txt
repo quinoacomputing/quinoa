@@ -7,6 +7,8 @@ include(charm)
 add_library(Base
             Exception.C
             Timer.C
+            Reader.C
+            Writer.C
 #            Msg.C
 )
 

@@ -3,13 +3,11 @@ cmake_minimum_required(VERSION 2.8.5)
 project(IO CXX)
 
 add_library(IO
-            Reader.C                    # readers
-            GmshMeshReader.C
+            GmshMeshReader.C            # readers
             STLTxtMeshReader.C
             NetgenMeshReader.C
             ExodusIIMeshReader.C
-            Writer.C                    # writers
-            PDFWriter.C
+            PDFWriter.C                 # writers
             GlobWriter.C
             TxtStatWriter.C
             GmshMeshWriter.C

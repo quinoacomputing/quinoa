@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 27 Aug 2014 10:51:20 AM MDT
+  \date      Thu 28 Aug 2014 03:02:53 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -56,7 +56,9 @@ namespace grm {
     { MsgKey::MISSING, "Required field missing." },
     { MsgKey::UNSUPPORTED, "Option not supported." },
     { MsgKey::NOOPTION, "Option does not exist." },
-    { MsgKey::NOTSELECTED, "Option is not among the selected ones." },
+    { MsgKey::NOTSELECTED, "Option is not among the selected ones. The keyword "
+      "here is appropriate, but in order to use this keyword in this context, "
+      "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
@@ -188,7 +190,7 @@ namespace grm {
       using key_type =
         typename Stack::template nT< sel >::template nT< vec >::value_type;
       const key_type& key = stack.template get< sel, vec >().back();
-      stack.template insert_field< key_type, field, tag, tags... >( key, value );
+      stack.template insert_field<key_type, field, tag, tags...>( key, value );
     }
   };
 
@@ -217,7 +219,7 @@ namespace grm {
          pegtl::seq< token, pegtl::until< pegtl::at< erased > > > {};
 
   // match unknown keyword and handle error
-  template< class Stack, MsgKey key, template<class,MsgKey> class msg >
+  template< class Stack, MsgKey key, template< class, MsgKey > class msg >
   struct unknown :
          pegtl::pad< pegtl::ifapply< trim< pegtl::any, pegtl::space >,
                                      msg< Stack, key > >,
@@ -227,10 +229,11 @@ namespace grm {
   //! match alias cmdline keyword
   template< class Stack, class keyword >
   struct alias :
-         pegtl::seq< pegtl::one<'-'>,
-                     typename keyword::pegtl_alias,
-                     pegtl::sor< pegtl::space,
-                                 pegtl::apply< error< Stack, MsgKey::ALIAS > > > > {};
+         pegtl::seq<
+           pegtl::one<'-'>,
+           typename keyword::pegtl_alias,
+           pegtl::sor< pegtl::space,
+                       pegtl::apply< error< Stack, MsgKey::ALIAS > > > > {};
 
   //! match verbose cmdline keyword
   template< class keyword >

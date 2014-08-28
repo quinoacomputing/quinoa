@@ -168,22 +168,26 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   111: statement is unreachable
   #   193: zero used for undefined preprocessing identifier
   #   304: access control not specified ("public" by default)
+  #   367: duplicate friend declaration
   #   383: value copied to temporary, reference to temporary used
   #   444: destructor for base class is not virtual
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
   #  1418: external function definition with no prior declaration
+  #  2282: unrecognized GCC pragma
   #  2415: variable of static storage duration was declared but never referenced
   #  2547: path was specified as both a system and non-system include directory
   #  3346: dynamic exception specifications are deprecated
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,383,444,869,981,1418,2415,2547,3346")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,367,383,444,869,981,1418,2282,2415,2547,3346")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -opt-report=0")
 
   # Link to thread-safe MPI library
   add_compiler_flag("-mt_mpi")
 
-  # Use the g++ 4.8 headers
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gxx-name=g++-4.8")
+  # No limit on inlining
+  add_compiler_flag("-no-inline-max-size")
+  add_compiler_flag("-no-inline-max-total-size")
+  add_compiler_flag("-no-inline-max-per-routine")
 
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
