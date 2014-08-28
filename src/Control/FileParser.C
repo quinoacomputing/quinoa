@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:09:56 PM MDT
+  \date      Thu 28 Aug 2014 03:27:26 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -51,8 +51,8 @@ FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 }
 
 void
-FileParser::echoErrors( const tk::Print& print,
-                        const std::vector< std::string >& messages )
+FileParser::diagnostics( const tk::Print& print,
+                         const std::vector< std::string >& messages )
 //******************************************************************************
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print    Pretty printer
