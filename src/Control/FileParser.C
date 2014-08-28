@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:27:26 PM MDT
+  \date      Thu 28 Aug 2014 03:59:31 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -127,5 +127,5 @@ FileParser::diagnostics( const tk::Print& print,
   }
 
   // Exit if there were any errors
-  Throw( "Error(s) occurred, listed above, while parsing the control file\n" );
+  if (err) Throw( "Error(s) occurred while parsing file " + m_filename );
 }
