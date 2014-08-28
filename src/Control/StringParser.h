@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 12:53:36 PM MDT
+  \date      Thu 28 Aug 2014 03:28:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     String parser
   \details   String parser
@@ -28,8 +28,8 @@ class StringParser {
     explicit StringParser( int argc, char** argv );
 
     //! Echo errors and warnings accumulated during parsing
-    void echoErrors( const tk::Print& print,
-                     const std::vector< std::string >& messages );
+    void diagnostics( const tk::Print& print,
+                      const std::vector< std::string >& messages );
 
     std::string m_string;                     //!< String to parse
 };

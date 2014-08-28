@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 06:12:13 PM MDT
+  \date      Thu 28 Aug 2014 03:27:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -25,8 +25,8 @@ class FileParser {
     explicit FileParser( const std::string& filename );
 
     //! Echo errors accumulated during parsing
-    void echoErrors( const tk::Print& print,
-                     const std::vector< std::string >& errors );
+    void diagnostics( const tk::Print& print,
+                      const std::vector< std::string >& errors );
 
     const std::string m_filename;             //!< Name of file to parse
 };

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 11:26:31 AM MDT
+  \date      Thu 28 Aug 2014 03:30:20 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest's comamnd line parser
   \details   UnitTest's comamnd line parser
@@ -48,6 +48,9 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
+
+  // Echo errors and warnings accumulated during parsing
+  diagnostics( print, cmd.get< tk::tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:10:11 PM MDT
+  \date      Thu 28 Aug 2014 03:53:37 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     String parser
   \details   String parser
@@ -33,8 +33,8 @@ StringParser::StringParser(int argc, char** argv)
 }
 
 void
-StringParser::echoErrors( const tk::Print& print,
-                          const std::vector< std::string >& messages )
+StringParser::diagnostics( const tk::Print& print,
+                           const std::vector< std::string >& messages )
 //******************************************************************************
 //  Echo errors and warnings accumulated during parsing
 //! \param[in] print    Pretty printer
