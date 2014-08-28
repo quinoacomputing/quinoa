@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/IO/Writer.h
+  \file      src/Base/Writer.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:51:23 PM MDT
+  \date      Thu 28 Aug 2014 11:51:40 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Writer base class declaration
   \details   Writer base class declaration
@@ -29,24 +29,11 @@ class Writer {
     virtual ~Writer() noexcept;
 
     //! Write interface
-    virtual void write() {
-      Throw( "Writer::write() is a no-op and should be defined by a child" );
-    }
+    virtual void write() { Throw( "Writer::write() is a no-op" ); }
 
   protected:
     const std::string m_filename;          //!< File name
-
     mutable std::ofstream m_outFile;       //!< File output stream
-
-  private:
-    //! Don't permit copy constructor
-    Writer(const Writer&) = delete;
-    //! Don't permit copy assigment
-    Writer& operator=(const Writer&) = delete;
-    //! Don't permit move constructor
-    Writer(Writer&&) = delete;
-    //! Don't permit move assigment
-    Writer& operator=(Writer&&) = delete;
 };
 
 } // tk::

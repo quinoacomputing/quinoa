@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/IO/Reader.C
+  \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 02:53:38 PM MDT
+  \date      Thu 28 Aug 2014 01:19:21 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader class definition
@@ -81,7 +81,34 @@ Reader::firstline()
 //******************************************************************************
 {
   std::string s;
-  getline( m_inFile, s );               // read the first line
+  std::getline( m_inFile, s );          // read the first line
+  m_inFile.seekg( 0, std::ios::beg );   // seek back to the beginning of file
+  return s;
+}
+
+std::vector< std::string >
+Reader::lines()
+//******************************************************************************
+// Read file and return a string for each line
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::string s;
+  std::vector< std::string > lines;
+  while ( std::getline( m_inFile, s ) ) lines.emplace_back( s );
+  return lines;
+}
+
+std::string
+Reader::line( std::size_t lineNum )
+//******************************************************************************
+// Read a given line from file
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::string s;
+  std::size_t num = 0;
+  while ( std::getline( m_inFile, s ) && ++num < lineNum ) {}
   m_inFile.seekg( 0, std::ios::beg );   // seek back to the beginning of file
   return s;
 }
