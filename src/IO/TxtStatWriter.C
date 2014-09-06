@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 04:48:26 PM MDT
+  \date      Fri 05 Sep 2014 12:04:51 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -17,26 +17,33 @@
 using quinoa::TxtStatWriter;
 
 void
-TxtStatWriter::header() const
+TxtStatWriter::header( const std::vector< bool >& plotOrd,
+                       const std::vector< std::string >& nameOrd,
+                       const std::vector< std::string >& nameCen ) const
 //******************************************************************************
 //  Write out statistics file header
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( plotOrd.size() == nameOrd.size(), "plotOrd.size()!=nameOrd.size()" );
+
   m_outFile << "#     it             t";
 
-  for (int i=0; i<m_nord; ++i)
-    if ( m_plotOrdinary[i] )
-      m_outFile << std::setw(12) << '<' << m_nameOrdinary[i] << ">";
+  const auto nord = nameOrd.size();
+  for (auto i=decltype(nord){0}; i<nord; ++i)
+    if (plotOrd[i]) m_outFile << std::setw(12) << '<' << nameOrd[i] << ">";
 
-  for (int i=0; i<m_ncen; ++i)
-    m_outFile << std::setw(10) << '<' << m_nameCentral[i] << ">";
+  for (const auto& c : nameCen) m_outFile << std::setw(10) << '<' << c << ">";
 
   m_outFile << std::endl;
 }
 
 void
-TxtStatWriter::writeStat(const int it, const tk::real t)
+TxtStatWriter::writeStat( int it,
+                          tk::real t,
+                          const std::vector< tk::real >& ordinary,
+                          const std::vector< tk::real >& central,
+                          const std::vector< bool >& plotOrd )
 //******************************************************************************
 //  Write out statistics
 //! \param[in]  it         Iteration counter
@@ -49,15 +56,14 @@ TxtStatWriter::writeStat(const int it, const tk::real t)
             << "  ";
 
   // Output ordinary moments
-  for (int i=0; i<m_nord; ++i) {
-    if ( m_plotOrdinary[i] )
-      m_outFile << (m_ordinary[i]>0 ? " " : "") << m_ordinary[i] << "  ";
-  }
+  const auto nord = ordinary.size();
+  for (auto i=decltype(nord){0}; i<nord; ++i)
+    if (plotOrd[i])
+      //m_outFile << (ordinary[i] > 0 ? " " : "") << ordinary[i] << "  ";
+      m_outFile << " " << ordinary[i] << "  ";
 
   // Output central moments
-  for (int i=0; i<m_ncen; ++i) {
-    m_outFile << (m_central[i]>0 ? " " : "") << m_central[i] << "  ";
-  }
+  for (const auto& c : central) m_outFile << " " << c << "  ";
 
   m_outFile << std::endl;
 }

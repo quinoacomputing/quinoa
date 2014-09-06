@@ -45,7 +45,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       IO
                       #LinearAlgebra
                       Mesh
-                      #Statistics
+                      Statistics
                       QuinoaControl
                       RNG
                       ${SILO_LIBRARY}

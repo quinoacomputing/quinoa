@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:51:56 PM MDT
+  \date      Thu 04 Sep 2014 04:57:25 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -74,25 +74,33 @@ class InputDeck :
       set< tag::stat >( std::vector< Product >() );
     }
 
-  private:
-    // capture map for pegtl::capture, the functions below make this class look
-    // like a std::map in pegtl::capture's view, see pegtl/rules_action.hh
-    pegtl::capture_map m_captured;
+    //! Extract data on whether to plot ordinary moments of requested statistics
+    std::vector< bool > plotOrdinary() const {
+      std::vector< bool > plot;
+      for (const auto& product : get< tag::stat >()) {
+        if (ordinary( product )) {
+          plot.emplace_back( false );
+          for (const auto& term : product)
+            if (term.plot) plot.back() = true;
+        }
+      }
+      return plot;
+    }
 
-  public:
-    //! type const_iterator for pegtl::capture
-    using const_iterator = pegtl::capture_map::const_iterator;
-
-    //! operator[] for pegtl::capture
-    pegtl::capture_map::mapped_type& operator[]( unsigned key )
-    { return m_captured[ key ]; }
-
-    //! find() for pegtl::capture
-    const_iterator find( const unsigned& key ) const
-    { return m_captured.find( key ); }
-
-    //! end() for pegtl::capture
-    const_iterator end() const { return m_captured.end(); }
+    //! Extract moment names of requested statistics
+    std::vector< std::string > momentNames( std::function<
+      bool ( const std::vector< ctr::Term >& ) > momentType ) const
+    {
+      std::vector< std::string > names;
+      for (const auto& product : get< tag::stat >()) {
+        if (momentType( product )) {
+          names.emplace_back( std::string() );
+          for (const auto& term : product)
+            names.back() += ctr::FieldVar( term.var, term.field );
+        }
+      }
+      return names;
+    }
 
     //! Pack/Unpack
     void pup( PUP::er& p ) {
@@ -105,7 +113,6 @@ class InputDeck :
                    tag::param,      parameters,
                    tag::stat,       std::vector< Product >,
                    tk::tag::error,  std::vector< std::string > >::pup(p);
-      // p | m_captured;
     }
     friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }
 };

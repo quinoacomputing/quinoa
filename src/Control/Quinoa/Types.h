@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:37:33 AM MDT
+  \date      Thu 04 Sep 2014 04:54:59 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -72,11 +72,10 @@ struct Term {
   //! Equal operator for finding unique elements, used by e.g., std::unique()
   //! Test only on field and moment
   bool operator== ( const Term& term ) const {
-    if (field == term.field && moment == term.moment && var == term.var) {
+    if (field == term.field && moment == term.moment && var == term.var)
       return true;
-    } else {
+    else
       return false;
-    }
   }
 
   //! Less than operator for ordering, used by e.g., std::sort().
@@ -86,52 +85,74 @@ struct Term {
   //! user-requested Term will take precendence.
   bool operator< ( const Term& term ) const {
     // test on everything except var
-    if (field < term.field) {
+    if (field < term.field)
       return true;
-    } else if (field == term.field && moment < term.moment) {
+    else if (field == term.field && moment < term.moment)
       return true;
-    } else if (field == term.field && moment == term.moment && var < term.var) {
+    else if (field == term.field && moment == term.moment && var < term.var)
       return true;
-    } else if (field == term.field && moment == term.moment &&
-               var == term.var && plot > term.plot) {
+    else if (field == term.field && moment == term.moment &&
+             var == term.var && plot > term.plot)
       return true;
-    } else {
+    else
       return false;
-    }
   }
+};
 
-  //! Operator + for adding Term (var+field ID) to a std::string
-  friend std::string operator+ ( const std::string& lhs, const Term& term ) {
-    std::stringstream ss;
-    ss << lhs << char(term.var) << term.field+1;
-    std::string rhs = ss.str();
-    return rhs;
-  }
+//! Operator + for adding Term (var+field ID) to a std::string
+static std::string operator+ ( const std::string& lhs, const Term& term ) {
+  std::stringstream ss;
+  ss << lhs << char(term.var) << term.field+1;
+  std::string rhs = ss.str();
+  return rhs;
+}
 
-  //! Operator << for writing Term to output streams
-  friend std::ostream& operator<< ( std::ostream& os, const Term& term ) {
-    os << char(term.var) << term.field+1;
-    return os;
-  }
+//! Operator << for writing Term to output streams
+static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
+  os << char(term.var) << term.field+1;
+  return os;
+}
 
-  //! Operator << for writing vector<Term> to output streams
-  friend std::ostream&
-  operator<< ( std::ostream& os, const std::vector< Term >& vec ) {
+//! Operator << for writing vector<Term> to output streams
+static std::ostream&
+operator<< ( std::ostream& os, const std::vector< Term >& vec ) {
+  os << "<";
+  for (auto& w : vec) os << w;
+  os << "> ";
+  return os;
+}
+
+//! Operator <<= for writing requested vector<Term> to output streams
+static std::ostream&
+operator<<= ( std::ostream& os, const std::vector< Term >& vec ) {
+  if (vec[0].plot) {
     os << "<";
     for (auto& w : vec) os << w;
-    os << ">";
-    return os;
+    os << "> ";
   }
+  return os;
+}
 
-  //! Operator <<= for writing requested vector<Term> to output streams
-  friend std::ostream&
-  operator<<= ( std::ostream& os, const std::vector< Term >& vec ) {
-    if (vec[0].plot) {
-      os << "<";
-      for (auto& w : vec) os << w;
-      os << ">";
-    }
-    return os;
+//! Function for using operator << as std::function, ala operator wrappers in
+//! std::functional.
+static
+std::ostream& estimated( std::ostream& os, const std::vector< Term >& vec ) {
+  os << vec;
+  return os;
+}
+
+//! Function for using operator <<= as std::function, ala operator wrappers in
+//! std::functional.
+static
+std::ostream& requested( std::ostream& os, const std::vector< Term >& vec ) {
+  os <<= vec;
+  return os;
+}
+
+//! Case-insensitive character comparison functor
+struct CaseInsensitiveCharLess {
+  bool operator() ( char lhs, char rhs ) const {
+    return std::tolower( lhs ) < std::tolower( rhs );
   }
 };
 
@@ -166,6 +187,21 @@ struct FieldVar {
 //! ensemble averaging: (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the
 //! moment is \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
 using Product = std::vector< Term >;
+
+//! Find out if a statistics product only contains ordinary moment terms
+//! \details If and only if all terms are ordinary, the product is ordinary.
+static inline bool ordinary( const std::vector< ctr::Term >& product ) {
+  bool ord = true;
+  for (auto& term : product) {
+    if (term.moment == ctr::Moment::CENTRAL) ord = false;
+  }
+  return ord;
+}
+
+//! Find out if a statistics product contains any central moment terms
+//! \details If any term is central, the product is central.
+static inline bool central( const std::vector< ctr::Term >& product )
+{ return !ordinary( product ); }
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<

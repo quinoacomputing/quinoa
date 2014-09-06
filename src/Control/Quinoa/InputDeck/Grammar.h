@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 27 Aug 2014 10:14:54 AM MDT
+  \date      Thu 04 Sep 2014 09:33:36 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -26,7 +26,6 @@
 #endif
 
 #include <RNGSSEGrammar.h>
-#include <CustomPEGTLCapture.h>
 
 namespace quinoa {
 
@@ -47,8 +46,14 @@ namespace deck {
   using Stack = PEGTLInputDeck;
   //! Out-of-struct storage of field ID for pushing terms for statistics
   static int field = 0;
-  //! Parser-lifetime storage for dependent variables selected
-  static std::set< char > depvars;
+  //! Parser-lifetime storage for dependent variables selected. Used to track
+  //! the dependent variable of differential equations assigned during parsing.
+  //! It needs to be case insensitive since we only care about whether the
+  //! variable is selected or not and not whether it denotes a full variable
+  //! (upper case) or a fluctuation (lower case). This is true for both
+  //! inserting variables into the set as well as at matching terms of products
+  //! in parsing requested statistics.
+  static std::set< char, ctr::CaseInsensitiveCharLess > depvars;
 
   // Quinoa's InputDeck actions
 
@@ -99,15 +104,30 @@ namespace deck {
   //! add depvar (dependent variable) to the selected ones
   struct add_depvar : pegtl::action_base< add_depvar > {
     static void apply(const std::string& value, Stack& stack) {
-      // put in new dependent variable to set of already selected ones
+      // convert matched string to char
       char newvar = stack.convert< char >( value );
-      // error out if depvar is already taken
-      if (depvars.find( newvar ) == depvars.end() ) {
+      // put in new dependent variable to set of already selected ones
+      if (depvars.find( newvar ) == depvars.end() )
         depvars.insert( newvar );
-      } else {
+      else  // error out if depvar is already taken
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::EXISTS >
                         ( stack, value );
+    }
+  };
+
+  //! match depvar (dependent variable) to one of the selected ones
+  template< ctr::Moment m >
+  struct match_depvar : pegtl::action_base< match_depvar< m > > {
+    static void apply(const std::string& value, Stack& stack) {
+      // convert matched string to char
+      char var = stack.convert< char >( value );
+      // find matched variable in set of selected ones
+      if (depvars.find( var ) != depvars.end() ) {
+        push_term< m >::apply( value, stack );
       }
+      else  // error out if matched var is not selected
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
+                        ( stack, value );
     }
   };
 
@@ -123,8 +143,7 @@ namespace deck {
   //! put option in state at position given by tags if among the selected
   template< class Option, typename sel, typename vec, typename... tags >
   struct check_store_option :
-  pegtl::action_base< check_store_option< Option, sel, vec, tags... > >
-  {
+  pegtl::action_base< check_store_option< Option, sel, vec, tags... > > {
     static void apply(const std::string& value, Stack& stack) {
       // error out if chosen item does not exist in selected vector
       bool exists = false;
@@ -143,42 +162,25 @@ namespace deck {
 
   // Quinoa's InputDeck grammar
 
-  //! moment: keyword optionally followed by a digit, pushed to vector of terms
-  template< class keyword, ctr::Moment m >
+  //! moment: a matched variable optionally followed by a digit 
+  template< typename var >
   struct moment :
-         pegtl::sor < pegtl::ifapply<
-                        pegtl::seq< keyword,
-                                    pegtl::ifapply< pegtl::digit,
-                                                    save_field > >,
-                        push_term< m > >,
-                      pegtl::ifapply< keyword, push_term< m > > > {};
+         pegtl::sor<
+           pegtl::seq< var, pegtl::ifapply< pegtl::digit, save_field > >,
+           var > {};
 
-  //! term accounts for both full variable and fluctuation
-  template< class Tag >
+  //! term: orindary or central moment, matched to selected depvars
   struct term :
-         pegtl::sor< moment< tk::pegtl::capture< Tag::id, &toupper >,
-                             ctr::Moment::ORDINARY >,
-                     moment< tk::pegtl::capture< Tag::id, &tolower >,
-                             ctr::Moment::CENTRAL > > {};
-
-  //! terms recognized within an expectation
-  struct terms :
-         pegtl::sor< moment< kw::transported_scalar::pegtl_string,
-                             ctr::Moment::ORDINARY >,
-                     moment< kw::transported_scalar_fluctuation::pegtl_string,
-                             ctr::Moment::CENTRAL >,
-                     moment< kw::velocity_x::pegtl_string,
-                             ctr::Moment::ORDINARY >,
-                     term< tag::dirichlet >,
-                     term< tag::gendir >,
-                     tk::grm::unknown< Stack,
-                                       tk::grm::MsgKey::MOMENT,
-                                       tk::grm::error > > {};
+         pegtl::sor<
+           pegtl::ifapply< moment< pegtl::upper >,
+                           match_depvar< ctr::Moment::ORDINARY > >,
+           pegtl::ifapply< moment< pegtl::lower >,
+                           match_depvar< ctr::Moment::CENTRAL > > > {};
 
   //! plow through terms in expectation until character 'rbound'
   template< char rbound >
   struct expectation :
-         pegtl::until< pegtl::one< rbound >, terms > {};
+         pegtl::until< pegtl::one< rbound >, term > {};
 
   //! plow through expectations between characters 'lbound' and 'rbound'
   template< char lbound, char rbound >
@@ -264,8 +266,7 @@ namespace deck {
                          pegtl::apply<
                            tk::grm::error< Stack, tk::grm::MsgKey::NOTALPHA > > >,
              tk::grm::Store_back< Stack, tag::param, model, Tag >,
-             add_depvar,
-             pegtl::capture< model::id > > > {};
+             add_depvar > > {};
 
   //! scan and store MonteCarlo keyword and option
   template< typename keyword >

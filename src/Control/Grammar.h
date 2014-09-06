@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:02:53 PM MDT
+  \date      Thu 04 Sep 2014 07:52:56 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -41,6 +41,7 @@ namespace grm {
                                 NOOPTION,
                                 NOTSELECTED,
                                 EXISTS,
+                                NODEPVAR,
                                 NOTALPHA,
                                 CHARMARG };
 
@@ -60,6 +61,9 @@ namespace grm {
       "here is appropriate, but in order to use this keyword in this context, "
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
+    { MsgKey::NODEPVAR, "Dependent variable not selected. To request a "
+      "statistic involving this variable, an equation must be specified "
+      "upstream assigning this dependent variable using the depvar keyword." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "

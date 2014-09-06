@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 07:19:06 AM MDT
+  \date      Wed 03 Sep 2014 04:19:50 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -112,17 +112,9 @@ class QuinoaPrint : public tk::RNGPrint {
     }
 
     //! Echo requested statistics if differs from default.
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! <<= for outputing requested Term and vector< Term >.
-    void RequestedStats( const std::string& msg ) const;
+    void stats( const std::string& msg, std::function< std::ostream& (
+      std::ostream&, const std::vector< ctr::Term >& ) > op ) const;
  
-    //! Echo estimated statistics if differs from default.
-    //! Fields of vector<vector< struct{field, name, plot} >> must exist.
-    //! See src/Control/Quinoa/InputDeck/Types.h for the definition of operator
-    //! << for outputing estimated Term and vector< Term >.
-    void EstimatedStats( const std::string& msg ) const;
-
     //! Print configuration of a stack of differential equations
     void diffeqs( const std::string& title,
       const std::vector< std::vector< std::pair< std::string, std::string > > >&

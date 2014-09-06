@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/distributor.ci
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 09:57:17 AM MDT
+  \date      Fri 05 Sep 2014 11:40:25 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for distributor
   \details   Charm++ module interface file for distributor
@@ -27,8 +27,8 @@ module distributor {
     chare Distributor {
       entry Distributor( const ctr::CmdLine& cmdline );
       entry void init();
-      entry void step();
-      entry void finish();
+      entry void estimateOrd( const std::vector< tk::real >& ord );
+      entry void estimateCen( const std::vector< tk::real >& ctr );
     }
 
   } // quinoa::

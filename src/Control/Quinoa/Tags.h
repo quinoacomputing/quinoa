@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Mon 11 Aug 2014 12:48:13 PM MDT
+  \date      Thu 04 Sep 2014 08:46:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -48,8 +48,8 @@ struct depvar {};
 struct diffeq {};
 struct virtualization {};
 
-struct dirichlet { enum { id = 0 }; };
-struct gendir { enum { id = 1 }; };
+struct dirichlet {};
+struct gendir {};
 struct beta {};
 struct gamma {};
 struct slm {};
