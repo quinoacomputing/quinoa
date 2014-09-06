@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Wed 20 Aug 2014 08:48:16 AM MDT
+  \date      Thu 04 Sep 2014 08:51:14 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -21,29 +21,20 @@ extern std::vector< DiffEq > g_diffeqs;
 } // quinoa::
 
 void
-QuinoaPrint::RequestedStats(const std::string& msg) const
+QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
+  std::ostream&, const std::vector< ctr::Term >& ) > op ) const
 //******************************************************************************
 //  Echo requested statistics if differs from default
 //! \author J. Bakosi
 //******************************************************************************
 {
+  //! Fields of std::vector< std::vector< struct{field, name, plot} > > must
+  //! exist. See src/Control/Quinoa/InputDeck/Types.h for the definition of
+  //! operators, << and <<=, aliased with 'estimated' and 'requested',
+  //! respectively, for outputing estimated and requested std::vector< Term >.
   if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for ( auto& v : g_inputdeck.get< tag::stat >() ) m_stream <<= v;
-    m_stream << '\n';
-  }
-}
-
-void
-QuinoaPrint::EstimatedStats(const std::string& msg) const
-//******************************************************************************
-//  Echo estimated statistics if differs from default
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
-    m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : g_inputdeck.get<tag::stat>()) m_stream << v;
+    for ( auto& v : g_inputdeck.get< tag::stat >() ) op( m_stream, v );
     m_stream << '\n';
   }
 }

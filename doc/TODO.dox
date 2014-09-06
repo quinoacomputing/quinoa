@@ -14,6 +14,9 @@ Parser/Control
    an 'end', as that is not so user-friendly
  - Add type, default, bounds fields to keyword and possibly others.
  - Add command line help with short and long help on keywords.
+ - Add commandline option --version
+ - Trigger parser error on non-existent field-id, besides the existing dependent
+   variable.
 
 RNGTest
 -------
@@ -97,6 +100,8 @@ Uncategorized
    updating the particle properties, the order of the particle properties in
    memory should be user-selectable at compile time
 
+ - Fix field/column lengths in IO/TxtStatWriter.
+
  - Use std::to_string() to convert a number to a string
 
  - Add floating point exception handler, e.g., based on fenv.h, see also:
@@ -124,7 +129,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 23 Aug 2014 05:35:04 PM MDT
+<em>Page last updated:</em> Sat 06 Sep 2014 10:09:21 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

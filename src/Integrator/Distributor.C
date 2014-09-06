@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:41:17 AM MDT
+  \date      Fri 05 Sep 2014 12:44:20 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -21,10 +21,18 @@ using quinoa::Distributor;
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
   m_ninit( 0 ),
-  m_nstep( 0 ),
-  m_nfinish( 0 ),
+  m_nAccOrd( 0 ),
+  m_nAccCen( 0 ),
+  m_numchares( 0 ),
   m_it( 0 ),
-  m_t( 0.0 )
+  m_t( 0.0 ),
+  m_plotOrdinary( g_inputdeck.plotOrdinary() ),
+  m_nameOrdinary( g_inputdeck.momentNames( ctr::ordinary ) ),
+  m_nameCentral( g_inputdeck.momentNames( ctr::central ) ),
+  m_ordinary( m_nameOrdinary.size() + 1, 0.0 ),
+  m_central( m_nameCentral.size(), 0.0 ),
+  m_statWriter( g_inputdeck.get< tag::cmd, tag::io, tag::stat >() ),
+  m_wroteStat( false )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -56,6 +64,39 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Print out info on settings of selected differential equations
   m_print.diffeqs( "Differential equations integrated", stack.info() );
 
+  // Print out info on RNGs selected
+  // ...
+
+  // Print I/O filenames
+  m_print.section( "Output filenames" );
+  m_print.item( "Input", g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  m_print.item( "Output", g_inputdeck.get< tag::cmd, tag::io, tag::output >() );
+  m_print.item( "Glob", g_inputdeck.get< tag::cmd, tag::io, tag::glob >() );
+  m_print.item( "Statistics", g_inputdeck.get< tag::cmd, tag::io, tag::stat >() );
+  m_print.item( "PDF", g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() );
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
+  m_print.item( "Number of time steps",
+                g_inputdeck.get< tag::discr, tag::nstep >() );
+  m_print.item( "Terminate time",
+                g_inputdeck.get< tag::discr, tag::term >() );
+  m_print.item( "Initial time step size",
+                g_inputdeck.get< tag::discr, tag::dt >() );
+
+  // Print output intervals
+  m_print.section( "Output intervals" );
+  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  m_print.item( "Dump", g_inputdeck.get< tag::interval, tag::dump>() );
+  m_print.item( "Glob", g_inputdeck.get< tag::interval, tag::glob >() );
+  m_print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
+  m_print.item( "Plot", g_inputdeck.get< tag::interval, tag::plot >() );
+
+  // Print out statistics estimated
+  m_print.section( "Statistics" );
+  m_print.stats( "Requested", ctr::requested );
+  m_print.stats( "Estimated", ctr::estimated );
+
   // Print out info on load distirubtion
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
@@ -65,23 +106,26 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
                 std::to_string( m_numchares ) + " (" +
-                std::to_string( m_numchares-1 ) + "x" +
+                std::to_string( m_numchares-1 ) + "*" +
                 std::to_string( chunksize ) + "+" +
                 std::to_string( chunksize+remainder ) + ")" );
 
   // Print out time integration header
   if (g_inputdeck.get< tag::discr, tag::nstep >()) {
     header();
-    //statWriter().header();
+    m_statWriter.header( m_plotOrdinary, m_nameOrdinary, m_nameCentral );
   }
 
   // Start timer measuring total integration time
   m_timer.emplace_back();
 
+  // Compute size of initial time step
+  const auto dt = computedt();
+
   // Fire up integrators
   for (auto i=decltype(m_numchares){1}; i<m_numchares; ++i)
-    m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize ) );
-  m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize+remainder ) );
+    m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt ) );
+  m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize+remainder, dt ) );
 }
 
 void
@@ -148,6 +192,16 @@ Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
   remainder = npar - m_numchares*chunksize;
 }
 
+tk::real
+Distributor::computedt()
+//******************************************************************************
+// Compute size of next time step
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  return g_inputdeck.get< tag::discr, tag::dt >();
+}
+
 void
 Distributor::init()
 //******************************************************************************
@@ -165,22 +219,107 @@ Distributor::init()
 }
 
 void
-Distributor::step()
+Distributor::estimateOrd( const std::vector< tk::real >& ord )
 //******************************************************************************
-// Wait for all integrators to finish a step in time
+// Wait for all integrators to finish accumulation of the ordinary moments
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Increase number integrators completing the time step
-  ++m_nstep;
+  // Increase number of integrators completing the accumulation of the ordinary
+  // moments
+  ++m_nAccOrd;
 
-  // Wait for all integrators completing the time step and continue next one
-  if ( m_nstep == m_numchares ) {
-    // Echo one-liner info on time step
-    report();
-    // Continue with next time step on all integrators
-    m_nstep = 0;
-    for (auto& p : m_proxy) p.advance();
+  // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
+  for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
+
+  // Wait for all integrators completing accumulation of ordinary moments
+  if ( m_nAccOrd == m_numchares ) {
+    // Finish computing moments, i.e., divide sums by the number of samples
+    for (auto& m : m_ordinary) m /= g_inputdeck.get< tag::discr, tag::npar >();
+    // Continue with accumulation for central moments with all integrators
+    for (auto& p : m_proxy) p.estimateCen( m_ordinary );
+  }
+}
+
+void
+Distributor::estimateCen( const std::vector< tk::real >& cen )
+//******************************************************************************
+// Wait for all integrators to finish accumulation of the central moments
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Increase number of integrators completing the accumulation of the central
+  // moments
+  ++m_nAccCen;
+
+  // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
+  for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
+
+  // Wait for all integrators completing accumulation of central moments
+  if ( m_nAccCen == m_numchares ) {
+
+    // Finish computing moments, i.e., divide sums by the number of samples
+    for (auto& m : m_central) m /= g_inputdeck.get< tag::discr, tag::npar >();
+
+     // Append statistics file at selected times
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::plot >())) {
+      m_statWriter.writeStat( m_it, m_t, m_ordinary, m_central, m_plotOrdinary );
+      m_wroteStat = true;
+    }
+
+    // Zero accumulator counters and total-sums for next time step
+    m_nAccOrd = m_nAccCen = 0;
+    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );    
+    std::fill( begin(m_central), end(m_central), 0.0 );    
+
+    // Decide if it is time to quit
+    evaluateTime();
+  }
+}
+
+void
+Distributor::evaluateTime()
+//******************************************************************************
+// Evaluate time, decide if it is time to quit
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Increase number of iterations taken
+  ++m_it;
+
+  // Compute size of next time step
+  const auto dt = computedt();
+
+  // Advance physical time
+  m_t += dt;
+
+  // Get physical time at which to terminate
+  const auto term = g_inputdeck.get< tag::discr, tag::term >();
+
+  // Truncate the size of last time step
+  if (m_t > term) m_t = term;
+
+  // Echo one-liner info on time step
+  report();
+
+  // Finish if either max iterations or max time reached 
+  if (std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
+    m_it < g_inputdeck.get< tag::discr, tag::nstep >()) {
+    // Continue with next time step with all integrators
+    for (auto& p : m_proxy) p.advance( dt );
+  } else {
+    // Normal finish, print out reason
+    const auto term = g_inputdeck.get< tag::discr, tag::term >();
+    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
+    m_print.endsubsection();
+    if (m_it >= g_inputdeck.get< tag::discr, tag::nstep >())
+       m_print.note( "Normal finish, maximum number of iterations reached: " +
+                     std::to_string( nstep ) );
+     else 
+       m_print.note( "Normal finish, maximum time reached: " +
+                     std::to_string( term ) );
+    // Quit
+    mainProxy.finalize();
   }
 }
 
@@ -210,17 +349,15 @@ Distributor::report()
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-  const auto dt = g_inputdeck.get< tag::discr, tag::dt >();
-  ++m_it;
-  m_t += dt;
-
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
-    tk::Timer::Watch ete, eta;  // estimated time elapsed and for accomplishment
+
+    // estimated time elapsed and for accomplishment
+    tk::Timer::Watch ete, eta;
     m_timer[0].eta( g_inputdeck.get< tag::discr, tag::term >(), m_t,
                     g_inputdeck.get< tag::discr, tag::nstep >(), m_it,
                     ete, eta );
 
+    // Output one-liner
     m_print << std::setfill(' ') << std::setw(8) << m_it << "  "
             << std::scientific << std::setprecision(6)
             << std::setw(12) << m_t << "  "
@@ -233,40 +370,13 @@ Distributor::report()
             << std::setw(2) << eta.min.count() << ":"
             << std::setw(2) << eta.sec.count() << "  ";
 
-//     if (wroteGlob) print().raw( 'G' );
-//     if (wroteJpdf) print().raw( 'J' );
-//     if (wroteStat) print().raw( 'P' );
+   // Augment one-liner with output indicators
+   if (m_wroteStat) m_print << 'S';
+
+   // Reset output indicators
+   m_wroteStat = false;
 
     m_print << '\n';
-  }
-}
-
-void
-Distributor::finish()
-//******************************************************************************
-// Wait for all integrators to finish time stepping
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  // Increase number integrators completing the time step
-  ++m_nfinish;
-
-  // Wait for all integrators completing time stepping
-  if ( m_nfinish == m_numchares ) {
-    // Echo one-liner info on last time step
-    report();
-    // Normal finish, print out reason
-    const auto term = g_inputdeck.get< tag::discr, tag::term >();
-    const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
-    m_print.endsubsection();
-    if (std::fabs(m_t - term) > std::numeric_limits<tk::real>::epsilon())
-       m_print.note( "Normal finish, maximum number of iterations reached: " +
-                     std::to_string( nstep ) );
-     else 
-       m_print.note( "Normal finish, maximum time reached: " +
-                     std::to_string( term ) );
-    // Quit
-    mainProxy.finalize();
   }
 }
 
