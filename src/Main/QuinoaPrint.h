@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Wed 03 Sep 2014 04:19:50 PM MDT
+  \date      Tue 09 Sep 2014 01:09:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -17,6 +17,7 @@
 
 #include <RNGPrint.h>
 #include <DiffEq.h>
+#include <Quinoa/Types.h>
 #include <Quinoa/Options/DiffEq.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 
@@ -104,17 +105,11 @@ class QuinoaPrint : public tk::RNGPrint {
 
     //! Print time integration header
     void inthead( const std::string& title, const std::string& name,
-                  const std::string& legend, const std::string& head ) const {
-      section( title, name );
-      std::string l( legend );
-      boost::replace_all( l, "\n", "\n" + m_item_indent );
-      raw( m_item_indent + l + head );
-    }
+                  const std::string& legend, const std::string& head ) const;
 
-    //! Echo requested statistics if differs from default.
-    void stats( const std::string& msg, std::function< std::ostream& (
-      std::ostream&, const std::vector< ctr::Term >& ) > op ) const;
- 
+    //! Print statistics and PDFs
+    void statistics( const std::string& title ) const;
+
     //! Print configuration of a stack of differential equations
     void diffeqs( const std::string& title,
       const std::vector< std::vector< std::pair< std::string, std::string > > >&
@@ -127,17 +122,28 @@ class QuinoaPrint : public tk::RNGPrint {
     { return ctr::DiffEq().name( key.template get< tag::diffeq >() ); }
 
     //! Extract differential equation policy names from diff eq key
-   template< class Key >
-   std::vector< std::string > DiffEqPolicyNames( const Key& key ) const {
-     std::vector< std::string > names;
-     names.push_back(
-       std::string("i:") +
-       ctr::InitPolicy().name( key.template get< tag::initpolicy >() ) + ',' );
-     names.push_back(
-       std::string("c:") +
-       ctr::CoeffPolicy().name( key.template get< tag::coeffpolicy >() ) );
-     return names;
-   }
+    template< class Key >
+    std::vector< std::string > DiffEqPolicyNames( const Key& key ) const {
+      std::vector< std::string > names;
+      names.emplace_back(
+        std::string("i:") +
+        ctr::InitPolicy().name( key.template get< tag::initpolicy >() ) + ',' );
+      names.emplace_back(
+        std::string("c:") +
+        ctr::CoeffPolicy().name( key.template get< tag::coeffpolicy >() ) );
+      return names;
+    }
+
+    //! Echo statistics container contents if differs from default applying op
+    void stats( const std::string& msg, std::function< std::ostream& (
+      std::ostream&, const std::vector< ctr::Term >& ) > op ) const;
+
+    //! Echo pdfs container contents if differs from default applying op
+    void pdfs( const std::string& msg,
+               std::function<
+                 std::ostream& ( std::ostream&,
+                                 const std::vector< ctr::Term >&,
+                                 const std::vector< tk::real >& ) > op ) const;
 };
 
 } // quinoa::

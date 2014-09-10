@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 04 Sep 2014 04:57:25 PM MDT
+  \date      Sun 07 Sep 2014 10:47:11 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -31,6 +31,7 @@ class InputDeck :
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
                       tag::stat,       std::vector< Product >,
+                      tag::pdf,        std::vector< Probability >,
                       tk::tag::error,  std::vector< std::string > > {
 
   public:
@@ -56,7 +57,7 @@ class InputDeck :
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );
-      set< tag::interval, tag::plot >( 1 );
+      set< tag::interval, tag::stat >( 1 );
       set< tag::interval, tag::pdf >( 1 );
       set< tag::interval, tag::glob >( 1 );
       // Default beta mass model parameters
@@ -112,6 +113,7 @@ class InputDeck :
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
                    tag::stat,       std::vector< Product >,
+                   tag::pdf,        std::vector< Probability >,
                    tk::tag::error,  std::vector< std::string > >::pup(p);
     }
     friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }

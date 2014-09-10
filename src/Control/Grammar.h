@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 04 Sep 2014 07:52:56 AM MDT
+  \date      Wed 10 Sep 2014 08:08:22 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -43,6 +43,16 @@ namespace grm {
                                 EXISTS,
                                 NODEPVAR,
                                 NOTALPHA,
+                                NOTERMS,
+                                NOSAMPLES,
+                                INVALIDSAMPLESPACE,
+                                INVALIDBINSIZE,
+                                NOBINS,
+                                ZEROBINSIZE,
+                                MAXSAMPLES,
+                                MAXBINSIZES,
+                                BINSIZES,
+                                PDF,
                                 CHARMARG };
 
   //! Associate parser errors to error messages
@@ -62,14 +72,37 @@ namespace grm {
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
     { MsgKey::NODEPVAR, "Dependent variable not selected. To request a "
-      "statistic involving this variable, an equation must be specified "
-      "upstream assigning this dependent variable using the depvar keyword." },
+      "statistic or PDF involving this variable, an equation must be specified "
+      "upstream in the input deck assigning this dependent variable to an "
+      "equation to be integrated using the depvar keyword." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
+    { MsgKey::NOTERMS, "Statistic requires at least one variable." },
+    { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
+    { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
+      "non-empty list of sample space variables, must be followed by a "
+      "semi-colon, followed by a non-empty list of bin sizes (reals numbers), "
+      "e.g., \"(x y : 0.1 0.2)\"" },
+    { MsgKey::INVALIDBINSIZE, "PDF sample space bin size(s) specification "
+      "incorrect. A non-empty list of sample space variables, must be followed "
+      "by a semi-colon, followed by a non-empty list of bin sizes (real "
+      "numbers), e.g., \"(x y : 0.1 0.2)\"" },
+    { MsgKey::NOBINS, "Need at least one sample space bin size, followed by a "
+      "semi-colon, in a PDF specification." },
+    { MsgKey::ZEROBINSIZE, "Sample space bin size must be a real number and "
+      "greater than zero." },
+    { MsgKey::MAXSAMPLES, "The maximum number of sample space variables for a "
+      "joint PDF is 3." },
+    { MsgKey::MAXBINSIZES, "The maximum number of bins sizes for a joint PDF "
+      "is 3."},
+    { MsgKey::BINSIZES, "The number of sample space variables for a PDF must "
+      "equal the number of bin sizes given." },
+    { MsgKey::PDF, "Syntax error while parsing PDF specification." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "
       "charmrun, then Charm++ does not understand it either. See the Charm++ "
-      "manual at http://charm.cs.illinois.edu/manuals/html/charm++/manual.html."}
+      "manual at http://charm.cs.illinois.edu/manuals/html/charm++/"
+      "manual.html." }
   } );
 
   //! parser error and warning message handler
@@ -259,11 +292,24 @@ namespace grm {
          pegtl::sor< verbose< keyword >, alias< Stack, keyword > > {};
 
   //! scan input padded by blank at left and space at right and if it matches
-  //! 'keywords', apply 'actions'
-  template< class keywords, typename... actions >
+  //! 'keywords', apply 'actions'; as opposed to scan_until this rule, allows
+  //! multiple actions
+  template< class keywords, class... actions >
   struct scan :
          pegtl::pad< pegtl::ifapply< trim< keywords, pegtl::space >,
                                      actions... >,
+                     pegtl::blank,
+                     pegtl::space > {};
+
+  //! scan input padded by blank at left and space at right and if it matches
+  //! 'keywords', apply 'action'; using additional custom end rule, as opposed
+  //! to scan, this rule allows an additional end-rule until which parsing is
+  //! continued, the additional custom end-rule is OR'd to pegtl::space
+  template< class keywords, class action, class end = pegtl::space >
+  struct scan_until :
+         pegtl::pad< pegtl::ifapply< trim< keywords,
+                                           pegtl::sor< pegtl::space, end > >,
+                                     action >,
                      pegtl::blank,
                      pegtl::space > {};
 

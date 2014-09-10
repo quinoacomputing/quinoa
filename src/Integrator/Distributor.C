@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:44:20 PM MDT
+  \date      Tue 09 Sep 2014 03:51:21 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -29,10 +29,10 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_plotOrdinary( g_inputdeck.plotOrdinary() ),
   m_nameOrdinary( g_inputdeck.momentNames( ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( ctr::central ) ),
-  m_ordinary( m_nameOrdinary.size() + 1, 0.0 ),
+  m_ordinary( m_nameOrdinary.size(), 0.0 ),
   m_central( m_nameCentral.size(), 0.0 ),
   m_statWriter( g_inputdeck.get< tag::cmd, tag::io, tag::stat >() ),
-  m_wroteStat( false )
+  m_output( false, false )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -89,13 +89,11 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
   m_print.item( "Dump", g_inputdeck.get< tag::interval, tag::dump>() );
   m_print.item( "Glob", g_inputdeck.get< tag::interval, tag::glob >() );
+  m_print.item( "Statistics", g_inputdeck.get< tag::interval, tag::stat >() );
   m_print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
-  m_print.item( "Plot", g_inputdeck.get< tag::interval, tag::plot >() );
 
   // Print out statistics estimated
-  m_print.section( "Statistics" );
-  m_print.stats( "Requested", ctr::requested );
-  m_print.stats( "Estimated", ctr::estimated );
+  m_print.statistics( "Statistics and probabilities" );
 
   // Print out info on load distirubtion
   m_print.section( "Load distribution" );
@@ -262,9 +260,9 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
     for (auto& m : m_central) m /= g_inputdeck.get< tag::discr, tag::npar >();
 
      // Append statistics file at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::plot >())) {
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
       m_statWriter.writeStat( m_it, m_t, m_ordinary, m_central, m_plotOrdinary );
-      m_wroteStat = true;
+      m_output.get< tag::stat >() = true;
     }
 
     // Zero accumulator counters and total-sums for next time step
@@ -337,7 +335,7 @@ Distributor::header() const
     "        dt - time step size\n"
     "       ETE - estimated time elapsed (h:m:s)\n"
     "       ETA - estimated time for accomplishment (h:m:s)\n"
-    "       out - output saved\n",
+    "       out - output-saved flags (S: statistics, P: PDFs)\n",
     "\n      it             t            dt        ETE        ETA   out\n"
       " ---------------------------------------------------------------\n" );
 }
@@ -370,11 +368,13 @@ Distributor::report()
             << std::setw(2) << eta.min.count() << ":"
             << std::setw(2) << eta.sec.count() << "  ";
 
-   // Augment one-liner with output indicators
-   if (m_wroteStat) m_print << 'S';
+    // Augment one-liner with output indicators
+    if (m_output.get< tag::stat >()) m_print << 'S';
+    if (m_output.get< tag::pdf >()) m_print << 'P';
 
-   // Reset output indicators
-   m_wroteStat = false;
+    // Reset output indicators
+    m_output.get< tag::stat >() = false;
+    m_output.get< tag::pdf >() = false;
 
     m_print << '\n';
   }

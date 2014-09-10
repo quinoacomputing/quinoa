@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Thu 04 Sep 2014 08:51:14 AM MDT
+  \date      Tue 09 Sep 2014 03:45:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -21,28 +21,42 @@ extern std::vector< DiffEq > g_diffeqs;
 } // quinoa::
 
 void
-QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
-  std::ostream&, const std::vector< ctr::Term >& ) > op ) const
+QuinoaPrint::inthead( const std::string& title,
+                      const std::string& name,
+                      const std::string& legend,
+                      const std::string& head ) const
 //******************************************************************************
-//  Echo requested statistics if differs from default
+//  Print time integration header
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Fields of std::vector< std::vector< struct{field, name, plot} > > must
-  //! exist. See src/Control/Quinoa/InputDeck/Types.h for the definition of
-  //! operators, << and <<=, aliased with 'estimated' and 'requested',
-  //! respectively, for outputing estimated and requested std::vector< Term >.
-  if (g_inputdeck.get<tag::stat>() != g_inputdeck_defaults.get<tag::stat>()) {
-    m_stream << m_item_name_fmt % m_item_indent % msg;
-    for ( auto& v : g_inputdeck.get< tag::stat >() ) op( m_stream, v );
-    m_stream << '\n';
+  section( title, name );
+  std::string l( legend );
+  boost::replace_all( l, "\n", "\n" + m_item_indent );
+  raw( m_item_indent + l + head );
+}
+
+void
+QuinoaPrint::statistics( const std::string& title ) const
+//******************************************************************************
+//  Print statistics and PDFs
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if ( !g_inputdeck.get< tag::stat >().empty() ||
+       !g_inputdeck.get< tag::pdf >().empty() )
+  {
+    section( title );
+    stats( "Requested statistical moments", ctr::requested );
+    stats( "Triggered statistical moments", ctr::triggered );
+    stats( "Estimated statistical moments", ctr::estimated );
+    pdfs( "PDFs", ctr::sample_space );
   }
 }
 
 void
-QuinoaPrint::diffeqs( const std::string& title,
-  const std::vector< std::vector< std::pair< std::string, std::string > > >&
-    info ) const
+QuinoaPrint::diffeqs( const std::string& title, const std::vector< std::vector<
+  std::pair< std::string, std::string > > >& info ) const
 //******************************************************************************
 //  Print configuration of a stack of differential equations
 //! \author J. Bakosi
@@ -59,5 +73,60 @@ QuinoaPrint::diffeqs( const std::string& title,
                     % info[e][l].first % info[e][l].second;
       if (e < info.size()-1) endsubsection();
     }
+  }
+}
+
+void
+QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
+  std::ostream&, const std::vector< ctr::Term >& ) > op ) const
+//******************************************************************************
+//  Echo statistics container contents if differs from default applying op.
+//! \details See src/Control/Quinoa/InputDeck/Types.h for the definition of
+//! functions that may be passed in as op. Examples are 'estimated',
+//! 'requested', and 'triggered'. The operation given by the template
+//! argument and is a function pointer specifying an stream-output operator
+//! for a std::vector< ctr::Term >.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !msg.empty(), "Empty message size in QuinoaPrint::stats()." );
+  const auto& c = g_inputdeck.get< tag::stat >();
+
+  if (!c.empty() && c != g_inputdeck_defaults.get< tag::stat >()) {
+    m_stream << m_item_name_fmt % m_item_indent % msg;
+    for (auto& v : c) op( m_stream, v );
+    m_stream << '\n';
+  }
+}
+
+void
+QuinoaPrint::pdfs( const std::string& msg,
+                   std::function<
+                     std::ostream& ( std::ostream&,
+                                     const std::vector< ctr::Term >&,
+                                     const std::vector< tk::real >& ) > op )
+const
+//******************************************************************************
+//  Echo pdfs container contents if differs from default applying op.
+//! \details See src/Control/Quinoa/InputDeck/Types.h for the definition of
+//! functions that may be passed in as op. Examples are 'estimated',
+//! 'requested', and 'triggered'. The operation given by the template
+//! argument and is a function pointer specifying an stream-output operator
+//! for a std::vector< ctr::Term >.
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !msg.empty(), "Empty message size in QuinoaPrint::vec()." );
+
+  const auto& c = g_inputdeck.get< tag::pdf >();
+  const auto& b = g_inputdeck.get< tag::discr, tag::binsize >();
+
+  Assert( c.size() == b.size(),
+          "Number of PDFs != number of binsizes in QuinoaPrint::pdfs()." );
+
+  if (!c.empty() && c != g_inputdeck_defaults.get< tag::pdf >()) {
+    m_stream << m_item_name_fmt % m_item_indent % msg;
+    for (std::size_t i=0; i<c.size(); ++i) op( m_stream, c[i], b[i] );
+    m_stream << '\n';
   }
 }

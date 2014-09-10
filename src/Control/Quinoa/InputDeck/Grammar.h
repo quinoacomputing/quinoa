@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 04 Sep 2014 09:33:36 AM MDT
+  \date      Wed 10 Sep 2014 09:14:37 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -57,44 +57,110 @@ namespace deck {
 
   // Quinoa's InputDeck actions
 
-  //! start new product in vector of statistics
-  template< typename... tags >
-  struct start_parameter_vector :
-  pegtl::action_base< start_parameter_vector< tags... > > {
+  //! start new vector in vector of components
+  template< class tag, class... tags >
+  struct start_vector : pegtl::action_base< start_vector< tag, tags... > > {
     static void apply(const std::string&, Stack& stack) {
-      stack.push_back< tags... >( std::vector< tk::real >() );
+      stack.push_back< tag, tags... >( {} );
     }
   };
 
-  //! start new product in vector of statistics
-  struct start_product : pegtl::action_base< start_product > {
-    static void apply(const std::string&, Stack& stack) {
-      stack.push_back< tag::stat >( ctr::Product() );
-    }
-  };
-
-  //! add matched value as Term into vector of Product in vector of statistics
-  template< ctr::Moment m, char var='\0' >
+  //! add matched value as Term into vector of vector of statistics
+  template< ctr::Moment m, char var = '\0' >
   struct push_term : pegtl::action_base< push_term< m, var > > {
     static void apply( const std::string& value, Stack& stack ) {
       // If var is given, it is triggered not user-requested
       bool plot(var ? false : true);
       // If var is given, push var, otherwise push first char of value
       char v(var ? var : value[0]);
-      // Use stats for shorthand of reference to stats vector
-      std::vector< ctr::Product >& stats = stack.get< tag::stat >();
-      // Push term into current product
-      stats.back().push_back( ctr::Term( field, m, v, plot ) );
-      // If central moment, trigger mean
+      // Use a shorthand of reference to vector to push_back to
+      auto& stats = stack.get< tag::stat >();
+      // Push term into current vector
+      stats.back().emplace_back( ctr::Term( field, m, v, plot ) );
+      // If central moment, trigger mean (in statistics)
       if (m == ctr::Moment::CENTRAL) {
         ctr::Term term( field, ctr::Moment::ORDINARY, toupper(v), false );
-        stats.insert( stats.end() - 1, ctr::Product( 1, term ) );
+        stats.insert( stats.end()-1, ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
     }
   };
 
-  //! save field ID so push_term can pick it up
+  //! add matched value as Term into vector of vector of PDFs
+  template< ctr::Moment m >
+  struct push_sample : pegtl::action_base< push_sample< m > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Use a shorthand of reference to vector to push_back to
+      auto& pdf = stack.get< tag::pdf >();
+      // Error out if sample space already has at least 3 dimensions
+      if ( pdf.back().size() >= 3 ) {
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::MAXSAMPLES >
+                        ( stack, value );
+      }
+      // Push term into current vector
+      pdf.back().emplace_back( ctr::Term( field, m, value[0], true ) );
+      // If central moment, trigger mean (in statistics)
+      if (m == ctr::Moment::CENTRAL) {
+        ctr::Term term( field, ctr::Moment::ORDINARY, toupper(value[0]), false );
+        auto& stats = stack.get< tag::stat >();
+        if (!stats.empty())
+          stats.insert( stats.end()-1, ctr::Product( 1, term ) );
+        else
+          stats.emplace_back( ctr::Product( 1, term ) );
+      }
+      field = 0;            // reset default field
+    }
+  };
+
+  //! push matched value into vector of vector binsizes
+  struct push_binsize : pegtl::action_base< push_binsize > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Use a shorthand of reference to vector to push_back to
+      auto& bins = stack.get< tag::discr, tag::binsize >();
+      // Error out if binsize vector already has at least 3 dimensions
+      if ( bins.back().size() >= 3 ) {
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::MAXBINSIZES >
+                        ( stack, value );
+      }
+      // Push term into vector if larger than zero
+      const auto& binsize = stack.convert< tk::real >( value );
+      if ( !(binsize > std::numeric_limits< tk::real >::epsilon()) )
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::ZEROBINSIZE >
+                        ( stack, value );
+      else
+        bins.back().emplace_back( binsize );
+    }
+  };
+
+  //! check if there is at least one variable in expectation
+  struct check_expectation : pegtl::action_base< check_expectation > {
+    static void apply( const std::string& value, Stack& stack ) {
+      if (stack.get< tag::stat >().back().empty())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOTERMS >
+                        ( stack, value );
+    }
+  };
+
+  //! check if the number of binsizes equal the PDF sample space variables
+  struct check_binsizes : pegtl::action_base< check_binsizes > {
+    static void apply( const std::string& value, Stack& stack ) {
+      if (stack.get< tag::pdf >().back().size() !=
+          stack.get< tag::discr, tag::binsize >().back().size())
+          tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::BINSIZES >
+                          ( stack, value );
+    }
+  };
+
+  //! check if there is at least one sample space variable in PDF
+  struct check_samples : pegtl::action_base< check_samples > {
+    static void apply( const std::string& value, Stack& stack ) {
+      if (stack.get< tag::pdf >().back().empty())
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NOSAMPLES >
+                        ( stack, value );
+    }
+  };
+
+  //! save field ID to parser's state so push_term can pick it up
   struct save_field : pegtl::action_base< save_field > {
     static void apply(const std::string& value, Stack& stack) {
       field = stack.convert< int >( value ) - 1;  // field ID numbers start at 0
@@ -115,16 +181,17 @@ namespace deck {
     }
   };
 
-  //! match depvar (dependent variable) to one of the selected ones
-  template< ctr::Moment m >
-  struct match_depvar : pegtl::action_base< match_depvar< m > > {
+  //! match depvar (dependent variable) to one of the selected ones, used to
+  //! check the set of dependent variables previously assigned to registered
+  //! differential equations
+  template< class push >
+  struct match_depvar : pegtl::action_base< match_depvar< push > > {
     static void apply(const std::string& value, Stack& stack) {
       // convert matched string to char
       char var = stack.convert< char >( value );
       // find matched variable in set of selected ones
-      if (depvars.find( var ) != depvars.end() ) {
-        push_term< m >::apply( value, stack );
-      }
+      if (depvars.find( var ) != depvars.end())
+        push::apply( value, stack );
       else  // error out if matched var is not selected
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::NODEPVAR >
                         ( stack, value );
@@ -162,32 +229,84 @@ namespace deck {
 
   // Quinoa's InputDeck grammar
 
-  //! moment: a matched variable optionally followed by a digit 
+  //! ignore: comments and empty lines
+  struct ignore :
+         pegtl::sor< tk::grm::comment,
+                     pegtl::until< pegtl::eol, pegtl::space > > {};
+
+  //! fieldvar: a character, denoting a variable, optionally followed by a digit
   template< typename var >
-  struct moment :
+  struct fieldvar :
          pegtl::sor<
            pegtl::seq< var, pegtl::ifapply< pegtl::digit, save_field > >,
            var > {};
 
-  //! term: orindary or central moment, matched to selected depvars
+  //! term: upper or lowercase fieldvar matched to selected depvars for stats
   struct term :
          pegtl::sor<
-           pegtl::ifapply< moment< pegtl::upper >,
-                           match_depvar< ctr::Moment::ORDINARY > >,
-           pegtl::ifapply< moment< pegtl::lower >,
-                           match_depvar< ctr::Moment::CENTRAL > > > {};
+           pegtl::ifapply< fieldvar< pegtl::upper >,
+                           match_depvar< push_term< ctr::Moment::ORDINARY > > >,
+           pegtl::ifapply< fieldvar< pegtl::lower >,
+                           match_depvar< push_term< ctr::Moment::CENTRAL > > > >
+         {};
 
-  //! plow through terms in expectation until character 'rbound'
-  template< char rbound >
-  struct expectation :
-         pegtl::until< pegtl::one< rbound >, term > {};
+  //! sample space variable: fieldvar matched to selected depvars
+  template< class c, ctr::Moment m >
+  struct sample_space_var :
+         tk::grm::scan_until< fieldvar< c >,
+                              match_depvar< push_sample< m > >,
+                              pegtl::one<':'> > {};
 
-  //! plow through expectations between characters 'lbound' and 'rbound'
-  template< char lbound, char rbound >
+  //! sample space variables optionally separated by fillers
+  struct samples :
+         pegtl::sor< sample_space_var< pegtl::upper, ctr::Moment::ORDINARY >,
+                     sample_space_var< pegtl::lower, ctr::Moment::CENTRAL > >
+         {};
+
+  //! bin(sizes): real numbers as many sample space dimensions were given
+  struct bins :
+         pegtl::sor< tk::grm::scan_until< tk::grm::number,
+                                          push_binsize,
+                                          pegtl::one<')'> >,
+                     pegtl::ifapply<
+                       pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
+                       tk::grm::error< Stack,
+                                       tk::grm::MsgKey::INVALIDBINSIZE > > > {};
+
+  //! plow through expectations between characters '<' and '>'
   struct parse_expectations :
-         tk::grm::readkw< pegtl::ifmust< pegtl::one< lbound >,
-                                         pegtl::apply< start_product >,
-                                         expectation< rbound > > > {};
+         tk::grm::readkw<
+           pegtl::ifmust< pegtl::one<'<'>,
+                          pegtl::apply< start_vector< tag::stat > >,
+                          pegtl::until< pegtl::one<'>'>, term >,
+                          pegtl::apply< check_expectation > > > {};
+
+  //! list of sample space variables with error checking
+  struct sample_space :
+         pegtl::seq<
+           pegtl::apply< start_vector< tag::pdf > >,
+           pegtl::until< pegtl::one<':'>, samples >,
+           pegtl::apply< check_samples > > {};
+
+  //! list of binsizes with error checking
+  struct binsizes :
+         pegtl::seq<
+           pegtl::apply< start_vector< tag::discr, tag::binsize > >,
+           pegtl::until< pegtl::one<')'>, bins >,
+           pegtl::apply< check_binsizes > > {};
+
+  //! match sample space specification between characters '(' and ')', example
+  //! syntax (without the quotes): "(x y z : 1.0 2.0 3.0)", where x,y,z are
+  //! sample space variables, while 1.0 2.0 3.0 are bin sizes corresponding to
+  //! the x y z sample space dimensions, respectively
+  struct parse_pdf :
+         tk::grm::readkw<
+           pegtl::ifmust<
+             pegtl::one<'('>,
+             pegtl::sor< pegtl::seq< sample_space, binsizes >,
+             pegtl::apply<
+               tk::grm::error< Stack,
+                               tk::grm::MsgKey::INVALIDSAMPLESPACE > > > > > {};
 
   //! control parameter
   template< typename keyword, class kw_type, typename... tags >
@@ -228,7 +347,7 @@ namespace deck {
            typename keyword::pegtl_string,
            tk::grm::Store_back_back< Stack, tag::param, tags... >,
            tk::kw::end,
-           pegtl::apply< start_parameter_vector< tag::param, tags... > > > {};
+           pegtl::apply< start_vector< tag::param, tags... > > > {};
 
   //! rng parameter
   template< typename keyword, typename option, typename model,
@@ -315,7 +434,15 @@ namespace deck {
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
-                                        parse_expectations<'<','>'> > > {};
+                                        interval< kw::interval, tag::stat >,
+                                        parse_expectations > > {};
+  //! pdfs block
+  struct pdfs :
+         pegtl::ifmust< tk::grm::readkw< kw::pdfs::pegtl_string >,
+                        tk::grm::block< Stack,
+                                        tk::kw::end,
+                                        interval< kw::interval, tag::pdf >,
+                                        parse_pdf > > {};
 
   //! Fluctuating velocity in x direction
   struct u :
@@ -336,9 +463,9 @@ namespace deck {
                                       ctr::Hydro,
                                       tag::hydro,
                                       // trigger Reynolds-stress diagonal
-                                      start_product, u, u,
-                                      start_product, v, v,
-                                      start_product, w, w >,
+                                      start_vector< tag::stat >, u, u,
+                                      start_vector< tag::stat >, v, v,
+                                      start_vector< tag::stat >, w, w >,
            tk::grm::block< Stack,
                            tk::kw::end,
                            parameter< kw::SLM_C0,
@@ -436,8 +563,6 @@ namespace deck {
                      discr< kw::term, tag::term >,
                      discr< kw::dt, tag::dt >,
                      interval< kw::glbi, tag::glob >,
-                     interval< kw::pdfi, tag::pdf >,
-                     interval< kw::stai, tag::plot >,
                      interval< kw::ttyi, tag::tty >,
                      interval< kw::dmpi, tag::dump > > {};
 
@@ -674,7 +799,8 @@ namespace deck {
                                         montecarlo_common,
                                         sde,
                                         rngblock,
-                                        statistics > > {};
+                                        statistics,
+                                        pdfs > > {};
 
   //! montecarlo physics types
   struct physics :
@@ -690,11 +816,6 @@ namespace deck {
   //! main keywords
   struct keywords :
          pegtl::sor< title, montecarlo > {};
-
-  //! ignore: comments and empty lines
-  struct ignore :
-         pegtl::sor< tk::grm::comment,
-                     pegtl::until< pegtl::eol, pegtl::space > > {};
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :

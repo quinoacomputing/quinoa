@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.h
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:40:29 PM MDT
+  \date      Sun 07 Sep 2014 10:55:12 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -83,8 +83,10 @@ class Distributor : public CBase_Distributor {
     std::vector< tk::real > m_central;
     //! Statistics file writer
     TxtStatWriter m_statWriter;
+
     //! Output indicators
-    bool m_wroteStat;
+    tk::tuple::tagged_tuple< tag::stat, bool,
+                             tag::pdf,  bool > m_output;
 };
 
 } // quinoa::
