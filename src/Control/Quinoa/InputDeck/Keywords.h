@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:40:26 AM MDT
+  \date      Sun 07 Sep 2014 10:41:47 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -332,17 +332,17 @@ using ttyi = keyword<undefined_info,  t,t,y,i >;
 // Dump (restart file) output interval
 using dmpi = keyword<undefined_info,  d,m,p,i >;
 
-// Statistics output interval
-using stai = keyword<undefined_info,  s,t,a,i >;
-
-// PDF output interval
-using pdfi = keyword<undefined_info,  p,d,f,i >;
-
 // Glob output interval
 using glbi = keyword<undefined_info,  g,l,b,i >;
 
+// Output interval
+using interval = keyword<undefined_info,  i,n,t,e,r,v,a,l >;
+
 // Statistics
 using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
+
+// PDFs
+using pdfs = keyword<undefined_info, p,d,f,s >;
 
 // RNG block
 using rngs = keyword<undefined_info,  r,n,g,s >;

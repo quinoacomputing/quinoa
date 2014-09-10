@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 04 Sep 2014 04:54:59 PM MDT
+  \date      Tue 09 Sep 2014 03:50:00 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -50,8 +50,8 @@ struct Term {
   // a mean that was triggered by a central moment by one of the Terms of a
   // Product requesting the mean or a model. However, that would require
   // Product to be a vector<struct>, which then would need custom comparitors
-  // for std::sort() and std::unique() in Parser::unique(). Since this is not a
-  // performance issue, plot is here in Term.
+  // for std::sort() and std::unique() in, e.g, Parser::unique(). Since this is
+  // not a performance issue, plot is here, redundantly, in Term.
 
   //! Pack/Unpack
   void pup( PUP::er& p ) {
@@ -69,8 +69,8 @@ struct Term {
   explicit Term( int f, Moment m, char v, bool p ) :
     field(f), moment(m), var(v), plot(p) {}
 
-  //! Equal operator for finding unique elements, used by e.g., std::unique()
-  //! Test only on field and moment
+  //! Equal operator for, e.g., finding unique elements, used by, e.g.,
+  //! std::unique(). Test on field, moment, and var, ignore plot.
   bool operator== ( const Term& term ) const {
     if (field == term.field && moment == term.moment && var == term.var)
       return true;
@@ -113,39 +113,85 @@ static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
   return os;
 }
 
-//! Operator << for writing vector<Term> to output streams
-static std::ostream&
-operator<< ( std::ostream& os, const std::vector< Term >& vec ) {
+//! Lighter-weight (lighter than Term) structure for var+field. Used for
+//! representing the variable + field ID in e.g., statistics or sample space.
+struct FieldVar {
+  char var;
+  int field;
+
+  //! Constructor
+  explicit FieldVar( const char v='\0', const int f=0 ) : var(v), field(f) {}
+
+  //! Equal operator for, e.g., testing on equality of containers containing
+  //! FieldVars in any way finding, e.g., InputDeck< tag::pdf >. Test on both
+  //! var and field.
+  bool operator== ( const FieldVar& f ) const {
+    if (field == f.field && var == f.var)
+      return true;
+    else
+      return false;
+  }
+
+  //! Operator += for adding FieldVar to std::string
+  friend std::string& operator+= ( std::string& os, const FieldVar& f ) {
+     std::stringstream ss;
+     ss << os << f.var << f.field+1;
+     os = ss.str();
+     return os;
+  }
+
+//   //! Pack/Unpack
+//   void pup( PUP::er& p ) { p | var; p | field; }
+//   friend void operator|( PUP::er& p, FieldVar& t ) { t.pup(p); }
+};
+
+//! Function for writing std::vector< Term > to output streams
+static
+std::ostream& estimated( std::ostream& os, const std::vector< Term >& vec ) {
   os << "<";
-  for (auto& w : vec) os << w;
+  for (const auto& w : vec) os << w;
   os << "> ";
   return os;
 }
 
-//! Operator <<= for writing requested vector<Term> to output streams
-static std::ostream&
-operator<<= ( std::ostream& os, const std::vector< Term >& vec ) {
-  if (vec[0].plot) {
+//! Function for writing requested statistics terms to output streams
+static
+std::ostream& requested( std::ostream& os, const std::vector< Term >& vec ) {
+  if (!vec.empty() && vec[0].plot) {
     os << "<";
-    for (auto& w : vec) os << w;
+    for (const auto& w : vec) os << w;
     os << "> ";
   }
   return os;
 }
 
-//! Function for using operator << as std::function, ala operator wrappers in
-//! std::functional.
+//! Function for writing triggered statistics terms to output streams
 static
-std::ostream& estimated( std::ostream& os, const std::vector< Term >& vec ) {
-  os << vec;
+std::ostream& triggered( std::ostream& os, const std::vector< Term >& vec ) {
+  if (!vec.empty() && !vec[0].plot) {
+    os << "<";
+    for (const auto& w : vec) os << w;
+    os << "> ";
+  }
   return os;
 }
 
-//! Function for using operator <<= as std::function, ala operator wrappers in
-//! std::functional.
+//! Function for writing pdf sample space variables to output streams
 static
-std::ostream& requested( std::ostream& os, const std::vector< Term >& vec ) {
-  os <<= vec;
+std::ostream& sample_space( std::ostream& os,
+                            const std::vector< Term >& var,
+                            const std::vector< tk::real >& bin )
+{
+  Assert( !var.empty(), "var is empty in sample_space()" );
+  Assert( !bin.empty(), "bin is empty in sample_space()" );
+  Assert( var.size()==bin.size(), "var.size != bin.size() in sample_space()" );
+
+  os << "(";
+  std::size_t i;
+  for (i=0; i<var.size()-1; ++i) os << var[i] << ' ';
+  os << var[i] << " : ";
+  for (i=0; i<bin.size()-1; ++i) os << bin[i] << ' ';
+  os << bin[i] << ")  ";
   return os;
 }
 
@@ -156,36 +202,13 @@ struct CaseInsensitiveCharLess {
   }
 };
 
-//! Lighter-weight (lighter than Term) structure for var+field
-struct FieldVar {
-  char var;
-  int field;
-
-  //! Constructor
-  explicit FieldVar( const char n = '\0', const int f = 0 ) :
-    var(n), field(f) {}
-
-  //! Operator << for writing FieldVar to output streams
-  friend std::ostream& operator<< ( std::ostream& os, const FieldVar& fn ) {
-     os << char(fn.var) << fn.field+1;
-     return os;
-  }
-
-  //! Operator += for adding FieldVar to std::string
-  friend std::string& operator+= ( std::string& os, const FieldVar& fn ) {
-     std::stringstream ss;
-     ss << os << fn.var << fn.field+1;
-     os = ss.str();
-     return os;
-  }
-};
-
-//! Products are N Terms to be multiplied and ensemble averaged
-//! E.g. the scalar flux in x direction needs two terms for ensemble averaging:
-//! (Y-\<Y\>) and (U-\<U\>), then the moment is \<yu\> = <(Y-\<Y\>)(U-\<U\>)>
-//! E.g the third mixed central moment of three scalars needs three terms for
-//! ensemble averaging: (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the
-//! moment is \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
+//! Products are arbitrary number of Terms to be multiplied and ensemble
+//! averaged, an example is the scalar flux in x direction which needs two terms
+//! for ensemble averaging: (Y-\<Y\>) and (U-\<U\>), then the moment is \<yu\> =
+//! <(Y-\<Y\>)(U-\<U\>)>, another example is the third mixed central moment of
+//! three scalars which needs three terms for ensemble averaging: (Y1-\<Y1\>),
+//! (Y2-\<Y2\>), and (Y3-\<Y3\>), then the moment is \<y1y2y3\> =
+//! \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
 using Product = std::vector< Term >;
 
 //! Find out if a statistics product only contains ordinary moment terms
@@ -202,6 +225,9 @@ static inline bool ordinary( const std::vector< ctr::Term >& product ) {
 //! \details If any term is central, the product is central.
 static inline bool central( const std::vector< ctr::Term >& product )
 { return !ordinary( product ); }
+
+//! Probability density function (sample space variables)
+using Probability = std::vector< Term >;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
@@ -222,14 +248,15 @@ using discretization = tk::tuple::tagged_tuple<
   tag::npar,           uint64_t,  //!< Total number of particles
   tag::nstep,          uint64_t,  //!< Number of time steps to take
   tag::term,           tk::real,  //!< Time to terminate time stepping
-  tag::dt,             tk::real   //!< Size of time step
+  tag::dt,             tk::real,  //!< Size of time step
+  tag::binsize,        std::vector< std::vector< tk::real > > //!< PDF binsizes
 >;
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
   tag::tty,  uint32_t,  //!< TTY output interval
   tag::dump, uint32_t,  //!< Dump output interval
-  tag::plot, uint32_t,  //!< Plot output interval
+  tag::stat, uint32_t,  //!< Statistics output interval
   tag::pdf,  uint32_t,  //!< PDF output interval
   tag::glob, uint32_t   //!< Glob output interval
 >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:35:30 PM MDT
+  \date      Mon 08 Sep 2014 10:17:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -157,7 +157,8 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 {
   if (m_ncen) {
     // Overwrite ordinary moments by those computed across all PEs
-    m_ordinary = ord;
+    for (std::size_t i=0; i<ord.size(); ++i) m_ordinary[i] += ord[i];
+    //m_ordinary = ord;
 
     // Zero central moment accumulators
     std::fill( begin(m_central), end(m_central), 0.0 );
