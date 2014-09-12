@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/integrator.ci
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:13:38 PM MDT
+  \date      Wed 10 Sep 2014 09:39:49 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for the integrator
   \details   Charm++ module interface file for the integrator
@@ -29,7 +29,8 @@ module integrator {
     chare Integrator {
       entry Integrator( Proxy& proxy, uint64_t npar, tk::real dt );
       entry void advance( tk::real dt );
-      entry void estimateCen( std::vector< tk::real >& ord );
+      entry void accumulateCen( const std::vector< tk::real >& ord );
+      entry void accumulatePDF();
     }
 
   } // quinoa::

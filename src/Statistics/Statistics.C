@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 08 Sep 2014 10:17:39 AM MDT
+  \date      Fri 12 Sep 2014 06:48:03 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <Statistics.h>
+#include <flip_map.h>
 
 using quinoa::Statistics;
 
@@ -27,10 +28,10 @@ Statistics::Statistics( const ParProps& particles ) :
   OffsetMap offset;
   boost::mpl::for_each< ncomps::tags >( depvar( offset ) );
 
-  // Use the above offset to prepare for computing all requested ordinary and
-  // central moments
+  // Prepare for computing ordinary and central moments, PDFs
   setupOrdinary( offset );
   setupCentral( offset );
+  setupPDF( offset );
 }
 
 void
@@ -41,7 +42,7 @@ Statistics::setupOrdinary( const OffsetMap& offset )
 //******************************************************************************
 {
   for (const auto& product : g_inputdeck.get< tag::stat >()) {
-    if (ordinary( product )) {
+    if (ordinary(product)) {
 
       m_instOrd.emplace_back( std::vector< const tk::real* >() );
       m_ordFieldVar.emplace_back( ctr::FieldVar() );
@@ -77,7 +78,7 @@ Statistics::setupCentral( const OffsetMap& offset )
     m_ordinary[ m_nord ] = 0.0;
 
     for (const auto& product : g_inputdeck.get< tag::stat >()) {
-      if (central( product )) {
+      if (central(product)) {
 
         m_instCen.emplace_back( std::vector< const tk::real* >() );
         m_center.emplace_back( std::vector< const tk::real* >() );
@@ -98,6 +99,30 @@ Statistics::setupCentral( const OffsetMap& offset )
 
     // Allocate storage for all required central moments
     m_central.resize( m_ncen );
+  }
+}
+
+void
+Statistics::setupPDF( const OffsetMap& offset )
+//******************************************************************************
+//  Prepare for computing PDFs
+//! \author J. Bakosi
+//******************************************************************************
+{
+  std::size_t i = 0;
+  for (const auto& probability : g_inputdeck.get< tag::pdf >()) {
+
+    m_pdf.emplace_back( g_inputdeck.get< tag::discr, tag:: binsize >()[i++][0] );
+    m_instPDF.emplace_back( std::vector< const tk::real* >() );
+
+    if (ordinary(probability)) {
+      for (const auto& term : probability) {
+        auto o = offset.find( term.var );
+        Assert( o != end( offset ), "No such depvar" );
+        // Put in starting address of instantaneous variable
+        m_instPDF.back().push_back( m_particles.cptr(term.field, o->second) );
+      }
+    }
   }
 }
 
@@ -158,7 +183,6 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
   if (m_ncen) {
     // Overwrite ordinary moments by those computed across all PEs
     for (std::size_t i=0; i<ord.size(); ++i) m_ordinary[i] += ord[i];
-    //m_ordinary = ord;
 
     // Zero central moment accumulators
     std::fill( begin(m_central), end(m_central), 0.0 );
@@ -175,6 +199,27 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
         }
         m_central[i] += prod;
       }
+    }
+  }
+}
+
+void
+Statistics::accumulatePDF()
+//******************************************************************************
+//  Accumulate (i.e., only do the sum for) PDFs
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if (!m_pdf.empty()) {
+    // Zero PDF accumulators
+    for (auto& pdf : m_pdf) pdf.zero();
+
+    // Accumulate sum for PDFs. This is a partial sum.
+    const auto npar = m_particles.npar();
+    for (auto p=decltype(npar){0}; p<npar; ++p) {
+      std::size_t i = 0;
+      for (auto& pdf : m_pdf)
+        pdf.add( m_particles.cvar( m_instPDF[i++][0], p ) );
     }
   }
 }

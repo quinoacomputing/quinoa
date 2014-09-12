@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Mon 07 Oct 2013 08:47:24 PM MDT
+  \date      Thu 11 Sep 2014 04:30:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -15,58 +15,69 @@
 #include <unordered_map>
 
 #include <Types.h>
-#include <Distribution.h>
+#include <PUPUtil.h>
 
-namespace tk {
+namespace quinoa {
 
 //! Univariate PDF estimator
-class PDF : public Distribution {
+class PDF {
 
-    //! Univariate PDF as unordered_map: key: bin id,
-    //!                                  mapped value: sample counter
-    using pdf = std::unordered_map<int,tk::real>;
+    //! Univariate PDF is an unordered_map: key: bin id, value: sample counter
+    using pdf = std::unordered_map< int, tk::real >;
 
   public:
-    //! Constructor: Initialize univariate PDF container
-    //! \param[in]   binsize    Sample space bin size
-    explicit PDF(const tk::real& binsize) : m_binsize(binsize), m_pdf() {}
+    //! Empty constructor for Charm++
+    explicit PDF() : m_binsize( 0 ), m_nsample( 0 ) {}
 
-    //! Destructor: Clear univariate PDF container
-    ~PDF() noexcept override { m_pdf.clear(); }
+    //! Constructor
+    //! \param[in]  binsize  Sample space bin size
+    explicit PDF( tk::real binsize ) : m_binsize( binsize ), m_nsample( 0 ) {}
 
     //! Constant accessor to number of samples
     //! \return Number of samples collected
-    const int& getNsample() const noexcept override { return m_nsample; }
+    int nsample() const noexcept { return m_nsample; }
 
-    //! Insert new sample into univariate PDF
-    //! \param[in]   sample    Value to insert
-    void insert(const tk::real& sample) {
-      ++m_nsample;                  // Increase number of samples in joint PDF
-      ++m_pdf[floor(sample/m_binsize+0.5)];         // Add sample to joint PDF
+    //! Add new sample into univariate PDF
+    //! \param[in]  sample  Value to insert
+    void add( const tk::real& sample ) {
+      ++m_nsample;
+      ++m_pdf[ floor( sample / m_binsize + 0.5 ) ];
     }
+
+    //! Add samples of a PDF passed in into PDF held
+    //! \param[in]  p  New PDF to add
+    void add( const PDF& p ) {
+      m_binsize = p.binsize();
+      m_nsample += p.nsample();
+      for (const auto& e : p.map()) m_pdf[ e.first ] += e.second;
+    }
+
+    //! Zero bins
+    void zero() noexcept { m_nsample = 0; m_pdf.clear(); }
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
-    const pdf* getMap() const noexcept { return &m_pdf; }
+    const pdf& map() const noexcept { return m_pdf; }
 
     //! Constant accessor to binsize
     //! \return Sample space bin size
-    const tk::real& getBinsize() const noexcept { return m_binsize; }
+    tk::real binsize() const noexcept { return m_binsize; }
+
+    //! Pack/Unpack
+    void pup( PUP::er& p ) {
+      p | m_binsize;
+      p | m_nsample;
+      using tk::operator|;
+      p | m_pdf;
+    }
+    friend void operator|( PUP::er& p, PDF& t ) { t.pup(p); } 
 
   private:
-    //! Don't permit copy constructor
-    PDF(const PDF&) = delete;
-    //! Don't permit copy assigment
-    PDF& operator=(const PDF&) = delete;
-    //! Don't permit move constructor
-    PDF(PDF&&) = delete;
-    //! Don't permit move assigment
-    PDF& operator=(PDF&&) = delete;
-
-    const tk::real m_binsize;   //!< Sample space bin size
+    tk::real m_binsize;         //!< Sample space bin size
+    int m_nsample;              //!< Number of samples collected
     pdf m_pdf;                  //!< Probability density function
 };
 
-} // tk::
+} // quinoa::
 
 #endif // PDF_h

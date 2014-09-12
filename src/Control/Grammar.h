@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 08:08:22 AM MDT
+  \date      Thu 11 Sep 2014 09:58:32 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -53,6 +53,7 @@ namespace grm {
                                 MAXBINSIZES,
                                 BINSIZES,
                                 PDF,
+                                PDFEXISTS,
                                 CHARMARG };
 
   //! Associate parser errors to error messages
@@ -97,6 +98,7 @@ namespace grm {
     { MsgKey::BINSIZES, "The number of sample space variables for a PDF must "
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
+    { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

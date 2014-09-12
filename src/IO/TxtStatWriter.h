@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 07:55:48 AM MDT
+  \date      Thu 11 Sep 2014 11:37:59 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include <Types.h>
 #include <Writer.h>
@@ -24,8 +25,9 @@ class TxtStatWriter : public tk::Writer {
 
   public:
     //! Constructor
-    explicit TxtStatWriter( const std::string& filename ) :
-      Writer( filename ) {}
+    explicit TxtStatWriter( const std::string& filename,
+                            std::ios_base::openmode mode = std::ios_base::out )
+      : Writer( filename, mode ) {}
 
     //! Write out statistics file header
     void header( const std::vector< bool >& plotOrd,
@@ -33,11 +35,11 @@ class TxtStatWriter : public tk::Writer {
                  const std::vector< std::string >& nameCen ) const;
 
     //! Write statistics file
-    void writeStat( int it,
-                    tk::real t,
-                    const std::vector< tk::real >& ordinary,
-                    const std::vector< tk::real >& central,
-                    const std::vector< bool >& plotOrd );
+    void stat( int it,
+               tk::real t,
+               const std::vector< tk::real >& ordinary,
+               const std::vector< tk::real >& central,
+               const std::vector< bool >& plotOrd );
 };
 
 } // quinoa::

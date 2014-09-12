@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Tue 09 Sep 2014 03:50:00 PM MDT
+  \date      Thu 11 Sep 2014 10:17:40 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -26,6 +26,7 @@
 #include <Quinoa/Options/DiffEq.h>
 #include <Quinoa/Options/InitPolicy.h>
 #include <Quinoa/Options/CoeffPolicy.h>
+#include <Quinoa/Options/PDFFileType.h>
 #include <Options/RNG.h>
 #include <PUPUtil.h>
 
@@ -62,7 +63,7 @@ struct Term {
   }
   friend void operator|( PUP::er& p, Term& t ) { t.pup(p); } 
 
-  //! Empty constructor
+  //! Empty constructor for Charm++
   explicit Term() : field(0), moment(Moment::ORDINARY), var(0), plot(false) {}
 
   //! Constructor
@@ -178,20 +179,22 @@ std::ostream& triggered( std::ostream& os, const std::vector< Term >& vec ) {
 
 //! Function for writing pdf sample space variables to output streams
 static
-std::ostream& sample_space( std::ostream& os,
-                            const std::vector< Term >& var,
-                            const std::vector< tk::real >& bin )
+std::ostream& pdf( std::ostream& os,
+                   const std::vector< Term >& var,
+                   const std::vector< tk::real >& bin,
+                   const std::string& name )
 {
   Assert( !var.empty(), "var is empty in sample_space()" );
   Assert( !bin.empty(), "bin is empty in sample_space()" );
-  Assert( var.size()==bin.size(), "var.size != bin.size() in sample_space()" );
+  Assert( var.size() == bin.size(),
+          "var.size and bin.size() must equal in ctr::pdf()" );
 
-  os << "(";
+  os << name << '(';
   std::size_t i;
-  for (i=0; i<var.size()-1; ++i) os << var[i] << ' ';
-  os << var[i] << " : ";
-  for (i=0; i<bin.size()-1; ++i) os << bin[i] << ' ';
-  os << bin[i] << ")  ";
+  for (i=0; i<var.size()-1; ++i) os << var[i] << ',';
+  os << var[i] << ":";
+  for (i=0; i<bin.size()-1; ++i) os << bin[i] << ',';
+  os << bin[i] << ") ";
   return os;
 }
 
@@ -211,20 +214,19 @@ struct CaseInsensitiveCharLess {
 //! \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>
 using Product = std::vector< Term >;
 
-//! Find out if a statistics product only contains ordinary moment terms
-//! \details If and only if all terms are ordinary, the product is ordinary.
-static inline bool ordinary( const std::vector< ctr::Term >& product ) {
+//! Find out if a vector of Terms only contains ordinary moment terms
+//! \details If and only if all terms are ordinary, the vector of Terms is
+//! ordinary.
+static inline bool ordinary( const std::vector< ctr::Term >& vec ) {
   bool ord = true;
-  for (auto& term : product) {
-    if (term.moment == ctr::Moment::CENTRAL) ord = false;
-  }
+  for (auto& term : vec) if (term.moment == ctr::Moment::CENTRAL) ord = false;
   return ord;
 }
 
-//! Find out if a statistics product contains any central moment terms
-//! \details If any term is central, the product is central.
-static inline bool central( const std::vector< ctr::Term >& product )
-{ return !ordinary( product ); }
+//! Find out if a vector of Terms  contains any central moment terms
+//! \details If any term is central, the vector of Terms is central.
+static inline bool central( const std::vector< ctr::Term >& vec )
+{ return !ordinary( vec ); }
 
 //! Probability density function (sample space variables)
 using Probability = std::vector< Term >;
@@ -240,7 +242,8 @@ using selects = tk::tuple::tagged_tuple<
   tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
   tag::diffeq,     std::vector< ctr::DiffEqType >,  //!< Selected diff eqs
-  tk::tag::rng,    std::vector< tk::ctr::RNGType >  //!< Selected RNGs
+  tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
+  tag::pdftype,    ctr::PDFFileType     //!< PDF file type
 >;
 
 //! Discretization parameters storage
@@ -268,7 +271,8 @@ using ios = tk::tuple::tagged_tuple<
   tag::output,      std::string,  //!< Output filename
   tag::pdf,         std::string,  //!< PDF filename
   tag::glob,        std::string,  //!< Glob filename
-  tag::stat,        std::string   //!< Statistics filename
+  tag::stat,        std::string,  //!< Statistics filename
+  tag::pdfnames,    std::vector< std::string >  //!< PDF identifiers
 >;
 
 //! Position parameters storage

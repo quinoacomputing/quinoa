@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Sun 07 Sep 2014 10:41:47 AM MDT
+  \date      Thu 11 Sep 2014 07:32:15 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -343,6 +343,28 @@ using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
 
 // PDFs
 using pdfs = keyword<undefined_info, p,d,f,s >;
+
+// Keyword 'filetype': selected PDF file type
+struct filetype_info {
+  static const char* name() { return "PDF File type"; }
+  static const char* help() { return "PDF file type."; }
+};
+using filetype = keyword< filetype_info, f,i,l,e,t,y,p,e >;
+
+// Keyword 'overwrite': PDF file type: overwrite
+struct overwrite_info {
+  static const char* name() { return "overwrite"; }
+  static const char* help() { return "PDF output overwrites the same file."; }
+};
+using overwrite = keyword< overwrite_info, o,v,e,r,w,r,i,t,e >;
+
+// Keyword 'multiple': PDF file type: multiple
+struct multiple_info {
+  static const char* name() { return "multiple"; }
+  static const char* help() { return "PDF output creates new file for each "
+  "time step."; }
+};
+using multiple = keyword< multiple_info, m,u,l,t,i,p,l,e >;
 
 // RNG block
 using rngs = keyword<undefined_info,  r,n,g,s >;

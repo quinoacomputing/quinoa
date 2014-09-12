@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/distributor.ci
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 11:40:25 AM MDT
+  \date      Thu 11 Sep 2014 04:28:56 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for distributor
   \details   Charm++ module interface file for distributor
@@ -21,6 +21,7 @@ module distributor {
   extern module integrator;
 
   include "Quinoa/CmdLine/CmdLine.h";
+  include "PDF.h";
 
   namespace quinoa {
 
@@ -29,6 +30,7 @@ module distributor {
       entry void init();
       entry void estimateOrd( const std::vector< tk::real >& ord );
       entry void estimateCen( const std::vector< tk::real >& ctr );
+      entry void estimatePDF( const std::vector< PDF >& pdf );
     }
 
   } // quinoa::

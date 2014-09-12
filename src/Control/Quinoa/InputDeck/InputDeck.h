@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 07 Sep 2014 10:47:11 AM MDT
+  \date      Fri 12 Sep 2014 06:59:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -48,7 +48,7 @@ class InputDeck :
       set< tag::selected, tag::mix >( MixType::NO_MIX );
       set< tag::selected, tag::frequency >( FrequencyType::NO_FREQUENCY );
       set< tag::selected, tag::mixrate >( MixRateType::NO_MIXRATE );
-      // Default time incrementation parameters
+      // Default discretization parameters
       set< tag::discr, tag::npar >( 1 );
       set< tag::discr, tag::nstep >( std::numeric_limits< uint64_t >::max() );
       set< tag::discr, tag::term >( 1.0 );
@@ -81,8 +81,7 @@ class InputDeck :
       for (const auto& product : get< tag::stat >()) {
         if (ordinary( product )) {
           plot.emplace_back( false );
-          for (const auto& term : product)
-            if (term.plot) plot.back() = true;
+          for (const auto& term : product) if (term.plot) plot.back() = true;
         }
       }
       return plot;

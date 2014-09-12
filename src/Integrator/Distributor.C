@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Tue 09 Sep 2014 03:51:21 PM MDT
+  \date      Fri 12 Sep 2014 07:24:47 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -12,7 +12,10 @@
 #include <Distributor.h>
 #include <Integrator.h>
 #include <DiffEqStack.h>
+#include <TxtStatWriter.h>
+#include <PDFWriter.h>
 #include <quinoa.decl.h>
+#include <flip_map.h>
 
 extern CProxy_Main mainProxy;
 
@@ -20,19 +23,15 @@ using quinoa::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
-  m_ninit( 0 ),
-  m_nAccOrd( 0 ),
-  m_nAccCen( 0 ),
-  m_numchares( 0 ),
+  m_count( 0, 0, 0, 0, 0 ),
+  m_output( false, false ),
   m_it( 0 ),
   m_t( 0.0 ),
-  m_plotOrdinary( g_inputdeck.plotOrdinary() ),
   m_nameOrdinary( g_inputdeck.momentNames( ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
   m_central( m_nameCentral.size(), 0.0 ),
-  m_statWriter( g_inputdeck.get< tag::cmd, tag::io, tag::stat >() ),
-  m_output( false, false )
+  m_pdf( g_inputdeck.get< tag::pdf >().size() )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -93,7 +92,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
 
   // Print out statistics estimated
-  m_print.statistics( "Statistics and probabilities" );
+  m_print.statistics( "Statistical moments and distributions" );
 
   // Print out info on load distirubtion
   m_print.section( "Load distribution" );
@@ -103,15 +102,18 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
                 g_inputdeck.get< tag::discr, tag::npar >() );
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
-                std::to_string( m_numchares ) + " (" +
-                std::to_string( m_numchares-1 ) + "*" +
+                std::to_string( m_count.get< tag::chare >() ) + " (" +
+                std::to_string( m_count.get< tag::chare >()-1 ) + "*" +
                 std::to_string( chunksize ) + "+" +
                 std::to_string( chunksize+remainder ) + ")" );
 
   // Print out time integration header
   if (g_inputdeck.get< tag::discr, tag::nstep >()) {
     header();
-    m_statWriter.header( m_plotOrdinary, m_nameOrdinary, m_nameCentral );
+    TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
+                      g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                      std::string() );
+    sw.header( g_inputdeck.plotOrdinary(), m_nameOrdinary, m_nameCentral );
   }
 
   // Start timer measuring total integration time
@@ -121,7 +123,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   const auto dt = computedt();
 
   // Fire up integrators
-  for (auto i=decltype(m_numchares){1}; i<m_numchares; ++i)
+  for (uint64_t i = 1; i < m_count.get< tag::chare >(); ++i)
     m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt ) );
   m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize+remainder, dt ) );
 }
@@ -178,16 +180,16 @@ Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
   chunksize = (1.0-n)*v + n;
 
   // Compute number of work units with size computed ignoring remainder
-  m_numchares = npar/chunksize;
+  m_count.get< tag::chare >() = npar / chunksize;
 
   // Compute remainder of work if the above number of units were to be created
-  remainder = npar - m_numchares*chunksize;
+  remainder = npar - m_count.get< tag::chare >() * chunksize;
 
   // Redistribute remainder among the work units for a more equal distribution
-  chunksize += remainder/m_numchares;
+  chunksize += remainder / m_count.get< tag::chare >();
 
   // Compute new remainder (after redistribution of the previous remainder)
-  remainder = npar - m_numchares*chunksize;
+  remainder = npar - m_count.get< tag::chare >() * chunksize;
 }
 
 tk::real
@@ -208,10 +210,10 @@ Distributor::init()
 //******************************************************************************
 {
   // Increase number of integrators completing initialization
-  ++m_ninit;
+  ++m_count.get< tag::init >();
 
   // Wait for all integrators completing initialization
-  if ( m_ninit == m_numchares ) {
+  if (m_count.get< tag::init >() == m_count.get< tag::chare >()) {
     mainProxy.timestamp( "Initial conditions", m_timer[0].dsec() );
   }
 }
@@ -225,17 +227,17 @@ Distributor::estimateOrd( const std::vector< tk::real >& ord )
 {
   // Increase number of integrators completing the accumulation of the ordinary
   // moments
-  ++m_nAccOrd;
+  ++m_count.get< tag::ordinary >();
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_ordinary.size(); ++i) m_ordinary[i] += ord[i];
 
   // Wait for all integrators completing accumulation of ordinary moments
-  if ( m_nAccOrd == m_numchares ) {
+  if (m_count.get< tag::ordinary >() == m_count.get< tag::chare >()) {
     // Finish computing moments, i.e., divide sums by the number of samples
     for (auto& m : m_ordinary) m /= g_inputdeck.get< tag::discr, tag::npar >();
     // Continue with accumulation for central moments with all integrators
-    for (auto& p : m_proxy) p.estimateCen( m_ordinary );
+    for (auto& p : m_proxy) p.accumulateCen( m_ordinary );
   }
 }
 
@@ -248,27 +250,83 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
 {
   // Increase number of integrators completing the accumulation of the central
   // moments
-  ++m_nAccCen;
+  ++m_count.get< tag::central >();
 
   // Add contribution from PE to total sums, i.e., u[i] += v[i] for all i
   for (std::size_t i=0; i<m_central.size(); ++i) m_central[i] += cen[i];
 
   // Wait for all integrators completing accumulation of central moments
-  if ( m_nAccCen == m_numchares ) {
+  if (m_count.get< tag::central >() == m_count.get< tag::chare >()) {
 
     // Finish computing moments, i.e., divide sums by the number of samples
     for (auto& m : m_central) m /= g_inputdeck.get< tag::discr, tag::npar >();
 
-     // Append statistics file at selected times
+    // Append statistics file at selected times
     if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
-      m_statWriter.writeStat( m_it, m_t, m_ordinary, m_central, m_plotOrdinary );
+      TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
+                        g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                        std::string(), std::ios_base::app );
+      sw.stat( m_it, m_t, m_ordinary, m_central, g_inputdeck.plotOrdinary() );
       m_output.get< tag::stat >() = true;
     }
 
     // Zero accumulator counters and total-sums for next time step
-    m_nAccOrd = m_nAccCen = 0;
+    m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
     std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );    
     std::fill( begin(m_central), end(m_central), 0.0 );    
+
+    // Continue with accumulation for PDFs with all integrators
+    for (auto& p : m_proxy) p.accumulatePDF();
+  }
+}
+
+void
+Distributor::estimatePDF( const std::vector< PDF >& pdf )
+//******************************************************************************
+// Wait for all integrators to finish accumulation of PDFs
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Increase number of integrators completing the accumulation of the central
+  // moments
+  ++m_count.get< tag::pdf >();
+
+  // Add contribution from PE to total sums
+  std::size_t i=0;
+  for (auto& p : m_pdf) p.add( pdf[i++] );
+
+  // Wait for all integrators completing accumulation of central moments
+  if (m_count.get< tag::pdf >() == m_count.get< tag::chare >()) {
+
+    // Output PDFs at selected times
+    if (!(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) &&
+        !m_pdf.empty())
+    {
+      std::size_t i = 0;
+      for (auto& p : m_pdf) {
+        // Construct PDF file name: base name + pdf name
+        std::string filename =
+          g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' +
+          g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >()[i++];
+        // Augment PDF filename by time stamp if filetype multiple
+        if (g_inputdeck.get< tag::selected, tag::pdftype >() ==
+            ctr::PDFFileType::MULTIPLE) filename += '_' + std::to_string( m_t );
+        // Augment PDF filename by '.dat' extension
+        filename += ".dat";
+
+        // Create new PDF file
+        PDFWriter pdfw( filename );
+        // Output PDF
+        pdfw.writeTxt( p );
+      }
+
+      // Signal that PDF was written
+      m_output.get< tag::pdf >() = true;
+    }
+
+    // Zero accumulator counter and PDFs for next time step
+    m_count.get< tag::pdf >() = 0;
+    for (auto& p : m_pdf) p.zero();
 
     // Decide if it is time to quit
     evaluateTime();
