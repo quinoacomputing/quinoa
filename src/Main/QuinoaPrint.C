@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Tue 09 Sep 2014 03:45:02 PM MDT
+  \date      Thu 11 Sep 2014 10:16:41 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -50,7 +50,7 @@ QuinoaPrint::statistics( const std::string& title ) const
     stats( "Requested statistical moments", ctr::requested );
     stats( "Triggered statistical moments", ctr::triggered );
     stats( "Estimated statistical moments", ctr::estimated );
-    pdfs( "PDFs", ctr::sample_space );
+    pdfs( "PDFs", ctr::pdf );
   }
 }
 
@@ -104,7 +104,8 @@ QuinoaPrint::pdfs( const std::string& msg,
                    std::function<
                      std::ostream& ( std::ostream&,
                                      const std::vector< ctr::Term >&,
-                                     const std::vector< tk::real >& ) > op )
+                                     const std::vector< tk::real >&,
+                                     const std::string& ) > op )
 const
 //******************************************************************************
 //  Echo pdfs container contents if differs from default applying op.
@@ -120,13 +121,19 @@ const
 
   const auto& c = g_inputdeck.get< tag::pdf >();
   const auto& b = g_inputdeck.get< tag::discr, tag::binsize >();
+  const auto& n = g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >();
 
-  Assert( c.size() == b.size(),
-          "Number of PDFs != number of binsizes in QuinoaPrint::pdfs()." );
+  Assert( (c.size() == b.size()) && (c.size() == n.size()),
+          "Number of PDFs, number of binsizes vector, number of PDF names "
+          "must equal in QuinoaPrint::pdfs()." );
 
   if (!c.empty() && c != g_inputdeck_defaults.get< tag::pdf >()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (std::size_t i=0; i<c.size(); ++i) op( m_stream, c[i], b[i] );
+    for (std::size_t i=0; i<c.size(); ++i) op( m_stream, c[i], b[i], n[i] );
     m_stream << '\n';
   }
+
+  // Print PDF file type
+  ctr::PDFFile f;
+  item( f.group(), f.name( g_inputdeck.get< tag::selected, tag::pdftype >() ) );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Tue 09 Sep 2014 01:09:00 PM MDT
+  \date      Thu 11 Sep 2014 10:09:20 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -143,7 +143,8 @@ class QuinoaPrint : public tk::RNGPrint {
                std::function<
                  std::ostream& ( std::ostream&,
                                  const std::vector< ctr::Term >&,
-                                 const std::vector< tk::real >& ) > op ) const;
+                                 const std::vector< tk::real >&,
+                                 const std::string& ) > op ) const;
 };
 
 } // quinoa::

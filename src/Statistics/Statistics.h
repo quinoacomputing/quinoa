@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:14:27 PM MDT
+  \date      Fri 12 Sep 2014 06:42:15 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -14,6 +14,7 @@
 #include <Types.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 #include <ParticleProperties.h>
+#include <PDF.h>
 
 namespace quinoa {
 
@@ -32,11 +33,17 @@ class Statistics {
     //! Accumulate (i.e., only do the sum for) central moments
     void accumulateCen( const std::vector< tk::real >& ord );
 
+    //! Accumulate (i.e., only do the sum for) PDFs
+    void accumulatePDF();
+
     //! Ordinary moments accessor
     const std::vector< tk::real >& ord() const noexcept { return m_ordinary; }
 
     //! Central moments accessor
     const std::vector< tk::real >& ctr() const noexcept { return m_central; }
+
+    //! PDF accessor
+    const std::vector< PDF >& pdf() const noexcept { return m_pdf; }
 
   private:
     // Get offset type out of InputDeck for computing map< depvar, offset >
@@ -74,6 +81,9 @@ class Statistics {
     //! Setup central moments
     void setupCentral( const OffsetMap& offset );
 
+    //! Setup PDFs
+    void setupPDF( const OffsetMap& offset );
+
     //! Return mean for fluctuation
     int mean(const ctr::Term& term) const;
 
@@ -91,6 +101,10 @@ class Statistics {
     //! Ordinary moments about which to compute central moments
     std::vector< std::vector< const tk::real* > > m_center;
     int m_ncen;                                //!< Number of central moments
+
+    //! Instantaneous variable pointers for computing PDFs
+    std::vector< std::vector< const tk::real* > > m_instPDF;
+    std::vector< PDF > m_pdf;                  //!< PDFs
 };
 
 } // quinoa::

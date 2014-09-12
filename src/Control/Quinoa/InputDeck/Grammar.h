@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 09:14:37 AM MDT
+  \date      Fri 12 Sep 2014 06:37:08 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -54,6 +54,10 @@ namespace deck {
   //! inserting variables into the set as well as at matching terms of products
   //! in parsing requested statistics.
   static std::set< char, ctr::CaseInsensitiveCharLess > depvars;
+
+  //! Parser-lifetime storage for PDF names. Used to track the names registere
+  //! so that parsing new ones can be required to be unique.
+  static std::set< std::string > pdfnames;
 
   // Quinoa's InputDeck actions
 
@@ -198,6 +202,21 @@ namespace deck {
     }
   };
 
+  //! match PDF name to the registered ones, used to check the set of PDF names
+  //! dependent previously registered to make sure all are unique
+  struct match_pdfname : pegtl::action_base< match_pdfname > {
+    static void apply(const std::string& value, Stack& stack) {
+      // find matched name in set of registered ones
+      if (pdfnames.find( value ) == pdfnames.end()) {
+        pdfnames.insert( value );
+        stack.push_back< tag::cmd, tag::io, tag::pdfnames >( value );
+      }
+      else  // error out if name matched var is already registered
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::PDFEXISTS>
+                        ( stack, value );
+    }
+  };
+
   //! put option in state at position given by tags
   template< class Option, typename... tags >
   struct store_option : pegtl::action_base< store_option< Option, tags... > > {
@@ -295,6 +314,12 @@ namespace deck {
            pegtl::until< pegtl::one<')'>, bins >,
            pegtl::apply< check_binsizes > > {};
 
+  //! PDF name: a C-language identifier (alphas, digits and underscores, no
+  //! leading digit), matched to already selected pdf name requiring unique
+  //! names
+  struct pdf_name :
+         pegtl::ifapply< pegtl::identifier, match_pdfname > {};
+
   //! match sample space specification between characters '(' and ')', example
   //! syntax (without the quotes): "(x y z : 1.0 2.0 3.0)", where x,y,z are
   //! sample space variables, while 1.0 2.0 3.0 are bin sizes corresponding to
@@ -302,6 +327,7 @@ namespace deck {
   struct parse_pdf :
          tk::grm::readkw<
            pegtl::ifmust<
+             pdf_name,
              pegtl::one<'('>,
              pegtl::sor< pegtl::seq< sample_space, binsizes >,
              pegtl::apply<
@@ -429,6 +455,14 @@ namespace deck {
                                            tk::grm::Set< Stack,
                                                          tag::title > > > {};
 
+  //! PDF file type
+  struct pdf_file_type :
+   tk::grm::process<
+           Stack,
+           typename kw::filetype::pegtl_string,
+           store_option< ctr::PDFFile, tag::selected, tag::pdftype >,
+           pegtl::alpha > {};
+
   //! statistics block
   struct statistics :
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
@@ -442,6 +476,7 @@ namespace deck {
                         tk::grm::block< Stack,
                                         tk::kw::end,
                                         interval< kw::interval, tag::pdf >,
+                                        pdf_file_type,
                                         parse_pdf > > {};
 
   //! Fluctuating velocity in x direction

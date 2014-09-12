@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.h
   \author    J. Bakosi
-  \date      Sun 07 Sep 2014 10:55:12 AM MDT
+  \date      Fri 12 Sep 2014 07:23:43 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -14,7 +14,6 @@
 #include <TaggedTuple.h>
 #include <QuinoaPrint.h>
 #include <Quinoa/CmdLine/CmdLine.h>
-#include <TxtStatWriter.h>
 #include <distributor.decl.h>
 
 namespace quinoa {
@@ -34,6 +33,9 @@ class Distributor : public CBase_Distributor {
 
     //! Finish estimation of central moments
     void estimateCen( const std::vector< tk::real >& ctr );
+
+    //! Finish estimation of PDFs
+    void estimatePDF( const std::vector< PDF >& pdf );
 
   private:
     using CProxyInt = CProxy_Integrator< CProxy_Distributor >;
@@ -55,38 +57,27 @@ class Distributor : public CBase_Distributor {
 
     //! Pretty printer
     QuinoaPrint m_print;
-    //! Number of integrators completed setting the initial conditions
-    uint64_t m_ninit;
-    //! Number of integrators completed accumulating the ordinary moments
-    uint64_t m_nAccOrd;
-    //! Number of integrators completed accumulating the central moments
-    uint64_t m_nAccCen;
-    //! Number of integrators fired up
-    uint64_t m_numchares;
-    //! Iteration count
-    uint64_t m_it;
-    //! Physical time
-    tk::real m_t;
-    //! Integrator proxies
-    std::vector< CProxyInt > m_proxy;
-    //! Timers
-    std::vector< tk::Timer > m_timer;
-    //! Bools indicating whether to plot ordinary moments (in stats output)
-    std::vector< bool > m_plotOrdinary;
-    //! Ordinary moment names
-    std::vector< std::string > m_nameOrdinary;
-    //! Central moment names
-    std::vector< std::string > m_nameCentral;
-    //! Ordinary moments
-    std::vector< tk::real > m_ordinary;
-    //! Central moments
-    std::vector< tk::real > m_central;
-    //! Statistics file writer
-    TxtStatWriter m_statWriter;
+
+    //! Counters of integrator chares completing a function
+    tk::tuple::tagged_tuple< tag::init,     uint64_t,
+                             tag::ordinary, uint64_t,
+                             tag::central,  uint64_t,
+                             tag::pdf,      uint64_t,
+                             tag::chare,    uint64_t > m_count;
 
     //! Output indicators
     tk::tuple::tagged_tuple< tag::stat, bool,
                              tag::pdf,  bool > m_output;
+
+    uint64_t m_it;                              //!< Iteration count
+    tk::real m_t;                               //!< Physical time
+    std::vector< CProxyInt > m_proxy;           //!< Integrator proxies
+    std::vector< tk::Timer > m_timer;           //!< Timers
+    std::vector< std::string > m_nameOrdinary;  //!< Ordinary moment names
+    std::vector< std::string > m_nameCentral;   //!< Central moment names
+    std::vector< tk::real > m_ordinary;         //!< Ordinary moments
+    std::vector< tk::real > m_central;          //!< Central moments
+    std::vector< PDF > m_pdf;                   //!< PDFs
 };
 
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:04:51 PM MDT
+  \date      Thu 11 Sep 2014 11:19:17 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -29,25 +29,28 @@ TxtStatWriter::header( const std::vector< bool >& plotOrd,
 
   m_outFile << "#     it             t";
 
-  const auto nord = nameOrd.size();
-  for (auto i=decltype(nord){0}; i<nord; ++i)
-    if (plotOrd[i]) m_outFile << std::setw(12) << '<' << nameOrd[i] << ">";
+  // Output names of ordinary moments
+  std::size_t i=0;
+  for (const auto& n : nameOrd)
+    if (plotOrd[i++]) m_outFile << std::setw(12) << '<' << n << ">";
 
+  // Output name of central moments
   for (const auto& c : nameCen) m_outFile << std::setw(10) << '<' << c << ">";
 
   m_outFile << std::endl;
 }
 
 void
-TxtStatWriter::writeStat( int it,
-                          tk::real t,
-                          const std::vector< tk::real >& ordinary,
-                          const std::vector< tk::real >& central,
-                          const std::vector< bool >& plotOrd )
+TxtStatWriter::stat( int it,
+                     tk::real t,
+                     const std::vector< tk::real >& ordinary,
+                     const std::vector< tk::real >& central,
+                     const std::vector< bool >& plotOrd )
 //******************************************************************************
 //  Write out statistics
 //! \param[in]  it         Iteration counter
 //! \param[in]  t          Time
+//! \return Bool signaling whether anything was written into file
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -56,11 +59,9 @@ TxtStatWriter::writeStat( int it,
             << "  ";
 
   // Output ordinary moments
-  const auto nord = ordinary.size();
-  for (auto i=decltype(nord){0}; i<nord; ++i)
-    if (plotOrd[i])
-      //m_outFile << (ordinary[i] > 0 ? " " : "") << ordinary[i] << "  ";
-      m_outFile << " " << ordinary[i] << "  ";
+  std::size_t i=0;
+  for (const auto& o : ordinary)
+    if (plotOrd[i++]) m_outFile << " " << o << "  ";
 
   // Output central moments
   for (const auto& c : central) m_outFile << " " << c << "  ";

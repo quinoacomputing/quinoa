@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Integrator.h
   \author    J. Bakosi
-  \date      Fri 05 Sep 2014 12:13:48 PM MDT
+  \date      Wed 10 Sep 2014 03:55:10 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Integrator used to advance ordinary and stochastic differential eqs.
   \details   Integrator used to advance ordinary and stochastic differential
@@ -48,22 +48,31 @@ class Integrator : public CBase_Integrator< Proxy > {
     //! Advance all equations one step in time
     void advance( tk::real dt ) {
       for (const auto& e : g_diffeqs) e.advance( m_particles, CkMyPe(), dt );
-      estimateOrd();    // start accumulating ordinary moments
+      accumulateOrd();    // start accumulating ordinary moments
     }
 
-    void estimateCen( const std::vector< tk::real >& ord ) {
+    // Accumulate sums for central moments
+    void accumulateCen( const std::vector< tk::real >& ord ) {
       // Accumulate partial sums for central moments
       m_stat.accumulateCen( ord );
-      // Send accumulated central moments to host
+      // Send accumulated central moments to host for estimation
       m_proxy.estimateCen( m_stat.ctr() );
     }
 
+    // Accumulate sums for PDFs
+    void accumulatePDF() {
+      // Accumulate partial sums for PDFs
+      m_stat.accumulatePDF();
+      // Send accumulated PDFs to host for estimation
+      m_proxy.estimatePDF( m_stat.pdf() );
+    }
+
   private:
-    // Estimate ordinary moments
-    void estimateOrd() {
+    // Accumulate sums for ordinary moments
+    void accumulateOrd() {
       // Accumulate partial sums for ordinary moments
       m_stat.accumulateOrd();
-      // Send accumulated ordinary moments to host
+      // Send accumulated ordinary moments to host for estimation
       m_proxy.estimateOrd( m_stat.ord() );
     }
 

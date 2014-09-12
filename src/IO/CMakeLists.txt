@@ -16,7 +16,7 @@ add_library(IO
             SiloWriter.C
 )
 
-removeWarnings( "TxtStatWriter.C" )
+removeWarnings( "TxtStatWriter.C;PDFWriter.C" )
 
 INSTALL(TARGETS IO
   	RUNTIME DESTINATION bin COMPONENT Runtime

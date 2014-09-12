@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 08:45:31 AM MDT
+  \date      Wed 10 Sep 2014 11:04:51 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \details   Charm++ Pack/UnPack utilities
@@ -10,6 +10,8 @@
 //******************************************************************************
 #ifndef PUPUtil_h
 #define PUPUtil_h
+
+#include <unordered_map>
 
 #include <make_unique.h>
 #include <pup_stl.h>
@@ -62,6 +64,25 @@ inline void operator|( PUP::er& p, std::vector< T >& v ) {
 //! Pack/Unpack std::map
 template< typename KeyType, typename ValueType >
 inline void operator|( PUP::er& p, std::map< KeyType, ValueType >& m ) {
+  auto size = pup_container_size( p, m );
+  if (p.isUnpacking()) {
+    for (std::size_t s=0; s<size; ++s) {
+      std::pair< KeyType, ValueType > node;
+      pup( p, node );
+      m.emplace( node );
+    }
+  } else {
+    for (auto& t : m) {
+      std::pair< KeyType, ValueType > node( t );
+      pup( p, node );
+    }
+  }
+}
+
+//! Pack/Unpack std::unordered_map
+template< typename KeyType, typename ValueType >
+inline
+void operator|( PUP::er& p, std::unordered_map< KeyType, ValueType >& m ) {
   auto size = pup_container_size( p, m );
   if (p.isUnpacking()) {
     for (std::size_t s=0; s<size; ++s) {
