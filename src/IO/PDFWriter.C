@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 04:44:40 PM MDT
+  \date      Mon 15 Sep 2014 08:38:00 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -23,9 +23,9 @@ PDFWriter::writeTxt( const PDF& pdf ) const
 //******************************************************************************
 {
   const auto binsize = pdf.binsize();
-  const auto sp = pdf.nsample() * binsize;
+  const auto sp = binsize * pdf.size();
   for (const auto& p : pdf.map())
-    m_outFile << p.first*binsize << "\t" << p.second/sp << std::endl;
+    m_outFile << binsize * p.first << "\t" << p.second / sp << std::endl;
 }
 
 void
@@ -37,10 +37,10 @@ PDFWriter::writeTxt( const JPDF& jpdf ) const
 //******************************************************************************
 {
   const auto binsize = jpdf.binsize();
-  const auto sp = jpdf.nsample()*binsize*binsize;
+  const auto sp = binsize * binsize * jpdf.size();
   for (const auto& p : jpdf.map())
-    m_outFile << p.first[0]*binsize << " " << p.first[1]*binsize
-              << " " << p.second/sp << std::endl;
+    m_outFile << binsize * p.first[0] << " " << binsize * p.first[1]
+              << " " << p.second / sp << std::endl;
 }
 
 void
@@ -57,7 +57,7 @@ PDFWriter::writeGmsh( const JPDF& jpdf ) const
 
   auto f = jpdf.map();
   tk::real binsize = jpdf.binsize();
-  const tk::real sp = jpdf.nsample()*binsize*binsize;
+  const tk::real sp = binsize * binsize * jpdf.size();
 
   // Find sample space extents
   tk::real xmin = std::numeric_limits<tk::real>::max();

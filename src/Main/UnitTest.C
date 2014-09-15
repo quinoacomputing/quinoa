@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:18:07 PM MDT
+  \date      Sun 14 Sep 2014 10:32:31 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -86,9 +86,6 @@ std::string g_executable;
 //! Pack/Unpack test runner
 inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
 { if (!p.isSizing()) runner = tut::test_runner_singleton(); }
-
-//! Pack/Unpack: delegate to Charm++
-inline void operator|( PUP::er& p, std::string& s ) { ::operator|( p, s ); }
 
 } // unittest::
 

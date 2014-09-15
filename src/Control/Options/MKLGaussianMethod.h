@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:42:41 AM MDT
+  \date      Mon 15 Sep 2014 07:59:54 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -25,6 +25,10 @@ namespace ctr {
 enum class MKLGaussianMethodType : uint8_t { BOXMULLER,
                                              BOXMULLER2,
                                              ICDF };
+
+//! Pack/Unpack: delegate to tk::
+inline void operator|( PUP::er& p, MKLGaussianMethodType& e )
+{ tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {

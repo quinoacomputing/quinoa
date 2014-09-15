@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:36:27 PM MDT
+  \date      Mon 15 Sep 2014 08:13:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -22,6 +22,9 @@ namespace ctr {
 //! Frequency model types
 enum class FrequencyType : uint8_t { NO_FREQUENCY=0,
                                      GAMMA };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, FrequencyType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class Frequency : public tk::Toggle< FrequencyType > {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Sun 10 Aug 2014 09:11:46 PM MDT
+  \date      Mon 15 Sep 2014 08:12:29 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -22,6 +22,9 @@ namespace ctr {
 //! Mass model types
 enum class MassType : uint8_t { NO_MASS=0,
                                 BETA };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, MassType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class Mass : public tk::Toggle< MassType > {

@@ -152,8 +152,8 @@ set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
 ExternalProject_Add(
   charm
   PREFIX charm
-  URL ${PROJECT_SOURCE_DIR}/charm-6.5.1.tar.gz
-  URL_MD5 034d99458474a3ab96d8bede8a691a5d
+  URL ${PROJECT_SOURCE_DIR}/charm-6.6.0.tar.gz
+  URL_MD5 31e95901b3f7324d52107e6ad000fcc8
   # Move unpacked tarball to install dir and build there
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
                     ${PROJECT_BINARY_DIR}/charm/src/charm

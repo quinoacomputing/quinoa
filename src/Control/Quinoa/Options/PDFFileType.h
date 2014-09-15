@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 05:28:22 PM MDT
+  \date      Mon 15 Sep 2014 08:14:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDFFile model options and associations
   \details   PDFFile model options and associations
@@ -22,6 +22,9 @@ namespace ctr {
 //! PDFFile model types
 enum class PDFFileType : uint8_t { OVERWRITE=0,
                                    MULTIPLE };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, PDFFileType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class PDFFile : public tk::Toggle< PDFFileType > {

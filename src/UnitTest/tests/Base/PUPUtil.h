@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 08:39:01 AM MDT
+  \date      Sun 14 Sep 2014 10:31:17 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -15,6 +15,12 @@
 #include <StrConvUtil.h>
 #include <migrated.decl.h>
 #include <tests/Base/MigratedTypes.h>
+
+namespace unittest {
+
+extern CProxy_TUTSuite g_suiteProxy;
+
+} // unittest::
 
 namespace tut {
 
