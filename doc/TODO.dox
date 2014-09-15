@@ -102,6 +102,9 @@ Uncategorized
 
  - Fix field/column lengths in IO/TxtStatWriter.
 
+ - Explore kernel density estimation for outputing PDFs instead of only the
+   histogram
+
  - Use std::to_string() to convert a number to a string
 
  - Add floating point exception handler, e.g., based on fenv.h, see also:
@@ -129,7 +132,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 06 Sep 2014 10:09:21 AM MDT
+<em>Page last updated:</em> Mon 15 Sep 2014 09:02:32 AM MDT
 <em>Copyright 2005-2014, Jozsef Bakosi.</em>
 </small></div>
 */

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue 12 Aug 2014 10:25:04 AM MDT
+  \date      Mon 15 Sep 2014 07:58:29 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -63,6 +63,9 @@ enum class RNGType : uint8_t { NO_RNG=0
                              , MKL_NONDETERM
                              #endif
 };
+
+//! Pack/Unpack: delegate to tk::
+inline void operator|( PUP::er& p, RNGType& e ) { tk::pup( p, e ); }
 
 //! Underlying type shortcut
 using RawRNGType = std::underlying_type< RNGType >::type;

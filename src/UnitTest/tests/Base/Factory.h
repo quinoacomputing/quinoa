@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:50:59 AM MDT
+  \date      Sun 14 Sep 2014 04:36:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -12,6 +12,9 @@
 #define test_Factory_h
 
 #include <unistd.h>
+
+#include <make_unique.h>
+
 #include <tut/tut.hpp>
 #include <Factory.h>
 #include <charmchild.decl.h>

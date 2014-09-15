@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 10:17:40 AM MDT
+  \date      Mon 15 Sep 2014 09:18:02 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -100,6 +100,9 @@ struct Term {
   }
 };
 
+//! Pack/Unpack Term
+inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
+
 //! Operator + for adding Term (var+field ID) to a std::string
 static std::string operator+ ( const std::string& lhs, const Term& term ) {
   std::stringstream ss;
@@ -140,10 +143,6 @@ struct FieldVar {
      os = ss.str();
      return os;
   }
-
-//   //! Pack/Unpack
-//   void pup( PUP::er& p ) { p | var; p | field; }
-//   friend void operator|( PUP::er& p, FieldVar& t ) { t.pup(p); }
 };
 
 //! Function for writing std::vector< Term > to output streams

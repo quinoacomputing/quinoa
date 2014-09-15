@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:44:23 AM MDT
+  \date      Mon 15 Sep 2014 07:59:18 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -24,6 +24,10 @@ namespace ctr {
 //! MKL uniform random number generator methods
 enum class MKLUniformMethodType : uint8_t { STANDARD,
                                             ACCURATE };
+
+//! Pack/Unpack: delegate to tk::
+inline void operator|( PUP::er& p, MKLUniformMethodType& e )
+{ tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {

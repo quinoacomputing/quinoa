@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MonteCarlo.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:29:56 PM MDT
+  \date      Mon 15 Sep 2014 08:11:23 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MonteCarlo options and associations
   \details   MonteCarlo options and associations
@@ -26,6 +26,9 @@ enum class MonteCarloType : uint8_t { NO_MONTECARLO=0,
                                       HOMOGENEOUS_HYDRO,
                                       HOMOGENEOUS_RAYLEIGH_TAYLOR,
                                       SPINSFLOW };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, MonteCarloType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class MonteCarlo : public tk::Toggle< MonteCarloType > {

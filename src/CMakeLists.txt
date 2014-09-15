@@ -143,7 +143,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align")
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-deprecated-register -Wno-mismatched-tags -Wno-cast-align -Wno-zero-length-array -Wno-sign-compare -Wno-unused-private-field")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
@@ -158,7 +158,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
-  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-cast-align")
+  set(HOSTFILE_FLAGS "-Wno-shadow -Wno-unused-variable -Wno-unused-parameter -Wno-cast-align -Wno-sign-compare -Wno-pedantic")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
@@ -205,8 +205,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   # 1944: declaration shadows a member of 'this'
   # 2259: non-pointer conversion from "int" to "unsigned char" may lose
   #       significant bits
+  # 2557: comparison between signed and unsigned operands
   # 3280: declaration hides member
-  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,3280")
+  set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,2557,3280")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 

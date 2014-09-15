@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/PDF.h
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 04:30:54 PM MDT
+  \date      Mon 15 Sep 2014 08:42:26 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -23,24 +23,24 @@ namespace quinoa {
 class PDF {
 
     //! Univariate PDF is an unordered_map: key: bin id, value: sample counter
-    using pdf = std::unordered_map< int, tk::real >;
+    using pdf = std::unordered_map< std::size_t, tk::real >;
 
   public:
     //! Empty constructor for Charm++
-    explicit PDF() : m_binsize( 0 ), m_nsample( 0 ) {}
+    explicit PDF() : m_binsize( 0 ), m_size( 0 ) {}
 
     //! Constructor
     //! \param[in]  binsize  Sample space bin size
-    explicit PDF( tk::real binsize ) : m_binsize( binsize ), m_nsample( 0 ) {}
+    explicit PDF( tk::real binsize ) : m_binsize( binsize ), m_size( 0 ) {}
 
-    //! Constant accessor to number of samples
+    //! Accessor to number of samples
     //! \return Number of samples collected
-    int nsample() const noexcept { return m_nsample; }
+    std::size_t size() const noexcept { return m_size; }
 
     //! Add new sample into univariate PDF
     //! \param[in]  sample  Value to insert
-    void add( const tk::real& sample ) {
-      ++m_nsample;
+    void add( tk::real sample ) {
+      ++m_size;
       ++m_pdf[ floor( sample / m_binsize + 0.5 ) ];
     }
 
@@ -48,12 +48,12 @@ class PDF {
     //! \param[in]  p  New PDF to add
     void add( const PDF& p ) {
       m_binsize = p.binsize();
-      m_nsample += p.nsample();
+      m_size += p.size();
       for (const auto& e : p.map()) m_pdf[ e.first ] += e.second;
     }
 
     //! Zero bins
-    void zero() noexcept { m_nsample = 0; m_pdf.clear(); }
+    void zero() noexcept { m_size = 0; m_pdf.clear(); }
 
     //! Constant accessor to PDF map
     //! \return Pointer to map
@@ -66,15 +66,13 @@ class PDF {
     //! Pack/Unpack
     void pup( PUP::er& p ) {
       p | m_binsize;
-      p | m_nsample;
-      using tk::operator|;
-      p | m_pdf;
+      p | m_size;
+      tk::pup( p, m_pdf );
     }
-    friend void operator|( PUP::er& p, PDF& t ) { t.pup(p); } 
 
   private:
     tk::real m_binsize;         //!< Sample space bin size
-    int m_nsample;              //!< Number of samples collected
+    std::size_t m_size;         //!< Number of samples collected
     pdf m_pdf;                  //!< Probability density function
 };
 

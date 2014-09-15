@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/JPDF.h
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 04:10:55 PM MDT
+  \date      Mon 15 Sep 2014 08:38:58 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Joint PDF estimator
   \details   Joint PDF estimator
@@ -24,13 +24,13 @@ class JPDF {
 
   public:
     //! Key type
-    using key_type = std::vector< int >;
+    using key_type = std::vector< std::size_t >;
 
     // Hash function for std::vector<int>
     struct key_hash {
       size_t operator()(const key_type& key) const {
         size_t h = 0;
-        for (auto& k : key) h ^= std::hash<int>()(k);
+        for (auto& k : key) h ^= std::hash< std::size_t >()( k );
         return h;
       }
     };
@@ -45,12 +45,12 @@ class JPDF {
     //! \param[in]   binsize    Sample space bin size
     explicit JPDF( int dim, tk::real binsize ) :
       m_binsize( binsize ),
-      m_nsample( 0 ),
+      m_size( 0 ),
       m_key( dim ) {}
 
-    //! Constant accessor to number of samples
+    //! Accessor to number of samples
     //! \return Number of samples collected
-    int nsample() const noexcept { return m_nsample; }
+    std::size_t size() const noexcept { return m_size; }
 
     //! Insert new sample into joint PDF
     void insert(const std::vector< tk::real >& sample);
@@ -65,7 +65,7 @@ class JPDF {
 
   private:
     tk::real m_binsize;      //!< Sample space bin size
-    int m_nsample;           //!< Number of samples collected
+    std::size_t m_size;      //!< Number of samples collected
     key_type m_key;          //!< Temporary key for finding the sample space bin
     pdf m_pdf;               //!< Probability density function
 };

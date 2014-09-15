@@ -4,8 +4,8 @@ endif()
 set(__libstdcxx YES)
 
 
-# Set which C++ standard library to use; this should be the same as what is used
-# for quinoa
+# Set C++ standard library; this should be the same for the third-party
+# libraries as well as all executables
 
 function(setlibstdcxx LIBCXX_DEFAULT)
 

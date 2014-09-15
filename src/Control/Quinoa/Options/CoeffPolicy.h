@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 11 Aug 2014 09:34:46 AM MDT
+  \date      Mon 15 Sep 2014 08:12:43 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options and associations
   \details   Differential equation coefficients policy options and associations
@@ -21,6 +21,9 @@ namespace ctr {
 
 //! Differential equation coefficients policies
 enum class CoeffPolicyType : uint8_t { CONSTANT=0 };
+
+//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+inline void operator|( PUP::er& p, CoeffPolicyType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {

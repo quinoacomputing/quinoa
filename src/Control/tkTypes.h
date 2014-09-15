@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/tkTypes.h
   \author    J. Bakosi
-  \date      Sat 21 Jun 2014 05:01:15 PM MDT
+  \date      Mon 15 Sep 2014 09:18:38 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for tk control
   \details   Types for tk control
@@ -42,9 +42,6 @@ using RNGMKLParam = tuple::tagged_tuple<
 //! MKL RNG parameters bundle
 using RNGMKLParameters = std::map< RNGType, RNGMKLParam >;
 #endif
-
-//! Forward overload to generic std::map packer in tk::
-using tk::operator|;
 
 } // ctr::
 } // tk::
