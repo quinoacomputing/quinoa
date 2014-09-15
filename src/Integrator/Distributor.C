@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Fri 12 Sep 2014 07:24:47 AM MDT
+  \date      Mon 15 Sep 2014 02:19:53 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -309,15 +309,22 @@ Distributor::estimatePDF( const std::vector< PDF >& pdf )
           g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' +
           g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >()[i++];
         // Augment PDF filename by time stamp if filetype multiple
-        if (g_inputdeck.get< tag::selected, tag::pdftype >() ==
-            ctr::PDFFileType::MULTIPLE) filename += '_' + std::to_string( m_t );
+        if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+            ctr::PDFPolicyType::MULTIPLE)
+        {
+          filename += '_' + std::to_string( m_t );
+        }
         // Augment PDF filename by '.dat' extension
         filename += ".dat";
 
         // Create new PDF file
         PDFWriter pdfw( filename );
         // Output PDF
-        pdfw.writeTxt( p );
+        if (g_inputdeck.get< tag::selected, tag::pdffile >() ==
+            ctr::PDFFileType::TXT)
+          pdfw.writeTxt( p );
+//         else
+//           pdfw.writeGmsh( p );
       }
 
       // Signal that PDF was written

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 09:18:02 AM MDT
+  \date      Mon 15 Sep 2014 12:50:28 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -26,7 +26,8 @@
 #include <Quinoa/Options/DiffEq.h>
 #include <Quinoa/Options/InitPolicy.h>
 #include <Quinoa/Options/CoeffPolicy.h>
-#include <Quinoa/Options/PDFFileType.h>
+#include <Quinoa/Options/PDFFile.h>
+#include <Quinoa/Options/PDFPolicy.h>
 #include <Options/RNG.h>
 #include <PUPUtil.h>
 
@@ -242,7 +243,8 @@ using selects = tk::tuple::tagged_tuple<
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
   tag::diffeq,     std::vector< ctr::DiffEqType >,  //!< Selected diff eqs
   tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
-  tag::pdftype,    ctr::PDFFileType     //!< PDF file type
+  tag::pdffile,    ctr::PDFFileType,    //!< PDF output file type
+  tag::pdfpolicy,  ctr::PDFPolicyType   //!< PDF output file policy
 >;
 
 //! Discretization parameters storage

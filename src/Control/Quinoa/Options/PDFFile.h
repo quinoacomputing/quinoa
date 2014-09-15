@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Quinoa/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:14:39 AM MDT
+  \date      Mon 15 Sep 2014 12:55:44 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     PDFFile model options and associations
-  \details   PDFFile model options and associations
+  \brief     PDF output file type options and associations
+  \details   PDF output file type options and associations
 */
 //******************************************************************************
 #ifndef QuinoaPDFFileOptions_h
@@ -19,11 +19,11 @@
 namespace quinoa {
 namespace ctr {
 
-//! PDFFile model types
-enum class PDFFileType : uint8_t { OVERWRITE=0,
-                                   MULTIPLE };
+//! PDF output file types
+enum class PDFFileType : uint8_t { TXT=0,
+                                   GMSH };
 
-//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+//! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PDFFileType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
@@ -33,13 +33,13 @@ class PDFFile : public tk::Toggle< PDFFileType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit PDFFile() :
-      Toggle< PDFFileType >( "PDF file type",
+      Toggle< PDFFileType >( "PDF output file type",
       //! Enums -> names
-      { { PDFFileType::OVERWRITE, kw::overwrite().name() },
-        { PDFFileType::MULTIPLE, kw::multiple().name() } },
+      { { PDFFileType::TXT, kw::txt().name() },
+        { PDFFileType::GMSH, kw::gmsh().name() } },
       //! keywords -> Enums
-      { { kw::overwrite().string(), PDFFileType::OVERWRITE },
-        { kw::multiple().string(), PDFFileType::MULTIPLE } } ) {}
+      { { kw::txt().string(), PDFFileType::TXT },
+        { kw::gmsh().string(), PDFFileType::GMSH } } ) {}
 };
 
 } // ctr::

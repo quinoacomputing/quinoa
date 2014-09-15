@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:56:28 PM MDT
+  \date      Mon 15 Sep 2014 01:36:49 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
@@ -52,14 +52,12 @@ class MKLRNG {
     ~MKLRNG() { deleteStreams(); }
 
     //! Uniform RNG
-    void uniform( int tid, int num, double* r ) const {
-      vdRngUniform( m_uniform_method, m_stream[tid], num, r, 0.0, 1.0 );
-    }
+    void uniform( int tid, int num, double* r ) const
+    { vdRngUniform( m_uniform_method, m_stream[tid], num, r, 0.0, 1.0 ); }
 
     //! Gaussian RNG
-    void gaussian( int tid, int num, double* r ) const {
-      vdRngGaussian( m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0 );
-    }
+    void gaussian( int tid, int num, double* r ) const
+    { vdRngGaussian( m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0 ); }
 
     //! Copy assignment
     MKLRNG& operator=( const MKLRNG& x ) {

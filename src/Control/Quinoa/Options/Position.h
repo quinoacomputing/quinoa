@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:12:03 AM MDT
+  \date      Mon 15 Sep 2014 12:37:28 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -24,7 +24,7 @@ enum class PositionType : uint8_t { NO_POSITION=0,
                                     INVISCID,
                                     VISCOUS };
 
-//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+//! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, PositionType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations

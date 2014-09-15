@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:13:50 AM MDT
+  \date      Mon 15 Sep 2014 12:36:30 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Differential equation initialization policy options
   \details   Differential equation initialization policy options
@@ -23,7 +23,7 @@ namespace ctr {
 enum class InitPolicyType : uint8_t { RAW=0,
                                       ZERO };
 
-//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+//! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, InitPolicyType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
