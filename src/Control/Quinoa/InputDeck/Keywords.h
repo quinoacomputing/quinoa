@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 07:32:15 AM MDT
+  \date      Mon 15 Sep 2014 01:08:11 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -344,21 +344,42 @@ using statistics = keyword<undefined_info,  s,t,a,t,i,s,t,i,c,s >;
 // PDFs
 using pdfs = keyword<undefined_info, p,d,f,s >;
 
-// Keyword 'filetype': selected PDF file type
+// Keyword 'filetype': selected PDF output file type
 struct filetype_info {
-  static const char* name() { return "PDF File type"; }
-  static const char* help() { return "PDF file type."; }
+  static const char* name() { return "PDF output file type"; }
+  static const char* help() { return "PDF output file type."; }
 };
-using filetype = keyword< filetype_info, f,i,l,e,t,y,p,e >;
+using pdf_filetype = keyword< filetype_info, f,i,l,e,t,y,p,e >;
 
-// Keyword 'overwrite': PDF file type: overwrite
+// Keyword 'txt': PDF output file type: txt
+struct txt_info {
+  static const char* name() { return "text"; }
+  static const char* help() { return "PDF text output file."; }
+};
+using txt = keyword< txt_info, t,x,t >;
+
+// Keyword 'gmsh': PDF output file type: gmsh
+struct gmsh_info {
+  static const char* name() { return "gmsh"; }
+  static const char* help() { return "PDF GMSH output file."; }
+};
+using gmsh = keyword< gmsh_info, g,m,s,h >;
+
+// Keyword 'policy': selected PDF output file policy
+struct policy_info {
+  static const char* name() { return "PDF output file policy"; }
+  static const char* help() { return "PDF output file policy."; }
+};
+using pdf_policy = keyword< policy_info, p,o,l,i,c,y >;
+
+// Keyword 'overwrite': PDF output file policy: overwrite
 struct overwrite_info {
   static const char* name() { return "overwrite"; }
   static const char* help() { return "PDF output overwrites the same file."; }
 };
 using overwrite = keyword< overwrite_info, o,v,e,r,w,r,i,t,e >;
 
-// Keyword 'multiple': PDF file type: multiple
+// Keyword 'multiple': PDF output file policy: multiple
 struct multiple_info {
   static const char* name() { return "multiple"; }
   static const char* help() { return "PDF output creates new file for each "

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 09:58:32 AM MDT
+  \date      Mon 15 Sep 2014 01:25:47 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -143,7 +143,10 @@ namespace grm {
               << opt.name( stack.template get< tags... >() ) << "' with '"
               << opt.name( opt.value( value ) ) << "'.\n\n";
     }
-    stack.template set< tags... >( opt.value( value ) );
+    if (opt.exist(value))
+      stack.template set< tags... >( opt.value( value ) );
+    else
+      Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );
   }
 
   // Common PEGTL actions
@@ -212,7 +215,7 @@ namespace grm {
   pegtl::action_base< store_back_option<Stack, Option, tag, tags...> > {
     static void apply( const std::string& value, Stack& stack ) {
       Option opt;
-      if (opt.exist( value ))
+      if (opt.exist(value))
         stack.template push_back<tag,tags...>( opt.value( value ) );
       else
         Message< Stack, ERROR, MsgKey::NOOPTION >( stack, value );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:14:07 AM MDT
+  \date      Mon 15 Sep 2014 12:36:44 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Mix model options and associations
   \details   Mix model options and associations
@@ -26,7 +26,7 @@ enum class MixType : uint8_t { NO_MIX=0,
                                DIRICHLET,
                                GENDIR };
 
-//! Pack/Unpack BatteryType: forward overload to generic enum class packer
+//! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, MixType& e ) { tk::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations

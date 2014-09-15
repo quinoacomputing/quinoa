@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 12 Sep 2014 06:37:08 AM MDT
+  \date      Mon 15 Sep 2014 01:16:35 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -328,7 +328,10 @@ namespace deck {
          tk::grm::readkw<
            pegtl::ifmust<
              pdf_name,
-             pegtl::one<'('>,
+             pegtl::sor< pegtl::one<'('>,
+                         pegtl::apply<
+                           tk::grm::error< Stack,
+                                           tk::grm::MsgKey::KEYWORD > > >,
              pegtl::sor< pegtl::seq< sample_space, binsizes >,
              pegtl::apply<
                tk::grm::error< Stack,
@@ -455,13 +458,13 @@ namespace deck {
                                            tk::grm::Set< Stack,
                                                          tag::title > > > {};
 
-  //! PDF file type
-  struct pdf_file_type :
-   tk::grm::process<
-           Stack,
-           typename kw::filetype::pegtl_string,
-           store_option< ctr::PDFFile, tag::selected, tag::pdftype >,
-           pegtl::alpha > {};
+  //! PDF option
+  template< class keyword, class Option, class Tag >
+  struct pdf_option :
+   tk::grm::process< Stack,
+                     typename keyword::pegtl_string,
+                     store_option< Option, tag::selected, Tag >,
+                     pegtl::alpha > {};
 
   //! statistics block
   struct statistics :
@@ -472,12 +475,15 @@ namespace deck {
                                         parse_expectations > > {};
   //! pdfs block
   struct pdfs :
-         pegtl::ifmust< tk::grm::readkw< kw::pdfs::pegtl_string >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        interval< kw::interval, tag::pdf >,
-                                        pdf_file_type,
-                                        parse_pdf > > {};
+         pegtl::ifmust<
+           tk::grm::readkw< kw::pdfs::pegtl_string >,
+           tk::grm::block<
+             Stack,
+             tk::kw::end,
+             interval< kw::interval, tag::pdf >,
+             pdf_option< kw::pdf_filetype, ctr::PDFFile, tag::pdffile >,
+             pdf_option< kw::pdf_policy, ctr::PDFPolicy, tag::pdfpolicy >,
+             parse_pdf > > {};
 
   //! Fluctuating velocity in x direction
   struct u :
