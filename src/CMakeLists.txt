@@ -106,7 +106,6 @@ add_compiler_flag("-Wcast-align")
 add_compiler_flag("-Wwrite-strings")
 add_compiler_flag("-Wunused")
 add_compiler_flag("-Woverloaded-virtual")
-add_compiler_flag("-ansi")
 add_compiler_flag("-fdiagnostics-show-option")
 
 #add_compiler_flag("-default-to-aout")
