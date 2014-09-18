@@ -115,8 +115,11 @@ add_compiler_flag("-Wno-vla")
 
 # Require a C++11 compiler
 check_cxx_compiler_flag(-std=c++11 COMPILER_HAS_CPP11)
+check_cxx_compiler_flag(--c++11 COMPILER_HAS_CXX11)
 if(COMPILER_HAS_CPP11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_HAS_CXX11)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --c++11")
 else()
   MESSAGE(FATAL_ERROR "Need a compiler with C++11 support.")
 endif()
@@ -126,6 +129,7 @@ include(libstdcxx)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
 
@@ -147,6 +151,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
+
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
 
@@ -162,6 +167,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   set(PARTOF_FLAGS "-Wno-unused-parameter")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
+
   add_compiler_flag("-Wremarks")
   # Suppress the following Intel compiler remarks:
   #   111: statement is unreachable
@@ -209,6 +215,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   set(HOSTFILE_FLAGS "-diag-disable 177,181,1572,1599,1720,1944,2259,2557,3280")
   # Ignore warnings for linking with a Charm++ module
   set(PARTOF_FLAGS "-Wno-unused-parameter")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
 
 endif()
 

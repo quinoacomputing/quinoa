@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 12 Sep 2014 06:59:44 AM MDT
+  \date      Wed 17 Sep 2014 10:21:24 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -100,6 +100,34 @@ class InputDeck :
         }
       }
       return names;
+    }
+
+    // Count number requested PDFs with given number of sample space dimensions
+    template< std::size_t d >
+    std::size_t npdf() const {
+      std::size_t n = 0;
+      for (const auto& bs : get< tag::discr, tag::binsize >())
+        if (bs.size() == d) ++n;
+      return n;
+    }
+
+    //! Find PDF name for PDF given the sample space dimension and its index
+    //! \param[in]  idx  Index of the PDF with given sample space dimension
+    template< std::size_t d >
+    const std::string& pdfname( long int idx ) const {
+      const auto& binsizes = get< tag::discr, tag::binsize >();
+      const auto& names = get< tag::cmd, tag::io, tag::pdfnames >();
+      Assert( binsizes.size() == names.size(),
+              "Number of binsizes vector and the number of PDF names must "
+              "equal in InputDeck::pdfname()." );
+      long int n = -1;
+      long int i = 0;
+      for (const auto& bs : binsizes) {
+        if (bs.size() == d) ++n;
+        if (n == idx) return names[i];
+        ++i;
+      }
+      Throw( "Cannot find PDF name." );
     }
 
     //! Pack/Unpack

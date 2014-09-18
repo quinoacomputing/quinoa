@@ -2,26 +2,24 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Tue 12 Aug 2014 05:10:27 PM MDT
+  \date      Wed 17 Sep 2014 09:40:42 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   Stack of random number generators
 */
 //******************************************************************************
 
-extern "C" {
-  #include <gm19.h>
-  #include <gm29.h>
-  #include <gm31.h>
-  #include <gm55.h>
-  #include <gm61.h>
-  #include <gq58x1.h>
-  #include <gq58x3.h>
-  #include <gq58x4.h>
-  #include <mt19937.h>
-  #include <lfsr113.h>
-  #include <mrg32k3a.h>
-}
+#include <gm19.h>
+#include <gm29.h>
+#include <gm31.h>
+#include <gm55.h>
+#include <gm61.h>
+#include <gq58x1.h>
+#include <gq58x3.h>
+#include <gq58x4.h>
+#include <mt19937.h>
+#include <lfsr113.h>
+#include <mrg32k3a.h>
 
 #include <charm++.h>
 

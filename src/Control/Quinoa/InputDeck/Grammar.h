@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 01:16:35 PM MDT
+  \date      Thu 18 Sep 2014 12:02:56 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -65,7 +65,7 @@ namespace deck {
   template< class tag, class... tags >
   struct start_vector : pegtl::action_base< start_vector< tag, tags... > > {
     static void apply(const std::string&, Stack& stack) {
-      stack.push_back< tag, tags... >( {} );
+      stack.push_back< tag, tags... >();  // no arg: used default ctor
     }
   };
 
@@ -99,6 +99,15 @@ namespace deck {
       // Error out if sample space already has at least 3 dimensions
       if ( pdf.back().size() >= 3 ) {
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::MAXSAMPLES >
+                        ( stack, value );
+      }
+      // Error out if matched sample space variable is longer than two
+      // characters or if it is two-character long but the second character is
+      // not a digit - malformed sample
+      if ( value.size() > 2 || (value.size() > 1 && !std::isdigit(value[1])) ) {
+        tk::grm::Message< Stack,
+                          tk::grm::ERROR,
+                          tk::grm::MsgKey::MALFORMEDSAMPLE >
                         ( stack, value );
       }
       // Push term into current vector
@@ -481,8 +490,9 @@ namespace deck {
              Stack,
              tk::kw::end,
              interval< kw::interval, tag::pdf >,
-             pdf_option< kw::pdf_filetype, ctr::PDFFile, tag::pdffile >,
+             pdf_option< kw::pdf_filetype, ctr::PDFFile, tag::pdffiletype >,
              pdf_option< kw::pdf_policy, ctr::PDFPolicy, tag::pdfpolicy >,
+             pdf_option< kw::pdf_centering, ctr::PDFCentering, tag::pdfctr >,
              parse_pdf > > {};
 
   //! Fluctuating velocity in x direction

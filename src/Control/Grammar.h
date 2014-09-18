@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 01:25:47 PM MDT
+  \date      Mon 15 Sep 2014 04:54:55 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -46,6 +46,7 @@ namespace grm {
                                 NOTERMS,
                                 NOSAMPLES,
                                 INVALIDSAMPLESPACE,
+                                MALFORMEDSAMPLE,
                                 INVALIDBINSIZE,
                                 NOBINS,
                                 ZEROBINSIZE,
@@ -83,6 +84,10 @@ namespace grm {
       "non-empty list of sample space variables, must be followed by a "
       "semi-colon, followed by a non-empty list of bin sizes (reals numbers), "
       "e.g., \"(x y : 0.1 0.2)\"" },
+    { MsgKey::MALFORMEDSAMPLE, "A PDF sample space variable must be a single "
+      "upper or lowercase letter optionally followed by a single digit. "
+      "Multiple variables, specifying a multi-dimensional sample space, must "
+      "be separated by white spaces." },
     { MsgKey::INVALIDBINSIZE, "PDF sample space bin size(s) specification "
       "incorrect. A non-empty list of sample space variables, must be followed "
       "by a semi-colon, followed by a non-empty list of bin sizes (real "

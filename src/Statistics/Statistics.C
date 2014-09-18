@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:41:18 AM MDT
+  \date      Thu 18 Sep 2014 04:34:35 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -112,15 +112,28 @@ Statistics::setupPDF( const OffsetMap& offset )
   std::size_t i = 0;
   for (const auto& probability : g_inputdeck.get< tag::pdf >()) {
 
-    m_pdf.emplace_back( g_inputdeck.get< tag::discr, tag:: binsize >()[i++][0] );
-    m_instPDF.emplace_back( std::vector< const tk::real* >() );
+    // Detect number of sample space dimensions and instantiate PDFs
+    const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
+    if (bs.size() == 1) {
+      m_updf.emplace_back( bs[0] );
+      m_instUniPDF.emplace_back( std::vector< const tk::real* >() );
+    } else if (bs.size() == 2) {
+      m_bpdf.emplace_back( bs );
+      m_instBiPDF.emplace_back( std::vector< const tk::real* >() );
+    }
 
+    // Store starting addresses of instantaneous variables
     if (ordinary(probability)) {
       for (const auto& term : probability) {
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
-        // Put in starting address of instantaneous variable
-        m_instPDF.back().push_back( m_particles.cptr(term.field, o->second) );
+        if (bs.size() == 1) {
+          m_instUniPDF.back().push_back(
+            m_particles.cptr( term.field, o->second ) );
+        } else if (bs.size() == 2) {
+          m_instBiPDF.back().push_back(
+            m_particles.cptr( term.field, o->second ) );
+        }
       }
     }
   }
@@ -210,16 +223,26 @@ Statistics::accumulatePDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (!m_pdf.empty()) {
+  if (!m_updf.empty() || !m_bpdf.empty()) {
     // Zero PDF accumulators
-    for (auto& pdf : m_pdf) pdf.zero();
+    for (auto& pdf : m_updf) pdf.zero();
+    for (auto& pdf : m_bpdf) pdf.zero();
 
-    // Accumulate sum for PDFs. This is a partial sum.
+    // Accumulate partial sum for PDFs
     const auto npar = m_particles.npar();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
-      for (auto& pdf : m_pdf)
-        pdf.add( m_particles.cvar( m_instPDF[i++][0], p ) );
+      // Accumulate partial sum for univariate PDFs
+      for (auto& pdf : m_updf) {
+        pdf.add( m_particles.cvar( m_instUniPDF[i++][0], p ) );
+      }
+      // Accumulate partial sum for bivariate PDFs
+      i = 0;
+      for (auto& pdf : m_bpdf) {
+        const auto inst = m_instBiPDF[i++];
+        pdf.add( {{ m_particles.cvar( inst[0], p ),
+                    m_particles.cvar( inst[1], p ) }} );
+      }
     }
   }
 }

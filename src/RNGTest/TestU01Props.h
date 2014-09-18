@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 09:21:21 AM MDT
+  \date      Tue 16 Sep 2014 08:05:32 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     TestU01 statistical test properties
   \details   TestU01 statistical test properties
@@ -93,7 +93,7 @@ class TestU01Props {
       p | m_proxy;
       p | m_rng;
       p | m_names;
-      tk::pup( p, m_xargs );
+      p | m_xargs;
       if (p.isUnpacking()) {
         m_gen = g_testStack.TestU01.generator( m_rng );
         m_runner = g_testStack.TestU01.runner.get< Test >();

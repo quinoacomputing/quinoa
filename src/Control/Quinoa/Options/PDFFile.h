@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:55:44 PM MDT
+  \date      Tue 16 Sep 2014 08:14:53 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF output file type options and associations
   \details   PDF output file type options and associations
@@ -24,7 +24,7 @@ enum class PDFFileType : uint8_t { TXT=0,
                                    GMSH };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, PDFFileType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, PDFFileType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class PDFFile : public tk::Toggle< PDFFileType > {

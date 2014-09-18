@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/MigratedTypes.h
   \author    J. Bakosi
-  \date      Sun 14 Sep 2014 10:37:05 PM MDT
+  \date      Tue 16 Sep 2014 08:14:00 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Type definitions for unit tests of Charm++ migrated data
   \details   Type definitions for unit tests of Charm++ migrated data
@@ -26,10 +26,10 @@ using Tuple = std::tuple< int, double, std::vector< std::string >,
                           Enum_default, std::map< Enum_uint8_t, std::string > >;
 
 //! Pack/Unpack: delegate to tk::
-inline void operator|( PUP::er& p, Enum_default& e ) { tk::pup( p, e ); }
-inline void operator|( PUP::er& p, Enum_uint8_t& e ) { tk::pup( p, e ); }
-inline void operator|( PUP::er& p, Enum_cstyle& e ) { tk::pup( p, e ); }
-inline void operator|( PUP::er& p, Tuple& t ) { tk::pup( p, t ); }
+inline void operator|( PUP::er& p, Enum_default& e ) { PUP::pup( p, e ); }
+inline void operator|( PUP::er& p, Enum_uint8_t& e ) { PUP::pup( p, e ); }
+inline void operator|( PUP::er& p, Enum_cstyle& e ) { PUP::pup( p, e ); }
+inline void operator|( PUP::er& p, Tuple& t ) { PUP::pup( p, t ); }
 
 } // charm::
 } // tut::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:36:11 PM MDT
+  \date      Tue 16 Sep 2014 08:16:01 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Energy model options and associations
   \details   Energy model options and associations
@@ -23,7 +23,7 @@ namespace ctr {
 enum class EnergyType : uint8_t { NO_ENERGY=0 };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, EnergyType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, EnergyType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class Energy : public tk::Toggle< EnergyType > {

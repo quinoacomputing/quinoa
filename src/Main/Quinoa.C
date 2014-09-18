@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:30:17 PM MDT
+  \date      Wed 17 Sep 2014 02:37:43 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -18,9 +18,9 @@
 #include <QuinoaPrint.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/CmdLine/Parser.h>
-#include <TPLInfo/Silo.h>
+//#include <TPLInfo/Silo.h>
 #include <TPLInfo/HDF5.h>
-#include <TPLInfo/Zlib.h>
+//#include <TPLInfo/Zlib.h>
 #include <TPLInfo/MKL.h>
 #include <TPLInfo/Boost.h>
 #include <quinoa.decl.h>
@@ -44,9 +44,9 @@ void echoTPL( const tk::Print& print )
   print.item( "Intel Math Kernel Library", "n/a" );
   #endif
   echoBoost( print, "Boost C++ Libraries" );
-  tk::echoSilo(print, "Silo library");
+//  tk::echoSilo(print, "Silo library");
   tk::echoHDF5(print, "HDF5 library");
-  tk::echoZlib(print, "Zlib compression library");
+//  tk::echoZlib(print, "Zlib compression library");
   print.endpart();
 }
 

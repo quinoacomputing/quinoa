@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 02:19:53 PM MDT
+  \date      Thu 18 Sep 2014 12:03:07 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -31,7 +31,8 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_nameCentral( g_inputdeck.momentNames( ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
   m_central( m_nameCentral.size(), 0.0 ),
-  m_pdf( g_inputdeck.get< tag::pdf >().size() )
+  m_updf( g_inputdeck.npdf< 1 >() ),
+  m_bpdf( g_inputdeck.npdf< 2 >() )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -281,62 +282,112 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
 }
 
 void
-Distributor::estimatePDF( const std::vector< PDF >& pdf )
+Distributor::estimatePDF( const std::vector< UniPDF >& updf,
+                          const std::vector< BiPDF >& bpdf )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of PDFs
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Increase number of integrators completing the accumulation of the central
-  // moments
+  // Increase number of integrators completing the accumulation of PDFs
   ++m_count.get< tag::pdf >();
 
   // Add contribution from PE to total sums
   std::size_t i=0;
-  for (auto& p : m_pdf) p.add( pdf[i++] );
+  for (auto& p : m_updf) p.addPDF( updf[i++] );
+  i = 0;
+  for (auto& p : m_bpdf) p.addPDF( bpdf[i++] );
 
-  // Wait for all integrators completing accumulation of central moments
+  // Wait for all integrators completing accumulation of PDFs
   if (m_count.get< tag::pdf >() == m_count.get< tag::chare >()) {
 
     // Output PDFs at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) &&
-        !m_pdf.empty())
+    if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) &&
+         (!m_updf.empty() || !m_bpdf.empty()) )
     {
-      std::size_t i = 0;
-      for (auto& p : m_pdf) {
-        // Construct PDF file name: base name + pdf name
-        std::string filename =
-          g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' +
-          g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >()[i++];
-        // Augment PDF filename by time stamp if filetype multiple
-        if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
-            ctr::PDFPolicyType::MULTIPLE)
-        {
-          filename += '_' + std::to_string( m_t );
-        }
-        // Augment PDF filename by '.dat' extension
-        filename += ".dat";
-
-        // Create new PDF file
-        PDFWriter pdfw( filename );
-        // Output PDF
-        if (g_inputdeck.get< tag::selected, tag::pdffile >() ==
-            ctr::PDFFileType::TXT)
-          pdfw.writeTxt( p );
-//         else
-//           pdfw.writeGmsh( p );
-      }
-
-      // Signal that PDF was written
-      m_output.get< tag::pdf >() = true;
+      outUniPDF();                       // Output univariate PDFs to file
+      outBiPDF();                        // Output bivariate PDFs to file
+      m_output.get< tag::pdf >() = true; // Signal that PDFs were written
     }
 
     // Zero accumulator counter and PDFs for next time step
     m_count.get< tag::pdf >() = 0;
-    for (auto& p : m_pdf) p.zero();
+    for (auto& p : m_updf) p.zero();
+    for (auto& p : m_bpdf) p.zero();
 
     // Decide if it is time to quit
     evaluateTime();
+  }
+}
+
+void
+Distributor::outUniPDF()
+//******************************************************************************
+// Output univariate PDFs to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::size_t i = 0;
+  for (const auto& p : m_updf) {
+
+    // Construct PDF file name: base name + '_' + pdf name
+    std::string filename =
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' +
+      g_inputdeck.pdfname< 1 >( i++ );
+
+    // Augment PDF filename by time stamp if PDF output file policy is multiple
+    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+        ctr::PDFPolicyType::MULTIPLE)
+      filename += '_' + std::to_string( m_t );
+
+    // Augment PDF filename by '.txt' extension
+    filename += ".txt";
+
+    // Create new PDF file (overwrite if exists)
+    PDFWriter pdfw( filename );
+
+    // Output PDF
+    pdfw.writeTxt( p );
+  }
+}
+
+void
+Distributor::outBiPDF()
+//******************************************************************************
+// Output bivariate PDFs to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::size_t i = 0;
+  for (const auto& p : m_bpdf) {
+
+    // Construct PDF file name: base name + '_' + pdf name
+    std::string pdfname = g_inputdeck.pdfname< 2 >( i++ );
+    std::string filename =
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdfname;
+
+    // Augment PDF filename by time stamp if PDF output file policy is multiple
+    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+        ctr::PDFPolicyType::MULTIPLE)
+      filename += '_' + std::to_string( m_t );
+
+    // Augment PDF filename by '.txt' or '.gmsh' extension
+    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
+        ctr::PDFFileType::TXT)
+      filename += ".txt";
+    else
+      filename += ".gmsh";
+
+    // Create new PDF file (overwrite if exists)
+    PDFWriter pdfw( filename );
+
+    // Output PDF
+    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
+        ctr::PDFFileType::TXT)
+      pdfw.writeTxt( p );
+    else
+      pdfw.writeGmsh( p, pdfname,
+                      g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }
 

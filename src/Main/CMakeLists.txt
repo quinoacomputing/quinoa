@@ -20,9 +20,9 @@ add_executable(${QUINOA_EXECUTABLE}
                TPLInfo/MKL.C
                TPLInfo/Boost.C
                TPLInfo/Zoltan.C
-               TPLInfo/Silo.C
+#               TPLInfo/Silo.C
                TPLInfo/HDF5.C
-               TPLInfo/Zlib.C
+#               TPLInfo/Zlib.C
                QuinoaDriver.C
                QuinoaPrint.C
                Quinoa.C
@@ -48,12 +48,12 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       Statistics
                       QuinoaControl
                       RNG
-                      ${SILO_LIBRARY}
+                      #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
                       ${NETCDF_LIBRARY}
                       ${HDF5_LIBRARY}
-                      ${Z_LIBRARY}
+                      #${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -91,10 +91,10 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${RNGTEST_EXECUTABLE}
+                      Base
                       RNG
                       RNGTest
                       RNGTestControl
-                      Base
                       ${TESTU01_PROBDIST_LIBRARY}
                       ${TESTU01_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -132,12 +132,12 @@ if(MPI_LINK_FLAGS)
 endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
+                      Base
+                      IO
+                      Mesh
                       UnitTest
                       UnitTestControl
-                      Mesh
-                      IO
-                      Base
-                      ${SILO_LIBRARY}
+                      #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
                       ${NETCDF_LIBRARY}
@@ -178,7 +178,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       IO
                       Mesh
                       MeshConvControl
-                      ${SILO_LIBRARY}
+                      #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
                       ${NETCDF_LIBRARY}

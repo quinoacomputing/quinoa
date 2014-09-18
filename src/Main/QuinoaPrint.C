@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:52:40 PM MDT
+  \date      Thu 18 Sep 2014 12:04:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -135,7 +135,12 @@ const
 
   // Print PDF output options
   ctr::PDFFile f;
-  item( f.group(), f.name( g_inputdeck.get< tag::selected, tag::pdffile >() ) );
+  item( f.group(),
+        f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
   ctr::PDFPolicy p;
-  item( p.group(), p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
+  item( p.group(),
+        p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
+  ctr::PDFCentering e;
+  item( e.group(),
+        e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Sat 16 Aug 2014 09:28:15 PM MDT
+  \date      Wed 17 Sep 2014 09:45:01 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Control base
   \details   Control base
@@ -128,23 +128,31 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! TODO: Replace the overloads below with a variadic one
     //! Push back value to vector at tag at 1st level without conversion
     template< typename tag >
-    void push_back(const typename Tuple::template nT<tag>::value_type& value) {
+    void push_back( const typename Tuple::template nT<tag>::value_type& value =
+                          typename Tuple::template nT<tag>::value_type() ) {
       Tuple::template get<tag>().push_back( value );
     }
     //! Push back value to vector at tag at 2nd level without conversion
     template< typename tag, typename subtag >
-    void push_back(const typename Tuple::template nT<tag>
-                                       ::template nT<subtag>
-                                       ::value_type& value) {
+    void push_back( const typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::value_type() ) {
       Tuple::template get<tag>().
              template get<subtag>().push_back( value );
     }
     //! Push back value to vector at tag at 3rd level without conversion
     template< typename tag, typename subtag, typename subsubtag >
-    void push_back(const typename Tuple::template nT<tag>
-                                       ::template nT<subtag>
-                                       ::template nT<subsubtag>
-                                       ::value_type& value) {
+    void push_back( const typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::value_type() ) {
       Tuple::template get<tag>().
              template get<subtag>().
              template get<subsubtag>().push_back( value );
