@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/PDFPolicy.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:56:16 PM MDT
+  \date      Tue 16 Sep 2014 08:14:39 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF output file policy options and associations
   \details   PDF output file policy options and associations
@@ -24,7 +24,7 @@ enum class PDFPolicyType : uint8_t { OVERWRITE=0,
                                      MULTIPLE };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, PDFPolicyType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, PDFPolicyType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class PDFPolicy : public tk::Toggle< PDFPolicyType > {

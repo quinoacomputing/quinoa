@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:50:28 PM MDT
+  \date      Thu 18 Sep 2014 11:59:10 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -28,6 +28,7 @@
 #include <Quinoa/Options/CoeffPolicy.h>
 #include <Quinoa/Options/PDFFile.h>
 #include <Quinoa/Options/PDFPolicy.h>
+#include <Quinoa/Options/PDFCentering.h>
 #include <Options/RNG.h>
 #include <PUPUtil.h>
 
@@ -58,7 +59,7 @@ struct Term {
   //! Pack/Unpack
   void pup( PUP::er& p ) {
     p | field;
-    tk::pup( p, moment );
+    PUP::pup( p, moment );
     p | var;
     p | plot;
   }
@@ -243,8 +244,9 @@ using selects = tk::tuple::tagged_tuple<
   tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
   tag::diffeq,     std::vector< ctr::DiffEqType >,  //!< Selected diff eqs
   tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
-  tag::pdffile,    ctr::PDFFileType,    //!< PDF output file type
-  tag::pdfpolicy,  ctr::PDFPolicyType   //!< PDF output file policy
+  tag::pdffiletype,ctr::PDFFileType,    //!< PDF output file type
+  tag::pdfpolicy,  ctr::PDFPolicyType,  //!< PDF output file policy
+  tag::pdfctr,     ctr::PDFCenteringType//!< PDF output file centering
 >;
 
 //! Discretization parameters storage

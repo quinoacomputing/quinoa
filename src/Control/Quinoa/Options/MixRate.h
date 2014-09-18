@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MixRate.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:36:51 PM MDT
+  \date      Tue 16 Sep 2014 08:14:46 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -24,7 +24,7 @@ enum class MixRateType : uint8_t { NO_MIXRATE=0,
                                    GAMMA };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, MixRateType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, MixRateType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class MixRate : public tk::Toggle<MixRateType> {

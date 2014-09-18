@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.h
   \author    J. Bakosi
-  \date      Fri 12 Sep 2014 07:23:43 AM MDT
+  \date      Tue 16 Sep 2014 08:28:21 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -35,7 +35,8 @@ class Distributor : public CBase_Distributor {
     void estimateCen( const std::vector< tk::real >& ctr );
 
     //! Finish estimation of PDFs
-    void estimatePDF( const std::vector< PDF >& pdf );
+    void estimatePDF( const std::vector< UniPDF >& updf,
+                      const std::vector< BiPDF >& bpdf );
 
   private:
     using CProxyInt = CProxy_Integrator< CProxy_Distributor >;
@@ -54,6 +55,12 @@ class Distributor : public CBase_Distributor {
 
     //! Print out one-liner report on time step
     void report();
+
+    //! Output univariate PDFs to file(s)
+    void outUniPDF();
+
+    //! Output bivariate PDFs to file(s)
+    void outBiPDF();
 
     //! Pretty printer
     QuinoaPrint m_print;
@@ -77,7 +84,8 @@ class Distributor : public CBase_Distributor {
     std::vector< std::string > m_nameCentral;   //!< Central moment names
     std::vector< tk::real > m_ordinary;         //!< Ordinary moments
     std::vector< tk::real > m_central;          //!< Central moments
-    std::vector< PDF > m_pdf;                   //!< PDFs
+    std::vector< UniPDF > m_updf;               //!< Univariate PDFs
+    std::vector< BiPDF > m_bpdf;                //!< Bivariate PDFs
 };
 
 } // quinoa::

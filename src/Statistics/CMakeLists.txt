@@ -4,7 +4,6 @@ project(Statistics CXX)
 
 add_library(Statistics
             Statistics.C
-#            JPDF.C
 )
 
 removeWarnings( "Statistics.C" )

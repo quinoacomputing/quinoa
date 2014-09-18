@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Wed 10 Sep 2014 03:47:16 PM MDT
+  \date      Thu 18 Sep 2014 11:51:46 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -14,8 +14,9 @@
 #include <string>
 
 #include <Writer.h>
-#include <PDF.h>
-#include <JPDF.h>
+#include <UniPDF.h>
+#include <BiPDF.h>
+#include <Quinoa/Options/PDFCentering.h>
 
 namespace quinoa {
 
@@ -26,14 +27,16 @@ class PDFWriter : public tk::Writer {
     //! Constructor
     explicit PDFWriter( const std::string& filename ) : Writer( filename ) {}
 
-    //! Write PDF to file
-    void writeTxt( const PDF& pdf ) const;
+    //! Write univariate PDF to text file
+    void writeTxt( const UniPDF& pdf ) const;
 
-    //! Write joint PDF to text file
-    void writeTxt( const JPDF& jpdf ) const;
+    //! Write bivariate PDF to text file
+    void writeTxt( const BiPDF& pdf ) const;
 
-    //! Write joint PDF to gmsh (text) file format
-    void writeGmsh( const JPDF& jpdf ) const;
+    //! Write bivariate PDF to gmsh (text) file format
+    void writeGmsh( const BiPDF& pdf,
+                    const std::string& pdfname,
+                    ctr::PDFCenteringType centering ) const;
 };
 
 } // quinoa::

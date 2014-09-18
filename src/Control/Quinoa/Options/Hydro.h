@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:36:23 PM MDT
+  \date      Tue 16 Sep 2014 08:14:16 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Hydro model options and associations
   \details   Hydro model options and associations
@@ -25,7 +25,7 @@ enum class HydroType : uint8_t { NO_HYDRO=0,
                                  GLM };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, HydroType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, HydroType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class Hydro : public tk::Toggle< HydroType > {

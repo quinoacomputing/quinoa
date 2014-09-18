@@ -61,12 +61,12 @@ endif()
 # Set Charm++/AMPI compiler wrappers
 set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicc)
 set(CHARM_AMPI_CXX_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicxx)
-set(CHARM_AMPI_FORTRAN_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampif90)
+set(CHARM_AMPI_Fortran_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampif90)
 
 # Echo Charm++ underlying compilers
 MESSAGE(STATUS "Charm++/AMPI C compiler: " ${CHARM_AMPI_C_COMPILER})
 MESSAGE(STATUS "Charm++/AMPI C++ compiler: " ${CHARM_AMPI_CXX_COMPILER})
-MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_FORTRAN_COMPILER})
+MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_Fortran_COMPILER})
 
 # Compilers
 # =========
@@ -76,7 +76,7 @@ MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_FORTRAN_COMPILER})
 #
 #    UNDERLYING_C_COMPILER
 #    UNDERLYING_CXX_COMPILER
-#    UNDERLYING_FORTRAN_COMPILER
+#    UNDERLYING_Fortran_COMPILER
 #
 # 2. The MPI wrappers (of the underlying compilers)
 #
@@ -85,12 +85,12 @@ MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_FORTRAN_COMPILER})
 #    MPI_Fortran_COMPILER
 #
 # 3. The Charm++/AMPI wrappers (of the MPI wrappers or around the underlying
-#    compilers, depending on CHARM_COMPILER, the compiler used to build Charm++
+#    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
 #    and AMPI
 #
 #    CHARM_AMPI_C_COMPILER
 #    CHARM_AMPI_CXX_COMPILER
-#    CHARM_AMPI_FORTRAN_COMPILER
+#    CHARM_AMPI_Fortran_COMPILER
 
 # Set Boost's default toolset
 set(BOOST_TOOLSET ${COMP})
@@ -100,22 +100,33 @@ include(libstdcxx)
 
 # Compiler-specific settings
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
+
   # Set libc++ as the default standard C++ library and allow selection
   setlibstdcxx("libc++")
+  # Don't error out on functions not returning anything even when supposed to,
+  # required only by TestU01 
+  set(CFLAGS "${CFLAGS} -Wno-error=return-type")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
+
   # Boost as build toolset wants 'gcc' for the gnu compiler
   set(BOOST_TOOLSET "gcc")
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
-  # Link to thread-safe MPI libraries
+
+  # Link to thread-safe MPI libraries, needed for Intel MPI
   set(CFLAGS "${CFLAGS} -mt_mpi")
   set(CXXFLAGS "${CXXFLAGS} -mt_mpi")
   set(FFLAGS "${FFLAGS} -mt_mpi")
   # Set libstdc++ as the default standard C++ library and allow selection
   setlibstdcxx("libstdc++")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "PGI")  # pgi-specific settings
+
+  # Some configure scripts don't like pgi's preprocessor so use gnu's
+  set(PGCPP "CPP=cpp")
 
 endif()
 
@@ -135,8 +146,8 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 include(get_compiler_flags)
 get_compiler_flags()
 
-# Set compiler flags for use of libc++ (If nothing is given, libstdc++ is the
-# default thus does not require anything special.)
+# Set compiler flags for use of libc++ (If nothing is given, do nothing; gnu,
+# intel, and clang will use libstdc++ by default).
 if(LIBCXX_CPP)
   set(CXXFLAGS_LIBCPP "-stdlib=libc++")
   set(CXXFLAGS_LIBCPPABI "-lc++abi")
@@ -221,29 +232,53 @@ ExternalProject_Add_Step(
           ${CMAKE_INSTALL_PREFIX}/include/tut
 )
 
+##### Boost ####################################################################
+## http://www.boost.org
+#ExternalProject_Add(
+#  boost
+#  PREFIX boost
+#  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
+#  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#                    --with-toolset=${BOOST_TOOLSET}
+#                    --with-libraries=system
+#  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
+#                  toolset=${BOOST_TOOLSET}
+#                  variant=${BOOST_BUILD_TYPE}
+#                  cxxflags=${CXXFLAGS}
+#                  cflags=${CFLAGS}
+#                  --debug-building
+#                  install
+#  BUILD_COMMAND ""
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
+
 #### Boost ####################################################################
 # http://www.boost.org
+# Header only
 ExternalProject_Add(
   boost
   PREFIX boost
   URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
   URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-                    --with-libraries=system
-  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
-                  toolset=${BOOST_TOOLSET}
-                  variant=${BOOST_BUILD_TYPE}
-                  cxxflags=${CXXFLAGS}
-                  cflags=${CFLAGS}
-                  --debug-building
-                  install
+  CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
-  BUILD_IN_SOURCE 1
+  INSTALL_COMMAND ""
   LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
+)
+# Header-only, copy include dir over
+ExternalProject_Get_Property(boost SOURCE_DIR)
+ExternalProject_Add_Step(
+  boost copy-source
+  DEPENDEES download
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${SOURCE_DIR}/boost
+          ${CMAKE_INSTALL_PREFIX}/include/boost
 )
 
 #### Boost.MPL extension: cartesian product ###################################
@@ -279,6 +314,7 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CFLAGS=${CFLAGS}
+                    ${PGCPP}
                     --prefix=${CMAKE_INSTALL_PREFIX}/hdf5ser
   BUILD_IN_SOURCE 1
   LOG_DOWNLOAD 1
@@ -289,22 +325,22 @@ ExternalProject_Add(
 
 #### HDF5 parallel #############################################################
 # http://www.hdfgroup.org/HDF5
-ExternalProject_Add(
-  hdf5par
-  PREFIX hdf5par
-  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
-  URL_MD5 c03426e9e77d7766944654280b467289
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
-                    CC=${MPI_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    --enable-parallel
-                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5par
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  hdf5par
+#  PREFIX hdf5par
+#  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
+#  URL_MD5 c03426e9e77d7766944654280b467289
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5par/src/hdf5par/configure
+#                    CC=${MPI_C_COMPILER}
+#                    CFLAGS=${CFLAGS}
+#                    --enable-parallel
+#                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5par
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 ##### H5Part ###################################################################
 ## http://vis.lbl.gov/Research/H5Part
@@ -329,20 +365,20 @@ ExternalProject_Add(
 
 #### zlib ######################################################################
 # http://www.zlib.net
-ExternalProject_Add(
-  zlib
-  PREFIX zlib
-  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
-  URL_MD5 44d667c142d7cda120332623eab69f40
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  zlib
+#  PREFIX zlib
+#  URL ${PROJECT_SOURCE_DIR}/zlib-1.2.8.tar.gz
+#  URL_MD5 44d667c142d7cda120332623eab69f40
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/zlib/src/zlib/configure
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_COMMAND make CC=${UNDERLYING_C_COMPILER} CFLAGS=${CFLAGS} install
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### NETCDF ####################################################################
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
@@ -355,6 +391,7 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CFLAGS=${CFLAGS}
+                    ${PGCPP}
                     CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/hdf5ser/include
                     LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
                     --disable-examples
@@ -396,164 +433,165 @@ ExternalProject_Add(
   LOG_INSTALL 1
 )
 
-#### Silo #####################################################################
-# https://wci.llnl.gov/codes/silo
-ExternalProject_Add(
-  silo
-  DEPENDS hdf5ser
-  PREFIX silo
-  URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
-  URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
-                    CC=${MPI_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    --enable-optimization
-                    --enable-shared
-                    --disable-silex
-                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser/include,${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+##### Silo #####################################################################
+## https://wci.llnl.gov/codes/silo
+#ExternalProject_Add(
+#  silo
+#  DEPENDS hdf5ser
+#  PREFIX silo
+#  URL ${PROJECT_SOURCE_DIR}/silo-4.9.1-bsd.tar.gz
+#  URL_MD5 a66223e1c0e569eb4887df2aae0ab70f
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/silo/src/silo/configure
+#                    CC=${MPI_C_COMPILER}
+#                    CFLAGS=${CFLAGS}
+#                    ${PGCPP}
+#                    --enable-optimization
+#                    --enable-shared
+#                    --disable-silex
+#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser/include,${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### minixml ###################################################################
 # http://www.minixml.org/software.php
-ExternalProject_Add(
-  minixml
-  PREFIX minixml
-  URL ${PROJECT_SOURCE_DIR}/mxml-2.8.tar.gz
-  URL_MD5 d85ee6d30de053581242c4a86e79a5d2
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/minixml/src/minixml/configure
-                    CC=${UNDERLYING_C_COMPILER}
-                    CXX=${UNDERLYING_CXX_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    CXXFLAGS=${CXXFLAGS}
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  minixml
+#  PREFIX minixml
+#  URL ${PROJECT_SOURCE_DIR}/mxml-2.8.tar.gz
+#  URL_MD5 d85ee6d30de053581242c4a86e79a5d2
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/minixml/src/minixml/configure
+#                    CC=${UNDERLYING_C_COMPILER}
+#                    CXX=${UNDERLYING_CXX_COMPILER}
+#                    CFLAGS=${CFLAGS}
+#                    CXXFLAGS=${CXXFLAGS}
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### bzip2 #####################################################################
 # http://www.bzip.org
-ExternalProject_Add(
-  bzip2
-  PREFIX bzip2
-  URL ${PROJECT_SOURCE_DIR}/bzip2-1.0.6.tar.gz
-  URL_MD5 00b516f4704d4a7cb50a1d97e6e8e15b
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND make
-                CC=${UNDERLYING_C_COMPILER}
-                CFLAGS=${CFLAGS}
-                PREFIX=${CMAKE_INSTALL_PREFIX}
-                install
-  INSTALL_COMMAND ""
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  bzip2
+#  PREFIX bzip2
+#  URL ${PROJECT_SOURCE_DIR}/bzip2-1.0.6.tar.gz
+#  URL_MD5 00b516f4704d4a7cb50a1d97e6e8e15b
+#  CONFIGURE_COMMAND ""
+#  BUILD_COMMAND make
+#                CC=${UNDERLYING_C_COMPILER}
+#                CFLAGS=${CFLAGS}
+#                PREFIX=${CMAKE_INSTALL_PREFIX}
+#                install
+#  INSTALL_COMMAND ""
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### szip ######################################################################
 # http://www.hdfgroup.org/ftp/lib-external/szip
-ExternalProject_Add(
-  szip
-  PREFIX szip
-  URL ${PROJECT_SOURCE_DIR}/szip-2.1.tar.gz
-  URL_MD5 902f831bcefb69c6b635374424acbead
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/szip/src/szip/configure
-                    CC=${UNDERLYING_C_COMPILER}
-                    CXX=${UNDERLYING_CXX_COMPILER}
-                    FC=${UNDERLYING_Fortran_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    CXXFLAGS=${CXXFLAGS}
-                    FFLAGS=${FFLAGS}
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  szip
+#  PREFIX szip
+#  URL ${PROJECT_SOURCE_DIR}/szip-2.1.tar.gz
+#  URL_MD5 902f831bcefb69c6b635374424acbead
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/szip/src/szip/configure
+#                    CC=${UNDERLYING_C_COMPILER}
+#                    CXX=${UNDERLYING_CXX_COMPILER}
+#                    FC=${UNDERLYING_Fortran_COMPILER}
+#                    CFLAGS=${CFLAGS}
+#                    CXXFLAGS=${CXXFLAGS}
+#                    FFLAGS=${FFLAGS}
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### ISOBAR ####################################################################
 # http://dx.doi.org/10.1145/2287076.2287086
-ExternalProject_Add(
-  isobar
-  PREFIX isobar
-  URL ${PROJECT_SOURCE_DIR}/isobar.0.3.0.tgz
-  URL_MD5 86d123b7028ed238c0e6e49c22e7272c
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
-  BUILD_COMMAND make install
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
-                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/lib/libisobar.a
-                  ${CMAKE_INSTALL_PREFIX}/lib
-          COMMAND ${CMAKE_COMMAND} -E copy
-                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/include/isobar.h
-                  ${CMAKE_INSTALL_PREFIX}/include
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  isobar
+#  PREFIX isobar
+#  URL ${PROJECT_SOURCE_DIR}/isobar.0.3.0.tgz
+#  URL_MD5 86d123b7028ed238c0e6e49c22e7272c
+#  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/lib
+#            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_INSTALL_PREFIX}/include
+#  BUILD_COMMAND make install
+#  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+#                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/lib/libisobar.a
+#                  ${CMAKE_INSTALL_PREFIX}/lib
+#          COMMAND ${CMAKE_COMMAND} -E copy
+#                  ${PROJECT_BINARY_DIR}/isobar/src/isobar/include/isobar.h
+#                  ${CMAKE_INSTALL_PREFIX}/include
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### APLOD #####################################################################
 # http://conferences.computer.org/sc/2012/papers/1000a088.pdf
-ExternalProject_Add(
-  aplod
-  PREFIX aplod
-  URL ${PROJECT_SOURCE_DIR}/aplod.0.1.tar.gz
-  URL_MD5 3e9749efb42a3d4d3165e884456812bc
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND make CXX=${UNDERLYING_CXX_COMPILER} CXXLAGS=${CXXFLAGS}
-  INSTALL_COMMAND make install prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  aplod
+#  PREFIX aplod
+#  URL ${PROJECT_SOURCE_DIR}/aplod.0.1.tar.gz
+#  URL_MD5 3e9749efb42a3d4d3165e884456812bc
+#  CONFIGURE_COMMAND ""
+#  BUILD_COMMAND make CXX=${UNDERLYING_CXX_COMPILER} CXXLAGS=${CXXFLAGS}
+#  INSTALL_COMMAND make install prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### ADIOS #####################################################################
 # https://www.olcf.ornl.gov/center-projects/adios
-ExternalProject_Add(
-  adios
-  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par netcdf
-  PREFIX adios
-  URL ${PROJECT_SOURCE_DIR}/adios-1.6.0.tar.gz
-  URL_MD5 70073584c620b92d7842250ce778847f
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/adios/src/adios/configure
-                    CC=${MPI_C_COMPILER}
-                    CXX=${MPI_CXX_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    CXXLAGS=${CXXFLAGS}
-                    --disable-fortran
-                    --enable-research-transports
-                    --enable-skel-timing
-                    --with-mxml=${CMAKE_INSTALL_PREFIX}
-                    --with-phdf5=${CMAKE_INSTALL_PREFIX}/hdf5par
-                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
-                    --with-netcdf=${CMAKE_INSTALL_PREFIX}
-                    --with-zlib=${CMAKE_INSTALL_PREFIX}
-                    --with-bzip2=${CMAKE_INSTALL_PREFIX}
-                    --with-szip=${CMAKE_INSTALL_PREFIX}
-                    --with-isobar=${CMAKE_INSTALL_PREFIX}
-                    --with-aplod=${CMAKE_INSTALL_PREFIX}
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+#ExternalProject_Add(
+#  adios
+#  DEPENDS minixml zlib bzip2 szip isobar aplod hdf5ser hdf5par netcdf
+#  PREFIX adios
+#  URL ${PROJECT_SOURCE_DIR}/adios-1.6.0.tar.gz
+#  URL_MD5 70073584c620b92d7842250ce778847f
+#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/adios/src/adios/configure
+#                    CC=${MPI_C_COMPILER}
+#                    CXX=${MPI_CXX_COMPILER}
+#                    CFLAGS=${CFLAGS}
+#                    CXXLAGS=${CXXFLAGS}
+#                    --disable-fortran
+#                    --enable-research-transports
+#                    --enable-skel-timing
+#                    --with-mxml=${CMAKE_INSTALL_PREFIX}
+#                    --with-phdf5=${CMAKE_INSTALL_PREFIX}/hdf5par
+#                    --with-hdf5=${CMAKE_INSTALL_PREFIX}/hdf5ser
+#                    --with-netcdf=${CMAKE_INSTALL_PREFIX}
+#                    --with-zlib=${CMAKE_INSTALL_PREFIX}
+#                    --with-bzip2=${CMAKE_INSTALL_PREFIX}
+#                    --with-szip=${CMAKE_INSTALL_PREFIX}
+#                    --with-isobar=${CMAKE_INSTALL_PREFIX}
+#                    --with-aplod=${CMAKE_INSTALL_PREFIX}
+#                    --prefix=${CMAKE_INSTALL_PREFIX}
+#  BUILD_IN_SOURCE 1
+#  LOG_DOWNLOAD 1
+#  LOG_CONFIGURE 1
+#  LOG_BUILD 1
+#  LOG_INSTALL 1
+#)
 
 #### RNGSSELib2 ################################################################
 # http://dx.doi.org/10.1016/j.cpc.2013.04.007
@@ -562,10 +600,10 @@ ExternalProject_Add(
   rngsse2
   PREFIX rngsse2
   URL ${PROJECT_SOURCE_DIR}/rngsselib_2.tar.gz
-  URL_MD5 b78981ae65c3d801e2b878f2a38084b8
+  URL_MD5 dc0db58196dd291a362028545b55e2a9
   CMAKE_ARGS -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${UNDERLYING_C_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+             -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+             -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
              -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
@@ -584,8 +622,9 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/testu01/src/testu01/configure
                     CC=${UNDERLYING_C_COMPILER}
                     CXX=${UNDERLYING_CXX_COMPILER}
-                    F77=${UNDERLYING_FORTRAN_COMPILER}
-                    CFLAGS=-Wno-error=return-type
+                    F77=${UNDERLYING_Fortran_COMPILER}
+                    ${PGCPP}
+                    CFLAGS=${CFLAGS}
                     CPPFLAGS=${CFLAGS}
                     CXXFLAGS=${CXXFLAGS}
                     FFLAGS=${FFLAGS}
@@ -613,7 +652,7 @@ ExternalProject_Add(
 #  CONFIGURE_COMMAND ${PROJECT_SOURCE_DIR}/src/TestU01-1.2.3/configure
 #                    CC=${UNDERLYING_C_COMPILER}
 #                    CXX=${UNDERLYING_CXX_COMPILER}
-#                    F77=${UNDERLYING_FORTRAN_COMPILER}
+#                    F77=${UNDERLYING_Fortran_COMPILER}
 #                    CFLAGS=-Wno-error=return-type
 #                    CPPFLAGS=${CFLAGS}
 #                    CXXFLAGS=${CXXFLAGS}

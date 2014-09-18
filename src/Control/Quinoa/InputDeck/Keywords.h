@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 01:08:11 PM MDT
+  \date      Wed 17 Sep 2014 10:34:54 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -386,6 +386,27 @@ struct multiple_info {
   "time step."; }
 };
 using multiple = keyword< multiple_info, m,u,l,t,i,p,l,e >;
+
+// Keyword 'centering': selected PDF output file centering
+struct centering_info {
+  static const char* name() { return "PDF output file centering"; }
+  static const char* help() { return "PDF output file centering."; }
+};
+using pdf_centering = keyword< centering_info, c,e,n,t,e,r,i,n,g >;
+
+// Keyword 'elem': PDF output file centering: elem
+struct elem_info {
+  static const char* name() { return "elem"; }
+  static const char* help() { return "PDF output bins at elem centers."; }
+};
+using elem = keyword< elem_info, e,l,e,m >;
+
+// Keyword 'node': PDF output file centering: node
+struct node_info {
+  static const char* name() { return "node"; }
+  static const char* help() { return "PDF output bins at nodes."; }
+};
+using node = keyword< node_info, n,o,d,e >;
 
 // RNG block
 using rngs = keyword<undefined_info,  r,n,g,s >;

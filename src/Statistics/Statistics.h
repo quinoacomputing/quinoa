@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri 12 Sep 2014 06:42:15 AM MDT
+  \date      Tue 16 Sep 2014 07:24:28 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -14,7 +14,8 @@
 #include <Types.h>
 #include <Quinoa/InputDeck/InputDeck.h>
 #include <ParticleProperties.h>
-#include <PDF.h>
+#include <UniPDF.h>
+#include <BiPDF.h>
 
 namespace quinoa {
 
@@ -42,8 +43,11 @@ class Statistics {
     //! Central moments accessor
     const std::vector< tk::real >& ctr() const noexcept { return m_central; }
 
-    //! PDF accessor
-    const std::vector< PDF >& pdf() const noexcept { return m_pdf; }
+    //! Univariate PDF accessor
+    const std::vector< UniPDF >& updf() const noexcept { return m_updf; }
+
+    //! Bivariate PDF accessor
+    const std::vector< BiPDF >& bpdf() const noexcept { return m_bpdf; }
 
   private:
     // Get offset type out of InputDeck for computing map< depvar, offset >
@@ -102,9 +106,12 @@ class Statistics {
     std::vector< std::vector< const tk::real* > > m_center;
     int m_ncen;                                //!< Number of central moments
 
-    //! Instantaneous variable pointers for computing PDFs
-    std::vector< std::vector< const tk::real* > > m_instPDF;
-    std::vector< PDF > m_pdf;                  //!< PDFs
+    //! Instantaneous variable pointers for computing univariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instUniPDF;
+    std::vector< UniPDF > m_updf;              //!< Univariate PDFs
+    //! Instantaneous variable pointers for computing bivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instBiPDF;
+    std::vector< BiPDF > m_bpdf;               //!< Bivariate PDFs
 };
 
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 12:36:05 PM MDT
+  \date      Tue 16 Sep 2014 08:15:06 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -30,7 +30,7 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   GENDIR };
 
 //! Pack/Unpack: forward overload to generic enum class packer
-inline void operator|( PUP::er& p, DiffEqType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
 
 //! Differential equation key used access a differential equation in a factory
 using DiffEqKey =

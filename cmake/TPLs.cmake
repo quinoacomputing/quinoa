@@ -93,20 +93,20 @@ endif()
 #endif()
 
 #### Z
-set(Z_LIBRARY "NOTFOUND")
-find_library(Z_LIBRARY
-             NAMES z
-             PATHS ${TPL_DIR}/lib
-             REQUIRED
-             NO_DEFAULT_PATH)
+#set(Z_LIBRARY "NOTFOUND")
+#find_library(Z_LIBRARY
+#             NAMES z
+#             PATHS ${TPL_DIR}/lib
+#             REQUIRED
+#             NO_DEFAULT_PATH)
 
-#### Silo
-set(SILO_LIBRARY "NOTFOUND")
-find_library(SILO_LIBRARY
-             NAMES siloh5
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
+##### Silo
+#set(SILO_LIBRARY "NOTFOUND")
+#find_library(SILO_LIBRARY
+#             NAMES siloh5
+#             PATHS ${TPL_DIR}/lib
+#             NO_DEFAULT_PATH
+#             REQUIRED)
 
 #### ExodusII
 set(EXODUS_LIBRARY "NOTFOUND")

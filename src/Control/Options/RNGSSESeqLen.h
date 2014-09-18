@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 08:02:00 AM MDT
+  \date      Tue 16 Sep 2014 08:14:12 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -25,7 +25,7 @@ enum class RNGSSESeqLenType : uint8_t { SHORT,
                                         LONG };
 
 //! Pack/Unpack: delegate to tk::
-inline void operator|( PUP::er& p, RNGSSESeqLenType& e ) { tk::pup( p, e ); }
+inline void operator|( PUP::er& p, RNGSSESeqLenType& e ) { PUP::pup( p, e ); }
 
 //! Class with base templated on the above enum class with associations
 class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {

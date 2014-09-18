@@ -13,7 +13,7 @@ add_library(IO
             GmshMeshWriter.C
             NetgenMeshWriter.C
             ExodusIIMeshWriter.C
-            SiloWriter.C
+#            SiloWriter.C
 )
 
 removeWarnings( "TxtStatWriter.C;PDFWriter.C" )
