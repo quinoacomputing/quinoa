@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:59:31 PM MDT
+  \date      Sat 20 Sep 2014 07:54:16 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
@@ -96,7 +96,7 @@ FileParser::diagnostics( const tk::Print& print,
         // skip line number
         sloc = e.find_first_of( ',', sloc ) + 1;
         // extract column number of error from error message
-        const decltype(sloc) cnum = std::stoi( e.substr( sloc, eloc-sloc ) ) - 1;
+        const decltype(sloc) cnum = std::stoi( e.substr( sloc, eloc-sloc ) )-1;
         // store erroneous line information in map
         auto& l = lines[ lnum ];
         // store number of digits in line number
@@ -107,9 +107,22 @@ FileParser::diagnostics( const tk::Print& print,
         l.msg.push_back( e );
         // start constructing underline (from scratch if first error on line)
         if (l.underline.empty()) l.underline = std::string(l.parsed.size(),' ');
-        // find beginning of erroneous argument
-        sloc = l.parsed.rfind( ' ', cnum-1 );
-        // special-handle the first argument with no space in front of it
+        // find beginning of erroneous argument, this can be found in either e
+        // (the full error message which may contain the erroneous substring
+        // between single quotes and can also contain white space), or in
+        // l.parsed (the erroneouss line from the file), if we find a
+        // singly-quoted substring in e, we find the location of that substring
+        // in l.parsed, if we don't find a singly-quoted substring in e,
+        // we reverse-search l.parsed until a white space, in which case the
+        // error that will be underlined will be a single word
+        sloc = e.find( '\'' );
+        if (sloc == std::string::npos) {
+          sloc = l.parsed.rfind( ' ', cnum-1 );
+        } else {
+          auto sloc2 = e.find( '\'', sloc+1 );
+          sloc = l.parsed.find( e.substr( sloc+1, sloc2-sloc-1 ) ) - 1;
+        }
+        // special-handle the beginning of the line with no space in front of it
         if (sloc == std::string::npos) sloc = 0; else ++sloc;
         // underline error and warning differently
         for (auto i=sloc; i<cnum; ++i) l.underline[i] = underchar;
