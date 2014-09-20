@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 12:02:56 PM MDT
+  \date      Fri 19 Sep 2014 05:12:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -336,15 +336,15 @@ namespace deck {
   struct parse_pdf :
          tk::grm::readkw<
            pegtl::ifmust<
-             pdf_name,
+             pegtl::seq< pdf_name, pegtl::at< pegtl::one<'('> > >,
              pegtl::sor< pegtl::one<'('>,
                          pegtl::apply<
                            tk::grm::error< Stack,
                                            tk::grm::MsgKey::KEYWORD > > >,
              pegtl::sor< pegtl::seq< sample_space, binsizes >,
-             pegtl::apply<
-               tk::grm::error< Stack,
-                               tk::grm::MsgKey::INVALIDSAMPLESPACE > > > > > {};
+                         pegtl::apply<
+                           tk::grm::error< Stack,
+                           tk::grm::MsgKey::INVALIDSAMPLESPACE > > > > > {};
 
   //! control parameter
   template< typename keyword, class kw_type, typename... tags >

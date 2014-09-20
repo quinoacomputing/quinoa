@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 04:19:40 PM MDT
+  \date      Thu 18 Sep 2014 07:17:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -22,6 +22,9 @@ PDFWriter::writeTxt( const UniPDF& pdf ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Output header
+  m_outFile << "# Univariate PDF. Columns: x, probability\n#" << std::endl;
+
   const auto binsize = pdf.binsize();
   const auto sp = binsize * pdf.nsample();
   for (const auto& p : pdf.map())
@@ -36,9 +39,6 @@ PDFWriter::writeTxt( const BiPDF& pdf ) const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const auto binsize = pdf.binsize();
-  const auto sp = binsize[0] * binsize[1] * pdf.nsample();
-
   // Output header
   m_outFile << "# Joint bivariate PDF. Columns: x, y, probability\n#\n"
             << "# Example visualization with gnuplot:\n#\n"
@@ -46,6 +46,9 @@ PDFWriter::writeTxt( const BiPDF& pdf ) const
             << "# gnuplot> set cntrparam levels 20\n"
             << "# gnuplot> set contour\n"
             << "# gnuplot> splot <filename.txt> with lines\n#" << std::endl;
+
+  const auto binsize = pdf.binsize();
+  const auto sp = binsize[0] * binsize[1] * pdf.nsample();
 
   // Output data
   for (const auto& p : pdf.map())
