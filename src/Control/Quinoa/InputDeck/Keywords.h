@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed 17 Sep 2014 10:34:54 AM MDT
+  \date      Fri 26 Sep 2014 10:32:52 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -375,7 +375,8 @@ using pdf_policy = keyword< policy_info, p,o,l,i,c,y >;
 // Keyword 'overwrite': PDF output file policy: overwrite
 struct overwrite_info {
   static const char* name() { return "overwrite"; }
-  static const char* help() { return "PDF output overwrites the same file."; }
+  static const char* help() { return "PDF output overwrites the same file "
+  "containing a single time step."; }
 };
 using overwrite = keyword< overwrite_info, o,v,e,r,w,r,i,t,e >;
 
@@ -386,6 +387,15 @@ struct multiple_info {
   "time step."; }
 };
 using multiple = keyword< multiple_info, m,u,l,t,i,p,l,e >;
+
+// Keyword 'evolution': PDF output file policy: evolution
+struct evolution_info {
+  static const char* name() { return "evolution"; }
+  static const char* help() { return "PDF output appends new time step to the "
+  "same file for each yielding a time evolution of data."; }
+};
+
+using evolution = keyword< evolution_info, e,v,o,l,u,t,i,o,n >;
 
 // Keyword 'centering': selected PDF output file centering
 struct centering_info {

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 11:59:10 AM MDT
+  \date      Mon 22 Sep 2014 03:51:07 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -183,7 +183,8 @@ static
 std::ostream& pdf( std::ostream& os,
                    const std::vector< Term >& var,
                    const std::vector< tk::real >& bin,
-                   const std::string& name )
+                   const std::string& name,
+                   const std::vector< tk::real >& ext )
 {
   Assert( !var.empty(), "var is empty in sample_space()" );
   Assert( !bin.empty(), "bin is empty in sample_space()" );
@@ -192,10 +193,19 @@ std::ostream& pdf( std::ostream& os,
 
   os << name << '(';
   std::size_t i;
+  // sample space variables
   for (i=0; i<var.size()-1; ++i) os << var[i] << ',';
-  os << var[i] << ":";
+  os << var[i] << ':';
+  // sample space bin sizes
   for (i=0; i<bin.size()-1; ++i) os << bin[i] << ',';
-  os << bin[i] << ") ";
+  os << bin[i];
+  // sample space extents
+  if (!ext.empty()) {
+    os << ';';
+    for (i=0; i<ext.size()-1; ++i) os << ext[i] << ',';
+    os << ext[i];
+  }
+  os << ") ";
   return os;
 }
 
@@ -251,11 +261,12 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::npar,           uint64_t,  //!< Total number of particles
-  tag::nstep,          uint64_t,  //!< Number of time steps to take
-  tag::term,           tk::real,  //!< Time to terminate time stepping
-  tag::dt,             tk::real,  //!< Size of time step
-  tag::binsize,        std::vector< std::vector< tk::real > > //!< PDF binsizes
+  tag::npar,    uint64_t,  //!< Total number of particles
+  tag::nstep,   uint64_t,  //!< Number of time steps to take
+  tag::term,    tk::real,  //!< Time to terminate time stepping
+  tag::dt,      tk::real,  //!< Size of time step
+  tag::binsize, std::vector< std::vector< tk::real > >, //!< PDF binsizes
+  tag::extent,  std::vector< std::vector< tk::real > >  //!< PDF extents
 >;
 
 //! Output intervals storage

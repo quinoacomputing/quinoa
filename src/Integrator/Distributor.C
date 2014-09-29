@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 12:03:07 PM MDT
+  \date      Fri 26 Sep 2014 10:45:22 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -330,10 +330,12 @@ Distributor::outUniPDF()
   std::size_t i = 0;
   for (const auto& p : m_updf) {
 
+    // Get PDF metadata
+    const auto pdf = g_inputdeck.pdf< 1 >( i++ );
+
     // Construct PDF file name: base name + '_' + pdf name
     std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' +
-      g_inputdeck.pdfname< 1 >( i++ );
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdf.name;
 
     // Augment PDF filename by time stamp if PDF output file policy is multiple
     if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -347,7 +349,7 @@ Distributor::outUniPDF()
     PDFWriter pdfw( filename );
 
     // Output PDF
-    pdfw.writeTxt( p );
+    pdfw.writeTxt( p, pdf.exts );
   }
 }
 
@@ -361,10 +363,12 @@ Distributor::outBiPDF()
   std::size_t i = 0;
   for (const auto& p : m_bpdf) {
 
+    // Get PDF metadata
+    const auto pdf = g_inputdeck.pdf< 2 >( i++ );
+
     // Construct PDF file name: base name + '_' + pdf name
-    std::string pdfname = g_inputdeck.pdfname< 2 >( i++ );
     std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdfname;
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdf.name;
 
     // Augment PDF filename by time stamp if PDF output file policy is multiple
     if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -384,10 +388,12 @@ Distributor::outBiPDF()
     // Output PDF
     if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
         ctr::PDFFileType::TXT)
-      pdfw.writeTxt( p );
+      pdfw.writeTxt( p, pdf.exts );
     else
-      pdfw.writeGmsh( p, pdfname,
-                      g_inputdeck.get< tag::selected, tag::pdfctr >() );
+      pdfw.writeGmsh( p,
+                      pdf.name,
+                      g_inputdeck.get< tag::selected, tag::pdfctr >(),
+                      pdf.exts );
   }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 17 Sep 2014 10:21:24 AM MDT
+  \date      Sat 27 Sep 2014 09:58:49 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -37,17 +37,6 @@ class InputDeck :
   public:
     //! Constructor: set all defaults
     InputDeck() {
-      // Default title
-      set< tag::title >( "" );
-      // Default selections
-      set< tag::selected, tag::montecarlo >( MonteCarloType::NO_MONTECARLO );
-      set< tag::selected, tag::position >( PositionType::NO_POSITION );
-      set< tag::selected, tag::mass >( MassType::NO_MASS );
-      set< tag::selected, tag::hydro >( HydroType::NO_HYDRO );
-      set< tag::selected, tag::energy >( EnergyType::NO_ENERGY );
-      set< tag::selected, tag::mix >( MixType::NO_MIX );
-      set< tag::selected, tag::frequency >( FrequencyType::NO_FREQUENCY );
-      set< tag::selected, tag::mixrate >( MixRateType::NO_MIXRATE );
       // Default discretization parameters
       set< tag::discr, tag::npar >( 1 );
       set< tag::discr, tag::nstep >( std::numeric_limits< uint64_t >::max() );
@@ -111,12 +100,19 @@ class InputDeck :
       return n;
     }
 
-    //! Find PDF name for PDF given the sample space dimension and its index
+    // PDF information
+    struct PDFInfo {
+      const std::string& name;                  //!< identifier
+      const std::vector< tk::real >& exts;      //!< extents
+    };
+
+    //! Find PDF information given the sample space dimension and its index
     //! \param[in]  idx  Index of the PDF with given sample space dimension
     template< std::size_t d >
-    const std::string& pdfname( long int idx ) const {
+    PDFInfo pdf( long int idx ) const {
       const auto& binsizes = get< tag::discr, tag::binsize >();
       const auto& names = get< tag::cmd, tag::io, tag::pdfnames >();
+      const auto& exts = get< tag::discr, tag::extent >();
       Assert( binsizes.size() == names.size(),
               "Number of binsizes vector and the number of PDF names must "
               "equal in InputDeck::pdfname()." );
@@ -124,7 +120,7 @@ class InputDeck :
       long int i = 0;
       for (const auto& bs : binsizes) {
         if (bs.size() == d) ++n;
-        if (n == idx) return names[i];
+        if (n == idx) return { names[i], exts[i] };
         ++i;
       }
       Throw( "Cannot find PDF name." );

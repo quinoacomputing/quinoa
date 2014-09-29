@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 04:54:55 PM MDT
+  \date      Mon 22 Sep 2014 01:37:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -48,10 +48,13 @@ namespace grm {
                                 INVALIDSAMPLESPACE,
                                 MALFORMEDSAMPLE,
                                 INVALIDBINSIZE,
+                                INVALIDEXTENT,
+                                EXTENTLOWER,
                                 NOBINS,
                                 ZEROBINSIZE,
                                 MAXSAMPLES,
                                 MAXBINSIZES,
+                                MAXEXTENTS,
                                 BINSIZES,
                                 PDF,
                                 PDFEXISTS,
@@ -82,24 +85,34 @@ namespace grm {
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
       "non-empty list of sample space variables, must be followed by a "
-      "semi-colon, followed by a non-empty list of bin sizes (reals numbers), "
-      "e.g., \"(x y : 0.1 0.2)\"" },
+      "colon, followed by a non-empty list of bin sizes (reals numbers), e.g., "
+      "\"(x y : 0.1 0.2)\"" },
     { MsgKey::MALFORMEDSAMPLE, "A PDF sample space variable must be a single "
       "upper or lowercase letter optionally followed by a single digit. "
       "Multiple variables, specifying a multi-dimensional sample space, must "
       "be separated by white spaces." },
     { MsgKey::INVALIDBINSIZE, "PDF sample space bin size(s) specification "
       "incorrect. A non-empty list of sample space variables, must be followed "
-      "by a semi-colon, followed by a non-empty list of bin sizes (real "
-      "numbers), e.g., \"(x y : 0.1 0.2)\"" },
+      "by a colon, followed by a non-empty list of bin sizes (real numbers), "
+      "e.g., \"(x y : 0.1 0.2)\"" },
+    { MsgKey::INVALIDEXTENT, "PDF sample space extents specification "
+      "incorrect. The semi-colon following the list of bin sizes, must be "
+      "followed by a non-empty list of extents (real numbers), e.g., \"(x y : "
+      "0.1 0.2 ; 0.0 1.0 0.2 0.9)\". The number of real numbers representing "
+      "the sample space extents must be exactly twice the number of sample "
+      "space dimensions, i.e., in this 2D example 4 (2 pairs)." },
+    { MsgKey::EXTENTLOWER, "PDF sample space extents must be a pair of a "
+      "smaller and a larger numerical value, in that order." },
     { MsgKey::NOBINS, "Need at least one sample space bin size, followed by a "
-      "semi-colon, in a PDF specification." },
+      "colon, in a PDF specification." },
     { MsgKey::ZEROBINSIZE, "Sample space bin size must be a real number and "
       "greater than zero." },
     { MsgKey::MAXSAMPLES, "The maximum number of sample space variables for a "
       "joint PDF is 3." },
     { MsgKey::MAXBINSIZES, "The maximum number of bins sizes for a joint PDF "
       "is 3."},
+    { MsgKey::MAXEXTENTS, "The maximum number of optional sample space extents "
+      "for a joint PDF is 3 pairs."},
     { MsgKey::BINSIZES, "The number of sample space variables for a PDF must "
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
@@ -260,7 +273,7 @@ namespace grm {
 
   // Common grammar
 
-  //! read 'token' until 'erased' trimming 'erased'
+  //! read 'token' until 'erased' trimming, i.e., not consuming, 'erased'
   template< class token, class erased >
   struct trim :
          pegtl::seq< token, pegtl::until< pegtl::at< erased > > > {};

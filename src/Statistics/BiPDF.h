@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 10:56:49 PM MDT
+  \date      Sat 27 Sep 2014 09:42:02 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator
@@ -23,8 +23,12 @@ namespace quinoa {
 //! Joint bivariate PDF estimator
 class BiPDF {
 
+  public:
     //! Key type
     using key_type = std::array< long, 2 >;
+
+    //! Pair type
+    using pair_type = std::pair< const key_type, tk::real >;
 
     // Hash function for key_type
     struct key_hash {
@@ -33,20 +37,16 @@ class BiPDF {
       }
     };
 
-    //! Pair type
-    using pair_type = std::pair< const key_type, tk::real >;
-
     //! Joint bivariate PDF is an unordered_map: key: two bin ids corresponding
     //! to the two sample space dimensions, mapped value: sample counter,
     //! hasher: XORed hash of the two bin ids
     using map_type = std::unordered_map< key_type, tk::real, key_hash >;
 
-  public:
     //! Empty constructor for Charm++
     explicit BiPDF() : m_binsize( {{ 0, 0 }} ), m_nsample( 0 ) {}
 
     //! Constructor: Initialize joint bivariate PDF container
-    //! \param[in]   binsize    Sample space bin size
+    //! \param[in]  bs  Sample space bin size in both directions
     explicit BiPDF( const std::vector< tk::real >& bs ) :
       m_binsize( {{ bs[0], bs[1] }} ),
       m_nsample( 0 ) {}
@@ -84,7 +84,7 @@ class BiPDF {
     { return m_binsize; }
 
     //! Return minimum and maximum bin ids of sample space in both dimensions
-    //! \return  {minx,miny}{maxx,maxy}  Minima and maxima of the bin ids
+    //! \return  {xmin,xmax}{ymin,ymax}  Minima and maxima of the bin ids
     std::pair< key_type, key_type > extents() const {
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
@@ -92,8 +92,8 @@ class BiPDF {
       auto y = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
                  { return a.first[1] < b.first[1]; } );
-      return { {{ x.first->first[0], y.first->first[1] }},
-               {{ x.second->first[0], y.second->first[1] }} };
+      return { {{ x.first->first[0], x.second->first[0] }},
+               {{ y.first->first[1], y.second->first[1] }} };
     }
 
     //! Pack/Unpack

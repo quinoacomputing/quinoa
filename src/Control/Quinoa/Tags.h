@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 11:59:19 AM MDT
+  \date      Sun 21 Sep 2014 11:00:05 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -74,6 +74,7 @@ struct io {};
 struct cmd {};
 struct param {};
 struct binsize {};
+struct extent {};
 struct pdffiletype {};
 struct pdfpolicy {};
 struct pdfctr {};

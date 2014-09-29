@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 10:50:52 PM MDT
+  \date      Sat 27 Sep 2014 09:54:54 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -12,6 +12,7 @@
 #define UniPDF_h
 
 #include <unordered_map>
+#include <algorithm>
 
 #include <Types.h>
 #include <PUPUtil.h>
@@ -21,6 +22,7 @@ namespace quinoa {
 //! Univariate PDF estimator
 class UniPDF {
 
+  public:
     //! Key type
     using key_type = long;
 
@@ -30,7 +32,6 @@ class UniPDF {
     //! Univariate PDF is an unordered_map: key: bin id, value: sample counter
     using map_type = std::unordered_map< key_type, tk::real >;
 
-  public:
     //! Empty constructor for Charm++
     explicit UniPDF() : m_binsize( 0 ), m_nsample( 0 ) {}
 
@@ -68,6 +69,15 @@ class UniPDF {
     //! Constant accessor to bin size
     //! \return Sample space bin size
     tk::real binsize() const noexcept { return m_binsize; }
+
+    //! Return minimum and maximum bin ids of sample space
+    //! \return  {min,max}  Minimum and maximum of the bin ids
+    std::pair< key_type, key_type > extents() const {
+      auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
+                 []( const pair_type& a, const pair_type& b )
+                 { return a.first < b.first; } );
+      return { { x.first->first }, { x.second->first } };
+    }
 
     //! Pack/Unpack
     void pup( PUP::er& p ) {
