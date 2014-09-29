@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 19 Sep 2014 05:12:05 PM MDT
+  \date      Mon 22 Sep 2014 07:18:30 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -54,20 +54,29 @@ namespace deck {
   //! inserting variables into the set as well as at matching terms of products
   //! in parsing requested statistics.
   static std::set< char, ctr::CaseInsensitiveCharLess > depvars;
-
   //! Parser-lifetime storage for PDF names. Used to track the names registere
   //! so that parsing new ones can be required to be unique.
   static std::set< std::string > pdfnames;
 
   // Quinoa's InputDeck actions
 
-  //! start new vector in vector of components
+  //! start new vector in vector
   template< class tag, class... tags >
   struct start_vector : pegtl::action_base< start_vector< tag, tags... > > {
     static void apply(const std::string&, Stack& stack) {
-      stack.push_back< tag, tags... >();  // no arg: used default ctor
+      stack.push_back< tag, tags... >();  // no arg: use default ctor
     }
   };
+
+//   //! insert new key in map
+//   template< class Tag, class... Tags >
+//   struct insert_pdfkey : pegtl::action_base< insert_pdfkey< Tag, Tags... > > {
+//     static void apply(const std::string&, Stack& stack) {
+//       // use PDF name put in last as key, no value: use default ctor
+//       stack.insert< Tag, Tags... >(
+//         stack.get< tag::cmd, tag::io, tag::pdfnames >().back() );
+//     }
+//   };
 
   //! add matched value as Term into vector of vector of statistics
   template< ctr::Moment m, char var = '\0' >
@@ -129,9 +138,9 @@ namespace deck {
   struct push_binsize : pegtl::action_base< push_binsize > {
     static void apply( const std::string& value, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
-      auto& bins = stack.get< tag::discr, tag::binsize >();
+      auto& bins = stack.get< tag::discr, tag::binsize >().back();
       // Error out if binsize vector already has at least 3 dimensions
-      if ( bins.back().size() >= 3 ) {
+      if ( bins.size() >= 3 ) {
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::MAXBINSIZES >
                         ( stack, value );
       }
@@ -141,7 +150,27 @@ namespace deck {
         tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::ZEROBINSIZE >
                         ( stack, value );
       else
-        bins.back().emplace_back( binsize );
+        bins.emplace_back( binsize );
+    }
+  };
+
+  //! push matched value into vector of PDF extents
+  struct push_extents : pegtl::action_base< push_extents > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Use a shorthand of reference to vector to push_back to
+      auto& vec = stack.get< tag::discr, tag::extent >().back();
+      // Error out if extents vector already has at least 3 pairs
+      if (vec.size() >= 6)
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::MAXEXTENTS >
+                        ( stack, value );
+      // Error out if extents vector already has the enough pairs to match the
+      // number of sample space dimensions
+      if (vec.size() >=
+          stack.get< tag::discr, tag::binsize >().back().size() * 2)
+        tk::grm::Message<Stack, tk::grm::ERROR, tk::grm::MsgKey::INVALIDEXTENT>
+                        (stack, value);
+      // Push extent into vector
+      vec.emplace_back( stack.convert< tk::real >( value ) );
     }
   };
 
@@ -161,6 +190,29 @@ namespace deck {
           stack.get< tag::discr, tag::binsize >().back().size())
           tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::BINSIZES >
                           ( stack, value );
+    }
+  };
+
+  //! check if the number of extents equal 2 * the PDF sample space variables
+  struct check_extents : pegtl::action_base< check_extents > {
+    static void apply( const std::string& value, Stack& stack ) {
+      // Use a shorthand to extents vector
+      const auto& e = stack.get< tag::discr, tag::extent >().back();
+      // Check if the number of extents are correct
+      if (!e.empty() &&
+          e.size() != stack.get< tag::discr, tag::binsize >().back().size()*2)
+        tk::grm::Message<Stack, tk::grm::ERROR, tk::grm::MsgKey::INVALIDEXTENT>
+                         (stack, value);
+      // Check if the lower extents are indeed lower than the higher extents
+      if (e.size() > 1 && e[0] > e[1])
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::EXTENTLOWER >
+                        ( stack, value );
+      if (e.size() > 3 && e[2] > e[3])
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::EXTENTLOWER >
+                        ( stack, value );
+      if (e.size() > 5 && e[4] > e[5])
+        tk::grm::Message< Stack, tk::grm::ERROR, tk::grm::MsgKey::EXTENTLOWER >
+                        ( stack, value );
     }
   };
 
@@ -316,12 +368,26 @@ namespace deck {
            pegtl::until< pegtl::one<':'>, samples >,
            pegtl::apply< check_samples > > {};
 
-  //! list of binsizes with error checking
-  struct binsizes :
+  //! extents: optional user-specified extents of PDF sample space
+  struct extents :
+         pegtl::sor< tk::grm::scan_until< tk::grm::number,
+                                          push_extents,
+                                          pegtl::one<')'> >,
+                     pegtl::ifapply<
+                       pegtl::until< pegtl::at< pegtl::one<')'> >, pegtl::any >,
+                       tk::grm::error< Stack,
+                                       tk::grm::MsgKey::INVALIDEXTENT > > > {};
+
+  //! binsizes followed by optional extents with error checking
+  struct bins_exts :
          pegtl::seq<
-           pegtl::apply< start_vector< tag::discr, tag::binsize > >,
-           pegtl::until< pegtl::one<')'>, bins >,
-           pegtl::apply< check_binsizes > > {};
+           pegtl::apply< start_vector< tag::discr, tag::binsize >,
+                         start_vector< tag::discr, tag::extent > >,
+           pegtl::until< pegtl::sor< pegtl::one<';'>,
+                                     pegtl::at< pegtl::one<')'> > >, bins >,
+           pegtl::until< pegtl::one<')'>, extents >,
+           pegtl::apply< check_binsizes >,
+           pegtl::apply< check_extents > > {};
 
   //! PDF name: a C-language identifier (alphas, digits and underscores, no
   //! leading digit), matched to already selected pdf name requiring unique
@@ -341,7 +407,7 @@ namespace deck {
                          pegtl::apply<
                            tk::grm::error< Stack,
                                            tk::grm::MsgKey::KEYWORD > > >,
-             pegtl::sor< pegtl::seq< sample_space, binsizes >,
+             pegtl::sor< pegtl::seq< sample_space, bins_exts >,
                          pegtl::apply<
                            tk::grm::error< Stack,
                            tk::grm::MsgKey::INVALIDSAMPLESPACE > > > > > {};

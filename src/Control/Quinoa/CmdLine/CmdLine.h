@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:37:17 PM MDT
+  \date      Sat 27 Sep 2014 10:00:07 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's command line
   \details   Quinoa's command line
@@ -33,10 +33,10 @@ class CmdLine : public tk::Control<
     CmdLine() {
       set< tag::io, tag::output >( "out" );
       set< tag::io, tag::pdf >( "pdf" );
-      set< tag::io, tag::glob >( "glob" );
-      set< tag::io, tag::stat >( "stat" );
+      set< tag::io, tag::glob >( "glob.txt" );
+      set< tag::io, tag::stat >( "stat.txt" );
       set< tag::virtualization >( 0.0 );
-      set< tk::tag::verbose >( false ); // Use quiet output by default
+      set< tk::tag::verbose >( false ); // Quiet output by default
     }
 
     //! Pack/Unpack

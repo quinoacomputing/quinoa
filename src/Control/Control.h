@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Wed 17 Sep 2014 09:45:01 PM MDT
+  \date      Fri 26 Sep 2014 01:22:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Control base
   \details   Control base
@@ -220,6 +220,54 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subsubtag>
                               ::value_type::value_type>( value ) );
     }
+
+//     //! Insert key and value to map at slot
+//     //! TODO: Replace the overloads below with a variadic one
+//     //! Insert key and value to map at tag at 1st level
+//     template< typename tag >
+//     void insert( const typename Tuple::template nT<tag>
+//                                      ::key_type& key,
+//                  const typename Tuple::template nT<tag>
+//                                      ::mapped_type& value =
+//                        typename Tuple::template nT<tag>
+//                                      ::mapped_type() )
+//     {
+//       Tuple::template get<tag>()[ key ] = value;
+//     }
+//     //! Insert key and value to map at tag at 2nd level
+//     template< typename tag, typename subtag >
+//     void insert( const typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::key_type& key,
+//                  const typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::mapped_type& value =
+//                        typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::mapped_type() )
+//     {
+//       Tuple::template get<tag>().
+//              template get<subtag>()[ key ] = value;
+//     }
+//     //! Insert key and value to map at tag at 3rd level
+//     template< typename tag, typename subtag, typename subsubtag >
+//     void insert( const typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::template nT<subsubtag>
+//                                      ::key_type& key,
+//                  const typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::template nT<subsubtag>
+//                                      ::mapped_type& value =
+//                        typename Tuple::template nT<tag>
+//                                      ::template nT<subtag>
+//                                      ::template nT<subsubtag>
+//                                      ::mapped_type() )
+//     {
+//       Tuple::template get<tag>().
+//              template get<subtag>().
+//              template get<subsubtag>()[ key ] = value;
+//     }
 
     //! Convert and insert value to field of map at slot
     //! TODO: Replace the overloads below with a variadic one
