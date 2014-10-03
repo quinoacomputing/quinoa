@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 18 Sep 2014 04:34:35 PM MDT
+  \date      Tue 30 Sep 2014 02:16:38 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -120,6 +120,9 @@ Statistics::setupPDF( const OffsetMap& offset )
     } else if (bs.size() == 2) {
       m_bpdf.emplace_back( bs );
       m_instBiPDF.emplace_back( std::vector< const tk::real* >() );
+    } else if (bs.size() == 3) {
+      m_tpdf.emplace_back( bs );
+      m_instTriPDF.emplace_back( std::vector< const tk::real* >() );
     }
 
     // Store starting addresses of instantaneous variables
@@ -132,6 +135,9 @@ Statistics::setupPDF( const OffsetMap& offset )
             m_particles.cptr( term.field, o->second ) );
         } else if (bs.size() == 2) {
           m_instBiPDF.back().push_back(
+            m_particles.cptr( term.field, o->second ) );
+        } else if (bs.size() == 3) {
+          m_instTriPDF.back().push_back(
             m_particles.cptr( term.field, o->second ) );
         }
       }
@@ -223,10 +229,11 @@ Statistics::accumulatePDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (!m_updf.empty() || !m_bpdf.empty()) {
+  if (!m_updf.empty() || !m_bpdf.empty() || !m_tpdf.empty()) {
     // Zero PDF accumulators
     for (auto& pdf : m_updf) pdf.zero();
     for (auto& pdf : m_bpdf) pdf.zero();
+    for (auto& pdf : m_tpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
     const auto npar = m_particles.npar();
@@ -242,6 +249,14 @@ Statistics::accumulatePDF()
         const auto inst = m_instBiPDF[i++];
         pdf.add( {{ m_particles.cvar( inst[0], p ),
                     m_particles.cvar( inst[1], p ) }} );
+      }
+      // Accumulate partial sum for trivariate PDFs
+      i = 0;
+      for (auto& pdf : m_tpdf) {
+        const auto inst = m_instTriPDF[i++];
+        pdf.add( {{ m_particles.cvar( inst[0], p ),
+                    m_particles.cvar( inst[1], p ),
+                    m_particles.cvar( inst[2], p ) }} );
       }
     }
   }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Mon 22 Sep 2014 03:51:07 PM MDT
+  \date      Thu 02 Oct 2014 09:42:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -29,6 +29,7 @@
 #include <Quinoa/Options/PDFFile.h>
 #include <Quinoa/Options/PDFPolicy.h>
 #include <Quinoa/Options/PDFCentering.h>
+#include <Quinoa/Options/TxtFloatFormat.h>
 #include <Options/RNG.h>
 #include <PUPUtil.h>
 
@@ -244,29 +245,31 @@ using Probability = std::vector< Term >;
 
 //! Storage of selected options
 using selects = tk::tuple::tagged_tuple<
-  tag::montecarlo, ctr::MonteCarloType, //!< Selected physics
-  tag::position,   ctr::PositionType,   //!< Selected position model
-  tag::mass,       ctr::MassType,       //!< Selected mass model
-  tag::hydro,      ctr::HydroType,      //!< Selected hydrodynamics model
-  tag::energy,     ctr::EnergyType,     //!< Selected internal energy model
-  tag::mix,        ctr::MixType,        //!< Selected material mix model
-  tag::frequency,  ctr::FrequencyType,  //!< Selected turbulence frequency model
-  tag::mixrate,    ctr::MixRateType,    //!< Selected material mix rate model
-  tag::diffeq,     std::vector< ctr::DiffEqType >,  //!< Selected diff eqs
-  tk::tag::rng,    std::vector< tk::ctr::RNGType >, //!< Selected RNGs
-  tag::pdffiletype,ctr::PDFFileType,    //!< PDF output file type
-  tag::pdfpolicy,  ctr::PDFPolicyType,  //!< PDF output file policy
-  tag::pdfctr,     ctr::PDFCenteringType//!< PDF output file centering
+  tag::montecarlo,   ctr::MonteCarloType,   //!< Physics
+  tag::position,     ctr::PositionType,     //!< Position model
+  tag::mass,         ctr::MassType,         //!< Mass model
+  tag::hydro,        ctr::HydroType,        //!< Hydrodynamics model
+  tag::energy,       ctr::EnergyType,       //!< Internal energy model
+  tag::mix,          ctr::MixType,          //!< Material mix model
+  tag::frequency,    ctr::FrequencyType,    //!< Turbulence frequency model
+  tag::mixrate,      ctr::MixRateType,      //!< Material mix rate model
+  tag::diffeq,       std::vector< ctr::DiffEqType >,  //!< Differential eqs
+  tk::tag::rng,      std::vector< tk::ctr::RNGType >, //!< RNGs
+  tag::pdffiletype,  ctr::PDFFileType,      //!< PDF output file type
+  tag::pdfpolicy,    ctr::PDFPolicyType,    //!< PDF output file policy
+  tag::pdfctr,       ctr::PDFCenteringType, //!< PDF output file centering
+  tag::float_format, ctr::TxtFloatFormatType//!< Text floating-point format
 >;
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::npar,    uint64_t,  //!< Total number of particles
-  tag::nstep,   uint64_t,  //!< Number of time steps to take
-  tag::term,    tk::real,  //!< Time to terminate time stepping
-  tag::dt,      tk::real,  //!< Size of time step
-  tag::binsize, std::vector< std::vector< tk::real > >, //!< PDF binsizes
-  tag::extent,  std::vector< std::vector< tk::real > >  //!< PDF extents
+  tag::npar,      uint64_t,  //!< Total number of particles
+  tag::nstep,     uint64_t,  //!< Number of time steps to take
+  tag::term,      tk::real,  //!< Time to terminate time stepping
+  tag::dt,        tk::real,  //!< Size of time step
+  tag::binsize,   std::vector< std::vector< tk::real > >, //!< PDF binsizes
+  tag::extent,    std::vector< std::vector< tk::real > >, //!< PDF extents
+  tag::precision, std::streamsize  //!< Precision in digits
 >;
 
 //! Output intervals storage

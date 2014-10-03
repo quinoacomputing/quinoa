@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Statistics/BiPDF.h
+  \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 12:25:47 PM MDT
+  \date      Thu 02 Oct 2014 12:26:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
-  \brief     Joint bivariate PDF estimator
-  \details   Joint bivariate PDF estimator
+  \brief     Joint trivariate PDF estimator
+  \details   Joint trivariate PDF estimator
 */
 //******************************************************************************
-#ifndef BiPDF_h
-#define BiPDF_h
+#ifndef TriPDF_h
+#define TriPDF_h
 
 #include <array>
 #include <unordered_map>
@@ -20,12 +20,12 @@
 
 namespace quinoa {
 
-//! Joint bivariate PDF estimator
-class BiPDF {
+//! Joint trivariate PDF estimator
+class TriPDF {
 
   public:
     //! Number of sample space dimensions
-    static const std::size_t dim = 2;
+    static const std::size_t dim = 3;
 
     //! Key type
     using key_type = std::array< long, dim >;
@@ -36,39 +36,42 @@ class BiPDF {
     // Hash function for key_type
     struct key_hash {
       long operator()( const key_type& key ) const {
-        return std::hash< long >()( key[0] ) ^ std::hash< long >()( key[1] );
+        return std::hash< long >()( key[0] ) ^
+               std::hash< long >()( key[1] ) ^
+               std::hash< long >()( key[2] );
       }
     };
 
-    //! Joint bivariate PDF is an unordered_map: key: two bin ids corresponding
-    //! to the two sample space dimensions, mapped value: sample counter,
-    //! hasher: XORed hash of the two bin ids
+    //! Joint trivariate PDF is an unordered_map: key: three bin ids
+    //! corresponding to the three sample space dimensions, mapped value: sample
+    //! counter, hasher: XORed hash of the three bin ids
     using map_type = std::unordered_map< key_type, tk::real, key_hash >;
 
     //! Empty constructor for Charm++
-    explicit BiPDF() : m_binsize( {{ 0, 0 }} ), m_nsample( 0 ) {}
+    explicit TriPDF() : m_binsize( {{ 0, 0, 0 }} ), m_nsample( 0 ) {}
 
-    //! Constructor: Initialize joint bivariate PDF container
-    //! \param[in]  bs  Sample space bin size in both directions
-    explicit BiPDF( const std::vector< tk::real >& bs ) :
-      m_binsize( {{ bs[0], bs[1] }} ),
+    //! Constructor: Initialize joint trivariate PDF container
+    //! \param[in]  bs  Sample space bin size in all three directions
+    explicit TriPDF( const std::vector< tk::real >& bs ) :
+      m_binsize( {{ bs[0], bs[1], bs[2] }} ),
       m_nsample( 0 ) {}
 
     //! Accessor to number of samples
     //! \return Number of samples collected
     std::size_t nsample() const noexcept { return m_nsample; }
 
-    //! Add sample to bivariate PDF
+    //! Add sample to trivariate PDF
     //! \param[in]  sample  Sample to add
     void add( std::array< tk::real, dim > sample ) {
       ++m_nsample;
       ++m_pdf[ {{ std::lround( sample[0] / m_binsize[0] ),
-                  std::lround( sample[1] / m_binsize[1] ) }} ];
+                  std::lround( sample[1] / m_binsize[1] ),
+                  std::lround( sample[2] / m_binsize[2] ) }} ];
     }
 
     //! Add multiple samples from a PDF
     //! \param[in]  p  PDF whose samples to add
-    void addPDF( const BiPDF& p ) {
+    void addPDF( const TriPDF& p ) {
       m_binsize = p.binsize();
       m_nsample += p.nsample();
       for (const auto& e : p.map()) m_pdf[ e.first ] += e.second;
@@ -86,8 +89,9 @@ class BiPDF {
     const std::array< tk::real, dim >& binsize() const noexcept
     { return m_binsize; }
 
-    //! Return minimum and maximum bin ids of sample space in both dimensions
-    //! \return  {xmin,xmax,ymin,ymax}  Minima and maxima of the bin ids
+    //! Return minimum and maximum bin ids of sample space in all three
+    //! dimensions
+    //! \return  {xmin,xmax,ymin,ymax,zmin,zmax}  Minima and maxima of bin ids
     std::array< long, 2*dim > extents() const {
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
@@ -95,8 +99,12 @@ class BiPDF {
       auto y = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
                  { return a.first[1] < b.first[1]; } );
+      auto z = std::minmax_element( begin(m_pdf), end(m_pdf),
+                 []( const pair_type& a, const pair_type& b )
+                 { return a.first[2] < b.first[2]; } );
       return {{ x.first->first[0], x.second->first[0],
-                y.first->first[1], y.second->first[1] }};
+                y.first->first[1], y.second->first[1],
+                z.first->first[2], z.second->first[2] }};
     }
 
     //! Pack/Unpack
@@ -107,11 +115,11 @@ class BiPDF {
     }
 
   private:
-    std::array< tk::real, dim > m_binsize;  //!< Sample space bin sizes
-    std::size_t m_nsample;                  //!< Number of samples collected
-    map_type m_pdf;                         //!< Probability density function
+    std::array< tk::real, dim > m_binsize;   //!< Sample space bin sizes
+    std::size_t m_nsample;                   //!< Number of samples collected
+    map_type m_pdf;                          //!< Probability density function
 };
 
 } // quinoa::
 
-#endif // BiPDF_h
+#endif // TriPDF_h

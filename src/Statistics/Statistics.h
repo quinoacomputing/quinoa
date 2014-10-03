@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 07:24:28 AM MDT
+  \date      Tue 30 Sep 2014 01:26:37 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -16,6 +16,7 @@
 #include <ParticleProperties.h>
 #include <UniPDF.h>
 #include <BiPDF.h>
+#include <TriPDF.h>
 
 namespace quinoa {
 
@@ -48,6 +49,9 @@ class Statistics {
 
     //! Bivariate PDF accessor
     const std::vector< BiPDF >& bpdf() const noexcept { return m_bpdf; }
+
+    //! Trivariate PDF accessor
+    const std::vector< TriPDF >& tpdf() const noexcept { return m_tpdf; }
 
   private:
     // Get offset type out of InputDeck for computing map< depvar, offset >
@@ -112,6 +116,9 @@ class Statistics {
     //! Instantaneous variable pointers for computing bivariate PDFs
     std::vector< std::vector< const tk::real* > > m_instBiPDF;
     std::vector< BiPDF > m_bpdf;               //!< Bivariate PDFs
+    //! Instantaneous variable pointers for computing trivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instTriPDF;
+    std::vector< TriPDF > m_tpdf;              //!< Trivariate PDFs
 };
 
 } // quinoa::

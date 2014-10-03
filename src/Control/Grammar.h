@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 22 Sep 2014 01:37:39 PM MDT
+  \date      Thu 02 Oct 2014 08:42:15 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -58,6 +58,8 @@ namespace grm {
                                 BINSIZES,
                                 PDF,
                                 PDFEXISTS,
+                                BADPRECISION,
+                                PRECISIONBOUNDS,
                                 CHARMARG };
 
   //! Associate parser errors to error messages
@@ -117,6 +119,13 @@ namespace grm {
       "equal the number of bin sizes given." },
     { MsgKey::PDF, "Syntax error while parsing PDF specification." },
     { MsgKey::PDFEXISTS, "PDF already exists. PDF identifiers must be unique."},
+    { MsgKey::BADPRECISION, "Precision specification invalid. It should be a "
+      "positive integer or the word \'max\', selecting the maximum number of "
+      "digits for the underyling floating point type."},
+    { MsgKey::PRECISIONBOUNDS, "Precision specification out of bounds. It "
+      "should be a positive integer between 1 and the maximum number of digits "
+      "for the underyling floating point type on the machine. (Set \'max\' for "
+      "the maximum.)"},
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

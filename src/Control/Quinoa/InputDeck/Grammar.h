@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 22 Sep 2014 07:18:30 PM MDT
+  \date      Thu 02 Oct 2014 09:46:41 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -307,6 +307,38 @@ namespace deck {
     }
   };
 
+  //! set numeric precision
+  struct StorePrecision : pegtl::action_base< StorePrecision > {
+    static void apply(const std::string& value, Stack& stack) {
+      std::string low(value);
+      std::transform( begin(low), end(low), begin(low), ::tolower );
+      if (low == "max") {
+        stack.template set< tag::discr, tag::precision >
+                          ( std::numeric_limits< tk::real >::digits10 + 1 );
+      } else {
+        std::streamsize precision = std::cout.precision();  // set default
+        try {
+          precision = std::stol( value ); // try to convert matched str to int
+        }
+        catch ( std::exception& e ) {
+          tk::grm::Message< Stack,
+                            tk::grm::ERROR,
+                            tk::grm::MsgKey::BADPRECISION >
+                          ( stack, value );
+        }
+        // only set precision given if it makes sense
+        if (precision > 0 &&
+            precision < std::numeric_limits< tk::real >::digits10+2)
+          stack.template set< tag::discr, tag::precision >( precision );
+        else
+          tk::grm::Message< Stack,
+                            tk::grm::WARNING,
+                            tk::grm::MsgKey::PRECISIONBOUNDS >
+                          ( stack, value );
+      }
+    }
+  };
+
   // Quinoa's InputDeck grammar
 
   //! ignore: comments and empty lines
@@ -411,6 +443,13 @@ namespace deck {
                          pegtl::apply<
                            tk::grm::error< Stack,
                            tk::grm::MsgKey::INVALIDSAMPLESPACE > > > > > {};
+
+  //! precision of floating-point numbers in digits (for text output)
+  struct precision :
+         tk::grm::process< Stack,
+                           kw::precision::pegtl_string,
+                           StorePrecision,
+                           pegtl::alnum > {};
 
   //! control parameter
   template< typename keyword, class kw_type, typename... tags >
@@ -559,6 +598,10 @@ namespace deck {
              pdf_option< kw::pdf_filetype, ctr::PDFFile, tag::pdffiletype >,
              pdf_option< kw::pdf_policy, ctr::PDFPolicy, tag::pdfpolicy >,
              pdf_option< kw::pdf_centering, ctr::PDFCentering, tag::pdfctr >,
+             pdf_option< kw::txt_float_format,
+                         ctr::TxtFloatFormat,
+                         tag::float_format >,
+             precision,
              parse_pdf > > {};
 
   //! Fluctuating velocity in x direction
