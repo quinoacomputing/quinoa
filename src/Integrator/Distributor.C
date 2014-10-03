@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Fri 26 Sep 2014 10:45:22 AM MDT
+  \date      Thu 02 Oct 2014 07:15:44 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -32,7 +32,8 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
   m_central( m_nameCentral.size(), 0.0 ),
   m_updf( g_inputdeck.npdf< 1 >() ),
-  m_bpdf( g_inputdeck.npdf< 2 >() )
+  m_bpdf( g_inputdeck.npdf< 2 >() ),
+  m_tpdf( g_inputdeck.npdf< 3 >() )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
@@ -283,7 +284,8 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
 
 void
 Distributor::estimatePDF( const std::vector< UniPDF >& updf,
-                          const std::vector< BiPDF >& bpdf )
+                          const std::vector< BiPDF >& bpdf,
+                          const std::vector< TriPDF >& tpdf )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of PDFs
 //! \author  J. Bakosi
@@ -297,16 +299,19 @@ Distributor::estimatePDF( const std::vector< UniPDF >& updf,
   for (auto& p : m_updf) p.addPDF( updf[i++] );
   i = 0;
   for (auto& p : m_bpdf) p.addPDF( bpdf[i++] );
+  i = 0;
+  for (auto& p : m_tpdf) p.addPDF( tpdf[i++] );
 
   // Wait for all integrators completing accumulation of PDFs
   if (m_count.get< tag::pdf >() == m_count.get< tag::chare >()) {
 
     // Output PDFs at selected times
     if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) &&
-         (!m_updf.empty() || !m_bpdf.empty()) )
+         (!m_updf.empty() || !m_bpdf.empty() || !m_tpdf.empty()) )
     {
-      outUniPDF();                       // Output univariate PDFs to file
-      outBiPDF();                        // Output bivariate PDFs to file
+      outUniPDF();                       // Output univariate PDFs to file(s)
+      outBiPDF();                        // Output bivariate PDFs to file(s)
+      outTriPDF();                       // Output trivariate PDFs to file(s)
       m_output.get< tag::pdf >() = true; // Signal that PDFs were written
     }
 
@@ -314,6 +319,7 @@ Distributor::estimatePDF( const std::vector< UniPDF >& updf,
     m_count.get< tag::pdf >() = 0;
     for (auto& p : m_updf) p.zero();
     for (auto& p : m_bpdf) p.zero();
+    for (auto& p : m_tpdf) p.zero();
 
     // Decide if it is time to quit
     evaluateTime();
@@ -323,7 +329,7 @@ Distributor::estimatePDF( const std::vector< UniPDF >& updf,
 void
 Distributor::outUniPDF()
 //******************************************************************************
-// Output univariate PDFs to file
+// Output univariate PDFs to file(s)
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -331,11 +337,11 @@ Distributor::outUniPDF()
   for (const auto& p : m_updf) {
 
     // Get PDF metadata
-    const auto pdf = g_inputdeck.pdf< 1 >( i++ );
+    const auto info = g_inputdeck.pdf< 1 >( i++ );
 
     // Construct PDF file name: base name + '_' + pdf name
     std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdf.name;
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
 
     // Augment PDF filename by time stamp if PDF output file policy is multiple
     if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -346,17 +352,19 @@ Distributor::outUniPDF()
     filename += ".txt";
 
     // Create new PDF file (overwrite if exists)
-    PDFWriter pdfw( filename );
+    PDFWriter pdfw( filename,
+                    g_inputdeck.get< tag::selected, tag::float_format >(),
+                    g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
-    pdfw.writeTxt( p, pdf.exts );
+    pdfw.writeTxt( p, info );
   }
 }
 
 void
 Distributor::outBiPDF()
 //******************************************************************************
-// Output bivariate PDFs to file
+// Output bivariate PDFs to file(s)
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -364,11 +372,11 @@ Distributor::outBiPDF()
   for (const auto& p : m_bpdf) {
 
     // Get PDF metadata
-    const auto pdf = g_inputdeck.pdf< 2 >( i++ );
+    const auto info = g_inputdeck.pdf< 2 >( i++ );
 
     // Construct PDF file name: base name + '_' + pdf name
     std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + pdf.name;
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
 
     // Augment PDF filename by time stamp if PDF output file policy is multiple
     if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
@@ -383,17 +391,59 @@ Distributor::outBiPDF()
       filename += ".gmsh";
 
     // Create new PDF file (overwrite if exists)
-    PDFWriter pdfw( filename );
+    PDFWriter pdfw( filename,
+                    g_inputdeck.get< tag::selected, tag::float_format >(),
+                    g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
     if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
         ctr::PDFFileType::TXT)
-      pdfw.writeTxt( p, pdf.exts );
+      pdfw.writeTxt( p, info );
     else
-      pdfw.writeGmsh( p,
-                      pdf.name,
-                      g_inputdeck.get< tag::selected, tag::pdfctr >(),
-                      pdf.exts );
+      pdfw.writeGmsh( p, info, g_inputdeck.get< tag::selected, tag::pdfctr >() );
+  }
+}
+
+void
+Distributor::outTriPDF()
+//******************************************************************************
+// Output trivariate PDFs to file(s)
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  std::size_t i = 0;
+  for (const auto& p : m_tpdf) {
+
+    // Get PDF metadata
+    const auto info = g_inputdeck.pdf< 3 >( i++ );
+
+    // Construct PDF file name: base name + '_' + pdf name
+    std::string filename =
+      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+
+    // Augment PDF filename by time stamp if PDF output file policy is multiple
+    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+        ctr::PDFPolicyType::MULTIPLE)
+      filename += '_' + std::to_string( m_t );
+
+    // Augment PDF filename by '.txt' or '.gmsh' extension
+    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
+        ctr::PDFFileType::TXT)
+      filename += ".txt";
+    else
+      filename += ".gmsh";
+
+    // Create new PDF file (overwrite if exists)
+    PDFWriter pdfw( filename,
+                    g_inputdeck.get< tag::selected, tag::float_format >(),
+                    g_inputdeck.get< tag::discr, tag::precision >() );
+
+    // Output PDF
+    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
+        ctr::PDFFileType::TXT)
+      pdfw.writeTxt( p, info );
+//     else
+//       pdfw.writeGmsh( p, info, g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }
 

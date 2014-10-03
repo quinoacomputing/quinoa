@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Mon 22 Sep 2014 03:59:58 PM MDT
+  \date      Thu 02 Oct 2014 07:22:27 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -139,7 +139,7 @@ const
     m_stream << '\n';
   }
 
-  // Print PDF output options
+  // Oputput options and settings affecting PDF output
   ctr::PDFFile f;
   item( f.group(),
         f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
@@ -149,4 +149,9 @@ const
   ctr::PDFCentering e;
   item( e.group(),
         e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
+  ctr::TxtFloatFormat fl;
+  item( fl.group(),
+        fl.name( g_inputdeck.get< tag::selected, tag::float_format >() ) );
+  item( "Text precision in digits",
+        g_inputdeck.get< tag::discr, tag::precision >() );
 }

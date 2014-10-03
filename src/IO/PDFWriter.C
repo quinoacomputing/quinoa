@@ -2,28 +2,61 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Sun 28 Sep 2014 09:52:14 PM MDT
+  \date      Thu 02 Oct 2014 09:47:38 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
 */
 //******************************************************************************
 
+#include <iostream>
+
 #include <PDFWriter.h>
 #include <Exception.h>
 
 using quinoa::PDFWriter;
 
+PDFWriter::PDFWriter( const std::string& filename,
+                      ctr::TxtFloatFormatType format,
+                      std::streamsize precision ) :
+  Writer( filename )
+//******************************************************************************
+//  Constructor
+//! \param[in]  filename  Output filename
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Set floating-point format for output file stream
+  if (format == ctr::TxtFloatFormatType::DEFAULT)
+    {} //m_outFile << std::defaultfloat;   GCC does not yet support this
+  else if (format == ctr::TxtFloatFormatType::FIXED)
+    m_outFile << std::fixed;
+  else if (format == ctr::TxtFloatFormatType::SCIENTIFIC)
+    m_outFile << std::scientific;
+  else Throw( "Text floating-point format not recognized." );
+
+  // Set numeric precision for output file stream if the input makes sense
+  if (precision > 0 && precision < std::numeric_limits< tk::real >::digits10+2)
+    m_outFile << std::setprecision( precision );
+}
+
 void
-PDFWriter::writeTxt( const UniPDF& pdf, const std::vector< tk::real >& uext )
+PDFWriter::writeTxt( const UniPDF& pdf, const ctr::InputDeck::PDFInfo& info )
 const
 //******************************************************************************
 //  Write out standardized univariate PDF to file
 //! \param[in]  pdf   Univariate PDF
-//! \param[in]  uext  Optional user-specified extents of the sample space
+//! \param[in]  info  PDF metadata
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  Assert( vars.size() == 1, "Number of sample space variables must equal one "
+                            "in univariate PDF writer." );
+
   if (!uext.empty())
     Assert( uext.size() == 2, "Univariate PDF user-specified sample space "
             "extents must be defined by two real numbers: min, max" );
@@ -35,32 +68,38 @@ const
   tk::real min, max;
   std::vector< tk::real > outpdf;
   tk::real binsize;
-  std::pair< UniPDF::key_type, UniPDF::key_type > ext;
+  std::array< long, 2*UniPDF::dim > ext;
   extents( pdf, uext, nbi, min, max, binsize, ext, outpdf );
 
   // Output header
-  m_outFile << "# Univariate PDF\n"
-            << "# --------------\n"
+  m_outFile << "# Univariate PDF: " << name << '(' << vars[0] << ')' << '\n'
+            << "# -----------------------------------------------\n"
+            << "# Numeric precision: " << m_outFile.precision() << '\n'
             << "# Bin size: " << binsize << '\n'
-            << "# Number of bins estimated: " << ext.second - ext.first + 1
+            << "# Number of bins estimated: " << ext[1] - ext[0] + 1
             << '\n'
             << "# Number of bins output: " << nbi << '\n'
             << "# Sample space extent: [" << min << " : " << max << "]\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
             << "# -----------------------------------------------\n"
             << "# gnuplot> set grid\n"
+            << "# gnuplot> unset key\n"
+            << "# gnuplot> set xlabel \"" << vars[0] << "\"\n"
+            << "# gnuplot> set ylabel \"" << name << "(" << vars[0] << ")\"\n"
             << "# gnuplot> plot ";
   if (!uext.empty()) m_outFile << "[" << uext[0] << ':' << uext[1] << "] ";
   m_outFile << "\"" << m_filename << "\" with points\n#\n"
             << "# Gnuplot one-liner for quick copy-paste\n"
-            << "# --------------------------------------\n"
-            << "# set grid; plot";
+            << "# -----------------------------------------------\n"
+            << "# set grid; unset key; set xlabel \"" << vars[0]
+            << "\"; set ylabel \"" << name << "(" << vars[0]
+            << ")\"; plot";
   if (!uext.empty()) m_outFile << " [" << uext[0] << ':' << uext[1] << "]";
   m_outFile << " \"" << m_filename << "\" w p\n#\n"
-            << "# -----------< data columns: x, probability >-----------\n";
+            << "# Data columns: " << vars[0] << ", " << name << "(" << vars[0]
+            << ")\n# -----------------------------------------------\n";
 
   // If no user-specified sample space extents, output pdf map directly
-  m_outFile << std::scientific << std::setprecision(12);
   if (uext.empty()) {
     for (const auto& p : pdf.map())
       m_outFile << binsize * p.first << '\t'
@@ -73,15 +112,22 @@ const
 }
 
 void
-PDFWriter::writeTxt( const BiPDF& pdf, const std::vector< tk::real >& uext )
+PDFWriter::writeTxt( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info )
 const
 //******************************************************************************
 //  Write out standardized bivariate PDF to text file
 //! \param[in]  pdf   Bivariate PDF
-//! \param[in]  uext  Optional user-specified extents of the sample space
+//! \param[in]  info  PDF metadata
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  Assert( vars.size() == 2, "Number of sample space variables must equal two "
+                            "in bivariate PDF writer." );
+
   if (!uext.empty())
     Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
        "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
@@ -93,21 +139,28 @@ const
   tk::real xmin, xmax, ymin, ymax;
   std::vector< tk::real > outpdf;
   std::array< tk::real, 2 > binsize;
-  std::pair< BiPDF::key_type, BiPDF::key_type > ext;
+  std::array< long, 2*BiPDF::dim > ext;
   extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
 
   // Output header
-  m_outFile << "# Joint bivariate PDF\n"
-            << "# -------------------\n"
+  m_outFile << "# Joint bivariate PDF: " << name << '(' << vars[0] << ','
+            << vars[1] << ")\n"
+            << "# -----------------------------------------------\n"
+            << "# Numeric precision: " << m_outFile.precision() << '\n'
             << "# Bin sizes: " << binsize[0] << ", " << binsize[1] << '\n'
-            << "# Number of bins estimated: " << ext.first[1] - ext.first[0] + 1
-            << " x " << ext.second[1] - ext.second[0] + 1 << '\n'
+            << "# Number of bins estimated: " << ext[1] - ext[0] + 1 << " x "
+            << ext[3] - ext[2] + 1 << '\n'
             << "# Number of bins output: " << nbix << " x " << nbiy << '\n'
             << "# Sample space extents: [" << xmin << " : " << xmax
             << "], [" << ymin << " : " << ymax << "]\n#\n"
             << "# Example step-by-step visualization with gnuplot\n"
             << "# -----------------------------------------------\n"
             << "# gnuplot> set grid\n"
+            << "# gnuplot> unset key\n"
+            << "# gnuplot> set xlabel \"" << vars[0] << "\"\n"
+            << "# gnuplot> set ylabel \"" << vars[1] << "\"\n"
+            << "# gnuplot> set zlabel \"" << name << "(" << vars[0] << ","
+            << vars[1] << ")\"\n"
             << "# gnuplot> set dgrid3d 50,50,1\n"
             << "# gnuplot> set cntrparam levels 20\n"
             << "# gnuplot> set contour\n";
@@ -118,16 +171,19 @@ const
   m_outFile << "# gnuplot> splot \"" << m_filename << "\" with lines\n#\n"
             << "# Gnuplot one-liner for quick copy-paste\n"
             << "# --------------------------------------\n"
-            << "# set grid; set dgrid3d 50,50,1; set cntrparam levels 20; set "
-               "contour; ";
+            << "# set grid; unset key; set xlabel \"" << vars[0]
+            << "\"; set ylabel \"" << vars[1] << "\"; set zlabel \"" << name
+            << "(" << vars[0] << ',' << vars[1] << ")\"; set dgrid3d 50,50,1; "
+               "set cntrparam levels 20; set contour; ";
   if (!uext.empty())
     m_outFile << "set xrange [" << uext[0] << ':' << uext[1] << "]; set yrange "
                  "[" << uext[2] << ':' << uext[3] << "]; ";
   m_outFile << "splot \"" << m_filename << "\" w l\n#\n"
-            << "# -----------< data columns: x, y, probability >-----------\n";
+            << "# Data columns: " << vars[0] << ", " << vars[1] << ", "
+            << name << '(' << vars[0] << ',' << vars[1] << ")\n"
+            << "# -----------------------------------------------\n";
 
   // If no user-specified sample space extents, output pdf map directly
-  m_outFile << std::scientific << std::setprecision(12);
   if (uext.empty()) {
     for (const auto& p : pdf.map())
       m_outFile << binsize[0] * p.first[0] << '\t'
@@ -149,17 +205,119 @@ const
 }
 
 void
-PDFWriter::writeGmsh( const BiPDF& pdf,
-                      const std::string& pdfname,
-                      ctr::PDFCenteringType centering,
-                      const std::vector< tk::real >& uext ) const
+PDFWriter::writeTxt( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info )
+const
 //******************************************************************************
-//  Write out standardized bivariate PDF to Gmsh (text) format
-//! \param[in]  pdf   Bivariate PDF
-//! \param[in]  uext  Optional user-specified extents of the sample space
+//  Write out standardized trivariate PDF to text file
+//! \param[in]  pdf   Trivariate PDF
+//! \param[in]  info  PDF metadata
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  Assert( vars.size() == 3, "Number of sample space variables must equal three "
+                            "in trivariate PDF writer." );
+
+  if (!uext.empty())
+    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
+    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
+    "minz, maxz" );
+
+  // Query and optionally override number of bins and minima of sample space if
+  // user-specified extents were given and copy probabilities from pdf to a
+  // logically 3D array for output
+  std::size_t nbix, nbiy, nbiz;
+  tk::real xmin, xmax, ymin, ymax, zmin, zmax;
+  std::vector< tk::real > outpdf;
+  std::array< tk::real, 3 > binsize;
+  std::array< long, 2*TriPDF::dim > ext;
+  extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
+           binsize, ext, outpdf );
+
+  // Output header
+  m_outFile << "# Joint trivariate PDF: " << name << '(' << vars[0] << ','
+            << vars[1] << ',' << vars[2] << ")\n"
+            << "# -----------------------------------------------\n"
+            << "# Numeric precision: " << m_outFile.precision() << '\n'
+            << "# Bin sizes: " << binsize[0] << ", " << binsize[1] << ", "
+            << binsize[2] << '\n'
+            << "# Number of bins estimated: " << ext[1] - ext[0] + 1 << " x "
+            << ext[3] - ext[2] + 1 << " x " << ext[5] - ext[4] + 1 << '\n'
+            << "# Number of bins output: " << nbix << " x " << nbiy << " x "
+            << nbiz << '\n'
+            << "# Sample space extents: [" << xmin << " : " << xmax << "], ["
+            << ymin << " : " << ymax << "], [" << zmin << " : " << zmax
+            << "]\n#\n"
+            << "# Example step-by-step visualization with gnuplot\n"
+            << "# -----------------------------------------------\n"
+            << "# gnuplot> set grid\n"
+            << "# gnuplot> set xlabel \"" << vars[0] << "\"\n"
+            << "# gnuplot> set ylabel \"" << vars[1] << "\"\n"
+            << "# gnuplot> set zlabel \"" << vars[2] << "\"\n";
+  if (!uext.empty())
+    m_outFile << "# gnuplot> set xrange [" << uext[0] << ':' << uext[1] << "]\n"
+              << "# gnuplot> set yrange [" << uext[2] << ':' << uext[3] << "]\n"
+              << "# gnuplot> set zrange [" << uext[4] << ':' << uext[5] << "]\n";
+  m_outFile << "# gnuplot> splot \"" << m_filename << "\" pointtype 7 "
+               "linecolor palette title \"" << name << '(' << vars[0] << ','
+            << vars[1] << ',' << vars[2] << ")\"\n#\n"
+            << "# Gnuplot one-liner for quick copy-paste\n"
+            << "# --------------------------------------\n"
+            << "# set grid; set xlabel \"" << vars[0] << "\"; set ylabel \""
+            << vars[1] << "\"; set zlabel \"" << vars[2] << "\"; ";
+  if (!uext.empty())
+    m_outFile << "set xrange [" << uext[0] << ':' << uext[1] << "]; set yrange "
+                 "[" << uext[2] << ':' << uext[3] << "]; set zrange ["
+              << uext[4] << ':' << uext[5] << "]; ";
+  m_outFile << "splot \"" << m_filename << "\" pt 7 linecolor palette title \""
+            << name << '(' << vars[0] << ',' << vars[1] << ',' << vars[2] << ')'
+            << "\"\n#\n"
+            << "# Data columns: " << vars[0] << ", " << vars[1] << ", "
+            << vars[2] << ", " << name << '(' << vars[0] << ',' << vars[1]
+            << ',' << vars[2] << ")\n"
+            << "# -----------------------------------------------\n";
+
+  // If no user-specified sample space extents, output pdf map directly
+  if (uext.empty()) {
+    for (const auto& p : pdf.map())
+      m_outFile << binsize[0] * p.first[0] << '\t'
+                << binsize[1] * p.first[1] << '\t'
+                << binsize[2] * p.first[2] << '\t'
+                << p.second / binsize[0] / binsize[1] / binsize[2]
+                            / pdf.nsample()
+                << std::endl;
+  } else { // If user-specified sample space extents, output outpdf array
+    std::size_t bin = 0;
+    for (const auto& p : outpdf) {
+      const auto n = nbix*nbiy;
+      m_outFile << binsize[0] * (bin % n % nbix) + uext[0] << '\t'
+                << binsize[1] * (bin % n / nbix) + uext[2] << '\t'
+                << binsize[2] * (bin / n) + uext[4] << '\t'
+                << p
+                << std::endl;
+      ++bin;
+    }
+  }
+
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+}
+
+void
+PDFWriter::writeGmsh( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                      ctr::PDFCenteringType centering ) const
+//******************************************************************************
+//  Write out standardized bivariate PDF to Gmsh (text) format
+//! \param[in]  pdf   Bivariate PDF
+//! \param[in]  info  PDF metadata
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+
   // Output mesh header: mesh version, file type, data size
   m_outFile << "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n";
   ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
@@ -171,7 +329,7 @@ PDFWriter::writeGmsh( const BiPDF& pdf,
   tk::real xmin, xmax, ymin, ymax;
   std::vector< tk::real > outpdf;
   std::array< tk::real, 2 > binsize;
-  std::pair< BiPDF::key_type, BiPDF::key_type > ext;
+  std::array< long, 2*BiPDF::dim > ext;
   extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
 
   // Output grid points of discretized sample space (2D Cartesian grid)
@@ -201,18 +359,16 @@ PDFWriter::writeGmsh( const BiPDF& pdf,
     ++nbix; ++nbiy;
     c = "Node";
   }
-  m_outFile << "$" << c << "Data\n1\n\"" << pdfname << "\"\n1\n0.0\n3\n0\n1\n"
+  m_outFile << "$" << c << "Data\n1\n\"" << name << "\"\n1\n0.0\n3\n0\n1\n"
             << nbix*nbiy << "\n";
 
   // If no user-specified sample space extents, output pdf map directly
-  m_outFile << std::scientific << std::setprecision(12);
   if (uext.empty()) {
 
     std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
-    const auto ext = pdf.extents();
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[1] - ext.second[0]) * nbix +
-                       (p.first[0] - ext.first[0]) % nbix;
+      const auto bin = (p.first[1] - ext[2]) * nbix +
+                       (p.first[0] - ext[0]) % nbix;
       Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmsh()." );
       out[ bin ] = true;
       m_outFile << bin+1 << '\t'
@@ -243,7 +399,7 @@ PDFWriter::extents( const UniPDF& pdf,
                     tk::real& min,
                     tk::real& max,
                     tk::real& binsize,
-                    std::pair< UniPDF::key_type, UniPDF::key_type >& ext,
+                    std::array< long, 2*UniPDF::dim >& ext,
                     std::vector< tk::real >& outpdf ) const
 //******************************************************************************
 //  Query and optionally override number of bins and minimum of sample space if
@@ -257,11 +413,11 @@ PDFWriter::extents( const UniPDF& pdf,
   ext = pdf.extents();
 
   // Compute number of bins of sample space (min bins: 1)
-  nbi = ext.second - ext.first + 1;
+  nbi = ext[1] - ext[0] + 1;
 
   // Compute minimum and maximum of sample space
-  min = binsize * ext.first;
-  max = binsize * ext.second;
+  min = binsize * ext[0];
+  max = binsize * ext[1];
 
   // Override number of bins and minimum if user-specified extents were given,
   // and copy probabilities from pdf to an array for output
@@ -304,8 +460,8 @@ PDFWriter::extents( const BiPDF& pdf,
                     tk::real& xmax,
                     tk::real& ymin,
                     tk::real& ymax,
-                    std::array< tk::real, 2 >& binsize,
-                    std::pair< BiPDF::key_type, BiPDF::key_type >& ext,
+                    std::array< tk::real, BiPDF::dim >& binsize,
+                    std::array< long, 2*BiPDF::dim >& ext,
                     std::vector< tk::real >& outpdf ) const
 //******************************************************************************
 //  Query and optionally override number of bins and minima of sample space if
@@ -319,14 +475,14 @@ PDFWriter::extents( const BiPDF& pdf,
   ext = pdf.extents();
 
   // Compute number of bins in sample space directions (min bins: 1)
-  nbix = ext.first[1] - ext.first[0] + 1;
-  nbiy = ext.second[1] - ext.second[0] + 1;
+  nbix = ext[1] - ext[0] + 1;
+  nbiy = ext[3] - ext[2] + 1;
 
   // Compute minima and maxima of sample space
-  xmin = binsize[0] * ext.first[0];
-  xmax = binsize[0] * ext.first[1];
-  ymin = binsize[1] * ext.second[0];
-  ymax = binsize[1] * ext.second[1];
+  xmin = binsize[0] * ext[0];
+  xmax = binsize[0] * ext[1];
+  ymin = binsize[1] * ext[2];
+  ymax = binsize[1] * ext[3];
 
   // Override number of bins and minima if user-specified extents were given,
   // and copy probabilities from pdf to a logically 2D array for output
@@ -350,18 +506,102 @@ PDFWriter::extents( const BiPDF& pdf,
     // Fill requested region of pdf to be output from computed pdf
     for (const auto& p : pdf.map()) {
       // Compute (i.e., shift) bin indices relative to user-requested extents
-      const auto binx = p.first[0] - std::lround( uext[0] / binsize[0] );
-      const auto biny = p.first[1] - std::lround( uext[2] / binsize[1] );
+      const auto x = p.first[0] - std::lround( uext[0] / binsize[0] );
+      const auto y = p.first[1] - std::lround( uext[2] / binsize[1] );
       // Only copy probability value if shifted bin indices fall within
       // user-requested extents (lower inclusive, upper exclusive)
-      if (binx >= 0 && binx < std::lround( (uext[1] - uext[0]) / binsize[0] ) &&
-          biny >= 0 && biny < std::lround( (uext[3] - uext[2]) / binsize[1] ))
+      if (x >= 0 && x < std::lround( (uext[1] - uext[0]) / binsize[0] ) &&
+          y >= 0 && y < std::lround( (uext[3] - uext[2]) / binsize[1] ))
       {
-        Assert( binx + biny*nbix < nbix*nbiy, "Bin overflow in user-specified-"
-                "-extent-based bin calculation of bivariate PDF extents." );
+        Assert( y*nbix + x < nbix*nbiy, "Bin overflow in user-specified-extent-"
+                "based bin calculation of bivariate PDF." );
         // Copy normalized probability to output pdf
-        outpdf[ binx + biny*nbix ] =
+        outpdf[ y*nbix + x ] =
           p.second / binsize[0] / binsize[1] / pdf.nsample();
+      }
+    }
+  }
+}
+
+void
+PDFWriter::extents( const TriPDF& pdf,
+                    const std::vector< tk::real >& uext,
+                    std::size_t& nbix,
+                    std::size_t& nbiy,
+                    std::size_t& nbiz,
+                    tk::real& xmin,
+                    tk::real& xmax,
+                    tk::real& ymin,
+                    tk::real& ymax,
+                    tk::real& zmin,
+                    tk::real& zmax,
+                    std::array< tk::real, TriPDF::dim >& binsize,
+                    std::array< long, 2*TriPDF::dim >& ext,
+                    std::vector< tk::real >& outpdf ) const
+//******************************************************************************
+//  Query and optionally override number of bins and minima of sample space if
+//  user-specified extents were given and copy probabilities from pdf to a
+//  logically 3D array for output for plotting trivariate joint PDF
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Query bin sizes and extents of sample space from PDF
+  binsize = pdf.binsize();
+  ext = pdf.extents();
+
+  // Compute number of bins in sample space directions (min bins: 1)
+  nbix = ext[1] - ext[0] + 1;
+  nbiy = ext[3] - ext[2] + 1;
+  nbiz = ext[5] - ext[4] + 1;
+
+  // Compute minima and maxima of sample space
+  xmin = binsize[0] * ext[0];
+  xmax = binsize[0] * ext[1];
+  ymin = binsize[1] * ext[2];
+  ymax = binsize[1] * ext[3];
+  zmin = binsize[2] * ext[4];
+  zmax = binsize[2] * ext[5];
+
+  // Override number of bins and minima if user-specified extents were given,
+  // and copy probabilities from pdf to a logically 3D array for output
+  if (!uext.empty()) {
+    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
+    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
+    "minz, maxz" );
+
+    // Override number of bins by that based on user-specified extents
+    nbix = std::lround( (uext[1] - uext[0]) / binsize[0] );
+    nbiy = std::lround( (uext[3] - uext[2]) / binsize[1] );
+    nbiz = std::lround( (uext[5] - uext[4]) / binsize[2] );
+    // Override extents
+    xmin = uext[0];
+    xmax = uext[1];
+    ymin = uext[2];
+    ymax = uext[3];
+    zmin = uext[4];
+    zmax = uext[5];
+
+    // Size output pdf to user-requested dimensions to overridden nbiz * nbiy *
+    // nbix and initialize output probabilities to zero
+    outpdf = std::vector< tk::real >( nbiz * nbiy * nbix, 0.0 );
+
+    // Fill requested region of pdf to be output from computed pdf
+    for (const auto& p : pdf.map()) {
+      // Compute (i.e., shift) bin indices relative to user-requested extents
+      const auto x = p.first[0] - std::lround( uext[0] / binsize[0] );
+      const auto y = p.first[1] - std::lround( uext[2] / binsize[1] );
+      const auto z = p.first[2] - std::lround( uext[4] / binsize[2] );
+      // Only copy probability value if shifted bin indices fall within
+      // user-requested extents (lower inclusive, upper exclusive)
+      if (x >= 0 && x < std::lround( (uext[1] - uext[0]) / binsize[0] ) &&
+          y >= 0 && y < std::lround( (uext[3] - uext[2]) / binsize[1] ) &&
+          z >= 0 && z < std::lround( (uext[5] - uext[4]) / binsize[2] ))
+      {
+        Assert( nbix*(z*nbiy + y) + x < nbix*nbiy*nbiz, "Bin overflow in "
+              "user-specified-extent-based bin calculation of bivariate PDF." );
+        // Copy normalized probability to output pdf
+        outpdf[ nbix*(z*nbiy + y) + x ] =
+          p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
       }
     }
   }

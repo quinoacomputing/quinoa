@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 27 Sep 2014 09:58:49 AM MDT
+  \date      Thu 02 Oct 2014 12:30:40 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -42,7 +42,7 @@ class InputDeck :
       set< tag::discr, tag::nstep >( std::numeric_limits< uint64_t >::max() );
       set< tag::discr, tag::term >( 1.0 );
       set< tag::discr, tag::dt >( 0.5 );
-      set< tag::discr, tag::dt >( 0.5 );
+      set< tag::discr, tag::precision >( std::cout.precision() );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );
@@ -100,10 +100,27 @@ class InputDeck :
       return n;
     }
 
+    // Return sample space variables for PDF
+    template< std::size_t d >
+    std::vector< std::string > vars( long int idx ) const {
+      long int n = -1;
+      std::vector< std::string > v;
+      for (const auto& probability : get< tag::pdf >()) {
+        if (probability.size() == d) ++n;
+        if (n == idx) {
+          for (const auto& term : probability)
+            v.push_back( term.var + std::to_string(term.field+1) );
+          return v;
+        }
+      }
+      Throw( "Cannot find PDF." );
+    }
+
     // PDF information
     struct PDFInfo {
       const std::string& name;                  //!< identifier
       const std::vector< tk::real >& exts;      //!< extents
+      std::vector< std::string > vars;          //!< dependent variables
     };
 
     //! Find PDF information given the sample space dimension and its index
@@ -120,7 +137,7 @@ class InputDeck :
       long int i = 0;
       for (const auto& bs : binsizes) {
         if (bs.size() == d) ++n;
-        if (n == idx) return { names[i], exts[i] };
+        if (n == idx) return { names[i], exts[i], vars<d>(idx) };
         ++i;
       }
       Throw( "Cannot find PDF name." );

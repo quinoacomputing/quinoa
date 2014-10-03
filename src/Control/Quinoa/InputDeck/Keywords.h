@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 26 Sep 2014 10:32:52 AM MDT
+  \date      Thu 02 Oct 2014 07:27:06 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -394,8 +394,47 @@ struct evolution_info {
   static const char* help() { return "PDF output appends new time step to the "
   "same file for each yielding a time evolution of data."; }
 };
-
 using evolution = keyword< evolution_info, e,v,o,l,u,t,i,o,n >;
+
+// Keyword 'txt_float_format': PDF txt output floating-point format
+struct txt_float_format_info {
+  static const char* name() { return "format"; }
+  static const char* help() { return "Formatting for floating-point output."; }
+};
+using txt_float_format = keyword< txt_float_format_info, f,o,r,m,a,t >;
+
+// Keyword 'txt_float_default': PDF txt output floating-point format: default
+struct txt_float_default_info {
+  static const char* name() { return "default"; }
+  static const char* help() { return "Use default formatting for "
+  "floating-point output."; }
+};
+using txt_float_default = keyword< txt_float_default_info, d,e,f,a,u,l,t >;
+
+// Keyword 'txt_float_scientific': PDF txt output floating-point format:
+// scientific
+struct txt_float_scientific_info {
+  static const char* name() { return "scientific"; }
+  static const char* help() { return "Use scientific formatting for "
+  "floating-point output."; }
+};
+using txt_float_scientific =
+  keyword< txt_float_scientific_info, s,c,i,e,n,t,i,f,i,c >;
+
+// Keyword 'fixed': PDF txt output floating-point format: fixed
+struct txt_float_fixed_info {
+  static const char* name() { return "fixed"; }
+  static const char* help() { return "Use fixed formatting for "
+  "floating-point output."; }
+};
+using txt_float_fixed = keyword< txt_float_fixed_info, f,i,x,e,d >;
+
+// Keyword 'precision': precision in digits for text output of numbers
+struct precision_info {
+  static const char* name() { return "precision"; }
+  static const char* help() { return "Precision in digits for text output.."; }
+};
+using precision = keyword< precision_info, p,r,e,c,i,s,i,o,n >;
 
 // Keyword 'centering': selected PDF output file centering
 struct centering_info {

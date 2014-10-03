@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:28:21 AM MDT
+  \date      Tue 30 Sep 2014 01:27:48 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -36,7 +36,8 @@ class Distributor : public CBase_Distributor {
 
     //! Finish estimation of PDFs
     void estimatePDF( const std::vector< UniPDF >& updf,
-                      const std::vector< BiPDF >& bpdf );
+                      const std::vector< BiPDF >& bpdf,
+                      const std::vector< TriPDF >& tpdf );
 
   private:
     using CProxyInt = CProxy_Integrator< CProxy_Distributor >;
@@ -62,6 +63,9 @@ class Distributor : public CBase_Distributor {
     //! Output bivariate PDFs to file(s)
     void outBiPDF();
 
+    //! Output trivariate PDFs to file(s)
+    void outTriPDF();
+
     //! Pretty printer
     QuinoaPrint m_print;
 
@@ -86,6 +90,7 @@ class Distributor : public CBase_Distributor {
     std::vector< tk::real > m_central;          //!< Central moments
     std::vector< UniPDF > m_updf;               //!< Univariate PDFs
     std::vector< BiPDF > m_bpdf;                //!< Bivariate PDFs
+    std::vector< TriPDF > m_tpdf;               //!< Trivariate PDFs
 };
 
 } // quinoa::
