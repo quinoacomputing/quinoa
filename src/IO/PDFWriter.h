@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 09:42:17 PM MDT
+  \date      Thu 02 Oct 2014 10:00:30 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -46,6 +46,10 @@ class PDFWriter : public tk::Writer {
 
     //! Write bivariate PDF to gmsh (text) file format
     void writeGmsh( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                    ctr::PDFCenteringType centering ) const;
+
+    //! Write trivariate PDF to gmsh (text) file format
+    void writeGmsh( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
                     ctr::PDFCenteringType centering ) const;
 
   private:
