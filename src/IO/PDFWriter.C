@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 08:06:55 AM MDT
+  \date      Wed 08 Oct 2014 08:35:03 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -54,12 +54,8 @@ const
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 1, "Number of sample space variables must equal one "
-                            "in univariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 2, "Univariate PDF user-specified sample space "
-            "extents must be defined by two real numbers: min, max" );
+  assertSampleSpaceDimensions< 1 >( vars );
+  assertSampleSpaceExtents< 1 >( uext );
 
   // Query and optionally override number of bins and minimum of sample space if
   // user-specified extents were given and copy probabilities from pdf to an
@@ -126,12 +122,8 @@ const
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 2, "Number of sample space variables must equal two "
-                            "in bivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
-       "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
+  assertSampleSpaceDimensions< 2 >( vars );
+  assertSampleSpaceExtents< 2 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -220,13 +212,8 @@ const
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 3, "Number of sample space variables must equal three "
-                            "in trivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
-    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
-    "minz, maxz" );
+  assertSampleSpaceDimensions< 3 >( vars );
+  assertSampleSpaceExtents< 3 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -324,12 +311,8 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 2, "Number of sample space variables must equal two "
-                            "in bivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
-       "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
+  assertSampleSpaceDimensions< 2 >( vars );
+  assertSampleSpaceExtents< 2 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -436,13 +419,8 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 3, "Number of sample space variables must equal three "
-                            "in trivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
-    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
-    "minz, maxz" );
+  assertSampleSpaceDimensions< 3 >( vars );
+  assertSampleSpaceExtents< 3 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -561,12 +539,8 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 2, "Number of sample space variables must equal two "
-                            "in bivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
-       "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
+  assertSampleSpaceDimensions< 2 >( vars );
+  assertSampleSpaceExtents< 2 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -704,13 +678,8 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   const auto& uext = info.exts;
   const auto& vars = info.vars;
 
-  Assert( vars.size() == 3, "Number of sample space variables must equal three "
-                            "in trivariate PDF writer." );
-
-  if (!uext.empty())
-    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
-    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
-    "minz, maxz" );
+  assertSampleSpaceDimensions< 3 >( vars );
+  assertSampleSpaceExtents< 3 >( uext );
 
   // Query and optionally override number of bins and minima of sample space if
   // user-specified extents were given and copy probabilities from pdf to a
@@ -822,7 +791,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
     }
     // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
     // bins if holes exist in the data, it also looks better as zero than holes)
-    tk::real prob = 0.0;    
+    tk::real prob = 0.0;
     for (std::size_t i=0; i<out.size(); ++i)
       if (!out[i]) {
         int id = i+1;
@@ -862,6 +831,8 @@ PDFWriter::extents( const UniPDF& pdf,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  assertSampleSpaceExtents< 1 >( uext );
+
   // Query bin size and extents of sample space from PDF
   binsize = pdf.binsize();
   ext = pdf.extents();
@@ -876,9 +847,6 @@ PDFWriter::extents( const UniPDF& pdf,
   // Override number of bins and minimum if user-specified extents were given,
   // and copy probabilities from pdf to an array for output
   if (!uext.empty()) {
-    Assert( uext.size() == 2, "Bivariate joint PDF user-specified sample space "
-       "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
-
     // Override number of bins by that based on user-specified extents
     nbi = std::lround( (uext[1] - uext[0]) / binsize );
     // Override extents
@@ -924,6 +892,8 @@ PDFWriter::extents( const BiPDF& pdf,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  assertSampleSpaceExtents< 2 >( uext );
+
   // Query bin sizes and extents of sample space from PDF
   binsize = pdf.binsize();
   ext = pdf.extents();
@@ -941,9 +911,6 @@ PDFWriter::extents( const BiPDF& pdf,
   // Override number of bins and minima if user-specified extents were given,
   // and copy probabilities from pdf to a logically 2D array for output
   if (!uext.empty()) {
-    Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
-          "extents must be defined by four real numbers: minx,maxx,miny,maxy" );
-
     // Override number of bins by that based on user-specified extents
     nbix = std::lround( (uext[1] - uext[0]) / binsize[0] );
     nbiy = std::lround( (uext[3] - uext[2]) / binsize[1] );
@@ -999,6 +966,8 @@ PDFWriter::extents( const TriPDF& pdf,
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  assertSampleSpaceExtents< 3 >( uext );
+
   // Query bin sizes and extents of sample space from PDF
   binsize = pdf.binsize();
   ext = pdf.extents();
@@ -1019,10 +988,6 @@ PDFWriter::extents( const TriPDF& pdf,
   // Override number of bins and minima if user-specified extents were given,
   // and copy probabilities from pdf to a logically 3D array for output
   if (!uext.empty()) {
-    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
-    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
-    "minz, maxz" );
-
     // Override number of bins by that based on user-specified extents
     nbix = std::lround( (uext[1] - uext[0]) / binsize[0] );
     nbiy = std::lround( (uext[3] - uext[2]) / binsize[1] );

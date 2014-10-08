@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Tue 07 Oct 2014 07:50:57 PM MDT
+  \date      Wed 08 Oct 2014 08:31:36 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -61,6 +61,23 @@ class PDFWriter : public tk::Writer {
                        ctr::PDFCenteringType centering ) const;
 
   private:
+    //! Assert the number of sample space dimensions given
+    template< std::size_t size, class Container >
+    void assertSampleSpaceDimensions( const Container& c ) const {
+      Assert( c.size() == size,
+              "Number of sample space variables must equal " +
+              std::to_string( size ) + " in PDF writer." );
+    }
+
+    //! Assert the number of sample space extents given
+    template< std::size_t size, class Container >
+    void assertSampleSpaceExtents( const Container& c ) const {
+      if (!c.empty())
+        Assert( c.size() == size*2,
+                "PDF user-specified sample space extents must be defined by " +
+                std::to_string( size*2 ) +" real numbers: minx, maxx, ..." );
+    }
+
     //! Query extents and other metadata of univariate PDF sample space
     void extents( const UniPDF& pdf,
                   const std::vector< tk::real >& uext,
