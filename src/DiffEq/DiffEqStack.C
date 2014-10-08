@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 20 Aug 2014 09:37:25 AM MDT
+  \date      Wed 08 Oct 2014 10:39:11 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -12,6 +12,7 @@
 #include <boost/mpl/cartesian_product.hpp>
 
 #include <DiffEqStack.h>
+#include <OrnsteinUhlenbeck.h>
 #include <Dirichlet.h>
 #include <GenDirichlet.h>
 #include <Factory.h>
@@ -41,6 +42,14 @@ DiffEqStack::DiffEqStack()
   mpl::cartesian_product< GenDirPolicies >(
     registerDiffEq< GenDirichlet >
                   ( m_factory, ctr::DiffEqType::GENDIR, m_eqTypes ) );
+
+  // Ornstein-Uhlenbeck SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using OUPolicies = mpl::vector< InitPolicies, OUCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< OUPolicies >(
+    registerDiffEq< OrnsteinUhlenbeck >
+                  ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
 }
 
 std::vector< quinoa::DiffEq >
@@ -58,6 +67,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::dirichlet >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       diffeqs.push_back( createDiffEq< tag::gendir >( m_factory, d, cnt ) );
+    else if (d == ctr::DiffEqType::OU)
+      diffeqs.push_back( createDiffEq< tag::ou >( m_factory, d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -79,6 +90,8 @@ DiffEqStack::info() const
       info.emplace_back( infoDirichlet( cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       info.emplace_back( infoGenDir( cnt ) );
+    else if (d == ctr::DiffEqType::OU)
+      info.emplace_back( infoOU( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -111,15 +124,12 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tk::tag::rng >()[c] ) );
-  info.emplace_back(
-    "coeff vector b (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::dirichlet, tag::b >(c) );
-  info.emplace_back(
-    "coeff vector S (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::dirichlet, tag::S >(c) );
-  info.emplace_back(
-    "coeff vector kappa (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::dirichlet, tag::kappa >(c) );
+  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::dirichlet, tag::b >(c) );
+  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::dirichlet, tag::S >(c) );
+  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::dirichlet, tag::kappa >(c) );
 
   return info;
 }
@@ -150,18 +160,48 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::gendir, tk::tag::rng >()[c] ) );
-  info.emplace_back(
-    "coeff vector b (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::gendir, tag::b >(c) );
-  info.emplace_back(
-    "coeff vector S (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::gendir, tag::S >(c) );
-  info.emplace_back(
-    "coeff vector kappa (size:" + std::to_string( ncomp ) + ")",
-    parameters< tag::param, tag::gendir, tag::kappa >(c) );
-  info.emplace_back(
-    "coeff vector c (size:" + std::to_string( ncomp*(ncomp-1)/2 ) + ")",
-    parameters< tag::param, tag::gendir, tag::c >( c ) );
+  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gendir, tag::b >(c) );
+  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gendir, tag::S >(c) );
+  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gendir, tag::kappa >(c) );
+  info.emplace_back( "coeff c [" + std::to_string( ncomp*(ncomp-1)/2 ) + "]",
+                     parameters< tag::param, tag::gendir, tag::c >( c ) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
+//******************************************************************************
+//  Return information on the Ornstein-Uhlenbeck SDE
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::OU ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::OU ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::ou, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::ou, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::ou, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::ou >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::ou >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) );
+  info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::ou, tag::sigma >(c) );
+  info.emplace_back( "coeff timescale [" + std::to_string( ncomp ) + "]",
+    parameters< tag::param, tag::ou, tag::timescale >(c) );
 
   return info;
 }
