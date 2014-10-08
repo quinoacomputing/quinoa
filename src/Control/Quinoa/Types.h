@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 09:42:54 PM MDT
+  \date      Wed 08 Oct 2014 10:19:17 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -343,9 +343,11 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
 //! Ornstein-Uhlenbeck parameters storage
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::sigma,       tk::real,
-  tag::timescale,   tk::real,
-  tk::tag::rng,     std::vector< tk::ctr::RNGType >
+  tag::sigma,       std::vector< std::vector< tk::real > >,
+  tag::timescale,   std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Log-normal parameters storage

@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 10:06:33 PM MDT
+  \date      Wed 08 Oct 2014 10:27:42 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -47,7 +47,7 @@ struct DirCoeffConst {
   { return ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
-  void operator()( const tk::real& t,
+  void operator()( const tk::real&,
                    std::vector< tk::real >&,
                    std::vector< tk::real >&,
                    std::vector< tk::real >& ) {}
