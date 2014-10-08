@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Tue 07 Oct 2014 07:46:38 AM MDT
+  \date      Wed 08 Oct 2014 08:06:55 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -309,9 +309,9 @@ const
 }
 
 void
-PDFWriter::writeGmsh( const BiPDF& pdf,
-                      const ctr::InputDeck::PDFInfo& info,
-                      ctr::PDFCenteringType centering ) const
+PDFWriter::writeGmshTxt( const BiPDF& pdf,
+                         const ctr::InputDeck::PDFInfo& info,
+                         ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized bivariate PDF to Gmsh (text) format
 //! \param[in]  pdf        Bivariate PDF
@@ -377,7 +377,7 @@ PDFWriter::writeGmsh( const BiPDF& pdf,
   for (int i=0; i<nbix*nbiy; ++i) {
     const auto y = i/nbix;
     m_outFile << i+1 << " 3 2 1 1 " << i+y+1 << ' ' << i+y+2 << ' '
-              << i+y+nbix+3 << ' ' << i+y+nbix+y+2 << std::endl;
+              << i+y+nbix+3 << ' ' << i+y+nbix+2 << std::endl;
   }
   m_outFile << "$EndElements\n";
 
@@ -421,9 +421,9 @@ PDFWriter::writeGmsh( const BiPDF& pdf,
 }
 
 void
-PDFWriter::writeGmsh( const TriPDF& pdf,
-                      const ctr::InputDeck::PDFInfo& info,
-                      ctr::PDFCenteringType centering ) const
+PDFWriter::writeGmshTxt( const TriPDF& pdf,
+                         const ctr::InputDeck::PDFInfo& info,
+                         ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized trivariate PDF to Gmsh (text) format
 //! \param[in]  pdf        Trivariate PDF
@@ -537,6 +537,307 @@ PDFWriter::writeGmsh( const TriPDF& pdf,
 
     std::size_t bin = 0;
     for (const auto& p : outpdf) m_outFile << ++bin << ' ' << p << std::endl;
+
+  }
+
+  m_outFile << "$End" << c << "Data\n";
+
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+}
+
+void
+PDFWriter::writeGmshBin( const BiPDF& pdf,
+                         const ctr::InputDeck::PDFInfo& info,
+                         ctr::PDFCenteringType centering ) const
+//******************************************************************************
+//  Write out standardized bivariate PDF to Gmsh (binary) format
+//! \param[in]  pdf        Bivariate PDF
+//! \param[in]  info       PDF metadata
+//! \param[in]  centering  Bin centering on sample space mesh
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  Assert( vars.size() == 2, "Number of sample space variables must equal two "
+                            "in bivariate PDF writer." );
+
+  if (!uext.empty())
+    Assert( uext.size() == 4, "Bivariate joint PDF user-specified sample space "
+       "extents must be defined by four real numbers: minx, maxx, miny, maxy" );
+
+  // Query and optionally override number of bins and minima of sample space if
+  // user-specified extents were given and copy probabilities from pdf to a
+  // logically 2D array for output
+  std::size_t nbix, nbiy;
+  tk::real xmin, xmax, ymin, ymax;
+  std::vector< tk::real > outpdf;
+  std::array< tk::real, 2 > binsize;
+  std::array< long, 2*BiPDF::dim > ext;
+  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
+
+  // Output metadata. The #s are unnecessary, but vi will color it differently.
+  m_outFile << "$Comments\n"
+            << "# vim: filetype=sh:\n"
+            << "# Joint bivariate PDF: " << name << '(' << vars[0] << ','
+            << vars[1] << ")\n"
+            << "# -----------------------------------------------\n"
+            << "# Numeric precision: 64-bit binary\n"
+            << "# Bin sizes: " << binsize[0] << ", " << binsize[1] << '\n'
+            << "# Number of bins estimated: " << ext[1] - ext[0] + 1 << " x "
+            << ext[3] - ext[2] + 1 << '\n'
+            << "# Number of bins output: " << nbix << " x " << nbiy << '\n'
+            << "# Sample space extents: [" << xmin << " : " << xmax
+            << "], [" << ymin << " : " << ymax << "]\n"
+            << "$EndComments\n";
+
+  // Output mesh header: mesh version, file type, data size
+  m_outFile << "$MeshFormat\n2.2 1 8\n";
+  int one = 1;
+  m_outFile.write( reinterpret_cast<char*>(&one), sizeof(int) );
+  m_outFile << "\n$EndMeshFormat\n";
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+
+  // Output grid points of discretized sample space (2D Cartesian grid)
+  m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1) << std::endl;
+  int k = 0;
+  tk::real z = 0.0;
+  for (int i=0; i<=nbiy; i++) {
+    tk::real y = ymin + i*binsize[1];
+    for (int j=0; j<=nbix; j++) {
+      tk::real x = xmin + j*binsize[0];
+      ++k;
+      m_outFile.write( reinterpret_cast< char* >( &k ), sizeof(int) );
+      m_outFile.write( reinterpret_cast< char* >( &x ), sizeof(tk::real) );
+      m_outFile.write( reinterpret_cast< char* >( &y ), sizeof(tk::real) );
+      m_outFile.write( reinterpret_cast< char* >( &z ), sizeof(tk::real) );
+    }
+  }
+  m_outFile << "\n$EndNodes\n";
+
+  // Output elements of discretized sample space (2D Cartesian grid)
+  m_outFile << "$Elements\n" << nbix*nbiy << "\n";
+  int type = 3;         // gmsh elem type: 4-node quadrangle
+  int n = nbix*nbiy;    // number of elements in (this single) block
+  int ntags = 2;        // number of element tags
+  m_outFile.write( reinterpret_cast< char* >( &type ), sizeof(int) );
+  m_outFile.write( reinterpret_cast< char* >( &n ), sizeof(int) );
+  m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
+  for (int i=0; i<n; ++i) {
+    auto y = i/nbix;
+    auto id = i+1;
+    int tag[2] = { 1, 1 };
+    int con[4] = { static_cast< int >( i+y+1 ),
+                   static_cast< int >( i+y+2 ),
+                   static_cast< int >( i+y+nbix+3 ),
+                   static_cast< int >( i+y+nbix+2 ) };
+    m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+    m_outFile.write( reinterpret_cast< char* >( tag ), 2*sizeof(int) );
+    m_outFile.write( reinterpret_cast< char* >( con ), 4*sizeof(int) );
+  }
+  m_outFile << "\n$EndElements\n";
+
+  // Output PDF function values in element or node centers
+  std::string c( "Element" );
+  if (centering == ctr::PDFCenteringType::NODE) {
+    ++nbix; ++nbiy;
+    c = "Node";
+  }
+  m_outFile << '$' << c << "Data\n1\n\"" << name << "\"\n1\n0.0\n3\n0\n1\n"
+            << nbix*nbiy << "\n";
+
+  // If no user-specified sample space extents, output pdf map directly
+  if (uext.empty()) {
+
+    std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
+    for (const auto& p : pdf.map()) {
+      const auto bin = (p.first[1] - ext[2]) * nbix +
+                       (p.first[0] - ext[0]) % nbix;
+      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmsh()." );
+      out[ bin ] = true;
+      int id = bin+1;
+      tk::real prob = p.second / binsize[0] / binsize[1] / pdf.nsample();
+      m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+      m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
+    }
+    // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
+    // bins if holes exist in the data, it also looks better as zero than holes)
+    tk::real prob = 0.0;
+    for (std::size_t i=0; i<out.size(); ++i)
+      if (!out[i]) {
+        int id = i+1;
+        m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+        m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
+      }
+
+  } else { // If user-specified sample space extents, output outpdf array
+
+    std::size_t bin = 0;
+    for (auto& p : outpdf) {
+      ++bin;
+      m_outFile.write( reinterpret_cast< char* >( &bin ), sizeof(int) );
+      m_outFile.write( reinterpret_cast< char* >( &p ), sizeof(tk::real) );
+    }
+
+  }
+
+  m_outFile << "$End" << c << "Data\n";
+
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+}
+
+void
+PDFWriter::writeGmshBin( const TriPDF& pdf,
+                         const ctr::InputDeck::PDFInfo& info,
+                         ctr::PDFCenteringType centering ) const
+//******************************************************************************
+//  Write out standardized trivariate PDF to Gmsh (binary) format
+//! \param[in]  pdf        Trivariate PDF
+//! \param[in]  info       PDF metadata
+//! \param[in]  centering  Bin centering on sample space mesh
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  Assert( vars.size() == 3, "Number of sample space variables must equal three "
+                            "in trivariate PDF writer." );
+
+  if (!uext.empty())
+    Assert( uext.size() == 6, "Trivariate joint PDF user-specified sample space"
+    " extents must be defined by six real numbers: minx, maxx, miny, maxy, "
+    "minz, maxz" );
+
+  // Query and optionally override number of bins and minima of sample space if
+  // user-specified extents were given and copy probabilities from pdf to a
+  // logically 3D array for output
+  std::size_t nbix, nbiy, nbiz;
+  tk::real xmin, xmax, ymin, ymax, zmin, zmax;
+  std::vector< tk::real > outpdf;
+  std::array< tk::real, 3 > binsize;
+  std::array< long, 2*TriPDF::dim > ext;
+  extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
+           binsize, ext, outpdf );
+
+  // Output metadata. The #s are unnecessary, but vi will color it differently.
+  m_outFile << "$Comments\n"
+            << "# vim: filetype=sh:\n#\n"
+            << "# Joint trivariate PDF: " << name << '(' << vars[0] << ','
+            << vars[1] << ',' << vars[2] << ")\n"
+            << "# -----------------------------------------------\n"
+            << "# Numeric precision: 64-bit binary\n"
+            << "# Bin sizes: " << binsize[0] << ", " << binsize[1] << ", "
+            << binsize[2] << '\n'
+            << "# Number of bins estimated: " << ext[1] - ext[0] + 1 << " x "
+            << ext[3] - ext[2] + 1 << " x " << ext[5] - ext[4] + 1 << '\n'
+            << "# Number of bins output: " << nbix << " x " << nbiy << " x "
+            << nbiz << '\n'
+            << "# Sample space extents: [" << xmin << " : " << xmax << "], ["
+            << ymin << " : " << ymax << "], [" << zmin << " : " << zmax << "]\n"
+            << "$EndComments\n";
+
+  // Output mesh header: mesh version, file type, data size
+  m_outFile << "$MeshFormat\n2.2 1 8\n";
+  int one = 1;
+  m_outFile.write( reinterpret_cast<char*>(&one), sizeof(int) );
+  m_outFile << "\n$EndMeshFormat\n";
+
+  ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+
+  // Output grid points of discretized sample space (3D Cartesian grid)
+  m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
+  int l = 0;
+  for (int k=0; k<=nbiz; k++) {
+    tk::real z = zmin + k*binsize[2];
+    for (int j=0; j<=nbiy; j++) {
+      tk::real y = ymin + j*binsize[1];
+      for (int i=0; i<=nbix; i++) {
+        tk::real x = xmin + i*binsize[0];
+        ++l;
+        m_outFile.write( reinterpret_cast< char* >( &l ), sizeof(int) );
+        m_outFile.write( reinterpret_cast< char* >( &x ), sizeof(tk::real) );
+        m_outFile.write( reinterpret_cast< char* >( &y ), sizeof(tk::real) );
+        m_outFile.write( reinterpret_cast< char* >( &z ), sizeof(tk::real) );
+      }
+    }
+  }
+  m_outFile << "\n$EndNodes\n";
+
+  // Output elements of discretized sample space (3D Cartesian grid)
+  m_outFile << "$Elements\n" << nbix*nbiy*nbiz << "\n";
+  int type = 5;           // gmsh elem type: 8-node hexahedron
+  int n = nbix*nbiy*nbiz; // number of elements in (this single) block
+  int ntags = 2;          // number of element tags
+  m_outFile.write( reinterpret_cast< char* >( &type ), sizeof(int) );
+  m_outFile.write( reinterpret_cast< char* >( &n ), sizeof(int) );
+  m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
+  for (int i=0; i<n; ++i) {
+    const auto n = nbix*nbiy;
+    const auto p = (nbix+1)*(nbiy+1);
+    const auto y = i/nbix + i/n*(nbix+1);
+    auto id = i+1;
+    int tag[2] = { 1, 1 };
+    int con[8] = { static_cast< int >( i+y+1 ),
+                   static_cast< int >( i+y+2 ),
+                   static_cast< int >( i+y+nbix+3 ),
+                   static_cast< int >( i+y+nbix+2 ),
+                   static_cast< int >( i+y+p+1 ),
+                   static_cast< int >( i+y+p+2 ),
+                   static_cast< int >( i+y+p+nbix+3 ),
+                   static_cast< int >( i+y+p+nbix+2 ) };
+    m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+    m_outFile.write( reinterpret_cast< char* >( tag ), 2*sizeof(int) );
+    m_outFile.write( reinterpret_cast< char* >( con ), 8*sizeof(int) );
+  }
+  m_outFile << "\n$EndElements\n";
+
+  // Output PDF function values in element or node centers
+  std::string c( "Element" );
+  if (centering == ctr::PDFCenteringType::NODE) {
+    ++nbix; ++nbiy; ++nbiz;
+    c = "Node";
+  }
+  m_outFile << '$' << c << "Data\n1\n\"" << name << "\"\n1\n0.0\n3\n0\n1\n"
+            << nbix*nbiy*nbiz << "\n";
+
+  // If no user-specified sample space extents, output pdf map directly
+  if (uext.empty()) {
+
+    std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
+    for (const auto& p : pdf.map()) {
+      const auto bin = (p.first[2] - ext[4]) * nbix*nbiy +
+                       (p.first[1] - ext[2]) * nbix +
+                       (p.first[0] - ext[0]) % nbix;
+      Assert( bin < nbix*nbiy*nbiz, "Bin overflow in PDFWriter::writeGmsh()." );
+      out[ bin ] = true;
+      int id = bin+1;
+      tk::real prob =
+        p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
+      m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+      m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
+    }
+    // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
+    // bins if holes exist in the data, it also looks better as zero than holes)
+    tk::real prob = 0.0;    
+    for (std::size_t i=0; i<out.size(); ++i)
+      if (!out[i]) {
+        int id = i+1;
+        m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
+        m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
+      }
+
+  } else { // If user-specified sample space extents, output outpdf array
+
+    std::size_t bin = 0;
+    for (auto& p : outpdf) {
+      ++bin;
+      m_outFile.write( reinterpret_cast< char* >( &bin ), sizeof(int) );
+      m_outFile.write( reinterpret_cast< char* >( &p ), sizeof(tk::real) );
+    }
 
   }
 

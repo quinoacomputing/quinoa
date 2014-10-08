@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 10:00:30 PM MDT
+  \date      Tue 07 Oct 2014 07:50:57 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -45,12 +45,20 @@ class PDFWriter : public tk::Writer {
     const;
 
     //! Write bivariate PDF to gmsh (text) file format
-    void writeGmsh( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
-                    ctr::PDFCenteringType centering ) const;
+    void writeGmshTxt( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                       ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to gmsh (text) file format
-    void writeGmsh( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
-                    ctr::PDFCenteringType centering ) const;
+    void writeGmshTxt( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                       ctr::PDFCenteringType centering ) const;
+
+    //! Write bivariate PDF to gmsh (binary) file format
+    void writeGmshBin( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                       ctr::PDFCenteringType centering ) const;
+
+    //! Write trivariate PDF to gmsh (binary) file format
+    void writeGmshBin( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                       ctr::PDFCenteringType centering ) const;
 
   private:
     //! Query extents and other metadata of univariate PDF sample space
