@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 08:35:03 AM MDT
+  \date      Wed 08 Oct 2014 12:17:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -133,7 +133,8 @@ const
   std::vector< tk::real > outpdf;
   std::array< tk::real, 2 > binsize;
   std::array< long, 2*BiPDF::dim > ext;
-  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
+  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf,
+           ctr::PDFCenteringType::ELEM );
 
   // Output metadata
   m_outFile << "# vim: filetype=sh:\n#\n"
@@ -224,7 +225,7 @@ const
   std::array< tk::real, 3 > binsize;
   std::array< long, 2*TriPDF::dim > ext;
   extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
-           binsize, ext, outpdf );
+           binsize, ext, outpdf, ctr::PDFCenteringType::ELEM );
 
   // Output header
   m_outFile << "# vim: filetype=sh:\n#\n"
@@ -322,7 +323,8 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
   std::vector< tk::real > outpdf;
   std::array< tk::real, 2 > binsize;
   std::array< long, 2*BiPDF::dim > ext;
-  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
+  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf,
+           centering );
 
   // Output metadata. The #s are unnecessary, but vi will color it differently.
   m_outFile << "$Comments\n"
@@ -431,7 +433,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   std::array< tk::real, 3 > binsize;
   std::array< long, 2*TriPDF::dim > ext;
   extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
-           binsize, ext, outpdf );
+           binsize, ext, outpdf, centering );
 
   // Output metadata. The #s are unnecessary, but vi will color it differently.
   m_outFile << "$Comments\n"
@@ -550,7 +552,8 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
   std::vector< tk::real > outpdf;
   std::array< tk::real, 2 > binsize;
   std::array< long, 2*BiPDF::dim > ext;
-  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf );
+  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf,
+           centering );
 
   // Output metadata. The #s are unnecessary, but vi will color it differently.
   m_outFile << "$Comments\n"
@@ -690,7 +693,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   std::array< tk::real, 3 > binsize;
   std::array< long, 2*TriPDF::dim > ext;
   extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
-           binsize, ext, outpdf );
+           binsize, ext, outpdf, centering );
 
   // Output metadata. The #s are unnecessary, but vi will color it differently.
   m_outFile << "$Comments\n"
@@ -884,7 +887,8 @@ PDFWriter::extents( const BiPDF& pdf,
                     tk::real& ymax,
                     std::array< tk::real, BiPDF::dim >& binsize,
                     std::array< long, 2*BiPDF::dim >& ext,
-                    std::vector< tk::real >& outpdf ) const
+                    std::vector< tk::real >& outpdf,
+                    ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Query and optionally override number of bins and minima of sample space if
 //  user-specified extents were given and copy probabilities from pdf to a
@@ -920,6 +924,9 @@ PDFWriter::extents( const BiPDF& pdf,
     ymin = uext[2];
     ymax = uext[3];
 
+    // Temporarily increase number of bins if node-centered output required
+    if (centering == ctr::PDFCenteringType::NODE) { ++nbix; ++nbiy; }
+
     // Size output pdf to user-requested dimensions to overridden nbiy * nbix
     // and initialize output probabilities to zero
     outpdf = std::vector< tk::real >( nbix*nbiy, 0.0 );
@@ -941,6 +948,9 @@ PDFWriter::extents( const BiPDF& pdf,
           p.second / binsize[0] / binsize[1] / pdf.nsample();
       }
     }
+
+    // Revert number of bins if node-centered output required
+    if (centering == ctr::PDFCenteringType::NODE) { --nbix; --nbiy; }
   }
 }
 
@@ -958,7 +968,8 @@ PDFWriter::extents( const TriPDF& pdf,
                     tk::real& zmax,
                     std::array< tk::real, TriPDF::dim >& binsize,
                     std::array< long, 2*TriPDF::dim >& ext,
-                    std::vector< tk::real >& outpdf ) const
+                    std::vector< tk::real >& outpdf,
+                    ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Query and optionally override number of bins and minima of sample space if
 //  user-specified extents were given and copy probabilities from pdf to a
@@ -1000,6 +1011,9 @@ PDFWriter::extents( const TriPDF& pdf,
     zmin = uext[4];
     zmax = uext[5];
 
+    // Temporarily increase number of bins if node-centered output required
+    if (centering == ctr::PDFCenteringType::NODE) { ++nbix; ++nbiy; ++nbiz; }
+
     // Size output pdf to user-requested dimensions to overridden nbiz * nbiy *
     // nbix and initialize output probabilities to zero
     outpdf = std::vector< tk::real >( nbiz * nbiy * nbix, 0.0 );
@@ -1023,5 +1037,8 @@ PDFWriter::extents( const TriPDF& pdf,
           p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
       }
     }
+
+    // Revert number of bins if node-centered output required
+    if (centering == ctr::PDFCenteringType::NODE) { --nbix; --nbiy; --nbiz; }
   }
 }

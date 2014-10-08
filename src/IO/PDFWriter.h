@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 08:31:36 AM MDT
+  \date      Wed 08 Oct 2014 12:16:10 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -99,7 +99,8 @@ class PDFWriter : public tk::Writer {
                   tk::real& ymax,
                   std::array< tk::real, BiPDF::dim >& binsize,
                   std::array< long, 2*BiPDF::dim >& ext,
-                  std::vector< tk::real >& outpdf ) const;
+                  std::vector< tk::real >& outpdf,
+                  ctr::PDFCenteringType centering ) const;
 
     //! Query extents and other metadata of trivariate PDF sample space
     void extents( const TriPDF& pdf,
@@ -115,7 +116,8 @@ class PDFWriter : public tk::Writer {
                   tk::real& zmax,
                   std::array< tk::real, TriPDF::dim >& binsize,
                   std::array< long, 2*TriPDF::dim >& ext,
-                  std::vector< tk::real >& outpdf ) const;
+                  std::vector< tk::real >& outpdf,
+                  ctr::PDFCenteringType centering ) const;
 };
 
 } // quinoa::
