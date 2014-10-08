@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 07:27:06 AM MDT
+  \date      Tue 07 Oct 2014 07:40:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -358,12 +358,19 @@ struct txt_info {
 };
 using txt = keyword< txt_info, t,x,t >;
 
-// Keyword 'gmsh': PDF output file type: gmsh
-struct gmsh_info {
-  static const char* name() { return "gmsh"; }
-  static const char* help() { return "PDF GMSH output file."; }
+// Keyword 'gmshtxt': PDF output file type: gmshtxt
+struct gmshtxt_info {
+  static const char* name() { return "gmshtxt"; }
+  static const char* help() { return "PDF GMSH txt file output."; }
 };
-using gmsh = keyword< gmsh_info, g,m,s,h >;
+using gmshtxt = keyword< gmshtxt_info, g,m,s,h,t,x,t >;
+
+// Keyword 'gmshbin': PDF output file type: gmshbin
+struct gmshbin_info {
+  static const char* name() { return "gmshbin"; }
+  static const char* help() { return "PDF GMSH binary file output."; }
+};
+using gmshbin = keyword< gmshbin_info, g,m,s,h,b,i,n >;
 
 // Keyword 'policy': selected PDF output file policy
 struct policy_info {

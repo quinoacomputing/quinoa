@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 10:02:16 PM MDT
+  \date      Tue 07 Oct 2014 07:48:57 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -396,11 +396,15 @@ Distributor::outBiPDF()
                     g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
-    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
-        ctr::PDFFileType::TXT)
+    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+    if (filetype == ctr::PDFFileType::TXT)
       pdfw.writeTxt( p, info );
-    else
-      pdfw.writeGmsh( p, info, g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::GMSHTXT)
+      pdfw.writeGmshTxt( p, info,
+                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::GMSHBIN)
+      pdfw.writeGmshBin( p, info,
+                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }
 
@@ -439,11 +443,15 @@ Distributor::outTriPDF()
                     g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
-    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
-        ctr::PDFFileType::TXT)
+    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+    if (filetype == ctr::PDFFileType::TXT)
       pdfw.writeTxt( p, info );
-     else
-       pdfw.writeGmsh( p, info, g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::GMSHTXT)
+       pdfw.writeGmshTxt( p, info,
+                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::GMSHBIN)
+       pdfw.writeGmshBin( p, info,
+                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }
 
