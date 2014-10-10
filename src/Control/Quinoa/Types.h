@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:19:17 AM MDT
+  \date      Fri 10 Oct 2014 02:44:45 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -227,8 +227,7 @@ struct CaseInsensitiveCharLess {
 using Product = std::vector< Term >;
 
 //! Find out if a vector of Terms only contains ordinary moment terms
-//! \details If and only if all terms are ordinary, the vector of Terms is
-//! ordinary.
+//! \details Iff all terms are ordinary, the vector of Terms is ordinary.
 static inline bool ordinary( const std::vector< ctr::Term >& vec ) {
   bool ord = true;
   for (auto& term : vec) if (term.moment == ctr::Moment::CENTRAL) ord = false;
@@ -344,7 +343,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::sigma,       std::vector< std::vector< tk::real > >,
-  tag::timescale,   std::vector< std::vector< tk::real > >,
+  tag::theta,       std::vector< std::vector< tk::real > >,
+  tag::mu,          std::vector< std::vector< tk::real > >,
   tk::tag::rng,     std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >

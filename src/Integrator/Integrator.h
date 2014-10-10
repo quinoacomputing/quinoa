@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Integrator.h
   \author    J. Bakosi
-  \date      Tue 30 Sep 2014 01:27:04 PM MDT
+  \date      Fri 10 Oct 2014 12:23:46 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Integrator used to advance ordinary and stochastic differential eqs.
   \details   Integrator used to advance ordinary and stochastic differential
@@ -61,10 +61,13 @@ class Integrator : public CBase_Integrator< Proxy > {
 
     // Accumulate sums for PDFs
     void accumulatePDF() {
-      // Accumulate partial sums for univariate PDFs
-      m_stat.accumulatePDF();
+      // Accumulate partial sums for ordinary PDFs
+      m_stat.accumulateOrdPDF();
+      // Accumulate partial sums for central PDFs
+      m_stat.accumulateCenPDF();
       // Send accumulated PDFs to host for estimation
-      m_proxy.estimatePDF( m_stat.updf(), m_stat.bpdf(), m_stat.tpdf() );
+      m_proxy.estimatePDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf(),
+                           m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
     }
 
   private:
@@ -77,7 +80,7 @@ class Integrator : public CBase_Integrator< Proxy > {
     }
 
     Proxy m_proxy;              //!< Host proxy
-    ParProps m_particles;       //!< Particle properties operated on
+    ParProps m_particles;       //!< Particle properties
     Statistics m_stat;          //!< Statistics
 };
 

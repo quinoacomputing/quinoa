@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 11:08:06 AM MDT
+  \date      Fri 10 Oct 2014 03:16:05 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
@@ -34,12 +34,14 @@ class OrnsteinUhlenbeck {
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) ) )
     {
+      const auto& sigma = g_inputdeck.get< tag::param, tag::ou, tag::sigma >();
+      const auto& theta = g_inputdeck.get< tag::param, tag::ou, tag::theta >();
+      const auto& mu = g_inputdeck.get< tag::param, tag::ou, tag::mu >();
+      ErrChk( sigma.size() > c, "Wrong number of OU SDE parameters 'sigma'");
+      ErrChk( theta.size() > c, "Wrong number of OU SDE parameters 'theta'");
+      ErrChk( mu.size() > c, "Wrong number of OU SDE parameters 'mu'");
       // Use coefficients policy to initialize coefficients
-      Coefficients(
-        m_ncomp,
-        g_inputdeck.get< tag::param, tag::ou, tag::sigma >()[c],
-        g_inputdeck.get< tag::param, tag::ou, tag::timescale >()[c],
-        m_sigma, m_timescale );
+      Coefficients( m_ncomp, sigma[c], theta[c], mu[c], m_sigma, m_theta, m_mu );
     }
 
     //! Set initial conditions
@@ -56,9 +58,9 @@ class OrnsteinUhlenbeck {
         // Advance all m_ncomp scalars
         for (unsigned int i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
-          tk::real d = 2.0 * m_sigma[i] * m_sigma[i] / m_timescale[i] * dt;
+          tk::real d = m_sigma[i] * m_sigma[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          par += -par/m_timescale[i]*dt + d*dW[i];
+          par += m_theta[i]*(m_mu[i] - par)*dt + d*dW[i];
         }
       }
     }
@@ -68,7 +70,8 @@ class OrnsteinUhlenbeck {
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
     std::vector< tk::real > m_sigma;    //!< Coefficients
-    std::vector< tk::real > m_timescale;
+    std::vector< tk::real > m_theta;
+    std::vector< tk::real > m_mu;
 };
 
 } // quinoa::

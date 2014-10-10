@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue 30 Sep 2014 01:26:37 PM MDT
+  \date      Fri 10 Oct 2014 02:10:12 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -35,8 +35,11 @@ class Statistics {
     //! Accumulate (i.e., only do the sum for) central moments
     void accumulateCen( const std::vector< tk::real >& ord );
 
-    //! Accumulate (i.e., only do the sum for) PDFs
-    void accumulatePDF();
+    //! Accumulate (i.e., only do the sum for) ordinary PDFs
+    void accumulateOrdPDF();
+
+    //! Accumulate (i.e., only do the sum for) central PDFs
+    void accumulateCenPDF();
 
     //! Ordinary moments accessor
     const std::vector< tk::real >& ord() const noexcept { return m_ordinary; }
@@ -44,14 +47,23 @@ class Statistics {
     //! Central moments accessor
     const std::vector< tk::real >& ctr() const noexcept { return m_central; }
 
-    //! Univariate PDF accessor
-    const std::vector< UniPDF >& updf() const noexcept { return m_updf; }
+    //! Ordinary univariate PDFs accessor
+    const std::vector< UniPDF >& oupdf() const noexcept { return m_ordupdf; }
 
-    //! Bivariate PDF accessor
-    const std::vector< BiPDF >& bpdf() const noexcept { return m_bpdf; }
+    //! Ordinary bivariate PDFs accessor
+    const std::vector< BiPDF >& obpdf() const noexcept { return m_ordbpdf; }
 
-    //! Trivariate PDF accessor
-    const std::vector< TriPDF >& tpdf() const noexcept { return m_tpdf; }
+    //! Ordinary trivariate PDFs accessor
+    const std::vector< TriPDF >& otpdf() const noexcept { return m_ordtpdf; }
+
+    //! Central univariate PDFs accessor
+    const std::vector< UniPDF >& cupdf() const noexcept { return m_cenupdf; }
+
+    //! Central bivariate PDFs accessor
+    const std::vector< BiPDF >& cbpdf() const noexcept { return m_cenbpdf; }
+
+    //! Central trivariate PDFs accessor
+    const std::vector< TriPDF >& ctpdf() const noexcept { return m_centpdf; }
 
   private:
     // Get offset type out of InputDeck for computing map< depvar, offset >
@@ -93,32 +105,60 @@ class Statistics {
     void setupPDF( const OffsetMap& offset );
 
     //! Return mean for fluctuation
-    int mean(const ctr::Term& term) const;
+    std::size_t mean(const ctr::Term& term) const;
 
     const ParProps& m_particles;              //!< Particle properties
+
+    // Statistics
 
     //! Instantaneous variable pointers for computing ordinary moments
     std::vector< std::vector< const tk::real* > > m_instOrd;
     std::vector< tk::real > m_ordinary;        //!< Ordinary moments
     std::vector< ctr::FieldVar > m_ordFieldVar;//!< Ordinary moment field names
-    int m_nord;                                //!< Number of ordinary moments
+    std::size_t m_nord;                        //!< Number of ordinary moments
 
     //! Instantaneous variable pointers for computing central moments
     std::vector< std::vector< const tk::real* > > m_instCen;
     std::vector< tk::real > m_central;         //!< Central moments
     //! Ordinary moments about which to compute central moments
-    std::vector< std::vector< const tk::real* > > m_center;
-    int m_ncen;                                //!< Number of central moments
+    std::vector< std::vector< const tk::real* > > m_ctr;
+    std::size_t m_ncen;                        //!< Number of central moments
 
-    //! Instantaneous variable pointers for computing univariate PDFs
-    std::vector< std::vector< const tk::real* > > m_instUniPDF;
-    std::vector< UniPDF > m_updf;              //!< Univariate PDFs
-    //! Instantaneous variable pointers for computing bivariate PDFs
-    std::vector< std::vector< const tk::real* > > m_instBiPDF;
-    std::vector< BiPDF > m_bpdf;               //!< Bivariate PDFs
-    //! Instantaneous variable pointers for computing trivariate PDFs
-    std::vector< std::vector< const tk::real* > > m_instTriPDF;
-    std::vector< TriPDF > m_tpdf;              //!< Trivariate PDFs
+    // Univariate probability density functions
+
+    //! Instantaneous variable pointers for computing ordinary univariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instOrdUniPDF;
+    std::vector< UniPDF > m_ordupdf;           //!< Ordinary univariate PDFs
+
+    //! Instantaneous variable pointers for computing central univariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instCenUniPDF;
+    std::vector< UniPDF > m_cenupdf;           //!< Central univariate PDFs
+    //! Ordinary moments about which to compute central univariate PDFs
+    std::vector< std::vector< const tk::real* > > m_ctrUniPDF;
+
+    // Bivariate probability density functions
+
+    //! Instantaneous variable pointers for computing ordinary bivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instOrdBiPDF;
+    std::vector< BiPDF > m_ordbpdf;           //!< Ordinary bivariate PDFs
+
+    //! Instantaneous variable pointers for computing central bivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instCenBiPDF;
+    std::vector< BiPDF > m_cenbpdf;           //!< Central bivariate PDFs
+    //! Ordinary moments about which to compute central bivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_ctrBiPDF;
+
+    // Trivariate probability density functions
+
+    //! Instantaneous variable pointers for computing ordinary trivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instOrdTriPDF;
+    std::vector< TriPDF > m_ordtpdf;          //!< Ordinary trivariate PDFs
+
+    //! Instantaneous variable pointers for computing central trivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_instCenTriPDF;
+    std::vector< TriPDF > m_centpdf;          //!< Central trivariate PDFs
+    //! Ordinary moments about which to compute central trivariate PDFs
+    std::vector< std::vector< const tk::real* > > m_ctrTriPDF;
 };
 
 } // quinoa::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/distributor.ci
   \author    J. Bakosi
-  \date      Tue 30 Sep 2014 11:18:19 AM MDT
+  \date      Fri 10 Oct 2014 12:26:02 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for distributor
   \details   Charm++ module interface file for distributor
@@ -32,9 +32,12 @@ module distributor {
       entry void init();
       entry void estimateOrd( const std::vector< tk::real >& ord );
       entry void estimateCen( const std::vector< tk::real >& ctr );
-      entry void estimatePDF( const std::vector< UniPDF >& updf,
-                              const std::vector< BiPDF >& bpdf,
-                              const std::vector< TriPDF >& tpdf );
+      entry void estimatePDF( const std::vector< UniPDF >& oupdf,
+                              const std::vector< BiPDF >& obpdf,
+                              const std::vector< TriPDF >& otpdf,
+                              const std::vector< UniPDF >& cupdf,
+                              const std::vector< BiPDF >& cbpdf,
+                              const std::vector< TriPDF >& ctpdf );
     }
 
   } // quinoa::

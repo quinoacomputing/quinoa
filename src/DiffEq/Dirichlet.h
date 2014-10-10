@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 19 Aug 2014 04:39:46 PM MDT
+  \date      Fri 10 Oct 2014 03:18:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
@@ -37,13 +37,14 @@ class Dirichlet {
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::dirichlet, tk::tag::rng >()[c] ) ) )
     {
+      const auto& b = g_inputdeck.get< tag::param, tag::dirichlet, tag::b >();
+      const auto& S = g_inputdeck.get< tag::param, tag::dirichlet, tag::S >();
+      const auto& k = g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >();
+      ErrChk( b.size() > c, "Wrong number of OU SDE parameters 'b'");
+      ErrChk( S.size() > c, "Wrong number of OU SDE parameters 'S'");
+      ErrChk( k.size() > c, "Wrong number of OU SDE parameters 'kappa'");
       // Use coefficients policy to initialize coefficients
-      Coefficients(
-        m_ncomp,
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::b >()[c],
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::S >()[c],
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >()[c],
-        m_b, m_S, m_k );
+      Coefficients( m_ncomp, b[c], S[c], k[c], m_b, m_S, m_k );
     }
 
     //! Set initial conditions

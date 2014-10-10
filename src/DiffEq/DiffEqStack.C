@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:39:11 AM MDT
+  \date      Fri 10 Oct 2014 03:04:44 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -200,8 +200,10 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
     g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) );
   info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
                      parameters< tag::param, tag::ou, tag::sigma >(c) );
-  info.emplace_back( "coeff timescale [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::ou, tag::timescale >(c) );
+  info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
+    parameters< tag::param, tag::ou, tag::theta >(c) );
+  info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
+    parameters< tag::param, tag::ou, tag::mu >(c) );
 
   return info;
 }

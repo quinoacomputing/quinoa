@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Tue 07 Oct 2014 07:48:57 PM MDT
+  \date      Fri 10 Oct 2014 03:05:39 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -283,9 +283,12 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
 }
 
 void
-Distributor::estimatePDF( const std::vector< UniPDF >& updf,
-                          const std::vector< BiPDF >& bpdf,
-                          const std::vector< TriPDF >& tpdf )
+Distributor::estimatePDF( const std::vector< UniPDF >& oupdf,
+                          const std::vector< BiPDF >& obpdf,
+                          const std::vector< TriPDF >& otpdf,
+                          const std::vector< UniPDF >& cupdf,
+                          const std::vector< BiPDF >& cbpdf,
+                          const std::vector< TriPDF >& ctpdf )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of PDFs
 //! \author  J. Bakosi
@@ -296,11 +299,14 @@ Distributor::estimatePDF( const std::vector< UniPDF >& updf,
 
   // Add contribution from PE to total sums
   std::size_t i=0;
-  for (auto& p : m_updf) p.addPDF( updf[i++] );
+  for (const auto& p : oupdf) m_updf[i++].addPDF( p );
+  for (const auto& p : cupdf) m_updf[i++].addPDF( p );
   i = 0;
-  for (auto& p : m_bpdf) p.addPDF( bpdf[i++] );
+  for (const auto& p : obpdf) m_bpdf[i++].addPDF( p );
+  for (const auto& p : cbpdf) m_bpdf[i++].addPDF( p );
   i = 0;
-  for (auto& p : m_tpdf) p.addPDF( tpdf[i++] );
+  for (const auto& p : otpdf) m_tpdf[i++].addPDF( p );
+  for (const auto& p : ctpdf) m_tpdf[i++].addPDF( p );
 
   // Wait for all integrators completing accumulation of PDFs
   if (m_count.get< tag::pdf >() == m_count.get< tag::chare >()) {
