@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 07:14:15 AM MDT
+  \date      Fri 10 Oct 2014 02:50:31 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -41,6 +41,8 @@ struct c3 {};
 struct c4 {};
 struct lambda {};
 struct sigma {};
+struct theta {};
+struct mu {};
 struct timescale {};
 struct initpolicy {};
 struct coeffpolicy {};

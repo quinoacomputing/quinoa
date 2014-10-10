@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.h
   \author    J. Bakosi
-  \date      Tue 30 Sep 2014 01:27:48 PM MDT
+  \date      Fri 10 Oct 2014 12:28:30 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -35,9 +35,12 @@ class Distributor : public CBase_Distributor {
     void estimateCen( const std::vector< tk::real >& ctr );
 
     //! Finish estimation of PDFs
-    void estimatePDF( const std::vector< UniPDF >& updf,
-                      const std::vector< BiPDF >& bpdf,
-                      const std::vector< TriPDF >& tpdf );
+    void estimatePDF( const std::vector< UniPDF >& oupdf,
+                      const std::vector< BiPDF >& obpdf,
+                      const std::vector< TriPDF >& otpdf,
+                      const std::vector< UniPDF >& cupdf,
+                      const std::vector< BiPDF >& cbpdf,
+                      const std::vector< TriPDF >& ctpdf );
 
   private:
     using CProxyInt = CProxy_Integrator< CProxy_Distributor >;

@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/GenDirichlet.h
   \author    J. Bakosi
-  \date      Tue 19 Aug 2014 07:35:06 PM MDT
+  \date      Fri 10 Oct 2014 03:18:19 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -33,14 +33,16 @@ class GenDirichlet {
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::gendir, tk::tag::rng >()[c] ) ) )
     {
+      const auto& b = g_inputdeck.get< tag::param, tag::gendir, tag::b >();
+      const auto& S = g_inputdeck.get< tag::param, tag::gendir, tag::S >();
+      const auto& k = g_inputdeck.get< tag::param, tag::gendir, tag::kappa >();
+      const auto& C = g_inputdeck.get< tag::param, tag::gendir, tag::c >();
+      ErrChk( b.size() > c, "Wrong number of OU SDE parameters 'b'");
+      ErrChk( S.size() > c, "Wrong number of OU SDE parameters 'S'");
+      ErrChk( k.size() > c, "Wrong number of OU SDE parameters 'kappa'");
+      ErrChk( C.size() > c, "Wrong number of OU SDE parameters 'c'");
       // Use coefficients policy to initialize coefficients
-      Coefficients(
-        m_ncomp,
-        g_inputdeck.get< tag::param, tag::gendir, tag::b >()[c],
-        g_inputdeck.get< tag::param, tag::gendir, tag::S >()[c],
-        g_inputdeck.get< tag::param, tag::gendir, tag::kappa >()[c],
-        g_inputdeck.get< tag::param, tag::gendir, tag::c >()[c],
-        m_b, m_S, m_k, m_c );
+      Coefficients( m_ncomp, b[c], S[c], k[c], C[c], m_b, m_S, m_k, m_c );
     }
 
     //! Set initial conditions

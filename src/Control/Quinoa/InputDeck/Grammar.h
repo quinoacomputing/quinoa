@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:19:30 AM MDT
+  \date      Fri 10 Oct 2014 02:55:06 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -833,12 +833,15 @@ namespace deck {
                                                 ctr::CoeffPolicy,
                                                 tag::ou,
                                                 tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_timescale,
-                                                          tag::ou,
-                                                          tag::timescale >,
                                         parameter_vector< kw::sde_sigma,
                                                           tag::ou,
-                                                          tag::sigma > > > {};
+                                                          tag::sigma >,
+                                        parameter_vector< kw::sde_theta,
+                                                          tag::ou,
+                                                          tag::theta >,
+                                        parameter_vector< kw::sde_mu,
+                                                          tag::ou,
+                                                          tag::mu > > > {};
 
   //! Log-normal SDE
   struct lognormal :

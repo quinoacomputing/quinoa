@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:12:43 AM MDT
+  \date      Fri 10 Oct 2014 02:45:16 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -295,8 +295,9 @@ using sde_kappa = keyword<undefined_info,  k,a,p,p,a >;
 using sde_c = keyword<undefined_info,  c >;
 
 // Ornstein-Uhlenbeck SDE parameters
-using sde_timescale = keyword<undefined_info, t,i,m,e,s,c,a,l,e >;
 using sde_sigma = keyword<undefined_info, s,i,g,m,a >;
+using sde_theta = keyword<undefined_info, t,h,e,t,a >;
+using sde_mu = keyword<undefined_info, m,u >;
 
 // Langevin model parameters
 using SLM_C0 = keyword<undefined_info,  C,'0' >;

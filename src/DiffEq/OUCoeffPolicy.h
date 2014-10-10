@@ -2,7 +2,7 @@
 /*!
   \file      src/SDE/OUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:29:51 AM MDT
+  \date      Fri 10 Oct 2014 02:47:10 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   Ornstein-Uhlenbeck coefficients policies
@@ -26,15 +26,18 @@ struct OUCoeffConst {
   //! Constructor: initialize coefficients
   OUCoeffConst( unsigned int ncomp,
                  const std::vector< tk::real >& sigma_,
-                 const std::vector< tk::real >& timescale_,
+                 const std::vector< tk::real >& theta_,
+                 const std::vector< tk::real >& mu_,
                  std::vector< tk::real >& sigma,
-                 std::vector< tk::real >& timescale )
+                 std::vector< tk::real >& theta,
+                 std::vector< tk::real >& mu )
   {
     sigma = sigma_;
-    timescale = timescale_;
+    theta = theta_;
+    mu = mu_;
     ErrChk( sigma.size() == ncomp, "Wrong number of OU SDE parameters 'sigma'");
-    ErrChk( timescale.size() == ncomp,
-            "Wrong number of OU SDE parameters 'timscale'");
+    ErrChk( theta.size() == ncomp, "Wrong number of OU SDE parameters 'theta'");
+    ErrChk( mu.size() == ncomp, "Wrong number of OU SDE parameters 'mu'");
   }
 
   std::string policy() const noexcept

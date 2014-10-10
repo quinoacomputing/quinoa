@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue 30 Sep 2014 02:16:38 PM MDT
+  \date      Fri 10 Oct 2014 03:41:54 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -59,6 +59,18 @@ Statistics::setupOrdinary( const OffsetMap& offset )
       ++m_nord;
     }
   }
+
+  // Put in a zero as the last ordinary moment. This will be used as the center
+  // about which central moments are computed. If this is not needed, e.g.,
+  // because there is no central moments or not central PDFs are requested, this
+  // is small, unused, and harmless.
+  if (m_nord) {
+    // Storage for all the required ordinary moments
+    // +1 for 0 as center for ordinary moments in computing central moments
+    m_ordinary.resize( m_nord + 1 );
+    // Put in zero as center for ordinary moments in central products
+    m_ordinary[ m_nord ] = 0.0;
+  }
 }
 
 void
@@ -68,20 +80,13 @@ Statistics::setupCentral( const OffsetMap& offset )
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Central moments can only be estimated if there are ordinary moments
+  // Central moments can only be estimated about ordinary moments
   if (m_nord) {
-    // Storage for all the required ordinary moments
-    // +1 for 0 as center for ordinary moments
-    m_ordinary.resize( m_nord + 1 );
-
-    // Put in zero as center for ordinary moments in central products
-    m_ordinary[ m_nord ] = 0.0;
-
     for (const auto& product : g_inputdeck.get< tag::stat >()) {
       if (central(product)) {
 
         m_instCen.emplace_back( std::vector< const tk::real* >() );
-        m_center.emplace_back( std::vector< const tk::real* >() );
+        m_ctr.emplace_back( std::vector< const tk::real* >() );
 
         for (const auto& term : product) {
           auto o = offset.find( term.var );
@@ -89,7 +94,7 @@ Statistics::setupCentral( const OffsetMap& offset )
           // Put in starting address of instantaneous variable
           m_instCen.back().push_back( m_particles.cptr(term.field, o->second) );
           // Put in index of center for central, m_nord for ordinary moment
-          m_center.back().push_back(
+          m_ctr.back().push_back(
             &m_ordinary[0] + (std::islower(term.var) ? mean(term) : m_nord) );
         }
 
@@ -111,41 +116,76 @@ Statistics::setupPDF( const OffsetMap& offset )
 {
   std::size_t i = 0;
   for (const auto& probability : g_inputdeck.get< tag::pdf >()) {
-
-    // Detect number of sample space dimensions and instantiate PDFs
-    const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
-    if (bs.size() == 1) {
-      m_updf.emplace_back( bs[0] );
-      m_instUniPDF.emplace_back( std::vector< const tk::real* >() );
-    } else if (bs.size() == 2) {
-      m_bpdf.emplace_back( bs );
-      m_instBiPDF.emplace_back( std::vector< const tk::real* >() );
-    } else if (bs.size() == 3) {
-      m_tpdf.emplace_back( bs );
-      m_instTriPDF.emplace_back( std::vector< const tk::real* >() );
-    }
-
-    // Store starting addresses of instantaneous variables
     if (ordinary(probability)) {
+
+      // Detect number of sample space dimensions and create ordinary PDFs
+      const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
+      if (bs.size() == 1) {
+        m_ordupdf.emplace_back( bs[0] );
+        m_instOrdUniPDF.emplace_back( std::vector< const tk::real* >() );
+      } else if (bs.size() == 2) {
+        m_ordbpdf.emplace_back( bs );
+        m_instOrdBiPDF.emplace_back( std::vector< const tk::real* >() );
+      } else if (bs.size() == 3) {
+        m_ordtpdf.emplace_back( bs );
+        m_instOrdTriPDF.emplace_back( std::vector< const tk::real* >() );
+      }
+
+      // Put in starting addresses of instantaneous variables
       for (const auto& term : probability) {
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
+        const tk::real* iptr = m_particles.cptr( term.field, o->second );
+        if (bs.size() == 1) m_instOrdUniPDF.back().push_back( iptr );
+        else if (bs.size() == 2) m_instOrdBiPDF.back().push_back( iptr );
+        else if (bs.size() == 3) m_instOrdTriPDF.back().push_back( iptr );
+      }
+
+    } else { // if central PDF
+
+      // Detect number of sample space dimensions and create central PDFs,
+      // create new storage for instantaneous variable pointer, create new
+      // storage for center pointer
+      const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
+      if (bs.size() == 1) {
+        m_cenupdf.emplace_back( bs[0] );
+        m_instCenUniPDF.emplace_back( std::vector< const tk::real* >() );
+        m_ctrUniPDF.emplace_back( std::vector< const tk::real* >() );
+      } else if (bs.size() == 2) {
+        m_cenbpdf.emplace_back( bs );
+        m_instCenBiPDF.emplace_back( std::vector< const tk::real* >() );
+        m_ctrBiPDF.emplace_back( std::vector< const tk::real* >() );
+      } else if (bs.size() == 3) {
+        m_ordtpdf.emplace_back( bs );
+        m_instCenTriPDF.emplace_back( std::vector< const tk::real* >() );
+        m_ctrTriPDF.emplace_back( std::vector< const tk::real* >() );
+      }
+
+      // Put in starting address of instantaneous variables
+      for (const auto& term : probability) {
+        auto o = offset.find( term.var );
+        Assert( o != end( offset ), "No such depvar" );
+        // Put in starting address of instantaneous variable as well as index
+        // of center for central, m_nord for ordinary moment
+        const tk::real* iptr = m_particles.cptr( term.field, o->second );
+        const tk::real* cptr =
+          &m_ordinary[0] + (std::islower(term.var) ? mean(term) : m_nord);
         if (bs.size() == 1) {
-          m_instUniPDF.back().push_back(
-            m_particles.cptr( term.field, o->second ) );
+          m_instCenUniPDF.back().push_back( iptr );
+          m_ctrUniPDF.back().push_back( cptr );
         } else if (bs.size() == 2) {
-          m_instBiPDF.back().push_back(
-            m_particles.cptr( term.field, o->second ) );
+          m_instCenBiPDF.back().push_back( iptr );
+          m_ctrBiPDF.back().push_back( cptr );
         } else if (bs.size() == 3) {
-          m_instTriPDF.back().push_back(
-            m_particles.cptr( term.field, o->second ) );
+          m_instCenTriPDF.back().push_back( iptr );
+          m_ctrTriPDF.back().push_back( cptr );
         }
       }
     }
   }
 }
 
-int
+std::size_t
 Statistics::mean( const ctr::Term& term ) const
 //******************************************************************************
 //  Return mean for fluctuation
@@ -211,10 +251,10 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
     const auto npar = m_particles.npar();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       for (int i=0; i<m_ncen; ++i) {
-        auto prod = m_particles.cvar( m_instCen[i][0], p ) - *(m_center[i][0]);
+        auto prod = m_particles.cvar( m_instCen[i][0], p ) - *(m_ctr[i][0]);
         const auto s = m_instCen[i].size();
         for (auto j=decltype(s){1}; j<s; ++j) {
-          prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_center[i][j]);
+          prod *= m_particles.cvar( m_instCen[i][j], p ) - *(m_ctr[i][j]);
         }
         m_central[i] += prod;
       }
@@ -223,40 +263,86 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
 }
 
 void
-Statistics::accumulatePDF()
+Statistics::accumulateOrdPDF()
 //******************************************************************************
-//  Accumulate (i.e., only do the sum for) PDFs
+//  Accumulate (i.e., only do the sum for) ordinary PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (!m_updf.empty() || !m_bpdf.empty() || !m_tpdf.empty()) {
+  if (!m_ordupdf.empty() || !m_ordbpdf.empty() || !m_ordtpdf.empty()) {
     // Zero PDF accumulators
-    for (auto& pdf : m_updf) pdf.zero();
-    for (auto& pdf : m_bpdf) pdf.zero();
-    for (auto& pdf : m_tpdf) pdf.zero();
+    for (auto& pdf : m_ordupdf) pdf.zero();
+    for (auto& pdf : m_ordbpdf) pdf.zero();
+    for (auto& pdf : m_ordtpdf) pdf.zero();
 
     // Accumulate partial sum for PDFs
     const auto npar = m_particles.npar();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
       std::size_t i = 0;
       // Accumulate partial sum for univariate PDFs
-      for (auto& pdf : m_updf) {
-        pdf.add( m_particles.cvar( m_instUniPDF[i++][0], p ) );
+      for (auto& pdf : m_ordupdf) {
+        pdf.add( m_particles.cvar( m_instOrdUniPDF[i++][0], p ) );
       }
       // Accumulate partial sum for bivariate PDFs
       i = 0;
-      for (auto& pdf : m_bpdf) {
-        const auto inst = m_instBiPDF[i++];
+      for (auto& pdf : m_ordbpdf) {
+        const auto inst = m_instOrdBiPDF[i++];
         pdf.add( {{ m_particles.cvar( inst[0], p ),
                     m_particles.cvar( inst[1], p ) }} );
       }
       // Accumulate partial sum for trivariate PDFs
       i = 0;
-      for (auto& pdf : m_tpdf) {
-        const auto inst = m_instTriPDF[i++];
+      for (auto& pdf : m_ordtpdf) {
+        const auto inst = m_instOrdTriPDF[i++];
         pdf.add( {{ m_particles.cvar( inst[0], p ),
                     m_particles.cvar( inst[1], p ),
                     m_particles.cvar( inst[2], p ) }} );
+      }
+    }
+  }
+}
+
+void
+Statistics::accumulateCenPDF()
+//******************************************************************************
+//  Accumulate (i.e., only do the sum for) central PDFs
+//! \author J. Bakosi
+//******************************************************************************
+{
+  if (!m_cenupdf.empty() || !m_cenbpdf.empty() || !m_centpdf.empty()) {
+    // Zero PDF accumulators
+    for (auto& pdf : m_cenupdf) pdf.zero();
+    for (auto& pdf : m_cenbpdf) pdf.zero();
+    for (auto& pdf : m_centpdf) pdf.zero();
+
+    // Accumulate partial sum for PDFs
+    const auto npar = m_particles.npar();
+    for (auto p=decltype(npar){0}; p<npar; ++p) {
+      std::size_t i = 0;
+      // Accumulate partial sum for univariate PDFs
+      for (auto& pdf : m_cenupdf) {
+        pdf.add(
+          m_particles.cvar( m_instCenUniPDF[i][0], p ) - *(m_ctrUniPDF[i][0]) );
+        ++i;
+      }
+      // Accumulate partial sum for bivariate PDFs
+      i = 0;
+      for (auto& pdf : m_cenbpdf) {
+        const auto& inst = m_instCenBiPDF[i];
+        const auto& cen = m_ctrBiPDF[i];
+        pdf.add( {{ m_particles.cvar( inst[0], p ) - *(cen[0]),
+                    m_particles.cvar( inst[1], p ) - *(cen[1]) }} );
+        ++i;
+      }
+      // Accumulate partial sum for trivariate PDFs
+      i = 0;
+      for (auto& pdf : m_centpdf) {
+        const auto inst = m_instCenTriPDF[i];
+        const auto& cen = m_ctrTriPDF[i];
+        pdf.add( {{ m_particles.cvar( inst[0], p ) - *(cen[0]),
+                    m_particles.cvar( inst[1], p ) - *(cen[1]),
+                    m_particles.cvar( inst[2], p ) - *(cen[2]) }} );
+        ++i;
       }
     }
   }
