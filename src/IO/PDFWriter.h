@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 12:16:10 PM MDT
+  \date      Tue 14 Oct 2014 08:48:43 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -60,6 +60,14 @@ class PDFWriter : public tk::Writer {
     void writeGmshBin( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
                        ctr::PDFCenteringType centering ) const;
 
+    //! Write bivariate PDF to Exodus II file format
+    void writeExodusII( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                        int it, ctr::PDFCenteringType centering ) const;
+
+    //! Write trivariate PDF to Exodus II file format
+    void writeExodusII( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+                        int it, ctr::PDFCenteringType centering ) const;
+
   private:
     //! Assert the number of sample space dimensions given
     template< std::size_t size, class Container >
@@ -77,6 +85,16 @@ class PDFWriter : public tk::Writer {
                 "PDF user-specified sample space extents must be defined by " +
                 std::to_string( size*2 ) +" real numbers: minx, maxx, ..." );
     }
+
+    // Create Exodus II file
+    int createExFile() const;
+
+    // Write Exodus II file header
+    void writeExHdr( int outFileId, int nnode, int nelem ) const;
+
+    // Output probability density function as Exodus II results field
+    void writeExVar( int exoFile, int it, ctr::PDFCenteringType centering,
+                     const std::vector< tk::real >& probability ) const;
 
     //! Query extents and other metadata of univariate PDF sample space
     void extents( const UniPDF& pdf,

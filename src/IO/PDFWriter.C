@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 12:17:16 PM MDT
+  \date      Tue 14 Oct 2014 09:04:11 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -10,6 +10,9 @@
 //******************************************************************************
 
 #include <iostream>
+
+#include <exodusII.h>
+#include <ne_nemesisI.h>
 
 #include <PDFWriter.h>
 #include <Exception.h>
@@ -282,8 +285,8 @@ const
                 << std::endl;
   } else { // If user-specified sample space extents, output outpdf array
     std::size_t bin = 0;
+    const auto n = nbix*nbiy;
     for (const auto& p : outpdf) {
-      const auto n = nbix*nbiy;
       m_outFile << binsize[0] * (bin % n % nbix) + uext[0] << '\t'
                 << binsize[1] * (bin % n / nbix) + uext[2] << '\t'
                 << binsize[2] * (bin / n) + uext[4] << '\t'
@@ -473,9 +476,9 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
 
   // Output elements of discretized sample space (3D Cartesian grid)
   m_outFile << "$Elements\n" << nbix*nbiy*nbiz << "\n";
+  const auto n = nbix*nbiy;
+  const auto p = (nbix+1)*(nbiy+1);
   for (int i=0; i<nbix*nbiy*nbiz; ++i) {
-    const auto n = nbix*nbiy;
-    const auto p = (nbix+1)*(nbiy+1);
     const auto y = i/nbix + i/n*(nbix+1);
     m_outFile << i+1 << " 5 2 1 1 " << i+y+1 << ' ' << i+y+2 << ' '
               << i+y+nbix+3 << ' ' << i+y+nbix+2 << ' '
@@ -741,15 +744,15 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 
   // Output elements of discretized sample space (3D Cartesian grid)
   m_outFile << "$Elements\n" << nbix*nbiy*nbiz << "\n";
-  int type = 5;           // gmsh elem type: 8-node hexahedron
-  int n = nbix*nbiy*nbiz; // number of elements in (this single) block
-  int ntags = 2;          // number of element tags
+  int type = 5;               // gmsh elem type: 8-node hexahedron
+  int nelem = nbix*nbiy*nbiz; // number of elements in (this single) block
+  int ntags = 2;              // number of element tags
   m_outFile.write( reinterpret_cast< char* >( &type ), sizeof(int) );
-  m_outFile.write( reinterpret_cast< char* >( &n ), sizeof(int) );
+  m_outFile.write( reinterpret_cast< char* >( &nelem ), sizeof(int) );
   m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
+  const auto n = nbix*nbiy;
+  const auto p = (nbix+1)*(nbiy+1);
   for (int i=0; i<n; ++i) {
-    const auto n = nbix*nbiy;
-    const auto p = (nbix+1)*(nbiy+1);
     const auto y = i/nbix + i/n*(nbix+1);
     auto id = i+1;
     int tag[2] = { 1, 1 };
@@ -816,6 +819,302 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   m_outFile << "$End" << c << "Data\n";
 
   ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
+}
+
+void
+PDFWriter::writeExodusII( const BiPDF& pdf,
+                          const ctr::InputDeck::PDFInfo& info,
+                          int it,
+                          ctr::PDFCenteringType centering ) const
+//******************************************************************************
+//  Write out standardized bivariate PDF to Exodus II format
+//! \param[in]  pdf        Bivariate PDF
+//! \param[in]  info       PDF metadata
+//! \param[in]  it         Iteration count
+//! \param[in]  centering  Bin centering on sample space mesh
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  assertSampleSpaceDimensions< 2 >( vars );
+  assertSampleSpaceExtents< 2 >( uext );
+
+  // Query and optionally override number of bins and minima of sample space if
+  // user-specified extents were given and copy probabilities from pdf to a
+  // logically 2D array for output
+  std::size_t nbix, nbiy;
+  tk::real xmin, xmax, ymin, ymax;
+  std::vector< tk::real > outpdf;
+  std::array< tk::real, 2 > binsize;
+  std::array< long, 2*BiPDF::dim > ext;
+  extents( pdf, uext, nbix, nbiy, xmin, xmax, ymin, ymax, binsize, ext, outpdf,
+           centering );
+
+  // Create ExodusII file
+  int outFile = createExFile();
+
+  // Compute number of nodes and number of elements in sample space mesh
+  int nelem = nbix*nbiy;
+  int nnode = (nbix+1)*(nbiy+1);
+
+  // Write ExodusII header
+  writeExHdr( outFile, nnode, nelem );
+
+  // Write sample space variables as coordinate names
+  char* coordnames[] = { const_cast< char* >( vars[0].c_str() ),
+                         const_cast< char* >( vars[1].c_str() ),
+                         const_cast< char* >( "probability" ) };
+  ErrChk( ex_put_coord_names( outFile, coordnames ) == 0,
+          "Failed to write coordinate names to file: " + m_filename );
+
+  // Output grid points of discretized sample space (2D Cartesian grid)
+  std::vector< tk::real > x( nnode, 0.0 );
+  std::vector< tk::real > y( nnode, 0.0 );
+  std::vector< tk::real > z( nnode, 0.0 );
+  int k = 0;
+  for (int i=0; i<=nbiy; i++)
+    for (int j=0; j<=nbix; j++) {
+      x[k] = xmin + j*binsize[0];
+      y[k] = ymin + i*binsize[1];
+      ++k;
+    }
+  ErrChk( ex_put_coord( outFile, x.data(), y.data(), z.data() ) == 0,
+          "Failed to write coordinates to file: " + m_filename );
+
+  // Output elements of discretized sample space (2D Cartesian grid)
+  // Write element block information
+  ErrChk( ex_put_elem_block( outFile, 1, "QUADRANGLES", nelem, 4, 0 ) == 0,
+          "Failed to write QUDARANGLE element block to file: " + m_filename );
+  // Write element connectivity
+  for (int i=0; i<nelem; ++i) {
+    auto y = i/nbix;
+    int con[4] = { static_cast< int >( i+y+1 ),
+                   static_cast< int >( i+y+2 ),
+                   static_cast< int >( i+y+nbix+3 ),
+                   static_cast< int >( i+y+nbix+2 ) };
+    ErrChk( ne_put_n_elem_conn( outFile, 1, i+1, 1, con ) == 0,
+            "Failed to write element connectivity to file: " + m_filename );
+  }
+
+  // Output PDF function values in element or node centers
+  char c = 'e';
+  if (centering == ctr::PDFCenteringType::NODE) {
+    ++nbix; ++nbiy;
+    c = 'n';
+  }
+
+  // Write PDF function values metadata
+  ErrChk( ex_put_var_param( outFile, &c, 1 ) == 0,
+            "Failed to write results metadata to file: " + m_filename );
+  char* probname[] = { const_cast< char* >(
+                       (name + '(' + vars[0] + ',' + vars[1] + ')').c_str() ) };
+  ErrChk( ex_put_var_names( outFile, &c, 1, probname ) == 0,
+            "Failed to write results metadata to file: " + m_filename );
+
+  // If no user-specified sample space extents, output pdf map directly
+  if (uext.empty()) {
+
+    // Output PDF function values in element centers
+    std::vector< tk::real > prob( nbix*nbiy, 0.0 );
+    for (const auto& p : pdf.map()) {
+      const auto bin = (p.first[1] - ext[2]) * nbix +
+                       (p.first[0] - ext[0]) % nbix;
+      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeExodusII()." );
+      prob[bin] = p.second / binsize[0] / binsize[1] / pdf.nsample();
+    }
+    writeExVar( outFile, it+1, centering, prob );
+
+  } else { // If user-specified sample space extents, output outpdf array
+
+    writeExVar( outFile, it+1, centering, outpdf );
+
+  }
+
+  ErrChk( ex_close(outFile) == 0, "Failed to close file: " + m_filename );
+}
+
+void
+PDFWriter::writeExodusII( const TriPDF& pdf,
+                          const ctr::InputDeck::PDFInfo& info,
+                          int it,
+                          ctr::PDFCenteringType centering ) const
+//******************************************************************************
+//  Write out standardized trivariate PDF to Exodus II format
+//! \param[in]  pdf        Trivariate PDF
+//! \param[in]  info       PDF metadata
+//! \param[in]  it         Iteration count
+//! \param[in]  centering  Bin centering on sample space mesh
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  const auto& name = info.name;
+  const auto& uext = info.exts;
+  const auto& vars = info.vars;
+
+  assertSampleSpaceDimensions< 3 >( vars );
+  assertSampleSpaceExtents< 3 >( uext );
+
+  // Query and optionally override number of bins and minima of sample space if
+  // user-specified extents were given and copy probabilities from pdf to a
+  // logically 3D array for output
+  std::size_t nbix, nbiy, nbiz;
+  tk::real xmin, xmax, ymin, ymax, zmin, zmax;
+  std::vector< tk::real > outpdf;
+  std::array< tk::real, 3 > binsize;
+  std::array< long, 2*TriPDF::dim > ext;
+  extents( pdf, uext, nbix, nbiy, nbiz, xmin, xmax, ymin, ymax, zmin, zmax,
+           binsize, ext, outpdf, centering );
+
+  // Create ExodusII file
+  int outFile = createExFile();
+
+  // Compute number of nodes and number of elements in sample space mesh
+  int nelem = nbix*nbiy*nbiz;
+  int nnode = (nbix+1)*(nbiy+1)*(nbiz+1);
+
+  // Write ExodusII header
+  writeExHdr( outFile, nnode, nelem );
+
+  // Write sample space variables as coordinate names
+  char* coordnames[] = { const_cast< char* >( vars[0].c_str() ),
+                         const_cast< char* >( vars[1].c_str() ),
+                         const_cast< char* >( vars[2].c_str() ) };
+  ErrChk( ex_put_coord_names( outFile, coordnames ) == 0,
+          "Failed to write coordinate names to file: " + m_filename );
+
+  // Output grid points of discretized sample space (2D Cartesian grid)
+  std::vector< tk::real > x( nnode, 0.0 );
+  std::vector< tk::real > y( nnode, 0.0 );
+  std::vector< tk::real > z( nnode, 0.0 );
+  int l=0;
+  for (int k=0; k<=nbiz; k++)
+    for (int i=0; i<=nbiy; i++)
+      for (int j=0; j<=nbix; j++) {
+        x[l] = xmin + j*binsize[0];
+        y[l] = ymin + i*binsize[1];
+        z[l] = zmin + k*binsize[2];
+        ++l;
+      }
+  ErrChk( ex_put_coord( outFile, x.data(), y.data(), z.data() ) == 0,
+          "Failed to write coordinates to file: " + m_filename );
+
+  // Output elements of discretized sample space (2D Cartesian grid)
+  // Write element block information
+  ErrChk( ex_put_elem_block( outFile, 1, "HEXAHEDRA", nelem, 8, 0 ) == 0,
+          "Failed to write HEXAHEDRA element block to file: " + m_filename );
+  // Write element connectivity
+  const auto n = nbix*nbiy;
+  const auto p = (nbix+1)*(nbiy+1);
+  for (int i=0; i<nelem; ++i) {
+    const auto y = i/nbix + i/n*(nbix+1);
+    int con[8] = { static_cast< int >( i+y+1 ),
+                   static_cast< int >( i+y+2 ),
+                   static_cast< int >( i+y+nbix+3 ),
+                   static_cast< int >( i+y+nbix+2 ),
+                   static_cast< int >( i+y+p+1 ),
+                   static_cast< int >( i+y+p+2 ),
+                   static_cast< int >( i+y+p+nbix+3 ),
+                   static_cast< int >( i+y+p+nbix+2 ) };
+    ErrChk( ne_put_n_elem_conn( outFile, 1, i+1, 1, con ) == 0,
+            "Failed to write element connectivity to file: " + m_filename );
+  }
+
+  // Output PDF function values in element or node centers
+  char c = 'e';
+  if (centering == ctr::PDFCenteringType::NODE) {
+    ++nbix; ++nbiy; ++nbiz;
+    c = 'n';
+  }
+
+  // Write PDF function values metadata
+  ErrChk( ex_put_var_param( outFile, &c, 1 ) == 0,
+            "Failed to write results metadata to file: " + m_filename );
+  char* probname[] = { const_cast< char* >( (name + '(' + vars[0] + ',' +
+                         vars[1] + ',' + vars[2] + ')').c_str() ) };
+  ErrChk( ex_put_var_names( outFile, &c, 1, probname ) == 0,
+            "Failed to write results metadata to file: " + m_filename );
+
+  // If no user-specified sample space extents, output pdf map directly
+  if (uext.empty()) {
+
+    // Output PDF function values in element centers
+    std::vector< tk::real > prob( nbix*nbiy*nbiz, 0.0 );
+    for (const auto& p : pdf.map()) {
+      const auto bin = (p.first[2] - ext[4]) * nbix*nbiy +
+                       (p.first[1] - ext[2]) * nbix +
+                       (p.first[0] - ext[0]) % nbix;
+      Assert( bin < nbix*nbiy*nbiz,
+              "Bin overflow in PDFWriter::writeExodusII()." );
+      prob[bin] = p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
+    }
+    writeExVar( outFile, it+1, centering, prob );
+
+  } else { // If user-specified sample space extents, output outpdf array
+
+    writeExVar( outFile, it+1, centering, outpdf );
+
+  }
+
+  ErrChk( ex_close(outFile) == 0, "Failed to close file: " + m_filename );
+}
+
+int
+PDFWriter::createExFile() const
+//******************************************************************************
+//  Create Exodus II file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  int cpuwordsize = sizeof( double );
+  int iowordsize = sizeof( double );
+  int outFileId = ex_create( m_filename.c_str(),
+                             EX_CLOBBER | EX_NORMAL_MODEL,
+                             &cpuwordsize,
+                             &iowordsize );
+  ErrChk( outFileId > 0, "Failed to create file: " + m_filename );
+  return outFileId;
+}
+
+void
+PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
+//******************************************************************************
+//  Write Exodus II file header
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  ErrChk( ex_put_init( outFileId,
+                       (std::string("Written by Quinoa::") +
+                        QUINOA_EXECUTABLE).c_str(),
+                       3,                     // number of dimensions
+                       nnode,                 // number of nodes
+                       nelem,                 // number of elements
+                       1,                     // number of element blocks
+                       0,                     // number of node sets
+                       0 ) == 0,              // number of side sets
+          "Failed to write header to file: " + m_filename );
+}
+
+void
+PDFWriter::writeExVar( int exoFile, int it, ctr::PDFCenteringType centering,
+                       const std::vector< tk::real >& probability ) const
+//******************************************************************************
+//  Output probability density function as Exodus II results field
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  if (centering == ctr::PDFCenteringType::NODE)
+    ErrChk( ex_put_nodal_var( exoFile, 1, 1, probability.size(),
+                              probability.data() ) == 0,
+            "Failed to write node-centered bivariate PDF to file: " +
+            m_filename );
+  else
+    ErrChk( ex_put_elem_var( exoFile, 1, 1, 1, probability.size(),
+                             probability.data() ) == 0,
+            "Failed to write elem-centered bivariate PDF to file: " +
+            m_filename );
 }
 
 void
