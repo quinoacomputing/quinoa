@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:05:39 PM MDT
+  \date      Mon 13 Oct 2014 10:18:18 PM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -389,12 +389,17 @@ Distributor::outBiPDF()
         ctr::PDFPolicyType::MULTIPLE)
       filename += '_' + std::to_string( m_t );
 
-    // Augment PDF filename by '.txt' or '.gmsh' extension
-    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
-        ctr::PDFFileType::TXT)
+    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+
+    // Augment PDF filename by the appropriate extension
+    if (filetype == ctr::PDFFileType::TXT)
       filename += ".txt";
-    else
+    else if (filetype == ctr::PDFFileType::GMSHTXT ||
+             filetype == ctr::PDFFileType::GMSHBIN )
       filename += ".gmsh";
+    else if (filetype == ctr::PDFFileType::EXODUSII)
+      filename += ".exo";
+    else Throw( "Unkown PDF file type attempting to output bivariate PDF" );
 
     // Create new PDF file (overwrite if exists)
     PDFWriter pdfw( filename,
@@ -402,7 +407,6 @@ Distributor::outBiPDF()
                     g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
-    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
     if (filetype == ctr::PDFFileType::TXT)
       pdfw.writeTxt( p, info );
     else if (filetype == ctr::PDFFileType::GMSHTXT)
@@ -411,6 +415,9 @@ Distributor::outBiPDF()
     else if (filetype == ctr::PDFFileType::GMSHBIN)
       pdfw.writeGmshBin( p, info,
                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::EXODUSII)
+      pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
+                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }
 
@@ -436,12 +443,17 @@ Distributor::outTriPDF()
         ctr::PDFPolicyType::MULTIPLE)
       filename += '_' + std::to_string( m_t );
 
-    // Augment PDF filename by '.txt' or '.gmsh' extension
-    if (g_inputdeck.get< tag::selected, tag::pdffiletype >() ==
-        ctr::PDFFileType::TXT)
+    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+
+    // Augment PDF filename by the appropriate extension
+    if (filetype == ctr::PDFFileType::TXT)
       filename += ".txt";
-    else
+    else if (filetype == ctr::PDFFileType::GMSHTXT ||
+             filetype == ctr::PDFFileType::GMSHBIN )
       filename += ".gmsh";
+    else if (filetype == ctr::PDFFileType::EXODUSII)
+      filename += ".exo";
+    else Throw( "Unkown PDF file type attempting to output trivariate PDF" );
 
     // Create new PDF file (overwrite if exists)
     PDFWriter pdfw( filename,
@@ -449,7 +461,6 @@ Distributor::outTriPDF()
                     g_inputdeck.get< tag::discr, tag::precision >() );
 
     // Output PDF
-    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
     if (filetype == ctr::PDFFileType::TXT)
       pdfw.writeTxt( p, info );
     else if (filetype == ctr::PDFFileType::GMSHTXT)
@@ -457,6 +468,9 @@ Distributor::outTriPDF()
                           g_inputdeck.get< tag::selected, tag::pdfctr >() );
     else if (filetype == ctr::PDFFileType::GMSHBIN)
        pdfw.writeGmshBin( p, info,
+                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
+    else if (filetype == ctr::PDFFileType::EXODUSII)
+      pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
                           g_inputdeck.get< tag::selected, tag::pdfctr >() );
   }
 }

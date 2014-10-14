@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:45:16 PM MDT
+  \date      Sat 11 Oct 2014 10:56:17 AM MDT
   \copyright 2005-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -363,19 +363,26 @@ struct txt_info {
 };
 using txt = keyword< txt_info, t,x,t >;
 
-// Keyword 'gmshtxt': PDF output file type: gmshtxt
+// Keyword 'gmshtxt': PDF output file type: text gmsh
 struct gmshtxt_info {
   static const char* name() { return "gmshtxt"; }
   static const char* help() { return "PDF GMSH txt file output."; }
 };
 using gmshtxt = keyword< gmshtxt_info, g,m,s,h,t,x,t >;
 
-// Keyword 'gmshbin': PDF output file type: gmshbin
+// Keyword 'gmshbin': PDF output file type: binary gmsh
 struct gmshbin_info {
   static const char* name() { return "gmshbin"; }
   static const char* help() { return "PDF GMSH binary file output."; }
 };
 using gmshbin = keyword< gmshbin_info, g,m,s,h,b,i,n >;
+
+// Keyword 'exodusii': PDF output file type: Exodus II
+struct exodusii_info {
+  static const char* name() { return "exodusii"; }
+  static const char* help() { return "PDF Exodus II binary file output."; }
+};
+using exodusii = keyword< exodusii_info, e,x,o,d,u,s,i,i >;
 
 // Keyword 'policy': selected PDF output file policy
 struct policy_info {
