@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/Types.h
   \author    J. Bakosi
   \date      Mon 14 Jul 2014 09:32:48 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for MeshConv's parsers
   \details   Types for MeshConv's parsers
 */

@@ -3,7 +3,7 @@
   \file      src/Main/Driver.h
   \author    J. Bakosi
   \date      Sun 08 Jun 2014 01:16:53 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Driver
   \details   Driver
 */

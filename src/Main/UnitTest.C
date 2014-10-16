@@ -3,7 +3,7 @@
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
   \date      Sun 14 Sep 2014 10:32:31 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
 */

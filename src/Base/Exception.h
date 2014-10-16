@@ -3,7 +3,7 @@
   \file      src/Base/Exception.h
   \author    J. Bakosi
   \date      Fri 01 Aug 2014 02:45:07 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Exception base class declaration
   \details   Exception base class declaration
 */

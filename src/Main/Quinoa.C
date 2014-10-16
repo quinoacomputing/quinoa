@@ -3,7 +3,7 @@
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
   \date      Wed 17 Sep 2014 02:37:43 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
 */

@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 11:45:25 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
 */

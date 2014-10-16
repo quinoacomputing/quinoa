@@ -3,7 +3,7 @@
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
   \date      Mon 18 Aug 2014 03:34:14 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation
   \details   Differential equation
 */

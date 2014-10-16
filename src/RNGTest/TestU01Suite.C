@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 09:48:40 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
 */

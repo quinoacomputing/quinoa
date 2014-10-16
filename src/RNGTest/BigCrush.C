@@ -3,7 +3,7 @@
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
   \date      Fri 04 Jul 2014 08:33:40 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     BigCrush battery
   \details   BigCrush battery
 */

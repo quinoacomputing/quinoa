@@ -3,7 +3,7 @@
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:03:20 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistical test base
   \details   Statistical test base
 */

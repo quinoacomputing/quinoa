@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/CmdLine/Keywords.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:34:53 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's command line keywords
   \details   All keywords recognized by Quinoa's command line parser. The
   keywords are defined by specializing struct 'keyword', defined in

@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/PDFPolicy.h
   \author    J. Bakosi
   \date      Fri 26 Sep 2014 10:40:51 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file policy options and associations
   \details   PDF output file policy options and associations
 */

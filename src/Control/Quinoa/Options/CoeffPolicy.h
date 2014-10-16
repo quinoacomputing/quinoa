@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/CoeffPolicy.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:16:37 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options and associations
   \details   Differential equation coefficients policy options and associations
 */

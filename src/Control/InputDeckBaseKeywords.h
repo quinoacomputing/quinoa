@@ -3,7 +3,7 @@
   \file      src/Control/InputDeckBaseKeywords.h
   \author    J. Bakosi
   \date      Sat 12 Jul 2014 06:39:24 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all input deck parsers
   \details   Basic keywords recognized by all input deck parsers
 */

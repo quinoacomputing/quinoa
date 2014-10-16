@@ -3,7 +3,7 @@
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 03:41:54 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
 */

@@ -3,7 +3,7 @@
   \file      src/Main/RNGTestPrint.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 09:40:19 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's printer
   \details   RNGTest's printer
 */

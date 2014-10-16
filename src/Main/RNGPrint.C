@@ -3,7 +3,7 @@
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 09:51:19 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
 */

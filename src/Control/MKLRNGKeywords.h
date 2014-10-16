@@ -3,7 +3,7 @@
   \file      src/Control/MKLRNGKeywords.h
   \author    J. Bakosi
   \date      Fri 22 Nov 2013 05:20:02 PM MST
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNG keywords for Intel's MKL
   \details   Random number generator selector keywords for those generators
   available in Intel's Math Kernel Library's (MKL) Vector Statistical Library

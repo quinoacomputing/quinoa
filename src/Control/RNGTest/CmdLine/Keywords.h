@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Keywords.h
   \author    J. Bakosi
   \date      Sat 12 Jul 2014 06:44:25 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's command line keywords
   \details   All keywords recognized by RNGTest's command line parser. The
   keywords are defined by specializing struct 'keyword', defined in

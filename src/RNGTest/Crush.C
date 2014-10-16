@@ -3,7 +3,7 @@
   \file      src/RNGTest/Crush.C
   \author    J. Bakosi
   \date      Fri 04 Jul 2014 07:01:18 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Crush battery
   \details   Crush battery
 */

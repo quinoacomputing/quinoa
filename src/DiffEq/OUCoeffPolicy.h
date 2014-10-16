@@ -1,9 +1,9 @@
 //******************************************************************************
 /*!
-  \file      src/SDE/OUCoeffPolicy.h
+  \file      src/DiffEq/OUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:47:10 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \date      Thu 16 Oct 2014 05:14:48 PM MDT
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   Ornstein-Uhlenbeck coefficients policies
 */

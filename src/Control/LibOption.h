@@ -3,7 +3,7 @@
   \file      src/Control/LibOption.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 10:04:45 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Library toggle
   \details   Library toggle
 */

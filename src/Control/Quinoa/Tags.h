@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 02:50:31 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
 */

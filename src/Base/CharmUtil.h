@@ -3,7 +3,7 @@
   \file      src/Base/CharmUtil.h
   \author    J. Bakosi
   \date      Thu 03 Jul 2014 03:44:28 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Charm++ utilities
   \details   Charm++ utilities
 */

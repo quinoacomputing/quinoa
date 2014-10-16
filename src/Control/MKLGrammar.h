@@ -3,7 +3,7 @@
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
   \date      Mon 14 Jul 2014 08:56:20 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     MKL grammar
   \details   MKL grammar
 */

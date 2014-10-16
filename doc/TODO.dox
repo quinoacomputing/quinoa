@@ -128,11 +128,9 @@ Uncategorized
 
  - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
 
- - Update copyright date start to when quinoa's development started
-
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 15 Sep 2014 09:02:32 AM MDT
-<em>Copyright 2005-2014, Jozsef Bakosi.</em>
+<em>Page last updated:</em> Thu 16 Oct 2014 05:35:32 PM MDT
+<em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

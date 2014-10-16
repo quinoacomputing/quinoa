@@ -3,7 +3,7 @@
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
   \date      Tue 14 Oct 2014 09:04:11 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
 */

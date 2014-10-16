@@ -3,7 +3,7 @@
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
   \date      Thu 29 May 2014 05:57:42 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration
 */

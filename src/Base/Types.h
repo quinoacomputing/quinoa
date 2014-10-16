@@ -3,7 +3,7 @@
   \file      src/Base/Types.h
   \author    J. Bakosi
   \date      Wed 21 May 2014 10:19:38 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Toolkit-level type definitions
   \details   Toolkit-level type definitions
 */

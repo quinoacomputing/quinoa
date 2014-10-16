@@ -1,9 +1,9 @@
 //******************************************************************************
 /*!
-  \file      src/SDE/DirCoeffPolicy.h
+  \file      src/DiffEq/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:27:42 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \date      Thu 16 Oct 2014 05:13:47 PM MDT
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
 */

@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
   \date      Thu 24 Jul 2014 11:25:18 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for UnitTest's parsers
   \details   Types for UnitTest's parsers
 */

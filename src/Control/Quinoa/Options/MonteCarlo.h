@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/MonteCarlo.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:14:27 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     MonteCarlo options and associations
   \details   MonteCarlo options and associations
 */

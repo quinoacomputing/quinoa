@@ -3,7 +3,7 @@
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
   \date      Thu 02 Oct 2014 12:26:02 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator
 */

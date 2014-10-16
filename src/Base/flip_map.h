@@ -3,7 +3,7 @@
   \file      src/Base/flip_map.h
   \author    J. Bakosi
   \date      Wed 02 Jul 2014 08:19:18 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Flip a std::map yielding a multimap sorted by std::map::value_type
   \details   Flip a std::map yielding a multimap sorted by std::map::value_type
 */

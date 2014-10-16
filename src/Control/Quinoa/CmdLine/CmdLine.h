@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Sat 27 Sep 2014 10:00:07 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's command line
   \details   Quinoa's command line
 */

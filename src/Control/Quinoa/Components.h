@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Components.h
   \author    J. Bakosi
   \date      Wed 20 Aug 2014 09:08:38 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components
 */

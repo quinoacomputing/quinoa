@@ -3,7 +3,7 @@
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:15:43 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
 */

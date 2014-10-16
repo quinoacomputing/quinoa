@@ -3,7 +3,7 @@
   \file      src/Base/Factory.h
   \author    J. Bakosi
   \date      Mon 18 Aug 2014 08:50:30 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined below help with
              interfacing with object factories. For an short introduction on

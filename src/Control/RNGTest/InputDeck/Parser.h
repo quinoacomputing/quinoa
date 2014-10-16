@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
   \date      Sat 12 Jul 2014 10:22:15 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
 */

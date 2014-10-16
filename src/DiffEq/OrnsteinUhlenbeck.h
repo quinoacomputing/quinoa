@@ -3,7 +3,7 @@
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 03:16:05 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
 */

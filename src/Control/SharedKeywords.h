@@ -3,7 +3,7 @@
   \file      src/Control/SharedKeywords.h
   \author    J. Bakosi
   \date      Sat 12 Jul 2014 06:39:43 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Shared keywords are shared among different executables
   \details   Shared keywords are shared among different executables
 */

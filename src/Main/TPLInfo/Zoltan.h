@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/Zoltan.h
   \author    J. Bakosi
   \date      Wed 23 Jul 2014 10:13:59 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Zoltan info
   \details   Zoltan info
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Reader.C
   \author    J. Bakosi
   \date      Thu 28 Aug 2014 03:57:39 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader class definition
 */

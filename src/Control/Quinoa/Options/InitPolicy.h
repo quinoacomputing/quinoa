@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/InitPolicy.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:16:25 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation initialization policy options
   \details   Differential equation initialization policy options
 */

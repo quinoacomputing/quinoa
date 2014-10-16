@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
   \date      Thu 28 Aug 2014 03:29:28 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
 */

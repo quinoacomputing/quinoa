@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/Toggle.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 10:22:52 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
 */

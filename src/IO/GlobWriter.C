@@ -3,7 +3,7 @@
   \file      src/IO/GlobWriter.C
   \author    J. Bakosi
   \date      Wed Apr 23 11:20:25 2014
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Glob (i.e. domain-average statistics) writer
   \details   Glob (i.e. domain-average statistics) writer
 */

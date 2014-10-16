@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/CmdLine/Grammar.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:47:02 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

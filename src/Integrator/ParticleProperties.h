@@ -3,7 +3,7 @@
   \file      src/Integrator/ParticleProperties.h
   \author    J. Bakosi
   \date      Tue 12 Aug 2014 04:22:58 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     ParticleProperties for storing particle data with accessors
   \details   ParticleProperties for storing particle data with accessors for
              particle-, and property-major data layout policies

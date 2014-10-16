@@ -3,7 +3,7 @@
   \file      src/Control/tkTags.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:35:06 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Toolkit Tags
   \details   Toolkit Tags
 */

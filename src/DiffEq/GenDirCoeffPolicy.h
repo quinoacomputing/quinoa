@@ -1,9 +1,9 @@
 //******************************************************************************
 /*!
-  \file      src/SDE/GenDirCoeffPolicy.h
+  \file      src/DiffEq/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:27:53 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \date      Thu 16 Oct 2014 05:14:43 PM MDT
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
 */

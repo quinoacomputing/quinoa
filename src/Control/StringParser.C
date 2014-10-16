@@ -3,7 +3,7 @@
   \file      src/Control/StringParser.C
   \author    J. Bakosi
   \date      Thu 28 Aug 2014 03:53:37 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     String parser
   \details   String parser
 */

@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:14:34 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Mass model options and associations
   \details   Mass model options and associations
 */

@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/CmdLine/Keywords.h
   \author    J. Bakosi
   \date      Thu 24 Jul 2014 11:26:11 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's command line keywords
   \details   All keywords recognized by UnitTest's command line parser. The
   keywords are defined by specializing struct 'keyword', defined in

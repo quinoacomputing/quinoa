@@ -3,7 +3,7 @@
   \file      src/Integrator/Integrator.h
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 12:23:46 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Integrator used to advance ordinary and stochastic differential eqs.
   \details   Integrator used to advance ordinary and stochastic differential
              equations.
