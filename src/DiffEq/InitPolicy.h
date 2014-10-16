@@ -3,7 +3,7 @@
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
   \date      Fri 15 Aug 2014 09:52:57 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Initialization policies
   \details   Initialization policies
 */

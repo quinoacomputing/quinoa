@@ -3,7 +3,7 @@
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
   \date      Tue 26 Aug 2014 12:25:25 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTestDriver that drives the unit test suite
   \details   UnitTestDriver that drives the unit test suite
 */

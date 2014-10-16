@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 10:09:52 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

@@ -3,7 +3,7 @@
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:14:04 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
 */

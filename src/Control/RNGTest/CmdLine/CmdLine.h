@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:53:06 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's command line
   \details   RNGTest's command line
 */

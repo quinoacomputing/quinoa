@@ -3,7 +3,7 @@
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
   \date      Tue 26 Aug 2014 12:19:14 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
 */

@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Mon 15 Sep 2014 09:18:20 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's command line
   \details   UnitTest's command line
 */

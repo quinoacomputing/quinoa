@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/PDFCentering.h
   \author    J. Bakosi
   \date      Wed 17 Sep 2014 10:31:34 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file centering type options and associations
   \details   PDF output file centering type options and associations
 */

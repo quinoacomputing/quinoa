@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/TaggedTuple.h
   \author    J. Bakosi
   \date      Fri 01 Aug 2014 02:07:14 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
 */

@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/make_list.h
   \author    J. Bakosi
   \date      Fri 25 Jul 2014 03:11:35 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/make_list.h
   \details   Unit tests for Base/make_list.h
 */

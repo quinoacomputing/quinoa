@@ -3,7 +3,7 @@
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 03:18:39 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
              \f[\mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -

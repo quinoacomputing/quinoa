@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Energy.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:16:01 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Energy model options and associations
   \details   Energy model options and associations
 */

@@ -1,9 +1,9 @@
 //******************************************************************************
 /*!
-  \file      src/SDE/GenDirichlet.h
+  \file      src/DiffEq/GenDirichlet.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:18:19 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \date      Thu 16 Oct 2014 05:14:54 PM MDT
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
              see http://dx.doi.org/10.1063/1.4822416

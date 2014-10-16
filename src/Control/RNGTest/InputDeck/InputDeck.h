@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:53:54 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
 */

@@ -3,7 +3,7 @@
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
   \date      Mon 13 Oct 2014 10:18:18 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
 */

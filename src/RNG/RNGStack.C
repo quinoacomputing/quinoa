@@ -3,7 +3,7 @@
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
   \date      Wed 17 Sep 2014 09:40:42 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   Stack of random number generators
 */

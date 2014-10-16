@@ -3,7 +3,7 @@
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
   \date      Sat 05 Jul 2014 09:00:23 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition
 */

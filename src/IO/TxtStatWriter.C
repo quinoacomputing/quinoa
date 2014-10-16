@@ -3,7 +3,7 @@
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
   \date      Thu 11 Sep 2014 11:19:17 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
 */

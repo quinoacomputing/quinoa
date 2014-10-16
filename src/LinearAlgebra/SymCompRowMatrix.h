@@ -3,7 +3,7 @@
   \file      src/LinearAlgebra/SymCompRowMatrix.h
   \author    J. Bakosi
   \date      Sat 25 Jan 2014 03:33:59 PM MST
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Symmetric compressed row sparse matrix
   \details   Derived sparse matrix class for symmetric compressed sparse row
              (CSR) storage format, with only the upper triangle stored,

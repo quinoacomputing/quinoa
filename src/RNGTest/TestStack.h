@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestStack.h
   \author    J. Bakosi
   \date      Sat 14 Jun 2014 02:34:40 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of all types of statistical tests
   \details   Stack of all types of statistical tests
 */

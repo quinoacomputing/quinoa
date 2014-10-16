@@ -3,7 +3,7 @@
   \file      src/Main/TPLInfo/MKL.C
   \author    J. Bakosi
   \date      Wed 23 Jul 2014 10:08:51 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     MKL info
   \details   MKL info
 */

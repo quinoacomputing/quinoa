@@ -3,7 +3,7 @@
   \file      src/UnitTest/TUTTest.h
   \author    J. Bakosi
   \date      Fri 25 Jul 2014 04:55:00 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Template Unit Test unit test
   \details   Template Unit Test unit test
 */

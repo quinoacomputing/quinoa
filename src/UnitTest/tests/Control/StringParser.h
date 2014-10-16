@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/StringParser.h
   \author    J. Bakosi
   \date      Tue 05 Aug 2014 04:02:40 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
 */

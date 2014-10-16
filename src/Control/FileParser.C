@@ -3,7 +3,7 @@
   \file      src/Control/FileParser.C
   \author    J. Bakosi
   \date      Sat 20 Sep 2014 07:54:16 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     File parser
   \details   File parser
 */

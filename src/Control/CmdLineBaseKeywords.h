@@ -3,7 +3,7 @@
   \file      src/Control/CmdLineBaseKeywords.h
   \author    J. Bakosi
   \date      Sat 12 Jul 2014 11:10:11 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all command line parsers
   \details   Basic keywords recognized by all command line parsers
 */

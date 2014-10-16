@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/TxtFloatFormat.h
   \author    J. Bakosi
   \date      Wed 01 Oct 2014 08:09:49 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Text floating-point output options and associations
   \details   Text floating-point output options and associations
 */

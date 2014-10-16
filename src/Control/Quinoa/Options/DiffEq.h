@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/DiffEq.h
   \author    J. Bakosi
   \date      Wed 08 Oct 2014 10:30:28 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
 */

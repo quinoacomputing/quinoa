@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/PDFFile.h
   \author    J. Bakosi
   \date      Sat 11 Oct 2014 10:54:39 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file type options and associations
   \details   PDF output file type options and associations
 */

@@ -3,7 +3,7 @@
   \file      src/Base/Writer.C
   \author    J. Bakosi
   \date      Thu 11 Sep 2014 11:37:50 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Writer base class definition
   \details   Writer base class definition
 */

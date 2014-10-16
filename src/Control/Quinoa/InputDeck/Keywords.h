@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
   \date      Sat 11 Oct 2014 10:56:17 AM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
   are defined by specializing struct 'keyword', defined in Control/Keyword.h.

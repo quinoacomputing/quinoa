@@ -3,7 +3,7 @@
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
   \date      Thu 17 Apr 2014 09:14:44 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Netgen mesh writer
   \details   Netgen mesh writer
 */

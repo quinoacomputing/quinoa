@@ -3,7 +3,7 @@
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
   \date      Tue 22 Jul 2014 10:21:39 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver
 */

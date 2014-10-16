@@ -3,7 +3,7 @@
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
   \date      Thu 02 Oct 2014 12:25:47 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator
 */

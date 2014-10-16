@@ -3,7 +3,7 @@
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
   \date      Mon 15 Sep 2014 01:36:49 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     MKL-based random number generator
   \details   MKL-based random number generator
 */

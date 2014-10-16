@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Fri 22 Aug 2014 10:52:30 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     MeshConv's command line
   \details   MeshConv's command line
 */

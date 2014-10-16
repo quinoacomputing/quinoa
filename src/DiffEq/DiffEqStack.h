@@ -3,7 +3,7 @@
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 03:04:13 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
 */

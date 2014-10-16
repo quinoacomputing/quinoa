@@ -3,7 +3,7 @@
   \file      src/RNG/RNG.h
   \author    J. Bakosi
   \date      Tue 12 Aug 2014 05:04:15 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator base
   \details   Random number generator base
 */

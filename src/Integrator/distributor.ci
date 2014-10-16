@@ -3,7 +3,7 @@
   \file      src/Integrator/distributor.ci
   \author    J. Bakosi
   \date      Fri 10 Oct 2014 12:26:02 PM MDT
-  \copyright 2005-2014, Jozsef Bakosi.
+  \copyright 2012-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for distributor
   \details   Charm++ module interface file for distributor
 */
