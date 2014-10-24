@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:41:54 PM MDT
+  \date      Sun 19 Oct 2014 09:47:06 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -303,13 +303,16 @@ Statistics::accumulateOrdPDF()
 }
 
 void
-Statistics::accumulateCenPDF()
+Statistics::accumulateCenPDF( const std::vector< tk::real >& ord )
 //******************************************************************************
 //  Accumulate (i.e., only do the sum for) central PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
   if (!m_cenupdf.empty() || !m_cenbpdf.empty() || !m_centpdf.empty()) {
+    // Overwrite ordinary moments by those computed across all PEs
+    for (std::size_t i=0; i<ord.size(); ++i) m_ordinary[i] = ord[i];
+
     // Zero PDF accumulators
     for (auto& pdf : m_cenupdf) pdf.zero();
     for (auto& pdf : m_cenbpdf) pdf.zero();

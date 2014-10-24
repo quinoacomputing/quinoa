@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:10:12 PM MDT
+  \date      Sun 19 Oct 2014 11:40:52 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -39,7 +39,7 @@ class Statistics {
     void accumulateOrdPDF();
 
     //! Accumulate (i.e., only do the sum for) central PDFs
-    void accumulateCenPDF();
+    void accumulateCenPDF( const std::vector< tk::real >& ord );
 
     //! Ordinary moments accessor
     const std::vector< tk::real >& ord() const noexcept { return m_ordinary; }

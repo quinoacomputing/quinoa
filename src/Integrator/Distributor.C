@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Distributor.C
   \author    J. Bakosi
-  \date      Mon 13 Oct 2014 10:18:18 PM MDT
+  \date      Thu 23 Oct 2014 07:50:09 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -23,100 +23,25 @@ using quinoa::Distributor;
 
 Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
-  m_count( 0, 0, 0, 0, 0 ),
+  m_count( 0, 0, 0, 0, 0, 0 ),
   m_output( false, false ),
   m_it( 0 ),
   m_t( 0.0 ),
   m_nameOrdinary( g_inputdeck.momentNames( ctr::ordinary ) ),
   m_nameCentral( g_inputdeck.momentNames( ctr::central ) ),
   m_ordinary( m_nameOrdinary.size(), 0.0 ),
-  m_central( m_nameCentral.size(), 0.0 ),
-  m_updf( g_inputdeck.npdf< 1 >() ),
-  m_bpdf( g_inputdeck.npdf< 2 >() ),
-  m_tpdf( g_inputdeck.npdf< 3 >() )
+  m_central( m_nameCentral.size(), 0.0 )
 //******************************************************************************
 // Constructor
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Print out info data layout
-  m_print.list( "Particle properties data layout policy (CMake: LAYOUT)",
-                std::list< std::string >{ ParProps().major() } );
-
-  // Re-create differential equations stack for output
-  DiffEqStack stack;
-
-  // Print out information on factory
-  m_print.eqlist( "Registered differential equations", stack.factory(),
-                  stack.ntypes() );
-  m_print.endpart();
-
   // Compute load distribution given total work and specified virtualization
   uint64_t chunksize, remainder;
   computeLoadDistribution( chunksize, remainder );
 
-  // Print out information on problem
-  m_print.part( "Problem" );
-
-  // Print out info on problem title
-  if ( !g_inputdeck.get< tag::title >().empty() )
-    m_print.section( "Title", g_inputdeck.get< tag::title >() );
-
-  // Print out info on settings of selected differential equations
-  m_print.diffeqs( "Differential equations integrated", stack.info() );
-
-  // Print out info on RNGs selected
-  // ...
-
-  // Print I/O filenames
-  m_print.section( "Output filenames" );
-  m_print.item( "Input", g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-  m_print.item( "Output", g_inputdeck.get< tag::cmd, tag::io, tag::output >() );
-  m_print.item( "Glob", g_inputdeck.get< tag::cmd, tag::io, tag::glob >() );
-  m_print.item( "Statistics", g_inputdeck.get< tag::cmd, tag::io, tag::stat >() );
-  m_print.item( "PDF", g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() );
-
-  // Print discretization parameters
-  m_print.section( "Discretization parameters" );
-  m_print.item( "Number of time steps",
-                g_inputdeck.get< tag::discr, tag::nstep >() );
-  m_print.item( "Terminate time",
-                g_inputdeck.get< tag::discr, tag::term >() );
-  m_print.item( "Initial time step size",
-                g_inputdeck.get< tag::discr, tag::dt >() );
-
-  // Print output intervals
-  m_print.section( "Output intervals" );
-  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
-  m_print.item( "Dump", g_inputdeck.get< tag::interval, tag::dump>() );
-  m_print.item( "Glob", g_inputdeck.get< tag::interval, tag::glob >() );
-  m_print.item( "Statistics", g_inputdeck.get< tag::interval, tag::stat >() );
-  m_print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
-
-  // Print out statistics estimated
-  m_print.statistics( "Statistical moments and distributions" );
-
-  // Print out info on load distirubtion
-  m_print.section( "Load distribution" );
-  m_print.item( "Virtualization [0.0...1.0]",
-                g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of particles)",
-                g_inputdeck.get< tag::discr, tag::npar >() );
-  m_print.item( "Number of processing elements", CkNumPes() );
-  m_print.item( "Number of work units",
-                std::to_string( m_count.get< tag::chare >() ) + " (" +
-                std::to_string( m_count.get< tag::chare >()-1 ) + "*" +
-                std::to_string( chunksize ) + "+" +
-                std::to_string( chunksize+remainder ) + ")" );
-
-  // Print out time integration header
-  if (g_inputdeck.get< tag::discr, tag::nstep >()) {
-    header();
-    TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
-                      g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
-                      std::string() );
-    sw.header( g_inputdeck.plotOrdinary(), m_nameOrdinary, m_nameCentral );
-  }
+  // Print out info on what will be done and how
+  info( chunksize, remainder );
 
   // Start timer measuring total integration time
   m_timer.emplace_back();
@@ -124,10 +49,17 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Compute size of initial time step
   const auto dt = computedt();
 
+  // Activate SDAG-wait for estimation of ordinary statistics
+  wait4ord();
+  // Activate SDAG-wait for estimation of central moments
+  wait4cen();
+  // Activate SDAG-wait for estimation of PDFs at select times
+  if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
+
   // Fire up integrators
   for (uint64_t i = 1; i < m_count.get< tag::chare >(); ++i)
-    m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt ) );
-  m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize+remainder, dt ) );
+    m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt, m_it ) );
+  m_proxy.push_back(CProxyInt::ckNew(thisProxy, chunksize+remainder, dt, m_it));
 }
 
 void
@@ -194,6 +126,93 @@ Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
   remainder = npar - m_count.get< tag::chare >() * chunksize;
 }
 
+void
+Distributor::info( uint64_t chunksize, uint64_t remainder ) const
+//******************************************************************************
+//  Print information at startup
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Print out info data layout
+  m_print.list( "Particle properties data layout policy (CMake: LAYOUT)",
+                std::list< std::string >{ ParProps().major() } );
+
+  // Re-create differential equations stack for output
+  DiffEqStack stack;
+
+  // Print out information on factory
+  m_print.eqlist( "Registered differential equations", stack.factory(),
+                  stack.ntypes() );
+  m_print.endpart();
+
+  // Print out information on problem
+  m_print.part( "Problem" );
+
+  // Print out info on problem title
+  if ( !g_inputdeck.get< tag::title >().empty() )
+    m_print.section( "Title", g_inputdeck.get< tag::title >() );
+
+  // Print out info on settings of selected differential equations
+  m_print.diffeqs( "Differential equations integrated", stack.info() );
+
+  // Print out info on RNGs selected
+  // ...
+
+  // Print I/O filenames
+  m_print.section( "Output filenames" );
+  m_print.item( "Input", g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  m_print.item( "Output", g_inputdeck.get< tag::cmd, tag::io, tag::output >() );
+  m_print.item( "Glob", g_inputdeck.get< tag::cmd, tag::io, tag::glob >() );
+  if (!g_inputdeck.get< tag::stat >().empty())
+    m_print.item( "Statistics", g_inputdeck.get< tag::cmd, tag::io, tag::stat >() );
+  if (!g_inputdeck.get< tag::pdf >().empty())
+    m_print.item( "PDF", g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() );
+
+  // Print discretization parameters
+  m_print.section( "Discretization parameters" );
+  m_print.item( "Number of time steps",
+                g_inputdeck.get< tag::discr, tag::nstep >() );
+  m_print.item( "Terminate time",
+                g_inputdeck.get< tag::discr, tag::term >() );
+  m_print.item( "Initial time step size",
+                g_inputdeck.get< tag::discr, tag::dt >() );
+
+  // Print output intervals
+  m_print.section( "Output intervals" );
+  m_print.item( "TTY", g_inputdeck.get< tag::interval, tag::tty>() );
+  m_print.item( "Dump", g_inputdeck.get< tag::interval, tag::dump>() );
+  m_print.item( "Glob", g_inputdeck.get< tag::interval, tag::glob >() );
+  if (!g_inputdeck.get< tag::stat >().empty())
+    m_print.item( "Statistics", g_inputdeck.get< tag::interval, tag::stat >() );
+  if (!g_inputdeck.get< tag::pdf >().empty())
+    m_print.item( "PDF", g_inputdeck.get< tag::interval, tag::pdf >() );
+
+  // Print out statistics estimated
+  m_print.statistics( "Statistical moments and distributions" );
+
+  // Print out info on load distirubtion
+  m_print.section( "Load distribution" );
+  m_print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+  m_print.item( "Load (number of particles)",
+                g_inputdeck.get< tag::discr, tag::npar >() );
+  m_print.item( "Number of processing elements", CkNumPes() );
+  m_print.item( "Number of work units",
+                std::to_string( m_count.get< tag::chare >() ) + " (" +
+                std::to_string( m_count.get< tag::chare >()-1 ) + "*" +
+                std::to_string( chunksize ) + "+" +
+                std::to_string( chunksize+remainder ) + ")" );
+
+  // Print out time integration header
+  if (g_inputdeck.get< tag::discr, tag::nstep >()) {
+    header();
+    TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
+                      g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                      std::string() );
+    sw.header( g_inputdeck.plotOrdinary(), m_nameOrdinary, m_nameCentral );
+  }
+}
+
 tk::real
 Distributor::computedt()
 //******************************************************************************
@@ -215,9 +234,8 @@ Distributor::init()
   ++m_count.get< tag::init >();
 
   // Wait for all integrators completing initialization
-  if (m_count.get< tag::init >() == m_count.get< tag::chare >()) {
+  if (m_count.get< tag::init >() == m_count.get< tag::chare >())
     mainProxy.timestamp( "Initial conditions", m_timer[0].dsec() );
-  }
 }
 
 void
@@ -238,8 +256,8 @@ Distributor::estimateOrd( const std::vector< tk::real >& ord )
   if (m_count.get< tag::ordinary >() == m_count.get< tag::chare >()) {
     // Finish computing moments, i.e., divide sums by the number of samples
     for (auto& m : m_ordinary) m /= g_inputdeck.get< tag::discr, tag::npar >();
-    // Continue with accumulation for central moments with all integrators
-    for (auto& p : m_proxy) p.accumulateCen( m_ordinary );
+    // Activate SDAG trigger signaling that ordinary moments have been estimated
+    estimateOrdDone();
   }
 }
 
@@ -259,226 +277,284 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
 
   // Wait for all integrators completing accumulation of central moments
   if (m_count.get< tag::central >() == m_count.get< tag::chare >()) {
-
     // Finish computing moments, i.e., divide sums by the number of samples
     for (auto& m : m_central) m /= g_inputdeck.get< tag::discr, tag::npar >();
-
-    // Append statistics file at selected times
-    if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
-      TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
-                        g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
-                        std::string(), std::ios_base::app );
-      sw.stat( m_it, m_t, m_ordinary, m_central, g_inputdeck.plotOrdinary() );
-      m_output.get< tag::stat >() = true;
-    }
-
-    // Zero accumulator counters and total-sums for next time step
-    m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
-    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );    
-    std::fill( begin(m_central), end(m_central), 0.0 );    
-
-    // Continue with accumulation for PDFs with all integrators
-    for (auto& p : m_proxy) p.accumulatePDF();
+    // Activate SDAG trigger signaling that central moments have been estimated
+    estimateCenDone();
   }
 }
 
 void
-Distributor::estimatePDF( const std::vector< UniPDF >& oupdf,
-                          const std::vector< BiPDF >& obpdf,
-                          const std::vector< TriPDF >& otpdf,
-                          const std::vector< UniPDF >& cupdf,
-                          const std::vector< BiPDF >& cbpdf,
-                          const std::vector< TriPDF >& ctpdf )
+Distributor::estimateOrdPDF( const std::vector< UniPDF >& updf,
+                             const std::vector< BiPDF >& bpdf,
+                             const std::vector< TriPDF >& tpdf )
 //******************************************************************************
-// Wait for all integrators to finish accumulation of PDFs
+// Wait for all integrators to finish accumulation of ordinary PDFs
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Increase number of integrators completing the accumulation of ordinary PDFs
+  ++m_count.get< tag::ordpdf >();
+
+  // Add contribution from PE to total sums
+  std::size_t i = 0;
+  m_ordupdf.resize( updf.size() );
+  for (const auto& p : updf) m_ordupdf[i++].addPDF( p );
+
+  i = 0;
+  m_ordbpdf.resize( bpdf.size() );
+  for (const auto& p : bpdf) m_ordbpdf[i++].addPDF( p );
+
+  i = 0;
+  m_ordtpdf.resize( tpdf.size() );
+  for (const auto& p : tpdf) m_ordtpdf[i++].addPDF( p );
+
+  // Wait for all integrators completing accumulation of ordinary PDFs
+  if (m_count.get< tag::ordpdf >() == m_count.get< tag::chare >()) {
+    // Activate SDAG trigger signaling that ordinary PDFs have been estimated
+    estimateOrdPDFDone();
+  }
+}
+
+void
+Distributor::estimateCenPDF( const std::vector< UniPDF >& updf,
+                             const std::vector< BiPDF >& bpdf,
+                             const std::vector< TriPDF >& tpdf )
+//******************************************************************************
+// Wait for all integrators to finish accumulation of central PDFs
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Increase number of integrators completing the accumulation of PDFs
-  ++m_count.get< tag::pdf >();
+  ++m_count.get< tag::cenpdf >();
 
   // Add contribution from PE to total sums
-  std::size_t i=0;
-  for (const auto& p : oupdf) m_updf[i++].addPDF( p );
-  for (const auto& p : cupdf) m_updf[i++].addPDF( p );
+  std::size_t i = 0;
+  m_cenupdf.resize( updf.size() );
+  for (const auto& p : updf) m_cenupdf[i++].addPDF( p );
+
   i = 0;
-  for (const auto& p : obpdf) m_bpdf[i++].addPDF( p );
-  for (const auto& p : cbpdf) m_bpdf[i++].addPDF( p );
+  m_cenbpdf.resize( bpdf.size() );
+  for (const auto& p : bpdf) m_cenbpdf[i++].addPDF( p );
+
   i = 0;
-  for (const auto& p : otpdf) m_tpdf[i++].addPDF( p );
-  for (const auto& p : ctpdf) m_tpdf[i++].addPDF( p );
+  m_centpdf.resize( tpdf.size() );
+  for (const auto& p : tpdf) m_centpdf[i++].addPDF( p );
 
   // Wait for all integrators completing accumulation of PDFs
-  if (m_count.get< tag::pdf >() == m_count.get< tag::chare >()) {
-
-    // Output PDFs at selected times
-    if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) &&
-         (!m_updf.empty() || !m_bpdf.empty() || !m_tpdf.empty()) )
-    {
-      outUniPDF();                       // Output univariate PDFs to file(s)
-      outBiPDF();                        // Output bivariate PDFs to file(s)
-      outTriPDF();                       // Output trivariate PDFs to file(s)
-      m_output.get< tag::pdf >() = true; // Signal that PDFs were written
-    }
-
-    // Zero accumulator counter and PDFs for next time step
-    m_count.get< tag::pdf >() = 0;
-    for (auto& p : m_updf) p.zero();
-    for (auto& p : m_bpdf) p.zero();
-    for (auto& p : m_tpdf) p.zero();
-
-    // Decide if it is time to quit
-    evaluateTime();
+  if (m_count.get< tag::cenpdf >() == m_count.get< tag::chare >()) {
+    // Activate SDAG trigger signaling that central PDFs have been estimated
+    estimateCenPDFDone();
   }
 }
 
 void
+Distributor::outStat()
+//******************************************************************************
+// Output statistics to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Append statistics file at selected times
+  if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
+    TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
+                      g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
+                      std::string(), std::ios_base::app );
+    if (sw.stat( m_it, m_t, m_ordinary, m_central, g_inputdeck.plotOrdinary() ))
+      m_output.get< tag::stat >() = true;
+  }
+}
+
+void
+Distributor::outPDF()
+//******************************************************************************
+// Output PDFs to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Output PDFs at selected times
+  if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
+    std::size_t n = outUniPDF();       // Output univariate PDFs to file(s)
+    n += outBiPDF();                   // Output bivariate PDFs to file(s)
+    n += outTriPDF();                  // Output trivariate PDFs to file(s)
+    if (n) m_output.get< tag::pdf >() = true; // Signal that PDFs were written
+  }
+}
+
+void
+Distributor::writeUniPDF( const UniPDF& p, std::size_t& cnt )
+//******************************************************************************
+// Write univariate PDF to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Get PDF metadata
+  const auto info = g_inputdeck.pdf< 1 >( cnt++ );
+
+  // Construct PDF file name: base name + '_' + pdf name
+  std::string filename =
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+
+  // Augment PDF filename by time stamp if PDF output file policy is multiple
+  if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+      ctr::PDFPolicyType::MULTIPLE)
+    filename += '_' + std::to_string( m_t );
+
+  // Augment PDF filename by '.txt' extension
+  filename += ".txt";
+
+  // Create new PDF file (overwrite if exists)
+  PDFWriter pdfw( filename,
+                  g_inputdeck.get< tag::selected, tag::float_format >(),
+                  g_inputdeck.get< tag::discr, tag::precision >() );
+
+  // Output PDF
+  pdfw.writeTxt( p, info );
+}
+
+void
+Distributor::writeBiPDF( const BiPDF& p, std::size_t& cnt )
+//******************************************************************************
+// Write bivariate PDF to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Get PDF metadata
+  const auto info = g_inputdeck.pdf< 2 >( cnt++ );
+
+  // Construct PDF file name: base name + '_' + pdf name
+  std::string filename =
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+
+  // Augment PDF filename by time stamp if PDF output file policy is multiple
+  if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+      ctr::PDFPolicyType::MULTIPLE)
+    filename += '_' + std::to_string( m_t );
+
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+
+  // Augment PDF filename by the appropriate extension
+  if (filetype == ctr::PDFFileType::TXT)
+    filename += ".txt";
+  else if (filetype == ctr::PDFFileType::GMSHTXT ||
+           filetype == ctr::PDFFileType::GMSHBIN )
+    filename += ".gmsh";
+  else if (filetype == ctr::PDFFileType::EXODUSII)
+    filename += ".exo";
+  else Throw( "Unkown PDF file type attempting to output bivariate PDF" );
+
+  // Create new PDF file (overwrite if exists)
+  PDFWriter pdfw( filename,
+                  g_inputdeck.get< tag::selected, tag::float_format >(),
+                  g_inputdeck.get< tag::discr, tag::precision >() );
+
+  // Output PDF
+  if (filetype == ctr::PDFFileType::TXT)
+    pdfw.writeTxt( p, info );
+  else if (filetype == ctr::PDFFileType::GMSHTXT)
+    pdfw.writeGmshTxt( p, info,
+                       g_inputdeck.get< tag::selected, tag::pdfctr >() );
+  else if (filetype == ctr::PDFFileType::GMSHBIN)
+    pdfw.writeGmshBin( p, info,
+                       g_inputdeck.get< tag::selected, tag::pdfctr >() );
+  else if (filetype == ctr::PDFFileType::EXODUSII)
+    pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
+                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
+}
+
+void
+Distributor::writeTriPDF( const TriPDF& p, std::size_t& cnt )
+//******************************************************************************
+// Write trivariate PDF to file
+//! \author  J. Bakosi
+//******************************************************************************
+{
+  // Get PDF metadata
+  const auto info = g_inputdeck.pdf< 3 >( cnt++ );
+
+  // Construct PDF file name: base name + '_' + pdf name
+  std::string filename =
+    g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
+
+  // Augment PDF filename by time stamp if PDF output file policy is multiple
+  if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
+      ctr::PDFPolicyType::MULTIPLE)
+    filename += '_' + std::to_string( m_t );
+
+  const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
+
+  // Augment PDF filename by the appropriate extension
+  if (filetype == ctr::PDFFileType::TXT)
+    filename += ".txt";
+  else if (filetype == ctr::PDFFileType::GMSHTXT ||
+           filetype == ctr::PDFFileType::GMSHBIN )
+    filename += ".gmsh";
+  else if (filetype == ctr::PDFFileType::EXODUSII)
+    filename += ".exo";
+  else Throw( "Unkown PDF file type attempting to output trivariate PDF" );
+
+  // Create new PDF file (overwrite if exists)
+  PDFWriter pdfw( filename,
+                  g_inputdeck.get< tag::selected, tag::float_format >(),
+                  g_inputdeck.get< tag::discr, tag::precision >() );
+
+  // Output PDF
+  if (filetype == ctr::PDFFileType::TXT)
+    pdfw.writeTxt( p, info );
+  else if (filetype == ctr::PDFFileType::GMSHTXT)
+     pdfw.writeGmshTxt( p, info,
+                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
+  else if (filetype == ctr::PDFFileType::GMSHBIN)
+     pdfw.writeGmshBin( p, info,
+                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
+  else if (filetype == ctr::PDFFileType::EXODUSII)
+    pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
+                        g_inputdeck.get< tag::selected, tag::pdfctr >() );
+}
+
+std::size_t
 Distributor::outUniPDF()
 //******************************************************************************
 // Output univariate PDFs to file(s)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::size_t i = 0;
-  for (const auto& p : m_updf) {
-
-    // Get PDF metadata
-    const auto info = g_inputdeck.pdf< 1 >( i++ );
-
-    // Construct PDF file name: base name + '_' + pdf name
-    std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
-
-    // Augment PDF filename by time stamp if PDF output file policy is multiple
-    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
-        ctr::PDFPolicyType::MULTIPLE)
-      filename += '_' + std::to_string( m_t );
-
-    // Augment PDF filename by '.txt' extension
-    filename += ".txt";
-
-    // Create new PDF file (overwrite if exists)
-    PDFWriter pdfw( filename,
-                    g_inputdeck.get< tag::selected, tag::float_format >(),
-                    g_inputdeck.get< tag::discr, tag::precision >() );
-
-    // Output PDF
-    pdfw.writeTxt( p, info );
-  }
+  std::size_t cnt = 0;
+  for (const auto& p : m_ordupdf) writeUniPDF( p, cnt );
+  for (const auto& p : m_cenupdf) writeUniPDF( p, cnt );
+  return cnt;
 }
 
-void
+std::size_t
 Distributor::outBiPDF()
 //******************************************************************************
 // Output bivariate PDFs to file(s)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::size_t i = 0;
-  for (const auto& p : m_bpdf) {
-
-    // Get PDF metadata
-    const auto info = g_inputdeck.pdf< 2 >( i++ );
-
-    // Construct PDF file name: base name + '_' + pdf name
-    std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
-
-    // Augment PDF filename by time stamp if PDF output file policy is multiple
-    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
-        ctr::PDFPolicyType::MULTIPLE)
-      filename += '_' + std::to_string( m_t );
-
-    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
-
-    // Augment PDF filename by the appropriate extension
-    if (filetype == ctr::PDFFileType::TXT)
-      filename += ".txt";
-    else if (filetype == ctr::PDFFileType::GMSHTXT ||
-             filetype == ctr::PDFFileType::GMSHBIN )
-      filename += ".gmsh";
-    else if (filetype == ctr::PDFFileType::EXODUSII)
-      filename += ".exo";
-    else Throw( "Unkown PDF file type attempting to output bivariate PDF" );
-
-    // Create new PDF file (overwrite if exists)
-    PDFWriter pdfw( filename,
-                    g_inputdeck.get< tag::selected, tag::float_format >(),
-                    g_inputdeck.get< tag::discr, tag::precision >() );
-
-    // Output PDF
-    if (filetype == ctr::PDFFileType::TXT)
-      pdfw.writeTxt( p, info );
-    else if (filetype == ctr::PDFFileType::GMSHTXT)
-      pdfw.writeGmshTxt( p, info,
-                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
-    else if (filetype == ctr::PDFFileType::GMSHBIN)
-      pdfw.writeGmshBin( p, info,
-                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
-    else if (filetype == ctr::PDFFileType::EXODUSII)
-      pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
-                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
-  }
+  std::size_t cnt = 0;
+  for (const auto& p : m_ordbpdf) writeBiPDF( p, cnt );
+  for (const auto& p : m_cenbpdf) writeBiPDF( p, cnt );
+  return cnt;
 }
 
-void
+std::size_t
 Distributor::outTriPDF()
 //******************************************************************************
 // Output trivariate PDFs to file(s)
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  std::size_t i = 0;
-  for (const auto& p : m_tpdf) {
-
-    // Get PDF metadata
-    const auto info = g_inputdeck.pdf< 3 >( i++ );
-
-    // Construct PDF file name: base name + '_' + pdf name
-    std::string filename =
-      g_inputdeck.get< tag::cmd, tag::io, tag::pdf >() + '_' + info.name;
-
-    // Augment PDF filename by time stamp if PDF output file policy is multiple
-    if (g_inputdeck.get< tag::selected, tag::pdfpolicy >() ==
-        ctr::PDFPolicyType::MULTIPLE)
-      filename += '_' + std::to_string( m_t );
-
-    const auto& filetype = g_inputdeck.get< tag::selected, tag::pdffiletype >();
-
-    // Augment PDF filename by the appropriate extension
-    if (filetype == ctr::PDFFileType::TXT)
-      filename += ".txt";
-    else if (filetype == ctr::PDFFileType::GMSHTXT ||
-             filetype == ctr::PDFFileType::GMSHBIN )
-      filename += ".gmsh";
-    else if (filetype == ctr::PDFFileType::EXODUSII)
-      filename += ".exo";
-    else Throw( "Unkown PDF file type attempting to output trivariate PDF" );
-
-    // Create new PDF file (overwrite if exists)
-    PDFWriter pdfw( filename,
-                    g_inputdeck.get< tag::selected, tag::float_format >(),
-                    g_inputdeck.get< tag::discr, tag::precision >() );
-
-    // Output PDF
-    if (filetype == ctr::PDFFileType::TXT)
-      pdfw.writeTxt( p, info );
-    else if (filetype == ctr::PDFFileType::GMSHTXT)
-       pdfw.writeGmshTxt( p, info,
-                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
-    else if (filetype == ctr::PDFFileType::GMSHBIN)
-       pdfw.writeGmshBin( p, info,
-                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
-    else if (filetype == ctr::PDFFileType::EXODUSII)
-      pdfw.writeExodusII( p, info, static_cast< int >( m_it ),
-                          g_inputdeck.get< tag::selected, tag::pdfctr >() );
-  }
+  std::size_t cnt = 0;
+  for (const auto& p : m_ordtpdf) writeTriPDF( p, cnt );
+  for (const auto& p : m_centpdf) writeTriPDF( p, cnt );
+  return cnt;
 }
 
 void
 Distributor::evaluateTime()
 //******************************************************************************
-// Evaluate time, decide if it is time to quit
+// Evaluate time step, compute new time step size, decide if it is time to quit
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -503,9 +579,35 @@ Distributor::evaluateTime()
   // Finish if either max iterations or max time reached 
   if (std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
     m_it < g_inputdeck.get< tag::discr, tag::nstep >()) {
+
+    // Zero statistics counters and accumulators
+    m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
+    std::fill( begin(m_ordinary), end(m_ordinary), 0.0 );
+    std::fill( begin(m_central), end(m_central), 0.0 );
+
+    // Re-activate SDAG-wait for estimation of ordinary statistics for next step
+    wait4ord();
+    // Re-activate SDAG-wait for estimation of central moments for next step
+    wait4cen();
+
+    // Selectively re-activate SDAG-wait for estimation of PDFs for next step
+    if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
+      // Zero PDF counters and accumulators
+      m_count.get< tag::ordpdf >() = m_count.get< tag::cenpdf >() = 0;
+      for (auto& p : m_ordupdf) p.zero();
+      for (auto& p : m_ordbpdf) p.zero();
+      for (auto& p : m_ordtpdf) p.zero();
+      for (auto& p : m_cenupdf) p.zero();
+      for (auto& p : m_cenbpdf) p.zero();
+      for (auto& p : m_centpdf) p.zero();
+      wait4pdf();
+    }
+
     // Continue with next time step with all integrators
-    for (auto& p : m_proxy) p.advance( dt );
+    for (auto& p : m_proxy) p.advance( dt, m_it );
+
   } else {
+
     // Normal finish, print out reason
     const auto term = g_inputdeck.get< tag::discr, tag::term >();
     const auto nstep = g_inputdeck.get< tag::discr, tag::nstep >();
@@ -518,6 +620,7 @@ Distributor::evaluateTime()
                      std::to_string( term ) );
     // Quit
     mainProxy.finalize();
+
   }
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:55:06 PM MDT
+  \date      Wed 22 Oct 2014 10:43:01 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -313,8 +313,8 @@ namespace deck {
       std::string low(value);
       std::transform( begin(low), end(low), begin(low), ::tolower );
       if (low == "max") {
-        stack.template set< tag::discr, tag::precision >
-                          ( std::numeric_limits< tk::real >::digits10 + 1 );
+        stack.set< tag::discr, tag::precision >
+                 ( std::numeric_limits< tk::real >::digits10 + 1 );
       } else {
         std::streamsize precision = std::cout.precision();  // set default
         try {
@@ -329,7 +329,7 @@ namespace deck {
         // only set precision given if it makes sense
         if (precision > 0 &&
             precision < std::numeric_limits< tk::real >::digits10+2)
-          stack.template set< tag::discr, tag::precision >( precision );
+          stack.set< tag::discr, tag::precision >( precision );
         else
           tk::grm::Message< Stack,
                             tk::grm::WARNING,

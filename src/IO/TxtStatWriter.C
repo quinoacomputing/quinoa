@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 11:19:17 AM MDT
+  \date      Thu 23 Oct 2014 07:47:43 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -40,7 +40,7 @@ TxtStatWriter::header( const std::vector< bool >& plotOrd,
   m_outFile << std::endl;
 }
 
-void
+std::size_t
 TxtStatWriter::stat( int it,
                      tk::real t,
                      const std::vector< tk::real >& ordinary,
@@ -67,4 +67,6 @@ TxtStatWriter::stat( int it,
   for (const auto& c : central) m_outFile << " " << c << "  ";
 
   m_outFile << std::endl;
+
+  return ordinary.size() + central.size();
 }
