@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 07:22:27 AM MDT
+  \date      Thu 23 Oct 2014 07:33:59 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -81,7 +81,7 @@ QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
   std::ostream&, const std::vector< ctr::Term >& ) > op ) const
 //******************************************************************************
 //  Echo statistics container contents if differs from default applying op.
-//! \details See src/Control/Quinoa/InputDeck/Types.h for the definition of
+//! \details See src/Control/Quinoa/Types.h for the definition of
 //! functions that may be passed in as op. Examples are 'estimated',
 //! 'requested', and 'triggered'. The operation given by the template
 //! argument and is a function pointer specifying an stream-output operator
@@ -110,11 +110,8 @@ QuinoaPrint::pdfs( const std::string& msg,
 const
 //******************************************************************************
 //  Echo pdfs container contents if differs from default applying op.
-//! \details See src/Control/Quinoa/InputDeck/Types.h for the definition of
-//! functions that may be passed in as op. Examples are 'estimated',
-//! 'requested', and 'triggered'. The operation given by the template
-//! argument and is a function pointer specifying an stream-output operator
-//! for a std::vector< ctr::Term >.
+//! \details See src/Control/Quinoa/Types.h for the definition of
+//! functions that may be passed in as op. Currently, the only example is 'pdf'.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -140,18 +137,20 @@ const
   }
 
   // Oputput options and settings affecting PDF output
-  ctr::PDFFile f;
-  item( f.group(),
-        f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
-  ctr::PDFPolicy p;
-  item( p.group(),
-        p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
-  ctr::PDFCentering e;
-  item( e.group(),
-        e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
-  ctr::TxtFloatFormat fl;
-  item( fl.group(),
-        fl.name( g_inputdeck.get< tag::selected, tag::float_format >() ) );
-  item( "Text precision in digits",
-        g_inputdeck.get< tag::discr, tag::precision >() );
+  if (!c.empty()) {
+    ctr::PDFFile f;
+    item( f.group(),
+          f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
+    ctr::PDFPolicy p;
+    item( p.group(),
+          p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
+    ctr::PDFCentering e;
+    item( e.group(),
+          e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
+    ctr::TxtFloatFormat fl;
+    item( fl.group(),
+          fl.name( g_inputdeck.get< tag::selected, tag::float_format >() ) );
+    item( "Text precision in digits",
+          g_inputdeck.get< tag::discr, tag::precision >() );
+  }
 }

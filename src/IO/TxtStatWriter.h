@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Thu 11 Sep 2014 11:37:59 AM MDT
+  \date      Thu 23 Oct 2014 07:46:37 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -35,11 +35,10 @@ class TxtStatWriter : public tk::Writer {
                  const std::vector< std::string >& nameCen ) const;
 
     //! Write statistics file
-    void stat( int it,
-               tk::real t,
-               const std::vector< tk::real >& ordinary,
-               const std::vector< tk::real >& central,
-               const std::vector< bool >& plotOrd );
+    std::size_t stat( int it, tk::real t,
+                      const std::vector< tk::real >& ordinary,
+                      const std::vector< tk::real >& central,
+                      const std::vector< bool >& plotOrd );
 };
 
 } // quinoa::

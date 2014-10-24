@@ -2,7 +2,7 @@
 /*!
   \file      src/Integrator/Integrator.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 12:23:46 PM MDT
+  \date      Thu 23 Oct 2014 07:19:20 AM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Integrator used to advance ordinary and stochastic differential eqs.
   \details   Integrator used to advance ordinary and stochastic differential
@@ -30,13 +30,13 @@ class Integrator : public CBase_Integrator< Proxy > {
 
   public:
     //! Constructor
-    explicit Integrator( Proxy& proxy, uint64_t npar, tk::real dt ) :
-      m_proxy( proxy ),
-      m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
-      m_stat( m_particles )
+    explicit Integrator( Proxy& proxy, uint64_t npar, tk::real dt, uint64_t it )
+      : m_proxy( proxy ),
+        m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
+        m_stat( m_particles )
     {
-      ic();             // set initial conditions
-      advance( dt );    // start time stepping
+      ic();                 // set initial conditions
+      advance( dt, it );    // start time stepping
     }
 
     //! Set initial conditions
@@ -45,10 +45,23 @@ class Integrator : public CBase_Integrator< Proxy > {
       m_proxy.init();   // signal to host that initialization is complete
     }
 
-    //! Advance all equations one step in time
-    void advance( tk::real dt ) {
+    //! Advance all particles owned by this integrator
+    void advance( tk::real dt, uint64_t it ) {
+      //! Advance all equations one step in time
       for (const auto& e : g_diffeqs) e.advance( m_particles, CkMyPe(), dt );
-      accumulateOrd();    // start accumulating ordinary moments
+      // Accumulate sums for ordinary moments (every time step)
+      accumulateOrd();
+      // Accumulate sums for ordinary PDFs at select times
+      if ( !(it % g_inputdeck.get< tag::interval, tag::pdf >()) )
+        accumulateOrdPDF();
+    }
+
+    // Accumulate sums for ordinary moments
+    void accumulateOrd() {
+      // Accumulate partial sums for ordinary moments
+      m_stat.accumulateOrd();
+      // Send accumulated ordinary moments to host for estimation
+      m_proxy.estimateOrd( m_stat.ord() );
     }
 
     // Accumulate sums for central moments
@@ -59,29 +72,26 @@ class Integrator : public CBase_Integrator< Proxy > {
       m_proxy.estimateCen( m_stat.ctr() );
     }
 
-    // Accumulate sums for PDFs
-    void accumulatePDF() {
+    // Accumulate sums for ordinary PDFs
+    void accumulateOrdPDF() {
       // Accumulate partial sums for ordinary PDFs
       m_stat.accumulateOrdPDF();
+      // Send accumulated ordinary PDFs to host for estimation
+      m_proxy.estimateOrdPDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf() );
+    }
+
+    // Accumulate sums for central PDFs
+    void accumulateCenPDF( const std::vector< tk::real >& ord ) {
       // Accumulate partial sums for central PDFs
-      m_stat.accumulateCenPDF();
-      // Send accumulated PDFs to host for estimation
-      m_proxy.estimatePDF( m_stat.oupdf(), m_stat.obpdf(), m_stat.otpdf(),
-                           m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
+      m_stat.accumulateCenPDF( ord );
+      // Send accumulated central PDFs to host for estimation
+      m_proxy.estimateCenPDF( m_stat.cupdf(), m_stat.cbpdf(), m_stat.ctpdf() );
     }
 
   private:
-    // Accumulate sums for ordinary moments
-    void accumulateOrd() {
-      // Accumulate partial sums for ordinary moments
-      m_stat.accumulateOrd();
-      // Send accumulated ordinary moments to host for estimation
-      m_proxy.estimateOrd( m_stat.ord() );
-    }
-
-    Proxy m_proxy;              //!< Host proxy
-    ParProps m_particles;       //!< Particle properties
-    Statistics m_stat;          //!< Statistics
+    Proxy m_proxy;                      //!< Host proxy
+    ParProps m_particles;               //!< Particle properties
+    Statistics m_stat;                  //!< Statistics
 };
 
 } // quinoa::

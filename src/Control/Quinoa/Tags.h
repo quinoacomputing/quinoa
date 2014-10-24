@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:50:31 PM MDT
+  \date      Sun 19 Oct 2014 09:11:13 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -24,6 +24,8 @@ struct tty {};
 struct dump {};
 struct plot {};
 struct pdf {};
+struct ordpdf {};
+struct cenpdf {};
 struct glob {};
 struct control {};
 struct input {};
