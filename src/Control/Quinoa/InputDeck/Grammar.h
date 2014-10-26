@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 22 Oct 2014 10:43:01 AM MDT
+  \date      Sat 25 Oct 2014 06:24:59 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -702,19 +702,19 @@ namespace deck {
                                      tag::gamma,
                                      tag::c4 > > > {};
 
-  //! Beta mass model block
-  struct mass_beta :
-         pegtl::ifmust< scan_mass< kw::mass_beta >,
-                        tk::grm::block<
-                          Stack,
-                          tk::kw::end,
-                          component< kw::ndensity, tag::mass >,
-                          rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
-                          parameter< kw::Beta_At,
-                                     pegtl::digit,
-                                     tag::beta,
-                                     tag::atwood > >
-                      > {};
+//   //! Beta mass model block
+//   struct mass_beta :
+//          pegtl::ifmust< scan_mass< kw::mass_beta >,
+//                         tk::grm::block<
+//                           Stack,
+//                           tk::kw::end,
+//                           component< kw::ndensity, tag::mass >,
+//                           rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
+//                           parameter< kw::Beta_At,
+//                                      pegtl::digit,
+//                                      tag::beta,
+//                                      tag::atwood > >
+//                       > {};
 
   //! common to all monte-carlo
   struct montecarlo_common :
@@ -744,8 +744,8 @@ namespace deck {
                         tk::grm::block< Stack, tk::kw::end, rngs > > {};
 
   //! mass models
-  struct mass :
-         pegtl::sor< mass_beta > {};
+//   struct mass :
+//          pegtl::sor< mass_beta > {};
 
   //! hydro models
   struct hydro :
@@ -775,7 +775,7 @@ namespace deck {
                         tk::grm::block< Stack,
                                         tk::kw::end,
                                         montecarlo_common,
-                                        mass,
+                                        //mass,
                                         hydro,
                                         freq,
                                         rngblock,
@@ -881,23 +881,29 @@ namespace deck {
          pegtl::ifmust< scan_sde< kw::beta >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
+                                        depvar< tag::beta, tag::depvar >,
                                         component< kw::ncomp, tag::beta >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::beta,
                                              tk::tag::rng >,
-                                        parameter< kw::sde_b,
-                                                   pegtl::digit,
-                                                   tag::beta,
-                                                   tag::b >,
-                                        parameter< kw::sde_S,
-                                                   pegtl::digit,
-                                                   tag::beta,
-                                                   tag::S >,
-                                        parameter< kw::sde_kappa,
-                                                   pegtl::digit,
-                                                   tag::beta,
-                                                   tag::kappa > > > {};
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::beta,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::beta,
+                                                tag::coeffpolicy >,
+                                        parameter_vector< kw::sde_b,
+                                                          tag::beta,
+                                                          tag::b >,
+                                        parameter_vector< kw::sde_S,
+                                                          tag::beta,
+                                                          tag::S >,
+                                        parameter_vector< kw::sde_kappa,
+                                                          tag::beta,
+                                                          tag::kappa > > > {};
 
   //! Dirichlet SDE
   struct dirichlet :

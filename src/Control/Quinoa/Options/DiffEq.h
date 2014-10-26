@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 08 Oct 2014 10:30:28 AM MDT
+  \date      Sat 25 Oct 2014 06:05:13 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -24,6 +24,7 @@ namespace ctr {
 //! Differential equation types
 enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   OU,
+                                  BETA,
                                   LOGNORMAL,
                                   SKEWNORMAL,
                                   DIRICHLET,
@@ -49,6 +50,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         //! Enums -> names
         { { DiffEqType::NO_DIFFEQ, "n/a" },
           { DiffEqType::OU, kw::ornstein_uhlenbeck().name() },
+          { DiffEqType::BETA, kw::beta().name() },
           { DiffEqType::LOGNORMAL, kw::lognormal().name() },
           { DiffEqType::SKEWNORMAL, kw::skewnormal().name() },
           { DiffEqType::DIRICHLET, kw::dirichlet().name() },
@@ -56,6 +58,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck().string(), DiffEqType::OU },
+          { kw::beta().string(), DiffEqType::BETA },
           { kw::lognormal().string(), DiffEqType::LOGNORMAL },
           { kw::skewnormal().string(), DiffEqType::SKEWNORMAL },
           { kw::dirichlet().string(), DiffEqType::DIRICHLET },

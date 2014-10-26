@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 12:30:40 PM MDT
+  \date      Sat 25 Oct 2014 06:21:39 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -49,8 +49,6 @@ class InputDeck :
       set< tag::interval, tag::stat >( 1 );
       set< tag::interval, tag::pdf >( 1 );
       set< tag::interval, tag::glob >( 1 );
-      // Default beta mass model parameters
-      set< tag::param, tag::beta, tag::atwood >( 0.5 );
       // Default gamma mix model parameters
       set< tag::param, tag::gamma, tag::c1 >( 0.5 );
       set< tag::param, tag::gamma, tag::c2 >( 0.73 );

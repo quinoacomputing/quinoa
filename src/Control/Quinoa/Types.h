@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 02:44:45 PM MDT
+  \date      Sat 25 Oct 2014 06:17:33 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -380,11 +380,12 @@ using GammaParameters = tk::tuple::tagged_tuple<
 //! Beta parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::atwood,      tk::real,
-  tag::b,           tk::real,
-  tag::S,           tk::real,
-  tag::kappa,       tk::real,
-  tk::tag::rng,     std::vector< tk::ctr::RNGType >
+  tag::b,           std::vector< std::vector< tk::real > >,
+  tag::S,           std::vector< std::vector< tk::real > >,
+  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Simplified Langevin hydro model parameters storage

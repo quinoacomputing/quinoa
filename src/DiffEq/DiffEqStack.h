@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:04:13 PM MDT
+  \date      Sat 25 Oct 2014 07:08:28 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -56,7 +56,7 @@ class DiffEqStack {
     //! differential equation factory - repeatedly called by mpl's
     //! cartesian_product sweeping all combinations of the differential equation
     //! policies. The purpose of template template is to simplify client code as
-    //! that will not have specify the template arguments of the template
+    //! that will not have to specify the template arguments of the template
     //! argument (the policies of Eq), since we can figure it out here. See also
     //! http://stackoverflow.com/a/214900
     template< template< class, class > class Eq >
@@ -110,6 +110,9 @@ class DiffEqStack {
     //! Get information on Ornstein_Uhlenbeck SDE
     std::vector< std::pair< std::string, std::string > >
     infoOU( std::map< ctr::DiffEqType, int >& cnt ) const;
+    //! Get information on Beta SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
 
     //! Return parameter values from vector as string
     template< typename... tags > std::string parameters( int c ) const {
