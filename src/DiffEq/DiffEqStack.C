@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:04:44 PM MDT
+  \date      Sat 25 Oct 2014 06:30:21 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -15,6 +15,7 @@
 #include <OrnsteinUhlenbeck.h>
 #include <Dirichlet.h>
 #include <GenDirichlet.h>
+#include <Beta.h>
 #include <Factory.h>
 
 using quinoa::DiffEqStack;
@@ -50,6 +51,15 @@ DiffEqStack::DiffEqStack()
   mpl::cartesian_product< OUPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
+
+  // Beta SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using BetaPolicies = mpl::vector< InitPolicies, BetaCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< BetaPolicies >(
+    registerDiffEq< Beta >
+                  ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
+
 }
 
 std::vector< quinoa::DiffEq >
@@ -69,6 +79,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::gendir >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::OU)
       diffeqs.push_back( createDiffEq< tag::ou >( m_factory, d, cnt ) );
+    else if (d == ctr::DiffEqType::BETA)
+      diffeqs.push_back( createDiffEq< tag::beta >( m_factory, d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -92,6 +104,8 @@ DiffEqStack::info() const
       info.emplace_back( infoGenDir( cnt ) );
     else if (d == ctr::DiffEqType::OU)
       info.emplace_back( infoOU( cnt ) );
+    else if (d == ctr::DiffEqType::BETA)
+      info.emplace_back( infoBeta( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -204,6 +218,42 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
     parameters< tag::param, tag::ou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
     parameters< tag::param, tag::ou, tag::mu >(c) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
+//******************************************************************************
+//  Return information on the beta SDE
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::BETA ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::BETA ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::beta, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::beta, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::beta, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::beta >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::beta >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::beta, tk::tag::rng >()[c] ) );
+  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::beta, tag::b >(c) );
+  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::beta, tag::S >(c) );
+  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::beta, tag::kappa >(c) );
 
   return info;
 }
