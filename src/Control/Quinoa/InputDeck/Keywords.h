@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Sat 11 Oct 2014 10:56:17 AM MDT
+  \date      Tue 28 Oct 2014 09:25:33 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -110,8 +110,8 @@ struct dirichlet_info {
   static const char* name() {
     return "Dirichlet SDE"; }
   static const char* help() { return
-    "A system of stochastic differential equations whose invariant is the "
-    "Dirichlet distribution. For more details, see "
+    "A coupled system of stochastic differential equations whose invariant is "
+    "the Dirichlet distribution. For more details, see "
     "http://dx.doi.org/10.1155/2013/842981.";
   }
 };
@@ -122,13 +122,26 @@ struct gendir_info {
   static const char* name() {
     return "Generalized Dirichlet SDE"; }
   static const char* help() { return
-    "A system of stochastic differential equations whose invariant is "
+    "A coupled system of stochastic differential equations whose invariant is "
     "Lochner's generalized Dirichlet distribution. For more details, see "
     "http://dx.doi.org/10.1063/1.4822416.";
   }
 };
 using gendir =
   keyword< gendir_info, g,e,n,e,r,a,l,i,z,e,d,'_',d,i,r,i,c,h,l,e,t >;
+
+// Keyword 'wright_fisher'
+struct wrightfisher_info {
+  static const char* name() {
+    return "Wright-Fisher SDE"; }
+  static const char* help() { return
+    "A coupled system of stochastic differential equations whose invariant is "
+    "the Dirichlet distribution. For more details, see "
+    "http://www.sciencedirect.com/science/article/pii/S0040580912001013.";
+  }
+};
+using wrightfisher =
+  keyword< wrightfisher_info, w,r,i,g,h,t,'_',f,i,s,h,e,r >;
 
 // Keyword 'skewnormal'
 struct skewnormal_info {
@@ -287,6 +300,9 @@ using nfreq = keyword<undefined_info,  n,f,r,e,q >;
 
 // Number of components
 using ncomp = keyword<undefined_info,  n,c,o,m,p >;
+
+// Wright-Fisher SDE parameters
+using sde_omega = keyword<undefined_info, o,m,e,g,a >;
 
 // Dirichlet and generalized Dirichlet parameters
 using sde_b = keyword<undefined_info,  b >;

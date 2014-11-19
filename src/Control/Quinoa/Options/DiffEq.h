@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 06:05:13 PM MDT
+  \date      Tue 28 Oct 2014 09:11:00 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -28,7 +28,8 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   LOGNORMAL,
                                   SKEWNORMAL,
                                   DIRICHLET,
-                                  GENDIR };
+                                  GENDIR,
+                                  WRIGHTFISHER };
 
 //! Pack/Unpack: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, DiffEqType& e ) { PUP::pup( p, e ); }
@@ -54,7 +55,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::LOGNORMAL, kw::lognormal().name() },
           { DiffEqType::SKEWNORMAL, kw::skewnormal().name() },
           { DiffEqType::DIRICHLET, kw::dirichlet().name() },
-          { DiffEqType::GENDIR, kw::gendir().name() } },
+          { DiffEqType::GENDIR, kw::gendir().name() },
+          { DiffEqType::WRIGHTFISHER, kw::wrightfisher().name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck().string(), DiffEqType::OU },
@@ -62,7 +64,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::lognormal().string(), DiffEqType::LOGNORMAL },
           { kw::skewnormal().string(), DiffEqType::SKEWNORMAL },
           { kw::dirichlet().string(), DiffEqType::DIRICHLET },
-          { kw::gendir().string(), DiffEqType::GENDIR } } ) {}
+          { kw::gendir().string(), DiffEqType::GENDIR },
+          { kw::wrightfisher().string(), DiffEqType::WRIGHTFISHER } } ) {}
 };
 
 } // ctr::

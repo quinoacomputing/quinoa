@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GenDirichlet.h
   \author    J. Bakosi
-  \date      Thu 16 Oct 2014 05:14:54 PM MDT
+  \date      Tue 28 Oct 2014 09:07:24 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -37,10 +37,14 @@ class GenDirichlet {
       const auto& S = g_inputdeck.get< tag::param, tag::gendir, tag::S >();
       const auto& k = g_inputdeck.get< tag::param, tag::gendir, tag::kappa >();
       const auto& C = g_inputdeck.get< tag::param, tag::gendir, tag::c >();
-      ErrChk( b.size() > c, "Wrong number of OU SDE parameters 'b'");
-      ErrChk( S.size() > c, "Wrong number of OU SDE parameters 'S'");
-      ErrChk( k.size() > c, "Wrong number of OU SDE parameters 'kappa'");
-      ErrChk( C.size() > c, "Wrong number of OU SDE parameters 'c'");
+      ErrChk( b.size() > c,
+              "Wrong number of Generalized Dirichlet SDE parameters 'b'");
+      ErrChk( S.size() > c,
+              "Wrong number of Generalized Dirichlet SDE parameters 'S'");
+      ErrChk( k.size() > c,
+              "Wrong number of Generalized Dirichlet SDE parameters 'kappa'");
+      ErrChk( C.size() > c,
+              "Wrong number of Generalized Dirichlet SDE parameters 'c'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, b[c], S[c], k[c], C[c], m_b, m_S, m_k, m_c );
     }

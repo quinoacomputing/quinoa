@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 06:30:21 PM MDT
+  \date      Tue 28 Oct 2014 09:16:05 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -15,6 +15,7 @@
 #include <OrnsteinUhlenbeck.h>
 #include <Dirichlet.h>
 #include <GenDirichlet.h>
+#include <WrightFisher.h>
 #include <Beta.h>
 #include <Factory.h>
 
@@ -44,6 +45,14 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< GenDirichlet >
                   ( m_factory, ctr::DiffEqType::GENDIR, m_eqTypes ) );
 
+  // Wright-Fisher SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using WFPolicies = mpl::vector< InitPolicies, WFCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< WFPolicies >(
+    registerDiffEq< WrightFisher >
+                  ( m_factory, ctr::DiffEqType::WRIGHTFISHER, m_eqTypes ) );
+
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
   using OUPolicies = mpl::vector< InitPolicies, OUCoeffPolicies >;
@@ -59,7 +68,6 @@ DiffEqStack::DiffEqStack()
   mpl::cartesian_product< BetaPolicies >(
     registerDiffEq< Beta >
                   ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
-
 }
 
 std::vector< quinoa::DiffEq >
@@ -77,6 +85,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::dirichlet >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       diffeqs.push_back( createDiffEq< tag::gendir >( m_factory, d, cnt ) );
+    else if (d == ctr::DiffEqType::WRIGHTFISHER)
+      diffeqs.push_back( createDiffEq< tag::wrightfisher >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::OU)
       diffeqs.push_back( createDiffEq< tag::ou >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::BETA)
@@ -102,6 +112,8 @@ DiffEqStack::info() const
       info.emplace_back( infoDirichlet( cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
       info.emplace_back( infoGenDir( cnt ) );
+    else if (d == ctr::DiffEqType::WRIGHTFISHER)
+      info.emplace_back( infoWrightFisher( cnt ) );
     else if (d == ctr::DiffEqType::OU)
       info.emplace_back( infoOU( cnt ) );
     else if (d == ctr::DiffEqType::BETA)
@@ -182,6 +194,38 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
                      parameters< tag::param, tag::gendir, tag::kappa >(c) );
   info.emplace_back( "coeff c [" + std::to_string( ncomp*(ncomp-1)/2 ) + "]",
                      parameters< tag::param, tag::gendir, tag::c >( c ) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
+//******************************************************************************
+//  Return information on the Wright-Fisher SDE
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::WRIGHTFISHER ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::WRIGHTFISHER ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::wrightfisher, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::wrightfisher, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::wrightfisher >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::wrightfisher, tk::tag::rng >()[c] ) );
+  info.emplace_back( "coeff omega [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::wrightfisher, tag::omega >(c) );
 
   return info;
 }
