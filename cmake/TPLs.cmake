@@ -148,19 +148,12 @@ find_library(RNGSSE_LIBRARY
              NO_DEFAULT_PATH
              REQUIRED)
 
-#### Boost C++ system library (optional)
-set(BOOST_SYSTEM_LIBRARY "NOTFOUND")
-message(STATUS "Check for optional Boost C++ system library")
-find_library(BOOST_SYSTEM_LIBRARY
-             NAMES boost_system
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH)
-if(BOOST_SYSTEM_LIBRARY)
-  set(HAS_BOOST_SYSTEM on)
-  message(STATUS "Check for optional Boost C++ system library -- works")
-else()
-  set(BOOST_SYSTEM_LIBRARY "")
-  message(STATUS "Check for optional Boost C++ system library -- failed")
+#### Boost C++ libraries
+set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
+find_package(Boost)
+if(Boost_FOUND)
+  message(STATUS "Boost include dir ${Boost_INCLUDE_DIR}")
+  include_directories(${Boost_INCLUDE_DIR})
 endif()
 
 #### TestU01

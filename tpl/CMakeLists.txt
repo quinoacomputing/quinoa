@@ -154,6 +154,13 @@ if(LIBCXX_CPP)
   set(CXXFLAGS "${CXXFLAGS} ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}")
 endif()
 
+# Detect Boost, exclude if found
+find_package(Boost)
+if(Boost_FOUND)
+  message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not install ours")
+  set(boost "")
+endif()
+
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
@@ -232,57 +239,33 @@ ExternalProject_Add_Step(
           ${CMAKE_INSTALL_PREFIX}/include/tut
 )
 
-##### Boost ####################################################################
-## http://www.boost.org
-#ExternalProject_Add(
-#  boost
-#  PREFIX boost
-#  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
-#  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
-#  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bootstrap.sh
-#                    --prefix=${CMAKE_INSTALL_PREFIX}
-#                    --with-toolset=${BOOST_TOOLSET}
-#                    --with-libraries=system
-#  INSTALL_COMMAND ${PROJECT_BINARY_DIR}/boost/src/boost/bjam
-#                  toolset=${BOOST_TOOLSET}
-#                  variant=${BOOST_BUILD_TYPE}
-#                  cxxflags=${CXXFLAGS}
-#                  cflags=${CFLAGS}
-#                  --debug-building
-#                  install
-#  BUILD_COMMAND ""
-#  BUILD_IN_SOURCE 1
-#  LOG_DOWNLOAD 1
-#  LOG_CONFIGURE 1
-#  LOG_BUILD 1
-#  LOG_INSTALL 1
-#)
-
 #### Boost ####################################################################
 # http://www.boost.org
-# Header only
-ExternalProject_Add(
-  boost
-  PREFIX boost
-  URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
-  URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-)
-# Header-only, copy include dir over
-ExternalProject_Get_Property(boost SOURCE_DIR)
-ExternalProject_Add_Step(
-  boost copy-source
-  DEPENDEES download
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${SOURCE_DIR}/boost
-          ${CMAKE_INSTALL_PREFIX}/include/boost
-)
+# Header only, only if not found
+if (boost)
+  ExternalProject_Add(
+    boost
+    PREFIX boost
+    URL ${PROJECT_SOURCE_DIR}/boost_1_54_0.tar.bz2
+    URL_MD5 15cb8c0803064faef0c4ddf5bc5ca279
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+  )
+  # Header-only, copy include dir over
+  ExternalProject_Get_Property(boost SOURCE_DIR)
+  ExternalProject_Add_Step(
+    boost copy-source
+    DEPENDEES download
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${SOURCE_DIR}/boost
+            ${CMAKE_INSTALL_PREFIX}/include/boost
+  )
+endif()
 
 #### Boost.MPL extension: cartesian product ###################################
-# http://www.organicvectory.com
+# http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
 # Header only
 ExternalProject_Add(
   cartesian_product
