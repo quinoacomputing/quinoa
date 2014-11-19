@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:22:51 PM MDT
+  \date      Wed 19 Nov 2014 12:34:13 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains.
@@ -15,10 +15,6 @@
 #include <sstream>
 #include <ctime>
 #include <unistd.h>
-
-#ifdef HAS_BOOST_SYSTEM   // Boost.Asio requires the Boost.System library
-#include <boost/asio/ip/host_name.hpp>
-#endif
 
 #include <Config.h>
 #include <Exception.h>
@@ -135,10 +131,6 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
 //******************************************************************************
 {
   print.section( "Run-time environment" );
-
-  #ifdef HAS_BOOST_SYSTEM
-  print.item( "Hostname", boost::asio::ip::host_name() );
-  #endif
 
   print.item( "Date, time", curtime() );
   print.item( "Work directory", workdir() );
