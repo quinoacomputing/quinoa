@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Sun 19 Oct 2014 09:11:13 PM MDT
+  \date      Tue 28 Oct 2014 09:18:37 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -51,9 +51,10 @@ struct coeffpolicy {};
 struct depvar {};
 struct diffeq {};
 struct virtualization {};
-
+struct omega {};
 struct dirichlet {};
 struct gendir {};
+struct wrightfisher {};
 struct beta {};
 struct gamma {};
 struct slm {};
@@ -68,7 +69,6 @@ struct energy {};
 struct mix {};
 struct frequency {};
 struct mixrate {};
-
 struct title {};
 struct selected {};
 struct discr {};
@@ -83,7 +83,6 @@ struct pdffiletype {};
 struct pdfpolicy {};
 struct pdfctr {};
 struct pdfnames {};
-
 struct float_format {};
 struct precision {};
 struct init {};

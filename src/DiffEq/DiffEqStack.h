@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 07:08:28 PM MDT
+  \date      Tue 28 Oct 2014 08:57:01 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -107,6 +107,9 @@ class DiffEqStack {
     //! Get information on Lochner's generalized Dirichlet SDE
     std::vector< std::pair< std::string, std::string > >
     infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const;
+    //! Get information on Wright-Fisher SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const;
     //! Get information on Ornstein_Uhlenbeck SDE
     std::vector< std::pair< std::string, std::string > >
     infoOU( std::map< ctr::DiffEqType, int >& cnt ) const;

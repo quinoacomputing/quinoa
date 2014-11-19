@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 06:24:59 PM MDT
+  \date      Tue 28 Oct 2014 09:30:15 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -965,10 +965,34 @@ namespace deck {
                                                           tag::gendir,
                                                           tag::c > > > {};
 
+  //! Wright-Fisher SDE
+  struct wright_fisher :
+         pegtl::ifmust< scan_sde< kw::wrightfisher >,
+                        tk::grm::block< Stack,
+                                        tk::kw::end,
+                                        depvar< tag::wrightfisher, tag::depvar >,
+                                        component< kw::ncomp, tag::wrightfisher >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::wrightfisher,
+                                             tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::wrightfisher,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::wrightfisher,
+                                                tag::coeffpolicy >,
+                                        parameter_vector< kw::sde_omega,
+                                                          tag::wrightfisher,
+                                                          tag::omega > > > {};
+
   //! stochastic differential equations
   struct sde :
          pegtl::sor< dirichlet,
                      generalized_dirichlet,
+                     wright_fisher,
                      ornstein_uhlenbeck,
                      lognormal,
                      skewnormal,

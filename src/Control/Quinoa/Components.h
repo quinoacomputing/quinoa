@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Components.h
   \author    J. Bakosi
-  \date      Wed 20 Aug 2014 09:08:38 AM MDT
+  \date      Tue 28 Oct 2014 09:22:16 PM MDT
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components
@@ -109,19 +109,20 @@ class ncomponents : public tk::tuple::tagged_tuple< Tags... > {
 //! Number of components of models and equations
 template< typename ncomp >
 using ncomps = ncomponents<
-  tag::position,   std::vector< ncomp >,      //!< Position models
-  tag::mass,       std::vector< ncomp >,      //!< Mass models
-  tag::hydro,      std::vector< ncomp >,      //!< Hydro models
-  tag::mix,        std::vector< ncomp >,      //!< Material mix models
-  tag::frequency,  std::vector< ncomp >,      //!< Turbulent frequency models
+  tag::position,     std::vector< ncomp >,      //!< Position models
+  tag::mass,         std::vector< ncomp >,      //!< Mass models
+  tag::hydro,        std::vector< ncomp >,      //!< Hydro models
+  tag::mix,          std::vector< ncomp >,      //!< Material mix models
+  tag::frequency,    std::vector< ncomp >,      //!< Turbulent frequency models
 
-  tag::dirichlet,  std::vector< ncomp >,      //!< Dirichlet SDEs
-  tag::gendir,     std::vector< ncomp >,      //!< Generalized Dirichlet SDEs
-  tag::ou,         std::vector< ncomp >,      //!< Ornstein-Uhlenbeck SDEs
-  tag::lognormal,  std::vector< ncomp >,      //!< Log-normal SDEs
-  tag::skewnormal, std::vector< ncomp >,      //!< Skew-normal SDEs
-  tag::gamma,      std::vector< ncomp >,      //!< Gamma SDEs
-  tag::beta,       std::vector< ncomp >       //!< Beta SDEs
+  tag::dirichlet,    std::vector< ncomp >,      //!< Dirichlet SDEs
+  tag::gendir,       std::vector< ncomp >,      //!< Generalized Dirichlet SDEs
+  tag::wrightfisher, std::vector< ncomp >,      //!< Wright-Fisher SDEs
+  tag::ou,           std::vector< ncomp >,      //!< Ornstein-Uhlenbeck SDEs
+  tag::lognormal,    std::vector< ncomp >,      //!< Log-normal SDEs
+  tag::skewnormal,   std::vector< ncomp >,      //!< Skew-normal SDEs
+  tag::gamma,        std::vector< ncomp >,      //!< Gamma SDEs
+  tag::beta,         std::vector< ncomp >       //!< Beta SDEs
 >;
 
 } // ctr::
