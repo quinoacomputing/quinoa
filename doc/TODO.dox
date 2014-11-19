@@ -27,7 +27,7 @@ RNGTest
     + Hook up GPU versions
  - Find and add RNG library alternative to MKL and RNGSSE that works with
    threads: MKL is non-free and RNGSSE does not work on Mac OS (probably due
-   to its assembly code), cuRAND?
+   to its assembly code), cuRAND, Random123?
  - The functions in Handler.[Ch] work with the main Charm chare proxy,
    which is a first step toward fulfilling their intended functionality with
    Charm and handling exceptions with Charm. This works only in some
@@ -69,7 +69,9 @@ Build
  - Setup separate distribution of modules/executables. Via sub-repos? See
    http://stackoverflow.com/questions/359424/detach-subdirectory-into-separate-git-repository/359759#359759
  - Add support for PGI (if C++11 is complete)
+ - Reduce TPLs built by searching system
  - Platforms:
+    + arm: see tpl/README.build.charm
     + darwin-gnu
     + helios-gnu
     + titan-gnu
