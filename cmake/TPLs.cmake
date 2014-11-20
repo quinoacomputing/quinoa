@@ -123,21 +123,12 @@ if(NETCDF_FOUND)
   message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
 endif()
 
-#### ExodusII
-set(EXODUS_LIBRARY "NOTFOUND")
-find_library(EXODUS_LIBRARY
-             NAMES exodus
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-
-#### Nemesis
-set(NEMESIS_LIBRARY "NOTFOUND")
-find_library(NEMESIS_LIBRARY
-             NAMES nemesis
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
+#### ExodusII/Nemesis
+set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
+find_package(Exodus REQUIRED)
+if(EXODUS_FOUND)
+  message(STATUS "ExodusII/Nemesis at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib)")
+endif()
 
 #### RNGSSE2
 set(RNGSSE_LIBRARY "NOTFOUND")

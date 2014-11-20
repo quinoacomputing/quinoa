@@ -189,6 +189,15 @@ else()
   set(netcdf_lib "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
+# Detect ExodusII, exclude if found, build if not
+find_package(Exodus)
+if(EXODUS_FOUND)
+  message(STATUS "ExodusII/Nemesis found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib) - will not build ours")
+  set(exodus "")
+else()
+  set(exodus "exodus")
+endif()
+
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
@@ -421,32 +430,34 @@ endif()
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
-ExternalProject_Add(
-  trilinos
-  DEPENDS ${netcdf}
-  PREFIX trilinos
-  URL ${PROJECT_SOURCE_DIR}/trilinos-11.6.1-Source.tar.gz
-  URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
-  CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-             -D Trilinos_ENABLE_Fortran:BOOL=OFF
-             -D Trilinos_ENABLE_Zoltan:BOOL=ON
-             -D TPL_ENABLE_MPI:BOOL=ON
-             -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
-             -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
-             -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
-             -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
-             -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
-             -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
-             -D CMAKE_C_FLAGS:STRING=${CFLAGS}
-             -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
-             -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (exodus)
+  ExternalProject_Add(
+    trilinos
+    DEPENDS ${netcdf}
+    PREFIX trilinos
+    URL ${PROJECT_SOURCE_DIR}/trilinos-11.6.1-Source.tar.gz
+    URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
+    CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+               -D Trilinos_ENABLE_Fortran:BOOL=OFF
+               -D Trilinos_ENABLE_Zoltan:BOOL=ON
+               -D TPL_ENABLE_MPI:BOOL=ON
+               -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
+               -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
+               -D TPL_ENABLE_Netcdf:BOOL=ON
+               -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
+               -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
+               -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+               -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
+               -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}
+               -D CMAKE_C_FLAGS:STRING=${CFLAGS}
+               -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
+               -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 ##### Silo #####################################################################
 ## https://wci.llnl.gov/codes/silo

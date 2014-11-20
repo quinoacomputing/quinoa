@@ -43,8 +43,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       QuinoaControl
                       RNG
                       #${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARY}
-                      ${EXODUS_LIBRARY}
+                      ${NEMESIS_LIBRARIES}
+                      ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
                       ${HDF5_LIBRARY}
                       #${Z_LIBRARY}
@@ -129,8 +129,8 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARY}
-                      ${EXODUS_LIBRARY}
+                      ${NEMESIS_LIBRARIES}
+                      ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
                       ${BOOST_SYSTEM_LIBRARY}
 )
@@ -167,8 +167,8 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       Mesh
                       MeshConvControl
                       #${SILO_LIBRARY}
-                      ${NEMESIS_LIBRARY}
-                      ${EXODUS_LIBRARY}
+                      ${NEMESIS_LIBRARIES}
+                      ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}

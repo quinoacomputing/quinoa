@@ -69,7 +69,6 @@ Build
  - Setup separate distribution of modules/executables. Via sub-repos? See
    http://stackoverflow.com/questions/359424/detach-subdirectory-into-separate-git-repository/359759#359759
  - Add support for PGI (if C++11 is complete)
- - Reduce TPLs built by searching system
  - Platforms:
     + arm: see tpl/README.build.charm
     + darwin-gnu
@@ -132,7 +131,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 16 Oct 2014 05:35:32 PM MDT
+<em>Page last updated:</em> Thu 20 Nov 2014 11:50:05 AM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */
