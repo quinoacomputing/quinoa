@@ -53,7 +53,6 @@ Testing
 
 Build
 -----
- - Put in version-queries for ADIOS and its TPLs
  - Reduce build deps with ninja build dependency map
  - Explore dynamic libs, precompiled headers
    (https://github.com/ducakar/openzone/ uses pch cmake and clang)
@@ -131,7 +130,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 20 Nov 2014 11:50:05 AM MST
+<em>Page last updated:</em> Thu 20 Nov 2014 04:30:32 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */
