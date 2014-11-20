@@ -108,6 +108,21 @@ endif()
 #             NO_DEFAULT_PATH
 #             REQUIRED)
 
+#### Boost C++ libraries
+set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+  message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
+  include_directories(${Boost_INCLUDE_DIR})
+endif()
+
+#### NetCDF
+set(NETCDF_ROOT ${TPL_DIR}) # prefer ours
+find_package(NetCDF REQUIRED)
+if(NETCDF_FOUND)
+  message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
+endif()
+
 #### ExodusII
 set(EXODUS_LIBRARY "NOTFOUND")
 find_library(EXODUS_LIBRARY
@@ -124,14 +139,6 @@ find_library(NEMESIS_LIBRARY
              NO_DEFAULT_PATH
              REQUIRED)
 
-#### NetCDF
-set(NETCDF_LIBRARY "NOTFOUND")
-find_library(NETCDF_LIBRARY
-             NAMES netcdf
-             PATHS ${TPL_DIR}/lib
-             NO_DEFAULT_PATH
-             REQUIRED)
-
 #### RNGSSE2
 set(RNGSSE_LIBRARY "NOTFOUND")
 find_library(RNGSSE_LIBRARY
@@ -139,14 +146,6 @@ find_library(RNGSSE_LIBRARY
              PATHS ${TPL_DIR}/lib
              NO_DEFAULT_PATH
              REQUIRED)
-
-#### Boost C++ libraries
-set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
-find_package(Boost)
-if(Boost_FOUND)
-  message(STATUS "Boost found at ${Boost_INCLUDE_DIR} (include)")
-  include_directories(${Boost_INCLUDE_DIR})
-endif()
 
 #### TestU01
 set(TESTU01_LIBRARY "NOTFOUND")

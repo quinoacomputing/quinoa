@@ -176,6 +176,19 @@ else()
   set(hdf5ser_lib "${CMAKE_INSTALL_PREFIX}/hdf5ser/lib")
 endif()
 
+# Detect NetCDF, exclude if found, build if not
+find_package(NetCDF)
+if(NETCDF_FOUND)
+  message(STATUS "NetCDF found at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib) - will not build ours")
+  set(netcdf "")
+  set(netcdf_include "${NETCDF_INCLUDES}")
+  set(netcdf_lib "${NETCDF_LIBRARIES}")
+else()
+  set(netcdf "netcdf")
+  set(netcdf_include "${CMAKE_INSTALL_PREFIX}/include")
+  set(netcdf_lib "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
+
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
@@ -382,33 +395,35 @@ endif()
 
 #### NETCDF ####################################################################
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
-ExternalProject_Add(
-  netcdf
-  DEPENDS ${hdf5ser}
-  PREFIX netcdf
-  URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.2.tar.gz
-  URL_MD5 2fd2365e1fe9685368cd6ab0ada532a0
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
-                    CC=${UNDERLYING_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    ${PGCPP}
-                    CPPFLAGS=-I${hdf5ser_include}
-                    LDFLAGS=-L${hdf5ser_lib}
-                    --disable-examples
-                    --enable-netcdf4
-                    --prefix=${CMAKE_INSTALL_PREFIX}
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (netcdf)
+  ExternalProject_Add(
+    netcdf
+    DEPENDS ${hdf5ser}
+    PREFIX netcdf
+    URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.2.tar.gz
+    URL_MD5 2fd2365e1fe9685368cd6ab0ada532a0
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/netcdf/src/netcdf/configure
+                      CC=${UNDERLYING_C_COMPILER}
+                      CFLAGS=${CFLAGS}
+                      ${PGCPP}
+                      CPPFLAGS=-I${hdf5ser_include}
+                      LDFLAGS=-L${hdf5ser_lib}
+                      --disable-examples
+                      --enable-netcdf4
+                      --prefix=${CMAKE_INSTALL_PREFIX}
+    BUILD_IN_SOURCE 1
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
 ExternalProject_Add(
   trilinos
-  DEPENDS netcdf
+  DEPENDS ${netcdf}
   PREFIX trilinos
   URL ${PROJECT_SOURCE_DIR}/trilinos-11.6.1-Source.tar.gz
   URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
@@ -419,8 +434,8 @@ ExternalProject_Add(
              -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
              -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
              -D TPL_ENABLE_Netcdf:BOOL=ON
-             -D Netcdf_LIBRARY_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/lib
-             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${CMAKE_INSTALL_PREFIX}/include
+             -D Netcdf_LIBRARY_DIRS:PATH=${netcdf_lib}
+             -D TPL_Netcdf_INCLUDE_DIRS:PATH=${netcdf_include}
              -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
              -D CMAKE_C_COMPILER:PATH=${MPI_C_COMPILER}
              -D CMAKE_CXX_COMPILER:PATH=${MPI_CXX_COMPILER}

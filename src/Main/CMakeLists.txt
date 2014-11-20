@@ -45,7 +45,7 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
-                      ${NETCDF_LIBRARY}
+                      ${NETCDF_LIBRARIES}
                       ${HDF5_LIBRARY}
                       #${Z_LIBRARY}
                       ${MKL_INTERFACE_LIBRARY}
@@ -131,7 +131,7 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
-                      ${NETCDF_LIBRARY}
+                      ${NETCDF_LIBRARIES}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
@@ -169,7 +169,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARY}
                       ${EXODUS_LIBRARY}
-                      ${NETCDF_LIBRARY}
+                      ${NETCDF_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
