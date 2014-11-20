@@ -154,11 +154,26 @@ if(LIBCXX_CPP)
   set(CXXFLAGS "${CXXFLAGS} ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}")
 endif()
 
-# Detect Boost, exclude if found
+# Detect Boost, exclude if found, copy if not
 find_package(Boost)
 if(Boost_FOUND)
-  message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not install ours")
   set(boost "")
+  message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not build ours")
+else()
+  set(boost "boost")
+endif()
+
+# Detect HDF5, exclude if found, build if not
+find_package(HDF5)
+if(HDF5_FOUND)
+  message(STATUS "HDF5 found at ${HDF5_INCLUDE_DIRS} (include) and at ${HDF5_LIBRARY_DIRS} (libs) - will not build ours")
+  set(hdf5ser "")
+  set(hdf5ser_include "${HDF5_INCLUDE_DIRS}")
+  set(hdf5ser_lib "${HDF5_LIBRARY_DIRS}")
+else()
+  set(hdf5ser "hdf5ser")
+  set(hdf5ser_include "${CMAKE_INSTALL_PREFIX}/hdf5ser/include")
+  set(hdf5ser_lib "${CMAKE_INSTALL_PREFIX}/hdf5ser/lib")
 endif()
 
 # Define fine-grained targets
@@ -289,22 +304,24 @@ ExternalProject_Add_Step(
 
 #### HDF5 serial ###############################################################
 # http://www.hdfgroup.org/HDF5
-ExternalProject_Add(
-  hdf5ser
-  PREFIX hdf5ser
-  URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
-  URL_MD5 c03426e9e77d7766944654280b467289
-  CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
-                    CC=${UNDERLYING_C_COMPILER}
-                    CFLAGS=${CFLAGS}
-                    ${PGCPP}
-                    --prefix=${CMAKE_INSTALL_PREFIX}/hdf5ser
-  BUILD_IN_SOURCE 1
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-)
+if (hdf5ser)
+  ExternalProject_Add(
+    hdf5ser
+    PREFIX hdf5ser
+    URL ${PROJECT_SOURCE_DIR}/hdf5-1.8.13.tar.gz
+    URL_MD5 c03426e9e77d7766944654280b467289
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/hdf5ser/src/hdf5ser/configure
+                      CC=${UNDERLYING_C_COMPILER}
+                      CFLAGS=${CFLAGS}
+                      ${PGCPP}
+                      --prefix=${CMAKE_INSTALL_PREFIX}/hdf5ser
+    BUILD_IN_SOURCE 1
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
 
 #### HDF5 parallel #############################################################
 # http://www.hdfgroup.org/HDF5
@@ -367,7 +384,7 @@ ExternalProject_Add(
 ## http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
 ExternalProject_Add(
   netcdf
-  DEPENDS hdf5ser
+  DEPENDS ${hdf5ser}
   PREFIX netcdf
   URL ${PROJECT_SOURCE_DIR}/netcdf-4.3.2.tar.gz
   URL_MD5 2fd2365e1fe9685368cd6ab0ada532a0
@@ -375,8 +392,8 @@ ExternalProject_Add(
                     CC=${UNDERLYING_C_COMPILER}
                     CFLAGS=${CFLAGS}
                     ${PGCPP}
-                    CPPFLAGS=-I${CMAKE_INSTALL_PREFIX}/hdf5ser/include
-                    LDFLAGS=-L${CMAKE_INSTALL_PREFIX}/hdf5ser/lib
+                    CPPFLAGS=-I${hdf5ser_include}
+                    LDFLAGS=-L${hdf5ser_lib}
                     --disable-examples
                     --enable-netcdf4
                     --prefix=${CMAKE_INSTALL_PREFIX}

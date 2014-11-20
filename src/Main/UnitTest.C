@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 14 Sep 2014 10:32:31 PM MDT
+  \date      Wed 19 Nov 2014 04:55:17 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -15,7 +15,6 @@
 #include <UnitTestPrint.h>
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
-#include <TPLInfo/Boost.h>
 #include <unittest.decl.h>
 #include <Init.h>
 
@@ -43,16 +42,6 @@
 CProxy_Main mainProxy;
 
 namespace unittest {
-
-void echoTPL( const tk::Print& print )
-//******************************************************************************
-//  Echo TPL version informaion for libs specific to UnitTest
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  echoBoost( print, "Boost C++ Libraries" );
-  print.endpart();
-}
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs
 //! by the Charm++ runtime system. Though semantically not const, all these
@@ -105,8 +94,7 @@ class Main : public CBase_Main {
                           m_cmdline,
                           tk::HeaderType::UNITTEST,
                           UNITTEST_EXECUTABLE,
-                          m_print,
-                          unittest::echoTPL ) ),
+                          m_print ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       // Save executable name to global-scope string so FileParser can access it

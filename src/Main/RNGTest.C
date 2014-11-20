@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:16:47 PM MDT
+  \date      Wed 19 Nov 2014 04:54:04 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -18,8 +18,6 @@
 #include <RNGTest/InputDeck/InputDeck.h>
 #include <TestStack.h>
 #include <PUPUtil.h>
-#include <TPLInfo/MKL.h>
-#include <TPLInfo/Boost.h>
 #include <rngtest.decl.h>
 #include <Init.h>
 
@@ -28,21 +26,6 @@
 CProxy_Main mainProxy;
 
 namespace rngtest {
-
-void echoTPL( const tk::Print& print )
-//******************************************************************************
-//  Echo TPL version informaion
-//! \author  J. Bakosi
-//******************************************************************************
-{
-#ifdef HAS_MKL
-  echoMKL( print, "Intel Math Kernel Library" );
-#else
-  print.item( "Intel Math Kernel Library", "n/a" );
-#endif
-  echoBoost( print, "Boost C++ Libraries" );
-  print.endpart();
-}
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs by
 //! the Charm++ runtime system. Though semantically not const, all these global
@@ -149,8 +132,7 @@ class Main : public CBase_Main {
                           m_cmdline,
                           tk::HeaderType::RNGTEST,
                           RNGTEST_EXECUTABLE,
-                          m_print,
-                          rngtest::echoTPL ) ),
+                          m_print ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;

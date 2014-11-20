@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:19:14 PM MDT
+  \date      Wed 19 Nov 2014 04:56:05 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -11,9 +11,6 @@
 
 #include <Config.h>
 #include <MeshConvDriver.h>
-#include <TPLInfo/ExodusII.h>
-#include <TPLInfo/MKL.h>
-#include <TPLInfo/Boost.h>
 #include <MeshConv/CmdLine/Parser.h>
 #include <meshconv.decl.h>
 #include <Init.h>
@@ -21,26 +18,6 @@
 //! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
-
-namespace meshconv {
-
-void echoTPL( const tk::Print& print )
-//******************************************************************************
-//  Echo TPL version informaion for libs specific to MeshConv
-//! \author  J. Bakosi
-//******************************************************************************
-{
-#ifdef HAS_MKL
-  echoMKL( print, "Intel Math Kernel Library" );
-#else
-  print.item( "Intel Math Kernel Library", "n/a" );
-#endif
-  echoBoost( print, "Boost C++ Libraries" );
-  echoExodusII( print, "ExodusII library" );
-  print.endpart();
-}
-
-} // meshconv::
 
 //! Charm++ main chare
 class Main : public CBase_Main {
@@ -58,8 +35,7 @@ class Main : public CBase_Main {
                           m_cmdline,
                           tk::HeaderType::MESHCONV,
                           MESHCONV_EXECUTABLE,
-                          m_print,
-                          meshconv::echoTPL ) ),
+                          m_print ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;
