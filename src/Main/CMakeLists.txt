@@ -17,12 +17,6 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
 
 ### Quinoa executable ##########################################################
 add_executable(${QUINOA_EXECUTABLE}
-               TPLInfo/MKL.C
-               TPLInfo/Boost.C
-               TPLInfo/Zoltan.C
-#               TPLInfo/Silo.C
-               TPLInfo/HDF5.C
-#               TPLInfo/Zlib.C
                QuinoaDriver.C
                QuinoaPrint.C
                Quinoa.C
@@ -73,8 +67,6 @@ INSTALL(TARGETS ${QUINOA_EXECUTABLE}
 
 ### RNGTest executable #########################################################
 add_executable(${RNGTEST_EXECUTABLE}
-               TPLInfo/MKL.C
-               TPLInfo/Boost.C
                RNGTestDriver.C
                RNGPrint.C
                RNGTest.C
@@ -116,7 +108,6 @@ INSTALL(TARGETS ${RNGTEST_EXECUTABLE}
 
 ## UnitTest executable ########################################################
 add_executable(${UNITTEST_EXECUTABLE}
-               TPLInfo/Boost.C
                UnitTestDriver.C
                UnitTest.C
 )
@@ -156,9 +147,6 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
 
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
-               TPLInfo/MKL.C
-               TPLInfo/Boost.C
-               TPLInfo/ExodusII.C
                MeshConvDriver.C
                MeshConv.C
 )

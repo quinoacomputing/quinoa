@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 17 Sep 2014 02:37:43 PM MDT
+  \date      Wed 19 Nov 2014 04:56:42 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -18,11 +18,6 @@
 #include <QuinoaPrint.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/CmdLine/Parser.h>
-//#include <TPLInfo/Silo.h>
-#include <TPLInfo/HDF5.h>
-//#include <TPLInfo/Zlib.h>
-#include <TPLInfo/MKL.h>
-#include <TPLInfo/Boost.h>
 #include <quinoa.decl.h>
 #include <Init.h>
 
@@ -31,24 +26,6 @@
 CProxy_Main mainProxy;
 
 namespace quinoa {
-
-void echoTPL( const tk::Print& print )
-//******************************************************************************
-//  Echo TPL version informaion for libs specific to Quinoa
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  #ifdef HAS_MKL
-  echoMKL( print, "Intel Math Kernel Library" );
-  #else
-  print.item( "Intel Math Kernel Library", "n/a" );
-  #endif
-  echoBoost( print, "Boost C++ Libraries" );
-//  tk::echoSilo(print, "Silo library");
-  tk::echoHDF5(print, "HDF5 library");
-//  tk::echoZlib(print, "Zlib compression library");
-  print.endpart();
-}
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs
 //! by the Charm++ runtime system. Though semantically not const, all these
@@ -131,8 +108,7 @@ class Main : public CBase_Main {
                           m_cmdline,
                           tk::HeaderType::QUINOA,
                           QUINOA_EXECUTABLE,
-                          m_print,
-                          quinoa::echoTPL ) ),
+                          m_print ) ),
       m_timer(1)        // Start new timer measuring the total runtime
     {
       delete msg;

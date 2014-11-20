@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 12:34:13 PM MST
+  \date      Wed 19 Nov 2014 04:54:50 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains.
@@ -90,9 +90,7 @@ static void echoHeader( const Print& print, HeaderType header )
     Throw( "Header not available" );
 }
 
-static void echoBuildEnv( const Print& print,
-                          const std::string& executable,
-                          void (*echoTPL)(const Print& print) )
+static void echoBuildEnv( const Print& print, const std::string& executable )
 //******************************************************************************
 //  Echo build environment
 //! \details Echo information read from [build]/Base/Config.h filled by
@@ -119,9 +117,6 @@ static void echoBuildEnv( const Print& print,
   print.item( "MPI C++ wrapper", MPI_COMPILER );
   print.item( "Underlying C++ compiler", COMPILER );
   print.item( "Build date", BUILD_DATE );
-
-  // Echo info on TPLs used
-  echoTPL( print );
 }
 
 static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
@@ -155,8 +150,7 @@ Driver Main( int argc, char* argv[],
              const CmdLine& cmdline,
              HeaderType header,
              const std::string& executable,
-             const Printer& print,
-             void (*echoTPL)(const Print&) = [](const Print&){} )
+             const Printer& print )
 {
   // Echo program header
   echoHeader( print, header );
@@ -164,7 +158,7 @@ Driver Main( int argc, char* argv[],
   // Echo environment
   print.part( "Environment" );
   // Build environment
-  echoBuildEnv( print, executable, echoTPL );
+  echoBuildEnv( print, executable );
   // Runtime environment
   echoRunEnv( print, argc, argv, cmdline.template get< tag::verbose >() );
 
