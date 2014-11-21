@@ -155,7 +155,9 @@ if(LIBCXX_CPP)
 endif()
 
 # Detect Boost, exclude if found, copy if not
-find_package(Boost)
+if (NOT NO_SYSTEM_BOOST)
+  find_package(Boost)
+endif()
 if(Boost_FOUND)
   set(boost "")
   message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not build ours")
@@ -164,7 +166,9 @@ else()
 endif()
 
 # Detect HDF5, exclude if found, build if not
-find_package(HDF5)
+if (NOT NO_SYSTEM_HDF5)
+  find_package(HDF5)
+endif()
 if(HDF5_FOUND)
   message(STATUS "HDF5 found at ${HDF5_INCLUDE_DIRS} (include) and at ${HDF5_LIBRARY_DIRS} (libs) - will not build ours")
   set(hdf5ser "")
@@ -177,7 +181,9 @@ else()
 endif()
 
 # Detect NetCDF, exclude if found, build if not
-find_package(NetCDF)
+if (NOT NO_SYSTEM_NETCDF)
+  find_package(NetCDF)
+endif()
 if(NETCDF_FOUND)
   message(STATUS "NetCDF found at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib) - will not build ours")
   set(netcdf "")
@@ -190,7 +196,9 @@ else()
 endif()
 
 # Detect ExodusII, exclude if found, build if not
-find_package(Exodus)
+if (NOT NO_SYSTEM_EXODUS)
+  find_package(Exodus)
+endif()
 if(EXODUS_FOUND)
   message(STATUS "ExodusII/Nemesis found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib) - will not build ours")
   set(exodus "")
@@ -439,7 +447,6 @@ if (exodus)
     URL_MD5 e933ca40a585c7ba9edfc0f45186aaf7
     CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
                -D Trilinos_ENABLE_Fortran:BOOL=OFF
-               -D Trilinos_ENABLE_Zoltan:BOOL=ON
                -D TPL_ENABLE_MPI:BOOL=ON
                -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
                -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
