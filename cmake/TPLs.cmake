@@ -109,23 +109,29 @@ endif()
 #             REQUIRED)
 
 #### Boost C++ libraries
-set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
-find_package(Boost REQUIRED)
+if (NOT NO_SYSTEM_BOOST)
+  set(BOOST_INCLUDEDIR ${TPL_DIR}/include) # prefer ours
+  find_package(Boost REQUIRED)
+endif()
 if(Boost_FOUND)
   message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
 #### NetCDF
-set(NETCDF_ROOT ${TPL_DIR}) # prefer ours
-find_package(NetCDF REQUIRED)
+if (NOT NO_SYSTEM_NETCDF)
+  set(NETCDF_ROOT ${TPL_DIR}) # prefer ours
+  find_package(NetCDF REQUIRED)
+endif()
 if(NETCDF_FOUND)
   message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
 endif()
 
 #### ExodusII/Nemesis
-set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
-find_package(Exodus REQUIRED)
+if (NOT NO_SYSTEM_EXODUS)
+  set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
+  find_package(Exodus REQUIRED)
+endif()
 if(EXODUS_FOUND)
   message(STATUS "ExodusII/Nemesis at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib)")
 endif()
