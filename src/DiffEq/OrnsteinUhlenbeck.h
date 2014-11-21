@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 10 Oct 2014 03:16:05 PM MDT
+  \date      Fri 21 Nov 2014 03:13:13 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
@@ -14,7 +14,7 @@
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <OUCoeffPolicy.h>
+#include <DiagOUCoeffPolicy.h>
 #include <RNG.h>
 
 namespace quinoa {

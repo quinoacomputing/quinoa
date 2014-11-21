@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Tue 28 Oct 2014 09:16:05 PM MDT
+  \date      Fri 21 Nov 2014 03:14:14 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -53,13 +53,13 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< WrightFisher >
                   ( m_factory, ctr::DiffEqType::WRIGHTFISHER, m_eqTypes ) );
 
-  // Ornstein-Uhlenbeck SDE
+  // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
-  using OUPolicies = mpl::vector< InitPolicies, OUCoeffPolicies >;
+  using DiagOUPolicies = mpl::vector< InitPolicies, DiagOUCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< OUPolicies >(
+  mpl::cartesian_product< DiagOUPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
-                  ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
+                  ( m_factory, ctr::DiffEqType::DIAG_OU, m_eqTypes ) );
 
   // Beta SDE
   // Construct vector of vectors for all possible policies for SDE
@@ -87,7 +87,7 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::gendir >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::WRIGHTFISHER)
       diffeqs.push_back( createDiffEq< tag::wrightfisher >( m_factory, d, cnt ) );
-    else if (d == ctr::DiffEqType::OU)
+    else if (d == ctr::DiffEqType::DIAG_OU)
       diffeqs.push_back( createDiffEq< tag::ou >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       diffeqs.push_back( createDiffEq< tag::beta >( m_factory, d, cnt ) );
@@ -114,8 +114,8 @@ DiffEqStack::info() const
       info.emplace_back( infoGenDir( cnt ) );
     else if (d == ctr::DiffEqType::WRIGHTFISHER)
       info.emplace_back( infoWrightFisher( cnt ) );
-    else if (d == ctr::DiffEqType::OU)
-      info.emplace_back( infoOU( cnt ) );
+    else if (d == ctr::DiffEqType::DIAG_OU)
+      info.emplace_back( infoDiagOU( cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       info.emplace_back( infoBeta( cnt ) );
     else Throw( "Can't find selected DiffEq" );
@@ -231,18 +231,18 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
-//  Return information on the Ornstein-Uhlenbeck SDE
+//  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto c = ++cnt[ ctr::DiffEqType::OU ];       // count eqs
+  auto c = ++cnt[ ctr::DiffEqType::DIAG_OU ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > info;
 
-  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::OU ), "" );
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DIAG_OU ), "" );
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
     g_inputdeck.get< tag::param, tag::ou, tag::depvar >()[c] ) );

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Tue 28 Oct 2014 09:30:15 PM MDT
+  \date      Fri 21 Nov 2014 03:09:57 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -814,9 +814,9 @@ namespace deck {
            pegtl::alpha > {};
 
 
-  //! Ornstein-Uhlenbeck SDE
-  struct ornstein_uhlenbeck :
-         pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
+  //! Diagonal Ornstein-Uhlenbeck SDE
+  struct diag_ornstein_uhlenbeck :
+         pegtl::ifmust< scan_sde< kw::diag_ornstein_uhlenbeck >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
                                         depvar< tag::ou, tag::depvar >,
@@ -993,7 +993,8 @@ namespace deck {
          pegtl::sor< dirichlet,
                      generalized_dirichlet,
                      wright_fisher,
-                     ornstein_uhlenbeck,
+                     diag_ornstein_uhlenbeck,
+                     //ornstein_uhlenbeck,
                      lognormal,
                      skewnormal,
                      gamma,
