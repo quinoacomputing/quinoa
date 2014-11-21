@@ -218,7 +218,7 @@ ExternalProject_Add(
   URL ${PROJECT_SOURCE_DIR}/charm-6.6.0.tar.gz
   URL_MD5 31e95901b3f7324d52107e6ad000fcc8
   # Move unpacked tarball to install dir and build there
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E rename
                     ${PROJECT_BINARY_DIR}/charm/src/charm
                     ${CMAKE_INSTALL_PREFIX}/charm
   # Build in install dir and leave stuff there - no install step
