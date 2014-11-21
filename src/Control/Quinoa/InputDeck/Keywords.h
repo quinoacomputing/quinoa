@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Tue 28 Oct 2014 09:25:33 PM MDT
+  \date      Fri 21 Nov 2014 03:16:29 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -108,7 +108,7 @@ using testsde = keyword<testsde_info,  t,e,s,t,s,d,e >;
 // Keyword 'dirichlet'
 struct dirichlet_info {
   static const char* name() {
-    return "Dirichlet SDE"; }
+    return "Dirichlet"; }
   static const char* help() { return
     "A coupled system of stochastic differential equations whose invariant is "
     "the Dirichlet distribution. For more details, see "
@@ -120,7 +120,7 @@ using dirichlet = keyword<dirichlet_info,  d,i,r,i,c,h,l,e,t >;
 // Keyword 'generalized_dirichlet'
 struct gendir_info {
   static const char* name() {
-    return "Generalized Dirichlet SDE"; }
+    return "Generalized Dirichlet"; }
   static const char* help() { return
     "A coupled system of stochastic differential equations whose invariant is "
     "Lochner's generalized Dirichlet distribution. For more details, see "
@@ -133,7 +133,7 @@ using gendir =
 // Keyword 'wright_fisher'
 struct wrightfisher_info {
   static const char* name() {
-    return "Wright-Fisher SDE"; }
+    return "Wright-Fisher"; }
   static const char* help() { return
     "A coupled system of stochastic differential equations whose invariant is "
     "the Dirichlet distribution. For more details, see "
@@ -146,10 +146,10 @@ using wrightfisher =
 // Keyword 'skewnormal'
 struct skewnormal_info {
   static const char* name() {
-    return "Skew-normal SDE"; }
+    return "Skew-normal"; }
   static const char* help() { return
-    "A single-variate stochastic differential equation whose invariant is the "
-    "skew-normal distribution.";
+    "A system of stochastic differential equations whose invariant is the "
+    " joint skew-normal distribution.";
   }
 };
 using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
@@ -157,41 +157,56 @@ using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
 // Keyword 'beta'
 struct beta_info {
   static const char* name() {
-    return "Beta SDE"; }
+    return "Beta"; }
   static const char* help() { return
-    "A single-variate stochastic differential equation whose invariant is the "
-    "beta distribution.";
+    "A system of stochastic differential equations with linear drift and "
+    "quadratic diagonal diffusion whose invariant is the joint beta "
+    "distribution.";
   }
 };
-using beta = keyword< beta_info,  b,e,t,a >;
+using beta = keyword< beta_info, b,e,t,a >;
 
 // Keyword 'gamma'
 struct gamma_info {
   static const char* name() {
-    return "Gamma SDE"; }
+    return "Gamma"; }
   static const char* help() { return
-    "A single-variate stochastic differential equation whose invariant is the "
-    "gamma distribution.";
+    "A system stochastic differential equations with linear drift and linear "
+    "diagonal diffusion whose invariant is the joint gamma distribution.";
   }
 };
-using gamma = keyword< gamma_info,  g,a,m,m,a >;
+using gamma = keyword< gamma_info, g,a,m,m,a >;
 
 // Keyword 'ornstein_uhlenbeck'
 struct ornstein_uhlenbeck_info {
   static const char* name() {
-    return "Ornstein-Uhlenbeck SDE"; }
+    return "Ornstein-Uhlenbeck"; }
   static const char* help() { return
-    "A single-variate stochastic differential equation whose invariant is the "
-    "normal distribution.";
+    "A system of stochastic differential equations with linear drift and "
+    "constant diffusion whose invariant is the joint normal distribution.";
   }
 };
 using ornstein_uhlenbeck =
-  keyword< ornstein_uhlenbeck_info,  o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
+  keyword< ornstein_uhlenbeck_info, o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
+
+// Keyword 'diag_ornstein_uhlenbeck'
+struct diag_ornstein_uhlenbeck_info {
+  static const char* name() {
+    return "Diagonal Ornstein-Uhlenbeck"; }
+  static const char* help() { return
+    "A system of stochastic differential equations with linear drift and "
+    "constant diagonal diffusion whose invariant is the joint normal "
+    "distribution.";
+  }
+};
+using diag_ornstein_uhlenbeck =
+  keyword< diag_ornstein_uhlenbeck_info,
+           d,i,a,g,'_',o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
 
 // Keyword 'lognormal'
 struct lognormal_info {
   static const char* name() {
-    return "Log-normal SDE"; }
+    return "Log-normal"; }
   static const char* help() { return
     "A single-variate stochastic differential equation whose invariant is the "
     "log-normal distribution.";
