@@ -28,6 +28,9 @@ RNGTest
  - Find and add RNG library alternative to MKL and RNGSSE that works with
    threads: MKL is non-free and RNGSSE does not work on Mac OS (probably due
    to its assembly code), cuRAND, Random123?
+ - Implement a fall-back RNG (Boost?, STL?) that guaranteed to work everywhere.
+   (RNGSSE's assembly does not work on ARM.)
+ - Detect architecture. If not x86, don't try to build RNGSSE.
  - The functions in Handler.[Ch] work with the main Charm chare proxy,
    which is a first step toward fulfilling their intended functionality with
    Charm and handling exceptions with Charm. This works only in some
@@ -70,7 +73,6 @@ Build
  - Add support for PGI (if C++11 is complete)
  - Platforms:
     + arm: see tpl/README.build.charm
-    + darwin-gnu
     + helios-gnu
     + titan-gnu
     + mac-clang
@@ -95,6 +97,10 @@ Documentation
 Uncategorized
 -------------
  - Charm++ codes to explore: GTC, NAMD, LeanMD, Mol3D
+
+ - Remove testsde from quinoa and make it into a separate executable, testsde
+   will be a general math and numerical analysis tool, while quinoa will compute
+   physics
 
  - As the estimation of statistics should be closer (i.e., immediately after)
    updating the particle properties, the order of the particle properties in
@@ -130,7 +136,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 20 Nov 2014 04:30:32 PM MST
+<em>Page last updated:</em> Tue 25 Nov 2014 07:30:40 AM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */
