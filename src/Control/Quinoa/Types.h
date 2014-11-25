@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Tue 28 Oct 2014 09:18:04 PM MDT
+  \date      Fri 21 Nov 2014 04:50:08 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -359,6 +359,17 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
+//! Diagonal Ornstein-Uhlenbeck parameters storage
+using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::sigma,       std::vector< std::vector< tk::real > >,
+  tag::theta,       std::vector< std::vector< tk::real > >,
+  tag::mu,          std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
+>;
+
 //! Log-normal parameters storage
 using LogNormalParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
@@ -424,6 +435,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::gendir,       GenDirichletParameters,
   tag::wrightfisher, WrightFisherParameters,
   tag::ou,           OrnsteinUhlenbeckParameters,
+  tag::diagou,       DiagOrnsteinUhlenbeckParameters,
   tag::lognormal,    LogNormalParameters,
   tag::skewnormal,   SkewNormalParameters,
   tag::gamma,        GammaParameters,

@@ -1,20 +1,20 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/OrnsteinUhlenbeck.h
+  \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:53:37 PM MST
+  \date      Fri 21 Nov 2014 04:45:28 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Ornstein-Uhlenbeck SDE
-  \details   Ornstein-Uhlenbeck SDE.
+  \brief     Diagonal Ornstein-Uhlenbeck SDE
+  \details   Diagonal Ornstein-Uhlenbeck SDE.
 */
 //******************************************************************************
-#ifndef OrnsteinUhlenbeck_h
-#define OrnsteinUhlenbeck_h
+#ifndef DiagOrnsteinUhlenbeck_h
+#define DiagOrnsteinUhlenbeck_h
 
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <OUCoeffPolicy.h>
+#include <DiagOUCoeffPolicy.h>
 #include <RNG.h>
 
 namespace quinoa {
@@ -22,13 +22,13 @@ namespace quinoa {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Ornstein-Uhlenbeck SDE used polymorphically with DiffEq
+//! Diagonal Ornstein-Uhlenbeck SDE used polymorphically with DiffEq
 template< class Init, class Coefficients >
-class OrnsteinUhlenbeck {
+class DiagOrnsteinUhlenbeck {
 
   public:
     //! Constructor
-    explicit OrnsteinUhlenbeck( unsigned int c ) :
+    explicit DiagOrnsteinUhlenbeck( unsigned int c ) :
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::ou >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::ou >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
@@ -76,4 +76,4 @@ class OrnsteinUhlenbeck {
 
 } // quinoa::
 
-#endif // OrnsteinUhlenbeck_h
+#endif // DiagOrnsteinUhlenbeck_h

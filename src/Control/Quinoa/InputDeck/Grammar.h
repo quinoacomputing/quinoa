@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 03:09:57 PM MST
+  \date      Fri 21 Nov 2014 04:55:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -819,6 +819,35 @@ namespace deck {
          pegtl::ifmust< scan_sde< kw::diag_ornstein_uhlenbeck >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
+                                        depvar< tag::diagou, tag::depvar >,
+                                        component< kw::ncomp, tag::diagou >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::diagou,
+                                             tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::diagou,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::diagou,
+                                                tag::coeffpolicy >,
+                                        parameter_vector< kw::sde_sigma,
+                                                          tag::diagou,
+                                                          tag::sigma >,
+                                        parameter_vector< kw::sde_theta,
+                                                          tag::diagou,
+                                                          tag::theta >,
+                                        parameter_vector< kw::sde_mu,
+                                                          tag::diagou,
+                                                          tag::mu > > > {};
+
+  //! Ornstein-Uhlenbeck SDE
+  struct ornstein_uhlenbeck :
+         pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
+                        tk::grm::block< Stack,
+                                        tk::kw::end,
                                         depvar< tag::ou, tag::depvar >,
                                         component< kw::ncomp, tag::ou >,
                                         rng< kw::rng,
@@ -851,7 +880,7 @@ namespace deck {
                                         component< kw::ncomp, tag::lognormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
-                                             tag::ou,
+                                             tag::lognormal,
                                              tk::tag::rng > > > {};
 
   //! Skew-normal SDE
@@ -862,7 +891,7 @@ namespace deck {
                                         component< kw::ncomp, tag::skewnormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
-                                             tag::ou,
+                                             tag::skewnormal,
                                              tk::tag::rng > > > {};
 
   //! Gamma SDE
@@ -993,8 +1022,8 @@ namespace deck {
          pegtl::sor< dirichlet,
                      generalized_dirichlet,
                      wright_fisher,
+                     ornstein_uhlenbeck,
                      diag_ornstein_uhlenbeck,
-                     //ornstein_uhlenbeck,
                      lognormal,
                      skewnormal,
                      gamma,
