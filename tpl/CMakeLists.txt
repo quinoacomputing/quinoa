@@ -43,6 +43,7 @@ if(NOT CHARM_ARCH)
 
   set(CHARM_ARCH ${CHARM_ARCHITECTURE} CACHE STRING "Select Charm++/AMPI target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
+message(STATUS "Charm++ architecture: ${CHARM_ARCH}")
 
 # Set Charm++/AMPI compiler (the compiler used to build Charm++/AMPI): if MPI
 # is detected use it
@@ -57,6 +58,7 @@ if(NOT CHARM_COMPILER)
 
   set(CHARM_COMPILER ${CHARM_COMP} CACHE STRING "Select compiler used to build Charm++/AMPI with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
+message(STATUS "Charm++ compiler: ${CHARM_COMPILER}")
 
 # Set Charm++/AMPI compiler wrappers
 set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicc)
