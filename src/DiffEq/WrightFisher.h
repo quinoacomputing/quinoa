@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 10:28:18 AM MST
+  \date      Sun 23 Nov 2014 07:05:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   Wright-Fisher SDE, see
@@ -14,7 +14,11 @@
 
 #include <numeric>
 
-#include <mkl_lapacke.h>
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
 
 #include <InitPolicy.h>
 #include <WFCoeffPolicy.h>
@@ -150,8 +154,8 @@ class WrightFisher {
         }
         std::memcpy( Bo, B, m_ncomp*m_ncomp*sizeof(tk::real) );
         // Compute diffusion matrix (lower triangle of Cholesky-decomposition)
-        MKL_INT n = static_cast< MKL_INT >( m_ncomp );
-        MKL_INT info = LAPACKE_dpotrf( LAPACK_ROW_MAJOR, 'L', n, B[0], n );
+        lapack_int n = static_cast< lapack_int >( m_ncomp );
+        lapack_int info = LAPACKE_dpotrf( LAPACK_ROW_MAJOR, 'L', n, B[0], n );
         if (info != 0 ) {
           print_matrix( "=======\nOriginal Matrix", Bo[0], n, n );
           std::cout << "info: " << info << std::endl;
