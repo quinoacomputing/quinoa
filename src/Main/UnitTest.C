@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 04:55:17 PM MST
+  \date      Sun 23 Nov 2014 05:55:52 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -32,8 +32,10 @@
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
 #include <tests/Control/Toggle.h>
-#include <tests/Control/Options/MKLGaussianMethod.h>
-#include <tests/Control/Options/MKLUniformMethod.h>
+#ifdef HAS_MKL
+  #include <tests/Control/Options/MKLGaussianMethod.h>
+  #include <tests/Control/Options/MKLUniformMethod.h>
+#endif
 #include <tests/Control/Options/RNG.h>
 #include <tests/IO/Reader.h>
 

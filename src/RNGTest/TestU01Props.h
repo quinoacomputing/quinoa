@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:05:32 AM MDT
+  \date      Sun 23 Nov 2014 05:53:11 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TestU01 statistical test properties
   \details   TestU01 statistical test properties
@@ -194,8 +194,9 @@ class TestU01Props {
       //  g = createTestU01Gen< raw(RNGType::MKL_SABSTRACT) >( rngname );
       else if (m_rng == RNGType::MKL_NONDETERM)
         g = createTestU01Gen< raw(RNGType::MKL_NONDETERM) >( rngname );
+      else
       #endif
-      else if (m_rng == RNGType::RNGSSE_GM19)
+      if (m_rng == RNGType::RNGSSE_GM19)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM19) >( rngname );
       else if (m_rng == RNGType::RNGSSE_GM29)
         g = createTestU01Gen< raw(RNGType::RNGSSE_GM29) >( rngname );

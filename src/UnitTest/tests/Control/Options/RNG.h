@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 11:45:48 AM MDT
+  \date      Sun 23 Nov 2014 06:05:37 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -31,10 +31,10 @@ RNG_group RNG( "Control/Options/RNG" );
 
 //! Test definitions for group
 
-//! Test that member function param() finds MKL parameter for method type
+//! Test that member function param() finds RNG parameter for method type
 template<> template<>
 void RNG_object::test< 1 >() {
-  set_test_name( "param() finds MKL parameter" );
+  set_test_name( "param() finds RNG parameter" );
   ensure( "cannot find parameter",
           m.param( tk::ctr::RNGType::RNGSSE_GM19 ) == 0 );
 }
@@ -81,7 +81,7 @@ void RNG_object::test< 4 >() {
   std::vector< tk::ctr::RNG > v;
   v.emplace_back( std::move(c) );
   ensure( "move constructor used to emplace_back a RNG object to a std::vector",
-           v[0].param( tk::ctr::RNGType::MKL_SOBOL ) == VSL_BRNG_SOBOL );
+           v[0].param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
 }
 
 //! Test copy assignment
@@ -92,7 +92,7 @@ void RNG_object::test< 5 >() {
   tk::ctr::RNG c;
   c = m;
   ensure( "find param of copy-assigned RNG",
-          c.param( tk::ctr::RNGType::MKL_MCG59 ) == VSL_BRNG_MCG59 );
+          c.param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
 }
 
 //! Test move assignment
@@ -103,16 +103,18 @@ void RNG_object::test< 6 >() {
   tk::ctr::RNG c;
   c = std::move( m );
   ensure( "find param of move-assigned RNG",
-          c.param( tk::ctr::RNGType::MKL_MT2203 ) == VSL_BRNG_MT2203 );
+          c.param( tk::ctr::RNGType::RNGSSE_GM31 ) == 2 );
 }
 
 //! Test that member function lib() finds MKL library type for a MKL rng
+#ifdef HAS_MKL
 template<> template<>
 void RNG_object::test< 7 >() {
   set_test_name( "lib() finds MKL library type" );
   ensure( "cannot find library type",
           m.lib( tk::ctr::RNGType::MKL_R250 ) == tk::ctr::RNGLibType::MKL );
 }
+#endif
 
 //! Test that member function lib() finds RNGSSE library type for a RNGSSE rng
 template<> template<>
@@ -132,12 +134,16 @@ void RNG_object::test< 9 >() {
 }
 
 //! Test that member function supportSeq() returns false for an non-RNGSSE rng
+//! TODO: enable this once a new rng lib is hooked up (other than the optional
+//! mkl)
+#ifdef HAS_MKL
 template<> template<>
 void RNG_object::test< 10 >() {
   set_test_name( "supportsSeq() false for non-RNGSSE" );
   ensure_equals( "cannot find non-RNGSSE rng in support map",
                  m.supportsSeq( tk::ctr::RNGType::MKL_SFMT19937 ), false );
 }
+#endif
 
 //! Test that member function param<>() returns default for non-specified
 //! parameter
@@ -146,10 +152,10 @@ void RNG_object::test< 11 >() {
   set_test_name( "param() correctly returns default" );
 
   // empty bundle: no parameter specified
-  std::map< tk::ctr::RNGType, tk::ctr::RNGMKLParam > b;
+  std::map< tk::ctr::RNGType, tk::ctr::RNGSSEParam > b;
   ensure_equals( "does not return default seed for no parameters",
                  m.param< tk::tag::seed >
-                        ( tk::ctr::RNGType::MKL_MRG32K3A, 0, b ), 0 );
+                        ( tk::ctr::RNGType::RNGSSE_GM31, 0, b ), 0 );
 }
 
 //! Test that member function param<>() returns parameter for specified

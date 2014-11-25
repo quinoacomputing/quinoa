@@ -48,6 +48,8 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${NETCDF_LIBRARIES}
                       ${HDF5_LIBRARY}
                       #${Z_LIBRARY}
+                      ${LAPACKE_LIB}
+                      ${LAPACK_LIBRARIES}
                       ${MKL_INTERFACE_LIBRARY}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
@@ -170,9 +172,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
