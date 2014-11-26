@@ -1,9 +1,10 @@
 # - Find NetCDF
 # Find the native NetCDF includes and library
 #
-#  NETCDF_INCLUDES    - where to find netcdf.h, etc
-#  NETCDF_LIBRARIES   - Link these libraries when using NetCDF
-#  NETCDF_FOUND       - True if NetCDF found including required interfaces (see below)
+#  NETCDF_INCLUDES     - where to find netcdf.h, etc
+#  NETCDF_LIBRARIES    - Link these libraries when using NetCDF
+#  NETCDF_LIBRARY_DIRS - location of the NetCDF libraries
+#  NETCDF_FOUND        - True if NetCDF found including required interfaces (see below)
 #
 # Your package can require certain interfaces to be FOUND by setting these
 #
@@ -31,22 +32,29 @@ if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
   set (NETCDF_FIND_QUIETLY TRUE)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
-find_path (NETCDF_INCLUDES netcdf.h HINTS ${NETCDF_ROOT}/include)
+find_path (NETCDF_INCLUDES netcdf.h
+           HINTS ${NETCDF_ROOT}/include
+                 ${NETCDF_DIR}/include
+                 $ENV{NETCDF_DIR}/include)
 
-find_library (NETCDF_LIBRARIES_C NAMES netcdf HINTS ${NETCDF_ROOT}/lib)
+find_library (NETCDF_LIBRARIES_C NAMES netcdf
+              HINTS ${NETCDF_ROOT}/lib
+                    ${NETCDF_DIR}/lib
+                    $ENV{NETCDF_DIR}/lib)
 mark_as_advanced(NETCDF_LIBRARIES_C)
 
 set (NetCDF_has_interfaces "YES") # will be set to NO if we're missing any interfaces
 set (NetCDF_libs "${NETCDF_LIBRARIES_C}")
 
-get_filename_component (NetCDF_lib_dirs "${NETCDF_LIBRARIES_C}" PATH)
+get_filename_component (NETCDF_LIBRARY_DIRS "${NETCDF_LIBRARIES_C}" PATH)
+mark_as_advanced(NETCDF_LIBRARY_DIRS)
 
 macro (NetCDF_check_interface lang header libs)
   if (NETCDF_${lang})
     find_path (NETCDF_INCLUDES_${lang} NAMES ${header}
       HINTS "${NETCDF_INCLUDES}" NO_DEFAULT_PATH)
     find_library (NETCDF_LIBRARIES_${lang} NAMES ${libs}
-      HINTS "${NetCDF_lib_dirs}" NO_DEFAULT_PATH)
+      HINTS "${NETCDF_LIBRARY_DIRS}" NO_DEFAULT_PATH)
     mark_as_advanced (NETCDF_INCLUDES_${lang} NETCDF_LIBRARIES_${lang})
     if (NETCDF_INCLUDES_${lang} AND NETCDF_LIBRARIES_${lang})
       list (INSERT NetCDF_libs 0 ${NETCDF_LIBRARIES_${lang}}) # prepend so that -lnetcdf is last

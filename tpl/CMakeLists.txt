@@ -162,17 +162,18 @@ if (NOT NO_SYSTEM_BOOST)
 endif()
 if(Boost_FOUND)
   set(boost "")
-  message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not build ours")
+  #message(STATUS "Boost found at ${Boost_INCLUDE_DIR} - will not build ours")
 else()
   set(boost "boost")
 endif()
 
 # Detect HDF5, exclude if found, build if not
 if (NOT NO_SYSTEM_HDF5)
+  set(ENV{HDF5_ROOT} $ENV{HDF5_DIR})
   find_package(HDF5)
 endif()
 if(HDF5_FOUND)
-  message(STATUS "HDF5 found at ${HDF5_INCLUDE_DIRS} (include) and at ${HDF5_LIBRARY_DIRS} (libs) - will not build ours")
+  #message(STATUS "HDF5 found at ${HDF5_INCLUDE_DIRS} (include) and at ${HDF5_LIBRARIES} (libs) - will not build ours")
   set(hdf5ser "")
   set(hdf5ser_include "${HDF5_INCLUDE_DIRS}")
   set(hdf5ser_lib "${HDF5_LIBRARY_DIRS}")
@@ -187,10 +188,10 @@ if (NOT NO_SYSTEM_NETCDF)
   find_package(NetCDF)
 endif()
 if(NETCDF_FOUND)
-  message(STATUS "NetCDF found at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib) - will not build ours")
+  #message(STATUS "NetCDF found at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib) - will not build ours")
   set(netcdf "")
   set(netcdf_include "${NETCDF_INCLUDES}")
-  set(netcdf_lib "${NETCDF_LIBRARIES}")
+  set(netcdf_lib "${NETCDF_LIBRARY_DIRS}")
 else()
   set(netcdf "netcdf")
   set(netcdf_include "${CMAKE_INSTALL_PREFIX}/include")
@@ -202,7 +203,7 @@ if (NOT NO_SYSTEM_EXODUS)
   find_package(Exodus)
 endif()
 if(EXODUS_FOUND)
-  message(STATUS "ExodusII/Nemesis found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib) - will not build ours")
+  #message(STATUS "ExodusII/Nemesis found at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib) - will not build ours")
   set(exodus "")
 else()
   set(exodus "exodus")
@@ -220,7 +221,7 @@ ExternalProject_Add(
   URL ${PROJECT_SOURCE_DIR}/charm-6.6.0.tar.gz
   URL_MD5 31e95901b3f7324d52107e6ad000fcc8
   # Move unpacked tarball to install dir and build there
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E rename
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy_directory
                     ${PROJECT_BINARY_DIR}/charm/src/charm
                     ${CMAKE_INSTALL_PREFIX}/charm
   # Build in install dir and leave stuff there - no install step
