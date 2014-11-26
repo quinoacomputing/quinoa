@@ -1,9 +1,6 @@
 # Third-party libraries paths
 
 #### MKL (optional)
-message(STATUS "Check for optional MKL (Intel Math Kernel Library)")
-
-# Attempt to find MKL libraries
 find_library(MKL_INTERFACE_LIBRARY
              NAMES mkl_intel_ilp64
              PATHS $ENV{MKLROOT}/lib/intel64
@@ -33,12 +30,11 @@ find_path(MKL_INCLUDE_PATH mkl.h
           $ENV{INTEL}/mkl/include
           NO_DEFAULT_PATH)
 
-# Define HAS_MKL macro and echo MKL status
 if (MKL_INTERFACE_LIBRARY AND
     MKL_SEQUENTIAL_LAYER_LIBRARY AND
     #MKL_THREADED_LAYER_LIBRARY AND
     MKL_CORE_LIBRARY)
-  message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- works")
+  message(STATUS "Found MKL:")
   message(STATUS " * MKL_INTERFACE_LIBRARY: ${MKL_INTERFACE_LIBRARY}")
   message(STATUS " * MKL_SEQUENTIAL_LAYER_LIBRARY: ${MKL_SEQUENTIAL_LAYER_LIBRARY}")
   #message(STATUS " * MKL_THREADED_LAYER_LIBRARY: ${MKL_THREADED_LAYER_LIBRARY}")
@@ -47,7 +43,7 @@ if (MKL_INTERFACE_LIBRARY AND
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMKL_ILP64 -m64")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMKL_ILP64 -m64")
 else()
-  message(STATUS "Check for optional MKL (Intel Math Kernel Library) -- failed: Intel MKL VSL RNGs will not be available")
+  message(STATUS "MKL NOT found: Intel MKL VSL RNGs will not be available")
   set(MKL_INTERFACE_LIBRARY "")
   set(MKL_SEQUENTIAL_LAYER_LIBRARY "")
   #set(MKL_THREADED_LAYER_LIBRARY "")
@@ -122,7 +118,7 @@ if (NOT NO_SYSTEM_BOOST)
   find_package(Boost REQUIRED)
 endif()
 if(Boost_FOUND)
-  message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
+  #message(STATUS "Boost at ${Boost_INCLUDE_DIR} (include)")
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
@@ -132,7 +128,7 @@ if (NOT NO_SYSTEM_NETCDF)
   find_package(NetCDF REQUIRED)
 endif()
 if(NETCDF_FOUND)
-  message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
+  #message(STATUS "NetCDF at ${NETCDF_INCLUDES} (include) and at ${NETCDF_LIBRARIES} (lib)")
 endif()
 
 #### ExodusII/Nemesis library
@@ -141,19 +137,19 @@ if (NOT NO_SYSTEM_EXODUS)
   find_package(Exodus REQUIRED)
 endif()
 if(EXODUS_FOUND)
-  message(STATUS "ExodusII/Nemesis at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib)")
+  #message(STATUS "ExodusII/Nemesis at ${EXODUS_INCLUDES} (exodus include), ${NEMESIS_INCLUDES} (nemesis include) and at ${EXODUS_LIBRARIES} (exodus lib), ${NEMESIS_LIBRARIES} (nemesis lib)")
 endif()
 
 #### BLAS/LAPACK library
 if (HAS_MKL)    # prefer Intel's MKL's BLAS/LAPACK if MKL is available
-  message(STATUS "BLAS/LAPACK at ${MKL_INTERFACE_LIBRARY};${MKL_CORE_LIBRARY};${MKL_SEQUENTIAL_LAYER_LIBRARY} using via MKL's C-interface")
+  message(STATUS "Found BLAS/LAPACK: ${MKL_INTERFACE_LIBRARY};${MKL_CORE_LIBRARY};${MKL_SEQUENTIAL_LAYER_LIBRARY} using via MKL's C-interface")
 else()
   find_package(LAPACK REQUIRED)
   if(LAPACK_FOUND)
     # find C-interface
     find_path(LAPACKE_PATH lapacke.h DOC "C-interface to LAPACK")
     find_library(LAPACKE_LIB NAMES lapacke REQUIRED)
-    message(STATUS "BLAS/LAPACK at ${LAPACK_LIBRARIES} using via C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
+    message(STATUS "Found BLAS/LAPACK: ${LAPACK_LIBRARIES} using via C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
   endif()
 endif()
 
