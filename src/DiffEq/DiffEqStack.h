@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 12:58:39 PM MST
+  \date      Fri 05 Dec 2014 02:36:13 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -122,6 +122,9 @@ class DiffEqStack {
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
     infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const;
+    //! Get information on Gamma SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const;
 
     //! Return parameter values from vector as string
     template< typename... tags > std::string parameters( int c ) const {

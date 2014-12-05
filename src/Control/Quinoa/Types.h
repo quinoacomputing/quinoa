@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:09:50 PM MST
+  \date      Fri 05 Dec 2014 02:34:47 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -392,11 +392,12 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 //! Gamma parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::c1,          tk::real,
-  tag::c2,          tk::real,
-  tag::c3,          tk::real,
-  tag::c4,          tk::real,
-  tk::tag::rng,     std::vector< tk::ctr::RNGType >
+  tag::b,           std::vector< std::vector< tk::real > >,
+  tag::S,           std::vector< std::vector< tk::real > >,
+  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tk::tag::rng,     std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
 //! Beta parameters storage
