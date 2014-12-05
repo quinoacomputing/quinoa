@@ -175,6 +175,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #   304: access control not specified ("public" by default)
   #   367: duplicate friend declaration
   #   383: value copied to temporary, reference to temporary used
+  #   411: defines no constructor for initializer_list<>
   #   444: destructor for base class is not virtual
   #   869: parameter was never referenced
   #   981: operands are evaluated in unspecified order
@@ -183,7 +184,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")  # intel-specific settings
   #  2415: variable of static storage duration was declared but never referenced
   #  2547: path was specified as both a system and non-system include directory
   #  3346: dynamic exception specifications are deprecated
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,367,383,444,869,981,1418,2282,2415,2547,3346")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 111,193,304,367,383,411,444,869,981,1418,2282,2415,2547,3346")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -opt-report=0")
 
   # Link to thread-safe MPI library
