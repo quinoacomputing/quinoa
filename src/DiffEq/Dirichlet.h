@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 17 Nov 2014 07:46:18 PM MST
+  \date      Fri 05 Dec 2014 02:16:49 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
@@ -40,9 +40,9 @@ class Dirichlet {
       const auto& b = g_inputdeck.get< tag::param, tag::dirichlet, tag::b >();
       const auto& S = g_inputdeck.get< tag::param, tag::dirichlet, tag::S >();
       const auto& k = g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >();
-      ErrChk( b.size() > c, "Wrong number of Dirichlet SDE parameters 'b'");
-      ErrChk( S.size() > c, "Wrong number of Dirichlet SDE parameters 'S'");
-      ErrChk( k.size() > c, "Wrong number of Dirichlet SDE parameters 'kappa'");
+      ErrChk( b.size() > c, "Indexing out of Dirichlet SDE parameters 'b'");
+      ErrChk( S.size() > c, "Indexing out of Dirichlet SDE parameters 'S'");
+      ErrChk( k.size() > c, "Indexing out of Dirichlet SDE parameters 'kappa'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, b[c], S[c], k[c], m_b, m_S, m_k );
     }

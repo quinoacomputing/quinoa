@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Wed 26 Nov 2014 01:27:35 PM MST
+  \date      Fri 05 Dec 2014 02:17:39 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck SDE
   \details   Diagonal Ornstein-Uhlenbeck SDE.
@@ -39,9 +39,12 @@ class DiagOrnsteinUhlenbeck {
       const auto& theta =
         g_inputdeck.get< tag::param, tag::diagou, tag::theta >();
       const auto& mu = g_inputdeck.get< tag::param, tag::diagou, tag::mu >();
-      ErrChk( sigma.size() > c, "Wrong number of OU SDE parameters 'sigma'");
-      ErrChk( theta.size() > c, "Wrong number of OU SDE parameters 'theta'");
-      ErrChk( mu.size() > c, "Wrong number of OU SDE parameters 'mu'");
+      ErrChk( sigma.size() > c,
+              "Indexing out of diagonal OU SDE parameters 'sigma'");
+      ErrChk( theta.size() > c,
+              "Indexing out of diagonal OU SDE parameters 'theta'");
+      ErrChk( mu.size() > c,
+              "Indexing out of diagonal OU SDE parameters 'mu'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, sigma[c], theta[c], mu[c], m_sigma, m_theta, m_mu );
     }

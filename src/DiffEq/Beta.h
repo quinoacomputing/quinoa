@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Mon 17 Nov 2014 07:46:00 PM MST
+  \date      Fri 05 Dec 2014 02:16:20 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Beta SDE
   \details   Beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843
@@ -37,9 +37,9 @@ class Beta {
       const auto& b = g_inputdeck.get< tag::param, tag::beta, tag::b >();
       const auto& S = g_inputdeck.get< tag::param, tag::beta, tag::S >();
       const auto& k = g_inputdeck.get< tag::param, tag::beta, tag::kappa >();
-      ErrChk( b.size() > c, "Wrong number of beta SDE parameters 'b'");
-      ErrChk( S.size() > c, "Wrong number of beta OU SDE parameters 'S'");
-      ErrChk( k.size() > c, "Wrong number of beta OU SDE parameters 'kappa'");
+      ErrChk( b.size() > c, "Indexing out of beta SDE parameters 'b'");
+      ErrChk( S.size() > c, "Indexing out of beta OU SDE parameters 'S'");
+      ErrChk( k.size() > c, "Indexing out of beta OU SDE parameters 'kappa'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, b[c], S[c], k[c], m_b, m_S, m_k );
     }

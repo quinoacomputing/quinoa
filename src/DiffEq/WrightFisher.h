@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Wed 26 Nov 2014 01:44:44 PM MST
+  \date      Fri 05 Dec 2014 02:15:59 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   Wright-Fisher SDE, see
@@ -59,7 +59,7 @@ class WrightFisher {
       const auto& omega =
         g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >();
       ErrChk( omega.size() > c,
-              "Wrong number of Wright-Fisher SDE parameters 'omega'");
+              "Indexing out of Wright-Fisher SDE parameters 'omega'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, omega[c], m_omega );
     }
