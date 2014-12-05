@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Wed 26 Nov 2014 01:39:56 PM MST
+  \date      Fri 05 Dec 2014 11:30:12 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -270,7 +270,8 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) );
   info.emplace_back( "coeff sigma [" + std::to_string( ncomp*(ncomp+1)/2 )
-                     + "]", parameters< tag::param, tag::ou, tag::sigma >(c) );
+                     + ", upper tri]",
+                     parameters< tag::param, tag::ou, tag::sigma >(c) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
     parameters< tag::param, tag::ou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
