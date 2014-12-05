@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:55:51 PM MST
+  \date      Fri 05 Dec 2014 01:21:38 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -888,11 +888,29 @@ namespace deck {
          pegtl::ifmust< scan_sde< kw::skewnormal >,
                         tk::grm::block< Stack,
                                         tk::kw::end,
+                                        depvar< tag::skewnormal, tag::depvar >,
                                         component< kw::ncomp, tag::skewnormal >,
                                         rng< kw::rng,
                                              tk::ctr::RNG,
                                              tag::skewnormal,
-                                             tk::tag::rng > > > {};
+                                             tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::skewnormal,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::skewnormal,
+                                                tag::coeffpolicy >,
+                                        parameter_vector< kw::sde_T,
+                                                          tag::skewnormal,
+                                                          tag::timescale >,
+                                        parameter_vector< kw::sde_sigma,
+                                                          tag::skewnormal,
+                                                          tag::sigma >,
+                                        parameter_vector< kw::sde_lambda,
+                                                          tag::skewnormal,
+                                                          tag::lambda > > > {};
 
   //! Gamma SDE
   struct gamma :
