@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Tags.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:46:26 PM MST
+  \date      Fri 05 Dec 2014 03:39:15 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's tags
   \details   Quinoa's tags
@@ -61,7 +61,6 @@ struct slm {};
 struct glm {};
 struct diagou {};
 struct ou {};
-struct lognormal {};
 struct skewnormal {};
 struct position {};
 struct mass {};

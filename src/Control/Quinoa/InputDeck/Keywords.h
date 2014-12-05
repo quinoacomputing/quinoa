@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:12:41 PM MST
+  \date      Fri 05 Dec 2014 03:39:07 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -202,17 +202,6 @@ struct diag_ornstein_uhlenbeck_info {
 using diag_ornstein_uhlenbeck =
   keyword< diag_ornstein_uhlenbeck_info,
            d,i,a,g,'_',o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
-
-// Keyword 'lognormal'
-struct lognormal_info {
-  static const char* name() {
-    return "Log-normal"; }
-  static const char* help() { return
-    "A single-variate stochastic differential equation whose invariant is the "
-    "log-normal distribution.";
-  }
-};
-using lognormal = keyword< lognormal_info,  l,o,g,n,o,r,m,a,l >;
 
 // Select position model:
 //   * Insviscid model

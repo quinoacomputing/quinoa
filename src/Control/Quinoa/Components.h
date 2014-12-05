@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Components.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:48:33 PM MST
+  \date      Fri 05 Dec 2014 03:38:19 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components
@@ -120,7 +120,6 @@ using ncomps = ncomponents<
   tag::wrightfisher, std::vector< ncomp >, //!< Wright-Fisher SDEs
   tag::diagou,       std::vector< ncomp >, //!< Diagonal Ornstein-Uhlenbeck SDEs
   tag::ou,           std::vector< ncomp >, //!< Ornstein-Uhlenbeck SDEs
-  tag::lognormal,    std::vector< ncomp >, //!< Log-normal SDEs
   tag::skewnormal,   std::vector< ncomp >, //!< Skew-normal SDEs
   tag::gamma,        std::vector< ncomp >, //!< Gamma SDEs
   tag::beta,         std::vector< ncomp >  //!< Beta SDEs
