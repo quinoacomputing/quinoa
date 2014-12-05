@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Thu 20 Nov 2014 09:22:23 PM MST
+  \date      Fri 05 Dec 2014 03:37:45 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -25,7 +25,6 @@ namespace ctr {
 enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   OU,
                                   DIAG_OU,
-                                  LOGNORMAL,
                                   SKEWNORMAL,
                                   GAMMA,
                                   BETA,
@@ -54,7 +53,6 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         { { DiffEqType::NO_DIFFEQ, "n/a" },
           { DiffEqType::OU, kw::ornstein_uhlenbeck().name() },
           { DiffEqType::DIAG_OU, kw::diag_ornstein_uhlenbeck().name() },
-          { DiffEqType::LOGNORMAL, kw::lognormal().name() },
           { DiffEqType::SKEWNORMAL, kw::skewnormal().name() },
           { DiffEqType::GAMMA, kw::gamma().name() },
           { DiffEqType::BETA, kw::beta().name() },
@@ -65,7 +63,6 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck().string(), DiffEqType::OU },
           { kw::diag_ornstein_uhlenbeck().string(), DiffEqType::DIAG_OU },
-          { kw::lognormal().string(), DiffEqType::LOGNORMAL },
           { kw::skewnormal().string(), DiffEqType::SKEWNORMAL },
           { kw::gamma().string(), DiffEqType::GAMMA },
           { kw::beta().string(), DiffEqType::BETA },

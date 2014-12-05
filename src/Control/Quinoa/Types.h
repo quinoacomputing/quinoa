@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:34:47 PM MST
+  \date      Fri 05 Dec 2014 03:38:40 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
   \details   Types for Quinoa's parsers
@@ -370,14 +370,6 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< ctr::CoeffPolicyType >
 >;
 
-//! Log-normal parameters storage
-using LogNormalParameters = tk::tuple::tagged_tuple<
-  tag::depvar,      std::vector< char >,
-  tag::sigma,       tk::real,
-  tag::timescale,   tk::real,
-  tk::tag::rng,     std::vector< tk::ctr::RNGType >
->;
-
 //! Skew-normal parameters storage
 using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
@@ -439,7 +431,6 @@ using parameters = tk::tuple::tagged_tuple<
   tag::wrightfisher, WrightFisherParameters,
   tag::ou,           OrnsteinUhlenbeckParameters,
   tag::diagou,       DiagOrnsteinUhlenbeckParameters,
-  tag::lognormal,    LogNormalParameters,
   tag::skewnormal,   SkewNormalParameters,
   tag::gamma,        GammaParameters,
   tag::beta,         BetaParameters
