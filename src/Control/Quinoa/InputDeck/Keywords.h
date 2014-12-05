@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Keywords.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 03:16:29 PM MST
+  \date      Fri 05 Dec 2014 09:49:24 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck keywords
   \details   All keywords recognized by Quinoa's input deck parser. The keywords
@@ -521,21 +521,21 @@ using coeff = keyword<undefined_info,  c,o,e,f,f >;
 
 // Keyword 'raw': raw initialization policy
 struct raw_info {
-  static const char* name() { return "Raw"; }
+  static const char* name() { return "R"; }
   static const char* help() { return "Raw initialization policy."; }
 };
 using raw = keyword<raw_info, r,a,w >;
 
 // Keyword 'raw': zero initialization policy
 struct zero_info {
-  static const char* name() { return "Zero"; }
+  static const char* name() { return "Z"; }
   static const char* help() { return "Zero initialization policy."; }
 };
 using zero = keyword<zero_info, z,e,r,o >;
 
 // Keyword 'constant': constant coefficients policy
 struct constant_info {
-  static const char* name() { return "Constant"; }
+  static const char* name() { return "C"; }
   static const char* help() { return "Constant coefficients policy."; }
 };
 using constant = keyword<constant_info, c,o,n,s,t,a,n,t >;

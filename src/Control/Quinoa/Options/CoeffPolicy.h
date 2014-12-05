@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:16:37 AM MDT
+  \date      Fri 05 Dec 2014 10:09:09 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options and associations
   \details   Differential equation coefficients policy options and associations
@@ -32,7 +32,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit CoeffPolicy() :
-      Toggle< CoeffPolicyType >( "Differential equation coefficients policy",
+      Toggle< CoeffPolicyType >( "Coefficients Policy",
         //! Enums -> names
         { { CoeffPolicyType::CONSTANT, kw::constant().name() } },
         //! keywords -> Enums
