@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:21:38 PM MST
+  \date      Fri 05 Dec 2014 02:42:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -677,30 +677,30 @@ namespace deck {
                                                           tag::gendir,
                                                           tag::c > > > {};
 
-  //! Gamma turbulence frequency model block
-  struct freq_gamma :
-         pegtl::ifmust< scan_frequency< kw::freq_gamma >,
-                        tk::grm::block<
-                          Stack,
-                          tk::kw::end,
-                          component< kw::nfreq, tag::frequency >,
-                          rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
-                          parameter< kw::freq_gamma_C1,
-                                     pegtl::digit,
-                                     tag::gamma,
-                                     tag::c1 >,
-                          parameter< kw::freq_gamma_C2,
-                                     pegtl::digit,
-                                     tag::gamma,
-                                     tag::c2 >,
-                          parameter< kw::freq_gamma_C3,
-                                     pegtl::digit,
-                                     tag::gamma,
-                                     tag::c3 >,
-                          parameter< kw::freq_gamma_C4,
-                                     pegtl::digit,
-                                     tag::gamma,
-                                     tag::c4 > > > {};
+//   //! Gamma turbulence frequency model block
+//   struct freq_gamma :
+//          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
+//                         tk::grm::block<
+//                           Stack,
+//                           tk::kw::end,
+//                           component< kw::nfreq, tag::frequency >,
+//                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
+//                           parameter< kw::freq_gamma_C1,
+//                                      pegtl::digit,
+//                                      tag::gamma,
+//                                      tag::c1 >,
+//                           parameter< kw::freq_gamma_C2,
+//                                      pegtl::digit,
+//                                      tag::gamma,
+//                                      tag::c2 >,
+//                           parameter< kw::freq_gamma_C3,
+//                                      pegtl::digit,
+//                                      tag::gamma,
+//                                      tag::c3 >,
+//                           parameter< kw::freq_gamma_C4,
+//                                      pegtl::digit,
+//                                      tag::gamma,
+//                                      tag::c4 > > > {};
 
 //   //! Beta mass model block
 //   struct mass_beta :
@@ -756,8 +756,8 @@ namespace deck {
          pegtl::sor< mix_dir, mix_gendir > {};
 
   //! turbulence frequency models
-  struct freq :
-         pegtl::sor< freq_gamma > {};
+//   struct freq :
+//          pegtl::sor< freq_gamma > {};
 
   //! MonteCarlo physics 'hommix' block
   struct hommix :
@@ -777,7 +777,7 @@ namespace deck {
                                         montecarlo_common,
                                         //mass,
                                         hydro,
-                                        freq,
+                                        //freq,
                                         rngblock,
                                         statistics > > {};
 
@@ -788,7 +788,7 @@ namespace deck {
                                         tk::kw::end,
                                         montecarlo_common,
                                         hydro,
-                                        freq,
+                                        //freq,
                                         rngblock,
                                         statistics > > {};
 
@@ -799,7 +799,7 @@ namespace deck {
                                         tk::kw::end,
                                         montecarlo_common,
                                         hydro,
-                                        freq,
+                                        //freq,
                                         mix,
                                         rngblock,
                                         statistics > > {};
@@ -912,17 +912,6 @@ namespace deck {
                                                           tag::skewnormal,
                                                           tag::lambda > > > {};
 
-  //! Gamma SDE
-  struct gamma :
-         pegtl::ifmust< scan_sde< kw::gamma >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        component< kw::ncomp, tag::gamma >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::gamma,
-                                             tk::tag::rng > > > {};
-
   //! Beta SDE
   struct beta :
          pegtl::ifmust< scan_sde< kw::beta >,
@@ -950,6 +939,35 @@ namespace deck {
                                                           tag::S >,
                                         parameter_vector< kw::sde_kappa,
                                                           tag::beta,
+                                                          tag::kappa > > > {};
+
+  //! Gamma SDE
+  struct gamma :
+         pegtl::ifmust< scan_sde< kw::gamma >,
+                        tk::grm::block< Stack,
+                                        tk::kw::end,
+                                        depvar< tag::gamma, tag::depvar >,
+                                        component< kw::ncomp, tag::gamma >,
+                                        rng< kw::rng,
+                                             tk::ctr::RNG,
+                                             tag::gamma,
+                                             tk::tag::rng >,
+                                        policy< kw::init,
+                                                ctr::InitPolicy,
+                                                tag::gamma,
+                                                tag::initpolicy >,
+                                        policy< kw::coeff,
+                                                ctr::CoeffPolicy,
+                                                tag::gamma,
+                                                tag::coeffpolicy >,
+                                        parameter_vector< kw::sde_b,
+                                                          tag::gamma,
+                                                          tag::b >,
+                                        parameter_vector< kw::sde_S,
+                                                          tag::gamma,
+                                                          tag::S >,
+                                        parameter_vector< kw::sde_kappa,
+                                                          tag::gamma,
                                                           tag::kappa > > > {};
 
   //! Dirichlet SDE

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 06:21:39 PM MDT
+  \date      Fri 05 Dec 2014 02:41:12 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -49,11 +49,6 @@ class InputDeck :
       set< tag::interval, tag::stat >( 1 );
       set< tag::interval, tag::pdf >( 1 );
       set< tag::interval, tag::glob >( 1 );
-      // Default gamma mix model parameters
-      set< tag::param, tag::gamma, tag::c1 >( 0.5 );
-      set< tag::param, tag::gamma, tag::c2 >( 0.73 );
-      set< tag::param, tag::gamma, tag::c3 >( 5.0 );
-      set< tag::param, tag::gamma, tag::c4 >( 0.25 );
       // Default simplified Langevin hydro model parameters
       set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default generalized Langevin hydro model parameters

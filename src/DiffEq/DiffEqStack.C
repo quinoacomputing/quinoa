@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:07:11 PM MST
+  \date      Fri 05 Dec 2014 03:13:24 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -19,6 +19,7 @@
 #include <WrightFisher.h>
 #include <Beta.h>
 #include <SkewNormal.h>
+#include <Gamma.h>
 #include <Factory.h>
 
 using quinoa::DiffEqStack;
@@ -87,6 +88,14 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< SkewNormal >
                   ( m_factory, ctr::DiffEqType::SKEWNORMAL, m_eqTypes ) );
 
+  // Gamma SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using GammaPolicies = mpl::vector< InitPolicies, GammaCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< GammaPolicies >(
+    registerDiffEq< Gamma >
+                  ( m_factory, ctr::DiffEqType::GAMMA, m_eqTypes ) );
+
 }
 
 std::vector< quinoa::DiffEq >
@@ -114,6 +123,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::beta >( m_factory, d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       diffeqs.push_back( createDiffEq< tag::skewnormal >( m_factory, d, cnt ) );
+    else if (d == ctr::DiffEqType::GAMMA)
+      diffeqs.push_back( createDiffEq< tag::gamma >( m_factory, d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -145,6 +156,8 @@ DiffEqStack::info() const
       info.emplace_back( infoBeta( cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       info.emplace_back( infoSkewNormal( cnt ) );
+    else if (d == ctr::DiffEqType::GAMMA)
+      info.emplace_back( infoGamma( cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -398,6 +411,42 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
                      parameters< tag::param, tag::skewnormal, tag::sigma >(c) );
   info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
                      parameters< tag::param, tag::skewnormal, tag::lambda >(c) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const
+//******************************************************************************
+//  Return information on the gamma SDE
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::GAMMA ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::GAMMA ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::gamma, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::gamma, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::gamma, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::gamma >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::gamma >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::gamma, tk::tag::rng >()[c] ) );
+  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gamma, tag::b >(c) );
+  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gamma, tag::S >(c) );
+  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::gamma, tag::kappa >(c) );
 
   return info;
 }
