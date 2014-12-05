@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:52:28 PM MST
+  \date      Wed 26 Nov 2014 01:39:56 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -269,8 +269,8 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) );
-  info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::ou, tag::sigma >(c) );
+  info.emplace_back( "coeff sigma [" + std::to_string( ncomp*(ncomp+1)/2 )
+                     + "]", parameters< tag::param, tag::ou, tag::sigma >(c) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
     parameters< tag::param, tag::ou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
@@ -294,23 +294,23 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::DIAG_OU ), "" );
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::ou, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, tag::diagou, tag::depvar >()[c] ) );
   info.emplace_back( "initialization policy", ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::ou, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::diagou, tag::initpolicy >()[c] ) );
   info.emplace_back( "coefficients policy", ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::ou, tag::coeffpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::diagou, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::ou >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::ou >()[c];
+    g_inputdeck.get< tag::component >().offset< tag::diagou >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::diagou >()[c];
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) );
+    g_inputdeck.get< tag::param, tag::diagou, tk::tag::rng >()[c] ) );
   info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::ou, tag::sigma >(c) );
+                     parameters< tag::param, tag::diagou, tag::sigma >(c) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::ou, tag::theta >(c) );
+    parameters< tag::param, tag::diagou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::ou, tag::mu >(c) );
+    parameters< tag::param, tag::diagou, tag::mu >(c) );
 
   return info;
 }

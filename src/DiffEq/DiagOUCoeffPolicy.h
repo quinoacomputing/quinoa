@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 03:12:34 PM MST
+  \date      Wed 26 Nov 2014 12:47:29 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   Diagonal Ornstein-Uhlenbeck coefficients policies
@@ -36,7 +36,7 @@ struct DiagOUCoeffConst {
     theta = theta_;
     mu = mu_;
     ErrChk( sigma.size() == ncomp,
-            "Wrong number of diagonarl OU SDE parameters 'sigma'");
+            "Wrong number of diagonal OU SDE parameters 'sigma'");
     ErrChk( theta.size() == ncomp,
             "Wrong number of diagonal OU SDE parameters 'theta'");
     ErrChk( mu.size() == ncomp,

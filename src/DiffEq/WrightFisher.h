@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Sun 23 Nov 2014 07:05:51 PM MST
+  \date      Wed 26 Nov 2014 01:44:44 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   Wright-Fisher SDE, see
@@ -29,20 +29,20 @@ namespace quinoa {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-void print_matrix(const char *name, const double *mat, int n, int m) {
+//! Wright-Fisher SDE used polymorphically with DiffEq
+template< class Init, class Coefficients >
+class WrightFisher {
+
+  void print_matrix(const char *name, const double *mat, int n, int m) const {
     int i, j;
     printf("%s:\n", name);
     for(i=0; i<n; ++i) {
         for(j=0; j<m; ++j)
-            printf("%10g ", mat[n*j+i]);        
+            printf("%10g ", mat[i*n+j]);
         printf("\n");
     }
     printf("\n");
-}
-
-//! Wright-Fisher SDE used polymorphically with DiffEq
-template< class Init, class Coefficients >
-class WrightFisher {
+  }
 
   public:
     //! Constructor: use coefficients policy to initialize coefficients

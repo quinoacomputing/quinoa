@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:45:28 PM MST
+  \date      Wed 26 Nov 2014 01:27:35 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck SDE
   \details   Diagonal Ornstein-Uhlenbeck SDE.
@@ -29,14 +29,16 @@ class DiagOrnsteinUhlenbeck {
   public:
     //! Constructor
     explicit DiagOrnsteinUhlenbeck( unsigned int c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::ou >()[c] ),
-      m_offset(g_inputdeck.get< tag::component >().offset< tag::ou >(c)),
+      m_ncomp( g_inputdeck.get< tag::component >().get< tag::diagou >()[c] ),
+      m_offset(g_inputdeck.get< tag::component >().offset< tag::diagou >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::diagou, tk::tag::rng >()[c] ) ) )
     {
-      const auto& sigma = g_inputdeck.get< tag::param, tag::ou, tag::sigma >();
-      const auto& theta = g_inputdeck.get< tag::param, tag::ou, tag::theta >();
-      const auto& mu = g_inputdeck.get< tag::param, tag::ou, tag::mu >();
+      const auto& sigma =
+        g_inputdeck.get< tag::param, tag::diagou, tag::sigma >();
+      const auto& theta =
+        g_inputdeck.get< tag::param, tag::diagou, tag::theta >();
+      const auto& mu = g_inputdeck.get< tag::param, tag::diagou, tag::mu >();
       ErrChk( sigma.size() > c, "Wrong number of OU SDE parameters 'sigma'");
       ErrChk( theta.size() > c, "Wrong number of OU SDE parameters 'theta'");
       ErrChk( mu.size() > c, "Wrong number of OU SDE parameters 'mu'");
