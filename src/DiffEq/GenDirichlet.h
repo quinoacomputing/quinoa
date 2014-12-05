@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GenDirichlet.h
   \author    J. Bakosi
-  \date      Tue 28 Oct 2014 09:07:24 PM MDT
+  \date      Fri 05 Dec 2014 02:17:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -38,13 +38,13 @@ class GenDirichlet {
       const auto& k = g_inputdeck.get< tag::param, tag::gendir, tag::kappa >();
       const auto& C = g_inputdeck.get< tag::param, tag::gendir, tag::c >();
       ErrChk( b.size() > c,
-              "Wrong number of Generalized Dirichlet SDE parameters 'b'");
+              "Indexing out of Generalized Dirichlet SDE parameters 'b'");
       ErrChk( S.size() > c,
-              "Wrong number of Generalized Dirichlet SDE parameters 'S'");
+              "Indexing out of Generalized Dirichlet SDE parameters 'S'");
       ErrChk( k.size() > c,
-              "Wrong number of Generalized Dirichlet SDE parameters 'kappa'");
+              "Indexing out of Generalized Dirichlet SDE parameters 'kappa'");
       ErrChk( C.size() > c,
-              "Wrong number of Generalized Dirichlet SDE parameters 'c'");
+              "Indexing out of Generalized Dirichlet SDE parameters 'c'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, b[c], S[c], k[c], C[c], m_b, m_S, m_k, m_c );
     }

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:45:05 PM MST
+  \date      Fri 05 Dec 2014 02:16:37 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE.
@@ -41,11 +41,11 @@ class SkewNormal {
       const auto& lambda =
         g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >();
       ErrChk( timescale.size() > c,
-              "Wrong number of Skew-normal SDE parameters 'timescale'");
+              "Indexing out of Skew-normal SDE parameters 'timescale'");
       ErrChk( sigma.size() > c,
-              "Wrong number of Skew-normal SDE parameters 'sigma'");
+              "Indexing out of Skew-normal SDE parameters 'sigma'");
       ErrChk( lambda.size() > c,
-              "Wrong number of Skew-normal SDE parameters 'lambda'");
+              "Indexing out of Skew-normal SDE parameters 'lambda'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, timescale[c], sigma[c], lambda[c],
                     m_timescale, m_sigma, m_lambda );
