@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 21 Nov 2014 04:53:37 PM MST
+  \date      Thu 04 Dec 2014 04:58:28 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
@@ -12,6 +12,12 @@
 #define OrnsteinUhlenbeck_h
 
 #include <cmath>
+
+#ifdef HAS_MKL
+  #include <mkl_lapacke.h>
+#else
+  #include <lapacke.h>
+#endif
 
 #include <InitPolicy.h>
 #include <OUCoeffPolicy.h>
@@ -42,6 +48,11 @@ class OrnsteinUhlenbeck {
       ErrChk( mu.size() > c, "Wrong number of OU SDE parameters 'mu'");
       // Use coefficients policy to initialize coefficients
       Coefficients( m_ncomp, sigma[c], theta[c], mu[c], m_sigma, m_theta, m_mu );
+
+      // Compute diffusion matrix using Cholesky-decomposition
+      lapack_int n = static_cast< lapack_int >( m_ncomp );
+      lapack_int info =
+        LAPACKE_dpotrf( LAPACK_ROW_MAJOR, 'U', n, m_sigma.data(), n );
     }
 
     //! Set initial conditions
@@ -51,16 +62,16 @@ class OrnsteinUhlenbeck {
     void advance( ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
-        // Generate Gaussian random numbers with zero mean and unit variance
-        tk::real dW[m_ncomp];
+        tk::real dW[ m_ncomp ];
         m_rng.gaussian( stream, m_ncomp, dW );
-
         // Advance all m_ncomp scalars
         for (unsigned int i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
-          tk::real d = m_sigma[i] * m_sigma[i] * dt;
-          d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          par += m_theta[i]*(m_mu[i] - par)*dt + d*dW[i];
+          par += m_theta[i]*(m_mu[i] - par)*dt;
+          for (unsigned int j=0; j<m_ncomp; ++j) {
+            tk::real d = m_sigma[ j*m_ncomp+i ] * sqrt(dt);     // use transpose
+            par += d*dW[j];
+          }
         }
       }
     }

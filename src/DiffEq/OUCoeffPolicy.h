@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 16 Oct 2014 05:14:48 PM MDT
+  \date      Thu 04 Dec 2014 02:21:46 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   Ornstein-Uhlenbeck coefficients policies
@@ -25,17 +25,23 @@ struct OUCoeffConst {
   OUCoeffConst() = default;
   //! Constructor: initialize coefficients
   OUCoeffConst( unsigned int ncomp,
-                 const std::vector< tk::real >& sigma_,
-                 const std::vector< tk::real >& theta_,
-                 const std::vector< tk::real >& mu_,
-                 std::vector< tk::real >& sigma,
-                 std::vector< tk::real >& theta,
-                 std::vector< tk::real >& mu )
+                const std::vector< tk::real >& sigma_,
+                const std::vector< tk::real >& theta_,
+                const std::vector< tk::real >& mu_,
+                std::vector< tk::real >& sigma,
+                std::vector< tk::real >& theta,
+                std::vector< tk::real >& mu )
   {
-    sigma = sigma_;
+    ErrChk( sigma_.size() == ncomp*(ncomp+1)/2,
+            "Wrong number of OU SDE parameters 'sigma'");
+    sigma.resize( ncomp * ncomp );
+    std::size_t c = 0;
+    for (std::size_t i=0; i<ncomp; ++i)
+      for (std::size_t j=0; j<ncomp; ++j)
+        if (i<=j) sigma[ i*ncomp+j ] = sigma_[ c++ ];
+
     theta = theta_;
     mu = mu_;
-    ErrChk( sigma.size() == ncomp, "Wrong number of OU SDE parameters 'sigma'");
     ErrChk( theta.size() == ncomp, "Wrong number of OU SDE parameters 'theta'");
     ErrChk( mu.size() == ncomp, "Wrong number of OU SDE parameters 'mu'");
   }
