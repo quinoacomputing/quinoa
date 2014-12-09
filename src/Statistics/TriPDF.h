@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 12:26:02 PM MDT
+  \date      Mon 08 Dec 2014 03:35:06 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator
@@ -18,7 +18,7 @@
 #include <Types.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Joint trivariate PDF estimator
 class TriPDF {
@@ -120,6 +120,6 @@ class TriPDF {
     map_type m_pdf;                          //!< Probability density function
 };
 
-} // quinoa::
+} // tk::
 
 #endif // TriPDF_h

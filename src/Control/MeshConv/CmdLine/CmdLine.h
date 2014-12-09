@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:52:30 PM MDT
+  \date      Mon 08 Dec 2014 02:27:01 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     MeshConv's command line
   \details   MeshConv's command line
@@ -21,15 +21,15 @@ namespace ctr {
 
 //! CmdLine : Control< specialized to MeshConv >, see Types.h,
 class CmdLine :
-  public tk::Control< // tag            type
-                      tag::io,          ios,
-                      tk::tag::verbose, bool,
-                      tk::tag::error,   std::vector< std::string > > {
+  public tk::Control< // tag        type
+                      tag::io,      ios,
+                      tag::verbose, bool,
+                      tag::error,   std::vector< std::string > > {
   public:
     //! Constructor: set defaults. Anything not set here initialized by the
     //! compiler using the default constructor for the corresponding type.
     CmdLine() {
-      set< tk::tag::verbose >( false ); // Use quiet output by default
+      set< tag::verbose >( false ); // Use quiet output by default
     }
 };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 04:56:05 PM MST
+  \date      Mon 08 Dec 2014 02:35:22 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh to Exodus II mesh file converter
   \details   Gmsh to Exodus II mesh file converter
@@ -28,7 +28,7 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create MeshConv driver
       m_driver( tk::Main< meshconv::MeshConvDriver >
                         ( msg->argc, msg->argv,

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 12:34:20 PM MST
+  \date      Tue 09 Dec 2014 08:44:33 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake
@@ -15,6 +15,7 @@
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
+#define WALKER_EXECUTABLE            "@WALKER_EXECUTABLE@"
 
 namespace tk {
  

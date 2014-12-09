@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:16:20 PM MST
+  \date      Tue 09 Dec 2014 06:29:42 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Beta SDE
   \details   Beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843
@@ -17,7 +17,7 @@
 #include <BetaCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -32,7 +32,7 @@ class Beta {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::beta >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::beta >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::beta, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::beta, tag::rng >()[c] ) ) )
     {
       const auto& b = g_inputdeck.get< tag::param, tag::beta, tag::b >();
       const auto& S = g_inputdeck.get< tag::param, tag::beta, tag::S >();
@@ -45,10 +45,10 @@ class Beta {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -74,6 +74,6 @@ class Beta {
     std::vector< tk::real > m_k;
 };
 
-} // quinoa::
+} // walker::
 
 #endif // Beta_h

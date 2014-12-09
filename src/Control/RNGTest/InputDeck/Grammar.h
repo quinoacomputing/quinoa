@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:07:51 AM MDT
+  \date      Mon 08 Dec 2014 02:26:21 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite grammar definition
   \details   Random number generator test suite input deck grammar definition.
@@ -18,7 +18,7 @@
 #include <Exception.h>
 #include <PEGTLParsed.h>
 #include <RNGTest/Types.h>
-#include <RNGTest/InputDeck/Keywords.h>
+#include <Keywords.h>
 #include <Grammar.h>
 
 #ifdef HAS_MKL
@@ -60,7 +60,7 @@ namespace deck {
 
   //! title
   struct title :
-         pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
+         pegtl::ifmust< tk::grm::readkw< kw::title::pegtl_string >,
                         tk::grm::quoted< Stack,
                                          tk::grm::Set<Stack, tag::title> > > {};
 
@@ -69,12 +69,12 @@ namespace deck {
          pegtl::sor<
                      #ifdef HAS_MKL
                      tk::mkl::rngs< Stack,
-                                    tag::selected, tk::tag::rng,
-                                    tag::param, tk::tag::rngmkl >,
+                                    tag::selected, tag::rng,
+                                    tag::param, tag::rngmkl >,
                      #endif
                      tk::rngsse::rngs< Stack,
-                                       tag::selected, tk::tag::rng,
-                                       tag::param, tk::tag::rngsse > > {};
+                                       tag::selected, tag::rng,
+                                       tag::param, tag::rngsse > > {};
 
   // TestU01 batteries
   template< typename battery_kw >
@@ -83,7 +83,7 @@ namespace deck {
                                        store_option< ctr::Battery,
                                                      tag::selected,
                                                      tag::battery > >,
-                        tk::grm::block< Stack, tk::kw::end, rngs > > {};
+                        tk::grm::block< Stack, kw::end, rngs > > {};
 
   //! batteries
   struct battery :

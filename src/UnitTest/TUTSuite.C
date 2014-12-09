@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Mon 04 Aug 2014 09:26:05 PM MDT
+  \date      Mon 08 Dec 2014 02:33:02 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Template Unit Test suite
   \details   Template Unit Test suite
@@ -24,7 +24,7 @@ extern tut::test_runner_singleton g_runner;
 using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
-  m_print( cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
+  m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
   m_maxTestsInGroup( 50 ),
   m_nrun( 0 ),
   m_ncomplete( 0 ),

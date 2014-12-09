@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 04 Dec 2014 02:21:46 PM MST
+  \date      Tue 09 Dec 2014 06:32:43 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   Ornstein-Uhlenbeck coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Ornstein-Uhlenbeck constant coefficients policity: constants in time
 struct OUCoeffConst {
@@ -47,10 +47,10 @@ struct OUCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -62,6 +62,6 @@ struct OUCoeffConst {
 //! List of all Ornstein-Uhlenbeck's coefficients policies
 using OUCoeffPolicies = boost::mpl::vector< OUCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // OUCoeffPolicy_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:42:15 AM MDT
+  \date      Tue 09 Dec 2014 09:35:36 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Printer with RNGs
   \details   Printer with RNGs
@@ -12,7 +12,7 @@
 #define RNGPrint_h
 
 #include <Print.h>
-#include <tkTypes.h>
+#include <ControlTypes.h>
 #include <Options/RNG.h>
 
 namespace tk {

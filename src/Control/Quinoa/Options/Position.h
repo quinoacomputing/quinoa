@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:15:00 AM MDT
+  \date      Mon 08 Dec 2014 02:59:33 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Position model options and associations
   \details   Position model options and associations
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace quinoa {
 namespace ctr {

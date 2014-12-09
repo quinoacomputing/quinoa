@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:16:44 AM MDT
+  \date      Mon 08 Dec 2014 02:58:57 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options and associations
   \details   Turbulence frequency model options and associations
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace quinoa {
 namespace ctr {

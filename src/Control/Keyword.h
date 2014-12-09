@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:28:48 AM MDT
+  \date      Mon 08 Dec 2014 02:19:40 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Basic keywords recognized by all parsers
   \details   Basic keywords recognized by all parsers
@@ -20,7 +20,6 @@
   #pragma GCC diagnostic pop
 #endif
 
-namespace tk {
 namespace kw {
 
 //! A keyword is a struct that collects the information that makes up a keyword.
@@ -66,6 +65,5 @@ struct undefined_info {
 };
 
 } // kw::
-} // tk::
 
 #endif // Keyword_h

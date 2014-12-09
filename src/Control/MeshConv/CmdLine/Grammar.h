@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:09:31 AM MDT
+  \date      Tue 09 Dec 2014 09:14:49 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,11 +14,9 @@
 #ifndef MeshConvCmdLineGrammar_h
 #define MeshConvCmdLineGrammar_h
 
-#include <Macro.h>
-#include <Exception.h>
 #include <Grammar.h>
 #include <PEGTLParsed.h>
-#include <MeshConv/CmdLine/Keywords.h>
+#include <Keywords.h>
 
 namespace meshconv {
 //! Grammar definition: state, actions, grammar
@@ -40,8 +38,8 @@ namespace cmd {
   //! verbose (i.e., verbose or quiet output)
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      tk::kw::verbose,
-                                      tk::tag::verbose > {};
+                                      kw::verbose,
+                                      tag::verbose > {};
 
   //! io parameter
   template< typename keyword, typename io_tag >

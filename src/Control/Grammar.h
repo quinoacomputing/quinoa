@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 08:42:15 AM MDT
+  \date      Mon 08 Dec 2014 12:53:08 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Common of grammars
   \details   Common of grammars
@@ -14,7 +14,7 @@
 #include <sstream>
 
 #include <Exception.h>
-#include <tkTags.h>
+#include <Tags.h>
 
 namespace tk {
 //! Grammar definition: state, actions, grammar

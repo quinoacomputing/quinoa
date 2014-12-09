@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:36:13 PM MST
+  \date      Tue 09 Dec 2014 09:35:24 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -15,16 +15,16 @@
 
 #include <boost/mpl/at.hpp>
 
-#include <tkTypes.h>
+#include <ControlTypes.h>
 #include <DiffEq.h>
 #include <Factory.h>
-#include <Quinoa/Tags.h>
-#include <Quinoa/Options/DiffEq.h>
-#include <Quinoa/Options/InitPolicy.h>
-#include <Quinoa/Options/CoeffPolicy.h>
-#include <Quinoa/InputDeck/InputDeck.h>
+#include <Tags.h>
+#include <Walker/Options/DiffEq.h>
+#include <Options/InitPolicy.h>
+#include <Options/CoeffPolicy.h>
+#include <Walker/InputDeck/InputDeck.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 
@@ -139,6 +139,6 @@ class DiffEqStack {
     std::set< ctr::DiffEqType > m_eqTypes;   //!< Count number of equation types
 };
 
-} // quinoa::
+} // walker::
 
 #endif // DiffEqStack_h

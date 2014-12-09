@@ -34,8 +34,6 @@ endif()
 
 target_link_libraries(${QUINOA_EXECUTABLE}
                       Base
-                      DiffEq
-                      Integrator
                       IO
                       #LinearAlgebra
                       Mesh
@@ -184,3 +182,53 @@ INSTALL(TARGETS ${MESHCONV_EXECUTABLE}
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development
 )
+
+### Walker executable ##########################################################
+add_executable(${WALKER_EXECUTABLE}
+               WalkerDriver.C
+               WalkerPrint.C
+               Walker.C
+)
+
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${WALKER_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${WALKER_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+target_link_libraries(${WALKER_EXECUTABLE}
+                      Base
+                      DiffEq
+                      IO
+                      Mesh
+                      Statistics
+                      RNG
+                      Walker
+                      WalkerControl
+                      ${NEMESIS_LIBRARIES}
+                      ${EXODUS_LIBRARIES}
+                      ${NETCDF_LIBRARIES}
+                      ${HDF5_LIBRARY}
+                      ${LAPACKE_LIB}
+                      ${LAPACK_LIBRARIES}
+                      ${MKL_INTERFACE_LIBRARY}
+                      ${MKL_CORE_LIBRARY}
+                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
+                      ${RNGSSE_LIBRARY}
+                      ${BOOST_SYSTEM_LIBRARY}
+)
+
+# Add custom dependencies for Walker's main Charm++ module
+addCharmModule( "walker" "${WALKER_EXECUTABLE}" )
+removeWarnings( "WalkerDriver.C;WalkerPrint.C;Walker.C")
+
+INSTALL(TARGETS ${WALKER_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 03:34:14 PM MDT
+  \date      Mon 08 Dec 2014 05:08:28 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation
   \details   Differential equation
@@ -18,7 +18,7 @@
 #include <make_unique.h>
 #include <ParticleProperties.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Differential equation. The class below uses runtime polymorphism without
 //! client-side inheritance: inheritance is confined to the internals of the
@@ -51,11 +51,11 @@ class DiffEq {
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
     //! Public interface to setting the initial conditions
-    void initialize( ParProps& particles ) const
+    void initialize( tk::ParProps& particles ) const
     { self->initialize( particles ); }
 
     //! Public interface to advancing particles in time
-    void advance( ParProps& particles, int stream, tk::real dt ) const
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const
     { self->advance( particles, stream, dt ); }
 
     //! Copy assignment
@@ -74,8 +74,8 @@ class DiffEq {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( ParProps& ) const = 0;
-      virtual void advance( ParProps&, int, tk::real ) const = 0;
+      virtual void initialize( tk::ParProps& ) const = 0;
+      virtual void advance( tk::ParProps&, int, tk::real ) const = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -84,9 +84,9 @@ class DiffEq {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void initialize( ParProps& particles ) const override
+      void initialize( tk::ParProps& particles ) const override
       { data.initialize( particles ); }
-      void advance( ParProps& particles, int stream, tk::real dt ) const
+      void advance( tk::ParProps& particles, int stream, tk::real dt ) const
       override { data.advance( particles, stream, dt ); }
       T data;
     };
@@ -94,6 +94,6 @@ class DiffEq {
     std::unique_ptr< Concept > self;    //!< Base pointer used polymorphically
 };
 
-} // quinoa::
+} // walker::
 
 #endif // DiffEq_h

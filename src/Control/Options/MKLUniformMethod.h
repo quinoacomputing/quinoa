@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:14:09 AM MDT
+  \date      Mon 08 Dec 2014 03:08:27 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -16,7 +16,7 @@
 #include <mkl_vsl.h>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace tk {
 namespace ctr {
@@ -41,11 +41,11 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     explicit MKLUniformMethod() :
       Toggle< MKLUniformMethodType >( "uniform method",
         //! Enums -> names
-        { { MKLUniformMethodType::STANDARD, tk::kw::standard().name() },
-          { MKLUniformMethodType::ACCURATE, tk::kw::accurate().name() } },
+        { { MKLUniformMethodType::STANDARD, kw::standard().name() },
+          { MKLUniformMethodType::ACCURATE, kw::accurate().name() } },
         //! keywords -> Enums
-        { { tk::kw::standard().string(), MKLUniformMethodType::STANDARD },
-          { tk::kw::accurate().string(), MKLUniformMethodType::ACCURATE } } ) {}
+        { { kw::standard().string(), MKLUniformMethodType::STANDARD },
+          { kw::accurate().string(), MKLUniformMethodType::ACCURATE } } ) {}
 
     //! Return parameter based on Enum
     const ParamType& param( MKLUniformMethodType m ) const {

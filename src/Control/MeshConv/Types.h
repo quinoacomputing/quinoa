@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/Types.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 09:32:48 PM MDT
+  \date      Tue 09 Dec 2014 09:19:09 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for MeshConv's parsers
   \details   Types for MeshConv's parsers
@@ -11,10 +11,8 @@
 #ifndef MeshConvTypes_h
 #define MeshConvTypes_h
 
-#include <pegtl.hh>
-
-#include <tkTags.h>
-#include <MeshConv/Tags.h>
+#include <Tags.h>
+#include <Keyword.h>
 
 namespace meshconv {
 //! control and parsing

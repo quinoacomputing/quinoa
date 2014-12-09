@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:16:54 PM MST
+  \date      Mon 08 Dec 2014 05:16:25 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
@@ -23,7 +23,7 @@
 #include <OUCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -38,7 +38,7 @@ class OrnsteinUhlenbeck {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::ou >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::ou >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::ou, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::ou, tag::rng >()[c] ) ) )
     {
       const auto& sigma = g_inputdeck.get< tag::param, tag::ou, tag::sigma >();
       const auto& theta = g_inputdeck.get< tag::param, tag::ou, tag::theta >();
@@ -56,10 +56,10 @@ class OrnsteinUhlenbeck {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         tk::real dW[ m_ncomp ];
@@ -85,6 +85,6 @@ class OrnsteinUhlenbeck {
     std::vector< tk::real > m_mu;
 };
 
-} // quinoa::
+} // walker::
 
 #endif // OrnsteinUhlenbeck_h

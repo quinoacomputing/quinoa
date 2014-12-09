@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Thu 23 Oct 2014 07:46:37 AM MDT
+  \date      Tue 09 Dec 2014 08:34:13 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -18,7 +18,7 @@
 #include <Types.h>
 #include <Writer.h>
 
-namespace quinoa {
+namespace tk {
 
 //! TxtStatWriter : Writer
 class TxtStatWriter : public tk::Writer {
@@ -41,6 +41,6 @@ class TxtStatWriter : public tk::Writer {
                       const std::vector< bool >& plotOrd );
 };
 
-} // quinoa::
+} // tk::
 
 #endif // TxtStatWriter_h

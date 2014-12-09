@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 03:38:52 PM MST
+  \date      Mon 08 Dec 2014 03:28:35 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
@@ -18,7 +18,7 @@
 #include <Exception.h>
 #include <PEGTLParsed.h>
 #include <Quinoa/Types.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 #include <Grammar.h>
 
 #ifdef HAS_MKL
@@ -53,7 +53,7 @@ namespace deck {
   //! (upper case) or a fluctuation (lower case). This is true for both
   //! inserting variables into the set as well as at matching terms of products
   //! in parsing requested statistics.
-  static std::set< char, ctr::CaseInsensitiveCharLess > depvars;
+  static std::set< char, tk::ctr::CaseInsensitiveCharLess > depvars;
   //! Parser-lifetime storage for PDF names. Used to track the names registere
   //! so that parsing new ones can be required to be unique.
   static std::set< std::string > pdfnames;
@@ -79,7 +79,7 @@ namespace deck {
 //   };
 
   //! add matched value as Term into vector of vector of statistics
-  template< ctr::Moment m, char var = '\0' >
+  template< tk::ctr::Moment m, char var = '\0' >
   struct push_term : pegtl::action_base< push_term< m, var > > {
     static void apply( const std::string& value, Stack& stack ) {
       // If var is given, it is triggered not user-requested
@@ -89,18 +89,19 @@ namespace deck {
       // Use a shorthand of reference to vector to push_back to
       auto& stats = stack.get< tag::stat >();
       // Push term into current vector
-      stats.back().emplace_back( ctr::Term( field, m, v, plot ) );
+      stats.back().emplace_back( tk::ctr::Term( field, m, v, plot ) );
       // If central moment, trigger mean (in statistics)
-      if (m == ctr::Moment::CENTRAL) {
-        ctr::Term term( field, ctr::Moment::ORDINARY, toupper(v), false );
-        stats.insert( stats.end()-1, ctr::Product( 1, term ) );
+      if (m == tk::ctr::Moment::CENTRAL) {
+        tk::ctr::Term term( field, tk::ctr::Moment::ORDINARY, toupper(v),
+                            false );
+        stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
     }
   };
 
   //! add matched value as Term into vector of vector of PDFs
-  template< ctr::Moment m >
+  template< tk::ctr::Moment m >
   struct push_sample : pegtl::action_base< push_sample< m > > {
     static void apply( const std::string& value, Stack& stack ) {
       // Use a shorthand of reference to vector to push_back to
@@ -120,15 +121,16 @@ namespace deck {
                         ( stack, value );
       }
       // Push term into current vector
-      pdf.back().emplace_back( ctr::Term( field, m, value[0], true ) );
+      pdf.back().emplace_back( tk::ctr::Term( field, m, value[0], true ) );
       // If central moment, trigger mean (in statistics)
-      if (m == ctr::Moment::CENTRAL) {
-        ctr::Term term( field, ctr::Moment::ORDINARY, toupper(value[0]), false );
+      if (m == tk::ctr::Moment::CENTRAL) {
+        tk::ctr::Term term( field, tk::ctr::Moment::ORDINARY, toupper(value[0]),
+                            false );
         auto& stats = stack.get< tag::stat >();
         if (!stats.empty())
-          stats.insert( stats.end()-1, ctr::Product( 1, term ) );
+          stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
         else
-          stats.emplace_back( ctr::Product( 1, term ) );
+          stats.emplace_back( tk::ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
     }
@@ -357,13 +359,15 @@ namespace deck {
   struct term :
          pegtl::sor<
            pegtl::ifapply< fieldvar< pegtl::upper >,
-                           match_depvar< push_term< ctr::Moment::ORDINARY > > >,
+                           match_depvar<
+                             push_term< tk::ctr::Moment::ORDINARY > > >,
            pegtl::ifapply< fieldvar< pegtl::lower >,
-                           match_depvar< push_term< ctr::Moment::CENTRAL > > > >
+                           match_depvar<
+                             push_term< tk::ctr::Moment::CENTRAL > > > >
          {};
 
   //! sample space variable: fieldvar matched to selected depvars
-  template< class c, ctr::Moment m >
+  template< class c, tk::ctr::Moment m >
   struct sample_space_var :
          tk::grm::scan_until< fieldvar< c >,
                               match_depvar< push_sample< m > >,
@@ -371,8 +375,8 @@ namespace deck {
 
   //! sample space variables optionally separated by fillers
   struct samples :
-         pegtl::sor< sample_space_var< pegtl::upper, ctr::Moment::ORDINARY >,
-                     sample_space_var< pegtl::lower, ctr::Moment::CENTRAL > >
+         pegtl::sor< sample_space_var< pegtl::upper, tk::ctr::Moment::ORDINARY >,
+                     sample_space_var< pegtl::lower, tk::ctr::Moment::CENTRAL > >
          {};
 
   //! bin(sizes): real numbers as many sample space dimensions were given
@@ -489,7 +493,7 @@ namespace deck {
            Stack,
            typename keyword::pegtl_string,
            tk::grm::Store_back_back< Stack, tag::param, tags... >,
-           tk::kw::end,
+           kw::end,
            pegtl::apply< start_vector< tag::param, tags... > > > {};
 
   //! rng parameter
@@ -500,7 +504,7 @@ namespace deck {
                            typename keyword::pegtl_string,
                            check_store_option< option,
                                                tag::selected,
-                                               tk::tag::rng,
+                                               tag::rng,
                                                tag::param, model, tags... >,
                            pegtl::alpha > {};
 
@@ -555,66 +559,33 @@ namespace deck {
   struct scan_frequency :
          select_option< keyword, ctr::Frequency, tag::frequency > {};
 
-  //! scan and store_back sde keyword and option
-  template< typename keyword >
-  struct scan_sde :
-         tk::grm::scan< typename keyword::pegtl_string,
-                        tk::grm::store_back_option< Stack,
-                                                    ctr::DiffEq,
-                                                    tag::selected,
-                                                    tag::diffeq > > {};
-
   //! title
   struct title :
-         pegtl::ifmust< tk::grm::readkw< tk::kw::title::pegtl_string >,
+         pegtl::ifmust< tk::grm::readkw< kw::title::pegtl_string >,
                                          tk::grm::quoted<
                                            Stack,
                                            tk::grm::Set< Stack,
                                                          tag::title > > > {};
 
-  //! PDF option
-  template< class keyword, class Option, class Tag >
-  struct pdf_option :
-   tk::grm::process< Stack,
-                     typename keyword::pegtl_string,
-                     store_option< Option, tag::selected, Tag >,
-                     pegtl::alpha > {};
-
   //! statistics block
   struct statistics :
          pegtl::ifmust< tk::grm::readkw< kw::statistics::pegtl_string >,
                         tk::grm::block< Stack,
-                                        tk::kw::end,
+                                        kw::end,
                                         interval< kw::interval, tag::stat >,
                                         parse_expectations > > {};
-  //! pdfs block
-  struct pdfs :
-         pegtl::ifmust<
-           tk::grm::readkw< kw::pdfs::pegtl_string >,
-           tk::grm::block<
-             Stack,
-             tk::kw::end,
-             interval< kw::interval, tag::pdf >,
-             pdf_option< kw::pdf_filetype, ctr::PDFFile, tag::pdffiletype >,
-             pdf_option< kw::pdf_policy, ctr::PDFPolicy, tag::pdfpolicy >,
-             pdf_option< kw::pdf_centering, ctr::PDFCentering, tag::pdfctr >,
-             pdf_option< kw::txt_float_format,
-                         ctr::TxtFloatFormat,
-                         tag::float_format >,
-             precision,
-             parse_pdf > > {};
 
   //! Fluctuating velocity in x direction
   struct u :
-         push_term< ctr::Moment::CENTRAL, 'u' > {};
+         push_term< tk::ctr::Moment::CENTRAL, 'u' > {};
 
   //! Fluctuating velocity in y direction
   struct v :
-         push_term< ctr::Moment::CENTRAL, 'v' > {};
+         push_term< tk::ctr::Moment::CENTRAL, 'v' > {};
 
   //! Fluctuating velocity in z direction
   struct w :
-         push_term< ctr::Moment::CENTRAL, 'w' > {};
+         push_term< tk::ctr::Moment::CENTRAL, 'w' > {};
 
   //! slm block
   struct slm :
@@ -627,64 +598,21 @@ namespace deck {
                                       start_vector< tag::stat >, v, v,
                                       start_vector< tag::stat >, w, w >,
            tk::grm::block< Stack,
-                           tk::kw::end,
+                           kw::end,
                            parameter< kw::SLM_C0,
                                       pegtl::digit,
                                       tag::slm,
                                       tag::c0 >,
                            component< kw::nvelocity, tag::hydro > > > {};
 
-  //! dirichlet mix model block
-  struct mix_dir :
-         pegtl::ifmust< scan_mix< kw::mix_dir >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        component< kw::nscalar, tag::mix >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::dirichlet,
-                                             tk::tag::rng >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::dirichlet,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::dirichlet,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::dirichlet,
-                                                          tag::kappa > > > {};
-
-  //! Generalized Dirichlet mix model block
-  struct mix_gendir :
-         pegtl::ifmust< scan_mix< kw::mix_gendir >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        component< kw::nscalar, tag::mix >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::gendir,
-                                             tk::tag::rng >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::gendir,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::gendir,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::gendir,
-                                                          tag::kappa >,
-                                        parameter_vector< kw::sde_c,
-                                                          tag::gendir,
-                                                          tag::c > > > {};
-
 //   //! Gamma turbulence frequency model block
 //   struct freq_gamma :
 //          pegtl::ifmust< scan_frequency< kw::freq_gamma >,
 //                         tk::grm::block<
 //                           Stack,
-//                           tk::kw::end,
+//                           kw::end,
 //                           component< kw::nfreq, tag::frequency >,
-//                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tk::tag::rng >,
+//                           rng< kw::rng, tk::ctr::RNG, tag::gamma, tag::rng >,
 //                           parameter< kw::freq_gamma_C1,
 //                                      pegtl::digit,
 //                                      tag::gamma,
@@ -707,9 +635,9 @@ namespace deck {
 //          pegtl::ifmust< scan_mass< kw::mass_beta >,
 //                         tk::grm::block<
 //                           Stack,
-//                           tk::kw::end,
+//                           kw::end,
 //                           component< kw::ndensity, tag::mass >,
-//                           rng< kw::rng, tk::ctr::RNG, tag::beta, tk::tag::rng >,
+//                           rng< kw::rng, tk::ctr::RNG, tag::beta, tag::rng >,
 //                           parameter< kw::Beta_At,
 //                                      pegtl::digit,
 //                                      tag::beta,
@@ -731,17 +659,17 @@ namespace deck {
          pegtl::sor<
                      #ifdef HAS_MKL
                      tk::mkl::rngs< Stack,
-                                    tag::selected, tk::tag::rng,
-                                    tag::param, tk::tag::rngmkl >,
+                                    tag::selected, tag::rng,
+                                    tag::param, tag::rngmkl >,
                      #endif
                      tk::rngsse::rngs< Stack,
-                                       tag::selected, tk::tag::rng,
-                                       tag::param, tk::tag::rngsse > > {};
+                                       tag::selected, tag::rng,
+                                       tag::param, tag::rngsse > > {};
 
   // RNGs block
   struct rngblock :
          pegtl::ifmust< tk::grm::readkw< kw::rngs::pegtl_string >,
-                        tk::grm::block< Stack, tk::kw::end, rngs > > {};
+                        tk::grm::block< Stack, kw::end, rngs > > {};
 
   //! mass models
 //   struct mass :
@@ -751,9 +679,9 @@ namespace deck {
   struct hydro :
          pegtl::sor< slm > {};
 
-  //! material mix models
-  struct mix :
-         pegtl::sor< mix_dir, mix_gendir > {};
+//   //! material mix models
+//   struct mix :
+//          pegtl::sor< mix_dir, mix_gendir > {};
 
   //! turbulence frequency models
 //   struct freq :
@@ -763,9 +691,9 @@ namespace deck {
   struct hommix :
          pegtl::ifmust< scan_montecarlo< kw::hommix >,
                         tk::grm::block< Stack,
-                                        tk::kw::end,
+                                        kw::end,
                                         montecarlo_common,
-                                        mix,
+                                        //mix,
                                         rngblock,
                                         statistics > > {};
 
@@ -773,7 +701,7 @@ namespace deck {
   struct homrt :
          pegtl::ifmust< scan_montecarlo< kw::homrt >,
                         tk::grm::block< Stack,
-                                        tk::kw::end,
+                                        kw::end,
                                         montecarlo_common,
                                         //mass,
                                         hydro,
@@ -785,7 +713,7 @@ namespace deck {
   struct homhydro :
          pegtl::ifmust< scan_montecarlo< kw::homhydro >,
                         tk::grm::block< Stack,
-                                        tk::kw::end,
+                                        kw::end,
                                         montecarlo_common,
                                         hydro,
                                         //freq,
@@ -796,11 +724,11 @@ namespace deck {
   struct spinsflow :
          pegtl::ifmust< scan_montecarlo< kw::spinsflow >,
                         tk::grm::block< Stack,
-                                        tk::kw::end,
+                                        kw::end,
                                         montecarlo_common,
                                         hydro,
                                         //freq,
-                                        mix,
+                                        //mix,
                                         rngblock,
                                         statistics > > {};
 
@@ -813,271 +741,16 @@ namespace deck {
            tk::grm::store_back_option< Stack, option, tag::param, sde, tags... >,
            pegtl::alpha > {};
 
-
-  //! Diagonal Ornstein-Uhlenbeck SDE
-  struct diag_ornstein_uhlenbeck :
-         pegtl::ifmust< scan_sde< kw::diag_ornstein_uhlenbeck >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::diagou, tag::depvar >,
-                                        component< kw::ncomp, tag::diagou >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::diagou,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::diagou,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::diagou,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_sigma,
-                                                          tag::diagou,
-                                                          tag::sigma >,
-                                        parameter_vector< kw::sde_theta,
-                                                          tag::diagou,
-                                                          tag::theta >,
-                                        parameter_vector< kw::sde_mu,
-                                                          tag::diagou,
-                                                          tag::mu > > > {};
-
-  //! Ornstein-Uhlenbeck SDE
-  struct ornstein_uhlenbeck :
-         pegtl::ifmust< scan_sde< kw::ornstein_uhlenbeck >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::ou, tag::depvar >,
-                                        component< kw::ncomp, tag::ou >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::ou,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::ou,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::ou,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_sigma,
-                                                          tag::ou,
-                                                          tag::sigma >,
-                                        parameter_vector< kw::sde_theta,
-                                                          tag::ou,
-                                                          tag::theta >,
-                                        parameter_vector< kw::sde_mu,
-                                                          tag::ou,
-                                                          tag::mu > > > {};
-
-  //! Skew-normal SDE
-  struct skewnormal :
-         pegtl::ifmust< scan_sde< kw::skewnormal >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::skewnormal, tag::depvar >,
-                                        component< kw::ncomp, tag::skewnormal >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::skewnormal,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::skewnormal,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::skewnormal,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_T,
-                                                          tag::skewnormal,
-                                                          tag::timescale >,
-                                        parameter_vector< kw::sde_sigma,
-                                                          tag::skewnormal,
-                                                          tag::sigma >,
-                                        parameter_vector< kw::sde_lambda,
-                                                          tag::skewnormal,
-                                                          tag::lambda > > > {};
-
-  //! Beta SDE
-  struct beta :
-         pegtl::ifmust< scan_sde< kw::beta >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::beta, tag::depvar >,
-                                        component< kw::ncomp, tag::beta >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::beta,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::beta,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::beta,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::beta,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::beta,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::beta,
-                                                          tag::kappa > > > {};
-
-  //! Gamma SDE
-  struct gamma :
-         pegtl::ifmust< scan_sde< kw::gamma >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::gamma, tag::depvar >,
-                                        component< kw::ncomp, tag::gamma >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::gamma,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::gamma,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::gamma,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::gamma,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::gamma,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::gamma,
-                                                          tag::kappa > > > {};
-
-  //! Dirichlet SDE
-  struct dirichlet :
-         pegtl::ifmust< scan_sde< kw::dirichlet >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::dirichlet, tag::depvar >,
-                                        component< kw::ncomp, tag::dirichlet >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::dirichlet,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::dirichlet,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::dirichlet,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::dirichlet,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::dirichlet,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::dirichlet,
-                                                          tag::kappa > > > {};
-  //! Generalized Dirichlet SDE
-  struct generalized_dirichlet :
-         pegtl::ifmust< scan_sde< kw::gendir >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::gendir, tag::depvar >,
-                                        component< kw::ncomp, tag::gendir >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::gendir,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::gendir,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::gendir,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_b,
-                                                          tag::gendir,
-                                                          tag::b >,
-                                        parameter_vector< kw::sde_S,
-                                                          tag::gendir,
-                                                          tag::S >,
-                                        parameter_vector< kw::sde_kappa,
-                                                          tag::gendir,
-                                                          tag::kappa >,
-                                        parameter_vector< kw::sde_c,
-                                                          tag::gendir,
-                                                          tag::c > > > {};
-
-  //! Wright-Fisher SDE
-  struct wright_fisher :
-         pegtl::ifmust< scan_sde< kw::wrightfisher >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        depvar< tag::wrightfisher, tag::depvar >,
-                                        component< kw::ncomp, tag::wrightfisher >,
-                                        rng< kw::rng,
-                                             tk::ctr::RNG,
-                                             tag::wrightfisher,
-                                             tk::tag::rng >,
-                                        policy< kw::init,
-                                                ctr::InitPolicy,
-                                                tag::wrightfisher,
-                                                tag::initpolicy >,
-                                        policy< kw::coeff,
-                                                ctr::CoeffPolicy,
-                                                tag::wrightfisher,
-                                                tag::coeffpolicy >,
-                                        parameter_vector< kw::sde_omega,
-                                                          tag::wrightfisher,
-                                                          tag::omega > > > {};
-
-  //! stochastic differential equations
-  struct sde :
-         pegtl::sor< dirichlet,
-                     generalized_dirichlet,
-                     wright_fisher,
-                     ornstein_uhlenbeck,
-                     diag_ornstein_uhlenbeck,
-                     skewnormal,
-                     gamma,
-                     beta > {};
-
-  //! 'testsde' block
-  struct testsde :
-         pegtl::ifmust< scan_montecarlo< kw::testsde >,
-                        tk::grm::block< Stack,
-                                        tk::kw::end,
-                                        montecarlo_common,
-                                        sde,
-                                        rngblock,
-                                        statistics,
-                                        pdfs > > {};
-
-  //! montecarlo physics types
+  //! physics types
   struct physics :
          pegtl::sor< hommix,
                      homhydro,
                      homrt,
                      spinsflow > {};
 
-  //! montecarlo types
-  struct montecarlo :
-         pegtl::sor< testsde, physics > {};
-
   //! main keywords
   struct keywords :
-         pegtl::sor< title, montecarlo > {};
+         pegtl::sor< title, physics > {};
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :

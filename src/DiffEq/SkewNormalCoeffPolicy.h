@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 01:16:20 PM MST
+  \date      Tue 09 Dec 2014 06:30:11 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE coefficients policies
   \details   Skew-normal SDE coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Skew-normal SDE constant coefficients policity: constants in time
 struct SkewNormalCoeffConst {
@@ -44,10 +44,10 @@ struct SkewNormalCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -59,6 +59,6 @@ struct SkewNormalCoeffConst {
 //! List of all Skew-normal SDE's coefficients policies
 using SkewNormalCoeffPolicies = boost::mpl::vector< SkewNormalCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // SkewNormalCoeffPolicy_h

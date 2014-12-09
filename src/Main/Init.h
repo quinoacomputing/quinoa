@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 04:54:50 PM MST
+  \date      Tue 09 Dec 2014 08:57:40 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Common initialization for all mains
   \details   Common initialization for all mains.
@@ -19,7 +19,7 @@
 #include <Config.h>
 #include <Exception.h>
 #include <Print.h>
-#include <tkTags.h>
+#include <Tags.h>
 
 namespace tk {
 
@@ -27,7 +27,8 @@ namespace tk {
 enum class HeaderType : uint8_t { QUINOA=0,
                                   RNGTEST,
                                   UNITTEST,
-                                  MESHCONV };
+                                  MESHCONV,
+                                  WALKER };
 
 
 static std::string workdir()
@@ -86,6 +87,8 @@ static void echoHeader( const Print& print, HeaderType header )
     print.headerUnitTest();
   else if ( header == HeaderType::MESHCONV )
     print.headerMeshConv();
+  else if ( header == HeaderType::WALKER )
+    print.headerWalker();
   else
     Throw( "Header not available" );
 }

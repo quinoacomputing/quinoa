@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:29:44 PM MDT
+  \date      Mon 08 Dec 2014 02:26:09 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   Random number generator test suite input deck parser
@@ -39,7 +39,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   pegtl::dummy_parse< deck::read_file >( input, id );
 
   // Echo errors and warnings accumulated during parsing
-  diagnostics( print, id.get< tk::tag::error >() );
+  diagnostics( print, id.get< tag::error >() );
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 04:54:04 PM MST
+  \date      Mon 08 Dec 2014 02:35:07 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest: Quinoa's random number generator test suite
   \details   RNGTest: Quinoa's random number generator test suite
@@ -91,10 +91,10 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
   if (!p.isSizing()) {
     tk::RNGStack stack(
       #ifdef HAS_MKL
-      g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
+      g_inputdeck.get< tag::param, tag::rngmkl >(),
       #endif
-      g_inputdeck.get< tag::param, tk::tag::rngsse >() );
-    rng = stack.selected( g_inputdeck.get< tag::selected, tk::tag::rng >() );
+      g_inputdeck.get< tag::param, tag::rngsse >() );
+    rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
   }
 }
 
@@ -125,7 +125,7 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create RNGTest driver
       m_driver( tk::Main< rngtest::RNGTestDriver >
                         ( msg->argc, msg->argv,

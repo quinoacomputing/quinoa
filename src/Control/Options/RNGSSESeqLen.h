@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:14:12 AM MDT
+  \date      Mon 08 Dec 2014 03:08:58 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace tk {
 namespace ctr {
@@ -36,13 +36,13 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
     explicit RNGSSESeqLen() :
       Toggle< RNGSSESeqLenType >( "sequence length",
         //! Enums -> names
-        { { RNGSSESeqLenType::SHORT, tk::kw::seq_short().name() },
-          { RNGSSESeqLenType::MEDIUM, tk::kw::seq_med().name() },
-          { RNGSSESeqLenType::LONG, tk::kw::seq_long().name() } },
+        { { RNGSSESeqLenType::SHORT, kw::seq_short().name() },
+          { RNGSSESeqLenType::MEDIUM, kw::seq_med().name() },
+          { RNGSSESeqLenType::LONG, kw::seq_long().name() } },
         //! keywords -> Enums
-        { { tk::kw::seq_short().string(), RNGSSESeqLenType::SHORT },
-          { tk::kw::seq_med().string(), RNGSSESeqLenType::MEDIUM },
-          { tk::kw::seq_long().string(), RNGSSESeqLenType::LONG } } ) {}
+        { { kw::seq_short().string(), RNGSSESeqLenType::SHORT },
+          { kw::seq_med().string(), RNGSSESeqLenType::MEDIUM },
+          { kw::seq_long().string(), RNGSSESeqLenType::LONG } } ) {}
 };
 
 } // ctr::

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Thu 23 Oct 2014 07:47:43 AM MDT
+  \date      Tue 09 Dec 2014 08:34:17 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -14,7 +14,7 @@
 
 #include <TxtStatWriter.h>
 
-using quinoa::TxtStatWriter;
+using tk::TxtStatWriter;
 
 void
 TxtStatWriter::header( const std::vector< bool >& plotOrd,
