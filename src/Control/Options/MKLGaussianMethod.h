@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:15:43 AM MDT
+  \date      Mon 08 Dec 2014 03:08:21 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -16,7 +16,7 @@
 #include <mkl_vsl.h>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace tk {
 namespace ctr {
@@ -41,13 +41,13 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     explicit MKLGaussianMethod() :
       Toggle< MKLGaussianMethodType >( "Gaussian method",
         //! Enums -> names
-        { { MKLGaussianMethodType::BOXMULLER, tk::kw::boxmuller().name() },
-          { MKLGaussianMethodType::BOXMULLER2, tk::kw::boxmuller2().name() },
-          { MKLGaussianMethodType::ICDF, tk::kw::icdf().name() } },
+        { { MKLGaussianMethodType::BOXMULLER, kw::boxmuller().name() },
+          { MKLGaussianMethodType::BOXMULLER2, kw::boxmuller2().name() },
+          { MKLGaussianMethodType::ICDF, kw::icdf().name() } },
         //! keywords -> Enums
-        { { tk::kw::boxmuller().string(), MKLGaussianMethodType::BOXMULLER },
-          { tk::kw::boxmuller2().string(), MKLGaussianMethodType::BOXMULLER2 },
-          { tk::kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
+        { { kw::boxmuller().string(), MKLGaussianMethodType::BOXMULLER },
+          { kw::boxmuller2().string(), MKLGaussianMethodType::BOXMULLER2 },
+          { kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
 
     //! Return parameter based on Enum
     const ParamType& param( MKLGaussianMethodType m ) const {

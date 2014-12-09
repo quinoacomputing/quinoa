@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Sun 19 Oct 2014 09:47:06 PM MDT
+  \date      Tue 09 Dec 2014 11:21:50 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -12,40 +12,40 @@
 #include <Statistics.h>
 #include <flip_map.h>
 
-using quinoa::Statistics;
+using tk::Statistics;
 
-Statistics::Statistics( const ParProps& particles ) :
-  m_particles( particles ),
-  m_nord( 0 ),
-  m_ncen( 0 )
+Statistics::Statistics( const tk::ParProps& particles,
+                        const ctr::OffsetMap& offset,
+                        const std::vector< ctr::Product >& stat,
+                        const std::vector< ctr::Probability >& pdf,
+                        const std::vector< std::vector< tk::real > >& binsize )
+  : m_particles( particles ),
+    m_nord( 0 ),
+    m_ncen( 0 )
 //******************************************************************************
 //  Constructor
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Setup a map that associates each dependent variable of all requested
-  // differential equations to their offset in the particle array
-  OffsetMap offset;
-  boost::mpl::for_each< ncomps::tags >( depvar( offset ) );
-
   // Prepare for computing ordinary and central moments, PDFs
-  setupOrdinary( offset );
-  setupCentral( offset );
-  setupPDF( offset );
+  setupOrdinary( offset, stat );
+  setupCentral( offset, stat );
+  setupPDF( offset, pdf, binsize );
 }
 
 void
-Statistics::setupOrdinary( const OffsetMap& offset )
+Statistics::setupOrdinary( const ctr::OffsetMap& offset,
+                           const std::vector< ctr::Product >& stat )
 //******************************************************************************
 //  Prepare for computing ordinary moments
 //! \author J. Bakosi
 //******************************************************************************
 {
-  for (const auto& product : g_inputdeck.get< tag::stat >()) {
+  for (const auto& product : stat) {
     if (ordinary(product)) {
 
       m_instOrd.emplace_back( std::vector< const tk::real* >() );
-      m_ordFieldVar.emplace_back( ctr::FieldVar() );
+      m_ordFieldVar.emplace_back( tk::ctr::FieldVar() );
 
       for (const auto& term : product) {
         auto o = offset.find( term.var );
@@ -53,7 +53,7 @@ Statistics::setupOrdinary( const OffsetMap& offset )
         // Put in starting address of instantaneous variable
         m_instOrd.back().push_back( m_particles.cptr( term.field, o->second ) );
         // Put in term name+field
-        m_ordFieldVar.back() = ctr::FieldVar( term.var, term.field );
+        m_ordFieldVar.back() = tk::ctr::FieldVar( term.var, term.field );
       }
 
       ++m_nord;
@@ -74,7 +74,8 @@ Statistics::setupOrdinary( const OffsetMap& offset )
 }
 
 void
-Statistics::setupCentral( const OffsetMap& offset )
+Statistics::setupCentral( const ctr::OffsetMap& offset,
+                          const std::vector< ctr::Product >& stat )
 //******************************************************************************
 //  Prepare for computing central moments
 //! \author J. Bakosi
@@ -82,7 +83,7 @@ Statistics::setupCentral( const OffsetMap& offset )
 {
   // Central moments can only be estimated about ordinary moments
   if (m_nord) {
-    for (const auto& product : g_inputdeck.get< tag::stat >()) {
+    for (const auto& product : stat) {
       if (central(product)) {
 
         m_instCen.emplace_back( std::vector< const tk::real* >() );
@@ -108,18 +109,20 @@ Statistics::setupCentral( const OffsetMap& offset )
 }
 
 void
-Statistics::setupPDF( const OffsetMap& offset )
+Statistics::setupPDF( const ctr::OffsetMap& offset,
+                      const std::vector< ctr::Probability >& pdf,
+                      const std::vector< std::vector< tk::real > >& binsize )
 //******************************************************************************
 //  Prepare for computing PDFs
 //! \author J. Bakosi
 //******************************************************************************
 {
   std::size_t i = 0;
-  for (const auto& probability : g_inputdeck.get< tag::pdf >()) {
+  for (const auto& probability : pdf) {
     if (ordinary(probability)) {
 
       // Detect number of sample space dimensions and create ordinary PDFs
-      const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
+      const auto& bs = binsize[i++];
       if (bs.size() == 1) {
         m_ordupdf.emplace_back( bs[0] );
         m_instOrdUniPDF.emplace_back( std::vector< const tk::real* >() );
@@ -146,7 +149,7 @@ Statistics::setupPDF( const OffsetMap& offset )
       // Detect number of sample space dimensions and create central PDFs,
       // create new storage for instantaneous variable pointer, create new
       // storage for center pointer
-      const auto& bs = g_inputdeck.get< tag::discr, tag::binsize >()[i++];
+      const auto& bs = binsize[i++];
       if (bs.size() == 1) {
         m_cenupdf.emplace_back( bs[0] );
         m_instCenUniPDF.emplace_back( std::vector< const tk::real* >() );
@@ -186,7 +189,7 @@ Statistics::setupPDF( const OffsetMap& offset )
 }
 
 std::size_t
-Statistics::mean( const ctr::Term& term ) const
+Statistics::mean( const tk::ctr::Term& term ) const
 //******************************************************************************
 //  Return mean for fluctuation
 //! \param[in]  term      Term (a fluctuation) whose mean to search for

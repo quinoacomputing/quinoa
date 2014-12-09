@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Sun 23 Nov 2014 06:05:37 PM MST
+  \date      Tue 09 Dec 2014 09:35:12 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -13,7 +13,7 @@
 
 #include <tut/tut.hpp>
 #include <Options/RNG.h>
-#include <tkTypes.h>
+#include <ControlTypes.h>
 
 namespace tut {
 
@@ -154,7 +154,7 @@ void RNG_object::test< 11 >() {
   // empty bundle: no parameter specified
   std::map< tk::ctr::RNGType, tk::ctr::RNGSSEParam > b;
   ensure_equals( "does not return default seed for no parameters",
-                 m.param< tk::tag::seed >
+                 m.param< tag::seed >
                         ( tk::ctr::RNGType::RNGSSE_GM31, 0, b ), 0 );
 }
 
@@ -169,7 +169,7 @@ void RNG_object::test< 12 >() {
     { tk::ctr::RNGType::RNGSSE_GQ581, { 12, tk::ctr::RNGSSESeqLenType::LONG } }
   };
   ensure( "does not return specified sequence length for RNGSSE rng",
-          m.param< tk::tag::seqlen >                    // query this field
+          m.param< tag::seqlen >                    // query this field
                  ( tk::ctr::RNGType::RNGSSE_GQ581,      // query this rng
                    tk::ctr::RNGSSESeqLenType::SHORT,    // default if not spec'd
                    b ) ==                               // query this bundle

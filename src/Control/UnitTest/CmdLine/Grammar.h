@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:09:52 AM MDT
+  \date      Mon 08 Dec 2014 02:32:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -18,7 +18,7 @@
 #include <Exception.h>
 #include <Grammar.h>
 #include <PEGTLParsed.h>
-#include <UnitTest/CmdLine/Keywords.h>
+#include <Keywords.h>
 
 namespace unittest {
 //! Grammar definition: state, actions, grammar
@@ -40,8 +40,8 @@ namespace cmd {
   //! verbose (i.e., verbose or quiet output)
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      tk::kw::verbose,
-                                      tk::tag::verbose > {};
+                                      kw::verbose,
+                                      tag::verbose > {};
 
   //! command line keywords
   struct keywords :

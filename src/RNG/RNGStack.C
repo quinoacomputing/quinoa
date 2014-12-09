@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Wed 17 Sep 2014 09:40:42 PM MDT
+  \date      Mon 08 Dec 2014 02:35:39 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   Stack of random number generators
@@ -78,8 +78,8 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
   using tk::ctr::RNGType;
   using tk::ctr::MKLUniformMethodType;
   using tk::ctr::MKLGaussianMethodType;
-  using tk::tag::uniform_method;
-  using tk::tag::gaussian_method;
+  using tag::uniform_method;
+  using tag::gaussian_method;
 
   // Defaults for MKL RNGs
   unsigned int s_def = 0;
@@ -96,7 +96,7 @@ RNGStack::regMKL( int nstreams, const tk::ctr::RNGMKLParameters& param )
       ( m_factory, rng,
         nstreams,
         opt.param( rng ),
-        opt.param< tk::tag::seed >( rng, s_def, param ),
+        opt.param< tag::seed >( rng, s_def, param ),
         um_opt.param( opt.param< uniform_method >( rng, u_def, param ) ),
         gm_opt.param( opt.param< gaussian_method >( rng, g_def, param) ) );
   };
@@ -130,7 +130,7 @@ RNGStack::regRNGSSE( int nstreams, const tk::ctr::RNGSSEParameters& param )
   using tk::RNGSSE;
   using tk::ctr::RNGType;
   using tk::ctr::RNGSSESeqLenType;
-  using tk::tag::seqlen;
+  using tag::seqlen;
 
   tk::ctr::RNG opt;
 

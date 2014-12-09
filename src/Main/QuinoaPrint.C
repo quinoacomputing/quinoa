@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Thu 23 Oct 2014 07:33:59 AM MDT
+  \date      Mon 08 Dec 2014 04:57:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -10,15 +10,8 @@
 //******************************************************************************
 
 #include <QuinoaPrint.h>
-#include <Quinoa/Options/DiffEq.h>
 
 using quinoa::QuinoaPrint;
-
-namespace quinoa {
-
-extern std::vector< DiffEq > g_diffeqs;
-
-} // quinoa::
 
 void
 QuinoaPrint::inthead( const std::string& title,
@@ -47,45 +40,23 @@ QuinoaPrint::statistics( const std::string& title ) const
        !g_inputdeck.get< tag::pdf >().empty() )
   {
     section( title );
-    stats( "Requested statistical moments", ctr::requested );
-    stats( "Triggered statistical moments", ctr::triggered );
-    stats( "Estimated statistical moments", ctr::estimated );
-    pdfs( "PDFs", ctr::pdf );
-  }
-}
-
-void
-QuinoaPrint::diffeqs( const std::string& title, const std::vector< std::vector<
-  std::pair< std::string, std::string > > >& info ) const
-//******************************************************************************
-//  Print configuration of a stack of differential equations
-//! \author J. Bakosi
-//******************************************************************************
-{
-  if ( !info.empty() ) {
-    std::stringstream ss;
-    ss << title << " (" << g_diffeqs.size() << ")";
-    section( ss.str() );
-    for (std::size_t e=0; e<info.size(); ++e) {
-      subsection( info[e][0].first );
-      for (std::size_t l=1; l<info[e].size(); ++l)
-        m_stream << m_item_name_value_fmt % m_item_indent
-                    % info[e][l].first % info[e][l].second;
-      if (e < info.size()-1) endsubsection();
-    }
+    stats( "Requested statistical moments", tk::ctr::requested );
+    stats( "Triggered statistical moments", tk::ctr::triggered );
+    stats( "Estimated statistical moments", tk::ctr::estimated );
+    pdfs( "PDFs", tk::ctr::pdf );
   }
 }
 
 void
 QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
-  std::ostream&, const std::vector< ctr::Term >& ) > op ) const
+  std::ostream&, const std::vector< tk::ctr::Term >& ) > op ) const
 //******************************************************************************
 //  Echo statistics container contents if differs from default applying op.
 //! \details See src/Control/Quinoa/Types.h for the definition of
 //! functions that may be passed in as op. Examples are 'estimated',
 //! 'requested', and 'triggered'. The operation given by the template
 //! argument and is a function pointer specifying an stream-output operator
-//! for a std::vector< ctr::Term >.
+//! for a std::vector< tk::ctr::Term >.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -103,7 +74,7 @@ void
 QuinoaPrint::pdfs( const std::string& msg,
                    std::function<
                      std::ostream& ( std::ostream&,
-                                     const std::vector< ctr::Term >&,
+                                     const std::vector< tk::ctr::Term >&,
                                      const std::vector< tk::real >&,
                                      const std::string&,
                                      const std::vector< tk::real >& ext ) > op )
@@ -138,16 +109,16 @@ const
 
   // Oputput options and settings affecting PDF output
   if (!c.empty()) {
-    ctr::PDFFile f;
+    tk::ctr::PDFFile f;
     item( f.group(),
           f.name( g_inputdeck.get< tag::selected, tag::pdffiletype >() ) );
-    ctr::PDFPolicy p;
+    tk::ctr::PDFPolicy p;
     item( p.group(),
           p.name( g_inputdeck.get< tag::selected, tag::pdfpolicy >() ) );
-    ctr::PDFCentering e;
+    tk::ctr::PDFCentering e;
     item( e.group(),
           e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
-    ctr::TxtFloatFormat fl;
+    tk::ctr::TxtFloatFormat fl;
     item( fl.group(),
           fl.name( g_inputdeck.get< tag::selected, tag::float_format >() ) );
     item( "Text precision in digits",

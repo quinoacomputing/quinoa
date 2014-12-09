@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WFCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 17 Nov 2014 07:48:58 PM MST
+  \date      Tue 09 Dec 2014 06:28:33 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher coefficients policies
   \details   Wright-Fisher coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Wright-Fisher constant coefficients policity: constants in time
 struct WFCoeffConst {
@@ -34,10 +34,10 @@ struct WFCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&, std::vector< tk::real >& ) {}
@@ -46,6 +46,6 @@ struct WFCoeffConst {
 //! List of all Wright-Fisher's coefficients policies
 using WFCoeffPolicies = boost::mpl::vector< WFCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // WFCoeffPolicy_h

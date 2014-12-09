@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:39:26 PM MST
+  \date      Tue 09 Dec 2014 06:33:07 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gamma coefficients policies
   \details   Gamma coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Gamma constant coefficients policity: constants in time
 struct GammaCoeffConst {
@@ -41,10 +41,10 @@ struct GammaCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -56,6 +56,6 @@ struct GammaCoeffConst {
 //! List of all gamma's coefficients policies
 using GammaCoeffPolicies = boost::mpl::vector< GammaCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // GammaCoeffPolicy_h

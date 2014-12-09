@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:15:59 PM MST
+  \date      Tue 09 Dec 2014 06:28:00 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   Wright-Fisher SDE, see
@@ -24,7 +24,7 @@
 #include <WFCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -52,7 +52,7 @@ class WrightFisher {
       m_offset( g_inputdeck.get< tag::component >().
                             offset< tag::wrightfisher >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::wrightfisher, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >()[c] ) ) )
     {
       Throw( "Wright-Fisher diffusion matrix not yet implemented! See comments "
              "in code for details." );
@@ -65,7 +65,7 @@ class WrightFisher {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const {
+    void initialize( tk::ParProps& particles ) const {
       //Init( { particles } );
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -84,7 +84,7 @@ class WrightFisher {
     }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
       const auto npar = particles.npar();
@@ -203,6 +203,6 @@ class WrightFisher {
     std::vector< tk::real > m_omega;    //!< Coefficients
 };
 
-} // quinoa::
+} // walker::
 
 #endif // WrightFisher_h

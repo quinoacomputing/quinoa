@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 12:25:09 PM MDT
+  \date      Mon 08 Dec 2014 03:34:31 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
   \details   Univariate PDF estimator
@@ -18,7 +18,7 @@
 #include <Types.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Univariate PDF estimator
 class UniPDF {
@@ -96,6 +96,6 @@ class UniPDF {
     map_type m_pdf;             //!< Probability density function
 };
 
-} // quinoa::
+} // tk::
 
 #endif // UniPDF_h

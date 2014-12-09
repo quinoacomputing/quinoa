@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 09:52:57 AM MDT
+  \date      Tue 09 Dec 2014 11:10:54 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Initialization policies
   \details   Initialization policies
@@ -18,9 +18,9 @@
 #include <Macro.h>
 #include <Types.h>
 #include <ParticleProperties.h>
-#include <Quinoa/Options/InitPolicy.h>
+#include <Options/InitPolicy.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
@@ -44,7 +44,7 @@ struct InitZero {
   InitZero() = default;
   //! Constructor: initialize particle properties (zero)
   InitZero( ParProps& particles )
-  { memset( particles.ptr(), 0, particles.size()*sizeof(tk::real) ); }
+  { memset( particles.ptr(), 0, particles.size()*sizeof(real) ); }
 
   std::string policy() const noexcept
   { return ctr::InitPolicy().name( ctr::InitPolicyType::ZERO ); }
@@ -56,6 +56,6 @@ struct InitZero {
 //! List of all initialization policies
 using InitPolicies = boost::mpl::vector< InitRaw, InitZero >;
 
-} // quinoa::
+} // tk::
 
 #endif // InitPolicy_h

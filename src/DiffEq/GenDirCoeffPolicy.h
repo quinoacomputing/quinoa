@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 16 Oct 2014 05:14:43 PM MDT
+  \date      Tue 09 Dec 2014 06:26:18 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Generalized Dirichlet constant coefficients policity: constants in time
 struct GenDirCoeffConst {
@@ -49,10 +49,10 @@ struct GenDirCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -65,6 +65,6 @@ struct GenDirCoeffConst {
 //! List of all generalized Dirichlet's coefficients policies
 using GenDirCoeffPolicies = boost::mpl::vector< GenDirCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // GenDirCoeffPolicy_h

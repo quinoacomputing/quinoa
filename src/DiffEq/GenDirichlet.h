@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GenDirichlet.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:17:51 PM MST
+  \date      Tue 09 Dec 2014 06:27:30 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   Lochner's generalized Dirichlet SDE,
@@ -16,7 +16,7 @@
 #include <GenDirCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -31,7 +31,7 @@ class GenDirichlet {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::gendir >()[c] ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::gendir, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::gendir, tag::rng >()[c] ) ) )
     {
       const auto& b = g_inputdeck.get< tag::param, tag::gendir, tag::b >();
       const auto& S = g_inputdeck.get< tag::param, tag::gendir, tag::S >();
@@ -50,10 +50,10 @@ class GenDirichlet {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Y_i = 1 - sum_{k=1}^{i} y_k
@@ -95,6 +95,6 @@ class GenDirichlet {
     std::vector< tk::real > m_c;
 };
 
-} // quinoa::
+} // walker::
 
 #endif // GenDirichlet_h

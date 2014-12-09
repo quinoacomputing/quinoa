@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:14:04 AM MDT
+  \date      Mon 08 Dec 2014 03:07:36 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -22,8 +22,7 @@
 
 #include <TaggedTuple.h>
 #include <Toggle.h>
-#include <Quinoa/Tags.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 #include <Options/RNGSSESeqLen.h>
 
 namespace tk {
@@ -92,62 +91,62 @@ class RNG : public tk::Toggle< RNGType > {
       Toggle< RNGType >( "Random number generator",
         //! Enums -> names
         { { RNGType::NO_RNG, "n/a" }
-        , { RNGType::RNGSSE_GM19, tk::kw::rngsse_gm19().name() }
-        , { RNGType::RNGSSE_GM29, tk::kw::rngsse_gm29().name() }
-        , { RNGType::RNGSSE_GM31, tk::kw::rngsse_gm31().name() }
-        , { RNGType::RNGSSE_GM55, tk::kw::rngsse_gm55().name() }
-        , { RNGType::RNGSSE_GM61, tk::kw::rngsse_gm61().name() }
-        , { RNGType::RNGSSE_GQ581, tk::kw::rngsse_gq581().name() }
-        , { RNGType::RNGSSE_GQ583, tk::kw::rngsse_gq583().name() }
-        , { RNGType::RNGSSE_GQ584, tk::kw::rngsse_gq584().name() }
-        , { RNGType::RNGSSE_MT19937, tk::kw::rngsse_mt19937().name() }
-        , { RNGType::RNGSSE_LFSR113, tk::kw::rngsse_lfsr113().name() }
-        , { RNGType::RNGSSE_MRG32K3A, tk::kw::rngsse_mrg32k3a().name() }
+        , { RNGType::RNGSSE_GM19, kw::rngsse_gm19().name() }
+        , { RNGType::RNGSSE_GM29, kw::rngsse_gm29().name() }
+        , { RNGType::RNGSSE_GM31, kw::rngsse_gm31().name() }
+        , { RNGType::RNGSSE_GM55, kw::rngsse_gm55().name() }
+        , { RNGType::RNGSSE_GM61, kw::rngsse_gm61().name() }
+        , { RNGType::RNGSSE_GQ581, kw::rngsse_gq581().name() }
+        , { RNGType::RNGSSE_GQ583, kw::rngsse_gq583().name() }
+        , { RNGType::RNGSSE_GQ584, kw::rngsse_gq584().name() }
+        , { RNGType::RNGSSE_MT19937, kw::rngsse_mt19937().name() }
+        , { RNGType::RNGSSE_LFSR113, kw::rngsse_lfsr113().name() }
+        , { RNGType::RNGSSE_MRG32K3A, kw::rngsse_mrg32k3a().name() }
         #ifdef HAS_MKL
-        , { RNGType::MKL_MCG31, tk::kw::mkl_mcg31().name() }
-        , { RNGType::MKL_R250, tk::kw::mkl_r250().name() }
-        , { RNGType::MKL_MRG32K3A, tk::kw::mkl_mrg32k3a().name() }
-        , { RNGType::MKL_MCG59, tk::kw::mkl_mcg59().name() }
-        , { RNGType::MKL_WH, tk::kw::mkl_wh().name() }
-        , { RNGType::MKL_MT19937, tk::kw::mkl_mt19937().name() }
-        , { RNGType::MKL_MT2203, tk::kw::mkl_mt2203().name() }
-        , { RNGType::MKL_SFMT19937, tk::kw::mkl_sfmt19937().name() }
-        , { RNGType::MKL_SOBOL, tk::kw::mkl_sobol().name() }
-        , { RNGType::MKL_NIEDERR, tk::kw::mkl_niederr().name() }
-        //, { RNGType::MKL_IABSTRACT, tk::kw::mkl_iabstract().name() }
-        //, { RNGType::MKL_DABSTRACT, tk::kw::mkl_dabstract().name() }
-        //, { RNGType::MKL_SABSTRACT, tk::kw::mkl_sabstract().name() }
-        , { RNGType::MKL_NONDETERM, tk::kw::mkl_nondeterm().name() }
+        , { RNGType::MKL_MCG31, kw::mkl_mcg31().name() }
+        , { RNGType::MKL_R250, kw::mkl_r250().name() }
+        , { RNGType::MKL_MRG32K3A, kw::mkl_mrg32k3a().name() }
+        , { RNGType::MKL_MCG59, kw::mkl_mcg59().name() }
+        , { RNGType::MKL_WH, kw::mkl_wh().name() }
+        , { RNGType::MKL_MT19937, kw::mkl_mt19937().name() }
+        , { RNGType::MKL_MT2203, kw::mkl_mt2203().name() }
+        , { RNGType::MKL_SFMT19937, kw::mkl_sfmt19937().name() }
+        , { RNGType::MKL_SOBOL, kw::mkl_sobol().name() }
+        , { RNGType::MKL_NIEDERR, kw::mkl_niederr().name() }
+        //, { RNGType::MKL_IABSTRACT, kw::mkl_iabstract().name() }
+        //, { RNGType::MKL_DABSTRACT, kw::mkl_dabstract().name() }
+        //, { RNGType::MKL_SABSTRACT, kw::mkl_sabstract().name() }
+        , { RNGType::MKL_NONDETERM, kw::mkl_nondeterm().name() }
         #endif
         },
         //! keywords -> Enums
         { { "no_rng", RNGType::NO_RNG }
-        , { tk::kw::rngsse_gm19().string(), RNGType::RNGSSE_GM19 }
-        , { tk::kw::rngsse_gm29().string(), RNGType::RNGSSE_GM29 }
-        , { tk::kw::rngsse_gm31().string(), RNGType::RNGSSE_GM31 }
-        , { tk::kw::rngsse_gm55().string(), RNGType::RNGSSE_GM55 }
-        , { tk::kw::rngsse_gm61().string(), RNGType::RNGSSE_GM61 }
-        , { tk::kw::rngsse_gq581().string(), RNGType::RNGSSE_GQ581 }
-        , { tk::kw::rngsse_gq583().string(), RNGType::RNGSSE_GQ583 }
-        , { tk::kw::rngsse_gq584().string(), RNGType::RNGSSE_GQ584 }
-        , { tk::kw::rngsse_mt19937().string(), RNGType::RNGSSE_MT19937 }
-        , { tk::kw::rngsse_lfsr113().string(), RNGType::RNGSSE_LFSR113 }
-        , { tk::kw::rngsse_mrg32k3a().string(), RNGType::RNGSSE_MRG32K3A }
+        , { kw::rngsse_gm19().string(), RNGType::RNGSSE_GM19 }
+        , { kw::rngsse_gm29().string(), RNGType::RNGSSE_GM29 }
+        , { kw::rngsse_gm31().string(), RNGType::RNGSSE_GM31 }
+        , { kw::rngsse_gm55().string(), RNGType::RNGSSE_GM55 }
+        , { kw::rngsse_gm61().string(), RNGType::RNGSSE_GM61 }
+        , { kw::rngsse_gq581().string(), RNGType::RNGSSE_GQ581 }
+        , { kw::rngsse_gq583().string(), RNGType::RNGSSE_GQ583 }
+        , { kw::rngsse_gq584().string(), RNGType::RNGSSE_GQ584 }
+        , { kw::rngsse_mt19937().string(), RNGType::RNGSSE_MT19937 }
+        , { kw::rngsse_lfsr113().string(), RNGType::RNGSSE_LFSR113 }
+        , { kw::rngsse_mrg32k3a().string(), RNGType::RNGSSE_MRG32K3A }
         #ifdef HAS_MKL
-        , { tk::kw::mkl_mcg31().string(), RNGType::MKL_MCG31 }
-        , { tk::kw::mkl_r250().string(), RNGType::MKL_R250 }
-        , { tk::kw::mkl_mrg32k3a().string(), RNGType::MKL_MRG32K3A }
-        , { tk::kw::mkl_mcg59().string(), RNGType::MKL_MCG59 }
-        , { tk::kw::mkl_wh().string(), RNGType::MKL_WH }
-        , { tk::kw::mkl_mt19937().string(), RNGType::MKL_MT19937 }
-        , { tk::kw::mkl_mt2203().string(), RNGType::MKL_MT2203 }
-        , { tk::kw::mkl_sfmt19937().string(), RNGType::MKL_SFMT19937 }
-        , { tk::kw::mkl_sobol().string(), RNGType::MKL_SOBOL }
-        , { tk::kw::mkl_niederr().string(), RNGType::MKL_NIEDERR }
-        //, { tk::kw::mkl_iabstract().string(), RNGType::MKL_IABSTRACT }
-        //, { tk::kw::mkl_dabstract().string(), RNGType::MKL_DABSTRACT }
-        //, { tk::kw::mkl_sabstract().string(), RNGType::MKL_SABSTRACT }
-        , { tk::kw::mkl_nondeterm().string(), RNGType::MKL_NONDETERM }
+        , { kw::mkl_mcg31().string(), RNGType::MKL_MCG31 }
+        , { kw::mkl_r250().string(), RNGType::MKL_R250 }
+        , { kw::mkl_mrg32k3a().string(), RNGType::MKL_MRG32K3A }
+        , { kw::mkl_mcg59().string(), RNGType::MKL_MCG59 }
+        , { kw::mkl_wh().string(), RNGType::MKL_WH }
+        , { kw::mkl_mt19937().string(), RNGType::MKL_MT19937 }
+        , { kw::mkl_mt2203().string(), RNGType::MKL_MT2203 }
+        , { kw::mkl_sfmt19937().string(), RNGType::MKL_SFMT19937 }
+        , { kw::mkl_sobol().string(), RNGType::MKL_SOBOL }
+        , { kw::mkl_niederr().string(), RNGType::MKL_NIEDERR }
+        //, { kw::mkl_iabstract().string(), RNGType::MKL_IABSTRACT }
+        //, { kw::mkl_dabstract().string(), RNGType::MKL_DABSTRACT }
+        //, { kw::mkl_sabstract().string(), RNGType::MKL_SABSTRACT }
+        , { kw::mkl_nondeterm().string(), RNGType::MKL_NONDETERM }
         #endif
         } ) {}
 

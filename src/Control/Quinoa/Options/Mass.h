@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:14:34 AM MDT
+  \date      Mon 08 Dec 2014 02:59:09 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Mass model options and associations
   \details   Mass model options and associations
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
-#include <Quinoa/InputDeck/Keywords.h>
+#include <Keywords.h>
 
 namespace quinoa {
 namespace ctr {

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:17:39 PM MST
+  \date      Mon 08 Dec 2014 05:16:49 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck SDE
   \details   Diagonal Ornstein-Uhlenbeck SDE.
@@ -17,7 +17,7 @@
 #include <DiagOUCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -32,7 +32,7 @@ class DiagOrnsteinUhlenbeck {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::diagou >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::diagou >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::diagou, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) ) )
     {
       const auto& sigma =
         g_inputdeck.get< tag::param, tag::diagou, tag::sigma >();
@@ -50,10 +50,10 @@ class DiagOrnsteinUhlenbeck {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -79,6 +79,6 @@ class DiagOrnsteinUhlenbeck {
     std::vector< tk::real > m_mu;
 };
 
-} // quinoa::
+} // walker::
 
 #endif // DiagOrnsteinUhlenbeck_h

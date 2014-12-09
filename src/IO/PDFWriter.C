@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Tue 14 Oct 2014 09:04:11 AM MDT
+  \date      Mon 08 Dec 2014 03:57:49 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -17,7 +17,7 @@
 #include <PDFWriter.h>
 #include <Exception.h>
 
-using quinoa::PDFWriter;
+using tk::PDFWriter;
 
 PDFWriter::PDFWriter( const std::string& filename,
                       ctr::TxtFloatFormatType format,
@@ -44,8 +44,7 @@ PDFWriter::PDFWriter( const std::string& filename,
 }
 
 void
-PDFWriter::writeTxt( const UniPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-const
+PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //******************************************************************************
 //  Write out standardized univariate PDF to file
 //! \param[in]  pdf   Univariate PDF
@@ -112,8 +111,7 @@ const
 }
 
 void
-PDFWriter::writeTxt( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-const
+PDFWriter::writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //******************************************************************************
 //  Write out standardized bivariate PDF to text file
 //! \param[in]  pdf   Bivariate PDF
@@ -203,8 +201,7 @@ const
 }
 
 void
-PDFWriter::writeTxt( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-const
+PDFWriter::writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const
 //******************************************************************************
 //  Write out standardized trivariate PDF to text file
 //! \param[in]  pdf   Trivariate PDF
@@ -301,7 +298,7 @@ const
 
 void
 PDFWriter::writeGmshTxt( const BiPDF& pdf,
-                         const ctr::InputDeck::PDFInfo& info,
+                         const tk::ctr::PDFInfo& info,
                          ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized bivariate PDF to Gmsh (text) format
@@ -410,7 +407,7 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
 
 void
 PDFWriter::writeGmshTxt( const TriPDF& pdf,
-                         const ctr::InputDeck::PDFInfo& info,
+                         const tk::ctr::PDFInfo& info,
                          ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized trivariate PDF to Gmsh (text) format
@@ -530,7 +527,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
 
 void
 PDFWriter::writeGmshBin( const BiPDF& pdf,
-                         const ctr::InputDeck::PDFInfo& info,
+                         const tk::ctr::PDFInfo& info,
                          ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized bivariate PDF to Gmsh (binary) format
@@ -670,7 +667,7 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
 
 void
 PDFWriter::writeGmshBin( const TriPDF& pdf,
-                         const ctr::InputDeck::PDFInfo& info,
+                         const tk::ctr::PDFInfo& info,
                          ctr::PDFCenteringType centering ) const
 //******************************************************************************
 //  Write out standardized trivariate PDF to Gmsh (binary) format
@@ -823,7 +820,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 
 void
 PDFWriter::writeExodusII( const BiPDF& pdf,
-                          const ctr::InputDeck::PDFInfo& info,
+                          const tk::ctr::PDFInfo& info,
                           int it,
                           ctr::PDFCenteringType centering ) const
 //******************************************************************************
@@ -938,7 +935,7 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 
 void
 PDFWriter::writeExodusII( const TriPDF& pdf,
-                          const ctr::InputDeck::PDFInfo& info,
+                          const tk::ctr::PDFInfo& info,
                           int it,
                           ctr::PDFCenteringType centering ) const
 //******************************************************************************

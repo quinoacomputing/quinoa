@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Thu 16 Oct 2014 05:13:47 PM MDT
+  \date      Tue 09 Dec 2014 06:23:23 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Dirichlet constant coefficients policity: constants in time
 struct DirCoeffConst {
@@ -41,10 +41,10 @@ struct DirCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -56,6 +56,6 @@ struct DirCoeffConst {
 //! List of all Dirichlet's coefficients policies
 using DirCoeffPolicies = boost::mpl::vector< DirCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // DirCoeffPolicy_h

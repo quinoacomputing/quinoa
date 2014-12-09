@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 03:11:39 PM MST
+  \date      Tue 09 Dec 2014 06:31:00 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gamma SDE
   \details   Gamma SDE.
@@ -17,7 +17,7 @@
 #include <GammaCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -32,7 +32,7 @@ class Gamma {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::gamma >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::gamma >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::gamma, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::gamma, tag::rng >()[c] ) ) )
     {
       const auto& b = g_inputdeck.get< tag::param, tag::gamma, tag::b >();
       const auto& S = g_inputdeck.get< tag::param, tag::gamma, tag::S >();
@@ -45,10 +45,10 @@ class Gamma {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -74,6 +74,6 @@ class Gamma {
     std::vector< tk::real > m_k;
 };
 
-} // quinoa::
+} // walker::
 
 #endif // Gamma_h

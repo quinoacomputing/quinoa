@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 11:25:18 AM MDT
+  \date      Tue 09 Dec 2014 09:20:20 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for UnitTest's parsers
   \details   Types for UnitTest's parsers
@@ -11,10 +11,8 @@
 #ifndef UnitTestTypes_h
 #define UnitTestTypes_h
 
-#include <pegtl.hh>
-
-#include <tkTags.h>
-#include <UnitTest/Tags.h>
+#include <Tags.h>
+#include <Keyword.h>
 
 namespace unittest {
 //! control and parsing

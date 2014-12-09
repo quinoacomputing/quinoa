@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
-  \date      Sat 23 Aug 2014 08:46:35 AM MDT
+  \date      Mon 08 Dec 2014 02:21:00 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGSSE grammar
   \details   RNGSSE grammar
@@ -59,7 +59,7 @@ namespace rngsse {
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seed :
          tk::grm::process< Stack,
-                           tk::kw::seed::pegtl_string,
+                           kw::seed::pegtl_string,
                            tk::grm::Insert_field< Stack,
                                                   tag::seed,
                                                   sel, vec, tags... > > {};
@@ -77,7 +77,7 @@ namespace rngsse {
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seqlen :
          rngsse_seq< Stack,
-                     tk::kw::seqlen,
+                     kw::seqlen,
                      ctr::RNG,
                      tag::seqlen,
                      sel, vec, tags... > {};
@@ -91,7 +91,7 @@ namespace rngsse {
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
-                           tk::kw::end,
+                           kw::end,
                            seed< Stack, sel, vec, tags... >,
                            seqlen< Stack, sel, vec, tags... > > > {};
 

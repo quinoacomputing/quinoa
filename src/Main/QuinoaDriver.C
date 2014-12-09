@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:30:20 PM MDT
+  \date      Mon 08 Dec 2014 04:55:17 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     QuinoaDriver that drives Quinoa
   \details   QuinoaDriver that drives Quinoa
@@ -11,12 +11,12 @@
 
 #include <QuinoaDriver.h>
 #include <Quinoa/InputDeck/Parser.h>
-#include <integrator.decl.h>
+//#include <integrator.decl.h>
 
 namespace quinoa {
 
 extern ctr::InputDeck g_inputdeck;
-extern CProxy_Distributor g_DistributorProxy;
+//extern CProxy_Distributor g_DistributorProxy;
 
 } // quinoa::
 
@@ -46,5 +46,5 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
   // individual integrators so they can call back to Distributor. Since this
   // is called inside the main chare constructor, the Charm++ runtime system
   // distributes the handle along with all other global-scope data.
-  g_DistributorProxy = CProxy_Distributor::ckNew( cmdline );
+  //g_DistributorProxy = CProxy_Distributor::ckNew( cmdline );
 }

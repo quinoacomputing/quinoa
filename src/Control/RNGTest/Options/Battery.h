@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:15:23 AM MDT
+  \date      Tue 09 Dec 2014 09:21:54 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test batteries options and associations
   \details   Random number generator test batteries options and associations
@@ -14,7 +14,7 @@
 #include <map>
 
 #include <Toggle.h>
-#include <RNGTest/InputDeck/Keywords.h>
+#include <Keywords.h>
 #include <PUPUtil.h>
 
 namespace rngtest {

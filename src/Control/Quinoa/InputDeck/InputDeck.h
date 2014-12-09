@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:41:12 PM MST
+  \date      Tue 09 Dec 2014 10:51:18 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck
   \details   Quinoa's input deck
@@ -26,13 +26,13 @@ class InputDeck :
                       tag::title,      std::string,
                       tag::selected,   selects,
                       tag::discr,      discretization,
-                      tag::component,  ncomps< unsigned int >,
+                      tag::component,  ncomps,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
                       tag::param,      parameters,
-                      tag::stat,       std::vector< Product >,
-                      tag::pdf,        std::vector< Probability >,
-                      tk::tag::error,  std::vector< std::string > > {
+                      tag::stat,       std::vector< tk::ctr::Product >,
+                      tag::pdf,        std::vector< tk::ctr::Probability >,
+                      tag::error,      std::vector< std::string > > {
 
   public:
     //! Constructor: set all defaults
@@ -54,7 +54,7 @@ class InputDeck :
       // Default generalized Langevin hydro model parameters
       set< tag::param, tag::slm, tag::c0 >( 2.1 );
       // Default requested statistics
-      set< tag::stat >( std::vector< Product >() );
+      set< tag::stat >( std::vector< tk::ctr::Product >() );
     }
 
     //! Extract data on whether to plot ordinary moments of requested statistics
@@ -71,14 +71,14 @@ class InputDeck :
 
     //! Extract moment names of requested statistics
     std::vector< std::string > momentNames( std::function<
-      bool ( const std::vector< ctr::Term >& ) > momentType ) const
+      bool ( const std::vector< tk::ctr::Term >& ) > momentType ) const
     {
       std::vector< std::string > names;
       for (const auto& product : get< tag::stat >()) {
         if (momentType( product )) {
           names.emplace_back( std::string() );
           for (const auto& term : product)
-            names.back() += ctr::FieldVar( term.var, term.field );
+            names.back() += tk::ctr::FieldVar( term.var, term.field );
         }
       }
       return names;
@@ -141,13 +141,13 @@ class InputDeck :
       tk::Control< tag::title,      std::string,
                    tag::selected,   selects,
                    tag::discr,      discretization,
-                   tag::component,  ncomps< unsigned int >,
+                   tag::component,  ncomps,
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
-                   tag::stat,       std::vector< Product >,
-                   tag::pdf,        std::vector< Probability >,
-                   tk::tag::error,  std::vector< std::string > >::pup(p);
+                   tag::stat,       std::vector< tk::ctr::Product >,
+                   tag::pdf,        std::vector< tk::ctr::Probability >,
+                   tag::error,      std::vector< std::string > >::pup(p);
     }
     friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }
 };

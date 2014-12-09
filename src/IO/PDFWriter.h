@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Tue 14 Oct 2014 08:48:43 AM MDT
+  \date      Mon 08 Dec 2014 03:51:08 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -17,10 +17,11 @@
 #include <UniPDF.h>
 #include <BiPDF.h>
 #include <TriPDF.h>
-#include <Quinoa/Options/PDFCentering.h>
-#include <Quinoa/InputDeck/InputDeck.h>
+#include <PDFInfo.h>
+#include <Options/PDFCentering.h>
+#include <Options/TxtFloatFormat.h>
 
-namespace quinoa {
+namespace tk {
 
 //! PDFWriter : Writer
 class PDFWriter : public tk::Writer {
@@ -28,44 +29,41 @@ class PDFWriter : public tk::Writer {
   public:
     //! Constructor
     explicit PDFWriter( const std::string& filename,
-                        ctr::TxtFloatFormatType format =
-                          ctr::TxtFloatFormatType::DEFAULT,
+                        tk::ctr::TxtFloatFormatType format =
+                          tk::ctr::TxtFloatFormatType::DEFAULT,
                         std::streamsize precision = std::cout.precision() );
 
     //! Write univariate PDF to text file
-    void writeTxt( const UniPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-    const;
+    void writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const;
 
     //! Write bivariate PDF to text file
-    void writeTxt( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-    const;
+    void writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const;
 
     //! Write trivariate PDF to text file
-    void writeTxt( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info )
-    const;
+    void writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const;
 
     //! Write bivariate PDF to gmsh (text) file format
-    void writeGmshTxt( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeGmshTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
                        ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to gmsh (text) file format
-    void writeGmshTxt( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeGmshTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
                        ctr::PDFCenteringType centering ) const;
 
     //! Write bivariate PDF to gmsh (binary) file format
-    void writeGmshBin( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeGmshBin( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
                        ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to gmsh (binary) file format
-    void writeGmshBin( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeGmshBin( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
                        ctr::PDFCenteringType centering ) const;
 
     //! Write bivariate PDF to Exodus II file format
-    void writeExodusII( const BiPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeExodusII( const BiPDF& pdf, const tk::ctr::PDFInfo& info,
                         int it, ctr::PDFCenteringType centering ) const;
 
     //! Write trivariate PDF to Exodus II file format
-    void writeExodusII( const TriPDF& pdf, const ctr::InputDeck::PDFInfo& info,
+    void writeExodusII( const TriPDF& pdf, const tk::ctr::PDFInfo& info,
                         int it, ctr::PDFCenteringType centering ) const;
 
   private:
@@ -138,6 +136,6 @@ class PDFWriter : public tk::Writer {
                   ctr::PDFCenteringType centering ) const;
 };
 
-} // quinoa::
+} // tk::
 
 #endif // PDFWriter_h

@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Thu 02 Oct 2014 12:25:47 PM MDT
+  \date      Mon 08 Dec 2014 03:34:45 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator
@@ -18,7 +18,7 @@
 #include <Types.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Joint bivariate PDF estimator
 class BiPDF {
@@ -112,6 +112,6 @@ class BiPDF {
     map_type m_pdf;                         //!< Probability density function
 };
 
-} // quinoa::
+} // tk::
 
 #endif // BiPDF_h

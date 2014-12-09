@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 22 Aug 2014 10:53:54 PM MDT
+  \date      Mon 08 Dec 2014 02:25:59 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck
   \details   Random number generator test suite input deck
@@ -26,7 +26,7 @@ class InputDeck : public tk::Control<
                     tag::io,         ios,
                     tag::cmd,        CmdLine,
                     tag::param,      parameters,
-                    tk::tag::error,  std::vector< std::string > > {
+                    tag::error,      std::vector< std::string > > {
 
   public:
     //! Pack/Unpack
@@ -36,7 +36,7 @@ class InputDeck : public tk::Control<
                    tag::io,         ios,
                    tag::cmd,        CmdLine,
                    tag::param,      parameters,
-                   tk::tag::error,  std::vector< std::string > >::pup(p);
+                   tag::error,      std::vector< std::string > >::pup(p);
     }
     friend void operator|( PUP::er& p, InputDeck& c ) { c.pup(p); }
 };

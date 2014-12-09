@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Fri 05 Dec 2014 02:16:37 PM MST
+  \date      Tue 09 Dec 2014 06:30:40 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE.
@@ -17,7 +17,7 @@
 #include <SkewNormalCoeffPolicy.h>
 #include <RNG.h>
 
-namespace quinoa {
+namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
@@ -32,7 +32,7 @@ class SkewNormal {
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::skewnormal >()[c] ),
       m_offset(g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c)),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::skewnormal, tk::tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >()[c] ) ) )
     {
       const auto& timescale =
         g_inputdeck.get< tag::param, tag::skewnormal, tag::timescale >();
@@ -52,10 +52,10 @@ class SkewNormal {
     }
 
     //! Set initial conditions
-    void initialize( ParProps& particles ) const { Init( { particles } ); }
+    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
 
     //! Advance particles
-    void advance( ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -88,6 +88,6 @@ class SkewNormal {
     constexpr double pi() const { return std::atan(1.0) * 4.0; }
 };
 
-} // quinoa::
+} // walker::
 
 #endif // SkewNormal_h

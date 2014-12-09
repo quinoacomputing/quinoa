@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:29:28 PM MDT
+  \date      Mon 08 Dec 2014 02:25:21 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's comamnd line parser
   \details   RNGTest's comamnd line parser
@@ -48,7 +48,7 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
 
   // Echo errors and warnings accumulated during parsing
-  diagnostics( print, cmd.get< tk::tag::error >() );
+  diagnostics( print, cmd.get< tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out

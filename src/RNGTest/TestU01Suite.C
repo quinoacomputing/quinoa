@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:48:40 AM MDT
+  \date      Tue 09 Dec 2014 09:24:07 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TestU01 suite
   \details   TestU01 suite
@@ -28,7 +28,7 @@ extern TestStack g_testStack;
 using rngtest::TestU01Suite;
 
 TestU01Suite::TestU01Suite( ctr::BatteryType suite ) :
-  m_print( rngtest::g_inputdeck.get< rngtest::tag::cmd, tk::tag::verbose >() ?
+  m_print( rngtest::g_inputdeck.get< tag::cmd, tag::verbose >() ?
            std::cout : std::clog ),
   m_npval(0), m_ncomplete(0), m_ntest(0)
 //******************************************************************************
@@ -79,16 +79,16 @@ TestU01Suite::names( std::vector< std::string > n )
   m_print.names( n );
 
   if ( ++m_ntest == ntest() ) {
-    const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
+    const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
     std::stringstream ss;
     ss << "RNGs tested (" << rngs.size() << ")";
     m_print.section( ss.str() );
     #ifdef HAS_MKL
-    m_print.MKLParams( g_inputdeck.get< tag::selected, tk::tag::rng >(),
-                       g_inputdeck.get< tag::param, tk::tag::rngmkl >() );
+    m_print.MKLParams( g_inputdeck.get< tag::selected, tag::rng >(),
+                       g_inputdeck.get< tag::param, tag::rngmkl >() );
     #endif
-    m_print.RNGSSEParams( g_inputdeck.get< tag::selected, tk::tag::rng >(),
-                          g_inputdeck.get< tag::param, tk::tag::rngsse >() );
+    m_print.RNGSSEParams( g_inputdeck.get< tag::selected, tag::rng >(),
+                          g_inputdeck.get< tag::param, tag::rngsse >() );
     m_print.endpart();
     m_print.part( m_name );
     m_print.statshead( "Statistics computed",
@@ -109,7 +109,7 @@ TestU01Suite::names( std::vector< std::string > n )
     // tests per RNG and keep the status more generic. See also the
     // discussion on the return type in TestU01Props::run().
     tk::ctr::RNG rng;
-    for (const auto& r : g_inputdeck.get< tag::selected, tk::tag::rng >() )
+    for (const auto& r : g_inputdeck.get< tag::selected, tag::rng >() )
       m_nfail[ rng.name(r) ] = 0;
   }
 }
@@ -156,7 +156,7 @@ TestU01Suite::assess()
 {
   // Output summary of failed tests for all RNGs tested
   if ( !m_failed.empty() ) {
-    const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
+    const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
     m_print.failed( "Failed statistics", m_npval*rngs.size(), m_failed );
   } else m_print.note< tk::QUIET >( "All tests passed" );
 
@@ -183,7 +183,7 @@ TestU01Suite::ntest() const
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  const auto rngs = g_inputdeck.get< tag::selected, tk::tag::rng >();
+  const auto rngs = g_inputdeck.get< tag::selected, tag::rng >();
   return m_ctrs.size() / rngs.size();
 }
 

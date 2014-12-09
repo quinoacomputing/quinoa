@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:04:28 PM MDT
+  \date      Mon 08 Dec 2014 02:33:54 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -44,7 +44,7 @@ TestU01Stack::TestU01Stack()
   // used as external generators to TestU01. Templating them on the id enables
   // the compiler generate a different wrapper for a different RNG facilitating
   // simultaneous calls to any or all wrappers as they are unique functions.
-  for (const auto& r : g_inputdeck.get< tag::selected, tk::tag::rng >()) {
+  for (const auto& r : g_inputdeck.get< tag::selected, tag::rng >()) {
     using tk::ctr::RNGType;
     using tk::ctr::raw;
     #ifdef HAS_MKL

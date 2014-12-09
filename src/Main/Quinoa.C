@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Wed 19 Nov 2014 04:56:42 PM MST
+  \date      Mon 08 Dec 2014 04:59:13 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -14,7 +14,6 @@
 #include <Config.h>
 #include <RNG.h>
 #include <RNGStack.h>
-#include <DiffEqStack.h>
 #include <QuinoaPrint.h>
 #include <QuinoaDriver.h>
 #include <Quinoa/CmdLine/Parser.h>
@@ -40,12 +39,10 @@ ctr::InputDeck g_inputdeck_defaults;
 ctr::InputDeck g_inputdeck;
 //! Random number generators selected by user
 std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
-//! Differential equations selected by user
-std::vector< DiffEq > g_diffeqs;
 
 //! Distributor Charm++ proxy facilitating call-back to Distributor by the
 //! individual integrators
-CProxy_Distributor g_DistributorProxy;
+//CProxy_Distributor g_DistributorProxy;
 
 //! Pack/Unpack selected RNGs. This Pack/Unpack method (re-)creates the full RNG
 //! stack since it needs to (re-)bind function pointers on different processing
@@ -65,29 +62,11 @@ void operator|( PUP::er& p, std::map< tk::ctr::RawRNGType, tk::RNG >& rng ) {
   if (!p.isSizing()) {
     tk::RNGStack stack(
       #ifdef HAS_MKL
-      g_inputdeck.get< tag::param, tk::tag::rngmkl >(),
+      g_inputdeck.get< tag::param, tag::rngmkl >(),
       #endif
-      g_inputdeck.get< tag::param, tk::tag::rngsse >() );
-    rng = stack.selected( g_inputdeck.get< tag::selected, tk::tag::rng >() );
+      g_inputdeck.get< tag::param, tag::rngsse >() );
+    rng = stack.selected( g_inputdeck.get< tag::selected, tag::rng >() );
   }
-}
-
-//! Pack/Unpack selected differential equations. This Pack/Unpack method
-//! (re-)creates the DiffEq factory since it needs to (re-)bind function
-//! pointers on different processing elements. Therefore we circumvent Charm's
-//! usual pack/unpack for this type, and thus sizing does not make sense: sizing
-//! is a no-op. We could initialize the factory in QuinoaDriver's constructor
-//! and let this function re-create the stack only when unpacking, but that
-//! leads to repeating the same code twice: once in QuinoaDriver's constructor,
-//! once here. Another option is to use this pack/unpack routine to both
-//! initially create (when packing) and to re-create (when unpacking) the
-//! factory, which eliminates the need for pre-creating the object in
-//! QuinoaDriver's constructor and therefore eliminates the repeated code. This
-//! explains the guard for sizing: the code below is called for packing only (in
-//! serial) and packing and unpacking (in parallel).
-inline
-void operator|( PUP::er& p, std::vector< DiffEq >& eqs ) {
-  if (!p.isSizing()) eqs = DiffEqStack().selected();
 }
 
 } // quinoa::
@@ -101,7 +80,7 @@ class Main : public CBase_Main {
       // Parse command line into m_cmdline using default simple pretty printer
       m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
       // Create pretty printer initializing output streams based on command line
-      m_print( m_cmdline.get< tk::tag::verbose >() ? std::cout : std::clog ),
+      m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create Quinoa driver
       m_driver( tk::Main< quinoa::QuinoaDriver >
                         ( msg->argc, msg->argv,

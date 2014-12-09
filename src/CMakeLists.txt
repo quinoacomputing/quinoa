@@ -78,6 +78,7 @@ set(QUINOA_EXECUTABLE "quinoa")
 set(RNGTEST_EXECUTABLE "rngtest")
 set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")
+set(WALKER_EXECUTABLE "walker")
 
 # Get git revision
 include(GetGitRevisionDescription)
@@ -299,7 +300,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Base
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/DiffEq
-                    ${QUINOA_SOURCE_DIR}/Integrator
+                    ${QUINOA_SOURCE_DIR}/Walker
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
@@ -312,7 +313,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
-                    ${PROJECT_BINARY_DIR}/Integrator    # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
@@ -322,7 +323,7 @@ include_directories(${QUINOA_SOURCE_DIR}
 add_subdirectory(Base)
 add_subdirectory(Control)
 add_subdirectory(DiffEq)
-add_subdirectory(Integrator)
+add_subdirectory(Walker)
 add_subdirectory(IO)
 #add_subdirectory(LinearAlgebra)
 add_subdirectory(Main)

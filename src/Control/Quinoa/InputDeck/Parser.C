@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:28:16 PM MDT
+  \date      Mon 08 Dec 2014 03:26:11 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
   \details   Quinoa's input deck file parser
@@ -41,7 +41,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   pegtl::dummy_parse< deck::read_file >( input, id );
 
   // Echo errors and warnings accumulated during parsing
-  diagnostics( print, id.get< tk::tag::error >() );
+  diagnostics( print, id.get< tag::error >() );
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
@@ -55,7 +55,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 }
 
 void
-InputDeckParser::unique( std::vector< ctr::Product >& statistics )
+InputDeckParser::unique( std::vector< tk::ctr::Product >& statistics )
 //******************************************************************************
 //  Make requested statistics unique
 //! \param[in,out]  statistics  Vector of statistics

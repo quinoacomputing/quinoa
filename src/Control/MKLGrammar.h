@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 08:56:20 PM MDT
+  \date      Mon 08 Dec 2014 02:21:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     MKL grammar
   \details   MKL grammar
@@ -36,7 +36,7 @@ namespace mkl {
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct seed :
          tk::grm::process< Stack,
-                           tk::kw::seed::pegtl_string,
+                           kw::seed::pegtl_string,
                            tk::grm::Insert_field< Stack,
                                                   tag::seed,
                                                   sel, vec, tags... > > {};
@@ -45,7 +45,7 @@ namespace mkl {
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct uniform_method :
          grm::rng_option< Stack,
-                          tk::kw::uniform_method,
+                          kw::uniform_method,
                           ctr::MKLUniformMethod,
                           tag::uniform_method,
                           sel, vec, tags... > {};
@@ -54,7 +54,7 @@ namespace mkl {
   template< typename Stack, typename sel, typename vec, typename... tags >
   struct gaussian_method :
          grm::rng_option< Stack,
-                          tk::kw::gaussian_method,
+                          kw::gaussian_method,
                           ctr::MKLGaussianMethod,
                           tag::gaussian_method,
                           sel, vec, tags... > {};
@@ -68,7 +68,7 @@ namespace mkl {
                                                       ctr::RNG,
                                                       sel, vec > >,
            tk::grm::block< Stack,
-                           tk::kw::end,
+                           kw::end,
                            seed< Stack, sel, vec, tags... >,
                            uniform_method< Stack, sel, vec, tags... >,
                            gaussian_method< Stack, sel, vec, tags... > > > {};

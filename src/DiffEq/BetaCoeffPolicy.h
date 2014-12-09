@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Sat 25 Oct 2014 06:20:42 PM MDT
+  \date      Tue 09 Dec 2014 06:29:11 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   Beta coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Beta constant coefficients policity: constants in time
 struct BetaCoeffConst {
@@ -41,10 +41,10 @@ struct BetaCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -56,6 +56,6 @@ struct BetaCoeffConst {
 //! List of all beta's coefficients policies
 using BetaCoeffPolicies = boost::mpl::vector< BetaCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // BetaCoeffPolicy_h

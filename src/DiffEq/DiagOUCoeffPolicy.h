@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Wed 26 Nov 2014 12:47:29 PM MST
+  \date      Mon 08 Dec 2014 05:18:00 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   Diagonal Ornstein-Uhlenbeck coefficients policies
@@ -14,9 +14,9 @@
 #include <boost/mpl/vector.hpp>
 
 #include <Types.h>
-#include <Quinoa/Options/CoeffPolicy.h>
+#include <Options/CoeffPolicy.h>
 
-namespace quinoa {
+namespace walker {
 
 //! Diagonal Ornstein-Uhlenbeck constant coefficients policity: constants in time
 struct DiagOUCoeffConst {
@@ -44,10 +44,10 @@ struct DiagOUCoeffConst {
   }
 
   std::string policy() const noexcept
-  { return ctr::CoeffPolicy().name( ctr::CoeffPolicyType::CONSTANT ); }
+  { return tk::ctr::CoeffPolicy().name( tk::ctr::CoeffPolicyType::CONSTANT ); }
 
-  ctr::CoeffPolicyType type() const noexcept
-  { return ctr::CoeffPolicyType::CONSTANT; }
+  tk::ctr::CoeffPolicyType type() const noexcept
+  { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
   //! Function call: no-op for constant coefficients
   void operator()( const tk::real&,
@@ -59,6 +59,6 @@ struct DiagOUCoeffConst {
 //! List of all Ornstein-Uhlenbeck's coefficients policies
 using DiagOUCoeffPolicies = boost::mpl::vector< DiagOUCoeffConst >;
 
-} // quinoa::
+} // walker::
 
 #endif // DiagOUCoeffPolicy_h

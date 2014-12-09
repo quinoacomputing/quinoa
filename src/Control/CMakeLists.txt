@@ -72,3 +72,20 @@ INSTALL(TARGETS MeshConvControl
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development
 )
+
+#### Walker control ############################################################
+add_library(WalkerControl
+            FileParser.C
+            StringParser.C
+            Walker/InputDeck/Parser.C
+            Walker/CmdLine/Parser.C
+)
+
+removeWarnings("Walker/InputDeck/Parser.C;Walker/CmdLine/Parser.C")
+
+INSTALL(TARGETS WalkerControl
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
