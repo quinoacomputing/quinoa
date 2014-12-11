@@ -2,10 +2,15 @@
 /*!
   \file      src/Base/make_list.h
   \author    J. Bakosi
-  \date      Thu 13 Feb 2014 07:37:49 PM CET
+  \date      Wed 10 Dec 2014 01:40:55 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Convert a variadic template argument pack to boost::mpl::list
-  \details   Convert a variadic template argument pack to boost::mpl::list
+  \details   Convert a variadic template argument pack to boost::mpl::list. For
+    more information on the Boost MetaProgramming Library (MPL), see
+    http://www.boost.org/doc/libs/release/libs/mpl, in particular, be sure to
+    check out mpl::list at
+    http://www.boost.org/doc/libs/release/libs/mpl/doc/refmanual/list.html.
+    Credit goes to Dmytro Shandyba: http://blog.shandyba.com/2009/12/17/converting-variadic-template-arguments-pack-to-boost-mpl-sequence.
 */
 //******************************************************************************
 #ifndef make_list_h
@@ -15,9 +20,6 @@
 #include <boost/mpl/push_front.hpp>
 
 namespace tk {
-
-// Credit goes to Dmytro Shandyba: http://blog.shandyba.com/2009/12/17/
-// converting-variadic-template-arguments-pack-to-boost-mpl-sequence/
 
 // General definition of the helper class
 template< typename ...Args > struct make_list;

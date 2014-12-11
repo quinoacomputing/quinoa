@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Types.h
   \author    J. Bakosi
-  \date      Wed 21 May 2014 10:19:38 AM MDT
+  \date      Thu 11 Dec 2014 02:03:46 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Toolkit-level type definitions
   \details   Toolkit-level type definitions
@@ -13,6 +13,8 @@
 
 namespace tk {
 
+//! Real number type used throughout the whole code. \todo Test with single
+//! precision and possibly others.
 using real = double;
 
 } // tk::

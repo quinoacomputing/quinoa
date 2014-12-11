@@ -21,7 +21,7 @@
 #include <Keywords.h>
 
 namespace rngtest {
-//! Grammar definition: state, actions, grammar
+//! RNGTest command line grammar definition
 namespace cmd {
 
   //! PEGTLParsed type specialized to RNGTest's command line parser

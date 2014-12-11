@@ -2,12 +2,22 @@
 /*!
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Tue 16 Sep 2014 08:21:04 AM MDT
+  \date      Thu 11 Dec 2014 12:11:52 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Tagged tuple allowing tag-based access
-  \details   Tagged tuple allowing tag-based access, credit goes to
-             ecatmur@stackoverflow.com, for more details, see
-             http://stackoverflow.com/questions/13065166/c11-tagged-tuple
+  \details   Tagged tuple allowing tag-based access. This is very much like
+    [std::tuple](http://en.cppreference.com/w/cpp/utility/tuple), but instead of
+    having to index the elements by integers, it allows access by a tag, which
+    can be an empty struct with a unique name. Credit goes to
+    ecatmur@stackoverflow.com, for more details, see
+    http://stackoverflow.com/questions/13065166/c11-tagged-tuple. For tags, see
+    Control/Tags.h. Tagged tuples are extensively used for transferring data
+    from the parser to an internal data structure in a type-save manner, which
+    is a tagged tuple containing a hierarchy of various containers. As an
+    example on how tagged tuples are used for parsing an input file, see
+    Control/Walker/InputDeck/InputDeck.h. Another way to use a tagged tuple is a
+    compile-time associated container between tags and an arbitrary type. As an
+    example, see rngtest::TestU01Stack::runner.
 */
 //******************************************************************************
 #ifndef TaggedTuple_h
@@ -17,7 +27,7 @@
 #include <PUPUtil.h>
 
 namespace tk {
-//! tagged tuple allowing tag-based access to tuple members with arbitrary types
+//! Tagged tuple allowing tag-based access to tuple members
 namespace tuple {
 
 template<typename... Ts> struct typelist {
@@ -76,7 +86,20 @@ struct tt_impl<typelist<Ss...>, typelist<Ts...>> : public std::tuple<Ts...> {
   { t.pup(p); }
 };
 
-//! tagged_tuple
+//! Tagged tuple. Client-side interface. Tagged tuple allowing tag-based access.
+//! This is very much like
+//! [std::tuple](http://en.cppreference.com/w/cpp/utility/tuple), but instead of
+//! having to index the elements by integers, it allows access by a tag, which
+//! can be an empty struct with a unique name. Credit goes to
+//! ecatmur@stackoverflow.com, for more details, see
+//! http://stackoverflow.com/questions/13065166/c11-tagged-tuple. For tags, see
+//! Control/Tags.h. Tagged tuples are extensively used for transferring data
+//! from the parser to an internal data structure in a type-save manner, which
+//! is a tagged tuple containing a hierarchy of various containers. As an
+//! example on how tagged tuples are used for parsing an input file, see
+//! Control/Walker/InputDeck/InputDeck.h. Another way to use a tagged tuple is a
+//! compile-time associated container between tags and an arbitrary type. As an
+//! example, see rngtest::TestU01Stack::runner.
 template<typename... Ts> struct tagged_tuple :
   tt_impl<extract<2, 0, Ts...>, extract<2, 1, Ts...>> {
   //! Constructor

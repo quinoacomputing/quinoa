@@ -2,10 +2,13 @@
 /*!
   \file      src/Base/make_unique.h
   \author    J. Bakosi
-  \date      Sat 05 Apr 2014 08:54:34 AM MDT
+  \date      Thu 11 Dec 2014 07:56:08 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Define make_unique for unique_ptr until C++14
-  \details   Define make_unique for unique_ptr until C++14
+  \details   Define make_unique for unique_ptr until C++14. When we switch to
+    C++14, this can go away. The code below is lifted from
+    http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen, generated on
+    2014-01-06.
 */
 //******************************************************************************
 #ifndef make_unique_h
@@ -20,9 +23,6 @@ namespace tk {
 // from gcc below
 
 #if _LIBCPP_STD_VER <= 11
-
-// Taken from http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen,
-// generated on 2014-01-06.
 
 using std::unique_ptr;
 using std::remove_extent;

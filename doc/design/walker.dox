@@ -1,0 +1,19 @@
+/*!
+  \page      walker_design Random walker (walker) design
+
+Walker, is a random walker, that allows temporal integration of a system of
+ordinary or stochastic differential equations (SDEs) of various types and the
+collection of arbitrary coupled statistics and probability density functions.
+Walker is intended as a general mathematical tool to analyze the behavior of
+SDEs and its statistics.
+
+Walker uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
+the integration concurrently, either on a single machine or a networked set of
+computers.
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 09 Dec 2014 02:35:48 PM MST
+<em>Copyright 2012-2014, Jozsef Bakosi.</em>
+</small></div>
+*/

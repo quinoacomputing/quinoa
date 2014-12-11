@@ -25,6 +25,7 @@
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
+//! RNGTest declarations and definitions
 namespace rngtest {
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs by

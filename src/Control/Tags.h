@@ -11,6 +11,7 @@
 #ifndef Tags_h
 #define Tags_h
 
+//! Tags used as unique-type labels for compile-time code-generation
 namespace tag {
 
 struct io {};

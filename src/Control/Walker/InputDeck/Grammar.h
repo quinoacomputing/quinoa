@@ -31,6 +31,7 @@ namespace walker {
 
 extern ctr::InputDeck g_inputdeck_defaults;
 
+//! Walker input deck facilitating user input for integrating SDEs
 namespace deck {
 
   //! PEGTLParsed type specialized to Walker's input deck parser

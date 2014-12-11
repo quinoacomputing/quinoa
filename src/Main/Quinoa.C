@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 04:59:13 PM MST
+  \date      Wed 10 Dec 2014 12:25:19 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa main
   \details   Quinoa main
@@ -24,6 +24,7 @@
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
+//! Quinoa declarations and definitions
 namespace quinoa {
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs

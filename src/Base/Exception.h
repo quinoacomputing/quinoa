@@ -2,10 +2,15 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 02:45:07 PM MDT
+  \date      Wed 10 Dec 2014 04:01:49 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Exception base class declaration
-  \details   Exception base class declaration
+  \brief     Exception class declaration
+  \details   Exception class declaration. The basic functionality provided by
+    the Exception class is to facilitate printing out a message, together with
+    the location of the exception (file, line, funcion name), as well as a call
+    trace if available, when an exception is thrown. This file also defines
+    three macros, Throw, Assert, and ErrChk, that help simplifying client code
+    throwing exceptions.
 */
 //******************************************************************************
 #ifndef Exception_h
@@ -17,6 +22,7 @@
 
 #include <StrConvUtil.h>
 
+//! Toolkit declarations and definitions for general purpose utilities
 namespace tk {
 
 //! Throw macro that always throws an exception:
@@ -56,7 +62,10 @@ enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
                      FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
 
-//! Exception base
+//! \details The basic functionality provided by the Exception class is to
+//! facilitate printing out a message, together with the location of the
+//! exception (file, line, funcion name), as well as a call trace if available,
+//! when an exception is thrown.
 class Exception : public std::exception {
 
   public:
@@ -73,12 +82,14 @@ class Exception : public std::exception {
     Exception(Exception&&) = default;
 
     //! Redefine std::exception's what()
+    //! \return C-style string to exception message
     virtual const char* what() const noexcept { return m_message.c_str(); }
 
     //! Handle Exception
     virtual ErrCode handleException() noexcept;
 
     //! Accessor to function name
+    //! \return Reference to function name in which the exception occurred
     const std::string& func() const noexcept { return m_func; }
 
   private:

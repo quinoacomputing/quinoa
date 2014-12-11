@@ -2,13 +2,13 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Mon 18 Aug 2014 08:50:30 PM MDT
+  \date      Thu 11 Dec 2014 08:48:02 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Factory utilities
-  \details   Factory utilities. The functions defined below help with
-             interfacing with object factories. For an short introduction on
-             what factories are good for, see
-             http://www.boost.org/doc/libs/release/libs/functional/factory.
+  \details   Factory utilities. The functions defined in this file help
+    interfacing with object factories. For a short introduction on whatfactories
+    are good for, see
+    http://www.boost.org/doc/libs/release/libs/functional/factory.
 */
 //******************************************************************************
 #ifndef Factory_h
@@ -31,11 +31,21 @@ namespace tk {
 //! i.e., an associative container, associating some key to a std::function
 //! object holding a pointer of Child's base class constructor. The constructor
 //! and its bound arguments are stored via boost::factory, which, in this
-//! use-case, yields the correct function object of type Base constructor
-//! pointer and thus facilitates runtime polymorphism. This function works in
-//! conjunction with boost::factory, i.e., uses reference semantics (works with
-//! storing pointers of objects). For a simple example on how to use this
-//! function, see UnitTest/tests/Base/Factory.h.
+//! use-case, yields the correct function object of type Base constructor pointer
+//! and thus facilitates runtime polymorphism. This function works in conjunction
+//! with boost::factory, i.e., uses reference semantics (works with storing
+//! pointers of objects). For a simple example on how to use this function, see
+//! UnitTest/tests/Base/Factory.h.
+//! \param[in] f Factory to register to (std::map with value using reference
+//!   semantics)
+//! \param[in] key Key used to identify the entry in the factory
+//! \param[in] args Variable number of arguments to pass to the constructor
+//!   being registered. Note that the constructor arguments are only bound to
+//!   the constructor and stored in the factory (an std::map with value using
+//!   reference semantics). The object is not instantiated here, i.e., the
+//!   constructor is not called here. The object can be instantiated by function
+//!   instantiate. \see instantiate
+//! \author J. Bakosi
 template< class C, class Key, class Factory, typename... ConstructorArgs >
 void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
   f.emplace( key,
@@ -54,6 +64,12 @@ void record( Factory& f, const Key& key, ConstructorArgs&&... args ) {
 //! conjunction with boost::factory, i.e., uses reference semantics (works with
 //! storing pointers of objects). For a simple example on how to
 //! use this function, see UnitTest/tests/Base/Factory.h.
+//! \param[in] f Factory to instantiate object from (std::map with value using
+//!   reference semantics)
+//! \param[in] key Key used to identify the object to instantiate from factory
+//! \return std::unique_ptr pointing to the object instantiated from factory
+//! \see record
+//! \author J. Bakosi
 template< class Factory, class Key,
           class Obj = typename std::remove_pointer<
                         typename Factory::mapped_type::result_type >::type >
@@ -68,19 +84,30 @@ std::unique_ptr< Obj > instantiate( const Factory& f, const Key& key ) {
 //! boost::value_factory to bind the model object constructor to its arguments
 //! and place it in the associative container storing host class objects. The
 //! container is thus of type std::map< key, std::function< T() > >, i.e.,
-//! associating a key to a function! holding a constructor (and not its
+//! associating a key to a function holding a constructor (and not its
 //! pointer). Runtime polymorphism here is realized entirely within the "base"
-//! class. See DiffEq/DiffEq.h for an example and more information on runtime
-//! polymorphism without client-side inheritance. As a result, this wrapper
-//! works with factories that use value semantics, as opposed to 'record' and
-//! 'instantiate' which work with reference semantics factories. In order to
-//! differentiate between runtime polymorphic classes using reference semantics,
-//! consistent with classes realizing runtime polymorphism without client-side
-//! inheritance, we call Host as the "Base" class and Model as the "derived" (or
-//! child) class. This wrapper function works in conjunction with
-//! boost::value_factory, i.e., uses value semantics (works with storing objects
-//! instead of object pointers). For a simple example on how to ! use this
-//! function, see UnitTest/tests/Base/Factory.h.
+//! class. See walker::DiffEq in DiffEq/DiffEq.h for an example and more
+//! information on runtime polymorphism without client-side inheritance. As a
+//! result, this wrapper works with factories that use value semantics, as opposed
+//! to 'record' and instantiate which work with reference semantics factories.
+//! In order to differentiate between runtime polymorphic classes using
+//! reference semantics, consistent with classes realizing runtime polymorphism
+//! without client-side inheritance, we call Host as the "Base" class and Model
+//! as the "derived" (or child) class. This wrapper function works in
+//! conjunction with boost::value_factory, i.e., uses value semantics (works
+//! with storing objects instead of object pointers). For a simple example on
+//! how to use this function, see UnitTest/tests/Base/Factory.h.
+//! \param[in] f Factory to register to (std::map with value using value
+//!   semantics)
+//! \param[in] key Key used to identify the entry in the factory
+//! \param[in] args Variable number of arguments to pass to the constructor
+//!   being registered. Note that the constructor arguments are only bound to
+//!   the constructor and stored in the factory (an std::map with value using
+//!   value semantics). The object is not instantiated here, i.e., the
+//!   constructor is not called here. The object can be instantiated by simply
+//!   calling the function call operator () on the mapped value. For an example,
+//!   RNGStack::selected() in RNG/RNGStack.C.
+//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename... ModelConstrArgs >
 void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
@@ -110,10 +137,17 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //! argument to the model constructor. Prescribing late binding to the host
 //! constructor puts in the actual request that an argument (with the correct
 //! type) must be passed to the host constructor at instantiate time, which then
-//! will forward it to the model constructor. See also, for example, DiffEq's
-//! corresponding constructor. An example of client-side code is in
-//! DiffEqStack::registerDiffEq for registration into factory, and
+//! will forward it to the model constructor. See also, for example,
+//! walker::DiffEq's corresponding constructor. An example of client-side code
+//! is in walker::DiffEqStack::registerDiffEq for registration into factory, and
 //! DiffEqStack::createDiffEq for instantiation late-passing the argument.
+//! \param[in] f Factory to register to (std::map with value using value
+//!   semantics)
+//! \param[in] key Key used to identify the entry in the factory
+//! \param[in] arg A single model constructor argument, only used to pass the
+//!   type in.
+//! \warning Only works with a single constructor argument
+//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename ModelConstrArg >
 void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
@@ -140,6 +174,12 @@ void recordModelLate( Factory& f, const Key& key, ModelConstrArg ) {
 //! constructors of hosts that invoke the model constructors' proxies' ckNew()
 //! and ignore the std::function. See, e.g., rngtest::Battery() and the
 //! associated unit tests in UnitTest/tests/Base/Factory.h.
+//! \param[in] f Factory to register to (std::map with value using value
+//!   semantics)
+//! \param[in] key Key used to identify the entry in the factory
+//! \param[in] args Variable number of arguments to pass to the constructor
+//!   being registered.
+//! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,
           typename... ModelConstrArgs >
 void recordCharmModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {

@@ -2,10 +2,12 @@
 /*!
   \file      src/Base/Msg.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:06:35 PM MDT
+  \date      Thu 11 Dec 2014 08:03:09 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Custom Charm++ message types
-  \details   Custom Charm++ message types
+  \brief     Custom Charm++ message types definitions.
+  \details   This file defines some custom Charm++ message types. This is
+    somewhat experimental, not well tested, and is not currently in use. The
+    best is to avoid this kind of low-level messages as this can be error-prone.
 */
 //******************************************************************************
 #ifndef Msg_h
@@ -20,7 +22,11 @@ namespace tk {
 
 static const int CSTYLE_STRLEN = 1024;
 
-//! Operator << for writing std::vector< T > to output streams; for debugging
+//! Operator << for writing std::vector< T > to output streams; for debugging.
+//! \param[in] os Output stream to write to
+//! \param[in] t std::vector of arbitrary type T to write to stream
+//! \return Updated output stream
+//! \author J. Bakosi
 template< typename T, typename Ch, typename Tr >
 inline std::basic_ostream< Ch, Tr >&
 operator<< ( std::basic_ostream< Ch, Tr >& os, const std::vector< T >& t ) {
@@ -28,7 +34,8 @@ operator<< ( std::basic_ostream< Ch, Tr >& os, const std::vector< T >& t ) {
   return os;
 }
 
-//! Charm++ message type for sending a single T, T must be POD
+//! Charm++ message type for sending a single T, T must be POD.
+//! \author J. Bakosi
 template< typename T >
 struct Msg : public CMessage_Msg< T > {
   using value_type = T;
@@ -40,7 +47,8 @@ struct Msg : public CMessage_Msg< T > {
   value_type value;
 };
 
-//! Charm++ message type for sending a string of strings separated by ';'
+//! Charm++ message type for sending a string of strings separated by ';'.
+//! \author J. Bakosi
 struct StringsMsg : public CMessage_StringsMsg {
   using value_type = std::vector< std::string >;
   //! Constructor
@@ -66,6 +74,7 @@ struct StringsMsg : public CMessage_StringsMsg {
 //! amenable to optimizations. The constructor and the value accessor interface
 //! with std::vector< std::string >, but converted to POD so that the Charm++
 //! runtime system easily serialize the data and migrate it over the network.
+//! \author J. Bakosi
 template< std::size_t Size = 1 >
 struct VecStrsMsg : public CMessage_VecStrsMsg< Size > {
   using value_type = std::vector< std::vector< std::string > >;
@@ -93,6 +102,7 @@ struct VecStrsMsg : public CMessage_VecStrsMsg< Size > {
 
 //! Wait for and return future. Concept: Msg must have public function get()
 //! returning Msg::value_type.
+//! \author J. Bakosi
 template< typename Msg >
 typename Msg::value_type waitfor( const CkFuture& f ) {
   Msg* m = static_cast< Msg* >( CkWaitFuture( f ) );

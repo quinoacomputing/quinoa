@@ -13,6 +13,7 @@
 
 #include <Keyword.h>
 
+//! Keywords used by all input deck and command line parsers
 namespace kw {
 
 using namespace pegtl::ascii;

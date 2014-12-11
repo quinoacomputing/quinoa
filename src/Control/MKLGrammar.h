@@ -12,7 +12,7 @@
 #define MKLGrammar_h
 
 namespace tk {
-//! MKL grammar definition: state, actions, grammar
+//! Toolkit, grammar definition for Intel's Math Kernel Library
 namespace mkl {
 
   //! rng: match any one of the MKL random number generators

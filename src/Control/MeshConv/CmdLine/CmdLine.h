@@ -17,6 +17,7 @@
 #include <MeshConv/Types.h>
 
 namespace meshconv {
+//! Mesh converter control facilitating user input to internal data transfer
 namespace ctr {
 
 //! CmdLine : Control< specialized to MeshConv >, see Types.h,

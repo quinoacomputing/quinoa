@@ -2,10 +2,13 @@
 /*!
   \file      src/Base/Timer.C
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 11:34:14 AM MDT
+  \date      Thu 11 Dec 2014 02:02:53 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Timer
-  \details   Timer
+  \brief     Timer definition
+  \details   Timer definition. Timer is a simple class to do timing various
+    parts of the code in a portable way. The functionality is intended to be
+    very minimal and simple, but still convenient to use, with as little state
+    as possible. For an example client code, see Main.
 */
 //******************************************************************************
 
@@ -18,8 +21,10 @@ using tk::Timer;
 tk::Timer::Watch
 Timer::hms() const
 //******************************************************************************
-//  Return time elapsed between start and stop for timer as h:m:s
-//! \return  Watch holding time in hours:minutes:seconds
+//  Return time elapsed between start and stop for timer as hours, minutes, and
+//  seconds.
+//! \return Time elapsed between start and stop as hours, minutes, and seconds,
+//!   as a Watch struct.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -43,7 +48,7 @@ Timer::eta( tk::real term, tk::real time, uint64_t nstep, uint64_t it,
 //! \param[in]  term            Time at which to terminate time stepping
 //! \param[in]  time            Current time
 //! \param[in]  nstep           Max number of time steps to take
-//! \param[in]  it              Current iteration
+//! \param[in]  it              Current iteration count
 //! \param[out] elapsedWatch    Elapsed time in h:m:s
 //! \param[out] estimatedWatch  Estimated time for accomplishmet in h:m:s
 //! \author J. Bakosi
@@ -89,6 +94,8 @@ Timer::Watch
 hms( tk::real stamp )
 //******************************************************************************
 //! Convert existing time stamp as a real to Watch (global-scope)
+//! \param[in] stamp Time stamp as a real number
+//! \return Time as hours, minutes, and seconds, as a Watch struct.
 //! \author J. Bakosi
 //******************************************************************************
 {

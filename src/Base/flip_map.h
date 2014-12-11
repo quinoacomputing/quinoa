@@ -2,10 +2,11 @@
 /*!
   \file      src/Base/flip_map.h
   \author    J. Bakosi
-  \date      Wed 02 Jul 2014 08:19:18 AM MDT
+  \date      Thu 11 Dec 2014 07:41:58 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Flip a std::map yielding a multimap sorted by std::map::value_type
-  \details   Flip a std::map yielding a multimap sorted by std::map::value_type
+  \details   Flip a std::map yielding a multimap sorted by std::map::value_type.
+    Credit goes to Oli Charlesworth: http://stackoverflow.com/a/5056797
 */
 //******************************************************************************
 #ifndef flip_map_h
@@ -13,12 +14,19 @@
 
 namespace tk {
 
-// Credit goes to Oli Charlesworth: http://stackoverflow.com/a/5056797
-
+//! Flip a std::pair of arbitrary types
+//! \param[in] p std::pair of arbitrary types, A and B
+//! \return std::pair of arbitrary types, B and A
+//! \author J. Bakosi
 template< typename A, typename B >
 std::pair< B, A > flip_pair( const std::pair< A ,B >& p )
 { return std::pair< B, A >( p.second, p.first ); }
 
+//! Flip a std::map of arbitrary types, yielding a std::multimap sorted by
+//! std::map::value_type.
+//! \param[in] p std::map of arbitrary key and value pairs of types A and B
+//! \return std::multimap of arbitrary key and value pairs of types B and A
+//! \author J. Bakosi
 template< typename A, typename B >
 std::multimap< B, A > flip_map( const std::map< A, B >& src ) {
   std::multimap< B, A > dst;

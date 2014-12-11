@@ -2,10 +2,12 @@
 /*!
   \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 12:20:07 PM MDT
+  \date      Thu 11 Dec 2014 02:06:59 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Reader base class declaration
-  \details   Reader base class declaration
+  \details   Reader base class declaration. Reader base serves as a base class
+    for various file readers. It does generic low-level I/O, e.g., opening and
+    closing a file, and associated error handling.
 */
 //******************************************************************************
 #ifndef Reader_h
@@ -18,7 +20,9 @@
 
 namespace tk {
 
-//! Reader base
+//! Reader base serves as a base class for various file readers. It does generic
+//! low-level I/O, e.g., opening and closing a file, and associated error
+//! handling.
 class Reader {
 
   public:
@@ -28,7 +32,7 @@ class Reader {
     //! Destructor: Release file handle
     virtual ~Reader() noexcept;
 
-    //! Read interface
+    //! Read interface: throw if not redefined and ends up being called called.
     virtual void read() { Throw( "Reader::read() is a no-op" ); }
 
     //! Return first line (for detection of file type based on header)

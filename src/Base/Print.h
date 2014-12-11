@@ -2,10 +2,13 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 11:57:05 AM MST
+  \date      Thu 11 Dec 2014 09:41:31 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Print
-  \details   Print
+  \brief     General purpose pretty printer functionality
+  \details   This file contains general purpose printer functions. Using the
+    functions defined here provides formatting, and a consistent look with
+    simple client-side code. For formatting, the Boost Format library is used,
+    see http://www.boost.org/doc/libs/release/libs/format.
 */
 //******************************************************************************
 #ifndef Print_h
@@ -26,7 +29,10 @@ namespace tk {
 //! Output verbosity. C-style enum as this is used for template argument.
 enum Style { QUIET=0, VERBOSE=1 };
 
-//! Print base
+//! Pretty printer base. Contains general purpose printer functions. Using the
+//! functions defined here provides formatting, and a consistent look with
+//! simple client-side code. For formatting, the Boost Format library is used,
+//! see http://www.boost.org/doc/libs/release/libs.
 class Print {
 
   public:
@@ -43,16 +49,30 @@ class Print {
     //! std::clog, is only used to detect whether client code passed a default
     //! argument or not: if it did not, the string stream is used for verbose
     //! output, if it did, the specified stream is used for the verbose output.
+    //! \param[in] str Verbose stream
+    //! \param[in] qstr Quiet stream
+    //! \author J. Bakosi
     explicit Print( std::ostream& str = std::clog,
                     std::ostream& qstr = std::cout ) :
       m_stream( str.rdbuf() == std::clog.rdbuf() ? m_null : str ),
       m_qstream( qstr ) {}
 
-    //! Save pointer to stream
+    //! Save pointer to stream. This function, used in conjunction with reset(),
+    //! can be used to pass streams around. This is not possible in general,
+    //! since streams are not copyable. See this in action in, e.g.,
+    //! Control/Walker/CmdLine/Parser.C.
+    //! \return The internal stream buffer of the stream
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     std::streambuf* save() const { return stream<s>().rdbuf(); }
 
-    //! Reset stream to streambuf
+    //! Reset stream to streambuf given. This function, used in conjunction with
+    //! save(), can be used to pass streams around. This is not possible in
+    //! general, since streams are not copyable. See this in action in, e.g.,
+    //! Control/Walker/CmdLine/Parser.C.
+    //! \param[in] buf Stream buffer of a stream
+    //! \return The internal stream buffer of the stream
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     std::streambuf* reset( std::streambuf* buf ) {
       if (stream<s>().rdbuf() == std::cout.rdbuf())
@@ -60,27 +80,49 @@ class Print {
       return stream<s>().rdbuf( buf );
     }
 
-    //! Operator << for printing any type to the verbose stream
+    //! Operator << for printing any type to the verbose stream.
+    //! \param[in] os Reference to pretty printer object
+    //! \param[in] t Reference to an arbitrary object of type T. T must define
+    //! operator<< for std::ostream-compatible streams.
+    //! \return The internal stream buffer of the stream
+    //! \author J. Bakosi
     template< typename T >
     friend const Print& operator<<( const Print& os, const T& t )
     { os.m_stream << t; return os; }
 
-    //! Operator % for printing any type to the quiet stream
+    //! Operator % for printing any type to the quiet stream.
+    //! \param[in] os Reference to pretty printer object
+    //! \param[in] t Reference to an arbitrary object of type T. T must define
+    //! operator<< for std::ostream-compatible streams.
+    //! \return The internal stream buffer of the stream
+    //! \author J. Bakosi
     template< typename T >
     friend const Print& operator%( const Print& os, const T& t )
     { os.m_qstream << t; return os; }
 
     //! Operator << for a function pointer taking ostream returning ostream.
     //! This is so that several of operators of << can be chained together.
+    //! \param[in] os Reference to pretty printer object
+    //! \param[in] pf Function pointer taking a reference to std::ostream and
+    //!   returning a reference to std::ostream
+    //! \return Reference to pretty printer object
+    //! \author J. Bakosi
     friend const Print& operator<<( const Print& os,
       std::ostream& (*pf)(std::ostream&) ) { os.m_stream << pf; return os; }
 
     //! Operator % for a function pointer taking ostream returning ostream.
     //! This is so that several of operators of % can be chained together.
+    //! \param[in] os Reference to pretty printer object
+    //! \param[in] pf Function pointer taking a reference to std::ostream and
+    //!   returning a reference to std::ostream
+    //! \return Reference to pretty printer object
+    //! \author J. Bakosi
     friend const Print& operator%( const Print& os,
       std::ostream& (*pf)(std::ostream&) ) { os.m_qstream << pf; return os; }
 
-    //! Print part header: title
+    //! Formatted print of part header: title.
+    //! \param[in] title Part title to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void part( const std::string& title ) const {
       using std::operator+;
@@ -94,7 +136,9 @@ class Print {
       stream<s>() << m_part_underline_fmt % underline;
     }
 
-    //! Print section header: title
+    //! Formatted print of section header: title.
+    //! \param[in] title Section title to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void section( const std::string& title ) const {
       stream<s>() << m_section_title_fmt % m_section_indent % m_section_bullet
@@ -103,7 +147,10 @@ class Print {
                % std::string( m_section_indent.size() + 2 + title.size(), '-' );
     }
 
-    //! Print section header: title : value
+    //! Formatted print of section header: title : value.
+    //! \param[in] title Section title to be printed
+    //! \param[in] value Section value to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void section( const std::string& name, const std::string& value ) const {
       stream<s>() << m_section_title_value_fmt % m_section_indent
@@ -113,31 +160,48 @@ class Print {
                                     value.size(), '-' );
     }
 
-    //! Print subsection header: title
+    //! Formatted print of subsection header: title.
+    //! \param[in] title Subsection title to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void subsection( const std::string& title ) const {
       stream<s>() << m_subsection_title_fmt % m_subsection_indent
                      % m_subsection_bullet % title;
     }
 
-    //! Print item: name
+    //! Formatted print of item: name.
+    //! \param[in] name Item name to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void item( const std::string& name ) const
     { stream<s>() << m_item_name_fmt % m_item_indent % name; }
 
-    //! Print item: name : value
+    //! Formatted print of item: name : value
+    //! \param[in] name Item name to be printed
+    //! \param[in] value Item value to be printed
+    //! \author J. Bakosi
     template< Style s = VERBOSE, typename T >
     void item( const std::string& name, const T& value ) const
     { stream<s>() << m_item_name_value_fmt % m_item_indent % name % value; }
 
-    //! Print item: h:m:s
+    //! Formatted print of item: h:m:s.
+    //! \param[in] name Item name to be printed
+    //! \param[in] watch Watch (in hours, minutes, seconds) to be printed as
+    //!   item value
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void item( const std::string& name, const tk::Timer::Watch& watch ) const {
       stream<s>() << m_item_name_watch_fmt % m_item_indent % name
                    % watch.hrs.count() % watch.min.count() % watch.sec.count();
     }
 
-    //! Print list: name: entries...
+    //! Formatted print of a list: name: entries...
+    //! \param[in] name Name of a section (consisting of a list) to be printed
+    //! \param[in] entries Container of type Container whose elements to be
+    //!   printed. Container must be iterable, e.g., possible to be used in a
+    //!   range-based for loop. \see
+    //!   http://en.cppreference.com/w/cpp/language/range-for
+    //! \author J. Bakosi
     template< Style s = VERBOSE, class Container >
     void list( const std::string& name, const Container& entries ) const {
       if (!entries.empty()) {
@@ -147,7 +211,12 @@ class Print {
       }
     }
 
-    //! Print list: name: option names...
+    //! Formatted print of a list: name: option names...
+    //! \param[in] title Title of the section containing a list
+    //! \param[in] factory Factory (an std::map) whose values are printed
+    //!   interpreted as options (classes deriving from Toggle), defining the
+    //!   name querying member function name().
+    //! \author J. Bakosi
     template< class Option, Style s = VERBOSE, class Factory >
     void list( const std::string& title, const Factory& factory ) const {
       if ( !factory.empty() ) {
@@ -158,7 +227,15 @@ class Print {
       }
     }
 
-    //! Print elapsed time
+    //! Formatted print of elapsed times
+    //! \param[in] title Title of section containing a list of elapsed times
+    //! \param[in] clock std::map of strings (clock names) and associated timers
+    //!   which could in various formats as long as there is a corresponding
+    //!   item() overload that can apply operator << for outputing their value
+    //!   to an output stream. Examples of allowed ClockFormats are:
+    //!   tk::Timer::Watch, which is a struct containing a timestamp in h:m:s
+    //!   format, and the return value of Timer::dsec(), which is a tk::real.
+    //! \author J. Bakosi
     template< Style s = VERBOSE, class ClockFormat >
     void time( const std::string& title,
                const std::map< std::string, ClockFormat >& clock ) const
@@ -168,32 +245,48 @@ class Print {
       endsubsection<s>();
     }
 
-    //! Print note
+    //! Formatted print of a note
+    //! \param[in] msg Message to print as a note
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
     { stream<s>() << m_note_fmt % m_section_indent % msg; }
 
-    //! Print end of part
+    //! Print end of a part
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void endpart() const { stream<s>() << '\n'; }
 
     //! Print end of subsection
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void endsubsection() const { stream<s>() << '\n'; }
 
-    //! Print raw
+    //! Print raw data to stream.
+    //! \param[in] r Arbitrary data of arbitrary type as long as it defines
+    //!   operator << for std::ostream.
+    //! \author J. Bakosi
     template< Style s = VERBOSE, typename T >
     void raw( const T& r ) const { stream<s>() << r; }
 
-    //! Return verbose or quiet stream depending on style template argument
+    //! Return verbose or quiet stream depending on style template argument.
+    //! Non-const version.
+    //! \return Reference to underlying std::ostream.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     std::ostream& stream() noexcept { return s ? m_stream : m_qstream; }
 
-    //! Return verbose or quiet stream depending on style template argument
+    //! Return verbose or quiet stream depending on style template argument.
+    //! Const version.
+    //! \return Reference to underlying std::ostream.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
 
-    //! Print Quinoa header
+    //! Print Quinoa header. Text ASCII Art Generator used for executable
+    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
+    //! used for converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerQuinoa() const {
       stream<s>() << R"(
@@ -219,7 +312,10 @@ class Print {
       << std::endl;
     }
 
-    //! Print RNGTest header
+    //! Print RNGTest header. Text ASCII Art Generator used for executable
+    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
+    //! used for converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerRNGTest() const {
        stream<s>() << R"(
@@ -248,7 +344,10 @@ class Print {
       << std::endl;
     }
 
-    //! Print UnitTest header
+    //! Print UnitTest header. Text ASCII Art Generator used for executable
+    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
+    //! used for converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerUnitTest() const {
        stream<s>() << R"(
@@ -277,7 +376,10 @@ class Print {
       << std::endl;
     }
 
-    //! Print MeshConv header
+    //! Print MeshConv header. Text ASCII Art Generator used for executable
+    //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
+    //! used for converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerMeshConv() const {
       stream<s>() << R"(
@@ -306,7 +408,10 @@ class Print {
       << std::endl;
     }
 
-    //! Print Walker header
+    //! Print Walker header. Text ASCII Art Generator used for executable names:
+    //! http://patorjk.com/software/taag, Picture ASCII Art Generator used for
+    //! converting the logo text "Quinoa": http://picascii.com.
+    //! \author J. Bakosi
     template< Style s = VERBOSE >
     void headerWalker() const {
       stream<s>() << R"(
@@ -345,7 +450,7 @@ class Print {
       std::operator+(m_section_indent,"  ");
     const std::string m_item_indent = std::operator+(m_subsection_indent,"  ");
 
-    //! Format strings
+    //! Format strings. See http://www.boost.org/doc/libs/release/libs/format.
     using format = boost::format;
     mutable format m_header_fmt = format("%|=80|\n");
     mutable format m_part_fmt = format("\n%|=80|\n");

@@ -21,7 +21,7 @@
 #include <Keywords.h>
 
 namespace unittest {
-//! Grammar definition: state, actions, grammar
+//! UnitTest command line grammar definition
 namespace cmd {
 
   //! PEGTLParsed type specialized to UnitTest's command line parser

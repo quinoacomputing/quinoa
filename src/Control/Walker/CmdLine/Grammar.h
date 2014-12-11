@@ -19,7 +19,7 @@
 #include <Keywords.h>
 
 namespace walker {
-//! Command line parser grammar definition: state, actions, grammar
+//! Walker command line grammar definition
 namespace cmd {
 
   //! PEGTLParsed type specialized to Walker's command line parser

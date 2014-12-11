@@ -17,6 +17,7 @@
 #include <Quinoa/Types.h>
 
 namespace quinoa {
+//! Quinoa control facilitating user input to internal data transfer
 namespace ctr {
 
 //! CmdLine : Control< specialized to Quinoa >, see Types.h,
