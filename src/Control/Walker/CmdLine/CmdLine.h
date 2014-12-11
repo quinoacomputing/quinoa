@@ -17,6 +17,7 @@
 #include <Walker/Types.h>
 
 namespace walker {
+//! Walker control facilitating user input to internal data transfer
 namespace ctr {
 
 //! CmdLine : Control< specialized to Walker >, see Types.h,

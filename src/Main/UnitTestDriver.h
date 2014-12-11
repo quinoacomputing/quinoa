@@ -14,7 +14,6 @@
 #include <UnitTestPrint.h>
 #include <UnitTest/CmdLine/CmdLine.h>
 
-//! Everything that contributes to the unittest executable
 namespace unittest {
 
 //! Unit test suite driver used polymorphically with Driver

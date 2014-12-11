@@ -19,7 +19,7 @@
 #include <Keywords.h>
 
 namespace meshconv {
-//! Grammar definition: state, actions, grammar
+//! Mesh converter command line grammar definition
 namespace cmd {
 
   //! PEGTLParsed type specialized to MeshConv's command line parser

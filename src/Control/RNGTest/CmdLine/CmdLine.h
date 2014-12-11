@@ -17,6 +17,7 @@
 #include <RNGTest/Types.h>
 
 namespace rngtest {
+//! RNGTest control facilitating user input to internal data transfer
 namespace ctr {
 
 //! CmdLine : Control< specialized to RNGTest >, see Types.h,

@@ -25,6 +25,7 @@
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
+//! Walker declarations and definitions
 namespace walker {
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs

@@ -14,7 +14,6 @@
 #include <QuinoaPrint.h>
 #include <Quinoa/CmdLine/CmdLine.h>
 
-//! Everything that contributes to the quinoa executable
 namespace quinoa {
 
 //! Quinoa driver used polymorphically with Driver

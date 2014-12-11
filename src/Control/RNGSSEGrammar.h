@@ -12,7 +12,7 @@
 #define RNGSSEGrammar_h
 
 namespace tk {
-//! RNGSSE grammar definition: state, actions, grammar
+//! Toolkit, grammar definition for the RNGSSE library
 namespace rngsse {
 
   // RNGSSE PEGTL actions

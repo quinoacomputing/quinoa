@@ -31,6 +31,7 @@ namespace rngtest {
 
 extern ctr::InputDeck g_inputdeck_defaults;
 
+//! RNGTest input deck facilitating user input for testing RNGs
 namespace deck {
 
   //! PEGTLParsed type specialized to RNGTest's input deck parser

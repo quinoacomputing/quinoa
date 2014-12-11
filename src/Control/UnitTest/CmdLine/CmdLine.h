@@ -17,6 +17,7 @@
 #include <UnitTest/Types.h>
 
 namespace unittest {
+//! UnitTest control facilitating user input to internal data transfer
 namespace ctr {
 
 //! CmdLine : Control< specialized to UnitTest >, see Types.h,

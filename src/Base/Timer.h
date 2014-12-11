@@ -2,10 +2,13 @@
 /*!
   \file      src/Base/Timer.h
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 11:05:50 AM MDT
+  \date      Thu 11 Dec 2014 01:56:11 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Timer
-  \details   Timer
+  \brief     Timer declaration
+  \details   Timer declaration. Timer is a simple class to do timing various
+    parts of the code in a portable way. The functionality is intended to be
+    very minimal and simple, but still convenient to use, with as little state
+    as possible. For an example client code, see walker::Main in Main/Walker.C.
 */
 //******************************************************************************
 #ifndef Timer_h
@@ -17,7 +20,9 @@
 
 namespace tk {
 
-//! Timer
+//! Timer is a simple class to do timing various parts of the code in a portable
+//! way. The functionality is intended to be very minimal and simple, but still
+//! convenient to use, with as little state as possible.
 class Timer {
 
   public:
@@ -34,26 +39,29 @@ class Timer {
       hours hrs;
       minutes min;
       seconds sec;
-      //! Zero constructor
+      //! Zero constructor. Zeros hours, minutes, and seconds.
       explicit Watch() :
         hrs( std::chrono::duration_cast< hours >( clock::duration::zero()) ),
         min( std::chrono::duration_cast< minutes >( clock::duration::zero() ) ),
         sec( std::chrono::duration_cast< seconds >( clock::duration::zero() ) )
       {}
-      //! Fill constructor
+      //! Fill constructor. Initialize hours, minutes, and seconds given.
       explicit Watch( hours&& h, minutes&& m, seconds&& s ) :
         hrs( std::move(h) ), min( std::move(m) ), sec( std::move(s) ) {}
     };
 
-    //! Constructor
+    //! Constructor: initialize clock to current time stamp.
     explicit Timer() : m_start( clock::now() ) {}
 
-    //! Return time elapsed between start and stop as a real number
+    //! Query time in second since the constructor call.
+    //! \return Time elapsed between start and stop as a real number
     real dsec() const {
       return std::chrono::duration_cast< Dsec >(clock::now() - m_start).count();
     }
 
-    //! Return time elapsed between start and stop as h:m:s
+    //! Query time in second since the constructor call.
+    //! \return Time elapsed between start and stop as hours, minutes, and
+    //! seconds, as a Watch struct.
     Watch hms() const;
 
     //! Estimate time for accomplishment

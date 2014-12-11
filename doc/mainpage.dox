@@ -7,29 +7,12 @@ analysis using stochastic differential equations.
 
   \section organization Organization
     Quinoa consists of the following tools:
-    \li \ref quinoa - Computational tool
-    \li \ref rngtest - Random number generator test suite
-    \li \ref unittest - Unit test suite
-    \li \ref meshconv - Mesh file converter
-
-  \section goals Design goals
-     1. __User experience__ -- User's perceptions of usefulness, usability, and
-        desirability based on the sum of all direct and indirect interactions
-     2. __Availability__ -- Readiness to perform functions when needed
-     3. __Performance__ -- The speed at which function is performed that meets
-        buisness requirements and user expectations
-     4. __Scalability__ -- Ability to handle increasing or decreasing volumes
-        of transactions, servieces, and data
-     5. __Adaptibility__ -- Ease with which functionality can be extended
-     6. __Security__ -- Mitigation the risk of attack and ensuring
-        confidentiality, integrity, authentication, authorization, and
-        nonrepudiation
-     7. __Economy__ -- Minimizing the cost to build, operate, and change
-        without compromising its business value or any of the other six design
-        qualities
-
-     _Source:_ M. Gualteri, M. Gilpin, A. Knoll, [The Seven Qualities Of Wildly
-     Desirable Software](http://www.forrester.com/The+Seven+Qualities+Of+Wildly+Desirable+Software/fulltext/-/E-RES58115?docid=58115&intcmp=blog:forrlink&cm_mmc=Forrester-_-Blogs-_-Related%20Research-_-5747), Forrester Research, Inc, 2011.
+    \li [<B>quinoa</B>](quinoa_design.html) - Computational fluid dynamics tool
+    \li [<B>walker</B>](walker_design.html) - Random walker for analyzing
+        stochastic differential equations
+    \li [<B>rngtest</B>](rngtest_design.html) - Random number generator test suite
+    \li [<B>unittest</B>](unittest_design.html) - Unit test suite
+    \li [<B>meshconv</B>](meshconv_design.html) - Mesh file converter
 
   \section copyright Copyright
     Copyright 2012-2014, Jozsef Bakosi.
@@ -42,7 +25,7 @@ analysis using stochastic differential equations.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 27 Oct 2014 09:50:07 AM MDT
+<em>Page last updated:</em> Tue 09 Dec 2014 09:16:09 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

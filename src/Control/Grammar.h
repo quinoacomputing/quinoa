@@ -17,7 +17,7 @@
 #include <Tags.h>
 
 namespace tk {
-//! Grammar definition: state, actions, grammar
+//! Toolkit general purpose grammar definition
 namespace grm {
 
   //! Parser's printer: this should be defined once per library in global-scope

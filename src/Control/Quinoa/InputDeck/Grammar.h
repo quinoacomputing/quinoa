@@ -31,6 +31,7 @@ namespace quinoa {
 
 extern ctr::InputDeck g_inputdeck_defaults;
 
+//! Quinoa input deck facilitating user input for computing fluid dynamics
 namespace deck {
 
   //! PEGTLParsed type specialized to Quinoa's input deck parser

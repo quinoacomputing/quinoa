@@ -16,6 +16,7 @@
 #include <UnsMesh.h>
 #include <MeshConv/CmdLine/CmdLine.h>
 
+//! Mesh converter declarations and definitions
 namespace meshconv {
 
 //! Mesh converter driver used polymorphically with Driver

@@ -43,6 +43,7 @@
 //! must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
+//! UnitTest declarations and definitions
 namespace unittest {
 
 //! Global-scope data. Initialized by the main chare and distibuted to all PEs

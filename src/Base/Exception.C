@@ -2,10 +2,10 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 02:44:50 PM MDT
+  \date      Wed 10 Dec 2014 04:08:08 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Exception base class definition
-  \details   Exception base class definition
+  \brief     Exception class definition
+  \details   Exception class definition
 */
 //******************************************************************************
 
@@ -26,7 +26,17 @@ Exception::Exception( std::string&& message,
                       unsigned int line ) noexcept
 //******************************************************************************
 //  Constructor: generate error message
-//! \details No-throw guarantee: this member function never throws exceptions.
+//! \param[in] message String (moved from) with an error message
+//! \param[in] file String (moved from) with the file name in which the
+//!   exception ocurred
+//! \param[in] function String (moved from) containing the name of the function
+//    in which the exception ocurred
+//! \param[in] line Source code line number at which the exception ocurred
+//! \details While throwing exceptions is possible calling this constructor, the
+//!   easiest and recommend way is to use the Assert, ErrChk, and Throw macros.
+//!   Exception safety: no-throw guarantee: this member function never throws
+//!   exceptions.
+//! \see Assert, ErrChk, Throw
 //! \author J. Bakosi
 //******************************************************************************
 try :
@@ -70,7 +80,8 @@ try :
 Exception::~Exception() noexcept
 //******************************************************************************
 //  Destructor
-//! \details No-throw guarantee: this member function never throws exceptions.
+//! \details Exception safety: no-throw guarantee: this member function never
+//!   throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -82,19 +93,18 @@ void
 Exception::saveTrace() noexcept
 //******************************************************************************
 //  Save call-trace
-//! \details No-throw guarantee: this member function never throws exceptions.
-//!          For more information see the libc manual at
-//!          http://www.gnu.org/software/libc/manual/html_node/Backtraces.html.
-//!          Requires stdio.h, execinfo.h.
+//! \details Exception safety: no-throw guarantee: this member function never
+//!   throws exceptions. For more information see the libc manual at
+//!   http://www.gnu.org/software/libc/manual/html_node/Backtraces.html.
+//!   Requires stdio.h, execinfo.h.
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Retrieve current stack addresses
   m_addrLength = backtrace(m_addrList, sizeof(m_addrList)/sizeof(void*));
 
-  if (m_addrLength == 0) {
-     printf(">>> Call stack is empty, possibly corrupt.\n");
-  }
+  if (m_addrLength == 0)
+    printf(">>> Call stack is empty, possibly corrupt.\n");
 
   // Resolve addresses into strings containing "filename(function+address)"
   m_symbolList = backtrace_symbols(m_addrList, m_addrLength);
@@ -104,9 +114,9 @@ void
 Exception::echoSymbols() noexcept
 //******************************************************************************
 //  Echo call trace as symbol list
-//! \details No-throw guarantee: this member function never throws exceptions.
-//!          For more information see the libc manual at
-//!          http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
+//! \details Exception safety: no-throw guarantee: this member function never
+//!   throws exceptions. For more information see the libc manual at
+//!   http://www.gnu.org/software/libc/manual/html_node/Backtraces.html
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -120,12 +130,12 @@ void
 Exception::echoTrace() noexcept
 //******************************************************************************
 //  Demangle and echo call trace
-//! \details No-throw guarantee: this member function never throws exceptions.
-//!   Credit goes to Timo Bingmann at http://idlebox.net, published under the
-//!   WTFPL v2.0. For more information see
-//!   http://panthema.net/2008/0901-stacktrace-demangled 
-//!   http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
-//!   http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
+//! \details Exception safety: no-throw guarantee: this member function never
+//!   throws exceptions. Credit goes to Timo Bingmann at http://idlebox.net,
+//!   published under the WTFPL v2.0. For more information see
+//!   * http://panthema.net/2008/0901-stacktrace-demangled
+//!   * http://panthema.net/2008/0901-stacktrace-demangled/cxa_demangle.html
+//!   * http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen
 //! \author T. Bingmann, J. Bakosi
 //******************************************************************************
 {
@@ -183,7 +193,9 @@ tk::ErrCode
 Exception::handleException() noexcept
 //******************************************************************************
 //  Handle Exception: Print cumulative message
-//! \details No-throw guarantee: this member function never throws exceptions.
+//! \return Error code, as defined in stdlib.h, i.e., cstdlib
+//! \details Exception safety: no-throw guarantee: this member function never
+//!   throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {

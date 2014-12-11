@@ -20,6 +20,7 @@
 #include <ControlTypes.h>
 
 namespace tk {
+//! Toolkit control, general purpose user input to internal data transfer
 namespace ctr {
 
 // Map associating a dependend variable to its offset in the particle data.

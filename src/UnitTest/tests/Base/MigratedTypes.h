@@ -13,7 +13,9 @@
 
 #include <PUPUtil.h>
 
+//! Unit test declarations and definitions
 namespace tut {
+//! Unit test declarations and definitions for testing Charm++ chares
 namespace charm {
 
 // Tested types migrated

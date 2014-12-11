@@ -19,7 +19,7 @@
 #include <Keywords.h>
 
 namespace quinoa {
-//! Command line parser grammar definition: state, actions, grammar
+//! Quinoa command line grammar definition
 namespace cmd {
 
   //! PEGTLParsed type specialized to Quinoa's command line parser

@@ -1,8 +1,8 @@
 //******************************************************************************
 /*!
-  \file      src/Integrator/Distributor.C
+  \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:40:13 AM MST
+  \date      Thu 11 Dec 2014 11:51:56 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
