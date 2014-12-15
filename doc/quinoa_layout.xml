@@ -3,7 +3,9 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title=""/>
-    <tab type="pages" visible="yes" title="Documents" intro=" "/>
+    <tab type="pages" visible="yes" title="Documents"
+         intro="Various additional documents not generated from the source
+                code:"/>
     <tab type="modules" visible="yes" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">
       <tab type="namespacelist" visible="yes" title="" intro=""/>
