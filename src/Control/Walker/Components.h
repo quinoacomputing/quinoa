@@ -2,10 +2,11 @@
 /*!
   \file      src/Control/Walker/Components.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 07:24:57 AM MST
+  \date      Wed 14 Jan 2015 07:20:55 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Storage for number of components
-  \details   Storage for number of components
+  \details   Storage for number of components. This is part of the input deck
+     stack and is thus populated during the control file parsing.
 */
 //******************************************************************************
 #ifndef WalkerComponents_h
@@ -16,16 +17,16 @@
 namespace walker {
 namespace ctr {
 
-//! Number of components of models and equations
+//! Number of components of systems of equations
 using ncomps = tk::ctr::ncomponents<
-  tag::dirichlet,    std::vector< unsigned int >, //!< Dirichlet SDEs
-  tag::gendir,       std::vector< unsigned int >, //!< Generalized Dirichlet
-  tag::wrightfisher, std::vector< unsigned int >, //!< Wright-Fisher SDEs
-  tag::diagou,       std::vector< unsigned int >, //!< Diagonal OU SDEs
-  tag::ou,           std::vector< unsigned int >, //!< Ornstein-Uhlenbeck SDEs
-  tag::skewnormal,   std::vector< unsigned int >, //!< Skew-normal SDEs
-  tag::gamma,        std::vector< unsigned int >, //!< Gamma SDEs
-  tag::beta,         std::vector< unsigned int >  //!< Beta SDEs
+  tag::dirichlet,    std::vector< tk::ctr::ncomp_type >,
+  tag::gendir,       std::vector< tk::ctr::ncomp_type >,
+  tag::wrightfisher, std::vector< tk::ctr::ncomp_type >,
+  tag::diagou,       std::vector< tk::ctr::ncomp_type >,
+  tag::ou,           std::vector< tk::ctr::ncomp_type >,
+  tag::skewnormal,   std::vector< tk::ctr::ncomp_type >,
+  tag::gamma,        std::vector< tk::ctr::ncomp_type >,
+  tag::beta,         std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

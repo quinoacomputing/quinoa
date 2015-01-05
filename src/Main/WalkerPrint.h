@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:36:30 AM MST
+  \date      Tue 13 Jan 2015 12:09:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's printer
   \details   Walker's printer
@@ -90,7 +90,8 @@ class WalkerPrint : public tk::RNGPrint {
           return *this;
         }
         // Output unique policies to output stream
-        friend std::ostream& operator<< ( std::ostream& os, const Policies& p ) {
+        friend std::ostream& operator<< ( std::ostream& os, const Policies& p )
+        {
           Policies copy( p );     // copy policies
           copy.unique();          // get rid of duplicate policies
           os << "i:" << copy.init << ", c:" << copy.coef;
@@ -122,16 +123,16 @@ class WalkerPrint : public tk::RNGPrint {
       if (!factory.empty()) {
         section( title );
         item( "Unique equation types", ntypes );
-        item( "With Cartesian product of policy combinations", factory.size() );
+        item( "With all policy combinations", factory.size() );
         raw( '\n' );
         raw( m_item_indent + "Legend: equation name : supported policies\n" );
         raw( '\n' );
         raw( m_item_indent + "Policy codes:\n" +
              m_item_indent + " * i: initialization policy: "
-                                    "R-raw, "
-                                    "Z-zero\n" +
+                           + kw::raw::info::name() + "-raw, "
+                           + kw::zero::info::name() + "-zero\n" +
              m_item_indent + " * c: coefficients policy: "
-                                    "C-constant\n\n" );
+                           + kw::constant::info::name() + "-const\n\n" );
         // extract eqname and supported policies
         const auto ip = tk::ctr::InitPolicy();
         const auto cp = tk::ctr::CoeffPolicy();

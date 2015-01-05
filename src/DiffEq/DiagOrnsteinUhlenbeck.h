@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 05:16:49 PM MST
+  \date      Tue 13 Jan 2015 10:55:07 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck SDE
   \details   Diagonal Ornstein-Uhlenbeck SDE.
@@ -61,7 +61,7 @@ class DiagOrnsteinUhlenbeck {
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance all m_ncomp scalars
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_sigma[i] * m_sigma[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -71,7 +71,7 @@ class DiagOrnsteinUhlenbeck {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
+    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
     std::vector< tk::real > m_sigma;    //!< Coefficients

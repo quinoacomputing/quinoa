@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Wed 10 Dec 2014 04:01:49 PM MST
+  \date      Tue 16 Dec 2014 12:14:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by

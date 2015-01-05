@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Exception.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 03:35:44 PM MDT
+  \date      Tue 16 Dec 2014 12:13:25 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h

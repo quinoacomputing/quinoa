@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/Quinoa/Types.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:34:51 AM MST
+  \date      Thu 15 Jan 2015 09:02:47 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Quinoa's parsers
-  \details   Types for Quinoa's parsers
+  \details   Types for Quinoa's parsers. This file defines the components of the
+    tagged tuple that stores heteroegeneous objects in a hierarchical way. These
+    components are therefore part of the grammar stack that is filled during
+    parsing (both command-line argument parsing and control file parsing).
 */
 //******************************************************************************
 #ifndef QuinoaTypes_h
@@ -13,7 +16,7 @@
 
 #include <Tags.h>
 #include <Types.h>
-#include <ControlTypes.h>
+#include <RNGParam.h>
 #include <Options/InitPolicy.h>
 #include <Options/CoeffPolicy.h>
 #include <Options/PDFFile.h>
@@ -53,32 +56,32 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::npar,      uint64_t,  //!< Total number of particles
-  tag::nstep,     uint64_t,  //!< Number of time steps to take
-  tag::term,      tk::real,  //!< Time to terminate time stepping
-  tag::dt,        tk::real,  //!< Size of time step
+  tag::npar,      kw::npar::info::expect::type,  //!< Total number of particles
+  tag::nstep,     kw::nstep::info::expect::type, //!< Number of time steps
+  tag::term,      kw::term::info::expect::type,  //!< Time to terminate
+  tag::dt,        kw::dt::info::expect::type,    //!< Size of time step
   tag::binsize,   std::vector< std::vector< tk::real > >, //!< PDF binsizes
   tag::extent,    std::vector< std::vector< tk::real > >, //!< PDF extents
-  tag::precision, std::streamsize  //!< Precision in digits
+  tag::precision, kw::precision::info::expect::type  //!< Precision in digits
 >;
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tag::tty,  uint32_t,  //!< TTY output interval
+  tag::tty,  kw::ttyi::info::expect::type,  //!< TTY output interval
   tag::dump, uint32_t,  //!< Dump output interval
-  tag::stat, uint32_t,  //!< Statistics output interval
-  tag::pdf,  uint32_t,  //!< PDF output interval
+  tag::stat, kw::interval::info::expect::type,  //!< Statistics output interval
+  tag::pdf,  kw::interval::info::expect::type,  //!< PDF output interval
   tag::glob, uint32_t   //!< Glob output interval
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  tag::control,     std::string,  //!< Control filename
+  tag::control,     kw::control::info::expect::type,  //!< Control filename
   tag::input,       std::string,  //!< Input filename
   tag::output,      std::string,  //!< Output filename
-  tag::pdf,         std::string,  //!< PDF filename
+  tag::pdf,         kw::pdf::info::expect::type,    //!< PDF filename
   tag::glob,        std::string,  //!< Glob filename
-  tag::stat,        std::string,  //!< Statistics filename
+  tag::stat,        kw::stat::info::expect::type,  //!< Statistics filename
   tag::pdfnames,    std::vector< std::string >  //!< PDF identifiers
 >;
 

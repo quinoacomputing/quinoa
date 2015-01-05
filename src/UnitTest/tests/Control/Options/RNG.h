@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:35:12 AM MST
+  \date      Wed 17 Dec 2014 04:45:22 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -13,7 +13,7 @@
 
 #include <tut/tut.hpp>
 #include <Options/RNG.h>
-#include <ControlTypes.h>
+#include <RNGParam.h>
 
 namespace tut {
 

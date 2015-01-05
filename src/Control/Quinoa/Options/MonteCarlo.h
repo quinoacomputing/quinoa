@@ -2,41 +2,58 @@
 /*!
   \file      src/Control/Quinoa/Options/MonteCarlo.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 11:04:07 AM MST
+  \date      Fri 16 Jan 2015 08:02:15 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     MonteCarlo options and associations
-  \details   MonteCarlo options and associations
+  \brief     MonteCarlo options
+  \details   MonteCarlo options
 */
 //******************************************************************************
 #ifndef QuinoaMonteCarloOptions_h
 #define QuinoaMonteCarloOptions_h
 
-#include <map>
+#include <boost/mpl/vector.hpp>
 
 #include <Toggle.h>
 #include <Keywords.h>
+#include <PUPUtil.h>
 
 namespace quinoa {
 namespace ctr {
 
 //! MonteCarlo types
+//! \author J. Bakosi
 enum class MonteCarloType : uint8_t { NO_MONTECARLO=0,
                                       HOMOGENEOUS_MIX,
                                       HOMOGENEOUS_HYDRO,
                                       HOMOGENEOUS_RAYLEIGH_TAYLOR,
                                       SPINSFLOW };
 
-//! Pack/Unpack: forward overload to generic enum class packer
+//! \brief Pack/Unpack MonteCarloType: forward overload to generic enum class
+//!    packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, MonteCarloType& e ) { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief MonteCarlo options: outsource searches to base templated on enum type
+//! \author J. Bakosi
 class MonteCarlo : public tk::Toggle< MonteCarloType > {
 
   public:
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::hommix
+                                       , kw::homhydro
+                                       , kw::homrt
+                                       , kw::spinsflow
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit MonteCarlo() :
-      Toggle< MonteCarloType >( "MonteCarlo",
+      Toggle< MonteCarloType >(
+        //! Group, i.e., options, name
+        "MonteCarlo",
         //! Enums -> names
         { { MonteCarloType::NO_MONTECARLO, "n/a" },
           { MonteCarloType::HOMOGENEOUS_MIX, kw::hommix().name() },

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 11:51:56 AM MST
+  \date      Fri 16 Jan 2015 12:22:06 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -160,8 +160,6 @@ Distributor::info( uint64_t chunksize, uint64_t remainder ) const
 
   // Print I/O filenames
   m_print.section( "Output filenames" );
-  m_print.item( "Input", g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-  m_print.item( "Output", g_inputdeck.get< tag::cmd, tag::io, tag::output >() );
   if (!g_inputdeck.get< tag::stat >().empty())
     m_print.item( "Statistics", g_inputdeck.get< tag::cmd, tag::io, tag::stat >() );
   if (!g_inputdeck.get< tag::pdf >().empty())
@@ -387,11 +385,11 @@ Distributor::writeUniPDF( const tk::UniPDF& p, std::size_t& cnt )
 {
   // Get PDF metadata
   const auto info =
-    tk::ctr::pdf< 1 >( g_inputdeck.get< tag::discr, tag::binsize >(),
-                       g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
-                       g_inputdeck.get< tag::discr, tag::extent >(),
-                       g_inputdeck.get< tag::pdf >(),
-                       cnt++ );
+    tk::ctr::pdfInfo< 1 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                           g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
+                           g_inputdeck.get< tag::discr, tag::extent >(),
+                           g_inputdeck.get< tag::pdf >(),
+                           cnt++ );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -423,11 +421,11 @@ Distributor::writeBiPDF( const tk::BiPDF& p, std::size_t& cnt )
 {
   // Get PDF metadata
   const auto info =
-    tk::ctr::pdf< 2 >( g_inputdeck.get< tag::discr, tag::binsize >(),
-                       g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
-                       g_inputdeck.get< tag::discr, tag::extent >(),
-                       g_inputdeck.get< tag::pdf >(),
-                       cnt++ );
+    tk::ctr::pdfInfo< 2 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                           g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
+                           g_inputdeck.get< tag::discr, tag::extent >(),
+                           g_inputdeck.get< tag::pdf >(),
+                           cnt++ );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =
@@ -478,11 +476,11 @@ Distributor::writeTriPDF( const tk::TriPDF& p, std::size_t& cnt )
 {
   // Get PDF metadata
   const auto info =
-    tk::ctr::pdf< 3 >( g_inputdeck.get< tag::discr, tag::binsize >(),
-                       g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
-                       g_inputdeck.get< tag::discr, tag::extent >(),
-                       g_inputdeck.get< tag::pdf >(),
-                       cnt++ );
+    tk::ctr::pdfInfo< 3 >( g_inputdeck.get< tag::discr, tag::binsize >(),
+                           g_inputdeck.get< tag::cmd, tag::io, tag::pdfnames >(),
+                           g_inputdeck.get< tag::discr, tag::extent >(),
+                           g_inputdeck.get< tag::pdf >(),
+                           cnt++ );
 
   // Construct PDF file name: base name + '_' + pdf name
   std::string filename =

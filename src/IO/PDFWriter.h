@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:51:08 PM MST
+  \date      Fri 16 Jan 2015 12:26:37 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF writer
   \details   PDF writer
@@ -17,7 +17,7 @@
 #include <UniPDF.h>
 #include <BiPDF.h>
 #include <TriPDF.h>
-#include <PDFInfo.h>
+#include <StatCtr.h>
 #include <Options/PDFCentering.h>
 #include <Options/TxtFloatFormat.h>
 
@@ -31,7 +31,8 @@ class PDFWriter : public tk::Writer {
     explicit PDFWriter( const std::string& filename,
                         tk::ctr::TxtFloatFormatType format =
                           tk::ctr::TxtFloatFormatType::DEFAULT,
-                        std::streamsize precision = std::cout.precision() );
+                        kw::precision::info::expect::type precision =
+                          std::cout.precision() );
 
     //! Write univariate PDF to text file
     void writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const;

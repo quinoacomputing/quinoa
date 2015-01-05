@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GenDirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:26:18 AM MST
+  \date      Tue 13 Jan 2015 10:42:40 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   Lochner's generalized Dirichlet coefficients policies
@@ -24,7 +24,7 @@ struct GenDirCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   GenDirCoeffConst() = default;
   //! Constructor: initialize coefficients
-  GenDirCoeffConst( unsigned int ncomp,
+  GenDirCoeffConst( tk::ctr::ncomp_type ncomp,
                     const std::vector< tk::real >& b_,
                     const std::vector< tk::real >& S_,
                     const std::vector< tk::real >& k_,

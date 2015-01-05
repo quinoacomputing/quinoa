@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WFCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:28:33 AM MST
+  \date      Tue 13 Jan 2015 10:52:52 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher coefficients policies
   \details   Wright-Fisher coefficients policies
@@ -24,7 +24,7 @@ struct WFCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   WFCoeffConst() = default;
   //! Constructor: initialize coefficients
-  WFCoeffConst( unsigned int ncomp,
+  WFCoeffConst( tk::ctr::ncomp_type ncomp,
                 const std::vector< tk::real >& omega_,
                 std::vector< tk::real >& omega )
   {

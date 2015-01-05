@@ -2,20 +2,15 @@
 /*!
   \file      src/Control/Quinoa/Components.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 10:50:24 AM MST
+  \date      Wed 14 Jan 2015 10:49:00 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Storage for number of components
-  \details   Storage for number of components
+  \details   Storage for number of components. This is part of the input deck
+     stack and is thus populated during the control file parsing.
 */
 //******************************************************************************
 #ifndef QuinoaComponents_h
 #define QuinoaComponents_h
-
-#include <boost/mpl/for_each.hpp>
-#include <boost/mpl/remove.hpp>
-#include <boost/mpl/at.hpp>
-
-#include <make_list.h>
 
 #include <Components.h>
 
@@ -24,11 +19,11 @@ namespace ctr {
 
 //! Number of components of models and equations
 using ncomps = tk::ctr::ncomponents<
-  tag::position,     std::vector< unsigned int >, //!< Position models
-  tag::mass,         std::vector< unsigned int >, //!< Mass models
-  tag::hydro,        std::vector< unsigned int >, //!< Hydro models
-  tag::mix,          std::vector< unsigned int >, //!< Material mix models
-  tag::frequency,    std::vector< unsigned int >  //!< Turbulent frequency models
+  tag::position,     std::vector< tk::ctr::ncomp_type >,
+  tag::mass,         std::vector< tk::ctr::ncomp_type >,
+  tag::hydro,        std::vector< tk::ctr::ncomp_type >,
+  tag::mix,          std::vector< tk::ctr::ncomp_type >,
+  tag::frequency,    std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Sun 17 Aug 2014 06:54:42 PM MDT
+  \date      Mon 12 Jan 2015 02:32:50 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Battery
   \details   Battery
@@ -17,6 +17,7 @@
 
 #include <make_unique.h>
 #include <CharmUtil.h>
+#include <Has.h>
 
 namespace rngtest {
 
@@ -41,7 +42,7 @@ class Battery {
     //! Object of T is constructed here. This overload is disabled for Charm++
     //! chare objects defining typedef 'Proxy', see also below.
     template< typename T,
-      typename std::enable_if< !tk::HasProxy<T>::value, int >::type = 0 >
+      typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit Battery( std::function<T()> x ) :
       self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
 
@@ -63,7 +64,7 @@ class Battery {
     //! having to explicitly forward the model constructor arguments via this
     //! host constructor. See also tk::recordCharmModel().
     template< typename T, typename... ConstrArgs,
-      typename std::enable_if< tk::HasProxy<T>::value, int >::type = 0 >
+      typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit Battery( std::function<T()> c, ConstrArgs... args ) :
       self( tk::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {

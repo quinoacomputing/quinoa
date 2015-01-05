@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:03:20 PM MDT
+  \date      Fri 02 Jan 2015 01:35:52 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistical test base
   \details   Statistical test base
@@ -43,7 +43,7 @@ class StatTest {
     //! Object of T is constructed here. This overload is disabled for Charm++
     //! chare objects defining typedef 'Proxy', see also below.
     template< typename T,
-      typename std::enable_if< !tk::HasProxy<T>::value, int >::type = 0 >
+      typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> x ) :
       self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
 
@@ -65,7 +65,7 @@ class StatTest {
     //! having to explicitly forward the model constructor arguments via this
     //! host constructor. See also tk::recordCharmModel().
     template< typename T, typename... ConstrArgs,
-      typename std::enable_if< tk::HasProxy<T>::value, int >::type = 0 >
+      typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> c, ConstrArgs... args ) :
       self( tk::make_unique< Model< typename T::Proxy > >
             (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {

@@ -2,10 +2,12 @@
 /*!
   \file      src/Control/StringParser.h
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:28:02 PM MDT
+  \date      Wed 14 Jan 2015 02:30:17 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     String parser
-  \details   String parser
+  \brief     String parser base class declaration
+  \details   String parser base class declaration. String parser base serves as
+    a base class for various string parsers, e.g., command-line parsers. It does
+    generic after-parser diagnostics.
 */
 //******************************************************************************
 #ifndef StringParser_h
@@ -21,13 +23,15 @@ namespace tk {
 class StringParser {
 
   protected:
-    //! Constructor from std::string
+    //! Constructor from C++-style std::string
+    //! \param[in] string String to be parsed
+    //! \author J. Bakosi
     explicit StringParser( const std::string& string ) : m_string( string ) {}
 
-    //! Constructor from char**
+    //! Constructor from C-style command-line argument string
     explicit StringParser( int argc, char** argv );
 
-    //! Echo errors and warnings accumulated during parsing
+    //! \brief Echo errors and warnings accumulated during parsing
     void diagnostics( const tk::Print& print,
                       const std::vector< std::string >& messages );
 

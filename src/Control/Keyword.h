@@ -2,14 +2,17 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:19:40 PM MST
+  \date      Tue 13 Jan 2015 11:57:43 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Basic keywords recognized by all parsers
-  \details   Basic keywords recognized by all parsers
+  \brief     Generic definition of a keyword
+  \details   Generic definition of all keywords - both command-line arguments
+    and control file keywords.
 */
 //******************************************************************************
 #ifndef Keyword_h
 #define Keyword_h
+
+#include <boost/optional.hpp>
 
 #ifndef __INTEL_COMPILER
   #pragma GCC diagnostic push
@@ -20,48 +23,135 @@
   #pragma GCC diagnostic pop
 #endif
 
+#include <Has.h>
+
 namespace kw {
 
-//! A keyword is a struct that collects the information that makes up a keyword.
-//! The last template parameter is a list of integers, specifying the
-//! case-sensitive characters of the keyword. The keyword must be at least one
-//! character long, but otherwise its length is only limited by the compiler's
-//! recursion handling of variadic templates.
+//! \brief Keyword alias helper
+//! \details This struct is used to define both a type and a value for a keyword
+//!   alias, which is a single character. Used for command-line arguments, e.g.,
+//!   --help, -h, where 'h' is the alias for keyword 'help'.
+//! \see Control/Keywords.h
+//! \author J. Bakosi
+template< int Char >
+struct Alias {
+  using type = pegtl::one< Char >;
+  static const int value = Char;
+};
+
+//! \brief Generic definition of a keyword
+//! \details A keyword is a struct that collects the information that makes up a
+//!    keyword. The requirement on the first template argument, Info, is that it
+//!    must define the name(), shortDescription(,) and longDescription() member
+//!    functions returning compile-time (static) std::strings. The
+//!    shortDescription() member function is used to return a short description
+//!    of what the keyword is used for, while the longDescription() member
+//!    function is used for a longer, e.g., a paragraph-long, description on
+//!    what the keyword can be used for and how it can and should be used. The
+//!    last template parameters are a list of character constants, specifying
+//!    the case-sensitive characters that make up the keyword, which is then
+//!    matched by the parser. The keyword must be at least one character long,
+//!    but otherwise its length is only limited by the compiler's recursion
+//!    handling capability of variadic templates. While the name(),
+//!    shortDescription() and longDescription() member functions of Info are
+//!    required, there are also optional ones, such as
+//!    Info::exptect::description(), which, if defined, must also be static and
+//!    return a std::string, describing the type the particular keyword expects
+//!    during parsing. This is optional since not every keyword expects a value
+//!    (or values) of a particular type. For example, the keyword 'end' is
+//!    simply used to close a block, and what follows does not have a
+//!    relationship to the keyword. A counterexample is is 'title', which
+//!    expects a double-quoted string.
+//! \see For example client-code and more detailed documentation on the possible
+//!    fields, see Control/Keywords.h.
+//! \author J. Bakosi
 template< typename Info, int Char, int... Chars >
 struct keyword {
 
-  //! Accessor to keyword as pegtl::string
-  using pegtl_string = pegtl::string<Char, Chars...>;
+  //! \brief Accessor to keyword as pegtl::string
+  using pegtl_string = pegtl::string< Char, Chars... >;
 
-  //! Accessor to keyword as std::tring
-  std::string string() const {
-    return std::string( (sizeof...(Chars)) ?
-                        (pegtl::escaper<Char, Chars...>::result()) :
-                        (pegtl::escape(Char)) );
+  //! \brief Accessor to keyword as std::string
+  //! \return Keyword as std::string
+  static std::string string() {
+    return ( sizeof...( Chars ) ) ?
+           ( pegtl::escaper< Char, Chars... >::result() ) :
+           ( pegtl::escape( Char ) );
   }
 
-  //! Accessor to name (more human readable but still short description)
-  const char* name() const { return Info::name(); }
+  //! \brief Accessor to required short name of a keyword
+  //! \return Name of keyword as std::string
+  static std::string name() { return Info::name(); }
 
-  //! Accessor to help (a few lines' worth description of the keyword
-  const char* help() const { return Info::help(); }
-};
+  //! \brief Accessor to required short description of a keyword
+  //! \return Short help as std::string
+  static std::string shortDescription() { return Info::shortDescription(); }
 
-//! A cmdline_keyword is a keyword that adds a character alias to a keyword.
-template< typename Info, int Alias, int Char, int... Chars >
-struct cmdline_keyword : keyword< Info, Char, Chars... > {
+  //! \brief Accessor to required long description of a keyword
+  //! \return Long help as std::string
+  static std::string longDescription() { return Info::longDescription(); }
 
-  //! Accessor to keyword alias character as pegtl::string
-  using pegtl_alias = pegtl::one< Alias >;
+  //! \brief Bring template argument 'Info' to scope as 'info'
+  //! \details This is used to access, e.g., Info::alias, etc., if exist.
+  //! \see tk::grm::alias
+  //! \see tk::grm::readcmd
+  using info = Info;
 
-  //! Accessor to keyword alias character as st::string
-  std::string alias() const { return pegtl::escape( Alias ); }
-};
+  //! \brief Overloads to optional alias accessor depending on the existence of
+  //!   Info::alias
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495. Though an alias
+  //!   is only a single character, it returns it as std::string since
+  //!   pegtl::escape returns std::string.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasTypedefAlias< T >::value, int >::type = 0 >
+  static boost::optional< std::string > alias()
+  { return pegtl::escape( Info::alias::value ); }
 
-// This will go away once all the keywords are documented
-struct undefined_info {
-  static const char* name() { return "undefined"; }
-  static const char* help() { return "Undefined."; }
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasTypedefAlias< T >::value, int >::type = 0 >
+  static boost::optional< std::string > alias()
+  { return boost::none; }
+
+  //! \brief Overloads to optional expected type description depending on the
+  //!   existence of Info::expect::description
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasFunctionExpectDescription< T >::value, int >::type = 0 >
+  static boost::optional< std::string > expt()
+  { return Info::expect::description(); }
+
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasFunctionExpectDescription< T >::value, int >::type = 0 >
+  static boost::optional< std::string > expt()
+  { return boost::none; }
+
+  //! \brief Overloads to optional expected choices description depending on the
+  //!   existence of Info::expect::choices
+  //! \return An initialized (or uninitialized) boost::optional< std::string >
+  //! \details As to why type Info has to be aliased to a local type T for
+  //!   SFINAE to work, see http://stackoverflow.com/a/22671495.
+  //! \see http://www.boost.org/doc/libs/release/libs/optional/doc/html/index.html
+  //! \see http://en.cppreference.com/w/cpp/language/sfinae
+  //! \see http://en.cppreference.com/w/cpp/types/enable_if
+  template< typename T = Info, typename std::enable_if<
+    tk::HasFunctionExpectChoices< T >::value, int >::type = 0 >
+  static boost::optional< std::string > choices()
+  { return Info::expect::choices(); }
+
+  template< typename T = Info, typename std::enable_if<
+    !tk::HasFunctionExpectChoices< T >::value, int >::type = 0 >
+  static boost::optional< std::string > choices()
+  { return boost::none; }
 };
 
 } // kw::

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:30:40 AM MST
+  \date      Tue 13 Jan 2015 10:53:33 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE
   \details   Skew-normal SDE.
@@ -63,7 +63,7 @@ class SkewNormal {
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance all m_ncomp scalars
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& x = particles( p, i, m_offset );
           tk::real d = 2.0 * m_sigma[i] * m_sigma[i] / m_timescale[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -78,10 +78,10 @@ class SkewNormal {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
-    const int m_offset;                 //!< Offset SDE operates from
-    const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< tk::real > m_timescale;//!< Coefficients
+    const tk::ctr::ncomp_type m_ncomp;    //!< Number of components
+    const int m_offset;                   //!< Offset SDE operates from
+    const tk::RNG& m_rng;                 //!< Random number generator
+    std::vector< tk::real > m_timescale;  //!< Coefficients
     std::vector< tk::real > m_sigma;
     std::vector< tk::real > m_lambda;
 

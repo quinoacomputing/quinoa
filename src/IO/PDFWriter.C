@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:57:49 PM MST
+  \date      Wed 07 Jan 2015 09:00:14 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \details   Univariate PDF writer
@@ -16,12 +16,13 @@
 
 #include <PDFWriter.h>
 #include <Exception.h>
+#include <Config.h>
 
 using tk::PDFWriter;
 
 PDFWriter::PDFWriter( const std::string& filename,
                       ctr::TxtFloatFormatType format,
-                      std::streamsize precision ) :
+                      kw::precision::info::expect::type precision ) :
   Writer( filename )
 //******************************************************************************
 //  Constructor

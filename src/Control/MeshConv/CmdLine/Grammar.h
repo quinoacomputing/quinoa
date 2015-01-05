@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:14:49 AM MST
+  \date      Sat 17 Jan 2015 06:54:09 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     MeshConv's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -22,39 +22,60 @@ namespace meshconv {
 //! Mesh converter command line grammar definition
 namespace cmd {
 
-  //! PEGTLParsed type specialized to MeshConv's command line parser
+  //!\brief PEGTLParsed type specialized to MeshConv's command line parser
+  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
+  //!    information so the location can be tracked during parsing.
+  //! \author J. Bakosi
   using PEGTLCmdLine =
     tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
+
+  //! \brief Specialization of tk::grm::use for MeshConv's command line parser
+  //! \author J. Bakosi
+  template< typename keyword >
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 
   // MeshConv's CmdLine state
 
   //! Everything is stored in Stack during parsing
   using Stack = PEGTLCmdLine;
 
-  // MeshConv's CmdLine actions
-
   // MeshConv's CmdLine grammar
 
-  //! verbose (i.e., verbose or quiet output)
+  //! brief Match and set verbose switch (i.e., verbose or quiet output)
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      kw::verbose,
+                                      use< kw::verbose >,
                                       tag::verbose > {};
 
-  //! io parameter
+  //! \brief Match and set io parameter
   template< typename keyword, typename io_tag >
   struct io :
          tk::grm::process_cmd< Stack,
                                keyword,
                                tk::grm::Store< Stack, tag::io, io_tag > > {};
 
-  //! command line keywords
+  //! \brief Match help on command-line parameters
+  struct help :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::help >,
+                                      tag::help > {};
+
+  //! \brief Match help on a single command-line or control file keyword
+  struct helpkw :
+         tk::grm::process_cmd< Stack,
+                               use< kw::helpkw >,
+                               tk::grm::helpkw< Stack >,
+                               pegtl::alnum > {};
+
+  //! \brief Match all command line keywords
   struct keywords :
          pegtl::sor< verbose,
-                     io< kw::input, tag::input >,
-                     io< kw::output, tag::output > > {};
+                     help,
+                     helpkw,
+                     io< use< kw::input >, tag::input >,
+                     io< use< kw::output >, tag::output > > {};
 
-  //! entry point: parse keywords and until end of string
+  //! \brief Grammar entry point: parse keywords until end of string
   struct read_string :
          tk::grm::read_string< Stack, keywords > {};
 

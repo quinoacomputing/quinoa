@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/flip_map.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 07:41:58 AM MST
+  \date      Sun 21 Dec 2014 10:04:01 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Flip a std::map yielding a multimap sorted by std::map::value_type
   \details   Flip a std::map yielding a multimap sorted by std::map::value_type.
@@ -24,7 +24,7 @@ std::pair< B, A > flip_pair( const std::pair< A ,B >& p )
 
 //! Flip a std::map of arbitrary types, yielding a std::multimap sorted by
 //! std::map::value_type.
-//! \param[in] p std::map of arbitrary key and value pairs of types A and B
+//! \param[in] src std::map of arbitrary key and value pairs of types A and B
 //! \return std::multimap of arbitrary key and value pairs of types B and A
 //! \author J. Bakosi
 template< typename A, typename B >

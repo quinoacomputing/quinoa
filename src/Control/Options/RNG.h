@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:07:36 PM MST
+  \date      Sat 17 Jan 2015 07:10:10 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's random number generator options and associations
   \details   Quinoa's random number generator options and associations
@@ -12,7 +12,8 @@
 #define RNGOptions_h
 
 #include <map>
-#include <list>
+
+#include <boost/mpl/vector/vector30.hpp>
 
 #include <Config.h>
 
@@ -20,15 +21,16 @@
 #include <mkl_vsl.h>
 #endif
 
-#include <TaggedTuple.h>
 #include <Toggle.h>
 #include <Keywords.h>
 #include <Options/RNGSSESeqLen.h>
+#include <PUPUtil.h>
 
 namespace tk {
 namespace ctr {
 
 //! Random number generator types
+//! \author J. Bakosi
 enum class RNGType : uint8_t { NO_RNG=0
                              , RNGSSE_GM19
                              , RNGSSE_GM29
@@ -63,32 +65,87 @@ enum class RNGType : uint8_t { NO_RNG=0
                              #endif
 };
 
-//! Pack/Unpack: delegate to tk::
+//! \brief Pack/Unpack RNGType: forward overload to generic enum class packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, RNGType& e ) { PUP::pup( p, e ); }
 
-//! Underlying type shortcut
+//! Enum class underlying type shortcut
+//! \author J. Bakosi
 using RawRNGType = std::underlying_type< RNGType >::type;
 
 //! Return underlying type
+//! \param[in] r RNG enum class value
+//! \return Enum class underlying value using static_cast
+//! \author J. Bakosi
 constexpr RawRNGType raw( RNGType r ) { return static_cast< RawRNGType >( r ); }
 
 //! Random number generator library types
+//! \author J. Bakosi
 enum class RNGLibType : uint8_t { NO_LIB=0,
                                   MKL,
                                   RNGSSE,
                                   PRAND };
 
-//! Class with base templated on the above enum class with associations
+//! \brief RNG options: outsource searches to base templated on enum type
+//! \author J. Bakosi
 class RNG : public tk::Toggle< RNGType > {
 
   public:
     using ParamType = int;
     using LibType = RNGLibType;
 
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    #ifdef HAS_MKL
+    using keywords = boost::mpl::vector22< kw::rngsse_gm19
+                                         , kw::rngsse_gm29
+                                         , kw::rngsse_gm31
+                                         , kw::rngsse_gm55
+                                         , kw::rngsse_gm61
+                                         , kw::rngsse_gq581
+                                         , kw::rngsse_gq583
+                                         , kw::rngsse_gq584
+                                         , kw::rngsse_mt19937
+                                         , kw::rngsse_lfsr113
+                                         , kw::rngsse_mrg32k3a
+                                         , kw::mkl_mcg31
+                                         , kw::mkl_r250
+                                         , kw::mkl_mrg32k3a
+                                         , kw::mkl_mcg59
+                                         , kw::mkl_wh
+                                         , kw::mkl_mt19937
+                                         , kw::mkl_mt2203
+                                         , kw::mkl_sfmt19937
+                                         , kw::mkl_sobol
+                                         , kw::mkl_niederr
+                                         //, kw::mkl_iabstract
+                                         //, kw::mkl_dabstract
+                                         //, kw::mkl_sabstract
+                                         , kw::mkl_nondeterm
+                                         >;
+    #else
+    using keywords = boost::mpl::vector< kw::rngsse_gm19
+                                       , kw::rngsse_gm29
+                                       , kw::rngsse_gm31
+                                       , kw::rngsse_gm55
+                                       , kw::rngsse_gm61
+                                       , kw::rngsse_gq581
+                                       , kw::rngsse_gq583
+                                       , kw::rngsse_gq584
+                                       , kw::rngsse_mt19937
+                                       , kw::rngsse_lfsr113
+                                       , kw::rngsse_mrg32k3a
+                                       >;
+    #endif
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit RNG() :
-      Toggle< RNGType >( "Random number generator",
+      Toggle< RNGType >(
+        //! Group, i.e., options, name
+        "Random number generator",
         //! Enums -> names
         { { RNGType::NO_RNG, "n/a" }
         , { RNGType::RNGSSE_GM19, kw::rngsse_gm19().name() }
@@ -150,7 +207,12 @@ class RNG : public tk::Toggle< RNGType > {
         #endif
         } ) {}
 
-    //! Return parameter based on Enum
+    //! \brief Return parameter based on Enum
+    //! \details Here 'parameter' is the library-specific identifier of the
+    //!    option, i.e., as the library identifies the given option
+    //! \param[in] m Enum value of the option requested
+    //! \return Library-specific parameter of the option
+    //! \author J. Bakosi
     const ParamType& param( RNGType rng ) const {
       auto it = brng.find( rng );
       Assert( it != end(brng),
@@ -158,8 +220,14 @@ class RNG : public tk::Toggle< RNGType > {
       return it->second;
     }
  
-    //! Return field from RNG parameters bundle: if user has specified it,
-    //! return it, if user did not specify it, return default
+    //! \brief Return field from RNG parameters bundle
+    //! \details If user has specified it, return field. If user did not
+    //!   specify it, return default.
+    //! \param[in] rng Enum value of the option
+    //! \param[in] def Default value of requested field if field is not found
+    //! \param[in] bundle Parameter bundle to search in
+    //! \return Field for requested enum if found, default if not found
+    //! \author J. Bakosi
     template< class tag, class Param, class Field >
     Field param( RNGType rng, const Field& def, const Param& bundle ) const {
       auto it = bundle.find( rng );
@@ -167,20 +235,31 @@ class RNG : public tk::Toggle< RNGType > {
       else return def;
     }
 
-    //! Return RNG library type based on Enum
+    //! \brief Return RNG library type based on RNG options enum
+    //! \param[in] rng Enum value of the option
+    //! \return Library type enum
+    //! \see tk::ctr::RNGLibType
+    //! \author J. Bakosi
     RNGLibType lib( RNGType rng ) const {
       const auto& n = name( rng );
       if ( found( "MKL", n ) ) return RNGLibType::MKL;
       else if ( found( "RNGSSE", n ) ) return RNGLibType::RNGSSE;
-      else if ( found( "PRAND", n) ) return RNGLibType::PRAND;
+      else if ( found( "PRAND", n ) ) return RNGLibType::PRAND;
       else return RNGLibType::NO_LIB;
     }
 
-    //! Return whether RNG supports sequence option
+    //! \brief Return whether RNG supports sequence option
+    //! \param[in] rng Enum value of the option
+    //! \return True if RNG supports sequence option
+    //! \author J. Bakosi
     bool supportsSeq( RNGType rng ) const
     { return support.find( rng ) != end( support ) ? true : false; }
 
-    //! Return whether RNG supports sequence option given
+    //! \brief Return whether RNG supports sequence option given
+    //! \param[in] rng Enum value of the option
+    //! \param[in] option Option type
+    //! \return True if RNG supports sequence option
+    //! \author J. Bakosi
     template< class OptionType >
     bool supportsOpt( RNGType rng, const OptionType& option ) const {
       auto it = support.find( rng );
@@ -192,11 +271,12 @@ class RNG : public tk::Toggle< RNGType > {
     }
 
   private:
-    //! Search for 'kw' in 'str'
-    //! \param[in]  kw   Keyword to search for
-    //! \param[in]  str  String to search in
-    //! \return     True if found, false if not
-    bool found(const std::string& kw, const std::string& str) const
+    //! \brief Search for 'kw' in 'str'
+    //! \param[in] kw Keyword to search for
+    //! \param[in] str String to search in
+    //! \return True if found, false if not
+    //! \author J. Bakosi
+    bool found( const std::string& kw, const std::string& str ) const
     { return str.find( kw ) != std::string::npos ? true : false; }
 
     //! Enums -> MKL VSL BRNG parameters

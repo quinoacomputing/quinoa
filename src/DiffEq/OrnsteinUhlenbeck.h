@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 05:16:25 PM MST
+  \date      Tue 13 Jan 2015 10:55:53 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck SDE
   \details   Ornstein-Uhlenbeck SDE.
@@ -65,10 +65,10 @@ class OrnsteinUhlenbeck {
         tk::real dW[ m_ncomp ];
         m_rng.gaussian( stream, m_ncomp, dW );
         // Advance all m_ncomp scalars
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           par += m_theta[i]*(m_mu[i] - par)*dt;
-          for (unsigned int j=0; j<m_ncomp; ++j) {
+          for (tk::ctr::ncomp_type j=0; j<m_ncomp; ++j) {
             tk::real d = m_sigma[ j*m_ncomp+i ] * sqrt(dt);     // use transpose
             par += d*dW[j];
           }
@@ -77,7 +77,7 @@ class OrnsteinUhlenbeck {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
+    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
     std::vector< tk::real > m_sigma;    //!< Coefficients

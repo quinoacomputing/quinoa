@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:30:53 PM MST
+  \date      Wed 14 Jan 2015 02:33:33 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Tags
-  \details   Tags
+  \details   Tags are unique types, used for metaprogramming.
 */
 //******************************************************************************
 #ifndef Tags_h
@@ -100,6 +100,11 @@ struct init {};
 struct chare {};
 struct battery {};
 struct generator {};
+struct help {};
+struct helpctr {};
+struct helpkw {};
+struct cmdinfo {};
+struct ctrinfo {};
 
 struct BirthdaySpacings {};
 struct Collision {};

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:32:26 PM MST
+  \date      Sat 17 Jan 2015 06:56:01 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,8 +14,6 @@
 #ifndef UnitTestCmdLineGrammar_h
 #define UnitTestCmdLineGrammar_h
 
-#include <Macro.h>
-#include <Exception.h>
 #include <Grammar.h>
 #include <PEGTLParsed.h>
 #include <Keywords.h>
@@ -24,30 +22,55 @@ namespace unittest {
 //! UnitTest command line grammar definition
 namespace cmd {
 
-  //! PEGTLParsed type specialized to UnitTest's command line parser
+  //!\brief PEGTLParsed type specialized to MeshConv's command line parser
+  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
+  //!    information so the location can be tracked during parsing.
+  //! \author J. Bakosi
   using PEGTLCmdLine =
     tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
 
+  //! \brief Specialization of tk::grm::use for UnitTest's command line parser
+  //! \author J. Bakosi
+  template< typename keyword >
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
+
   // UnitTest's CmdLine state
 
-  //! Everything is stored in Stack during parsing
+  //! \brief Everything is stored in Stack during parsing
+  //! \author J. Bakosi
   using Stack = PEGTLCmdLine;
-
-  // UnitTest's CmdLine actions
 
   // UnitTest's CmdLine grammar
 
-  //! verbose (i.e., verbose or quiet output)
+  //! \brief Match and set verbose switch (i.e., verbose or quiet output)
+  //! \author J. Bakosi
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      kw::verbose,
+                                      use< kw::verbose >,
                                       tag::verbose > {};
 
-  //! command line keywords
-  struct keywords :
-         pegtl::sor< verbose > {};
+  //! \brief Match help on command-line parameters
+  //! \author J. Bakosi
+  struct help :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::help >,
+                                      tag::help > {};
 
-  //! entry point: parse keywords and until end of string
+  //! \brief Match help on a command-line keyword
+  //! \author J. Bakosi
+  struct helpkw :
+         tk::grm::process_cmd< Stack,
+                               use< kw::helpkw >,
+                               tk::grm::helpkw< Stack >,
+                               pegtl::alnum > {};
+
+  //! \brief Match all command line keywords
+  //! \author J. Bakosi
+  struct keywords :
+         pegtl::sor< verbose, help, helpkw > {};
+
+  //! \brief Grammar entry point: parse keywords until end of string
+  //! \author J. Bakosi
   struct read_string :
          tk::grm::read_string< Stack, keywords > {};
 

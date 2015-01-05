@@ -2,10 +2,11 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:18:05 PM MST
+  \date      Fri 16 Jan 2015 12:33:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
-  \details   Quinoa's input deck file parser
+  \details   This file declares the input deck, i.e., control file, parser for
+    the computational fluid dynamics tool, Quinoa.
 */
 //******************************************************************************
 #ifndef QuinoaInputDeckParser_h
@@ -18,7 +19,10 @@
 
 namespace quinoa {
 
-//! InputDeckParser : FileParser
+//! \brief Control file parser for Quinoa.
+//! \details This class is used to interface with PEGTL, for the purpose of
+//!   parsing the control file for the computational fluid dynamics tool,
+//!   Quinoa.
 class InputDeckParser : public tk::FileParser {
 
   public:
@@ -26,10 +30,6 @@ class InputDeckParser : public tk::FileParser {
     explicit InputDeckParser( const tk::Print& print,
                               const ctr::CmdLine& cmdline,
                               ctr::InputDeck& inputdeck );
-
-  private:
-    //! Make requested statistics unique
-    void unique( std::vector< tk::ctr::Product >& statistics );
 };
 
 } // namespace quinoa

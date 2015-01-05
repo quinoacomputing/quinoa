@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:31:00 AM MST
+  \date      Tue 13 Jan 2015 11:09:12 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gamma SDE
   \details   Gamma SDE.
@@ -56,7 +56,7 @@ class Gamma {
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance all m_ncomp scalars
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -66,12 +66,12 @@ class Gamma {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
+    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< tk::real > m_b;        //!< Coefficients
-    std::vector< tk::real > m_S;
-    std::vector< tk::real > m_k;
+    std::vector< kw::sde_b::info::expect::type > m_b;        //!< Coefficients
+    std::vector< kw::sde_S::info::expect::type > m_S;
+    std::vector< kw::sde_kappa::info::expect::type > m_k;
 };
 
 } // walker::

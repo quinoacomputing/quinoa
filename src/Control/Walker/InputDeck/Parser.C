@@ -2,17 +2,23 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:55:28 AM MST
+  \date      Fri 16 Jan 2015 06:05:07 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
 */
 //******************************************************************************
 
-#include <make_unique.h>
-
 #include <Walker/InputDeck/Parser.h>
 #include <Walker/InputDeck/Grammar.h>
+
+namespace tk {
+namespace grm {
+
+extern tk::Print g_print;
+
+} // grm::
+} // tk::
 
 using walker::InputDeckParser;
 
@@ -34,6 +40,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // InputDeck and has location() used during parse
   deck::PEGTLInputDeck id( input, cmdline );
 
+  // Reset parser's output stream to that of print's
+  tk::grm::g_print.reset( print.save() );
+
   // Parse input file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
@@ -45,24 +54,11 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
-  inputdeck = id;
+  inputdeck = std::move( id );
 
   // Filter out repeated statistics
-  unique( inputdeck.get< tag::stat >() );
+  tk::ctr::unique( inputdeck.get< tag::stat >() );
 
-  // If we got here, parser succeeded
+  // If we got here, the parser has succeeded
   print.item( "Parsed control file", "success" );
-}
-
-void
-InputDeckParser::unique( std::vector< tk::ctr::Product >& statistics )
-//******************************************************************************
-//  Make requested statistics unique
-//! \param[in,out]  statistics  Vector of statistics
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::sort( begin(statistics), end(statistics) );
-  auto it = std::unique( begin(statistics), end(statistics) );
-  statistics.resize( std::distance( begin(statistics), it ) );
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 09:41:31 AM MST
+  \date      Sat 17 Jan 2015 07:26:55 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -23,6 +23,7 @@
 #include <boost/format.hpp>
 
 #include <Timer.h>
+#include <Exception.h>
 
 namespace tk {
 
@@ -148,7 +149,7 @@ class Print {
     }
 
     //! Formatted print of section header: title : value.
-    //! \param[in] title Section title to be printed
+    //! \param[in] name Section title to be printed
     //! \param[in] value Section value to be printed
     //! \author J. Bakosi
     template< Style s = VERBOSE >
@@ -251,6 +252,70 @@ class Print {
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
     { stream<s>() << m_note_fmt % m_section_indent % msg; }
+
+    //! \brief Formatted print of help of one-liners on all command-line
+    //!   parameters or control file keywords
+    //! \param[in] executable Name of executable to output help for
+    //! \param[in] pool std::map of keywords and their associated information
+    //! \param[in] msg Message to print after exectuable in the title
+    //! \param[in] pfx Prefix in front of alias, double prefix in front of
+    //!   keyword
+    //! \author J. Bakosi
+    template< Style s = VERBOSE, class Help >
+    void help( std::string executable,
+               const Help& pool,
+               const std::string& msg,
+               const std::string& pfx = "" ) const
+    {
+      executable[0] = std::toupper( executable[0] );
+      stream<s>() << m_help_title_fmt % executable % msg;
+      for (const auto& keyword : pool) {
+        const auto& info = keyword.second;
+        const auto& alias = info.alias;
+        const auto& expt = info.expt;
+        stream<s>() << m_help_item_fmt
+                       % std::string( ( alias ? pfx + *alias + ", " : "") +
+                                        pfx + pfx + keyword.first )
+                       % (expt ? *expt : "")
+                       % info.shortDescription;
+      }
+    }
+
+    //! \brief Formatted print of verbose help on a single command-line
+    //!   parameter or control file keywords
+    //! \param[in] executable Name of executable to output help for
+    //! \param[in] kw Keyword help struct on which help is to be printed
+    //! \author J. Bakosi
+    template< Style s = VERBOSE, class HelpKw >
+    void helpkw( std::string executable, const HelpKw& kw ) const {
+      Assert( !kw.keyword.empty(), "Empty keyword in Print::helpkw()" );
+      const auto& info = kw.info;
+      const auto& alias = info.alias;
+      const auto& expt = info.expt;
+      const auto& choices = info.choices;
+      executable[0] = std::toupper( executable[0] );
+      // print keyword title
+      if (kw.cmd)
+        stream<s>() << m_helpkw_cmd_title_fmt
+                       % executable
+                       % (alias ? "-" + *alias + ", " : "")
+                       % kw.keyword;
+      else
+        stream<s>() << m_helpkw_ctr_title_fmt
+                       % executable
+                       % kw.keyword;
+      // print short description
+      stream<s>() << m_description_fmt % splitLines(info.shortDescription);
+      // print long description
+      stream<s>() << m_description_fmt % splitLines(info.longDescription);
+      // print expected type description
+      if (expt)
+        stream<s>() << m_description_fmt % splitLines(*expt, "Expected type: ");
+      // print expected valied choices
+      if (choices)
+        stream<s>() << m_description_fmt
+                    % splitLines(*choices, "Expected valid choices: ");
+    }
 
     //! Print end of a part
     //! \author J. Bakosi
@@ -459,6 +524,14 @@ class Print {
     mutable format m_subsection_title_fmt = format("%s%c %s >\n");
     mutable format m_list_item_fmt = format("%s%-30s\n");
     mutable format m_note_fmt = format("%s%-30s\n");
+    mutable format m_help_title_fmt = format("\n%s %s\n");
+    mutable format m_help_item_fmt = format("%20s%11s %s\n");
+    mutable format m_helpkw_cmd_title_fmt =
+              format("\n%s command-line keyword %s--%s\n\n");
+    mutable format m_helpkw_ctr_title_fmt =
+              format("\n%s control file keyword '%s'\n\n");
+    mutable format m_helpkw_fmt = format("%s%s\n\n%s%s\n\n");
+    mutable format m_description_fmt = format("%s\n\n");
     mutable format m_item_name_fmt = format("%s%-30s : ");
     mutable format m_item_name_value_fmt = format("%s%-30s : %s\n");
     mutable format m_item_name_watch_fmt = format("%s%-65s : %d:%d:%d\n");
@@ -470,6 +543,49 @@ class Print {
     std::stringstream m_null;   //!< Default verbose stream
     std::ostream& m_stream;     //!< Verbose stream
     std::ostream& m_qstream;    //!< Quiet stream
+
+  private:
+    //! \brief Clean up whitespaces and format a long string into multiple lines
+    //! \param[in] str String to format
+    //! \param[in] name String to insert before string to output
+    //! \param[in] witdth Width in characters to insert newlines for output
+    //! \author J. Bakosi
+    //! \see http://stackoverflow.com/a/6892562
+    //! \see http://stackoverflow.com/a/8362145
+    // TODO A line longer than 'width' will cause a hang!
+    std::string splitLines( std::string str,
+                            std::string name = "",
+                            std::size_t width = 80 ) const
+    {
+      // remove form feeds, line feeds, carriage returns, horizontal tabs,
+      // vertical tabs, see http://en.cppreference.com/w/cpp/string/byte/isspace
+      str.erase(
+        std::remove_if( str.begin(), str.end(),
+                        []( char x ){ return std::isspace( x ) && x != ' '; } ),
+        str.end() );
+      // remove duplicate spaces
+      str.erase(
+        std::unique( str.begin(), str.end(),
+                     []( char a, char b ){ return a == b && a == ' '; } ),
+        str.end() );
+      // format str to 'witdh'-character-long lines with indent
+      const auto& indent = m_subsection_indent;
+      str.insert( 0, indent + name );
+      std::size_t currIndex = width - 1;
+      std::size_t sizeToElim;
+      while ( currIndex < str.length() ) {
+        const std::string whitespace = " ";
+        currIndex = str.find_last_of( whitespace, currIndex + 1 );
+        if ( currIndex == std::string::npos ) break;
+        currIndex = str.find_last_not_of( whitespace, currIndex );
+        if ( currIndex == std::string::npos ) break;
+        sizeToElim =
+          str.find_first_not_of( whitespace, currIndex + 1 ) - currIndex - 1;
+        str.replace( currIndex + 1, sizeToElim , "\n" + indent );
+        currIndex += width + indent.length() + 1;
+      }
+      return str;
+    }
 };
 
 } // tk::

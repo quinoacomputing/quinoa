@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:30:11 AM MST
+  \date      Tue 13 Jan 2015 10:53:08 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Skew-normal SDE coefficients policies
   \details   Skew-normal SDE coefficients policies
@@ -24,7 +24,7 @@ struct SkewNormalCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   SkewNormalCoeffConst() = default;
   //! Constructor: initialize coefficients
-  SkewNormalCoeffConst( unsigned int ncomp,
+  SkewNormalCoeffConst( tk::ctr::ncomp_type ncomp,
                         const std::vector< tk::real >& timescale_,
                         const std::vector< tk::real >& sigma_,
                         const std::vector< tk::real >& lambda_,

@@ -2,10 +2,11 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Sat 12 Jul 2014 10:22:15 AM MDT
+  \date      Fri 16 Jan 2015 06:32:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
-  \details   Random number generator test suite input deck parser
+  \details   This file declares the input deck, i.e., control file, parser for
+    the random number generator test suite, RNGTest.
 */
 //******************************************************************************
 #ifndef RNGTestInputDeckParser_h
@@ -18,7 +19,10 @@
 
 namespace rngtest {
 
-//! InputDeckParser : FileParser
+//! \brief Control file parser for RNGTest.
+//! \details This class is used to interface with PEGTL, for the purpose of
+//!   parsing the control file for the random number generator test suite,
+//!   RNGTest.
 class InputDeckParser : public tk::FileParser {
 
   public:

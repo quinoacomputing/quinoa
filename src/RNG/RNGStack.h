@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:35:45 AM MST
+  \date      Mon 12 Jan 2015 11:59:51 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   Stack of random number generators
@@ -13,7 +13,7 @@
 
 #include <map>
 
-#include <ControlTypes.h>
+#include <RNGParam.h>
 #include <RNG.h>
 #include <Options/RNG.h>
 
