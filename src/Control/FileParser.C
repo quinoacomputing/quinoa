@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Sat 20 Sep 2014 07:54:16 AM MDT
+  \date      Thu 18 Dec 2014 11:09:07 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     File parser
-  \details   File parser
+  \brief     File parser base class definition
+  \details   File parser base class defintion. File parser base serves as a
+    base class for various file parsers, e.g., input deck parsers. It does
+    generic low-level I/O, e.g., testing whether the file to be parsed exits or
+    not and associated error handling, as well as after-parser diagnostics.
 */
 //******************************************************************************
 
@@ -20,15 +23,21 @@ using tk::FileParser;
 FileParser::FileParser( const std::string& filename ) : m_filename( filename )
 //******************************************************************************
 //  Constructor
-//! \param[in]     filename      File to parse
-//! \details    Exception safety: basic guarantee: if an exception is thrown,
-//!             the stream is in a valid state.
+//! \param[in] filename File to be parsed by the parser
+//! \details This constructor does basic tests in an attempt to determine if the
+//!   file to be parsed exists and is in good shape and does associated error
+//!   handling. This file stream is local, only used for error checking, and
+//!   thus is not part of the object state here since the parser, inheriting
+//!   from FileParser, e.g., walker::InputDeckParser, parses by completely
+//!   outsourcing the parsing (to PEGTL), so there is no need to store the file
+//!   stream handle here.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  //! Make sure there is a filename
+  // Make sure there is a filename
   Assert( !filename.empty(), "No filename specified" );
 
+  // Local file stream handle
   std::ifstream q;
 
   // Check if file exists, throw exception if it does not

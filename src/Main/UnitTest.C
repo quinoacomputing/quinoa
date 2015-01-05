@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:35:18 PM MST
+  \date      Sat 17 Jan 2015 07:06:13 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite
   \details   UnitTest: Quinoa's unit test suite
@@ -24,6 +24,7 @@
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Timer.h>
 #include <tests/Base/CharmUtil.h>
+#include <tests/Base/Has.h>
 #include <tests/Base/Factory.h>
 #include <tests/Base/Print.h>
 #include <tests/Base/TaggedTuple.h>

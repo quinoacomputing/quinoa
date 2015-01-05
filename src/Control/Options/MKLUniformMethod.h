@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:08:27 PM MST
+  \date      Fri 16 Jan 2015 06:55:11 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -13,41 +13,64 @@
 
 #include <map>
 
+#include <boost/mpl/vector.hpp>
+
 #include <mkl_vsl.h>
 
 #include <Toggle.h>
 #include <Keywords.h>
+#include <PUPUtil.h>
 
 namespace tk {
 namespace ctr {
 
-//! MKL uniform random number generator methods
+//! MKL uniform random number generator method types
+//! \author J. Bakosi
 enum class MKLUniformMethodType : uint8_t { STANDARD,
                                             ACCURATE };
 
-//! Pack/Unpack: delegate to tk::
+//! \brief Pack/Unpack MKLGUniformMethodType: forward overload to generic enum
+//!   class packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, MKLUniformMethodType& e )
 { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief MKLUniformMethod options: outsource searches to base templated on
+//!   enum type
+//! \author J. Bakosi
 class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
 
   public:
     using ParamType = int;
 
-  public:
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::standard
+                                       , kw::accurate
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit MKLUniformMethod() :
-      Toggle< MKLUniformMethodType >( "uniform method",
+      Toggle< MKLUniformMethodType >(
+        //! Group, i.e., options, name
+        "uniform method",
         //! Enums -> names
         { { MKLUniformMethodType::STANDARD, kw::standard().name() },
-          { MKLUniformMethodType::ACCURATE, kw::accurate().name() } },
+          { MKLUniformMethodType::ACCURATE, kw::accurate().name() }
+        },
         //! keywords -> Enums
         { { kw::standard().string(), MKLUniformMethodType::STANDARD },
           { kw::accurate().string(), MKLUniformMethodType::ACCURATE } } ) {}
 
-    //! Return parameter based on Enum
+    //! \brief Return parameter based on Enum
+    //! \details Here 'parameter' is the library-specific identifier of the
+    //!    option, i.e., as the library identifies the given option
+    //! \param[in] m Enum value of the option requested
+    //! \return Library-specific parameter of the option
+    //! \author J. Bakosi
     const ParamType& param( MKLUniformMethodType m ) const {
       auto it = method.find( m );
       Assert( it != end(method),

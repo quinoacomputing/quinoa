@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/FileParser.h
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:27:45 PM MDT
+  \date      Wed 14 Jan 2015 02:30:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     File parser
-  \details   File parser
+  \brief     File parser base class declaration
+  \details   File parser base class declaration. File parser base serves as a
+    base class for various file parsers, e.g., input deck parsers. It does
+    generic low-level I/O, e.g., testing whether the file to be parsed exits or
+    not and associated error handling, as well as after-parser diagnostics.
 */
 //******************************************************************************
 #ifndef FileParser_h
@@ -21,10 +24,10 @@ namespace tk {
 class FileParser {
 
   protected:
-    //! Constructor
+    //! \brief Constructor
     explicit FileParser( const std::string& filename );
 
-    //! Echo errors accumulated during parsing
+    //! \brief Echo errors accumulated during parsing
     void diagnostics( const tk::Print& print,
                       const std::vector< std::string >& errors );
 

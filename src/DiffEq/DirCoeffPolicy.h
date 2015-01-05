@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DirCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:23:23 AM MST
+  \date      Tue 13 Jan 2015 10:48:07 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet coefficients policies
   \details   Dirichlet coefficients policies
@@ -24,7 +24,7 @@ struct DirCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   DirCoeffConst() = default;
   //! Constructor: initialize coefficients
-  DirCoeffConst( unsigned int ncomp,
+  DirCoeffConst( tk::ctr::ncomp_type ncomp,
                  const std::vector< tk::real >& b_,
                  const std::vector< tk::real >& S_,
                  const std::vector< tk::real >& k_,

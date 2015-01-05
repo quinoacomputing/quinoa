@@ -2,16 +2,16 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:21:54 AM MST
+  \date      Fri 16 Jan 2015 06:42:35 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Random number generator test batteries options and associations
-  \details   Random number generator test batteries options and associations
+  \brief     Random number generator test suite batteries options
+  \details   Random number generator test suite batteries options
 */
 //******************************************************************************
 #ifndef RNGTestBatteryOptions_h
 #define RNGTestBatteryOptions_h
 
-#include <map>
+#include <boost/mpl/vector.hpp>
 
 #include <Toggle.h>
 #include <Keywords.h>
@@ -21,22 +21,36 @@ namespace rngtest {
 namespace ctr {
 
 //! Random number generator battery types
+//! \author J. Bakosi
 enum class BatteryType : uint8_t { NO_BATTERY=0,
                                    SMALLCRUSH,
                                    CRUSH,
                                    BIGCRUSH };
 
 //! Pack/Unpack BatteryType: forward overload to generic enum class packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, BatteryType& e ) { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief Battery options: outsource searches to base templated on enum type
+//! \author J. Bakosi
 class Battery : public tk::Toggle< BatteryType > {
 
   public:
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::smallcrush
+                                       , kw::crush
+                                       , kw::bigcrush
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit Battery() :
-      Toggle< BatteryType >( "RNG battery",
+      Toggle< BatteryType >(
+        //! Group, i.e., options, name
+        "RNG battery",
         //! Enums -> names
         { { BatteryType::NO_BATTERY, "n/a" },
           { BatteryType::SMALLCRUSH, kw::smallcrush().name() },

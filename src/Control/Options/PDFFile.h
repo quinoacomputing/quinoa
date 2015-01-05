@@ -2,50 +2,68 @@
 /*!
   \file      src/Control/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:08:39 PM MST
+  \date      Fri 16 Jan 2015 06:59:18 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     PDF output file type options and associations
-  \details   PDF output file type options and associations
+  \brief     PDF output file type options
+  \details   PDF output file type options
 */
 //******************************************************************************
 #ifndef PDFFileOptions_h
 #define PDFFileOptions_h
 
-#include <map>
+#include <boost/mpl/vector.hpp>
 
 #include <Toggle.h>
 #include <Keywords.h>
+#include <PUPUtil.h>
 
 namespace tk {
 namespace ctr {
 
 //! PDF output file types
+//! \author J. Bakosi
 enum class PDFFileType : uint8_t { TXT=0,
                                    GMSHTXT,
                                    GMSHBIN,
                                    EXODUSII };
 
-//! Pack/Unpack: forward overload to generic enum class packer
+//! \brief Pack/Unpack PDFFileType: forward overload to generic enum class
+//!   packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, PDFFileType& e ) { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief PDFFileType options: outsource searches to base templated on enum
+//!   type
+//! \author J. Bakosi
 class PDFFile : public tk::Toggle< PDFFileType > {
 
   public:
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::txt
+                                       , kw::gmshtxt
+                                       , kw::gmshbin
+                                       , kw::exodusii
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit PDFFile() :
-      Toggle< PDFFileType >( "PDF output file type",
-      //! Enums -> names
-      { { PDFFileType::TXT, kw::txt().name() },
-        { PDFFileType::GMSHTXT, kw::gmshtxt().name() },
-        { PDFFileType::GMSHBIN, kw::gmshbin().name() },
-        { PDFFileType::EXODUSII, kw::exodusii().name() } },
-      //! keywords -> Enums
-      { { kw::txt().string(), PDFFileType::TXT },
-        { kw::gmshtxt().string(), PDFFileType::GMSHTXT },
-        { kw::gmshbin().string(), PDFFileType::GMSHBIN },
-        { kw::exodusii().string(), PDFFileType::EXODUSII } } ) {}
+      Toggle< PDFFileType >(
+        //! Group, i.e., options, name 
+        "PDF output file type",
+        //! Enums -> names
+        { { PDFFileType::TXT, kw::txt().name() },
+          { PDFFileType::GMSHTXT, kw::gmshtxt().name() },
+          { PDFFileType::GMSHBIN, kw::gmshbin().name() },
+          { PDFFileType::EXODUSII, kw::exodusii().name() } },
+        //! keywords -> Enums
+        { { kw::txt().string(), PDFFileType::TXT },
+          { kw::gmshtxt().string(), PDFFileType::GMSHTXT },
+          { kw::gmshbin().string(), PDFFileType::GMSHBIN },
+          { kw::exodusii().string(), PDFFileType::EXODUSII } } ) {}
 };
 
 } // ctr::

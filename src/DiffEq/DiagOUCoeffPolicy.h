@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOUCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 05:18:00 PM MST
+  \date      Tue 13 Jan 2015 10:54:30 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   Diagonal Ornstein-Uhlenbeck coefficients policies
@@ -24,7 +24,7 @@ struct DiagOUCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   DiagOUCoeffConst() = default;
   //! Constructor: initialize coefficients
-  DiagOUCoeffConst( unsigned int ncomp,
+  DiagOUCoeffConst( tk::ctr::ncomp_type ncomp,
                     const std::vector< tk::real >& sigma_,
                     const std::vector< tk::real >& theta_,
                     const std::vector< tk::real >& mu_,

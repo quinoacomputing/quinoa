@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GammaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:33:07 AM MST
+  \date      Tue 13 Jan 2015 10:49:04 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gamma coefficients policies
   \details   Gamma coefficients policies
@@ -24,7 +24,7 @@ struct GammaCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   GammaCoeffConst() = default;
   //! Constructor: initialize coefficients
-  GammaCoeffConst( unsigned int ncomp,
+  GammaCoeffConst( tk::ctr::ncomp_type ncomp,
                    const std::vector< tk::real >& b_,
                    const std::vector< tk::real >& S_,
                    const std::vector< tk::real >& k_,

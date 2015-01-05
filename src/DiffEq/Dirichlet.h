@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:25:11 AM MST
+  \date      Tue 13 Jan 2015 11:05:22 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
@@ -56,14 +56,15 @@ class Dirichlet {
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Compute Nth scalar
         tk::real yn = 1.0 - particles(p, 0, m_offset);
-        for (unsigned int i=1; i<m_ncomp; ++i) yn -= particles( p, i, m_offset );
+        for (tk::ctr::ncomp_type i=1; i<m_ncomp; ++i)
+          yn -= particles( p, i, m_offset );
 
         // Generate Gaussian random numbers with zero mean and unit variance
         tk::real dW[m_ncomp];
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance first m_ncomp (K=N-1) scalars
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -73,12 +74,12 @@ class Dirichlet {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
+    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< tk::real > m_b;        //!< Coefficients
-    std::vector< tk::real > m_S;
-    std::vector< tk::real > m_k;
+    std::vector< kw::sde_b::info::expect::type > m_b;        //!< Coefficients
+    std::vector< kw::sde_S::info::expect::type > m_S;
+    std::vector< kw::sde_kappa::info::expect::type > m_k;
 };
 
 } // walker::

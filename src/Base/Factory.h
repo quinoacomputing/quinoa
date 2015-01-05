@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Factory.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 08:48:02 AM MST
+  \date      Sun 21 Dec 2014 10:05:17 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Factory utilities
   \details   Factory utilities. The functions defined in this file help
@@ -144,8 +144,6 @@ void recordModel( Factory& f, const Key& key, ModelConstrArgs&&... args ) {
 //! \param[in] f Factory to register to (std::map with value using value
 //!   semantics)
 //! \param[in] key Key used to identify the entry in the factory
-//! \param[in] arg A single model constructor argument, only used to pass the
-//!   type in.
 //! \warning Only works with a single constructor argument
 //! \author J. Bakosi
 template< class Host, class ModelConstructor, class Factory, class Key,

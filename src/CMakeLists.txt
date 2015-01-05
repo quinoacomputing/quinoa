@@ -140,6 +140,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   # Experimental: use the C++14 standard
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
+  # See all template error messages
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
+
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
   # Don't warn on defined but unused functions
@@ -313,8 +316,8 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
                     ${TPL_DIR}/charm/include
-                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
 )

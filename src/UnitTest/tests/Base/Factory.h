@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Sun 14 Sep 2014 04:36:45 PM MDT
+  \date      Fri 02 Jan 2015 01:34:25 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -376,7 +376,7 @@ struct VBase {
   //! having to explicitly forward the model constructor arguments via this
   //! host constructor. See also tk::recordCharmModel().
   template< typename T, typename... ConstrArgs,
-    typename std::enable_if< tk::HasProxy<T>::value, int >::type = 0 >
+    typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
   explicit VBase( std::function<T()> c, ConstrArgs... args ) :
     self( tk::make_unique< Model< typename T::Proxy > >
          (std::move(T::Proxy::ckNew(std::forward<ConstrArgs>(args)...))) ) {

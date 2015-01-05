@@ -2,21 +2,26 @@
 /*!
   \file      src/Control/RNGTest/Types.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:34:22 AM MST
+  \date      Fri 16 Jan 2015 06:07:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for RNGTest's parsers
-  \details   Types for RNGTest's parsers
+  \details   Types for RNGTest's parsers. This file defines the components of
+    the tagged tuple that stores heteroegeneous objects in a hierarchical way.
+    These components are therefore part of the grammar stack that is filled
+    during parsing (both command-line argument parsing and control file
+    parsing).
 */
 //******************************************************************************
 #ifndef RNGTestTypes_h
 #define RNGTestTypes_h
 
-#include <ControlTypes.h>
+#include <Tags.h>
+#include <Types.h>
+#include <RNGParam.h>
 #include <RNGTest/Options/Battery.h>
 #include <Options/RNG.h>
 
 namespace rngtest {
-//! control and parsing
 namespace ctr {
 
 using tk::ctr::RNGType;

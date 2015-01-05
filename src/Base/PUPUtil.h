@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 09:49:42 AM MST
+  \date      Sat 17 Jan 2015 07:27:41 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -12,13 +12,19 @@
 #ifndef PUPUtil_h
 #define PUPUtil_h
 
+#include <iostream>     // NOT NEEDED!
 #include <unordered_map>
 
+#include <boost/optional.hpp>
+
 #include <pup_stl.h>
+
 #include <CharmUtil.h>
 
 //! Extensions to Charm++'s Pack/Unpack routines
 namespace PUP {
+
+//////////////////// Serialize enum class ////////////////////
 
 //! Pack/Unpack enum class. In Charm++ usually both the pup() overload and an
 //! overload for operator| are defined for all serializable types. However, we
@@ -35,6 +41,8 @@ inline void pup( PUP::er& p, E& e ) {
   p | v;
   e = static_cast< E >( v );
 }
+
+//////////////////// Serialize std::tuple ////////////////////
 
 //! PUP_tuple_impl: specialization for empty std::tuple
 template< std::size_t I = 0, typename... Tp >
@@ -63,6 +71,8 @@ inline void pup( PUP::er& p, std::tuple< Ts... >& t ) {
 template< typename... Ts >
 inline void operator|( PUP::er& p, std::tuple< Ts... >& t ) { pup( p, t ); }
 
+//////////////////// Serialize std::array ////////////////////
+
 //! Pack/Unpack std::array.
 //! \param[in] p Charm++'s pack/unpack object
 //! \param[in] a std::array< T, N > of arbitrary type T to pack/unpack
@@ -77,6 +87,8 @@ inline void pup( PUP::er& p, std::array< T, N >& a ) {
 //! \author J. Bakosi
 template< class T, std::size_t N >
 inline void operator|( PUP::er& p, std::array< T, N >& a ) { pup( p, a ); }
+
+//////////////////// Serialize std::unordered_map ////////////////////
 
 //! Pack/Unpack std::unordered_map.
 //! \param[in] p Charm++'s pack/unpack object
@@ -105,6 +117,24 @@ inline void pup( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m ) {
 template< class Key, typename T, class KeyEqual = std::equal_to< Key > >
 inline void operator|( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m )
 { pup( p, m ); }
+
+//////////////////// Serialize boost::optional ////////////////////
+
+//! Pack/Unpack boost::optional.
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \author J. Bakosi
+template< class T >
+inline void pup( PUP::er& p, boost::optional< T >& o ) {
+  // IMPLEMENT !!!
+  std::cout << "pup boost::opt\n";
+}
+//! Pack/Unpack boost::optional.
+//! \param[in] p Charm++'s pack/unpack object
+//! \param[in] o boost::optional< T > of arbitrary type T to pack/unpack
+//! \author J. Bakosi
+template< class T >
+inline void operator|( PUP::er& p, boost::optional< T >& o ) { pup( p, o ); }
 
 } // PUP::
 

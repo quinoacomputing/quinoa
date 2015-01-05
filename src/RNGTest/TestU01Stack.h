@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:23:38 AM MST
+  \date      Fri 16 Jan 2015 07:07:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of TestU01 tests
   \details   Stack of TestU01 tests
@@ -30,6 +30,7 @@ extern "C" {
 #include <StatTest.h>
 #include <TestU01Util.h>
 #include <Tags.h>
+#include <TaggedTuple.h>
 
 namespace rngtest {
 

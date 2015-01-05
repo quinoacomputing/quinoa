@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:29:47 PM MST
+  \date      Tue 13 Jan 2015 11:53:30 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -11,8 +11,9 @@
 #ifndef WalkerDiffEqOptions_h
 #define WalkerDiffEqOptions_h
 
-#include <map>
+#include <boost/mpl/vector.hpp>
 
+#include <TaggedTuple.h>
 #include <Toggle.h>
 #include <Keywords.h>
 #include <Options/InitPolicy.h>
@@ -45,6 +46,17 @@ using DiffEqKey =
 class DiffEq : public tk::Toggle< DiffEqType > {
 
   public:
+    // List valid expected choices to make them also available at compile-time
+    using keywords = boost::mpl::vector< kw::ornstein_uhlenbeck
+                                       , kw::diag_ou
+                                       , kw::skewnormal
+                                       , kw::gamma
+                                       , kw::beta
+                                       , kw::dirichlet
+                                       , kw::gendir
+                                       , kw::wrightfisher
+                                       >;
+
     //! Constructor: pass associations references to base, which will handle
     //! class-user interactions
     explicit DiffEq() :
@@ -52,7 +64,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         //! Enums -> names
         { { DiffEqType::NO_DIFFEQ, "n/a" },
           { DiffEqType::OU, kw::ornstein_uhlenbeck().name() },
-          { DiffEqType::DIAG_OU, kw::diag_ornstein_uhlenbeck().name() },
+          { DiffEqType::DIAG_OU, kw::diag_ou().name() },
           { DiffEqType::SKEWNORMAL, kw::skewnormal().name() },
           { DiffEqType::GAMMA, kw::gamma().name() },
           { DiffEqType::BETA, kw::beta().name() },
@@ -62,7 +74,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
           { kw::ornstein_uhlenbeck().string(), DiffEqType::OU },
-          { kw::diag_ornstein_uhlenbeck().string(), DiffEqType::DIAG_OU },
+          { kw::diag_ou().string(), DiffEqType::DIAG_OU },
           { kw::skewnormal().string(), DiffEqType::SKEWNORMAL },
           { kw::gamma().string(), DiffEqType::GAMMA },
           { kw::beta().string(), DiffEqType::BETA },

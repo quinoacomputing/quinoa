@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:28:33 PM MST
+  \date      Sat 17 Jan 2015 06:54:36 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -22,29 +22,35 @@ namespace walker {
 //! Walker command line grammar definition
 namespace cmd {
 
-  //! PEGTLParsed type specialized to Walker's command line parser
+  //! \brief PEGTLParsed type specialized to Walker's command line parser
+  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
+  //!    information so the location can be tracked during parsing.
+  //! \author J. Bakosi
   using PEGTLCmdLine =
     tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
+
+  //! \brief Specialization of tk::grm::use for Walker's command line parser
+  //! \author J. Bakosi
+  template< typename keyword >
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 
   // Walker's CmdLine state
 
   //! Everything is stored in Stack during parsing
   using Stack = PEGTLCmdLine;
 
-  // Walker's CmdLine actions
-
   // Walker's CmdLine grammar
 
   //! verbose (i.e., verbose or quiet output)
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      kw::verbose,
+                                      use< kw::verbose >,
                                       tag::verbose > {};
 
   //! virtualization parameter
   struct virtualization :
          tk::grm::process_cmd< Stack,
-                               kw::virtualization,
+                               use< kw::virtualization >,
                                tk::grm::Store< Stack, tag::virtualization >,
                                tk::grm::number > {};
 
@@ -55,13 +61,35 @@ namespace cmd {
                                keyword,
                                tk::grm::Store< Stack, tag::io, io_tag > > {};
 
+  //! help on control file keywords
+  struct helpctr :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::helpctr >,
+                                      tag::helpctr > {};
+
+  //! help on command-line parameters
+  struct help :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::help >,
+                                      tag::help > {};
+
+  //! help on a command-line keyword
+  struct helpkw :
+         tk::grm::process_cmd< Stack,
+                               use< kw::helpkw >,
+                               tk::grm::helpkw< Stack >,
+                               pegtl::alnum > {};
+
   //! command line keywords
   struct keywords :
          pegtl::sor< verbose,
+                     help,
+                     helpctr,
+                     helpkw,
                      virtualization,
-                     io< kw::control, tag::control >,
-                     io< kw::pdf, tag::pdf >,
-                     io< kw::stat, tag::stat > > {};
+                     io< use< kw::control >, tag::control >,
+                     io< use< kw::pdf >, tag::pdf >,
+                     io< use< kw::stat >, tag::stat > > {};
 
   //! entry point: parse keywords and until end of string
   struct read_string :

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:08:21 PM MST
+  \date      Fri 16 Jan 2015 06:55:27 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -13,33 +13,52 @@
 
 #include <map>
 
+#include <boost/mpl/vector.hpp>
+
 #include <mkl_vsl.h>
 
 #include <Toggle.h>
 #include <Keywords.h>
+#include <PUPUtil.h>
 
 namespace tk {
 namespace ctr {
 
-//! MKL Gaussian random number generator methods
+//! MKL Gaussian random number generator method types
+//! \author J. Bakosi
 enum class MKLGaussianMethodType : uint8_t { BOXMULLER,
                                              BOXMULLER2,
                                              ICDF };
 
-//! Pack/Unpack: delegate to tk::
+//! \brief Pack/Unpack MKLGaussianMethodType: forward overload to generic enum
+//!   class packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, MKLGaussianMethodType& e )
 { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief MKLGaussianMethod options: outsource searches to base templated on
+//!   enum type
+//! \author J. Bakosi
 class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
 
   public:
     using ParamType = int;
 
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::boxmuller
+                                       , kw::boxmuller2
+                                       , kw::icdf
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit MKLGaussianMethod() :
-      Toggle< MKLGaussianMethodType >( "Gaussian method",
+      Toggle< MKLGaussianMethodType >(
+        //! Group, i.e., options, name
+        "Gaussian method",
         //! Enums -> names
         { { MKLGaussianMethodType::BOXMULLER, kw::boxmuller().name() },
           { MKLGaussianMethodType::BOXMULLER2, kw::boxmuller2().name() },
@@ -49,7 +68,12 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
           { kw::boxmuller2().string(), MKLGaussianMethodType::BOXMULLER2 },
           { kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
 
-    //! Return parameter based on Enum
+    //! \brief Return parameter based on Enum
+    //! \details Here 'parameter' is the library-specific identifier of the
+    //!    option, i.e., as the library identifies the given option
+    //! \param[in] m Enum value of the option requested
+    //! \return Library-specific parameter of the option
+    //! \author J. Bakosi
     const ParamType& param( MKLGaussianMethodType m ) const {
       auto it = method.find( m );
       Assert( it != end(method),

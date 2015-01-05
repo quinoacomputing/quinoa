@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:25:33 PM MST
+  \date      Fri 16 Jan 2015 06:15:31 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -14,8 +14,6 @@
 #ifndef RNGTestCmdLineGrammar_h
 #define RNGTestCmdLineGrammar_h
 
-#include <Macro.h>
-#include <Exception.h>
 #include <Grammar.h>
 #include <PEGTLParsed.h>
 #include <Keywords.h>
@@ -25,37 +23,70 @@ namespace rngtest {
 namespace cmd {
 
   //! PEGTLParsed type specialized to RNGTest's command line parser
+  //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
+  //!    information so the location can be tracked during parsing.
+  //! \author J. Bakosi
   using PEGTLCmdLine =
     tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
+
+  //! \brief Specialization of tk::grm::use for RNGTest's command line parser
+  //! \author J. Bakosi
+  template< typename keyword >
+  using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 
   // RNGTest's CmdLine state
 
   //! Everything is stored in Stack during parsing
+  //! \author J. Bakosi
   using Stack = PEGTLCmdLine;
-
-  // RNGTest's CmdLine actions
 
   // RNGTest's CmdLine grammar
 
-  //! verbose (i.e., verbose or quiet output)
+  //! \brief Match and set verbose switch (i.e., verbose or quiet output)
+  //! \author J. Bakosi
   struct verbose :
          tk::grm::process_cmd_switch< Stack,
-                                      kw::verbose,
+                                      use< kw::verbose >,
                                       tag::verbose > {};
 
-  //! control (i.e., input deck) file name
+  //! \brief Match and set control (i.e., input deck) file name
+  //! \author J. Bakosi
   struct control :
          tk::grm::process_cmd< Stack,
-                               kw::control,
+                               use< kw::control >,
                                tk::grm::Store< Stack,
                                                tag::io,
                                                tag::control > > {};
 
-  //! command line keywords
-  struct keywords :
-         pegtl::sor< verbose, control > {};
+  //! \brief Match help on control file keywords
+  //! \author J. Bakosi
+  struct helpctr :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::helpctr >,
+                                      tag::helpctr > {};
 
-  //! entry point: parse keywords and until end of string
+  //! \brief Match help on command-line parameters
+  //! \author J. Bakosi
+  struct help :
+         tk::grm::process_cmd_switch< Stack,
+                                      use< kw::help >,
+                                      tag::help > {};
+
+  //! \brief Match help on a command-line keyword
+  //! \author J. Bakosi
+  struct helpkw :
+         tk::grm::process_cmd< Stack,
+                               use< kw::helpkw >,
+                               tk::grm::helpkw< Stack >,
+                               pegtl::alnum > {};
+
+  //! Match all command line keywords
+  //! \author J. Bakosi
+  struct keywords :
+         pegtl::sor< verbose, control, help, helpctr, helpkw > {};
+
+  //! \brief Grammar entry point: parse keywords until end of string
+  //! \author J. Bakosi
   struct read_string :
          tk::grm::read_string< Stack, keywords > {};
 

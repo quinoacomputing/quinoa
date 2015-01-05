@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:28:00 AM MST
+  \date      Tue 13 Jan 2015 11:00:25 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   Wright-Fisher SDE, see
@@ -70,7 +70,7 @@ class WrightFisher {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Initialize the first m_ncomp (N-1) scalars
-        unsigned int i;
+        tk::ctr::ncomp_type i;
         for (i=0; i<m_ncomp-1; ++i) {
           particles( p, i, m_offset ) = (1.0+i)/m_ncomp;
         }
@@ -140,9 +140,9 @@ class WrightFisher {
 
         tk::real B[m_ncomp][m_ncomp];
         tk::real Bo[m_ncomp][m_ncomp];
-        for (unsigned int i=0; i<m_ncomp; ++i) {
+        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           const tk::real& pari = particles( p, i, m_offset );
-          for (unsigned int j=0; j<m_ncomp; ++j) {
+          for (tk::ctr::ncomp_type j=0; j<m_ncomp; ++j) {
             const tk::real& parj = particles( p, j, m_offset );
             if (i == j) {
               B[i][i] = std::abs( pari * (1.0 - pari) );
@@ -160,7 +160,7 @@ class WrightFisher {
           print_matrix( "=======\nOriginal Matrix", Bo[0], n, n );
           std::cout << "info: " << info << std::endl;
           print_matrix( "Result of Cholesky factorization", B[0], n, n );
-          for (unsigned int i=0; i<m_ncomp; ++i) {
+          for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
             std::cout <<
               std::setprecision( std::numeric_limits< tk::real >::digits10 )
             << i << " par: " << particles( p, i, m_offset) << std::endl;
@@ -172,14 +172,14 @@ class WrightFisher {
 
         // Advance the first m_ncomp (N-1) scalars
         if (info == 0) {
-          unsigned int i = 0;
+          tk::ctr::ncomp_type i = 0;
           for (i=0; i<m_ncomp-1; ++i) {
             tk::real& par = particles( p, i, m_offset );
             // Advance first m_ncomp (K=N-1) scalars due to drift
             par += 0.5*(m_omega[i] - omega*par)*dt;
             // Advance first m_ncomp (K=N-1) particles with Cholesky-decomposed
             // lower triangle (diffusion matrix)
-            for (unsigned int j=0; j<m_ncomp-1; ++j)
+            for (tk::ctr::ncomp_type j=0; j<m_ncomp-1; ++j)
               if (j<=i) {
                 tk::real dW;
                 m_rng.gaussian( stream, 1, &dW );
@@ -197,10 +197,10 @@ class WrightFisher {
     }
 
   private:
-    const unsigned int m_ncomp;         //!< Number of components
+    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< tk::real > m_omega;    //!< Coefficients
+    std::vector< kw::sde_omega::info::expect::type > m_omega;  //!< Coefficients
 };
 
 } // walker::

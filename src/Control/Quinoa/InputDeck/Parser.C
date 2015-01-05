@@ -2,17 +2,24 @@
 /*!
   \file      src/Control/Quinoa/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:26:11 PM MST
+  \date      Fri 16 Jan 2015 06:05:03 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
-  \details   Quinoa's input deck file parser
+  \details   This file declares the input deck, i.e., control file, parser for
+    the computational fluid dynamics tool, Quinoa.
 */
 //******************************************************************************
 
-#include <make_unique.h>
-
 #include <Quinoa/InputDeck/Parser.h>
 #include <Quinoa/InputDeck/Grammar.h>
+
+namespace tk {
+namespace grm {
+
+extern tk::Print g_print;
+
+} // grm::
+} // tk::
 
 using quinoa::InputDeckParser;
 
@@ -22,6 +29,9 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   FileParser( cmdline.get< tag::io, tag::control >() )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmd Command line stack
+//! \param[inout] inputdeck Input deck stack where data is stored during parsing
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -34,7 +44,18 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // InputDeck and has location() used during parse
   deck::PEGTLInputDeck id( input, cmdline );
 
-  // Parse input file by populating the underlying tagged tuple:
+  // Reset parser's output stream to that of print's. This is so that mild
+  // warnings emitted during parsing can be output using the pretty printer.
+  // Usually, errors and warnings are simply accumulated during parsing and
+  // printed during diagnostics after the parser has finished. Howver, in some
+  // special cases we can provide a more user-friendly message right during
+  // parsing since there is more information available to construct a more
+  // sensible message. This is done in e.g., tk::grm::store_option. Resetting
+  // the global g_print, to that of passed in as the constructor argument allows
+  // not to have to create a new pretty printer, but use the existing one.
+  tk::grm::g_print.reset( print.save() );
+
+  // Parse control file by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
   // the parser itself, i.e., when modifying the grammar, otherwise, use
   // dummy_parse() to compile faster
@@ -45,24 +66,11 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
-  inputdeck = id;
+  inputdeck = std::move( id );
 
   // Filter out repeated statistics
-  unique( inputdeck.get< tag::stat >() );
+  tk::ctr::unique( inputdeck.get< tag::stat >() );
 
-  // If we got here, parser succeeded
+  // If we got here, the parser has succeeded
   print.item( "Parsed control file", "success" );
-}
-
-void
-InputDeckParser::unique( std::vector< tk::ctr::Product >& statistics )
-//******************************************************************************
-//  Make requested statistics unique
-//! \param[in,out]  statistics  Vector of statistics
-//! \author  J. Bakosi
-//******************************************************************************
-{
-  std::sort( begin(statistics), end(statistics) );
-  auto it = std::unique( begin(statistics), end(statistics) );
-  statistics.resize( std::distance( begin(statistics), it ) );
 }

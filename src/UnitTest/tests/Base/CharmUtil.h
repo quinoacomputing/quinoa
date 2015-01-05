@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Mon 28 Jul 2014 02:11:25 PM MDT
+  \date      Sat 17 Jan 2015 07:06:41 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
@@ -32,27 +32,9 @@ CharmUtil_group CharmUtil( "Base/CharmUtil" );
 
 //! Test definitions for group
 
-//! Test if tk::HasProxy correctly detects the presence of typedef Proxy
-template<> template<>
-void CharmUtil_object::test< 1 >() {
-  set_test_name( "HasProxy detects absence of typedef Proxy" );
-
-  struct no { bool value = tk::HasProxy< noProxy >::value; };
-  ensure_equals( "struct has no Proxy", no().value, false );
-}
-
-//! Test if tk::HasProxy correctly detects the absence of typedef Proxy
-template<> template<>
-void CharmUtil_object::test< 2 >() {
-  set_test_name( "HasProxy detects presence of typedef Proxy" );
-
-  struct yes { bool value = tk::HasProxy< yesProxy >::value; };
-  ensure_equals( "struct has Proxy", yes().value, true );
-}
-
 //! Test if is_enum_class correctly detects a strongly-typed enum
 template<> template<>
-void CharmUtil_object::test< 3 >() {
+void CharmUtil_object::test< 1 >() {
   set_test_name( "is_enum_class detects a strongly-typed enum" );
 
   enum class A { FIELD1, FIELD2 };
@@ -62,7 +44,7 @@ void CharmUtil_object::test< 3 >() {
 
 //! Test if is_enum_class correctly detects a C-style enum
 template<> template<>
-void CharmUtil_object::test< 4 >() {
+void CharmUtil_object::test< 2 >() {
   set_test_name( "is_enum_class detects a C-style enum" );
 
   enum A { FIELD1, FIELD2 };

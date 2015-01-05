@@ -2,10 +2,12 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Thu 28 Aug 2014 03:53:37 PM MDT
+  \date      Wed 14 Jan 2015 02:32:39 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     String parser
-  \details   String parser
+  \brief     String parser base class definition
+  \details   String parser base class definition. String parser base serves as
+    a base class for various string parsers, e.g., command-line parsers. It does
+    generic after-parser diagnostics.
 */
 //******************************************************************************
 
@@ -17,19 +19,19 @@
 
 using tk::StringParser;
 
-StringParser::StringParser(int argc, char** argv)
+StringParser::StringParser( int argc, char** argv )
 //******************************************************************************
 //  Constructor
-//! \param[in]     argc          Number of C-style character arrays in argv
-//! \param[in]     argv          C-style character array of character arrays
+//! \param[in] argc Number of C-style character arrays in argv
+//! \param[in] argv C-style character array of character arrays
 //! \details   Convert C-style character array of character arrays to a single
-//             std::string substrings separated by spaces. Exception safety:
-//             basic guarantee: if an exception is thrown, the stream is in a
-//             valid state.
+//!   std::string substrings separated by spaces. Exception safety: basic
+//!   guarantee: if an exception is thrown, the stream is in a valid state.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  for (int i=1; i<argc; ++i) m_string += std::string( argv[i] ) + ' ';
+  for (int i=1; i<argc; ++i)
+    m_string += std::string(argv[i]) + ' ';
 }
 
 void
@@ -37,7 +39,7 @@ StringParser::diagnostics( const tk::Print& print,
                            const std::vector< std::string >& messages )
 //******************************************************************************
 //  Echo errors and warnings accumulated during parsing
-//! \param[in] print    Pretty printer
+//! \param[in] print Pretty printer
 //! \param[in] messages Vector of strings of errors and warnings
 //! \author  J. Bakosi
 //******************************************************************************

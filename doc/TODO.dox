@@ -17,6 +17,9 @@ Parser/Control
  - Add commandline option --version
  - Trigger parser error on non-existent field-id, besides the existing dependent
    variable.
+ - Add to on-screen help: search for a string in any fields instead of only a
+   correct keyword.
+ - Fix Base::Print::splitLines() so that lines longer than 'width' do not hang.
 
 RNGTest
 -------
@@ -53,6 +56,7 @@ Testing
  - Memory testing: CMake/CTest/CDash has built-in support for automated
    memory testing using valgrind
  - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
+ - Add dynamic analysis tests to ctest and cdash: http://www.kitware.com/blog/home/post/762
 
 Build
 -----
@@ -90,9 +94,11 @@ Documentation
  - Find out build prerequisites (i.e., everyting that is linked in) and document
    them in README.build
  - Document remaining undocumented keywords
- - Would raw-string literals work for keywords in-code documentation?
  - Automatic generation of grammar/parser documentation
  - Fill details on TPL page
+ - Find alternatives to Doxygen that work better with heavily templated code
+ - Add separate page to doxygen on papers with links
+ - Add and hook up optional field specifying default expected value to keywords
 
 Uncategorized
 -------------
@@ -101,6 +107,11 @@ Uncategorized
  - As the estimation of statistics should be closer (i.e., immediately after)
    updating the particle properties, the order of the particle properties in
    memory should be user-selectable at compile time
+
+ - emplace() is only more efficient than insert() if it calls a constructor
+   internally instead of assignment() - check
+
+ - Consider using clang-format + vi-plugin
 
  - Fix field/column lengths in IO/TxtStatWriter.
 
@@ -126,13 +137,16 @@ Uncategorized
  - Any libs for concurrent containers? Would be nice for PDF/JPDF. TBB, NVIDIA
    Thrust?
 
+ - Explore the use of Eric Niebler's concept checking "library",
+   http://ericniebler.com/2013/11/23/concept-checking-in-c11/
+
  - Use static_assert for templates, see e.g., http://cxxninjitsu.blogspot.com/2013/12/staticassert-better-template-error.html?m=1
 
  - Pass strings and other function argument types that need copies and do not need to be modified by value, see http://stackoverflow.com/questions/16724657/why-do-we-copy-then-move
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 09 Dec 2014 10:34:18 AM MST
+<em>Page last updated:</em> Sat 17 Jan 2015 07:33:45 AM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

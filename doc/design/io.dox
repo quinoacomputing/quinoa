@@ -15,8 +15,6 @@ mesh. Examples of supported mesh generators:
   - Gmsh, http://www.geuz.org/gmsh
   - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
   - Cubit, https://cubit.sandia.gov
-  - Hexpress/Hybrid,
-    http://www.numeca.com/en/products/automeshtm/hexpresstmhybrid
   - Any other generator that outputs the input formats below
 
 Input mesh file formats supported:
@@ -63,7 +61,7 @@ Input/Output requirements:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 11 Jul 2014 09:43:49 PM MDT
+<em>Page last updated:</em> Tue 13 Jan 2015 12:17:19 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

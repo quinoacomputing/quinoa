@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 08:13:20 AM MDT
+  \date      Wed 14 Jan 2015 02:47:03 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Options and associations
-  \details   Options and associations
+  \brief     Toggle is the base for an Option, doing generic searches
+  \details   Toggle is the base for an Option, doing generic searches.
 */
 //******************************************************************************
 #ifndef Toggle_h
@@ -17,6 +17,11 @@
 
 namespace tk {
 
+//! \brief Toggle is the base for an Option, doing generic searches
+//! \details Toggle is templated on an enum type (a strongly typed enum), whose
+//!   values are used as keys in maps of associated option values.
+//! \see Control/Option for client code examples
+//! \author J. Bakosi
 template< typename Enum >
 class Toggle {
 
@@ -27,6 +32,8 @@ class Toggle {
     const std::string& group() const { return groupname; }
 
     //! Lookup Enum value based on keyword, Enum must exist
+    //! \param[in] keyword Keyword to search for
+    //! \return Strongly-typed enum value associated to keyword if found
     Enum value( const std::string& keyword ) const {
       auto it = values.find( keyword );
       Assert( it != end(values),
@@ -35,11 +42,15 @@ class Toggle {
     }
 
     //! Check if keyword exists
+    //! \param[in] keyword Keyword to search for
+    //! \return True if keyword if found
     bool exist( const std::string& keyword ) const {
       return values.find( keyword ) != end( values ) ? true : false;
     }
 
     //! Lookup option name based on Enum
+    //! \param[in] val Enum value to search for
+    //! \return Keyword if enum value is found
     const std::string& name( Enum val ) const {
       auto it = names.find( val );
       Assert( it != end(names),
@@ -49,16 +60,21 @@ class Toggle {
 
   protected:
     //! Constructor protected: designed to be used only as a base class
+    //! \param[in] g Group name of the option set
+    //! \param[in] n Map associating enum values to option names
+    //! \param[in] v Map associating keyword strings to enum values
+    //! \details Note that all arguments are rvalues, thus the objects gutted
+    //!    and this is the only constructor provided.
     explicit Toggle( std::string&& g,
                      std::map< Enum, std::string >&& n,
                      std::map< std::string, Enum >&& v ) :
-      groupname(std::move(g)), names(std::move(n)), values(std::move(v))
+      groupname( std::move(g) ), names( std::move(n) ), values( std::move(v) )
     { Assert( names.size() == values.size(), "map sizes differ in Toggle" ); }
 
   private:
-    std::string groupname;
-    std::map< Enum, std::string > names;
-    std::map< std::string, Enum > values;
+    std::string groupname;                     //!< Group name of the option set
+    std::map< Enum, std::string > names;       //!< Map of enums -> names
+    std::map< std::string, Enum > values;      //!< Map of keywords -> enums
 };
 
 } // tk::

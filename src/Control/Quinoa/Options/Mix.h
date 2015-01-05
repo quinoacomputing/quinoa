@@ -2,41 +2,57 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:59:15 PM MST
+  \date      Fri 16 Jan 2015 07:59:37 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Mix model options and associations
-  \details   Mix model options and associations
+  \brief     Mix model options
+  \details   Mix model options
 */
 //******************************************************************************
 #ifndef QuinoaMixOptions_h
 #define QuinoaMixOptions_h
 
-#include <map>
+#include <boost/mpl/vector.hpp>
 
 #include <Toggle.h>
 #include <Keywords.h>
+#include <PUPUtil.h>
 
 namespace quinoa {
 namespace ctr {
 
 //! Mix model types
+//! \author J. Bakosi
 enum class MixType : uint8_t { NO_MIX=0,
                                IEM,
                                IECM,
                                DIRICHLET,
                                GENDIR };
 
-//! Pack/Unpack: forward overload to generic enum class packer
+//! \brief Pack/Unpack MixType: forward overload to generic enum class packer
+//! \author J. Bakosi
 inline void operator|( PUP::er& p, MixType& e ) { PUP::pup( p, e ); }
 
-//! Class with base templated on the above enum class with associations
+//! \brief Mix model options: outsource searches to base templated on enum type
+//! \author J. Bakosi
 class Mix : public tk::Toggle< MixType > {
 
   public:
-    //! Constructor: pass associations references to base, which will handle
-    //! class-user interactions
+    //! Valid expected choices to make them also available at compile-time
+    //! \author J. Bakosi
+    using keywords = boost::mpl::vector< kw::mix_iem
+                                       , kw::mix_iecm
+                                       , kw::mix_dir
+                                       , kw::mix_gendir
+                                       >;
+
+    //! \brief Options constructor
+    //! \details Simply initialize in-line and pass associations to base, which
+    //!    will handle client interactions
+    //! \author J. Bakosi
     explicit Mix() :
-      Toggle< MixType >( "Material mix",
+      Toggle< MixType >(
+        //! Group, i.e., options, name
+        "Material mix",
         //! Enums -> names
         { { MixType::NO_MIX, "n/a" },
           { MixType::IEM, kw::mix_iem().name() },

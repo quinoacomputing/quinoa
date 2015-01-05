@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:29:11 AM MST
+  \date      Tue 13 Jan 2015 10:53:52 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   Beta coefficients policies
@@ -24,7 +24,7 @@ struct BetaCoeffConst {
   //! Constructor: default for accessing policy name, type, etc.
   BetaCoeffConst() = default;
   //! Constructor: initialize coefficients
-  BetaCoeffConst( unsigned int ncomp,
+  BetaCoeffConst( tk::ctr::ncomp_type ncomp,
                   const std::vector< tk::real >& b_,
                   const std::vector< tk::real >& S_,
                   const std::vector< tk::real >& k_,

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:35:24 AM MST
+  \date      Wed 17 Dec 2014 04:41:14 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   Stack of differential equations
@@ -15,7 +15,6 @@
 
 #include <boost/mpl/at.hpp>
 
-#include <ControlTypes.h>
 #include <DiffEq.h>
 #include <Factory.h>
 #include <Tags.h>

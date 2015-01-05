@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:34:35 AM MST
+  \date      Thu 15 Jan 2015 09:03:23 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for Walker's parsers
-  \details   Types for Walker's parsers
+  \details   Types for Walker's parsers. This file defines the components of the
+    tagged tuple that stores heteroegeneous objects in a hierarchical way. These
+    components are therefore part of the grammar stack that is filled during
+    parsing (both command-line argument parsing and control file parsing).
 */
 //******************************************************************************
 #ifndef WalkerTypes_h
@@ -13,7 +16,7 @@
 
 #include <Tags.h>
 #include <Types.h>
-#include <ControlTypes.h>
+#include <RNGParam.h>
 #include <Walker/Options/DiffEq.h>
 #include <Options/InitPolicy.h>
 #include <Options/CoeffPolicy.h>
@@ -24,7 +27,6 @@
 #include <Options/RNG.h>
 
 namespace walker {
-//! control and parsing
 namespace ctr {
 
 //! Storage of selected options
@@ -39,38 +41,41 @@ using selects = tk::tuple::tagged_tuple<
 
 //! Discretization parameters storage
 using discretization = tk::tuple::tagged_tuple<
-  tag::npar,      uint64_t,  //!< Total number of particles
-  tag::nstep,     uint64_t,  //!< Number of time steps to take
-  tag::term,      tk::real,  //!< Time to terminate time stepping
-  tag::dt,        tk::real,  //!< Size of time step
+  tag::npar,      kw::npar::info::expect::type,   //!< Total number of particles
+  tag::nstep,     kw::nstep::info::expect::type,  //!< Number of time steps
+  tag::term,      kw::term::info::expect::type,   //!< Termination time
+  tag::dt,        kw::dt::info::expect::type,     //!< Size of time step
   tag::binsize,   std::vector< std::vector< tk::real > >, //!< PDF binsizes
   tag::extent,    std::vector< std::vector< tk::real > >, //!< PDF extents
-  tag::precision, std::streamsize  //!< Precision in digits
+  tag::precision, kw::precision::info::expect::type  //!< Precision in digits
 >;
 
 //! Output intervals storage
 using intervals = tk::tuple::tagged_tuple<
-  tag::tty,  uint32_t,  //!< TTY output interval
-  tag::stat, uint32_t,  //!< Statistics output interval
-  tag::pdf,  uint32_t   //!< PDF output interval
+  tag::tty,  kw::ttyi::info::expect::type,      //!< TTY output interval
+  tag::stat, kw::interval::info::expect::type,  //!< Statistics output interval
+  tag::pdf,  kw::interval::info::expect::type   //!< PDF output interval
 >;
 
 //! IO parameters storage
 using ios = tk::tuple::tagged_tuple<
-  tag::control,         std::string,  //!< Control filename
-  tag::input,           std::string,  //!< Input filename
-  tag::output,          std::string,  //!< Output filename
-  tag::pdf,             std::string,  //!< PDF filename
-  tag::stat,            std::string,  //!< Statistics filename
-  tag::pdfnames,        std::vector< std::string >  //!< PDF identifiers
+  tag::control,         kw::control::info::expect::type,  //!< Control filename
+  tag::input,           std::string,                  //!< Input filename
+  tag::output,          std::string,                  //!< Output filename
+  tag::pdf,             kw::pdf::info::expect::type,  //!< PDF filename
+  tag::stat,            kw::stat::info::expect::type, //!< Statistics filename
+  tag::pdfnames,        std::vector< std::string >    //!< PDF identifiers
 >;
 
 //! Dirichlet parameters storage
 using DirichletParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::b,           std::vector< std::vector< tk::real > >,
-  tag::S,           std::vector< std::vector< tk::real > >,
-  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -79,10 +84,14 @@ using DirichletParameters = tk::tuple::tagged_tuple<
 //! Generalized Dirichlet parameters storage
 using GenDirichletParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::b,           std::vector< std::vector< tk::real > >,
-  tag::S,           std::vector< std::vector< tk::real > >,
-  tag::kappa,       std::vector< std::vector< tk::real > >,
-  tag::c,           std::vector< std::vector< tk::real > >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
+  tag::c,           std::vector< std::vector<
+                      kw::sde_c::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -91,7 +100,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
 //! Wright-Fisher parameters storage
 using WrightFisherParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::omega,       std::vector< std::vector< tk::real > >,
+  tag::omega,       std::vector< std::vector<
+                      kw::sde_omega::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -100,9 +110,12 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
 //! Ornstein-Uhlenbeck parameters storage
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::sigma,       std::vector< std::vector< tk::real > >,
-  tag::theta,       std::vector< std::vector< tk::real > >,
-  tag::mu,          std::vector< std::vector< tk::real > >,
+  tag::sigma,       std::vector< std::vector<
+                      kw::sde_sigma::info::expect::type > >,
+  tag::theta,       std::vector< std::vector<
+                      kw::sde_theta::info::expect::type > >,
+  tag::mu,          std::vector< std::vector<
+                      kw::sde_mu::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -111,9 +124,12 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
 //! Diagonal Ornstein-Uhlenbeck parameters storage
 using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::sigma,       std::vector< std::vector< tk::real > >,
-  tag::theta,       std::vector< std::vector< tk::real > >,
-  tag::mu,          std::vector< std::vector< tk::real > >,
+  tag::sigma,       std::vector< std::vector<
+                      kw::sde_sigma::info::expect::type > >,
+  tag::theta,       std::vector< std::vector<
+                      kw::sde_theta::info::expect::type > >,
+  tag::mu,          std::vector< std::vector<
+                      kw::sde_mu::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -122,9 +138,12 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
 //! Skew-normal parameters storage
 using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::timescale,   std::vector< std::vector< tk::real > >,
-  tag::sigma,       std::vector< std::vector< tk::real > >,
-  tag::lambda,      std::vector< std::vector< tk::real > >,
+  tag::timescale,   std::vector< std::vector<
+                      kw::sde_T::info::expect::type > >,
+  tag::sigma,       std::vector< std::vector<
+                      kw::sde_sigma::info::expect::type > >,
+  tag::lambda,      std::vector< std::vector<
+                      kw::sde_lambda::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -133,9 +152,12 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
 //! Gamma parameters storage
 using GammaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::b,           std::vector< std::vector< tk::real > >,
-  tag::S,           std::vector< std::vector< tk::real > >,
-  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -144,9 +166,12 @@ using GammaParameters = tk::tuple::tagged_tuple<
 //! Beta parameters storage
 using BetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::b,           std::vector< std::vector< tk::real > >,
-  tag::S,           std::vector< std::vector< tk::real > >,
-  tag::kappa,       std::vector< std::vector< tk::real > >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -155,9 +180,9 @@ using BetaParameters = tk::tuple::tagged_tuple<
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
-  tag::rngmkl,       tk::ctr::RNGMKLParameters,   //!< MKL RNG parameters
+  tag::rngmkl,       tk::ctr::RNGMKLParameters,
   #endif
-  tag::rngsse,       tk::ctr::RNGSSEParameters,   //!< RNGSSE RNG parameters
+  tag::rngsse,       tk::ctr::RNGSSEParameters,
   tag::dirichlet,    DirichletParameters,
   tag::gendir,       GenDirichletParameters,
   tag::wrightfisher, WrightFisherParameters,

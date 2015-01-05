@@ -2,10 +2,13 @@
 /*!
   \file      src/Control/UnitTest/Types.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 09:20:20 AM MST
+  \date      Sat 17 Jan 2015 06:48:40 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types for UnitTest's parsers
-  \details   Types for UnitTest's parsers
+  \details   Types for UnitTest's parsers. This file defines the components of
+    the tagged tuple that stores heteroegeneous objects in a hierarchical way.
+    These components are therefore part of the grammar stack that is filled
+    during command0line argument parsing.
 */
 //******************************************************************************
 #ifndef UnitTestTypes_h
@@ -15,7 +18,6 @@
 #include <Keyword.h>
 
 namespace unittest {
-//! control and parsing
 namespace ctr {
 
 //! PEGTL location type to use throughout all of UnitTest's parsers
