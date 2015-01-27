@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Fri 26 Dec 2014 05:27:43 PM MST
+  \date      Thu 22 Jan 2015 06:12:56 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Integrator used to advance ordinary and stochastic differential eqs.
   \details   Integrator used to advance ordinary and stochastic differential
@@ -46,7 +46,7 @@ class Integrator : public CBase_Integrator< Proxy > {
 
     //! Set initial conditions
     void ic() {
-      for (const auto& eq : g_diffeqs) eq.initialize( m_particles );
+      for (const auto& eq : g_diffeqs) eq.initialize( m_particles, m_stat );
       m_proxy.init();   // signal to host that initialization is complete
     }
 
@@ -96,7 +96,7 @@ class Integrator : public CBase_Integrator< Proxy > {
   private:
     Proxy m_proxy;                      //!< Host proxy
     tk::ParProps m_particles;           //!< Particle properties
-    tk::Statistics m_stat;                  //!< Statistics
+    tk::Statistics m_stat;              //!< Statistics
 };
 
 } // walker::

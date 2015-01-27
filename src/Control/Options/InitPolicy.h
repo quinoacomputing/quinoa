@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:46:50 PM MST
+  \date      Wed 21 Jan 2015 07:58:21 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation initialization policy options
   \details   Differential equation initialization policy options
@@ -49,11 +49,11 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         //! Group, i.e., options, name
         "Initialization Policy",
         //! Enums -> names
-        { { InitPolicyType::RAW, kw::raw().name() },
-          { InitPolicyType::ZERO, kw::zero().name() } },
+        { { InitPolicyType::RAW, kw::raw::name() },
+          { InitPolicyType::ZERO, kw::zero::name() } },
         //! keywords -> Enums
-        { { kw::raw().string(), InitPolicyType::RAW },
-          { kw::zero().string(), InitPolicyType::ZERO } } ) {}
+        { { kw::raw::string(), InitPolicyType::RAW },
+          { kw::zero::string(), InitPolicyType::ZERO } } ) {}
 };
 
 } // ctr::

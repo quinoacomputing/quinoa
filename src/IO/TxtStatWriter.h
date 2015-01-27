@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:34:13 AM MST
+  \date      Wed 21 Jan 2015 03:56:06 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Text statistics writer
   \details   Text statistics writer
@@ -30,15 +30,13 @@ class TxtStatWriter : public tk::Writer {
       : Writer( filename, mode ) {}
 
     //! Write out statistics file header
-    void header( const std::vector< bool >& plotOrd,
-                 const std::vector< std::string >& nameOrd,
+    void header( const std::vector< std::string >& nameOrd,
                  const std::vector< std::string >& nameCen ) const;
 
     //! Write statistics file
     std::size_t stat( int it, tk::real t,
                       const std::vector< tk::real >& ordinary,
-                      const std::vector< tk::real >& central,
-                      const std::vector< bool >& plotOrd );
+                      const std::vector< tk::real >& central );
 };
 
 } // tk::

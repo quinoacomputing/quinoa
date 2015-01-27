@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:27:00 PM MST
+  \date      Wed 21 Jan 2015 07:59:32 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Text floating-point output options
   \details   Text floating-point output options
@@ -53,13 +53,13 @@ class TxtFloatFormat : public tk::Toggle< TxtFloatFormatType > {
         //! Group, i.e., options, name
         "Text floating-point format",
         //! Enums -> names
-        { { TxtFloatFormatType::DEFAULT, kw::txt_float_default().name() },
-          { TxtFloatFormatType::FIXED, kw::txt_float_fixed().name() },
-          { TxtFloatFormatType::SCIENTIFIC, kw::txt_float_scientific().name() } },
+        { { TxtFloatFormatType::DEFAULT, kw::txt_float_default::name() },
+          { TxtFloatFormatType::FIXED, kw::txt_float_fixed::name() },
+          { TxtFloatFormatType::SCIENTIFIC, kw::txt_float_scientific::name() } },
         //! keywords -> Enums
-        { { kw::txt_float_default().string(), TxtFloatFormatType::DEFAULT },
-          { kw::txt_float_fixed().string(), TxtFloatFormatType::FIXED },
-        { kw::txt_float_scientific().string(), TxtFloatFormatType::SCIENTIFIC } }
+        { { kw::txt_float_default::string(), TxtFloatFormatType::DEFAULT },
+          { kw::txt_float_fixed::string(), TxtFloatFormatType::FIXED },
+        { kw::txt_float_scientific::string(), TxtFloatFormatType::SCIENTIFIC } }
       ) {}
 };
 

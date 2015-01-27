@@ -2,10 +2,15 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 11:11:54 AM MST
+  \date      Mon 26 Jan 2015 05:49:37 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
-  \details   Stack of differential equations
+  \details   This file defines class DiffEqStack, which implements various
+    functionality related to registering and instantiating differential equation
+    types. Registration and instantiation use a differential equation factory,
+    which is a std::map (an associative container), associating unique
+    differential equation keys to their constructor calls. For more details, see
+    the in-code documentation of the constructor.
 */
 //******************************************************************************
 
@@ -15,7 +20,7 @@
 #include <OrnsteinUhlenbeck.h>
 #include <DiagOrnsteinUhlenbeck.h>
 #include <Dirichlet.h>
-#include <GenDirichlet.h>
+#include <GeneralizedDirichlet.h>
 #include <WrightFisher.h>
 #include <Beta.h>
 #include <SkewNormal.h>
@@ -27,6 +32,69 @@ using walker::DiffEqStack;
 DiffEqStack::DiffEqStack()
 //******************************************************************************
 //  Constructor: register all differential equations into factory
+//! \details This constructor consists of several blocks, each registering a
+//!   potentially large number of entries in the differential equation factory,
+//!   m_factory, which is of type walker::DiffEqFactory, a std::map. At this
+//!   time, each type of differential equation can be configured to use a unique
+//!   _initialization policy_ and a unique _coefficients policy_. (More types
+//!   of policies will most likely come in the future.) The policy classes are
+//!   template arguments to the differential equation classes and influence
+//!   their behavior in a different way, abstracting away certain functions,
+//!   e.g., how to set initial conditions and how to update their coefficients
+//!   during time integration. For more information on policy-based design, see
+//!   http://en.wikipedia.org/wiki/Policy-based_design. This abstraction allows
+//!   [separation of concerns](http://en.wikipedia.org/wiki/Separation_of_concerns).
+//!
+//!   Since the functionality of the policies are orthogonal to each other,
+//!   i.e., they do not depend on each other or their host (the differential
+//!   equation class), a Cartesian product of combinations are possible,
+//!   depending on which policies are selected. _This constructor registers all
+//!   possible combinations of policies for all available differential
+//!   equations._ By _register_, we mean, an entry is recorded in an associative
+//!   container, a std::map, that associates a lightweight key of type
+//!   walker::ctr::DiffEqKey, consisting of only an enum for each policy type,
+//!   to an std::function object that holds the a constructor bound to its
+//!   arguments corresponding to a particular differential equation + policies
+//!   combination. Note that registering these entries in the map does not
+//!   invoke the constructors. The mapped value simply stores how the
+//!   constructors should be invoked at a later time. At some point later,
+//!   based on user input, we then instantiate only the differential equations
+//!   (and only those configurations) that are requested by the user.
+//!
+//!   Since all differential equation types (registered in the factory)
+//!   "inherit" from a common "base", client-code is unform and generic, and
+//!   thus immune to changes in the inner workings of the particular
+//!   differential equations as long as they fullfill certain concepts, i.e.,
+//!   implement certain member functinos, enforced by the _common base_, DiffEq.
+//!   The words "inherit and "base" are quoted here, because the common base
+//!   does not use inheritance in the normal OOP sense and does not use
+//!   reference semantics, i.e., pointers, visible to client-code either. The
+//!   relationship is more of a _models a_-type, which simplifies client-code
+//!   and allows for the benfits of runtime inheritance with value-semantics
+//!   which is less error prone and easier to read. See more about the
+//!   _models-a_ relationship and its implementation in DiffEq/DiffEq.h.
+//!
+//!   The design discussed above allows the registration, instantiation, and
+//!   use of the differential equations to be generic, which eliminates a lot of
+//!   boiler-plate code and makes client-code uniform.
+//!
+//!   _Details of registration using mpl::cartesian_product:_
+//!
+//!   The template argument to mpl::cartesian_product requires a sequence of
+//!   sequences of types. We use vector of vectors of types, listing all
+//!   possible policies. The constructor argument to mpl::cartesian_product is a
+//!   functor that is to be applied to all combinations. mpl::cartesian_product
+//!   will then create all possible combinations of these types and call the
+//!   user-supplied functor with each type of the created sequence as a template
+//!   parameter. The user-supplied functor here is registerDiffEq, which, i.e.,
+//!   its constructor call, needs a single template argument, a class templated
+//!   on policy classes. This is the differential equation class to be
+//!   configured by selecting policies and to be registered. The arguments to
+//!   registerDiffEq's constructor are the factory, the enum denoting the
+//!   differential equation type, and a reference to a variable of type
+//!   std::set< ctr::DiffEqType >, which is only used internally to DiffEqStack
+//!   for counting up the number of unique differential equation types
+//!   registered, used for diagnostics purposes.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -34,7 +102,7 @@ DiffEqStack::DiffEqStack()
 
   // Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DirPolicies = mpl::vector< tk::InitPolicies, DirCoeffPolicies >;
+  using DirPolicies = mpl::vector< tk::InitPolicies, DirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< DirPolicies >(
     registerDiffEq< Dirichlet >
@@ -42,33 +110,37 @@ DiffEqStack::DiffEqStack()
 
   // Lochner's generalized Dirichlet SDE
   // Construct vector of vectors for all possible policies for SDE
-  using GenDirPolicies = mpl::vector< tk::InitPolicies, GenDirCoeffPolicies >;
+  using GenDirPolicies =
+    mpl::vector< tk::InitPolicies, GeneralizedDirichletCoeffPolicies >;
   // Register SDE for all combinations of policies
   mpl::cartesian_product< GenDirPolicies >(
-    registerDiffEq< GenDirichlet >
+    registerDiffEq< GeneralizedDirichlet >
                   ( m_factory, ctr::DiffEqType::GENDIR, m_eqTypes ) );
 
   // Wright-Fisher SDE
   // Construct vector of vectors for all possible policies for SDE
-  using WFPolicies = mpl::vector< tk::InitPolicies, WFCoeffPolicies >;
+  using WrightFisherPolicies =
+    mpl::vector< tk::InitPolicies, WrightFisherCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< WFPolicies >(
+  mpl::cartesian_product< WrightFisherPolicies >(
     registerDiffEq< WrightFisher >
                   ( m_factory, ctr::DiffEqType::WRIGHTFISHER, m_eqTypes ) );
 
   // Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
-  using OUPolicies = mpl::vector< tk::InitPolicies, OUCoeffPolicies >;
+  using OrnsteinUhlenbeckPolicies =
+    mpl::vector< tk::InitPolicies, OrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< OUPolicies >(
+  mpl::cartesian_product< OrnsteinUhlenbeckPolicies >(
     registerDiffEq< OrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::OU, m_eqTypes ) );
 
   // Diagonal Ornstein-Uhlenbeck SDE
   // Construct vector of vectors for all possible policies for SDE
-  using DiagOUPolicies = mpl::vector< tk::InitPolicies, DiagOUCoeffPolicies >;
+  using DiagOrnsteinUhlenbeckPolicies =
+    mpl::vector< tk::InitPolicies, DiagOrnsteinUhlenbeckCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< DiagOUPolicies >(
+  mpl::cartesian_product< DiagOrnsteinUhlenbeckPolicies >(
     registerDiffEq< DiagOrnsteinUhlenbeck >
                   ( m_factory, ctr::DiffEqType::DIAG_OU, m_eqTypes ) );
 
@@ -103,29 +175,30 @@ std::vector< walker::DiffEq >
 DiffEqStack::selected() const
 //******************************************************************************
 //  Instantiate all selected differential equations
+//! \return std::vector of instantiated differential equation objects
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::DiffEqType, int > cnt; //!< Count DiffEqs per type
-  std::vector< DiffEq > diffeqs;
+  std::map< ctr::DiffEqType, int > cnt; // count DiffEqs per type
+  std::vector< DiffEq > diffeqs;        // will store instantiated DiffEqs
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
     if (d == ctr::DiffEqType::DIRICHLET)
-      diffeqs.push_back( createDiffEq< tag::dirichlet >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::dirichlet >( d, cnt ) );
     else if (d == ctr::DiffEqType::GENDIR)
-      diffeqs.push_back( createDiffEq< tag::gendir >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::gendir >( d, cnt ) );
     else if (d == ctr::DiffEqType::WRIGHTFISHER)
-      diffeqs.push_back( createDiffEq< tag::wrightfisher >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::wrightfisher >( d, cnt ) );
     else if (d == ctr::DiffEqType::OU)
-      diffeqs.push_back( createDiffEq< tag::ou >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::ou >( d, cnt ) );
     else if (d == ctr::DiffEqType::DIAG_OU)
-      diffeqs.push_back( createDiffEq< tag::diagou >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::diagou >( d, cnt ) );
     else if (d == ctr::DiffEqType::BETA)
-      diffeqs.push_back( createDiffEq< tag::beta >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::beta >( d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
-      diffeqs.push_back( createDiffEq< tag::skewnormal >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
-      diffeqs.push_back( createDiffEq< tag::gamma >( m_factory, d, cnt ) );
+      diffeqs.push_back( createDiffEq< tag::gamma >( d, cnt ) );
     else Throw( "Can't find selected DiffEq" );
   }
 
@@ -136,10 +209,12 @@ std::vector< std::vector< std::pair< std::string, std::string > > >
 DiffEqStack::info() const
 //******************************************************************************
 //  Return information on all selected differential equations
+//! \return 
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::DiffEqType, int > cnt; //!< Count DiffEqs per type
+  std::map< ctr::DiffEqType, int > cnt;         // count DiffEqs per type
+  // will store info on all differential equations selected
   std::vector< std::vector< std::pair< std::string, std::string > > > info;
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
@@ -169,6 +244,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the Dirichlet SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -205,6 +282,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on Lochner's generalized Dirichlet SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -243,6 +322,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the Wright-Fisher SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -275,6 +356,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the Ornstein-Uhlenbeck SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -312,6 +395,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the diagonal Ornstein-Uhlenbeck SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -348,6 +433,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the beta SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -384,6 +471,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the skew-normal SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -420,6 +509,8 @@ std::vector< std::pair< std::string, std::string > >
 DiffEqStack::infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const
 //******************************************************************************
 //  Return information on the gamma SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {

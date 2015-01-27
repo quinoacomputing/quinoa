@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 11:53:30 AM MST
+  \date      Wed 21 Jan 2015 07:59:50 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -63,24 +63,24 @@ class DiffEq : public tk::Toggle< DiffEqType > {
       Toggle< DiffEqType >( "Differential equation",
         //! Enums -> names
         { { DiffEqType::NO_DIFFEQ, "n/a" },
-          { DiffEqType::OU, kw::ornstein_uhlenbeck().name() },
-          { DiffEqType::DIAG_OU, kw::diag_ou().name() },
-          { DiffEqType::SKEWNORMAL, kw::skewnormal().name() },
-          { DiffEqType::GAMMA, kw::gamma().name() },
-          { DiffEqType::BETA, kw::beta().name() },
-          { DiffEqType::DIRICHLET, kw::dirichlet().name() },
-          { DiffEqType::GENDIR, kw::gendir().name() },
-          { DiffEqType::WRIGHTFISHER, kw::wrightfisher().name() } },
+          { DiffEqType::OU, kw::ornstein_uhlenbeck::name() },
+          { DiffEqType::DIAG_OU, kw::diag_ou::name() },
+          { DiffEqType::SKEWNORMAL, kw::skewnormal::name() },
+          { DiffEqType::GAMMA, kw::gamma::name() },
+          { DiffEqType::BETA, kw::beta::name() },
+          { DiffEqType::DIRICHLET, kw::dirichlet::name() },
+          { DiffEqType::GENDIR, kw::gendir::name() },
+          { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
         //! keywords -> Enums
         { { "no_diffeq", DiffEqType::NO_DIFFEQ },
-          { kw::ornstein_uhlenbeck().string(), DiffEqType::OU },
-          { kw::diag_ou().string(), DiffEqType::DIAG_OU },
-          { kw::skewnormal().string(), DiffEqType::SKEWNORMAL },
-          { kw::gamma().string(), DiffEqType::GAMMA },
-          { kw::beta().string(), DiffEqType::BETA },
-          { kw::dirichlet().string(), DiffEqType::DIRICHLET },
-          { kw::gendir().string(), DiffEqType::GENDIR },
-          { kw::wrightfisher().string(), DiffEqType::WRIGHTFISHER } } ) {}
+          { kw::ornstein_uhlenbeck::string(), DiffEqType::OU },
+          { kw::diag_ou::string(), DiffEqType::DIAG_OU },
+          { kw::skewnormal::string(), DiffEqType::SKEWNORMAL },
+          { kw::gamma::string(), DiffEqType::GAMMA },
+          { kw::beta::string(), DiffEqType::BETA },
+          { kw::dirichlet::string(), DiffEqType::DIRICHLET },
+          { kw::gendir::string(), DiffEqType::GENDIR },
+          { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}
 };
 
 } // ctr::

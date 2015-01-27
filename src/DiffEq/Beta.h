@@ -2,10 +2,13 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 11:04:44 AM MST
+  \date      Fri 23 Jan 2015 06:43:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Beta SDE
-  \details   Beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843
+  \brief     System of beta SDEs
+  \details   This file implements the time integration of a system of stochastic
+    differential equations (SDEs) with linear drift and quadratic diagonal
+    diffusion, whose invariant is the joint beta distribution. For more on the
+    beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
 */
 //******************************************************************************
 #ifndef Beta_h
@@ -22,32 +25,47 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Beta SDE used polymorphically with DiffEq
+//! \brief Beta SDE used polymorphically with DiffEq
+//! \details The template arguments specify policies and are used to configure
+//!   the behavior of the class. The policies are:
+//!   - Init - initialization policy, see DiffEq/InitPolicy.h
+//!   - Coefficients - coefficients policy, see DiffEq/BetaCoeffPolicy.h
 template< class Init, class Coefficients >
 class Beta {
 
   public:
-    //! Constructor
+    //! \brief Constructor
+    //! \param[in] c Index specifying which system of beta SDEs to construct.
+    //!   There can be multiple beta ... end blocks in a control file. This
+    //!   index specifies which beta SDE system to instantiate. The index
+    //!   corresponds to the order in which the beta ... end blocks are given
+    //!   the control file.
+    //! \author J. Bakosi
     explicit Beta( unsigned int c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::beta >()[c] ),
-      m_offset(g_inputdeck.get< tag::component >().offset< tag::beta >(c)),
+      m_depvar( g_inputdeck.get< tag::param, tag::beta, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< tag::beta >().at(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< tag::beta >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::beta, tag::rng >()[c] ) ) )
-    {
-      const auto& b = g_inputdeck.get< tag::param, tag::beta, tag::b >();
-      const auto& S = g_inputdeck.get< tag::param, tag::beta, tag::S >();
-      const auto& k = g_inputdeck.get< tag::param, tag::beta, tag::kappa >();
-      ErrChk( b.size() > c, "Indexing out of beta SDE parameters 'b'");
-      ErrChk( S.size() > c, "Indexing out of beta OU SDE parameters 'S'");
-      ErrChk( k.size() > c, "Indexing out of beta OU SDE parameters 'kappa'");
-      // Use coefficients policy to initialize coefficients
-      Coefficients( m_ncomp, b[c], S[c], k[c], m_b, m_S, m_k );
+        g_inputdeck.get< tag::param, tag::beta, tag::rng >().at(c) ) ) ),
+      coeff( m_ncomp,
+             g_inputdeck.get< tag::param, tag::beta, tag::b >().at(c),
+             g_inputdeck.get< tag::param, tag::beta, tag::S >().at(c),
+             g_inputdeck.get< tag::param, tag::beta, tag::kappa >().at(c),
+             m_b, m_S, m_k ) {}
+
+    //! Initalize SDE, prepare for time integration
+    //! \param[inout] particles Array of particle properties 
+    //! \param[in] stat Statistics object for accessing moments 
+    //! \author J. Bakosi
+    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+      //! Set initial conditions using initialization policy
+      Init( { particles } );
+      //! Pre-lookup required statistical moments
+      coeff.lookup( stat, m_depvar );
     }
 
-    //! Set initial conditions
-    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
-
-    //! Advance particles
+    //! \brief Advance particles according to the system of beta SDEs
+    //! \author J. Bakosi
     void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -66,12 +84,18 @@ class Beta {
     }
 
   private:
+    const char m_depvar;                //!< Dependent variable
     const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< kw::sde_b::info::expect::type > m_b;        //!< Coefficients
+
+    //! Coefficients
+    std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
+
+    //! Coefficients policy
+    Coefficients coeff;
 };
 
 } // walker::

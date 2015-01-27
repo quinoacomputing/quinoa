@@ -34,6 +34,8 @@ RNGTest
  - Implement a fall-back RNG (Boost?, STL?) that guaranteed to work everywhere.
    (RNGSSE's assembly does not work on ARM.)
  - Detect architecture. If not x86, don't try to build RNGSSE.
+ - Add --all command-line argument to simply test all available RNGs without any
+   control file.
  - The functions in Handler.[Ch] work with the main Charm chare proxy,
    which is a first step toward fulfilling their intended functionality with
    Charm and handling exceptions with Charm. This works only in some
@@ -146,7 +148,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 17 Jan 2015 07:33:45 AM MST
+<em>Page last updated:</em> Fri 23 Jan 2015 06:57:22 AM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

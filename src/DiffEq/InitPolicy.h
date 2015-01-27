@@ -2,10 +2,31 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 11:10:54 AM MST
+  \date      Mon 26 Jan 2015 01:23:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Initialization policies
-  \details   Initialization policies
+  \details   This file defines initialization policy classes. As opposed to
+    coefficients policies, see, e.g., DiffEq/BetaCoeffPolicy.h, initialization
+    policies are not SDE-specific -- at least at this time.
+
+    General requirements on initialization policy classes:
+
+    - Must define a _constructor_, which is used to do the initialization.
+      Required signature:
+      \code{.cpp}
+        InitPolicyName( ParProps& particles )
+      \endcode
+      where particles denotes the particle properties array to be initialized.
+
+    - Must define the static function _type()_, returning the enum value of the
+      policy option. Example:
+      \code{.cpp}
+        static ctr::InitPolicyType type() noexcept {
+          return ctr::InitPolicyType::RAW;
+        }
+      \endcode
+      which returns the enum value of the option from the underlying option
+      class, collecting all possible options for initialization policies.
 */
 //******************************************************************************
 #ifndef InitPolicy_h
@@ -25,31 +46,21 @@ namespace tk {
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
 
-  //! Constructor: default for accessing policy name, type, etc.
-  InitRaw() = default;
   //! Constructor: initialize particle properties (raw: no-op)
   InitRaw( ParProps& particles ) {}
 
-  std::string policy() const noexcept
-  { return ctr::InitPolicy().name( ctr::InitPolicyType::RAW ); }
-
-  ctr::InitPolicyType type() const noexcept
+  static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
 };
 
 //! Zero initialization policy: zero particle properties
 struct InitZero {
 
-  //! Constructor: default for accessing policy name, type, etc.
-  InitZero() = default;
   //! Constructor: initialize particle properties (zero)
   InitZero( ParProps& particles )
   { memset( particles.ptr(), 0, particles.size()*sizeof(real) ); }
 
-  std::string policy() const noexcept
-  { return ctr::InitPolicy().name( ctr::InitPolicyType::ZERO ); }
-
-  ctr::InitPolicyType type() const noexcept
+  static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::ZERO; }
 };
 

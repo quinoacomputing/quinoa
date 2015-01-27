@@ -2,13 +2,16 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 11:05:22 AM MST
+  \date      Mon 26 Jan 2015 11:30:21 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Dirichlet SDE
-  \details   Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981,
-             \f[\mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
-             (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
-             Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1 \f]
+  \details   This file implements the time integration of a system of stochastic
+    differential equations (SDEs), whose invariant is the Dirichlet
+    distribution. For more info on the Dirichlet SDE, see
+    http://dx.doi.org/10.1155/2013/842981,
+    \f[ \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
+        (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
+        Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1 \f]
 */
 //******************************************************************************
 #ifndef Dirichlet_h
@@ -17,7 +20,7 @@
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <DirCoeffPolicy.h>
+#include <DirichletCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -25,32 +28,47 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Dirichlet SDE used polymorphically with DiffEq
+//! \brief Dirichlet SDE used polymorphically with DiffEq
+//! \details The template arguments specify policies and are used to configure
+//!   the behavior of the class. The policies are:
+//!   - Init - initialization policy, see DiffEq/InitPolicy.h
+//!   - Coefficients - coefficients policy, see DiffEq/DirCoeffPolicy.h
 template< class Init, class Coefficients >
 class Dirichlet {
 
   public:
-    //! Constructor
+    //! \brief Constructor
+    //! \param[in] c Index specifying which Dirichlet SDE to construct. There
+    //!   can be multiple dirichlet ... end blocks in a control file. This index
+    //!   specifies which Dirichlet SDE to instantiate. The index corresponds to
+    //!   the order in which the dirichlet ... end blocks are given the control
+    //!   file.
+    //! \author J. Bakosi
     explicit Dirichlet( unsigned int c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::dirichlet >()[c] ),
-      m_offset(g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c)),
+      m_depvar( g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >()[c] ) ) )
-    {
-      const auto& b = g_inputdeck.get< tag::param, tag::dirichlet, tag::b >();
-      const auto& S = g_inputdeck.get< tag::param, tag::dirichlet, tag::S >();
-      const auto& k = g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >();
-      ErrChk( b.size() > c, "Indexing out of Dirichlet SDE parameters 'b'");
-      ErrChk( S.size() > c, "Indexing out of Dirichlet SDE parameters 'S'");
-      ErrChk( k.size() > c, "Indexing out of Dirichlet SDE parameters 'kappa'");
-      // Use coefficients policy to initialize coefficients
-      Coefficients( m_ncomp, b[c], S[c], k[c], m_b, m_S, m_k );
+        g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >().at(c) ) ) ),
+      coeff( m_ncomp,
+             g_inputdeck.get< tag::param, tag::dirichlet, tag::b >().at(c),
+             g_inputdeck.get< tag::param, tag::dirichlet, tag::S >().at(c),
+             g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >().at(c),
+             m_b, m_S, m_k ) {}
+
+    //! Initalize SDE, prepare for time integration
+    //! \param[inout] particles Array of particle properties 
+    //! \param[in] stat Statistics object for accessing moments 
+    //! \author J. Bakosi
+    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+      //! Set initial conditions using initialization policy
+      Init( { particles } );
+      //! Pre-lookup required statistical moments
+      coeff.lookup( stat, m_depvar );
     }
 
-    //! Set initial conditions
-    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
-
-    //! Advance particles
+    //! \brief Advance particles according to the Dirichlet SDE
+    //! \author J. Bakosi
     void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -74,12 +92,18 @@ class Dirichlet {
     }
 
   private:
+    const char m_depvar;                //!< Dependent variable
     const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< kw::sde_b::info::expect::type > m_b;        //!< Coefficients
+
+    //! Coefficients
+    std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
+
+    //! Coefficients policy
+    Coefficients coeff;
 };
 
 } // walker::

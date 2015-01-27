@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MixRate.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 08:01:03 PM MST
+  \date      Wed 21 Jan 2015 08:00:24 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
@@ -51,10 +51,10 @@ class MixRate : public tk::Toggle<MixRateType> {
         "Material mix rate",
         //! Enums -> names
         { { MixRateType::NO_MIXRATE, "n/a" },
-          { MixRateType::GAMMA, kw::mixrate_gamma().name() } },
+          { MixRateType::GAMMA, kw::mixrate_gamma::name() } },
         //! keywords -> Enums
         { { "no_mixrate", MixRateType::NO_MIXRATE },
-          { kw::mixrate_gamma().string(), MixRateType::GAMMA } } ) {}
+          { kw::mixrate_gamma::string(), MixRateType::GAMMA } } ) {}
 };
 
 } // ctr::

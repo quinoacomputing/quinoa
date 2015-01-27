@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/Options/Battery.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:42:35 PM MST
+  \date      Wed 21 Jan 2015 08:48:06 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite batteries options
   \details   Random number generator test suite batteries options
@@ -53,14 +53,14 @@ class Battery : public tk::Toggle< BatteryType > {
         "RNG battery",
         //! Enums -> names
         { { BatteryType::NO_BATTERY, "n/a" },
-          { BatteryType::SMALLCRUSH, kw::smallcrush().name() },
-          { BatteryType::CRUSH, kw::crush().name() },
-          { BatteryType::BIGCRUSH, kw::bigcrush().name() } },
+          { BatteryType::SMALLCRUSH, kw::smallcrush::name() },
+          { BatteryType::CRUSH, kw::crush::name() },
+          { BatteryType::BIGCRUSH, kw::bigcrush::name() } },
         //! keywords -> Enums
         { { "no_battery", BatteryType::NO_BATTERY },
-          { kw::smallcrush().string(), BatteryType::SMALLCRUSH },
-          { kw::crush().string(), BatteryType::CRUSH },
-          { kw::bigcrush().string(), BatteryType::BIGCRUSH } } ) {}
+          { kw::smallcrush::string(), BatteryType::SMALLCRUSH },
+          { kw::crush::string(), BatteryType::CRUSH },
+          { kw::bigcrush::string(), BatteryType::BIGCRUSH } } ) {}
 };
 
 } // ctr::

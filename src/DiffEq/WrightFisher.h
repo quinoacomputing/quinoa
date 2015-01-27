@@ -2,11 +2,13 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 11:00:25 AM MST
+  \date      Mon 26 Jan 2015 12:04:53 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
-  \details   Wright-Fisher SDE, see
-             http://www.sciencedirect.com/science/article/pii/S0040580912001013
+  \details   This file implements the time integration of a system of stochastic
+    differential equations (SDEs), whose invariant is the Dirichlet
+    distribution. For more details on the Wright-Fisher SDE, see
+    http://www.sciencedirect.com/science/article/pii/S0040580912001013.
 */
 //******************************************************************************
 #ifndef WrightFisher_h
@@ -21,7 +23,7 @@
 #endif
 
 #include <InitPolicy.h>
-#include <WFCoeffPolicy.h>
+#include <WrightFisherCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -29,7 +31,11 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Wright-Fisher SDE used polymorphically with DiffEq
+//! \brief Wright-Fisher SDE used polymorphically with DiffEq
+//! \details The template arguments specify policies and are used to configure
+//!   the behavior of the class. The policies are:
+//!   - Init - initialization policy, see DiffEq/InitPolicy.h
+//!   - Coefficients - coefficients policy, see DiffEq/WrightFisherCoeffPolicy.h
 template< class Init, class Coefficients >
 class WrightFisher {
 
@@ -45,28 +51,36 @@ class WrightFisher {
   }
 
   public:
-    //! Constructor: use coefficients policy to initialize coefficients
+    //! \brief Constructor
+    //! \param[in] c Index specifying which system of Wright-Fisher SDEs to
+    //!   construct. There can be multiple wright-fisher ... end blocks in a
+    //!   control file. This index specifies which Wright-Fisher SDE system to
+    //!   instantiate. The index corresponds to the order in which the
+    //!   wright-fisher ... end blocks are given the control file.
+    //! \author J. Bakosi
     explicit WrightFisher( unsigned int c ) :
+      m_depvar( g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >().at(c) ),
       m_ncomp( g_inputdeck.get< tag::component >().
-                           get< tag::wrightfisher >()[c] ),
+                           get< tag::wrightfisher >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().
                             offset< tag::wrightfisher >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >()[c] ) ) )
+        g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >().at(c) ) ) ),
+      coeff( m_ncomp,
+             g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c),
+             m_omega )
     {
       Throw( "Wright-Fisher diffusion matrix not yet implemented! See comments "
              "in code for details." );
-      const auto& omega =
-        g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >();
-      ErrChk( omega.size() > c,
-              "Indexing out of Wright-Fisher SDE parameters 'omega'");
-      // Use coefficients policy to initialize coefficients
-      Coefficients( m_ncomp, omega[c], m_omega );
     }
-
-    //! Set initial conditions
-    void initialize( tk::ParProps& particles ) const {
+    //! Initalize SDE, prepare for time integration
+    //! \param[inout] particles Array of particle properties 
+    //! \param[in] stat Statistics object for accessing moments 
+    //! \author J. Bakosi
+    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+      //! Set initial conditions using initialization policy
       //Init( { particles } );
+
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Initialize the first m_ncomp (N-1) scalars
@@ -81,9 +95,13 @@ class WrightFisher {
           par -= particles( p, i, m_offset );
         }
       }
+
+      //! Pre-lookup required statistical moments
+      coeff.lookup( stat, m_depvar );
     }
 
-    //! Advance particles
+    //! \brief Advance particles according to the Wright-Fisher SDE
+    //! \author J. Bakosi
     void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
@@ -197,10 +215,16 @@ class WrightFisher {
     }
 
   private:
+    const char m_depvar;                //!< Dependent variable
     const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< kw::sde_omega::info::expect::type > m_omega;  //!< Coefficients
+
+    //! Coefficients
+    std::vector< kw::sde_omega::info::expect::type > m_omega;
+
+    //! Coefficients policy
+    Coefficients coeff;
 };
 
 } // walker::

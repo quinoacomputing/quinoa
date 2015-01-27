@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:22:06 PM MST
+  \date      Wed 21 Jan 2015 03:58:51 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations
@@ -204,7 +204,7 @@ Distributor::info( uint64_t chunksize, uint64_t remainder ) const
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
                           std::string() );
-    sw.header( g_inputdeck.plotOrdinary(), m_nameOrdinary, m_nameCentral );
+    sw.header( m_nameOrdinary, m_nameCentral );
   }
 }
 
@@ -355,7 +355,7 @@ Distributor::outStat()
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
                           std::string(), std::ios_base::app );
-    if (sw.stat( m_it, m_t, m_ordinary, m_central, g_inputdeck.plotOrdinary() ))
+    if (sw.stat( m_it, m_t, m_ordinary, m_central ))
       m_output.get< tag::stat >() = true;
   }
 }

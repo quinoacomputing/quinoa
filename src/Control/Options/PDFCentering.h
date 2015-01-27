@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PDFCentering.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:57:10 PM MST
+  \date      Wed 21 Jan 2015 07:58:42 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file centering type options
   \details   PDF output file centering type options
@@ -51,11 +51,11 @@ class PDFCentering : public tk::Toggle< PDFCenteringType > {
         //! Group, i.e., options, name
         "PDF output file centering",
         //! Enums -> names
-        { { PDFCenteringType::ELEM, kw::elem().name() },
-          { PDFCenteringType::NODE, kw::node().name() } },
+        { { PDFCenteringType::ELEM, kw::elem::name() },
+          { PDFCenteringType::NODE, kw::node::name() } },
         //! keywords -> Enums
-        { { kw::elem().string(), PDFCenteringType::ELEM },
-          { kw::node().string(), PDFCenteringType::NODE } } ) {}
+        { { kw::elem::string(), PDFCenteringType::ELEM },
+          { kw::node::string(), PDFCenteringType::NODE } } ) {}
 };
 
 } // ctr::

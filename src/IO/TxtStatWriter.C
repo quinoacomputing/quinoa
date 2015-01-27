@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:34:17 AM MST
+  \date      Wed 21 Jan 2015 03:57:31 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TxtStat writer base class definition
   \details   TxtStat writer base class definition
@@ -17,22 +17,17 @@
 using tk::TxtStatWriter;
 
 void
-TxtStatWriter::header( const std::vector< bool >& plotOrd,
-                       const std::vector< std::string >& nameOrd,
+TxtStatWriter::header( const std::vector< std::string >& nameOrd,
                        const std::vector< std::string >& nameCen ) const
 //******************************************************************************
 //  Write out statistics file header
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( plotOrd.size() == nameOrd.size(), "plotOrd.size()!=nameOrd.size()" );
-
   m_outFile << "#     it             t";
 
   // Output names of ordinary moments
-  std::size_t i=0;
-  for (const auto& n : nameOrd)
-    if (plotOrd[i++]) m_outFile << std::setw(12) << '<' << n << ">";
+  for (const auto& n : nameOrd) m_outFile << std::setw(12) << '<' << n << ">";
 
   // Output name of central moments
   for (const auto& c : nameCen) m_outFile << std::setw(10) << '<' << c << ">";
@@ -44,8 +39,7 @@ std::size_t
 TxtStatWriter::stat( int it,
                      tk::real t,
                      const std::vector< tk::real >& ordinary,
-                     const std::vector< tk::real >& central,
-                     const std::vector< bool >& plotOrd )
+                     const std::vector< tk::real >& central )
 //******************************************************************************
 //  Write out statistics
 //! \param[in]  it         Iteration counter
@@ -59,9 +53,7 @@ TxtStatWriter::stat( int it,
             << "  ";
 
   // Output ordinary moments
-  std::size_t i=0;
-  for (const auto& o : ordinary)
-    if (plotOrd[i++]) m_outFile << " " << o << "  ";
+  for (const auto& o : ordinary) m_outFile << " " << o << "  ";
 
   // Output central moments
   for (const auto& c : central) m_outFile << " " << c << "  ";

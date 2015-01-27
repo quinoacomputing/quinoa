@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 04:57:16 PM MST
+  \date      Wed 21 Jan 2015 03:50:16 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     QuinoaPrint
   \details   QuinoaPrint
@@ -40,23 +40,15 @@ QuinoaPrint::statistics( const std::string& title ) const
        !g_inputdeck.get< tag::pdf >().empty() )
   {
     section( title );
-    stats( "Requested statistical moments", tk::ctr::requested );
-    stats( "Triggered statistical moments", tk::ctr::triggered );
-    stats( "Estimated statistical moments", tk::ctr::estimated );
+    stats( "Estimated statistical moments" );
     pdfs( "PDFs", tk::ctr::pdf );
   }
 }
 
 void
-QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
-  std::ostream&, const std::vector< tk::ctr::Term >& ) > op ) const
+QuinoaPrint::stats( const std::string& msg ) const
 //******************************************************************************
-//  Echo statistics container contents if differs from default applying op.
-//! \details See src/Control/Quinoa/Types.h for the definition of
-//! functions that may be passed in as op. Examples are 'estimated',
-//! 'requested', and 'triggered'. The operation given by the template
-//! argument and is a function pointer specifying an stream-output operator
-//! for a std::vector< tk::ctr::Term >.
+//  Echo statistics container contents if differs from default.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -65,7 +57,7 @@ QuinoaPrint::stats( const std::string& msg, std::function< std::ostream& (
 
   if (!c.empty() && c != g_inputdeck_defaults.get< tag::stat >()) {
     m_stream << m_item_name_fmt % m_item_indent % msg;
-    for (auto& v : c) op( m_stream, v );
+    for (auto& v : c) m_stream << v;
     m_stream << '\n';
   }
 }

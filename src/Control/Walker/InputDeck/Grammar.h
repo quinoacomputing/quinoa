@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 09:09:09 AM MST
+  \date      Fri 23 Jan 2015 06:35:37 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -252,52 +252,53 @@ namespace deck {
 
   //! Beta SDE
   struct beta :
-         pegtl::ifmust< scan_sde< use< kw::beta > >,
-                        tk::grm::block< Stack,
-                                        use< kw::end >,
-                                        tk::grm::depvar< Stack,
-                                                         use,
-                                                         tag::beta,
-                                                         tag::depvar >,
-                                        tk::grm::component< Stack,
-                                                            use< kw::ncomp >,
-                                                            tag::beta >,
-                                        tk::grm::rng< Stack,
-                                                      use,
-                                                      use< kw::rng >,
-                                                      tk::ctr::RNG,
-                                                      tag::beta,
-                                                      tag::rng >,
-                                        tk::grm::policy< Stack,
-                                                         use,
-                                                         use< kw::init >,
-                                                         tk::ctr::InitPolicy,
-                                                         tag::beta,
-                                                         tag::initpolicy >,
-                                        tk::grm::policy< Stack,
-                                                         use,
-                                                         use< kw::coeff >,
-                                                         tk::ctr::CoeffPolicy,
-                                                         tag::beta,
-                                                         tag::coeffpolicy >,
-                                        tk::grm::parameter_vector<
-                                          Stack,
-                                          use,
-                                          use< kw::sde_b >,
-                                          tag::beta,
-                                          tag::b >,
-                                        tk::grm::parameter_vector<
-                                          Stack,
-                                          use,
-                                          use< kw::sde_S >,
-                                          tag::beta,
-                                          tag::S >,
-                                        tk::grm::parameter_vector<
-                                          Stack,
-                                          use,
-                                          use< kw::sde_kappa >,
-                                          tag::beta,
-                                          tag::kappa > > > {};
+         pegtl::ifmust<
+           scan_sde< use< kw::beta > >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::depvar< Stack,
+                                            use,
+                                            tag::beta,
+                                            tag::depvar >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::beta >,
+                           tk::grm::rng< Stack,
+                                         use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::beta,
+                                         tag::rng >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::init >,
+                                            tk::ctr::InitPolicy,
+                                            tag::beta,
+                                            tag::initpolicy >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::coeff >,
+                                            tk::ctr::CoeffPolicy,
+                                            tag::beta,
+                                            tag::coeffpolicy >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_b >,
+                             tag::beta,
+                             tag::b >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_S >,
+                             tag::beta,
+                             tag::S >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_kappa >,
+                             tag::beta,
+                             tag::kappa > > > {};
 
   //! Gamma SDE
   struct gamma :

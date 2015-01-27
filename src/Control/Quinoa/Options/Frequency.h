@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Frequency.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:55:49 PM MST
+  \date      Wed 21 Jan 2015 08:00:05 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
@@ -51,10 +51,10 @@ class Frequency : public tk::Toggle< FrequencyType > {
         "Turbulence frequency",
         //! Enums -> names
         { { FrequencyType::NO_FREQUENCY, "n/a" },
-          { FrequencyType::GAMMA, kw::freq_gamma().name() } },
+          { FrequencyType::GAMMA, kw::freq_gamma::name() } },
         //! keywords -> Enums
         { { "no_frequency", FrequencyType::NO_FREQUENCY },
-          { kw::freq_gamma().string(), FrequencyType::GAMMA } } ) {}
+          { kw::freq_gamma::string(), FrequencyType::GAMMA } } ) {}
 };
 
 } // ctr::

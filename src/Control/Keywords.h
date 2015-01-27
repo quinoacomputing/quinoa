@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Sun 18 Jan 2015 07:18:15 AM MST
+  \date      Tue 27 Jan 2015 06:47:59 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1145,6 +1145,26 @@ struct const_info {
 };
 using constant = keyword< const_info, c,o,n,s,t >;
 
+struct jrrj_info {
+  static std::string name() { return "J"; }
+  static std::string shortDescription() { return
+    "Select JRRJ coefficients policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the JRRJ coefficients policy. This policy
+    (or model) is named after Joseph Raymond Ristorcelli Jr., which, at this
+    time, is used to test some of Ray's closure ideas while we are working on
+    a PDF/moment closure for variable-density binary material mixing for
+    turbulent flows based on the beta distribution. A coefficients policy, in
+    general, is used to specify how
+    the coefficients are set at each time step during time-integration. Example:
+    "coeff const", which selects constant coefficients policy, which sets
+    constant coefficients before t = 0 and leaves the coefficients unchanged
+    during time integration. Note that this option may behave differently
+    depending on the particular equation or physical model. For an example, see
+    walker::DirCoeffPolicies in DiffEq/DirCoeffPolicy.h for valid options.)"; }
+};
+using jrrj = keyword< jrrj_info, j,r,r,j >;
+
 struct coeff_info {
   static std::string name() { return "coeffpolicy"; }
   static std::string shortDescription() { return
@@ -1200,7 +1220,7 @@ struct gendir_info {
   static std::string shortDescription() { return
     "Start configuration block for the generalized Dirichlet SDE"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the generalized_dirichlet ... end
+    R"(This keyword is used to introduce the gendir ... end
     block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), whose invariant is Lochner's generalized
     Dirichlet distribution. For more details on the generalized Dirichlet
@@ -1655,7 +1675,7 @@ struct depvar_info {
   static std::string shortDescription() { return
     "Select dependent variable (in a relevant block)"; }
   static std::string longDescription() { return
-    R"(Dependent variable, .e.g, in differential equations.)"; }
+    R"(Dependent variable, e.g, in differential equations.)"; }
 };
 using depvar = keyword< depvar_info, d,e,p,v,a,r >;
 
@@ -1733,9 +1753,9 @@ using verbose = keyword< verbose_info, v,e,r,b,o,s,e >;
 struct virtualization_info {
   static std::string name() { return "virtualization"; }
   static std::string shortDescription() { return
-    R"(Select degree of virtualization)"; }
+    R"(Set degree of virtualization)"; }
   static std::string longDescription() { return
-    R"(This option is used to define the degree of virtualization
+    R"(This option is used to set the degree of virtualization
     (over-decomposition). The virtualization parameter, is a real number
     between 0.0 and 1.0, inclusive, which controls the degree of
     virtualization or over-decomposition. Independent of the value of

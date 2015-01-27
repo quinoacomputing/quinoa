@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNGSSESeqLen.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:25:00 PM MST
+  \date      Wed 21 Jan 2015 08:49:33 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     RNGSSE sequence length options
   \details   RNGSSE sequence length options
@@ -53,13 +53,13 @@ class RNGSSESeqLen : public tk::Toggle< RNGSSESeqLenType > {
         //! Group, i.e., options, name
         "sequence length",
         //! Enums -> names
-        { { RNGSSESeqLenType::SHORT, kw::seq_short().name() },
-          { RNGSSESeqLenType::MEDIUM, kw::seq_med().name() },
-          { RNGSSESeqLenType::LONG, kw::seq_long().name() } },
+        { { RNGSSESeqLenType::SHORT, kw::seq_short::name() },
+          { RNGSSESeqLenType::MEDIUM, kw::seq_med::name() },
+          { RNGSSESeqLenType::LONG, kw::seq_long::name() } },
         //! keywords -> Enums
-        { { kw::seq_short().string(), RNGSSESeqLenType::SHORT },
-          { kw::seq_med().string(), RNGSSESeqLenType::MEDIUM },
-          { kw::seq_long().string(), RNGSSESeqLenType::LONG } } ) {}
+        { { kw::seq_short::string(), RNGSSESeqLenType::SHORT },
+          { kw::seq_med::string(), RNGSSESeqLenType::MEDIUM },
+          { kw::seq_long::string(), RNGSSESeqLenType::LONG } } ) {}
 };
 
 } // ctr::

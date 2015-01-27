@@ -2,10 +2,15 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 05:08:28 PM MST
+  \date      Mon 26 Jan 2015 12:13:00 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation
-  \details   Differential equation
+  \details   This file defines a generic differential equation class. The class
+    uses runtime polymorphism without client-side inheritance: inheritance is
+    confined to the internals of the class, inivisble to client-code. The class
+    exclusively deals with ownership enabling client-side value semantics.
+    Credit goes to Sean Parent at Adobe: https://github.com/sean-parent/
+    sean-parent.github.com/wiki/Papers-and-Presentations.
 */
 //******************************************************************************
 #ifndef DiffEq_h
@@ -17,6 +22,7 @@
 #include <Types.h>
 #include <make_unique.h>
 #include <ParticleProperties.h>
+#include <Statistics.h>
 
 namespace walker {
 
@@ -25,7 +31,8 @@ namespace walker {
 //! class below, inivisble to client-code. The class exclusively deals with
 //! ownership enabling client-side value semantics. Credit goes to Sean Parent
 //! at Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
-//! Papers-and-Presentations
+//! Papers-and-Presentations. For example client code that models a DiffEq, see
+//! walker::Beta.
 class DiffEq {
 
   public:
@@ -50,11 +57,11 @@ class DiffEq {
     explicit DiffEq( std::function<T(Args...)> x, Args... args ) :
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
-    //! Public interface to setting the initial conditions
-    void initialize( tk::ParProps& particles ) const
-    { self->initialize( particles ); }
+    //! Public interface to setting the initial conditions for the diff eq
+    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) const
+    { self->initialize( particles, stat ); }
 
-    //! Public interface to advancing particles in time
+    //! Public interface to advancing particles in time by the diff eq
     void advance( tk::ParProps& particles, int stream, tk::real dt ) const
     { self->advance( particles, stream, dt ); }
 
@@ -74,7 +81,7 @@ class DiffEq {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( tk::ParProps& ) const = 0;
+      virtual void initialize( tk::ParProps&, const tk::Statistics& ) = 0;
       virtual void advance( tk::ParProps&, int, tk::real ) const = 0;
     };
 
@@ -84,10 +91,10 @@ class DiffEq {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const { return new Model( *this ); }
-      void initialize( tk::ParProps& particles ) const override
-      { data.initialize( particles ); }
+      void initialize( tk::ParProps& particles, const tk::Statistics& stat )
+        override { data.initialize( particles, stat ); }
       void advance( tk::ParProps& particles, int stream, tk::real dt ) const
-      override { data.advance( particles, stream, dt ); }
+        override { data.advance( particles, stream, dt ); }
       T data;
     };
 

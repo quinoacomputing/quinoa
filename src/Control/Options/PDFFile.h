@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PDFFile.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:59:18 PM MST
+  \date      Wed 21 Jan 2015 07:58:48 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file type options
   \details   PDF output file type options
@@ -55,15 +55,15 @@ class PDFFile : public tk::Toggle< PDFFileType > {
         //! Group, i.e., options, name 
         "PDF output file type",
         //! Enums -> names
-        { { PDFFileType::TXT, kw::txt().name() },
-          { PDFFileType::GMSHTXT, kw::gmshtxt().name() },
-          { PDFFileType::GMSHBIN, kw::gmshbin().name() },
-          { PDFFileType::EXODUSII, kw::exodusii().name() } },
+        { { PDFFileType::TXT, kw::txt::name() },
+          { PDFFileType::GMSHTXT, kw::gmshtxt::name() },
+          { PDFFileType::GMSHBIN, kw::gmshbin::name() },
+          { PDFFileType::EXODUSII, kw::exodusii::name() } },
         //! keywords -> Enums
-        { { kw::txt().string(), PDFFileType::TXT },
-          { kw::gmshtxt().string(), PDFFileType::GMSHTXT },
-          { kw::gmshbin().string(), PDFFileType::GMSHBIN },
-          { kw::exodusii().string(), PDFFileType::EXODUSII } } ) {}
+        { { kw::txt::string(), PDFFileType::TXT },
+          { kw::gmshtxt::string(), PDFFileType::GMSHTXT },
+          { kw::gmshbin::string(), PDFFileType::GMSHBIN },
+          { kw::exodusii::string(), PDFFileType::EXODUSII } } ) {}
 };
 
 } // ctr::
