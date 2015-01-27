@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:59:37 PM MST
+  \date      Wed 21 Jan 2015 08:00:19 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Mix model options
   \details   Mix model options
@@ -55,16 +55,16 @@ class Mix : public tk::Toggle< MixType > {
         "Material mix",
         //! Enums -> names
         { { MixType::NO_MIX, "n/a" },
-          { MixType::IEM, kw::mix_iem().name() },
-          { MixType::IECM, kw::mix_iecm().name() },
-          { MixType::DIRICHLET, kw::mix_dir().name() },
-          { MixType::GENDIR, kw::mix_gendir().name() } },
+          { MixType::IEM, kw::mix_iem::name() },
+          { MixType::IECM, kw::mix_iecm::name() },
+          { MixType::DIRICHLET, kw::mix_dir::name() },
+          { MixType::GENDIR, kw::mix_gendir::name() } },
        //! keywords -> Enums
        { { "no_mix", MixType::NO_MIX },
-         { kw::mix_iem().string(), MixType::IEM },
-         { kw::mix_iecm().string(), MixType::IECM },
-         { kw::mix_dir().string(), MixType::DIRICHLET },
-         { kw::mix_gendir().string(), MixType::GENDIR } } ) {}
+         { kw::mix_iem::string(), MixType::IEM },
+         { kw::mix_iecm::string(), MixType::IECM },
+         { kw::mix_dir::string(), MixType::DIRICHLET },
+         { kw::mix_gendir::string(), MixType::GENDIR } } ) {}
 };
 
 } // ctr::

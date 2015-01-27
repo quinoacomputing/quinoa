@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 18 Jan 2015 06:49:01 AM MST
+  \date      Mon 26 Jan 2015 03:46:15 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -146,6 +146,7 @@ class InputDeck :
                                      #endif
                                      >;
     using keywords5 = boost::mpl::set< kw::constant
+                                     , kw::jrrj
                                      , kw::raw
                                      , kw::zero
                                      , kw::elem
@@ -189,18 +190,6 @@ class InputDeck :
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
     }
 
-    //! Extract data on whether to plot ordinary moments of requested statistics
-    std::vector< bool > plotOrdinary() const {
-      std::vector< bool > plot;
-      for (const auto& product : get< tag::stat >()) {
-        if (ordinary( product )) {
-          plot.emplace_back( false );
-          for (const auto& term : product) if (term.plot) plot.back() = true;
-        }
-      }
-      return plot;
-    }
-
     //! Extract moment names of requested statistics
     std::vector< std::string > momentNames( std::function<
       bool ( const std::vector< tk::ctr::Term >& ) > momentType ) const
@@ -210,7 +199,7 @@ class InputDeck :
         if (momentType( product )) {
           names.emplace_back( std::string() );
           for (const auto& term : product)
-            names.back() += tk::ctr::FieldVar( term.var, term.field );
+            names.back() += tk::ctr::Term( term.var, term.field );
         }
       }
       return names;

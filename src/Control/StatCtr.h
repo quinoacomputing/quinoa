@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatControl.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:35:18 PM MST
+  \date      Wed 21 Jan 2015 03:55:05 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -31,16 +31,9 @@ enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
 //!    to the user, e.g., in screen-output, as starting from 1.
 //! \author J. Bakosi
 struct Term {
+  char var;          //!< Variable name
   int field;         //!< Field ID
   Moment moment;     //!< Moment type: ordinary, central
-  char var;          //!< Dependent variable
-  bool plot;         //!< Indicates whether the variable will be plotted
-  // Conceptually, plot should be in Product, since plot will only be false for
-  // a mean that was triggered by a central moment by one of the Terms of a
-  // Product requesting the mean or a model. However, that would require
-  // Product to be a vector< struct >, which then would need custom comparitors
-  // for std::sort() and std::unique(), etc., in, e.g, Parser::unique(). Since
-  // this is not a performance issue, plot is here, redundantly, in Term.
 
   /** @name Pack/Unpack: Serialize Term object for Charm++ */
   ///@{
@@ -48,10 +41,9 @@ struct Term {
   //! \param[inout] p Charm++'s PUP::er serializer object reference
   //! \author J. Bakosi
   void pup( PUP::er& p ) {
+    p | var;
     p | field;
     PUP::pup( p, moment );
-    p | var;
-    p | plot;
   }
   //! \brief Pack/Unpack serialize operator|
   //! \param[inout] p Charm++'s PUP::er serializer object reference
@@ -60,49 +52,39 @@ struct Term {
   friend void operator|( PUP::er& p, Term& t ) { t.pup(p); } 
   ///@}
 
-  //! \brief Default (empty) constructor for Charm++
-  //! \author J. Bakosi
-  explicit Term() : field(0), moment(Moment::ORDINARY), var(0), plot(false) {}
-
   //! \brief Constructor: initialize all state data
+  //! \param[in] v Variable name
   //! \param[in] f Field ID
   //! \param[in] m Moment type enum: Moment::ORDINARY or Moment::CENTRAL
-  //! \param[in] v Dependent variable
   //! \param[in] p Indicates whether the variable will be plotted
   //! \author J. Bakosi
-  explicit Term( int f, Moment m, char v, bool p ) :
-    field( f ), moment( m ), var( v ), plot( p ) {}
+  explicit Term( char v = 0, int f = 0, Moment m = Moment::ORDINARY ) :
+    var( v ), field( f ), moment( m ) {}
 
   //! \brief Equal operator for, e.g., finding unique elements, used by, e.g.,
   //!    std::unique().
-  //! \details Test on field, moment, and var, but ignore plot.
+  //! \details Test on field, moment, and var
   //! \param[in] term Term to compare
-  //! \return Boolean indicating if term is equal to 'this'
+  //! \return Boolean indicating if term equals 'this'
   //! \author J. Bakosi
   bool operator== ( const Term& term ) const {
-    if (field == term.field && moment == term.moment && var == term.var)
+    if (var == term.var && field == term.field && moment == term.moment )
       return true;
     else
       return false;
   }
 
   //! \brief Less-than operator for ordering, used by, e.g., std::sort().
-  //! \details Test on field, moment, var, and !plot. Using operator >, instead
-  //!   of operator <, on plot ensures that if a Term is user-requested, i.e.,
-  //!   plotted, and also triggered by, e.g., a (turbulence) model, the
-  //!   user-requested Term will take precendence.
+  //! \details Test on field, var, and moment.
   //! \param[in] term Term to compare
-  //! \return Boolean indicating if term is equation to 'this'
+  //! \return Boolean indicating if term is less than 'this'
   //! \author J. Bakosi
   bool operator< ( const Term& term ) const {
-    if (field < term.field)
+    if (var < term.var)
       return true;
-    else if (field == term.field && moment < term.moment)
+    else if (var == term.var && field < term.field)
       return true;
-    else if (field == term.field && moment == term.moment && var < term.var)
-      return true;
-    else if (field == term.field && moment == term.moment &&
-             var == term.var && plot > term.plot)
+    else if (var == term.var && field == term.field && moment < term.moment)
       return true;
     else
       return false;
@@ -115,7 +97,7 @@ struct Term {
 //! \author J. Bakosi
 inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
 
-//! \brief Operator + for adding Term (var+field ID) to a std::string
+//! \brief Operator + for adding Term (var+field) to a std::string
 //! \param[in] lhs std::string to add to
 //! \param[in] term Term to add
 //! \return Updated std::string
@@ -125,6 +107,18 @@ static std::string operator+ ( const std::string& lhs, const Term& term ) {
   ss << lhs << char(term.var) << term.field+1;
   std::string rhs = ss.str();
   return rhs;
+}
+
+//! \brief Operator += for adding Term (var+field) to a std::string
+//! \param[inout] os std::string to add to
+//! \param[in] term Term to add
+//! \return Updated std::string
+//! \author J. Bakosi
+static std::string& operator+= ( std::string& os, const Term& term ) {
+  std::stringstream ss;
+  ss << os << term.var << term.field+1;
+  os = ss.str();
+  return os;
 }
 
 //! \brief Operator << for writing Term to output streams
@@ -137,88 +131,27 @@ static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
   return os;
 }
 
-//! \brief Lighter-weight (lighter than Term) structure for storing only
-//!    var+field.
-//! \details Used for representing the variable + field ID in, e.g., statistics
-//!    or sample space.
+//! \brief Products are arbitrary number of Terms to be multiplied and ensemble
+//!   averaged.
+//! \details An example is the scalar flux in x direction which needs two terms
+//! for ensemble averaging: (Y-\<Y\>) and (U-\<U\>), then the central moment is
+//! \<yu\> = <(Y-\<Y\>)(U-\<U\>)>, another example is the third mixed central
+//! moment of three scalars which needs three terms for ensemble averaging:
+//! (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the central moment is
+//! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
 //! \author J. Bakosi
-struct FieldVar {
-  char var;          //!< Dependent variable
-  int field;         //!< Field ID
+using Product = std::vector< Term >;
 
-  //! Constructor: Initialize state variables, allowing defaults for both
-  //! \param[in] v Dependent variable
-  //! \param[in] f Field ID
-  //! \author J. Bakosi
-  explicit FieldVar( const char v='\0', const int f=0 ) : var(v), field(f) {}
-
-  //! \brief Equal operator for, e.g., testing on equality of containers
-  //!   containing FieldVars.
-  //! \details  E.g., walker::ctr::InputDeck's tag::pdf field. Test on both var
-  //!    and field.
-  //! \param[in] f FieldVar to compare
-  //! \return Boolean indicating if f is equal to 'this'
-  //! \author J. Bakosi
-  bool operator== ( const FieldVar& f ) const {
-    if (field == f.field && var == f.var)
-      return true;
-    else
-      return false;
-  }
-
-  //! \brief Operator += for adding FieldVar to std::string
-  //! \param[inout] os std::string to add to
-  //! \param[in] f FieldVar to add
-  //! \return Updated std::string
-  //! \author J. Bakosi
-  friend std::string& operator+= ( std::string& os, const FieldVar& f ) {
-     std::stringstream ss;
-     ss << os << f.var << f.field+1;
-     os = ss.str();
-     return os;
-  }
-};
-
-//! \brief Function for writing std::vector< Term > to output streams
+//! \brief Operator << for writing products to output streams
 //! \param[inout] os Output stream to write to
-//! \param[in] vec Vector of Terms to write
+//! \param[in] p Product, std::vector< Term >, to write
 //! \return Updated output stream
 //! \author J. Bakosi
 static
-std::ostream& estimated( std::ostream& os, const std::vector< Term >& vec ) {
-  if (!vec.empty()) {
+std::ostream& operator<< ( std::ostream& os, const Product& p ) {
+  if (!p.empty()) {
     os << "<";
-    for (const auto& w : vec) os << w;
-    os << "> ";
-  }
-  return os;
-}
-
-//! \brief Function for writing requested statistics terms to output streams
-//! \param[inout] os Output stream to write to
-//! \param[in] vec Vector of Terms to write
-//! \return Updated output stream
-//! \author J. Bakosi
-static
-std::ostream& requested( std::ostream& os, const std::vector< Term >& vec ) {
-  if (!vec.empty() && vec[0].plot) {
-    os << "<";
-    for (const auto& w : vec) os << w;
-    os << "> ";
-  }
-  return os;
-}
-
-//! \brief Function for writing triggered statistics terms to output streams
-//! \param[inout] os Output stream to write to
-//! \param[in] vec Vector of Terms to write
-//! \return Updated output stream
-//! \author J. Bakosi
-static
-std::ostream& triggered( std::ostream& os, const std::vector< Term >& vec ) {
-  if (!vec.empty() && !vec[0].plot) {
-    os << "<";
-    for (const auto& w : vec) os << w;
+    for (const auto& w : p) os << w;
     os << "> ";
   }
   return os;
@@ -274,17 +207,6 @@ struct CaseInsensitiveCharLess {
     return std::tolower( lhs ) < std::tolower( rhs );
   }
 };
-
-//! \brief Products are arbitrary number of Terms to be multiplied and ensemble
-//!   averaged.
-//! \details An example is the scalar flux in x direction which needs two terms
-//! for ensemble averaging: (Y-\<Y\>) and (U-\<U\>), then the central moment is
-//! \<yu\> = <(Y-\<Y\>)(U-\<U\>)>, another example is the third mixed central
-//! moment of three scalars which needs three terms for ensemble averaging:
-//! (Y1-\<Y1\>), (Y2-\<Y2\>), and (Y3-\<Y3\>), then the central moment is
-//! \<y1y2y3\> = \<(Y1-\<Y1\>)(Y2-\<Y2\>)(Y3-\<Y3\>)\>.
-//! \author J. Bakosi
-using Product = std::vector< Term >;
 
 //! \brief Find out if a vector of Terms only contains ordinary moment terms
 //! \details If and only if all terms are ordinary, the vector of Terms is

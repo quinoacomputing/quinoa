@@ -2,10 +2,15 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Wed 17 Dec 2014 04:41:14 PM MST
+  \date      Mon 26 Jan 2015 05:49:44 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of differential equations
-  \details   Stack of differential equations
+  \details   This file declares class DiffEqStack, which implements various
+    functionality related to registering and instantiating differential equation
+    types. Registration and instantiation use a differential equation factory,
+    which is a std::map (an associative container), associating unique
+    differential equation keys to their constructor calls. For more details, see
+    the in-code documentation of the constructor.
 */
 //******************************************************************************
 #ifndef DiffEqStack_h
@@ -27,10 +32,12 @@ namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 
-//! Differential equation factory: keys associated to their constructors
+//! \brief Differential equation factory: keys associated to their constructors
+//! \author J. Bakosi
 using DiffEqFactory = std::map< ctr::DiffEqKey, std::function< DiffEq(int) > >;
 
-//! DiffEqStack
+//! \brief Differential equations stack
+//! \author J. Bakosi
 class DiffEqStack {
 
   public:
@@ -40,35 +47,43 @@ class DiffEqStack {
     //! Instantiate selected DiffEqs
     std::vector< DiffEq > selected() const;
 
-    //! Accessor to factory
+    //! \brief Constant accessor to differential equation factory
+    //! \return Constant reference to the internal differential equation factory
+    //! \author J. Bakosi
     const DiffEqFactory& factory() const { return m_factory; }
 
     //! Return info on selected differential equations
     std::vector< std::vector< std::pair< std::string, std::string > > > info()
     const;
 
-    //! Return number of unique equation types registered
+    //! \brief Return number of unique equation types registered
+    //! \return The number of unique equation types registered in the factory
+    //! \author J. Bakosi
     std::size_t ntypes() const { return m_eqTypes.size(); }
 
   private:
-    //! Function object for registering a differential equation into the
-    //! differential equation factory - repeatedly called by mpl's
-    //! cartesian_product sweeping all combinations of the differential equation
-    //! policies. The purpose of template template is to simplify client code as
-    //! that will not have to specify the template arguments of the template
-    //! argument (the policies of Eq), since we can figure it out here. See also
-    //! http://stackoverflow.com/a/214900
+    //! \brief Function object for registering a differential equation into the
+    //!   differential equation factory
+    //! \details This functor is repeatedly called by MPL's cartesian_product,
+    //!   sweeping all combinations of the differential equation policies. The
+    //!   purpose of template template is to simplify client code as that will
+    //!   not have to specify the template arguments of the template argument
+    //!   (the policies of Eq), since we can figure it out here. See also
+    //!   http://stackoverflow.com/a/214900
+    //! \author J. Bakosi
     template< template< class, class > class Eq >
     struct registerDiffEq {
-
+      //! Need to store the reference to factory we are registering into
       DiffEqFactory& factory;
+      //! Need to store which differential equation we are registering
       const ctr::DiffEqType type;
-
-      // Constructor, also count number of unique equation types registered
-      explicit registerDiffEq( DiffEqFactory& f, ctr::DiffEqType t,
+      //! Constructor, also count number of unique equation types registered
+      explicit registerDiffEq( DiffEqFactory& f,
+                               ctr::DiffEqType t,
                                std::set< ctr::DiffEqType >& eqTypes ) :
         factory( f ), type( t ) { eqTypes.insert( t ); }
-
+      //! \brief Function call operator called by mpl::cartesian_product for
+      //!   each unique sequence of policy combinations
       template< typename U > void operator()( U ) {
         namespace mpl = boost::mpl;
         // Get Initialization policy: 1st type of mpl::vector U
@@ -76,30 +91,39 @@ class DiffEqStack {
         // Get coefficients policy: 2nd type of mpl::vector U
         using CoeffPolicy = typename mpl::at< U, mpl::int_<1> >::type;
         // Build differential equation key
-        ctr::DiffEqKey key{ type, InitPolicy().type(), CoeffPolicy().type() };
+        ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
         // Register equation (with policies given by mpl::vector U) into factory
         tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
                            ( factory, key, 0 );
       }
     };
 
-    //! Instantiate differential equation
+    //! \brief Instantiate a differential equation
+    //! \details The template argument, EqTag, is used to find the given
+    //!   differential equation in the input deck, the hierarchical data filled
+    //!   during control file parsing, containing user input.
+    //! \param[in] eq The unique differential equation key whose object to
+    //!   instantiate.
+    //! \param[inout] cnt Counter, a std::map, that counts all instantiated
+    //!   differential equations by type.
+    //! \author J. Bakosi
     template< class EqTag >
-    DiffEq createDiffEq( const DiffEqFactory& f,
-                         ctr::DiffEqType eq,
+    DiffEq createDiffEq( ctr::DiffEqType eq,
                          std::map< ctr::DiffEqType, int >& cnt ) const {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
+        // re-create key and search for it
         ctr::DiffEqKey key{ eq,
           g_inputdeck.get< tag::param, EqTag, tag::initpolicy >()[c],
           g_inputdeck.get< tag::param, EqTag, tag::coeffpolicy >()[c] };
-        const auto it = f.find( key );
-        Assert( it != end( f ), "Can't find eq in factory" );
-        return it->second( c );    // instantiate and return diff eq
+        const auto it = m_factory.find( key );
+        Assert( it != end( m_factory ), "Can't find eq in factory" );
+        return it->second( c );    // instantiate and return diff eq object
       } else Throw ( "Can't create DiffEq with zero independent variables" );
     }
 
+    /** @name Configuration-querying functions for all SDEs */
     //! Get information on the Dirichlet SDE
     std::vector< std::pair< std::string, std::string > >
     infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const;
@@ -124,8 +148,15 @@ class DiffEqStack {
     //! Get information on Gamma SDE
     std::vector< std::pair< std::string, std::string > >
     infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const;
+    ///@}
 
-    //! Return parameter values from vector as string
+    //! \brief Return parameter values from vector as string
+    //! \details The template arguments index into the input deck, the
+    //!   hierarchical data structure filled during control file parsing,
+    //!   containing user input.
+    //! \param[in] c Index into a vector to access a vector
+    //! \return Concatenated string of values read from a vector
+    //! \author J. Bakosi
     template< typename... tags > std::string parameters( int c ) const {
       std::stringstream s;
       s << "{ ";

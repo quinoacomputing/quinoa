@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 12:09:16 PM MST
+  \date      Wed 21 Jan 2015 05:08:21 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Walker's printer
   \details   Walker's printer
@@ -132,7 +132,8 @@ class WalkerPrint : public tk::RNGPrint {
                            + kw::raw::info::name() + "-raw, "
                            + kw::zero::info::name() + "-zero\n" +
              m_item_indent + " * c: coefficients policy: "
-                           + kw::constant::info::name() + "-const\n\n" );
+                           + kw::constant::info::name() + "-const, "
+                           + kw::jrrj::info::name() + "-jrrj\n\n" );
         // extract eqname and supported policies
         const auto ip = tk::ctr::InitPolicy();
         const auto cp = tk::ctr::CoeffPolicy();
@@ -165,9 +166,8 @@ class WalkerPrint : public tk::RNGPrint {
     std::string DiffEqName ( const Key& key ) const
     { return ctr::DiffEq().name( key.template get< tag::diffeq >() ); }
 
-    //! Echo statistics container contents if differs from default applying op
-    void stats( const std::string& msg, std::function< std::ostream& (
-      std::ostream&, const std::vector< tk::ctr::Term >& ) > op ) const;
+    //! Echo statistics container contents if differs from default
+    void stats( const std::string& msg ) const;
 
     //! Echo pdfs container contents if differs from default applying op
     void pdfs( const std::string& msg,

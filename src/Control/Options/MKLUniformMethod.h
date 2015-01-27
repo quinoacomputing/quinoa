@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:55:11 PM MST
+  \date      Thu 22 Jan 2015 07:00:19 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL uniform RNG method options
   \details   Intel MKL uniform RNG method options
@@ -58,12 +58,12 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
         //! Group, i.e., options, name
         "uniform method",
         //! Enums -> names
-        { { MKLUniformMethodType::STANDARD, kw::standard().name() },
-          { MKLUniformMethodType::ACCURATE, kw::accurate().name() }
+        { { MKLUniformMethodType::STANDARD, kw::standard::name() },
+          { MKLUniformMethodType::ACCURATE, kw::accurate::name() }
         },
         //! keywords -> Enums
-        { { kw::standard().string(), MKLUniformMethodType::STANDARD },
-          { kw::accurate().string(), MKLUniformMethodType::ACCURATE } } ) {}
+        { { kw::standard::string(), MKLUniformMethodType::STANDARD },
+          { kw::accurate::string(), MKLUniformMethodType::ACCURATE } } ) {}
 
     //! \brief Return parameter based on Enum
     //! \details Here 'parameter' is the library-specific identifier of the
@@ -72,6 +72,7 @@ class MKLUniformMethod : public tk::Toggle< MKLUniformMethodType > {
     //! \return Library-specific parameter of the option
     //! \author J. Bakosi
     const ParamType& param( MKLUniformMethodType m ) const {
+      using tk::operator<<;
       auto it = method.find( m );
       Assert( it != end(method),
               std::string("Cannot find parameter for MKLUniformMethod \"")

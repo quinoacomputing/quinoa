@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Mass.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:58:24 PM MST
+  \date      Wed 21 Jan 2015 08:00:14 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Mass model options
   \details   Mass model options
@@ -49,10 +49,10 @@ class Mass : public tk::Toggle< MassType > {
         "Mass",
         //! Enums -> names
         { { MassType::NO_MASS, "n/a" },
-          { MassType::BETA, kw::mass_beta().name() } },
+          { MassType::BETA, kw::mass_beta::name() } },
         //! keywords -> Enums
         { { "no_mass", MassType::NO_MASS },
-          { kw::mass_beta().string(), MassType::BETA } } ) {}
+          { kw::mass_beta::string(), MassType::BETA } } ) {}
 };
 
 } // ctr::

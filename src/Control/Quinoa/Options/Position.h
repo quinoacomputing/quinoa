@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/Position.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 08:21:19 PM MST
+  \date      Wed 21 Jan 2015 08:00:34 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Position model options
   \details   Position model options
@@ -53,12 +53,12 @@ class Position : public tk::Toggle< PositionType > {
         "Position",
         //! Enums -> names
         { { PositionType::NO_POSITION, "n/a" },
-          { PositionType::INVISCID, kw::pos_inviscid().name() },
-          { PositionType::VISCOUS, kw::pos_viscous().name() } },
+          { PositionType::INVISCID, kw::pos_inviscid::name() },
+          { PositionType::VISCOUS, kw::pos_viscous::name() } },
         //! keywords -> Enums
         { { "no_position", PositionType::NO_POSITION },
-          { kw::pos_inviscid().string(), PositionType::INVISCID },
-          { kw::pos_viscous().string(), PositionType::INVISCID } } ) {}
+          { kw::pos_inviscid::string(), PositionType::INVISCID },
+          { kw::pos_viscous::string(), PositionType::INVISCID } } ) {}
 };
 
 } // ctr::

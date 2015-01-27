@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 04:51:45 PM MST
+  \date      Wed 21 Jan 2015 03:50:46 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Quinoa's printer
   \details   Quinoa's printer
@@ -86,9 +86,8 @@ class QuinoaPrint : public tk::RNGPrint {
         info ) const;
 
   private:
-    //! Echo statistics container contents if differs from default applying op
-    void stats( const std::string& msg, std::function< std::ostream& (
-      std::ostream&, const std::vector< tk::ctr::Term >& ) > op ) const;
+    //! Echo statistics container contents if differs from default
+    void stats( const std::string& msg ) const;
 
     //! Echo pdfs container contents if differs from default applying op
     void pdfs( const std::string& msg,

@@ -2,10 +2,12 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 10:55:07 AM MST
+  \date      Mon 26 Jan 2015 11:42:26 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Diagonal Ornstein-Uhlenbeck SDE
-  \details   Diagonal Ornstein-Uhlenbeck SDE.
+  \brief     System of diagonal Ornstein-Uhlenbeck SDEs
+  \details   This file implements the time integration of a system of stochastic
+    differential equations (SDEs), with linear drift and constant diagonal
+    diffusion, whose invariant is the joint normal distribution.
 */
 //******************************************************************************
 #ifndef DiagOrnsteinUhlenbeck_h
@@ -14,7 +16,7 @@
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <DiagOUCoeffPolicy.h>
+#include <DiagOrnsteinUhlenbeckCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -22,37 +24,50 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! Diagonal Ornstein-Uhlenbeck SDE used polymorphically with DiffEq
+//! \brief Diagonal Ornstein-Uhlenbeck SDE used polymorphically with DiffEq
+//! \details The template arguments specify policies and are used to configure
+//!   the behavior of the class. The policies are:
+//!   - Init - initialization policy, see DiffEq/InitPolicy.h
+//!   - Coefficients - coefficients policy, see
+//!       DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h
 template< class Init, class Coefficients >
 class DiagOrnsteinUhlenbeck {
 
   public:
-    //! Constructor
+    //! \brief Constructor
+    //! \param[in] c Index specifying which system of diagonal
+    //!   Ornstein-Uhlenbeck SDEs to construct. There can be multiple diag_ou
+    //!   ... end blocks in a control file. This index specifies which diagonal
+    //!   Ornstein-Uhlenbeck SDE system to instantiate. The index corresponds to
+    //!   the order in which the diag_ou ... end blocks are given the control
+    //!   file.
+    //! \author J. Bakosi
     explicit DiagOrnsteinUhlenbeck( unsigned int c ) :
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::diagou >()[c] ),
-      m_offset(g_inputdeck.get< tag::component >().offset< tag::diagou >(c)),
+      m_depvar( g_inputdeck.get< tag::param, tag::diagou, tag::depvar >().at(c) ),
+      m_ncomp( g_inputdeck.get< tag::component >().get< tag::diagou >().at(c) ),
+      m_offset( g_inputdeck.get< tag::component >().offset< tag::diagou >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) ) )
-    {
-      const auto& sigma =
-        g_inputdeck.get< tag::param, tag::diagou, tag::sigma >();
-      const auto& theta =
-        g_inputdeck.get< tag::param, tag::diagou, tag::theta >();
-      const auto& mu = g_inputdeck.get< tag::param, tag::diagou, tag::mu >();
-      ErrChk( sigma.size() > c,
-              "Indexing out of diagonal OU SDE parameters 'sigma'");
-      ErrChk( theta.size() > c,
-              "Indexing out of diagonal OU SDE parameters 'theta'");
-      ErrChk( mu.size() > c,
-              "Indexing out of diagonal OU SDE parameters 'mu'");
-      // Use coefficients policy to initialize coefficients
-      Coefficients( m_ncomp, sigma[c], theta[c], mu[c], m_sigma, m_theta, m_mu );
+        g_inputdeck.get< tag::param, tag::diagou, tag::rng >().at(c) ) ) ),
+      coeff( m_ncomp,
+             g_inputdeck.get< tag::param, tag::diagou, tag::sigma >().at(c),
+             g_inputdeck.get< tag::param, tag::diagou, tag::theta >().at(c),
+             g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c),
+             m_sigma, m_theta, m_mu ) {}
+
+    //! Initalize SDE, prepare for time integration
+    //! \param[inout] particles Array of particle properties 
+    //! \param[in] stat Statistics object for accessing moments 
+    //! \author J. Bakosi
+    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+      //! Set initial conditions using initialization policy
+      Init( { particles } );
+      //! Pre-lookup required statistical moments
+      coeff.lookup( stat, m_depvar );
     }
 
-    //! Set initial conditions
-    void initialize( tk::ParProps& particles ) const { Init( { particles } ); }
-
-    //! Advance particles
+    //! \brief Advance particles according to the system of diagonal
+    //!   Orsntein-Uhlenbeck SDEs
+    //! \author J. Bakosi
     void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -71,12 +86,18 @@ class DiagOrnsteinUhlenbeck {
     }
 
   private:
+    const char m_depvar;                //!< Dependent variable
     const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
     const int m_offset;                 //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
-    std::vector< tk::real > m_sigma;    //!< Coefficients
-    std::vector< tk::real > m_theta;
-    std::vector< tk::real > m_mu;
+
+    //! Coefficients
+    std::vector< kw::sde_sigma::info::expect::type > m_sigma;
+    std::vector< kw::sde_theta::info::expect::type > m_theta;
+    std::vector< kw::sde_mu::info::expect::type > m_mu;
+
+    //! Coefficients policy
+    Coefficients coeff;
 };
 
 } // walker::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/CoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:45:08 PM MST
+  \date      Fri 23 Jan 2015 06:44:59 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
@@ -22,7 +22,9 @@ namespace ctr {
 
 //! Differential equation coefficients policy types
 //! \author J. Bakosi
-enum class CoeffPolicyType : uint8_t { CONSTANT=0 };
+enum class CoeffPolicyType : uint8_t { CONSTANT=0
+                                     , JRRJ
+                                     };
 
 //! Pack/Unpack CoeffPolicyType: forward overload to generic enum class packer
 //! \author J. Bakosi
@@ -37,6 +39,7 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
     //! Valid expected choices to make them also available at compile-time
     //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::constant
+                                       , kw::jrrj
                                        >;
 
     //! \brief Options constructor
@@ -48,9 +51,11 @@ class CoeffPolicy : public tk::Toggle< CoeffPolicyType > {
         //! Group, i.e., options, name
         "Coefficients Policy",
         //! Enums -> names
-        { { CoeffPolicyType::CONSTANT, kw::constant().name() } },
+        { { CoeffPolicyType::CONSTANT, kw::constant::name() },
+          { CoeffPolicyType::JRRJ, kw::jrrj::name() } },
         //! keywords -> Enums
-        {  { kw::constant().string(), CoeffPolicyType::CONSTANT } } ) {}
+        {  { kw::constant::string(), CoeffPolicyType::CONSTANT },
+           { kw::jrrj::string(), CoeffPolicyType::JRRJ } } ) {}
 };
 
 } // ctr::

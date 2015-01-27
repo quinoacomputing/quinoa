@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 11:21:42 AM MST
+  \date      Wed 21 Jan 2015 03:40:09 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -84,32 +84,45 @@ class Statistics {
     //! Return mean for fluctuation
     std::size_t mean(const tk::ctr::Term& term) const;
 
-    const tk::ParProps& m_particles;              //!< Particle properties
+    //! Particle properties
+    const tk::ParProps& m_particles;
+
+    //! Map used to lookup ordinary moments
+    std::map< tk::ctr::Product, const tk::real* > m_ordLookup;
+    //! Map used to lookup central moments
+    std::map< tk::ctr::Product, const tk::real* > m_cenLookup;
 
     // Statistics
 
     //! Instantaneous variable pointers for computing ordinary moments
     std::vector< std::vector< const tk::real* > > m_instOrd;
-    std::vector< tk::real > m_ordinary;        //!< Ordinary moments
-    std::vector< tk::ctr::FieldVar > m_ordFieldVar;//!< Ordinary moment field names
-    std::size_t m_nord;                        //!< Number of ordinary moments
+    //! Ordinary moments
+    std::vector< tk::real > m_ordinary;
+    //! Ordinary moment Terms, used to find means for fluctuations
+    std::vector< tk::ctr::Term > m_ordTerm;
+    //! Number of ordinary moments
+    std::size_t m_nord;
 
     //! Instantaneous variable pointers for computing central moments
     std::vector< std::vector< const tk::real* > > m_instCen;
-    std::vector< tk::real > m_central;         //!< Central moments
+    //! Central moments
+    std::vector< tk::real > m_central;
     //! Ordinary moments about which to compute central moments
     std::vector< std::vector< const tk::real* > > m_ctr;
-    std::size_t m_ncen;                        //!< Number of central moments
+    //! Number of central moments
+    std::size_t m_ncen;
 
     // Univariate probability density functions
 
     //! Instantaneous variable pointers for computing ordinary univariate PDFs
     std::vector< std::vector< const tk::real* > > m_instOrdUniPDF;
-    std::vector< tk::UniPDF > m_ordupdf;           //!< Ordinary univariate PDFs
+    //! Ordinary univariate PDFs
+    std::vector< tk::UniPDF > m_ordupdf;
 
     //! Instantaneous variable pointers for computing central univariate PDFs
     std::vector< std::vector< const tk::real* > > m_instCenUniPDF;
-    std::vector< tk::UniPDF > m_cenupdf;           //!< Central univariate PDFs
+    //! Central univariate PDFs
+    std::vector< tk::UniPDF > m_cenupdf;
     //! Ordinary moments about which to compute central univariate PDFs
     std::vector< std::vector< const tk::real* > > m_ctrUniPDF;
 
@@ -117,11 +130,13 @@ class Statistics {
 
     //! Instantaneous variable pointers for computing ordinary bivariate PDFs
     std::vector< std::vector< const tk::real* > > m_instOrdBiPDF;
-    std::vector< tk::BiPDF > m_ordbpdf;           //!< Ordinary bivariate PDFs
+    //! Ordinary bivariate PDFs
+    std::vector< tk::BiPDF > m_ordbpdf;
 
     //! Instantaneous variable pointers for computing central bivariate PDFs
     std::vector< std::vector< const tk::real* > > m_instCenBiPDF;
-    std::vector< tk::BiPDF > m_cenbpdf;           //!< Central bivariate PDFs
+    //! Central bivariate PDFs
+    std::vector< tk::BiPDF > m_cenbpdf;
     //! Ordinary moments about which to compute central bivariate PDFs
     std::vector< std::vector< const tk::real* > > m_ctrBiPDF;
 
@@ -129,11 +144,13 @@ class Statistics {
 
     //! Instantaneous variable pointers for computing ordinary trivariate PDFs
     std::vector< std::vector< const tk::real* > > m_instOrdTriPDF;
-    std::vector< tk::TriPDF > m_ordtpdf;          //!< Ordinary trivariate PDFs
+    //! Ordinary trivariate PDFs
+    std::vector< tk::TriPDF > m_ordtpdf;
 
     //! Instantaneous variable pointers for computing central trivariate PDFs
     std::vector< std::vector< const tk::real* > > m_instCenTriPDF;
-    std::vector< tk::TriPDF > m_centpdf;          //!< Central trivariate PDFs
+    //! Central trivariate PDFs
+    std::vector< tk::TriPDF > m_centpdf;
     //! Ordinary moments about which to compute central trivariate PDFs
     std::vector< std::vector< const tk::real* > > m_ctrTriPDF;
 };

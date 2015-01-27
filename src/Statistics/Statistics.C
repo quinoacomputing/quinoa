@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 11:21:50 AM MST
+  \date      Wed 21 Jan 2015 04:11:28 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Statistics
   \details   Computing ordinary and central moments
@@ -45,17 +45,21 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
     if (ordinary(product)) {
 
       m_instOrd.emplace_back( std::vector< const tk::real* >() );
-      m_ordFieldVar.emplace_back( tk::ctr::FieldVar() );
 
       for (const auto& term : product) {
         auto o = offset.find( term.var );
         Assert( o != end( offset ), "No such depvar" );
         // Put in starting address of instantaneous variable
         m_instOrd.back().push_back( m_particles.cptr( term.field, o->second ) );
-        // Put in term name+field
-        m_ordFieldVar.back() = tk::ctr::FieldVar( term.var, term.field );
+        // Collect all Terms of all estimated statistics in a linear vector
+        m_ordTerm.push_back( term );
       }
 
+      // Increase number of ordinary moments by one
+      m_ordinary.push_back( 0.0 );
+      // Add product as key associated to ordinary moment to lookup map
+      m_ordLookup[ product ] = &m_ordinary[ m_nord ];
+      // Count up orindary moments
       ++m_nord;
     }
   }
@@ -99,6 +103,11 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
             &m_ordinary[0] + (std::islower(term.var) ? mean(term) : m_nord) );
         }
 
+        // Increase number of central moments by one
+        m_central.push_back( 0.0 );
+        // Add product as key associated to central moment to lookup map
+        m_cenLookup[ product ] = &m_central[ m_ncen ];
+        // Count up central moments
         ++m_ncen;
       }
     }
@@ -196,10 +205,10 @@ Statistics::mean( const tk::ctr::Term& term ) const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  const auto size = m_ordFieldVar.size();
+  const auto size = m_ordTerm.size();
   for (auto i=decltype(size){0}; i<size; ++i) {
-    if (m_ordFieldVar[i].var == std::toupper(term.var) &&
-        m_ordFieldVar[i].field == term.field) {
+    if (m_ordTerm[i].var == std::toupper(term.var) &&
+        m_ordTerm[i].field == term.field) {
       return i;
     }
   }

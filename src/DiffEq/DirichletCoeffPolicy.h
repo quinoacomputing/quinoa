@@ -1,14 +1,14 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/GammaCoeffPolicy.h
+  \file      src/DiffEq/DirichletCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:34:00 AM MST
+  \date      Mon 26 Jan 2015 11:31:10 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Gamma coefficients policies
-  \details   This file defines coefficients policy classes for the gamma SDE,
-    defined in DiffEq/Gamma.h.
+  \brief     Dirichlet coefficients policies
+  \details   This file defines coefficients policy classes for the Dirichlet
+    SDE, defined in DiffEq/Dirichlet.h.
 
-    General requirements on gamma SDE coefficients policy classes:
+    General requirements on Dirichlet SDE coefficients policy classes:
 
     - Must define a _constructor_, which is used to initialize the SDE
       coefficients, b, S, and kappa. Required signature:
@@ -23,11 +23,11 @@
           std::vector< kw::sde_kappa::info::expect::type >& k )
       \endcode
       where
-      - ncomp denotes the number of scalar components of the system of gamma
+      - ncomp denotes the number of scalar components of the system of Dirichlet
         SDEs.
       - Constant references to b_, S_, and k_, which denote three vectors of
-        real values used to initialize the parameter vectors of the system of
-        gamma SDEs. The length of the vectors must be equal to the number of
+        real values used to initialize the parameter vectors of the Dirichlet
+        SDEs. The length of the vectors must be equal to the number of
         components given by ncomp.
       - References to b, S, and k, which denote the parameter vectors to be
         initialized based on b_, S_, and k_.
@@ -42,19 +42,20 @@
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
 
-    - Must define the function _lookup()_, called from Gamma::initialize(),
+    - Must define the function _lookup()_, called from Dirichlet::initialize(),
       performing pre-lookup of the locations of the statistical moments required
       by the given model. Required signature:
       \code{.cpp}
-        void lookup( const tk::Statistics& stat, char depvar ) {}
+        void lookup( const tk::Statistics& stat, char depvar )
       \endcode
       where _stat_ is the Statistics object, allowing access to the location of
       the various moments in memory, and _depvar_ is the dependent variable
-      associated with the gamma SDE, given in the control file by the user.
+      associated with the Dirichlet SDE, given in the control file by the user.
+
 */
 //******************************************************************************
-#ifndef GammaCoeffPolicy_h
-#define GammaCoeffPolicy_h
+#ifndef DirichletCoeffPolicy_h
+#define DirichletCoeffPolicy_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -63,12 +64,12 @@
 
 namespace walker {
 
-//! Gamma constant coefficients policity: constants in time
-class GammaCoeffConst {
+//! Dirichlet constant coefficients policity: constants in time
+class DirichletCoeffConst {
 
   public:
     //! Constructor: initialize coefficients
-    GammaCoeffConst(
+    DirichletCoeffConst(
       tk::ctr::ncomp_type ncomp,
       const std::vector< kw::sde_b::info::expect::type >& b_,
       const std::vector< kw::sde_S::info::expect::type >& S_,
@@ -80,16 +81,19 @@ class GammaCoeffConst {
       b = b_;
       S = S_;
       k = k_;
-      ErrChk( b.size() == ncomp, "Wrong number of gamma SDE parameters 'b'");
-      ErrChk( S.size() == ncomp, "Wrong number of gamma SDE parameters 'S'");
-      ErrChk( k.size() == ncomp, "Wrong number of gamma SDE parameters 'kappa'");
+      ErrChk( b.size() == ncomp,
+              "Wrong number of Dirichlet SDE parameters 'b'");
+      ErrChk( S.size() == ncomp,
+              "Wrong number of Dirichlet SDE parameters 'S'");
+      ErrChk( k.size() == ncomp,
+              "Wrong number of Dirichlet SDE parameters 'kappa'");
     }
 
     static tk::ctr::CoeffPolicyType type() noexcept
     { return tk::ctr::CoeffPolicyType::CONSTANT; }
 
     //! Lookup statistical moments required: no-op for constant coefficients
-    void lookup( const tk::Statistics& stat, char ) {}
+    void lookup( const tk::Statistics&, char ) {}
 
     //! Function call: no-op for constant coefficients
     void operator()( const tk::real&,
@@ -98,9 +102,9 @@ class GammaCoeffConst {
                      std::vector< tk::real >& ) {}
 };
 
-//! List of all gamma's coefficients policies
-using GammaCoeffPolicies = boost::mpl::vector< GammaCoeffConst >;
+//! List of all Dirichlet's coefficients policies
+using DirichletCoeffPolicies = boost::mpl::vector< DirichletCoeffConst >;
 
 } // walker::
 
-#endif // GammaCoeffPolicy_h
+#endif // DirichletCoeffPolicy_h

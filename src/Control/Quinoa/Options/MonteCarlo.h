@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Quinoa/Options/MonteCarlo.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 08:02:15 PM MST
+  \date      Wed 21 Jan 2015 08:00:29 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     MonteCarlo options
   \details   MonteCarlo options
@@ -56,16 +56,16 @@ class MonteCarlo : public tk::Toggle< MonteCarloType > {
         "MonteCarlo",
         //! Enums -> names
         { { MonteCarloType::NO_MONTECARLO, "n/a" },
-          { MonteCarloType::HOMOGENEOUS_MIX, kw::hommix().name() },
-          { MonteCarloType::HOMOGENEOUS_HYDRO, kw::homhydro().name() },
-          { MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR, kw::homrt().name() },
-          { MonteCarloType::SPINSFLOW, kw::spinsflow().name() } },
+          { MonteCarloType::HOMOGENEOUS_MIX, kw::hommix::name() },
+          { MonteCarloType::HOMOGENEOUS_HYDRO, kw::homhydro::name() },
+          { MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR, kw::homrt::name() },
+          { MonteCarloType::SPINSFLOW, kw::spinsflow::name() } },
         //! keywords -> Enums
         { { "no_montecarlo", MonteCarloType::NO_MONTECARLO },
-          { kw::hommix().string(), MonteCarloType::HOMOGENEOUS_MIX },
-          { kw::homhydro().string(), MonteCarloType::HOMOGENEOUS_HYDRO },
-          { kw::homrt().string(), MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR },
-          { kw::spinsflow().string(), MonteCarloType::SPINSFLOW } } ) {}
+          { kw::hommix::string(), MonteCarloType::HOMOGENEOUS_MIX },
+          { kw::homhydro::string(), MonteCarloType::HOMOGENEOUS_HYDRO },
+          { kw::homrt::string(), MonteCarloType::HOMOGENEOUS_RAYLEIGH_TAYLOR },
+          { kw::spinsflow::string(), MonteCarloType::SPINSFLOW } } ) {}
 };
 
 } // ctr::

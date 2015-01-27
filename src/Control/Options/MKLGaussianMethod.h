@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:55:27 PM MST
+  \date      Thu 22 Jan 2015 07:00:58 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Intel MKL Gaussian RNG method options
   \details   Intel MKL Gaussian RNG method options
@@ -60,13 +60,13 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
         //! Group, i.e., options, name
         "Gaussian method",
         //! Enums -> names
-        { { MKLGaussianMethodType::BOXMULLER, kw::boxmuller().name() },
-          { MKLGaussianMethodType::BOXMULLER2, kw::boxmuller2().name() },
-          { MKLGaussianMethodType::ICDF, kw::icdf().name() } },
+        { { MKLGaussianMethodType::BOXMULLER, kw::boxmuller::name() },
+          { MKLGaussianMethodType::BOXMULLER2, kw::boxmuller2::name() },
+          { MKLGaussianMethodType::ICDF, kw::icdf::name() } },
         //! keywords -> Enums
-        { { kw::boxmuller().string(), MKLGaussianMethodType::BOXMULLER },
-          { kw::boxmuller2().string(), MKLGaussianMethodType::BOXMULLER2 },
-          { kw::icdf().string(), MKLGaussianMethodType::ICDF } } ) {}
+        { { kw::boxmuller::string(), MKLGaussianMethodType::BOXMULLER },
+          { kw::boxmuller2::string(), MKLGaussianMethodType::BOXMULLER2 },
+          { kw::icdf::string(), MKLGaussianMethodType::ICDF } } ) {}
 
     //! \brief Return parameter based on Enum
     //! \details Here 'parameter' is the library-specific identifier of the
@@ -75,6 +75,7 @@ class MKLGaussianMethod : public tk::Toggle< MKLGaussianMethodType > {
     //! \return Library-specific parameter of the option
     //! \author J. Bakosi
     const ParamType& param( MKLGaussianMethodType m ) const {
+      using tk::operator<<;
       auto it = method.find( m );
       Assert( it != end(method),
               std::string("Cannot find parameter for MKLGaussianMethod \"")

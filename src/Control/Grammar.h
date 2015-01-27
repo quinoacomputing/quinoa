@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:26:58 PM MST
+  \date      Mon 26 Jan 2015 03:35:20 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -115,8 +115,9 @@ namespace grm {
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
     { MsgKey::NODEPVAR, "Dependent variable not selected. To request a "
-      "statistic or PDF involving this variable, an equation must be specified "
-      "upstream in the input deck assigning this dependent variable to an "
+      "statistic or PDF involving this variable, or use this variable as a "
+      "coefficients policy variable, an equation must be specified "
+      "upstream in the control file assigning this variable to an "
       "equation to be integrated using the depvar keyword." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
@@ -582,7 +583,7 @@ namespace grm {
       // convert matched string to char
       auto newvar = stack.template convert< char >( value );
       // put in new dependent variable to set of already selected ones
-      if (depvars.find( newvar ) == depvars.end() )
+      if (depvars.find( newvar ) == depvars.end())
         depvars.insert( newvar );
       else  // error out if depvar is already taken
         Message< Stack, ERROR, MsgKey::EXISTS >( stack, value );
@@ -604,18 +605,15 @@ namespace grm {
   template< class Stack, tk::ctr::Moment m, char var = '\0' >
   struct push_term : pegtl::action_base< push_term< Stack, m, var > > {
     static void apply( const std::string& value, Stack& stack ) {
-      // If var is given, it is triggered not user-requested
-      bool plot(var ? false : true);
       // If var is given, push var, otherwise push first char of value
       char v(var ? var : value[0]);
       // Use a shorthand of reference to vector to push_back to
       auto& stats = stack.template get< tag::stat >();
       // Push term into current vector
-      stats.back().emplace_back( tk::ctr::Term( field, m, v, plot ) );
+      stats.back().emplace_back( tk::ctr::Term( v, field, m ) );
       // If central moment, trigger mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( field, tk::ctr::Moment::ORDINARY, toupper(v),
-                            false );
+        tk::ctr::Term term( toupper(v), field, tk::ctr::Moment::ORDINARY );
         stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
@@ -640,11 +638,10 @@ namespace grm {
         Message< Stack, ERROR, MsgKey::MALFORMEDSAMPLE >( stack, value );
       }
       // Push term into current vector
-      pdf.back().emplace_back( tk::ctr::Term( field, m, value[0], true ) );
+      pdf.back().emplace_back( tk::ctr::Term( value[0], field, m ) );
       // If central moment, trigger mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( field, tk::ctr::Moment::ORDINARY, toupper(value[0]),
-                            false );
+        tk::ctr::Term term( toupper(value[0]), field, tk::ctr::Moment::ORDINARY );
         auto& stats = stack.template get< tag::stat >();
         if (!stats.empty())
           stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
@@ -1133,13 +1130,10 @@ namespace grm {
            pegtl::ifmust<
              pegtl::seq< pdf_name< Stack >, pegtl::at< pegtl::one<'('> > >,
              pegtl::sor< pegtl::one<'('>,
-                         pegtl::apply<
-                           error< Stack,
-                                           MsgKey::KEYWORD > > >,
+                         pegtl::apply< error< Stack, MsgKey::KEYWORD > > >,
              pegtl::sor< pegtl::seq< sample_space< Stack >, bins_exts< Stack > >,
                          pegtl::apply<
-                           error< Stack, MsgKey::INVALIDSAMPLESPACE > > >
-           > > {};
+                           error< Stack, MsgKey::INVALIDSAMPLESPACE > > > > > {};
 
   //! \brief Match precision of floating-point numbers in digits (for text
   //!   output)

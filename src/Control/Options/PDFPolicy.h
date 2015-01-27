@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/PDFPolicy.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:01:31 PM MST
+  \date      Wed 21 Jan 2015 07:58:55 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     PDF output file policy options
   \details   PDF output file policy options
@@ -52,13 +52,13 @@ class PDFPolicy : public tk::Toggle< PDFPolicyType > {
         //! Group, i.e., options, name
         "PDF output file policy",
         //! Enums -> names
-        { { PDFPolicyType::OVERWRITE, kw::overwrite().name() },
-          { PDFPolicyType::MULTIPLE, kw::multiple().name() },
-          { PDFPolicyType::EVOLUTION, kw::evolution().name() } },
+        { { PDFPolicyType::OVERWRITE, kw::overwrite::name() },
+          { PDFPolicyType::MULTIPLE, kw::multiple::name() },
+          { PDFPolicyType::EVOLUTION, kw::evolution::name() } },
         //! keywords -> Enums
-        { { kw::overwrite().string(), PDFPolicyType::OVERWRITE },
-          { kw::multiple().string(), PDFPolicyType::MULTIPLE },
-          { kw::evolution().string(), PDFPolicyType::EVOLUTION } } ) {}
+        { { kw::overwrite::string(), PDFPolicyType::OVERWRITE },
+          { kw::multiple::string(), PDFPolicyType::MULTIPLE },
+          { kw::evolution::string(), PDFPolicyType::EVOLUTION } } ) {}
 };
 
 } // ctr::
