@@ -2,10 +2,10 @@
 /*!
   \file      src/Mesh/STLMesh.C
   \author    J. Bakosi
-  \date      Wed Mar 19 15:58:19 2014
+  \date      Wed 28 Jan 2015 01:00:42 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) mesh class definition
-  \details   ASCII STL (STereoLithography) mesh class definition
+  \details   ASCII STL (STereoLithography) mesh class definition.
 */
 //******************************************************************************
 
@@ -16,10 +16,10 @@
 using quinoa::STLMesh;
 
 void
-STLMesh::alloc(const size_t nnode)
+STLMesh::alloc( const size_t nnode )
 //******************************************************************************
 //  Allocate memory for mesh
-//! \param[in]  nnode  Number of vertices (nodes) in mesh
+//! \param[in] nnode Number of vertices (nodes) in mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
