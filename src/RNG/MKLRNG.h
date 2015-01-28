@@ -2,10 +2,10 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Mon 15 Sep 2014 01:36:49 PM MDT
+  \date      Wed 28 Jan 2015 03:48:42 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     MKL-based random number generator
-  \details   MKL-based random number generator
+  \brief     Interface to Intel MKL VSL random number generators
+  \details   Interface to Intel MKL VSL random number generators.
 */
 //******************************************************************************
 #ifndef MKLRNG_h
@@ -17,11 +17,16 @@
 
 namespace tk {
 
-//! MKL-based random number generator used polymorphically with RNG
+//! MKL-based random number generator used polymorphically with tk::RNG
 class MKLRNG {
 
   public:
-    //! Constructor
+    //! \brief Constructor
+    //! \param[in] nthreads Initialize RNG using this many independent streams
+    //! \param[in] brng Index of the basic generator to initialize the stream
+    //! \param[in] seed RNG seed
+    //! \param[in] uniform_method MKL ID of the method to use for uniform RNGs
+    //! \param[in] gaussian_method MKL ID of the method to use for Gaussian RNGs
     explicit MKLRNG( int nthreads,
                      int brng,
                      unsigned int seed,
@@ -51,11 +56,17 @@ class MKLRNG {
     //! Destructor
     ~MKLRNG() { deleteStreams(); }
 
-    //! Uniform RNG
+    //! Uniform RNG: Generate uniform random numbers
+    //! \param[in] tid Thread (or more precisely) stream ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout r Pointer to memory to write the RNGs to
     void uniform( int tid, int num, double* r ) const
     { vdRngUniform( m_uniform_method, m_stream[tid], num, r, 0.0, 1.0 ); }
 
-    //! Gaussian RNG
+    //! Gaussian RNG: Generate Gaussian random numbers
+    //! \param[in] tid Thread (or rather) stream ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout r Pointer to memory to write the RNGs to
     void gaussian( int tid, int num, double* r ) const
     { vdRngGaussian( m_gaussian_method, m_stream[tid], num, r, 0.0, 1.0 ); }
 
@@ -124,7 +135,7 @@ class MKLRNG {
     int m_uniform_method;                            //!< Uniform method to use
     int m_gaussian_method;                           //!< Gaussian method to use
     int m_nthreads;                                  //!< Number of threads
-    std::unique_ptr< VSLStreamStatePtr[] > m_stream; //! Random number streams
+    std::unique_ptr< VSLStreamStatePtr[] > m_stream; //!< Random number streams
 };
 
 } // tk::

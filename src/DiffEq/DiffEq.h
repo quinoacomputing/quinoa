@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 12:13:00 PM MST
+  \date      Wed 28 Jan 2015 03:32:50 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -26,33 +26,40 @@
 
 namespace walker {
 
-//! Differential equation. The class below uses runtime polymorphism without
-//! client-side inheritance: inheritance is confined to the internals of the
-//! class below, inivisble to client-code. The class exclusively deals with
-//! ownership enabling client-side value semantics. Credit goes to Sean Parent
-//! at Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
-//! Papers-and-Presentations. For example client code that models a DiffEq, see
-//! walker::Beta.
+//! \brief Differential equation
+//! \details This class uses runtime polymorphism without client-side
+//!   inheritance: inheritance is confined to the internals of the this class,
+//!   inivisble to client-code. The class exclusively deals with ownership
+//!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+//!   https://github.com/sean-parent/sean-parent.github.com/wiki/
+//!   Papers-and-Presentations. For example client code that models a DiffEq,
+//!   see walker::Beta.
+//! \author J. Bakosi
 class DiffEq {
 
   public:
-    //! Constructor taking an object modeling Concept (see below). The object
-    //! of class T comes pre-constructed.
+    //! \brief Constructor taking an object modeling Concept.
+    //! \details The object of class T comes pre-constructed.
+    //! \param[in] x Instantiated object of type T given by the template
+    //!   argument.
     template< typename T > explicit DiffEq( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ) {}
 
-    //! Constructor taking a function pointer to a constructor of an object
-    //! modeling Concept (see below). Passing std::function allows late
-    //! execution of the constructor, i.e., as late as inside this class'
-    //! constructor, and thus usage from a factory. Note that there are at least
-    //! two different ways of using this constructor: (1) Bind T's constructor
-    //! arguments and place it in std::function<T()> and passing no arguments as
-    //! args.... This case then instantiates the model via its constructor and
-    //! stores in here. (2) Bind a single placeholder argument to T's
-    //! constructor and pass it in as host's args..., which then forwards it to
-    //! model's constructor. This allows late binding, i.e., binding the
-    //! argument only here. See also the wrapper recordModel, which does (1),
-    //! and recordModelLate, which does (2) defined in Base/Factory.h.
+    //! \brief Constructor taking a function pointer to a constructor of an
+    //!   object modeling Concept.
+    //! \details Passing std::function allows late execution of the constructor,
+    //!   i.e., as late as inside this class' constructor, and thus usage from
+    //!   a factory. Note that there are at least two different ways of using
+    //!   this constructor:
+    //!   - Bind T's constructor arguments and place it in std::function<T()>
+    //!   and passing no arguments as args.... This case then instantiates the
+    //!   model via its constructor and stores it in here.
+    //!   - Bind a single placeholder argument to T's constructor and pass it in
+    //!   as host's args..., which then forwards it to model's constructor. This
+    //!   allows late binding, i.e., binding the argument only here.
+    //! \see See also the wrapper tk::recordModel() which does the former and
+    //!   tk::recordModelLate() which does the latter, both defined in
+    //!   src/Base/Factory.h.
     template< typename T, typename...Args >
     explicit DiffEq( std::function<T(Args...)> x, Args... args ) :
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
