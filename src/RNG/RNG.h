@@ -2,10 +2,15 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Tue 12 Aug 2014 05:04:15 PM MDT
+  \date      Wed 28 Jan 2015 03:34:42 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Random number generator base
-  \details   Random number generator base
+  \brief     Random number generator
+  \details   This file defines a generic random number generator class. The
+    class uses runtime polymorphism without client-side inheritance: inheritance
+    is confined to the internals of the class, inivisble to client-code. The
+    class exclusively deals with ownership enabling client-side value semantics.
+    Credit goes to Sean Parent at Adobe: https://github.com/sean-parent/
+    sean-parent.github.com/wiki/Papers-and-Presentations.
 */
 //******************************************************************************
 #ifndef RNG_h
@@ -17,23 +22,30 @@
 
 namespace tk {
 
-//! Random number generator. The class below uses runtime polymorphism without
-//! client-side inheritance: inheritance is confined to the internals of the
-//! class below, inivisble to client-code. The class exclusively deals with
-//! ownership enabling client-side value semantics. Credit goes to Sean Parent
-//! at Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
-//! Papers-and-Presentations
+//! \brief Random number generator
+//! \details This class uses runtime polymorphism without client-side
+//!   inheritance: inheritance is confined to the internals of the this class,
+//!   inivisble to client-code. The class exclusively deals with ownership
+//!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+//!   https://github.com/sean-parent/sean-parent.github.com/wiki/
+//!   Papers-and-Presentations. For example client code that models a RNG, see
+//!   see tk::MKLRNG or tk::RNGSSE.
+//! \author J. Bakosi
 class RNG {
 
   public:
-    //! Constructor taking an object modeling Concept (see below)
+    //! \brief Constructor taking an object modeling Concept.
+    //! \details The object of class T comes pre-constructed.
+    //! \param[in] x Instantiated object of type T given by the template
+    //!   argument.
     template< typename T >
     explicit RNG( T x ) : self( make_unique< Model<T> >( std::move(x) ) ) {}
 
-    //! Constructor taking a function pointer to a constructor of an object
-    //! modeling Concept (see below). Passing std::function allows late
-    //! execution of the constructor, i.e., as late as inside this class'
-    //! constructor, and thus usage from a factory.
+    //! \brief Constructor taking a function pointer to a constructor of an
+    //!   object modeling Concept.
+    //! \details Passing std::function allows late execution of the constructor,
+    //!   i.e., as late as inside this class' constructor, and thus usage from a
+    //!   factory.
     template< typename T >
     explicit RNG( std::function<T()> x ) :
       self( make_unique< Model<T> >( std::move(x()) ) ) {}

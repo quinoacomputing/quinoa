@@ -2,10 +2,10 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:53:55 PM MDT
+  \date      Wed 28 Jan 2015 03:49:08 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     RNGSSE-based random number generator
-  \details   RNGSSE-based random number generator
+  \brief     Interface to RNGSSE random number generators
+  \details   Interface to RNGSSE random number generators
 */
 //******************************************************************************
 #ifndef RNGSSE_h
@@ -19,14 +19,19 @@
 
 namespace tk {
 
-//! RNGSSE-based random number generator used polymorphically with RNG
+//! RNGSSE-based random number generator used polymorphically with tk::RNG
 template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
 class RNGSSE {
 
-    using InitFn = void (*)(State*, SeqNumType);
+    using InitFn = void (*)( State*, SeqNumType );
 
   public:
-    //! Constructor with sequence length option: short, long, medium
+    //! \brief Constructor
+    //! \param[in] nthreads Initialize RNG using this many independent streams
+    //! \param[in] fnShort RNG initializer function for short streams
+    //! \param[in] seqLen Sequence length enum: short, medium or long
+    //! \param[in] fnLong RNG initializer function for long streams
+    //! \param[in] fnMedium RNG initializer function for medium streams
     explicit RNGSSE( SeqNumType nthreads,
                      InitFn fnShort,
                      ctr::RNGSSESeqLenType seqlen = ctr::RNGSSESeqLenType::SHORT,
@@ -43,13 +48,20 @@ class RNGSSE {
       for (SeqNumType i=0; i<nthreads; ++i) m_init( &m_stream[i], i );
     }
 
-    //! Uniform RNG
+    //! Uniform RNG: Generate uniform random numbers
+    //! \param[in] tid Thread (or more precisely) stream ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout r Pointer to memory to write the RNGs to
     void uniform( int tid, int num, double* r ) const {
       for (int i=0; i<num; ++i)
         r[i] = static_cast<double>( Generate( &m_stream[tid] ) ) / 4294967296.0;
     }
 
-    //! Gaussian RNG
+    //! Gaussian RNG: Generate Gaussian random numbers
+    //! \param[in] tid Thread (or rather) stream ID
+    //! \param[in] num Number of RNGs to generate
+    //! \param[inout r Pointer to memory to write the RNGs to
+    // TODO: not yet implemented
     void gaussian( int tid, int num, double* r ) const {
       Throw( "RNGSSE::gaussian undefined" );
       IGNORE(tid);

@@ -2,10 +2,15 @@
 /*!
   \file      src/RNG/RNGStack.h
   \author    J. Bakosi
-  \date      Mon 12 Jan 2015 11:59:51 AM MST
+  \date      Wed 28 Jan 2015 03:53:24 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Stack of random number generators
-  \details   Stack of random number generators
+  \details   This file declares class RNGStack, which implements various
+    functionality related to registering and instantiating random number
+    generators interfacing to multiple RNG libraries. Registration and
+    instantiation use a random number generator factory, which is a std::map (an
+    associative container), associating unique RNG keys to their constructor
+    calls. For more details, see the in-code documentation of the constructor.
 */
 //******************************************************************************
 #ifndef RNGStack_h
@@ -19,10 +24,12 @@
 
 namespace tk {
 
-//! Random number generator factory type
+//! Random number generator factory: keys associated to their constructors
+//! \author J. Bakosi
 using RNGFactory = std::map< ctr::RNGType, std::function< RNG() > >;
 
-//! RNGStack
+//! \brief Random number generator stack
+//! \author J. Bakosi
 class RNGStack {
 
   public:
