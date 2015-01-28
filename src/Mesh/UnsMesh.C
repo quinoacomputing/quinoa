@@ -2,10 +2,11 @@
 /*!
   \file      src/Mesh/UnsMesh.C
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 09:21:29 AM MDT
+  \date      Wed 28 Jan 2015 01:08:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     3D unstructured mesh class definition
-  \details   3D unstructured mesh class definition
+  \details   3D unstructured mesh class definition. This mesh class currently
+    supports line, triangle, and tetrahedron elements.
 */
 //******************************************************************************
 
@@ -20,6 +21,7 @@ void
 UnsMesh::echoElemSets( const tk::Print& print ) const
 //******************************************************************************
 //  Echo element tags and connectivity in all element sets
+//! \param[in] print Pretty printer to use for printing
 //! \author J. Bakosi
 //******************************************************************************
 {

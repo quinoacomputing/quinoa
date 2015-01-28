@@ -2,10 +2,10 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Wed Mar 19 15:57:12 2014
+  \date      Wed 28 Jan 2015 01:00:30 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     STL (STereoLithography) mesh class declaration
-  \details   STL (STereoLithography) mesh class declaration
+  \details   STL (STereoLithography) mesh class declaration.
 */
 //******************************************************************************
 #ifndef STLMesh_h
@@ -23,16 +23,14 @@ class STLMesh {
 
   public:
     //! Constructor
-    explicit STLMesh() : m_nnodes(0) {}
-
-    //! Destructor
-    virtual ~STLMesh() = default;
+    explicit STLMesh() : m_nnodes( 0 ) {}
 
     //! Allocate memory for mesh
     void alloc(const size_t num);
 
-    //! Set/get mesh name
-    void setName(const std::string& n) { m_name = n; }
+    //! Set mesh name
+    void setName( const std::string& n ) { m_name = n; }
+    //! Get mesh name
     const std::string& name() const noexcept { return m_name; }
 
     //! Coordinate array accessors
@@ -47,20 +45,11 @@ class STLMesh {
     size_t nnodes() const noexcept { return m_nnodes; }
 
   private:
-    //! Don't permit copy constructor
-    STLMesh(const STLMesh&) = delete;
-    //! Don't permit assigment constructor
-    STLMesh& operator=(const STLMesh&) = delete;
-    //! Don't permit move constructor
-    STLMesh(STLMesh&&) = delete;
-    //! Don't permit move assignment
-    STLMesh& operator=(STLMesh&&) = delete;
-
     std::string m_name;                      //!< Name of the mesh
-    std::unique_ptr<tk::real[]> m_x;         //!< Vertex x coordinates
-    std::unique_ptr<tk::real[]> m_y;         //!< Vertex y coordinates
-    std::unique_ptr<tk::real[]> m_z;         //!< Vertex z coordinates
-    std::unique_ptr<int[]> m_nodelist;       //!< Node indices describing facets
+    std::unique_ptr< tk::real[] > m_x;       //!< Vertex x coordinates
+    std::unique_ptr< tk::real[] > m_y;       //!< Vertex y coordinates
+    std::unique_ptr< tk::real[] > m_z;       //!< Vertex z coordinates
+    std::unique_ptr< int[] > m_nodelist;     //!< Node indices describing facets
 
     size_t m_nnodes;                         //!< Number of nodes
 };
