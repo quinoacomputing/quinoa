@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/RNGPrint.h
   \author    J. Bakosi
-  \date      Wed 17 Dec 2014 04:43:22 PM MST
+  \date      Wed 28 Jan 2015 12:16:17 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Printer with RNGs
-  \details   Printer with RNGs
+  \brief     Pretty printer base for pretty printers supporting RNGs
+  \details   Pretty printer base for pretty printers supporting RNGs.
 */
 //******************************************************************************
 #ifndef RNGPrint_h
@@ -22,6 +22,9 @@ class RNGPrint : public Print {
 
   public:
     //! Constructor
+    //! \param[inout] str Verbose stream
+    //! \param[inout] qstr Quiet stream
+    //! \see tk::Print::Print    
     explicit RNGPrint( std::ostream& str = std::clog,
                        std::ostream& qstr = std::cout ) : Print( str, qstr ) {}
 

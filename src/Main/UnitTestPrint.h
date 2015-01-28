@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 11:33:00 AM MDT
+  \date      Wed 28 Jan 2015 12:42:36 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -19,16 +19,23 @@
 
 namespace unittest {
 
-//! UnitTestPrint : Print
+//! UnitTestPrint : tk::Print
 class UnitTestPrint : public tk::Print {
 
   public:
     //! Constructor
+    //! \param[inout] str Verbose stream
+    //! \param[inout] qstr Quiet stream
+    //! \see tk::Print::Print
+    //! \author J. Bakosi
     explicit UnitTestPrint( std::ostream& str = std::clog,
                             std::ostream& qstr = std::cout ) :
       Print( str, qstr ) {}
 
     //! Print unit tests header (with legend)
+    //! \param[in] title Section title
+    //! \param[in] ngroup Number of test groups
+    //! \author J. Bakosi
     void unithead( const std::string& title, std::size_t ngroup ) const {
       std::stringstream ss;
       ss << title << " (from " << ngroup << " test groups)";
@@ -42,19 +49,21 @@ class UnitTestPrint : public tk::Print {
       raw( m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
     }
 
-    //! Print one-liner info for test. Columns:
-    //! [done/failed]
+    //! \brief Print one-liner info for test.
+    //! \details Columns:
+    //!   [done/failed]
     //!   - done: number of tests completed so far
     //!   - failed: number of failed tests so far
-    //! name of the test group
-    //! name of the test
-    //! result (with additional info if failed)
-    //! Assumed fields for status:
-    //!   status[0]: test group name
-    //!   status[1]: test name
-    //!   status[2]: result (tut::test_result::result_type as string)
-    //!   status[3]: exception message for failed test
-    //!   status[4]: exception type id for failed test
+    //!   name of the test group
+    //!   name of the test
+    //!   result (with additional info if failed)
+    //!   Assumed fields for status:
+    //!   - status[0]: test group name
+    //!   - status[1]: test name
+    //!   - status[2]: result (tut::test_result::result_type as string)
+    //!   - status[3]: exception message for failed test
+    //!   - status[4]: exception type id for failed test
+    //! \author J. Bakosi
     void test( std::size_t ncomplete,
                std::size_t nfail,
                const std::vector< std::string >& status )
@@ -71,6 +80,10 @@ class UnitTestPrint : public tk::Print {
 
   private:
     //! Return human-readable test result based on result code
+    //! \param[in] code Result code
+    //! \param[in] msg Message to append
+    //! \param[in] ex Expection message to attach to exceptions cases
+    //! \author J. Bakosi
     std::string result( const std::string& code,
                         const std::string& msg,
                         const std::string& ex ) const

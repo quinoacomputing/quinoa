@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/UnitTestDriver.h
   \author    J. Bakosi
-  \date      Mon 11 Aug 2014 04:49:22 PM MDT
+  \date      Wed 28 Jan 2015 11:43:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Unit test driver
-  \details   Unit test driver
+  \details   Unit test driver.
 */
 //******************************************************************************
 #ifndef UnitTestDriver_h
@@ -16,7 +16,7 @@
 
 namespace unittest {
 
-//! Unit test suite driver used polymorphically with Driver
+//! Unit test suite driver used polymorphically with tk::Driver
 class UnitTestDriver {
 
   public:

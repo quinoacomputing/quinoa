@@ -2,10 +2,11 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:35:22 PM MST
+  \date      Wed 28 Jan 2015 11:15:08 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Gmsh to Exodus II mesh file converter
-  \details   Gmsh to Exodus II mesh file converter
+  \brief     Mesh file converter Charm++ main chare
+  \details   Mesh file converter Charm++ main chare. This file contains the
+    definition of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
 //******************************************************************************
 
@@ -15,14 +16,32 @@
 #include <meshconv.decl.h>
 #include <Init.h>
 
-//! Charm handle to the main proxy, facilitates call-back to finalize, etc.,
-//! must be in global scope, unique per executable
+//! \brief Charm handle to the main proxy, facilitates call-back to finalize,
+//!    etc., must be in global scope, unique per executable
 CProxy_Main mainProxy;
 
-//! Charm++ main chare
+//! \brief Charm++ main chare for the mesh converter executable, meshconv.
+//! \details Note that this object should not be in a namespace.
 class Main : public CBase_Main {
 
   public:
+    //! \brief Constructor
+    //! \details The main chare constructor is the main entry point of the
+    //!   program, called by the Charm++ runtime system. The constructor does
+    //!   basic initialization steps, e.g., parser the command-line, prints out
+    //!   some useful information to screen (in verbose mode), and instantiates
+    //!   a driver. Since Charm++ is fully asynchronous, the constructure
+    //!   usually spawns asynchronous objects and immediately exits. Thus in the
+    //!   body of the main chare constructor we fire up an 'execute' chare,
+    //!   which then calls back to Main::execute(). Finishing the main chare
+    //!   constructor the Charm++ runtime system then starts the
+    //!   network-migration of all global-scope data (if any). The execute chare
+    //!   calling back to Main::execute() signals the end of the migration of
+    //!   the global-scope data. Then we are ready to execute the driver. Since
+    //!   the mesh converter is not parallel at this time, once the driver
+    //!   finished its execute() function we simply call finalize() which exits
+    //!   by calling Charm++'s CkExit(), shutting down the runtime system.
+    //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
     try :
       // Parse command line into m_cmdline using default simple pretty printer

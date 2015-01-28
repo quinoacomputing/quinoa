@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:50:16 PM MST
+  \date      Wed 28 Jan 2015 12:03:14 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     QuinoaPrint
-  \details   QuinoaPrint
+  \brief     Quinoa-specific pretty printer functionality
+  \details   Quinoa-specific pretty printer functionality.
 */
 //******************************************************************************
 
@@ -20,6 +20,10 @@ QuinoaPrint::inthead( const std::string& title,
                       const std::string& head ) const
 //******************************************************************************
 //  Print time integration header
+//! \param[in] title Section title
+//! \param[in] name Section name
+//! \param[in] legend Legend to print
+//! \param[in] head Head to append
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -33,6 +37,7 @@ void
 QuinoaPrint::statistics( const std::string& title ) const
 //******************************************************************************
 //  Print statistics and PDFs
+//! \param[in] title Section title
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -48,7 +53,8 @@ QuinoaPrint::statistics( const std::string& title ) const
 void
 QuinoaPrint::stats( const std::string& msg ) const
 //******************************************************************************
-//  Echo statistics container contents if differs from default.
+//  Echo statistics container contents if differs from default
+//! \param[in] msg Message to print
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -72,9 +78,11 @@ QuinoaPrint::pdfs( const std::string& msg,
                                      const std::vector< tk::real >& ext ) > op )
 const
 //******************************************************************************
-//  Echo pdfs container contents if differs from default applying op.
-//! \details See src/Control/Quinoa/Types.h for the definition of
-//! functions that may be passed in as op. Currently, the only example is 'pdf'.
+//  Echo pdfs container contents if differs from default applying op().
+//! \param[in] msg Message to print
+//! \param[in] op Functor to use
+//! \details See src/Control/StatCtr.h for the definition of functions that may
+//!    be passed in as op. Currently, the only example is tk::ctr::pdf.
 //! \author J. Bakosi
 //******************************************************************************
 {

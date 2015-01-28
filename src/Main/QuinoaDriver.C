@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/QuinoaDriver.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 04:55:17 PM MST
+  \date      Wed 28 Jan 2015 11:41:14 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     QuinoaDriver that drives Quinoa
-  \details   QuinoaDriver that drives Quinoa
+  \brief     Quinoa driver
+  \details   Quinor driver.
 */
 //******************************************************************************
 
@@ -27,6 +27,9 @@ QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
   m_print( print )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {

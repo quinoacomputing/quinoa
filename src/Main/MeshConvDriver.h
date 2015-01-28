@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/MeshConvDriver.h
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 09:19:44 PM MDT
+  \date      Wed 28 Jan 2015 11:36:44 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Mesh converter driver
-  \details   Mesh converter driver
+  \details   Mesh converter driver.
 */
 //******************************************************************************
 #ifndef MeshConvDriver_h
@@ -19,7 +19,7 @@
 //! Mesh converter declarations and definitions
 namespace meshconv {
 
-//! Mesh converter driver used polymorphically with Driver
+//! Mesh converter driver used polymorphically with tk::Driver
 class MeshConvDriver {
 
   public:

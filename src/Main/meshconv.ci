@@ -2,10 +2,12 @@
 /*!
   \file      src/Main/meshconv.ci
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:18:40 PM MDT
+  \date      Wed 28 Jan 2015 11:28:27 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Charm++ module interface file for meshconv
-  \details   Charm++ module interface file for meshconv
+  \details   Charm++ module interface file for the mesh file converter,
+    meshconv.
+  \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
 */
 //******************************************************************************
 

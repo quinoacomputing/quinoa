@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 05:08:21 PM MST
+  \date      Wed 28 Jan 2015 12:43:56 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Walker's printer
-  \details   Walker's printer
+  \brief     Walker-specific pretty printer functionality
+  \details   Walker-specific pretty printer functionality.
 */
 //******************************************************************************
 #ifndef WalkerPrint_h
@@ -26,16 +26,21 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck_defaults;
 extern ctr::InputDeck g_inputdeck;
 
-//! WalkerPrint : RNGPrint
+//! WalkerPrint : tk::RNGPrint
 class WalkerPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
+    //! \param[inout] str Verbose stream
+    //! \param[inout] qstr Quiet stream
+    //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
+    //! \author J. Bakosi
     explicit WalkerPrint( std::ostream& str = std::clog,
                           std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
 
-    //! Print control option: 'group : option' only if differs from its default
+    //! Print section only if differs from its default
+    //! \author J. Bakosi
     template< typename Option, typename... tags >
     void Section() const {
       if (g_inputdeck.get< tags... >() !=
@@ -55,8 +60,10 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     //! Print item: 'name : value' only if differs from its default
-    template<typename... tags>
-    void Item(const std::string& name) const {
+    //! \param[in] name Name of item
+    //! \author J. Bakosi
+    template< typename... tags >
+    void Item( const std::string& name ) const {
       if (g_inputdeck.get< tags... >() !=
             g_inputdeck_defaults.get< tags... >() )
         m_stream << m_item_name_value_fmt
@@ -64,6 +71,7 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     //! Print control option: 'group : option' only if differs from its default
+    //! \author J. Bakosi
     template<typename Option, typename... tags>
     void Item() const {
       if (g_inputdeck.get< tags... >() !=
@@ -76,6 +84,7 @@ class WalkerPrint : public tk::RNGPrint {
     }
 
     // Helper class for compact output of diff eq policies
+    //! \author J. Bakosi
     class Policies {
       public:
         // Default constructor
@@ -99,23 +108,21 @@ class WalkerPrint : public tk::RNGPrint {
         }
 
       private:
-        // Make list of policies unique
-        void unique( std::string& list ) {
-          std::sort( begin(list), end(list) );
-          auto it = std::unique( begin(list), end(list) );
-          list.resize( std::distance( begin(list), it ) );
-        }
         // Make all policies unique
         void unique() {
-          unique( init );
-          unique( coef );
+          tk::ctr::unique( init );
+          tk::ctr::unique( coef );
         }
 
         std::string init;
         std::string coef;
     };
 
-    //! Print list: name: option names with policies
+    //! Print equation list with policies
+    //! \param[in] title Section title
+    //! \param[in] factory Factory to get equation data from
+    //! \param[in] ntypes Unique equation types
+    //! \author J. Bakosi
     template< class Factory >
     void eqlist( const std::string& title,
                  const Factory& factory,
@@ -162,6 +169,8 @@ class WalkerPrint : public tk::RNGPrint {
 
   private:
     //! Return differential equation name
+    //! \param[in] key Equation key
+    //! \return Differential equation name based on key
     template< class Key >
     std::string DiffEqName ( const Key& key ) const
     { return ctr::DiffEq().name( key.template get< tag::diffeq >() ); }

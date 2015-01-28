@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
-  \date      Wed 07 Jan 2015 02:17:00 PM MST
+  \date      Wed 28 Jan 2015 11:44:44 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
@@ -27,6 +27,9 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   m_print( print )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {

@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/RNGTestDriver.h
   \author    J. Bakosi
-  \date      Tue 22 Jul 2014 10:21:39 PM MDT
+  \date      Wed 28 Jan 2015 11:42:12 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator test suite driver
-  \details   Random number generator test suite driver
+  \details   Random number generator test suite driver.
 */
 //******************************************************************************
 #ifndef RNGTestDriver_h
@@ -20,7 +20,8 @@ namespace rngtest {
 //! Battery factory type
 using BatteryFactory = std::map< ctr::BatteryType, std::function< Battery() > >;
 
-//! Random number generator test suite driver used polymorphically with Driver
+//! \brief Random number generator test suite driver used polymorphically with
+//!   tk::Driver
 class RNGTestDriver {
 
   public:
