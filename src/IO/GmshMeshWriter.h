@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:14:58 2014
+  \date      Wed 28 Jan 2015 08:43:57 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     GmshMeshWriter class declaration
-  \details   GmshMeshWriter class declaration
+  \brief     Gmsh mesh writer class declaration
+  \details   Gmsh mesh writer class declaration. Currently, this class supports
+    line, triangle, tetrahedron, and point Gmsh element types.
 */
 //******************************************************************************
 #ifndef GmshMeshWriter_h
@@ -19,33 +20,23 @@
 
 namespace quinoa {
 
-//! GmshMeshWriter : Writer
+//! \brief GmshMeshWriter : Writer
+//! \details Mesh writer class facilitating writing a mesh to a file readable by
+//!   the Gmsh mesh generator: http://geuz.org/gmsh.
 class GmshMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
     explicit GmshMeshWriter( const std::string& filename,
-                             UnsMesh& mesh,
+                             const UnsMesh& mesh,
                              GmshFileType type = GmshFileType::BINARY,
                              tk::real version = 2.2,
                              int datasize = sizeof(double) );
-
-    //! Destructor, default compiler generated
-    ~GmshMeshWriter() noexcept override = default;
 
     //! Write Gmsh mesh to file
     void write() override;
 
   private:
-    //! Don't permit copy constructor
-    GmshMeshWriter(const GmshMeshWriter&) = delete;
-    //! Don't permit copy assigment
-    GmshMeshWriter& operator=(const GmshMeshWriter&) = delete;
-    //! Don't permit move constructor
-    GmshMeshWriter(GmshMeshWriter&&) = delete;
-    //! Don't permit move assigment
-    GmshMeshWriter& operator=(GmshMeshWriter&&) = delete;
-
     //! Write "$Nodes--$EndNodes" section
     void writeNodes();
 
@@ -55,20 +46,24 @@ class GmshMeshWriter : public tk::Writer {
     //! Write "$PhysicalNames--$EndPhysicalNames" section
     void writePhysicalNames();
 
-    // Get mesh type
+    //! \brief Mesh ASCII type query
+    //! \return true if member variable m_type indicates an ASCII mesh format
     bool isASCII() const {
       return m_type == GmshFileType::ASCII ? true : false;
     }
+    //! \brief Mesh binary type query
+    //! \return true if member variable m_type indicates an binary mesh format
     bool isBinary() const {
       return m_type == GmshFileType::BINARY ? true : false;
     }
 
     //! Write element block: element ids, tags, and connectivity (node list)
-    void writeElemBlock( GmshElemType type, std::vector< int >& id,
-                         std::vector< std::vector< int > >& tag,
-                         std::vector< std::vector< int > >& inpoel );
+    void writeElemBlock( GmshElemType type,
+                         const std::vector< int >& id,
+                         const std::vector< std::vector< int > >& tag,
+                         const std::vector< std::vector< int > >& inpoel );
 
-    UnsMesh& m_mesh;                    //!< Mesh object
+    const UnsMesh& m_mesh;              //!< Mesh object
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
 };
 

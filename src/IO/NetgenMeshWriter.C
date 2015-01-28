@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 09:14:44 PM MDT
+  \date      Wed 28 Jan 2015 09:01:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Netgen mesh writer
-  \details   Netgen mesh writer
+  \brief     Netgen mesh writer class definition
+  \details   Netgen mesh writer class definition. Only supports tetrahedra.
 */
 //******************************************************************************
 
@@ -23,9 +23,7 @@ NetgenMeshWriter::write()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Write nodes
   writeNodes();
-  // Write elements
   writeElements();
 }
 

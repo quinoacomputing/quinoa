@@ -8,7 +8,6 @@ add_library(IO
             NetgenMeshReader.C
             ExodusIIMeshReader.C
             PDFWriter.C                 # writers
-            GlobWriter.C
             TxtStatWriter.C
             GmshMeshWriter.C
             NetgenMeshWriter.C

@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:12:23 2014
+  \date      Wed 28 Jan 2015 10:05:53 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     ExodusII mesh writer
-  \details   ExodusII mesh writer
+  \details   ExodusII mesh writer class declaration. Currently, this is a bare
+     minimum functionality to interface with the ExodusII writer. It only writes
+     3D meshes and only triangle and tetrahedron elements.
 */
 //******************************************************************************
 #ifndef ExodusIIMeshWriter_h
@@ -18,13 +20,15 @@
 
 namespace quinoa {
 
-//! ExodusIIMeshWriter
+//! \brief ExodusIIMeshWriter : tk::Writer
+//! \details Mesh reader class facilitating writing a mesh to a file in
+//!   ExodusII format. See also http://sourceforge.net/projects/exodusii.
 class ExodusIIMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
     explicit ExodusIIMeshWriter( const std::string& filename,
-                                 UnsMesh& mesh,
+                                 const UnsMesh& mesh,
                                  int cpuwordsize = sizeof(double),
                                  int iowordsize = sizeof(double) );
 
@@ -35,31 +39,23 @@ class ExodusIIMeshWriter : public tk::Writer {
     void write() override;
 
   private:
-    //! Don't permit copy constructor
-    ExodusIIMeshWriter(const ExodusIIMeshWriter&) = delete;
-    //! Don't permit copy assigment
-    ExodusIIMeshWriter& operator=(const ExodusIIMeshWriter&) = delete;
-    //! Don't permit move constructor
-    ExodusIIMeshWriter(ExodusIIMeshWriter&&) = delete;
-    //! Don't permit move assigment
-    ExodusIIMeshWriter& operator=(ExodusIIMeshWriter&&) = delete;
-
-    //! Write header
+    //! Write ExodusII header
     void writeHeader();
 
-    //! Write nodes
+    //! Write nodes coordinates to ExodusII file
     void writeNodes();
 
-    //! Write elements
+    //! Write element conectivity to ExodusII file
     void writeElements();
 
-    //! Write element block
-    void writeElemBlock( int elclass, int nnpe, const std::string& eltype,
-                         std::vector< std::vector< int > >& inpoel );
+    //! Write element block to ExodusII file
+    void writeElemBlock( int elclass,
+                         int nnpe,
+                         const std::string& eltype,
+                         const std::vector< std::vector< int > >& inpoel );
 
     const std::string m_filename;          //!< File name
-
-    UnsMesh& m_mesh;                       //!< Mesh object
+    const UnsMesh& m_mesh;                 //!< Mesh object
     int m_outFile;                         //!< ExodusII file handle
 };
 

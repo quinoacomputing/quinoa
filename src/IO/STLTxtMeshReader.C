@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:01:44 PM MDT
+  \date      Wed 28 Jan 2015 10:12:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
-  \details   ASCII STL (STereoLithography) reader class definition
+  \details   ASCII STL (STereoLithography) reader class definition.
 */
 //******************************************************************************
 
@@ -14,16 +14,17 @@
 
 using quinoa::STLTxtMeshReader;
 
-STLTxtMeshReader::STLTxtMeshReader(const std::string filename, STLMesh& mesh) :
-  Reader(filename),
-  m_mesh(mesh)
+STLTxtMeshReader::STLTxtMeshReader( const std::string filename, STLMesh& mesh )
+  : Reader( filename ), m_mesh( mesh )
 //******************************************************************************
 // Constructor
+//! \param[in] filename File to read STL data from
+//! \param[inout] mesh STLMesh object to store STL mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Set mesh name as filename modulo extension
-  mesh.setName(filename.substr(0, filename.find_last_of(".")));
+  mesh.setName( filename.substr( 0, filename.find_last_of(".") ) );
 }
 
 void
@@ -34,21 +35,21 @@ STLTxtMeshReader::read()
 //******************************************************************************
 {
   // Count up number of vertices in STL mesh
-  size_t nnodes = readFacets(COUNT);
+  size_t nnodes = readFacets( COUNT );
   Assert(nnodes % 3 == 0, "Number of nodes in STL file must be divisible by 3");
 
   // Allocate memory to store coordinates and face list
-  m_mesh.alloc(nnodes);
+  m_mesh.alloc( nnodes );
 
   // Read and store mesh
-  readFacets(STORE, m_mesh.getx(), m_mesh.gety(), m_mesh.getz());
+  readFacets( STORE, m_mesh.getx(), m_mesh.gety(), m_mesh.getz() );
 }
 
 size_t
-STLTxtMeshReader::readFacets(const bool store,
-                             tk::real* const x,
-                             tk::real* const y,
-                             tk::real* const z)
+STLTxtMeshReader::readFacets( const bool store,
+                              tk::real* const x,
+                              tk::real* const y,
+                              tk::real* const z )
 //******************************************************************************
 //  Read ASCII STL mesh
 //  \param[in]  store  Whether to store the facets or not (i.e., only count)
@@ -67,7 +68,7 @@ STLTxtMeshReader::readFacets(const bool store,
 
   // Read in solids with their facets until eof
   size_t num = 0;
-  while (!m_inFile.eof()) {
+  while ( !m_inFile.eof() ) {
     // Start reading new solid
     std::string solidname;
     m_inFile >> solid >> solidname;

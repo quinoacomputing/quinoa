@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/GmshMeshIO.h
   \author    J. Bakosi
-  \date      Thu 10 Apr 2014 09:30:12 AM MDT
+  \date      Wed 28 Jan 2015 08:06:18 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Gmsh mesh reader and writer common
-  \details   Gmsh mesh reader and writer common
+  \brief     Gmsh mesh reader and writer related types
+  \details   Gmsh mesh reader and writer related types.
 */
 //******************************************************************************
 #ifndef GmshMeshIO_h
@@ -13,13 +13,13 @@
 
 namespace quinoa {
 
-// Identifiers of supported Gmsh elements
+//! Identifiers of supported Gmsh elements
 enum GmshElemType { LIN = 1,
                     TRI = 2,
                     TET = 4,
                     PNT = 15 };
 
-// Gmsh mesh file types
+//! Supported Gmsh mesh file types
 enum class GmshFileType { UNDEFINED = -1,
                           ASCII = 0,
                           BINARY = 1 };

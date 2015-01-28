@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:26:37 PM MST
+  \date      Wed 28 Jan 2015 09:05:57 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     PDF writer
-  \details   PDF writer
+  \brief     PDF writer class declaration
+  \details   This file declares a PDF writer class that facilitates outputing
+    probability density functions (PDFs) into files in various formats using
+    various configurations.
 */
 //******************************************************************************
 #ifndef PDFWriter_h

@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:57:31 PM MST
+  \date      Wed 28 Jan 2015 10:16:38 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     TxtStat writer base class definition
-  \details   TxtStat writer base class definition
+  \brief     Text statistics writer declaration
+  \details   This file declares the ASCII statistics writer class that
+     facilitates outputing statistics to text files.
 */
 //******************************************************************************
 
@@ -21,6 +22,8 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
                        const std::vector< std::string >& nameCen ) const
 //******************************************************************************
 //  Write out statistics file header
+//! \param[in] nameOrd Vector of strings with the names of ordinary moments
+//! \param[in] nameCen Vector of strings with the names of central moments
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -42,9 +45,11 @@ TxtStatWriter::stat( int it,
                      const std::vector< tk::real >& central )
 //******************************************************************************
 //  Write out statistics
-//! \param[in]  it         Iteration counter
-//! \param[in]  t          Time
-//! \return Bool signaling whether anything was written into file
+//! \param[in] it Iteration counter
+//! \param[in] t Time
+//! \param[in] ordinary Vector with the ordinary moment statistics
+//! \param[in] central Vector with the central moment statistics
+//! \return The total number of statistics written to the output file
 //! \author J. Bakosi
 //******************************************************************************
 {

@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 08:58:48 PM MDT
+  \date      Wed 28 Jan 2015 08:58:31 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
-  \details   Netgen mesh reader class definition
+  \details   Netgen mesh reader class definition. Only supports tetrahedra.
 */
 //******************************************************************************
 
@@ -19,7 +19,7 @@ using quinoa::NetgenMeshReader;
 void
 NetgenMeshReader::read()
 //******************************************************************************
-//  Public interface for read Netgen mesh
+//  Public interface for reading Netgen mesh
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -63,7 +63,7 @@ NetgenMeshReader::readNodes()
 void
 NetgenMeshReader::readElements()
 //******************************************************************************
-//  Read elements, i.e., connectivity
+//  Read element connectivity
 //! \author J. Bakosi
 //******************************************************************************
 {

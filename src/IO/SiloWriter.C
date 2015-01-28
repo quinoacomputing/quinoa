@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:02:32 PM MDT
+  \date      Wed 28 Jan 2015 10:00:22 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Silo (https://wci.llnl.gov/codes/silo) writer
-  \details   Silo (https://wci.llnl.gov/codes/silo) writer
+  \brief     Silo writer definition.
+  \details   Silo writer definition. This class currently only supports writing
+    an STL triangulation into a Silo file. See also
+    https://wci.llnl.gov/codes/silo.
 */
 //******************************************************************************
 
@@ -19,7 +21,7 @@
 #include <STLMesh.h>
 
 void
-quinoa::SiloError(char* msg)
+quinoa::SiloError( char* msg )
 //******************************************************************************
 //  Silo error handler
 //! \param[in]  msg  Error message
@@ -38,17 +40,17 @@ quinoa::SiloError(char* msg)
 
 using quinoa::SiloWriter;
 
-SiloWriter::SiloWriter(const std::string& filename,
-                       const STLMesh& mesh,
-                       int errLevel) :
-  m_filename(filename),
-  m_mesh(mesh),
-  m_dbfile(nullptr)
+SiloWriter::SiloWriter( const std::string& filename,
+                        const STLMesh& mesh,
+                        int errLevel ) :
+  m_filename( filename ),
+  m_mesh( mesh ),
+  m_dbfile( nullptr )
 //******************************************************************************
 //  Constructor
-//  \param[in]  filename  Name of Silo file to be created
-//  \param[in]  mesh      Mesh object
-//  \param[in]  errLevel  Silo library error output level
+//  \param[in] filename Name of Silo file to be created
+//  \param[in] mesh Mesh object
+//  \param[in] errLevel Silo library error output level
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -67,7 +69,7 @@ SiloWriter::SiloWriter(const std::string& filename,
 SiloWriter::~SiloWriter() noexcept
 //******************************************************************************
 //  Destructor
-//! \details    Exception safety: no-throw guarantee: never throws exceptions.
+//! \details Exception safety: no-throw guarantee: never throws exceptions.
 //! \author J. Bakosi
 //******************************************************************************
 {
