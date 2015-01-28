@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/QuinoaPrint.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:50:46 PM MST
+  \date      Wed 28 Jan 2015 12:40:58 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Quinoa's printer
-  \details   Quinoa's printer
+  \brief     Quinoa-specific pretty printer functionality
+  \details   Quinoa-specific pretty printer functionality.
 */
 //******************************************************************************
 #ifndef QuinoaPrint_h
@@ -24,11 +24,15 @@ namespace quinoa {
 extern ctr::InputDeck g_inputdeck_defaults;
 extern ctr::InputDeck g_inputdeck;
 
-//! QuinoaPrint : RNGPrint
+//! QuinoaPrint : tk::RNGPrint
 class QuinoaPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
+    //! \param[inout] str Verbose stream
+    //! \param[inout] qstr Quiet stream
+    //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
+    //! \author J. Bakosi
     explicit QuinoaPrint( std::ostream& str = std::clog,
                           std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
@@ -53,8 +57,10 @@ class QuinoaPrint : public tk::RNGPrint {
     }
 
     //! Print item: 'name : value' only if differs from its default
-    template<typename... tags>
-    void Item(const std::string& name) const {
+    //! \param[in] name Name of item
+    //! \author J. Bakosi
+    template< typename... tags >
+    void Item( const std::string& name ) const {
       if (g_inputdeck.get< tags... >() !=
             g_inputdeck_defaults.get< tags... >() )
         m_stream << m_item_name_value_fmt
@@ -62,7 +68,8 @@ class QuinoaPrint : public tk::RNGPrint {
     }
 
     //! Print control option: 'group : option' only if differs from its default
-    template<typename Option, typename... tags>
+    //! \author J. Bakosi
+    template< typename Option, typename... tags >
     void Item() const {
       if (g_inputdeck.get< tags... >() !=
             g_inputdeck_defaults.get< tags... >() ) {

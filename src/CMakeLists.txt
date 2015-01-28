@@ -305,7 +305,6 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/DiffEq
                     ${QUINOA_SOURCE_DIR}/Walker
                     ${QUINOA_SOURCE_DIR}/IO
-                    ${QUINOA_SOURCE_DIR}/LinearAlgebra
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
                     ${QUINOA_SOURCE_DIR}/RNG
@@ -328,7 +327,6 @@ add_subdirectory(Control)
 add_subdirectory(DiffEq)
 add_subdirectory(Walker)
 add_subdirectory(IO)
-#add_subdirectory(LinearAlgebra)
 add_subdirectory(Main)
 add_subdirectory(Mesh)
 add_subdirectory(RNG)

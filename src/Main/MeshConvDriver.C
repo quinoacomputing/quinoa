@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:25:59 PM MDT
+  \date      Wed 28 Jan 2015 11:39:08 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     MeshConvDriver that drives MeshConv
-  \details   MeshConvDriver that drives MeshConv
+  \brief     Mesh converter driver
+  \details   Mesh converter driver.
 */
 //******************************************************************************
 
@@ -28,6 +28,9 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
                                 const ctr::CmdLine& cmdline )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -80,6 +83,7 @@ MeshConvDriver::MeshReaderType
 MeshConvDriver::detectInput() const
 //******************************************************************************
 //  Detect input mesh file type
+//! \return enum specifying the mesh reader type
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -120,6 +124,7 @@ MeshConvDriver::MeshWriterType
 MeshConvDriver::pickOutput() const
 //******************************************************************************
 //  Determine output mesh file type
+//! \return enum specifying the mesh writer type
 //! \author J. Bakosi
 //******************************************************************************
 {

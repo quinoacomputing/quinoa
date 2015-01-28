@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatControl.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:55:05 PM MST
+  \date      Wed 28 Jan 2015 12:09:54 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -293,14 +293,15 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
   Throw( "Cannot find PDF name." );
 }
 
-//! \brief Make requested statistics unique
-//! \param[in,out] statistics Vector of statistics
+//! \brief Make elements of container unique
+//! \param[inout] c Container
 //! \author  J. Bakosi
+template< class Container >
 static inline void
-unique( std::vector< tk::ctr::Product >& statistics ) {
-  std::sort( begin(statistics), end(statistics) );
-  auto it = std::unique( begin(statistics), end(statistics) );
-  statistics.resize( std::distance( begin(statistics), it ) );
+unique( Container& c ) {
+  std::sort( begin(c), end(c) );
+  auto it = std::unique( begin(c), end(c) );
+  c.resize( std::distance( begin(c), it ) );
 }
 
 } // ctr::

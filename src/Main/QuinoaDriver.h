@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/QuinoaDriver.h
   \author    J. Bakosi
-  \date      Fri 15 Aug 2014 10:12:21 AM MDT
+  \date      Wed 28 Jan 2015 11:40:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     QuinoaDriver that drives Quinoa
-  \details   QuinoaDriver that drives Quinoa
+  \brief     Quinoa driver
+  \details   Quinoa driver.
 */
 //******************************************************************************
 #ifndef QuinoaDriver_h
@@ -16,7 +16,7 @@
 
 namespace quinoa {
 
-//! Quinoa driver used polymorphically with Driver
+//! Quinoa driver used polymorphically with tk::Driver
 class QuinoaDriver {
 
   public:

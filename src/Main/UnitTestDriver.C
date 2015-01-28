@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/UnitTestDriver.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 12:25:25 PM MDT
+  \date      Wed 28 Jan 2015 11:43:48 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     UnitTestDriver that drives the unit test suite
-  \details   UnitTestDriver that drives the unit test suite
+  \brief     Unit test driver
+  \details   Unit test driver.
 */
 //******************************************************************************
 
@@ -25,6 +25,9 @@ UnitTestDriver::UnitTestDriver( const UnitTestPrint& print,
   m_print( print )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {

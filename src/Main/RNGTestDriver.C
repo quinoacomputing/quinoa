@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Tue 26 Aug 2014 06:08:40 PM MDT
+  \date      Wed 28 Jan 2015 11:42:27 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     RNGTestDriver that drives the random number generator test suite
-  \details   RNGTestDriver that drives the random number generator test suite
+  \brief     Random number generator test suite driver
+  \details   Random number generator test suite driver.
 */
 //******************************************************************************
 
@@ -31,6 +31,9 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
   m_print( print )
 //******************************************************************************
 //  Constructor
+//! \param[in] print Pretty printer
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
 //! \author J. Bakosi
 //******************************************************************************
 {

@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/RNGPrint.C
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:51:19 AM MDT
+  \date      Wed 28 Jan 2015 12:19:57 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Printer with RNGs
-  \details   Printer with RNGs
+  \brief     Pretty printer base for pretty printers supporting RNGs
+  \details   Pretty printer base for pretty printers supporting RNGs.
 */
 //******************************************************************************
 
@@ -18,6 +18,7 @@ void
 RNGPrint::echoMKLParams( const ctr::RNGMKLParam& p ) const
 //******************************************************************************
 //  Echo information on MKL random number generator
+//! \param[in] p MKL RNG parameters
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -47,6 +48,9 @@ RNGPrint::echoRNGSSEParams( const ctr::RNGSSEParam& p,
                             const ctr::RNGType& r ) const
 //******************************************************************************
 //  Echo information on RNGSSE random number generator
+//! \param[in] p RNGSSE RNG parameters
+//! \param[in] rng RNG options object
+//! \param[in] r RNG type enum
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -70,6 +74,8 @@ RNGPrint::MKLParams( const std::vector< ctr::RNGType >& vec,
                      const ctr::RNGMKLParameters& map ) const
 //******************************************************************************
 //  Print all fields of MKL RNG parameters
+//! \param[in] vec Vector of RNG type enums to print
+//! \param[in] map MKL RNG parameters map
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -94,6 +100,8 @@ RNGPrint::RNGSSEParams( const std::vector< ctr::RNGType >& vec,
                         const ctr::RNGSSEParameters& map ) const
 //******************************************************************************
 //  Print all fields of RNGSSE RNG parameters
+//! \param[in] vec Vector of RNG type enums to print
+//! \param[in] map RNGSSE RNG parameters map
 //! \author J. Bakosi
 //******************************************************************************
 {

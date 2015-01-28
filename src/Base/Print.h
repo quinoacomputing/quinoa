@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 07:26:55 AM MST
+  \date      Wed 28 Jan 2015 11:48:47 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -50,8 +50,8 @@ class Print {
     //! std::clog, is only used to detect whether client code passed a default
     //! argument or not: if it did not, the string stream is used for verbose
     //! output, if it did, the specified stream is used for the verbose output.
-    //! \param[in] str Verbose stream
-    //! \param[in] qstr Quiet stream
+    //! \param[inout] str Verbose stream
+    //! \param[inout] qstr Quiet stream
     //! \author J. Bakosi
     explicit Print( std::ostream& str = std::clog,
                     std::ostream& qstr = std::cout ) :

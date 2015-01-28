@@ -2,10 +2,10 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:59:20 PM MST
+  \date      Wed 28 Jan 2015 12:03:25 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     WalkerPrint
-  \details   WalkerPrint
+  \brief     Walker-specific pretty printer functionality
+  \details   Walker-specific pretty printer functionality.
 */
 //******************************************************************************
 
@@ -27,6 +27,10 @@ WalkerPrint::inthead( const std::string& title,
                       const std::string& head ) const
 //******************************************************************************
 //  Print time integration header
+//! \param[in] title Section title
+//! \param[in] name Section name
+//! \param[in] legend Legend to print
+//! \param[in] head Head to append
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -40,6 +44,7 @@ void
 WalkerPrint::statistics( const std::string& title ) const
 //******************************************************************************
 //  Print statistics and PDFs
+//! \param[in] title Section title
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -57,6 +62,7 @@ WalkerPrint::diffeqs( const std::string& title, const std::vector< std::vector<
   std::pair< std::string, std::string > > >& info ) const
 //******************************************************************************
 //  Print configuration of a stack of differential equations
+//! \param[in] msg Message to print
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -78,6 +84,7 @@ void
 WalkerPrint::stats( const std::string& msg ) const
 //******************************************************************************
 //  Echo statistics container contents if differs from default
+//! \param[in] msg Message to print
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -102,8 +109,10 @@ WalkerPrint::pdfs( const std::string& msg,
 const
 //******************************************************************************
 //  Echo pdfs container contents if differs from default applying op.
-//! \details See src/Control/Walker/Types.h for the definition of
-//! functions that may be passed in as op. Currently, the only example is 'pdf'.
+//! \param[in] msg Message to print
+//! \param[in] op Functor to use
+//! \details See src/Control/StatCtr.h for the definition of functions that may
+//!    be passed in as op. Currently, the only example is tk::ctr::pdf.
 //! \author J. Bakosi
 //******************************************************************************
 {

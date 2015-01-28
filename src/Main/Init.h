@@ -2,10 +2,13 @@
 /*!
   \file      src/Main/Init.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:57:40 AM MST
+  \date      Wed 28 Jan 2015 10:52:34 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Common initialization for all mains
-  \details   Common initialization for all mains.
+  \brief     Common initialization routines for main() functions for multiple
+     exectuables
+  \details   Common initialization routines for main() functions for multiple
+     exectuables. The functions in this file are used by multiple execitables
+     to ensure code-reuse and a uniform screen-output.
 */
 //******************************************************************************
 #ifndef Init_h
@@ -23,7 +26,7 @@
 
 namespace tk {
 
-//! Executable types for which an ascii logo is available in Print
+//! Executable types for which an ascii logo is available in tk::Print
 enum class HeaderType : uint8_t { QUINOA=0,
                                   RNGTEST,
                                   UNITTEST,
@@ -33,29 +36,31 @@ enum class HeaderType : uint8_t { QUINOA=0,
 
 static std::string workdir()
 //******************************************************************************
-//  Wrapper for POSIX API's getcwd() from unistd.h
-//! \author  J. Bakosi
+//! \brief Wrapper for POSIX API's getcwd() from unistd.h
+//! \return A stirng containing the current working directory
+//! \author J. Bakosi
 //******************************************************************************
 {
   char cwd[1024];
 
-  if (getcwd(cwd, sizeof(cwd)) != NULL)
-    return std::string(cwd);
+  if ( getcwd(cwd, sizeof(cwd)) != NULL )
+    return std::string( cwd );
   else
     Throw( "Error from POSIX API's getcwd()" );
 }
 
 static std::string curtime()
 //******************************************************************************
-//  Wrapper for the standard C library's gettimeofday() from
-//! \author  J. Bakosi
+//! \brief Wrapper for the standard C library's gettimeofday() from
+//! \return A stirng containing the current date and time
+//! \author J. Bakosi
 //******************************************************************************
 {
   time_t current_time;
   char* c_time_string;
 
   // Obtain current time as seconds elapsed since the Epoch
-  current_time = time(NULL);
+  current_time = time( NULL );
 
   if (current_time == ((time_t)-1))
     Throw( "Failure to compute the current time" );
@@ -67,15 +72,17 @@ static std::string curtime()
     Throw( "Failure to convert the current time" );
 
   // Convert to std::string and remove trailing newline
-  std::string str(c_time_string);
-  str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+  std::string str( c_time_string );
+  str.erase( std::remove(str.begin(), str.end(), '\n'), str.end() );
 
   return str;
 }
 
 static void echoHeader( const Print& print, HeaderType header )
 //******************************************************************************
-//  Echo program header
+//! \brief Echo program header
+//! \param[in] print Pretty printer
+//! \param[in] header Header type enum indicating which header to print
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -95,10 +102,12 @@ static void echoHeader( const Print& print, HeaderType header )
 
 static void echoBuildEnv( const Print& print, const std::string& executable )
 //******************************************************************************
-//  Echo build environment
-//! \details Echo information read from [build]/Base/Config.h filled by
-//!          CMake based on src/Main/Config.h.in
-//! \author  J. Bakosi
+//! \brief Echo build environment
+//! \details Echo information read from <build>/Base/Config.h filled by
+//!    CMake based on src/Main/Config.h.in.
+//! \param[in] print Pretty printer
+//! \param[in] executable Name of the executable
+//! \author J. Bakosi
 //******************************************************************************
 {
   print.section( "Build environment" );
@@ -124,8 +133,12 @@ static void echoBuildEnv( const Print& print, const std::string& executable )
 
 static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose )
 //******************************************************************************
-//  Echo runtime environment
-//! \author  J. Bakosi
+//! \brief Echo runtime environment
+//! \param[in] print Pretty printer
+//! \param[in] argc Number of command-line arguments to executable
+//! \param[in] argv C-style string array to command-line arguments to executable
+//! \param[in] verbose True for verbose screen-output
+//! \author J. Bakosi
 //******************************************************************************
 {
   print.section( "Run-time environment" );
@@ -147,7 +160,26 @@ static void echoRunEnv( const Print& print, int argc, char** argv, bool verbose 
   print.item( "Output", verbose ? "verbose (quiet: omit -v)" : "quiet" );
 }
 
-//! Generic Main() used for all executables for code-reuse and a uniform output
+//! \brief Generic Main() used for all executables for code-reuse and a uniform
+//!    output
+//! \details The template arguments configure this Main class that is
+//!   practically used instead of the usual main(). This allows code-reuse and a
+//!   unfirom screen-output. The template arguments are:
+//!   - Driver, specializaing the driver type to be created, see tk::Driver
+//!   - Printer, specializaing the pretty printer type to use, see tk::Print
+//!   - CmdLine, specializing the command line object storing data parsed from
+//!     the command line
+//! \param[in] argc Number of command-line arguments to executable
+//! \param[in] argv C-style string array to command-line arguments to executable
+//! \param[in] cmdline Command line object storing data parsed from the command
+//!   line arguments
+//! \param[in] header Header type enum indicating which executable header to
+//!   print
+//! \param[in] executable Name of the executable
+//! \param[in] print Pretty printer to use
+//! \return Instantiated driver object which can then be used to execute()
+//!   whatever it is intended to drive
+//! \author J. Bakosi
 template< class Driver, class Printer, class CmdLine >
 Driver Main( int argc, char* argv[],
              const CmdLine& cmdline,
