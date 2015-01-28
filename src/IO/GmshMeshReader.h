@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 10:04:47 AM MDT
+  \date      Wed 28 Jan 2015 08:26:20 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Gmsh reader class declaration
-  \details   Gmsh reader class declaration
+  \brief     Gmsh mesh reader class declaration
+  \details   Gmsh mesh reader class declaration. Currently, this class supports
+    line, triangle, tetrahedron, and point Gmsh element types.
 */
 //******************************************************************************
 #ifndef GmshMeshReader_h
@@ -20,7 +21,10 @@
 
 namespace quinoa {
 
-//! GmshMeshReader : Reader
+//! \brief GmshMeshReader : tk::Reader
+//! \details Mesh reader class facilitating reading a mesh from a file saved by
+//!   the Gmsh mesh generator: http://geuz.org/gmsh.
+//! \author J. Bakosi
 class GmshMeshReader : public tk::Reader {
 
   public:
@@ -32,22 +36,10 @@ class GmshMeshReader : public tk::Reader {
       m_type( GmshFileType::UNDEFINED ),       //  -1: uninitialized
       m_mesh( mesh ) {}
 
-    //! Destructor, default compiler generated
-    ~GmshMeshReader() noexcept override = default;
-
     //! Read Gmsh mesh
     void read() override;
 
   private:
-    //! Don't permit copy constructor
-    GmshMeshReader(const GmshMeshReader&) = delete;
-    //! Don't permit copy assigment
-    GmshMeshReader& operator=(const GmshMeshReader&) = delete;
-    //! Don't permit move constructor
-    GmshMeshReader(GmshMeshReader&&) = delete;
-    //! Don't permit move assigment
-    GmshMeshReader& operator=(GmshMeshReader&&) = delete;
-
     //! Read mandatory "$MeshFormat--$EndMeshFormat" section
     void readMeshFormat();
 
@@ -60,11 +52,16 @@ class GmshMeshReader : public tk::Reader {
     //! Read "$PhysicalNames--$EndPhysicalNames" section
     void readPhysicalNames();
 
-    // Get mesh type queries
+    //! \brief Mesh ASCII type query
+    //! \return true if member variable m_type indicates an ASCII mesh format
+    //! \author J. Bakosi
     bool isASCII() const {
       Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::ASCII ? true : false;
     }
+    //! \brief Mesh binary type query
+    //! \return true if member variable m_type indicates an binary mesh format
+    //! \author J. Bakosi
     bool isBinary() const {
       Assert( m_type != GmshFileType::UNDEFINED, "Mesh type is undefined");
       return m_type == GmshFileType::BINARY ? true : false;
@@ -75,9 +72,13 @@ class GmshMeshReader : public tk::Reader {
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
     UnsMesh& m_mesh;                    //!< Mesh object
 
-    //! Push back p for different element types
+    //! \brief Push back object p into underlying std::vector for different
+    //!   element types
     template< class Pushed, class ElmType1, class ElmType2, class ElmType3 >
-    void push_back( int etype, const Pushed& p, ElmType1& e1, ElmType2& e2,
+    void push_back( int etype,
+                    const Pushed& p,
+                    ElmType1& e1,
+                    ElmType2& e2,
                     ElmType3& e3 )
     {
       using tk::operator<<;
@@ -92,8 +93,8 @@ class GmshMeshReader : public tk::Reader {
       }
     }
 
-    //! Gmsh element types and their number of nodes,
-    //! See Gmsh documentation for element ids as keys
+    //! \brief Gmsh element types and their corrseponding number of nodes
+    //! \details See Gmsh documentation for element ids as keys
     const std::map< int, int > m_elemNodes {
       { GmshElemType::LIN,   2 },  // 2-node line
       { GmshElemType::TRI,   3 },  // 3-node triangle

@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 05 Jul 2014 09:00:23 PM MDT
+  \date      Wed 28 Jan 2015 08:44:35 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
-  \details   Gmsh mesh writer class definition
+  \details   Gmsh mesh writer class definition. Currently, this class supports
+    line, triangle, tetrahedron, and point Gmsh element types.
 */
 //******************************************************************************
 
@@ -18,13 +19,17 @@
 using quinoa::GmshMeshWriter;
 
 GmshMeshWriter::GmshMeshWriter( const std::string& filename,
-                                UnsMesh& mesh,
+                                const UnsMesh& mesh,
                                 GmshFileType type,
                                 tk::real version,
                                 int datasize ) :
   Writer( filename ), m_mesh( mesh ), m_type( type )
 //******************************************************************************
 //  Constructor: write mandatory "$MeshFormat" section
+//! \param[in] filename File to open as a Gmsh file
+//! \param[in] mesh Unstructured mesh object to write data from
+//! \param[in] type Gmsh file type: ASCII or binary
+//! \param[in] datasize Size of double precision number on machine
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -84,10 +89,13 @@ GmshMeshWriter::writeNodes()
   } else {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
       m_outFile.write(
-        reinterpret_cast<char*>(&m_mesh.nodeId()[i]), sizeof(int) );
-      m_outFile.write(reinterpret_cast<char*>(&m_mesh.x()[i]), sizeof(double));
-      m_outFile.write(reinterpret_cast<char*>(&m_mesh.y()[i]), sizeof(double));
-      m_outFile.write(reinterpret_cast<char*>(&m_mesh.z()[i]), sizeof(double));
+        reinterpret_cast<const char*>(&m_mesh.nodeId()[i]), sizeof(int) );
+      m_outFile.write(
+        reinterpret_cast<const char*>(&m_mesh.x()[i]), sizeof(double) );
+      m_outFile.write(
+        reinterpret_cast<const char*>(&m_mesh.y()[i]), sizeof(double) );
+      m_outFile.write(
+        reinterpret_cast<const char*>(&m_mesh.z()[i]), sizeof(double) );
     }
     m_outFile << std::endl;
   }
@@ -105,8 +113,10 @@ GmshMeshWriter::writeElements()
   m_outFile << "$Elements" << std::endl;
 
   // Write out number of elements
-  m_outFile << m_mesh.lininpoel().size() + m_mesh.triinpoel().size() +
-               m_mesh.tetinpoel().size() << std::endl;
+  m_outFile << m_mesh.lininpoel().size() +
+               m_mesh.triinpoel().size() +
+               m_mesh.tetinpoel().size()
+            << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
   writeElemBlock( GmshElemType::LIN, m_mesh.linId(), m_mesh.lintag(),
@@ -125,18 +135,25 @@ GmshMeshWriter::writeElements()
 }
 
 void
-GmshMeshWriter::writeElemBlock( GmshElemType type, std::vector< int >& id,
-                                std::vector< std::vector< int > >& tag,
-                                std::vector< std::vector< int > >& inpoel )
+GmshMeshWriter::writeElemBlock( GmshElemType type,
+                                const std::vector< int >& id,
+                                const std::vector< std::vector< int > >& tag,
+                                const std::vector< std::vector< int > >& inpoel )
 //******************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
+//! \param[in] type Element type
+//! \param[in] id Vector of element ids
+//! \param[in] tag Vectors of element tags
+//! \param[in] inpoel Vectors of element connectivities
 //! \author J. Bakosi
 //******************************************************************************
 {
   if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
 
   auto n = inpoel.size();
+
   if (isASCII()) {
+
     for (std::size_t i=0; i<n; i++) {
       // elm-number elm-type number-of-tags < tag > ... node-number-list
       m_outFile << id[i] << " " << type << " " << tag[i].size() << " ";
@@ -149,7 +166,9 @@ GmshMeshWriter::writeElemBlock( GmshElemType type, std::vector< int >& id,
             std::ostream_iterator< int >( m_outFile, " ") );
       m_outFile << inpoel[i].back() << std::endl;
     }
+
   } else {
+
     int ntags = tag[0].size();
     // elm-type num-of-elm-follow number-of-tags
     m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
@@ -158,13 +177,14 @@ GmshMeshWriter::writeElemBlock( GmshElemType type, std::vector< int >& id,
     for (std::size_t i=0; i<n; i++) {
       // element id
       m_outFile.write(
-        reinterpret_cast<char*>(&id[i]), sizeof(int) );
+        reinterpret_cast<const char*>(&id[i]), sizeof(int) );
       // element tags
-      m_outFile.write( reinterpret_cast<char*>(tag[i].data()),
+      m_outFile.write( reinterpret_cast<const char*>(tag[i].data()),
                        tag[i].size()*sizeof(int) );
       // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<char*>(inpoel[i].data()),
+      m_outFile.write( reinterpret_cast<const char*>(inpoel[i].data()),
                        inpoel[i].size()*sizeof(int) );
     }
+
   }
 }

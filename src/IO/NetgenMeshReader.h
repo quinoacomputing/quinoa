@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
-  \date      Thu 17 Apr 2014 07:47:12 PM MDT
+  \date      Wed 28 Jan 2015 08:59:09 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Netgen reader class declaration
-  \details   Netgen reader class declaration
+  \brief     Netgen mesh reader class declaration
+  \details   Netgen mesh reader class declaration. Only supports tetrahedra.
 */
 //******************************************************************************
 #ifndef NetgenMeshReader_h
@@ -16,7 +16,10 @@
 
 namespace quinoa {
 
-//! NetgenMeshReader : Reader
+//! \brief NetgenMeshReader : tk::Reader
+//! \details Mesh reader class facilitating reading a mesh from a file saved by
+//!   the Netgen mesh generator:
+//!   http://sourceforge.net/apps/mediawiki/netgen-mesher.
 class NetgenMeshReader : public tk::Reader {
 
   public:
@@ -25,26 +28,14 @@ class NetgenMeshReader : public tk::Reader {
       Reader( filename ),
       m_mesh( mesh ) {}
 
-    //! Destructor, default compiler generated
-    ~NetgenMeshReader() noexcept override = default;
-
     //! Read Netgen mesh
     void read() override;
 
   private:
-    //! Don't permit copy constructor
-    NetgenMeshReader(const NetgenMeshReader&) = delete;
-    //! Don't permit copy assigment
-    NetgenMeshReader& operator=(const NetgenMeshReader&) = delete;
-    //! Don't permit move constructor
-    NetgenMeshReader(NetgenMeshReader&&) = delete;
-    //! Don't permit move assigment
-    NetgenMeshReader& operator=(NetgenMeshReader&&) = delete;
-
     //! Read nodes
     void readNodes();
 
-    //! Read elements, i.e., connectivity
+    //! Read element connectivity
     void readElements();
 
     UnsMesh& m_mesh;                   //!< Mesh object

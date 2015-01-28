@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
-  \date      Mon Oct  7 08:26:08 2013
+  \date      Wed 28 Jan 2015 10:07:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Silo (https://wci.llnl.gov/codes/silo) writer
-  \details   Silo (https://wci.llnl.gov/codes/silo) writer
+  \brief     Silo writer declaration.
+  \details   Silo writer declaration. This class currently only supports writing
+    an STL triangulation into a Silo file. See also
+    https://wci.llnl.gov/codes/silo.
 */
 //******************************************************************************
 #ifndef SiloWriter_h
@@ -18,21 +20,23 @@
 namespace quinoa {
 
 //! Silo error handler function type
-typedef void (*SiloErrorHandler)(char*);
+typedef void (*SiloErrorHandler)( char* );
 
 //! Silo error handler
-void SiloError(char* msg);
+void SiloError( char* msg );
 
 class STLMesh;
 
-//! SiloWriter
+//! \brief SiloWriter
+//! \details Mesh reader class facilitating reading a mesh from a file in
+//!   Silo format. See also https://wci.llnl.gov/codes/silo.
 class SiloWriter {
 
   public:
-    //! Constructor: Acquire glob file handle
-    explicit SiloWriter(const std::string& filename,
-                        const STLMesh& mesh,
-                        int errLevel);
+    //! Constructor
+    explicit SiloWriter( const std::string& filename,
+                         const STLMesh& mesh,
+                         int errLevel );
  
     //! Destructor: Release glob file handle
     ~SiloWriter() noexcept;
@@ -41,15 +45,6 @@ class SiloWriter {
     void write();
 
   private:
-    //! Don't permit copy constructor
-    SiloWriter(const SiloWriter&) = delete;
-    //! Don't permit copy assigment
-    SiloWriter& operator=(const SiloWriter&) = delete;
-    //! Don't permit move constructor
-    SiloWriter(SiloWriter&&) = delete;
-    //! Don't permit move assigment
-    SiloWriter& operator=(SiloWriter&&) = delete;
-
     const std::string m_filename;       //!< Silo filename
     const STLMesh& m_mesh;              //!< Mesh
 

@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Wed Apr 23 08:42:19 2014
+  \date      Wed 28 Jan 2015 10:03:16 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     ExodusII mesh reader
-  \details   ExodusII mesh reader
+  \details   ExodusII mesh reader class declaration. Currently, this is a bare
+     minimum functionality to interface with the ExodusII reader. It only reads
+     3D meshes and only triangle and tetrahedron elements.
 */
 //******************************************************************************
 #ifndef ExodusIIMeshReader_h
@@ -18,7 +20,9 @@
 
 namespace quinoa {
 
-//! ExodusIIMeshReader
+//! \brief ExodusIIMeshReader : tk::Reader
+//! \details Mesh reader class facilitating reading a mesh from a file in
+//!   ExodusII format. See also http://sourceforge.net/projects/exodusii.
 class ExodusIIMeshReader : public tk::Reader {
 
   public:
@@ -31,32 +35,18 @@ class ExodusIIMeshReader : public tk::Reader {
     //! Destructor
     ~ExodusIIMeshReader() noexcept override;
 
-    //! Read ExodusII mesh to file
+    //! Read ExodusII mesh from file
     void read() override;
 
   private:
-    //! Don't permit copy constructor
-    ExodusIIMeshReader(const ExodusIIMeshReader&) = delete;
-    //! Don't permit copy assigment
-    ExodusIIMeshReader& operator=(const ExodusIIMeshReader&) = delete;
-    //! Don't permit move constructor
-    ExodusIIMeshReader(ExodusIIMeshReader&&) = delete;
-    //! Don't permit move assigment
-    ExodusIIMeshReader& operator=(ExodusIIMeshReader&&) = delete;
-
-    //! Read header
+    //! Read ExodusII header
     void readHeader();
 
-    //! Read nodes
+    //! Read node coordinates from ExodusII file
     void readNodes();
 
-    //! Read elements
+    //! Read element blocks and connectivity from ExodusII file
     void readElements();
-
-    //! Read element block
-    void readElemBlock();
-
-    const std::string m_filename;          //!< File name
 
     UnsMesh& m_mesh;                       //!< Mesh object
     int m_inFile;                          //!< ExodusII file handle

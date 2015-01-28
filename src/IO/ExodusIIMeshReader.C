@@ -2,10 +2,12 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Mon 14 Jul 2014 08:28:02 PM MDT
+  \date      Wed 28 Jan 2015 08:32:12 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     ExodusII mesh reader
-  \details   ExodusII mesh reader
+  \details   ExodusII mesh reader class definition. Currently, this is a bare
+     minimum functionality to interface with the ExodusII reader. It only reads
+     3D meshes and only triangle and tetrahedron elements.
 */
 //******************************************************************************
 
@@ -14,7 +16,6 @@
 #include <exodusII.h>
 #include <ne_nemesisI.h>
 
-#include <Config.h>
 #include <ExodusIIMeshReader.h>
 #include <Exception.h>
 
@@ -24,9 +25,13 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         UnsMesh& mesh,
                                         int cpuwordsize,
                                         int iowordsize ) :
-  Reader(filename), m_filename(filename), m_mesh(mesh), m_inFile(0)
+  Reader( filename ), m_mesh( mesh ), m_inFile( 0 )
 //******************************************************************************
-//  Constructor: create Exodus II file
+//  Constructor: open Exodus II file
+//! \param[in] filename File to open as ExodusII file
+//! \param[inout] mesh Unstructured mesh object to load the data to
+//! \param[in] cpuwordsize Set CPU word size, see ExodusII documentation
+//! \param[in] iowordsize Set I/O word size, see ExodusII documentation
 //! \author J. Bakosi
 //******************************************************************************
 {

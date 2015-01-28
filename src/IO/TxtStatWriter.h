@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:56:06 PM MST
+  \date      Wed 28 Jan 2015 10:14:24 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Text statistics writer
-  \details   Text statistics writer
+  \brief     Text statistics writer declaration
+  \details   This file declares the ASCII statistics writer class that
+     facilitates outputing statistics to text files.
 */
 //******************************************************************************
 #ifndef TxtStatWriter_h
@@ -20,7 +21,9 @@
 
 namespace tk {
 
-//! TxtStatWriter : Writer
+//! \brief TxtStatWriter : tk::Writer
+//! \details ASCII statistics writer class that facilitates outputing
+//!   statistics to text files.
 class TxtStatWriter : public tk::Writer {
 
   public:

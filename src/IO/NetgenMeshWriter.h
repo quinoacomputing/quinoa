@@ -2,10 +2,10 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Wed Apr 23 11:15:13 2014
+  \date      Wed 28 Jan 2015 09:00:42 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Netgen writer
-  \details   Netgen writer
+  \brief     Netgen mesh writer class declaration
+  \details   Netgen mesh writer class declaration. Only supports tetrahedra.
 */
 //******************************************************************************
 #ifndef NetgenMeshWriter_h
@@ -18,38 +18,29 @@
 
 namespace quinoa {
 
-//! NetgenMeshWriter : Writer
+//! \brief NetgenMeshWriter : tk::Writer
+//! Mesh reader class facilitating reading a mesh from a file saved by
+//!   the Netgen mesh generator:
+//!   http://sourceforge.net/apps/mediawiki/netgen-mesher.
 class NetgenMeshWriter : public tk::Writer {
 
   public:
     //! Constructor
-    explicit NetgenMeshWriter( const std::string filename, UnsMesh& mesh ) :
-      Writer( filename ),
-      m_mesh( mesh ) {}
-
-    //! Destructor, default compiler generated
-    ~NetgenMeshWriter() noexcept override = default;
+    explicit NetgenMeshWriter( const std::string filename,
+                               const UnsMesh& mesh ) : Writer( filename ),
+                                                       m_mesh( mesh ) {}
 
     //! Write Netgen mesh
     void write() override;
 
   private:
-    //! Don't permit copy constructor
-    NetgenMeshWriter(const NetgenMeshWriter&) = delete;
-    //! Don't permit copy assigment
-    NetgenMeshWriter& operator=(const NetgenMeshWriter&) = delete;
-    //! Don't permit move constructor
-    NetgenMeshWriter(NetgenMeshWriter&&) = delete;
-    //! Don't permit move assigment
-    NetgenMeshWriter& operator=(NetgenMeshWriter&&) = delete;
-
     //! Write nodes
     void writeNodes();
 
     //! Write elements, i.e., connectivity
     void writeElements();
 
-    UnsMesh& m_mesh;                   //!< Mesh object
+    const UnsMesh& m_mesh;                   //!< Mesh object
 };
 
 } // quinoa::

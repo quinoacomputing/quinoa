@@ -2,10 +2,11 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 10:08:17 AM MDT
+  \date      Wed 28 Jan 2015 08:20:57 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
-  \details   Gmsh mesh reader class definition
+  \details   Gmsh mesh reader class definition. Currently, this class supports
+    line, triangle, tetrahedron, and point Gmsh element types.
 */
 //******************************************************************************
 
@@ -21,22 +22,23 @@ using quinoa::GmshMeshReader;
 void
 GmshMeshReader::read()
 //******************************************************************************
-//  Public interface for read Gmsh mesh
+//  Public interface for read a Gmsh mesh from file
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Read in mandatory "$MeshFormat" section
   readMeshFormat();
 
-  // Keep reading in sections until end of file
-  while (!m_inFile.eof()) {
+  // Keep reading in sections until end of file. These sections can be in
+  // arbitrary order, hence a while loop.
+  while ( !m_inFile.eof() ) {
     std::string s;
     getline( m_inFile, s );
-    if (s=="$Nodes")
+    if ( s == "$Nodes" )
       readNodes();
-    else if (s=="$Elements")
+    else if ( s == "$Elements" )
       readElements();
-    else if (s=="$PhysicalNames")
+    else if ( s == "$PhysicalNames" )
       readPhysicalNames();
   }
 
@@ -84,11 +86,10 @@ GmshMeshReader::readMeshFormat()
   getline( m_inFile, s );  // finish reading the line
 
   // if file is binary, binary-read in binary "one"
-  if (isBinary()) {
+  if ( isBinary() ) {
     int one;
     m_inFile.read( reinterpret_cast<char*>(&one), sizeof(int) );
-    ErrChk( one == 1,
-            "Endianness does not match in file " + m_filename );
+    ErrChk( one == 1, "Endianness does not match in file " + m_filename );
     getline( m_inFile, s );  // finish reading the line
   }
 

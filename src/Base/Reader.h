@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 02:06:59 PM MST
+  \date      Tue 27 Jan 2015 03:15:10 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
