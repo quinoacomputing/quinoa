@@ -2,10 +2,12 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:33:02 PM MST
+  \date      Thu 29 Jan 2015 08:58:15 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Template Unit Test suite
-  \details   Template Unit Test suite
+  \brief     Template Unit Test suite class definition
+  \details   Template Unit Test suite class definition. In principle there can
+    be unit test suites other than this one which uses the Template Unit Test
+    library.
 */
 //******************************************************************************
 
@@ -34,7 +36,8 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_nexcp( 0 )
 //******************************************************************************
 // Constructor
-//! \author  J. Bakosi
+//! \param[in] cmdline Data structure storing data from the command-line parser
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Output registered test groups
@@ -46,7 +49,8 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_print.part( "Problem" );
   m_print.unithead( "Unit tests computed", m_ngroup );
 
-  // Fire up all tests in all groups
+  // Asynchronously fire up all tests in all groups using the Charm++ runtime
+  // system
   for (const auto& g : groups)
     for (int t=1; t<=m_maxTestsInGroup; ++t)
       CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
@@ -56,7 +60,9 @@ void
 TUTSuite::evaluate( std::vector< std::string > status )
 //******************************************************************************
 // Evaluate a unit test
-//! \author  J. Bakosi
+//! \param[in] status Vector strings containing the test results. See
+//!   unittest::TUTTest constructor for the expected structure of status.
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number tests run (including dummies)
