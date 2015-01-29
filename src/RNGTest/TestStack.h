@@ -2,10 +2,12 @@
 /*!
   \file      src/RNGTest/TestStack.h
   \author    J. Bakosi
-  \date      Sat 14 Jun 2014 02:34:40 PM MDT
+  \date      Wed 28 Jan 2015 04:29:18 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Stack of all types of statistical tests
-  \details   Stack of all types of statistical tests
+  \brief     Stack collecting all types of random number generator statistical
+     tests
+  \details   Stack collecting all types of statistical tests. Currently, on
+    TestU01 is interfaced. More might in the future.
 */
 //******************************************************************************
 #ifndef TestStack_h
@@ -15,7 +17,7 @@
 
 namespace rngtest {
 
-//! TestStack
+//! Stack collecting all types of random RNG statistical tests
 struct TestStack {
   TestU01Stack TestU01;
 };

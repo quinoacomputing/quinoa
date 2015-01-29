@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/BigCrush.C
   \author    J. Bakosi
-  \date      Fri 04 Jul 2014 08:33:40 PM MDT
+  \date      Wed 28 Jan 2015 04:45:26 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     BigCrush battery
-  \details   BigCrush battery
+  \brief     Class re-creating the TestU01 library's BigCrush battery
+  \details   Class re-creating the TestU01 library's BigCrush battery.
 */
 //******************************************************************************
 
@@ -26,14 +26,19 @@ BigCrush::addTests( std::vector< std::function< StatTest() > >& tests,
                     CProxy_TestU01Suite& proxy )
 //******************************************************************************
 // Add statistical tests to battery
+//! \details This function adds, i.e., registers, all statistical tests to the
+//!   test stack corresponding to the TestU01 library's BigCrush battery.
+//! \param[in] tests Vector of test constructors
+//! \param[in] rng RNG ID enum associated with the RNG to be tested
+//! \param[in] proxy Charm++ host proxy to which the tests will call back to
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Select test stack
   const auto& stack = g_testStack.TestU01;
 
-  // Find RNG properties
-  auto gen = stack.generator(rng);
+  // Find RNG
+  auto gen = stack.generator( rng );
 
   static const long THOUSAND = 1000;
   static const long MILLION = THOUSAND * THOUSAND;

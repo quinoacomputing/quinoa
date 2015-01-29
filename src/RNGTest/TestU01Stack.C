@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/TestU01Stack.C
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 02:33:54 PM MST
+  \date      Wed 28 Jan 2015 05:17:24 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Stack of TestU01 tests
-  \details   Stack of TestU01 tests
+  \brief     Stack of TestU01 RNG statistical tests
+  \details   Stack of TestU01 RNG statistical tests
 */
 //******************************************************************************
 
@@ -31,19 +31,20 @@ using rngtest::TestU01Stack;
 TestU01Stack::TestU01Stack()
 //******************************************************************************
 //  Constructor
+//! \details Associate RNGs to global-scope wrappers. Admittedly, this code is
+//!   ugly and looks stupid at first sight. However, this is a translation of
+//!   runtime information (user-selected RNGs) to compile-time information:
+//!   associating RNG ids from an enum class, tk::ctr::RNGType::value, to a
+//!   compile-time constant, underlying_type value, facilitating a different
+//!   pair of global-scope RNG wrappers (uniform and uniform_bits) with code
+//!   reuse. Note that uniform and uniform_bits wrappers must be global-scope as
+//!   they are used as external generators to TestU01. Templating them on the
+//!   id enables the compiler generate a different wrapper for a different RNG
+//!   facilitating simultaneous calls to any or all wrappers as they are unique
+//!   functions.
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  // Associate RNGs to global-scope wrappers. Admittedly, the code below is ugly
-  // and looks stupid at first sight. However, this is a translation of runtime
-  // information (user-selected RNGs) to compile-time information: associating
-  // RNG ids from an enum class, tk::ctr::RNGType::value, to a compile-time
-  // constant, underlying_type value, facilitating a different pair of
-  // global-scope RNG wrappers (uniform and uniform_bits) with code reuse. Note
-  // that uniform and uniform_bits wrappers must be global-scope as they are
-  // used as external generators to TestU01. Templating them on the id enables
-  // the compiler generate a different wrapper for a different RNG facilitating
-  // simultaneous calls to any or all wrappers as they are unique functions.
   for (const auto& r : g_inputdeck.get< tag::selected, tag::rng >()) {
     using tk::ctr::RNGType;
     using tk::ctr::raw;
@@ -107,6 +108,7 @@ template< tk::ctr::RawRNGType id >
 void TestU01Stack::addRNG( tk::ctr::RNGType r )
 //******************************************************************************
 //! Create TestU01 RNG wrapper
+//! \param[in] r RNG ID enum
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -118,6 +120,8 @@ unif01_Gen*
 TestU01Stack::generator( tk::ctr::RNGType r ) const
 //******************************************************************************
 //! Find TestU01 RNG wrapper based on RNG id
+//! \param[in] r RNG ID enum
+//! \return Raw function pointer to TestU01 statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -131,6 +135,14 @@ TestU01Stack::BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
   const std::tuple<long, long, int, long, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's BirthdaySpacings test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -146,6 +158,10 @@ TestU01Stack::Collision( unif01_Gen* gen, sknuth_Res2* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Collision test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -160,6 +176,10 @@ TestU01Stack::Gap( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, double, double>& xargs )
 //******************************************************************************
 //  Run Knuth's Gap test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -174,6 +194,10 @@ TestU01Stack::SimplePoker( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Simplified Poker test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -188,6 +212,10 @@ TestU01Stack::CouponCollector( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Coupon Collector test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -202,6 +230,10 @@ TestU01Stack::MaxOft( unif01_Gen* gen, sknuth_Res1* res,
   const std::tuple<long, long, int, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Maximum-of-t test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -217,6 +249,10 @@ TestU01Stack::WeightDistrib( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, long, double, double>& xargs )
 //******************************************************************************
 //  Run Matsumoto's Weight Distribution test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -231,6 +267,10 @@ TestU01Stack::MatrixRank( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Matrix Rank test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -245,6 +285,10 @@ TestU01Stack::HammingIndep( unif01_Gen* gen, sstring_Res* res,
   const std::tuple<long, long, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run L'Ecuyer's Hamming Independence test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -259,6 +303,10 @@ TestU01Stack::RandomWalk1( unif01_Gen* gen, swalk_Res* res,
   const std::tuple<long, long, int, int, long, long>& xargs )
 //******************************************************************************
 //  Run Random Walk 1 test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -277,6 +325,10 @@ TestU01Stack::SerialOver( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Serial Over test, t = 2
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -291,6 +343,10 @@ TestU01Stack::CollisionOver( unif01_Gen* gen, smarsa_Res* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's Serial Over test, t = 2
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -305,6 +361,10 @@ TestU01Stack::ClosePairs( unif01_Gen* gen, snpair_Res* res,
   const std::tuple<long, long, int, int, int, int, int>& xargs )
 //******************************************************************************
 //  Run the close-pairs test, t = 2
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -332,6 +392,10 @@ TestU01Stack::ClosePairsBitMatch( unif01_Gen* gen, snpair_Res* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run the close-pairs test using bit match distance, t = 2
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -346,6 +410,10 @@ TestU01Stack::Run( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Run test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -360,6 +428,10 @@ TestU01Stack::Permutation( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Permutation test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -374,6 +446,10 @@ TestU01Stack::CollisionPermut( unif01_Gen* gen, sknuth_Res2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Knuth's Collision test with permutations
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -388,6 +464,10 @@ TestU01Stack::SampleProd( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Sample Products test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -402,6 +482,10 @@ TestU01Stack::SampleMean( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int>& xargs )
 //******************************************************************************
 //  Run Sample Mean test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -415,6 +499,10 @@ TestU01Stack::SampleCorr( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Sample Autocorrelation test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -429,6 +517,10 @@ TestU01Stack::AppearanceSpacings( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Maurer's "universal" test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -444,6 +536,10 @@ TestU01Stack::SumCollector( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, double>& xargs )
 //******************************************************************************
 //  Run Sum Collector test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -458,6 +554,10 @@ TestU01Stack::Savir2( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, long, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's modified Savir test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -472,6 +572,10 @@ TestU01Stack::GCD( unif01_Gen* gen, smarsa_Res2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Marsaglia's greatest common divisor test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -486,6 +590,10 @@ TestU01Stack::LinearComp( unif01_Gen* gen, scomp_Res* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Linear Complexity test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -501,6 +609,10 @@ TestU01Stack::LempelZiv( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Lempel-Ziv Compressibility test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -515,6 +627,10 @@ TestU01Stack::Fourier3( unif01_Gen* gen, sspectral_Res* res,
   const std::tuple<long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Fourier3 test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -529,6 +645,10 @@ TestU01Stack::LongestHeadRun( unif01_Gen* gen, sstring_Res2* res,
   const std::tuple<long, long, int, int, long>& xargs )
 //******************************************************************************
 //  Run Longest Head Run test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -544,6 +664,10 @@ TestU01Stack::PeriodsInStrings( unif01_Gen* gen, sres_Chi2* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run Periods In Strings test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -558,6 +682,10 @@ TestU01Stack::HammingWeight2( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int, long>& xargs )
 //******************************************************************************
 //  Run Hamming Weight 2 test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -572,6 +700,10 @@ TestU01Stack::HammingCorr( unif01_Gen* gen, sstring_Res* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Hamming Weight Correlation test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -586,6 +718,10 @@ TestU01Stack::StringRun( unif01_Gen* gen, sstring_Res3* res,
   const std::tuple<long, long, int, int>& xargs )
 //******************************************************************************
 //  Run String Run test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {
@@ -601,6 +737,10 @@ TestU01Stack::AutoCorr( unif01_Gen* gen, sres_Basic* res,
   const std::tuple<long, long, int, int, int>& xargs )
 //******************************************************************************
 //  Run Autocorrelation test
+//! \param[in] gen Raw function pointer to TestU01 statistical test
+//! \param[in] res Pointer to test results object
+//! \param[in] xargs Test arguments
+//! \return Vector p-values as a result of the statistical test
 //! \author  J. Bakosi
 //******************************************************************************
 {

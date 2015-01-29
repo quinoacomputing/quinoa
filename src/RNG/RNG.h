@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 03:34:42 PM MST
+  \date      Wed 28 Jan 2015 04:08:59 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
@@ -46,6 +46,8 @@ class RNG {
     //! \details Passing std::function allows late execution of the constructor,
     //!   i.e., as late as inside this class' constructor, and thus usage from a
     //!   factory.
+    //! \param[in] x Function pointer to a constructor of an object modeling
+    //!   Concept
     template< typename T >
     explicit RNG( std::function<T()> x ) :
       self( make_unique< Model<T> >( std::move(x()) ) ) {}

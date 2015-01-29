@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/SmallCrush.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:49:33 AM MDT
+  \date      Wed 28 Jan 2015 04:22:47 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     SmallCrush battery
-  \details   SmallCrush battery
+  \brief     Class re-creating the TestU01 library's SmallCrush battery
+  \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
 //******************************************************************************
 #ifndef SmallCrush_h
@@ -17,11 +17,12 @@
 
 namespace rngtest {
 
-//! SmallCrush
+//! Class registering the TestU01 library's SmallCrush battery
 class SmallCrush {
 
   public:
     //! Return string identifying test suite name
+    //! \return Test suite name as a std::string
     std::string name() const
     { return ctr::Battery().name( rngtest::ctr::BatteryType::SMALLCRUSH ); }
 

@@ -2,10 +2,12 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Sun 23 Nov 2014 05:53:11 PM MST
+  \date      Wed 28 Jan 2015 05:06:27 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     TestU01 statistical test properties
-  \details   TestU01 statistical test properties
+  \brief     TestU01 statistical test properties class
+  \details   This file defines a generic TestU01 statistical test properties
+    class, used to initialize, interface, and evaluate TestU01 RNG statistical
+    tests by the TestU01 library.
 */
 //******************************************************************************
 #ifndef TestU01Props_h
@@ -24,19 +26,21 @@ namespace rngtest {
 
 extern TestStack g_testStack;
 
-//! TestU01 properties used to initialize TestU01 tests. Used to abstract away
-//! the initialization for TestU01 statistical tests. Needed because of the move
-//! semantics and variadic templates since Charm++ chares do not support these
-//! yet. TestU01Props is therefore not a chare, but TestU01, initialized with a
-//! TestU01Props object, is. Note that TestU01Props still needs to be
-//! migratable, i.e., defines the pack/unpack operator, as it is an argument to
-//! chare TestU01's constructor.
-template< class Test,                   //!< Statistical test tag, struct{}
-          class Proxy,                  //!< Host proxy
-          class Result,                 //!< Results type
-          Result* (*Creator)(void),     //!< Results creator
-          void (*Deleter)(Result *),    //!< Results deleter
-          typename... Ts >              //!< Extra runner args types
+//! \brief TestU01 properties used to initialize TestU01 tests.
+//! \details This class is used to abstract away the initialization for TestU01
+//!   statistical tests. Needed because of the move semantics and variadic
+//!   templates, since Charm++ chares do not support these yet. TestU01Props is
+//!   therefore not a chare, but TestU01, initialized with a TestU01Props
+//!   object, is. Note that TestU01Props still needs to be migratable, i.e.,
+//!   defines the pack/unpack operator, as it is an argument to chare TestU01's
+//!   constructor.
+//! \author J. Bakosi
+template< class Test,                 //!< Statistical test tag, struct{}
+          class Proxy,                //!< Host proxy type
+          class Result,               //!< Results type
+          Result* (*Creator)(void),   //!< Results creator function pointer type
+          void (*Deleter)(Result *),  //!< Results deleter function pointer type
+          typename... Ts >            //!< Extra test runner argument types
 class TestU01Props {
 
   public:
@@ -47,14 +51,26 @@ class TestU01Props {
     //! TestU01 results type with a custom deleter by TestU01
     using ResultPtr = TestU01Ptr< Result, Deleter >;
 
-    //! Constructor taking no args, required as migratable, init what we can
+    //! \brief Default constructor taking no arguments
+    //! \details Required as migratable. Called by Charm++. Initialize what we
+    //!    can.
     explicit TestU01Props() :
       m_rng( tk::ctr::RNGType::NO_RNG ),
       m_runner( g_testStack.TestU01.runner.get<Test>() ),
       m_res( ResultPtr(Creator()) ),
       m_time( 0.0 ) {}
 
-    //! Constructor
+    //! \brief Initializer constructor
+    //! \details None of the state data is const since the this class is
+    //!   designed to be migratable over the network by the Charm++ runtime
+    //!   system.
+    //! \param[in] proxy Host proxy facilitating call-back to host object chare.
+    //! \param[in] rng Random number generator ID enum to be tested
+    //! \param[in] names Vector of statisical test names (can be more than one
+    //!   associated with a given test, since a test can contain more than one
+    //!   statistical test evaluation, yielding multiple p-values)
+    //! \param[in] gen Raw function pointer to TestU01 statistical test
+    //! \param[in] xargs... Extra arguments to test-run
     explicit TestU01Props( Proxy& proxy,
                            tk::ctr::RNGType rng,
                            std::vector< std::string >&& names,
@@ -88,7 +104,10 @@ class TestU01Props {
     //! Move constructor
     TestU01Props( TestU01Props&& ) = default;
 
-    //! Pack/Unpack
+    /** @name Pack/Unpack: Serialize Term object for Charm++ */
+    ///@{
+    //! Pack/Unpack serialize member function
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_proxy;
       p | m_rng;
@@ -101,31 +120,38 @@ class TestU01Props {
       }
       p | m_time;
     }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[inout] c TestU01Props object reference
     friend void operator|( PUP::er& p, TestU01Props& c ) { c.pup(p); }
+    ///@}
 
     //! Host proxy accessor
+    //! \return Host proxy
     Proxy& proxy() noexcept { return m_proxy; }
 
     //! Number of results/test (i.e., p-values) accessor
+    //! \return Number of p-values this test yields
     std::size_t npval() const { return m_names.size(); }
 
     //! Test name(s) accessor
+    //! \return Vector of test names (there can be more than one)
     std::vector< std::string > names() const { return m_names; }
 
-    //! Run test and return its status as a vector of vector of strings. The
-    //! return type could potentially be a more specific type, e.g., a struct
-    //! with fields RNGType, and a vector of strings for the p-values, and the
-    //! names. Instead we return a more generic vector of vector of strings
-    //! type. This helps keeping the corresponding argument to
-    //! Battery::evaluate() generic, which may come in handy when other test
-    //! libraries are added in the future. The return value is thus the
-    //! following in a vector of vectors:
-    //! 0: Name(s) of statistics (note that a test may produce more than one
-    //!    statistics and thus p-values)
-    //! 1: p-value strings: "pass" or "fail, p-value = ..." for all tests run
-    //!    (note that a test may produce more than one statistics and thus
-    //!    p-values)
-    //! 2: RNG name used to run the test: sub-vector length = 1
+    //! \brief Run test and return its status as a vector of vector of strings.
+    //! \details The return type could potentially be a more specific type,
+    //!   e.g., a struct with fields RNGType, and a vector of strings for the
+    //!   p-values, and the names. Instead, we return a more generic vector of
+    //!   vector of strings type. This helps keeping the corresponding argument
+    //!   to Battery::evaluate() generic, which may come in handy when other
+    //!   test libraries are added in the future. The return value is thus the
+    //!   following in a vector of vectors:
+    //! - 0: Name(s) of statistics (note that a test may produce more than one
+    //!   statistics and thus p-values)
+    //! - 1: p-value strings: "pass" or "fail, p-value = ..." for all tests run
+    //!   (note that a test may produce more than one statistics and thus
+    //!   p-values)
+    //! - 2: RNG name used to run the test: sub-vector length = 1
     std::vector< std::vector< std::string > > run() {
       // Run and time statistical test
       tk::Timer timer;
@@ -143,23 +169,28 @@ class TestU01Props {
     }
 
     //! Test time accessor
+    //! \return Time it took to run the test with the associated RNG name
     std::pair< std::string, tk::real > time()
     { return { tk::ctr::RNG().name(m_rng), m_time }; }
 
   private:
-    //! Pack/Unpack TestU01 external generator pointer
+    //! \brief Pack/Unpack TestU01 external generator pointer
+    //! \details Admittedly, the code below is ugly and looks stupid at first
+    //!   sight. However, this is a translation of runtime information (a
+    //!   user-selected RNG that this statistical test exercises) to
+    //!   compile-time information: associating an RNG id from an enum class,
+    //!   tk::ctr::RNGType::value, to a compile-time constant, underlying_type
+    //!   value, facilitating a different global-scope TestU01 external
+    //!   generator with code reuse. Note that createTestU01Gen() must be
+    //!   global-scope as it is used to create a different external generator to
+    //!   TestU01, depending on the RNG. Templating createTestU01Gen on the id
+    //!   enables the compiler to generate a different wrapper for a different
+    //!   RNG facilitating simultaneous calls to any or all wrappers as they are
+    //!   unique functions.
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[inou] gen Reference to raw function pointer to TestU01
+    //!   statistical test
     void pup( PUP::er& p, unif01_Gen*& g ) {
-      // Admittedly, the code below is ugly and looks stupid at first sight.
-      // However, this is a translation of runtime information (a user-selected
-      // RNG that this statistical test exercises) to compile-time information:
-      // associating an RNG id from an enum class, tk::ctr::RNGType::value, to a
-      // compile-time constant, underlying_type value, facilitating a different
-      // global-scope TestU01 external generator with code reuse. Note that
-      // createTestU01Gen must be global-scope as it is used to create a
-      // different external generator to TestU01, depending on the RNG.
-      // Templating createTestU01Gen on the id enables the compiler generate a
-      // different wrapper for a different RNG facilitating simultaneous calls
-      // to any or all wrappers as they are unique functions.
       using tk::ctr::RNGType;
       using tk::ctr::raw;
       const auto& rngname = tk::ctr::RNG().name(m_rng);
@@ -221,6 +252,8 @@ class TestU01Props {
     }
 
     //! Query whether test is failed
+    //! \param[in] val p-value returned from test
+    //! \return true if the RNG has failed the statistical test
     bool fail( double val ) const {
       if ((val <= gofw_Suspectp) || (val >= 1.0-gofw_Suspectp))
         return true;
@@ -228,7 +261,9 @@ class TestU01Props {
         return false;
     }
 
-    //! Return humand-readable p-value (ala TestU01::bbattery.c::WritePval)
+    //! Return human-readable p-value (ala TestU01::bbattery.c::WritePval)
+    //! \param[in] val p-value returned from test
+    //! \return Human-readable p-value (ala TestU01::bbattery.c::WritePval)
     std::string pval( double val ) const {
       std::stringstream ss;
       if (val < gofw_Suspectp) {

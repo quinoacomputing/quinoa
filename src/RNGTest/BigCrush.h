@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/BigCrush.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 09:50:21 AM MDT
+  \date      Wed 28 Jan 2015 04:22:30 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     BigCrush battery
-  \details   BigCrush battery
+  \brief     Class re-creating the TestU01 library's BigCrush battery
+  \details   Class re-creating the TestU01 library's BigCrush battery.
 */
 //******************************************************************************
 #ifndef BigCrush_h
@@ -17,11 +17,12 @@
 
 namespace rngtest {
 
-//! BigCrush
+//! Class registering the TestU01 library's BigCrush battery
 class BigCrush {
 
   public:
     //! Return string identifying test suite name
+    //! \return Test suite name as a std::string
     std::string name() const
     { return ctr::Battery().name( rngtest::ctr::BatteryType::BIGCRUSH ); }
 
