@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/SmallCrush.C
   \author    J. Bakosi
-  \date      Thu 03 Jul 2014 04:32:36 PM MDT
+  \date      Wed 28 Jan 2015 05:03:33 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     SmallCrush battery
-  \details   SmallCrush battery
+  \brief     Class re-creating the TestU01 library's SmallCrush battery
+  \details   Class re-creating the TestU01 library's SmallCrush battery.
 */
 //******************************************************************************
 
@@ -26,13 +26,18 @@ SmallCrush::addTests( std::vector< std::function< StatTest() > >& tests,
                       CProxy_TestU01Suite& proxy )
 //******************************************************************************
 // Add statistical tests to battery
+//! \details This function adds, i.e., registers, all statistical tests to the
+//!   test stack corresponding to the TestU01 library's SmallCrush battery.
+//! \param[in] tests Vector of test constructors to add tests to
+//! \param[in] rng RNG ID enum associated with the RNG to be tested
+//! \param[in] proxy Charm++ host proxy to which the tests will call back to
 //! \author  J. Bakosi
 //******************************************************************************
 {
   // Select test stack
   const auto& stack = g_testStack.TestU01;
 
-  // Find RNG properties
+  // Find RNG
   auto gen = stack.generator(rng);
 
   static const long THOUSAND = 1000;

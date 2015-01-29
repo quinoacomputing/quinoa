@@ -2,10 +2,16 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Fri 02 Jan 2015 01:35:52 PM MST
+  \date      Wed 28 Jan 2015 04:29:58 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Statistical test base
-  \details   Statistical test base
+  \brief     Random number generator statistical test
+  \details   This file defines a generic random number generator statistical
+    test class. The class uses runtime polymorphism without client-side
+    inheritance: inheritance is confined to the internals of the class,
+    inivisble to client-code. The class exclusively deals with ownership
+    enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+    https://github.com/sean-parent/
+    sean-parent.github.com/wiki/Papers-and-Presentations.
 */
 //******************************************************************************
 #ifndef StatTest_h
@@ -21,17 +27,22 @@
 
 namespace rngtest {
 
-//! Statistical test. The class below uses runtime polymorphism without
-//! client-side inheritance: inheritance is confined to the internals of the
-//! class below, inivisble to client-code. The class exclusively deals with
-//! ownership enabling client-side value semantics. Credit goes to Sean Parent
-//! at Adobe: https://github.com/sean-parent/sean-parent.github.com/wiki/
-//! Papers-and-Presentations
+//! \brief Random number generator statistical test
+//! \details This class uses runtime polymorphism without client-side
+//!   inheritance: inheritance is confined to the internals of the this class,
+//!   inivisble to client-code. The class exclusively deals with ownership
+//!   enabling client-side value semantics. Credit goes to Sean Parent at Adobe:
+//!   https://github.com/sean-parent/sean-parent.github.com/wiki/
+//!   Papers-and-Presentations. For example client code that models a Battery,
+//!   see rngtest::TestU01.
+//! \author J. Bakosi
 class StatTest {
 
   public:
-    //! Constructor taking an object modeling Concept (see below). The object
-    //! of class T was pre-constructed.
+    //! \brief Constructor taking an object modeling Concept
+    //! \details The object of class T comes pre-constructed.
+    //! \param[in] x Instantiated object of type T given by the template
+    //!   argument.
     template< typename T >
     explicit StatTest( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ){}
@@ -47,23 +58,28 @@ class StatTest {
     explicit StatTest( std::function<T()> x ) :
       self( tk::make_unique< Model<T> >( std::move(x()) ) ) {}
 
-    //! Constructor taking a function pointer to a constructor of an object
-    //! modeling Concept (see below). Passing std::function allows late
-    //! execution of the constructor of T, i.e., at some future time, and thus
-    //! usage from a factory. Note that the value of the first function
-    //! argument, std::function<T()>, is not used here, but its constructor
-    //! type, T, is used to enable the compiler to deduce the model constructor
-    //! type, used to create its Charm proxy, defined by T::Proxy. The actual
-    //! constructor of T is not called here but at some future time by the
-    //! Charm++ runtime system, here only an asynchrounous ckNew() is called,
-    //! i.e., a message (or request) for a future call to T's constructor. This
-    //! overload is only enabled for Charm++ chare objects defining typedef
-    //! 'Proxy', which must define the Charm++ proxy. All optional constructor
-    //! arguments are forwarded to ckNew() and thus to T's constructor. If
-    //! it was somehow possible to obtain all bound arguments' types and values
-    //! from an already-bound std::function, we could use those instead of
-    //! having to explicitly forward the model constructor arguments via this
-    //! host constructor. See also tk::recordCharmModel().
+    //! \brief Constructor taking a function pointer to a constructor of an
+    //!    object modeling Concept
+    //! \details Passing std::function allows late execution of the constructor
+    //!   of T, i.e., at some future time, and thus usage from a factory. Note
+    //!   that the value of the first function argument, std::function<T()>, is
+    //!   not used here, but its constructor type, T, is used to enable the
+    //!   compiler to deduce the model constructor type, used to create its
+    //!   Charm proxy, defined by T::Proxy. The actual constructor of T is not
+    //!   called here but at some future time by the Charm++ runtime system,
+    //!   here only an asynchrounous ckNew() is called, i.e., a message (or
+    //!   request) for a future call to T's constructor. This overload is only
+    //!   enabled for Charm++ chare objects defining typedef 'Proxy', which must
+    //!   define the Charm++ proxy. All optional constructor arguments are
+    //!   forwarded to ckNew() and thus to T's constructor. If it was somehow
+    //!   possible to obtain all bound arguments' types and values from an
+    //!   already-bound std::function, we could use those instead of having to
+    //!   explicitly forward the model constructor arguments via this host
+    //!   constructor.
+    //! \param[in] c Function pointer to a constructor of an object modeling
+    //!    Concept.
+    //! \param[in] args... Constructor arguments
+    //! \see See also tk::recordCharmModel().
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> c, ConstrArgs... args ) :

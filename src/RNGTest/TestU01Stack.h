@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:07:16 PM MST
+  \date      Wed 28 Jan 2015 05:11:25 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Stack of TestU01 tests
-  \details   Stack of TestU01 tests
+  \brief     Stack of TestU01 RNG statistical tests
+  \details   Stack of TestU01 RNG statistical tests
 */
 //******************************************************************************
 #ifndef TestU01Stack_h
@@ -34,14 +34,27 @@ extern "C" {
 
 namespace rngtest {
 
-//! TestU01Stack
+//! Stack of TestU01 RNG statistical tests
 class TestU01Stack {
 
   public:
     //! Constructor
     explicit TestU01Stack();
 
-    //! Add statistical test to battery
+    //! \brief Add a statistical test to battery
+    //! \details Note that adding a test to the battery does not invoke the test
+    //!   constructor, it only records the information on how to call the test
+    //!   constructor in the future. That is it binds the constructor arguments
+    //!   to the constructor call and records the the information so only a
+    //!   function call "()" is necessary to instantiate it.
+    //! \param[in] proxy Charm++ host proxy to which the test calls back to
+    //! \param[in] tests Vector of test constructors to add tests to
+    //! \param[in] r RNG ID enum
+    //! \param[in] gen Raw function pointer to TestU01 statistical test
+    //! \param[in] names Vector of statisical test names (can be more than one
+    //!   associated with a given test, since a test can contain more than one
+    //!   statistical test evaluation, yielding multiple p-values)
+    //! \param[in] xargs... Extra arguments to test-run    
     template< class TestType, class Proxy, typename... Ts >
     void add( Proxy& proxy,
               std::vector< std::function< StatTest() > >& tests,
@@ -61,8 +74,8 @@ class TestU01Stack {
                             std::forward<Ts>(xargs)... ) ) ) );
     }
 
-    //! Stack of TestU01 statistical tests wrappers
-
+    /** @name Stack of TestU01 statistical tests wrappers */
+    ///@{
     static std::vector< double >
     BirthdaySpacings( unif01_Gen* gen, sres_Poisson* res,
       const std::tuple<long, long, int, long, int, int>& xargs );
@@ -194,12 +207,13 @@ class TestU01Stack {
     static std::vector< double >
     AutoCorr( unif01_Gen* gen, sres_Basic* res,
       const std::tuple<long, long, int, int, int>& xargs );
+    ///@}
 
-    //! Compile-time tag-based access to individual wrappers. The tagged_tuple
-    //! below is practically a compile-time map that associates tags (empty
-    //! structs) to test wrappers. This is used to find the test wrapper
-    //! function pointers after migration over the network. See also
-    //! TestU01Props::pup().
+    //! \brief Compile-time tag-based access to individual test wrappers.
+    //! \details This tagged_tuple is practically a compile-time map that
+    //!   associates tags (empty structs) to test wrappers. This is used to find
+    //!   the test wrapper function pointers after migration over the network.
+    //! \see See also TestU01Props::pup().
     tk::tuple::tagged_tuple<
 
       tag::BirthdaySpacings,                                // tag
@@ -336,8 +350,8 @@ class TestU01Stack {
 
     > runner {
 
-      BirthdaySpacings,   // bind to member function wrappers
-      Collision,
+      BirthdaySpacings,   // Initialize by binding to member function wrappers.
+      Collision,          // Obviously the order here is important.
       RandomWalk1,
       Gap,
       SimplePoker,

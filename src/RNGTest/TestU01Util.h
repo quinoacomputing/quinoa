@@ -2,10 +2,10 @@
 /*!
   \file      src/RNGTest/TestU01Util.h
   \author    J. Bakosi
-  \date      Wed 21 May 2014 03:13:14 PM MDT
+  \date      Wed 28 Jan 2015 10:39:31 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Interfacing the TestU01 random number generator test suite
-  \details   Interfacing the TestU01 random number generator test suite
+  \details   Interfacing the TestU01 random number generator test suite.
 */
 //******************************************************************************
 #ifndef TestU01Util_h

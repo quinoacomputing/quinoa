@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01.h
   \author    J. Bakosi
-  \date      Thu 24 Jul 2014 03:13:52 PM MDT
+  \date      Wed 28 Jan 2015 04:30:36 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     TestU01 statistical test
   \details   TestU01 statistical test
@@ -18,7 +18,7 @@
 
 namespace rngtest {
 
-//! TestU01 statistical test used polymorphically with StatTest
+//! TestU01 statistical test used polymorphically with rngtest::StatTest
 template< class TestU01Props >
 class TestU01 : public CBase_TestU01< TestU01Props > {
 
@@ -27,6 +27,7 @@ class TestU01 : public CBase_TestU01< TestU01Props > {
     using Proxy = CProxy_TestU01< TestU01Props >;
 
     //! Constructor
+    //! \param[in] props TestU01 properties
     explicit TestU01( const TestU01Props& props ) : m_props( props ) {}
 
     //! Query and contribute number of results/test, i.e., p-values
