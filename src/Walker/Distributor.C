@@ -2,10 +2,15 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 03:58:51 PM MST
+  \date      Thu 29 Jan 2015 09:20:50 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
-  \details   Distributor drives the time integration of differential equations
+  \details   Distributor drives the time integration of differential equations.
+    The implementation uses the Charm++ runtime system and is fully asynchronous,
+    overlapping computation, communication as well I/O. The algorithm utilizes
+    the structured dagger (SDAG) Charm++ functionality. The high-level overview
+    of the algorithm structure and how it interfaces with Charm++ is discussed
+    in the Charm++ interface file src/Walker/distributor.ci.
 */
 //******************************************************************************
 
@@ -33,7 +38,8 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   m_central( m_nameCentral.size(), 0.0 )
 //******************************************************************************
 // Constructor
-//! \author  J. Bakosi
+//! \param[in] cmdline Data structure storing data from the command-line parser
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Compute load distribution given total work and specified virtualization
@@ -56,7 +62,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Activate SDAG-wait for estimation of PDFs at select times
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) wait4pdf();
 
-  // Fire up integrators
+  // Fire up asynchronous differential equation integrators
   for (uint64_t i = 1; i < m_count.get< tag::chare >(); ++i)
     m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt, m_it ) );
   m_proxy.push_back(CProxyInt::ckNew(thisProxy, chunksize+remainder, dt, m_it));
@@ -66,35 +72,40 @@ void
 Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
 //******************************************************************************
 //  Compute load distribution for given total work and virtualization
+//! \param[inout] chunksize Chunk size, see detailed description
+//! \param[inout] remainder Remainder, see detailed description
+//! \details Compute load distibution (number of chares and chunksize) based on
+//!   total work (total number of particles) and virtualization
+//!
+//!   The virtualization parameter, specified by the user, is a real number
+//!   between 0.0 and 1.0, inclusive, which controls the degree of
+//!   virtualization or over-decomposition. Independent of the value of
+//!   virtualization the work is approximately evenly distributed among the
+//!   available processing elements. For zero virtualization (no
+//!   over-decomposition), the work is simply decomposed into total_work/numPEs,
+//!   which yields the smallest number of Charm++ chares and the largest chunks
+//!   of work units. The other extreme is unity virtualization, which decomposes
+//!   the total work into the smallest size work units possible, yielding the
+//!   largest number of Charm++ chares. Obviously, the optimum will be between
+//!   0.0 and 1.0, depending on the problem.
+//!
+//!   The formula implemented uses the simplest (linear) relationship between
+//!   the virtualization parameter and the number of work units with the
+//!   extremes described above. The formula is given by
+//!
+//!   chunksize = (1 - n) * v + n;
+//!
+//!   where
+//!
+//!    - n = npar/npes
+//!
+//!    - npar = number of particles, representing the total work
+//!
+//!    - npes = number of hardware processing elements
+//!
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Compute load distibution (number of chares and chunksize) based on total
-  // work (total number of particles) and virtualization
-
-  // The virtualization parameter, specified by the user, is a real number
-  // between 0.0 and 1.0, inclusive, which controls the degree of virtualization
-  // or over-decomposition. Independent of the value of virtualization the work
-  // is approximately evenly distributed among the available processing
-  // elements. For zero virtualization (no over-decomposition), the work is
-  // simply decomposed into total_work/numPEs, which yields the smallest number
-  // of Charm++ chares and the largest chunks of work units. The other extreme
-  // is unity virtualization, which decomposes the total work into the smallest
-  // size work units possible, yielding the largest number of Charm++ chares.
-  // Obviously, the optimum will be between 0.0 and 1.0, depending on the
-  // problem.
-  //
-  // The formula below uses the simplest (linear) relationship between the
-  // virtualization parameter and the number of work units with the extremes
-  // described above. The formula is given by
-  //
-  // chunksize = (1 - n) * v + n;
-  //
-  // where
-  //         n = npar/npes
-  //      npar = number of particles, representing the total work
-  //      npes = number of hardware processing elements
-
   // Get virtualization parameter
   const auto v = g_inputdeck.get< tag::cmd, tag::virtualization >();
   Assert( v > -std::numeric_limits< tk::real >::epsilon() &&
@@ -130,6 +141,8 @@ void
 Distributor::info( uint64_t chunksize, uint64_t remainder ) const
 //******************************************************************************
 //  Print information at startup
+//! \param[in] chunksize Chunk size, see computeLoadDistribution()
+//! \param[in] remainder Remainder, see computeLoadDistribution()
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -212,9 +225,11 @@ tk::real
 Distributor::computedt()
 //******************************************************************************
 // Compute size of next time step
+//! \return Size of dt for the next time step
 //! \author  J. Bakosi
 //******************************************************************************
 {
+  // Simply return a constant user-defined dt for now
   return g_inputdeck.get< tag::discr, tag::dt >();
 }
 
@@ -237,7 +252,8 @@ void
 Distributor::estimateOrd( const std::vector< tk::real >& ord )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of the ordinary moments
-//! \author  J. Bakosi
+//! \param[in] ord Partially accumulated ordinary moments contributed by caller
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number of integrators completing the accumulation of the ordinary
@@ -260,7 +276,8 @@ void
 Distributor::estimateCen( const std::vector< tk::real >& cen )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of the central moments
-//! \author  J. Bakosi
+//! \param[in] cen Partially accumulated central moments contributed by caller
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number of integrators completing the accumulation of the central
@@ -285,7 +302,10 @@ Distributor::estimateOrdPDF( const std::vector< tk::UniPDF >& updf,
                              const std::vector< tk::TriPDF >& tpdf )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of ordinary PDFs
-//! \author  J. Bakosi
+//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
+//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
+//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number of integrators completing the accumulation of ordinary PDFs
@@ -317,7 +337,10 @@ Distributor::estimateCenPDF( const std::vector< tk::UniPDF >& updf,
                              const std::vector< tk::TriPDF >& tpdf )
 //******************************************************************************
 // Wait for all integrators to finish accumulation of central PDFs
-//! \author  J. Bakosi
+//! \param[in] updf Partially accumulated univariate PDFs contributed by caller
+//! \param[in] bpdf Partially accumulated bivariate PDFs contributed by caller
+//! \param[in] tpdf Partially accumulated trivariate PDFs contributed by caller
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number of integrators completing the accumulation of PDFs
@@ -347,7 +370,7 @@ void
 Distributor::outStat()
 //******************************************************************************
 // Output statistics to file
-//! \author  J. Bakosi
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Append statistics file at selected times
@@ -364,7 +387,7 @@ void
 Distributor::outPDF()
 //******************************************************************************
 // Output PDFs to file
-//! \author  J. Bakosi
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Output PDFs at selected times
@@ -380,7 +403,9 @@ void
 Distributor::writeUniPDF( const tk::UniPDF& p, std::size_t& cnt )
 //******************************************************************************
 // Write univariate PDF to file
-//! \author  J. Bakosi
+//! \param[in] p Univariate PDF to output
+//! \param[inout] cnt Count up number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Get PDF metadata
@@ -416,7 +441,9 @@ void
 Distributor::writeBiPDF( const tk::BiPDF& p, std::size_t& cnt )
 //******************************************************************************
 // Write bivariate PDF to file
-//! \author  J. Bakosi
+//! \param[in] p Bivariate PDF to output
+//! \param[inout] cnt Count up number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Get PDF metadata
@@ -471,7 +498,9 @@ void
 Distributor::writeTriPDF( const tk::TriPDF& p, std::size_t& cnt )
 //******************************************************************************
 // Write trivariate PDF to file
-//! \author  J. Bakosi
+//! \param[in] p Trivariate PDF to output
+//! \param[inout] cnt Count up number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Get PDF metadata
@@ -525,8 +554,9 @@ Distributor::writeTriPDF( const tk::TriPDF& p, std::size_t& cnt )
 std::size_t
 Distributor::outUniPDF()
 //******************************************************************************
-// Output univariate PDFs to file(s)
-//! \author  J. Bakosi
+// Output all requested univariate PDFs to file(s)
+//! \return Number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   std::size_t cnt = 0;
@@ -538,8 +568,9 @@ Distributor::outUniPDF()
 std::size_t
 Distributor::outBiPDF()
 //******************************************************************************
-// Output bivariate PDFs to file(s)
-//! \author  J. Bakosi
+// Output all requested bivariate PDFs to file(s)
+//! \return Number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   std::size_t cnt = 0;
@@ -551,8 +582,9 @@ Distributor::outBiPDF()
 std::size_t
 Distributor::outTriPDF()
 //******************************************************************************
-// Output trivariate PDFs to file(s)
-//! \author  J. Bakosi
+// Output all requested trivariate PDFs to file(s)
+//! \return Number of PDFs written
+//! \author J. Bakosi
 //******************************************************************************
 {
   std::size_t cnt = 0;
@@ -565,7 +597,7 @@ void
 Distributor::evaluateTime()
 //******************************************************************************
 // Evaluate time step, compute new time step size, decide if it is time to quit
-//! \author  J. Bakosi
+//! \author J. Bakosi
 //******************************************************************************
 {
   // Increase number of iterations taken
@@ -638,7 +670,7 @@ void
 Distributor::header() const
 //******************************************************************************
 // Print out time integration header
-//! \author  J. Bakosi
+//! \author J. Bakosi
 //******************************************************************************
 {
   m_print.inthead( "Time integration", "Differential equations testbed",
@@ -656,7 +688,7 @@ void
 Distributor::report()
 //******************************************************************************
 // Print out one-liner report on time step
-//! \author  J. Bakosi
+//! \author J. Bakosi
 //******************************************************************************
 {
   if (!(m_it % g_inputdeck.get< tag::interval, tag::tty >())) {
