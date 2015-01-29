@@ -2,10 +2,14 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:34:45 PM MST
+  \date      Thu 29 Jan 2015 07:44:08 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
-  \details   Joint bivariate PDF estimator
+  \details   Joint bivariate PDF estimator. This class can be used to estimate a
+    joint probability density function (PDF) of two scalar variables from an
+    ensemble. The implementation uses the standard container std::unordered_map,
+    which is a hash-based associative container with linear algorithmic
+    complexity for insertion of a new sample.
 */
 //******************************************************************************
 #ifndef BiPDF_h
@@ -33,23 +37,25 @@ class BiPDF {
     //! Pair type
     using pair_type = std::pair< const key_type, tk::real >;
 
-    // Hash function for key_type
+    // Hash functor for key_type
     struct key_hash {
       long operator()( const key_type& key ) const {
         return std::hash< long >()( key[0] ) ^ std::hash< long >()( key[1] );
       }
     };
 
-    //! Joint bivariate PDF is an unordered_map: key: two bin ids corresponding
-    //! to the two sample space dimensions, mapped value: sample counter,
-    //! hasher: XORed hash of the two bin ids
+    //! \brief Joint bivariate PDF
+    //! \details The underlying container type is an unordered_map where the key
+    //!   is two bin ids corresponding to the two sample space dimensions, and
+    //!   the mapped value is the sample counter. The hasher functor, defined by
+    //!   key_hash provides an XORed hash of the two bin ids.
     using map_type = std::unordered_map< key_type, tk::real, key_hash >;
 
     //! Empty constructor for Charm++
     explicit BiPDF() : m_binsize( {{ 0, 0 }} ), m_nsample( 0 ) {}
 
     //! Constructor: Initialize joint bivariate PDF container
-    //! \param[in]  bs  Sample space bin size in both directions
+    //! \param[in] bs Sample space bin size in both directions
     explicit BiPDF( const std::vector< tk::real >& bs ) :
       m_binsize( {{ bs[0], bs[1] }} ),
       m_nsample( 0 ) {}
@@ -59,7 +65,7 @@ class BiPDF {
     std::size_t nsample() const noexcept { return m_nsample; }
 
     //! Add sample to bivariate PDF
-    //! \param[in]  sample  Sample to add
+    //! \param[in] sample Sample to add
     void add( std::array< tk::real, dim > sample ) {
       ++m_nsample;
       ++m_pdf[ {{ std::lround( sample[0] / m_binsize[0] ),
@@ -67,7 +73,7 @@ class BiPDF {
     }
 
     //! Add multiple samples from a PDF
-    //! \param[in]  p  PDF whose samples to add
+    //! \param[in] p PDF whose samples to add
     void addPDF( const BiPDF& p ) {
       m_binsize = p.binsize();
       m_nsample += p.nsample();
@@ -78,16 +84,17 @@ class BiPDF {
     void zero() noexcept { m_nsample = 0; m_pdf.clear(); }
 
     //! Constant accessor to underlying PDF map
-    //! \return Reference to underlying map
+    //! \return Constant reference to underlying map
     const map_type& map() const noexcept { return m_pdf; }
 
     //! Constant accessor to bin sizes
-    //! \return Sample space bin sizes
+    //! \return Constant reference to sample space bin sizes
     const std::array< tk::real, dim >& binsize() const noexcept
     { return m_binsize; }
 
     //! Return minimum and maximum bin ids of sample space in both dimensions
-    //! \return  {xmin,xmax,ymin,ymax}  Minima and maxima of the bin ids
+    //! \return {xmin,xmax,ymin,ymax} Minima and maxima of the bin ids in a
+    //!    std::array
     std::array< long, 2*dim > extents() const {
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
@@ -99,12 +106,20 @@ class BiPDF {
                 y.first->first[1], y.second->first[1] }};
     }
 
-    //! Pack/Unpack
+    /** @name Pack/Unpack: Serialize BiPDF object for Charm++ */
+    ///@{
+    //! Pack/Unpack serialize member function
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_binsize;
       p | m_nsample;
       p | m_pdf;
     }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[inout] c BiPDF object reference
+    friend void operator|( PUP::er& p, BiPDF& c ) { c.pup(p); }
+    ///@}
 
   private:
     std::array< tk::real, dim > m_binsize;  //!< Sample space bin sizes

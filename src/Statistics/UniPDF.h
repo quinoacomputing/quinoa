@@ -2,10 +2,14 @@
 /*!
   \file      src/Statistics/UniPDF.h
   \author    J. Bakosi
-  \date      Mon 08 Dec 2014 03:34:31 PM MST
+  \date      Thu 29 Jan 2015 07:44:14 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Univariate PDF estimator
-  \details   Univariate PDF estimator
+  \details   Univariate PDF estimator. This class can be used to estimate a
+    probability density function of (PDF) a scalar variable from an ensemble.
+    The implementation uses the standard container std::unordered_map, which is
+    a hash-based associative container with linear algorithmic complexity for
+    insertion of a new sample.
 */
 //******************************************************************************
 #ifndef UniPDF_h
@@ -33,14 +37,18 @@ class UniPDF {
     //! Pair type
     using pair_type = std::pair< const key_type, tk::real >;
 
-    //! Univariate PDF is an unordered_map: key: bin id, value: sample counter
+    //! \brief Univariate PDF
+    //! \details The underlying container type is an unordered_map where the key
+    //!   is one bin id corresponding to the single sample space dimension, and
+    //!   the mapped value is the sample counter. The hasher functor used here
+    //!   is the default for the key type provided by the standard library.
     using map_type = std::unordered_map< key_type, tk::real >;
 
     //! Empty constructor for Charm++
     explicit UniPDF() : m_binsize( 0 ), m_nsample( 0 ) {}
 
-    //! Constructor
-    //! \param[in]  binsize  Sample space bin size
+    //! Constructor: Initialize univariate PDF container
+    //! \param[in] binsize Sample space bin size
     explicit UniPDF( tk::real binsize ) :
       m_binsize( binsize ), m_nsample( 0 ) {}
 
@@ -49,14 +57,14 @@ class UniPDF {
     std::size_t nsample() const noexcept { return m_nsample; }
 
     //! Add sample to univariate PDF
-    //! \param[in]  sample  Sample to insert
+    //! \param[in] sample Sample to insert
     void add( tk::real sample ) {
       ++m_nsample;
       ++m_pdf[ std::lround( sample / m_binsize ) ];
     }
 
     //! Add multiple samples from a PDF
-    //! \param[in]  p  PDF whose samples to add
+    //! \param[in] p PDF whose samples to add
     void addPDF( const UniPDF& p ) {
       m_binsize = p.binsize();
       m_nsample += p.nsample();
@@ -75,7 +83,7 @@ class UniPDF {
     tk::real binsize() const noexcept { return m_binsize; }
 
     //! Return minimum and maximum bin ids of sample space
-    //! \return  {min,max}  Minimum and maximum of the bin ids
+    //! \return {min,max} Minimum and maximum of the bin ids
     std::array< long, 2*dim > extents() const {
       auto x = std::minmax_element( begin(m_pdf), end(m_pdf),
                  []( const pair_type& a, const pair_type& b )
@@ -83,12 +91,20 @@ class UniPDF {
       return {{ x.first->first, x.second->first }};
     }
 
-    //! Pack/Unpack
+    /** @name Pack/Unpack: Serialize BiPDF object for Charm++ */
+    ///@{
+    //! Pack/Unpack serialize member function
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er& p ) {
       p | m_binsize;
       p | m_nsample;
       p | m_pdf;
     }
+    //! \brief Pack/Unpack serialize operator|
+    //! \param[inout] p Charm++'s PUP::er serializer object reference
+    //! \param[inout] c UniPDF object reference
+    friend void operator|( PUP::er& p, UniPDF& c ) { c.pup(p); }
+    ///@}
 
   private:
     tk::real m_binsize;         //!< Sample space bin size
