@@ -2,10 +2,15 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 08:32:17 AM MST
+  \date      Thu 29 Jan 2015 09:20:18 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
-  \details   Distributor drives the time integration of differential equations
+  \details   Distributor drives the time integration of differential equations.
+    The implementation uses the Charm++ runtime system and is fully asynchronous,
+    overlapping computation, communication as well I/O. The algorithm utilizes
+    the structured dagger (SDAG) Charm++ functionality. The high-level overview
+    of the algorithm structure and how it interfaces with Charm++ is discussed
+    in the Charm++ interface file src/Walker/distributor.ci.
 */
 //******************************************************************************
 #ifndef Distributor_h
@@ -22,7 +27,7 @@ namespace walker {
 class Distributor : public CBase_Distributor {
 
   // Include Charm++ SDAG code. See http://charm.cs.illinois.edu/manuals/html/
-  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger"
+  // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
   Distributor_SDAG_CODE
 
   public:
@@ -81,13 +86,13 @@ class Distributor : public CBase_Distributor {
     //! Output PDFs to file
     void outPDF();
 
-    //! Output univariate PDFs to file(s)
+    //! Output all requested univariate PDFs to file(s)
     std::size_t outUniPDF();
 
-    //! Output bivariate PDFs to file(s)
+    //! Output all requested bivariate PDFs to file(s)
     std::size_t outBiPDF();
 
-    //! Output trivariate PDFs to file(s)
+    //! Output all requested trivariate PDFs to file(s)
     std::size_t outTriPDF();
 
     //! Evaluate time step, compute new time step size

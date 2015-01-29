@@ -2,11 +2,15 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Thu 22 Jan 2015 06:12:56 AM MST
+  \date      Thu 29 Jan 2015 09:32:19 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Integrator used to advance ordinary and stochastic differential eqs.
-  \details   Integrator used to advance ordinary and stochastic differential
-             equations.
+  \brief     Integrator advances differential equations
+  \details   Integrator advances differential equations. There are a potentially
+    large number of Integrator Charm++ chares created by Distributor. Each
+    integrator gets a chunk of the full load and does the same: initializes and
+    advances multiple ordinary or stochastic differential equations in time.
+    Note that there is no spatial dependence, these equations describe spatially
+    homogeneous processes.
 */
 //******************************************************************************
 #ifndef Integrator_h
@@ -24,12 +28,16 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::vector< DiffEq > g_diffeqs;
 
-//! Integrator used to advance ODEs and SDEs in time
+//! Integrator Charm++ chare used to advance differential equations in time
 template< class Proxy >
 class Integrator : public CBase_Integrator< Proxy > {
 
   public:
     //! Constructor
+    //! \param[in] proxy Host proxy to call back to (here: Distributor)
+    //! \param[in] npar Number of particles this integrator advances
+    //! \param[in] dt Size of time step
+    //! \param[in] it Iteration count
     explicit Integrator( Proxy& proxy, uint64_t npar, tk::real dt, uint64_t it )
       : m_proxy( proxy ),
         m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
@@ -40,8 +48,8 @@ class Integrator : public CBase_Integrator< Proxy > {
                 g_inputdeck.get< tag::pdf >(),
                 g_inputdeck.get< tag::discr, tag::binsize >() )
     {
-      ic();                 // set initial conditions
-      advance( dt, it );    // start time stepping
+      ic();                 // set initial conditions for all equations
+      advance( dt, it );    // start time stepping all equations
     }
 
     //! Set initial conditions
@@ -51,6 +59,8 @@ class Integrator : public CBase_Integrator< Proxy > {
     }
 
     //! Advance all particles owned by this integrator
+    //! \param[in] dt Size of time step
+    //! \param[in] it Iteration count
     void advance( tk::real dt, uint64_t it ) {
       //! Advance all equations one step in time
       for (const auto& e : g_diffeqs) e.advance( m_particles, CkMyPe(), dt );
@@ -70,6 +80,7 @@ class Integrator : public CBase_Integrator< Proxy > {
     }
 
     // Accumulate sums for central moments
+    //! \param[in] ord Estimated ordinary moments (collected from all PEs)
     void accumulateCen( const std::vector< tk::real >& ord ) {
       // Accumulate partial sums for central moments
       m_stat.accumulateCen( ord );
@@ -86,6 +97,7 @@ class Integrator : public CBase_Integrator< Proxy > {
     }
 
     // Accumulate sums for central PDFs
+    //! \param[in] ord Estimated ordinary moments (collected from all PEs)
     void accumulateCenPDF( const std::vector< tk::real >& ord ) {
       // Accumulate partial sums for central PDFs
       m_stat.accumulateCenPDF( ord );

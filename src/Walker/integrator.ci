@@ -2,10 +2,10 @@
 /*!
   \file      src/Walker/integrator.ci
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:38:06 AM MST
+  \date      Thu 29 Jan 2015 09:21:54 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Charm++ module interface file for the integrator
-  \details   Charm++ module interface file for the integrator
+  \brief     Charm++ module interface file for Integrator
+  \details   Charm++ module interface file for Integrator
 */
 //******************************************************************************
 

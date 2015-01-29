@@ -2,10 +2,10 @@
 /*!
   \file      src/Walker/distributor.ci
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 06:47:15 AM MST
+  \date      Thu 29 Jan 2015 09:04:20 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Charm++ module interface file for distributor
-  \details   Charm++ module interface file for distributor
+  \brief     Charm++ module interface file for Distributor
+  \details   Charm++ module interface file for Distributor
 */
 //******************************************************************************
 
@@ -40,7 +40,7 @@ module distributor {
                                  const std::vector< tk::TriPDF >& tpdf );
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
-      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger"
+      // charm++/manual.html, Sec. "Structured Control Flow: Structured Dagger".
 
       // High-level overview of the dependency and asynchronous call structure
       // ---------------------------------------------------------------------
@@ -111,7 +111,7 @@ module distributor {
       // else discussed thus far.
       //
       // The resulting algorithm for a single time step enables overlapping
-      // computations and communications. The algorithm has two
+      // computations, communications as well as I/O. The algorithm has two
       // global synchronization points: (1) it must wait for all particles to be
       // advanced (AdvP), and (2) the final evaluateTime() (EvT) can only happen
       // once all required statistics and PDFs have been estimated and

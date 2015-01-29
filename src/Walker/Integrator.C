@@ -2,11 +2,15 @@
 /*!
   \file      src/Walker/Integrator.C
   \author    J. Bakosi
-  \date      Tue 09 Dec 2014 12:39:01 PM MST
+  \date      Thu 29 Jan 2015 09:32:38 AM MST
   \copyright 2012-2014, Jozsef Bakosi.
-  \brief     Integrator used to advance ordinary and stochastic differential eqs.
-  \details   Integrator used to advance ordinary and stochastic differential
-             equations.
+  \brief     Integrator advances differential equations
+  \details   Integrator advances differential equations. There are a potentially
+    large number of Integrator Charm++ chares created by Distributor. Each
+    integrator gets a chunk of the full load and does the same: initializes and
+    advances multiple ordinary or stochastic differential equations in time.
+    Note that there is no spatial dependence, these equations describe spatially
+    homogeneous processes.
 */
 //******************************************************************************
 
