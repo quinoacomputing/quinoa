@@ -3,7 +3,7 @@
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 09:00:42 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh writer class declaration
   \details   Netgen mesh writer class declaration. Only supports tetrahedra.
 */

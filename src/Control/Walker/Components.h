@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Components.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 07:20:55 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
      stack and is thus populated during the control file parsing.

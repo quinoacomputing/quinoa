@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/CmdLine/Parser.h
   \author    J. Bakosi
   \date      Sat 17 Jan 2015 06:57:09 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line parser
   \details   This file declares the command-line argument parser for the unit
      test suite, UnitTest.

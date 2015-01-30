@@ -3,7 +3,7 @@
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Sat 17 Jan 2015 06:53:25 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the unit test

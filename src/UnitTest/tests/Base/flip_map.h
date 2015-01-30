@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/flip_map.h
   \author    J. Bakosi
   \date      Tue 05 Aug 2014 04:02:31 PM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/flip_map.h
   \details   Unit tests for Base/flip_map.h
 */

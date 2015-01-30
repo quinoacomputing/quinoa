@@ -3,7 +3,7 @@
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 01:23:51 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
     coefficients policies, see, e.g., DiffEq/BetaCoeffPolicy.h, initialization

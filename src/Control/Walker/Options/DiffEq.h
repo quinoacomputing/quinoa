@@ -3,7 +3,7 @@
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 07:59:50 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
 */

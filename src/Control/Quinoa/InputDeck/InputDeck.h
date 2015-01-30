@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Sun 18 Jan 2015 06:48:49 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Quinoa's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the

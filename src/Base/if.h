@@ -3,7 +3,7 @@
   \file      src/Base/if.h
   \author    J. Bakosi
   \date      Sat 03 Jan 2015 10:01:28 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Compile-time type selection
   \details   Compile-time type selection
 */

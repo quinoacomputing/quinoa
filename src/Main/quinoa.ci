@@ -3,7 +3,7 @@
   \file      src/Main/quinoa.ci
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:29:03 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for quinoa
   \details   Charm++ module interface file for the computational fluid dynamics
     tool, quinoa. 

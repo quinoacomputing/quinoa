@@ -15,7 +15,7 @@ analysis using Monte Carlo methods.
     \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
   \section copyright Copyright
-    Copyright 2012-2014, Jozsef Bakosi.
+    Copyright 2012-2015, Jozsef Bakosi.
 
   \section license License
     License ...
@@ -29,6 +29,6 @@ analysis using Monte Carlo methods.
 <hr>
 <div><small>
 <em>Page last updated:</em> Thu 29 Jan 2015 08:59:44 PM MST
-<em>Copyright 2012-2014, Jozsef Bakosi.</em>
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

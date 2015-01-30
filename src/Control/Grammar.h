@@ -3,7 +3,7 @@
   \file      src/Control/Grammar.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 03:35:20 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
     Template Library (PEGTL)](https://code.google.com/p/pegtl/wiki/PEGTL0) to

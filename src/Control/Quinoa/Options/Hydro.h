@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Hydro.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 08:00:09 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hydro model options
   \details   Hydro model options
 */

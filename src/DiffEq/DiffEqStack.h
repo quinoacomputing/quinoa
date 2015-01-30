@@ -3,7 +3,7 @@
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 05:49:44 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
     functionality related to registering and instantiating differential equation

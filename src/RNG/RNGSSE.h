@@ -3,7 +3,7 @@
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 03:49:08 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
 */

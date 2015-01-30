@@ -3,7 +3,7 @@
   \file      src/Control/StatControl.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 12:09:54 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
     probability density functions.

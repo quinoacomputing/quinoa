@@ -3,7 +3,7 @@
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
   \date      Fri 23 Jan 2015 06:43:15 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal

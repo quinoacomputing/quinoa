@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
   \date      Fri 23 Jan 2015 06:35:37 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
     Expression Grammar Template Library (PEGTL)]

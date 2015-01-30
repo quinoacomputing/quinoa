@@ -3,7 +3,7 @@
   \file      src/Base/Exception.h
   \author    J. Bakosi
   \date      Tue 16 Dec 2014 12:14:26 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
     the Exception class is to facilitate printing out a message, together with

@@ -3,7 +3,7 @@
   \file      src/Base/make_unique.h
   \author    J. Bakosi
   \date      Thu 11 Dec 2014 07:56:08 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Define make_unique for unique_ptr until C++14
   \details   Define make_unique for unique_ptr until C++14. When we switch to
     C++14, this can go away. The code below is lifted from

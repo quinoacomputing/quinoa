@@ -3,7 +3,7 @@
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 12:05:25 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Skew-normal SDE coefficients policies
   \details   Skew-normal SDE coefficients policies
 */

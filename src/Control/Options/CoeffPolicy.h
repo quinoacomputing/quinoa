@@ -3,7 +3,7 @@
   \file      src/Control/Options/CoeffPolicy.h
   \author    J. Bakosi
   \date      Fri 23 Jan 2015 06:44:59 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation coefficients policy options
   \details   Differential equation coefficients policy options
 */

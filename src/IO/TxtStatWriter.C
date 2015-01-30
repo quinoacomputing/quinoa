@@ -3,7 +3,7 @@
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 10:16:38 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
      facilitates outputing statistics to text files.

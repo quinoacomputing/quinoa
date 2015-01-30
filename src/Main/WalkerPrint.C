@@ -3,7 +3,7 @@
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 12:03:25 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
 */

@@ -3,7 +3,7 @@
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
   \date      Fri 16 Jan 2015 06:33:54 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   This file declares the input deck, i.e., control file, parser for
      the random number generator test suite, RNGTest.

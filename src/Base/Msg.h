@@ -3,7 +3,7 @@
   \file      src/Base/Msg.h
   \author    J. Bakosi
   \date      Thu 11 Dec 2014 08:03:09 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Custom Charm++ message types definitions.
   \details   This file defines some custom Charm++ message types. This is
     somewhat experimental, not well tested, and is not currently in use. The

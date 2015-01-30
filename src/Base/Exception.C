@@ -3,7 +3,7 @@
   \file      src/Base/Exception.C
   \author    J. Bakosi
   \date      Wed 10 Dec 2014 04:08:08 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class definition
   \details   Exception class definition
 */

@@ -3,7 +3,7 @@
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
   \date      Thu 29 Jan 2015 09:20:50 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,

@@ -3,7 +3,7 @@
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 11:44:43 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), with linear drift and linear diagonal

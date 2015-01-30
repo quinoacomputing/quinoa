@@ -3,7 +3,7 @@
   \file      src/DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 11:31:23 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
     Ornstein-Uhlenbeck SDE, defined in DiffEq/DiagOrnsteinUhlenbeck.h.

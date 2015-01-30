@@ -3,7 +3,7 @@
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 07:59:32 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text floating-point output options
   \details   Text floating-point output options
 */

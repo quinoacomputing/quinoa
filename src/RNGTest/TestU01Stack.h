@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 05:11:25 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
 */

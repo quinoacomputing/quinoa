@@ -3,7 +3,7 @@
   \file      src/Main/QuinoaPrint.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 12:03:14 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Quinoa-specific pretty printer functionality
   \details   Quinoa-specific pretty printer functionality.
 */

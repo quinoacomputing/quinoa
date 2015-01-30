@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/IO/Reader.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 03:04:33 PM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for IO/Reader
   \details   Unit tests for IO/Reader
 */

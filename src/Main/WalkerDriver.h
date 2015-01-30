@@ -3,7 +3,7 @@
   \file      src/Main/WalkerDriver.h
   \author    J. Bakosi
   \date      Mon 08 Dec 2014 09:46:18 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
 */

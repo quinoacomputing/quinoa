@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/Parser.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 07:12:09 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line parser
   \details   This file declares the command-line argument parser for the mesh
      file converter, MeshConv.

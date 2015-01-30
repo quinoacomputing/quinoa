@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/Exception.h
   \author    J. Bakosi
   \date      Tue 16 Dec 2014 12:13:25 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
 */

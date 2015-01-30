@@ -3,7 +3,7 @@
   \file      src/Control/RNGSSEGrammar.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 02:21:40 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGSSE-related grammar
   \details   This file defines RNGSSE2 library related grammar, (re-)used by
      several executables.

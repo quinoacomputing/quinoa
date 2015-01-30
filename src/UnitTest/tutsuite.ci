@@ -3,7 +3,7 @@
   \file      src/UnitTest/tutsuite.ci
   \author    J. Bakosi
   \date      Sat 02 Aug 2014 12:25:05 PM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Template Unit Test suite
   \details   Charm++ module interface file for Template Unit Test suite
 */

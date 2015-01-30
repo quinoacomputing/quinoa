@@ -3,7 +3,7 @@
   \file      src/Main/unittest.ci
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:30:06 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for unittest
   \details   Charm++ module interface file for the unit test suite, unittest.
   \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html

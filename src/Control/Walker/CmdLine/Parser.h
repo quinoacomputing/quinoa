@@ -3,7 +3,7 @@
   \file      src/Control/Walker/CmdLine/Parser.h
   \author    J. Bakosi
   \date      Mon 08 Dec 2014 11:31:10 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's command line parser
   \details   Walker's command line parser
 */
