@@ -3,16 +3,16 @@
   \image     html quinoa.svg
   \section   intro What is Quinoa?
 Quinoa is a set of computational tools that enables research and numerical
-analysis using stochastic differential equations.
+analysis using Monte Carlo methods.
 
   \section organization Organization
     Quinoa consists of the following tools:
-    \li [<B>quinoa</B>](quinoa_design.html) - Computational fluid dynamics tool
-    \li [<B>walker</B>](walker_design.html) - Random walker for analyzing
-        stochastic differential equations
-    \li [<B>rngtest</B>](rngtest_design.html) - Random number generator test suite
-    \li [<B>unittest</B>](unittest_design.html) - Unit test suite
-    \li [<B>meshconv</B>](meshconv_design.html) - Mesh file converter
+    \li [<B>bonker</B>](bonker_doc.html) - Molecular-realm fluid dynamics solving the Boltzmann equation
+    \li [<B>breeze</B>](breeze_doc.html) - Continuum-realm fluid dynamics solving the Navier-Stokes equation
+    \li [<B>walker</B>](walker_doc.html) - Random walker of stochastic differential equations
+    \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
+    \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
+    \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
   \section copyright Copyright
     Copyright 2012-2014, Jozsef Bakosi.
@@ -28,7 +28,7 @@ analysis using stochastic differential equations.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 20 Dec 2014 07:31:31 AM MST
+<em>Page last updated:</em> Thu 29 Jan 2015 08:59:44 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

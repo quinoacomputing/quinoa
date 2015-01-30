@@ -1,0 +1,16 @@
+/*!
+  \page      breeze_doc Continuum-realm fluid dynamics: breeze
+
+Breeze is used for the computation of fluid dynamics at the continuum scales and
+it solves the Navier-Stokes equation with a stochastic Lagrangian particle
+method.
+
+Breeze uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
+concurrently, either on a single machine or a networked set of computers.
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 29 Jan 2015 09:04:44 PM MST
+<em>Copyright 2012-2014, Jozsef Bakosi.</em>
+</small></div>
+*/
