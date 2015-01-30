@@ -1,14 +1,15 @@
 /*!
-  \page      unittest_design Unit test suite (unittest) design
+  \page      unittest_doc Unit test suite: unittest
 
 UnitTest is used to run [unit tests](http://en.wikipedia.org/wiki/Unit_testing).
+
 The test suite uses the [Charm++](http://charm.cs.illinois.edu) runtime system
 to run the tests concurrently, either on a single machine or a networked set of
 computers.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 26 Jul 2014 08:18:12 AM MDT
+<em>Page last updated:</em> Thu 29 Jan 2015 09:01:15 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

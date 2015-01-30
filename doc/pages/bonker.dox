@@ -1,0 +1,16 @@
+/*!
+  \page      bonker_doc Molecular-realm fluid dynamics: bonker
+
+Bonker is used for the computation of fluid dynamics at the molecular scales and
+it solves the Boltzmann equation with a direct simulation Monte Carlo (DSMC)
+method.
+
+Bonker uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
+concurrently, either on a single machine or a networked set of computers.
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Thu 29 Jan 2015 09:04:52 PM MST
+<em>Copyright 2012-2014, Jozsef Bakosi.</em>
+</small></div>
+*/

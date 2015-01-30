@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Tue 27 Jan 2015 06:47:59 AM MST
+  \date      Thu 29 Jan 2015 08:42:30 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -766,7 +766,7 @@ struct pdfs_info {
     variable is y1, using automatic determination of the bounds of the sample
     space, using 1.0e-2 as the sample space bin size, and call the PDF
     "mypdf". For more info on the structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox.)";
+    doc/pages/pdf_output.dox.)";
   }
 };
 using pdfs = keyword< pdfs_info, p,d,f,s >;
@@ -781,7 +781,7 @@ struct txt_info {
     a pdfs ... end block. Example: "filetype txt", which selects text-file
     output. Valid options are 'txt', 'gmshtxt', 'gmshbin', and 'exodusii'.
     For more info on the structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox.)"; }
+    doc/pages/pdf_output.dox.)"; }
 };
 using txt = keyword< txt_info, t,x,t >;
 
@@ -795,7 +795,7 @@ struct gmshtxt_info {
     density function (PDF) within a pdfs ... end block. Example: "filetype
     gmshtxt", which selects Gmsh ASCII file output. Valid options are 'txt',
     'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the structure of
-    the pdfs ... end block, see doc/design/pdf_output_design.dox. For more
+    the pdfs ... end block, see doc/pages/pdf_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
 using gmshtxt = keyword< gmshtxt_info, g,m,s,h,t,x,t >;
@@ -810,7 +810,7 @@ struct gmshbin_info {
     density function (PDF) within a pdfs ... end block. Example: "filetype
     gmshbin", which selects Gmsh binary file output. Valid options are 'txt',
     'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the structure of
-    the pdfs ... end block, see doc/design/pdf_output_design.dox. For more
+    the pdfs ... end block, see doc/pages/pdf_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
 using gmshbin = keyword< gmshbin_info, g,m,s,h,b,i,n >;
@@ -826,7 +826,7 @@ struct exodusii_info {
     "filetype exodusii", which selects ExodusII file output. Valid options
     are 'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
     structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox. For more info on ExodusII, see
+    doc/pages/pdf_output.dox. For more info on ExodusII, see
     http://sourceforge.net/projects/exodusii.)";
   }
 };
@@ -842,7 +842,7 @@ struct filetype_info {
     "filetype exodusii", which selects ExodusII output. Valid options are
     'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
     structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox.)"; }
+    doc/pages/pdf_output.dox.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -868,7 +868,7 @@ struct overwrite_info {
     overwrite policy overwrites the same output file containing a single time
     step. Valid PDF policy options are 'overwrite', 'multiple', and
     'evolution'. For more info on the structure of the pdfs ... end block,
-    see doc/design/pdf_output_design.dox.)"; }
+    see doc/pages/pdf_output.dox.)"; }
 };
 using overwrite = keyword< overwrite_info, o,v,e,r,w,r,i,t,e >;
 
@@ -884,7 +884,7 @@ struct multiple_info {
     multiple policy output creates a new file for each time step. Valid PDF
     policy options are 'overwrite', 'multiple', and 'evolution'. For more
     info on the structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox.)"; }
+    doc/pages/pdf_output.dox.)"; }
 };
 using multiple = keyword< multiple_info, m,u,l,t,i,p,l,e >;
 
@@ -901,7 +901,7 @@ struct evolution_info {
     each time instant, yielding a time evolution of data. Valid PDF
     policy options are 'overwrite', 'multiple', and 'evolution'. For more
     info on the structure of the pdfs ... end block, see
-    doc/design/pdf_output_design.dox.)";
+    doc/pages/pdf_output.dox.)";
   }
 };
 using evolution = keyword< evolution_info, e,v,o,l,u,t,i,o,n >;
@@ -916,7 +916,7 @@ struct policy_info {
     (PDFs) within a pdfs ... end block. Example: "policy overwrite", which
     selects the overwrite output file policy. Valid options are 'overwrite',
     'multiple', and 'evolution'. For more info on the structure of the
-    pdfs ... end block, see doc/design/pdf_output_design.dox.)";
+    pdfs ... end block, see doc/pages/pdf_output.dox.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -1440,7 +1440,7 @@ struct statistics_info {
     descriptions and settings of requested output for statistical moments.
     Example: "statistics <Y> <yy> end", which requests the first two moments of
     the flutcutating variable 'Y'. For more info on the structure of the
-    statistics ... end block, see doc/design/statistics_output_design.dox.)";
+    statistics ... end block, see doc/pages/statistics_output.dox.)";
   }
 };
 using statistics = keyword< statistics_info, s,t,a,t,i,s,t,i,c,s >;
@@ -1455,7 +1455,7 @@ struct rngs_info {
     Example: "rngs mkl_mcg59 seed 2134 uniform_method accurate end end" which
     enables the MCG59 generator from MKL using the seed 2134. For more info on
     the structure of the rngs ... end block, see
-    doc/design/rngs_input_design.dox.)";
+    doc/pages/rngs_input.dox.)";
   }
 };
 using rngs = keyword< rngs_info, r,n,g,s >;

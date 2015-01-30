@@ -1,5 +1,5 @@
 /*!
-  \page      rngtest_design Random number generator test suite (rngtest) design
+  \page      rngtest_doc Random number generator test suite: rngtest
 
 RNGTest is used to subject the various random number generators (RNG) available
 in quinoa to a battery of statistical tests. These tests give a quantitative
@@ -235,7 +235,7 @@ in-code documentation in Main/RNGTest.C.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 26 Jul 2014 08:14:59 AM MDT
+<em>Page last updated:</em> Thu 29 Jan 2015 08:59:26 PM MST
 <em>Copyright 2012-2014, Jozsef Bakosi.</em>
 </small></div>
 */

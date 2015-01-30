@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Components.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:26:50 PM MST
+  \date      Thu 29 Jan 2015 08:43:44 PM MST
   \copyright 2012-2014, Jozsef Bakosi.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,
@@ -21,7 +21,7 @@
 
     _Example:_ An example is to define storage for systems of stochastic
     differential equations as in walker::ctr::ncomps. In
-    [walker](walker_design.html) various types of stochastic differential
+    [walker](walker.html) various types of stochastic differential
     equations are implemented and numerically integrated in time in order to
     compute and learn about their statistical behavior. Since different types of
     systems can be parameterized differently, there can be several systems of
