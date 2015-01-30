@@ -3,7 +3,7 @@
   \file      src/Control/MKLGrammar.h
   \author    J. Bakosi
   \date      Tue 13 Jan 2015 12:35:04 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Intel MKL-related grammar
   \details   This file defines Intel Math Kernel Library related grammar,
     (re-)used by several executables.

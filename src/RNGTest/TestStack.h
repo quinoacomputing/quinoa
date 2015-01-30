@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestStack.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 04:29:18 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack collecting all types of random number generator statistical
      tests
   \details   Stack collecting all types of statistical tests. Currently, on

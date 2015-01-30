@@ -3,7 +3,7 @@
   \file      src/RNGTest/TestU01Suite.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 10:32:06 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
     which facilitates subjecting any supported random number generator to a

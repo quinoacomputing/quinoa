@@ -3,7 +3,7 @@
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:26:02 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite Charm++ main chare.
   \details   UnitTest: Quinoa's unit test suite Charm++ main chare. This file
     contains the definition of the Charm++ main chare, equivalent to main() in

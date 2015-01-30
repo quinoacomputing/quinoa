@@ -3,7 +3,7 @@
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Fri 16 Jan 2015 11:45:16 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the mesh

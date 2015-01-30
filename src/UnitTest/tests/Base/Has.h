@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/Has.h
   \author    J. Bakosi
   \date      Sat 17 Jan 2015 07:05:25 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Has.h
   \details   Unit tests for Base/Has.h
 */

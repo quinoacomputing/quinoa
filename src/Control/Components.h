@@ -3,7 +3,7 @@
   \file      src/Control/Components.h
   \author    J. Bakosi
   \date      Thu 29 Jan 2015 08:43:44 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Operations on numbers of scalar components of systems of equations
   \details   Operations on numbers of scalar components of systems of equations,
     e.g. multiple equation sets of a physical model or a set of equations of

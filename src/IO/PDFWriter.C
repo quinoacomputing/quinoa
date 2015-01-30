@@ -3,7 +3,7 @@
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 09:23:57 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
   \details   This file defines a PDF writer class that facilitates outputing

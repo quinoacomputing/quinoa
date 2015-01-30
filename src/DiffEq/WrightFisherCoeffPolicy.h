@@ -3,7 +3,7 @@
   \file      src/DiffEq/WrightFisherCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 12:02:06 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher coefficients policies
   \details   This file defines coefficients policy classes for the Wright-Fisher
     SDE, defined in DiffEq/WrightFisher.h.

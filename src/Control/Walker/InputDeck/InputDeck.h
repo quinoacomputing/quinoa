@@ -3,7 +3,7 @@
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 03:46:15 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
 */

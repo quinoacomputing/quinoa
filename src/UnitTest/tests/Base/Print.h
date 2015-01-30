@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/Print.h
   \author    J. Bakosi
   \date      Fri 01 Aug 2014 11:46:10 AM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
 */

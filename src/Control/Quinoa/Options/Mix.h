@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/Options/Mix.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 08:00:19 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix model options
   \details   Mix model options
 */

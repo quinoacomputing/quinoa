@@ -3,7 +3,7 @@
   \file      src/Control/Keyword.h
   \author    J. Bakosi
   \date      Tue 13 Jan 2015 11:57:43 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
     and control file keywords.

@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/Parser.h
   \author    J. Bakosi
   \date      Fri 16 Jan 2015 12:33:51 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Quinoa's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
     the computational fluid dynamics tool, Quinoa.

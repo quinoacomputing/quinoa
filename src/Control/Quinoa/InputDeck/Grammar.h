@@ -3,7 +3,7 @@
   \file      src/Control/Quinoa/InputDeck/Grammar.h
   \author    J. Bakosi
   \date      Fri 16 Jan 2015 06:20:53 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Quinoa's input deck grammar definition
   \details   Quinoa's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the

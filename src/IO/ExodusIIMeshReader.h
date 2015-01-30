@@ -3,7 +3,7 @@
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 10:03:16 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration. Currently, this is a bare
      minimum functionality to interface with the ExodusII reader. It only reads

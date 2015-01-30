@@ -3,7 +3,7 @@
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 10:07:15 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Silo writer declaration.
   \details   Silo writer declaration. This class currently only supports writing
     an STL triangulation into a Silo file. See also

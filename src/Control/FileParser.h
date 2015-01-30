@@ -3,7 +3,7 @@
   \file      src/Control/FileParser.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 02:30:26 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class declaration
   \details   File parser base class declaration. File parser base serves as a
     base class for various file parsers, e.g., input deck parsers. It does

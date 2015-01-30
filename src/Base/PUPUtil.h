@@ -3,7 +3,7 @@
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
   \date      Sat 17 Jan 2015 07:27:41 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
     routines.

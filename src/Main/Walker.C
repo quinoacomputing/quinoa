@@ -3,7 +3,7 @@
   \file      src/Main/Walker.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:18:59 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
     of the Charm++ main chare, equivalent to main() in Charm++-land.

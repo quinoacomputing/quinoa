@@ -765,6 +765,7 @@ WARN_LOGFILE           =
 
 INPUT                  = . \
                          ../src \
+                         ../script \
                          pages
 
 # This tag can be used to specify the character encoding of the source files
@@ -819,7 +820,8 @@ FILE_PATTERNS          = *.c \
                          *.for \
                          *.vhd \
                          *.vhdl \
-                         *.C
+                         *.C \
+                         *.sh
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -904,7 +906,7 @@ IMAGE_PATH             = logo
 # code is scanned, but not when the output code is generated. If lines are added
 # or removed, the anchors will not be placed correctly.
 
-INPUT_FILTER           = 
+INPUT_FILTER           =
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern
 # basis. Doxygen will compare the file name with each pattern and apply the

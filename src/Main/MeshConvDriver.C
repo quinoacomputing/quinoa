@@ -3,7 +3,7 @@
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:39:08 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
 */

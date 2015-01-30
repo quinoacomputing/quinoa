@@ -3,7 +3,7 @@
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 11:30:21 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), whose invariant is the Dirichlet

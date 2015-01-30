@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
   \date      Wed 06 Aug 2014 11:44:34 AM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLUniformMethod
   \details   Unit tests for Control/Options/MKLUniformMethod
 */

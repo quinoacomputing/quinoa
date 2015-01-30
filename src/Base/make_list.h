@@ -3,7 +3,7 @@
   \file      src/Base/make_list.h
   \author    J. Bakosi
   \date      Wed 10 Dec 2014 01:40:55 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Convert a variadic template argument pack to boost::mpl::list
   \details   Convert a variadic template argument pack to boost::mpl::list. For
     more information on the Boost MetaProgramming Library (MPL), see

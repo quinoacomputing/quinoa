@@ -3,7 +3,7 @@
   \file      src/Control/Toggle.h
   \author    J. Bakosi
   \date      Wed 14 Jan 2015 02:47:03 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Toggle is the base for an Option, doing generic searches
   \details   Toggle is the base for an Option, doing generic searches.
 */

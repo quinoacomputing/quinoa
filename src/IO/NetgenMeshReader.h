@@ -3,7 +3,7 @@
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 08:59:09 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class declaration
   \details   Netgen mesh reader class declaration. Only supports tetrahedra.
 */

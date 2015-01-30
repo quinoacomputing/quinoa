@@ -3,7 +3,7 @@
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 10:09:45 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
 */

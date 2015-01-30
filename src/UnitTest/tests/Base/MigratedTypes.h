@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/MigratedTypes.h
   \author    J. Bakosi
   \date      Tue 16 Sep 2014 08:14:00 AM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Type definitions for unit tests of Charm++ migrated data
   \details   Type definitions for unit tests of Charm++ migrated data
 */

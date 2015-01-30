@@ -3,7 +3,7 @@
   \file      src/Control/Options/PDFFile.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 07:58:48 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF output file type options
   \details   PDF output file type options
 */

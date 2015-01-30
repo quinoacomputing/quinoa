@@ -3,7 +3,7 @@
   \file      src/Main/Quinoa.C
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 11:25:49 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Quinoa's computational fluid dynamics tool Charm++ main chare.
   \details   Quinoa's computational fluid dynamics tool Charm++ main chare. This
     file contains the definition of the Charm++ main chare, equivalent to main()

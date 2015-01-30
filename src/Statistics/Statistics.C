@@ -3,7 +3,7 @@
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
   \date      Thu 29 Jan 2015 08:44:48 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
     estimate statistics from an ensemble. Supported at this time are ordinary

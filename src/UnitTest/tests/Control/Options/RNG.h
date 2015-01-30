@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
   \date      Wed 17 Dec 2014 04:45:22 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
 */

@@ -3,7 +3,7 @@
   \file      src/Base/TaggedTuple.h
   \author    J. Bakosi
   \date      Thu 11 Dec 2014 12:11:52 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tagged tuple allowing tag-based access
   \details   Tagged tuple allowing tag-based access. This is very much like
     [std::tuple](http://en.cppreference.com/w/cpp/utility/tuple), but instead of

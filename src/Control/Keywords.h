@@ -3,7 +3,7 @@
   \file      src/Control/Keywords.h
   \author    J. Bakosi
   \date      Thu 29 Jan 2015 08:42:30 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
     of command-line argument parsers as well as input, i.e., control, file

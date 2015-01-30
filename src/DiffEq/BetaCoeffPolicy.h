@@ -3,7 +3,7 @@
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 11:33:24 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   This file defines coefficients policy classes for the beta SDE,
     defined in DiffEq/Beta.h.

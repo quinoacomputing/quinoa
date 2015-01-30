@@ -3,7 +3,7 @@
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 04:10:00 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
     uses runtime polymorphism without client-side inheritance: inheritance is

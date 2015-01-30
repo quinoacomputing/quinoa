@@ -3,7 +3,7 @@
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 08:43:57 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class declaration
   \details   Gmsh mesh writer class declaration. Currently, this class supports
     line, triangle, tetrahedron, and point Gmsh element types.

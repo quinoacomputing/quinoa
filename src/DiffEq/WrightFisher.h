@@ -3,7 +3,7 @@
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 12:04:53 PM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), whose invariant is the Dirichlet

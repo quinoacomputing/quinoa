@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
   \date      Sun 14 Sep 2014 10:31:17 PM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
 */

@@ -3,7 +3,7 @@
   \file      src/Control/Options/PDFPolicy.h
   \author    J. Bakosi
   \date      Wed 21 Jan 2015 07:58:55 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF output file policy options
   \details   PDF output file policy options
 */

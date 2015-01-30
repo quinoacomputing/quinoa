@@ -3,7 +3,7 @@
   \file      src/DiffEq/GeneralizedDirichletCoeffPolicy.h
   \author    J. Bakosi
   \date      Mon 26 Jan 2015 11:40:48 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet coefficients policies
   \details   This file defines coefficients policy classes for the generalized
     Dirichlet SDE, defined in DiffEq/GeneralizedDirichlet.h.

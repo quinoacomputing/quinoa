@@ -3,7 +3,7 @@
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
   \date      Mon 28 Jul 2014 02:33:32 PM MDT
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
 */

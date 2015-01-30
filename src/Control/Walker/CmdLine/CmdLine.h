@@ -3,7 +3,7 @@
   \file      src/Control/Walker/CmdLine/CmdLine.h
   \author    J. Bakosi
   \date      Sat 17 Jan 2015 06:50:44 AM MST
-  \copyright 2012-2014, Jozsef Bakosi.
+  \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's command line
   \details   Walker's command line
 */
