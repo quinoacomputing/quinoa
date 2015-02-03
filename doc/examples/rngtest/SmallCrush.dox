@@ -1,0 +1,266 @@
+/*!
+  \page      rngtest_example_smallcrush RNGTest: Testing a few RNGs with SmallCrush
+  \tableofcontents
+
+\section rngtest_example_smallcrush_control Control file
+
+\code{.py}
+# vim: filetype=sh:
+# This is a comment
+# Keywords are case-sensitive
+
+title "Example RNG test suite"
+
+smallcrush
+
+#  mkl_mcg59
+#    seed 213
+#    uniform_method standard
+#    gaussian_method icdf
+#  end
+# 
+  mkl_mcg31 seed 0 end
+  mkl_mrg32k3a seed 2 end
+  
+  rngsse_gm55
+    seed 0
+    seqlen long
+  end
+  rngsse_mrg32k3a seed 0 end
+
+end
+\endcode
+
+\section rngtest_example_smallcrush_run Example run on 8 CPUs
+\code{.py}
+./charmrun +p8 Main/rngtest -v -c ../../tmp/rngtest.q
+\endcode
+
+\section rngtest_example_smallcrush_output Output
+\verbatim
+Running on 8 processors:  Main/rngtest -v -c ../../tmp/rngtest.q
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/rngtest -v -c ../../tmp/rngtest.q
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 8
+Converse/Charm++ Commit ID: 1a4f4bc
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.002 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     __________ _______    __________________
+   .;@+@';;;;;;' \______   \\      \  /  _____\__    _______   ______/  |_
+    `     '#''@`  |       _//   |   \/   \  ___ |    |_/ __ \ /  ___\   __\
+                  |    |   /    |    \    \_\  \|    |\  ___/ \___ \ |  |
+                  |____|_  \____|__  /\______  /|____| \___  /____  >|__|
+                         \/        \/        \/            \/     \/         
+
+                                 < ENVIRONMENT >                                
+                                 ------ o ------                          
+
+ * Build environment:
+ --------------------
+     Hostname                       : karman
+     Executable                     : rngtest
+     Version                        : 0.1
+     Release                        : LA-CC-XX-XXX
+     Revision                       : 497a86fd7840c2f77a787e373c95ac2428f0dc2a
+     CMake build type               : Debug
+     Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/clang++-3.5
+     Build date                     : Fri Jan 30 07:01:00 MST 2015
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Feb  2 16:01:55 2015
+     Work directory                 : /home/jbakosi/code/quinoa/build/clang
+     Executable (rel. to work dir)  : Main/rngtest
+     Command line arguments         : '-v -c ../../tmp/rngtest.q'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : ../../tmp/rngtest.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >                                  
+                                   ---- o ----                            
+
+ * Registered batteries:
+ -----------------------
+     SmallCrush                    
+     Crush                         
+     BigCrush                      
+
+
+                                   < PROBLEM >                                  
+                                   ---- o ----                            
+
+ * Title: Example RNG test suite
+ -------------------------------
+
+ * RNG battery: SmallCrush (10 tests, 15 stats)
+ ----------------------------------------------
+     Birthday Spacings             
+     Simplified Poker              
+     Gap                           
+     Collision                     
+     Hamming Independence          
+     Weight Distribution           
+     Coupon Collector              
+     Maximum-of-t                  
+     Maximum-of-t Anderson-Darling 
+     Random Walk 1 Stat H          
+     Random Walk 1 Stat M          
+     Random Walk 1 Stat J          
+     Random Walk 1 Stat R          
+     Random Walk 1 Stat C          
+     Matrix Rank                   
+
+ * RNGs tested (4):
+ ------------------
+   < MKL MCG311 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL MRG32K3A >
+     seed                           : 2
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < RNGSSE GM55 >
+     seed                           : 0
+     sequence length                : long
+   < RNGSSE MRG32K3A >
+     seed                           : 0
+
+
+                                 < SMALLCRUSH >                                 
+                                 ------ o ------                          
+
+ * Statistics computed (60 stats from 40 tests):
+ -----------------------------------------------
+     Legend: [done/total/failed] Test, RNG : p-value
+     (eps  means a value < 1.0e-300)
+     (eps1 means a value < 1.0e-15)
+
+     [1/40/1] Birthday Spacings, MKL MCG311                            : fail, p-value = eps
+     [2/40/2] Collision, MKL MCG311                                    : fail, p-value = 8.95103e-06
+     [3/40/2] Matrix Rank, MKL MCG311                                  : pass
+     [4/40/0] Birthday Spacings, MKL MRG32K3A                          : pass
+     [5/40/2] Simplified Poker, MKL MCG311                             : pass
+     [6/40/2] Maximum-of-t, MKL MCG311                                 : pass
+     [6/40/2] Maximum-of-t Anderson-Darling                            : pass
+     [7/40/2] Hamming Independence, MKL MCG311                         : pass
+     [8/40/0] Maximum-of-t, MKL MRG32K3A                               : pass
+     [8/40/0] Maximum-of-t Anderson-Darling                            : pass
+     [9/40/0] Collision, MKL MRG32K3A                                  : pass
+     [10/40/2] Coupon Collector, MKL MCG311                            : pass
+     [11/40/2] Gap, MKL MCG311                                         : pass
+     [12/40/2] Weight Distribution, MKL MCG311                         : pass
+     [13/40/0] Weight Distribution, MKL MRG32K3A                       : pass
+     [14/40/0] Random Walk 1 Stat H, RNGSSE GM55                       : pass
+     [14/40/0] Random Walk 1 Stat M                                    : pass
+     [14/40/0] Random Walk 1 Stat J                                    : pass
+     [14/40/0] Random Walk 1 Stat R                                    : pass
+     [14/40/0] Random Walk 1 Stat C                                    : pass
+     [15/40/2] Random Walk 1 Stat H, MKL MCG311                        : pass
+     [15/40/2] Random Walk 1 Stat M                                    : pass
+     [15/40/2] Random Walk 1 Stat J                                    : pass
+     [15/40/2] Random Walk 1 Stat R                                    : pass
+     [15/40/2] Random Walk 1 Stat C                                    : pass
+     [16/40/0] Gap, MKL MRG32K3A                                       : pass
+     [17/40/0] Random Walk 1 Stat H, MKL MRG32K3A                      : pass
+     [17/40/0] Random Walk 1 Stat M                                    : pass
+     [17/40/0] Random Walk 1 Stat J                                    : pass
+     [17/40/0] Random Walk 1 Stat R                                    : pass
+     [17/40/0] Random Walk 1 Stat C                                    : pass
+     [18/40/0] Birthday Spacings, RNGSSE GM55                          : pass
+     [19/40/0] Coupon Collector, MKL MRG32K3A                          : pass
+     [20/40/0] Simplified Poker, MKL MRG32K3A                          : pass
+     [21/40/0] Matrix Rank, MKL MRG32K3A                               : pass
+     [22/40/0] Simplified Poker, RNGSSE MRG32K3A                       : pass
+     [23/40/0] Collision, RNGSSE GM55                                  : pass
+     [24/40/0] Hamming Independence, MKL MRG32K3A                      : pass
+     [25/40/0] Weight Distribution, RNGSSE MRG32K3A                    : pass
+     [26/40/0] Coupon Collector, RNGSSE GM55                           : pass
+     [27/40/0] Weight Distribution, RNGSSE GM55                        : pass
+     [28/40/0] Maximum-of-t, RNGSSE GM55                               : pass
+     [28/40/0] Maximum-of-t Anderson-Darling                           : pass
+     [29/40/0] Simplified Poker, RNGSSE GM55                           : pass
+     [30/40/0] Gap, RNGSSE GM55                                        : pass
+     [31/40/0] Hamming Independence, RNGSSE GM55                       : pass
+     [32/40/0] Collision, RNGSSE MRG32K3A                              : pass
+     [33/40/0] Matrix Rank, RNGSSE MRG32K3A                            : pass
+     [34/40/0] Coupon Collector, RNGSSE MRG32K3A                       : pass
+     [35/40/0] Gap, RNGSSE MRG32K3A                                    : pass
+     [36/40/0] Matrix Rank, RNGSSE GM55                                : pass
+     [37/40/0] Random Walk 1 Stat H, RNGSSE MRG32K3A                   : pass
+     [37/40/0] Random Walk 1 Stat M                                    : pass
+     [37/40/0] Random Walk 1 Stat J                                    : pass
+     [37/40/0] Random Walk 1 Stat R                                    : pass
+     [37/40/0] Random Walk 1 Stat C                                    : pass
+     [38/40/0] Maximum-of-t, RNGSSE MRG32K3A                           : pass
+     [38/40/0] Maximum-of-t Anderson-Darling                           : pass
+     [39/40/0] Hamming Independence, RNGSSE MRG32K3A                   : pass
+     [40/40/0] Birthday Spacings, RNGSSE MRG32K3A                      : pass
+
+ * Failed statistics (2/60):
+ ---------------------------
+     The following tests gave p-values outside [0.001, 0.999]
+     List groupped by RNG, in the order given in the input file
+     Legend: Test, RNG : p-value
+     (eps  means a value < 1.0e-300)
+     (eps1 means a value < 1.0e-15)
+
+     Birthday Spacings, MKL MCG311                                     : fail, p-value = eps
+     Collision                                                         : fail, p-value = 8.95103e-06
+
+ * Generator cost:
+ -----------------
+     Measured times in seconds in increasing order (low is good)
+
+     MKL MCG311                     : 51.0734  (1x)
+     MKL MRG32K3A                   : 51.9438  (1.02x)
+     RNGSSE MRG32K3A                : 62.3795  (1.22x)
+     RNGSSE GM55                    : 92.9222  (1.82x)
+
+ * Generator quality:
+ --------------------
+     Number of failed tests in increasing order (low is good)
+
+     MKL MRG32K3A                   : 0
+     RNGSSE GM55                    : 0
+     RNGSSE MRG32K3A                : 0
+     MKL MCG311                     : 2
+
+ * Timers (h:m:s):
+ -----------------
+     Migration of global-scope data                                    : 0:0:0
+     Total runtime                                                     : 0:0:40
+
+
+[Partition 0][Node 0] End of program
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 03 Feb 2015 08:55:26 AM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

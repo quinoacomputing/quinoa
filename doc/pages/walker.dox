@@ -1,19 +1,107 @@
 /*!
-  \page      walker_doc Random walker: walker
+  \page      walker_doc Walker: Random walker for stochastic differential equations
+  \image html walker.svg
 
-Walker is a random walker for the temporal integration of a system of ordinary
-or stochastic differential equations (SDEs) of various types. Walker allows the
-collection of arbitrary coupled statistics and probability density functions.
-Walker is intended as a general mathematical tool to analyze the behavior of
-SDEs and its statistics.
+Walker is used to integrate a system of differential equations in time. The
+system may contain multiple types of ordinary or stochastic differential
+equations (SDEs). Walker allows the estimation of arbitrary coupled statistics
+and probability density functions. Walker is intended as a general mathematical
+tool to analyze the numerical behavior of SDEs and its statistics.
 
 Walker uses the [Charm++](http://charm.cs.illinois.edu) runtime system to run
 the integration concurrently, either on a single machine or a networked set of
 computers.
 
+Examples
+--------
+\subpage walker_examples
+
+Help on command-line parameters
+-------------------------------
+
+As usual, use the \a -h command-line parameter to get on-screen help from an
+executable. Example output, exluding Charm++ command-line parameters:
+\code{.py}
+$ walker -h
+walker Command-line Parameters:
+       -c, --control     string Specify the control file name [REQUIRED]
+          -h, --help            Display one-liner help on all command-line arguments
+       -f, --helpctr            Display one-liner help on all control file keywords
+        -H, --helpkw     string Display verbose help on a single keyword
+           -p, --pdf     string Specify the name of the PDF output file
+          -s, --stat     string Specify the name of the statistical moments output file
+       -v, --verbose            Select verbose screen output
+-u, --virtualization       real Set degree of virtualization
+\endcode
+
+Differential equations
+----------------------
+
+Currently, the following differential equations are implemented:
+
+ 1. <B>Beta</B> - A system of SDEs, with linear drift and quadratic diagonal
+ diffusion, whose invariant is the joint beta distribution. For more details
+ on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+
+   - For the implementation, see DiffEq/Beta.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/BetaCoeffPolicy.h.
+
+ 2. <B>Diagonal Ornstein-Uhlenbeck</B> - A system of SDEs with linear drift and
+ constant diagonal diffusion, whose invariant is the joint normal
+ distribution.
+
+   - For the implementation, see DiffEq/DiagOrnsteinUhlenbeck.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h.
+
+ 3. <B>Ornstein-Uhlenbeck</B> - A system of SDEs with linear drift and constant
+ diffusion, whose invariant is the joint normal distribution.
+
+   - For the implementation, see DiffEq/OrnsteinUhlenbeck.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/OrnsteinUhlenbeckCoeffPolicy.h.
+
+ 4. <B>Dirichlet</B> - A system of SDEs, whose invariant is the Dirichlet
+ distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
+
+   - For the implementation, see DiffEq/Dirichlet.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/DirichletCoeffPolicy.h.
+
+ 5. <B>Generalized Dirichlet</B> - A system of SDEs, whose invariant is Lochner's
+ generalized Dirichlet distribution. For more details on the generalized
+ Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](http://dx.doi.org/10.1063/1.4822416).
+
+   - For the implementation, see DiffEq/GeneralizedDirichlet.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/GeneralizedDirichletCoeffPolicy.h.
+
+ 6. <B>Gamma</B> - A system of SDEs, with linear drift and linear diagonal
+ diffusion, whose invariant is the joint gamma distribution.
+
+   - For the implementation, see DiffEq/Gamma.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/GammaCoeffPolicy.h.
+
+ 7. <B>Skew-normal</B> - A system of SDEs, whose invariant is the joint
+ skew-normal distribution. For more details on the skew-normal distribution,
+ see [Azzalini, Dalla Valle, The Multivariate Skew-Normal Distribution](http://www.jstor.org/stable/2337278).
+
+   - For the implementation, see DiffEq/SkewNormal.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/SkewNormalCoeffPolicy.h.
+
+ 8. <B>Wright-Fisher</B> - A system of SDEs, whose invariant is the Dirichlet
+ distribution. For more details on the Wright-Fisher SDE, see [Steinrucken, et al., An explicit transition density expansion for a multi-allelic Wright–Fisher diffusion with general diploid selection, Theor. Popul. Biol., 2013](http://www.sciencedirect.com/science/article/pii/S0040580912001013).
+
+   - For the implementation, see DiffEq/WrightFisher.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/WrightFisherCoeffPolicy.h.
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:59:08 PM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 09:08:06 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

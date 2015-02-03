@@ -1,0 +1,53 @@
+/*!
+  \page      tpl_licenses Third-party library licenses
+  \tableofcontents
+
+Here are the full texts of the licenses of all third-party libraries used by
+Quinoa.
+
+\section charm_license 1. The Charm++ Parallel Programming System
+  - Web: http://charm.cs.illinois.edu
+  \verbinclude tpl_licenses/Charm++_license.txt
+
+\section pegtl_license 2. The Parsing Expression Grammar Template Library
+  - Web: https://code.google.com/p/pegtl/wiki/PEGTL0
+  \verbinclude PEGTL_license.txt
+
+\section tut_license 3. C++ Template Unit Test Framework
+  - Web: http://tut-framework.sourceforge.net
+  \verbinclude TUT_license.txt
+
+\section boost_license 4. Boost C++ libraries
+  - Web: http://www.boost.org
+  \verbinclude Boost_license.txt
+
+\section cartesian_product_license 5. Cartesian product, a Boost MPL algorithm
+  - Web:  http://www.organicvectory.com/index.php?option=com_content&view=article&id=75:boostmplcartesianproduct&catid=42:boost&Itemid=78
+  \verbinclude Cartesian_Product_license.txt
+
+\section hdf5_license 6. The HDF5 data model
+  - Web: http://www.hdfgroup.org/HDF5
+  \verbinclude HDF5_license.txt
+
+\section netcdf_license 7. The NetCDF (network Common Data Form) data model
+  - Web: http://www.unidata.ucar.edu/downloads/netcdf/index.jsp
+  \verbinclude NetCDF_license.txt
+
+\section exodusii_license 8. ExodusII for storing data for finite element analyses
+  - Web: http://sourceforge.net/projects/exodusii
+  \verbinclude ExodusII_license.txt
+
+\section rngsselib_license 9. RNGSSELIB for random number generation
+  - Web: http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
+  \verbinclude RNGSSELIB_license.txt
+
+\section testu01_license 10. TestU01 for statistical testing of random number generators
+  - Web: http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+  \verbinclude TestU01_license.txt
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 03 Feb 2015 07:45:27 AM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

@@ -1,85 +1,38 @@
 /*!
   \page      algorithm Algoritm design
 
-It is essential that the algorithms are aware of (and optimize for) the three
-(sometimes opposing) requirements:
+Here are the priorities for contributing to Quinoa, listed most important first:
 
-1. __Performance__ (e.g., maximize FLOPS, minimize communication)
+1. __Correctness__ --
+Correct results, resilience against errors, fault tolerance.
 
-2. __Correctness__ (e.g., resilience against errors, fault tolerance)
+2. __Performance__ --
+Maximize FLOPS, minimize communication.
 
-3. __Power consumption__
+3. __Power consumption__ --
+Minimize power required for given performance.
+
+4. __Maintainability, easy to read__ --
+Maximize code-reuse.
+
+5. __Easy to write__ --
+Optimize code for being read even at the expense of making code harder to write.
 
 Requirements
 ------------
-Preferably, some kind of runtime mechanism should monitor all three aspects and
-dynamically influence the algorithm (e.g., performance: autotuning,
-redistribution; correctness/resilience: dynamic load-balancing on node failure;
-power: redistribution?). This requires good metrics and means of their
-measurements. We need to use libraries for measurements which must be portable.
-This capability must be designed into the algorithms preferably from the outset.
+Some mechanism, preferably the runtime system with some help from the
+application, should monitor the first three aspects and dynamically influence
+the algorithm. This requires runtime introspection, which must be designed into
+the algorithms from the outset. 
 
-Compile-time (user-selected), i.e., static, strategies (goals) are acceptable,
-but eventually the best would be a dynamically adapting behavior with respect to
-changes of the above three stacks based on runtime measurements and/or user
-input (based on either per problem or compile-time settings or both).
-
-Adaptation and its influence on the whole code should be possible to turn off
-(preferably individually, i.e., one out of the three) at compile time for
-testing and debugging purposes.
-
-Options for runtime performance measurement
--------------------------------------------
-
-1. Performance Application Programming Interface (PAPI)
-
-   http://icl.cs.utk.edu/papi
-
-   _Status_ Seems to be pretty advanced, well-maintained, supporting many
-   current architectures.
-
-Options for runtime correctness/resilience measurement and fault tolerance
---------------------------------------------------------------------------
-
-1. Fault-Tolerant MPI
-
-   http://icl.cs.utk.edu/ftmpi
-
-2. Open MPI with Fault Tolerance Backplane (FTB)
-
-   http://www.crest.iu.edu/research/ft
-
-   _Status_ Already part of OpenMPI since v1.5.3, disabled by default.
-
-Options for runtime power measurement
--------------------------------------
-
-1. Likwid: lightweight performance tools
-
-   https://code.google.com/p/likwid
-
-   Likwid contains likwid-powermeter, which can read energy consumption of
-   processors and memory through MSR registers.
-
-   _Status_ API is not available, i.e., can only be used to measure the whole
-   application externally. Developer is very responsive, might be persuaded to
-   release library and API.
-
-2. Intel Power Gadget: power usage monitoring tool
-
-   http://software.intel.com/en-us/articles/intel-power-gadget-20
-
-   Power Gadget includes an application, driver, and libraries to monitor and
-   estimate real-time processor package power information in watts using the
-   energy counters in the processor on various platforms including notebooks,
-   desktops, and servers.
-
-   _Status_ Documentation does not exist, the linux library compiles but the
-   executable fails to compile.
+Quinoa uses the [Charm++](http://charm.cs.illinois.edu) runtime system capable
+of runtime introspection. Charm++ facilitates task-based parallelism, automatic
+load balancing through network-migration of objects, and enables coping with
+hardware heterogeneity and system failure.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 11 Jul 2014 09:42:51 PM MDT
+<em>Page last updated:</em> Fri 30 Jan 2015 02:43:14 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

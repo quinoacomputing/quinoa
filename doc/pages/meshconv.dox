@@ -1,11 +1,37 @@
 /*!
-  \page      meshconv_doc Mesh file converter: meshconv
+  \page      meshconv_doc MeshConv: Mesh file converter
+  \image html meshconv.svg
 
-Meshconv if a mesh file converter.
+Meshconv is a mesh file converter. It can be used to convert 3D tetrahedron
+meshes from and to either of the following formats:
+
+  - Gmsh, http://www.geuz.org/gmsh
+  - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
+  - ExodusII, http://sourceforge.net/projects/exodusii
+
+Similar to the rest of Quinoa, meshconv also uses the Charm++ runtime system,
+however, meshconv is currently not parallelized.
+
+Help on command-line parameters
+-------------------------------
+
+As usual, use the \a -h command-line parameter to get on-screen help from an
+executable. Example output, exluding Charm++ command-line parameters:
+\code{.py}
+$ meshconv -h
+meshconv Command-line Parameters:
+          -h, --help            Display one-liner help on all command-line arguments
+        -H, --helpkw     string Display verbose help on a single keyword
+         -i, --input     string Specify the input file
+        -o, --output     string Specify the output file
+       -v, --verbose            Select verbose screen output
+\endcode
+
+See the [to-do page](todo.html) for planned features.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:59:59 PM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 09:21:04 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

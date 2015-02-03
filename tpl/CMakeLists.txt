@@ -242,7 +242,7 @@ ExternalProject_Add(
 )
 
 #### PEGTL (Parsing Expression Grammar Template Library) #######################
-# http://code.google.com/p/pegtl
+# https://code.google.com/p/pegtl/wiki/PEGTL0
 # Header only
 ExternalProject_Add(
   pegtl
@@ -265,7 +265,7 @@ ExternalProject_Add_Step(
 )
 
 #### TUT (Template Unit Test Framework) ########################################
-# http:://tut-framework.sourceforge.net
+# http://tut-framework.sourceforge.net
 # Header only
 ExternalProject_Add(
   tut
@@ -630,7 +630,7 @@ endif()
 #)
 
 #### RNGSSELib2 ################################################################
-# http://dx.doi.org/10.1016/j.cpc.2013.04.007
+# http://cpc.cs.qub.ac.uk/summaries/AEIT_v2_0.html
 # No need for MPI, use underlying compilers
 ExternalProject_Add(
   rngsse2

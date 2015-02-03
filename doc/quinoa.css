@@ -14,6 +14,62 @@ div.image img[src="quinoa.svg"]{
   width:  25%;
 }
 
+div.image img[src="all2allcost.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
+div.image img[src="bonker.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="breeze.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="meshconv.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="unittest.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="rngtest.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="quinoa_txt.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+div.image img[src="walker.svg"]{ 
+  height: auto;
+  float:  right;
+  width:  35%;
+}
+
+.title {
+  font-size: 26px;
+}
+
+h1 {
+  font-size: 22px;
+}
+
 span.comment {
 	color: #888888
 }

@@ -1,65 +1,63 @@
 /*!
-  \page      layout Data layout design
+  \page      layout Particle data layout
 
-_A beginning is the time for taking the most delicate care that the balances are
-correct. -- Frank Herbert, Dune_
-
-Outset
-------
+Data layout requirements and design
+-----------------------------------
 How should the particle properties should be stored in memory? This is the
-single largest chunk of data that a particle-based code will have. The layout
-determines how the data is accessed and potentially has a first-degree effect on
-overall efficiency.
+single largest chunk of data in a particle-based code. The layout determines how
+the data is accessed and potentially has a first-degree effect on overall
+efficiency.
 
-Possibilities
--------------
+### Possibilities
+
 1. __Particle-major__, in which various physical properties, e.g., position,
 velocity, energy, etc., of a single particle are close to each other in memory.
 For example: [ x1, y1, z1, ..., x2, y2, z2, ..., x3, y3, z3, ... ] where the x*
-are governed by one SDE (e.g., position), the y* are governed by another SDE
-(e.g., velocity), and the z* are governed by a third SDE (e.g., energy), etc.
-Here the first letter denotes a physical quantity, while the second is the
-particle number.  If the algorithm that advances the properties in time applies
-one SDE at a time, the SDEs will access data by having to jump a distance that
-corresponds to the number of scalar physical variables per particle.  In the
-example, the update will have to jump as x1, x2, x3, ... are updated.
+are governed by one equation (e.g., position), the y* are governed by another
+equation (e.g., velocity), and the z* are governed by a third equation (e.g.,
+energy), etc. Here the first letter denotes a physical quantity, while the
+second is the particle number. If the algorithm that advances the properties in
+time applies one equation at a time, the equations will access data by having to
+jump a distance that corresponds to the number of scalar physical variables per
+particle.  In the example, the update will have to jump as x1, x2, x3, ... are
+updated.
 
 2. __Property-major__, in which the same type of physical properties are close
 to each other in memory. For example, [ x1, x2, x3, ..., y1, y2, y3, ..., z1,
 z2, z3, ... ]. The legend here is the same as in particle-major: the first
 letter denotes a physical quantity, while the second is the particle number. If
-the algorithm that advances the properties in time applies one SDE at a time,
-the SDEs will access data contiguously in memory as the properties are
-contiguously stored.
+the algorithm that advances the properties in time applies one equation at a
+time, the equations will access data contiguously in memory as the properties
+are contiguously stored.
 
-Discussion
-----------
+### Discussion
 
-A property-major storage, case 2. above, seems to be the most efficient at first
-sight, as it stores data, as it is read and written by the SDE algorithms,
+A property-major storage, case 2 above, seems to be the most efficient at first
+sight, as it stores data, as it is read and written by the equation algorithms,
 contiguously. However, data access is contiguous only if the particle properties
-are independent, i.e., if there is no coupling among the SDEs. Unfortunately,
-this is rarely the case, at least not for fluid dynamics.  For example, position
-is used by the velocity update, and velocity is required by the energy update.
-Depending on the physical approximation, density (or mass) may be required for
-all SDEs. The stronger the SDEs are coupled the more very-far-reads are required
-for a given update. These far-reads are potentially almost always cache misses,
-as the property-major storage stores the physical variables for the same
-particle very far in memory, e.g., the distance between x1 and y1 is the number
-of particles. While the particle-major storage, case 1.  above, inherently
-stores data non-contiguously, the distance between properties of a single
-particle is relatively small, i.e., the number of properties, which may incure
-less cache misses as several particle with all of their properties could fit
-into cache.
+are independent, i.e., if there is no coupling among the equations.
+Unfortunately, this is rarely the case, at least not for fluid dynamics. For
+example, position is used by the velocity update, and velocity is required by
+the energy update.  Depending on the physical approximation, density (or mass)
+may be required for all equations. The stronger the equations are coupled the
+more very-far-reads are required for a given update. These far-reads are
+potentially almost always cache misses, as the property-major storage stores the
+physical variables for the same particle very far in memory, e.g., the distance
+between x1 and y1 is the number of particles. While the particle-major storage,
+case 1 above, inherently stores data non-contiguously, the distance between
+properties of a single particle is relatively small, i.e., the number of
+properties, which may incure less cache misses as several particles with all of
+their properties could fit into cache.
 
 Assuming strong coupling among the variables, the particle-major storage will be
 favored, but it would be nice if the design allowed for both layouts, so
-depending on the type of equations (e.g., non-fluid-dynamics) the most
-appropriate layout could be selected. If such a design is maintanable, there is
-still a question wether the data layout selection should be done at compile-, or
-run-time.
+depending on the type of equations the most appropriate layout could be
+selected. If such a design is maintanable, there is still a question wether the
+data layout selection should be done at compile-, or run-time.
 
-Have looked at https://code.google.com/p/blaze-lib, which implements row-, and
+### Assessment of the Blaze library that offers a similar choice
+
+Have looked at https://code.google.com/p/blaze-lib which implements row-, and
 column-major matrix classes based on a template argument. See, e.g.,
 blaze-1.5/blaze/math/dense/StaticMatrix.h, which reveals that the template
 argument (bool) SO selects between row-, or column-major internal storage.  Then
@@ -71,7 +69,7 @@ are problematic:
   - The compile-time usage duplicates a lot of code by having to provide similar
   implementations for the element-access operator() of StaticMatrix specialized
   to column-major. There is a generic implementation for SO for everthing that
-  is agnostic of SO, and there is a specialization when SO = column-major.
+  is agnostic of SO, and there is a specialization when SO is column-major.
 
   - The run-time usage also duplicates code by doing an if-test on SO in, e.g.,
   isDefault(). Is there a better way of doing this? If there are only two types
@@ -79,27 +77,18 @@ are problematic:
   too much of an issue. However, the implementation of particle-property data
   access must be absolutely zero run-time cost. This means the selection must be
   at compile-time and the element access must be absolutely invisible to the
-  derived SDE classes. In other words, there must be no re-implementation of a
-  time-integrator for an SDE just because the data access is different.
+  derived equation classes. In other words, there must be no re-implementation
+  of a time-integrator for an equation just because the data access is
+  different.
 
-Requirements
-------------
+### Requirements
 
-Is it possible to implement this policy via a thin data-access interface with
-zero run-time cost, no code-duplication and in a way that is invisible to
-derived SDE classes?
-
-Zero-cost possible: see [layout assembly](_layout_01assembly.html).
+Is it possible to implement a compile-time configurable data-access policy via a
+thin data-access interface with zero run-time cost, no code-duplication, and in
+a way that is invisible to derived equation classes? \a Yes.
 
 Zero-cost is achieved via type-based compile-time polymorphism. This is
 controlled via the cmake variable LAYOUT.
-
-Since class MonteCarlo stores the particle data, it should be this class that is
-configured via a data-layout policy. Physics classes derive from MonteCarlo and
-hold one or more Models (from which SDEs inherit) and access particle data.
-Neither physics or SDE classes may know anything about the underlying data
-layout. This is to allow a single implementation of member functions
-manipulating particle properties.
 
 The particle data is a logically 3-dimensional array that stores the particle
 properties. In principle there are a total of 6 permutations:
@@ -114,7 +103,8 @@ properties. In principle there are a total of 6 permutations:
 Of these 6 we only consider those where component follows equation. (For those
 layouts where equation follows component the access would be unnecessarily
 complicated by the potentially unequal number of components for different
-equations.) This decision leaves us with
+equations which is not known at compile-time and thus does not allow some
+optimizations.) This decision leaves us with the following choices:
 
     1. ParEqComp: [ particle ] [ equation ] [ component ]
     3. EqCompPar: [ equation ] [ component ] [ particle ]
@@ -122,10 +112,10 @@ equations.) This decision leaves us with
 
 Access is based on the 3 coordinates: particle, component, and offset.  Particle
 is the particle ID, component denotes the given component of a vector equation,
-e.g., velocity has 3 components, a mix model governed by the Dirichlet SDE has
-K=N-1 scalars (components), and offset is determined by the relative position of
-the given equation compared to other equations. Using these 3 coordinates the
-index calculations for the above 3 cases are:
+e.g., velocity has 3 components, a multi-material turbulent mix model governed
+by the Dirichlet SDE has K=N-1 scalars (components), and offset is determined by
+the relative position of the given equation compared to the other equations.
+Using these 3 coordinates the index calculations for the above 3 cases are:
 
     1. ParEqComp: [ particle ] [ equation ] [ component ]
 
@@ -147,29 +137,406 @@ where npar is the total number of particles.
 where nce is the number of components for the given equation. Since this would
 require another function argument (besides particle, component, and offset), and
 it costs an integer-multiply more than the other two layouts, we dismiss this
-layout, and only implement:
+layout, and only implement the following two:
 
     1. ParEqComp - Particle-major
     3. EqCompPar - Equation-major
 
 These options are exposed via the cmake variable LAYOUT and can be switched
-before a build by setting LAYOUT to either 'particle' or 'equation'.
+before a build by setting LAYOUT to either 'LAYOUT_PARTICLE_MAJOR' or
+'LAYOUT_EQUATION_MAJOR'.
 
-Requirements on MonteCarlo base
--------------------------------
+Data layout assembly
+--------------------
+This section documents the assembly, produced by the compilers, of the
+implementation of the compile-time configurable particle-data-access policy
+discussed above. The implementation is via a thin data-access interface with
+zero run-time cost, no code-duplication, and in a way that is invisible to
+derived equation classes.
 
-Policies of a MonteCarlo base class:
+### Zero-runtime-cost data-layout wrappers with type-based compile-time dispatch
 
- 1. Data-layout policy:
+Tags for selecting particle-, or property-major data layout policies:
 
-    Specifies which data layout policy is used internally to access particle
-    data. Data-layout policies:
-       - Particle-major
-       - Equation-major
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+const bool ParticleMajor = true;
+const bool PropertyMajor = false;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Implementation of data-layout wrappers:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+template< bool Major >
+class Data {
+
+  private:
+   // Transform a compile-time bool into a type
+   template< bool m >
+   struct int2type {
+     enum { value = m };
+   };
+
+   // Overloads for particle-, and property-major accesses
+   inline
+   tk::real& access( int particle, int property, int2type<ParticleMajor> ) {
+     return *(m_ptr + particle*m_nprop + m_offset + property);
+   }
+   inline
+   tk::real& access( int particle, int property, int2type<PropertyMajor> ) {
+     // This is the same for now, not callsed, irrelevant in zero-cost-test
+     return *(m_ptr + particle*m_nprop + m_offset + property);
+   }
+
+   tk::real* const m_ptr;
+   const int m_nprop;
+   const int m_offset;
+
+  public:
+    // Constructor
+    Data( tk::real* const ptr, int nprop, int offset ) :
+      m_ptr(ptr), m_nprop(nprop), m_offset(offset) {}
+
+    // Access dispatch
+    inline tk::real& operator()( int particle, int property ) {
+      return access( particle, property, int2type<Major>() );
+    }
+};
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Test of zero-cost
+
+Add to Dirichlet constructor:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+ParticleProperties< Layout > d( particles, m_nprop, m_offset );
+Model::aa = d( 34, 3 );
+Model::bb = *(m_particles + 34*m_nprop + m_offset + 3);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add to Model:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+Model {
+  ...
+  public:
+    tk::real aa;
+    tk::real bb;
+  ...
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add to Physics constructor after m_mix is instantiated:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.C}
+std::cout << m_mix->aa << m_mix->bb;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All the above so the optimizing compiler cannot entirely optimize the
+assignments of \a aa and \a bb away.
+
+### Debug assembly
+Generated DEBUG assembly code of the assignments of \a aa (line 42) and \a bb
+(line 43) in Dirichlet's constructor, with clang -g -S -mllvm
+--x86-asm-syntax=intel, gnu and intel generate very similar code:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+     .loc    143 42 20  # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:42:20
+.Ltmp27038:
+     lea     RDI, QWORD PTR [RBP - 56]
+     mov     ESI, 34
+     mov     EDX, 3
+     call    _ZN6quinoa4DataILb1EEclEii
+.Ltmp27039:
+     mov     QWORD PTR [RBP - 176], RAX # 8-byte Spill
+     jmp     .LBB2550_7
+.LBB2550_7:
+     mov     RAX, QWORD PTR [RBP - 176] # 8-byte Reload
+     movsd   XMM0, QWORD PTR [RAX]
+     mov     RCX, QWORD PTR [RBP - 64] # 8-byte Reload
+     movsd   QWORD PTR [RCX + 8], XMM0
+     .loc    143 43 0    # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:43:0
+     mov     RDX, QWORD PTR [RCX + 32]
+     imul    ESI, DWORD PTR [RCX + 48], 34
+     movsxd  RDI, ESI
+     shl     RDI, 3
+     add     RDX, RDI
+     movsxd  RDI, DWORD PTR [RCX + 52]
+     movsd   XMM0, QWORD PTR [RDX + 8*RDI + 24]
+     movsd   QWORD PTR [RCX + 16], XMM0
+...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Line 42 translates to register loads and a function call into
+tk::ParticleProperties, while line 43 translates to some integer arithmetic of
+the address and loads.
+
+### Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
+
+> The LEA (load effective address) instruction computes the effective address in
+> memory (offset within a segment) of a source operand and places it in a
+> general-purpose register. This instruction can interpret any of the
+> processor’s addressing modes and can perform any indexing or scaling that may
+> be needed. It is especially useful for initializing the ESI or EDI registers
+> before the execution of string instructions or for initializing the EBX
+> register before an XLAT instruction.
+> 
+> The MOVSXD instruction operates on 64-bit data. It sign-extends a 32-bit value
+> to 64 bits. This instruction is not encodable in non-64-bit modes.
+> 
+> A common type of operation on packed integers is the conversion by zero- or
+> sign-extension of packed integers into wider data types. SSE4.1 adds 12
+> instructions that convert from a smaller packed integer type to a larger
+> integer type (PMOVSXBW, PMOVZXBW, PMOVSXBD, PMOVZXBD, PMOVSXWD, PMOVZXWD,
+> PMOVSXBQ, PMOVZXBQ, PMOVSXWQ, PMOVZXWQ, PMOVSXDQ, PMOVZXDQ). The source
+> operand is from either an XMM register or memory; the destination is an XMM
+> register.
+> 
+> IMUL Signed multiply. The IMUL instruction multiplies two signed integer
+> operands. The result is computed to twice the size of the source operands;
+> however, in some cases the result is truncated to the size of the source
+> operands.
+> 
+> SAL/SHL Shift arithmetic left/Shift logical left. The SAL (shift arithmetic
+> left), SHL (shift logical left), SAR (shift arithmetic right), SHR (shift
+> logical right) instructions perform an arithmetic or logical shift of the bits
+> in a byte, word, or doubleword. The SAL and SHL instructions perform the same
+> operation. They shift the source operand left by from 1 to 31 bit positions.
+> Empty bit positions are cleared. The CF flag is loaded with the last bit
+> shifted out of the operand.
+
+### Optimized assembly
+
+Generated RELWITHDEBINFO assembly code of the assignments of \a aa (line 42) and
+\a bb (line 43) in Dirichlet's constructor, with clang -O2 -g DNDEBUG -S -mllvm
+--x86-asm-syntax=intel, gnu and intel generate very similar optimized code:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+     .loc    144 42 20  # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:42:20
+     movsd   XMM0, QWORD PTR [R14 + 8*RAX + 24]
+     movsd   QWORD PTR [R13 + 8], XMM0
+     .loc    144 43 0    # /home/jbakosi/code/quinoa/src/SDE/Dirichlet.h:43:0
+     mov     RCX, QWORD PTR [R13 + 32]
+     movsd   XMM0, QWORD PTR [RCX + 8*RAX + 24]
+     movsd   QWORD PTR [R13 + 16], XMM0
+...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Both lines 42 and 43 translate to very similar SSE loads with pointer
+arithmetic, i.e., line 42 costs the same as line 43.
+
+### Excerpt from the Intel® 64 and IA-32 Architectures Software Developer Manual
+
+> The MOVS instruction moves the string element addressed by the ESI register to
+> the location addressed by the EDI register. The assembler recognizes three
+> “short forms” of this instruction, which specify the size of the string to be
+> moved: MOVSB (move byte string), MOVSW (move word string), and MOVSD (move
+> doubleword string).
+> 
+> The MOVSD (move scalar double-precision floating-point) instruction transfers
+> a 64-bit double-precision floating- point operand from memory to the low
+> quadword of an XMM register or vice versa, or between XMM registers.
+> Alignment of the memory address is not required, unless alignment checking is
+> enabled.
+
+Data layout benchmark
+---------------------
+This section documents the benchmark of the implementation of the compile-time
+configurable particle-data-access policy discussed above. The implementation is
+via a thin data-access interface with zero run-time cost, no code-duplication,
+and in a way that is invisible to derived equation classes.
+
+### Control file used for benchmark
+We will integrate for the duration of a 100,000 time steps a system of 100
+coupled non-linear stochastic differential equations (SDEs) whose statistically
+stationary solution convergese to the Dirichlet distribution and measure the
+wall-clock time. For more on the Dirichlet SDE, see src/DiffEq/Dirichlet.h.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+walker
+
+  nstep 100000  # Max number of time steps
+  term  140.0   # Max time
+  dt    0.05    # Time step size
+  npar  40000   # Number of particles
+
+  ttyi  100     # TTY output interval
+
+  rngs
+    mkl_mrg32k3a seed 0 end
+  end
+
+  dirichlet
+    ncomp 100  # = K = N-1
+    b     0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+          0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5 0.1 1.5
+    end
+    S     0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+          0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4 0.625 0.4
+    end
+    kappa 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+          0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3 0.0125 0.3
+    end
+    rng mkl_mrg32k3a
+  end
+
+  statistics    # Estimate statistics
+    <Y1>        # mean of Y1
+    <Y2>
+    <y1y1>      # variance of Y1 = <(Y1-<Y1>)^2> = <y1^2>
+    <y2y2>
+    <y1y2>
+  end
+
+end
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Ptr - Working with raw pointers
+
+This algorithm gets the starting raw pointer from which the given particle data
+is (contiguously) accessible in memory and simply adds integers to the address
+to access and update the 100 components specified above. The algorithm assumes a
+particular data layout - it only works with the particle-major storage - a
+logically 3-dimensional array with [ particle ] [ sde ] [ component ].
+
+__Layout-dependent algorithm:__
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//! Advance particles
+void advance(int p, int tid, tk::real dt) override {
+  // Get access to particle scalars
+  tk::real* y = m_particles.ptr() + p*m_nprop + m_offset;
+  
+  // Compute Nth scalar
+  tk::real yn = 1.0 - y[0];
+  for (int i=1; i<m_ncomp; ++i) yn -= y[i];
+  
+  // Generate Gaussian random numbers with zero mean and unit variance
+  tk::real dW[m_ncomp];
+  m_rng->gaussian( tid, m_ncomp, dW );
+  
+  // Advance first m_ncomp (K=N-1) scalars
+  for (int i=0; i<m_ncomp; ++i) {
+    tk::real d = m_k[i]*y[i]*yn*dt;
+    if (d > 0.0) d = sqrt(d); else d = 0.0;
+    y[i] += 0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i])*y[i])*dt + d*dW[i];
+  }
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Par - Access via particle-major layout policy
+
+This algorithm accesses particle data via the wrapper class,
+tk::ParticleProperties, in a data-layout-agnostic fashion. Access itself via
+this class is demonstrably "zero-cost", i.e., an optmizing compiler completely
+optimizes the abstraction away: see [assembly](layout_assembly.html) for the
+assembly generated by 3 compilers. However, writing an SDE-advance algorithm in
+a data-layout-agnostic manner, requires index calculations at every
+particle-access compared to working with raw pointers, as described above. Thus
+the following tests are designed to measure only the additional index
+calculations that the layout-agnostic access entails.
+
+__Layout-independent algorithm:__
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//! Advance particles
+void advance(int p, int tid, tk::real dt) override {
+  // Compute Nth scalar
+  tk::real yn = 1.0 - m_particles(p, 0, m_offset);
+  for (int i=1; i<m_ncomp; ++i) yn -= m_particles(p, i, m_offset);
+
+  // Generate Gaussian random numbers with zero mean and unit variance
+  tk::real dW[m_ncomp];
+  m_rng->gaussian( tid, m_ncomp, dW );
+
+  // Advance first m_ncomp (K=N-1) scalars
+  for (int i=0; i<m_ncomp; ++i) {
+    tk::real d = m_k[i] * m_particles(p, i, m_offset) * yn * dt;
+    if (d > 0.0) d = sqrt(d); else d = 0.0;
+    m_particles(p, i, m_offset) +=
+      0.5*m_b[i]*(m_S[i]*yn - (1.0-m_S[i]) * m_particles(p, i, m_offset) )*dt
+      + d*dW[i];
+  }
+}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Comparison of the algorithms
+
+DEBUG mode is -O0 and does not optimize function calls away for all of three
+compilers tested. RELEASE modes is -O3 and the abstraction is completely
+optimized away. However, index calculations still remain compared to a
+layout-dependent advance algorithm.
+
+Total time measured in micro-seconds, run on a Lenovo laptop with Intel Core i7,
+8 compute cores:
+       Run           | Ptr              | Par              | Par/Ptr
+       :------------ | ---------------: | ---------------: | ----------------:
+       clang/DEBUG   | 150350236        | 338851735        | 2.2537 x slowdown
+       clang/RELEASE |  98157742        | 104077139        | 1.0603 x slowdown
+       DEBUG/RELEASE | 1.5317 x speedup | 3.2558 x speedup | n/a
+
+       Run           | Ptr              | Par              | Par/Ptr
+       :------------ | ---------------: | ---------------: | ----------------:
+       gnu/DEBUG     | 161603164        | 386646353        | 2.3926 x slowdown
+       gnu/RELEASE   |  94747953        |  98187568        | 1.0363 x slowdown
+       DEBUG/RELEASE | 1.7056 x speedup | 3.9378 x speedup | n/a
+
+       Run           | Ptr              | Par              | Par/Ptr
+       :------------ | ---------------: | ---------------: | ----------------:
+       intel/DEBUG   | 171691440        | 608407412        | 3.5436 x slowdown
+       intel/RELEASE |  90059133        |  89892665        | 0.99815 x speedup
+       DEBUG/RELEASE | 1.9064 x speedup | 6.7682 x speedup | n/a
+
+### Discussion
+
+- As expected, inlining has a significant effect on performance: going from
+  DEBUG to RELEASE mode yields a significant speedup with all three compilers,
+  see last, DEBUG/RELEASE, rows.
+
+- As expected, the additional index calculations required by layout-agnostic
+  access do take a performance hit: though only 6% with clang, and 3% with gnu,
+  see last, Par/Ptr, columns.
+
+- Surprisingly, the layout-agnostic access is even a tiny bit faster than the
+  layout-dependent algorithm with the intel compiler with -O3.
+
+### Conclusion
+
+As this is not a significant performance hit, the equation advancement
+algorithms and general particle data access are implemented in a
+data-layout-independent fashion. The data layout can be changed at compile time.
+Access will be abstracted (and optimized) away.
+
+For the implementation see the tk::ParticleProperties.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 09 Dec 2014 01:02:05 PM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 10:21:22 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

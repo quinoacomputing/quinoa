@@ -1,0 +1,93 @@
+/*!
+  \page      diffeq Differential equations
+
+General requirements
+--------------------
+Numerical time integration of ordinary and stochastic differential equations
+(ODEs, SDEs) is probably the single most important ingredient of the
+continuum-realm particle-solver, [breeze](breeze_doc.html). This must be:
+ - High-performance
+ - Easy to maintain
+ - The design must scale well with adding new functionality, i.e., adding new
+   equations and/or new models for already implemented equations should
+   require as little code as possible
+ - Should easily accommodate various advancement algorithms on different
+   hardware end/or using various parallelization strategies
+
+There should be a possibility to quickly prototype a new equation, e.g., in a
+test-bed class. This would be used to:
+ - Verify its invariant PDF
+ - Explore the behavior of its statistics
+ - Integrate multiple variables (coupled or non-coupled)
+
+Questions:
+ - Should a base class hold a single RNG used by all specific (derived) SDEs or
+   different SDEs should be able to instantiate and use their own (possibly
+   different) RNGs? _Currently, each derived SDE may access its own RNG, but the
+   user must configure it so. See also [RNGs input](rngs_input.html)._
+
+Requirements on a generic differential equation base class
+----------------------------------------------------------
+ODEs and SDEs should inherit at least from one base class (if a multiple-policy
+design is adopted) that should have generic data and member functions, which
+facilitates code-reuse.
+
+The base class should work for both N = 1 or N > 1, i.e., single-variate or
+multi-variate equation classes.
+
+The differential equation base class should have pure virtual interfaces for:
+ - Setting initial conditions on the particles at t = 0, e.g., initialize()
+ - Advancing the particles in time, e.g., advance()
+
+Possible policies of a differential eqiation base class
+-------------------------------------------------------
+Specific equation types (e.g., Ornstein-Uhlenbeck, Dirichlet, skew-normal, etc),
+should derive from the base class, forwarding base class policies, i.e., a
+specific SDE class should not hard-code any base class policy.
+
+Specific SDE classes may have their own policies (specific to the given SDE).
+
+### Initialization policy
+
+Specifies how the initialization of the particles happen at t = 0. Possible
+initialization policies:
+ - Do nothing: leave memory associated to particle data uninitialized
+ - Zero: zero particle properties
+ - Fill with one given constant: single-delta-spike PDF
+ - Fill with different constants given per variable
+ - Sample from given PDF, N = 1
+ - Sample from different PDF given per variable, N > 1 (independent)
+ - Sample from given JPDF, N > 1 (possibly non-independent)
+ - Pre-cycle properties using a given equation and its constant coefficients
+   for:
+   + a given time period
+   + a given number of time steps
+   + until convergence is reached for given statistics and convergence criteria
+
+### Coefficients policy
+
+Specifies how the differential equation coefficients, e.g., b, S, and kappa for
+the Dirichlet SDE, are used by the equation. Possible coefficients policies:
+ - Constant: initialized once, used for all t > 0
+ - Functional: advance() algorithm queries coefficients at every update via
+   coefficients-policy functions, e.g., b(time, various statistics)
+
+### Time-integration policy
+
+Specifies what time-integrator to use when advancing particles. Possible
+time-integration policies:
+ - Euler-Maruyama
+ - Milstein
+ - Runge-Kutta (with various orders)
+ - Various other explicit and implicit integrators, see Kloeden & Platen
+
+Questions
+---------
+ - What new requirements and constraints does spatial inhomogeneity entail?
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Mon 02 Feb 2015 03:48:20 PM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

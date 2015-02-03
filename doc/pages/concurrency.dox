@@ -2,35 +2,38 @@
   \page      concurrency Concurrency
 
 The strategy chosen for concurrency is probably the most decisive factor
-affecting performance. Obviously, it is impossible to pick a single concurrency
-strategy that is optimal for all types of physics (i.e., equation-sets planned
-to be implemented), algorithms, and problems. So here, we merely collect the
-main features of various algorithms from the viewpoint of concurrency. Due to
-the many factors affecting the performance of these algorithms (including not
-only the details of the various strategies, but also the as-of-yet unknown
-hardware they are and would be running on), no ranking will be attempted among
-the approaches. This is only a list of ideas.
+affecting performance. It is impossible to pick a single concurrency strategy
+that is optimal for all the tools and the types of physics (i.e., the different
+equation-sets implemented), algorithms, and problems. So here, we merely collect
+the main features of various algorithms from the viewpoint of concurrency. Due
+to the many factors affecting performance, no ranking is attempted among the
+approaches.
 
-ALL-TO-ALL-STATS
-----------------
-The inhomogeneity here is PIC-based (see doc/design/inhomogeneity.txt) and so
-this concurrency strategy requires a mesh. The idea is to only have to
-communicate the domain-statistics among distributed compute nodes and nothing
-else. Concurrency is realized among particles (realizations) of which each
-compute node generates and advances a different set. Since the full domain,
-i.e., statistics of all cells that are required for advancing particles, require
-communication (and that is with all-to-all) at each time-step, this seems like
-an insane amount of communication and so prohibitive -- it may well be. However,
-this strategy does not require communication for anything else, e.g., particle
+1. ALL-TO-ALL-STATS
+-------------------
+This is a back-of-the-envelope estimation for a simple (but naiive) concurrency
+strategy that is, of course, not used.
+
+Suppose the inhomogeneity strategy is PIC-based (see
+doc/design/inhomogeneity.txt) and this this concurrency strategy requires a
+mesh.  The idea is to only have to communicate the domain-statistics among
+distributed compute nodes and nothing else. Concurrency is realized among
+particles (realizations) of which each compute node generates and advances a
+different set. Since the full domain, i.e., statistics of all cells that are
+required for advancing particles, require communication (and that is with
+all-to-all) at each time-step, this seems like an insane amount of communication
+and so prohibitive.  As it will be shown, it is. The advantage of this strategy
+is that it does not require communication for anything else, e.g., particle
 properties, which is assumed to take up the bulk of memory and the bulk of
 computation cost.
 
-For example, for a PDF method for incompressible flow with elliptic relaxation,
-only about 5% of the computational time is spent on the two linear solvers
-(mean pressure and elliptic relaxation) and 92% on advancing the particles, see
-(http://dx.doi.org/10.1016/j.jcp.2008.02.024). In a plasma-physics-PIC parlance
-the particle pusher has the overwhelming memory and computational cost, and the
-cost of field solver is almost negligible.
+We take a specific algorithmic example, discussed in more detail in
+http://dx.doi.org/10.1016/j.jcp.2008.02.024. This is a continuum-realm PDF
+method for incompressible flow with elliptic relaxation. In that algorithm only
+about 5% of the computational time is spent on the two linear solvers (mean
+pressure and elliptic relaxation) and 92% on advancing the particles.  In a
+plasma-physics-PIC parlance the particle pusher has the overwhelming memory and
+computational cost, while the cost of field solver is almost negligible.
 
 Two important advantages of this strategy are:
 
@@ -58,7 +61,7 @@ Two important advantages of this strategy are:
 This strategy requires the full Eulerian mesh fit into a single compute node.
 This is obviously a limitation compared to those distributed concurrency
 strategies with geometric decomposition, which do not have this limitation. So
-let's see how much this a compromise on current hardware.
+let's see how much this is a compromise.
 
 In what follows, we only consider 3D unstructured mesh consisting of
 tetrahedra, but other types of grids should also work with this strategy, and
@@ -120,7 +123,7 @@ examine two different algorithms, an existing one and a hypothetical one:
     500 particles).
 
 2. __Standalone PDF method for compressible flow__ (hypothetical algorithm with
-   no turbulence model, does not yet exist, we can only guess what statistics
+   no turbulence model, does not yet exist, we are only guessing what statistics
    are needed)
 
     The memory usage of the particle properties per cell:
@@ -156,8 +159,8 @@ examine two different algorithms, an existing one and a hypothetical one:
 Obviously, the larger the mesh, the more communication occurs, however, in one
 single large chunk per time step.
 
-Communication cost estimate
----------------------------
+### ALL-TO-ALL-STATS communication cost estimate
+
 Here is a cost estimate of the necessary all-to-all communication, compared to
 one-to-one communication required by a geometric concurrency strategy:
 
@@ -172,15 +175,17 @@ one-to-one communication required by a geometric concurrency strategy:
 
     \f[ C(\textrm{geo+p2p}) = N^2 * n * r * \log_2(P) \f]
 
-    Here P is the number of compute nodes (among which communication is
-    required). The N^2 comes from the geometric nature of subdivision of the N^3
-    domain: every slice will add a communication cost of a N^2-cost surface
-    (along which communication must take place). The geometric decomposition
-    also results in doubling the number of compute nodes with each division,
-    hence the log2(P)-dependence. Typical values of n are in the range of
-    100-500, while r could be as few as 6 (incompressible flow: 3 position + 3
-    velocity components), and as many as 100s (single-material flow + chemistry
-    with approximately 90 species).
+    Here \a P is the number of compute nodes (among which communication is
+    required). The \a N^2 comes from the geometric nature of subdivision of the
+    \a N^3 domain: every slice will add a communication cost of a \a N^2-cost
+    surface (along which communication must take place). The geometric
+    decomposition also results in doubling the number of compute nodes with each
+    division, hence the \a log2(P)-dependence. Typical values of \a n are in the
+    range of 100-500, while \a r could be as few as 6 (incompressible flow: 3
+    position + 3 velocity components), and as many as 100s (single-material flow
+    + chemistry with approximately 90 species).
+
+\image html all2allcost.svg
 
 2. __Particle-array-slices, all-to-all:__
    Using an all-to-all decomposition (i.e., only on the particle properties are
@@ -188,24 +193,24 @@ one-to-one communication required by a geometric concurrency strategy:
 
    \f[ C(par+a2a) = N^3 * r * (P-1) \f]
 
-   since the particles are not communication, but the statistics (at least the
-   means) must still be communicated. (However, higher order-statistics might
-   still be required for advanced mixing models, further increasing communication
-   costs.)
+   since the particles are not, but the statistics (at least the means) must
+   still be communicated. (However, higher order-statistics might still be
+   required for advanced mixing models, further increasing communication costs.)
 
    Plotting the above two cost-functions (using N=100, n=100, r=100),
 
        gnuplot> plot [1:1e+7] 1.0e+8*log(x)/log(2), 1.0e8*(x-1)
 
-   reveals that, not surprisingly, the all-to-all strategy is prohibitively
-   expensive, for all number of compute nodes. Additionally, the non-geometric
-   strategy has the major limitation that the full mesh must fit into every
-   compute node's memory. This major limitation combined with the prohibitive
-   communication cost renders the all-to-all strategy not worthwhile.
+   reveals that, not surprisingly, _the all-to-all strategy is prohibitively
+   expensive, for practical numbers of compute nodes. Additionally, the
+   non-geometric strategy has the major limitation that the full mesh must fit
+   into every compute node's memory. This major limitation combined with the
+   prohibitive communication cost renders the all-to-all strategy not
+   worthwhile._
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:45:01 PM MST
+<em>Page last updated:</em> Mon 02 Feb 2015 07:25:41 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

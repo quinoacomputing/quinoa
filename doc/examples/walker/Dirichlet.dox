@@ -1,0 +1,220 @@
+/*!
+  \page      walker_example_dirichlet Walker: Integrating the Dirichlet SDE
+  \tableofcontents
+
+\section walker_example_dirichlet_control Control file
+For the paper [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
+
+\code{.py}
+# vim: filetype=sh:
+# This is a comment
+# Keywords are case-sensitive
+
+title "Dirichlet for the IJSA paper"
+
+walker
+  term  140.0   # Max time
+  dt    0.025   # Time step size
+  npar  10000   # Number of particles
+  ttyi  1000    # TTY output interval
+
+  rngs
+    mkl_mrg32k3a seed 0 end
+  end
+
+  dirichlet     # Select Dirichlet SDE
+    depvar y
+    init zero
+    coeff const
+    ncomp 2  # = K = N-1
+    b     0.1    1.5 end
+    S     0.625  0.4 end
+    kappa 0.0125 0.3 end
+    rng mkl_mrg32k3a    
+  end
+
+  statistics
+    <Y1>
+    <Y2>
+    <y1y1>
+    <y2y2>
+    <y1y2>
+  end
+end
+\endcode
+
+\section walker_example_dirichlet_run Example run on a single CPU
+\code{.py}
+Main/walker -v -c ../../tmp/dir.q
+\endcode
+
+\section walker_example_dirichlet_output Output
+\verbatim
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 1
+Converse/Charm++ Commit ID: 1a4f4bc
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.001 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.      __      __        .__   __
+  .;@+@';;;;;;'  /  \    /  \_____  |  | |  | __ ___________
+    `     '#''@` \   \/\/   /\__  \ |  | |  |/ // __ \_  __ \
+                  \        /  / __ \|  |_|    <\  ___/|  | \/
+                   \__/\  /  (____  /____/__|_ \\___  >__|
+                        \/        \/          \/    \/                       
+
+                                 < ENVIRONMENT >                                
+                                 ------ o ------                          
+
+ * Build environment:
+ --------------------
+     Hostname                       : karman
+     Executable                     : walker
+     Version                        : 0.1
+     Release                        : LA-CC-XX-XXX
+     Revision                       : 497a86fd7840c2f77a787e373c95ac2428f0dc2a
+     CMake build type               : Debug
+     Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/clang++-3.5
+     Build date                     : Fri Jan 30 07:01:00 MST 2015
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Mon Feb  2 16:30:56 2015
+     Work directory                 : /home/jbakosi/code/quinoa/build/clang
+     Executable (rel. to work dir)  : Main/walker
+     Command line arguments         : '-v -c ../../tmp/dir.q'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : ../../tmp/dir.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >                                  
+                                   ---- o ----                            
+
+ * Particle properties data layout policy (CMake: LAYOUT):
+ ---------------------------------------------------------
+     particle-major                
+
+ * Registered differential equations:
+ ------------------------------------
+     Unique equation types          : 8
+     With all policy combinations   : 18
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * i: initialization policy: R-raw, Z-zero
+      * c: coefficients policy: C-const, J-jrrj
+
+     Beta                           : i:RZ, c:CJ
+     Diagonal Ornstein-Uhlenbeck    : i:RZ, c:C
+     Dirichlet                      : i:RZ, c:C
+     Gamma                          : i:RZ, c:C
+     Generalized Dirichlet          : i:RZ, c:C
+     Ornstein-Uhlenbeck             : i:RZ, c:C
+     Skew-Normal                    : i:RZ, c:C
+     Wright-Fisher                  : i:RZ, c:C
+
+
+                                   < PROBLEM >                                  
+                                   ---- o ----                            
+
+ * Title: Dirichlet for the IJSA paper
+ -------------------------------------
+
+ * Differential equations integrated (1):
+ ----------------------------------------
+   < Dirichlet >
+     kind                           : stochastic
+     dependent variable             : y
+     initialization policy          : Z
+     coefficients policy            : C
+     start offset in particle array : 0
+     number of components           : 2
+     random number generator        : MKL MRG32K3A
+     coeff b [2]                    : { 0.1 1.5 }
+     coeff S [2]                    : { 0.625 0.4 }
+     coeff kappa [2]                : { 0.0125 0.3 }
+
+ * Output filenames:
+ -------------------
+     Statistics                     : stat.txt
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Terminate time                 : 140
+     Initial time step size         : 0.025
+
+ * Output intervals:
+ -------------------
+     TTY                            : 1000
+     Statistics                     : 1
+
+ * Statistical moments and distributions:
+ ----------------------------------------
+     Estimated statistical moments  : <Y1> <Y2> <y1y1> <y1y2> <y2y2> 
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0
+     Load (number of particles)     : 10000
+     Number of processing elements  : 1
+     Number of work units           : 1 (0*10000+10000)
+
+ * Time integration: Differential equations testbed
+ --------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (S: statistics, P: PDFs)
+     
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+    1000  2.500000e+01  2.500000e-02  000:00:08  000:00:38  S
+    2000  5.000000e+01  2.500000e-02  000:00:16  000:00:29  S
+    3000  7.500000e+01  2.500000e-02  000:00:24  000:00:21  S
+    4000  1.000000e+02  2.500000e-02  000:00:32  000:00:13  S
+    5000  1.250000e+02  2.500000e-02  000:00:40  000:00:04  S
+
+ Normal finish, maximum time reached: 140.000000
+
+ * Timers (h:m:s):
+ -----------------
+     Initial conditions                                                : 0:0:0
+     Migration of global-scope data                                    : 0:0:0
+     Total runtime                                                     : 0:0:45
+
+
+[Partition 0][Node 0] End of program
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 03 Feb 2015 08:50:33 AM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

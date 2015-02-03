@@ -1,8 +1,7 @@
 /*!
   \page      build How to build
 
-Building quinoa requires the following steps
---------------------------------------------
+### Building Quinoa requires the following steps
 
 <ol>
 <li> __Pick compilers:__
@@ -15,23 +14,23 @@ Building quinoa requires the following steps
     $ cmake <path-to-tpl-dir> <BR>
     $ make
    \note Fastest in a non-networked mount, e.g., /tmp
-   \note If you don't set CMAKE_INSTALL_PREFIX, it will default to
+   \note If the CMAKE_INSTALL_PREFIX cmake variable in unset, it will default to
    <path-to-tpl-dir>/install/<compiler>.
 </li>
 
-<li> __Build quinoa in empty build dir:__
+<li> __Build Quinoa in empty build dir:__
 
     $ cmake <path-to-src-dir> <BR>
     $ make
-   \note If you don't set TPL_DIR, it will default to
+   \note This builds all executables, which will be in <build>/Main.
+   \note If the TPL_DIR cmake variable is unset, it will default to
    <path-to-tpl-dir>install/<compiler>.
-   \note The executables will be in <build>/Main.
 </li>
 </ol>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 11 Jul 2014 09:44:19 PM MDT
+<em>Page last updated:</em> Mon 02 Feb 2015 03:49:17 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
