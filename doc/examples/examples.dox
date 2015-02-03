@@ -1,0 +1,16 @@
+/*!
+  \page      examples Examples
+  \tableofcontents
+
+\section walker_examples Walker examples
+  - \subpage walker_example_dirichlet
+
+\section rngtest_examples RNGTest examples
+  - \subpage rngtest_example_smallcrush
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Tue 03 Feb 2015 09:17:30 AM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

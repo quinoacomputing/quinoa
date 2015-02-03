@@ -1,11 +1,75 @@
 /*!
   \page      rngs_input Random number generators input
 
-...
+This page discusses how to configure random number generators (RNG) in a
+control file.
+
+### Requirements
+
+  - Any control file setup that needs one or more RNGs must contain an \e rngs
+    \a ... \a end block. This is used to enable and configure one or more RNGs.
+
+  - The \e rngs \a ... \a end block must appear before any reference to an RNG.
+
+  - The \e rngs \a ... \a end block consists of a list of \a rngname \a ... \a
+    end block, where \a rngname is the name of the RNG to be enabled and
+    configured. Currently, two different libraries are interfaced: MKL and
+    RNGSSE. The first part of \a rngname is the library, \a mkl or \a rngsse,
+    followed by an underscore, '_', followed by the name of the particular RNG
+    from the given library.
+
+  - Each \a rngname \a ... \a end block expects a different syntax, dependening
+    on what options are available for (and interfaced with) the given RNG.
+
+### Configuration of the MKL VSL RNGs
+
+All RNGs provided by Intel's Math Kernel Library (MKL) can be configured to be
+initialized using a user-specified \a seed, use a user-specified \a
+uniform_method, and use a user-specified \a gaussian_method. For more details on
+the available options for these control-file keywords, see the on-screen help
+from the executable, e.g.,
+
+\code{.py}
+  $ walker -H uniform_method
+\endcode
+
+### Configuration of the RNGSSE RNGs
+
+All RNGs provided by the RNGSSE library can be configured to be initialized
+using a user-specified sequence length by the \a seqlen keyword. For more
+details on the available options for the \a seqlen control-file keyword, see the
+on-screen help from the executable, e.g.,
+
+\code{.py}
+  $ walker -H seqlen
+\endcode
+
+\note Not all RNGSSE RNGs support all types of seqence lengths. See
+tk::ctr::RNG::support for details.
+
+### Example control file section for random number generators input
+
+\code{.py}
+  rngs
+    mkl_mcg59
+      seed 2134
+      uniform_method accurate
+    end
+
+    mkl_r250 seed 1 end
+    mkl_mcg31 end
+    mkl_mrg32k3a seed 0 end
+
+    rngsse_mrg32k3a end
+    rngsse_gq58.4
+      seqlen long
+    end
+  end
+\endcode
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:40:50 PM MST
+<em>Page last updated:</em> Mon 02 Feb 2015 02:15:57 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

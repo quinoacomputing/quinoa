@@ -1,34 +1,40 @@
 /*!
   \mainpage  notitle
-  \image     html quinoa.svg
-  \section   intro What is Quinoa?
+  \image html quinoa.svg
+
+\section intro What is Quinoa?
 Quinoa is a set of computational tools that enables research and numerical
-analysis using Monte Carlo methods.
+analysis using Monte Carlo methods. Most of Quinoa uses the
+[Charm++](http://charm.cs.illinois.edu) runtime system that enables the tools
+run concurrently, either on a single machine or a networked set of computers.
 
-  \section organization Organization
-    Quinoa consists of the following tools:
-    \li [<B>bonker</B>](bonker_doc.html) - Molecular-realm fluid dynamics solving the Boltzmann equation
-    \li [<B>breeze</B>](breeze_doc.html) - Continuum-realm fluid dynamics solving the Navier-Stokes equation
-    \li [<B>walker</B>](walker_doc.html) - Random walker of stochastic differential equations
-    \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
-    \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
-    \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
+\section organization Organization
+Quinoa consists of the following tools:
+  \li [<B>bonker</B>](bonker_doc.html) - Molecular-realm fluid dynamics
+      solving the Boltzmann equation
+  \li [<B>breeze</B>](breeze_doc.html) - Continuum-realm fluid dynamics
+      solving the Navier-Stokes equation
+  \li [<B>walker</B>](walker_doc.html) - Random walker for stochastic
+      differential equations
+  \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
+  \li [<B>unittest</B>](unittest_doc.html) - Unit test suite
+  \li [<B>meshconv</B>](meshconv_doc.html) - Mesh file converter
 
-  \section copyright Copyright
-    Copyright 2012-2015, Jozsef Bakosi.
+\section copyright Copyright
+Copyright 2012-2015, Jozsef Bakosi.
 
-  \section license License
-    License ...
+\section license License
+License ...
 
-  \section acknowledgements Acknowledgments
-    Acknowledgments ...
+\section acknowledgements Acknowledgments
+Acknowledgments ...
 
-  \section authors Authors
-    Jozsef Bakosi (jbakosi@lanl.gov)
+\section authors Authors
+Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:59:44 PM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 09:19:54 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

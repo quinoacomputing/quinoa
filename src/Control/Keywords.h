@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 08:42:30 PM MST
+  \date      Mon 02 Feb 2015 07:47:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -203,10 +203,11 @@ using helpctr = keyword< helpctr_info, h,e,l,p,c,t,r >;
 struct helpkw_info {
   static std::string name() { return "helpkw"; }
   static std::string shortDescription() { return
-    "Display verbose help on a single command-line argument"; }
+    "Display verbose help on a single keyword"; }
   static std::string longDescription() { return
     R"(This keyword can be used to get a verbose help on a single command-line
-    argument (help on keyword) from an executable.)";
+    argument or control-file keyword (i.e., help on keyword) from an
+    executable.)";
   }
   using alias = Alias< H >;
   struct expect {
@@ -766,7 +767,7 @@ struct pdfs_info {
     variable is y1, using automatic determination of the bounds of the sample
     space, using 1.0e-2 as the sample space bin size, and call the PDF
     "mypdf". For more info on the structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox.)";
+    doc/pages/statistics_output.dox.)";
   }
 };
 using pdfs = keyword< pdfs_info, p,d,f,s >;
@@ -781,7 +782,7 @@ struct txt_info {
     a pdfs ... end block. Example: "filetype txt", which selects text-file
     output. Valid options are 'txt', 'gmshtxt', 'gmshbin', and 'exodusii'.
     For more info on the structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox.)"; }
+    doc/pages/statistics_output.dox.)"; }
 };
 using txt = keyword< txt_info, t,x,t >;
 
@@ -795,7 +796,7 @@ struct gmshtxt_info {
     density function (PDF) within a pdfs ... end block. Example: "filetype
     gmshtxt", which selects Gmsh ASCII file output. Valid options are 'txt',
     'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the structure of
-    the pdfs ... end block, see doc/pages/pdf_output.dox. For more
+    the pdfs ... end block, see doc/pages/statistics_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
 using gmshtxt = keyword< gmshtxt_info, g,m,s,h,t,x,t >;
@@ -810,7 +811,7 @@ struct gmshbin_info {
     density function (PDF) within a pdfs ... end block. Example: "filetype
     gmshbin", which selects Gmsh binary file output. Valid options are 'txt',
     'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the structure of
-    the pdfs ... end block, see doc/pages/pdf_output.dox. For more
+    the pdfs ... end block, see doc/pages/statistics_output.dox. For more
     info on Gmsh, see http://www.geuz.org/gmsh.)"; }
 };
 using gmshbin = keyword< gmshbin_info, g,m,s,h,b,i,n >;
@@ -826,7 +827,7 @@ struct exodusii_info {
     "filetype exodusii", which selects ExodusII file output. Valid options
     are 'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
     structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox. For more info on ExodusII, see
+    doc/pages/statistics_output.dox. For more info on ExodusII, see
     http://sourceforge.net/projects/exodusii.)";
   }
 };
@@ -842,7 +843,7 @@ struct filetype_info {
     "filetype exodusii", which selects ExodusII output. Valid options are
     'txt', 'gmshtxt', 'gmshbin', and 'exodusii'. For more info on the
     structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox.)"; }
+    doc/pages/statistics_output.dox.)"; }
   struct expect {
     static std::string description() { return "string"; }
     static std::string choices() {
@@ -868,7 +869,7 @@ struct overwrite_info {
     overwrite policy overwrites the same output file containing a single time
     step. Valid PDF policy options are 'overwrite', 'multiple', and
     'evolution'. For more info on the structure of the pdfs ... end block,
-    see doc/pages/pdf_output.dox.)"; }
+    see doc/pages/statistics_output.dox.)"; }
 };
 using overwrite = keyword< overwrite_info, o,v,e,r,w,r,i,t,e >;
 
@@ -884,7 +885,7 @@ struct multiple_info {
     multiple policy output creates a new file for each time step. Valid PDF
     policy options are 'overwrite', 'multiple', and 'evolution'. For more
     info on the structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox.)"; }
+    doc/pages/statistics_output.dox.)"; }
 };
 using multiple = keyword< multiple_info, m,u,l,t,i,p,l,e >;
 
@@ -897,11 +898,11 @@ struct evolution_info {
     the 'evolution' output file policy for requested probability density
     functions (PDFs) within a pdfs ... end block. Example: "policy
     evolution", which selects the evolution output file policy. The
-    multiple policy output appends new time step to the same output file for
-    each time instant, yielding a time evolution of data. Valid PDF
-    policy options are 'overwrite', 'multiple', and 'evolution'. For more
-    info on the structure of the pdfs ... end block, see
-    doc/pages/pdf_output.dox.)";
+    evolution policy output appends new time step to the same output file for
+    each time instant, yielding a time evolution of data in a single file.
+    Valid PDF policy options are 'overwrite', 'multiple', and 'evolution'. For
+    more info on the structure of the pdfs ... end block, see
+    doc/pages/statistics_output.dox.)";
   }
 };
 using evolution = keyword< evolution_info, e,v,o,l,u,t,i,o,n >;
@@ -916,7 +917,7 @@ struct policy_info {
     (PDFs) within a pdfs ... end block. Example: "policy overwrite", which
     selects the overwrite output file policy. Valid options are 'overwrite',
     'multiple', and 'evolution'. For more info on the structure of the
-    pdfs ... end block, see doc/pages/pdf_output.dox.)";
+    pdfs ... end block, see doc/pages/statistics_output.dox.)";
   }
   struct expect {
     static std::string description() { return "string"; }
@@ -1224,7 +1225,7 @@ struct gendir_info {
     block, used to specify the configuration of a system of stochastic
     differential equations (SDEs), whose invariant is Lochner's generalized
     Dirichlet distribution. For more details on the generalized Dirichlet
-    SDE, see http://dx.doi.org/10.1155/2013/842981.)";
+    SDE, see http://dx.doi.org/10.1063/1.4822416.)";
   }
 };
 using gendir = keyword< gendir_info, g,e,n,d,i,r >;
@@ -1420,8 +1421,8 @@ struct interval_info {
   static std::string shortDescription() { return
     "Set interval (within a relevant block)"; }
   static std::string longDescription() { return
-    R"(This keyword is used to specify an interval in time steps. This is used
-    within a relevant block.)";
+    R"(This keyword is used to specify an interval in time steps. This must be
+    used within a relevant block.)";
   }
   struct expect {
     using type = uint32_t;

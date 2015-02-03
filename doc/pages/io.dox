@@ -1,16 +1,15 @@
 /*!
-  \page      io Input/Output strategy
+  \page      io Input/Output for PIC-based inhomogeneity strategy
 
-Input/Output for PIC-based inhomogeneity strategy
-=================================================
-
-For more on PIC-based inhomogeneity strategy, see the document on the
-[inhomogeneity strategies](_inhomogeneity.html).
+For more on PIC-based inhomogeneity strategy, see [inhomogeneity
+strategies](inhomogeneity.html).
 
 Input format requirements
 -------------------------
 An algorithm based on a PIC-based inhomogeneity strategy requires an Eulerian
-mesh. Examples of supported mesh generators:
+mesh. At this time, the plan is to keep it simple, and only support a Cartesian
+mesh for structured grid-applications and pure-tetrahedron unstructured meshes.
+Examples of supported mesh generators:
 
   - Gmsh, http://www.geuz.org/gmsh
   - Netgen, http://sourceforge.net/apps/mediawiki/netgen-mesher
@@ -26,19 +25,26 @@ Input mesh file formats supported:
 
 Output types
 ------------
-  1. Eulerian-mesh (field)
-  2. Checkpoint-Restart (particle and/or field)
+  1. Eulerian-mesh
+  2. Checkpoint-Restart (particle and/or field, should be combined with
+     existing support in Charm++)
   3. Glob (text)
-  4. Statistics (text)
-  5. PDF, Joint PDF, Marginal PDF, Conditional PDF, etc. (text, Gmsh)
+  4. Statistics
+  5. PDFs, Joint PDFs, Marginal PDFs, Conditional PDFs, etc.
+
+Output policies
+---------------
+  1. New timestep overwrites existing file
+  2. Multiple files for multiple time step data
+  3. Store time evolution in single file
 
 Input/Output requirements:
 --------------------------
   1. __Fields I/O:__
-     - For large binary fields I/O we will use ExodusII HDF5 (single file and
+     - For large binary fields I/O we use ExodusII HDF5 (single file and
        multiple files), and Quinoa's native mesh format based on ADIOS schema
        and .bp format.
-     - For Exodus I/O we will use the Seacas/ExodusII library in Trilinos.
+     - For Exodus I/O we use the Seacas/ExodusII library in Trilinos.
 
   2. __Particles I/O:__
      - For large binary particle I/O we will explore H5Part (http://vis.lbl.gov/
@@ -47,21 +53,21 @@ Input/Output requirements:
        .bp format.
 
   3. __Fields + Particles I/O:__
-     - For large binary field + particle I/O (same or separate file) we will use
-       the ADIOS library (https://www.olcf.ornl.gov/center-projects/adios),
+     - For large binary field + particle I/O (same or separate file) the plan is
+       to use the ADIOS library (https://www.olcf.ornl.gov/center-projects/adios),
        which facilitates both file-based and stream-based I/O.
-     - The stream-based ADIOS I/O API can be used for both file-based and
+     - The stream-based ADIOS I/O API can then be used for both file-based and
        stream-based I/O, the latter facilitating staging and in-situ
        visualization (and debugging), e.g., via DataSpaces, NSSI, DataTap,
-       DIMES, FlexPath, ParaView/Catalyst (this latter is not yet available).
+       DIMES, FlexPath, and/or ParaView/Catalyst.
      - We will develop our native fields + particles format based on ADIOS
        schema and .bp format.
-     - Using the ADIOS visualization schema (or pulling our own) we will need
-       to write our own ParaView reader plugin(s).
+     - Using the ADIOS visualization schema (or pulling our own) we will write
+       our own ParaView reader plugin(s).
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 13 Jan 2015 12:17:19 PM MST
+<em>Page last updated:</em> Fri 30 Jan 2015 09:32:33 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

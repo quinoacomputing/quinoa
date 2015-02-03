@@ -2,13 +2,12 @@
 /*!
   \file      src/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 08:44:05 AM MST
+  \date      Sun 01 Feb 2015 07:29:59 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ParticleProperties for storing particle data.
   \details   ParticleProperties for storing particle data with various accessors
     for particle-, and property-major data layout policies. See also data layout
-    [design](layout.html), [assembly](layout_assembly.html), and
-    [benchmark](layout_benchmark.html).
+    [design](layout.html).
 */
 //******************************************************************************
 #ifndef ParticleProperties_h

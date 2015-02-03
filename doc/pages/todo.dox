@@ -1,8 +1,7 @@
 /*!
   \page      todo To-do list
 
-Parser/Control
---------------
+### Parser/Control
  - Replace the overloads in Control.h with variadic ones: the implementation
    of Field template may give a clue on how to do the variadic deep-access
    for types in tagged tuple, see AA (Modern C++ Design) p69.
@@ -21,8 +20,7 @@ Parser/Control
    correct keyword.
  - Fix Base::Print::splitLines() so that lines longer than 'width' do not hang.
 
-RNGTest
--------
+### RNGTest
  - RNGSSE:
     + Put in gaussian(): Gaussian distribution from uniform: STL
     + Can RNGSSE's generators take a seed?
@@ -45,8 +43,7 @@ RNGTest
    resorting to terminate would be very helpful. Need local-scope try-catch
    blocks as Charm++ is not aware of exceptions.
 
-Testing
--------
+### Testing
  - Quantify code coverage by tests, e.g., COVTOOL: http://covtool.sourceforge.net
  - Regression tests with KitWare's CTest
  - Test build with optional libraries on/off (all permutations)
@@ -60,8 +57,10 @@ Testing
  - Clang's sanitizers: address, thread, memory, undefined behavior, etc.
  - Add dynamic analysis tests to ctest and cdash: http://www.kitware.com/blog/home/post/762
 
-Build
------
+### Build
+ - Get rid of the optional build of Trilinos/SEACAS (but keep ExodusII) as
+   SEACAS is LGPL (but Exodus is BSD)
+ - Inquire about a TestU01 commercial license
  - Reduce build deps with ninja build dependency map
  - Explore dynamic libs, precompiled headers
    (https://github.com/ducakar/openzone/ uses pch cmake and clang)
@@ -86,14 +85,15 @@ Build
     + win-gnu: http://tdm-gcc.tdragon.net/download
     + win-mingw: http://sourceforge.net/projects/mingwbuilds
 
-MeshConv
---------
+### MeshConv
  - Add side/node sets
  - Add of extra features, e.g., renumbering, partitioning, etc.
  - Should STLMesh use UnsMesh instead?
 
-Documentation
--------------
+### Documentation
+ - Add to-level LICENSE and README (describing how to build tpl, code, and doc)
+ - Double-check boost modules licenses
+ - Clarify TestU01 license with author
  - Find out build prerequisites (i.e., everyting that is linked in) and document
    them in README.build
  - Document remaining undocumented keywords
@@ -103,8 +103,7 @@ Documentation
  - Add separate page to doxygen on papers with links
  - Add and hook up optional field specifying default expected value to keywords
 
-Uncategorized
--------------
+### Uncategorized
  - Charm++ codes to explore: GTC, NAMD, LeanMD, Mol3D
 
  - As the estimation of statistics should be closer (i.e., immediately after)
@@ -149,7 +148,7 @@ Uncategorized
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 28 Jan 2015 10:18:05 AM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 10:19:23 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

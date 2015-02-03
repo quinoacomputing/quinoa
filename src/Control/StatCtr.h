@@ -1,6 +1,6 @@
 //******************************************************************************
 /*!
-  \file      src/Control/StatControl.h
+  \file      src/Control/StatCtr.h
   \author    J. Bakosi
   \date      Wed 28 Jan 2015 12:09:54 PM MST
   \copyright 2012-2015, Jozsef Bakosi.

@@ -1,11 +1,116 @@
 /*!
   \page      statistics_output Statistics output
 
-...
+This pages discusses the available options for extracting statistics from a
+simulation.
+
+Supported at this time are ordinary and central statistical moments of
+arbitrary-length products and arbitrary number of 1D, 2D, and 3D probability
+density functions (PDF) with sample spaces of ordinary and/or central sample
+space variables.
+
+### Definitions and nomenclature:
+
+  - Upper-case letters denote a full random variable, e.g., X
+
+  - Lower-case letters denote a fluctuation about the mean, i.e., x = X - <X>
+
+  - Letters can be augmented by a field ID, i.e., X2 is the full variable of
+    the second component of the vector X, while x1 = X1 - <X1> is the
+    fluctuation about the mean of the first component of vector X.
+
+  - If the field ID is unspecified, it defaults to the first field, i.e.,
+    X = X1, x = x1, etc.
+
+  - Statistical moments of arbitrary-length products can be computed.
+
+    Examples:
+
+    - <X> - mean,
+    - <xx> - variance,
+    - <xxx> - third central moment,
+    - <xy> - covariance of X and Y,
+    - <x1y2> - covariance of the first component of vector X and the second
+      component of vector Y <br><br>
+
+  - In general, arbitrary-length products can be estimated that make up a
+    statistical moment, using any number and combinations of upper and
+    lower-case letters and their field IDs < [A-Za-z][1-9] ... >.
+
+  - A statistical moment is ordinary if and only if all of its terms are
+    ordinary. A central moment has at least one term that is central, i.e., a
+    fluctuation about its mean.
+
+    - Examples of ordinary moments: <X>, <XX>, <XYZ>, etc.
+    - Examples of central moments: <x1x2>, <Xy>, <XYz>, etc.
+
+  - Estimation of the PDFs can be done using either ordinary or central sample
+    space variables.
+
+    Examples:
+    - p(X) denotes the univariate PDF of the full variable X,
+    - f(x1,x2) denotes the bivariate joint PDF of the fluctuations of the
+      variables x1 and x2 about their respective means,
+    - g(X,y,Z2) denotes the trivariate joint PDF of variables X, y = Y - <Y>,
+      and Z2. <br>
+
+### Example control file section for statistics output
+
+\code{.py}
+  statistics
+    interval 2  # Output statistics every 2nd time step
+    <X1> <X2> <x1x1> <x2x2> <x1x2>
+    <R> <rr> <R2> <r2r2> <R3> <r3r3> <r1r2> <r1r3> <r2r3>
+    <K1> <k1k1> <k2k2> <K1K1> <k3>
+    #<H1> <H2> <h1h1> <h2h2> <h1h2>
+    #<x1z2Uy2>
+    <Y2>
+    <y1y1>
+    <y2y2>
+    <y1y2>
+    #<x1x2Z1z2>
+  end
+\endcode
+
+### Example control file section for PDF output
+
+\code{.py}
+  pdfs
+    interval   10             # Output PDFs every 10th time step
+    filetype   txt            # Use txt file output
+    policy     overwrite      # Overwrite previous time step with new one
+    centering  elem           # Use element-centering for sample space
+    format     scientific     # Use 'scientific' floats in txt file output
+    precision  4              # Use 4 digits percision for floats in txt output
+
+    # Univariate PDF "O2" of the full variable O2 with bin size 0.05 and
+    # explicitly specified sample space extents 0.0 and 1.0 (min and max)
+    O2( O2 : 5.0e-2 ; 0 1 )
+
+    # Bivariate PDF "f2" of the fluctuating variables o1 and o2 with bin sizes
+    # 0.05 in both sample space dimensions
+    f2( o1 o2 ; 5.0e-2 5.0e-2 )
+
+    # Bivariate PDF "mypdf" of the fluctuating variables o1 and o2 with bin sizes
+    # 0.05 in both sample space dimensions and explicitly specified sample space
+    # extents, { xmin, xmax, ymin, ymax } = { -2, 2, -2, 2 }
+    mypdf( o1 o2 : 5.0e-2 5.0e-2 ; -2 2 -2 2 )
+
+    # Trivariate PDF "f3" of full variables O1, O2, and O3 with bin sizes 0.1 in
+    # all dimensions of the sample space
+    f3( O1 O2 O1 : 1.0e-1 1.0e-1 1.0e-1 )
+
+    # Trivariate PDF "newpdf" of full variables O1, O2, and O3 with bin sizes
+    # 0.1 in all dimensions of the sample space and explicitly specified sample
+    # space extents, { xmin, xmax, ymin, ymax, zmin, zmax } = { 0, 1, 0, 1,
+    # -0.5, -0.5 }
+    newpdf( O1 O2 O1 : 1.0e-1 1.0e-1 1.0e-1 ; 0 1 0 1 -0.5 0.5  )
+  end
+\endcode
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 29 Jan 2015 08:41:59 PM MST
+<em>Page last updated:</em> Mon 02 Feb 2015 08:09:22 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

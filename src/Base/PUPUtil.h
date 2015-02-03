@@ -127,7 +127,7 @@ inline void operator|( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m )
 template< class T >
 inline void pup( PUP::er& p, boost::optional< T >& o ) {
   // IMPLEMENT !!!
-  std::cout << "pup boost::opt\n";
+  //std::cout << "pup boost::opt\n";
 }
 //! Pack/Unpack boost::optional.
 //! \param[in] p Charm++'s pack/unpack object

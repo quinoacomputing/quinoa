@@ -8,7 +8,7 @@
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), whose invariant is the Dirichlet
     distribution. For more info on the Dirichlet SDE, see
-    http://dx.doi.org/10.1155/2013/842981,
+    http://dx.doi.org/10.1155/2013/842981
     \f[ \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
         (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
         Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1 \f]
