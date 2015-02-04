@@ -7,7 +7,21 @@
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), with linear drift and linear diagonal
-    diffusion, whose invariant is the joint gamma distribution.
+    diffusion, whose invariant is the joint [gamma
+    distribution](http://en.wikipedia.org/wiki/Gamma_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars,
+    \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+    \f[
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha -
+       (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha}
+       \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
+    \f]
+    with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
+    < S_\alpha < 1\f$. Here \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic
+    vector-valued [Wiener process](http://en.wikipedia.org/wiki/Wiener_process)
+    with independent increments. The invariant distribution is the joint gamma
+    distribution. This system of SDEs consists of N independent equations.
 */
 //******************************************************************************
 #ifndef Gamma_h

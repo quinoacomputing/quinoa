@@ -7,8 +7,23 @@
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
-    diffusion, whose invariant is the joint beta distribution. For more on the
-    beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
+    diffusion, whose invariant is the joint [beta
+    distribution](http://en.wikipedia.org/wiki/Beta_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars,
+    \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+    \f[
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha(1-Y_\alpha)}
+       \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
+    \f]
+    with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
+    < S_\alpha < 1\f$. Here
+    \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic vector-valued [Wiener
+    process](http://en.wikipedia.org/wiki/Wiener_process) with independent
+    increments. The invariant distribution is the joint beta distribution. This
+    system of SDEs consists of N independent equations. For
+    more on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
 */
 //******************************************************************************
 #ifndef Beta_h

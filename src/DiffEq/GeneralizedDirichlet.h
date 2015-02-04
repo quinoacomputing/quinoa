@@ -6,9 +6,49 @@
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
-    differential equations (SDEs) whose invariant is Lochner's generalized
-    Dirichlet distribution. For more info on the generalized Dirichlet SDE, see
-    http://dx.doi.org/10.1063/1.4822416.
+    differential equations (SDEs) whose invariant is Lochner's [generalized
+    Dirichlet distribution](http://en.wikipedia.org/wiki/Generalized_Dirichlet_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars, \f$0 \le
+    Y_i\f$, \f$i=1,\dots,K\f$, \f$\sum_{i=1}^KY_i\le1\f$, as
+    \f[ \begin{split}
+      \mathrm{d}Y_i(t) = \frac{\mathcal{U}_i}{2}\left\{ b_i\Big[S_i
+      \mathcal{Y}_K - (1-S_i)Y_i\Big] + Y_i\mathcal{Y}_K
+      \sum_{j=i}^{K-1}\frac{c_{ij}}{\mathcal{Y}_j}\right\}\mathrm{d}t +
+      \sqrt{\kappa_i Y_i \mathcal{Y}_K \mathcal{U}_i}\mathrm{d}W_i(t), \\
+      \qquad i=1,\dots,K, \end{split}
+    \f]
+    where \f$\mathrm{d}W_i(t)\f$ is an isotropic vector-valued [Wiener
+    process](http://en.wikipedia.org/wiki/Wiener_process) with independent
+    increments. The statistically stationary solution of the above coupled
+    system of nonlinear stochastic differential equations is the generalized
+    Dirichlet distribution,
+    \f[
+       \newcommand{\bv}[1]{{\mbox{$\mathbf{#1}$}}}
+       \mathscr{G}(\bv{Y},\bv{\alpha},\bv{\beta}) =
+       \prod_{i=1}^K\frac{\Gamma(\alpha_i+\beta_i)}{\Gamma(\alpha_i)
+       \Gamma(\beta_i)}Y_i^{\alpha_i-1} \mathcal{Y}_i^{\gamma_i} \qquad
+       \mathrm{with} \qquad \mathcal{Y}_i = 1-\sum_{k=1}^i Y_k,
+    \f]
+    provided the coefficients, \f$b_i\!>\!0\f$, \f$\kappa_i\!>\!0\f$,
+    \f$0\!<\!S_i\!<\!1\f$, and \f$c_{ij}\f$, with \f$c_{ij}\!=\!0\f$ for
+    \f$i\!>\!j\f$, \f$i,j\!=\!1,\dots,K\!-\!1\f$, satisfy
+    \f[ \begin{split}
+       \alpha_i & = \frac{b_i}{\kappa_i}S_i, \qquad i=1,\dots,K,\\
+       1-\gamma_i & = \frac{c_{1i}}{\kappa_1} = \dots = \frac{c_{ii}}{\kappa_i},
+       \qquad i=1,\dots,K-1,\\
+       1+\gamma_K & = \frac{b_1}{\kappa_1}(1-S_1) = \dots =
+       \frac{b_K}{\kappa_K}(1-S_K). \end{split}
+    \f]
+
+    Here \f$\mathcal{U}_i = \prod_{j=1}^{K-i}\mathcal{Y}_{K-j}^{-1}\f$,
+    \f$\alpha_i>0\f$, and \f$\beta_i>0\f$ are parameters, while
+    \f$\gamma_i=\beta_i-\alpha_{i+1}-\beta_{i+1}\f$ for \f$i=1,\dots,K-1\f$, and
+    \f$\gamma_K=\beta_K-1\f$. \f$\Gamma(\cdot)\f$ denotes the [gamma
+    function](http://en.wikipedia.org/wiki/Gamma_function). To keep the
+    invariant distribution generalized Dirichlet, the above set of constraints
+    on the coefficients must be satisfied. For more details on the generalized
+    Dirichlet SDE, see http://dx.doi.org/10.1063/1.4822416.
 */
 //******************************************************************************
 #ifndef GeneralizedDirichlet_h

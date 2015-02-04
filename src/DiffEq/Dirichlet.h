@@ -2,16 +2,33 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:30:21 AM MST
+  \date      Tue 03 Feb 2015 10:32:45 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
-    differential equations (SDEs), whose invariant is the Dirichlet
-    distribution. For more info on the Dirichlet SDE, see
-    http://dx.doi.org/10.1155/2013/842981
-    \f[ \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
-        (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
-        Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1 \f]
+    differential equations (SDEs), whose invariant is the [Dirichlet
+    distribution](http://en.wikipedia.org/wiki/Dirichlet_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars,
+    \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N-1\f$,
+    \f$\sum_{\alpha=1}^{N-1}Y_\alpha\!\le\!1\f$, as
+    \f[
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\big[S_\alpha Y_N -
+       (1-S_\alpha)Y_\alpha\big]\mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha
+       Y_N}\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N-1
+    \f]
+    with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
+    < S_\alpha < 1\f$, and \f$Y_N = 1-\sum_{\alpha=1}^{N-1}Y_\alpha\f$. Here
+    \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic vector-valued [Wiener
+    process](http://en.wikipedia.org/wiki/Wiener_process) with independent
+    increments. The invariant distribution is the Dirichlet distribution,
+    provided the parameters of the drift and diffusion terms satisfy
+    \f[
+      (1-S_1) b_1 / \kappa_1 = \dots = (1-S_{N-1}) b_{N-1} / \kappa_{N-1}.
+    \f]
+    To keep the invariant distribution Dirichlet, the above constraint on the
+    coefficients must be satisfied. For more details on the Dirichlet SDE, see
+    http://dx.doi.org/10.1155/2013/842981.
 */
 //******************************************************************************
 #ifndef Dirichlet_h

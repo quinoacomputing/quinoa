@@ -6,9 +6,35 @@
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
-    differential equations (SDEs), whose invariant is the joint skew-normal
-    distribution. For more details on the skew-normal distribution, see
-    http://www.jstor.org/stable/2337278.
+    differential equations (SDEs), whose invariant is the joint [skew-normal
+    distribution](http://en.wikipedia.org/wiki/Skew_normal_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars,
+    \f$x_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+    \f[
+       \mathrm{d}x_\alpha(t) = -\frac{1}{T_\alpha}\left[x_\alpha -
+       \lambda_\alpha\sigma^2_\alpha\sqrt{\frac{2}{\pi}} \cdot
+       \frac{\exp{\left(-\lambda_\alpha^2x^2_\alpha/2\right)}}{1+\mathrm{erf}
+       \left( \lambda_\alpha x_\alpha/\sqrt{2}\right)} \right] \mathrm{d}t +
+       \sqrt{\frac{2\sigma^2_\alpha}{T_\alpha}}\mathrm{d}W_\alpha(t).
+    \f]
+    The invariant distribution is the joint skew-normal distribution
+    \f[
+       p(x_\alpha) = \frac{1}{\sigma_\alpha\sqrt{2\pi}} \exp\left(
+       -\frac{x^2_\alpha}{2\sigma^2_\alpha} \right) \left[1 + \mathrm{erf}\left(
+       \frac{\lambda_\alpha x_\alpha}{\sqrt{2}}\right) \right].
+    \f]
+    Here \f$\mathrm{erf}(y) = 2/\sqrt{\pi} \int_0^y \exp(-u^2) \mathrm{d}u\f$,
+    \f$T_\alpha\f$ are time scales, \f$\sigma_\alpha\f$ are variance parameters,
+    \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic [Wiener
+    process](http://en.wikipedia.org/wiki/Wiener_process) with independent
+    increments, and \f$\lambda_\alpha\f$ are the parameters that control the
+    asymmetry and skewness for variable \f$x_\alpha\f$: \f$\lambda_\alpha<0\f$
+    and \f$\lambda_\alpha>0\f$ give negative and positive skewness,
+    respectively, while \f$\lambda_\alpha=0\f$ reduces the system to a set of
+    independent Ornstein-Uhlenbeck processes. See also
+    DiffEq/DiagOrnsteinUhlenbeck.h. For more details on the skew-normal
+    distribution, see http://www.jstor.org/stable/2337278.
 */
 //******************************************************************************
 #ifndef SkewNormal_h

@@ -7,7 +7,22 @@
   \brief     System of diagonal Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs), with linear drift and constant diagonal
-    diffusion, whose invariant is the joint normal distribution.
+    diffusion, whose invariant is the joint [normal
+    distribution](http://en.wikipedia.org/wiki/Normal_distribution).
+
+    In a nutshell, the equation integrated governs a set of scalars,
+    \f$Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+    \f[
+       \mathrm{d}Y_\alpha(t) = \theta_\alpha\left(\mu_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sigma_\alpha\mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
+    \f]
+    with parameter vectors \f$\theta_\alpha > 0\f$, \f$\mu_\alpha\f$, and
+    \f$\sigma_\alpha > 0\f$. Here \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic
+    vector-valued [Wiener process](http://en.wikipedia.org/wiki/Wiener_process)
+    with independent increments. The invariant distribution is the joint normal
+    distribution. This system of SDEs consists of N independent equations, each
+    being a single-variate [Ornstein-Uhlenbeck
+    process](http://en.wikipedia.org/wiki/Ornstein%E2%80%93Uhlenbeck_process).
 */
 //******************************************************************************
 #ifndef DiagOrnsteinUhlenbeck_h
