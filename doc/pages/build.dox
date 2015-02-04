@@ -6,31 +6,37 @@
 <ol>
 <li> __Pick compilers:__
 
+   \code{.sh}
     $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
+   \endcode
 </li>
 
-<li> __Build third-party libraries in empty build dir:__
+<li> __Build third-party libraries (TPLs) in empty build dir:__
 
-    $ cmake <path-to-tpl-dir> <BR>
+   \code{.sh}
+    $ cmake <path-to-tpl-dir>
     $ make
-   \note Fastest in a non-networked mount, e.g., /tmp
+   \endcode
+   \note Fastest in a non-networked mount, e.g., /tmp.
    \note If the CMAKE_INSTALL_PREFIX cmake variable in unset, it will default to
-   <path-to-tpl-dir>/install/<compiler>.
+   <path-to-tpl-dir>/install/<compiler>, which is where the TPLs are installed.
 </li>
 
 <li> __Build Quinoa in empty build dir:__
 
-    $ cmake <path-to-src-dir> <BR>
+   \code{.sh}
+    $ cmake <path-to-src-dir>
     $ make
+   \endcode
    \note This builds all executables, which will be in <build>/Main.
    \note If the TPL_DIR cmake variable is unset, it will default to
-   <path-to-tpl-dir>install/<compiler>.
+   <path-to-tpl-dir>/install/<compiler>.
 </li>
 </ol>
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 02 Feb 2015 03:49:17 PM MST
+<em>Page last updated:</em> Wed 04 Feb 2015 07:10:57 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

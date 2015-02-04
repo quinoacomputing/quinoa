@@ -43,7 +43,8 @@ Currently, the following differential equations are implemented:
  diffusion, whose invariant is the joint beta distribution. For more details
  on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
 
-   - For the implementation, see DiffEq/Beta.h.
+   - For a short overview of the equation and its implementation, see
+     DiffEq/Beta.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/BetaCoeffPolicy.h.
 
@@ -51,21 +52,24 @@ Currently, the following differential equations are implemented:
  constant diagonal diffusion, whose invariant is the joint normal
  distribution.
 
-   - For the implementation, see DiffEq/DiagOrnsteinUhlenbeck.h.
+   - For a short overview of the equation and its implementation, see
+     DiffEq/DiagOrnsteinUhlenbeck.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h.
 
  3. <B>Ornstein-Uhlenbeck</B> - A system of SDEs with linear drift and constant
  diffusion, whose invariant is the joint normal distribution.
 
-   - For the implementation, see DiffEq/OrnsteinUhlenbeck.h.
+   - For a short overview of the equation and its implementation, see
+     DiffEq/OrnsteinUhlenbeck.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/OrnsteinUhlenbeckCoeffPolicy.h.
 
  4. <B>Dirichlet</B> - A system of SDEs, whose invariant is the Dirichlet
  distribution. For more details on the Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
 
-   - For the implementation, see DiffEq/Dirichlet.h.
+   - For a short overview of the equation and its implementation, see
+     DiffEq/Dirichlet.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/DirichletCoeffPolicy.h.
 
@@ -73,14 +77,16 @@ Currently, the following differential equations are implemented:
  generalized Dirichlet distribution. For more details on the generalized
  Dirichlet SDE, see [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's generalized Dirichlet distribution, J. Math. Phys., 2013](http://dx.doi.org/10.1063/1.4822416).
 
-   - For the implementation, see DiffEq/GeneralizedDirichlet.h.
+   - For a short overview of the equation and its the implementation, see
+     DiffEq/GeneralizedDirichlet.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/GeneralizedDirichletCoeffPolicy.h.
 
  6. <B>Gamma</B> - A system of SDEs, with linear drift and linear diagonal
  diffusion, whose invariant is the joint gamma distribution.
 
-   - For the implementation, see DiffEq/Gamma.h.
+   - For a short overview of the equation and its implementation, see
+     DiffEq/Gamma.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/GammaCoeffPolicy.h.
 
@@ -88,7 +94,8 @@ Currently, the following differential equations are implemented:
  skew-normal distribution. For more details on the skew-normal distribution,
  see [Azzalini, Dalla Valle, The Multivariate Skew-Normal Distribution](http://www.jstor.org/stable/2337278).
 
-   - For the implementation, see DiffEq/SkewNormal.h.
+   - For a short overview of the equation and its implementation, see
+     see DiffEq/SkewNormal.h.
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/SkewNormalCoeffPolicy.h.
 
@@ -101,7 +108,7 @@ Currently, the following differential equations are implemented:
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 09:08:06 AM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 10:32:04 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

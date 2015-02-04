@@ -5,8 +5,8 @@
 \section intro What is Quinoa?
 Quinoa is a set of computational tools that enables research and numerical
 analysis using Monte Carlo methods. Most of Quinoa uses the
-[Charm++](http://charm.cs.illinois.edu) runtime system that enables the tools
-run concurrently, either on a single machine or a networked set of computers.
+[Charm++](http://charm.cs.illinois.edu) runtime system that enables concurrent
+execution, either on a single machine or a networked set of computers.
 
 \section organization Organization
 Quinoa consists of the following tools:
@@ -34,7 +34,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 09:19:54 AM MST
+<em>Page last updated:</em> Tue 03 Feb 2015 10:39:22 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
