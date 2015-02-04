@@ -785,6 +785,7 @@ INPUT                  = pages/mainpage.dox \
                          pages/tpl_licenses.dox \
                          examples/examples.dox \
                          examples/walker/Dirichlet.dox \
+                         examples/walker/Generalized_Dirichlet.dox \
                          examples/rngtest/SmallCrush.dox \
                          . \
                          ../src \
