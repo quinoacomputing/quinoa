@@ -144,17 +144,17 @@ endif()
 # Set Boost's default build type
 string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
-# Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
-include(get_compiler_flags)
-get_compiler_flags()
-
 # Set compiler flags for use of libc++ (If nothing is given, do nothing; gnu,
 # intel, and clang will use libstdc++ by default).
 if(LIBCXX_CPP)
-  set(CXXFLAGS_LIBCPP "-stdlib=libc++")
-  set(CXXFLAGS_LIBCPPABI "-lc++abi")
-  set(CXXFLAGS "${CXXFLAGS} ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}")
+   # Use libc++ (http://libcxx.llvm.org)
+   # Use libc++abi (http://libcxxabi.llvm.org)
+   set(CXXFLAGS "${CXXFLAGS} -stdlib=libc++ -lc++abi")
 endif()
+
+# Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
+include(get_compiler_flags)
+get_compiler_flags()
 
 # Detect Boost, exclude if found, copy if not
 if (NOT NO_SYSTEM_BOOST)
@@ -234,7 +234,6 @@ ExternalProject_Add(
                 --build-shared
                 -j8
                 ${CXXFLAGS}
-                ${CXXFLAGS_LIBCPP} ${CXXFLAGS_LIBCPPABI}
   INSTALL_COMMAND ""
   LOG_DOWNLOAD 1
   LOG_CONFIGURE 1
