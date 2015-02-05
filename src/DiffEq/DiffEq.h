@@ -100,7 +100,7 @@ class DiffEq {
     template< typename T >
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
-      Concept* copy() const { return new Model( *this ); }
+      Concept* copy() const override { return new Model( *this ); }
       void initialize( tk::ParProps& particles, const tk::Statistics& stat )
         override { data.initialize( particles, stat ); }
       void advance( tk::ParProps& particles, int stream, tk::real dt ) const

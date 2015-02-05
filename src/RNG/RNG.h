@@ -85,7 +85,7 @@ class RNG {
     template< typename T >
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
-      Concept* copy() const { return new Model( *this ); }
+      Concept* copy() const override { return new Model( *this ); }
       void uniform( int stream, int num, double* r ) const override
       { data.uniform( stream, num, r ); }
       void gaussian( int stream, int num, double* r ) const override
