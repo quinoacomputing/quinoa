@@ -141,12 +141,14 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
   # See all template error messages
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-backtrace-limit=0")
 
   # Don't warn on variable-length arrays
   add_compiler_flag("-Wno-vla-extension")
   # Don't warn on defined but unused functions
   add_compiler_flag("-Wno-unused-function")
+  # Dont' warn on unused local typedef
+  add_compiler_flag("-Wno-unused-local-typedef")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
@@ -235,9 +237,8 @@ message(STATUS "Charm++ module extra linker flags: ${PARTOF_FLAGS}")
 # default thus does not require anything special.)
 if(LIBCXX_CPP)
    # Use libc++ (http://libcxx.llvm.org)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
    # Use libc++abi (http://libcxxabi.llvm.org)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lc++abi")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 
 # Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
