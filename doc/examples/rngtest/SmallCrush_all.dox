@@ -1,0 +1,691 @@
+/*!
+  \page      rngtest_example_smallcrush_all RNGTest: Test all available MKL and RNGSSE RNGs with SmallCrush
+  \tableofcontents
+
+This example runs [rngtest](rngtest_doc.html) to subject all currently available
+MKL and RNGSSE random number generators to TestU01's SmallCrush battery.
+
+\section rngtest_example_smallcrush_all_control Control file
+
+\code{.py}
+title "Test all available RNGs"
+
+smallcrush
+
+  # Use the default configuration for all RNGs
+
+  rngsse_gm19 end
+  rngsse_gm29 end
+  rngsse_gm31 end
+  rngsse_gm55 end
+  rngsse_gm61 end
+  rngsse_gq58.1 end
+  rngsse_gq58.3 end
+  rngsse_gq58.4 end
+  rngsse_mt19937 end
+  rngsse_lfsr113 end
+  rngsse_mrg32k3a end
+
+  mkl_mcg31 end
+  mkl_r250 end
+  mkl_mrg32k3a end
+  mkl_mcg59 end
+  mkl_wh end
+  mkl_mt19937 end
+  mkl_mt2203 end
+  mkl_sfmt19937 end
+  mkl_sobol end
+  mkl_niederr end
+  mkl_nondeterm end
+
+end
+\endcode
+
+\section rngtest_example_smallcrush_all_run Example run on 8 CPUs
+\code{.py}
+./charmrun +p8 Main/rngtest -v -c ../../tmp/all.q
+\endcode
+
+\section rngtest_example_smallcrush_all_output Output
+\verbatim
+Running on 8 processors:  Main/rngtest -v -c ../../tmp/all.q
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/rngtest -v -c ../../tmp/all.q
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 8
+Converse/Charm++ Commit ID: e0bb794
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.003 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.     __________ _______    __________________
+   .;@+@';;;;;;' \______   \\      \  /  _____\__    _______   ______/  |_
+    `     '#''@`  |       _//   |   \/   \  ___ |    |_/ __ \ /  ___\   __\
+                  |    |   /    |    \    \_\  \|    |\  ___/ \___ \ |  |
+                  |____|_  \____|__  /\______  /|____| \___  /____  >|__|
+                         \/        \/        \/            \/     \/         
+
+                                 < ENVIRONMENT >                                
+                                 ------ o ------                          
+
+ * Build environment:
+ --------------------
+     Hostname                       : karman
+     Executable                     : rngtest
+     Version                        : 0.1
+     Release                        : LA-CC-XX-XXX
+     Revision                       : e0bb79490a120999f165452e62bb1f6ccf5e6333
+     CMake build type               : Release
+     Asserts                        : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     Exception trace                : off (turn on: CMAKE_BUILD_TYPE=DEBUG)
+     MPI C++ wrapper                : /opt/openmpi/1.8/intel/15.0.1/bin/mpicxx
+     Underlying C++ compiler        : /opt/intel/composer_xe_2015.1.133/bin/intel64/icpc
+     Build date                     : Wed Feb  4 14:35:30 MST 2015
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Wed Feb  4 16:30:17 2015
+     Work directory                 : /home/jbakosi/code/quinoa/build/intel
+     Executable (rel. to work dir)  : Main/rngtest
+     Command line arguments         : '-v -c ../../tmp/all.q'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : ../../tmp/all.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >                                  
+                                   ---- o ----                            
+
+ * Registered batteries:
+ -----------------------
+     SmallCrush                    
+     Crush                         
+     BigCrush                      
+
+
+                                   < PROBLEM >                                  
+                                   ---- o ----                            
+
+ * Title: Test all available RNGs
+ --------------------------------
+
+ * RNG battery: SmallCrush (10 tests, 15 stats)
+ ----------------------------------------------
+     Birthday Spacings             
+     Hamming Independence          
+     Weight Distribution           
+     Simplified Poker              
+     Matrix Rank                   
+     Gap                           
+     Collision                     
+     Coupon Collector              
+     Maximum-of-t                  
+     Maximum-of-t Anderson-Darling 
+     Random Walk 1 Stat H          
+     Random Walk 1 Stat M          
+     Random Walk 1 Stat J          
+     Random Walk 1 Stat R          
+     Random Walk 1 Stat C          
+
+ * RNGs tested (22):
+ -------------------
+   < MKL MCG311 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL R250 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL MRG32K3A >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL MCG59 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL WH >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL MT19937 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL MT2203 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL SFMT19937 >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL SOBOL >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL NIEDERR >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < MKL NONDETERM >
+     seed                           : 0
+     uniform method                 : standard
+     Gaussian method                : Box-Muller
+   < RNGSSE GM19 >
+     seed                           : 0
+   < RNGSSE GM29 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GM31 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GM55 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GM61 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GQ58.1 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GQ58.3 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE GQ58.4 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE MT19937 >
+     seed                           : 0
+   < RNGSSE LSFR113 >
+     seed                           : 0
+     sequence length                : short
+   < RNGSSE MRG32K3A >
+     seed                           : 0
+
+
+                                 < SMALLCRUSH >                                 
+                                 ------ o ------                          
+
+ * Statistics computed (330 stats from 220 tests):
+ -------------------------------------------------
+     Legend: [done/total/failed] Test, RNG : p-value
+     (eps  means a value < 1.0e-300)
+     (eps1 means a value < 1.0e-15)
+
+     [1/220/0] Birthday Spacings, RNGSSE GM19                          : pass
+     [2/220/0] Matrix Rank, RNGSSE GM19                                : pass
+     [3/220/0] Collision, RNGSSE GM19                                  : pass
+     [4/220/0] Maximum-of-t, RNGSSE GM29                               : pass
+     [4/220/0] Maximum-of-t Anderson-Darling                           : pass
+     [5/220/0] Birthday Spacings, RNGSSE GM29                          : pass
+     [6/220/0] Simplified Poker, RNGSSE GM19                           : pass
+     [7/220/0] Random Walk 1 Stat H, RNGSSE GM31                       : pass
+     [7/220/0] Random Walk 1 Stat M                                    : pass
+     [7/220/0] Random Walk 1 Stat J                                    : pass
+     [7/220/0] Random Walk 1 Stat R                                    : pass
+     [7/220/0] Random Walk 1 Stat C                                    : pass
+     [8/220/0] Maximum-of-t, RNGSSE GM19                               : pass
+     [8/220/0] Maximum-of-t Anderson-Darling                           : pass
+     [9/220/0] Collision, RNGSSE GM29                                  : pass
+     [10/220/0] Hamming Independence, RNGSSE GM19                      : pass
+     [11/220/0] Simplified Poker, RNGSSE GM55                          : pass
+     [12/220/0] Birthday Spacings, RNGSSE GM31                         : pass
+     [13/220/0] Weight Distribution, RNGSSE GM29                       : pass
+     [14/220/0] Weight Distribution, RNGSSE GM19                       : pass
+     [15/220/0] Gap, RNGSSE GM19                                       : pass
+     [16/220/0] Coupon Collector, RNGSSE GM29                          : pass
+     [17/220/0] Coupon Collector, RNGSSE GM19                          : pass
+     [18/220/0] Gap, RNGSSE GM29                                       : pass
+     [19/220/0] Random Walk 1 Stat H, RNGSSE GM29                      : pass
+     [19/220/0] Random Walk 1 Stat M                                   : pass
+     [19/220/0] Random Walk 1 Stat J                                   : pass
+     [19/220/0] Random Walk 1 Stat R                                   : pass
+     [19/220/0] Random Walk 1 Stat C                                   : pass
+     [20/220/0] Random Walk 1 Stat H, RNGSSE GM19                      : pass
+     [20/220/0] Random Walk 1 Stat M                                   : pass
+     [20/220/0] Random Walk 1 Stat J                                   : pass
+     [20/220/0] Random Walk 1 Stat R                                   : pass
+     [20/220/0] Random Walk 1 Stat C                                   : pass
+     [21/220/0] Collision, RNGSSE GM31                                 : pass
+     [22/220/0] Simplified Poker, RNGSSE GM31                          : pass
+     [23/220/0] Gap, RNGSSE GM31                                       : pass
+     [24/220/0] Hamming Independence, RNGSSE GM29                      : pass
+     [25/220/0] Simplified Poker, RNGSSE GM29                          : pass
+     [26/220/0] Hamming Independence, RNGSSE GQ58.1                    : pass
+     [27/220/0] Maximum-of-t, RNGSSE GM31                              : pass
+     [27/220/0] Maximum-of-t Anderson-Darling                          : pass
+     [28/220/0] Matrix Rank, RNGSSE GM29                               : pass
+     [29/220/0] Random Walk 1 Stat H, RNGSSE GQ58.4                    : pass
+     [29/220/0] Random Walk 1 Stat M                                   : pass
+     [29/220/0] Random Walk 1 Stat J                                   : pass
+     [29/220/0] Random Walk 1 Stat R                                   : pass
+     [29/220/0] Random Walk 1 Stat C                                   : pass
+     [30/220/0] Collision, RNGSSE GM55                                 : pass
+     [31/220/0] Weight Distribution, RNGSSE GM55                       : pass
+     [32/220/0] Gap, RNGSSE GM55                                       : pass
+     [33/220/0] Hamming Independence, RNGSSE GM55                      : pass
+     [34/220/0] Hamming Independence, RNGSSE GM31                      : pass
+     [35/220/0] Coupon Collector, RNGSSE GM31                          : pass
+     [36/220/0] Coupon Collector, MKL MCG311                           : pass
+     [37/220/0] Weight Distribution, RNGSSE GM31                       : pass
+     [38/220/0] Weight Distribution, MKL R250                          : pass
+     [39/220/0] Matrix Rank, RNGSSE GM31                               : pass
+     [40/220/0] Coupon Collector, RNGSSE GM61                          : pass
+     [41/220/0] Hamming Independence, RNGSSE MT19937                   : pass
+     [42/220/0] Matrix Rank, RNGSSE GM55                               : pass
+     [43/220/0] Coupon Collector, RNGSSE GM55                          : pass
+     [44/220/0] Collision, MKL MRG32K3A                                : pass
+     [45/220/0] Birthday Spacings, RNGSSE GM55                         : pass
+     [46/220/0] Random Walk 1 Stat H, RNGSSE MT19937                   : pass
+     [46/220/0] Random Walk 1 Stat M                                   : pass
+     [46/220/0] Random Walk 1 Stat J                                   : pass
+     [46/220/0] Random Walk 1 Stat R                                   : pass
+     [46/220/0] Random Walk 1 Stat C                                   : pass
+     [47/220/0] Random Walk 1 Stat H, RNGSSE GM55                      : pass
+     [47/220/0] Random Walk 1 Stat M                                   : pass
+     [47/220/0] Random Walk 1 Stat J                                   : pass
+     [47/220/0] Random Walk 1 Stat R                                   : pass
+     [47/220/0] Random Walk 1 Stat C                                   : pass
+     [48/220/0] Maximum-of-t, RNGSSE GM55                              : pass
+     [48/220/0] Maximum-of-t Anderson-Darling                          : pass
+     [49/220/0] Birthday Spacings, MKL WH                              : pass
+     [50/220/0] Simplified Poker, RNGSSE GM61                          : pass
+     [51/220/0] Coupon Collector, RNGSSE LSFR113                       : pass
+     [52/220/0] Birthday Spacings, RNGSSE GM61                         : pass
+     [53/220/1] Random Walk 1 Stat H, RNGSSE GM61                      : pass
+     [53/220/2] Random Walk 1 Stat M                                   : fail, p-value = 0.000817428
+     [53/220/3] Random Walk 1 Stat J                                   : pass
+     [53/220/4] Random Walk 1 Stat R                                   : pass
+     [53/220/5] Random Walk 1 Stat C                                   : pass
+     [54/220/0] Birthday Spacings, MKL MT19937                         : pass
+     [55/220/0] Matrix Rank, RNGSSE MRG32K3A                           : pass
+     [56/220/1] Birthday Spacings, MKL MCG311                          : fail, p-value = eps
+     [57/220/5] Matrix Rank, RNGSSE GM61                               : pass
+     [58/220/5] Collision, RNGSSE GM61                                 : pass
+     [59/220/0] Birthday Spacings, RNGSSE GQ58.4                       : pass
+     [60/220/0] Gap, MKL SFMT19937                                     : pass
+     [61/220/1] Weight Distribution, MKL MCG311                        : pass
+     [62/220/0] Matrix Rank, RNGSSE GQ58.4                             : pass
+     [63/220/1] Gap, MKL SOBOL                                         : fail, p-value = eps
+     [64/220/1] Collision, MKL NIEDERR                                 : fail, p-value = eps
+     [65/220/0] Weight Distribution, MKL MRG32K3A                      : pass
+     [66/220/0] Weight Distribution, RNGSSE MT19937                    : pass
+     [67/220/0] Birthday Spacings, RNGSSE GQ58.1                       : pass
+     [68/220/5] Maximum-of-t, RNGSSE GM61                              : pass
+     [68/220/5] Maximum-of-t Anderson-Darling                          : pass
+     [69/220/0] Maximum-of-t, MKL MCG59                                : pass
+     [69/220/0] Maximum-of-t Anderson-Darling                          : pass
+     [70/220/0] Simplified Poker, RNGSSE GQ58.1                        : pass
+     [71/220/0] Gap, RNGSSE LSFR113                                    : pass
+     [72/220/0] Matrix Rank, RNGSSE GQ58.1                             : pass
+     [73/220/0] Simplified Poker, RNGSSE LSFR113                       : pass
+     [74/220/0] Birthday Spacings, RNGSSE MT19937                      : pass
+     [75/220/0] Gap, MKL WH                                            : pass
+     [76/220/0] Hamming Independence, RNGSSE LSFR113                   : pass
+     [77/220/0] Gap, RNGSSE MT19937                                    : pass
+     [78/220/0] Random Walk 1 Stat H, RNGSSE GQ58.1                    : pass
+     [78/220/0] Random Walk 1 Stat M                                   : pass
+     [78/220/0] Random Walk 1 Stat J                                   : pass
+     [78/220/0] Random Walk 1 Stat R                                   : pass
+     [78/220/0] Random Walk 1 Stat C                                   : pass
+     [79/220/0] Maximum-of-t, MKL WH                                   : pass
+     [79/220/0] Maximum-of-t Anderson-Darling                          : pass
+     [80/220/0] Maximum-of-t, RNGSSE GQ58.1                            : pass
+     [80/220/0] Maximum-of-t Anderson-Darling                          : pass
+     [81/220/0] Random Walk 1 Stat H, RNGSSE MRG32K3A                  : pass
+     [81/220/0] Random Walk 1 Stat M                                   : pass
+     [81/220/0] Random Walk 1 Stat J                                   : pass
+     [81/220/0] Random Walk 1 Stat R                                   : pass
+     [81/220/0] Random Walk 1 Stat C                                   : pass
+     [82/220/0] Matrix Rank, RNGSSE MT19937                            : pass
+     [83/220/0] Matrix Rank, MKL WH                                    : pass
+     [84/220/0] Collision, RNGSSE MRG32K3A                             : pass
+     [85/220/1] Gap, MKL R250                                          : fail, p-value = 3.98015e-13
+     [86/220/0] Coupon Collector, RNGSSE MRG32K3A                      : pass
+     [87/220/0] Coupon Collector, MKL MT19937                          : pass
+     [88/220/5] Hamming Independence, RNGSSE GM61                      : pass
+     [89/220/0] Hamming Independence, RNGSSE MRG32K3A                  : pass
+     [90/220/0] Gap, MKL MRG32K3A                                      : pass
+     [91/220/1] Simplified Poker, MKL MCG311                           : pass
+     [92/220/5] Gap, RNGSSE GM61                                       : pass
+     [93/220/0] Gap, RNGSSE GQ58.3                                     : pass
+     [94/220/2] Weight Distribution, MKL SOBOL                         : fail, p-value = eps
+     [95/220/0] Coupon Collector, MKL MRG32K3A                         : pass
+     [96/220/1] Maximum-of-t, MKL MCG311                               : pass
+     [96/220/1] Maximum-of-t Anderson-Darling                          : pass
+     [97/220/1] Matrix Rank, MKL MCG311                                : pass
+     [98/220/2] Coupon Collector, MKL NIEDERR                          : fail, p-value = eps
+     [99/220/0] Random Walk 1 Stat H, MKL MRG32K3A                     : pass
+     [99/220/0] Random Walk 1 Stat M                                   : pass
+     [99/220/0] Random Walk 1 Stat J                                   : pass
+     [99/220/0] Random Walk 1 Stat R                                   : pass
+     [99/220/0] Random Walk 1 Stat C                                   : pass
+     [100/220/1] Collision, MKL R250                                   : pass
+     [101/220/0] Hamming Independence, RNGSSE GQ58.3                   : pass
+     [102/220/7] Random Walk 1 Stat H, MKL NIEDERR                     : fail, p-value = eps
+     [102/220/12] Random Walk 1 Stat M                                 : fail, p-value = eps
+     [102/220/17] Random Walk 1 Stat J                                 : fail, p-value = eps
+     [102/220/22] Random Walk 1 Stat R                                 : fail, p-value = eps
+     [102/220/27] Random Walk 1 Stat C                                 : fail, p-value = eps
+     [103/220/0] Coupon Collector, RNGSSE GQ58.1                       : pass
+     [104/220/0] Weight Distribution, RNGSSE GQ58.1                    : pass
+     [105/220/0] Matrix Rank, MKL MRG32K3A                             : pass
+     [106/220/0] Gap, MKL MCG59                                        : pass
+     [107/220/0] Collision, RNGSSE GQ58.3                              : pass
+     [108/220/0] Hamming Independence, MKL MRG32K3A                    : pass
+     [109/220/0] Birthday Spacings, RNGSSE GQ58.3                      : pass
+     [110/220/0] Simplified Poker, MKL MCG59                           : pass
+     [111/220/0] Simplified Poker, RNGSSE GQ58.4                       : pass
+     [112/220/1] Coupon Collector, MKL NONDETERM                       : fail, p-value = eps
+     [113/220/0] Maximum-of-t, RNGSSE GQ58.3                           : pass
+     [113/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [114/220/0] Coupon Collector, MKL MCG59                           : pass
+     [115/220/0] Collision, MKL WH                                     : pass
+     [116/220/0] Random Walk 1 Stat H, RNGSSE GQ58.3                   : pass
+     [116/220/0] Random Walk 1 Stat M                                  : pass
+     [116/220/0] Random Walk 1 Stat J                                  : pass
+     [116/220/0] Random Walk 1 Stat R                                  : pass
+     [116/220/0] Random Walk 1 Stat C                                  : pass
+     [117/220/0] Coupon Collector, RNGSSE GQ58.4                       : pass
+     [118/220/0] Coupon Collector, MKL WH                              : pass
+     [119/220/0] Simplified Poker, MKL WH                              : pass
+     [120/220/0] Hamming Independence, RNGSSE GQ58.4                   : pass
+     [121/220/0] Birthday Spacings, RNGSSE LSFR113                     : pass
+     [122/220/0] Maximum-of-t, RNGSSE GQ58.4                           : pass
+     [122/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [123/220/0] Collision, MKL MT19937                                : pass
+     [124/220/0] Simplified Poker, RNGSSE MT19937                      : pass
+     [125/220/0] Weight Distribution, MKL WH                           : pass
+     [126/220/0] Weight Distribution, RNGSSE LSFR113                   : pass
+     [127/220/0] Gap, MKL MT19937                                      : pass
+     [128/220/0] Coupon Collector, RNGSSE MT19937                      : pass
+     [129/220/0] Matrix Rank, RNGSSE LSFR113                           : pass
+     [130/220/0] Matrix Rank, MKL MT19937                              : pass
+     [131/220/0] Simplified Poker, RNGSSE MRG32K3A                     : pass
+     [132/220/0] Birthday Spacings, RNGSSE MRG32K3A                    : pass
+     [133/220/0] Weight Distribution, RNGSSE MRG32K3A                  : pass
+     [134/220/0] Weight Distribution, RNGSSE GQ58.4                    : pass
+     [135/220/0] Hamming Independence, MKL WH                          : pass
+     [136/220/0] Matrix Rank, MKL MT2203                               : pass
+     [137/220/1] Birthday Spacings, MKL R250                           : pass
+     [138/220/1] Gap, MKL MCG311                                       : pass
+     [139/220/0] Maximum-of-t, RNGSSE MT19937                          : pass
+     [139/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [140/220/1] Coupon Collector, MKL R250                            : pass
+     [141/220/0] Maximum-of-t, RNGSSE LSFR113                          : pass
+     [141/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [142/220/0] Weight Distribution, MKL MT19937                      : pass
+     [143/220/0] Hamming Independence, MKL MT2203                      : pass
+     [144/220/1] Maximum-of-t, MKL R250                                : pass
+     [144/220/1] Maximum-of-t Anderson-Darling                         : pass
+     [145/220/1] Hamming Independence, MKL MCG311                      : pass
+     [146/220/0] Gap, RNGSSE MRG32K3A                                  : pass
+     [147/220/0] Coupon Collector, MKL SFMT19937                       : pass
+     [148/220/1] Matrix Rank, MKL R250                                 : pass
+     [149/220/1] Random Walk 1 Stat H, MKL MCG311                      : pass
+     [149/220/1] Random Walk 1 Stat M                                  : pass
+     [149/220/1] Random Walk 1 Stat J                                  : pass
+     [149/220/1] Random Walk 1 Stat R                                  : pass
+     [149/220/1] Random Walk 1 Stat C                                  : pass
+     [150/220/1] Collision, MKL MCG311                                 : pass
+     [151/220/0] Hamming Independence, MKL MT19937                     : pass
+     [152/220/28] Birthday Spacings, MKL NIEDERR                       : fail, p-value = eps
+     [153/220/5] Weight Distribution, RNGSSE GM61                      : pass
+     [154/220/0] Weight Distribution, MKL SFMT19937                    : pass
+     [155/220/1] Hamming Independence, MKL R250                        : pass
+     [156/220/0] Birthday Spacings, MKL MRG32K3A                       : pass
+     [157/220/0] Matrix Rank, MKL MCG59                                : pass
+     [158/220/0] Gap, MKL MT2203                                       : pass
+     [159/220/29] Weight Distribution, MKL NIEDERR                     : fail, p-value = eps
+     [160/220/0] Collision, RNGSSE GQ58.1                              : pass
+     [161/220/31] Maximum-of-t, MKL NIEDERR                            : fail, p-value = eps
+     [161/220/33] Maximum-of-t Anderson-Darling                        : fail, p-value = 1 - eps1
+     [162/220/1] Random Walk 1 Stat H, MKL R250                        : pass
+     [162/220/1] Random Walk 1 Stat M                                  : pass
+     [162/220/1] Random Walk 1 Stat J                                  : pass
+     [162/220/1] Random Walk 1 Stat R                                  : pass
+     [162/220/1] Random Walk 1 Stat C                                  : pass
+     [163/220/0] Random Walk 1 Stat H, MKL MT19937                     : pass
+     [163/220/0] Random Walk 1 Stat M                                  : pass
+     [163/220/0] Random Walk 1 Stat J                                  : pass
+     [163/220/0] Random Walk 1 Stat R                                  : pass
+     [163/220/0] Random Walk 1 Stat C                                  : pass
+     [164/220/34] Matrix Rank, MKL NIEDERR                             : fail, p-value = eps
+     [165/220/0] Simplified Poker, MKL MRG32K3A                        : pass
+     [166/220/0] Coupon Collector, MKL MT2203                          : pass
+     [167/220/0] Birthday Spacings, MKL MT2203                         : pass
+     [168/220/35] Hamming Independence, MKL NIEDERR                    : fail, p-value = eps
+     [169/220/2] Simplified Poker, MKL NONDETERM                       : fail, p-value = eps
+     [170/220/0] Maximum-of-t, MKL MRG32K3A                            : pass
+     [170/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [171/220/0] Random Walk 1 Stat H, MKL MT2203                      : pass
+     [171/220/0] Random Walk 1 Stat M                                  : pass
+     [171/220/0] Random Walk 1 Stat J                                  : pass
+     [171/220/0] Random Walk 1 Stat R                                  : pass
+     [171/220/0] Random Walk 1 Stat C                                  : pass
+     [172/220/0] Birthday Spacings, MKL SFMT19937                      : pass
+     [173/220/0] Simplified Poker, MKL MT19937                         : pass
+     [174/220/0] Collision, MKL SFMT19937                              : pass
+     [175/220/0] Maximum-of-t, MKL SFMT19937                           : pass
+     [175/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [176/220/0] Maximum-of-t, MKL MT19937                             : pass
+     [176/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [177/220/0] Hamming Independence, MKL SFMT19937                   : pass
+     [178/220/3] Birthday Spacings, MKL SOBOL                          : fail, p-value = eps
+     [179/220/3] Weight Distribution, MKL NONDETERM                    : fail, p-value = eps
+     [180/220/0] Simplified Poker, MKL MT2203                          : pass
+     [181/220/4] Gap, MKL NONDETERM                                    : fail, p-value = eps
+     [182/220/1] Maximum-of-t, MKL MT2203                              : fail, p-value = 0.000243569
+     [182/220/2] Maximum-of-t Anderson-Darling                         : pass
+     [183/220/5] Matrix Rank, MKL NONDETERM                            : fail, p-value = eps
+     [184/220/4] Coupon Collector, MKL SOBOL                           : fail, p-value = eps
+     [185/220/0] Gap, RNGSSE GQ58.1                                    : pass
+     [186/220/2] Weight Distribution, MKL MT2203                       : pass
+     [187/220/10] Random Walk 1 Stat H, MKL NONDETERM                  : fail, p-value = eps
+     [187/220/15] Random Walk 1 Stat M                                 : fail, p-value = eps
+     [187/220/20] Random Walk 1 Stat J                                 : fail, p-value = eps
+     [187/220/25] Random Walk 1 Stat R                                 : fail, p-value = eps
+     [187/220/30] Random Walk 1 Stat C                                 : fail, p-value = eps
+     [188/220/6] Maximum-of-t, MKL SOBOL                               : fail, p-value = eps
+     [188/220/8] Maximum-of-t Anderson-Darling                         : fail, p-value = 1 - eps1
+     [189/220/0] Random Walk 1 Stat H, MKL SFMT19937                   : pass
+     [189/220/0] Random Walk 1 Stat M                                  : pass
+     [189/220/0] Random Walk 1 Stat J                                  : pass
+     [189/220/0] Random Walk 1 Stat R                                  : pass
+     [189/220/0] Random Walk 1 Stat C                                  : pass
+     [190/220/31] Collision, MKL NONDETERM                             : fail, p-value = eps
+     [191/220/0] Simplified Poker, RNGSSE GQ58.3                       : pass
+     [192/220/33] Maximum-of-t, MKL NONDETERM                          : fail, p-value = eps
+     [192/220/35] Maximum-of-t Anderson-Darling                        : fail, p-value = 1 - eps1
+     [193/220/9] Simplified Poker, MKL SOBOL                           : fail, p-value = eps
+     [194/220/10] Matrix Rank, MKL SOBOL                               : fail, p-value = eps
+     [195/220/0] Coupon Collector, RNGSSE GQ58.3                       : pass
+     [196/220/11] Hamming Independence, MKL SOBOL                      : fail, p-value = eps
+     [197/220/16] Random Walk 1 Stat H, MKL SOBOL                      : fail, p-value = eps
+     [197/220/21] Random Walk 1 Stat M                                 : fail, p-value = eps
+     [197/220/26] Random Walk 1 Stat J                                 : fail, p-value = eps
+     [197/220/31] Random Walk 1 Stat R                                 : fail, p-value = eps
+     [197/220/36] Random Walk 1 Stat C                                 : fail, p-value = eps
+     [198/220/36] Gap, MKL NIEDERR                                     : fail, p-value = eps
+     [199/220/37] Simplified Poker, MKL NIEDERR                        : fail, p-value = eps
+     [200/220/36] Birthday Spacings, MKL NONDETERM                     : fail, p-value = eps
+     [201/220/0] Weight Distribution, RNGSSE GQ58.3                    : pass
+     [202/220/0] Matrix Rank, RNGSSE GQ58.3                            : pass
+     [203/220/37] Hamming Independence, MKL NONDETERM                  : fail, p-value = eps
+     [204/220/0] Collision, RNGSSE GQ58.4                              : pass
+     [205/220/0] Gap, RNGSSE GQ58.4                                    : pass
+     [206/220/0] Collision, RNGSSE MT19937                             : pass
+     [207/220/0] Collision, RNGSSE LSFR113                             : pass
+     [208/220/0] Random Walk 1 Stat H, RNGSSE LSFR113                  : pass
+     [208/220/0] Random Walk 1 Stat M                                  : pass
+     [208/220/0] Random Walk 1 Stat J                                  : pass
+     [208/220/0] Random Walk 1 Stat R                                  : pass
+     [208/220/0] Random Walk 1 Stat C                                  : pass
+     [209/220/0] Maximum-of-t, RNGSSE MRG32K3A                         : pass
+     [209/220/0] Maximum-of-t Anderson-Darling                         : pass
+     [210/220/1] Simplified Poker, MKL R250                            : pass
+     [211/220/1] Birthday Spacings, MKL MCG59                          : fail, p-value = eps
+     [212/220/1] Collision, MKL MCG59                                  : pass
+     [213/220/1] Weight Distribution, MKL MCG59                        : pass
+     [214/220/1] Hamming Independence, MKL MCG59                       : pass
+     [215/220/1] Random Walk 1 Stat H, MKL MCG59                       : pass
+     [215/220/1] Random Walk 1 Stat M                                  : pass
+     [215/220/1] Random Walk 1 Stat J                                  : pass
+     [215/220/1] Random Walk 1 Stat R                                  : pass
+     [215/220/1] Random Walk 1 Stat C                                  : pass
+     [216/220/0] Random Walk 1 Stat H, MKL WH                          : pass
+     [216/220/0] Random Walk 1 Stat M                                  : pass
+     [216/220/0] Random Walk 1 Stat J                                  : pass
+     [216/220/0] Random Walk 1 Stat R                                  : pass
+     [216/220/0] Random Walk 1 Stat C                                  : pass
+     [217/220/2] Collision, MKL MT2203                                 : pass
+     [218/220/0] Simplified Poker, MKL SFMT19937                       : pass
+     [219/220/0] Matrix Rank, MKL SFMT19937                            : pass
+     [220/220/37] Collision, MKL SOBOL                                 : fail, p-value = eps
+
+ * Failed statistics (50/330):
+ -----------------------------
+     The following tests gave p-values outside [0.001, 0.999]
+     List groupped by RNG, in the order given in the input file
+     Legend: Test, RNG : p-value
+     (eps  means a value < 1.0e-300)
+     (eps1 means a value < 1.0e-15)
+
+     Random Walk 1 Stat M, RNGSSE GM61                                 : fail, p-value = 0.000817428
+     Birthday Spacings, MKL MCG311                                     : fail, p-value = eps
+     Gap, MKL SOBOL                                                    : fail, p-value = eps
+     Collision, MKL NIEDERR                                            : fail, p-value = eps
+     Gap, MKL R250                                                     : fail, p-value = 3.98015e-13
+     Weight Distribution, MKL SOBOL                                    : fail, p-value = eps
+     Coupon Collector, MKL NIEDERR                                     : fail, p-value = eps
+     Random Walk 1 Stat H                                              : fail, p-value = eps
+     Random Walk 1 Stat M                                              : fail, p-value = eps
+     Random Walk 1 Stat J                                              : fail, p-value = eps
+     Random Walk 1 Stat R                                              : fail, p-value = eps
+     Random Walk 1 Stat C                                              : fail, p-value = eps
+     Coupon Collector, MKL NONDETERM                                   : fail, p-value = eps
+     Birthday Spacings, MKL NIEDERR                                    : fail, p-value = eps
+     Weight Distribution                                               : fail, p-value = eps
+     Maximum-of-t                                                      : fail, p-value = eps
+     Maximum-of-t Anderson-Darling                                     : fail, p-value = 1 - eps1
+     Matrix Rank                                                       : fail, p-value = eps
+     Hamming Independence                                              : fail, p-value = eps
+     Simplified Poker, MKL NONDETERM                                   : fail, p-value = eps
+     Birthday Spacings, MKL SOBOL                                      : fail, p-value = eps
+     Weight Distribution, MKL NONDETERM                                : fail, p-value = eps
+     Gap                                                               : fail, p-value = eps
+     Maximum-of-t, MKL MT2203                                          : fail, p-value = 0.000243569
+     Matrix Rank, MKL NONDETERM                                        : fail, p-value = eps
+     Coupon Collector, MKL SOBOL                                       : fail, p-value = eps
+     Random Walk 1 Stat H, MKL NONDETERM                               : fail, p-value = eps
+     Random Walk 1 Stat M                                              : fail, p-value = eps
+     Random Walk 1 Stat J                                              : fail, p-value = eps
+     Random Walk 1 Stat R                                              : fail, p-value = eps
+     Random Walk 1 Stat C                                              : fail, p-value = eps
+     Maximum-of-t, MKL SOBOL                                           : fail, p-value = eps
+     Maximum-of-t Anderson-Darling                                     : fail, p-value = 1 - eps1
+     Collision, MKL NONDETERM                                          : fail, p-value = eps
+     Maximum-of-t                                                      : fail, p-value = eps
+     Maximum-of-t Anderson-Darling                                     : fail, p-value = 1 - eps1
+     Simplified Poker, MKL SOBOL                                       : fail, p-value = eps
+     Matrix Rank                                                       : fail, p-value = eps
+     Hamming Independence                                              : fail, p-value = eps
+     Random Walk 1 Stat H                                              : fail, p-value = eps
+     Random Walk 1 Stat M                                              : fail, p-value = eps
+     Random Walk 1 Stat J                                              : fail, p-value = eps
+     Random Walk 1 Stat R                                              : fail, p-value = eps
+     Random Walk 1 Stat C                                              : fail, p-value = eps
+     Gap, MKL NIEDERR                                                  : fail, p-value = eps
+     Simplified Poker                                                  : fail, p-value = eps
+     Birthday Spacings, MKL NONDETERM                                  : fail, p-value = eps
+     Hamming Independence                                              : fail, p-value = eps
+     Birthday Spacings, MKL MCG59                                      : fail, p-value = eps
+     Collision, MKL SOBOL                                              : fail, p-value = eps
+
+ * Generator cost:
+ -----------------
+     Measured times in seconds in increasing order (low is good)
+
+     RNGSSE LSFR113                 : 13.1791  (1x)
+     RNGSSE MT19937                 : 13.8989  (1.05x)
+     RNGSSE MRG32K3A                : 15.3292  (1.16x)
+     MKL NIEDERR                    : 15.7153  (1.19x)
+     MKL MCG311                     : 17.635  (1.34x)
+     MKL MCG59                      : 18.1942  (1.38x)
+     MKL R250                       : 18.224  (1.38x)
+     MKL SOBOL                      : 19.5393  (1.48x)
+     MKL MT19937                    : 20.2027  (1.53x)
+     MKL MT2203                     : 20.2551  (1.54x)
+     MKL SFMT19937                  : 20.6292  (1.57x)
+     MKL MRG32K3A                   : 21.6722  (1.64x)
+     MKL NONDETERM                  : 24.9503  (1.89x)
+     MKL WH                         : 25.8128  (1.96x)
+     RNGSSE GM55                    : 27.3669  (2.08x)
+     RNGSSE GQ58.4                  : 30.3263  (2.3x)
+     RNGSSE GQ58.3                  : 34.6031  (2.63x)
+     RNGSSE GM31                    : 41.7149  (3.17x)
+     RNGSSE GM29                    : 44.3246  (3.36x)
+     RNGSSE GM19                    : 49.4592  (3.75x)
+     RNGSSE GQ58.1                  : 58.3996  (4.43x)
+     RNGSSE GM61                    : 112.715  (8.55x)
+
+ * Generator quality:
+ --------------------
+     Number of failed tests in increasing order (low is good)
+
+     MKL MRG32K3A                   : 0
+     MKL MT19937                    : 0
+     MKL SFMT19937                  : 0
+     MKL WH                         : 0
+     RNGSSE GM19                    : 0
+     RNGSSE GM29                    : 0
+     RNGSSE GM31                    : 0
+     RNGSSE GM55                    : 0
+     RNGSSE GQ58.1                  : 0
+     RNGSSE GQ58.3                  : 0
+     RNGSSE GQ58.4                  : 0
+     RNGSSE LSFR113                 : 0
+     RNGSSE MRG32K3A                : 0
+     RNGSSE MT19937                 : 0
+     MKL MCG311                     : 1
+     MKL MCG59                      : 1
+     MKL R250                       : 1
+     MKL MT2203                     : 2
+     RNGSSE GM61                    : 5
+     MKL SOBOL                      : 37
+     MKL NIEDERR                    : 37
+     MKL NONDETERM                  : 37
+
+ * Timers (h:m:s):
+ -----------------
+     Migration of global-scope data                                    : 0:0:0
+     Total runtime                                                     : 0:2:15
+
+
+[Partition 0][Node 0] End of program
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Wed 04 Feb 2015 04:41:58 PM MST
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/
