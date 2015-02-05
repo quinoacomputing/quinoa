@@ -9,10 +9,12 @@
 
 \section rngtest_examples RNGTest examples
   - \subpage rngtest_example_smallcrush
+  - \subpage rngtest_example_smallcrush_all
+  - \subpage rngtest_example_crush_all
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 04 Feb 2015 11:49:33 AM MST
+<em>Page last updated:</em> Thu 05 Feb 2015 04:15:21 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

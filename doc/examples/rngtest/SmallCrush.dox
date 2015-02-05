@@ -1,6 +1,9 @@
 /*!
-  \page      rngtest_example_smallcrush RNGTest: Testing a few RNGs with SmallCrush
+  \page      rngtest_example_smallcrush RNGTest: Test a few RNGs with SmallCrush
   \tableofcontents
+
+This example runs [rngtest](rngtest_doc.html) to subject a few selected random
+number generators to TestU01's SmallCrush battery.
 
 \section rngtest_example_smallcrush_control Control file
 
@@ -260,7 +263,7 @@ Charm++> cpu topology info is gathered in 0.002 seconds.
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 08:55:26 AM MST
+<em>Page last updated:</em> Wed 04 Feb 2015 02:02:43 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
