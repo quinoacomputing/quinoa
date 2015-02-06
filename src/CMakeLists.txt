@@ -241,10 +241,6 @@ if(LIBCXX_CPP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -lc++abi")
 endif()
 
-# Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
-include(get_compiler_flags)
-get_compiler_flags()
-
 # Set data layout for particle properties
 # Available options
 set(LAYOUT_VALUES "particle" "equation")
