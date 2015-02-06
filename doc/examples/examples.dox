@@ -6,6 +6,7 @@
   - \subpage walker_example_dirichlet
   - \subpage walker_example_gendir
   - \subpage walker_example_skewnormal
+  - \subpage walker_example_diagou
 
 \section rngtest_examples RNGTest examples
   - \subpage rngtest_example_smallcrush
@@ -14,7 +15,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 05 Feb 2015 04:15:21 PM MST
+<em>Page last updated:</em> Fri 06 Feb 2015 05:39:38 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
