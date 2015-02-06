@@ -98,6 +98,24 @@ div.image img[src="skew_pdf.svg"]{
   width:  50%;
 }
 
+div.image img[src="diagou_means.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="diagou_sec.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
+div.image img[src="diagou_pdf.svg"]{
+  height: auto;
+  float:  center;
+  width:  75%;
+}
+
 .title {
   font-size: 26px;
 }
