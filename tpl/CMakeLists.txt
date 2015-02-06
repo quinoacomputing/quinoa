@@ -153,6 +153,7 @@ if(LIBCXX_CPP)
 endif()
 
 # Get compiler flags (CFLAGS, CXXFLAGS, FFLAGS) independent of CMAKE_BUILD_TYPE
+# and echo flags that will be passed to all TPL builds
 include(get_compiler_flags)
 get_compiler_flags()
 
