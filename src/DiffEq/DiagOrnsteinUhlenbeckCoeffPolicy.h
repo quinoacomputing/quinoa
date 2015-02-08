@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:31:23 AM MST
+  \date      Sat 07 Feb 2015 07:45:00 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Diagonal Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the diagonal
@@ -73,22 +73,23 @@ class DiagOrnsteinUhlenbeckCoeffConst {
     //! Constructor: initialize coefficients
     DiagOrnsteinUhlenbeckCoeffConst(
       tk::ctr::ncomp_type ncomp,
-      const std::vector< kw::sde_sigma::info::expect::type >& sigma_,
+      const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
       const std::vector< kw::sde_theta::info::expect::type >& theta_,
       const std::vector< kw::sde_mu::info::expect::type >& mu_,
-      std::vector< kw::sde_sigma::info::expect::type >& sigma,
+      std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
       std::vector< kw::sde_theta::info::expect::type >& theta,
       std::vector< kw::sde_mu::info::expect::type >& mu )
     {
-      sigma = sigma_;
+      ErrChk( sigmasq_.size() == ncomp,
+       "Wrong number of diagonal Ornstein-Uhlenbeck SDE parameters 'sigmasq'");
+      ErrChk( theta_.size() == ncomp,
+       "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'theta'");
+      ErrChk( mu_.size() == ncomp,
+       "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'mu'");
+
+      sigmasq = sigmasq_;
       theta = theta_;
       mu = mu_;
-      ErrChk( sigma.size() == ncomp,
-          "Wrong number of diagonal Ornstein-Uhlenbeck SDE parameters 'sigma'");
-      ErrChk( theta.size() == ncomp,
-          "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'theta'");
-      ErrChk( mu.size() == ncomp,
-          "Wrong number of diagonal Ornstein_uhlenbeck SDE parameters 'mu'");
     }
 
     //! Coefficients policy type accessor

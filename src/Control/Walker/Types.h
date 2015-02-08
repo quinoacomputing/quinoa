@@ -110,8 +110,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
 //! Ornstein-Uhlenbeck parameters storage
 using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::sigma,       std::vector< std::vector<
-                      kw::sde_sigma::info::expect::type > >,
+  tag::sigmasq,     std::vector< std::vector<
+                      kw::sde_sigmasq::info::expect::type > >,
   tag::theta,       std::vector< std::vector<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
@@ -124,8 +124,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
 //! Diagonal Ornstein-Uhlenbeck parameters storage
 using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
-  tag::sigma,       std::vector< std::vector<
-                      kw::sde_sigma::info::expect::type > >,
+  tag::sigmasq,     std::vector< std::vector<
+                      kw::sde_sigmasq::info::expect::type > >,
   tag::theta,       std::vector< std::vector<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
@@ -140,8 +140,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::timescale,   std::vector< std::vector<
                       kw::sde_T::info::expect::type > >,
-  tag::sigma,       std::vector< std::vector<
-                      kw::sde_sigma::info::expect::type > >,
+  tag::sigmasq,     std::vector< std::vector<
+                      kw::sde_sigmasq::info::expect::type > >,
   tag::lambda,      std::vector< std::vector<
                       kw::sde_lambda::info::expect::type > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,

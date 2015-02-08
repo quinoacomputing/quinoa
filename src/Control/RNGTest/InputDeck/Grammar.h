@@ -93,7 +93,11 @@ namespace deck {
                                        store_option< ctr::Battery,
                                                      tag::selected,
                                                      tag::battery > >,
-                        tk::grm::block< Stack, use< kw::end >, rngs > > {};
+                        pegtl::sor<
+                          tk::grm::block< Stack, use< kw::end >, rngs >,
+                          pegtl::apply<
+                          tk::grm::error< Stack,
+                                          tk::grm::MsgKey::UNFINISHED > > > > {};
 
   //! \brief Match all batteries
   //! \author J. Bakosi

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormalCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 12:05:25 PM MST
+  \date      Sat 07 Feb 2015 07:30:37 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Skew-normal SDE coefficients policies
   \details   Skew-normal SDE coefficients policies
@@ -25,21 +25,22 @@ class SkewNormalCoeffConst {
     //! Constructor: initialize coefficients
     SkewNormalCoeffConst( tk::ctr::ncomp_type ncomp,
                           const std::vector< tk::real >& timescale_,
-                          const std::vector< tk::real >& sigma_,
+                          const std::vector< tk::real >& sigmasq_,
                           const std::vector< tk::real >& lambda_,
                           std::vector< tk::real >& timescale,
-                          std::vector< tk::real >& sigma,
+                          std::vector< tk::real >& sigmasq,
                           std::vector< tk::real >& lambda )
     {
+      ErrChk( timescale_.size() == ncomp,
+        "Wrong number of diagonal Skew-normal SDE parameters 'timescale'");
+      ErrChk( sigmasq_.size() == ncomp,
+        "Wrong number of diagonal Skew-normal SDE parameters 'sigmasq'");
+      ErrChk( lambda_.size() == ncomp,
+        "Wrong number of diagonal Skew-normal SDE parameters 'lambda'");
+
       timescale = timescale_;
-      sigma = sigma_;
+      sigmasq = sigmasq_;
       lambda = lambda_;
-      ErrChk( timescale.size() == ncomp,
-              "Wrong number of diagonal Skew-normal SDE parameters 'timescale'");
-      ErrChk( sigma.size() == ncomp,
-              "Wrong number of diagonal Skew-normal SDE parameters 'sigma'");
-      ErrChk( lambda.size() == ncomp,
-              "Wrong number of diagonal Skew-normal SDE parameters 'lambda'");
     }
 
     static tk::ctr::CoeffPolicyType type() noexcept

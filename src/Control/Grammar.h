@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 03:35:20 PM MST
+  \date      Sat 07 Feb 2015 07:54:31 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -96,11 +96,13 @@ namespace grm {
     PDFEXISTS,          //!< PDF identifier already defined
     BADPRECISION,       //!< Floating point precision specification incorrect
     PRECISIONBOUNDS,    //!< Floating point precision specification out of bounds
+    UNFINISHED,         //!< Unfinished block
     CHARMARG };         //!< Argument inteded for the Charm++ runtime system
 
   //! Associate parser errors to error messages
   static const std::map< MsgKey, std::string > message( {
-    { MsgKey::KEYWORD, "Unknown keyword." },
+    { MsgKey::KEYWORD, "Unknown keyword or keyword unrecognized in this "
+      "block." },
     { MsgKey::MOMENT, "Unknown term in moment." },
     { MsgKey::QUOTED, "Must be double-quoted." },
     { MsgKey::LIST, "Unknown value in list." },
@@ -163,6 +165,8 @@ namespace grm {
       "should be a positive integer between 1 and the maximum number of digits "
       "for the underyling floating point type on the machine. (Set \'max\' for "
       "the maximum.)"},
+    { MsgKey::UNFINISHED, "Block started but not finished by the 'end' "
+      "keyword." },
     { MsgKey::CHARMARG, "Arguments starting with '+' are assumed to be inteded "
       "for the Charm++ runtime system. Did you forget to prefix the command "
       "line with charmrun? If this warning persists even after running with "

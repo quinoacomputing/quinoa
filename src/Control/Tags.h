@@ -70,7 +70,7 @@ struct c2 {};
 struct c3 {};
 struct c4 {};
 struct lambda {};
-struct sigma {};
+struct sigmasq {};
 struct theta {};
 struct mu {};
 struct timescale {};

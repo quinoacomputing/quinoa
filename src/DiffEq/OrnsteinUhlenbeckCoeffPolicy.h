@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeckCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:52:59 AM MST
+  \date      Sat 07 Feb 2015 11:46:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Ornstein-Uhlenbeck coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -74,27 +74,32 @@ class OrnsteinUhlenbeckCoeffConst {
     //! Constructor: initialize coefficients
     OrnsteinUhlenbeckCoeffConst(
       tk::ctr::ncomp_type ncomp,
-      const std::vector< kw::sde_sigma::info::expect::type >& sigma_,
+      const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
       const std::vector< kw::sde_theta::info::expect::type >& theta_,
       const std::vector< kw::sde_mu::info::expect::type >& mu_,
-      std::vector< kw::sde_sigma::info::expect::type >& sigma,
+      std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
       std::vector< kw::sde_theta::info::expect::type >& theta,
       std::vector< kw::sde_mu::info::expect::type >& mu )
     {
-      ErrChk( sigma_.size() == ncomp*(ncomp+1)/2,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'sigma'");
-      sigma.resize( ncomp * ncomp );
+      ErrChk( sigmasq_.size() == ncomp*(ncomp+1)/2,
+              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'sigmasq'");
+      ErrChk( theta_.size() == ncomp,
+              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'theta'");
+      ErrChk( mu_.size() == ncomp,
+              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'mu'");
+
+      // Prepare upper triangle for Cholesky-decomposition using LAPACK
+      sigmasq.resize( ncomp * ncomp );
       std::size_t c = 0;
       for (tk::ctr::ncomp_type i=0; i<ncomp; ++i)
         for (tk::ctr::ncomp_type j=0; j<ncomp; ++j)
-          if (i<=j) sigma[ i*ncomp+j ] = sigma_[ c++ ];
+          if (i<=j)
+            sigmasq[ i*ncomp+j ] = sigmasq_[ c++ ];
+          else
+            sigmasq[ i*ncomp+j ] = 0.0;
 
       theta = theta_;
       mu = mu_;
-      ErrChk( theta.size() == ncomp,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'theta'");
-      ErrChk( mu.size() == ncomp,
-              "Wrong number of Ornstein-Uhlenbeck SDE parameters 'mu'");
     }
 
     static tk::ctr::CoeffPolicyType type() noexcept

@@ -116,6 +116,24 @@ div.image img[src="diagou_pdf.svg"]{
   width:  75%;
 }
 
+div.image img[src="ou_means.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="ou_cov.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
+div.image img[src="ou_pdf.svg"]{
+  height: auto;
+  float:  center;
+  width:  75%;
+}
+
 .title {
   font-size: 26px;
 }
