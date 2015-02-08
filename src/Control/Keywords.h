@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 02 Feb 2015 07:47:42 AM MST
+  \date      Sat 07 Feb 2015 08:45:09 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1203,117 +1203,6 @@ struct walker_info {
 };
 using walker = keyword< walker_info, w,a,l,k,e,r >;
 
-struct dirichlet_info {
-  static std::string name() { return "Dirichlet"; }
-  static std::string shortDescription() { return
-    "Start configuration block for the Dirichlet SDE"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the dirichlet ... end block, used to
-    specify the configuration of a system of stochastic differential
-    equations (SDEs), whose invariant is the Dirichlet distribution. For more
-    details on the Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.)";
-  }
-};
-using dirichlet = keyword< dirichlet_info,  d,i,r,i,c,h,l,e,t >;
-
-struct gendir_info {
-  static std::string name() { return "Generalized Dirichlet"; }
-  static std::string shortDescription() { return
-    "Start configuration block for the generalized Dirichlet SDE"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the gendir ... end
-    block, used to specify the configuration of a system of stochastic
-    differential equations (SDEs), whose invariant is Lochner's generalized
-    Dirichlet distribution. For more details on the generalized Dirichlet
-    SDE, see http://dx.doi.org/10.1063/1.4822416.)";
-  }
-};
-using gendir = keyword< gendir_info, g,e,n,d,i,r >;
-
-struct wrightfisher_info {
-  static std::string name() { return "Wright-Fisher"; }
-  static std::string shortDescription() { return
-    "Start configuration block for the Wright-Fisher SDE"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the wright_fisher ... end block, used
-    to specify the configuration of a system of stochastic differential
-    equations (SDEs), whose invariant is the Dirichlet distribution. For more
-    details on the Wright-Fisher SDE, see
-    http://www.sciencedirect.com/science/article/pii/S0040580912001013.)";
-  }
-};
-using wrightfisher =
-  keyword< wrightfisher_info, w,r,i,g,h,t,'-',f,i,s,h,e,r >;
-
-struct skewnormal_info {
-  static std::string name() { return "Skew-Normal"; }
-  static std::string shortDescription() { return
-    "Start configuration block for the Skew-normal SDE"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the skew-normal ... end block, used
-    to specify the configuration of a system of stochastic differential
-    equations (SDEs), whose invariant is the joint skew-normal distribution.
-    For more details on the skew-normal distribution, see
-    http://www.jstor.org/stable/2337278.)";
-  }
-};
-using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
-
-struct beta_info {
-  static std::string name() { return "Beta"; }
-  static std::string shortDescription() { return
-    "Introduce the beta SDE input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the beta ... end block, used to specify
-    the configuration of a system of stochastic differential equations
-    (SDEs), with linear drift and quadratic diagonal diffusion, whose
-    invariant is the joint beta distribution. For more details
-    on the beta SDE, see http://doi.org/10.1080/14685248.2010.510843.)";
-  }
-};
-using beta = keyword< beta_info, b,e,t,a >;
-
-struct gamma_info {
-  static std::string name() { return "Gamma"; }
-  static std::string shortDescription() { return
-    "Introduce the gamma SDE input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the gamma ... end block, used to
-    specify the configuration of a system of stochastic differential equations
-    (SDEs), with linear drift and linear diagonal diffusion, whose invariant
-    is the joint gamma distribution.)";
-  }
-};
-using gamma = keyword< gamma_info, g,a,m,m,a >;
-
-struct ornstein_uhlenbeck_info {
-  static std::string name() { return "Ornstein-Uhlenbeck"; }
-  static std::string shortDescription() { return
-    "Introduce the Ornstein-Uhlenbeck SDE input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the ornstein-uhlenbeck ... end block,
-    used to specify the configuration of a system of stochastic differential
-    equations (SDEs), with linear drift and constant diffusion, whose
-    invariant is the joint normal distribution.)";
-  }
-};
-using ornstein_uhlenbeck =
-  keyword< ornstein_uhlenbeck_info, o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
-
-struct diag_ou_info {
-  static std::string name() { return "Diagonal Ornstein-Uhlenbeck"; }
-  static std::string shortDescription() { return
-    "Introduce the diagonal Ornstein-Uhlenbeck SDE input block"; }
-  static std::string longDescription() { return
-    R"(This keyword is used to introduce the diag_ou ... end
-    block, where 'diag_ou' stands for diagonal Ornstein-Uhlenbeck' and is used
-    to specify the configuration of a system of stochastic differential
-    equations (SDEs), with linear drift and constant diagonal diffusion, whose
-    invariant is the joint normal distribution.)";
-  }
-};
-using diag_ou = keyword< diag_ou_info, d,i,a,g,'_',o,u >;
-
 struct npar_info {
   static std::string name() { return "npar"; }
   static std::string shortDescription() { return
@@ -1591,21 +1480,22 @@ struct sde_c_info {
 };
 using sde_c = keyword< sde_c_info,  c >;
 
-struct sde_sigma_info {
-  static std::string name() { return "sigma"; }
+struct sde_sigmasq_info {
+  static std::string name() { return "sigmasq"; }
   static std::string shortDescription() { return
-    R"(Set SDE parameter(s) sigma)"; }
+    R"(Set SDE parameter(s) sigmasq)"; }
   static std::string longDescription() { return
     R"(This keyword is used to specify a vector of real numbers used to
     parameterize a system of stochastic differential equations. Example:
-    "sigma 5.0 2.0 3.0 end". The length of the vector depends on the particular
-    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+    "sigmasq 5.0 2.0 3.0 end". The length of the vector depends on the
+    particular type of SDE system and is controlled by the preceding keyword
+    'ncomp'.)"; }
   struct expect {
     using type = tk::real;
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_sigma = keyword< sde_sigma_info, s,i,g,m,a >;
+using sde_sigmasq = keyword< sde_sigmasq_info, s,i,g,m,a,s,q >;
 
 struct sde_theta_info {
   static std::string name() { return "theta"; }
@@ -1679,6 +1569,193 @@ struct depvar_info {
     R"(Dependent variable, e.g, in differential equations.)"; }
 };
 using depvar = keyword< depvar_info, d,e,p,v,a,r >;
+
+struct dirichlet_info {
+  static std::string name() { return "Dirichlet"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the Dirichlet SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the dirichlet ... end block, used to
+    specify the configuration of a system of stochastic differential
+    equations (SDEs), whose invariant is the Dirichlet distribution. For more
+    details on the Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.
+    Keywords allowed in a dirichlet ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappa::string() + "\'. "
+    + R"(For an example dirichlet ... end block, see
+      doc/html/walker_example_dirichlet.html.)";
+  }
+};
+using dirichlet = keyword< dirichlet_info,  d,i,r,i,c,h,l,e,t >;
+
+struct gendir_info {
+  static std::string name() { return "Generalized Dirichlet"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the generalized Dirichlet SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the gendir ... end
+    block, used to specify the configuration of a system of stochastic
+    differential equations (SDEs), whose invariant is Lochner's generalized
+    Dirichlet distribution. For more details on the generalized Dirichlet
+    SDE, see http://dx.doi.org/10.1063/1.4822416. Keywords allowed in a gendir
+    ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_c::string() + "\', \'"
+    + sde_kappa::string() + "\'. "
+    + R"(For an example gendir... end block, see
+      doc/html/walker_example_gendir.html.)";
+  }
+};
+using gendir = keyword< gendir_info, g,e,n,d,i,r >;
+
+struct wrightfisher_info {
+  static std::string name() { return "Wright-Fisher"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the Wright-Fisher SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the wright_fisher ... end block, used
+    to specify the configuration of a system of stochastic differential
+    equations (SDEs), whose invariant is the Dirichlet distribution. For more
+    details on the Wright-Fisher SDE, see
+    http://www.sciencedirect.com/science/article/pii/S0040580912001013.
+    Keywords allowed in a wright-fisher... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_omega::string() + "\'. "
+    + R"(For an example wright-fisher ... end block, see
+      doc/html/walker_example_wf.html.)";
+  }
+};
+using wrightfisher =
+  keyword< wrightfisher_info, w,r,i,g,h,t,'-',f,i,s,h,e,r >;
+
+struct skewnormal_info {
+  static std::string name() { return "Skew-Normal"; }
+  static std::string shortDescription() { return
+    "Start configuration block for the Skew-normal SDE"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the skew-normal ... end block, used
+    to specify the configuration of a system of stochastic differential
+    equations (SDEs), whose invariant is the joint skew-normal distribution.
+    For more details on the skew-normal distribution, see
+    http://www.jstor.org/stable/2337278. Keywords allowed in an skew-normal ...
+    end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_sigmasq::string() + "\', \'"
+    + sde_T::string() + "\', \'"
+    + sde_lambda::string() + "\'. "
+    + R"(For an example skew-normal... end block, see
+      doc/html/walker_example_skewnormal.html.)";
+  }
+};
+using skewnormal = keyword< skewnormal_info,  s,k,e,w,'-',n,o,r,m,a,l >;
+
+struct beta_info {
+  static std::string name() { return "Beta"; }
+  static std::string shortDescription() { return
+    "Introduce the beta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the beta ... end block, used to specify
+    the configuration of a system of stochastic differential equations
+    (SDEs), with linear drift and quadratic diagonal diffusion, whose
+    invariant is the joint beta distribution. For more details
+    on the beta SDE, see http://doi.org/10.1080/14685248.2010.510843. Keywords
+    allowed in a beta ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappa::string() + "\'. "
+    + R"(For an example beta ... end block, see
+      doc/html/walker_example_beta.html.)";
+  }
+};
+using beta = keyword< beta_info, b,e,t,a >;
+
+struct gamma_info {
+  static std::string name() { return "Gamma"; }
+  static std::string shortDescription() { return
+    "Introduce the gamma SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the gamma ... end block, used to
+    specify the configuration of a system of stochastic differential equations
+    (SDEs), with linear drift and linear diagonal diffusion, whose invariant
+    is the joint gamma distribution.)";
+  }
+};
+using gamma = keyword< gamma_info, g,a,m,m,a >;
+
+struct ornstein_uhlenbeck_info {
+  static std::string name() { return "Ornstein-Uhlenbeck"; }
+  static std::string shortDescription() { return
+    "Introduce the Ornstein-Uhlenbeck SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the ornstein-uhlenbeck ... end block,
+    used to specify the configuration of a system of stochastic differential
+    equations (SDEs), with linear drift and constant diffusion, whose
+    invariant is the joint normal distribution. Keywords allowed in an
+    ornstein-uhlenbeck ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_sigmasq::string() + "\', \'"
+    + sde_theta::string() + "\', \'"
+    + sde_mu::string() + "\'. "
+    + R"(For an example ornstein-uhlenbeck ... end block, see
+      doc/html/walker_example_ou.html.)";
+  }
+};
+using ornstein_uhlenbeck =
+  keyword< ornstein_uhlenbeck_info, o,r,n,s,t,e,i,n,'-',u,h,l,e,n,b,e,c,k >;
+
+struct diag_ou_info {
+  static std::string name() { return "Diagonal Ornstein-Uhlenbeck"; }
+  static std::string shortDescription() { return
+    "Introduce the diagonal Ornstein-Uhlenbeck SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the diag_ou ... end
+    block, where 'diag_ou' stands for diagonal Ornstein-Uhlenbeck' and is used
+    to specify the configuration of a system of stochastic differential
+    equations (SDEs), with linear drift and constant diagonal diffusion, whose
+    invariant is the joint normal distribution. Keywords
+    allowed in a diagou ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_sigmasq::string() + "\', \'"
+    + sde_theta::string() + "\', \'"
+    + sde_mu::string() + "\'. "
+    + R"(For an example diagou ... end block, see
+      doc/html/walker_example_diagou.html.)";
+  }
+};
+using diag_ou = keyword< diag_ou_info, d,i,a,g,'_',o,u >;
 
 struct control_info {
   static std::string name() { return "control"; }

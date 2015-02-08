@@ -99,7 +99,7 @@ class InputDeck :
                                      , kw::gendir
                                      , kw::wrightfisher
                                      , kw::beta
-                                     , kw::sde_sigma
+                                     , kw::sde_sigmasq
                                      , kw::sde_theta
                                      , kw::sde_mu
                                      , kw::sde_T

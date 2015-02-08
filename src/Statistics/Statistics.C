@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 08:44:48 AM MST
+  \date      Fri 06 Feb 2015 06:38:58 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -185,7 +185,7 @@ Statistics::setupPDF( const ctr::OffsetMap& offset,
         m_instCenBiPDF.emplace_back( std::vector< const tk::real* >() );
         m_ctrBiPDF.emplace_back( std::vector< const tk::real* >() );
       } else if (bs.size() == 3) {
-        m_ordtpdf.emplace_back( bs );
+        m_centpdf.emplace_back( bs );
         m_instCenTriPDF.emplace_back( std::vector< const tk::real* >() );
         m_ctrTriPDF.emplace_back( std::vector< const tk::real* >() );
       }

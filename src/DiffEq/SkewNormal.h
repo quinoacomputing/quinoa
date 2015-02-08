@@ -73,11 +73,12 @@ class SkewNormal {
       m_offset( g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >().at(c) ) ) ),
-      coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::skewnormal, tag::timescale >().at(c),
-             g_inputdeck.get< tag::param, tag::skewnormal, tag::sigma >().at(c),
-             g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >().at(c),
-             m_T, m_sigma, m_lambda ) {}
+      coeff(
+        m_ncomp,
+        g_inputdeck.get< tag::param, tag::skewnormal, tag::timescale >().at(c),
+        g_inputdeck.get< tag::param, tag::skewnormal, tag::sigmasq >().at(c),
+        g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >().at(c),
+        m_T, m_sigmasq, m_lambda ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
@@ -102,9 +103,9 @@ class SkewNormal {
         // Advance all m_ncomp scalars
         for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& x = particles( p, i, m_offset );
-          tk::real d = 2.0 * m_sigma[i] * m_sigma[i] / m_T[i] * dt;
+          tk::real d = 2.0 * m_sigmasq[i] / m_T[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          x += - ( x - m_lambda[i] * m_sigma[i] * m_sigma[i]
+          x += - ( x - m_lambda[i] * m_sigmasq[i]
                        * std::sqrt( 2.0 / pi() )
                        * std::exp( - m_lambda[i] * m_lambda[i] * x * x / 2.0 )
                        / ( 1.0 + std::erf( m_lambda[i] * x / std::sqrt(2.0) ) )
@@ -122,7 +123,7 @@ class SkewNormal {
 
     //! Coefficients
     std::vector< kw::sde_T::info::expect::type > m_T;
-    std::vector< kw::sde_sigma::info::expect::type > m_sigma;
+    std::vector< kw::sde_sigmasq::info::expect::type > m_sigmasq;
     std::vector< kw::sde_lambda::info::expect::type > m_lambda;
 
     //! Coefficients policy

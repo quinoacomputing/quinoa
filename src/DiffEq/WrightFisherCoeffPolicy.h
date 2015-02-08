@@ -69,9 +69,10 @@ class WrightFisherCoeffConst {
       const std::vector< kw::sde_omega::info::expect::type >& omega_,
       std::vector< kw::sde_omega::info::expect::type >& omega )
     {
-      omega = omega_;
-      ErrChk( omega.size() == ncomp,
+      ErrChk( omega_.size() == ncomp,
               "Wrong number of Wright-Fisher SDE parameters 'omega'");
+
+      omega = omega_;
     }
 
     static tk::ctr::CoeffPolicyType type() noexcept

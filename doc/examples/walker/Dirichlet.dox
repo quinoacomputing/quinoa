@@ -8,7 +8,7 @@ constant coefficients.
 \section walker_example_dirichlet_control Control file
 For the paper [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
 
-\code{.py}
+\verbatim
 # vim: filetype=sh:
 # This is a comment
 # Keywords are case-sensitive
@@ -17,7 +17,7 @@ title "Dirichlet for the IJSA paper"
 
 walker
   term  140.0   # Max time
-  dt    0.025   # Time step size
+  dt    0.05    # Time step size
   npar  10000   # Number of particles
   ttyi  1000    # TTY output interval
 
@@ -44,22 +44,22 @@ walker
     <y1y2>
   end
 end
-\endcode
+\endverbatim
 
 \section walker_example_dirichlet_run Example run on a single CPU
-\code{.py}
+\verbatim
 Main/walker -v -c ../../tmp/dir.q
-\endcode
+\endverbatim
 
 \section walker_example_dirichlet_output Output
 \verbatim
 Charm++> Running on MPI version: 3.0
 Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
 Charm++> Running in non-SMP mode: numPes 1
-Converse/Charm++ Commit ID: 1a4f4bc
+Converse/Charm++ Commit ID: b8b2735
 CharmLB> Load balancer assumes all CPUs are same.
-Charm++> Running on 1 unique compute nodes (8-way SMP).
-Charm++> cpu topology info is gathered in 0.001 seconds.
+Charm++> Running on 1 unique compute nodes (4-way SMP).
+Charm++> cpu topology info is gathered in 0.000 seconds.
 
       ,::,`                                                            `.
    .;;;'';;;:                                                          ;;#
@@ -89,21 +89,21 @@ Charm++> cpu topology info is gathered in 0.001 seconds.
 
  * Build environment:
  --------------------
-     Hostname                       : karman
+     Hostname                       : sprout
      Executable                     : walker
      Version                        : 0.1
      Release                        : LA-CC-XX-XXX
-     Revision                       : 497a86fd7840c2f77a787e373c95ac2428f0dc2a
-     CMake build type               : Debug
+     Revision                       : e26d8f8514a11ade687ba460f42dfae5af53d4d6
+     CMake build type               : DEBUG
      Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
      Underlying C++ compiler        : /usr/bin/clang++-3.5
-     Build date                     : Fri Jan 30 07:01:00 MST 2015
+     Build date                     : Fri Feb  6 06:39:01 MST 2015
 
  * Run-time environment:
  -----------------------
-     Date, time                     : Mon Feb  2 16:30:56 2015
+     Date, time                     : Sat Feb  7 19:17:50 2015
      Work directory                 : /home/jbakosi/code/quinoa/build/clang
      Executable (rel. to work dir)  : Main/walker
      Command line arguments         : '-v -c ../../tmp/dir.q'
@@ -168,7 +168,7 @@ Charm++> cpu topology info is gathered in 0.001 seconds.
  ----------------------------
      Number of time steps           : 18446744073709551615
      Terminate time                 : 140
-     Initial time step size         : 0.025
+     Initial time step size         : 0.05
 
  * Output intervals:
  -------------------
@@ -197,11 +197,8 @@ Charm++> cpu topology info is gathered in 0.001 seconds.
      
       it             t            dt        ETE        ETA   out
  ---------------------------------------------------------------
-    1000  2.500000e+01  2.500000e-02  000:00:08  000:00:38  S
-    2000  5.000000e+01  2.500000e-02  000:00:16  000:00:29  S
-    3000  7.500000e+01  2.500000e-02  000:00:24  000:00:21  S
-    4000  1.000000e+02  2.500000e-02  000:00:32  000:00:13  S
-    5000  1.250000e+02  2.500000e-02  000:00:40  000:00:04  S
+    1000  5.000000e+01  5.000000e-02  000:00:05  000:00:10  S
+    2000  1.000000e+02  5.000000e-02  000:00:11  000:00:04  S
 
  Normal finish, maximum time reached: 140.000000
 
@@ -209,7 +206,7 @@ Charm++> cpu topology info is gathered in 0.001 seconds.
  -----------------
      Initial conditions                                                : 0:0:0
      Migration of global-scope data                                    : 0:0:0
-     Total runtime                                                     : 0:0:45
+     Total runtime                                                     : 0:0:15
 
 
 [Partition 0][Node 0] End of program
@@ -217,15 +214,22 @@ Charm++> cpu topology info is gathered in 0.001 seconds.
 
 \section walker_example_dirichlet_results Results
 
+Left -- time evolution of the means and the means of the invariant distribution,
+right -- time evolution of the components of the covariance matrix and those of
+the invariant.
+
 \image html dir_mean.svg
 \image html dir_cov.svg
 
-The left shows the time evolution of the means, the right shows the time
-evolution of the non-zero entries of covariance matrix.
+Gnuplot commands to reproduce the above plots:
+\verbatim
+plot "stat.txt" u 2:3 w l t "<Y1>", "stat.txt" u 2:4 w l t "<Y2>", 0.5 lt 1, 0.2 lt 2
+plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt" u 2:7 w l t "<y2y2>", 1.0/44.0 lt 1, -1.0/110 lt 2, 4.0/275.0 lt 3
+\endverbatim
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 04 Feb 2015 12:01:03 PM MST
+<em>Page last updated:</em> Sat 07 Feb 2015 07:23:29 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

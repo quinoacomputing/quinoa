@@ -64,10 +64,10 @@ class DiagOrnsteinUhlenbeck {
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::diagou, tag::rng >().at(c) ) ) ),
       coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::diagou, tag::sigma >().at(c),
+             g_inputdeck.get< tag::param, tag::diagou, tag::sigmasq >().at(c),
              g_inputdeck.get< tag::param, tag::diagou, tag::theta >().at(c),
              g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c),
-             m_sigma, m_theta, m_mu ) {}
+             m_sigmasq, m_theta, m_mu ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
@@ -93,7 +93,7 @@ class DiagOrnsteinUhlenbeck {
         // Advance all m_ncomp scalars
         for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
-          tk::real d = m_sigma[i] * m_sigma[i] * dt;
+          tk::real d = m_sigmasq[i] * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
           par += m_theta[i]*(m_mu[i] - par)*dt + d*dW[i];
         }
@@ -107,7 +107,7 @@ class DiagOrnsteinUhlenbeck {
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients
-    std::vector< kw::sde_sigma::info::expect::type > m_sigma;
+    std::vector< kw::sde_sigmasq::info::expect::type > m_sigmasq;
     std::vector< kw::sde_theta::info::expect::type > m_theta;
     std::vector< kw::sde_mu::info::expect::type > m_mu;
 

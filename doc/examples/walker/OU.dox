@@ -1,64 +1,73 @@
 /*!
-  \page      walker_example_skewnormal Walker: Integrating the skew-normal SDE
+  \page      walker_example_ou Walker: Integrating the Ornstein-Uhlenbeck SDE
   \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the skew-normal
+This example runs [walker](walker_doc.html) to integrate the Ornstein-Uhlenbeck
 SDE using constant coefficients.
 
-\section walker_example_skewnormal_control Control file
+\section walker_example_ou_control Control file
 
 \verbatim
 title "Example problem"
 
 walker
 
-  term 10.0  # Max time
-  dt 0.001   # Time step size
-  npar 10000 # Number of particles
-  ttyi 1000  # TTY output interval
+  #nstep 1      # Max number of time steps
+  term  5.0     # Max time
+  dt    0.001   # Time step size
+  npar  1000000 # Number of particles (this many only to have a reasonably
+                #   smooth bivariated PDF
+  ttyi  1000    # TTY output interval
 
   rngs
-    mkl_r250 seed 1 end
+    mkl_mrg32k3a seed 0 end
   end
 
-  skew-normal
-    depvar m
-    init zero
+  ornstein-uhlenbeck
+    depvar r
+    init raw
     coeff const
-    ncomp 2
-    T 1.0 3.5 end
-    sigmasq 0.04 0.25 end
-    lambda 100.0 -50.0 end
-    rng mkl_r250
+    ncomp 3
+    theta 1.0 2.0 3.0 end
+    mu 0.0 0.5 1.0 end
+
+    # Upper triangle of the square of the diffusion matrix 'sigma-square'.
+    # Must be symmetric positive semi-definite.
+    sigmasq
+      4.0  2.5   1.1
+          32.0   5.6
+                23.0
+    end
+
+    rng mkl_mrg32k3a
   end
 
   statistics
     interval 2
-    <m1m1> <m2m2>
+    <R> <rr> <R2> <r2r2> <R3> <r3r3> <r1r2> <r1r3> <r2r3>
   end
 
   pdfs
-    interval 10
-    filetype txt
-    policy overwrite
-    centering elem
-    format scientific
-    precision 4
-    p1( M1 : 1.0e-2 )
-    p2( M2 : 1.0e-2 )
+    interval          1000
+    filetype          gmshbin
+    policy            overwrite
+    centering         node
+    #format            scientific
+    #precision         4
+    f2( r1 r2 : 2.0e-1 2.0e-1 ) #; -2 2 -2 2 )
   end
 end
 \endverbatim
 
-\section walker_example_skewnormal_run Example run on 4 CPUs
+\section walker_example_ou_run Example run on 4 CPUs
 \verbatim
-./charmrun +p4 Main/walker -v -c ../../tmp/test.q -u 0.9
+./charmrun +p4 Main/walker -v -c ../../tmp/ou.q -u 0.9
 \endverbatim
 
-\section walker_example_skewnormal_output Output
+\section walker_example_ou_output Output
 \verbatim
-Running on 4 processors:  Main/walker -v -c ../../tmp/skew.q -u 0.9
-charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/skew.q -u 0.9
+Running on 4 processors:  Main/walker -v -c ../../tmp/ou.q -u 0.9
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/ou.q -u 0.9
 Charm++> Running on MPI version: 3.0
 Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
 Charm++> Running in non-SMP mode: numPes 4
@@ -109,12 +118,12 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 
  * Run-time environment:
  -----------------------
-     Date, time                     : Sat Feb  7 07:41:35 2015
+     Date, time                     : Sat Feb  7 11:58:53 2015
      Work directory                 : /home/jbakosi/code/quinoa/build/clang
      Executable (rel. to work dir)  : Main/walker
-     Command line arguments         : '-v -c ../../tmp/skew.q -u 0.9'
+     Command line arguments         : '-v -c ../../tmp/ou.q -u 0.9'
      Output                         : verbose (quiet: omit -v)
-     Control file                   : ../../tmp/skew.q
+     Control file                   : ../../tmp/ou.q
      Parsed control file            : success
 
 
@@ -154,17 +163,17 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 
  * Differential equations integrated (1):
  ----------------------------------------
-   < Skew-Normal >
+   < Ornstein-Uhlenbeck >
      kind                           : stochastic
-     dependent variable             : m
-     initialization policy          : Z
+     dependent variable             : r
+     initialization policy          : R
      coefficients policy            : C
      start offset in particle array : 0
-     number of components           : 2
-     random number generator        : MKL R250
-     coeff T [2]                    : { 1 3.5 }
-     coeff sigmasq [2]              : { 0.04 0.25 }
-     coeff lambda [2]               : { 100 -50 }
+     number of components           : 3
+     random number generator        : MKL MRG32K3A
+     coeff sigmasq [6, upper tri]   : { 4 2.5 1.1 32 5.6 23 }
+     coeff theta [3]                : { 1 2 3 }
+     coeff mu [3]                   : { 0 0.5 1 }
 
  * Output filenames:
  -------------------
@@ -174,31 +183,31 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
  * Discretization parameters:
  ----------------------------
      Number of time steps           : 18446744073709551615
-     Terminate time                 : 10
+     Terminate time                 : 5
      Initial time step size         : 0.001
 
  * Output intervals:
  -------------------
      TTY                            : 1000
      Statistics                     : 2
-     PDF                            : 10
+     PDF                            : 1000
 
  * Statistical moments and distributions:
  ----------------------------------------
-     Estimated statistical moments  : <M1> <M2> <m1m1> <m2m2> 
-     PDFs                           : p1(M1:0.01) p2(M2:0.01) 
-     PDF output file type           : txt
+     Estimated statistical moments  : <R1> <R2> <R3> <r1r1> <r1r2> <r1r3> <r2r2> <r2r3> <r3r3> 
+     PDFs                           : f2(r1,r2:0.2,0.2) 
+     PDF output file type           : gmshbin
      PDF output file policy         : overwrite
-     PDF output file centering      : elem
-     Text floating-point format     : scientific
-     Text precision in digits       : 4
+     PDF output file centering      : node
+     Text floating-point format     : default
+     Text precision in digits       : 6
 
  * Load distribution:
  --------------------
      Virtualization [0.0...1.0]     : 0.9
-     Load (number of particles)     : 10000
+     Load (number of particles)     : 1000000
      Number of processing elements  : 4
-     Number of work units           : 40 (39*250+250)
+     Number of work units           : 40 (39*25000+25000)
 
  * Time integration: Differential equations testbed
  --------------------------------------------------
@@ -211,47 +220,49 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
      
       it             t            dt        ETE        ETA   out
  ---------------------------------------------------------------
-    1000  1.000000e+00  1.000000e-03  000:00:02  000:00:26  SP
-    2000  2.000000e+00  1.000000e-03  000:00:05  000:00:23  SP
-    3000  3.000000e+00  1.000000e-03  000:00:08  000:00:20  SP
-    4000  4.000000e+00  1.000000e-03  000:00:11  000:00:17  SP
-    5000  5.000000e+00  1.000000e-03  000:00:14  000:00:14  SP
-    6000  6.000000e+00  1.000000e-03  000:00:18  000:00:12  SP
-    7000  7.000000e+00  1.000000e-03  000:00:21  000:00:09  SP
-    8000  8.000000e+00  1.000000e-03  000:00:24  000:00:06  SP
-    9000  9.000000e+00  1.000000e-03  000:00:27  000:00:03  SP
-   10000  1.000000e+01  1.000000e-03  000:00:30  000:00:00  SP
+    1000  1.000000e+00  1.000000e-03  000:04:16  000:17:04  SP
+    2000  2.000000e+00  1.000000e-03  000:08:33  000:12:49  SP
+    3000  3.000000e+00  1.000000e-03  000:12:51  000:08:34  SP
+    4000  4.000000e+00  1.000000e-03  000:17:06  000:04:16  SP
+    5000  5.000000e+00  1.000000e-03  000:21:19  000:00:00  SP
 
- Normal finish, maximum time reached: 10.000000
+ Normal finish, maximum time reached: 5.000000
 
  * Timers (h:m:s):
  -----------------
      Initial conditions                                                : 0:0:0
      Migration of global-scope data                                    : 0:0:0
-     Total runtime                                                     : 0:0:30
+     Total runtime                                                     : 0:21:19
 
 
 [Partition 0][Node 0] End of program
 \endverbatim
 
-\section walker_example_skewnormal_results Results
+\section walker_example_ou_moments Estimated moments
 
-The left figure shows the first two moments indicating convergence to a
-statistically stationary state. The right one shows the estimated PDFs with
-their analytical solution (see DiffEq/SkewNormal.h).
+Left -- time evolution of the means and the means of the invariant distribution,
+right -- time evolution of the components of the covariance matrix and those of
+the invariant.
 
-\image html skew_mom.svg
-\image html skew_pdf.svg
+\image html ou_means.svg
+\image html ou_cov.svg
 
 Gnuplot commands to reproduce the above plots:
 \verbatim
-plot "stat.txt" u 2:3 w l t "<M1>", "stat.txt" u 2:4 w l t "<M2>", "stat.txt" u 2:5 w l t "<m1m1>", "stat.txt" u 2:6 w l t "<m2m2>"
-plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt(2)))/0.2/sqrt(2*pi) lt 1, exp(-x*x/2/0.5/0.5)*(1+erf(-50.0*x/sqrt(2)))/0.5/sqrt(2*pi) lt 2
+plot "stat.txt" u 2:3 w l t "<R1>", "stat.txt" u 2:4 w l t "<R2>", "stat.txt" u 2:5 w l t "<R3>", 0 lt 1, 0.5 lt 2, 1.0 lt 3
+plot "stat.txt" u 2:6 w l t "<r1r1>", "stat.txt" u 2:7 w l t "<r1r2>", "stat.txt" u 2:8 w l t "<r1r3>", "stat.txt" u 2:9 w l t "<r2r2>", "stat.txt" u 2:10 w l t "<r2r3>", "stat.txt" u 2:11 w l t "<r3r3>", 4.0/2 lt 1, 2.5/3 lt 2, 1.1/4 lt 3, 32.0/4 lt 4, 5.6/5 lt 5, 23.0/6 lt 6
 \endverbatim
+
+\section walker_example_ou_pdf Estimated bivariate PDF
+
+Example visualization of the estimated bivariate PDF at the final time step
+using [gmsh](http://www.geuz.org/gmsh).
+
+\image html ou_pdf.svg
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 07 Feb 2015 11:25:15 AM MST
+<em>Page last updated:</em> Sat 07 Feb 2015 07:08:11 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

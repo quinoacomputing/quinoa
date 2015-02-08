@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:46:51 AM MST
+  \date      Sat 07 Feb 2015 07:16:26 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -71,7 +71,7 @@ class OrnsteinUhlenbeck {
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::ou, tag::rng >().at(c) ) ) ),
       coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::ou, tag::sigma >().at(c),
+             g_inputdeck.get< tag::param, tag::ou, tag::sigmasq >().at(c),
              g_inputdeck.get< tag::param, tag::ou, tag::theta >().at(c),
              g_inputdeck.get< tag::param, tag::ou, tag::mu >().at(c),
              m_sigma, m_theta, m_mu )
@@ -123,7 +123,7 @@ class OrnsteinUhlenbeck {
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients
-    std::vector< kw::sde_sigma::info::expect::type > m_sigma;
+    std::vector< kw::sde_sigmasq::info::expect::type > m_sigma;
     std::vector< kw::sde_theta::info::expect::type > m_theta;
     std::vector< kw::sde_mu::info::expect::type > m_mu;
 

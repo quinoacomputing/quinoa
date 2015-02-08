@@ -136,9 +136,9 @@ namespace deck {
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
-                                          use< kw::sde_sigma >,
+                                          use< kw::sde_sigmasq >,
                                           tag::diagou,
-                                          tag::sigma >,
+                                          tag::sigmasq >,
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
@@ -185,9 +185,9 @@ namespace deck {
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
-                                          use< kw::sde_sigma >,
+                                          use< kw::sde_sigmasq >,
                                           tag::ou,
-                                          tag::sigma >,
+                                          tag::sigmasq >,
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
@@ -240,9 +240,9 @@ namespace deck {
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
-                                          use< kw::sde_sigma >,
+                                          use< kw::sde_sigmasq >,
                                           tag::skewnormal,
-                                          tag::sigma >,
+                                          tag::sigmasq >,
                                         tk::grm::parameter_vector<
                                           Stack,
                                           use,
@@ -504,13 +504,16 @@ namespace deck {
   struct walker :
          pegtl::ifmust<
            tk::grm::readkw< use< kw::walker >::pegtl_string >,
-           tk::grm::block< Stack,
-                           use< kw::end >,
-                           discretization_parameters,
-                           sde,
-                           tk::grm::rngblock< Stack, use, rngs >,
-                           tk::grm::statistics< Stack, use >,
-                           tk::grm::pdfs< Stack, use, store_option > > > {};
+           pegtl::sor< tk::grm::block< Stack,
+                         use< kw::end >,
+                         discretization_parameters,
+                         sde,
+                         tk::grm::rngblock< Stack, use, rngs >,
+                         tk::grm::statistics< Stack, use >,
+                         tk::grm::pdfs< Stack, use, store_option > >,
+                       pegtl::apply<
+                          tk::grm::error< Stack,
+                                          tk::grm::MsgKey::UNFINISHED > > > > {};
 
   //! main keywords
   struct keywords :

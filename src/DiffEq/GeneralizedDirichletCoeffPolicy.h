@@ -84,18 +84,19 @@ class GeneralizedDirichletCoeffConst {
       std::vector< kw::sde_kappa::info::expect::type >& k,
       std::vector< kw::sde_c::info::expect::type >& c )
     {
+      ErrChk( b_.size() == ncomp,
+              "Wrong number of generalized Dirichlet SDE parameters 'b'");
+      ErrChk( S_.size() == ncomp,
+              "Wrong number of generalized Dirichlet SDE parameters 'S'");
+      ErrChk( k_.size() == ncomp,
+              "Wrong number of generalized Dirichlet SDE parameters 'kappa'");
+      ErrChk( c_.size() == ncomp*(ncomp-1)/2,
+              "Wrong number of generalized Dirichlet SDE parameters 'c'");
+
       b = b_;
       S = S_;
       k = k_;
       c = c_;
-      ErrChk( b.size() == ncomp,
-              "Wrong number of generalized Dirichlet SDE parameters 'b'");
-      ErrChk( S.size() == ncomp,
-              "Wrong number of generalized Dirichlet SDE parameters 'S'");
-      ErrChk( k.size() == ncomp,
-              "Wrong number of generalized Dirichlet SDE parameters 'kappa'");
-      ErrChk( c.size() == ncomp*(ncomp-1)/2,
-              "Wrong number of generalized Dirichlet SDE parameters 'c'");
     }
 
     static tk::ctr::CoeffPolicyType type() noexcept

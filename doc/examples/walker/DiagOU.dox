@@ -7,7 +7,7 @@ Ornstein-Uhlenbeck SDE using constant coefficients.
 
 \section walker_example_diagou_control Control file
 
-\code{.py}
+\verbatim
 title "Example problem"
 
 walker
@@ -26,7 +26,7 @@ walker
     init raw
     coeff const
     ncomp 2
-    sigma 0.5 1.0 end
+    sigmasq 0.25 1.0 end
     theta 1.0 1.0 end
     mu 0.0 1.5 end
     rng mkl_mrg32k3a
@@ -47,17 +47,17 @@ walker
     f2( o1 o2 : 5.0e-2 5.0e-2 ) #; -2 2 -2 2 )
   end
 end
-\endcode
+\endverbatim
 
 \section walker_example_diagou_run Example run on 4 CPUs
-\code{.py}
+\verbatim
 ./charmrun +p4 Main/walker -v -c ../../tmp/test.q -u 0.9
-\endcode
+\endverbatim
 
 \section walker_example_diagou_output Output
 \verbatim
-Running on 4 processors:  Main/walker -v -c ../../tmp/test.q -u 0.9
-charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/test.q -u 0.9
+Running on 4 processors:  Main/walker -v -c ../../tmp/diagou.q -u 0.9
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 4  Main/walker -v -c ../../tmp/diagou.q -u 0.9
 Charm++> Running on MPI version: 3.0
 Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
 Charm++> Running in non-SMP mode: numPes 4
@@ -98,22 +98,22 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
      Executable                     : walker
      Version                        : 0.1
      Release                        : LA-CC-XX-XXX
-     Revision                       : a6e340b48b8878156e74ff3fdff0208796667371
+     Revision                       : e26d8f8514a11ade687ba460f42dfae5af53d4d6
      CMake build type               : DEBUG
      Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
      MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
      Underlying C++ compiler        : /usr/bin/clang++-3.5
-     Build date                     : Thu Feb  5 21:51:28 MST 2015
+     Build date                     : Fri Feb  6 06:39:01 MST 2015
 
  * Run-time environment:
  -----------------------
-     Date, time                     : Fri Feb  6 05:40:57 2015
+     Date, time                     : Sat Feb  7 11:34:29 2015
      Work directory                 : /home/jbakosi/code/quinoa/build/clang
      Executable (rel. to work dir)  : Main/walker
-     Command line arguments         : '-v -c ../../tmp/test.q -u 0.9'
+     Command line arguments         : '-v -c ../../tmp/diagou.q -u 0.9'
      Output                         : verbose (quiet: omit -v)
-     Control file                   : ../../tmp/test.q
+     Control file                   : ../../tmp/diagou.q
      Parsed control file            : success
 
 
@@ -161,7 +161,7 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
      start offset in particle array : 0
      number of components           : 2
      random number generator        : MKL MRG32K3A
-     coeff sigma [2]                : { 0.5 1 }
+     coeff sigmasq [2]              : { 0.25 1 }
      coeff theta [2]                : { 1 1 }
      coeff mu [2]                   : { 0 1.5 }
 
@@ -210,16 +210,16 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
      
       it             t            dt        ETE        ETA   out
  ---------------------------------------------------------------
-    1000  1.000000e+00  1.000000e-03  000:00:02  000:00:19  SP
-    2000  2.000000e+00  1.000000e-03  000:00:04  000:00:17  SP
-    3000  3.000000e+00  1.000000e-03  000:00:06  000:00:15  SP
-    4000  4.000000e+00  1.000000e-03  000:00:08  000:00:13  SP
+    1000  1.000000e+00  1.000000e-03  000:00:02  000:00:18  SP
+    2000  2.000000e+00  1.000000e-03  000:00:04  000:00:16  SP
+    3000  3.000000e+00  1.000000e-03  000:00:06  000:00:14  SP
+    4000  4.000000e+00  1.000000e-03  000:00:08  000:00:12  SP
     5000  5.000000e+00  1.000000e-03  000:00:10  000:00:10  SP
     6000  6.000000e+00  1.000000e-03  000:00:12  000:00:08  SP
-    7000  7.000000e+00  1.000000e-03  000:00:15  000:00:06  SP
-    8000  8.000000e+00  1.000000e-03  000:00:17  000:00:04  SP
-    9000  9.000000e+00  1.000000e-03  000:00:19  000:00:02  SP
-   10000  1.000000e+01  1.000000e-03  000:00:21  000:00:00  SP
+    7000  7.000000e+00  1.000000e-03  000:00:14  000:00:06  SP
+    8000  8.000000e+00  1.000000e-03  000:00:16  000:00:04  SP
+    9000  9.000000e+00  1.000000e-03  000:00:18  000:00:02  SP
+   10000  1.000000e+01  1.000000e-03  000:00:20  000:00:00  SP
 
  Normal finish, maximum time reached: 10.000000
 
@@ -227,7 +227,7 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
  -----------------
      Initial conditions                                                : 0:0:0
      Migration of global-scope data                                    : 0:0:0
-     Total runtime                                                     : 0:0:21
+     Total runtime                                                     : 0:0:20
 
 
 [Partition 0][Node 0] End of program
@@ -235,16 +235,22 @@ Charm++> cpu topology info is gathered in 0.000 seconds.
 
 \section walker_example_diagou_moments Estimated moments
 
-\image html diagou_means.svg
-\image html diagou_sec.svg
-
 Left -- time evolution of the means and the means of the invariant distribution,
 right -- time evolution of the variances and those of the invariant as well as
 the zero correlation between the two independent equations integrated.
 
-\section walker_example_diagou_pdf Estimated univariate PDF
+\image html diagou_means.svg
+\image html diagou_sec.svg
 
-Example ASCII univariate PDF output.
+Gnuplot commands to reproduce the above plots:
+\verbatim
+plot "stat.txt" u 2:3 w l t "<O1>", "stat.txt" u 2:4 w l t "<O2>", 0.0 lt 1, 1.5 lt 2
+plot "stat.txt" u 2:5 w l t "<o1o1>", "stat.txt" u 2:6 w l t "<o1o2>", "stat.txt" u 2:7 w l t "<o2o2>", 0.25/2 lt 1, 0.0 lt 2, 0.5 lt 3
+\endverbatim
+
+\section walker_example_diagou_pdf Estimated bivariate PDF
+
+Example ASCII bivariate PDF output.
 
 \verbatim
 # vim: filetype=sh:
@@ -284,17 +290,14 @@ Example ASCII univariate PDF output.
 ...
 \endverbatim
 
-Example rudimentary visualization of the estimated univariate PDF with contour
-lines using the command in the above input file
-\code{.py}
-gnuplot> set grid; unset key; set xlabel "o1"; set ylabel "o2"; set zlabel "f2(o1,o2)"; set dgrid3d 50,50,1; set cntrparam levels 20; set contour; splot "pdf_f2.txt" w l
-\endcode
+Example visualization of the estimated bivariate PDF with contour lines at the
+final time step using the command in the above input file.
 
 \image html diagou_pdf.svg
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 06 Feb 2015 06:22:08 AM MST
+<em>Page last updated:</em> Sat 07 Feb 2015 07:08:31 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

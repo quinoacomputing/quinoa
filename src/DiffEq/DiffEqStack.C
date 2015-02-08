@@ -380,9 +380,9 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::ou, tag::rng >()[c] ) );
-  info.emplace_back( "coeff sigma [" + std::to_string( ncomp*(ncomp+1)/2 )
-                     + ", upper tri]",
-                     parameters< tag::param, tag::ou, tag::sigma >(c) );
+  info.emplace_back(
+    "coeff sigmasq [" + std::to_string( ncomp*(ncomp+1)/2 ) + ", upper tri]",
+    parameters< tag::param, tag::ou, tag::sigmasq >(c) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
     parameters< tag::param, tag::ou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
@@ -419,8 +419,9 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) );
-  info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::diagou, tag::sigma >(c) );
+  info.emplace_back(
+    "coeff sigmasq [" + std::to_string( ncomp ) + "]",
+    parameters< tag::param, tag::diagou, tag::sigmasq >(c) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
     parameters< tag::param, tag::diagou, tag::theta >(c) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
@@ -497,8 +498,9 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
     g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >()[c] ) );
   info.emplace_back( "coeff T [" + std::to_string( ncomp ) + "]",
                      parameters< tag::param, tag::skewnormal, tag::timescale >(c) );
-  info.emplace_back( "coeff sigma [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::skewnormal, tag::sigma >(c) );
+  info.emplace_back(
+    "coeff sigmasq [" + std::to_string( ncomp ) + "]",
+    parameters< tag::param, tag::skewnormal, tag::sigmasq >(c) );
   info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
                      parameters< tag::param, tag::skewnormal, tag::lambda >(c) );
 
