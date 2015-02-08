@@ -68,9 +68,12 @@ class SkewNormal {
     //!   skew-normal ... end blocks are given the control file.
     //! \author J. Bakosi
     explicit SkewNormal( unsigned int c ) :
-      m_depvar( g_inputdeck.get< tag::param, tag::skewnormal, tag::depvar >().at(c) ),
-      m_ncomp( g_inputdeck.get< tag::component >().get< tag::skewnormal >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ),
+      m_depvar(
+        g_inputdeck.get< tag::param, tag::skewnormal, tag::depvar >().at(c) ),
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::skewnormal >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::skewnormal >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >().at(c) ) ) ),
       coeff(

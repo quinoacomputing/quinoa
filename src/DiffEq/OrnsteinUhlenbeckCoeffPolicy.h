@@ -12,27 +12,27 @@
     classes:
 
     - Must define a _constructor_, which is used to initialize the SDE
-      coefficients, sigma, theta, and mu. Required signature:
+      coefficients, sigmasq, theta, and mu. Required signature:
       \code{.cpp}
         CoeffPolicyName(
           tk::ctr::ncomp_type ncomp,
-          const std::vector< kw::sde_sigma::info::expect::type >& sigma_,
+          const std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq_,
           const std::vector< kw::sde_theta::info::expect::type >& theta_,
           const std::vector< kw::sde_mu::info::expect::type >& mu_,
-          std::vector< kw::sde_sigma::info::expect::type >& sigma,
+          std::vector< kw::sde_sigmasq::info::expect::type >& sigmasq,
           std::vector< kw::sde_theta::info::expect::type >& theta,
           std::vector< kw::sde_mu::info::expect::type >& mu )
       \endcode
       where
       - ncomp denotes the number of scalar components of the system of the
         Ornstein-Uhlenbeck SDEs.
-      - Constant references to sigma_, theta_, and mu_, which denote three
+      - Constant references to sigmasq_, theta_, and mu_, which denote three
         vectors of real values used to initialize the parameter vectors of the
-        system of Ornstein-Uhlenbeck SDEs. The length of the vector sigma_ must
-        be equal to ncomp*(ncomp+1)/2, while the number of components of the
-        vectors theta_, and mu_, must be equal to ncomp.
-      - References to sigma, theta, and mu, which denote the parameter vectors
-        to be initialized based on sigma_, theta_, and mu_.
+        system of Ornstein-Uhlenbeck SDEs. The length of the vector sigmasq_
+        must be equal to ncomp*(ncomp+1)/2, while the number of components of
+        the vectors theta_, and mu_, must be equal to ncomp.
+      - References to sigmasq, theta, and mu, which denote the parameter vectors
+        to be initialized based on sigmasq_, theta_, and mu_.
 
     - Must define the static function _type()_, returning the enum value of the
       policy option. Example:
