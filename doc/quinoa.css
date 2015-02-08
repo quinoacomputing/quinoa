@@ -134,6 +134,30 @@ div.image img[src="ou_pdf.svg"]{
   width:  75%;
 }
 
+div.image img[src="beta_mean.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="beta_var.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
+div.image img[src="beta_pdf.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="beta_cov.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
 .title {
   font-size: 26px;
 }
