@@ -1,42 +1,47 @@
 /*!
   \page      build How to build
 
-### Building Quinoa requires the following steps
+\section build_quinoa Building Quinoa
 
-<ol>
-<li> __Pick compilers:__
+__1. Pick compilers:__
 
-   \code{.sh}
+   \verbatim
     $ CC=mpicc CXX=mpic++ FC=mpif90 F77=mpif77 F90=mpif90
-   \endcode
-</li>
+   \endverbatim
 
-<li> __Build third-party libraries (TPLs) in empty build dir:__
+__2. Build third-party libraries (TPLs) in empty build dir:__
 
-   \code{.sh}
+   \verbatim
     $ cmake <path-to-tpl-dir>
     $ make
-   \endcode
+   \endverbatim
    \note Fastest in a non-networked mount, e.g., /tmp.
    \note If the CMAKE_INSTALL_PREFIX cmake variable in unset, it will default to
    <path-to-tpl-dir>/install/<compiler>, which is where the TPLs are installed.
-</li>
 
-<li> __Build Quinoa in empty build dir:__
+__3. Build Quinoa in empty build dir:__
 
-   \code{.sh}
+   \verbatim
     $ cmake <path-to-src-dir>
     $ make
-   \endcode
-   \note This builds all executables, which will be in <build>/Main.
+   \endverbatim
+   \note All executables will be in <build>/Main.
    \note If the TPL_DIR cmake variable is unset, it will default to
    <path-to-tpl-dir>/install/<compiler>.
 </li>
 </ol>
 
+\section build_quinoa_doc Building the documentation
+
+   \verbatim
+    $ cd <quinoa>/doc
+    $ doxygen quinoa.doxy
+   \endverbatim
+   \note Point a web browser to <quinoa>/doc/html/index.html.
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 04 Feb 2015 07:10:57 AM MST
+<em>Page last updated:</em> Sat 07 Feb 2015 09:10:15 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
