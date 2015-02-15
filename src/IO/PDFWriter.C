@@ -723,12 +723,11 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   int one = 1;
   m_outFile.write( reinterpret_cast<char*>(&one), sizeof(int) );
   m_outFile << "\n$EndMeshFormat\n";
-
   ErrChk( !m_outFile.bad(), "Failed to write to file: " + m_filename );
 
   // Output grid points of discretized sample space (3D Cartesian grid)
   m_outFile << "$Nodes\n" << (nbix+1)*(nbiy+1)*(nbiz+1) << std::endl;
-  int l = 0;
+  int l=0;
   for (int k=0; k<=nbiz; k++) {
     tk::real z = zmin + k*binsize[2];
     for (int j=0; j<=nbiy; j++) {
@@ -755,7 +754,7 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
   m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
   const auto n = nbix*nbiy;
   const auto p = (nbix+1)*(nbiy+1);
-  for (int i=0; i<n; ++i) {
+  for (int i=0; i<nelem; ++i) {
     const auto y = i/nbix + i/n*(nbix+1);
     auto id = i+1;
     int tag[2] = { 1, 1 };
