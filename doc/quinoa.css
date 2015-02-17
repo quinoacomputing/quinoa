@@ -158,6 +158,29 @@ div.image img[src="beta_cov.svg"]{
   width:  50%;
 }
 
+div.image img[src="gamma_mean.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="gamma_var.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
+
+div.image img[src="gamma_pdf.svg"]{
+  height: auto;
+  float:  left;
+  width:  50%;
+}
+
+div.image img[src="gamma_cov.svg"]{
+  height: auto;
+  float:  right;
+  width:  50%;
+}
 .title {
   font-size: 26px;
 }
