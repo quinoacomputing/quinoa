@@ -3,7 +3,7 @@
   \tableofcontents
 
 This example runs [walker](walker_doc.html) to integrate the Ornstein-Uhlenbeck
-SDE using constant coefficients.
+SDE (see DiffEq/OrnsteinUhlenbeck.h) using constant coefficients.
 
 \section walker_example_ou_control Control file
 
@@ -262,7 +262,7 @@ using [gmsh](http://www.geuz.org/gmsh).
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 07 Feb 2015 07:08:11 PM MST
+<em>Page last updated:</em> Tue 17 Feb 2015 08:43:08 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

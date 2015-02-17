@@ -2,8 +2,8 @@
   \page      walker_example_beta Walker: Integrating the beta SDE
   \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the beta SDE using
-constant coefficients. For more detail on the beta SDE, see
+This example runs [walker](walker_doc.html) to integrate the beta SDE (see
+DiffEq/Beta.h) using constant coefficients. For more detail on the beta SDE, see
 http://dx.doi.org/10.1080/14685248.2010.510843.
 
 \section walker_example_beta_control Control file
@@ -277,7 +277,7 @@ plot [] [-0.003:0.003] "stat.txt" u 2:9 w l t "<x1x2>", "stat.txt" u 2:10 w l t 
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sun 08 Feb 2015 01:36:00 PM MST
+<em>Page last updated:</em> Tue 17 Feb 2015 08:38:14 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
