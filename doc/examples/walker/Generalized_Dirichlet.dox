@@ -3,7 +3,9 @@
   \tableofcontents
 
 This example runs [walker](walker_doc.html) to integrate the generalized
-Dirichlet SDE using constant coefficients.
+Dirichlet SDE (see DiffEq/GeneralizedDirichlet.h) using constant coefficients.
+For more details on the generalized Dirichlet SDE, see
+http://dx.doi.org/10.1063/1.4822416.
 
 \section walker_example_gendir_control Control file
 For the paper [Bakosi, Ristorcelli, A Stochastic Diffusion Process for Lochner's
@@ -231,7 +233,7 @@ plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 07 Feb 2015 07:35:48 PM MST
+<em>Page last updated:</em> Tue 17 Feb 2015 08:41:38 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

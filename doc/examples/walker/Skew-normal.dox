@@ -3,7 +3,7 @@
   \tableofcontents
 
 This example runs [walker](walker_doc.html) to integrate the skew-normal
-SDE using constant coefficients.
+SDE (see DiffEq/SkewNormal.h) using constant coefficients.
 
 \section walker_example_skewnormal_control Control file
 
@@ -251,7 +251,7 @@ plot "pdf_p1.txt" w p, "pdf_p2.txt" w p, exp(-x*x/2/0.2/0.2)*(1+erf(100.0*x/sqrt
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 07 Feb 2015 11:25:15 AM MST
+<em>Page last updated:</em> Tue 17 Feb 2015 08:42:15 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

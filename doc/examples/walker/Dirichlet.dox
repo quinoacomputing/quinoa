@@ -2,8 +2,9 @@
   \page      walker_example_dirichlet Walker: Integrating the Dirichlet SDE
   \tableofcontents
 
-This example runs [walker](walker_doc.html) to integrate the Dirichlet SDE using
-constant coefficients.
+This example runs [walker](walker_doc.html) to integrate the Dirichlet SDE (see
+DiffEq/Dirichlet.h) using constant coefficients. For more details on the
+Dirichlet SDE, see http://dx.doi.org/10.1155/2013/842981.
 
 \section walker_example_dirichlet_control Control file
 For the paper [Bakosi, Ristorcelli, A Stochastic Diffusion Process for the Dirichlet Distribution, Int. J. Stoch. Anal., 2013](http://dx.doi.org/10.1155/2013/842981).
@@ -229,7 +230,7 @@ plot "stat.txt" u 2:5 w l t "<y1y1>", "stat.txt" u 2:6 w l t "<y1y2>", "stat.txt
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Sat 07 Feb 2015 07:23:29 PM MST
+<em>Page last updated:</em> Tue 17 Feb 2015 08:40:19 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
