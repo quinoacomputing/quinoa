@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:44:43 AM MST
+  \date      Fri 13 Feb 2015 02:49:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -79,7 +79,7 @@ class Gamma {
 
     //! \brief Advance particles according to the system of gamma SDEs
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance

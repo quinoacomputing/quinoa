@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Beta.h
   \author    J. Bakosi
-  \date      Fri 23 Jan 2015 06:43:15 AM MST
+  \date      Fri 13 Feb 2015 02:49:16 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -81,7 +81,7 @@ class Beta {
 
     //! \brief Advance particles according to the system of beta SDEs
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance

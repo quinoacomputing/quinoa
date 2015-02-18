@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/SkewNormal.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:54:54 AM MST
+  \date      Fri 13 Feb 2015 02:50:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of skew-normal SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -96,7 +96,7 @@ class SkewNormal {
 
     //! \brief Advance particles according to the system of skew-normal SDEs
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance

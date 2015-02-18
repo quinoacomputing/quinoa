@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 12:04:53 PM MST
+  \date      Fri 13 Feb 2015 03:02:28 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -59,16 +59,18 @@ class WrightFisher {
     //!   wright-fisher ... end blocks are given the control file.
     //! \author J. Bakosi
     explicit WrightFisher( unsigned int c ) :
-      m_depvar( g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >().at(c) ),
-      m_ncomp( g_inputdeck.get< tag::component >().
-                           get< tag::wrightfisher >().at(c) ),
-      m_offset( g_inputdeck.get< tag::component >().
-                            offset< tag::wrightfisher >(c) ),
+      m_depvar(
+        g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >().at(c) ),
+      m_ncomp(
+        g_inputdeck.get< tag::component >().get< tag::wrightfisher >().at(c) ),
+      m_offset(
+        g_inputdeck.get< tag::component >().offset< tag::wrightfisher >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
         g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >().at(c) ) ) ),
-      coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c),
-             m_omega )
+      coeff(
+        m_ncomp,
+        g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c),
+        m_omega )
     {
       Throw( "Wright-Fisher diffusion matrix not yet implemented! See comments "
              "in code for details." );
@@ -102,7 +104,7 @@ class WrightFisher {
 
     //! \brief Advance particles according to the Wright-Fisher SDE
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
       const auto npar = particles.npar();
