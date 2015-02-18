@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Fri 25 Jul 2014 03:11:35 PM MDT
+  \date      Wed 18 Feb 2015 04:43:52 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ParticleProperties.h
   \details   Unit tests for Base/ParticleProperties.h
@@ -94,7 +94,7 @@ void ParticleProperties_object::test< 3 >() {
 //!   value
 template<> template<>
 void ParticleProperties_object::test< 4 >() {
-  set_test_name( "operator() returns correct value" );
+  set_test_name( "operator() returns correct val" );
 
   tk::ParticleProperties< tk::ParEqComp > pp( 2, 5 );
   tk::ParticleProperties< tk::EqCompPar > pe( 2, 5 );
@@ -111,7 +111,7 @@ void ParticleProperties_object::test< 4 >() {
 //!   value
 template<> template<>
 void ParticleProperties_object::test< 5 >() {
-  set_test_name( "cvar(cptr()) returns correct value" );
+  set_test_name( "cvar(cptr()) returns correct val" );
 
   tk::ParticleProperties< tk::ParEqComp > pp( 2, 5 );
   tk::ParticleProperties< tk::EqCompPar > pe( 2, 5 );
