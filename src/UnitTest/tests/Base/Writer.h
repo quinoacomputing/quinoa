@@ -1,0 +1,83 @@
+//******************************************************************************
+/*!
+  \file      src/UnitTest/tests/Base/Writer.h
+  \author    J. Bakosi
+  \date      Wed 18 Feb 2015 04:10:06 PM MST
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Unit tests for Base/Writer
+  \details   Unit tests for Base/Writer
+*/
+//******************************************************************************
+#ifndef test_Writer_h
+#define test_Writer_h
+
+#include <tut/tut.hpp>
+#include <Writer.h>
+
+namespace unittest {
+
+extern std::string g_executable;
+
+} // unittest::
+
+namespace tut {
+
+//! All tests in group inherited from this base
+struct Writer_common {
+  struct W : public tk::Writer {
+     W( const std::string& filename ) : tk::Writer( filename ) {}
+  };
+};
+
+//! Test group shortcuts
+using Writer_group = test_group< Writer_common >;
+using Writer_object = Writer_group::object;
+
+//! Define test group
+Writer_group Writer( "Base/Writer" );
+
+//! Test definitions for group
+
+//! Test if constructor can open a file
+template<> template<>
+void Writer_object::test< 1 >() {
+  set_test_name( "ctor can open file" );
+
+  // throws exception if something goes wrong, which Template Unit Test catches
+  W w( "very_little_chance_that_a_file_with_this_name_exists" );
+  // clean up
+  std::remove( "very_little_chance_that_a_file_with_this_name_exists" );
+}
+
+//! Test if constructor does not throw if empty filename is given
+template<> template<>
+void Writer_object::test< 2 >() {
+  set_test_name( "ctor does not throw if filename empty" );
+
+  // throws exception if something goes wrong, which Template Unit Test catches
+  W w( "" );
+}
+
+//! Test if constructor finds and can open an existing file (the executable)
+template<> template<>
+void Writer_object::test< 3 >() {
+  set_test_name( "non-overridden write() correctly throws" );
+
+  // throws exception if something goes wrong, which Template Unit Test catches
+  W w( "very_little_chance_that_a_file_with_this_name_exists" );
+
+  try {
+    w.write();
+    fail( "should throw exception" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+
+  // clean up
+  std::remove( "very_little_chance_that_a_file_with_this_name_exists" );
+}
+
+} // tut::
+
+#endif // test_Writer_h

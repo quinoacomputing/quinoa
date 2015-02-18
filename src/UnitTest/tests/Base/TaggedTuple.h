@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Fri 01 Aug 2014 02:07:14 PM MDT
+  \date      Wed 18 Feb 2015 10:13:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
@@ -111,7 +111,7 @@ void TaggedTuple_object::test< 5 >() {
   ensure_equals( "original source kept intact", n, "Alice" );
 }
 
-//! Test set(std::string) with of tagged_tuple
+//! Test set(std::string) with rvalue argument of tagged_tuple
 template<> template<>
 void TaggedTuple_object::test< 6 >() {
   set_test_name( "set(std::string&&) - rvalue ref arg" );

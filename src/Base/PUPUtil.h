@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 07:27:41 AM MST
+  \date      Wed 18 Feb 2015 08:00:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ Pack/UnPack utilities
   \brief     This file contains some extensions to Charm++'s Pack/UnPack
@@ -12,8 +12,8 @@
 #ifndef PUPUtil_h
 #define PUPUtil_h
 
-#include <iostream>     // NOT NEEDED!
 #include <unordered_map>
+#include <array>
 
 #include <boost/optional.hpp>
 
@@ -92,10 +92,14 @@ inline void operator|( PUP::er& p, std::array< T, N >& a ) { pup( p, a ); }
 
 //! Pack/Unpack std::unordered_map.
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] m std::unordered_map< Key, T, KeyEqual > to pack/unpack
+//! \param[in] m std::unordered_map< Key, T, Hash, KeyEqual > to pack/unpack
 //! \author J. Bakosi
-template< class Key, typename T, class KeyEqual = std::equal_to< Key > >
-inline void pup( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m ) {
+template< class Key,
+          class T,
+          class Hash = std::hash< Key >,
+          class KeyEqual = std::equal_to< Key > >
+inline void pup( PUP::er& p,
+                 std::unordered_map< Key, T, Hash, KeyEqual >& m ) {
   auto size = PUP_stl_container_size( p, m );
   if (p.isUnpacking()) {
     for (std::size_t s=0; s<size; ++s) {
@@ -112,10 +116,14 @@ inline void pup( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m ) {
 }
 //! Pack/Unpack std::unordered_map.
 //! \param[in] p Charm++'s pack/unpack object
-//! \param[in] m std::unordered_map< Key, T, KeyEqual > to pack/unpack
+//! \param[in] m std::unordered_map< Key, T, Hash, KeyEqual > to pack/unpack
 //! \author J. Bakosi
-template< class Key, typename T, class KeyEqual = std::equal_to< Key > >
-inline void operator|( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m )
+template< class Key,
+          class T,
+          class Hash = std::hash< Key >,
+          class KeyEqual = std::equal_to< Key > >
+inline void operator|( PUP::er& p,
+                       std::unordered_map< Key, T, Hash, KeyEqual >& m )
 { pup( p, m ); }
 
 //////////////////// Serialize boost::optional ////////////////////
@@ -126,8 +134,11 @@ inline void operator|( PUP::er& p, std::unordered_map< Key, T, KeyEqual >& m )
 //! \author J. Bakosi
 template< class T >
 inline void pup( PUP::er& p, boost::optional< T >& o ) {
-  // IMPLEMENT !!!
-  //std::cout << "pup boost::opt\n";
+  T underlying_value = o ? *o : T();
+  bool exist = o ? true : false;
+  p | exist;
+  p | underlying_value;
+  o = exist ? boost::make_optional(underlying_value) : boost::none;
 }
 //! Pack/Unpack boost::optional.
 //! \param[in] p Charm++'s pack/unpack object

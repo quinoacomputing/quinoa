@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.h
   \author    J. Bakosi
-  \date      Tue 27 Jan 2015 03:15:10 PM MST
+  \date      Wed 18 Feb 2015 09:54:02 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader base class declaration
   \details   Reader base class declaration. Reader base serves as a base class
@@ -38,11 +38,11 @@ class Reader {
     //! Return first line (for detection of file type based on header)
     std::string firstline();
 
-    //! Read a given line from file
-    std::string line( std::size_t lineNum );
-
     //! Read file and return a string for each line
     std::vector< std::string > lines();
+
+    //! Read a given line from file
+    std::string line( std::size_t lineNum );
 
   protected:
     const std::string m_filename;            //!< File name

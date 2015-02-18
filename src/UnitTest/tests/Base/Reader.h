@@ -1,11 +1,11 @@
 //******************************************************************************
 /*!
-  \file      src/UnitTest/tests/IO/Reader.h
+  \file      src/UnitTest/tests/Base/Reader.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 03:04:33 PM MDT
+  \date      Wed 18 Feb 2015 10:06:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Unit tests for IO/Reader
-  \details   Unit tests for IO/Reader
+  \brief     Unit tests for Base/Reader
+  \details   Unit tests for Base/Reader
 */
 //******************************************************************************
 #ifndef test_Reader_h
@@ -30,7 +30,7 @@ using Reader_group = test_group< Reader_common >;
 using Reader_object = Reader_group::object;
 
 //! Define test group
-Reader_group Reader( "IO/Reader" );
+Reader_group Reader( "Base/Reader" );
 
 //! Test definitions for group
 
@@ -56,7 +56,7 @@ void Reader_object::test< 2 >() {
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
     // if any other type of exception is thrown, test fails with except
-    // find  out if exception was thrown due to the correct reason: testing on
+    // find out if exception was thrown due to the correct reason: testing on
     // whether the filename is empty is an Assert and compiled away in RELEASE
     // mode, in which case the ErrChk throws when it fails to open the file
     #ifdef NDEBUG
@@ -109,6 +109,15 @@ void Reader_object::test< 4 >() {
             std::string( e.what() ).find( "Failed to read from file" ) !=
               std::string::npos );
   }
+}
+
+//! Test if function firstline() can read a line
+template<> template<>
+void Reader_object::test< 5 >() {
+  set_test_name( "firstline() can read a line" );
+
+  tk::Reader r( unittest::g_executable );
+  r.firstline();        // if throws, TUT catches it, throw away return value
 }
 
 } // tut::
