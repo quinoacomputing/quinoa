@@ -27,6 +27,7 @@ walker
     coeff const
     ncomp 2
     # k = bS/kappa, 1/theta = b(1-S)/kappa
+    # <Y> = S/(1-S), <y^2> = kappa/b * <Y>/(1-S)
     b     1.5            2.5 end
     kappa 1.0            1.0 end
     S     0.666666666666 0.8 end
@@ -293,7 +294,7 @@ plot "stat.txt" u 2:6 w l t "<l1l2>"
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 17 Feb 2015 11:53:47 AM MST
+<em>Page last updated:</em> Wed 18 Feb 2015 03:36:04 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
