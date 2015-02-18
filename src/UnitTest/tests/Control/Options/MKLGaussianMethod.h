@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 11:45:25 AM MDT
+  \date      Wed 18 Feb 2015 06:34:03 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
@@ -42,7 +42,7 @@ void MKLGaussianMethod_object::test< 1 >() {
 //! Test that member function param() throws in DEBUG mode if can't find param
 template<> template<>
 void MKLGaussianMethod_object::test< 2 >() {
-  set_test_name( "param() correctly throws" );
+  set_test_name( "param() throws" );
 
   try {
 
