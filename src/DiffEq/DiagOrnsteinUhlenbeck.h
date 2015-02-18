@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:42:26 AM MST
+  \date      Tue 17 Feb 2015 09:22:10 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of diagonal Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -23,6 +23,27 @@
     distribution. This system of SDEs consists of N independent equations, each
     being a single-variate [Ornstein-Uhlenbeck
     process](http://en.wikipedia.org/wiki/Ornstein%E2%80%93Uhlenbeck_process).
+
+    From the Fokker-Planck equation, equivalent to the SDE above, the equations
+    governing the means, \f$ \langle Y_\alpha \rangle\f$, are
+    \f[
+      \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
+      \frac{\partial\irmean{Y_\alpha}}{\partial t} =
+        \theta_\alpha\left(\mu_\alpha - \irmean{Y_\alpha}\right)
+    \f]
+    while the equation governing the covariance matrix, \f$ \langle y_\alpha
+    y_\beta \rangle \equiv \left\langle (Y_\alpha - \langle Y_\alpha \rangle)
+    (Y_\beta - \langle Y_\beta\rangle) \right\rangle \f$, is
+    \f[
+      \newcommand{\irmean}[1]{{\langle{#1}\rangle}}
+      \newcommand{\irv}[1]{\langle{#1^2}\rangle}
+      \frac{\partial\irmean{y_\alpha y_\beta}}{\partial t} =
+        -\left(\theta_\alpha+\theta_\beta\right)\irmean{y_\alpha y_\beta} +
+        \left\{ \begin{array}{lr}
+          \sigma_\alpha^2 & \mathrm{for} \quad \alpha = \beta,\\
+          0               & \mathrm{for} \quad \alpha \ne \beta
+        \end{array} \right..
+    \f]
 */
 //******************************************************************************
 #ifndef DiagOrnsteinUhlenbeck_h
@@ -83,7 +104,7 @@ class DiagOrnsteinUhlenbeck {
     //! \brief Advance particles according to the system of diagonal
     //!   Orsntein-Uhlenbeck SDEs
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance

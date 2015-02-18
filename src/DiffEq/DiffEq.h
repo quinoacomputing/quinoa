@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:10:00 PM MST
+  \date      Fri 13 Feb 2015 02:49:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -92,7 +92,7 @@ class DiffEq {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
       virtual void initialize( tk::ParProps&, const tk::Statistics& ) = 0;
-      virtual void advance( tk::ParProps&, int, tk::real ) const = 0;
+      virtual void advance( tk::ParProps&, int, tk::real ) = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -103,8 +103,8 @@ class DiffEq {
       Concept* copy() const override { return new Model( *this ); }
       void initialize( tk::ParProps& particles, const tk::Statistics& stat )
         override { data.initialize( particles, stat ); }
-      void advance( tk::ParProps& particles, int stream, tk::real dt ) const
-        override { data.advance( particles, stream, dt ); }
+      void advance( tk::ParProps& particles, int stream, tk::real dt ) override
+        { data.advance( particles, stream, dt ); }
       T data;
     };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Tue 03 Feb 2015 10:32:45 PM MST
+  \date      Fri 13 Feb 2015 02:49:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -86,7 +86,7 @@ class Dirichlet {
 
     //! \brief Advance particles according to the Dirichlet SDE
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Compute Nth scalar

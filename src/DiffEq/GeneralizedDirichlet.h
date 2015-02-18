@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:45:38 AM MST
+  \date      Fri 13 Feb 2015 02:49:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -106,7 +106,7 @@ class GeneralizedDirichlet {
 
     //! \brief Advance particles according to the generalized Dirichlet SDE
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const {
+    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Y_i = 1 - sum_{k=1}^{i} y_k
