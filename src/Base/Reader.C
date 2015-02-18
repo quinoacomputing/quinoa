@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Reader.C
   \author    J. Bakosi
-  \date      Thu 11 Dec 2014 02:05:14 PM MST
+  \date      Wed 18 Feb 2015 10:05:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Reader class definition
   \details   Reader base class declaration. Reader base servers as a base class
@@ -104,7 +104,7 @@ Reader::lines()
 {
   std::string s;
   std::vector< std::string > ls;
-  while ( std::getline( m_inFile, s ) ) ls.emplace_back( s );
+  while ( std::getline( m_inFile, s ) ) ls.push_back( s );
   return ls;
 }
 

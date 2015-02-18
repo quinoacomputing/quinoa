@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 02 Feb 2015 11:12:49 AM MST
+  \date      Tue 17 Feb 2015 04:02:08 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -231,7 +231,7 @@ class Print {
     //! Formatted print of elapsed times
     //! \param[in] title Title of section containing a list of elapsed times
     //! \param[in] clock std::map of strings (clock names) and associated timers
-    //!   which could in various formats as long as there is a corresponding
+    //!   which could be in various formats as long as there is a corresponding
     //!   item() overload that can apply operator << for outputing their value
     //!   to an output stream. Examples of allowed ClockFormats are:
     //!   tk::Timer::Watch, which is a struct containing a timestamp in h:m:s

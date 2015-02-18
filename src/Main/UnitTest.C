@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:26:02 AM MST
+  \date      Wed 18 Feb 2015 10:08:10 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite Charm++ main chare.
   \details   UnitTest: Quinoa's unit test suite Charm++ main chare. This file
@@ -20,18 +20,22 @@
 #include <unittest.decl.h>
 #include <Init.h>
 
-// Unit test groups to be tested
+// Unit test groups to be tested. Each file defines a different test group.
 #include <tests/Base/flip_map.h>
 #include <tests/Base/make_list.h>
-#include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Timer.h>
 #include <tests/Base/CharmUtil.h>
 #include <tests/Base/Has.h>
+#include <tests/Base/ParticleProperties.h>
 #include <tests/Base/Factory.h>
 #include <tests/Base/Print.h>
 #include <tests/Base/TaggedTuple.h>
 #include <tests/Base/Exception.h>
 #include <tests/Base/PUPUtil.h>
+#include <tests/Base/Reader.h>
+#include <tests/Base/StrConvUtil.h>
+#include <tests/Base/Writer.h>
+
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
 #include <tests/Control/Toggle.h>
@@ -40,7 +44,6 @@
   #include <tests/Control/Options/MKLUniformMethod.h>
 #endif
 #include <tests/Control/Options/RNG.h>
-#include <tests/IO/Reader.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

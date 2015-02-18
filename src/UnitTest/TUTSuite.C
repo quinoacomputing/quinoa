@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 08:58:15 AM MST
+  \date      Wed 18 Feb 2015 11:42:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -84,7 +84,11 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // Echo one-liner info on result of test
   m_print.test( m_ncomplete, m_nfail, status );
 
-  if ( m_nrun == m_ngroup * m_maxTestsInGroup + 8 ) {
+  // The magic number here is the number of Charm++ migration tests.
+  // Unfortunately, there is no good way to count up these additional tests,
+  // since every Charm++ migration test has two halves: the send and the
+  // receive. Both triggers a TUT test, but the receive side is create manually.
+  if ( m_nrun == m_ngroup * m_maxTestsInGroup + 13 ) {
     // Echo final assessment
     if (!m_nfail && !m_nwarn && !m_nskip && !m_nexcp) {
       m_print.note< tk::QUIET >

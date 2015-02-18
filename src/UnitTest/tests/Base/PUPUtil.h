@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Sun 14 Sep 2014 10:31:17 PM MDT
+  \date      Wed 18 Feb 2015 11:18:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -42,7 +42,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a default strongly-typed enum
   explicit Migrated( charm::Enum_default e ) : m_enum_default(e) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 1, 
+    tut::test_result tr( "Base/PUPUtil", 1,
                          "migrate default strongly-typed enum 2",
                          tut::test_result::result_type::ok );
     try {
@@ -71,7 +71,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a uint8_t strongly-typed enum
   explicit Migrated( charm::Enum_uint8_t e ) : m_enum_uint8_t(e) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 2, 
+    tut::test_result tr( "Base/PUPUtil", 2,
                          "migrate uint_8t strongly-typed enum 2",
                          tut::test_result::result_type::ok );
     try {
@@ -100,7 +100,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a C-style enum
   explicit Migrated( charm::Enum_cstyle e ) : m_enum_cstyle(e) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 3, 
+    tut::test_result tr( "Base/PUPUtil", 3,
                          "migrate C-style enum 2",
                          tut::test_result::result_type::ok );
     try {
@@ -125,7 +125,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a std::pair<int,double>
   explicit Migrated( charm::Pair p ) : m_pair(p) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 4, 
+    tut::test_result tr( "Base/PUPUtil", 4,
                          "migrate std::pair<int,double> 2",
                          tut::test_result::result_type::ok );
     try {
@@ -151,7 +151,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a std::vector< std::string >
   explicit Migrated( charm::Vector v ) : m_vector(v) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 5, 
+    tut::test_result tr( "Base/PUPUtil", 5,
                          "migrate std::vector< std::string > 2",
                          tut::test_result::result_type::ok );
     try {
@@ -161,7 +161,7 @@ struct Migrated : CBase_Migrated {
                            ", " + m_vector[1] +
                            ", " + m_vector[2] + " ]";
       // Evaluate test
-      ensure( "std::pair different after migrated: "
+      ensure( "std::vector different after migrated: "
               "expected `" + expected + "` actual `" + actual + "`",
               m_vector == charm::Vector{ "1", "blah", "boohoo" } );
     } catch ( const failure& ex ) {
@@ -178,7 +178,7 @@ struct Migrated : CBase_Migrated {
   //! Constructor taking (and migrating) a std::tuple
   explicit Migrated( charm::Tuple t ) : m_tuple(t) {
     // Create test result struct, assume test is ok
-    tut::test_result tr( "Base/PUPUtil", 6, 
+    tut::test_result tr( "Base/PUPUtil", 6,
                          "migrate std::tuple 2",
                          tut::test_result::result_type::ok );
     try {
@@ -239,12 +239,153 @@ struct Migrated : CBase_Migrated {
         tr.exception_typeid } );
   }
 
+  //! Constructor taking (and migrating) a std::array
+  explicit Migrated( charm::Array a ) : m_array(a) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 7,
+                         "migrate std::array<int,2> 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = "[ 12, 2 ]";
+      std::string actual = "[ " + std::to_string( m_array[0] ) + ", "
+                                + std::to_string( m_array[1] ) + " ]";
+      // Evaluate test
+      ensure( "std::array<int,2> different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_array == charm::Array{ { 12, 2 } } );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
+  //! Constructor taking (and migrating) a std::unordered_map
+  explicit Migrated( charm::UnorderedMap m ) : m_unordered_map(m) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 8,
+                         "migrate std::unordered_map<int,str> 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = R"([ {11, "eleven"} {12, "twelve"} ])";
+      std::string actual = "[ ";
+      for (const auto& m : m_unordered_map) {
+        actual += "{" + std::to_string(m.first) + ", " + m.second + "} ";
+      }
+      actual += "]";
+      // Evaluate test
+      ensure( "std::unordered_map<int,str> different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_unordered_map ==
+                charm::UnorderedMap{ {11,"eleven"}, {12,"twelve"} } );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
+  //! Constructor taking (and migrating) a boost::optional< std::string >
+  explicit Migrated( charm::BoostOptionalStr o ) : m_boost_optional_str(o) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 9,
+                         "migrate boost::optional<str> 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = "blah";
+      std::string actual = o ? *o : "";
+      // Evaluate test
+      ensure( "boost::optional<str> different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_boost_optional_str ==
+                charm::BoostOptionalStr{ { "blah" } } );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
+  //! Constructor taking (and migrating) an uninitialized boost::optional< int >
+  explicit Migrated( charm::BoostOptionalInt o ) : m_boost_optional_int(o) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 10,
+                         "migrate boost::optional<int> 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = "boost::none";
+      std::string actual = o ? std::to_string(*o) : "boost::none";
+      // Evaluate test
+      ensure( "boost::optional<int> different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_boost_optional_int ==
+                charm::BoostOptionalInt{ { boost::none } } );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
+  //! Constructor taking (and migrating) a tk::tuple::tagged_tuple
+  explicit Migrated( charm::TaggedTuple t ) : m_tagged_tuple(t) {
+    // Create test result struct, assume test is ok
+    tut::test_result tr( "Base/PUPUtil", 11,
+                         "migrate tk::tuple::tagged_tuple 2",
+                         tut::test_result::result_type::ok );
+    try {
+      // Generate error message with expected and actual value in case if fail
+      std::string expected = R"([ "Bob", 32, "bob@bob.bob" ])";
+      std::string actual = "[ " +
+        m_tagged_tuple.get< charm::tag::name >() + ", " +
+        std::to_string( m_tagged_tuple.get< charm::tag::age >() ) +
+        m_tagged_tuple.get< charm::tag::email >() + " ]";
+      // Evaluate test
+      ensure( "tk::tuple::tagged_tuple different after migrated: "
+              "expected `" + expected + "` actual `" + actual + "`",
+              m_tagged_tuple == charm::TaggedTuple{ "Bob", 32, "bob@bob.bob"} );
+    } catch ( const failure& ex ) {
+      tr.result = ex.result();
+      tr.exception_typeid = ex.type();
+      tr.message = ex.what();
+    }
+    // Send back a new test result, with tag "2", signaling the second part.
+    unittest::g_suiteProxy.evaluate(
+      { tr.group, tr.name, std::to_string(tr.result), tr.message,
+        tr.exception_typeid } );
+  }
+
   charm::Enum_default m_enum_default;
   charm::Enum_uint8_t m_enum_uint8_t;
   charm::Enum_cstyle m_enum_cstyle;
   charm::Pair m_pair;
   charm::Vector m_vector;
   charm::Tuple m_tuple;
+  charm::Array m_array;
+  charm::UnorderedMap m_unordered_map;
+  charm::BoostOptionalStr m_boost_optional_str;
+  charm::BoostOptionalInt m_boost_optional_int;
+  charm::TaggedTuple m_tagged_tuple;
 };
 
 //! Test Pack/Unpack of a default strongly-typed enum
@@ -286,7 +427,7 @@ void PUPUtil_object::test< 3 >() {
   CProxy_Migrated::ckNew( charm::Enum_cstyle::F1 );
 }
 
-//! Test Pack/Unpack of a std::pair<int,double>
+//! Test Pack/Unpack of a std::pair< int, double >
 template<> template<>
 void PUPUtil_object::test< 4 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -331,6 +472,70 @@ void PUPUtil_object::test< 6 >() {
                     { charm::Enum_uint8_t::F2, "blahblah" } } } );
 }
 
+//! Test Pack/Unpack of a std::array< int, 2 >
+template<> template<>
+void PUPUtil_object::test< 7 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "migrate std::array<int,2> 1" );
+
+  CProxy_Migrated::ckNew( charm::Array{ { 12, 2 } } );
+}
+
+//! Test Pack/Unpack of a std::unordered_map< int, std::string >
+template<> template<>
+void PUPUtil_object::test< 8 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "migrate std::unordered_map<int,str> 1" );
+
+  CProxy_Migrated::ckNew( charm::UnorderedMap{ {11,"eleven"}, {12,"twelve"} } );
+}
+
+//! Test Pack/Unpack of a boost::optional< std::string >
+template<> template<>
+void PUPUtil_object::test< 9 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "migrate boost::optional<str> 1" );
+
+  CProxy_Migrated::ckNew( charm::BoostOptionalStr{ {"blah"} } );
+}
+
+//! Test Pack/Unpack of an uninitialized boost::optional< int >
+template<> template<>
+void PUPUtil_object::test< 10 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "migrate boost::optional<none> 1" );
+
+  CProxy_Migrated::ckNew( charm::BoostOptionalInt{ { boost::none } } );
+}
+
+//! Test Pack/Unpack of tk::tuple::tagged_tuple
+template<> template<>
+void PUPUtil_object::test< 11 >() {
+  // This test spawns a new Charm++ chare. The "1" at the end of the test name
+  // signals that this is only the first part of this test: the part up to
+  // firing up an asynchronous Charm++ chare. The second part creates a new test
+  // result, sending it back to the suite if successful. If that chare never
+  // executes, the suite will hang waiting for that chare to call back.
+  set_test_name( "migrate tk::tuple::tagged_tuple 1" );
+
+  CProxy_Migrated::ckNew( charm::TaggedTuple{ "Bob", 32, "bob@bob.bob" } );
+}
 } // tut::
 
 #endif // test_PUPUtil_h

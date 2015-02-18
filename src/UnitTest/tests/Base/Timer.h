@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Mon 28 Jul 2014 02:33:32 PM MDT
+  \date      Wed 18 Feb 2015 11:36:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -43,19 +43,19 @@ void Timer_object::test< 1 >() {
   ensure_equals( "time 0.1s elapsed as float", timer.dsec(), 0.1, precision );
 }
 
-//! Test timing a 0.1 duration as h:m:s with given precision
+//! Test timing a 1.0 duration as h:m:s with given precision
 template<> template<>
 void Timer_object::test< 2 >() {
-  set_test_name( "measure 0.1s using hms() with " + std::to_string(precision) +
+  set_test_name( "measure 1.0s using hms() with " + std::to_string(precision) +
                  "s prec" );
 
   tk::Timer timer;
-  usleep( 100000 );    // in micro-seconds, sleep for 0.1 second
+  usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
   const auto stamp = timer.hms();
   // test if time measured with at least 1/10th of a millisecond precision
-  ensure_equals( "time 0.1s elapsed as hrs", stamp.hrs.count(), 0.0, precision );
-  ensure_equals( "time 0.1s elapsed as min", stamp.min.count(), 0.0, precision );
-  ensure_equals( "time 0.1s elapsed as sec", stamp.sec.count(), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as hrs", stamp.hrs.count(), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as min", stamp.min.count(), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as sec", stamp.sec.count(), 1.0, precision );
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by term
@@ -115,6 +115,24 @@ void Timer_object::test< 4 >() {
                  1.0, precision );
   ensure_equals( "estimated time to accomlishment in sec", eta.sec.count(),
                  39.0, precision );
+}
+
+//! Test converting a 1.0s duration timed as a float to Timer::Watch
+template<> template<>
+void Timer_object::test< 5 >() {
+  set_test_name( "convert time stamp in float to Watch" );
+
+  tk::Timer timer;
+  usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
+  // convert time stamp in float to Timer::Watch
+  const auto w = tk::hms( timer.dsec() );
+  // test if time measured with at least 1/10th of a millisecond precision
+  ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in hrs",
+                 w.hrs.count(), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in min",
+                 w.min.count(), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in sec",
+                 w.sec.count(), 1.0, precision );
 }
 
 } // tut::
