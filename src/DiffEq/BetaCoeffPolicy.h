@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/BetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 11:33:24 AM MST
+  \date      Wed 18 Feb 2015 04:27:37 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Beta coefficients policies
   \details   This file defines coefficients policy classes for the beta SDE,
@@ -97,56 +97,13 @@ class BetaCoeffConst {
     void lookup( const tk::Statistics&, char ) {}
 
     //! Update coefficients: no-op for constant coefficients
-    void update( const tk::real&,
-                 std::vector< tk::real >&,
-                 std::vector< tk::real >&,
-                 std::vector< tk::real >& ) {}
-};
-
-//! \brief Beta JRRJ coefficients policity
-class BetaCoeffJRRJ {
-
-  public:
-    //! Constructor: initialize coefficients
-    BetaCoeffJRRJ( tk::ctr::ncomp_type ncomp,
-                   const std::vector< kw::sde_b::info::expect::type >& b_,
-                   const std::vector< kw::sde_S::info::expect::type >& S_,
-                   const std::vector< kw::sde_kappa::info::expect::type >& k_,
-                   std::vector< kw::sde_b::info::expect::type  >& b,
-                   std::vector< kw::sde_S::info::expect::type >& S,
-                   std::vector< kw::sde_kappa::info::expect::type >& k )
-    {
-      b = b_;
-      S = S_;
-      k = k_;
-      ErrChk( b.size() == ncomp, "Wrong number of beta SDE parameters 'b'");
-      ErrChk( S.size() == ncomp, "Wrong number of beta SDE parameters 'S'");
-      ErrChk( k.size() == ncomp, "Wrong number of beta SDE parameters 'k'");
-    }
-
-    //! Coefficients policy type accessor
-    static tk::ctr::CoeffPolicyType type() noexcept
-    { return tk::ctr::CoeffPolicyType::JRRJ; }
-
-    //! Lookup statistical moments required for the JRRJ model
-    void lookup( const tk::Statistics& stat, char depvar )
-    {
-      std::cout << depvar << std::endl;
-    }
-
-    //! Update coefficients using the JRRJ model
-    void update( const tk::real&,
-                 std::vector< tk::real >&,
-                 std::vector< tk::real >&,
-                 std::vector< tk::real >& ) {}
-
-  private:
-    std::vector< const tk::real* > mean;
+    void update( std::vector< kw::sde_b::info::expect::type  >& b,
+                 std::vector< kw::sde_S::info::expect::type >& S,
+                 std::vector< kw::sde_kappa::info::expect::type >& k ) {}
 };
 
 //! List of all beta's coefficients policies
 using BetaCoeffPolicies = boost::mpl::vector< BetaCoeffConst
-                                            , BetaCoeffJRRJ
                                             >;
 
 } // walker::
