@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 08:28:47 AM MST
+  \date      Fri 13 Feb 2015 03:18:16 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class declaration
   \details   This file implements a statistics class that can be used to
@@ -115,6 +115,15 @@ class Statistics {
     //! Central trivariate PDFs accessor
     const std::vector< tk::TriPDF >& ctpdf() const noexcept { return m_centpdf; }
 
+    //! Lookup moment positions (in memory)
+    const tk::real* pos( const tk::ctr::Product p ) const {
+      const auto& it = m_pos.find( p );
+      if (it != end(m_pos))
+        return it->second;
+      else
+        Throw( "Cannot lookup ordinary moment location in memory" );
+    }
+
   private:
     /** @name Setup functions, called from the constructor */
     ///@{
@@ -138,10 +147,8 @@ class Statistics {
     //! Particle properties
     const tk::ParProps& m_particles;
 
-    //! Map used to lookup ordinary moments
-    std::map< tk::ctr::Product, const tk::real* > m_ordLookup;
-    //! Map used to lookup central moments
-    std::map< tk::ctr::Product, const tk::real* > m_cenLookup;
+    //! Map used to lookup the position (in memory) of moments
+    std::map< tk::ctr::Product, const tk::real* > m_pos;
 
     /** @name Data for statistical moment estimation */
     ///@{
