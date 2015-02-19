@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:08:10 AM MST
+  \date      Wed 18 Feb 2015 06:52:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest: Quinoa's unit test suite Charm++ main chare.
   \details   UnitTest: Quinoa's unit test suite Charm++ main chare. This file
@@ -36,6 +36,7 @@
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Writer.h>
 
+#include <tests/Control/Components.h>
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
 #include <tests/Control/Toggle.h>
