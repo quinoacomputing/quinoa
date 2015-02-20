@@ -37,6 +37,7 @@
 #include <tests/Base/Writer.h>
 
 #include <tests/Control/Components.h>
+#include <tests/Control/Control.h>
 #include <tests/Control/FileParser.h>
 #include <tests/Control/StringParser.h>
 #include <tests/Control/Toggle.h>

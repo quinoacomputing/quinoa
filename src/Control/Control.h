@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 09:56:17 PM MST
+  \date      Thu 19 Feb 2015 07:07:43 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include <TaggedTuple.h>
+#include <Exception.h>
 
 namespace tk {
 
@@ -287,7 +288,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     void store_back_back(const std::string& value) {
       Tuple::template get<tag>().back().push_back(
         convert<typename Tuple::template nT<tag>
-                              ::value_type>( value ) );
+                              ::value_type::value_type>( value ) );
     }
     //! \brief Convert and push back value to vector of back of vector at tag at
     //!   2nd level
@@ -301,7 +302,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
              template get<subtag>().back().push_back(
         convert<typename Tuple::template nT<tag>
                               ::template nT<subtag>
-                              ::value_type>( value ) );
+                              ::value_type::value_type>( value ) );
     }
     //! \brief Convert and push back value to vector of back of vector at tag at
     //!   3rd level
@@ -398,6 +399,12 @@ class Control : public tuple::tagged_tuple<Ts...> {
     ///@{
     //! \brief Insert key-value pair with converting value to map at tag at 1st
     //!   level using std::map::operator[]
+    //! \details This member function is used to set a value behind a field
+    //!   given by the field template argument of a tagged tuple that exist as a
+    //!   value of a std::map behind a key at the 1st level of Control object
+    //!   given by the tag template argument. The assumed hierarchy is: Control
+    //!   (this object) -> tag -> std::map< key_type, tagged_tuple > -> field =
+    //!   value. This is similar to insert_opt, but performs conversion.
     //! \param[in] key Key to insert to std::map behind tag given by the
     //!   template argument
     //! \param[in] value Value to insert to std::map behind tag given by the
@@ -413,6 +420,13 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     //! \brief Insert key-value pair with converting value to map at tag at 2nd
     //!   level using std::map::operator[]
+    //! \details This member function is used to set a value behind a field
+    //!   given by the field template argument of a tagged tuple that exist as a
+    //!   value of a std::map behind a key at the 2nd level of Control object
+    //!   given by the tag and subtag template arguments. The assumed hierarchy
+    //!   is: Control (this object) -> tag -> subtag -> std::map< key_type,
+    //!   tagged_tuple > -> field = value. This is similar to insert_opt, but
+    //!   performs conversion.
     //! \param[in] key Key to insert to std::map behind tag and subtag given by
     //!   the template arguments
     //! \param[in] value Value to insert to std::map behind tag and subtag given
@@ -430,6 +444,13 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     //! \brief Insert key-value pair with converting value to map at tag at 3rd
     //!   level using std::map::operator[]
+    //! \details This member function is used to set a value behind a field
+    //!   given by the field template argument of a tagged tuple that exist as a
+    //!   value of a std::map behind a key at the 3rd level of Control object
+    //!   given by the tag, subtag, and subsubtag template arguments. The
+    //!   assumed hierarchy is: Control (this object) -> tag -> subtag ->
+    //!   subsubtag -> std::map< key_type, tagged_tuple > -> field = value. This
+    //!   is similar to insert_opt, but performs conversion.
     //! \param[in] key Key to insert to std::map behind tag, subtag, and
     //!   subsubtag given by the template arguments
     //! \param[in] value Value to insert to std::map behind tag, subtag, and
@@ -450,6 +471,29 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     ///@}
 
+    /** @name Insert key-value pair without conversion of value to map at tag at three different depths */
+    ///@{
+    //! \brief Insert value to field of tagged tuple behind a key of a map at
+    //!   tag at 1st level.
+    //! \details This member function is used to set a value behind a field
+    //!   given by the field template argument of a tagged tuple that exist as a
+    //!   value of a std::map behind a key at the 1st level of Control object
+    //!   given by the tag template argument. The assumed hierarchy is: Control
+    //!   (this object) -> tag -> subtag -> std::map< key_type, tagged_tuple >
+    //!   -> field = value. This is similar to insert_field, but performs no
+    //!   conversion.
+    //! \param[in] key Key used to access the std::map value using
+    //!   std::map::operator[], behind which a type that defines the get()
+    //!   member function (e.g., a tagged_tuple) is assumed to exist
+    //! \param[in] value Value to insert
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename key_type, typename field, typename field_type,
+              typename tag >
+    void insert_opt( const key_type& key, const field_type& value ) {
+      Tuple::template get<tag>()[ key ].template get<field>() = value;
+    }
+
     //! \brief Insert value to field of tagged tuple behind a key of a map at
     //!   tag at 2nd level.
     //! \details This member function is used to set a value behind a field
@@ -457,21 +501,44 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //!   value of a std::map behind a key at the 2nd level of Control object
     //!   given by the tag and subtag template arguments. The assumed hierarchy
     //!   is: Control (this object) -> tag -> subtag -> std::map< key_type,
-    //!   tagged_tuple > -> field = value.
+    //!   tagged_tuple > -> field = value. This is similar to insert_field, but
+    //!   performs no conversion.
     //! \param[in] key Key used to access the std::map value using
     //!   std::map::operator[], behind which a type that defines the get()
     //!   member function (e.g., a tagged_tuple) is assumed to exist
     //! \param[in] value Value to insert
     //! \author J. Bakosi
-    //! \warning Only implemented (and currently used) at 2nd level
-    // TODO Implement 1st and third level if needed
     // TODO Combine the three overloads into a single variadic one
     template< typename key_type, typename field, typename field_type,
               typename tag, typename subtag >
-    void insert_opt(const key_type& key, const field_type& value) {
+    void insert_opt( const key_type& key, const field_type& value ) {
       Tuple::template get<tag>().
              template get<subtag>()[ key ].template get<field>() = value;
     }
+
+    //! \brief Insert key-value pair with converting value to map at tag at 3rd
+    //!   level using std::map::operator[]
+    //! \details This member function is used to set a value behind a field
+    //!   given by the field template argument of a tagged tuple that exist as a
+    //!   value of a std::map behind a key at the 3rd level of Control object
+    //!   given by the tag, subtag, and subsubtag template arguments. The
+    //!   assumed hierarchy is: Control (this object) -> tag -> subtag ->
+    //!   subsubtag -> std::map< key_type, tagged_tuple > -> field = value. This
+    //!   is similar to insert_field, but performs no conversion.
+    //! \param[in] key Key to insert to std::map behind tag, subtag, and
+    //!   subsubtag given by the template arguments
+    //! \param[in] value Value to insert to std::map behind tag, subtag, and
+    //!   subsubtag given by the template arguments
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename key_type, typename field, typename field_type,
+              typename tag, typename subtag, typename subsubtag >
+    void insert_opt( const key_type& key, const field_type& value ) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>()[ key ].template get<field>() = value;
+    }
+    ///@}
 
     //! \brief Convert string to a type given by the template argument using
     //!   std::stringstream
@@ -479,10 +546,13 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \return A value of type given by the template argument
     //! \author J. Bakosi
     template< typename type >
-    type convert(const std::string& str) {
-      std::stringstream ss(str);
+    type convert( const std::string& str ) {
+      std::stringstream ss( str );
       type num;
       ss >> num;
+      if (ss.fail())
+        Throw( "Failed to convert '" + str +
+               "' to typeid " + typeid(num).name() );
       return num;
     }
 
@@ -492,9 +562,11 @@ class Control : public tuple::tagged_tuple<Ts...> {
     //! \return std::string of value converted
     //! \author J. Bakosi
     template< typename type >
-    std::string convert(const type& val) {
+    std::string convert( const type& val ) {
       std::stringstream ss;
       ss << val;
+      if (ss.fail())
+        Throw( "Failed to convert value to string" );
       return ss.str();
     }
 
