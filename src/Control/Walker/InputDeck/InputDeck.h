@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 03:46:15 PM MST
+  \date      Wed 18 Feb 2015 07:47:07 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -24,7 +24,7 @@
 namespace walker {
 namespace ctr {
 
-//! InputDeck : Control< specialized to Walker >, see Types.h,
+//! InputDeck : Control< specialized to Walker >, see Types.h
 class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
@@ -161,6 +161,9 @@ class InputDeck :
                                      , kw::txt_float_default
                                      , kw::txt_float_fixed
                                      , kw::txt_float_scientific
+                                     , kw::funcbeta
+                                     , kw::sde_rho2
+                                     , kw::sde_rcomma
                                      >;
 
     //! \brief Constructor: set all defaults

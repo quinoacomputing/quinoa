@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 23 Jan 2015 06:35:37 AM MST
+  \date      Mon 09 Feb 2015 12:48:35 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -300,6 +300,68 @@ namespace deck {
                              tag::beta,
                              tag::kappa > > > {};
 
+  //! Functional beta SDE
+  struct funcbeta :
+         pegtl::ifmust<
+           scan_sde< use< kw::funcbeta > >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::depvar< Stack,
+                                            use,
+                                            tag::funcbeta,
+                                            tag::depvar >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::funcbeta >,
+                           tk::grm::rng< Stack,
+                                         use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::funcbeta,
+                                         tag::rng >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::init >,
+                                            tk::ctr::InitPolicy,
+                                            tag::funcbeta,
+                                            tag::initpolicy >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::coeff >,
+                                            tk::ctr::CoeffPolicy,
+                                            tag::funcbeta,
+                                            tag::coeffpolicy >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_b >,
+                             tag::funcbeta,
+                             tag::b >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_S >,
+                             tag::funcbeta,
+                             tag::S >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_kappa >,
+                             tag::funcbeta,
+                             tag::kappa >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_rho2 >,
+                             tag::funcbeta,
+                             tag::rho2 >,
+                           tk::grm::parameter_vector<
+                             Stack,
+                             use,
+                             use< kw::sde_rcomma >,
+                             tag::funcbeta,
+                             tag::rcomma > > > {};
+
   //! Gamma SDE
   struct gamma :
          pegtl::ifmust< scan_sde< use< kw::gamma > >,
@@ -498,7 +560,8 @@ namespace deck {
                      diag_ou,
                      skewnormal,
                      gamma,
-                     beta > {};
+                     beta,
+                     funcbeta > {};
 
   //! 'walker' block
   struct walker :

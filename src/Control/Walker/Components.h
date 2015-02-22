@@ -26,7 +26,8 @@ using ncomps = tk::ctr::ncomponents<
   tag::ou,           std::vector< tk::ctr::ncomp_type >,
   tag::skewnormal,   std::vector< tk::ctr::ncomp_type >,
   tag::gamma,        std::vector< tk::ctr::ncomp_type >,
-  tag::beta,         std::vector< tk::ctr::ncomp_type >
+  tag::beta,         std::vector< tk::ctr::ncomp_type >,
+  tag::funcbeta,     std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

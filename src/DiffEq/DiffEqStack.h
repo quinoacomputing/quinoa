@@ -142,6 +142,9 @@ class DiffEqStack {
     //! Get information on Beta SDE
     std::vector< std::pair< std::string, std::string > >
     infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
+    //! Get information on functional Beta SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoFuncBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
     infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const;
