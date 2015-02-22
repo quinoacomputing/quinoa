@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 11:42:02 AM MDT
+  \date      Sun 22 Feb 2015 12:48:49 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -28,6 +28,10 @@ struct FileParser_common {
   // base class
   struct parser : tk::FileParser {
     parser( const std::string& f ) : FileParser( f ) {}
+    void diagnostics( const tk::Print& print,
+                      const std::vector< std::string >& messages ) {
+      tk::FileParser::diagnostics( print, messages );
+    }
   };
 };
 
@@ -61,7 +65,6 @@ void FileParser_object::test< 2 >() {
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
-    // if any other type of exception is thrown, test fails with except
     // find  out if exception was thrown due to the correct reason: testing on
     // whether the filename is empty is an Assert and compiled away in RELEASE
     // mode, in which case the ErrChk throws when it fails to open the file
@@ -74,7 +77,7 @@ void FileParser_object::test< 2 >() {
             std::string( e.what() ).find( "No filename specified" ) !=
               std::string::npos );
     #endif
-  }
+  } // if any other type of exception is thrown, test fails with except
 }
 
 //! Test if constructor throws exception if file does not exist
@@ -89,12 +92,11 @@ void FileParser_object::test< 3 >() {
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
-    // if any other type of exception is thrown, test fails with except
     // find  out if exception was thrown due to the correct reason
     ensure( std::string("wrong exception thrown: ") + e.what(),
             std::string( e.what() ).find( "Failed to open file" ) !=
               std::string::npos );
-  }
+  } // if any other type of exception is thrown, test fails with except
 }
 
 //! Test if constructor throws exception if cannot read from file
@@ -109,12 +111,71 @@ void FileParser_object::test< 4 >() {
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
-    // if any other type of exception is thrown, test fails with except
     // find  out if exception was thrown due to the correct reason
     ensure( std::string("wrong exception thrown: ") + e.what(),
             std::string( e.what() ).find( "Failed to read from file" ) !=
               std::string::npos );
+  } // if any other type of exception is thrown, test fails with except
+}
+
+//! Test if function diagnostics() throws exception if error occurred
+template<> template<>
+void FileParser_object::test< 5 >() {
+  set_test_name( "diagnostics throws on error" );
+
+  // Correctly throws exception on error
+  try {
+
+    // Open some file, does not matter what
+    parser p( unittest::g_executable );
+    // Feed "Error" to diagnostics()
+    p.diagnostics( tk::Print(), { { "Error" } } );
+    fail( "should throw exception" );
+
+  } catch( tk::Exception& e ) {
+    // exception thrown, test ok
+    // if any other type of exception is thrown, test fails with except
+    // find  out if exception was thrown due to the correct reason
+    ensure( std::string("wrong exception thrown: ") + e.what(),
+            std::string( e.what() ).find( "Error(s) occurred while parsing" ) !=
+              std::string::npos );
   }
+}
+
+//! Test if function diagnostics() does not throw exception if warning occurred
+template<> template<>
+void FileParser_object::test< 6 >() {
+  set_test_name( "diagnostics doesn't throw on warning" );
+
+  // Does not throw exception on warning
+  try {
+
+    // Open some file, does not matter what
+    parser p( unittest::g_executable );
+    // Feed "Warning" to diagnostics()
+    p.diagnostics( tk::Print(), { { "Warning" } } );
+
+  } catch( tk::Exception& e ) {
+    fail( "should not throw exception" );
+  } // if any other type of exception is thrown, test fails with except
+}
+
+//! Test if function diagnostics() does not break on empty messages vector
+template<> template<>
+void FileParser_object::test< 7 >() {
+  set_test_name( "diagnostics with no messages" );
+
+  // Does not throw exception on warning
+  try {
+
+    // Open some file, does not matter what
+    parser p( unittest::g_executable );
+    // Feed empty vector to diagnostics()
+    p.diagnostics( tk::Print(), { {  } } );
+
+  } catch( tk::Exception& e ) {
+    fail( "should not throw exception" );
+  } // if any other type of exception is thrown, test fails with except
 }
 
 } // tut::
