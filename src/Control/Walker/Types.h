@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Thu 15 Jan 2015 09:03:23 AM MST
+  \date      Mon 09 Feb 2015 12:44:19 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -177,6 +177,24 @@ using BetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
 >;
 
+//! Functional beta parameters storage
+using FuncBetaParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
+  tag::rho2,       std::vector< std::vector<
+                      kw::sde_rho2::info::expect::type > >,
+  tag::rcomma,     std::vector< std::vector<
+                      kw::sde_rcomma::info::expect::type > >,
+  tag::rng,         std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+>;
+
 //! Parameters storage
 using parameters = tk::tuple::tagged_tuple<
   #ifdef HAS_MKL
@@ -190,7 +208,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::diagou,       DiagOrnsteinUhlenbeckParameters,
   tag::skewnormal,   SkewNormalParameters,
   tag::gamma,        GammaParameters,
-  tag::beta,         BetaParameters
+  tag::beta,         BetaParameters,
+  tag::funcbeta,     FuncBetaParameters
 >;
 
 //! PEGTL location type to use throughout Walker's parsers

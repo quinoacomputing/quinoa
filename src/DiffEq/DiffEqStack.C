@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 05:49:37 PM MST
+  \date      Mon 09 Feb 2015 12:52:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -23,6 +23,7 @@
 #include <GeneralizedDirichlet.h>
 #include <WrightFisher.h>
 #include <Beta.h>
+#include <FunctionalBeta.h>
 #include <SkewNormal.h>
 #include <Gamma.h>
 #include <Factory.h>
@@ -152,6 +153,15 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< Beta >
                   ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
+  // Functional Beta SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using FunctionalBetaPolicies =
+    mpl::vector< tk::InitPolicies, FunctionalBetaCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< FunctionalBetaPolicies >(
+    registerDiffEq< FunctionalBeta >
+                  ( m_factory, ctr::DiffEqType::FUNCBETA, m_eqTypes ) );
+
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
@@ -195,6 +205,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::diagou >( d, cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       diffeqs.push_back( createDiffEq< tag::beta >( d, cnt ) );
+    else if (d == ctr::DiffEqType::FUNCBETA)
+      diffeqs.push_back( createDiffEq< tag::funcbeta >( d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -230,6 +242,8 @@ DiffEqStack::info() const
       info.emplace_back( infoDiagOU( cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       info.emplace_back( infoBeta( cnt ) );
+    else if (d == ctr::DiffEqType::FUNCBETA)
+      info.emplace_back( infoFuncBeta( cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       info.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -464,6 +478,48 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
                      parameters< tag::param, tag::beta, tag::S >(c) );
   info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
                      parameters< tag::param, tag::beta, tag::kappa >(c) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoFuncBeta( std::map< ctr::DiffEqType, int >& cnt ) const
+//******************************************************************************
+//  Return information on the functional beta SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::FUNCBETA ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::FUNCBETA ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::funcbeta, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::funcbeta, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::funcbeta, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::funcbeta >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::funcbeta >()[c];
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::funcbeta, tag::rng >()[c] ) );
+  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::funcbeta, tag::b >(c) );
+  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::funcbeta, tag::S >(c) );
+  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::funcbeta, tag::kappa >(c) );
+  info.emplace_back( "coeff rho2 [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::funcbeta, tag::rho2 >(c) );
+  info.emplace_back( "coeff rcomma [" + std::to_string( ncomp ) + "]",
+                     parameters< tag::param, tag::funcbeta, tag::rcomma >(c) );
 
   return info;
 }

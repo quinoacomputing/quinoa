@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Sat 07 Feb 2015 08:45:09 PM MST
+  \date      Mon 09 Feb 2015 12:48:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1570,6 +1570,38 @@ struct depvar_info {
 };
 using depvar = keyword< depvar_info, d,e,p,v,a,r >;
 
+struct sde_rho2_info {
+  static std::string name() { return "rho2"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) rho2)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "rho2 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_rho2 = keyword< sde_rho2_info,  r,h,o,'2' >;
+
+struct sde_rcomma_info {
+  static std::string name() { return "rcomma"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) rcomma)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "rcomma 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_rcomma = keyword< sde_rcomma_info,  r,c,o,m,m,a >;
+
 struct dirichlet_info {
   static std::string name() { return "Dirichlet"; }
   static std::string shortDescription() { return
@@ -1693,6 +1725,37 @@ struct beta_info {
   }
 };
 using beta = keyword< beta_info, b,e,t,a >;
+
+struct funcbeta_info {
+  static std::string name() { return "Functional beta"; }
+  static std::string shortDescription() { return
+    "Introduce the funcbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the funcbeta ... end block, used to
+    specify the configuration of a system of stochastic differential equations
+    (SDEs), in which the dependent variable is a function of a variable with
+    linear drift and quadratic diagonal diffusion whose invariant is the joint
+    beta distribution. Effectively, this is a beta SDE but additionally there is
+    a functional wrapper around the dependent variable governed by the beta SDE.
+    In other words, if X is governed by the beta SDE, then the functional beta
+    SDE governs Y = f(X), where both X and Y are random variables. The function
+    'f()' is currently hard-coded, but eventually may be abstracted away to
+    allow for different mathematical functions. For more details on the beta
+    SDE, see http://doi.org/10.1080/14685248.2010.510843 DiffEq/Beta.h. Keywords
+    allowed in a funcbeta ... end block: )" + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappa::string() + "\'. "
+    + R"(For an example funcbeta ... end block, see
+      doc/html/walker_example_funcbeta.html.)";
+  }
+};
+using funcbeta = keyword< funcbeta_info, f,u,n,c,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

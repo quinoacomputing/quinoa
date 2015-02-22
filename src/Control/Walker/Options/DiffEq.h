@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 07:59:50 AM MST
+  \date      Mon 09 Feb 2015 12:33:53 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -29,6 +29,7 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   SKEWNORMAL,
                                   GAMMA,
                                   BETA,
+                                  FUNCBETA,
                                   DIRICHLET,
                                   GENDIR,
                                   WRIGHTFISHER };
@@ -52,6 +53,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::skewnormal
                                        , kw::gamma
                                        , kw::beta
+                                       , kw::funcbeta
                                        , kw::dirichlet
                                        , kw::gendir
                                        , kw::wrightfisher
@@ -68,6 +70,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::SKEWNORMAL, kw::skewnormal::name() },
           { DiffEqType::GAMMA, kw::gamma::name() },
           { DiffEqType::BETA, kw::beta::name() },
+          { DiffEqType::FUNCBETA, kw::funcbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
           { DiffEqType::WRIGHTFISHER, kw::wrightfisher::name() } },
@@ -78,6 +81,7 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::skewnormal::string(), DiffEqType::SKEWNORMAL },
           { kw::gamma::string(), DiffEqType::GAMMA },
           { kw::beta::string(), DiffEqType::BETA },
+          { kw::funcbeta::string(), DiffEqType::FUNCBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },
           { kw::wrightfisher::string(), DiffEqType::WRIGHTFISHER } } ) {}

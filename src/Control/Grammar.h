@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Sat 07 Feb 2015 07:54:31 PM MST
+  \date      Tue 17 Feb 2015 04:17:04 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -46,7 +46,7 @@ namespace grm {
   // Common InputDeck state
 
   //! Out-of-struct storage of field ID for pushing terms for statistics
-  static int field = 0;
+  static kw::ncomp::info::expect::type field = 0;
   //! \brief Parser-lifetime storage for dependent variables selected.
   //! \details Used to track the dependent variable of differential equations
   //!   (i.e., models) assigned during parsing. It needs to be case insensitive
@@ -517,7 +517,7 @@ namespace grm {
         it = ctrinfo.find( value );
         if (it != ctrinfo.end())
           // store keyword and its info on which help was requested
-        stack.template set< tag::helpkw >( { it->first, it->second, false } );
+          stack.template set< tag::helpkw >( { it->first, it->second, false } );
         else
           Message< Stack, ERROR, MsgKey::KEYWORD >( stack, value );
       }
@@ -1018,7 +1018,7 @@ namespace grm {
   template< typename Stack, typename var >
   struct fieldvar :
          pegtl::sor<
-           pegtl::seq< var, pegtl::ifapply< pegtl::digit,
+           pegtl::seq< var, pegtl::ifapply< pegtl::plus< pegtl::digit >,
                                             save_field< Stack > > >,
            var > {};
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:33:33 PM MST
+  \date      Mon 09 Feb 2015 12:44:44 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -43,6 +43,7 @@ struct dirichlet {};
 struct gendir {};
 struct wrightfisher {};
 struct beta {};
+struct funcbeta {};
 struct gamma {};
 struct diffeq {};
 struct initpolicy {};
@@ -63,6 +64,8 @@ struct atwood {};
 struct b {};
 struct S {};
 struct kappa {};
+struct rho2 {};
+struct rcomma {};
 struct c {};
 struct c0 {};
 struct c1 {};
