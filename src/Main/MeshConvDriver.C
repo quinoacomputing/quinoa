@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:41:01 AM MST
+  \date      Mon 23 Feb 2015 02:59:23 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -14,13 +14,13 @@
 #include <Factory.h>
 #include <MeshConvDriver.h>
 #include <MeshConv/CmdLine/Parser.h>
+#include <MeshDetect.h>
 #include <GmshMeshReader.h>
 #include <NetgenMeshReader.h>
 #include <ExodusIIMeshReader.h>
 #include <NetgenMeshWriter.h>
 #include <GmshMeshWriter.h>
 #include <ExodusIIMeshWriter.h>
-#include <meshconv.decl.h>
 
 using meshconv::MeshConvDriver;
 
@@ -48,108 +48,33 @@ MeshConvDriver::execute() const
 //******************************************************************************
 {
   //! Mesh readers factory
-  std::map< MeshReaderType, std::function<tk::Reader*()> > readers;
+  std::map< tk::MeshReaderType, std::function<tk::Reader*()> > readers;
 
   //! Mesh writers factory
-  std::map< MeshWriterType, std::function<tk::Writer*()> > writers;
+  std::map< tk::MeshWriterType, std::function<tk::Writer*()> > writers;
 
   //! Create unstructured mesh to store mesh
   tk::UnsMesh mesh;
 
   // Register mesh readers
-  tk::record< tk::GmshMeshReader >( readers, MeshReaderType::GMSH,
+  tk::record< tk::GmshMeshReader >( readers, tk::MeshReaderType::GMSH,
                                     m_input, std::ref(mesh) );
-  tk::record< tk::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
+  tk::record< tk::NetgenMeshReader >( readers, tk::MeshReaderType::NETGEN,
                                       m_input, std::ref(mesh) );
-  tk::record< tk::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
+  tk::record< tk::ExodusIIMeshReader >( readers, tk::MeshReaderType::EXODUSII,
                                         m_input, std::ref(mesh) );
 
   // Register mesh writers
-  tk::record< tk::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+  tk::record< tk::GmshMeshWriter >( writers, tk::MeshWriterType::GMSH,
                                     m_output, std::ref(mesh) );
-  tk::record< tk::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
+  tk::record< tk::NetgenMeshWriter >( writers, tk::MeshWriterType::NETGEN,
                                       m_output, std::ref(mesh) );
-  tk::record< tk::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
+  tk::record< tk::ExodusIIMeshWriter >( writers, tk::MeshWriterType::EXODUSII,
                                         m_output, std::ref(mesh) );
 
   // Read in mesh
-  tk::instantiate( readers, detectInput() )->read();
+  tk::instantiate( readers, tk::detectInput( m_input ) )->read();
 
   // Write out mesh
-  tk::instantiate( writers, pickOutput() )->write();
-}
-
-MeshConvDriver::MeshReaderType
-MeshConvDriver::detectInput() const
-//******************************************************************************
-//  Detect input mesh file type
-//! \return enum specifying the mesh reader type
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Get first three letters from input file
-  std::string s( tk::Reader( m_input ).firstline().substr(0,3) );
-
-  if ( s == "$Me" ) {
-
-    return MeshReaderType::GMSH;
-
-  } else if ( s == "CDF" || s == "HDF" ) {
-
-    return MeshReaderType::EXODUSII;
-
-  } else {
-
-    try {
-
-      std::stoi(s);    // try to convert to an integer
-
-    } catch ( std::invalid_argument ) {
-
-      Throw( "Input mesh file type could not be determined from header: " +
-             m_input );
-
-    }
-
-    // could also catch std::out_of_range, the other exception potentially
-    // thrown by std::stoi(), but a three-digit integer will always fit into int
-
-    // if we got here, the above string-to-integer conversion succeeded
-    return MeshReaderType::NETGEN;
-
-  }
-}
-
-MeshConvDriver::MeshWriterType
-MeshConvDriver::pickOutput() const
-//******************************************************************************
-//  Determine output mesh file type
-//! \return enum specifying the mesh writer type
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Get extension of input file name
-  std::string fn = m_output;
-  std::string ext( fn.substr(fn.find_last_of(".") + 1) );
-
-  if ( ext == "msh" ) {
-
-    return MeshWriterType::GMSH;
-
-  } else if ( ext == "exo" || ext == "h5" ) {
-
-    return MeshWriterType::EXODUSII;
-
-  } else if ( ext == "mesh" ) {
-
-    return MeshWriterType::NETGEN;
-
-  } else {
-
-    Throw( "Output mesh file type could not be determined from extension of "
-           "filename '" + m_output + "'; valid extensions are: "
-           "'msh' for Gmsh, 'exo' or 'h5' for ExodusII, 'mesh' for Netgen's "
-           "neutral" );
-
-  }
+  tk::instantiate( writers, tk::pickOutput( m_output ) )->write();
 }

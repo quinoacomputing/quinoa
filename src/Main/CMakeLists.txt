@@ -35,24 +35,13 @@ endif()
 target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
-                      #LinearAlgebra
                       Mesh
                       Statistics
                       InciterControl
-                      RNG
-                      #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
                       ${HDF5_LIBRARY}
-                      #${Z_LIBRARY}
-                      ${LAPACKE_LIB}
-                      ${LAPACK_LIBRARIES}
-                      ${MKL_INTERFACE_LIBRARY}
-                      ${MKL_CORE_LIBRARY}
-                      ${MKL_SEQUENTIAL_LAYER_LIBRARY}
-                      ${RNGSSE_LIBRARY}
-                      ${BOOST_SYSTEM_LIBRARY}
 )
 
 # Add custom dependencies for Inciter's main Charm++ module
@@ -93,7 +82,6 @@ target_link_libraries(${RNGTEST_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
-                      ${BOOST_SYSTEM_LIBRARY}
 )
 
 # Add custom dependencies for RNGTest's main Charm++ module
@@ -132,7 +120,6 @@ target_link_libraries(${UNITTEST_EXECUTABLE}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
-                      ${BOOST_SYSTEM_LIBRARY}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module
@@ -170,7 +157,6 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
-                      ${BOOST_SYSTEM_LIBRARY}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -219,7 +205,6 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
-                      ${BOOST_SYSTEM_LIBRARY}
 )
 
 # Add custom dependencies for Walker's main Charm++ module
