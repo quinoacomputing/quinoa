@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:26:20 AM MST
+  \date      Mon 23 Feb 2015 08:18:14 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
@@ -19,13 +19,13 @@
 #include <GmshMeshIO.h>
 #include <Exception.h>
 
-namespace quinoa {
+namespace tk {
 
 //! \brief GmshMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
 //!   the Gmsh mesh generator: http://geuz.org/gmsh.
 //! \author J. Bakosi
-class GmshMeshReader : public tk::Reader {
+class GmshMeshReader : public Reader {
 
   public:
     //! Constructor
@@ -103,6 +103,6 @@ class GmshMeshReader : public tk::Reader {
     };
 };
 
-} // quinoa::
+} // tk::
 
 #endif // GmshMeshReader_h

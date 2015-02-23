@@ -6,17 +6,17 @@ project(Control CXX)
 
 include(charm)
 
-#### Quinoa control ############################################################
-add_library(QuinoaControl
+#### Inciter control ###########################################################
+add_library(InciterControl
             FileParser.C
             StringParser.C
-            Quinoa/InputDeck/Parser.C
-            Quinoa/CmdLine/Parser.C
+            Inciter/InputDeck/Parser.C
+            Inciter/CmdLine/Parser.C
 )
 
-removeWarnings("Quinoa/InputDeck/Parser.C;Quinoa/CmdLine/Parser.C")
+removeWarnings("Inciter/InputDeck/Parser.C;Inciter/CmdLine/Parser.C")
 
-INSTALL(TARGETS QuinoaControl
+INSTALL(TARGETS InciterControl
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development

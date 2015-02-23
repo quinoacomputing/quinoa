@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:09:45 AM MST
+  \date      Mon 23 Feb 2015 08:17:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -18,12 +18,12 @@
 
 class STLMesh;
 
-namespace quinoa {
+namespace tk {
 
 //! \brief STLTxtMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file in
 //!   ASCII STL format.
-class STLTxtMeshReader : public tk::Reader {
+class STLTxtMeshReader : public Reader {
 
   public:
     //! Constructor
@@ -67,6 +67,6 @@ class STLTxtMeshReader : public tk::Reader {
     STLMesh& m_mesh;                         //!< Mesh
 };
 
-} // quinoa::
+} // tk::
 
 #endif // STLTxtMeshReader_h

@@ -2,12 +2,12 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 06:52:47 PM MST
+  \date      Mon 23 Feb 2015 08:39:24 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     UnitTest: Quinoa's unit test suite Charm++ main chare.
-  \details   UnitTest: Quinoa's unit test suite Charm++ main chare. This file
-    contains the definition of the Charm++ main chare, equivalent to main() in
-    Charm++-land.
+  \brief     UnitTest's unit test suite Charm++ main chare.
+  \details   UnitTest's unit test suite Charm++ main chare. This file contains
+    the definition of the Charm++ main chare, equivalent to main() in Charm++-
+    land.
 */
 //******************************************************************************
 
@@ -165,7 +165,7 @@ class Main : public CBase_Main {
         catch ( tk::Exception& qe ) {
           qe.handleException();
         }
-        // Catch std::exception and transform it into Quinoa::Exception without
+        // Catch std::exception and transform it into tk::Exception without
         // file:line:func information
         catch ( std::exception& se ) {
           tk::Exception qe( se.what() );

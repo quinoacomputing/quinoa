@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:15:08 AM MST
+  \date      Mon 23 Feb 2015 08:41:14 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -90,7 +90,7 @@ class Main : public CBase_Main {
         catch ( tk::Exception& qe ) {
           qe.handleException();
         }
-        // Catch std::exception and transform it into Quinoa::Exception without
+        // Catch std::exception and transform it into tk::Exception without
         // file:line:func information
         catch ( std::exception& se ) {
           tk::Exception qe( se.what() );

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:59:09 AM MST
+  \date      Mon 23 Feb 2015 08:15:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class declaration
   \details   Netgen mesh reader class declaration. Only supports tetrahedra.
@@ -14,13 +14,13 @@
 #include <Reader.h>
 #include <UnsMesh.h>
 
-namespace quinoa {
+namespace tk {
 
 //! \brief NetgenMeshReader : tk::Reader
 //! \details Mesh reader class facilitating reading a mesh from a file saved by
 //!   the Netgen mesh generator:
 //!   http://sourceforge.net/apps/mediawiki/netgen-mesher.
-class NetgenMeshReader : public tk::Reader {
+class NetgenMeshReader : public Reader {
 
   public:
     //! Constructor
@@ -41,6 +41,6 @@ class NetgenMeshReader : public tk::Reader {
     UnsMesh& m_mesh;                   //!< Mesh object
 };
 
-} // quinoa::
+} // tk::
 
 #endif // NetgenMeshReader_h

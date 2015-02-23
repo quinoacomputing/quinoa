@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:32:01 AM MST
+  \date      Mon 23 Feb 2015 08:43:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class definition. Currently, this is a bare
@@ -20,7 +20,7 @@
 #include <ExodusIIMeshWriter.h>
 #include <Exception.h>
 
-using quinoa::ExodusIIMeshWriter;
+using tk::ExodusIIMeshWriter;
 
 ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
                                         const UnsMesh& mesh,
@@ -75,8 +75,7 @@ ExodusIIMeshWriter::writeHeader()
 {
   ErrChk(
     ex_put_init( m_outFile,
-                 (std::string("Written by Quinoa::") +
-                   MESHCONV_EXECUTABLE).c_str(),
+                 "Written by Quinoa",
                  3,     // number of dimensions
                  m_mesh.nnode(),
                  m_mesh.triinpoel().size() + m_mesh.tetinpoel().size(),

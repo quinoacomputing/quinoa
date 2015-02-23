@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Energy.h
+  \file      src/Control/Breeze/Options/Energy.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 07:54:13 PM MST
+  \date      Mon 23 Feb 2015 08:11:16 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Energy model options
   \details   Energy model options
 */
 //******************************************************************************
-#ifndef QuinoaEnergyOptions_h
-#define QuinoaEnergyOptions_h
+#ifndef BreezeEnergyOptions_h
+#define BreezeEnergyOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Energy model types
@@ -54,6 +54,6 @@ class Energy : public tk::Toggle< EnergyType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaEnergyOptions_h
+#endif // BreezeEnergyOptions_h

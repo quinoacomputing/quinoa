@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Mass.h
+  \file      src/Control/Breeze/Options/Mass.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:14 AM MST
+  \date      Mon 23 Feb 2015 08:11:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mass model options
   \details   Mass model options
 */
 //******************************************************************************
-#ifndef QuinoaMassOptions_h
-#define QuinoaMassOptions_h
+#ifndef BreezeMassOptions_h
+#define BreezeMassOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Mass model types
@@ -56,6 +56,6 @@ class Mass : public tk::Toggle< MassType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaMassOptions_h
+#endif // BreezeMassOptions_h

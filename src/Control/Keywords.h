@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 09 Feb 2015 12:48:02 PM MST
+  \date      Mon 23 Feb 2015 08:14:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1985,7 +1985,7 @@ struct output_info {
 };
 using output = keyword< output_info, o,u,t,p,u,t >;
 
-////////// USED ONLY BY EXECUTABLE 'quinoa', NOT YET FULLY DOCUMENTED //////////
+////////// NOT YET FULLY DOCUMENTED //////////
 
 struct mix_iem_info {
   static std::string name() { return "IEM"; }

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:20:57 AM MST
+  \date      Mon 23 Feb 2015 08:18:19 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -17,7 +17,7 @@
 #include <UnsMesh.h>
 #include <GmshMeshReader.h>
 
-using quinoa::GmshMeshReader;
+using tk::GmshMeshReader;
 
 void
 GmshMeshReader::read()

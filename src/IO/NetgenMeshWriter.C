@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 09:01:15 AM MST
+  \date      Mon 23 Feb 2015 08:18:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh writer class definition
   \details   Netgen mesh writer class definition. Only supports tetrahedra.
@@ -14,7 +14,7 @@
 #include <NetgenMeshWriter.h>
 #include <Exception.h>
 
-using quinoa::NetgenMeshWriter;
+using tk::NetgenMeshWriter;
 
 void
 NetgenMeshWriter::write()

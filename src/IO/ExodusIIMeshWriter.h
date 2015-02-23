@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:05:53 AM MST
+  \date      Mon 23 Feb 2015 08:17:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class declaration. Currently, this is a bare
@@ -18,12 +18,12 @@
 #include <UnsMesh.h>
 #include <Writer.h>
 
-namespace quinoa {
+namespace tk {
 
 //! \brief ExodusIIMeshWriter : tk::Writer
 //! \details Mesh reader class facilitating writing a mesh to a file in
 //!   ExodusII format. See also http://sourceforge.net/projects/exodusii.
-class ExodusIIMeshWriter : public tk::Writer {
+class ExodusIIMeshWriter : public Writer {
 
   public:
     //! Constructor
@@ -59,6 +59,6 @@ class ExodusIIMeshWriter : public tk::Writer {
     int m_outFile;                         //!< ExodusII file handle
 };
 
-} // quinoa::
+} // tk::
 
 #endif // ExodusIIMeshWriter_h

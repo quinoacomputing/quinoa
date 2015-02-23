@@ -1,29 +1,29 @@
 //******************************************************************************
 /*!
-  \file      src/Main/QuinoaDriver.C
+  \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:41:14 AM MST
+  \date      Mon 23 Feb 2015 08:32:21 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa driver
-  \details   Quinor driver.
+  \brief     Inciter driver
+  \details   Inciter driver.
 */
 //******************************************************************************
 
-#include <QuinoaDriver.h>
-#include <Quinoa/InputDeck/Parser.h>
+#include <InciterDriver.h>
+#include <Inciter/InputDeck/Parser.h>
 //#include <integrator.decl.h>
 
-namespace quinoa {
+namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 //extern CProxy_Distributor g_DistributorProxy;
 
-} // quinoa::
+} // inciter::
 
-using quinoa::QuinoaDriver;
+using inciter::InciterDriver;
 
-QuinoaDriver::QuinoaDriver( const QuinoaPrint& print,
-                            const ctr::CmdLine& cmdline ) :
+InciterDriver::InciterDriver( const InciterPrint& print,
+                              const ctr::CmdLine& cmdline ) :
   m_print( print )
 //******************************************************************************
 //  Constructor

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Tue 16 Dec 2014 12:14:26 PM MST
+  \date      Mon 23 Feb 2015 08:00:40 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -28,10 +28,10 @@ namespace tk {
 //! Throw macro that always throws an exception:
 //! Throw Exception with arguments passed in. Add source filename, function
 //! name, and line number where exception occurred. This macro facilitates a
-//! throw of Quinoa::Exception that is somehwat cleaner at the point of
-//! invocation than a direct throw of Exception, as it hides the file:func:line
-//! arguments. Whenever is possible, it should be used via the Assert and ErrChk
-//! macros defined below.
+//! throw of tk::Exception that is somehwat cleaner at the point of invocation
+//! than a direct throw of Exception, as it hides the file:func:line arguments.
+//! Whenever is possible, it should be used via the Assert and ErrChk macros
+//! defined below.
 #define Throw(...) \
    throw tk::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 

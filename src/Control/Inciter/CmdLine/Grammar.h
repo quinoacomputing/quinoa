@@ -1,46 +1,46 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/CmdLine/Grammar.h
+  \file      src/Control/Inciter/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:14:18 PM MST
+  \date      Mon 23 Feb 2015 08:53:34 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's command line grammar definition
+  \brief     Inciter's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
   associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
   of advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef QuinoaCmdLineGrammar_h
-#define QuinoaCmdLineGrammar_h
+#ifndef InciterCmdLineGrammar_h
+#define InciterCmdLineGrammar_h
 
 #include <Grammar.h>
 #include <PEGTLParsed.h>
 #include <Keywords.h>
 
-namespace quinoa {
-//! Quinoa command line grammar definition
+namespace inciter {
+//! Inciter command line grammar definition
 namespace cmd {
 
-  //! PEGTLParsed type specialized to Quinoa's command line parser
+  //! PEGTLParsed type specialized to Inciter's command line parser
   //! \details PEGTLCmdLine is practically CmdLine equipped with PEGTL location
   //!    information so the location can be tracked during parsing.
   //! \author J. Bakosi
   using PEGTLCmdLine =
     tk::ctr::PEGTLParsed< ctr::CmdLine, pegtl::string_input< ctr::Location > >;
 
-  //! \brief Specialization of tk::grm::use for Quinoa's command line parser
+  //! \brief Specialization of tk::grm::use for Inciter's command line parser
   //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword, ctr::CmdLine::keywords >;
 
-  // Quinoa's CmdLine state
+  // Inciter's CmdLine state
 
   //! Everything is stored in Stack during parsing
   //! \author J. Bakosi
   using Stack = PEGTLCmdLine;
 
-  // Quinoa's CmdLine grammar
+  // Inciter's CmdLine grammar
 
   //! \brief Match and set verbose switch (i.e., verbose or quiet output)
   //! \author J. Bakosi
@@ -98,10 +98,7 @@ namespace cmd {
                      helpkw,
                      io< use< kw::control >, tag::control >,
                      io< use< kw::input >, tag::input >,
-                     io< use< kw::output >, tag::output >,
-                     io< use< kw::pdf >, tag::pdf >,
-                     io< use< kw::glob >, tag::glob >,
-                     io< use< kw::stat >, tag::stat > > {};
+                     io< use< kw::output >, tag::output > > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   //! \author J. Bakosi
@@ -109,6 +106,6 @@ namespace cmd {
          tk::grm::read_string< Stack, keywords > {};
 
 } // cmd::
-} // quinoa::
+} // inciter::
 
-#endif // QuinoaCmdLineGrammar_h
+#endif // InciterCmdLineGrammar_h

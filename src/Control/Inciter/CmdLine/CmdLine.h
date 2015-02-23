@@ -1,17 +1,17 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/CmdLine/CmdLine.h
+  \file      src/Control/Inciter/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:52:02 AM MST
+  \date      Mon 23 Feb 2015 08:54:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's command line definition
+  \brief     Inciter's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the command-line parsing of the
-     computational fluid dynamics tool, Quinoa.
+     computational shock hydrodynamics tool, Inciter.
 */
 //******************************************************************************
-#ifndef QuinoaCmdLine_h
-#define QuinoaCmdLine_h
+#ifndef InciterCmdLine_h
+#define InciterCmdLine_h
 
 #include <string>
 
@@ -21,16 +21,16 @@
 #include <Control.h>
 #include <HelpFactory.h>
 #include <Keywords.h>
-#include <Quinoa/Types.h>
+#include <Inciter/Types.h>
 
-namespace quinoa {
-//! Quinoa control facilitating user input to internal data transfer
+namespace inciter {
+//! Inciter control facilitating user input to internal data transfer
 namespace ctr {
 
-//! \brief CmdLine : Control< specialized to Quinoa >
+//! \brief CmdLine : Control< specialized to Inciter >
 //! \details The stack is a tagged tuple
 //! \see Base/TaggedTuple.h
-//! \see Control/Quinoa/Types.h
+//! \see Control/Inciter/Types.h
 //! \author J. Bakosi
 class CmdLine : public tk::Control<
                   // tag               type
@@ -45,7 +45,7 @@ class CmdLine : public tk::Control<
                   tag::error,          std::vector< std::string > > {
 
   public:
-    //! \brief Quinoa command-line keywords
+    //! \brief Inciter command-line keywords
     //! \author J. Bakosi
     //! \see tk::grm::use and its documentation
     using keywords = boost::mpl::set< kw::verbose
@@ -56,9 +56,6 @@ class CmdLine : public tk::Control<
                                     , kw::control
                                     , kw::input
                                     , kw::output
-                                    , kw::pdf
-                                    , kw::glob
-                                    , kw::stat
                                     >;
 
     //! \brief Constructor: set all defaults.
@@ -94,9 +91,6 @@ class CmdLine : public tk::Control<
     //! \author J. Bakosi
     CmdLine( tk::ctr::HelpFactory ctrinfo = tk::ctr::HelpFactory() ) {
       set< tag::io, tag::output >( "out" );
-      set< tag::io, tag::pdf >( "pdf" );
-      set< tag::io, tag::glob >( "glob.txt" );
-      set< tag::io, tag::stat >( "stat.txt" );
       set< tag::virtualization >( 0.0 );
       set< tag::verbose >( false ); // Quiet output by default
       // Initialize help: fill from own keywords + add map passed in
@@ -129,6 +123,6 @@ class CmdLine : public tk::Control<
 };
 
 } // ctr::
-} // quinoa::
+} // inciter::
 
-#endif // QuinoaCmdLine_h
+#endif // InciterCmdLine_h

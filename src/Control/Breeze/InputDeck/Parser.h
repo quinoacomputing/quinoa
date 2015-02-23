@@ -1,28 +1,28 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/Parser.h
+  \file      src/Control/Breeze/InputDeck/Parser.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 12:33:51 PM MST
+  \date      Mon 23 Feb 2015 08:48:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's input deck file parser
+  \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
-    the computational fluid dynamics tool, Quinoa.
+    the computational fluid dynamics tool, Breeze.
 */
 //******************************************************************************
-#ifndef QuinoaInputDeckParser_h
-#define QuinoaInputDeckParser_h
+#ifndef BreezeInputDeckParser_h
+#define BreezeInputDeckParser_h
 
 #include <FileParser.h>
 #include <Print.h>
-#include <Quinoa/CmdLine/CmdLine.h>
-#include <Quinoa/InputDeck/InputDeck.h>
+#include <Breeze/CmdLine/CmdLine.h>
+#include <Breeze/InputDeck/InputDeck.h>
 
-namespace quinoa {
+namespace inciter {
 
-//! \brief Control file parser for Quinoa.
+//! \brief Control file parser for Breeze.
 //! \details This class is used to interface with PEGTL, for the purpose of
 //!   parsing the control file for the computational fluid dynamics tool,
-//!   Quinoa.
+//!   Breeze.
 class InputDeckParser : public tk::FileParser {
 
   public:
@@ -32,6 +32,6 @@ class InputDeckParser : public tk::FileParser {
                               ctr::InputDeck& inputdeck );
 };
 
-} // namespace quinoa
+} // namespace inciter
 
-#endif // QuinoaInputDeckParser_h
+#endif // BreezeInputDeckParser_h

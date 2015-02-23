@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:39:08 AM MST
+  \date      Mon 23 Feb 2015 08:41:01 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -54,23 +54,23 @@ MeshConvDriver::execute() const
   std::map< MeshWriterType, std::function<tk::Writer*()> > writers;
 
   //! Create unstructured mesh to store mesh
-  quinoa::UnsMesh mesh;
+  tk::UnsMesh mesh;
 
   // Register mesh readers
-  tk::record< quinoa::GmshMeshReader >( readers, MeshReaderType::GMSH,
+  tk::record< tk::GmshMeshReader >( readers, MeshReaderType::GMSH,
+                                    m_input, std::ref(mesh) );
+  tk::record< tk::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
+                                      m_input, std::ref(mesh) );
+  tk::record< tk::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
                                         m_input, std::ref(mesh) );
-  tk::record< quinoa::NetgenMeshReader >( readers, MeshReaderType::NETGEN,
-                                          m_input, std::ref(mesh) );
-  tk::record< quinoa::ExodusIIMeshReader >( readers, MeshReaderType::EXODUSII,
-                                            m_input, std::ref(mesh) );
 
   // Register mesh writers
-  tk::record< quinoa::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+  tk::record< tk::GmshMeshWriter >( writers, MeshWriterType::GMSH,
+                                    m_output, std::ref(mesh) );
+  tk::record< tk::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
+                                      m_output, std::ref(mesh) );
+  tk::record< tk::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
                                         m_output, std::ref(mesh) );
-  tk::record< quinoa::NetgenMeshWriter >( writers, MeshWriterType::NETGEN,
-                                          m_output, std::ref(mesh) );
-  tk::record< quinoa::ExodusIIMeshWriter >( writers, MeshWriterType::EXODUSII,
-                                            m_output, std::ref(mesh) );
 
   // Read in mesh
   tk::instantiate( readers, detectInput() )->read();

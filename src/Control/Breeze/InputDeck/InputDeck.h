@@ -1,17 +1,17 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/InputDeck.h
+  \file      src/Control/Breeze/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Sun 18 Jan 2015 06:48:49 AM MST
+  \date      Mon 23 Feb 2015 08:47:27 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's input deck definition
+  \brief     Breeze's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
      the data from user input during the control file parsing of the
-     computational fluid dynamics tool, Quinoa.
+     computational fluid dynamics tool, Breeze.
 */
 //******************************************************************************
-#ifndef QuinoaInputDeck_h
-#define QuinoaInputDeck_h
+#ifndef BreezeInputDeck_h
+#define BreezeInputDeck_h
 
 #include <limits>
 
@@ -19,17 +19,17 @@
 #include <boost/mpl/for_each.hpp>
 
 #include <Control.h>
-#include <Quinoa/CmdLine/CmdLine.h>
-#include <Quinoa/Components.h>
+#include <Breeze/CmdLine/CmdLine.h>
+#include <Breeze/Components.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
-//! \brief InputDeck : Control< specialized to Quinoa >, see Types.h,
+//! \brief InputDeck : Control< specialized to Breeze >, see Types.h,
 //! \details The stack is a tagged tuple, a hierarchical heterogeneous data
 //!    structure where all parsed information is stored.
 //! \see Base/TaggedTuple.h
-//! \see Control/Quinoa/Types.h
+//! \see Control/Breeze/Types.h
 //! \author J. Bakosi
 class InputDeck :
   public tk::Control< // tag           type
@@ -45,7 +45,7 @@ class InputDeck :
                       tag::error,      std::vector< std::string > > {
 
   public:
-    //! \brief Quinoa input deck keywords
+    //! \brief Breeze input deck keywords
     //! \details Since there are more than 20 and boost::mpl only allows maxium
     //!   20 items in a set by default (and I don't want to mess with
     //!   preprocessor-generated boost::mpl headers), the whole set is broken up
@@ -181,6 +181,6 @@ class InputDeck :
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaInputDeck_h
+#endif // BreezeInputDeck_h

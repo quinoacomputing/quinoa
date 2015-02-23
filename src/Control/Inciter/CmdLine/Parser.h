@@ -1,27 +1,27 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/CmdLine/Parser.h
+  \file      src/Control/Inciter/CmdLine/Parser.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:17:13 PM MST
+  \date      Mon 23 Feb 2015 08:07:23 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's command line parser
+  \brief     Inciter's command line parser
   \details   This file declares the command-line argument parser for the
-     computational fluid dynamics tool, Quinoa.
+     computational shock hydrodynamics tool, Inciter.
 */
 //******************************************************************************
-#ifndef QuinoaCmdLineParser_h
-#define QuinoaCmdLineParser_h
+#ifndef InciterCmdLineParser_h
+#define InciterCmdLineParser_h
 
 #include <Print.h>
 #include <StringParser.h>
-#include <Quinoa/CmdLine/CmdLine.h>
+#include <Inciter/CmdLine/CmdLine.h>
 
-namespace quinoa {
+namespace inciter {
 
-//! \brief Command-line parser for Quinoa.
+//! \brief Command-line parser for Inciter.
 //! \details This class is used to interface with PEGTL, for the purpose of
-//!   parsing command-line arguments for the computational fluid dynamics tool,
-//!   Quinoa.
+//!   parsing command-line arguments for the computational shock hydrodynamics
+//!   tool, Inciter.
 //! \author J. Bakosi
 class CmdLineParser : public tk::StringParser {
 
@@ -33,6 +33,6 @@ class CmdLineParser : public tk::StringParser {
                             ctr::CmdLine& cmdline );
 };
 
-} // quinoa::
+} // inciter::
 
-#endif // QuinoaCmdLineParser_h
+#endif // InciterCmdLineParser_h

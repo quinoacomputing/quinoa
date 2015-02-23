@@ -1,18 +1,18 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/Grammar.h
+  \file      src/Control/Breeze/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:20:53 PM MST
+  \date      Mon 23 Feb 2015 08:46:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's input deck grammar definition
-  \details   Quinoa's input deck grammar definition. We use the Parsing
+  \brief     Breeze's input deck grammar definition
+  \details   Breeze's input deck grammar definition. We use the Parsing
   Expression Grammar Template Library (PEGTL) to create the grammar and the
   associated parser. Credit goes to Colin Hirsch (pegtl@cohi.at) for PEGTL. Word
   of advice: read from the bottom up.
 */
 //******************************************************************************
-#ifndef QuinoaInputDeckGrammar_h
-#define QuinoaInputDeckGrammar_h
+#ifndef BreezeInputDeckGrammar_h
+#define BreezeInputDeckGrammar_h
 
 #include <Grammar.h>
 #include <PEGTLParsed.h>
@@ -24,14 +24,14 @@
 
 #include <RNGSSEGrammar.h>
 
-namespace quinoa {
+namespace breeze {
 
 extern ctr::InputDeck g_inputdeck_defaults;
 
-//! Quinoa input deck facilitating user input for computing fluid dynamics
+//! Breeze input deck facilitating user input for computing fluid dynamics
 namespace deck {
 
-  //! \brief PEGTLParsed type specialized to Quinoa's input deck parser
+  //! \brief PEGTLParsed type specialized to Breeze's input deck parser
   //! \details PEGTLInputDeck is practically InputDeck equipped with PEGTL
   //!   location information so the location can be tracked during parsing.
   //! \author J. Bakosi
@@ -41,7 +41,7 @@ namespace deck {
                           tag::cmd,
                           ctr::CmdLine >;
 
-  //! \brief Specialization of tk::grm::use for Quinoa's input deck parser
+  //! \brief Specialization of tk::grm::use for Breeze's input deck parser
   //! \author J. Bakosi
   template< typename keyword >
   using use = tk::grm::use< keyword,
@@ -50,12 +50,12 @@ namespace deck {
                             ctr::InputDeck::keywords3,
                             ctr::InputDeck::keywords4 >;
 
-  // Quinoa's InputDeck state
+  // Breeze's InputDeck state
 
   //! Everything is stored in Stack during parsing
   using Stack = PEGTLInputDeck;
 
-  // Quinoa's InputDeck actions
+  // Breeze's InputDeck actions
 
   //! \brief Put option in state at position given by tags
   //! \details This is simply a wrapper around tk::grm::store_option passing the
@@ -69,7 +69,7 @@ namespace deck {
     }
   };
 
-  // Quinoa's InputDeck grammar
+  // Breeze's InputDeck grammar
 
   //! \brief Scan selected option
   //! \author J. Bakosi
@@ -268,6 +268,6 @@ namespace deck {
          tk::grm::read_file< Stack, keywords, tk::grm::ignore > {};
 
 } // deck::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaInputDeckGrammar_h
+#endif // BreezeInputDeckGrammar_h

@@ -15,30 +15,30 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
        ${CHARM_COMPILER}
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
-### Quinoa executable ##########################################################
-add_executable(${QUINOA_EXECUTABLE}
-               QuinoaDriver.C
-               QuinoaPrint.C
-               Quinoa.C
+### Inciter executable #########################################################
+add_executable(${INCITER_EXECUTABLE}
+               InciterDriver.C
+               InciterPrint.C
+               Inciter.C
 )
 
 if(MPI_COMPILE_FLAGS)
-  set_target_properties(${QUINOA_EXECUTABLE} PROPERTIES
+  set_target_properties(${INCITER_EXECUTABLE} PROPERTIES
                         COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
 endif()
 
 if(MPI_LINK_FLAGS)
-  set_target_properties(${QUINOA_EXECUTABLE} PROPERTIES
+  set_target_properties(${INCITER_EXECUTABLE} PROPERTIES
                         LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
-target_link_libraries(${QUINOA_EXECUTABLE}
+target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
                       #LinearAlgebra
                       Mesh
                       Statistics
-                      QuinoaControl
+                      InciterControl
                       RNG
                       #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARIES}
@@ -55,11 +55,11 @@ target_link_libraries(${QUINOA_EXECUTABLE}
                       ${BOOST_SYSTEM_LIBRARY}
 )
 
-# Add custom dependencies for Quinoa's main Charm++ module
-addCharmModule( "quinoa" "${QUINOA_EXECUTABLE}" )
-removeWarnings( "QuinoaDriver.C;QuinoaPrint.C;Quinoa.C")
+# Add custom dependencies for Inciter's main Charm++ module
+addCharmModule( "inciter" "${INCITER_EXECUTABLE}" )
+removeWarnings( "InciterDriver.C;InciterPrint.C;Inciter.C")
 
-INSTALL(TARGETS ${QUINOA_EXECUTABLE}
+INSTALL(TARGETS ${INCITER_EXECUTABLE}
         RUNTIME DESTINATION bin COMPONENT Runtime
         LIBRARY DESTINATION lib COMPONENT Runtime
         ARCHIVE DESTINATION lib COMPONENT Development

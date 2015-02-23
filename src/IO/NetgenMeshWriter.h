@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 09:00:42 AM MST
+  \date      Mon 23 Feb 2015 08:19:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh writer class declaration
   \details   Netgen mesh writer class declaration. Only supports tetrahedra.
@@ -16,13 +16,13 @@
 #include <Writer.h>
 #include <UnsMesh.h>
 
-namespace quinoa {
+namespace tk {
 
 //! \brief NetgenMeshWriter : tk::Writer
 //! Mesh reader class facilitating reading a mesh from a file saved by
 //!   the Netgen mesh generator:
 //!   http://sourceforge.net/apps/mediawiki/netgen-mesher.
-class NetgenMeshWriter : public tk::Writer {
+class NetgenMeshWriter : public Writer {
 
   public:
     //! Constructor
@@ -43,6 +43,6 @@ class NetgenMeshWriter : public tk::Writer {
     const UnsMesh& m_mesh;                   //!< Mesh object
 };
 
-} // quinoa::
+} // tk::
 
 #endif // NetgenMeshWriter_h

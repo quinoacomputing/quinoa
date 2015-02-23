@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/STLMesh.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 01:00:30 PM MST
+  \date      Mon 23 Feb 2015 08:20:37 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     STL (STereoLithography) mesh class declaration
   \details   STL (STereoLithography) mesh class declaration.
@@ -16,7 +16,7 @@
 
 #include <Types.h>
 
-namespace quinoa {
+namespace tk {
 
 //! STLMesh
 class STLMesh {
@@ -54,6 +54,6 @@ class STLMesh {
     size_t m_nnodes;                         //!< Number of nodes
 };
 
-} // quinoa::
+} // tk::
 
 #endif // STLMesh_h
