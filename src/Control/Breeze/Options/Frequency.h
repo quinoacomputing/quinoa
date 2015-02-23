@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Frequency.h
+  \file      src/Control/Breeze/Options/Frequency.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:05 AM MST
+  \date      Mon 23 Feb 2015 08:11:29 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
 */
 //******************************************************************************
-#ifndef QuinoaFrequencyOptions_h
-#define QuinoaFrequencyOptions_h
+#ifndef BreezeFrequencyOptions_h
+#define BreezeFrequencyOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Frequency model types
@@ -58,6 +58,6 @@ class Frequency : public tk::Toggle< FrequencyType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaFrequencyOptions_h
+#endif // BreezeFrequencyOptions_h

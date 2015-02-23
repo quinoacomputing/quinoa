@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:32:12 AM MST
+  \date      Mon 23 Feb 2015 08:15:55 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -19,7 +19,7 @@
 #include <ExodusIIMeshReader.h>
 #include <Exception.h>
 
-using quinoa::ExodusIIMeshReader;
+using tk::ExodusIIMeshReader;
 
 ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
                                         UnsMesh& mesh,

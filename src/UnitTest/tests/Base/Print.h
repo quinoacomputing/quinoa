@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Print.h
   \author    J. Bakosi
-  \date      Tue 17 Feb 2015 04:50:53 PM MST
+  \date      Mon 23 Feb 2015 08:21:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -282,11 +282,11 @@ void Print_object::test< 23 >() {
                  quiet.str(), "12; 12; 12; 12; 12; " );
 }
 
-//! Test that tk::Print::headerQuinoa() does not throw an exception
+//! Test that tk::Print::headerInciter() does not throw an exception
 template<> template<>
 void Print_object::test< 24 >() {
-  set_test_name( "headerQuinoa() does not throw" );
-  prv.headerQuinoa();
+  set_test_name( "headerInciter() does not throw" );
+  prv.headerInciter();
 }
 
 //! Test that tk::Print::headerRNGTest() does not throw an exception

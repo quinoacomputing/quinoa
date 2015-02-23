@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/MixRate.h
+  \file      src/Control/Breeze/Options/MixRate.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:24 AM MST
+  \date      Mon 23 Feb 2015 08:12:25 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Turbulence frequency model options
   \details   Turbulence frequency model options
 */
 //******************************************************************************
-#ifndef QuinoaMixRateOptions_h
-#define QuinoaMixRateOptions_h
+#ifndef BreezeMixRateOptions_h
+#define BreezeMixRateOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Material mix rate model types
@@ -58,6 +58,6 @@ class MixRate : public tk::Toggle<MixRateType> {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaMixRateOptions_h
+#endif // BreezeMixRateOptions_h

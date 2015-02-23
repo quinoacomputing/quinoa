@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:43:57 AM MST
+  \date      Mon 23 Feb 2015 08:18:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class declaration
   \details   Gmsh mesh writer class declaration. Currently, this class supports
@@ -18,12 +18,12 @@
 #include <UnsMesh.h>
 #include <GmshMeshIO.h>
 
-namespace quinoa {
+namespace tk {
 
 //! \brief GmshMeshWriter : Writer
 //! \details Mesh writer class facilitating writing a mesh to a file readable by
 //!   the Gmsh mesh generator: http://geuz.org/gmsh.
-class GmshMeshWriter : public tk::Writer {
+class GmshMeshWriter : public Writer {
 
   public:
     //! Constructor
@@ -67,6 +67,6 @@ class GmshMeshWriter : public tk::Writer {
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
 };
 
-} // quinoa::
+} // tk::
 
 #endif // GmshMeshWriter_h

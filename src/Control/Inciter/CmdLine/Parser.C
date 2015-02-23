@@ -1,21 +1,21 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/CmdLine/Parser.C
+  \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:59:13 AM MST
+  \date      Mon 23 Feb 2015 08:06:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's comamnd line parser
+  \brief     Inciter's comamnd line parser
   \details   This file defines the command-line argument parser for the
-     computational fluid dynamics tool, Quinoa.
+     computational shock hydrodynamics tool, Inciter.
 */
 //******************************************************************************
 
 #include <charm++.h>
 
 #include <Config.h>
-#include <Quinoa/CmdLine/Parser.h>
-#include <Quinoa/CmdLine/Grammar.h>
-#include <Quinoa/InputDeck/InputDeck.h>
+#include <Inciter/CmdLine/Parser.h>
+#include <Inciter/CmdLine/Grammar.h>
+#include <Inciter/InputDeck/InputDeck.h>
 
 namespace tk {
 namespace grm {
@@ -25,13 +25,13 @@ tk::Print g_print;
 } // grm::
 } // tk::
 
-namespace quinoa {
+namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
 
-} // quinoa::
+} // inciter::
 
-using quinoa::CmdLineParser;
+using inciter::CmdLineParser;
 
 CmdLineParser::CmdLineParser( int argc,
                               char** argv,

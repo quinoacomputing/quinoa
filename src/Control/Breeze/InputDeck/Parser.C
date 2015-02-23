@@ -1,17 +1,17 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/InputDeck/Parser.C
+  \file      src/Control/Breeze/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:05:03 PM MST
+  \date      Mon 23 Feb 2015 08:47:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's input deck file parser
+  \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
-    the computational fluid dynamics tool, Quinoa.
+    the computational fluid dynamics tool, Breeze.
 */
 //******************************************************************************
 
-#include <Quinoa/InputDeck/Parser.h>
-#include <Quinoa/InputDeck/Grammar.h>
+#include <Breeze/InputDeck/Parser.h>
+#include <Breeze/InputDeck/Grammar.h>
 
 namespace tk {
 namespace grm {
@@ -21,7 +21,7 @@ extern tk::Print g_print;
 } // grm::
 } // tk::
 
-using quinoa::InputDeckParser;
+using inciter::InputDeckParser;
 
 InputDeckParser::InputDeckParser( const tk::Print& print,
                                   const ctr::CmdLine& cmdline,

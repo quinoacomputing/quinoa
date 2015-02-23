@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Hydro.h
+  \file      src/Control/Breeze/Options/Hydro.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:09 AM MST
+  \date      Mon 23 Feb 2015 08:11:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Hydro model options
   \details   Hydro model options
 */
 //******************************************************************************
-#ifndef QuinoaHydroOptions_h
-#define QuinoaHydroOptions_h
+#ifndef BreezeHydroOptions_h
+#define BreezeHydroOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Hydro model types
@@ -61,6 +61,6 @@ class Hydro : public tk::Toggle< HydroType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaHydroOptions_h
+#endif // BreezeHydroOptions_h

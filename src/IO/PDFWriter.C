@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 09:23:57 AM MST
+  \date      Mon 23 Feb 2015 08:42:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -1092,8 +1092,7 @@ PDFWriter::writeExHdr( int outFileId, int nnode, int nelem ) const
 //******************************************************************************
 {
   ErrChk( ex_put_init( outFileId,
-                       (std::string("Written by Quinoa::") +
-                        QUINOA_EXECUTABLE).c_str(),
+                       "Written by Quinoa",
                        3,                     // number of dimensions
                        nnode,                 // number of nodes
                        nelem,                 // number of elements

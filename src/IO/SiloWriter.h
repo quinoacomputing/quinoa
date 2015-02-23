@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:07:15 AM MST
+  \date      Mon 23 Feb 2015 08:16:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Silo writer declaration.
   \details   Silo writer declaration. This class currently only supports writing
@@ -17,7 +17,7 @@
 
 #include <silo.h>
 
-namespace quinoa {
+namespace tk {
 
 //! Silo error handler function type
 typedef void (*SiloErrorHandler)( char* );
@@ -53,6 +53,6 @@ class SiloWriter {
     DBfile* m_dbfile;                   //!< Silo DB file
 };
 
-} // quinoa::
+} // tk::
 
 #endif // SiloWriter_h

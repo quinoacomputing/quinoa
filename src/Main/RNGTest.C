@@ -2,13 +2,12 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:22:58 AM MST
+  \date      Mon 23 Feb 2015 08:38:25 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     RNGTest: Quinoa's random number generator test suite's Charm++ main
-    chare.
-  \details   RNGTest: Quinoa's random number generator test suite's Charm++ main
-    chare. This file contains the definition of the Charm++ main chare,
-    equivalent to main() in Charm++-land.
+  \brief     RNGTest's random number generator test suite's Charm++ main chare.
+  \details   RNGTest's random number generator test suite's Charm++ main chare.
+    This file contains the definition of the Charm++ main chare, equivalent to
+    main() in Charm++-land.
 */
 //******************************************************************************
 
@@ -194,7 +193,7 @@ class Main : public CBase_Main {
         catch ( tk::Exception& qe ) {
           qe.handleException();
         }
-        // Catch std::exception and transform it into Quinoa::Exception without
+        // Catch std::exception and transform it into tk::Exception without
         // file:line:func information
         catch ( std::exception& se ) {
           tk::Exception qe( se.what() );

@@ -1,20 +1,20 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Components.h
+  \file      src/Control/Inciter/Components.h
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 10:49:00 PM MST
+  \date      Mon 23 Feb 2015 08:01:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
      stack and is thus populated during the control file parsing.
 */
 //******************************************************************************
-#ifndef QuinoaComponents_h
-#define QuinoaComponents_h
+#ifndef InciterComponents_h
+#define InciterComponents_h
 
 #include <Components.h>
 
-namespace quinoa {
+namespace inciter {
 namespace ctr {
 
 //! Number of components of models and equations
@@ -27,6 +27,6 @@ using ncomps = tk::ctr::ncomponents<
 >;
 
 } // ctr::
-} // quinoa::
+} // inciter::
 
-#endif // QuinoaComponents_h
+#endif // InciterComponents_h

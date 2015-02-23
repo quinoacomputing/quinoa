@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Mix.h
+  \file      src/Control/Breeze/Options/Mix.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:19 AM MST
+  \date      Mon 23 Feb 2015 08:12:10 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mix model options
   \details   Mix model options
 */
 //******************************************************************************
-#ifndef QuinoaMixOptions_h
-#define QuinoaMixOptions_h
+#ifndef BreezeMixOptions_h
+#define BreezeMixOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Mix model types
@@ -68,6 +68,6 @@ class Mix : public tk::Toggle< MixType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaMixOptions_h
+#endif // BreezeMixOptions_h

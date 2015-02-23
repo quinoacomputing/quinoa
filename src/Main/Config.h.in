@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:27:17 AM MST
+  \date      Mon 23 Feb 2015 08:39:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
@@ -12,7 +12,7 @@
 #ifndef Config_h
 #define Config_h
 
-#define QUINOA_EXECUTABLE            "@QUINOA_EXECUTABLE@"
+#define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"

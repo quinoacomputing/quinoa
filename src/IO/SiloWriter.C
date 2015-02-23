@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/SiloWriter.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:00:22 AM MST
+  \date      Mon 23 Feb 2015 08:16:13 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Silo writer definition.
   \details   Silo writer definition. This class currently only supports writing
@@ -21,7 +21,7 @@
 #include <STLMesh.h>
 
 void
-quinoa::SiloError( char* msg )
+tk::SiloError( char* msg )
 //******************************************************************************
 //  Silo error handler
 //! \param[in]  msg  Error message
@@ -38,7 +38,7 @@ quinoa::SiloError( char* msg )
   Throw( ss.str() );
 }
 
-using quinoa::SiloWriter;
+using tk::SiloWriter;
 
 SiloWriter::SiloWriter( const std::string& filename,
                         const STLMesh& mesh,

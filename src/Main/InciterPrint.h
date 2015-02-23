@@ -1,31 +1,31 @@
 //******************************************************************************
 /*!
-  \file      src/Main/QuinoaPrint.h
+  \file      src/Main/InciterPrint.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:40:58 PM MST
+  \date      Mon 23 Feb 2015 08:59:22 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa-specific pretty printer functionality
-  \details   Quinoa-specific pretty printer functionality.
+  \brief     Inciter-specific pretty printer functionality
+  \details   Inciter-specific pretty printer functionality.
 */
 //******************************************************************************
-#ifndef QuinoaPrint_h
-#define QuinoaPrint_h
+#ifndef InciterPrint_h
+#define InciterPrint_h
 
 #include <algorithm>
 
 #include <boost/algorithm/string/replace.hpp>
 
 #include <RNGPrint.h>
-#include <Quinoa/Types.h>
-#include <Quinoa/InputDeck/InputDeck.h>
+#include <Inciter/Types.h>
+#include <Inciter/InputDeck/InputDeck.h>
 
-namespace quinoa {
+namespace inciter {
 
 extern ctr::InputDeck g_inputdeck_defaults;
 extern ctr::InputDeck g_inputdeck;
 
-//! QuinoaPrint : tk::RNGPrint
-class QuinoaPrint : public tk::RNGPrint {
+//! InciterPrint : tk::RNGPrint
+class InciterPrint : public tk::RNGPrint {
 
   public:
     //! Constructor
@@ -33,8 +33,8 @@ class QuinoaPrint : public tk::RNGPrint {
     //! \param[inout] qstr Quiet stream
     //! \see tk::RNGPrint::RNGPrint and tk::Print::Print
     //! \author J. Bakosi
-    explicit QuinoaPrint( std::ostream& str = std::clog,
-                          std::ostream& qstr = std::cout ) :
+    explicit InciterPrint( std::ostream& str = std::clog,
+                           std::ostream& qstr = std::cout ) :
       RNGPrint( str, qstr ) {}
 
     //! Print control option: 'group : option' only if differs from its default
@@ -83,29 +83,8 @@ class QuinoaPrint : public tk::RNGPrint {
     //! Print time integration header
     void inthead( const std::string& title, const std::string& name,
                   const std::string& legend, const std::string& head ) const;
-
-    //! Print statistics and PDFs
-    void statistics( const std::string& title ) const;
-
-    //! Print configuration of a stack of differential equations
-    void diffeqs( const std::string& title,
-      const std::vector< std::vector< std::pair< std::string, std::string > > >&
-        info ) const;
-
-  private:
-    //! Echo statistics container contents if differs from default
-    void stats( const std::string& msg ) const;
-
-    //! Echo pdfs container contents if differs from default applying op
-    void pdfs( const std::string& msg,
-               std::function<
-                 std::ostream& ( std::ostream&,
-                                 const std::vector< tk::ctr::Term >&,
-                                 const std::vector< tk::real >&,
-                                 const std::string&,
-                                 const std::vector< tk::real >& ) > op ) const;
 };
 
-} // quinoa::
+} // inciter::
 
-#endif // QuinoaPrint_h
+#endif // InciterPrint_h

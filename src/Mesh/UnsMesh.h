@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 01:07:58 PM MST
+  \date      Mon 23 Feb 2015 08:20:26 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -18,7 +18,7 @@
 #include <Types.h>
 #include <Print.h>
 
-namespace quinoa {
+namespace tk {
 
 //! 3D unstructured mesh class
 class UnsMesh {
@@ -143,6 +143,6 @@ class UnsMesh {
     std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron tags
 };
 
-} // quinoa::
+} // tk::
 
 #endif // UnsMesh_h

@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/Position.h
+  \file      src/Control/Breeze/Options/Position.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:34 AM MST
+  \date      Mon 23 Feb 2015 08:12:57 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Position model options
   \details   Position model options
 */
 //******************************************************************************
-#ifndef QuinoaPositionOptions_h
-#define QuinoaPositionOptions_h
+#ifndef BreezePositionOptions_h
+#define BreezePositionOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! Position model types
@@ -62,6 +62,6 @@ class Position : public tk::Toggle< PositionType > {
 };
 
 } // ctr::
-} // quinoa:::
+} // breeze:::
 
-#endif // QuinoaPositionOptions_h
+#endif // BreezePositionOptions_h

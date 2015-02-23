@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Tue 17 Feb 2015 04:02:08 PM MST
+  \date      Mon 23 Feb 2015 09:16:39 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -346,13 +346,13 @@ class Print {
     template< Style s = VERBOSE >
     std::ostream& stream() const noexcept { return s ? m_stream : m_qstream; }
 
-    //! Print Quinoa header. Text ASCII Art Generator used for executable
+    //! Print Inciter header. Text ASCII Art Generator used for executable
     //! names: http://patorjk.com/software/taag, Picture ASCII Art Generator
     //! used for converting the logo text "Quinoa": http://picascii.com.
     //! \author J. Bakosi
     template< Style s = VERBOSE >
-    void headerQuinoa() const {
-      stream<s>() << R"(
+    void headerInciter() const {
+       stream<s>() << R"(
       ,::,`                                                            `.
    .;;;'';;;:                                                          ;;#
   ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
@@ -369,9 +369,12 @@ class Print {
   ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
    :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
      .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
-    :;;;;;;.
-   .;@+@';;;;;;'
-    `     '#''@`                                                               )"
+    :;;;;;;.     .___              .__  __
+   .;@+@';;;;;;' |   | ____   ____ |__|/  |_  ___________
+    `     '#''@` |   |/    \_/ ___\|  \   __\/ __ \_  __ \
+                 |   |   |  \  \___|  ||  | \  ___/|  | \/
+                 |___|___|  /\___  >__||__|  \___  >__|
+                          \/     \/              \/                          )"
       << std::endl;
     }
 
@@ -398,7 +401,7 @@ class Print {
   ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
    :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
      .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
-    :;;;;;;.     __________ _______    __________________
+    :;;;;;;.     __________ _______    __________________             __
    .;@+@';;;;;;' \______   \\      \  /  _____\__    _______   ______/  |_
     `     '#''@`  |       _//   |   \/   \  ___ |    |_/ __ \ /  ___\   __\
                   |    |   /    |    \    \_\  \|    |\  ___/ \___ \ |  |

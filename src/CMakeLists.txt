@@ -74,7 +74,7 @@ execute_process(
 string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 
 # Set names of executables
-set(QUINOA_EXECUTABLE "quinoa")
+set(INCITER_EXECUTABLE "inciter")
 set(RNGTEST_EXECUTABLE "rngtest")
 set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")

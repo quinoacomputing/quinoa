@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshIO.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 08:06:18 AM MST
+  \date      Mon 23 Feb 2015 08:18:04 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader and writer related types
   \details   Gmsh mesh reader and writer related types.
@@ -11,7 +11,7 @@
 #ifndef GmshMeshIO_h
 #define GmshMeshIO_h
 
-namespace quinoa {
+namespace tk {
 
 //! Identifiers of supported Gmsh elements
 enum GmshElemType { LIN = 1,
@@ -24,6 +24,6 @@ enum class GmshFileType { UNDEFINED = -1,
                           ASCII = 0,
                           BINARY = 1 };
 
-} // quinoa::
+} // tk::
 
 #endif // GmshMeshIO_h

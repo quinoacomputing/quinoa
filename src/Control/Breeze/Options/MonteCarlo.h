@@ -1,15 +1,15 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Quinoa/Options/MonteCarlo.h
+  \file      src/Control/Breeze/Options/MonteCarlo.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 08:00:29 AM MST
+  \date      Mon 23 Feb 2015 08:12:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     MonteCarlo options
   \details   MonteCarlo options
 */
 //******************************************************************************
-#ifndef QuinoaMonteCarloOptions_h
-#define QuinoaMonteCarloOptions_h
+#ifndef BreezeMonteCarloOptions_h
+#define BreezeMonteCarloOptions_h
 
 #include <boost/mpl/vector.hpp>
 
@@ -17,7 +17,7 @@
 #include <Keywords.h>
 #include <PUPUtil.h>
 
-namespace quinoa {
+namespace breeze {
 namespace ctr {
 
 //! MonteCarlo types
@@ -69,6 +69,6 @@ class MonteCarlo : public tk::Toggle< MonteCarloType > {
 };
 
 } // ctr::
-} // quinoa::
+} // breeze::
 
-#endif // QuinoaMonteCarloOptions_h
+#endif // BreezeMonteCarloOptions_h

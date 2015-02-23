@@ -2,10 +2,10 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 22 Jan 2015 06:59:03 AM MST
+  \date      Mon 23 Feb 2015 08:14:49 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Quinoa's random number generator options and associations
-  \details   Quinoa's random number generator options and associations
+  \brief     Random number generator options and associations
+  \details   Random number generator options and associations
 */
 //******************************************************************************
 #ifndef RNGOptions_h
