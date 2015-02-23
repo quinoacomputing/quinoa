@@ -11,9 +11,14 @@ execution, either on a single machine or a networked set of computers.
 \section organization Organization
 Quinoa consists of the following tools:
   \li [<B>bonker</B>](bonker_doc.html) - Molecular-realm fluid dynamics
-      solving the Boltzmann equation
+      solving the [Boltzmann equation]
+      (http://en.wikipedia.org/wiki/Boltzmann_equation)
   \li [<B>breeze</B>](breeze_doc.html) - Continuum-realm fluid dynamics
-      solving the Navier-Stokes equation
+      solving the [Navier-Stokes equation]
+      (http://en.wikipedia.org/wiki/Navier%E2%80%93Stokes_equations)
+  \li [<B>inciter</B>](inciter_doc.html) - Continuum-realm shock hydrodynamics
+      solving the [Euler equation]
+      (http://en.wikipedia.org/wiki/Euler_equations_%28fluid_dynamics%29)
   \li [<B>walker</B>](walker_doc.html) - Random walker for stochastic
       differential equations
   \li [<B>rngtest</B>](rngtest_doc.html) - Random number generator test suite
@@ -34,7 +39,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 10:39:22 PM MST
+<em>Page last updated:</em> Mon 23 Feb 2015 09:32:58 AM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
