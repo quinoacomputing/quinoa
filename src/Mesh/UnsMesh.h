@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:20:26 AM MST
+  \date      Mon 23 Feb 2015 03:31:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -65,7 +65,7 @@ class UnsMesh {
     ///@}
 
     //! Total number of elements accessor
-    std::size_t nelem()
+    std::size_t nelem() const
     { return m_lininpoel.size() + m_triinpoel.size() + m_tetinpoel.size(); }
 
     //! Number of element blocks accessor

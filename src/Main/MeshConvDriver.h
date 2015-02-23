@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:36:44 AM MST
+  \date      Mon 23 Feb 2015 02:42:24 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -31,22 +31,6 @@ class MeshConvDriver {
     void execute() const;
 
   private:
-    //! Mesh readers
-    enum class MeshReaderType : uint8_t { GMSH=0,
-                                          NETGEN,
-                                          EXODUSII };
-
-    //! Mesh writers
-    enum class MeshWriterType : uint8_t { GMSH=0,
-                                          NETGEN,
-                                          EXODUSII };
-
-    //! Detect input mesh file type
-    MeshReaderType detectInput() const;
-
-    //! Determine output mesh file type
-    MeshWriterType pickOutput() const;
-
     std::string m_input;                //!< Input file name
     std::string m_output;               //!< Output file name
 };

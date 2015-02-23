@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:06:47 AM MST
+  \date      Mon 23 Feb 2015 03:17:02 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's comamnd line parser
   \details   This file defines the command-line argument parser for the
@@ -104,9 +104,16 @@ CmdLineParser::CmdLineParser( int argc,
   if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
 
   // Make sure mandatory arguments are set
-  auto alias = kw::control().alias();
+  auto ctralias = kw::control().alias();
   ErrChk( !(cmdline.get< tag::io, tag::control >().empty()),
           "Mandatory control file not specified. "
           "Use '--" + kw::control().string() + " <filename>'" +
-          ( alias ? " or '-" + *alias + " <filename>'" : "" ) + '.' );
+          ( ctralias ? " or '-" + *ctralias + " <filename>'" : "" ) + '.' );
+
+  auto inpalias = kw::input().alias();
+  ErrChk( !(cmdline.get< tag::io, tag::input >().empty()),
+          "Mandatory input file not specified. "
+          "Use '--" + kw::input().string() + " <filename>'" +
+          ( inpalias ? " or '-" + *inpalias + " <filename>'" : "" ) + '.' );
+
 }

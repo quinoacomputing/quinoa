@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 09:04:59 AM MST
+  \date      Mon 23 Feb 2015 03:18:29 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -13,9 +13,7 @@
 
 #include <InciterPrint.h>
 #include <Inciter/CmdLine/CmdLine.h>
-#include <inciter.decl.h>
-
-extern CProxy_Main mainProxy;
+#include <UnsMesh.h>
 
 namespace inciter {
 
@@ -28,10 +26,14 @@ class InciterDriver {
                             const ctr::CmdLine& cmdline );
 
     //! Execute driver
-    void execute() { mainProxy.finalize(); }
+    void execute() const;
 
   private:
-    const InciterPrint& m_print;
+    //! Echo mesh statistics
+    void meshStats( const tk::UnsMesh& mesh ) const;
+
+    const InciterPrint& m_print;        //!< Pretty printer
+    std::string m_input;                //!< Input file name
 };
 
 } // inciter::

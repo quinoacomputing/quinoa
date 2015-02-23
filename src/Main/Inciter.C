@@ -2,11 +2,11 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:59:58 AM MST
+  \date      Tue 24 Feb 2015 06:13:18 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Inciter's computational shock hydrodynamics tool Charm++ main
+  \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
-  \details   Inciter's computational shock hydrodynamics tool Charm++ main
+  \details   Inciter, computational shock hydrodynamics tool, Charm++ main
     chare. This file contains the definition of the Charm++ main chare,
     equivalent to main() in Charm++-land.
 */
