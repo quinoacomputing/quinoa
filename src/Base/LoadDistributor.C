@@ -2,13 +2,15 @@
 /*!
   \file      src/Base/LoadDistributor.C
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:14:28 AM MST
+  \date      Tue 24 Feb 2015 11:14:09 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of
      virtualization.
 */
 //******************************************************************************
+
+#include <limits>
 
 #include <charm++.h>
 
