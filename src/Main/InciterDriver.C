@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:24:47 AM MST
+  \date      Tue 24 Feb 2015 11:10:42 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -73,8 +73,14 @@ InciterDriver::execute() const
   tk::record< tk::ExodusIIMeshReader >( readers, tk::MeshReaderType::EXODUSII,
                                         m_input, std::ref(mesh) );
 
+  // Start timer measuring mesh read time
+  tk::Timer mesh_read;
+
   // Read in mesh
   tk::instantiate( readers, tk::detectInput( m_input ) )->read();
+
+  // Report mesh read time to main proxy
+  mainProxy.timestamp( "Mesh read", mesh_read.dsec() );
 
   // Compute load distribution given total work (= number of mesh cells) and
   // user-specified virtualization
