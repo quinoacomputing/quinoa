@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/LoadDistributor.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:55:11 AM MST
+  \date      Tue 24 Feb 2015 11:16:46 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/LoadDistributor
   \details   Unit tests for Base/LoadDistributor
@@ -39,8 +39,8 @@ template<> template<>
 void LoadDistributor_object::test< 1 >() {
   set_test_name( "linear doesn't throw on bounded virt" );
 
-  uint64_t nchare, chunksize, remainder;
-  nchare = tk::linearLoadDistributor( 0.5, 1234, chunksize, remainder );
+  uint64_t chunksize, remainder;
+  tk::linearLoadDistributor( 0.5, 1234, chunksize, remainder );
   // if exception is thrown, test fails with except
 }
 
@@ -51,8 +51,8 @@ void LoadDistributor_object::test< 2 >() {
 
   try {
 
-    uint64_t nchare, chunksize, remainder;
-    nchare = tk::linearLoadDistributor( -0.5, 1234, chunksize, remainder );
+    uint64_t chunksize, remainder;
+    tk::linearLoadDistributor( -0.5, 1234, chunksize, remainder );
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
@@ -71,8 +71,8 @@ void LoadDistributor_object::test< 3 >() {
 
   try {
 
-    uint64_t nchare, chunksize, remainder;
-    nchare = tk::linearLoadDistributor( 1.5, 1234, chunksize, remainder );
+    uint64_t chunksize, remainder;
+    tk::linearLoadDistributor( 1.5, 1234, chunksize, remainder );
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
@@ -101,9 +101,9 @@ template<> template<>
 void LoadDistributor_object::test< 5 >() {
   set_test_name( "linear returns sane chunksize" );
 
-  uint64_t nchare, chunksize, remainder;
-  nchare = tk::linearLoadDistributor( 0.0, 1234, chunksize, remainder );
-  // nchare should never be larger than the load
+  uint64_t chunksize, remainder;
+  tk::linearLoadDistributor( 0.0, 1234, chunksize, remainder );
+  // chunksize should never be larger than the load
   ensure( "chunksize too large", chunksize < 1235 );
 }
 
@@ -112,9 +112,9 @@ template<> template<>
 void LoadDistributor_object::test< 6 >() {
   set_test_name( "linear returns sane remainder" );
 
-  uint64_t nchare, chunksize, remainder;
-  nchare = tk::linearLoadDistributor( 1.0, 1234, chunksize, remainder );
-  // nchare should never be larger than the load
+  uint64_t chunksize, remainder;
+  tk::linearLoadDistributor( 1.0, 1234, chunksize, remainder );
+  // remainder should never be larger than chunksize
   ensure( "remainder too large",  remainder < chunksize );
 }
 
