@@ -208,6 +208,19 @@ if(EXODUS_FOUND)
   set(exodus "")
 else()
   set(exodus "exodus")
+  message(STATUS "ExodusII/Nemesis not found - will build Trilinos")
+endif()
+
+# Detect Zoltan, exclude if found, build if not
+if (NOT NO_SYSTEM_ZOLTAN)
+  find_package(Zoltan)
+endif()
+if(ZOLTAN_FOUND)
+  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
+  set(zoltan "")
+else()
+  message(STATUS "Zoltan not found - will build Trilinos")
+  set(zoltan "zoltan")
 endif()
 
 # Define fine-grained targets
@@ -441,7 +454,7 @@ endif()
 
 ##### Trilinos #################################################################
 ## http://trilinos.sandia.gov
-if (exodus)
+if (exodus OR zoltan)
   ExternalProject_Add(
     trilinos
     DEPENDS ${netcdf}
@@ -451,6 +464,7 @@ if (exodus)
     CMAKE_ARGS -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
                -D Trilinos_ENABLE_Fortran:BOOL=OFF
                -D TPL_ENABLE_MPI:BOOL=ON
+               -D Trilinos_ENABLE_Zoltan:BOOL=ON
                -D Trilinos_ENABLE_SEACASExodus:BOOL=ON
                -D Trilinos_ENABLE_SEACASNemesis:BOOL=ON
                -D TPL_ENABLE_Netcdf:BOOL=ON
