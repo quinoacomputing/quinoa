@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Reader.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:06:23 AM MST
+  \date      Tue 24 Feb 2015 10:58:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader
@@ -52,6 +52,7 @@ void Reader_object::test< 2 >() {
   try {
 
     tk::Reader r( "" );
+    fail( "should throw exception" );
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
@@ -80,6 +81,7 @@ void Reader_object::test< 3 >() {
   try {
 
     tk::Reader p( "very_little_chance_that_a_file_with_this_name_exists" );
+    fail( "should throw exception" );
 
   } catch( tk::Exception& e ) {
     // exception thrown, test ok
@@ -87,6 +89,8 @@ void Reader_object::test< 3 >() {
     // find  out if exception was thrown due to the correct reason
     ensure( std::string("wrong exception thrown: ") + e.what(),
             std::string( e.what() ).find( "Failed to open file" ) !=
+              std::string::npos ||
+            std::string( e.what() ).find( "Failed to read from file" ) !=
               std::string::npos );
   }
 }

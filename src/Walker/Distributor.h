@@ -59,9 +59,6 @@ class Distributor : public CBase_Distributor {
     //! Print information at startup
     void info( uint64_t chunksize, uint64_t remainder ) const;
 
-    //! Compute load distribution for given total work and virtualization
-    void computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder );
-
     //! Compute size of next time step
     tk::real computedt();
 

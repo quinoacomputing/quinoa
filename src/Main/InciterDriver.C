@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:40:10 PM MST
+  \date      Tue 24 Feb 2015 10:24:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -11,6 +11,7 @@
 
 #include <InciterDriver.h>
 #include <Inciter/InputDeck/Parser.h>
+#include <LoadDistributor.h>
 #include <MeshDetect.h>
 #include <GmshMeshReader.h>
 #include <NetgenMeshReader.h>
@@ -75,21 +76,38 @@ InciterDriver::execute() const
   // Read in mesh
   tk::instantiate( readers, tk::detectInput( m_input ) )->read();
 
-  // Echo mesh statistics
-  meshStats( mesh );
+  // Compute load distribution given total work (= number of mesh cells) and
+  // user-specified virtualization
+  uint64_t chunksize, remainder;
+  const auto nchare =
+    tk::linearLoadDistributor(
+       g_inputdeck.get< tag::cmd, tag::virtualization >(),
+       mesh.tetinpoel().size(),
+       chunksize,
+       remainder );
+
+  // Print out info on what will be done and how
+  info( mesh, chunksize, remainder, nchare );
+
 
   mainProxy.finalize();
 }
 
 void
-InciterDriver::meshStats( const tk::UnsMesh& mesh ) const
+InciterDriver::info( const tk::UnsMesh& mesh,
+                     uint64_t chunksize,
+                     uint64_t remainder,
+                     uint64_t nchare ) const
 //******************************************************************************
-//  Execute: Echo mesh statistics
+//  Print information at startup
 //! \param[in] mesh Unstructured mesh object reference to echo stats of
+//! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
+//! \param[in] remainder Remainder, see Base/LoadDistribution.h
+//! \param[in] nchare Number of work units (Charm++ chares)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Echo mesh stats in verbose mode
+  // Print out mesh stats
   m_print.section( "Input mesh statistics" );
   m_print.item( "Number of element blocks", mesh.neblk() );
   m_print.item( "Number of elements", mesh.nelem() );
@@ -101,4 +119,16 @@ InciterDriver::meshStats( const tk::UnsMesh& mesh ) const
     m_print.item( "Number of triangles", mesh.triinpoel().size() );
   if (!mesh.tetinpoel().empty())
     m_print.item( "Number of tetrahedra", mesh.tetinpoel().size() );
+
+  // Print out info on load distribution
+  m_print.section( "Load distribution" );
+  m_print.item( "Virtualization [0.0...1.0]",
+                g_inputdeck.get< tag::cmd, tag::virtualization >() );
+  m_print.item( "Load (number of mesh cells)", mesh.tetinpoel().size() );
+  m_print.item( "Number of processing elements", CkNumPes() );
+  m_print.item( "Number of work units",
+                std::to_string( nchare ) + " (" +
+                std::to_string( nchare-1 ) + "*" +
+                std::to_string( chunksize ) + "+" +
+                std::to_string( chunksize+remainder ) + ")" );
 }

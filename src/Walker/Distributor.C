@@ -19,6 +19,7 @@
 #include <DiffEqStack.h>
 #include <TxtStatWriter.h>
 #include <PDFWriter.h>
+#include <LoadDistributor.h>
 #include <walker.decl.h>
 #include <flip_map.h>
 
@@ -42,9 +43,15 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Compute load distribution given total work and specified virtualization
+  // Compute load distribution given total work (= number of particles) and
+  // user-specified virtualization
   uint64_t chunksize, remainder;
-  computeLoadDistribution( chunksize, remainder );
+  m_count.get< tag::chare >() =
+    tk::linearLoadDistributor(
+       g_inputdeck.get< tag::cmd, tag::virtualization >(),
+       g_inputdeck.get< tag::discr, tag::npar >(),
+       chunksize,
+       remainder );
 
   // Print out info on what will be done and how
   info( chunksize, remainder );
@@ -69,80 +76,11 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 }
 
 void
-Distributor::computeLoadDistribution( uint64_t& chunksize, uint64_t& remainder )
-//******************************************************************************
-//  Compute load distribution for given total work and virtualization
-//! \param[inout] chunksize Chunk size, see detailed description
-//! \param[inout] remainder Remainder, see detailed description
-//! \details Compute load distibution (number of chares and chunksize) based on
-//!   total work (total number of particles) and virtualization
-//!
-//!   The virtualization parameter, specified by the user, is a real number
-//!   between 0.0 and 1.0, inclusive, which controls the degree of
-//!   virtualization or over-decomposition. Independent of the value of
-//!   virtualization the work is approximately evenly distributed among the
-//!   available processing elements. For zero virtualization (no
-//!   over-decomposition), the work is simply decomposed into total_work/numPEs,
-//!   which yields the smallest number of Charm++ chares and the largest chunks
-//!   of work units. The other extreme is unity virtualization, which decomposes
-//!   the total work into the smallest size work units possible, yielding the
-//!   largest number of Charm++ chares. Obviously, the optimum will be between
-//!   0.0 and 1.0, depending on the problem.
-//!
-//!   The formula implemented uses the simplest (linear) relationship between
-//!   the virtualization parameter and the number of work units with the
-//!   extremes described above. The formula is given by
-//!
-//!   chunksize = (1 - n) * v + n;
-//!
-//!   where
-//!
-//!    - n = npar/npes
-//!
-//!    - npar = number of particles, representing the total work
-//!
-//!    - npes = number of hardware processing elements
-//!
-//! \author J. Bakosi
-//******************************************************************************
-{
-  // Get virtualization parameter
-  const auto v = g_inputdeck.get< tag::cmd, tag::virtualization >();
-  Assert( v > -std::numeric_limits< tk::real >::epsilon() &&
-          v < 1.0+std::numeric_limits< tk::real >::epsilon(),
-          "Virtualization parameter must be between [0.0...1.0]" );
-
-  // Get total number of particles (represents total work)
-  const auto npar = g_inputdeck.get< tag::discr, tag::npar >();
-
-  // Query number of processing elements
-  const auto npe = CkNumPes();
-
-  // Compute minimum number of work units
-  const auto n = npar/npe;
-
-  // Compute work unit size based on the linear formula above
-  chunksize = (1.0-n)*v + n;
-
-  // Compute number of work units with size computed ignoring remainder
-  m_count.get< tag::chare >() = npar / chunksize;
-
-  // Compute remainder of work if the above number of units were to be created
-  remainder = npar - m_count.get< tag::chare >() * chunksize;
-
-  // Redistribute remainder among the work units for a more equal distribution
-  chunksize += remainder / m_count.get< tag::chare >();
-
-  // Compute new remainder (after redistribution of the previous remainder)
-  remainder = npar - m_count.get< tag::chare >() * chunksize;
-}
-
-void
 Distributor::info( uint64_t chunksize, uint64_t remainder ) const
 //******************************************************************************
 //  Print information at startup
-//! \param[in] chunksize Chunk size, see computeLoadDistribution()
-//! \param[in] remainder Remainder, see computeLoadDistribution()
+//! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
+//! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \author J. Bakosi
 //******************************************************************************
 {

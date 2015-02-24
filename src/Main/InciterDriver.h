@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:18:29 PM MST
+  \date      Tue 24 Feb 2015 10:22:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -29,8 +29,11 @@ class InciterDriver {
     void execute() const;
 
   private:
-    //! Echo mesh statistics
-    void meshStats( const tk::UnsMesh& mesh ) const;
+    //! Print information at startup
+    void info( const tk::UnsMesh& mesh,
+               uint64_t chunksize,
+               uint64_t remainder,
+               uint64_t nchare ) const;
 
     const InciterPrint& m_print;        //!< Pretty printer
     std::string m_input;                //!< Input file name
