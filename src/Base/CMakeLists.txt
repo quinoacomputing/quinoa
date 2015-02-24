@@ -6,6 +6,7 @@ include(charm)
 
 add_library(Base
             Exception.C
+            LoadDistributor.C
             Timer.C
             Reader.C
             Writer.C
@@ -13,6 +14,7 @@ add_library(Base
 )
 
 #addCharmModule( "msg" "Base" )
+removeWarnings( "LoadDistributor.C")
 
 INSTALL(TARGETS Base
   	RUNTIME DESTINATION bin COMPONENT Runtime

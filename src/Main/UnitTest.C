@@ -35,6 +35,7 @@
 #include <tests/Base/Reader.h>
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Writer.h>
+#include <tests/Base/LoadDistributor.h>
 
 #include <tests/Control/Components.h>
 #include <tests/Control/Control.h>
