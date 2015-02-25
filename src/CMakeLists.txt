@@ -59,9 +59,7 @@ get_mpi_compilers()
 set(COMPILER ${UNDERLYING_CXX_COMPILER})
 set(MPI_COMPILER ${MPI_CXX_COMPILER})
 set(CHARM_COMPILER ${TPL_DIR}/charm/bin/charmc)
-set(AMPI_COMPILER ${TPL_DIR}/charm/bin/ampicxx)
-message(STATUS "Charm++ compiler: " ${CHARM_COMPILER})
-message(STATUS "Charm++/AMPI compiler: " ${AMPI_COMPILER})
+message(STATUS "Charm++ compiler wrapper (used to compile Charm++ interface (.ci) files and link Charm++ executables): " ${CHARM_COMPILER})
 
 # Query build hostname
 site_name(HOSTNAME)

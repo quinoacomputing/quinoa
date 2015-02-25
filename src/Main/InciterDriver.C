@@ -2,12 +2,14 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 11:10:42 AM MST
+  \date      Wed 25 Feb 2015 07:47:22 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
 */
 //******************************************************************************
+
+#include <zoltan.h>
 
 #include <InciterDriver.h>
 #include <Inciter/InputDeck/Parser.h>
@@ -95,8 +97,32 @@ InciterDriver::execute() const
   // Print out info on what will be done and how
   info( mesh, chunksize, remainder, nchare );
 
+  // Partition mesh using Zoltan
+  partition( mesh );
 
   mainProxy.finalize();
+}
+
+void
+InciterDriver::partition( const tk::UnsMesh& mesh ) const
+//******************************************************************************
+//  Partition mesh using Zoltan
+//! \param[in] mesh Unstructured mesh object reference to echo stats of
+//! \author J. Bakosi
+//******************************************************************************
+{
+//   // Initialize the Zoltan library
+//   float ver = 0.0;
+//   ErrChk( Zoltan_Initialize( 0, nullptr, &ver ) == ZOLTAN_OK,
+//           "Zoltan could not be initialized" );
+//
+//   // Create Zoltan data structure
+//   struct Zoltan_Struct *z;
+//   z = Zoltan_Create( MPI_COMM_WORLD );
+//   Assert( z != nullptr, "Zoltan_Create failed" );
+//
+//   // Destroy Zoltan data structure
+//   Zoltan_Destroy( &z );
 }
 
 void
