@@ -31,7 +31,7 @@ else()
   message(STATUS "CMAKE_INSTALL_PREFIX: " ${CMAKE_INSTALL_PREFIX})
 endif()
 
-# Set Charm++/AMPI build architecture: if MPI is detected, use it
+# Set Charm++ build architecture: if MPI is detected, use it
 if(NOT CHARM_ARCH)
   if(MPI_CXX_FOUND)
     set(CHARM_ARCHITECTURE "mpi-linux-x86_64")
@@ -41,12 +41,12 @@ if(NOT CHARM_ARCH)
     message(STATUS "CHARM_ARCH not specified and MPI not found, setting to '${CHARM_ARCHITECTURE}'")
   endif()
 
-  set(CHARM_ARCH ${CHARM_ARCHITECTURE} CACHE STRING "Select Charm++/AMPI target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
+  set(CHARM_ARCH ${CHARM_ARCHITECTURE} CACHE STRING "Select Charm++ target architecture, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
 message(STATUS "Charm++ architecture: ${CHARM_ARCH}")
 
-# Set Charm++/AMPI compiler (the compiler used to build Charm++/AMPI): if MPI
-# is detected use it
+# Set Charm++ compiler (CHARM_COMPILER, the compiler used to build Charm++).
+# If MPI is detected use its wrapper, if not, let the Charm++ build decide.
 if(NOT CHARM_COMPILER)
   if(MPI_CXX_FOUND)
     set(CHARM_COMP "mpicxx")
@@ -56,19 +56,9 @@ if(NOT CHARM_COMPILER)
     message(STATUS "CHARM_COMPILER not specified and MPI not found, letting Charm++ build use its default compiler")
   endif()
 
-  set(CHARM_COMPILER ${CHARM_COMP} CACHE STRING "Select compiler used to build Charm++/AMPI with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
+  set(CHARM_COMPILER ${CHARM_COMP} CACHE STRING "Select compiler used to build Charm++ with, see http://charm.cs.illinois.edu/manuals/html/charm++ and <charm>/build --help for more info.")
 endif()
-message(STATUS "Charm++ compiler: ${CHARM_COMPILER}")
-
-# Set Charm++/AMPI compiler wrappers
-set(CHARM_AMPI_C_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicc)
-set(CHARM_AMPI_CXX_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampicxx)
-set(CHARM_AMPI_Fortran_COMPILER ${CMAKE_INSTALL_PREFIX}/charm/bin/ampif90)
-
-# Echo Charm++ underlying compilers
-MESSAGE(STATUS "Charm++/AMPI C compiler: " ${CHARM_AMPI_C_COMPILER})
-MESSAGE(STATUS "Charm++/AMPI C++ compiler: " ${CHARM_AMPI_CXX_COMPILER})
-MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_Fortran_COMPILER})
+message(STATUS "Charm++ compiler (the compiler used to build Charm++): ${CHARM_COMPILER}")
 
 # Compilers
 # =========
@@ -86,13 +76,10 @@ MESSAGE(STATUS "Charm++/AMPI Fortran compiler: " ${CHARM_AMPI_Fortran_COMPILER})
 #    MPI_CXX_COMPILER
 #    MPI_Fortran_COMPILER
 #
-# 3. The Charm++/AMPI wrappers (of the MPI wrappers or around the underlying
+# 3. The Charm++ wrapper (of the MPI wrappers or around the underlying
 #    compilers, depending on CHARM_COMPILER), the compiler used to build Charm++
-#    and AMPI
 #
-#    CHARM_AMPI_C_COMPILER
-#    CHARM_AMPI_CXX_COMPILER
-#    CHARM_AMPI_Fortran_COMPILER
+#    CHARM_COMPILER
 
 # Set Boost's default toolset
 set(BOOST_TOOLSET ${COMP})
@@ -208,7 +195,7 @@ if(EXODUS_FOUND)
   set(exodus "")
 else()
   set(exodus "exodus")
-  message(STATUS "ExodusII/Nemesis not found - will build Trilinos")
+  #message(STATUS "ExodusII/Nemesis not found - will build Trilinos")
 endif()
 
 # Detect Zoltan, exclude if found, build if not
@@ -219,7 +206,7 @@ if(ZOLTAN_FOUND)
   #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
   set(zoltan "")
 else()
-  message(STATUS "Zoltan not found - will build Trilinos")
+  #message(STATUS "Zoltan not found - will build Trilinos")
   set(zoltan "zoltan")
 endif()
 
@@ -227,7 +214,7 @@ endif()
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
 
-#### Charm++, AMPI #############################################################
+#### Charm++ ###################################################################
 # http://charm.cs.illinois.edu
 ExternalProject_Add(
   charm
@@ -240,9 +227,9 @@ ExternalProject_Add(
                     ${CMAKE_INSTALL_PREFIX}/charm
   # Build in install dir and leave stuff there - no install step
   BINARY_DIR ${CMAKE_INSTALL_PREFIX}/charm
-  # Build AMPI which triggers building Charm++
+  # Build Charm++
   BUILD_COMMAND ${CMAKE_INSTALL_PREFIX}/charm/build
-                AMPI
+                charm++
                 ${CHARM_ARCH}
                 ${CHARM_COMPILER}
                 --build-shared
