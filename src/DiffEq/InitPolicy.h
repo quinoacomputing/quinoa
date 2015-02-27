@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 01:23:51 PM MST
+  \date      Fri 27 Feb 2015 08:21:32 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -33,6 +33,7 @@
 #define InitPolicy_h
 
 #include <cstring>
+#include <algorithm>
 
 #include <boost/mpl/vector.hpp>
 
@@ -46,8 +47,13 @@ namespace tk {
 //! Raw initialization policy: leave memory uninitialized
 struct InitRaw {
 
-  //! Constructor: initialize particle properties (raw: no-op)
-  InitRaw( ParProps& particles ) {}
+  //! Initialize particle properties (raw: no-op)
+  template< class eq, class InputDeck >
+  static void init( const InputDeck& deck,
+                    ParProps& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset ) {}
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::RAW; }
@@ -56,16 +62,60 @@ struct InitRaw {
 //! Zero initialization policy: zero particle properties
 struct InitZero {
 
-  //! Constructor: initialize particle properties (zero)
-  InitZero( ParProps& particles )
-  { memset( particles.ptr(), 0, particles.size()*sizeof(real) ); }
+  //! Initialize particle properties (zero)
+  template< class eq, class InputDeck >
+  static void init( const InputDeck& deck,
+                    ParProps& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    memset( particles.ptr(), 0, particles.size()*sizeof(real) );
+  }
 
   static ctr::InitPolicyType type() noexcept
   { return ctr::InitPolicyType::ZERO; }
 };
 
+//! Delta initialization policy: put in delta-spikes as the joint PDF
+struct InitDelta {
+
+  //! Initialize particle properties (zero)
+  template< class eq, class InputDeck >
+  static void init( const InputDeck& deck,
+                    ParProps& particles,
+                    tk::ctr::ncomp_type e,
+                    tk::ctr::ncomp_type ncomp,
+                    tk::ctr::ncomp_type offset )
+  {
+    using ncomp_t = tk::ctr::ncomp_type;
+
+    const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
+
+    // use only the first ncomp spikes if there are more than the equation is
+    // configured for
+    const ncomp_t size = std::min( ncomp, spike.size() );
+
+    for (ncomp_t c=0; c<size; ++c) {
+      const auto& sc = spike[c];        // vector of spikes for component c
+
+      ncomp_t i = 0;
+      for (ncomp_t s=0; s<sc.size(); s+=2) {
+        // compute number of samples to be set at relative probability height
+        const auto npar = particles.npar() * sc[s+1];
+        // assign sample values
+        for (ncomp_t p=0; p<npar; ++p) particles( i+p, c, offset ) = sc[s];
+        i += npar;
+      }
+    }
+  }
+
+  static ctr::InitPolicyType type() noexcept
+  { return ctr::InitPolicyType::DELTA; }
+};
+
 //! List of all initialization policies
-using InitPolicies = boost::mpl::vector< InitRaw, InitZero >;
+using InitPolicies = boost::mpl::vector< InitRaw, InitZero, InitDelta >;
 
 } // tk::
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 03:02:28 PM MST
+  \date      Fri 27 Feb 2015 12:45:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -50,6 +50,9 @@ class WrightFisher {
     printf("\n");
   }
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! \brief Constructor
     //! \param[in] c Index specifying which system of Wright-Fisher SDEs to
@@ -58,7 +61,8 @@ class WrightFisher {
     //!   instantiate. The index corresponds to the order in which the
     //!   wright-fisher ... end blocks are given the control file.
     //! \author J. Bakosi
-    explicit WrightFisher( unsigned int c ) :
+    explicit WrightFisher( ncomp_t c ) :
+      m_c( c ),
       m_depvar(
         g_inputdeck.get< tag::param, tag::wrightfisher, tag::depvar >().at(c) ),
       m_ncomp(
@@ -81,12 +85,13 @@ class WrightFisher {
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
       //! Set initial conditions using initialization policy
-      //Init( { particles } );
+      //Init::template init< tag::wrightfisher >
+      //                   ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
 
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Initialize the first m_ncomp (N-1) scalars
-        tk::ctr::ncomp_type i;
+        ncomp_t i;
         for (i=0; i<m_ncomp-1; ++i) {
           particles( p, i, m_offset ) = (1.0+i)/m_ncomp;
         }
@@ -160,9 +165,9 @@ class WrightFisher {
 
         tk::real B[m_ncomp][m_ncomp];
         tk::real Bo[m_ncomp][m_ncomp];
-        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
           const tk::real& pari = particles( p, i, m_offset );
-          for (tk::ctr::ncomp_type j=0; j<m_ncomp; ++j) {
+          for (ncomp_t j=0; j<m_ncomp; ++j) {
             const tk::real& parj = particles( p, j, m_offset );
             if (i == j) {
               B[i][i] = std::abs( pari * (1.0 - pari) );
@@ -180,7 +185,7 @@ class WrightFisher {
           print_matrix( "=======\nOriginal Matrix", Bo[0], n, n );
           std::cout << "info: " << info << std::endl;
           print_matrix( "Result of Cholesky factorization", B[0], n, n );
-          for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
+          for (ncomp_t i=0; i<m_ncomp; ++i) {
             std::cout <<
               std::setprecision( std::numeric_limits< tk::real >::digits10 )
             << i << " par: " << particles( p, i, m_offset) << std::endl;
@@ -192,14 +197,14 @@ class WrightFisher {
 
         // Advance the first m_ncomp (N-1) scalars
         if (info == 0) {
-          tk::ctr::ncomp_type i = 0;
+          ncomp_t i = 0;
           for (i=0; i<m_ncomp-1; ++i) {
             tk::real& par = particles( p, i, m_offset );
             // Advance first m_ncomp (K=N-1) scalars due to drift
             par += 0.5*(m_omega[i] - omega*par)*dt;
             // Advance first m_ncomp (K=N-1) particles with Cholesky-decomposed
             // lower triangle (diffusion matrix)
-            for (tk::ctr::ncomp_type j=0; j<m_ncomp-1; ++j)
+            for (ncomp_t j=0; j<m_ncomp-1; ++j)
               if (j<=i) {
                 tk::real dW;
                 m_rng.gaussian( stream, 1, &dW );
@@ -217,9 +222,10 @@ class WrightFisher {
     }
 
   private:
+    const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
-    const int m_offset;                 //!< Offset SDE operates from
+    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients

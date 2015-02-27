@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Dirichlet.h
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 02:49:38 PM MST
+  \date      Fri 27 Feb 2015 12:39:57 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -53,6 +53,9 @@ extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 template< class Init, class Coefficients >
 class Dirichlet {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! \brief Constructor
     //! \param[in] c Index specifying which Dirichlet SDE to construct. There
@@ -61,7 +64,8 @@ class Dirichlet {
     //!   the order in which the dirichlet ... end blocks are given the control
     //!   file.
     //! \author J. Bakosi
-    explicit Dirichlet( unsigned int c ) :
+    explicit Dirichlet( ncomp_t c ) :
+      m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, tag::dirichlet, tag::depvar >().at(c) ),
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::dirichlet >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::dirichlet >(c) ),
@@ -79,7 +83,8 @@ class Dirichlet {
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
       //! Set initial conditions using initialization policy
-      Init( { particles } );
+      Init::template init< tag::dirichlet >
+                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
       //! Pre-lookup required statistical moments
       coeff.lookup( stat, m_depvar );
     }
@@ -91,7 +96,7 @@ class Dirichlet {
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Compute Nth scalar
         tk::real yn = 1.0 - particles(p, 0, m_offset);
-        for (tk::ctr::ncomp_type i=1; i<m_ncomp; ++i)
+        for (ncomp_t i=1; i<m_ncomp; ++i)
           yn -= particles( p, i, m_offset );
 
         // Generate Gaussian random numbers with zero mean and unit variance
@@ -99,7 +104,7 @@ class Dirichlet {
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance first m_ncomp (K=N-1) scalars
-        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * yn * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -109,9 +114,10 @@ class Dirichlet {
     }
 
   private:
+    const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
-    const int m_offset;                 //!< Offset SDE operates from
+    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients

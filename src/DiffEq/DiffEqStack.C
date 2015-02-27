@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Mon 09 Feb 2015 12:52:02 PM MST
+  \date      Fri 27 Feb 2015 12:26:25 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -23,7 +23,7 @@
 #include <GeneralizedDirichlet.h>
 #include <WrightFisher.h>
 #include <Beta.h>
-#include <FunctionalBeta.h>
+#include <NumberFractionBeta.h>
 #include <SkewNormal.h>
 #include <Gamma.h>
 #include <Factory.h>
@@ -153,14 +153,14 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< Beta >
                   ( m_factory, ctr::DiffEqType::BETA, m_eqTypes ) );
 
-  // Functional Beta SDE
+  // Number-fraction Beta SDE
   // Construct vector of vectors for all possible policies for SDE
-  using FunctionalBetaPolicies =
-    mpl::vector< tk::InitPolicies, FunctionalBetaCoeffPolicies >;
+  using NumberFractionBetaPolicies =
+    mpl::vector< tk::InitPolicies, NumberFractionBetaCoeffPolicies >;
   // Register SDE for all combinations of policies
-  mpl::cartesian_product< FunctionalBetaPolicies >(
-    registerDiffEq< FunctionalBeta >
-                  ( m_factory, ctr::DiffEqType::FUNCBETA, m_eqTypes ) );
+  mpl::cartesian_product< NumberFractionBetaPolicies >(
+    registerDiffEq< NumberFractionBeta >
+                  ( m_factory, ctr::DiffEqType::NFRACBETA, m_eqTypes ) );
 
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
@@ -205,8 +205,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::diagou >( d, cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       diffeqs.push_back( createDiffEq< tag::beta >( d, cnt ) );
-    else if (d == ctr::DiffEqType::FUNCBETA)
-      diffeqs.push_back( createDiffEq< tag::funcbeta >( d, cnt ) );
+    else if (d == ctr::DiffEqType::NFRACBETA)
+      diffeqs.push_back( createDiffEq< tag::nfracbeta >( d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -242,8 +242,8 @@ DiffEqStack::info() const
       info.emplace_back( infoDiagOU( cnt ) );
     else if (d == ctr::DiffEqType::BETA)
       info.emplace_back( infoBeta( cnt ) );
-    else if (d == ctr::DiffEqType::FUNCBETA)
-      info.emplace_back( infoFuncBeta( cnt ) );
+    else if (d == ctr::DiffEqType::NFRACBETA)
+      info.emplace_back( infoNumberFractionBeta( cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       info.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -282,12 +282,19 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::dirichlet, tag::rng >()[c] ) );
-  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::dirichlet, tag::b >(c) );
-  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::dirichlet, tag::S >(c) );
-  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::dirichlet, tag::kappa >(c) );
+  info.emplace_back(
+    "coeff b [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::dirichlet, tag::b >().at(c) )
+  );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::dirichlet, tag::S >().at(c) )
+  );
+  info.emplace_back(
+    "coeff kappa [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::dirichlet, tag::kappa >().at(c) )
+  );
 
   return info;
 }
@@ -320,14 +327,21 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::gendir, tag::rng >()[c] ) );
-  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gendir, tag::b >(c) );
-  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gendir, tag::S >(c) );
-  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gendir, tag::kappa >(c) );
-  info.emplace_back( "coeff c [" + std::to_string( ncomp*(ncomp-1)/2 ) + "]",
-                     parameters< tag::param, tag::gendir, tag::c >( c ) );
+  info.emplace_back(
+    "coeff b [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gendir, tag::b >().at(c) ) );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gendir, tag::S >().at(c) ) );
+  info.emplace_back(
+    "coeff kappa [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gendir, tag::kappa >().at(c) )
+  );
+  info.emplace_back(
+    "coeff c [" + std::to_string( ncomp*(ncomp-1)/2 ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gendir, tag::c >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::gendir, tag::spike >().at(c) );
 
   return info;
 }
@@ -360,8 +374,13 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::wrightfisher, tag::rng >()[c] ) );
-  info.emplace_back( "coeff omega [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::wrightfisher, tag::omega >(c) );
+  info.emplace_back(
+    "coeff omega [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::wrightfisher, tag::omega >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::wrightfisher, tag::spike >().at(c)
+  );
 
   return info;
 }
@@ -396,11 +415,13 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
     g_inputdeck.get< tag::param, tag::ou, tag::rng >()[c] ) );
   info.emplace_back(
     "coeff sigmasq [" + std::to_string( ncomp*(ncomp+1)/2 ) + ", upper tri]",
-    parameters< tag::param, tag::ou, tag::sigmasq >(c) );
+    parameters( g_inputdeck.get< tag::param, tag::ou, tag::sigmasq >().at(c) )
+  );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::ou, tag::theta >(c) );
+    parameters( g_inputdeck.get< tag::param, tag::ou, tag::theta >().at(c) ) );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::ou, tag::mu >(c) );
+    parameters( g_inputdeck.get< tag::param, tag::ou, tag::mu >().at(c) ) );
+  spikes( info, g_inputdeck.get< tag::param, tag::ou, tag::spike >().at(c) );
 
   return info;
 }
@@ -435,11 +456,15 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
     g_inputdeck.get< tag::param, tag::diagou, tag::rng >()[c] ) );
   info.emplace_back(
     "coeff sigmasq [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::diagou, tag::sigmasq >(c) );
+    parameters(
+      g_inputdeck.get< tag::param, tag::diagou, tag::sigmasq >().at(c) ) );
   info.emplace_back( "coeff theta [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::diagou, tag::theta >(c) );
+    parameters( g_inputdeck.get< tag::param, tag::diagou, tag::theta >().at(c) )
+  );
   info.emplace_back( "coeff mu [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::diagou, tag::mu >(c) );
+    parameters( g_inputdeck.get< tag::param, tag::diagou, tag::mu >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::diagou, tag::spike >().at(c) );
 
   return info;
 }
@@ -472,54 +497,73 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::beta, tag::rng >()[c] ) );
-  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::beta, tag::b >(c) );
-  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::beta, tag::S >(c) );
-  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::beta, tag::kappa >(c) );
+  info.emplace_back(
+    "coeff b [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::beta, tag::b >().at(c) ) );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::beta, tag::S >().at(c) ) );
+  info.emplace_back(
+    "coeff kappa [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::beta, tag::kappa >().at(c) )
+  );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::beta, tag::spike >().at(c) );
 
   return info;
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoFuncBeta( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoNumberFractionBeta( std::map< ctr::DiffEqType, int >& cnt )
+const
 //******************************************************************************
-//  Return information on the functional beta SDE
+//  Return information on the number-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
 //! \return vector of string pairs describing the SDE configuration
 //! \author J. Bakosi
 //******************************************************************************
 {
-  auto c = ++cnt[ ctr::DiffEqType::FUNCBETA ];       // count eqs
+  auto c = ++cnt[ ctr::DiffEqType::NFRACBETA ];       // count eqs
   --c;  // used to index vectors starting with 0
 
   std::vector< std::pair< std::string, std::string > > info;
 
-  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::FUNCBETA ), "" );
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::NFRACBETA ), "" );
   info.emplace_back( "kind", "stochastic" );
   info.emplace_back( "dependent variable", std::string( 1,
-    g_inputdeck.get< tag::param, tag::funcbeta, tag::depvar >()[c] ) );
+    g_inputdeck.get< tag::param, tag::nfracbeta, tag::depvar >()[c] ) );
   info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
-    g_inputdeck.get< tag::param, tag::funcbeta, tag::initpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::nfracbeta, tag::initpolicy >()[c] ) );
   info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
-    g_inputdeck.get< tag::param, tag::funcbeta, tag::coeffpolicy >()[c] ) );
+    g_inputdeck.get< tag::param, tag::nfracbeta, tag::coeffpolicy >()[c] ) );
   info.emplace_back( "start offset in particle array", std::to_string(
-    g_inputdeck.get< tag::component >().offset< tag::funcbeta >(c) ) );
-  auto ncomp = g_inputdeck.get< tag::component >().get< tag::funcbeta >()[c];
+    g_inputdeck.get< tag::component >().offset< tag::nfracbeta >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::nfracbeta >()[c] / 3;
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
-    g_inputdeck.get< tag::param, tag::funcbeta, tag::rng >()[c] ) );
-  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::funcbeta, tag::b >(c) );
-  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::funcbeta, tag::S >(c) );
-  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::funcbeta, tag::kappa >(c) );
-  info.emplace_back( "coeff rho2 [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::funcbeta, tag::rho2 >(c) );
-  info.emplace_back( "coeff rcomma [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::funcbeta, tag::rcomma >(c) );
+    g_inputdeck.get< tag::param, tag::nfracbeta, tag::rng >()[c] ) );
+  info.emplace_back(
+    "coeff b [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::nfracbeta, tag::b >().at(c) )
+  );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::nfracbeta, tag::S >().at(c) )
+  );
+  info.emplace_back(
+    "coeff kappa [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::nfracbeta, tag::kappa >().at(c) ) );
+  info.emplace_back(
+    "coeff rho2 [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::nfracbeta, tag::rho2 >().at(c) ) );
+  info.emplace_back(
+    "coeff rcomma [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::nfracbeta, tag::rcomma >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::nfracbeta, tag::spike >().at(c) );
 
   return info;
 }
@@ -552,13 +596,21 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::skewnormal, tag::rng >()[c] ) );
-  info.emplace_back( "coeff T [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::skewnormal, tag::timescale >(c) );
+  info.emplace_back(
+    "coeff T [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::skewnormal, tag::timescale >().at(c) )
+  );
   info.emplace_back(
     "coeff sigmasq [" + std::to_string( ncomp ) + "]",
-    parameters< tag::param, tag::skewnormal, tag::sigmasq >(c) );
-  info.emplace_back( "coeff lambda [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::skewnormal, tag::lambda >(c) );
+    parameters(
+      g_inputdeck.get< tag::param, tag::skewnormal, tag::sigmasq >().at(c) ) );
+  info.emplace_back(
+    "coeff lambda [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::skewnormal, tag::lambda >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::skewnormal, tag::spike >().at(c) );
 
   return info;
 }
@@ -591,12 +643,17 @@ DiffEqStack::infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const
   info.emplace_back( "number of components", std::to_string( ncomp ) );
   info.emplace_back( "random number generator", tk::ctr::RNG().name(
     g_inputdeck.get< tag::param, tag::gamma, tag::rng >()[c] ) );
-  info.emplace_back( "coeff b [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gamma, tag::b >(c) );
-  info.emplace_back( "coeff S [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gamma, tag::S >(c) );
-  info.emplace_back( "coeff kappa [" + std::to_string( ncomp ) + "]",
-                     parameters< tag::param, tag::gamma, tag::kappa >(c) );
+  info.emplace_back(
+    "coeff b [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gamma, tag::b >().at(c) ) );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gamma, tag::S >().at(c) ) );
+  info.emplace_back(
+    "coeff kappa [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::gamma, tag::kappa >().at(c) )
+  );
+  spikes( info, g_inputdeck.get< tag::param, tag::gamma, tag::spike >().at(c) );
 
   return info;
 }

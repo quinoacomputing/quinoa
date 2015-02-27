@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Tue 17 Feb 2015 04:17:04 PM MST
+  \date      Fri 27 Feb 2015 12:33:38 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -16,9 +16,11 @@
 
 #include <sstream>
 
-// See documentation for tk::grm::use below for when to uncomment these
-// #define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-// #define BOOST_MPL_LIMIT_METAFUNCTION_ARITY 25
+// See documentation for tk::grm::use below for why these macros are here
+#undef BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#undef BOOST_MPL_LIMIT_METAFUNCTION_ARITY
+#define BOOST_MPL_LIMIT_METAFUNCTION_ARITY 10
 
 #include <boost/mpl/or.hpp>
 #include <boost/mpl/for_each.hpp>
@@ -27,7 +29,6 @@
 #include <Exception.h>
 #include <Tags.h>
 #include <StatCtr.h>
-
 #include <Options/PDFFile.h>
 #include <Options/PDFPolicy.h>
 #include <Options/PDFCentering.h>
@@ -75,11 +76,19 @@ namespace grm {
     MISSING,            //!< Required field missing
     UNSUPPORTED,        //!< Option not supported
     NOOPTION,           //!< Option does not exist
+    NOINIT,             //!< No initialization policy selected
+    NOCOEFF,            //!< No coefficients policy selected
     NOTSELECTED,        //!< Option not selected upstream
     EXISTS,             //!< Variable already used
-    NODEPVAR,           //!< Dependent variable not selected
+    NODEPVAR,           //!< Dependent variable has not been specified
+    NOSUCHDEPVAR,       //!< Dependent variable has not been previously selected
     NOTALPHA,           //!< Variable must be alphanumeric
     NOTERMS,            //!< Statistic need a variable
+    ODDSPIKES,          //!< Incomplete spikes block
+    HEIGHTSPIKES,       //!< Height-sum of spikes does not add up to unity
+    NODELTA,            //!< No delta...end block when initpolicy = delta
+    NONCOMP,            //!< No number of components selected
+    NORNG,              //!< No RNG selected
     NOSAMPLES,          //!< PDF need a variable
     INVALIDSAMPLESPACE, //!< PDF sample space specification incorrect
     MALFORMEDSAMPLE,    //!< PDF sample space variable specification incorrect
@@ -116,12 +125,44 @@ namespace grm {
       "here is appropriate, but in order to use this keyword in this context, "
       "the option must be selected upstream." },
     { MsgKey::EXISTS, "Dependent variable already used." },
-    { MsgKey::NODEPVAR, "Dependent variable not selected. To request a "
+    { MsgKey::NOSUCHDEPVAR, "Dependent variable not selected. To request a "
       "statistic or PDF involving this variable, or use this variable as a "
       "coefficients policy variable, an equation must be specified "
       "upstream in the control file assigning this variable to an "
       "equation to be integrated using the depvar keyword." },
     { MsgKey::NOTALPHA, "Variable not alphanumeric." },
+    { MsgKey::HEIGHTSPIKES, "The sum of all spike heights given in the "
+      "spike...end block does not add up to unity. A spike...end block "
+      "must contain an even number of real numbers, where every odd one is the "
+      "sample space position of a spike followed by the spike height "
+      "specifying the relative probability of the spike. Since the spike "
+      "heights are probabilities relative to unity, they must sum to one." },
+    { MsgKey::NODEPVAR, "Dependent variable not specified within the block "
+      "preceding this position. This is mandatory for the preceding block. Use "
+      "the keyword 'depvar' to specify the dependent variable." },
+    { MsgKey::NONCOMP, "The number of components has not specified within the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'ncomp' to specify the number of components." },
+    { MsgKey::NORNG, "The random number generator has not specified within the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'rng' to specify the random number generator." },
+    { MsgKey::NOINIT, "No initialization policy has been specified within the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'init' to specify an initialization policy." },
+    { MsgKey::NOCOEFF, "No coefficients policy has been specified within the "
+      "block preceding this position. This is mandatory for the preceding "
+      "block. Use the keyword 'coeff' to specify an coefficients policy." },
+    { MsgKey::NODELTA, "No delta...end block with at least a single "
+      "spike...end block has been specified within the block preceding this "
+      "position. This is mandatory for the preceding block if delta initpolicy "
+      "is selected. Pick an initpolicy different than delta (using keyword "
+      "'init') or specify at least a single spike...end block (within a "
+      "delta...end block)." },
+    { MsgKey::ODDSPIKES, "Incomplete spike...end block has been specified "
+      "within the  block preceding this position. A spike...end block "
+      "must contain an even number of real numbers, where every odd one is the "
+      "sample space position of a spike followed by the spike height "
+      "specifying the relative probability of the spike." },
     { MsgKey::NOTERMS, "Statistic requires at least one variable." },
     { MsgKey::NOSAMPLES, "PDF requires at least one sample space variable." },
     { MsgKey::INVALIDSAMPLESPACE, "PDF sample space specification incorrect. A "
@@ -360,6 +401,20 @@ namespace grm {
     }
   };
 
+  //! \brief Convert and push back value to vector of back of vector of back of
+  //!   vector in state at position given by tags
+  //! \details This struct and its apply function are used as a functor-like
+  //!    wrapper for calling the store_back_back_back member function of the
+  //!    underlying grammar stack, tk::Control::store_back_back_back.
+  //! \author J. Bakosi
+  template< class Stack, typename tag, typename...tags >
+  struct Store_back_back_back :
+  pegtl::action_base< Store_back_back_back< Stack, tag, tags... > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      stack.template store_back_back_back< tag, tags... >( value );
+    }
+  };
+
   //! \brief Put true in switch in state at position given by tags
   //! \details This struct and its apply function are used as a functor-like
   //!    wrapper for setting a boolean value to true in the underlying grammar
@@ -537,7 +592,7 @@ namespace grm {
       if (depvars.find( var ) != depvars.end())
         push::apply( value, stack );
       else  // error out if matched var is not selected
-        Message< Stack, ERROR, MsgKey::NODEPVAR >( stack, value );
+        Message< Stack, ERROR, MsgKey::NOSUCHDEPVAR >( stack, value );
     }
   };
 
@@ -601,6 +656,17 @@ namespace grm {
                           start_vector< Stack, tag, tags... > > {
     static void apply( const std::string&, Stack& stack ) {
       stack.template push_back< tag, tags... >();  // no arg: use default ctor
+    }
+  };
+
+  //! \brief Start new vector in back of a vector
+  //! \author J. Bakosi
+  template< class Stack, class tag, class... tags >
+  struct start_vector_back : pegtl::action_base<
+                             start_vector_back< Stack, tag, tags... > > {
+    static void apply( const std::string&, Stack& stack ) {
+      // no arg: use default ctor
+      stack.template push_back_back< tag, tags... >();
     }
   };
 
@@ -697,7 +763,41 @@ namespace grm {
     }
   };
 
-  //! check if there is at least one variable in expectation
+  //! \brief Check parameter vector
+  //! \author J. Bakosi
+  template< class Stack, class eq, class param >
+  struct check_vector : pegtl::action_base< check_vector< Stack, eq, param > > {
+    static void apply( const std::string& value, Stack& stack ) {}
+  };
+
+  //! \brief Check if the spikes parameter vector specifications are correct
+  //! \details Spikes are used to specify sample-space locations and relative
+  //!    probability heights for a joint-delta PDF.
+  //! \author J. Bakosi
+  template< class Stack, class eq, class param >
+  struct check_spikes : pegtl::action_base< check_spikes< Stack, eq, param > > {
+    static void apply( const std::string& value, Stack& stack ) {
+      const auto& spike =
+        stack.template get< tag::param, eq, param >().back().back();
+      // Warn on empty spikes...end block
+      // Error out if the number of spikes-vector is odd
+      if (spike.size() % 2)
+        Message< Stack, ERROR, MsgKey::ODDSPIKES >( stack, value );
+      // Error out if the sum of spike heights does not add up to unity, but
+      // only if there the spike block is not empty (an empty spike..end block
+      // is okay and is used to specify no delta spikes for a dependent
+      // variable).
+      if (!spike.empty()) {
+        tk::real sum = 0.0;
+        for (std::size_t i=1; i<spike.size(); i+=2)  // every even is a height
+          sum += spike[i];
+        if (std::abs(sum-1.0) > std::numeric_limits< tk::real >::epsilon())
+          Message< Stack, ERROR, MsgKey::HEIGHTSPIKES >( stack, value );
+      }
+    }
+  };
+
+  //! \brief Check if there is at least one variable in expectation
   //! \author J. Bakosi
   template< class Stack >
   struct check_expectation : pegtl::action_base< check_expectation< Stack > > {
@@ -1217,17 +1317,37 @@ namespace grm {
                         block< Stack, use< kw::end >, rngs > > {};
 
 
-  //! \brief Match model parameter vector
+  //! \brief Match equation/model parameter vector
+  //! \details This structure is used to match a keyword ... end block that
+  //!   contains a list (i.e., a vector) of numbers. The keyword that starts the
+  //!   block is passed in via the 'keyword' template argument. The 'store'
+  //!   argument abstracts away a "functor" used to store the parsed values
+  //!   (usually a push_back operaton on a std::vector. The 'start' argument
+  //!   abstracts away the starter functor used to start the inserting operation
+  //!   before parsing a value (usually a push_back on a vector using the
+  //!   default value constructor). The 'check' argument abstracts away a
+  //!   functor used to do error checking on the value parsed. Arguments 'eq'
+  //!   and 'param' denote two levels of the hierarchy relative to tag::param,
+  //!   at which the parameter vector lives. Example client-code: see
+  //!   walker::deck::beta, or walker::deck::delta.
   //! \author J. Bakosi
-  template< class Stack, template< class > class use, typename keyword,
-            typename...tags >
+  template< class Stack,
+            template< class > class use,
+            typename keyword,
+            template< class, class, class... > class store,
+            template< class, class, class... > class start,
+            template< class, class, class > class check,
+            typename eq,
+            typename param >
   struct parameter_vector :
-         vector<
-           Stack,
-           keyword,
-           Store_back_back< Stack, tag::param, tags... >,
-           use< kw::end >,
-           pegtl::apply< start_vector< Stack, tag::param, tags... > > > {};
+         pegtl::ifmust<
+           vector<
+             Stack,
+             keyword,
+             store< Stack, tag::param, eq, param >,
+             use< kw::end >,
+             pegtl::apply< start< Stack, tag::param, eq, param > > >,
+           pegtl::apply< check< Stack, eq, param > > > {};
 
   //! \brief Match model parameter dependent variable
   //! \author J. Bakosi

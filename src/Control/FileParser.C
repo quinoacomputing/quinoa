@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu 18 Dec 2014 11:09:07 AM MST
+  \date      Wed 25 Feb 2015 09:51:55 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -146,6 +146,7 @@ FileParser::diagnostics( const tk::Print& print,
     print % ">>> Line " % l.first % ": '" % e.parsed % "'\n";
     print % ">>>" % std::string( e.dlnum+9, ' ' ) % e.underline % "\n";
     for (const auto& m : e.msg) print % ">>> " % m % std::endl;
+    print % '\n';
   }
 
   // Exit if there were any errors

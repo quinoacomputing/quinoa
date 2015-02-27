@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 19 Feb 2015 07:07:43 PM MST
+  \date      Fri 27 Feb 2015 10:57:30 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Control base contains generic accessors to tagged tuple elements
   \details   Control is a slightly more specialized level of a tagged tuple,
@@ -231,6 +231,63 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     ///@}
 
+    /** @name Push back value to vector of back of vector at tag at three different depths */
+    ///@{
+    //! \brief Push back value to vector of back of vector at tag at 1st level
+    //!   without conversion.
+    //! \details This is similar to store_back_back but performes no conversion.
+    //! \param[in] value Value to push back behind tag given by the template
+    //!   argument
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag >
+    void push_back_back( const typename Tuple::template nT<tag>
+                                             ::value_type::value_type& value =
+                          typename Tuple::template nT<tag>
+                                         ::value_type::value_type() ) {
+      Tuple::template get<tag>().back().push_back( value );
+    }
+    //! \brief Push back value to vector of back of vector at tag at 2nd level
+    //!   without conversion
+    //! \details This is similar to store_back_back but performes no conversion.
+    //!   no conversion.
+    //! \param[in] value Value to push back behind tag and subtag given by the
+    //!   template argument
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag, typename subtag >
+    void push_back_back( const typename Tuple::template nT<tag>
+                                             ::template nT<subtag>
+                                             ::value_type::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::value_type::value_type() ) {
+      Tuple::template get<tag>().
+             template get<subtag>().back().push_back( value );
+    }
+    //! \brief Push back value to vector of back of vector at tag at 3rd level
+    //!   without conversion
+    //! \details This is similar to store_back_back but performes no conversion.
+    //!   no conversion.
+    //! \param[in] value Value to push back behind tag, subtag, and subsubtag
+    //!   given by the template argument
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag, typename subtag, typename subsubtag >
+    void push_back_back( const typename Tuple::template nT<tag>
+                                             ::template nT<subtag>
+                                             ::template nT<subsubtag>
+                                             ::value_type::value_type& value =
+                          typename Tuple::template nT<tag>
+                                        ::template nT<subtag>
+                                        ::template nT<subsubtag>
+                                        ::value_type::value_type() ) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().back().push_back( value );
+    }
+    ///@}
+
     /** @name Convert and push back value to vector at tag at three different
       * depths */
     ///@{
@@ -275,8 +332,7 @@ class Control : public tuple::tagged_tuple<Ts...> {
     }
     ///@}
 
-    /** @name Convert and push back value to vector of back of vector at tag at
-      * three different depths */
+    /** @name Convert and push back value to vector of back of vector at tag at three different depths */
     ///@{
     //! \brief Convert and push back value to vector of back of vector at tag at
     //!   1st level
@@ -319,6 +375,52 @@ class Control : public tuple::tagged_tuple<Ts...> {
                               ::template nT<subtag>
                               ::template nT<subsubtag>
                               ::value_type::value_type>( value ) );
+    }
+    ///@}
+
+    /** @name Convert and push back value to vector of back of vector of back of vector at tag at three different depths */
+    ///@{
+    //! \brief Convert and push back value to vector of back of vector of back
+    //!    of vector at tag at 1st level
+    //! \param[in] value Value to convert and push back behind tag given by the
+    //!   template arguments
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag >
+    void store_back_back_back(const std::string& value) {
+      Tuple::template get<tag>().back().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::value_type::value_type::value_type>( value ) );
+    }
+    //! \brief Convert and push back value to vector of back of vector of back
+    //!    of vector at tag at 2nd level
+    //! \param[in] value Value to convert and push back behind tag and subtag
+    //!   given by the template arguments
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag, typename subtag >
+    void store_back_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().back().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::value_type::value_type::value_type>( value ) );
+    }
+    //! \brief Convert and push back value to vector of back of vector of back
+    //!    of vector at tag at 3rd level
+    //! \param[in] value Value to convert and push back behind tag, subtag, and
+    //!   subsubtag given by the template arguments
+    //! \author J. Bakosi
+    // TODO Combine the three overloads into a single variadic one
+    template< typename tag, typename subtag, typename subsubtag >
+    void store_back_back_back(const std::string& value) {
+      Tuple::template get<tag>().
+             template get<subtag>().
+             template get<subsubtag>().back().back().push_back(
+        convert<typename Tuple::template nT<tag>
+                              ::template nT<subtag>
+                              ::template nT<subsubtag>
+                              ::value_type::value_type::value_type>( value ) );
     }
     ///@}
 

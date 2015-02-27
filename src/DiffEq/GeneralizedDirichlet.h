@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 02:49:57 PM MST
+  \date      Fri 27 Feb 2015 12:41:22 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -72,6 +72,9 @@ extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 template< class Init, class Coefficients >
 class GeneralizedDirichlet {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! \brief Constructor
     //! \param[in] c Index specifying which generalized Dirichlet system of SDEs
@@ -80,7 +83,8 @@ class GeneralizedDirichlet {
     //!   instantiate. The index corresponds to the order in which the gendir
     //!   ... end blocks are given the control file.
     //! \author J. Bakosi
-    explicit GeneralizedDirichlet( unsigned int c ) :
+    explicit GeneralizedDirichlet( ncomp_t c ) :
+      m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, tag::gendir, tag::depvar >().at(c) ),
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::gendir >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::gendir >(c) ),
@@ -91,7 +95,7 @@ class GeneralizedDirichlet {
              g_inputdeck.get< tag::param, tag::gendir, tag::S >().at(c),
              g_inputdeck.get< tag::param, tag::gendir, tag::kappa >().at(c),
              g_inputdeck.get< tag::param, tag::gendir, tag::c >().at(c),
-             m_b, m_S, m_k, m_c ) {}
+             m_b, m_S, m_k, m_cij ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
@@ -99,7 +103,8 @@ class GeneralizedDirichlet {
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
       //! Set initial conditions using initialization policy
-      Init( { particles } );
+      Init::template init< tag::gendir >
+                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
       //! Pre-lookup required statistical moments
       coeff.lookup( stat, m_depvar );
     }
@@ -112,7 +117,7 @@ class GeneralizedDirichlet {
         // Y_i = 1 - sum_{k=1}^{i} y_k
         tk::real Y[m_ncomp];
         Y[0] = 1.0 - particles( p, 0, m_offset );
-        for (tk::ctr::ncomp_type i=1; i<m_ncomp; ++i)
+        for (ncomp_t i=1; i<m_ncomp; ++i)
           Y[i] = Y[i-1] - particles( p, i, m_offset );
 
         // U_i = prod_{j=1}^{K-i} 1/Y_{K-j}
@@ -126,12 +131,12 @@ class GeneralizedDirichlet {
 
         // Advance first m_ncomp (K=N-1) scalars
         int k=0;
-        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * Y[m_ncomp-1] * U[i] * dt;
           d = (d > 0.0 ? sqrt(d) : 0.0);
           tk::real a=0.0;
-          for (tk::ctr::ncomp_type j=i; j<m_ncomp-1; ++j) a += m_c[k++]/Y[j];
+          for (ncomp_t j=i; j<m_ncomp-1; ++j) a += m_cij[k++]/Y[j];
           par += U[i]/2.0*( m_b[i]*( m_S[i]*Y[m_ncomp-1] - (1.0-m_S[i])*par ) +
                             par*Y[m_ncomp-1]*a )*dt + d*dW[i];
         }
@@ -139,16 +144,17 @@ class GeneralizedDirichlet {
     }
 
   private:
+    const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
-    const int m_offset;                 //!< Offset SDE operates from
+    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients
     std::vector< kw::sde_b::info::expect::type > m_b;
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
-    std::vector< kw::sde_c::info::expect::type > m_c;
+    std::vector< kw::sde_c::info::expect::type > m_cij;
 
     //! Coefficients policy
     Coefficients coeff;

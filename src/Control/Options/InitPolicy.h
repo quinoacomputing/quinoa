@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/InitPolicy.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 07:58:21 AM MST
+  \date      Wed 25 Feb 2015 08:26:51 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation initialization policy options
   \details   Differential equation initialization policy options
@@ -23,7 +23,8 @@ namespace ctr {
 //! Differential equation initializion policy types
 //! \author J. Bakosi
 enum class InitPolicyType : uint8_t { RAW=0,
-                                      ZERO };
+                                      ZERO,
+                                      DELTA };
 
 //! Pack/Unpack InitPolicyType: forward overload to generic enum class packer
 //! \author J. Bakosi
@@ -38,6 +39,7 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
     //! \author J. Bakosi
     using keywords = boost::mpl::vector< kw::raw
                                        , kw::zero
+                                       , kw::delta
                                        >;
 
     //! \brief Options constructor
@@ -50,10 +52,12 @@ class InitPolicy : public tk::Toggle< InitPolicyType > {
         "Initialization Policy",
         //! Enums -> names
         { { InitPolicyType::RAW, kw::raw::name() },
-          { InitPolicyType::ZERO, kw::zero::name() } },
+          { InitPolicyType::ZERO, kw::zero::name() },
+          { InitPolicyType::DELTA, kw::delta::name() } },
         //! keywords -> Enums
         { { kw::raw::string(), InitPolicyType::RAW },
-          { kw::zero::string(), InitPolicyType::ZERO } } ) {}
+          { kw::zero::string(), InitPolicyType::ZERO },
+          { kw::delta::string(), InitPolicyType::DELTA } } ) {}
 };
 
 } // ctr::

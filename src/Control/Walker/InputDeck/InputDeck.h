@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 07:47:07 PM MST
+  \date      Fri 27 Feb 2015 06:46:25 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -161,10 +161,12 @@ class InputDeck :
                                      , kw::txt_float_default
                                      , kw::txt_float_fixed
                                      , kw::txt_float_scientific
-                                     , kw::funcbeta
+                                     , kw::nfracbeta
                                      , kw::sde_rho2
                                      , kw::sde_rcomma
+                                     , kw::delta
                                      >;
+    using keywords6 = boost::mpl::set< kw::spike >;
 
     //! \brief Constructor: set all defaults
     //! \details Anything not set here is initialized by the compiler using the
@@ -191,6 +193,7 @@ class InputDeck :
       boost::mpl::for_each< keywords3 >( ctrinfoFill );
       boost::mpl::for_each< keywords4 >( ctrinfoFill );
       boost::mpl::for_each< keywords5 >( ctrinfoFill );
+      boost::mpl::for_each< keywords6 >( ctrinfoFill );
     }
 
     //! Extract moment names of requested statistics

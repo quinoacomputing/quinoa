@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 05:49:44 PM MST
+  \date      Fri 27 Feb 2015 12:24:20 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -142,9 +142,9 @@ class DiffEqStack {
     //! Get information on Beta SDE
     std::vector< std::pair< std::string, std::string > >
     infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
-    //! Get information on functional Beta SDE
+    //! Get information on number-fraction Beta SDE
     std::vector< std::pair< std::string, std::string > >
-    infoFuncBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoNumberFractionBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
     infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const;
@@ -153,19 +153,31 @@ class DiffEqStack {
     infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const;
     ///@}
 
-    //! \brief Return parameter values from vector as string
-    //! \details The template arguments index into the input deck, the
-    //!   hierarchical data structure filled during control file parsing,
-    //!   containing user input.
-    //! \param[in] c Index into a vector to access a vector
+    //! \brief Convert and return values from vector as string
+    //! \param[in] v Vector whose components to return as a string
     //! \return Concatenated string of values read from a vector
     //! \author J. Bakosi
-    template< typename... tags > std::string parameters( int c ) const {
+    template< typename V >
+    std::string parameters( const V& v) const {
       std::stringstream s;
       s << "{ ";
-      for (auto p : g_inputdeck.get< tags... >()[c]) s << p << ' ';
+      for (auto p : v) s << p << ' ';
       s << "}";
       return s.str();
+    }
+
+    //! \brief Insert spike information (used to specify delta PDFs) into info
+    //!   vector
+    //! \param[in] v Vector of vectors specifying spike info
+    //! \param[inout] info Info vector of string-pairs to insert to
+    //! \author J. Bakosi
+    template< typename Info, typename VV >
+    void spikes( Info& info, const VV& spike ) const {
+      std::size_t i = 0;
+      for (const auto& s : spike)
+        info.emplace_back( "delta spikes [comp" + std::to_string(++i) + ":" +
+                             std::to_string( s.size()/2 ) + "]",
+                           parameters( s ) );
     }
 
     DiffEqFactory m_factory;                 //!< Differential equations factory

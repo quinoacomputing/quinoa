@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Mon 09 Feb 2015 12:44:19 PM MST
+  \date      Fri 27 Feb 2015 07:17:45 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -76,6 +76,8 @@ using DirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -92,6 +94,8 @@ using GenDirichletParameters = tk::tuple::tagged_tuple<
                       kw::sde_kappa::info::expect::type > >,
   tag::c,           std::vector< std::vector<
                       kw::sde_c::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -102,6 +106,8 @@ using WrightFisherParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::omega,       std::vector< std::vector<
                       kw::sde_omega::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -116,6 +122,8 @@ using OrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
                       kw::sde_mu::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -130,6 +138,8 @@ using DiagOrnsteinUhlenbeckParameters = tk::tuple::tagged_tuple<
                       kw::sde_theta::info::expect::type > >,
   tag::mu,          std::vector< std::vector<
                       kw::sde_mu::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -144,6 +154,8 @@ using SkewNormalParameters = tk::tuple::tagged_tuple<
                       kw::sde_sigmasq::info::expect::type > >,
   tag::lambda,      std::vector< std::vector<
                       kw::sde_lambda::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -158,6 +170,8 @@ using GammaParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -172,13 +186,15 @@ using BetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_S::info::expect::type > >,
   tag::kappa,       std::vector< std::vector<
                       kw::sde_kappa::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
 >;
 
-//! Functional beta parameters storage
-using FuncBetaParameters = tk::tuple::tagged_tuple<
+//! Number-fraction beta parameters storage
+using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
   tag::b,           std::vector< std::vector<
                       kw::sde_b::info::expect::type > >,
@@ -190,6 +206,8 @@ using FuncBetaParameters = tk::tuple::tagged_tuple<
                       kw::sde_rho2::info::expect::type > >,
   tag::rcomma,     std::vector< std::vector<
                       kw::sde_rcomma::info::expect::type > >,
+  tag::spike,      std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
   tag::rng,         std::vector< tk::ctr::RNGType >,
   tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
@@ -209,7 +227,7 @@ using parameters = tk::tuple::tagged_tuple<
   tag::skewnormal,   SkewNormalParameters,
   tag::gamma,        GammaParameters,
   tag::beta,         BetaParameters,
-  tag::funcbeta,     FuncBetaParameters
+  tag::nfracbeta,    NumberFractionBetaParameters
 >;
 
 //! PEGTL location type to use throughout Walker's parsers
