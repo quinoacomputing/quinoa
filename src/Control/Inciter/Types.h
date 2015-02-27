@@ -1,6 +1,6 @@
 //******************************************************************************
 /*!
-  \file      src/Control/Incitier/Types.h
+  \file      src/Control/Inciter/Types.h
   \author    J. Bakosi
   \date      Mon 23 Feb 2015 08:52:44 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
