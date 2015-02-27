@@ -5,7 +5,11 @@ project(Mesh CXX)
 add_library(Mesh
             UnsMesh.C
             STLMesh.C
+            ZoltanInterOp.C
 )
+
+#removeWarnings( "UnsMesh.C;ZoltanInterOp.C")
+removeWarnings( "ZoltanInterOp.C")
 
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime

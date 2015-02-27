@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 09:38:04 PM MST
+  \date      Fri 27 Feb 2015 04:01:37 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -17,14 +17,13 @@
 #include <mpi-interoperate.h>   // For interoperation of MPI and Charm++
 #include <pup_stl.h>
 
-#include <zoltan.h>
-
 #include <Config.h>
 #include <RNG.h>
 #include <RNGStack.h>
 #include <InciterPrint.h>
 #include <InciterDriver.h>
 #include <Inciter/CmdLine/Parser.h>
+#include <ZoltanInterOp.h>
 #include <inciter.decl.h>
 #include <Init.h>
 
@@ -46,6 +45,13 @@ namespace inciter {
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
+//! \brief Mesh is global so that it is accessible to Zoltan
+//! \details Zoltan is an MPI library interoperating with Charm++. However,
+//!    g_mesh is NOT declared in Inciter's Charm++ main chare in Main/inciter.ci
+//!    so that Charm does not migrate the entire mesh across all PEs. The mesh
+//!    is read in on MPI rank 0 and is partitioned by Zoltan, then Charm++
+//!    chares will be created containing pieces of the partitioned mesh.
+tk::UnsMesh g_mesh;
 
 //! Distributor Charm++ proxy facilitating call-back to Distributor by the
 //! individual integrators
@@ -160,40 +166,37 @@ class Main : public CBase_Main {
     std::map< std::string, tk::Timer::Watch > m_timestamp;
 };
 
-//! Charm++ chare execute: by the time this object is constructed, the Charm++
-//! runtime system has finished migrating all global-scoped read-only objects
-//! which happens after the main chare constructor has finished.
+//! \brief Charm++ chare execute
+//! \details By the time this object is constructed, the Charm++ runtime system
+//!    has finished migrating all global-scoped read-only objects which happens
+//!    after the main chare constructor has finished.
+//! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
+//! \brief Inciter main()
+//! \details Inciter does have a main() function so that Charm++ can
+//!   interoperate with Zoltan, which is an MPI library. This is necessary,
+//!   since MPI_Init() is a bit adamant about capturing resources it wants and
+//!   hence it has to be called before Charm is initialized.
+//! \author J. Bakosi
 int main( int argc, char **argv ) {
   int peid, numpes;
-  //MPI_Comm newComm;
 
   // Initialize MPI
   MPI_Init( &argc, &argv );
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );
   MPI_Comm_size( MPI_COMM_WORLD, &numpes );
 
-  // Initialize the Zoltan library
-  float ver = 0.0;
-  ErrChk( Zoltan_Initialize( 0, nullptr, &ver ) == ZOLTAN_OK,
-          "Zoltan could not be initialized" );
-
-  // Create Zoltan data structure
-  struct Zoltan_Struct *z;
-  z = Zoltan_Create( MPI_COMM_WORLD );
-  Assert( z != nullptr, "Zoltan_Create failed" );
-
   // Initialize Charm++
-  //MPI_Comm_dup( MPI_COMM_WORLD, &newComm );
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
   MPI_Barrier( MPI_COMM_WORLD );
 
+  // Partition mesh using Zoltan
+  tk::zoltan::partitionMesh( inciter::g_mesh );
+
   // Finalize Charm++
   CharmLibExit();
-
-  // Destroy Zoltan data structure
-  Zoltan_Destroy( &z );
+  MPI_Barrier( MPI_COMM_WORLD );
 
   // Finalize MPI
   MPI_Finalize();

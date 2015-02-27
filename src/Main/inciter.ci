@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 09:00:13 AM MST
+  \date      Fri 27 Feb 2015 03:56:09 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -19,8 +19,7 @@ mainmodule inciter {
 
   namespace inciter {
 
-    // Order important: inputdeck stores parsed data, rngs instantiated based on
-    // user-defined parameters from input deck
+    // Order important
     readonly ctr::InputDeck g_inputdeck_defaults;
     readonly ctr::InputDeck g_inputdeck;
 

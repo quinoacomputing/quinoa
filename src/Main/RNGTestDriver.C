@@ -45,7 +45,7 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
 }
 
 void
-RNGTestDriver::execute()
+RNGTestDriver::execute() const
 //******************************************************************************
 //  Run battery
 //! \author J. Bakosi

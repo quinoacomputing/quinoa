@@ -2,14 +2,12 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Wed 25 Feb 2015 07:47:22 AM MST
+  \date      Fri 27 Feb 2015 03:27:40 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
 */
 //******************************************************************************
-
-#include <zoltan.h>
 
 #include <InciterDriver.h>
 #include <Inciter/InputDeck/Parser.h>
@@ -28,6 +26,7 @@ extern CProxy_Main mainProxy;
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
+extern tk::UnsMesh g_mesh;
 
 } // inciter::
 
@@ -64,16 +63,13 @@ InciterDriver::execute() const
   //! Mesh readers factory
   std::map< tk::MeshReaderType, std::function<tk::Reader*()> > readers;
 
-  //! Create unstructured mesh to store mesh
-  tk::UnsMesh mesh;
-
   // Register mesh readers
   tk::record< tk::GmshMeshReader >( readers, tk::MeshReaderType::GMSH,
-                                    m_input, std::ref(mesh) );
+                                    m_input, std::ref(g_mesh) );
   tk::record< tk::NetgenMeshReader >( readers, tk::MeshReaderType::NETGEN,
-                                      m_input, std::ref(mesh) );
+                                      m_input, std::ref(g_mesh) );
   tk::record< tk::ExodusIIMeshReader >( readers, tk::MeshReaderType::EXODUSII,
-                                        m_input, std::ref(mesh) );
+                                        m_input, std::ref(g_mesh) );
 
   // Start timer measuring mesh read time
   tk::Timer mesh_read;
@@ -90,49 +86,21 @@ InciterDriver::execute() const
   const auto nchare =
     tk::linearLoadDistributor(
        g_inputdeck.get< tag::cmd, tag::virtualization >(),
-       mesh.tetinpoel().size(),
+       g_mesh.tetinpoel().size(),
        chunksize,
        remainder );
 
   // Print out info on what will be done and how
-  info( mesh, chunksize, remainder, nchare );
-
-  // Partition mesh using Zoltan
-  partition( mesh );
+  info( chunksize, remainder, nchare );
 
   mainProxy.finalize();
 }
 
 void
-InciterDriver::partition( const tk::UnsMesh& mesh ) const
-//******************************************************************************
-//  Partition mesh using Zoltan
-//! \param[in] mesh Unstructured mesh object reference to echo stats of
-//! \author J. Bakosi
-//******************************************************************************
-{
-//   // Initialize the Zoltan library
-//   float ver = 0.0;
-//   ErrChk( Zoltan_Initialize( 0, nullptr, &ver ) == ZOLTAN_OK,
-//           "Zoltan could not be initialized" );
-//
-//   // Create Zoltan data structure
-//   struct Zoltan_Struct *z;
-//   z = Zoltan_Create( MPI_COMM_WORLD );
-//   Assert( z != nullptr, "Zoltan_Create failed" );
-//
-//   // Destroy Zoltan data structure
-//   Zoltan_Destroy( &z );
-}
-
-void
-InciterDriver::info( const tk::UnsMesh& mesh,
-                     uint64_t chunksize,
-                     uint64_t remainder,
-                     uint64_t nchare ) const
+InciterDriver::info( uint64_t chunksize, uint64_t remainder, uint64_t nchare )
+const
 //******************************************************************************
 //  Print information at startup
-//! \param[in] mesh Unstructured mesh object reference to echo stats of
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
 //! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \param[in] nchare Number of work units (Charm++ chares)
@@ -141,22 +109,22 @@ InciterDriver::info( const tk::UnsMesh& mesh,
 {
   // Print out mesh stats
   m_print.section( "Input mesh statistics" );
-  m_print.item( "Number of element blocks", mesh.neblk() );
-  m_print.item( "Number of elements", mesh.nelem() );
-  m_print.item( "Number of nodes", mesh.nnode() );
+  m_print.item( "Number of element blocks", g_mesh.neblk() );
+  m_print.item( "Number of elements", g_mesh.nelem() );
+  m_print.item( "Number of nodes", g_mesh.nnode() );
 
-  if (!mesh.lininpoel().empty())
-    m_print.item( "Number of lines", mesh.lininpoel().size() );
-  if (!mesh.triinpoel().empty())
-    m_print.item( "Number of triangles", mesh.triinpoel().size() );
-  if (!mesh.tetinpoel().empty())
-    m_print.item( "Number of tetrahedra", mesh.tetinpoel().size() );
+  if (!g_mesh.lininpoel().empty())
+    m_print.item( "Number of lines", g_mesh.lininpoel().size() );
+  if (!g_mesh.triinpoel().empty())
+    m_print.item( "Number of triangles", g_mesh.triinpoel().size() );
+  if (!g_mesh.tetinpoel().empty())
+    m_print.item( "Number of tetrahedra", g_mesh.tetinpoel().size() );
 
   // Print out info on load distribution
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of mesh cells)", mesh.tetinpoel().size() );
+  m_print.item( "Load (number of mesh cells)", g_mesh.tetinpoel().size() );
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
                 std::to_string( nchare ) + " (" +

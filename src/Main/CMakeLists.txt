@@ -133,8 +133,6 @@ endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
-                      IO
-                      Mesh
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
@@ -178,6 +176,7 @@ target_link_libraries(${MESHCONV_EXECUTABLE}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
+                      ${ZOLTAN_LIBRARIES}
 )
 
 # Add custom dependencies for MeshConv's main Charm++ module
@@ -226,6 +225,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       ${MKL_CORE_LIBRARY}
                       ${MKL_SEQUENTIAL_LAYER_LIBRARY}
                       ${RNGSSE_LIBRARY}
+                      ${ZOLTAN_LIBRARIES}
 )
 
 # Add custom dependencies for Walker's main Charm++ module
