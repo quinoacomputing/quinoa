@@ -5,19 +5,20 @@
 \section intro What is Quinoa?
 Quinoa is a set of computational tools that enable research and numerical
 analysis in fluid dynamics. Quinoa uses the [Charm++]
-(http://charm.cs.illinois.edu) runtime system that enables concurrent execution,
-either on a single machine or a networked set of computers.
+(http://charm.cs.illinois.edu) runtime system that enables concurrent use of
+multiple processors, either on a single machine or a networked set of computers.
 
-<B>Why Charm++?</B> The central idea of Charm++ is _overdecomposition_:
-computation (data and work-units) is decomposed into a large number of logical
-units mapped to the available processors by an intelligent runtime system. This
-empowers the runtime system to dynamically adapt the computational load
-monitoring load-imbalance due to software (e.g., particle clustering, adaptive
-refinemement) as well as hardware (e.g., dynamic processor frequency scaling,
-node failure). These features help solve challenges facing parallel application
-development while improving programmer productivity. Charm++ has been developed
-since the end of the 1980s and are used by several large production codes. Read
-more from the Charm++ developers at http://charm.cs.uiuc.edu/why.
+<B>Why Charm++?</B> Charm++ consists of libraries and a runtime system. The
+central idea of Charm++ is _overdecomposition_: computation (data and
+work-units) is decomposed into a large number of logical units mapped to the
+available processors by the intelligent runtime system which can dynamically
+adapt the computational load monitoring load-imbalance due to software (e.g.,
+particle clustering, adaptive refinemement) as well as hardware (e.g., dynamic
+processor frequency scaling, node failure). These features help solve challenges
+facing parallel application development while improving programmer productivity.
+Charm++ has been actively developed since the end of the 1980s and are used by
+several large production codes. Read more on what makes Charm++ different then
+most other runtime systems at http://charm.cs.uiuc.edu/why.
 
 \section organization Organization
 Quinoa consists of the following tools:
@@ -50,7 +51,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Fri 27 Feb 2015 10:24:15 AM MST
+<em>Page last updated:</em> Fri 27 Feb 2015 01:02:12 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
