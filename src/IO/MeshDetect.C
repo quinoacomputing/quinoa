@@ -1,6 +1,6 @@
 //******************************************************************************
 /*!
-  \file      src/Main/MeshDetect.C
+  \file      src/IO/MeshDetect.C
   \author    J. Bakosi
   \date      Mon 23 Feb 2015 03:37:15 PM MST
   \copyright 2012-2015, Jozsef Bakosi.

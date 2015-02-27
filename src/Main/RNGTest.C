@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:38:25 AM MST
+  \date      Fri 27 Feb 2015 10:26:47 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
