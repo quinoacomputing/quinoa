@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/Gamma.h
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 02:49:47 PM MST
+  \date      Fri 27 Feb 2015 12:40:34 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of gamma SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -46,6 +46,9 @@ extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 template< class Init, class Coefficients >
 class Gamma {
 
+  private:
+    using ncomp_t = tk::ctr::ncomp_type;
+
   public:
     //! \brief Constructor
     //! \param[in] c Index specifying which system of gamma SDEs to construct.
@@ -54,7 +57,8 @@ class Gamma {
     //!   corresponds to the order in which the gamma ... end blocks are given
     //!   the control file.
     //! \author J. Bakosi
-    explicit Gamma( unsigned int c ) :
+    explicit Gamma( ncomp_t c ) :
+      m_c( c ),
       m_depvar( g_inputdeck.get< tag::param, tag::gamma, tag::depvar >().at(c) ),
       m_ncomp( g_inputdeck.get< tag::component >().get< tag::gamma >().at(c) ),
       m_offset( g_inputdeck.get< tag::component >().offset< tag::gamma >(c) ),
@@ -72,7 +76,8 @@ class Gamma {
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
       //! Set initial conditions using initialization policy
-      Init( { particles } );
+      Init::template init< tag::gamma >
+                         ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
       //! Pre-lookup required statistical moments
       coeff.lookup( stat, m_depvar );
     }
@@ -87,7 +92,7 @@ class Gamma {
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance all m_ncomp scalars
-        for (tk::ctr::ncomp_type i=0; i<m_ncomp; ++i) {
+        for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
@@ -97,9 +102,10 @@ class Gamma {
     }
 
   private:
+    const ncomp_t m_c;                  //!< Equation system index
     const char m_depvar;                //!< Dependent variable
-    const tk::ctr::ncomp_type m_ncomp;  //!< Number of components
-    const int m_offset;                 //!< Offset SDE operates from
+    const ncomp_t m_ncomp;              //!< Number of components
+    const ncomp_t m_offset;             //!< Offset SDE operates from
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients

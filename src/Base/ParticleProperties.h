@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Sun 01 Feb 2015 07:29:59 AM MST
+  \date      Fri 27 Feb 2015 10:36:30 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ParticleProperties for storing particle data.
   \details   ParticleProperties for storing particle data with various accessors
@@ -17,6 +17,7 @@
 
 #include <Types.h>
 #include <Config.h>
+#include <Keywords.h>
 
 namespace tk {
 
@@ -29,12 +30,17 @@ const uint8_t EqCompPar = 1;
 template< uint8_t Layout >
 class ParticleProperties {
 
+  private:
+    //! \brief Inherit type of number of components from keyword 'ncomp', used
+    //!    also for type of offset
+    using ncomp_t = kw::ncomp::info::expect::type;
+
   public:
     //! Constructor
     //! \param[in] npar Number of particles to allocate memory for
     //! \param[in] nprop Number properties, i.e., scalar variables, per particle
     //! \author J. Bakosi
-    explicit ParticleProperties( uint64_t npar = 0, uint32_t nprop = 0) :
+    explicit ParticleProperties( ncomp_t npar = 0, ncomp_t nprop = 0) :
       m_ptr( tk::make_unique< tk::real[] >( npar*nprop ) ),
       m_npar( npar ),
       m_nprop( nprop ) {}
@@ -52,8 +58,10 @@ class ParticleProperties {
     //! \return Reference to particle data of type tk::real
     //! \author J. Bakosi
     inline tk::real&
-    operator()( int particle, int component, int offset ) const noexcept
-    { return access( particle, component, offset, int2type< Layout >() ); }
+    operator()( ncomp_t particle, ncomp_t component, ncomp_t offset )
+    const noexcept {
+      return access( particle, component, offset, int2type< Layout >() );
+    }
 
     //! Const ptr to physical variable access dispatch. Public interface to
     //! physical variable access. cptr() and cvar() are intended to be used
@@ -76,7 +84,7 @@ class ParticleProperties {
     //!   and cvar() in action.
     //! \author J. Bakosi
     inline const tk::real*
-    cptr( int component, int offset ) const noexcept
+    cptr( ncomp_t component, ncomp_t offset ) const noexcept
     { return cptr( component, offset, int2type< Layout >() ); }
 
     //! Const physical variable access dispatch. Public interface to physical
@@ -99,7 +107,7 @@ class ParticleProperties {
     //!   and cvar() in action.
     //! \author J. Bakosi
     inline const tk::real&
-    cvar( const tk::real* const pt, int particle ) const noexcept
+    cvar( const tk::real* const pt, ncomp_t particle ) const noexcept
     { return cvar( pt, particle, int2type< Layout >() ); }
 
     //! Raw pointer access to particle data.
@@ -111,12 +119,12 @@ class ParticleProperties {
     //! \return Total number of real numbers stored in the entire array: number
     //! of particles * number of properties/particle
     //! \author J. Bakosi
-    inline uint64_t size() const noexcept { return m_npar * m_nprop; }
+    inline ncomp_t size() const noexcept { return m_npar * m_nprop; }
 
     //! Number of particles access.
     //! \return Number of particles
     //! \author J. Bakosi
-    inline uint64_t npar() const noexcept { return m_npar; }
+    inline ncomp_t npar() const noexcept { return m_npar; }
 
     //! Layout name dispatch.
     //! \return The name of data layout used
@@ -125,69 +133,73 @@ class ParticleProperties {
     { return major( int2type< Layout >() ); }
 
   private:
-   //! Transform a compile-time uint8_t into a type, used for dispatch
-   //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
-   //!   Patterns Applied, Addison-Wesley Professional, 2001.
-   //! \author J. Bakosi
-   template< uint8_t m > struct int2type { enum { value = m }; };
+    //! Transform a compile-time uint8_t into a type, used for dispatch
+    //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
+    //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //! \author J. Bakosi
+    template< uint8_t m > struct int2type { enum { value = m }; };
 
-   //! Overloads for the various data accesses
-   //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
-   //!   Patterns Applied, Addison-Wesley Professional, 2001.
-   //! \author J. Bakosi
-   inline tk::real&
-   access( int particle, int component, int offset, int2type< ParEqComp > )
-   const noexcept {
-     return *(m_ptr.get() + particle*m_nprop + offset + component);
-   }
-   inline tk::real&
-   access( int particle, int component, int offset, int2type< EqCompPar > )
-   const noexcept {
-     return *(m_ptr.get() + (offset+component)*m_npar + particle);
-   }
+    //! Overloads for the various data accesses
+    //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
+    //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //! \author J. Bakosi
+    inline tk::real&
+    access( ncomp_t particle, ncomp_t component, ncomp_t offset,
+            int2type< ParEqComp > ) const noexcept
+    {
+      return *(m_ptr.get() + particle*m_nprop + offset + component);
+    }
+    inline tk::real&
+    access( ncomp_t particle, ncomp_t component, ncomp_t offset,
+            int2type< EqCompPar > ) const noexcept
+    {
+      return *(m_ptr.get() + (offset+component)*m_npar + particle);
+    }
 
-   // Overloads for the various const ptr to physical variable accesses
-   //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
-   //!   Patterns Applied, Addison-Wesley Professional, 2001.
-   //! \author J. Bakosi
-   inline const tk::real*
-   cptr( int component, int offset, int2type< ParEqComp > ) const noexcept {
-     return m_ptr.get() + component + offset;
-   }
-   inline const tk::real*
-   cptr( int component, int offset, int2type< EqCompPar > ) const noexcept {
-     return m_ptr.get() + (offset+component)*m_npar;
-   }
+    // Overloads for the various const ptr to physical variable accesses
+    //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
+    //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //! \author J. Bakosi
+    inline const tk::real*
+    cptr( ncomp_t component, ncomp_t offset, int2type< ParEqComp > ) const
+    noexcept {
+      return m_ptr.get() + component + offset;
+    }
+    inline const tk::real*
+    cptr( ncomp_t component, ncomp_t offset, int2type< EqCompPar > ) const
+    noexcept {
+      return m_ptr.get() + (offset+component)*m_npar;
+    }
 
-   // Overloads for the various const physical variable accesses
-   //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
-   //!   Patterns Applied, Addison-Wesley Professional, 2001.
-   //! \author J. Bakosi
-   inline const tk::real&
-   cvar( const tk::real* const pt, int particle, int2type< ParEqComp > ) const
-   noexcept {
-     return *(pt + particle*m_nprop);
-   }
-   inline const tk::real&
-   cvar( const tk::real* const pt, int particle, int2type< EqCompPar > ) const
-   noexcept {
-     return *(pt + particle);
-   }
+    // Overloads for the various const physical variable accesses
+    //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
+    //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //! \author J. Bakosi
+    inline const tk::real&
+    cvar( const tk::real* const pt, ncomp_t particle, int2type< ParEqComp > )
+    const noexcept {
+      return *(pt + particle*m_nprop);
+    }
+    inline const tk::real&
+    cvar( const tk::real* const pt, ncomp_t particle, int2type< EqCompPar > )
+    const noexcept {
+      return *(pt + particle);
+    }
 
-   // Overloads for the name-queries of data lauouts
-   //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
-   //!   Patterns Applied, Addison-Wesley Professional, 2001.
-   //! \author J. Bakosi
-   inline const char* major( int2type< ParEqComp > ) const noexcept {
-     return "particle-major";
-   }
-   inline const char* major( int2type< EqCompPar > ) const noexcept {
-     return "equation-major";
-   }
+    // Overloads for the name-queries of data lauouts
+    //! \see A. Alexandrescu, Modern C++ Design: Generic Programming and Design
+    //!   Patterns Applied, Addison-Wesley Professional, 2001.
+    //! \author J. Bakosi
+    inline const char* major( int2type< ParEqComp > ) const noexcept {
+      return "particle-major";
+    }
+    inline const char* major( int2type< EqCompPar > ) const noexcept {
+      return "equation-major";
+    }
 
-   const std::unique_ptr< tk::real[] > m_ptr; //!< Particle data pointer
-   const uint64_t m_npar;                     //!< Number of particles
-   const uint32_t m_nprop;                    //!< Number of particle properties
+    const std::unique_ptr< tk::real[] > m_ptr;//!< Particle data pointer
+    const ncomp_t m_npar;                     //!< Number of particles
+    const ncomp_t m_nprop;                    //!< Number of particle properties
 };
 
 //! Select data layout policy for particle properties at compile-time

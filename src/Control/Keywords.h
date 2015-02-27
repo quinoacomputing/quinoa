@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:14:29 AM MST
+  \date      Fri 27 Feb 2015 07:59:38 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1107,6 +1107,27 @@ struct zero_info {
 };
 using zero = keyword< zero_info, z,e,r,o >;
 
+struct delta_info {
+  static std::string name() { return "D"; }
+  static std::string shortDescription() { return
+    "Select the delta initialization policy"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to select the delta initialization policy.
+    The initialization policy is used to specify how the initial conditions are
+    set at t = 0 before time-integration. Example: "init zero", which selects
+    zero initialization policy, which puts zeros in memory. Note that this
+    option may behave differently depending on the particular equation or
+    physical model. For an example, see tk::InitPolicies in DiffEq/InitPolicy.h
+    for valid options.) The delta initialization policy can be used to prescribe
+    delta-spikes on the sample space with given heights, i.e., probabilities.
+    Example: "init delta" - select delta init-policy, "delta spike 0.1 0.3 end
+    spike 0.8 0.7 end end" - prescribe two delta-spikes at sample space
+    positions 0.1 and 0.8 with spike heights 0.3 and 0.7, respectively. Note
+    that the sum of the heights must add up to unity. See also the help on
+    keyword spike.)"; }
+};
+using delta = keyword< delta_info, d,e,l,t,a >;
+
 struct init_info {
   static std::string name() { return "initpolicy"; }
   static std::string shortDescription() { return
@@ -1123,7 +1144,8 @@ struct init_info {
     static std::string description() { return "string"; }
     static std::string choices() {
       return '\'' + raw::string() + "\' | \'"
-                  + zero::string() + '\'';
+                  + zero::string() + "\' | \'"
+                  + delta::string() + '\'';
     }
   };
 };
@@ -1282,7 +1304,7 @@ struct ncomp_info {
     vector.)";
   }
   struct expect {
-    using type = unsigned int;
+    using type = uint64_t;
     static constexpr type lower = 0;
     static std::string description() { return "uint"; }
   };
@@ -1561,6 +1583,26 @@ struct sde_lambda_info {
 };
 using sde_lambda = keyword< sde_lambda_info, l,a,m,b,d,a >;
 
+struct spike_info {
+  static std::string name() { return "spike"; }
+  static std::string shortDescription() { return
+    R"(Configure a delta spike)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify the configuration of delta spikes for,
+    e.g., the delta initialization policy. The configuration is given by a two
+    real numbers inside a spike...end block. Example: "spike 0.12 0.3 end",
+    which specifies a delta spike at sample space position 0.12 with relative
+    height 0.3. The height must be between [0.0...1.0] inclusive and specifies a
+    relative probability. This keyword is used inside a delta...end block
+    containing as many spike...end blocks so that the sum of the spikes add up
+    to unity. See also the help on keyword delta.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using spike = keyword< spike_info, s,p,i,k,e >;
+
 struct depvar_info {
   static std::string name() { return "depvar"; }
   static std::string shortDescription() { return
@@ -1726,23 +1768,22 @@ struct beta_info {
 };
 using beta = keyword< beta_info, b,e,t,a >;
 
-struct funcbeta_info {
-  static std::string name() { return "Functional beta"; }
+struct nfracbeta_info {
+  static std::string name() { return "Number-fraction beta"; }
   static std::string shortDescription() { return
-    "Introduce the funcbeta SDE input block"; }
+    "Introduce the nfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the funcbeta ... end block, used to
-    specify the configuration of a system of stochastic differential equations
-    (SDEs), in which the dependent variable is a function of a variable with
-    linear drift and quadratic diagonal diffusion whose invariant is the joint
-    beta distribution. Effectively, this is a beta SDE but additionally there is
-    a functional wrapper around the dependent variable governed by the beta SDE.
-    In other words, if X is governed by the beta SDE, then the functional beta
-    SDE governs Y = f(X), where both X and Y are random variables. The function
-    'f()' is currently hard-coded, but eventually may be abstracted away to
-    allow for different mathematical functions. For more details on the beta
+    R"(This keyword is used to introduce the nfracbeta ... end block, used to
+    specify the configuration of a system of number-fraction beta SDEs, a system
+    of stochastic differential equations (SDEs), in which, in addition to the
+    dependent variable, computed with linear drift and quadratic diagonal
+    diffusion (whose invariant is joint beta), two additional variables are
+    computed. In other words, this is a beta SDE but there are two additional
+    stochastic variables computed based on the beta SDE. If X is governed by the
+    beta SDE, then the number-fraction beta SDE additionally governs Y = f(X),
+    where both X and Y are random variables.  For more details on the beta
     SDE, see http://doi.org/10.1080/14685248.2010.510843 DiffEq/Beta.h. Keywords
-    allowed in a funcbeta ... end block: )" + std::string("\'")
+    allowed in a nfracbeta ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
     + rng::string() + "\', \'"
@@ -1751,11 +1792,11 @@ struct funcbeta_info {
     + sde_b::string() + "\', \'"
     + sde_S::string() + "\', \'"
     + sde_kappa::string() + "\'. "
-    + R"(For an example funcbeta ... end block, see
-      doc/html/walker_example_funcbeta.html.)";
+    + R"(For an example nfracbeta ... end block, see
+      doc/html/walker_example_nfracbeta.html.)";
   }
 };
-using funcbeta = keyword< funcbeta_info, f,u,n,c,b,e,t,a >;
+using nfracbeta = keyword< nfracbeta_info, n,f,r,a,c,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

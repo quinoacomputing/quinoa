@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Control.h
   \author    J. Bakosi
-  \date      Thu 19 Feb 2015 07:07:48 PM MST
+  \date      Fri 27 Feb 2015 11:07:08 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Control
   \details   Unit tests for Control/Control
@@ -25,6 +25,7 @@ struct tag5 {};
 struct tag6 {};
 struct tag7 {};
 struct tag8 {};
+struct tag9 {};
 
 //! All tests in group inherited from this base
 struct Control_common {
@@ -34,6 +35,7 @@ struct Control_common {
                    tag2, int,
                    tag5, std::vector< int >,
                    tag6, std::vector< std::vector< int > >,
+                   tag9, std::vector< std::vector< std::vector< int > > >,
                    tag7, std::map< int, std::string >,
                    tag8, std::map< int, map_value_tuple > >;
   using tuple2 = tk::tuple::tagged_tuple< tag1, std::string,
@@ -41,6 +43,7 @@ struct Control_common {
                    tag3, tuple1,
                    tag5, std::vector< int >,
                    tag6, std::vector< std::vector< int > >,
+                   tag9, std::vector< std::vector< std::vector< int > > >,
                    tag7, std::map< int, std::string >,
                    tag8, std::map< int, map_value_tuple > >;
   using control = tk::Control<
@@ -50,6 +53,7 @@ struct Control_common {
                    tag4, tuple2,
                    tag5, std::vector< int >,
                    tag6, std::vector< std::vector< int > >,
+                   tag9, std::vector< std::vector< std::vector< int > > >,
                    tag7, std::map< int, std::string >,
                    tag8, std::map< int, map_value_tuple > >;
 };
@@ -134,9 +138,40 @@ void Control_object::test< 4 >() {
           c.get< tag4, tag3, tag5 >() == std::vector< int >{ 3, 3 } );
 }
 
-//! Test store_back() at three levels
+//! Test push_back_back() at three levels
 template<> template<>
 void Control_object::test< 5 >() {
+  set_test_name( "push_back_back() at three depths" );
+
+  control c;
+  c.push_back< tag6 >();             // create an outer vector element
+  c.push_back_back< tag6 >( 1 );     // push to inner vector
+  c.push_back_back< tag6 >( 1 );
+  c.push_back< tag3, tag6 >();
+  c.push_back_back< tag3, tag6 >( 2 );
+  c.push_back_back< tag3, tag6 >( 2 );
+  c.push_back< tag4, tag3, tag6 >();
+  c.push_back_back< tag4, tag3, tag6 >( 3 );
+  c.push_back_back< tag4, tag3, tag6 >( 3 );
+
+  ensure_equals( "vector size at 1st level",
+                 c.get< tag6 >().back().size(), 2 );
+  ensure_equals( "vector size at 2nd level",
+                 c.get< tag3, tag6 >().back().size(), 2 );
+  ensure_equals( "vector size at 3rd level",
+                 c.get< tag4, tag3, tag6 >().back().size(), 2 );
+
+  ensure( "vector elements correct at 1st level",
+          c.get< tag6 >().back() == std::vector< int >{ 1, 1 } );
+  ensure( "vector elements correct at 2nd level",
+          c.get< tag3, tag6 >().back() == std::vector< int >{ 2, 2 } );
+  ensure( "vector elements correct at 3rd level",
+          c.get< tag4, tag3, tag6 >().back() == std::vector< int >{ 3, 3 } );
+}
+
+//! Test store_back() at three levels
+template<> template<>
+void Control_object::test< 6 >() {
   set_test_name( "store_back() at three depths" );
 
   control c;
@@ -160,9 +195,9 @@ void Control_object::test< 5 >() {
           c.get< tag4, tag3, tag5 >() == std::vector< int >{ 3, 3 } );
 }
 
-//! Test store_back() at three levels
+//! Test store_back_back() at three levels
 template<> template<>
-void Control_object::test< 6 >() {
+void Control_object::test< 7 >() {
   set_test_name( "store_back_back() at three depths" );
 
   control c;
@@ -191,9 +226,43 @@ void Control_object::test< 6 >() {
           c.get< tag4, tag3, tag6 >().back() == std::vector< int >{ 3, 3 } );
 }
 
+//! Test store_back_back_back() at three levels
+template<> template<>
+void Control_object::test< 8 >() {
+  set_test_name( "store_back_back_back() at three depths" );
+
+  control c;
+  c.push_back< tag9 >();                 // create an outer-outer vector element
+  c.push_back_back< tag9 >();            // create an outer vector element
+  c.store_back_back_back< tag9 >( "1" ); // push to inner vector
+  c.store_back_back_back< tag9 >( "1" );
+  c.push_back< tag3, tag9 >();
+  c.push_back_back< tag3, tag9 >();
+  c.store_back_back_back< tag3, tag9 >( "2" );
+  c.store_back_back_back< tag3, tag9 >( "2" );
+  c.push_back< tag4, tag3, tag9 >();
+  c.push_back_back< tag4, tag3, tag9 >();
+  c.store_back_back_back< tag4, tag3, tag9 >( "3" );
+  c.store_back_back_back< tag4, tag3, tag9 >( "3" );
+
+  ensure_equals( "vector size at 1st level",
+                 c.get< tag9 >().back().back().size(), 2 );
+  ensure_equals( "vector size at 2nd level",
+                 c.get< tag3, tag9 >().back().back().size(), 2 );
+  ensure_equals( "vector size at 3rd level",
+                 c.get< tag4, tag3, tag9 >().back().back().size(), 2 );
+
+  ensure( "vector elements correct at 1st level",
+          c.get< tag9 >().back().back() == std::vector< int >{ 1, 1 } );
+  ensure( "vector elements correct at 2nd level",
+          c.get< tag3, tag9 >().back().back() == std::vector< int >{ 2, 2 } );
+  ensure( "vector elements correct at 3rd level",
+          c.get< tag4, tag3, tag9 >().back().back() == std::vector< int >{ 3, 3 } );
+}
+
 //! Test insert() at three levels
 template<> template<>
-void Control_object::test< 7 >() {
+void Control_object::test< 9 >() {
   set_test_name( "insert() at three depths" );
 
   control c;
@@ -225,7 +294,7 @@ void Control_object::test< 7 >() {
 
 //! Test insert_field() at three levels
 template<> template<>
-void Control_object::test< 8 >() {
+void Control_object::test< 10 >() {
   set_test_name( "insert_field() at three depths" );
 
   control c;
@@ -254,7 +323,7 @@ void Control_object::test< 8 >() {
 
 //! Test insert_opt() at three levels
 template<> template<>
-void Control_object::test< 9 >() {
+void Control_object::test< 11 >() {
   set_test_name( "insert_opt() at three depths" );
 
   control c;
@@ -283,7 +352,7 @@ void Control_object::test< 9 >() {
 
 //! Test T convert( str ) feeding garbage
 template<> template<>
-void Control_object::test< 10 >() {
+void Control_object::test< 12 >() {
   set_test_name( "T convert(str) feeding garbage" );
 
   control c;
@@ -299,7 +368,7 @@ void Control_object::test< 10 >() {
 
 //! Test T convert( str ) feeding convertible value
 template<> template<>
-void Control_object::test< 11 >() {
+void Control_object::test< 13 >() {
   set_test_name( "T convert(str)" );
 
   control c;
@@ -315,7 +384,7 @@ void Control_object::test< 11 >() {
 
 //! Test str convert(T) feeding convertible value
 template<> template<>
-void Control_object::test< 12 >() {
+void Control_object::test< 14 >() {
   set_test_name( "str convert(T)" );
 
   control c;

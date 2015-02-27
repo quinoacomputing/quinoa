@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:43:56 PM MST
+  \date      Wed 25 Feb 2015 09:03:56 AM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -137,7 +137,8 @@ class WalkerPrint : public tk::RNGPrint {
         raw( m_item_indent + "Policy codes:\n" +
              m_item_indent + " * i: initialization policy: "
                            + kw::raw::info::name() + "-raw, "
-                           + kw::zero::info::name() + "-zero\n" +
+                           + kw::zero::info::name() + "-zero, "
+                           + kw::delta::info::name() + "-delta\n" +
              m_item_indent + " * c: coefficients policy: "
                            + kw::constant::info::name() + "-const, "
                            + kw::jrrj::info::name() + "-jrrj\n\n" );
