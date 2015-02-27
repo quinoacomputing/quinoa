@@ -26,7 +26,7 @@ class WalkerDriver {
                            const ctr::CmdLine& cmdline );
 
     //! Execute driver
-    void execute() {}
+    void execute() const {}
 
   private:
     const WalkerPrint& m_print;

@@ -200,9 +200,11 @@ class Main : public CBase_Main {
     std::map< std::string, tk::Timer::Watch > m_timestamp;
 };
 
-//! Charm++ chare execute: by the time this object is constructed, the Charm++
-//! runtime system has finished migrating all global-scoped read-only objects
-//! which happens after the main chare constructor has finished.
+//! \brief Charm++ chare execute
+//! \details By the time this object is constructed, the Charm++ runtime system
+//!    has finished migrating all global-scoped read-only objects which happens
+//!    after the main chare constructor has finished.
+//! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
 #include <walker.def.h>

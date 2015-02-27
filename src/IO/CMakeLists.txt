@@ -16,6 +16,7 @@ add_library(IO
 #            SiloWriter.C
 )
 
+#removeWarnings( "TxtStatWriter.C;PDFWriter.C;ExodusIIMeshWriter.C;ExodusIIMeshReader.C;GmshMeshReader.C;NetgenMeshReader.C;GmshMeshWriter.C;NetgenMeshWriter.C" )
 removeWarnings( "TxtStatWriter.C;PDFWriter.C" )
 
 INSTALL(TARGETS IO

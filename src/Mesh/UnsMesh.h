@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:31:01 PM MST
+  \date      Fri 27 Feb 2015 03:59:46 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -14,6 +14,8 @@
 
 #include <vector>
 #include <memory>
+
+//#include <pup_stl.h>
 
 #include <Types.h>
 #include <Print.h>
@@ -117,6 +119,33 @@ class UnsMesh {
 
     //! Echo element tags and connectivity in all element sets
     void echoElemSets( const tk::Print& print ) const;
+
+//     /** @name Pack/Unpack: Serialize unstructured mesh object for Charm++ */
+//     ///@{
+//     //! \brief Pack/Unpack serialize member function
+//     //! \param[inout] p Charm++'s PUP::er serializer object reference
+//     //! \author J. Bakosi
+//     void pup( PUP::er& p ) {
+//       p | m_nodeId;
+//       p | m_x;
+//       p | m_y;
+//       p | m_z;
+//       p | m_linId;
+//       p | m_triId;
+//       p | m_tetId;
+//       p | m_lininpoel;
+//       p | m_triinpoel;
+//       p | m_tetinpoel;
+//       p | m_lintag;
+//       p | m_tritag;
+//       p | m_tettag;
+//     }
+//     //! \brief Pack/Unpack serialize operator|
+//     //! \param[inout] p Charm++'s PUP::er serializer object reference
+//     //! \param[inout] m Unstructured mesh object reference
+//     //! \author J. Bakosi
+//     friend void operator|( PUP::er& p, UnsMesh& m ) { m.pup(p); }
+//     ///@}
 
   private:
     //!< Node Ids

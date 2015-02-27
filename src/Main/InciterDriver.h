@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 12:16:36 PM MST
+  \date      Fri 27 Feb 2015 03:27:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -30,13 +30,7 @@ class InciterDriver {
 
   private:
     //! Print information at startup
-    void info( const tk::UnsMesh& mesh,
-               uint64_t chunksize,
-               uint64_t remainder,
-               uint64_t nchare ) const;
-
-    //! Partition mesh using Zoltan
-    void partition( const tk::UnsMesh& mesh ) const;
+    void info( uint64_t chunksize, uint64_t remainder, uint64_t nchare ) const;
 
     const InciterPrint& m_print;        //!< Pretty printer
     std::string m_input;                //!< Input file name

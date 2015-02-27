@@ -30,7 +30,7 @@ class RNGTestDriver {
                             const ctr::CmdLine& cmdline );
 
     //! Execute driver
-    void execute();
+    void execute() const;
 
   private:
     const RNGTestPrint& m_print;
