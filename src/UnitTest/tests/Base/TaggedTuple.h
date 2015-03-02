@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:13:23 AM MST
+  \date      Sat 28 Feb 2015 10:17:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
@@ -102,7 +102,7 @@ void TaggedTuple_object::test< 4 >() {
 //! Test set(std::string) with const lvalue argument of tagged_tuple
 template<> template<>
 void TaggedTuple_object::test< 5 >() {
-  set_test_name( "set(const std::string) - const lvalue arg" );
+  set_test_name( "set(const std::string) - const lvalue" );
 
   record t{ "Bob", 32, "bob@bob.bob" };
   const std::string n( "Alice" );

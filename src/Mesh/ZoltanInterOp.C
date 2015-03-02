@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:20:29 AM MST
+  \date      Mon 02 Mar 2015 01:50:01 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -12,6 +12,7 @@
 
 #include <zoltan.h>
 
+#include <Exception.h>
 #include <ZoltanInterOp.h>
 
 namespace tk {
@@ -30,6 +31,8 @@ void partitionMesh( const tk::UnsMesh& mesh ) {
   Assert( z != nullptr, "Zoltan_Create failed" );
 
   std::cout << "Will now partition...\n";
+
+
 
   // Destroy Zoltan data structure
   Zoltan_Destroy( &z );

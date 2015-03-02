@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:41:14 AM MST
+  \date      Mon 02 Mar 2015 02:02:47 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -13,6 +13,7 @@
 #include <Config.h>
 #include <MeshConvDriver.h>
 #include <MeshConv/CmdLine/Parser.h>
+#include <ProcessException.h>
 #include <meshconv.decl.h>
 #include <Init.h>
 
@@ -66,44 +67,24 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { processException(); }
+    } catch (...) { tk::processException(); }
 
     void execute() {
-      m_timestamp.emplace( "Migration of global-scope data", m_timer[1].hms() );
-      m_driver.execute();       // does not fire up async chares
-      finalize();
+      try {
+        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_driver.execute();       // does not fire up async chares
+        finalize();
+      } catch (...) { tk::processException(); }
     }
 
     void finalize() {
-      m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-      m_print.time( "Timers (h:m:s)", m_timestamp );
-      m_print.endpart();
-      CkExit();
-    }
-
-    //! Process an exception
-    void processException() {
       try {
-        throw;      // rethrow exception to deal with it here
-      }
-        // Catch Quina::Exceptions
-        catch ( tk::Exception& qe ) {
-          qe.handleException();
-        }
-        // Catch std::exception and transform it into tk::Exception without
-        // file:line:func information
-        catch ( std::exception& se ) {
-          tk::Exception qe( se.what() );
-          qe.handleException();
-        }
-        // Catch uncaught exception
-        catch (...) {
-          tk::Exception qe( "Non-standard exception" );
-          qe.handleException();
-        }
-
-      // Tell the runtime system to exit
-      finalize();
+        m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+        m_print.time( "Timers (h:m:s)", m_timestamp );
+        m_print.endpart();
+      } catch (...) { tk::processException(); }
+      // Tell the Charm++ runtime system to exit
+      CkExit();
     }
 
   private:

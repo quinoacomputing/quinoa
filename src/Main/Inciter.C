@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 04:01:37 PM MST
+  \date      Mon 02 Mar 2015 02:56:16 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -24,6 +24,7 @@
 #include <InciterDriver.h>
 #include <Inciter/CmdLine/Parser.h>
 #include <ZoltanInterOp.h>
+#include <ProcessException.h>
 #include <inciter.decl.h>
 #include <Init.h>
 
@@ -108,58 +109,41 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { processException(); }
+    } catch (...) { tk::processException(); }
 
     //! Execute driver created and initialized by constructor
     void execute() {
-      m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
-      m_driver.execute();       // fires up async chares
+      try {
+        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_driver.execute();       // fires up async chares
+      } catch (...) { tk::processException(); }
     }
 
     //! Normal exit point
     void finalize() {
-      if (!m_timer.empty()) {
-        m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-        m_print.time( "Timers (h:m:s)", m_timestamp );
-        m_print.endpart();
-      }
+      try {
+        if (!m_timer.empty()) {
+          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+          m_print.time( "Timers (h:m:s)", m_timestamp );
+          m_print.endpart();
+        }
+      } catch (...) { tk::processException(); }
+      // Tell the Charm++ runtime system to exit
       CkExit();
     }
 
     //! Add time stamp contributing to final timers output
-    void timestamp( std::string label, tk::real stamp )
-    { m_timestamp.emplace( label, tk::hms( stamp ) ); }
-
-    //! Process an exception
-    void processException() {
+    void timestamp( std::string label, tk::real stamp ) {
       try {
-        throw;      // rethrow exception to deal with it here
-      }
-        // Catch Quina::Exceptions
-        catch ( tk::Exception& qe ) {
-          qe.handleException();
-        }
-        // Catch std::exception and transform it into tk::Exception without
-        // file:line:func information
-        catch ( std::exception& se ) {
-          tk::Exception qe( se.what() );
-          qe.handleException();
-        }
-        // Catch uncaught exception
-        catch (...) {
-          tk::Exception qe( "Non-standard exception" );
-          qe.handleException();
-        }
-
-      // Tell the runtime system to exit
-      finalize();
+        m_timestamp.emplace( label, tk::hms( stamp ) );
+      } catch (...) { tk::processException(); }
     }
 
   private:
     inciter::ctr::CmdLine m_cmdline;                  //!< Command line
     inciter::CmdLineParser m_cmdParser;               //!< Command line parser
     inciter::InciterPrint m_print;                    //!< Pretty printer
-    inciter::InciterDriver m_driver;                  //!< Drive
+    inciter::InciterDriver m_driver;                  //!< Driver
     std::vector< tk::Timer > m_timer;                 //!< Timers
 
     //! Time stamps in h:m:s with labels
@@ -180,6 +164,7 @@ struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 //!   hence it has to be called before Charm is initialized.
 //! \author J. Bakosi
 int main( int argc, char **argv ) {
+
   int peid, numpes;
 
   // Initialize MPI
@@ -191,8 +176,12 @@ int main( int argc, char **argv ) {
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
   MPI_Barrier( MPI_COMM_WORLD );
 
-  // Partition mesh using Zoltan
-  tk::zoltan::partitionMesh( inciter::g_mesh );
+  try {
+
+    // Partition mesh using Zoltan
+    tk::zoltan::partitionMesh( inciter::g_mesh );
+
+  } catch (...) { tk::processException(); }
 
   // Finalize Charm++
   CharmLibExit();

@@ -34,22 +34,14 @@
  - Detect architecture. If not x86, don't try to build RNGSSE.
  - Add --all command-line argument to simply test all available RNGs without any
    control file.
- - The functions in Handler.[Ch] work with the main Charm chare proxy,
-   which is a first step toward fulfilling their intended functionality with
-   Charm and handling exceptions with Charm. This works only in some
-   (synchronous) cases, where the exception originates from a try-block.
-   However, with Charm now we also have exceptions originating, asynchronously,
-   from non-try blocks. Being able catch those exceptions as well, without
-   resorting to terminate would be very helpful. Need local-scope try-catch
-   blocks as Charm++ is not aware of exceptions.
 
 ### Testing
  - Quantify code coverage by tests, e.g., COVTOOL: http://covtool.sourceforge.net
  - Regression tests with KitWare's CTest
  - Test build with optional libraries on/off (all permutations)
  - Test suite for exceptions:
-    + Automatically switch each potential throw location into a throw and
-      test for clean exit (e.g. with valgrind)
+    + Automatically switch each potential throw location into a throw (is this
+      even possible?) and test for clean exit (test with e.g. valgrind)
     + valgrind can return a different exit code based on errors detected
       using the command line argument --error-exitcode= to valgrind
  - Memory testing: CMake/CTest/CDash has built-in support for automated
@@ -148,7 +140,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 10:19:23 AM MST
+<em>Page last updated:</em> Mon 02 Mar 2015 03:14:31 PM MST
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
