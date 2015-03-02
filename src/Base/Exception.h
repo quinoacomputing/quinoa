@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:00:40 AM MST
+  \date      Sat 28 Feb 2015 10:11:27 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -25,23 +25,26 @@
 //! Toolkit declarations and definitions for general purpose utilities
 namespace tk {
 
-//! Throw macro that always throws an exception:
-//! Throw Exception with arguments passed in. Add source filename, function
-//! name, and line number where exception occurred. This macro facilitates a
-//! throw of tk::Exception that is somehwat cleaner at the point of invocation
-//! than a direct throw of Exception, as it hides the file:func:line arguments.
-//! Whenever is possible, it should be used via the Assert and ErrChk macros
-//! defined below.
+//! \brief Throw macro that always throws an exception
+//! \details Throw Exception with arguments passed in. Add source filename,
+//!   function name, and line number where exception occurred. This macro
+//!   facilitates a throw of Exception that is somehwat cleaner at the point
+//!   of invocation than a direct throw of Exception, as it hides the
+//!   file:func:line arguments. Whenever is possible, it should be used via the
+//!   Assert and ErrChk macros defined below.
+//! \author J. Bakosi
 #define Throw(...) \
    throw tk::Exception(__VA_ARGS__, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
-//! Assert macro that only throws an exception if expr fails:
-//! If NDEBUG is defined (e.g. RELEASE/OPTIMIZED mode), do nothing, expr is not
-//! evaluated. If NDEBUG is not defined, evaluate expr. If expr is true, do
-//! nothing. If expr is false, throw Exception with arguments passed in.
-//! The behavior is similar to libc's assert macro, but throwing an Exception
-//! instead will also generate a nice call-trace and will attempt to free
-//! memory. This macro should be used to detect programmer errors.
+//! \brief Assert macro that only throws an exception if expr fails.
+//! \details If NDEBUG is defined (e.g. cmake's RELEASE or OPTIMIZED mode), do
+//!    nothing, expr is not evaluated. If NDEBUG is not defined, evaluate expr.
+//!    If expr is true, do nothing. If expr is false, throw Exception with
+//!    arguments passed in. The behavior is similar to libc's assert macro, but
+//!    throwing an Exception instead will also generate a nice call-trace and
+//!    will attempt to free memory. This macro should be used to detect
+//!    programmer errors.
+//! \author J. Bakosi
 #ifdef NDEBUG
 #  define Assert(expr, ...) (static_cast<void>(0))
 #else  // NDEBUG
@@ -49,11 +52,12 @@ namespace tk {
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 #endif // NDEBUG
 
-//! ErrChk macro that only throws an exception if expr fails:
-//! The behavior is the same whether NDEBUG is defined or not: expr is always
-//! evaluated. If expr is true, do nothing. If expr is false, throw Exception
-//! with arguments passed in. This macro should be used to detect user/runtime
-//! errors.
+//! \brief ErrChk macro that only throws an exception if expr fails.
+//! \details The behavior of this macro is the same whether NDEBUG is defined or
+//!    not: expr is always evaluated. If expr is true, do nothing. If expr is
+//!    false, throw Exception with arguments passed in. This macro should be
+//!    used to detect user or runtime errors.
+//! \author J. Bakosi
 #define ErrChk(expr, ...) \
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
@@ -62,10 +66,12 @@ enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
                      FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
 
+//! \brief Basic exception class for producing file:func:line info + call trace
 //! \details The basic functionality provided by the Exception class is to
-//! facilitate printing out a message, together with the location of the
-//! exception (file, line, funcion name), as well as a call trace if available,
-//! when an exception is thrown.
+//!   facilitate printing out a message, together with the location of the
+//!   exception (file, line, funcion name), as well as a call trace if
+//!   available, when an exception is thrown.
+//! \author J. Bakosi
 class Exception : public std::exception {
 
   public:

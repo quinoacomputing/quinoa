@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:39:24 AM MST
+  \date      Mon 02 Mar 2015 02:30:00 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's unit test suite Charm++ main chare.
   \details   UnitTest's unit test suite Charm++ main chare. This file contains
@@ -17,6 +17,7 @@
 #include <UnitTestPrint.h>
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
+#include <ProcessException.h>
 #include <unittest.decl.h>
 #include <Init.h>
 
@@ -140,46 +141,27 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { processException(); }
+    } catch (...) { tk::processException(); }
 
     void execute() {
-      m_timestamp.emplace( "Migration of global-scope data + fire up all tests",
-                           m_timer[1].hms() );
-      m_driver.execute();       // fires up async chares
+      try {
+        m_timestamp.emplace(
+          "Migration of global-scope data + fire up all tests",
+           m_timer[1].hms() );
+        m_driver.execute();       // fires up async chares
+      } catch (...) { tk::processException(); }
     }
 
     void finalize() {
-      if (!m_timer.empty()) {
-        m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-        m_print.time( "Timers (h:m:s)", m_timestamp );
-        m_print.endpart();
-      }
-      CkExit();
-    }
-
-    //! Process an exception
-    void processException() {
       try {
-        throw;      // rethrow exception to deal with it here
-      }
-        // Catch Quina::Exceptions
-        catch ( tk::Exception& qe ) {
-          qe.handleException();
+        if (!m_timer.empty()) {
+          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+          m_print.time( "Timers (h:m:s)", m_timestamp );
+          m_print.endpart();
         }
-        // Catch std::exception and transform it into tk::Exception without
-        // file:line:func information
-        catch ( std::exception& se ) {
-          tk::Exception qe( se.what() );
-          qe.handleException();
-        }
-        // Catch uncaught exception
-        catch (...) {
-          tk::Exception qe( "Non-standard exception" );
-          qe.handleException();
-        }
-
-      // Tell the runtime system to exit
-      finalize();
+      } catch (...) { tk::processException(); }
+      // Tell the Charm++ runtime system to exit
+      CkExit();
     }
 
   private:

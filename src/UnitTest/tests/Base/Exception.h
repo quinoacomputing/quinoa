@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Exception.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:37:25 AM MST
+  \date      Sat 28 Feb 2015 10:17:08 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
@@ -31,7 +31,7 @@ Exception_group Exception( "Base/Exception" );
 //! Test constructor with line number info
 template<> template<>
 void Exception_object::test< 1 >() {
-  set_test_name( "constructor message w/ line nuber info" );
+  set_test_name( "constructor message w/ line number info" );
 
   tk::Exception e( "msg", "file", "func", 12 );
   ensure_equals( "get exception message",

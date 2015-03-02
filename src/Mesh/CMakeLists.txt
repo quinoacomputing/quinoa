@@ -8,8 +8,7 @@ add_library(Mesh
             ZoltanInterOp.C
 )
 
-#removeWarnings( "UnsMesh.C;ZoltanInterOp.C")
-removeWarnings( "ZoltanInterOp.C")
+removeWarnings( "UnsMesh.C;ZoltanInterOp.C")
 
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime

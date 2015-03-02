@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 03:56:09 PM MST
+  \date      Sat 28 Feb 2015 10:09:03 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -30,7 +30,6 @@ mainmodule inciter {
     entry void execute();
     entry void finalize();
     entry void timestamp( std::string label, tk::real stamp );
-    entry void processException();
   }
 
   chare execute { entry execute(); }

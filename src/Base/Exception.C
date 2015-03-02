@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.C
   \author    J. Bakosi
-  \date      Wed 10 Dec 2014 04:08:08 PM MST
+  \date      Sat 28 Feb 2015 10:00:18 PM MST
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class definition
   \details   Exception class definition
@@ -199,14 +199,16 @@ Exception::handleException() noexcept
 //! \author J. Bakosi
 //******************************************************************************
 {
-  printf("\n>>> %s\n", what());
+  printf("\n>>> Error: %s\n", what());
 
   if (m_trace) {
-    printf(">>> CALL TRACE: (turn off: CMAKE_BUILD_TYPE=RELEASE) =============="
-           "=============\n");
+    printf( ">>>\n>>> ===== "
+            "CALL TRACE: (turn off: CMAKE_BUILD_TYPE=RELEASE) "
+            "=====\n>>>\n" );
     echoTrace();
-    printf(">>> END OF CALL TRACE (turn off: CMAKE_BUILD_TYPE=RELEASE) ========"
-           "=============\n");
+    printf( ">>>\n>>> ===== "
+            "END OF CALL TRACE (turn off: CMAKE_BUILD_TYPE=RELEASE) "
+            "=====\n>>>\n" );
   }
  
   return tk::ErrCode::FAILURE;
