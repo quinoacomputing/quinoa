@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Sun 22 Feb 2015 12:48:49 PM MST
+  \date      Sun 08 Mar 2015 01:13:35 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -95,6 +95,8 @@ void FileParser_object::test< 3 >() {
     // find  out if exception was thrown due to the correct reason
     ensure( std::string("wrong exception thrown: ") + e.what(),
             std::string( e.what() ).find( "Failed to open file" ) !=
+              std::string::npos ||
+            std::string( e.what() ).find( "Failed to read from file" ) !=
               std::string::npos );
   } // if any other type of exception is thrown, test fails with except
 }

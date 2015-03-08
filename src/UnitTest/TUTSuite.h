@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 08:54:24 AM MST
+  \date      Sun 08 Mar 2015 07:23:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -33,7 +33,7 @@ class TUTSuite : public CBase_TUTSuite {
 
   private:
     UnitTestPrint m_print;      //!< Pretty printer
-    int m_maxTestsInGroup;      //!< Maximum number of tests per group to run
+    std::size_t m_nmpi;         //!< Number of MPI test groups
     std::size_t m_nrun;         //!< Number of tests ran (including dummies)
     std::size_t m_ngroup;       //!< Number of test groups
     std::size_t m_ncomplete;    //!< Number of completed tests

@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 09:16:39 AM MST
+  \date      Sun 08 Mar 2015 12:59:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -127,9 +127,10 @@ class Print {
     template< Style s = VERBOSE >
     void part( const std::string& title ) const {
       using std::operator+;
-      std::size_t half_length = title.size()/2 + 1;
-      std::string str( half_length, '-' );
-      std::string underline( str + " o " + str );
+      std::size_t half_length = title.size()/2;
+      std::string left( half_length+1, '-' );
+      std::string right( title.size()%2 ? half_length+1 : half_length, '-' );
+      std::string underline( left + " o " + right );
       std::string upper( title );
       std::transform( begin(title), end(title), begin(upper), ::toupper );
       upper = "< " + upper + " >";
@@ -251,7 +252,7 @@ class Print {
     //! \author J. Bakosi
     template< Style s = VERBOSE >
     void note( const std::string& msg ) const
-    { stream<s>() << m_note_fmt % m_section_indent % msg; }
+    { stream<s>() << m_note_fmt % m_item_indent % msg; }
 
     //! \brief Formatted print of help of one-liners on all command-line
     //!   parameters or control file keywords

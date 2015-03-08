@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Fri 02 Jan 2015 01:34:25 PM MST
+  \date      Sun 08 Mar 2015 07:10:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -439,8 +439,15 @@ struct CharmChild : CBase_CharmChild {
 //! (not in Factory_common, so Charm++ can find it)
 using ValueFactory = std::map< int, std::function< VBase() > >;
 
-//! Test if tk::recordCharmModel correctly registers a default child constructor
-//! in value factory
+//! \brief Test if tk::recordCharmModel correctly registers a default child
+//!   constructor in value factory
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   unittest::TUTSuite::evaluate().
 template<> template<>
 void Factory_object::test< 13 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
@@ -462,8 +469,15 @@ void Factory_object::test< 13 >() {
     fail( "cannot find key in factory" );
 }
 
-//! Test if tk::recordCharmModel correctly registers a child constructor in
-//! value factory
+//! \brief Test if tk::recordCharmModel correctly registers a child constructor
+//!   in value factory
+//! \details Every Charm++ migration test, such as this one, consists of two
+//!   unit tests: one for send and one for receive. Both triggers a TUT test,
+//!   but the receive side is created manually, i.e., without the awareness of
+//!   the TUT library. Unfortunately thus, there is no good way to count up
+//!   these additional tests, and thus if a test such as this is added to the
+//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   unittest::TUTSuite::evaluate().
 template<> template<>
 void Factory_object::test< 14 >() {
   // This test spawns a new Charm++ chare. The "1" at the end of the test name
