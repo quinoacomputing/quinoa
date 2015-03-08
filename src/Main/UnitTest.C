@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:30:00 PM MST
+  \date      Sun 08 Mar 2015 01:06:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's unit test suite Charm++ main chare.
   \details   UnitTest's unit test suite Charm++ main chare. This file contains
@@ -11,6 +11,9 @@
 */
 //******************************************************************************
 
+#include <mpi.h>
+
+#include <mpi-interoperate.h>   // For interoperation of MPI and Charm++
 #include <pup_stl.h>
 
 #include <Config.h>
@@ -18,6 +21,7 @@
 #include <UnitTestDriver.h>
 #include <UnitTest/CmdLine/Parser.h>
 #include <ProcessException.h>
+#include <Assessment.h>
 #include <unittest.decl.h>
 #include <Init.h>
 
@@ -32,6 +36,7 @@
 #include <tests/Base/Print.h>
 #include <tests/Base/TaggedTuple.h>
 #include <tests/Base/Exception.h>
+#include <tests/Base/ExceptionMPI.h>
 #include <tests/Base/PUPUtil.h>
 #include <tests/Base/Reader.h>
 #include <tests/Base/StrConvUtil.h>
@@ -85,6 +90,11 @@ CProxy_TUTSuite g_suiteProxy;
 //! for opening.
 std::string g_executable;
 
+//! \brief Max number tests in every test group to attempt to run
+//! \details If any of the unit test groups have larger than this number than
+//!   this should be increased.
+int g_maxTestsInGroup = 50;
+
 //! Pack/Unpack test runner
 inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
 { if (!p.isSizing()) runner = tut::test_runner_singleton(); }
@@ -101,7 +111,7 @@ class Main : public CBase_Main {
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
-    //!   a driver. Since Charm++ is fully asynchronous, the constructure
+    //!   a driver. Since Charm++ is fully asynchronous, the constructor
     //!   usually spawns asynchronous objects and immediately exits. Thus in the
     //!   body of the main chare constructor we fire up an 'execute' chare,
     //!   which then calls back to Main::execute(). Finishing the main chare
@@ -128,7 +138,7 @@ class Main : public CBase_Main {
                           tk::HeaderType::UNITTEST,
                           UNITTEST_EXECUTABLE,
                           m_print ) ),
-      m_timer(1)        // Start new timer measuring the total runtime
+      m_timer(1)  // Start new timer measuring the serial+Charm++ runtime
     {
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
@@ -155,8 +165,10 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
-          m_print.time( "Timers (h:m:s)", m_timestamp );
+          m_timestamp.emplace( "Serial and Charm++ tests runtime",
+                               m_timer[0].hms() );
+          m_print.time( "Serial and Charm++ test suite timers (h:m:s)",
+                        m_timestamp );
           m_print.endpart();
         }
       } catch (...) { tk::processException(); }
@@ -181,6 +193,77 @@ class Main : public CBase_Main {
 //!    after the main chare constructor has finished.
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
+
+//! \brief UnitTest main()
+//! \details UnitTest does have a main() function so that we can have tests
+//!   calling MPI functions. Thus we are using Charm++'s MPI-interoperation
+//!   capability as would have to be done with interoperation with an MPI
+//!   library. This is necessary, since MPI_Init() is a bit adamant about
+//!   capturing resources it wants and hence it has to be called before Charm is
+//!   initialized.
+//! \author J. Bakosi
+int main( int argc, char **argv ) {
+
+  int peid, numpes;
+
+  // Initialize MPI
+  MPI_Init( &argc, &argv );
+  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
+
+  // Run serial and Charm++ unit test suite
+  CharmLibInit( MPI_COMM_WORLD, argc, argv );
+  CharmLibExit();
+
+  // Run MPI test suite
+  try {
+
+    tk::Print print;    // quiet output by default using print, see ctr
+    unittest::ctr::CmdLine cmdline;
+    unittest::CmdLineParser cmdParser( argc, argv, print, cmdline );
+    unittest::UnitTestPrint
+      uprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
+
+    if (peid == 0) {
+      uprint.endpart();
+      uprint.part( "MPI unit test suite" );
+      uprint.unithead( "Unit tests computed" );
+    }
+
+    tk::Timer timer;  // start new timer measuring the MPI-suite runtime
+
+    // Fire up all tests in all test groups exercising MPI on rank 0
+    std::size_t nrun=0, ncomplete=0, nwarn=0, nskip=0, nexcp=0, nfail=0;
+    for (const auto& g : unittest::g_runner.get().list_groups())
+      if (g.find("MPI") != std::string::npos) // only start MPI test groups
+        for (int t=1; t<=unittest::g_maxTestsInGroup; ++t) {
+          tut::test_result tr;
+          unittest::g_runner.get().run_test( g, t, tr );
+          if (peid == 0) {
+            ++nrun;
+            std::vector< std::string > status
+              { tr.group, tr.name, std::to_string(tr.result), tr.message,
+                tr.exception_typeid };
+            unittest::evaluate( status, ncomplete, nwarn, nskip, nexcp, nfail );
+            uprint.test( ncomplete, nfail, status );
+          }
+        }
+
+    if (peid == 0) {
+      unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );
+      std::map< std::string, tk::Timer::Watch > timestamp;
+      timestamp.emplace( "MPI tests runtime", timer.hms() );
+      uprint.time( "MPI test suite timers (h:m:s)", timestamp );
+    }
+
+  } catch (...) { tk::processException(); }
+
+  // Finalize MPI
+  MPI_Finalize();
+
+  return tk::ErrCode::SUCCESS;
+}
+
 
 #include <charmchild.def.h>
 #include <migrated.def.h>

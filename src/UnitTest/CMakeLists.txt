@@ -6,6 +6,7 @@ project(UnitTest CXX)
 include(charm)
 
 add_library(UnitTest
+            Assessment.C
             TUTSuite.C
             TUTTest.C
 )

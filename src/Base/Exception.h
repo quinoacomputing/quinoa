@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:11:27 PM MST
+  \date      Sun 08 Mar 2015 01:08:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Exception class declaration
   \details   Exception class declaration. The basic functionality provided by
@@ -62,8 +62,8 @@ namespace tk {
    ((expr) ? static_cast<void>(0) : Throw(__VA_ARGS__))
 
 //! Error codes for the OS (or whatever calls us)
-enum class ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
-                     FAILURE = EXIT_FAILURE  //!< Exceptions occurred
+enum ErrCode { SUCCESS = EXIT_SUCCESS, //!< Everything went fine
+               FAILURE = EXIT_FAILURE  //!< Exceptions occurred
 };
 
 //! \brief Basic exception class for producing file:func:line info + call trace
