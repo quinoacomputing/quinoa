@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 01:50:01 PM MST
+  \date      Mon 09 Mar 2015 10:10:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -12,31 +12,85 @@
 
 #include <zoltan.h>
 
-#include <Exception.h>
+#include <charm++.h>
+
+#include <ExceptionMPI.h>
 #include <ZoltanInterOp.h>
 
 namespace tk {
 namespace zoltan {
 
+//! Zoltan hypergraph data structure
+struct HGRAPH_DATA {
+  int numMyVertices;            //!< number of vertices that I own initially
+  ZOLTAN_ID_TYPE *vtxGID;       //!< global ID of these vertices
+  int numMyHEdges;              //!< number of my hyperedges
+  int numAllNbors;              //!< number of vertices in my hyperedges
+  ZOLTAN_ID_TYPE *edgeGID;      //!< global ID of each of my hyperedges
+  int *nborIndex;               //!< index into nborGID array of edge's vertices
+  //!< vertices of edge edgeGID[i] begin at nborGID[nborIndex[i]]
+  ZOLTAN_ID_TYPE *nborGID;
+};
+
+static int get_number_of_vertices( void *data, int *ierr );
+
 void partitionMesh( const tk::UnsMesh& mesh ) {
 
   // Initialize the Zoltan library
   float ver = 0.0;
-  ErrChk( Zoltan_Initialize( 0, nullptr, &ver ) == ZOLTAN_OK,
-          "Zoltan could not be initialized" );
+  ErrChkMPI( Zoltan_Initialize( 0, nullptr, &ver ) == ZOLTAN_OK,
+             "Zoltan could not be initialized" );
 
   // Create Zoltan data structure
-  struct Zoltan_Struct *z;
-  z = Zoltan_Create( MPI_COMM_WORLD );
-  Assert( z != nullptr, "Zoltan_Create failed" );
+  struct Zoltan_Struct *zz;
+  zz = Zoltan_Create( MPI_COMM_WORLD );
+  AssertMPI( zz != nullptr, "Failed to create Zoltan data structure" );
 
-  std::cout << "Will now partition...\n";
+  // Set Zoltan parameters
+  char global_parts[10];
+  sprintf( global_parts, "%d", CkNumPes() );
+  Zoltan_Set_Param( zz, "DEBUG_LEVEL", "0" );
+  Zoltan_Set_Param( zz, "LB_METHOD", "HYPERGRAPH" );
+  Zoltan_Set_Param( zz, "LB_APPROACH", "PARTITION" );
+  Zoltan_Set_Param( zz, "HYPERGRAPH_PACKAGE", "PHG" );
+  Zoltan_Set_Param( zz, "NUM_GID_ENTRIES", "1" );
+  Zoltan_Set_Param( zz, "NUM_LID_ENTRIES", "1" );
+  Zoltan_Set_Param( zz, "RETURN_LISTS", "PART" );
+  Zoltan_Set_Param( zz, "OBJ_WEIGHT_DIM", "0" );
+  Zoltan_Set_Param( zz, "EDGE_WEIGHT_DIM", "0" );
+  Zoltan_Set_Param( zz, "NUM_GLOBAL_PARTS", global_parts );
 
+  // Create hypergraph data structure based on mesh
+  HGRAPH_DATA hg;
+  hg.numMyVertices = mesh.nnode();
+  hg.numMyHEdges = hg.numMyVertices;
+  hg.vtxGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * hg.numMyVertices);
+  hg.edgeGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * hg.numMyHEdges);
+  hg.nborIndex = (int *)malloc(sizeof(int) * (hg.numMyHEdges + 1));
+  for (int i=0; i<hg.numMyVertices; ++i) hg.vtxGID[i] = mesh.nodeId()[i];
 
+  // Set Zoltan query functions
+  Zoltan_Set_Num_Obj_Fn( zz, get_number_of_vertices, &hg );
+
+  // Destroy hypergraph data structure
+  if (hg.numMyVertices > 0) {
+    free( hg.vtxGID );
+    free( hg.edgeGID );
+    free( hg.nborIndex );
+  }
 
   // Destroy Zoltan data structure
-  Zoltan_Destroy( &z );
+  Zoltan_Destroy( &zz );
 }
+
+// Query functions
+
+static int get_number_of_vertices( void *data, int *ierr ) {
+  HGRAPH_DATA *hg = (HGRAPH_DATA *)data;
+  *ierr = ZOLTAN_OK;
+  return hg->numMyVertices;
+}
+
 
 } // zoltan::
 } // tk::
