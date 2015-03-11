@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 03:59:46 PM MST
+  \date      Wed 11 Mar 2015 07:56:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -42,25 +42,25 @@ class UnsMesh {
     std::vector< int >& nodeId() { return m_nodeId; }
     ///@}
 
-    /** Line element id accessors */
+    /** @name Line element id accessors */
     ///@{
     const std::vector< int >& linId() const { return m_linId; }
     std::vector< int >& linId() { return m_linId; }
     ///@}
 
-    /** Triangle element id accessors */
+    /** @name Triangle element id accessors */
     ///@{
     const std::vector< int >& triId() const { return m_triId; }
     std::vector< int >& triId() { return m_triId; }
     ///@}
 
-    /** Tetrahedron element id accessors */
+    /** @name Tetrahedron element id accessors */
     ///@{
     const std::vector< int >& tetId() const { return m_tetId; }
     std::vector< int >& tetId() { return m_tetId; }
     ///@}
 
-    /** Number of nodes accessors */
+    /** @name Number of nodes accessors */
     ///@{
     std::size_t nnode() const { return m_nodeId.size(); }
     std::size_t nnode() { return m_nodeId.size(); }
@@ -75,7 +75,7 @@ class UnsMesh {
       return !m_lininpoel.empty() + !m_triinpoel.empty() + !m_tetinpoel.empty();
     }
 
-    /** Line elements connectivity accessors */
+    /** @name Line elements connectivity accessors */
     ///@{
     const std::vector< std::vector< int > >& lininpoel() const
     { return m_lininpoel; }
@@ -83,13 +83,13 @@ class UnsMesh {
     { return m_lininpoel; }
     ///@}
 
-    /** Line element tags accessors */
+    /** @name Line element tags accessors */
     ///@{
     const std::vector< std::vector< int > >& lintag() const { return m_lintag; }
     std::vector< std::vector< int > >& lintag() { return m_lintag; }
     ///@}
 
-    /** Triangles elements connectivity accessors */
+    /** @name Triangles elements connectivity accessors */
     ///@{
     const std::vector< std::vector< int > >& triinpoel() const
     { return m_triinpoel; }
@@ -97,13 +97,13 @@ class UnsMesh {
     { return m_triinpoel; }
     ///@}
 
-    /** Triangle element tags accessors */
+    /** @name Triangle element tags accessors */
     ///@{
     const std::vector< std::vector< int > >& tritag() const { return m_tritag; }
     std::vector< std::vector< int > >& tritag() { return m_tritag; }
     ///@}
 
-    /** Tetrahedra elements connectivity accessors */
+    /** @name Tetrahedra elements connectivity accessors */
     ///@{
     const std::vector< std::vector< int > >& tetinpoel() const
     { return m_tetinpoel; }
@@ -111,7 +111,7 @@ class UnsMesh {
     { return m_tetinpoel; }
     ///@}
 
-    /** Tetrahedra element tags accessors */
+    /** @name Tetrahedra element tags accessors */
     ///@{
     const std::vector< std::vector< int > >& tettag() const { return m_tettag; }
     std::vector< std::vector< int > >& tettag() { return m_tettag; }
