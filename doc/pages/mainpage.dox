@@ -8,16 +8,16 @@ analysis in fluid dynamics. Quinoa relies on the [Charm++]
 (http://charm.cs.illinois.edu) runtime system that enables concurrent use of
 multiple processors, either on a single machine or a networked set of computers.
 
-<B>Why Charm++?</B> Charm++ consists of libraries and a runtime system. The
-central idea of Charm++ is _overdecomposition_: computation (data and
-work-units) is decomposed into a large number of logical units mapped to the
-available processors by the runtime system. The intelligent runtime system
-dynamically adapts the computational load monitoring load-imbalance due to
-software (e.g., particle clustering, adaptive refinemement) as well as hardware
-(e.g., dynamic processor frequency scaling, node failure). Charm++ has been
-actively developed since the 1990s and are used by several large production
-codes. Read more on what makes Charm++ different then other runtime systems at
-http://charm.cs.uiuc.edu/why.
+<B>Why Charm++?</B> Charm++ consists of libraries and a runtime system. A
+central idea of Charm++ is to enable and facilitate _overdecomposition_:
+computation (data and work-units) is decomposed into a large number of logical
+units mapped to the available processors by the runtime system.
+Overdecomposition allows the runtime system to dynamically adapt the
+computational load monitoring load-imbalance due to software (e.g., particle
+clustering, adaptive refinemement) as well as hardware (e.g., dynamic processor
+frequency scaling, node failure). Charm++ has been actively developed since the
+1990s and are used by several large production codes. Read a one-page summary on
+the stregths of Charm++ at http://charm.cs.uiuc.edu/why.
 
 \section organization Organization
 Quinoa consists of the following tools:
@@ -50,7 +50,7 @@ Jozsef Bakosi (jbakosi@lanl.gov)
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Mon 09 Mar 2015 10:17:58 PM MDT
+<em>Page last updated:</em> Wed 11 Mar 2015 08:17:27 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
