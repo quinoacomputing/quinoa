@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNG.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:08:59 PM MST
+  \date      Thu 12 Mar 2015 09:42:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator
   \details   This file defines a generic random number generator class. The
@@ -19,6 +19,7 @@
 #include <functional>
 
 #include <make_unique.h>
+#include <Keywords.h>
 
 namespace tk {
 
@@ -32,6 +33,8 @@ namespace tk {
 //!   see tk::MKLRNG or tk::RNGSSE.
 //! \author J. Bakosi
 class RNG {
+
+    using ncomp_t = kw::ncomp::info::expect::type;    
 
   public:
     //! \brief Constructor taking an object modeling Concept.
@@ -53,11 +56,11 @@ class RNG {
       self( make_unique< Model<T> >( std::move(x()) ) ) {}
 
     //! Public interface to uniform RNG
-    void uniform( int stream, int num, double* r ) const
+    void uniform( int stream, ncomp_t num, double* r ) const
     { self->uniform( stream, num, r ); }
 
     //! Public interface to Gaussian RNG
-    void gaussian( int stream, int num, double* r ) const
+    void gaussian( int stream, ncomp_t num, double* r ) const
     { self->gaussian( stream, num, r ); }
 
     //! Copy assignment
@@ -76,8 +79,8 @@ class RNG {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void uniform( int, int, double* ) const = 0;
-      virtual void gaussian( int, int, double* ) const = 0;
+      virtual void uniform( int, ncomp_t, double* ) const = 0;
+      virtual void gaussian( int, ncomp_t, double* ) const = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -86,9 +89,9 @@ class RNG {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void uniform( int stream, int num, double* r ) const override
+      void uniform( int stream, ncomp_t num, double* r ) const override
       { data.uniform( stream, num, r ); }
-      void gaussian( int stream, int num, double* r ) const override
+      void gaussian( int stream, ncomp_t num, double* r ) const override
       { data.gaussian( stream, num, r ); }
       T data;
     };

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:17:18 AM MST
+  \date      Sat 14 Mar 2015 06:32:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class definition
   \details   ASCII STL (STereoLithography) reader class definition.
@@ -35,8 +35,8 @@ STLTxtMeshReader::read()
 //******************************************************************************
 {
   // Count up number of vertices in STL mesh
-  size_t nnodes = readFacets( COUNT );
-  Assert(nnodes % 3 == 0, "Number of nodes in STL file must be divisible by 3");
+  auto nnodes = readFacets( COUNT );
+  Assert( nnodes%3 == 0, "Number of nodes in STL file must be divisible by 3");
 
   // Allocate memory to store coordinates and face list
   m_mesh.alloc( nnodes );
@@ -45,7 +45,7 @@ STLTxtMeshReader::read()
   readFacets( STORE, m_mesh.getx(), m_mesh.gety(), m_mesh.getz() );
 }
 
-size_t
+std::size_t
 STLTxtMeshReader::readFacets( const bool store,
                               tk::real* const x,
                               tk::real* const y,
@@ -67,7 +67,7 @@ STLTxtMeshReader::readFacets( const bool store,
              endfacet("endfacet");
 
   // Read in solids with their facets until eof
-  size_t num = 0;
+  std::size_t num = 0;
   while ( !m_inFile.eof() ) {
     // Start reading new solid
     std::string solidname;

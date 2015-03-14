@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:09:54 PM MST
+  \date      Sat 14 Mar 2015 07:08:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -14,6 +14,7 @@
 
 #include <Types.h>
 #include <Exception.h>
+#include <Keywords.h>
 
 namespace tk {
 namespace ctr {
@@ -31,9 +32,11 @@ enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
 //!    to the user, e.g., in screen-output, as starting from 1.
 //! \author J. Bakosi
 struct Term {
-  char var;          //!< Variable name
-  int field;         //!< Field ID
-  Moment moment;     //!< Moment type: ordinary, central
+  using ncomp_t = kw::ncomp::info::expect::type;
+
+  char var;              //!< Variable name
+  ncomp_t field;        //!< Field ID
+  Moment moment;        //!< Moment type: ordinary, central
 
   /** @name Pack/Unpack: Serialize Term object for Charm++ */
   ///@{
@@ -58,7 +61,7 @@ struct Term {
   //! \param[in] m Moment type enum: Moment::ORDINARY or Moment::CENTRAL
   //! \param[in] p Indicates whether the variable will be plotted
   //! \author J. Bakosi
-  explicit Term( char v = 0, int f = 0, Moment m = Moment::ORDINARY ) :
+  explicit Term( char v = 0, ncomp_t f = 0, Moment m = Moment::ORDINARY ) :
     var( v ), field( f ), moment( m ) {}
 
   //! \brief Equal operator for, e.g., finding unique elements, used by, e.g.,
@@ -104,7 +107,7 @@ inline void pup( PUP::er& p, Term& t ) { t.pup(p); }
 //! \author J. Bakosi
 static std::string operator+ ( const std::string& lhs, const Term& term ) {
   std::stringstream ss;
-  ss << lhs << char(term.var) << term.field+1;
+  ss << lhs << term.var << term.field+1;
   std::string rhs = ss.str();
   return rhs;
 }
@@ -127,7 +130,7 @@ static std::string& operator+= ( std::string& os, const Term& term ) {
 //! \return Updated output stream
 //! \author J. Bakosi
 static std::ostream& operator<< ( std::ostream& os, const Term& term ) {
-  os << char(term.var) << term.field+1;
+  os << term.var << term.field+1;
   return os;
 }
 
@@ -279,12 +282,12 @@ PDFInfo pdfInfo( const std::vector< std::vector< tk::real > >& binsizes,
                  const std::vector< std::string >& names,
                  const std::vector< std::vector< tk::real > >& exts,
                  const std::vector< Probability >& pdfs,
-                 long int idx )
+                 int idx )
 {
   Assert( binsizes.size() == names.size(),
           "Number of binsizes vector and the number of PDF names must equal." );
-  long int n = -1;
-  long int i = 0;
+  int n = -1;
+  std::size_t i = 0;
   for (const auto& bs : binsizes) {
     if (bs.size() == d) ++n;
     if (n == idx) return { names[i], exts[i], vars<d>(pdfs,idx) };
@@ -301,7 +304,9 @@ static inline void
 unique( Container& c ) {
   std::sort( begin(c), end(c) );
   auto it = std::unique( begin(c), end(c) );
-  c.resize( std::distance( begin(c), it ) );
+  auto d = std::distance( begin(c), it );
+  Assert( d >= 0, "Distance must be non-negative in tk::ctr::unique()" );
+  c.resize( static_cast< std::size_t >( d ) );
 }
 
 } // ctr::

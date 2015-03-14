@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/GeneralizedDirichlet.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:41:22 PM MST
+  \date      Fri 13 Mar 2015 04:12:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Lochner's generalized Dirichlet SDE
   \details   This file implements the time integration of a system of stochastic
@@ -73,7 +73,7 @@ template< class Init, class Coefficients >
 class GeneralizedDirichlet {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor
@@ -123,14 +123,14 @@ class GeneralizedDirichlet {
         // U_i = prod_{j=1}^{K-i} 1/Y_{K-j}
         tk::real U[m_ncomp];
         U[m_ncomp-1] = 1.0;
-        for (int i=m_ncomp-2; i>=0; --i) U[i] = U[i+1]/Y[i];
+        for (long i=static_cast<long>(m_ncomp)-2; i>=0; --i) U[i] = U[i+1]/Y[i];
 
         // Generate Gaussian random numbers with zero mean and unit variance
         tk::real dW[m_ncomp];
         m_rng.gaussian( stream, m_ncomp, dW );
 
         // Advance first m_ncomp (K=N-1) scalars
-        int k=0;
+        ncomp_t k=0;
         for (ncomp_t i=0; i<m_ncomp; ++i) {
           tk::real& par = particles( p, i, m_offset );
           tk::real d = m_k[i] * par * Y[m_ncomp-1] * U[i] * dt;

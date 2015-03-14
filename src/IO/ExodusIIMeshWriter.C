@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:43:08 AM MST
+  \date      Fri 13 Mar 2015 09:04:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class definition. Currently, this is a bare
@@ -77,9 +77,9 @@ ExodusIIMeshWriter::writeHeader()
     ex_put_init( m_outFile,
                  "Written by Quinoa",
                  3,     // number of dimensions
-                 m_mesh.nnode(),
-                 m_mesh.triinpoel().size() + m_mesh.tetinpoel().size(),
-                 m_mesh.neblk(),
+                 static_cast< int64_t >( m_mesh.nnode() ),
+                 m_mesh.triinpoel().size()/3 + m_mesh.tetinpoel().size()/4,
+                 static_cast< int64_t >( m_mesh.neblk() ),
                  0,     // number of node sets
                  0 ) == 0,
     "Failed to write header to file: " + m_filename );
@@ -109,11 +109,10 @@ ExodusIIMeshWriter::writeElements()
 }
 
 void
-ExodusIIMeshWriter::writeElemBlock(
-  int elclass,
-  int nnpe,
-  const std::string& eltype,
-  const std::vector< std::vector< int > >& inpoel )
+ExodusIIMeshWriter::writeElemBlock( int elclass,
+                                    int nnpe,
+                                    const std::string& eltype,
+                                    const std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block to ExodusII file
 //! \param[in] elclass Element class id
@@ -126,16 +125,24 @@ ExodusIIMeshWriter::writeElemBlock(
   if (inpoel.empty()) return;
 
   // Write element block information
-  ErrChk( ex_put_elem_block( m_outFile, elclass, eltype.c_str(), inpoel.size(),
-                             nnpe, 0 ) == 0,
-          "Failed to write " + eltype + " element block to file: " +
-          m_filename );
+  ErrChk(
+    ex_put_elem_block( m_outFile,
+                       elclass,
+                       eltype.c_str(),
+                       static_cast< int64_t >( inpoel.size() ) / nnpe,
+                       nnpe,
+                       0 ) == 0,
+    "Failed to write " + eltype + " element block to file: " + m_filename );
 
-  // Write element connectivity
-  for (std::size_t e=0; e<inpoel.size(); ++e) {
-    ErrChk( ne_put_n_elem_conn( m_outFile, elclass, e+1, 1,
-                                inpoel[e].data() ) == 0,  // 1-based element ids
-            "Failed to write " + eltype + " element connectivity to file: " +
-            m_filename );
+  // Write element connectivity with 1-based element ids
+  for (int e=0; e<static_cast<int>(inpoel.size()); e+=nnpe) {
+    ErrChk(
+      ne_put_n_elem_conn( m_outFile,
+                          elclass,
+                          e/nnpe+1,
+                          1,
+                          &inpoel[ static_cast< std::size_t >( e ) ] ) == 0,
+      "Failed to write " + eltype + " element connectivity to file: " +
+        m_filename );
   }
 }

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:29:58 PM MST
+  \date      Fri 13 Mar 2015 12:25:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -19,7 +19,16 @@
 
 #include <functional>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <make_unique.h>
 #include <CharmUtil.h>

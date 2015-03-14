@@ -2,15 +2,23 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:07:39 PM MST
+  \date      Fri 13 Mar 2015 08:14:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
     of the Charm++ main chare, equivalent to main() in Charm++-land.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <pup_stl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <Config.h>
 #include <RNG.h>
@@ -20,7 +28,18 @@
 #include <WalkerDriver.h>
 #include <Walker/CmdLine/Parser.h>
 #include <ProcessException.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <walker.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
@@ -191,4 +210,13 @@ class Main : public CBase_Main {
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <walker.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

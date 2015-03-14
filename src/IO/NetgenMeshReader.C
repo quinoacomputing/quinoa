@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:15:31 AM MST
+  \date      Sat 14 Mar 2015 12:20:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -10,6 +10,7 @@
 //******************************************************************************
 
 #include <limits>
+#include <array>
 #include <cmath>
 
 #include <NetgenMeshReader.h>
@@ -39,17 +40,15 @@ NetgenMeshReader::readNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::size_t nnode;
+  int nnode;
   m_inFile >> nnode;
   ErrChk( nnode > 0,
           "Number of nodes must be greater than zero in file " + m_filename  );
 
   // Read in node coordinates: x-coord y-coord z-coord
-  for ( std::size_t i=0; i<nnode; ++i ) {
+  for (int i=0; i<nnode; ++i) {
     tk::real x, y, z;
-
     m_inFile >> x >> y >> z;
-
     m_mesh.nodeId().push_back( i+1 );
     m_mesh.x().push_back( x );
     m_mesh.y().push_back( y );
@@ -81,12 +80,15 @@ NetgenMeshReader::readElements()
   // Read in tetrahedra element tags and connectivity
   for (int i=0; i<nel; ++i) {
     int tag;
-    std::vector< int > n( 4 );
+    std::array< int, 4 > n;
     // tag n[1-4]
     m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
     m_mesh.tetId().push_back( ++Nel );
     m_mesh.tettag().push_back( { tag } );
-    m_mesh.tetinpoel().push_back( n );
+    m_mesh.tetinpoel().push_back( n[0] );
+    m_mesh.tetinpoel().push_back( n[1] );
+    m_mesh.tetinpoel().push_back( n[2] );
+    m_mesh.tetinpoel().push_back( n[3] );
   }
 
   // Read in number of triangles
@@ -99,11 +101,13 @@ NetgenMeshReader::readElements()
   // Read in triangle element tags and connectivity
   for (int i=0; i<nel; ++i) {
     int tag;
-    std::vector< int > n( 3 );
+    std::array< int, 3 > n;
     // tag n[1-3]
     m_inFile >> tag >> n[0] >> n[1] >> n[2];
     m_mesh.triId().push_back( ++Nel );
     m_mesh.tritag().push_back( { tag } );
-    m_mesh.triinpoel().push_back( n );
+    m_mesh.triinpoel().push_back( n[0] );
+    m_mesh.triinpoel().push_back( n[1] );
+    m_mesh.triinpoel().push_back( n[2] );
   }
 }

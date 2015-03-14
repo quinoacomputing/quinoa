@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StringParser.C
   \author    J. Bakosi
-  \date      Wed 14 Jan 2015 02:32:39 PM MST
+  \date      Thu 12 Mar 2015 10:06:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     String parser base class definition
   \details   String parser base class definition. String parser base serves as
@@ -64,7 +64,7 @@ StringParser::diagnostics( const tk::Print& print,
         // find a dot starting from after "at 1,"
         const auto eloc = e.find_first_of( '.', sloc );
         // compute location of error by extracting it from error message
-        const std::size_t errloc = std::stoi( e.substr( sloc, eloc-sloc ) ) - 1;
+        const std::size_t errloc = std::stoul( e.substr( sloc, eloc-sloc ) ) - 1;
         // find beginning of erroneous argument
         sloc = m_string.rfind( ' ', errloc-1 );
         // special-handle the first argument with no space in front of it

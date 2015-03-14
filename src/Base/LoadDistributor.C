@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/LoadDistributor.C
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 11:14:09 AM MST
+  \date      Thu 12 Mar 2015 12:03:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of
@@ -12,7 +12,16 @@
 
 #include <limits>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <Types.h>
 #include <LoadDistributor.h>
@@ -75,10 +84,10 @@ linearLoadDistributor( tk::real virtualization,
   const auto npe = CkNumPes();
 
   // Compute minimum number of work units
-  const auto n = load/npe;
+  const auto n = static_cast< tk::real >( load ) / npe;
 
   // Compute work unit size based on the linear formula above
-  chunksize = (1.0 - n) * virtualization + n;
+  chunksize = static_cast< uint64_t >( (1.0 - n) * virtualization + n );
 
   // Compute number of work units with size computed ignoring remainder
   uint64_t nchare = load / chunksize;

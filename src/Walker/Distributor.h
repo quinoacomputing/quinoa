@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 09:20:18 AM MST
+  \date      Fri 13 Mar 2015 09:35:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -19,7 +19,17 @@
 #include <TaggedTuple.h>
 #include <WalkerPrint.h>
 #include <Walker/CmdLine/CmdLine.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <distributor.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 namespace walker {
 
@@ -72,25 +82,25 @@ class Distributor : public CBase_Distributor {
     void outStat();
 
     //! Write univariate PDF to file
-    void writeUniPDF( const tk::UniPDF& p, std::size_t& cnt );
+    void writeUniPDF( const tk::UniPDF& p, int& cnt );
 
     //! Write bivariate PDF to file
-    void writeBiPDF( const tk::BiPDF& p, std::size_t& cnt );
+    void writeBiPDF( const tk::BiPDF& p, int& cnt );
 
     //! Write trivariate PDF to file
-    void writeTriPDF( const tk::TriPDF& p, std::size_t& cnt );
+    void writeTriPDF( const tk::TriPDF& p, int& cnt );
 
     //! Output PDFs to file
     void outPDF();
 
     //! Output all requested univariate PDFs to file(s)
-    std::size_t outUniPDF();
+    int outUniPDF();
 
     //! Output all requested bivariate PDFs to file(s)
-    std::size_t outBiPDF();
+    int outBiPDF();
 
     //! Output all requested trivariate PDFs to file(s)
-    std::size_t outTriPDF();
+    int outTriPDF();
 
     //! Evaluate time step, compute new time step size
     void evaluateTime();

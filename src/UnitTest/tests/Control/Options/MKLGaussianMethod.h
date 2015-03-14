@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 06:34:03 AM MST
+  \date      Thu 12 Mar 2015 10:39:07 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
@@ -46,7 +46,7 @@ void MKLGaussianMethod_object::test< 2 >() {
 
   try {
 
-    m.param( static_cast< tk::ctr::MKLGaussianMethodType >( -234 ) );
+    m.param( static_cast< tk::ctr::MKLGaussianMethodType >( 234 ) );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif

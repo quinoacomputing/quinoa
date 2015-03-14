@@ -147,6 +147,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")  # clang-specific settings
   add_compiler_flag("-Wno-unused-function")
   # Dont' warn on unused local typedef
   add_compiler_flag("-Wno-unused-local-typedef")
+  # Warn on implicit conversions
+  add_compiler_flag("-Wconversion")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:
@@ -163,6 +165,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")  # gcc-specific settings
   add_compiler_flag("-Wno-unused-local-typedefs")
   add_compiler_flag("-Wno-unused-function")
   add_compiler_flag("-fdiagnostics-color")
+
+  # Warn on implicit conversions
+  add_compiler_flag("-Wconversion")
 
   # Suppress the following warnings for Charm++ hostfiles including the
   # Charm-generated .decl.h and .def.h:

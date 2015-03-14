@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:02:47 PM MST
+  \date      Fri 13 Mar 2015 12:23:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -14,7 +14,18 @@
 #include <MeshConvDriver.h>
 #include <MeshConv/CmdLine/Parser.h>
 #include <ProcessException.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <meshconv.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:16:38 AM MST
+  \date      Fri 13 Mar 2015 08:59:30 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -39,7 +39,7 @@ TxtStatWriter::header( const std::vector< std::string >& nameOrd,
 }
 
 std::size_t
-TxtStatWriter::stat( int it,
+TxtStatWriter::stat( uint64_t it,
                      tk::real t,
                      const std::vector< tk::real >& ordinary,
                      const std::vector< tk::real >& central )

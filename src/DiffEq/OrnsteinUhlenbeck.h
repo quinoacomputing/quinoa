@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/OrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:43:23 PM MST
+  \date      Fri 13 Mar 2015 03:55:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -75,7 +75,7 @@ template< class Init, class Coefficients >
 class OrnsteinUhlenbeck {
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor

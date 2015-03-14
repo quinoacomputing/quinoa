@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:26:25 PM MST
+  \date      Sat 14 Mar 2015 07:10:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -189,7 +189,7 @@ DiffEqStack::selected() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::DiffEqType, int > cnt; // count DiffEqs per type
+  std::map< ctr::DiffEqType, std::size_t > cnt; // count DiffEqs per type
   std::vector< DiffEq > diffeqs;        // will store instantiated DiffEqs
 
   for (const auto& d : g_inputdeck.get< tag::selected, tag::diffeq >()) {
@@ -225,7 +225,7 @@ DiffEqStack::info() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::map< ctr::DiffEqType, int > cnt;         // count DiffEqs per type
+  std::map< ctr::DiffEqType, std::size_t > cnt; // count DiffEqs per type
   // will store info on all differential equations selected
   std::vector< std::vector< std::pair< std::string, std::string > > > info;
 
@@ -255,7 +255,8 @@ DiffEqStack::info() const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, std::size_t >& cnt )
+const
 //******************************************************************************
 //  Return information on the Dirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -300,7 +301,7 @@ DiffEqStack::infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on Lochner's generalized Dirichlet SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -347,7 +348,8 @@ DiffEqStack::infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, std::size_t >& cnt )
+const
 //******************************************************************************
 //  Return information on the Wright-Fisher SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -386,7 +388,7 @@ DiffEqStack::infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on the Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -427,7 +429,7 @@ DiffEqStack::infoOU( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on the diagonal Ornstein-Uhlenbeck SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -470,7 +472,7 @@ DiffEqStack::infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoBeta( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on the beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -514,8 +516,8 @@ DiffEqStack::infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoNumberFractionBeta( std::map< ctr::DiffEqType, int >& cnt )
-const
+DiffEqStack::infoNumberFractionBeta(
+  std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on the number-fraction beta SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -569,7 +571,8 @@ const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, std::size_t >& cnt )
+const
 //******************************************************************************
 //  Return information on the skew-normal SDE
 //! \param[inout] cnt std::map of counters for all differential equation types
@@ -616,7 +619,7 @@ DiffEqStack::infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const
 }
 
 std::vector< std::pair< std::string, std::string > >
-DiffEqStack::infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const
+DiffEqStack::infoGamma( std::map< ctr::DiffEqType, std::size_t >& cnt ) const
 //******************************************************************************
 //  Return information on the gamma SDE
 //! \param[inout] cnt std::map of counters for all differential equation types

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:15:47 AM MST
+  \date      Fri 13 Mar 2015 05:08:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class declaration. Currently, this is a bare
@@ -48,10 +48,10 @@ class ExodusIIMeshReader : public Reader {
     //! Read element blocks and connectivity from ExodusII file
     void readElements();
 
-    UnsMesh& m_mesh;                       //!< Mesh object
-    int m_inFile;                          //!< ExodusII file handle
-    int m_neblk;                           //!< Number of element blocks
-    int m_nnode;                           //!< Number of nodes
+    UnsMesh& m_mesh;            //!< Mesh object
+    int m_inFile;               //!< ExodusII file handle
+    int m_neblk;                //!< Number of element blocks
+    int m_nnode;                //!< Number of nodes
 };
 
 } // tk::

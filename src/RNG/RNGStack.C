@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGStack.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:02:09 PM MST
+  \date      Thu 12 Mar 2015 09:36:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of random number generators
   \details   This file defines class RNGStack, which implements various
@@ -26,7 +26,16 @@
 #include <lfsr113.h>
 #include <mrg32k3a.h>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <RNGStack.h>
 #include <Factory.h>

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:42:45 AM MST
+  \date      Sat 14 Mar 2015 12:12:03 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Univariate PDF writer
   \brief     PDF writer class definition
@@ -46,7 +46,7 @@ PDFWriter::PDFWriter( const std::string& filename,
 
   // Set numeric precision for output file stream if the input makes sense
   if (precision > 0 && precision < std::numeric_limits< tk::real >::digits10+2)
-    m_outFile << std::setprecision( precision );
+    m_outFile << std::setprecision( static_cast<int>(precision) );
 }
 
 void
@@ -107,12 +107,15 @@ PDFWriter::writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
     for (const auto& p : pdf.map())
-      m_outFile << binsize * p.first << '\t'
-                << p.second / binsize / pdf.nsample() << std::endl;
+      m_outFile << binsize * static_cast<tk::real>(p.first) << '\t'
+                << static_cast<tk::real>(p.second) / binsize /
+                   static_cast<tk::real>(pdf.nsample())
+                << std::endl;
   } else { // If user-specified sample space extents, output outpdf array
     std::size_t bin = 0;
     for (const auto& p : outpdf)
-      m_outFile << binsize * bin++ + uext[0] << '\t' << p << std::endl;
+      m_outFile << binsize * static_cast<tk::real>(bin++) + uext[0] << '\t'
+                << p << std::endl;
   }
 }
 
@@ -188,15 +191,18 @@ PDFWriter::writeTxt( const BiPDF& pdf, const tk::ctr::PDFInfo& info ) const
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
     for (const auto& p : pdf.map())
-      m_outFile << binsize[0] * p.first[0] << '\t'
-                << binsize[1] * p.first[1] << '\t'
-                << p.second / binsize[0] / binsize[1] / pdf.nsample()
+      m_outFile << binsize[0] * static_cast<tk::real>(p.first[0]) << '\t'
+                << binsize[1] * static_cast<tk::real>(p.first[1]) << '\t'
+                << p.second / binsize[0] / binsize[1] /
+                   static_cast<tk::real>(pdf.nsample())
                 << std::endl;
   } else { // If user-specified sample space extents, output outpdf array
     std::size_t bin = 0;
     for (const auto& p : outpdf) {
-      m_outFile << binsize[0] * (bin % nbix) + uext[0] << '\t'
-                << binsize[1] * (bin / nbix) + uext[2] << '\t'
+      m_outFile << binsize[0] * static_cast<tk::real>(bin % nbix) + uext[0]
+                << '\t'
+                << binsize[1] * static_cast<tk::real>(bin / nbix) + uext[2]
+                << '\t'
                 << p
                 << std::endl;
       ++bin;
@@ -280,19 +286,21 @@ PDFWriter::writeTxt( const TriPDF& pdf, const tk::ctr::PDFInfo& info ) const
   // If no user-specified sample space extents, output pdf map directly
   if (uext.empty()) {
     for (const auto& p : pdf.map())
-      m_outFile << binsize[0] * p.first[0] << '\t'
-                << binsize[1] * p.first[1] << '\t'
-                << binsize[2] * p.first[2] << '\t'
+      m_outFile << binsize[0] * static_cast<tk::real>(p.first[0]) << '\t'
+                << binsize[1] * static_cast<tk::real>(p.first[1]) << '\t'
+                << binsize[2] * static_cast<tk::real>(p.first[2]) << '\t'
                 << p.second / binsize[0] / binsize[1] / binsize[2]
-                            / pdf.nsample()
+                            / static_cast<tk::real>(pdf.nsample())
                 << std::endl;
   } else { // If user-specified sample space extents, output outpdf array
     std::size_t bin = 0;
     const auto n = nbix*nbiy;
     for (const auto& p : outpdf) {
-      m_outFile << binsize[0] * (bin % n % nbix) + uext[0] << '\t'
-                << binsize[1] * (bin % n / nbix) + uext[2] << '\t'
-                << binsize[2] * (bin / n) + uext[4] << '\t'
+      m_outFile << binsize[0] * static_cast<tk::real>(bin % n % nbix) + uext[0]
+                << '\t'
+                << binsize[1] * static_cast<tk::real>(bin % n / nbix) + uext[2]
+                << '\t'
+                << binsize[2] * static_cast<tk::real>(bin / n) + uext[4] << '\t'
                 << p
                 << std::endl;
       ++bin;
@@ -365,7 +373,7 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   m_outFile << "$Elements\n" << nbix*nbiy << "\n";
-  for (int i=0; i<nbix*nbiy; ++i) {
+  for (std::size_t i=0; i<nbix*nbiy; ++i) {
     const auto y = i/nbix;
     m_outFile << i+1 << " 3 2 1 1 " << i+y+1 << ' ' << i+y+2 << ' '
               << i+y+nbix+3 << ' ' << i+y+nbix+2 << std::endl;
@@ -386,12 +394,14 @@ PDFWriter::writeGmshTxt( const BiPDF& pdf,
 
     std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
-      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmsh()." );
-      out[ bin ] = true;
+      const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
+      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmshTxt()." );
+      out[ static_cast<std::size_t>(bin) ] = true;
       m_outFile << bin+1 << '\t'
-                << p.second / binsize[0] / binsize[1] / pdf.nsample()
+                << p.second / binsize[0] / binsize[1]
+                            / static_cast<tk::real>(pdf.nsample())
                 << std::endl;
     }
     // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
@@ -481,7 +491,7 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
   m_outFile << "$Elements\n" << nbix*nbiy*nbiz << "\n";
   const auto n = nbix*nbiy;
   const auto p = (nbix+1)*(nbiy+1);
-  for (int i=0; i<nbix*nbiy*nbiz; ++i) {
+  for (std::size_t i=0; i<nbix*nbiy*nbiz; ++i) {
     const auto y = i/nbix + i/n*(nbix+1);
     m_outFile << i+1 << " 5 2 1 1 " << i+y+1 << ' ' << i+y+2 << ' '
               << i+y+nbix+3 << ' ' << i+y+nbix+2 << ' '
@@ -505,13 +515,16 @@ PDFWriter::writeGmshTxt( const TriPDF& pdf,
 
     std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * nbix*nbiy +
-                       (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
-      Assert( bin < nbix*nbiy*nbiz, "Bin overflow in PDFWriter::writeGmsh()." );
-      out[ bin ] = true;
+      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshTxt()." );
+      Assert( bin < nbix*nbiy*nbiz,
+              "Bin overflow in PDFWriter::writeGmshTxt()." );
+      out[ static_cast<std::size_t>(bin) ] = true;
       m_outFile << bin+1 << '\t'
-                << p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample()
+                << p.second / binsize[0] / binsize[1] / binsize[2]
+                            / static_cast<tk::real>(pdf.nsample())
                 << std::endl;
     }
     // Output bins nonexistent in PDF (gmsh sometimes fails to plot the exiting
@@ -602,14 +615,14 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   m_outFile << "$Elements\n" << nbix*nbiy << "\n";
-  int type = 3;         // gmsh elem type: 4-node quadrangle
-  int n = nbix*nbiy;    // number of elements in (this single) block
-  int ntags = 2;        // number of element tags
+  int type = 3;                 // gmsh elem type: 4-node quadrangle
+  std::size_t n = nbix*nbiy;    // number of elements in (this single) block
+  int ntags = 2;                // number of element tags
   m_outFile.write( reinterpret_cast< char* >( &type ), sizeof(int) );
   m_outFile.write( reinterpret_cast< char* >( &n ), sizeof(int) );
   m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
-  for (int i=0; i<n; ++i) {
-    auto y = i/nbix;
+  for (std::size_t i=0; i<n; ++i) {
+    const auto y = i/nbix;
     auto id = i+1;
     int tag[2] = { 1, 1 };
     int con[4] = { static_cast< int >( i+y+1 ),
@@ -636,12 +649,14 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
 
     std::vector< bool > out( nbix*nbiy, false ); // indicate bins filled
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
-      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmsh()." );
-      out[ bin ] = true;
-      int id = bin+1;
-      tk::real prob = p.second / binsize[0] / binsize[1] / pdf.nsample();
+      const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
+      Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeGmshBin()." );
+      out[ static_cast<std::size_t>(bin) ] = true;
+      auto id = static_cast<int>(bin+1);
+      tk::real prob = p.second / binsize[0] / binsize[1]
+                               / static_cast<tk::real>(pdf.nsample());
       m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
       m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
     }
@@ -650,14 +665,14 @@ PDFWriter::writeGmshBin( const BiPDF& pdf,
     tk::real prob = 0.0;
     for (std::size_t i=0; i<out.size(); ++i)
       if (!out[i]) {
-        int id = i+1;
+        auto id = static_cast<int>(i+1);
         m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
         m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
       }
 
   } else { // If user-specified sample space extents, output outpdf array
 
-    std::size_t bin = 0;
+    int bin = 0;
     for (auto& p : outpdf) {
       ++bin;
       m_outFile.write( reinterpret_cast< char* >( &bin ), sizeof(int) );
@@ -746,15 +761,15 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 
   // Output elements of discretized sample space (3D Cartesian grid)
   m_outFile << "$Elements\n" << nbix*nbiy*nbiz << "\n";
-  int type = 5;               // gmsh elem type: 8-node hexahedron
-  int nelem = nbix*nbiy*nbiz; // number of elements in (this single) block
-  int ntags = 2;              // number of element tags
+  int type = 5;                       // gmsh elem type: 8-node hexahedron
+  std::size_t nelem = nbix*nbiy*nbiz; // num of elements in (this single) block
+  int ntags = 2;                      // number of element tags
   m_outFile.write( reinterpret_cast< char* >( &type ), sizeof(int) );
   m_outFile.write( reinterpret_cast< char* >( &nelem ), sizeof(int) );
   m_outFile.write( reinterpret_cast< char* >( &ntags ), sizeof(int) );
   const auto n = nbix*nbiy;
   const auto p = (nbix+1)*(nbiy+1);
-  for (int i=0; i<nelem; ++i) {
+  for (std::size_t i=0; i<nelem; ++i) {
     const auto y = i/nbix + i/n*(nbix+1);
     auto id = i+1;
     int tag[2] = { 1, 1 };
@@ -786,14 +801,16 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
 
     std::vector< bool > out( nbix*nbiy*nbiz, false ); // indicate bins filled
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * nbix*nbiy +
-                       (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
-      Assert( bin < nbix*nbiy*nbiz, "Bin overflow in PDFWriter::writeGmsh()." );
-      out[ bin ] = true;
-      int id = bin+1;
-      tk::real prob =
-        p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
+      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeGmshBin()." );
+      Assert( bin < nbix*nbiy*nbiz,
+              "Bin overflow in PDFWriter::writeGmshBin()." );
+      out[ static_cast<std::size_t>(bin) ] = true;
+      auto id = static_cast<int>(bin+1);
+      tk::real prob = p.second / binsize[0] / binsize[1] / binsize[2]
+                               / static_cast<tk::real>(pdf.nsample());
       m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
       m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
     }
@@ -802,14 +819,14 @@ PDFWriter::writeGmshBin( const TriPDF& pdf,
     tk::real prob = 0.0;
     for (std::size_t i=0; i<out.size(); ++i)
       if (!out[i]) {
-        int id = i+1;
+        auto id = static_cast<int>(i+1);
         m_outFile.write( reinterpret_cast< char* >( &id ), sizeof(int) );
         m_outFile.write( reinterpret_cast< char* >( &prob ), sizeof(tk::real) );
       }
 
   } else { // If user-specified sample space extents, output outpdf array
 
-    std::size_t bin = 0;
+    int bin = 0;
     for (auto& p : outpdf) {
       ++bin;
       m_outFile.write( reinterpret_cast< char* >( &bin ), sizeof(int) );
@@ -859,11 +876,11 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
   int outFile = createExFile();
 
   // Compute number of nodes and number of elements in sample space mesh
-  int nelem = nbix*nbiy;
-  int nnode = (nbix+1)*(nbiy+1);
+  std::size_t nelem = nbix*nbiy;
+  std::size_t nnode = (nbix+1)*(nbiy+1);
 
   // Write ExodusII header
-  writeExHdr( outFile, nnode, nelem );
+  writeExHdr( outFile, static_cast<int>(nnode), static_cast<int>(nelem) );
 
   // Write sample space variables as coordinate names
   char* coordnames[] = { const_cast< char* >( vars[0].c_str() ),
@@ -876,7 +893,7 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
   std::vector< tk::real > x( nnode, 0.0 );
   std::vector< tk::real > y( nnode, 0.0 );
   std::vector< tk::real > z( nnode, 0.0 );
-  int k = 0;
+  std::size_t k = 0;
   for (int i=0; i<=nbiy; i++)
     for (int j=0; j<=nbix; j++) {
       x[k] = xmin + j*binsize[0];
@@ -888,17 +905,23 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   // Write element block information
-  ErrChk( ex_put_elem_block( outFile, 1, "QUADRANGLES", nelem, 4, 0 ) == 0,
+  ErrChk( ex_put_elem_block( outFile,
+                             1,
+                             "QUADRANGLES",
+                             static_cast<int64_t>(nelem),
+                             4,
+                             0 ) == 0,
           "Failed to write QUDARANGLE element block to file: " + m_filename );
   // Write element connectivity
-  for (int i=0; i<nelem; ++i) {
+  for (std::size_t i=0; i<nelem; ++i) {
     auto y = i/nbix;
     int con[4] = { static_cast< int >( i+y+1 ),
                    static_cast< int >( i+y+2 ),
                    static_cast< int >( i+y+nbix+3 ),
                    static_cast< int >( i+y+nbix+2 ) };
-    ErrChk( ne_put_n_elem_conn( outFile, 1, i+1, 1, con ) == 0,
-            "Failed to write element connectivity to file: " + m_filename );
+    ErrChk(
+      ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+      "Failed to write element connectivity to file: " + m_filename );
   }
 
   // Output PDF function values in element or node centers
@@ -922,10 +945,13 @@ PDFWriter::writeExodusII( const BiPDF& pdf,
     // Output PDF function values in element centers
     std::vector< tk::real > prob( nbix*nbiy, 0.0 );
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
+      const auto bin = (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeExodusII()." );
       Assert( bin < nbix*nbiy, "Bin overflow in PDFWriter::writeExodusII()." );
-      prob[bin] = p.second / binsize[0] / binsize[1] / pdf.nsample();
+      prob[ static_cast<std::size_t>(bin) ] =
+        p.second / binsize[0] / binsize[1]
+                 / static_cast<tk::real>(pdf.nsample());
     }
     writeExVar( outFile, it+1, centering, prob );
 
@@ -974,11 +1000,11 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
   int outFile = createExFile();
 
   // Compute number of nodes and number of elements in sample space mesh
-  int nelem = nbix*nbiy*nbiz;
-  int nnode = (nbix+1)*(nbiy+1)*(nbiz+1);
+  std::size_t nelem = nbix*nbiy*nbiz;
+  std::size_t nnode = (nbix+1)*(nbiy+1)*(nbiz+1);
 
   // Write ExodusII header
-  writeExHdr( outFile, nnode, nelem );
+  writeExHdr( outFile, static_cast<int>(nnode), static_cast<int>(nelem) );
 
   // Write sample space variables as coordinate names
   char* coordnames[] = { const_cast< char* >( vars[0].c_str() ),
@@ -991,13 +1017,13 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
   std::vector< tk::real > x( nnode, 0.0 );
   std::vector< tk::real > y( nnode, 0.0 );
   std::vector< tk::real > z( nnode, 0.0 );
-  int l=0;
-  for (int k=0; k<=nbiz; k++)
-    for (int i=0; i<=nbiy; i++)
-      for (int j=0; j<=nbix; j++) {
-        x[l] = xmin + j*binsize[0];
-        y[l] = ymin + i*binsize[1];
-        z[l] = zmin + k*binsize[2];
+  std::size_t l=0;
+  for (std::size_t k=0; k<=nbiz; k++)
+    for (std::size_t i=0; i<=nbiy; i++)
+      for (std::size_t j=0; j<=nbix; j++) {
+        x[l] = xmin + static_cast<tk::real>(j) * binsize[0];
+        y[l] = ymin + static_cast<tk::real>(i) * binsize[1];
+        z[l] = zmin + static_cast<tk::real>(k) * binsize[2];
         ++l;
       }
   ErrChk( ex_put_coord( outFile, x.data(), y.data(), z.data() ) == 0,
@@ -1005,12 +1031,17 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
 
   // Output elements of discretized sample space (2D Cartesian grid)
   // Write element block information
-  ErrChk( ex_put_elem_block( outFile, 1, "HEXAHEDRA", nelem, 8, 0 ) == 0,
+  ErrChk( ex_put_elem_block( outFile,
+                             1,
+                             "HEXAHEDRA",
+                             static_cast<int64_t>(nelem),
+                             8,
+                             0 ) == 0,
           "Failed to write HEXAHEDRA element block to file: " + m_filename );
   // Write element connectivity
   const auto n = nbix*nbiy;
   const auto p = (nbix+1)*(nbiy+1);
-  for (int i=0; i<nelem; ++i) {
+  for (std::size_t i=0; i<nelem; ++i) {
     const auto y = i/nbix + i/n*(nbix+1);
     int con[8] = { static_cast< int >( i+y+1 ),
                    static_cast< int >( i+y+2 ),
@@ -1020,8 +1051,9 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
                    static_cast< int >( i+y+p+2 ),
                    static_cast< int >( i+y+p+nbix+3 ),
                    static_cast< int >( i+y+p+nbix+2 ) };
-    ErrChk( ne_put_n_elem_conn( outFile, 1, i+1, 1, con ) == 0,
-            "Failed to write element connectivity to file: " + m_filename );
+    ErrChk(
+      ne_put_n_elem_conn( outFile, 1, static_cast<int64_t>(i+1), 1, con ) == 0,
+      "Failed to write element connectivity to file: " + m_filename );
   }
 
   // Output PDF function values in element or node centers
@@ -1045,12 +1077,15 @@ PDFWriter::writeExodusII( const TriPDF& pdf,
     // Output PDF function values in element centers
     std::vector< tk::real > prob( nbix*nbiy*nbiz, 0.0 );
     for (const auto& p : pdf.map()) {
-      const auto bin = (p.first[2] - ext[4]) * nbix*nbiy +
-                       (p.first[1] - ext[2]) * nbix +
-                       (p.first[0] - ext[0]) % nbix;
+      const auto bin = (p.first[2] - ext[4]) * static_cast<long>(nbix*nbiy) +
+                       (p.first[1] - ext[2]) * static_cast<long>(nbix) +
+                       (p.first[0] - ext[0]) % static_cast<long>(nbix);
+      Assert( bin >= 0, "Bin underflow in PDFWriter::writeExodusII()." );
       Assert( bin < nbix*nbiy*nbiz,
               "Bin overflow in PDFWriter::writeExodusII()." );
-      prob[bin] = p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
+      prob[ static_cast<std::size_t>(bin) ] =
+        p.second / binsize[0] / binsize[1] / binsize[2]
+                 / static_cast<tk::real>(pdf.nsample());
     }
     writeExVar( outFile, it+1, centering, prob );
 
@@ -1115,12 +1150,19 @@ PDFWriter::writeExVar( int exoFile, int it, ctr::PDFCenteringType centering,
 //******************************************************************************
 {
   if (centering == ctr::PDFCenteringType::NODE)
-    ErrChk( ex_put_nodal_var( exoFile, 1, 1, probability.size(),
+    ErrChk( ex_put_nodal_var( exoFile,
+                              1,
+                              1,
+                              static_cast<int64_t>(probability.size()),
                               probability.data() ) == 0,
             "Failed to write node-centered bivariate PDF to file: " +
             m_filename );
   else
-    ErrChk( ex_put_elem_var( exoFile, 1, 1, 1, probability.size(),
+    ErrChk( ex_put_elem_var( exoFile,
+                             1,
+                             1,
+                             1,
+                             static_cast<int64_t>(probability.size()),
                              probability.data() ) == 0,
             "Failed to write elem-centered bivariate PDF to file: " +
             m_filename );
@@ -1158,17 +1200,21 @@ PDFWriter::extents( const UniPDF& pdf,
   ext = pdf.extents();
 
   // Compute number of bins of sample space (min bins: 1)
-  nbi = ext[1] - ext[0] + 1;
+  Assert( ext[1] >= ext[0], "Wrong extents in PDFWriter::extents" );
+  nbi = static_cast< std::size_t >( ext[1] - ext[0] + 1 );
 
   // Compute minimum and maximum of sample space
-  min = binsize * ext[0];
-  max = binsize * ext[1];
+  min = binsize * static_cast< tk::real >( ext[0] );
+  max = binsize * static_cast< tk::real >( ext[1] );
 
   // Override number of bins and minimum if user-specified extents were given,
   // and copy probabilities from pdf to an array for output
   if (!uext.empty()) {
     // Override number of bins by that based on user-specified extents
-    nbi = std::lround( (uext[1] - uext[0]) / binsize );
+    Assert( uext[1] >= uext[0],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    nbi = static_cast< std::size_t >(
+            std::lround( (uext[1] - uext[0]) / binsize ) );
     // Override extents
     min = uext[0];
     max = uext[1];
@@ -1187,7 +1233,8 @@ PDFWriter::extents( const UniPDF& pdf,
         Assert( bin < nbi, "Bin overflow in user-specified-extent-based bin "
                            "calculation of univariate PDF extents." );
         // Copy normalized probability to output pdf
-        outpdf[ bin ] = p.second / binsize / pdf.nsample();
+        outpdf[ static_cast<std::size_t>(bin) ] =
+          p.second / binsize / static_cast<tk::real>(pdf.nsample());
       }
     }
   }
@@ -1233,21 +1280,29 @@ PDFWriter::extents( const BiPDF& pdf,
   ext = pdf.extents();
 
   // Compute number of bins in sample space directions (min bins: 1)
-  nbix = ext[1] - ext[0] + 1;
-  nbiy = ext[3] - ext[2] + 1;
+  Assert( ext[1] >= ext[0], "Wrong extents in PDFWriter::extents" );
+  Assert( ext[3] >= ext[2], "Wrong extents in PDFWriter::extents" );
+  nbix = static_cast< std::size_t >( ext[1] - ext[0] + 1 );
+  nbiy = static_cast< std::size_t >( ext[3] - ext[2] + 1 );
 
   // Compute minima and maxima of sample space
-  xmin = binsize[0] * ext[0];
-  xmax = binsize[0] * ext[1];
-  ymin = binsize[1] * ext[2];
-  ymax = binsize[1] * ext[3];
+  xmin = binsize[0] * static_cast< tk::real >( ext[0] );
+  xmax = binsize[0] * static_cast< tk::real >( ext[1] );
+  ymin = binsize[1] * static_cast< tk::real >( ext[2] );
+  ymax = binsize[1] * static_cast< tk::real >( ext[3] );
 
   // Override number of bins and minima if user-specified extents were given,
   // and copy probabilities from pdf to a logically 2D array for output
   if (!uext.empty()) {
     // Override number of bins by that based on user-specified extents
-    nbix = std::lround( (uext[1] - uext[0]) / binsize[0] );
-    nbiy = std::lround( (uext[3] - uext[2]) / binsize[1] );
+    Assert( uext[1] >= uext[0],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    Assert( uext[3] >= uext[2],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    nbix = static_cast< std::size_t >(
+             std::lround( (uext[1] - uext[0]) / binsize[0] ) );
+    nbiy = static_cast< std::size_t >(
+             std::lround( (uext[3] - uext[2]) / binsize[1] ) );
     // Override extents
     xmin = uext[0];
     xmax = uext[1];
@@ -1271,11 +1326,13 @@ PDFWriter::extents( const BiPDF& pdf,
       if (x >= 0 && x < std::lround( (uext[1] - uext[0]) / binsize[0] ) &&
           y >= 0 && y < std::lround( (uext[3] - uext[2]) / binsize[1] ))
       {
-        Assert( y*nbix + x < nbix*nbiy, "Bin overflow in user-specified-extent-"
-                "based bin calculation of bivariate PDF." );
+        const auto bin =
+          static_cast<std::size_t>(y)*nbix + static_cast<std::size_t>(x);
+        Assert( bin < nbix*nbiy, "Bin overflow in user-specified-extent-based "
+                "bin calculation of bivariate PDF." );
         // Copy normalized probability to output pdf
-        outpdf[ y*nbix + x ] =
-          p.second / binsize[0] / binsize[1] / pdf.nsample();
+        outpdf[ bin ] = p.second / binsize[0] / binsize[1]
+                                 / static_cast<tk::real>(pdf.nsample());
       }
     }
 
@@ -1330,25 +1387,37 @@ PDFWriter::extents( const TriPDF& pdf,
   ext = pdf.extents();
 
   // Compute number of bins in sample space directions (min bins: 1)
-  nbix = ext[1] - ext[0] + 1;
-  nbiy = ext[3] - ext[2] + 1;
-  nbiz = ext[5] - ext[4] + 1;
+  Assert( ext[1] >= ext[0], "Wrong extents in PDFWriter::extents" );
+  Assert( ext[3] >= ext[2], "Wrong extents in PDFWriter::extents" );
+  Assert( ext[5] >= ext[4], "Wrong extents in PDFWriter::extents" );
+  nbix = static_cast< std::size_t >( ext[1] - ext[0] + 1 );
+  nbiy = static_cast< std::size_t >( ext[3] - ext[2] + 1 );
+  nbiz = static_cast< std::size_t >( ext[5] - ext[4] + 1 );
 
   // Compute minima and maxima of sample space
-  xmin = binsize[0] * ext[0];
-  xmax = binsize[0] * ext[1];
-  ymin = binsize[1] * ext[2];
-  ymax = binsize[1] * ext[3];
-  zmin = binsize[2] * ext[4];
-  zmax = binsize[2] * ext[5];
+  xmin = binsize[0] * static_cast< tk::real >( ext[0] );
+  xmax = binsize[0] * static_cast< tk::real >( ext[1] );
+  ymin = binsize[1] * static_cast< tk::real >( ext[2] );
+  ymax = binsize[1] * static_cast< tk::real >( ext[3] );
+  zmin = binsize[2] * static_cast< tk::real >( ext[4] );
+  zmax = binsize[2] * static_cast< tk::real >( ext[5] );
 
   // Override number of bins and minima if user-specified extents were given,
   // and copy probabilities from pdf to a logically 3D array for output
   if (!uext.empty()) {
     // Override number of bins by that based on user-specified extents
-    nbix = std::lround( (uext[1] - uext[0]) / binsize[0] );
-    nbiy = std::lround( (uext[3] - uext[2]) / binsize[1] );
-    nbiz = std::lround( (uext[5] - uext[4]) / binsize[2] );
+    Assert( uext[1] >= uext[0],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    Assert( uext[3] >= uext[2],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    Assert( uext[5] >= uext[4],
+            "Wrong user-defined extents in PDFWriter::extents" );
+    nbix = static_cast< std::size_t >(
+             std::lround( (uext[1] - uext[0]) / binsize[0] ) );
+    nbiy = static_cast< std::size_t >(
+             std::lround( (uext[3] - uext[2]) / binsize[1] ) );
+    nbiz = static_cast< std::size_t >(
+             std::lround( (uext[5] - uext[4]) / binsize[2] ) );
     // Override extents
     xmin = uext[0];
     xmax = uext[1];
@@ -1376,11 +1445,16 @@ PDFWriter::extents( const TriPDF& pdf,
           y >= 0 && y < std::lround( (uext[3] - uext[2]) / binsize[1] ) &&
           z >= 0 && z < std::lround( (uext[5] - uext[4]) / binsize[2] ))
       {
-        Assert( nbix*(z*nbiy + y) + x < nbix*nbiy*nbiz, "Bin overflow in "
+        const auto X = static_cast< std::size_t >( x );
+        const auto Y = static_cast< std::size_t >( y );
+        const auto Z = static_cast< std::size_t >( z );
+        const auto bin = nbix*(Z*nbiy + Y) + X;
+        Assert( bin < nbix*nbiy*nbiz, "Bin overflow in "
               "user-specified-extent-based bin calculation of bivariate PDF." );
         // Copy normalized probability to output pdf
-        outpdf[ nbix*(z*nbiy + y) + x ] =
-          p.second / binsize[0] / binsize[1] / binsize[2] / pdf.nsample();
+        outpdf[ bin ] =
+          p.second / binsize[0] / binsize[1] / binsize[2]
+                   / static_cast<tk::real>(pdf.nsample());
       }
     }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 04:26:49 PM MST
+  \date      Fri 13 Mar 2015 12:28:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
@@ -19,7 +19,16 @@
 
 #include <functional>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <make_unique.h>
 #include <CharmUtil.h>
