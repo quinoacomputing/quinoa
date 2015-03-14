@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/STLTxtMeshReader.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:17:13 AM MST
+  \date      Sat 14 Mar 2015 06:32:30 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ASCII STL (STereoLithography) reader class declaration
   \details   ASCII STL (STereoLithographu) reader class declaration.
@@ -57,10 +57,10 @@ class STLTxtMeshReader : public Reader {
     };
 
     //! Read (or count vertices in) ASCII STL mesh
-    size_t readFacets( const bool store,
-                       tk::real* const x = nullptr,
-                       tk::real* const y = nullptr,
-                       tk::real* const z = nullptr );
+    std::size_t readFacets( const bool store,
+                            tk::real* const x = nullptr,
+                            tk::real* const y = nullptr,
+                            tk::real* const z = nullptr );
 
     const bool STORE = true;                 //!< Indicator to store facets
     const bool COUNT = false;                //!< Indicator to only count facets

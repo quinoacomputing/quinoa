@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:18:29 AM MST
+  \date      Sat 14 Mar 2015 07:20:36 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -113,21 +113,21 @@ GmshMeshWriter::writeElements()
   m_outFile << "$Elements" << std::endl;
 
   // Write out number of elements
-  m_outFile << m_mesh.lininpoel().size() +
-               m_mesh.triinpoel().size() +
-               m_mesh.tetinpoel().size()
+  m_outFile << m_mesh.lininpoel().size()/2 +
+               m_mesh.triinpoel().size()/3 +
+               m_mesh.tetinpoel().size()/4
             << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::LIN, m_mesh.linId(), m_mesh.lintag(),
+  writeElemBlock( 2, GmshElemType::LIN, m_mesh.linId(), m_mesh.lintag(),
                   m_mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::TRI, m_mesh.triId(), m_mesh.tritag(),
+  writeElemBlock( 3, GmshElemType::TRI, m_mesh.triId(), m_mesh.tritag(),
                   m_mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( GmshElemType::TET, m_mesh.tetId(), m_mesh.tettag(),
+  writeElemBlock( 4, GmshElemType::TET, m_mesh.tetId(), m_mesh.tettag(),
                   m_mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
@@ -135,22 +135,23 @@ GmshMeshWriter::writeElements()
 }
 
 void
-GmshMeshWriter::writeElemBlock( GmshElemType type,
+GmshMeshWriter::writeElemBlock( std::size_t nnpe,
+                                GmshElemType type,
                                 const std::vector< int >& id,
                                 const std::vector< std::vector< int > >& tag,
-                                const std::vector< std::vector< int > >& inpoel )
+                                const std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
 //! \param[in] type Element type
 //! \param[in] id Vector of element ids
 //! \param[in] tag Vectors of element tags
-//! \param[in] inpoel Vectors of element connectivities
+//! \param[in] inpoel Element connectivity
 //! \author J. Bakosi
 //******************************************************************************
 {
   if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
 
-  auto n = inpoel.size();
+  auto n = inpoel.size()/nnpe;
 
   if (isASCII()) {
 
@@ -162,14 +163,13 @@ GmshMeshWriter::writeElemBlock( GmshElemType type,
             std::ostream_iterator< int >( m_outFile, " " ) );
       m_outFile << tag[i].back() << " ";
 
-      copy( inpoel[i].begin(), inpoel[i].end()-1,
-            std::ostream_iterator< int >( m_outFile, " ") );
-      m_outFile << inpoel[i].back() << std::endl;
+      for (std::size_t p=0; p<nnpe; p++) m_outFile << inpoel[i*nnpe+p] << " ";
+      m_outFile << std::endl;
     }
 
   } else {
 
-    int ntags = tag[0].size();
+    int ntags = static_cast< int >( tag[0].size() );
     // elm-type num-of-elm-follow number-of-tags
     m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
     m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
@@ -180,10 +180,10 @@ GmshMeshWriter::writeElemBlock( GmshElemType type,
         reinterpret_cast<const char*>(&id[i]), sizeof(int) );
       // element tags
       m_outFile.write( reinterpret_cast<const char*>(tag[i].data()),
-                       tag[i].size()*sizeof(int) );
+                       static_cast<std::streamsize>(tag[i].size()*sizeof(int)) );
       // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<const char*>(inpoel[i].data()),
-                       inpoel[i].size()*sizeof(int) );
+      m_outFile.write( reinterpret_cast<const char*>(&inpoel[i*nnpe]),
+                       static_cast<std::streamsize>(nnpe*sizeof(int)) );
     }
 
   }

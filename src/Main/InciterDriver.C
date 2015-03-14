@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 03:27:40 PM MST
+  \date      Sat 14 Mar 2015 12:38:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
@@ -19,7 +19,17 @@
 #include <NetgenMeshWriter.h>
 #include <GmshMeshWriter.h>
 #include <ExodusIIMeshWriter.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <inciter.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 extern CProxy_Main mainProxy;
 
@@ -86,7 +96,7 @@ InciterDriver::execute() const
   const auto nchare =
     tk::linearLoadDistributor(
        g_inputdeck.get< tag::cmd, tag::virtualization >(),
-       g_mesh.tetinpoel().size(),
+       g_mesh.tetinpoel().size()/4,
        chunksize,
        remainder );
 
@@ -114,11 +124,11 @@ const
   m_print.item( "Number of nodes", g_mesh.nnode() );
 
   if (!g_mesh.lininpoel().empty())
-    m_print.item( "Number of lines", g_mesh.lininpoel().size() );
+    m_print.item( "Number of lines", g_mesh.lininpoel().size()/2 );
   if (!g_mesh.triinpoel().empty())
-    m_print.item( "Number of triangles", g_mesh.triinpoel().size() );
+    m_print.item( "Number of triangles", g_mesh.triinpoel().size()/3 );
   if (!g_mesh.tetinpoel().empty())
-    m_print.item( "Number of tetrahedra", g_mesh.tetinpoel().size() );
+    m_print.item( "Number of tetrahedra", g_mesh.tetinpoel().size()/4 );
 
   // Print out info on load distribution
   m_print.section( "Load distribution" );

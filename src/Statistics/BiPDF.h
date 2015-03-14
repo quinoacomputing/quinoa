@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/BiPDF.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 07:44:08 AM MST
+  \date      Thu 12 Mar 2015 07:09:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Joint bivariate PDF estimator
   \details   Joint bivariate PDF estimator. This class can be used to estimate a
@@ -39,7 +39,7 @@ class BiPDF {
 
     // Hash functor for key_type
     struct key_hash {
-      long operator()( const key_type& key ) const {
+      std::size_t operator()( const key_type& key ) const {
         return std::hash< long >()( key[0] ) ^ std::hash< long >()( key[1] );
       }
     };

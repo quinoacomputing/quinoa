@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/TxtStatWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:14:24 AM MST
+  \date      Fri 13 Mar 2015 08:59:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text statistics writer declaration
   \details   This file declares the ASCII statistics writer class that
@@ -37,7 +37,8 @@ class TxtStatWriter : public tk::Writer {
                  const std::vector< std::string >& nameCen ) const;
 
     //! Write statistics file
-    std::size_t stat( int it, tk::real t,
+    std::size_t stat( uint64_t it,
+                      tk::real t,
                       const std::vector< tk::real >& ordinary,
                       const std::vector< tk::real >& central );
 };

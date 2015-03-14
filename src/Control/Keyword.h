@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keyword.h
   \author    J. Bakosi
-  \date      Tue 13 Jan 2015 11:57:43 AM MST
+  \date      Thu 12 Mar 2015 12:04:23 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic definition of a keyword
   \details   Generic definition of all keywords - both command-line arguments
@@ -14,12 +14,14 @@
 
 #include <boost/optional.hpp>
 
-#ifndef __INTEL_COMPILER
+#if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wshadow"
 #endif
+
 #include <pegtl.hh>
-#ifndef __INTEL_COMPILER
+
+#if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
 

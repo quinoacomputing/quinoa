@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 11:36:47 AM MST
+  \date      Thu 12 Mar 2015 10:37:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -53,9 +53,12 @@ void Timer_object::test< 2 >() {
   usleep( 1000000 );    // in micro-seconds, sleep for 1.0 second
   const auto stamp = timer.hms();
   // test if time measured with at least 1/10th of a millisecond precision
-  ensure_equals( "time 1.0s elapsed as hrs", stamp.hrs.count(), 0.0, precision );
-  ensure_equals( "time 1.0s elapsed as min", stamp.min.count(), 0.0, precision );
-  ensure_equals( "time 1.0s elapsed as sec", stamp.sec.count(), 1.0, precision );
+  ensure_equals( "time 1.0s elapsed as hrs",
+                 static_cast<tk::real>(stamp.hrs.count()), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as min",
+                 static_cast<tk::real>(stamp.min.count()), 0.0, precision );
+  ensure_equals( "time 1.0s elapsed as sec",
+                 static_cast<tk::real>(stamp.sec.count()), 1.0, precision );
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by term
@@ -74,19 +77,19 @@ void Timer_object::test< 3 >() {
   tk::Timer::Watch ete, eta;
   timer.eta( term, time, nstep, it, ete, eta );
   // test estimated time elapsed with given precision
-  ensure_equals( "estimated time elapsed in hrs", ete.hrs.count(),
-                 0.0, precision );
-  ensure_equals( "estimated time elapsed in min", ete.min.count(),
-                 0.0, precision );
-  ensure_equals( "estimated time elapsed in sec", ete.sec.count(),
-                 1.0, precision );
+  ensure_equals( "estimated time elapsed in hrs",
+                 static_cast<tk::real>(ete.hrs.count()), 0.0, precision );
+  ensure_equals( "estimated time elapsed in min",
+                 static_cast<tk::real>(ete.min.count()), 0.0, precision );
+  ensure_equals( "estimated time elapsed in sec",
+                 static_cast<tk::real>(ete.sec.count()), 1.0, precision );
   // test estimated time to accomplishment with given precision
-  ensure_equals( "estimated time to accomlishment in hrs", eta.hrs.count(),
-                 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in min", eta.min.count(),
-                 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in sec", eta.sec.count(),
-                 4.0, precision );
+  ensure_equals( "estimated time to accomlishment in hrs",
+                 static_cast<tk::real>(eta.hrs.count()), 0.0, precision );
+  ensure_equals( "estimated time to accomlishment in min",
+                 static_cast<tk::real>(eta.min.count()), 0.0, precision );
+  ensure_equals( "estimated time to accomlishment in sec",
+                 static_cast<tk::real>(eta.sec.count()), 4.0, precision );
 }
 
 //! Test estimated time elapsed and to accomplishment triggered by nstep
@@ -105,16 +108,19 @@ void Timer_object::test< 4 >() {
   tk::Timer::Watch ete, eta;
   timer.eta( term, time, nstep, it, ete, eta );
   // test estimated time elapsed with given precision
-  ensure_equals( "estimated time elapsed in hrs", ete.hrs.count(), 0.0, precision );
-  ensure_equals( "estimated time elapsed in min", ete.min.count(), 0.0, precision );
-  ensure_equals( "estimated time elapsed in sec", ete.sec.count(), 1.0, precision );
+  ensure_equals( "estimated time elapsed in hrs",
+                 static_cast<tk::real>(ete.hrs.count()), 0.0, precision );
+  ensure_equals( "estimated time elapsed in min",
+                 static_cast<tk::real>(ete.min.count()), 0.0, precision );
+  ensure_equals( "estimated time elapsed in sec",
+                 static_cast<tk::real>(ete.sec.count()), 1.0, precision );
   // test estimated time to accomplishment with given precision
-  ensure_equals( "estimated time to accomlishment in hrs", eta.hrs.count(),
-                 0.0, precision );
-  ensure_equals( "estimated time to accomlishment in min", eta.min.count(),
-                 1.0, precision );
-  ensure_equals( "estimated time to accomlishment in sec", eta.sec.count(),
-                 39.0, precision );
+  ensure_equals( "estimated time to accomlishment in hrs",
+                 static_cast<tk::real>(eta.hrs.count()), 0.0, precision );
+  ensure_equals( "estimated time to accomlishment in min",
+                 static_cast<tk::real>(eta.min.count()), 1.0, precision );
+  ensure_equals( "estimated time to accomlishment in sec",
+                 static_cast<tk::real>(eta.sec.count()), 39.0, precision );
 }
 
 //! Test converting a 1.0s duration timed as a float to Timer::Watch
@@ -128,11 +134,11 @@ void Timer_object::test< 5 >() {
   const auto w = tk::hms( timer.dsec() );
   // test if time measured with at least 1/10th of a millisecond precision
   ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in hrs",
-                 w.hrs.count(), 0.0, precision );
+                 static_cast<tk::real>(w.hrs.count()), 0.0, precision );
   ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in min",
-                 w.min.count(), 0.0, precision );
+                 static_cast<tk::real>(w.min.count()), 0.0, precision );
   ensure_equals( "time 1.0s elapsed as float represented as Timer::Watch in sec",
-                 w.sec.count(), 1.0, precision );
+                 static_cast<tk::real>(w.sec.count()), 1.0, precision );
 }
 
 } // tut::

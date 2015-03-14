@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Wed 11 Mar 2015 07:56:31 AM MDT
+  \date      Sat 14 Mar 2015 12:19:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -28,124 +28,92 @@ class UnsMesh {
   public:
     /** @name Point coordinates accessors */
     ///@{
-    const std::vector< tk::real >& x() const { return m_x; }
-    const std::vector< tk::real >& y() const { return m_y; }
-    const std::vector< tk::real >& z() const { return m_z; }
-    std::vector< tk::real >& x() { return m_x; }
-    std::vector< tk::real >& y() { return m_y; }
-    std::vector< tk::real >& z() { return m_z; }
+    const std::vector< tk::real >& x() const noexcept { return m_x; }
+    const std::vector< tk::real >& y() const noexcept { return m_y; }
+    const std::vector< tk::real >& z() const noexcept { return m_z; }
+    std::vector< tk::real >& x() noexcept { return m_x; }
+    std::vector< tk::real >& y() noexcept { return m_y; }
+    std::vector< tk::real >& z() noexcept { return m_z; }
     ///@}
 
     /** @name Node ID accessors */
     ///@{
-    const std::vector< int >& nodeId() const { return m_nodeId; }
-    std::vector< int >& nodeId() { return m_nodeId; }
+    const std::vector< int >& nodeId() const noexcept { return m_nodeId; }
+    std::vector< int >& nodeId() noexcept { return m_nodeId; }
     ///@}
 
     /** @name Line element id accessors */
     ///@{
-    const std::vector< int >& linId() const { return m_linId; }
-    std::vector< int >& linId() { return m_linId; }
+    const std::vector< int >& linId() const noexcept { return m_linId; }
+    std::vector< int >& linId() noexcept { return m_linId; }
     ///@}
 
     /** @name Triangle element id accessors */
     ///@{
-    const std::vector< int >& triId() const { return m_triId; }
-    std::vector< int >& triId() { return m_triId; }
+    const std::vector< int >& triId() const noexcept { return m_triId; }
+    std::vector< int >& triId() noexcept { return m_triId; }
     ///@}
 
     /** @name Tetrahedron element id accessors */
     ///@{
-    const std::vector< int >& tetId() const { return m_tetId; }
-    std::vector< int >& tetId() { return m_tetId; }
+    const std::vector< int >& tetId() const noexcept { return m_tetId; }
+    std::vector< int >& tetId() noexcept { return m_tetId; }
     ///@}
 
     /** @name Number of nodes accessors */
     ///@{
-    std::size_t nnode() const { return m_nodeId.size(); }
-    std::size_t nnode() { return m_nodeId.size(); }
+    std::size_t nnode() const noexcept { return m_nodeId.size(); }
+    std::size_t nnode() noexcept { return m_nodeId.size(); }
     ///@}
 
     //! Total number of elements accessor
-    std::size_t nelem() const
-    { return m_lininpoel.size() + m_triinpoel.size() + m_tetinpoel.size(); }
+    std::size_t nelem() const noexcept {
+      return m_lininpoel.size()/2 + m_triinpoel.size()/3 + m_tetinpoel.size()/4;
+    }
 
     //! Number of element blocks accessor
-    int neblk() const {
+    std::size_t neblk() const noexcept {
       return !m_lininpoel.empty() + !m_triinpoel.empty() + !m_tetinpoel.empty();
     }
 
     /** @name Line elements connectivity accessors */
     ///@{
-    const std::vector< std::vector< int > >& lininpoel() const
-    { return m_lininpoel; }
-    std::vector< std::vector< int > >& lininpoel()
-    { return m_lininpoel; }
+    const std::vector< int >& lininpoel() const noexcept { return m_lininpoel; }
+    std::vector< int >& lininpoel() noexcept { return m_lininpoel; }
     ///@}
 
     /** @name Line element tags accessors */
     ///@{
-    const std::vector< std::vector< int > >& lintag() const { return m_lintag; }
-    std::vector< std::vector< int > >& lintag() { return m_lintag; }
+    const std::vector< std::vector< int > >& lintag() const noexcept
+    { return m_lintag; }
+    std::vector< std::vector< int > >& lintag() noexcept { return m_lintag; }
     ///@}
 
     /** @name Triangles elements connectivity accessors */
     ///@{
-    const std::vector< std::vector< int > >& triinpoel() const
-    { return m_triinpoel; }
-    std::vector< std::vector< int > >& triinpoel()
-    { return m_triinpoel; }
+    const std::vector< int >& triinpoel() const noexcept { return m_triinpoel; }
+    std::vector< int >& triinpoel() noexcept { return m_triinpoel; }
     ///@}
 
     /** @name Triangle element tags accessors */
     ///@{
-    const std::vector< std::vector< int > >& tritag() const { return m_tritag; }
-    std::vector< std::vector< int > >& tritag() { return m_tritag; }
+    const std::vector< std::vector< int > >& tritag() const noexcept
+    { return m_tritag; }
+    std::vector< std::vector< int > >& tritag() noexcept { return m_tritag; }
     ///@}
 
     /** @name Tetrahedra elements connectivity accessors */
     ///@{
-    const std::vector< std::vector< int > >& tetinpoel() const
-    { return m_tetinpoel; }
-    std::vector< std::vector< int > >& tetinpoel()
-    { return m_tetinpoel; }
+    const std::vector< int >& tetinpoel() const noexcept { return m_tetinpoel; }
+    std::vector< int >& tetinpoel() noexcept { return m_tetinpoel; }
     ///@}
 
     /** @name Tetrahedra element tags accessors */
     ///@{
-    const std::vector< std::vector< int > >& tettag() const { return m_tettag; }
-    std::vector< std::vector< int > >& tettag() { return m_tettag; }
+    const std::vector< std::vector< int > >& tettag() const noexcept
+    { return m_tettag; }
+    std::vector< std::vector< int > >& tettag() noexcept { return m_tettag; }
     ///@}
-
-    //! Echo element tags and connectivity in all element sets
-    void echoElemSets( const tk::Print& print ) const;
-
-//     /** @name Pack/Unpack: Serialize unstructured mesh object for Charm++ */
-//     ///@{
-//     //! \brief Pack/Unpack serialize member function
-//     //! \param[inout] p Charm++'s PUP::er serializer object reference
-//     //! \author J. Bakosi
-//     void pup( PUP::er& p ) {
-//       p | m_nodeId;
-//       p | m_x;
-//       p | m_y;
-//       p | m_z;
-//       p | m_linId;
-//       p | m_triId;
-//       p | m_tetId;
-//       p | m_lininpoel;
-//       p | m_triinpoel;
-//       p | m_tetinpoel;
-//       p | m_lintag;
-//       p | m_tritag;
-//       p | m_tettag;
-//     }
-//     //! \brief Pack/Unpack serialize operator|
-//     //! \param[inout] p Charm++'s PUP::er serializer object reference
-//     //! \param[inout] m Unstructured mesh object reference
-//     //! \author J. Bakosi
-//     friend void operator|( PUP::er& p, UnsMesh& m ) { m.pup(p); }
-//     ///@}
 
   private:
     //!< Node Ids
@@ -157,19 +125,19 @@ class UnsMesh {
     std::vector< tk::real > m_z;
 
     //! Element ids
-    std::vector< int > m_linId;                   //!< Line element ids
-    std::vector< int > m_triId;                   //!< Triangle element ids
-    std::vector< int > m_tetId;                   //!< Tetrahedron element ids
+    std::vector< int > m_linId;                 //!< Line element ids
+    std::vector< int > m_triId;                 //!< Triangle element ids
+    std::vector< int > m_tetId;                 //!< Tetrahedron element ids
 
     //! Element connectivity
-    std::vector< std::vector< int > > m_lininpoel;//!< Line connectivity
-    std::vector< std::vector< int > > m_triinpoel;//!< Triangle connectivity
-    std::vector< std::vector< int > > m_tetinpoel;//!< Tetrahedron connectivity
+    std::vector< int > m_lininpoel;             //!< Line connectivity
+    std::vector< int > m_triinpoel;             //!< Triangle connectivity
+    std::vector< int > m_tetinpoel;             //!< Tetrahedron connectivity
 
     //! Element tags
-    std::vector< std::vector< int > > m_lintag;   //!< Line tags
-    std::vector< std::vector< int > > m_tritag;   //!< Triangle tags
-    std::vector< std::vector< int > > m_tettag;   //!< Tetrahedron tags
+    std::vector< std::vector< int > > m_lintag; //!< Line tags
+    std::vector< std::vector< int > > m_tritag; //!< Triangle tags
+    std::vector< std::vector< int > > m_tettag; //!< Tetrahedron tags
 };
 
 } // tk::

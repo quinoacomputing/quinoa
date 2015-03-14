@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Suite.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 10:38:35 PM MST
+  \date      Fri 13 Mar 2015 12:26:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 random number generator test suite
   \details   This file declares the TestU01 random number generator test suite,
@@ -195,4 +195,13 @@ TestU01Suite::ntest() const
   return m_ctrs.size() / rngs.size();
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <testu01suite.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

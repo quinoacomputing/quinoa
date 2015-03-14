@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:18:55 AM MST
+  \date      Wed 11 Mar 2015 09:56:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh writer class definition
   \details   Netgen mesh writer class definition. Only supports tetrahedra.
@@ -54,27 +54,27 @@ NetgenMeshWriter::writeElements()
 //******************************************************************************
 {
   // Write out number of tetrahedra
-  m_outFile << m_mesh.tetinpoel().size() << std::endl;
+  m_outFile << m_mesh.tetinpoel().size()/4 << std::endl;
 
   // Write out tetrehadra element tags and connectivity
-  for (std::size_t i=0; i<m_mesh.tetinpoel().size(); ++i) {
+  for (std::size_t i=0; i<m_mesh.tetinpoel().size()/4; ++i) {
     // tag n[1-4]
     m_outFile << '\t' << m_mesh.tettag()[i][0]
-              << '\t' << m_mesh.tetinpoel()[i][3]
-              << '\t' << m_mesh.tetinpoel()[i][0]
-              << '\t' << m_mesh.tetinpoel()[i][1]
-              << '\t' << m_mesh.tetinpoel()[i][2] << std::endl;
+              << '\t' << m_mesh.tetinpoel()[i*4+3]
+              << '\t' << m_mesh.tetinpoel()[i*4+0]
+              << '\t' << m_mesh.tetinpoel()[i*4+1]
+              << '\t' << m_mesh.tetinpoel()[i*4+2] << std::endl;
   }
 
   // Write out number of triangles
-  m_outFile << m_mesh.triinpoel().size() << std::endl;
+  m_outFile << m_mesh.triinpoel().size()/3 << std::endl;
 
   // Write out triangle element tags and connectivity
-  for (std::size_t i=0; i<m_mesh.triinpoel().size(); ++i) {
+  for (std::size_t i=0; i<m_mesh.triinpoel().size()/3; ++i) {
     // tag n[1-4]
     m_outFile << '\t' << m_mesh.tritag()[i][0]
-              << '\t' << m_mesh.triinpoel()[i][0]
-              << '\t' << m_mesh.triinpoel()[i][1]
-              << '\t' << m_mesh.triinpoel()[i][2] << std::endl;
+              << '\t' << m_mesh.triinpoel()[i*3+0]
+              << '\t' << m_mesh.triinpoel()[i*3+1]
+              << '\t' << m_mesh.triinpoel()[i*3+2] << std::endl;
   }
 }

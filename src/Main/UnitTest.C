@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 01:06:15 PM MDT
+  \date      Thu 12 Mar 2015 10:20:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's unit test suite Charm++ main chare.
   \details   UnitTest's unit test suite Charm++ main chare. This file contains
@@ -10,10 +10,18 @@
     land.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <mpi.h>
+#include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
 
-#include <mpi-interoperate.h>   // For interoperation of MPI and Charm++
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <pup_stl.h>
 
 #include <Config.h>
@@ -264,7 +272,15 @@ int main( int argc, char **argv ) {
   return tk::ErrCode::SUCCESS;
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <charmchild.def.h>
 #include <migrated.def.h>
 #include <unittest.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

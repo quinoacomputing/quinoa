@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:45:01 PM MST
+  \date      Fri 13 Mar 2015 03:54:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -39,19 +39,21 @@ extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 template< class Init, class Coefficients >
 class WrightFisher {
 
-  void print_matrix(const char *name, const double *mat, int n, int m) const {
-    int i, j;
-    printf("%s:\n", name);
-    for(i=0; i<n; ++i) {
-        for(j=0; j<m; ++j)
-            printf("%10g ", mat[i*n+j]);
-        printf("\n");
+    void print_matrix( const char *name, const double *mat, lapack_int n,
+                       lapack_int m ) const
+    {
+      int i, j;
+      printf("%s:\n", name);
+      for(i=0; i<n; ++i) {
+          for(j=0; j<m; ++j)
+              printf("%10g ", mat[i*n+j]);
+          printf("\n");
+      }
+      printf("\n");
     }
-    printf("\n");
-  }
 
   private:
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor
@@ -93,7 +95,8 @@ class WrightFisher {
         // Initialize the first m_ncomp (N-1) scalars
         ncomp_t i;
         for (i=0; i<m_ncomp-1; ++i) {
-          particles( p, i, m_offset ) = (1.0+i)/m_ncomp;
+          particles( p, i, m_offset ) =
+            (1.0 + static_cast<tk::real>(i)) / static_cast<tk::real>(m_ncomp);
         }
         // Initialize the (N-1)th scalar from unit-sum
         tk::real& par = particles( p, i, m_offset );

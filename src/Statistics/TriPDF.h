@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/TriPDF.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 07:47:36 AM MST
+  \date      Thu 12 Mar 2015 07:10:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Joint trivariate PDF estimator
   \details   Joint trivariate PDF estimator. This class can be used to estimate
@@ -39,7 +39,7 @@ class TriPDF {
 
     // Hash functor for key_type
     struct key_hash {
-      long operator()( const key_type& key ) const {
+      std::size_t operator()( const key_type& key ) const {
         return std::hash< long >()( key[0] ) ^
                std::hash< long >()( key[1] ) ^
                std::hash< long >()( key[2] );

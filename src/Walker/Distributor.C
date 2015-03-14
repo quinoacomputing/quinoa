@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 09:20:50 AM MST
+  \date      Fri 13 Mar 2015 12:20:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -204,7 +204,8 @@ Distributor::estimateOrd( const std::vector< tk::real >& ord )
   // Wait for all integrators completing accumulation of ordinary moments
   if (m_count.get< tag::ordinary >() == m_count.get< tag::chare >()) {
     // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_ordinary) m /= g_inputdeck.get< tag::discr, tag::npar >();
+    for (auto& m : m_ordinary)
+      m /= static_cast<tk::real>( g_inputdeck.get< tag::discr, tag::npar >() );
     // Activate SDAG trigger signaling that ordinary moments have been estimated
     estimateOrdDone();
   }
@@ -228,7 +229,8 @@ Distributor::estimateCen( const std::vector< tk::real >& cen )
   // Wait for all integrators completing accumulation of central moments
   if (m_count.get< tag::central >() == m_count.get< tag::chare >()) {
     // Finish computing moments, i.e., divide sums by the number of samples
-    for (auto& m : m_central) m /= g_inputdeck.get< tag::discr, tag::npar >();
+    for (auto& m : m_central)
+      m /= static_cast<tk::real>( g_inputdeck.get< tag::discr, tag::npar >() );
     // Activate SDAG trigger signaling that central moments have been estimated
     estimateCenDone();
   }
@@ -330,7 +332,7 @@ Distributor::outPDF()
 {
   // Output PDFs at selected times
   if ( !(m_it % g_inputdeck.get< tag::interval, tag::pdf >()) ) {
-    std::size_t n = outUniPDF();       // Output univariate PDFs to file(s)
+    auto n = outUniPDF();              // Output univariate PDFs to file(s)
     n += outBiPDF();                   // Output bivariate PDFs to file(s)
     n += outTriPDF();                  // Output trivariate PDFs to file(s)
     if (n) m_output.get< tag::pdf >() = true; // Signal that PDFs were written
@@ -338,7 +340,7 @@ Distributor::outPDF()
 }
 
 void
-Distributor::writeUniPDF( const tk::UniPDF& p, std::size_t& cnt )
+Distributor::writeUniPDF( const tk::UniPDF& p, int& cnt )
 //******************************************************************************
 // Write univariate PDF to file
 //! \param[in] p Univariate PDF to output
@@ -376,7 +378,7 @@ Distributor::writeUniPDF( const tk::UniPDF& p, std::size_t& cnt )
 }
 
 void
-Distributor::writeBiPDF( const tk::BiPDF& p, std::size_t& cnt )
+Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
 //******************************************************************************
 // Write bivariate PDF to file
 //! \param[in] p Bivariate PDF to output
@@ -433,7 +435,7 @@ Distributor::writeBiPDF( const tk::BiPDF& p, std::size_t& cnt )
 }
 
 void
-Distributor::writeTriPDF( const tk::TriPDF& p, std::size_t& cnt )
+Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
 //******************************************************************************
 // Write trivariate PDF to file
 //! \param[in] p Trivariate PDF to output
@@ -489,7 +491,7 @@ Distributor::writeTriPDF( const tk::TriPDF& p, std::size_t& cnt )
                         g_inputdeck.get< tag::selected, tag::pdfctr >() );
 }
 
-std::size_t
+int
 Distributor::outUniPDF()
 //******************************************************************************
 // Output all requested univariate PDFs to file(s)
@@ -497,13 +499,13 @@ Distributor::outUniPDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::size_t cnt = 0;
+  int cnt = 0;
   for (const auto& p : m_ordupdf) writeUniPDF( p, cnt );
   for (const auto& p : m_cenupdf) writeUniPDF( p, cnt );
   return cnt;
 }
 
-std::size_t
+int
 Distributor::outBiPDF()
 //******************************************************************************
 // Output all requested bivariate PDFs to file(s)
@@ -511,13 +513,13 @@ Distributor::outBiPDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::size_t cnt = 0;
+  int cnt = 0;
   for (const auto& p : m_ordbpdf) writeBiPDF( p, cnt );
   for (const auto& p : m_cenbpdf) writeBiPDF( p, cnt );
   return cnt;
 }
 
-std::size_t
+int
 Distributor::outTriPDF()
 //******************************************************************************
 // Output all requested trivariate PDFs to file(s)
@@ -525,7 +527,7 @@ Distributor::outTriPDF()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::size_t cnt = 0;
+  int cnt = 0;
   for (const auto& p : m_ordtpdf) writeTriPDF( p, cnt );
   for (const auto& p : m_centpdf) writeTriPDF( p, cnt );
   return cnt;
@@ -662,4 +664,13 @@ Distributor::report()
   }
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <distributor.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

@@ -2,15 +2,23 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:17:02 PM MST
+  \date      Fri 13 Mar 2015 08:02:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's comamnd line parser
   \details   This file defines the command-line argument parser for the
      computational shock hydrodynamics tool, Inciter.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <Config.h>
 #include <Inciter/CmdLine/Parser.h>

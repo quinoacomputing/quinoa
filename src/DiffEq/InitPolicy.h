@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/InitPolicy.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 08:21:32 AM MST
+  \date      Thu 12 Mar 2015 09:38:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Initialization policies
   \details   This file defines initialization policy classes. As opposed to
@@ -70,7 +70,7 @@ struct InitZero {
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    memset( particles.ptr(), 0, particles.size()*sizeof(real) );
+    std::memset( particles.ptr(), 0, particles.size()*sizeof(real) );
   }
 
   static ctr::InitPolicyType type() noexcept
@@ -88,7 +88,7 @@ struct InitDelta {
                     tk::ctr::ncomp_type ncomp,
                     tk::ctr::ncomp_type offset )
   {
-    using ncomp_t = tk::ctr::ncomp_type;
+    using ncomp_t = kw::ncomp::info::expect::type;
 
     const auto& spike = deck.template get< tag::param, eq, tag::spike >().at(e);
 
@@ -102,7 +102,9 @@ struct InitDelta {
       ncomp_t i = 0;
       for (ncomp_t s=0; s<sc.size(); s+=2) {
         // compute number of samples to be set at relative probability height
-        const auto npar = particles.npar() * sc[s+1];
+        const auto npar =
+          static_cast< ncomp_t >(
+            static_cast< tk::real >( particles.npar() ) * sc[s+1] );
         // assign sample values
         for (ncomp_t p=0; p<npar; ++p) particles( i+p, c, offset ) = sc[s];
         i += npar;

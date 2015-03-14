@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:24:20 PM MST
+  \date      Thu 12 Mar 2015 09:41:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -32,9 +32,12 @@ namespace walker {
 
 extern ctr::InputDeck g_inputdeck;
 
+using ncomp_t = kw::ncomp::info::expect::type;
+
 //! \brief Differential equation factory: keys associated to their constructors
 //! \author J. Bakosi
-using DiffEqFactory = std::map< ctr::DiffEqKey, std::function< DiffEq(int) > >;
+using DiffEqFactory =
+  std::map< ctr::DiffEqKey, std::function< DiffEq( ncomp_t ) > >;
 
 //! \brief Differential equations stack
 //! \author J. Bakosi
@@ -94,7 +97,7 @@ class DiffEqStack {
         ctr::DiffEqKey key{ type, InitPolicy::type(), CoeffPolicy::type() };
         // Register equation (with policies given by mpl::vector U) into factory
         tk::recordModelLate< DiffEq, Eq< InitPolicy, CoeffPolicy > >
-                           ( factory, key, 0 );
+                           ( factory, key, static_cast<ncomp_t>(0) );
       }
     };
 
@@ -109,7 +112,7 @@ class DiffEqStack {
     //! \author J. Bakosi
     template< class EqTag >
     DiffEq createDiffEq( ctr::DiffEqType eq,
-                         std::map< ctr::DiffEqType, int >& cnt ) const {
+                         std::map< ctr::DiffEqType, ncomp_t >& cnt ) const {
       auto c = ++cnt[ eq ];   // count eqs
       --c;                    // used to index vectors starting with 0
       if ( g_inputdeck.get< tag::component, EqTag >()[c] ) {
@@ -126,31 +129,32 @@ class DiffEqStack {
     /** @name Configuration-querying functions for all SDEs */
     //! Get information on the Dirichlet SDE
     std::vector< std::pair< std::string, std::string > >
-    infoDirichlet( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoDirichlet( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on Lochner's generalized Dirichlet SDE
     std::vector< std::pair< std::string, std::string > >
-    infoGenDir( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoGenDir( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on Wright-Fisher SDE
     std::vector< std::pair< std::string, std::string > >
-    infoWrightFisher( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoWrightFisher( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on Ornstein_Uhlenbeck SDE
     std::vector< std::pair< std::string, std::string > >
-    infoOU( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on diagonal Ornstein_Uhlenbeck SDE
     std::vector< std::pair< std::string, std::string > >
-    infoDiagOU( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoDiagOU( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on Beta SDE
     std::vector< std::pair< std::string, std::string > >
-    infoBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on number-fraction Beta SDE
     std::vector< std::pair< std::string, std::string > >
-    infoNumberFractionBeta( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoNumberFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
+    const;
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
-    infoSkewNormal( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on Gamma SDE
     std::vector< std::pair< std::string, std::string > >
-    infoGamma( std::map< ctr::DiffEqType, int >& cnt ) const;
+    infoGamma( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     ///@}
 
     //! \brief Convert and return values from vector as string

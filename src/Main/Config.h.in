@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:39:45 AM MST
+  \date      Sat 14 Mar 2015 12:43:12 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
@@ -35,7 +35,6 @@ namespace tk {
 
 // Optional TPLs
 #cmakedefine HAS_MKL
-#cmakedefine HAS_TBB
 
 } // tk::
 

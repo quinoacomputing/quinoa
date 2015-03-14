@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 03:18:02 PM MST
+  \date      Thu 12 Mar 2015 10:02:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -249,7 +249,7 @@ Statistics::accumulateOrd()
     // division by the number of samples.
     const auto npar = m_particles.npar();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
-      for (int i=0; i<m_nord; ++i) {
+      for (std::size_t i=0; i<m_nord; ++i) {
        auto prod = m_particles.cvar( m_instOrd[i][0], p );
         const auto s = m_instOrd[i].size();
         for (auto j=decltype(s){1}; j<s; ++j) {
@@ -287,7 +287,7 @@ Statistics::accumulateCen( const std::vector< tk::real >& ord )
     // by the number of samples.
     const auto npar = m_particles.npar();
     for (auto p=decltype(npar){0}; p<npar; ++p) {
-      for (int i=0; i<m_ncen; ++i) {
+      for (std::size_t i=0; i<m_ncen; ++i) {
         auto prod = m_particles.cvar( m_instCen[i][0], p ) - *(m_ctr[i][0]);
         const auto s = m_instCen[i].size();
         for (auto j=decltype(s){1}; j<s; ++j) {

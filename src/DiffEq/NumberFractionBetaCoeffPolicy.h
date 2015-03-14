@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBetaCoeffPolicy.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 07:18:49 AM MST
+  \date      Fri 13 Mar 2015 03:58:30 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Number-fraction beta SDE coefficients policies
   \details   This file defines coefficients policy classes for the
@@ -173,9 +173,13 @@ class NumberFractionBetaCoeffJRRJ {
       std::vector< tk::ctr::Product > means;
       std::vector< tk::ctr::Product > vars;
       for (tk::ctr::ncomp_type c=0; c<ncomp; ++c) {
-        tk::ctr::Term m( toupper(depvar), c, tk::ctr::Moment::ORDINARY );
+        tk::ctr::Term m( static_cast<char>(toupper(depvar)),
+                         c,
+                         tk::ctr::Moment::ORDINARY );
         means.push_back( tk::ctr::Product( { m } ) );
-        tk::ctr::Term f( tolower(depvar), c, tk::ctr::Moment::CENTRAL );
+        tk::ctr::Term f( static_cast<char>(tolower(depvar)),
+                         c,
+                         tk::ctr::Moment::CENTRAL );
         vars.push_back( tk::ctr::Product( { f, f } ) );
       }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Wed 17 Dec 2014 04:45:22 PM MST
+  \date      Thu 12 Mar 2015 10:43:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -46,7 +46,7 @@ void RNG_object::test< 2 >() {
 
   try {
 
-    m.param( static_cast< tk::ctr::RNGType >( -123433325 ) );
+    m.param( static_cast< tk::ctr::RNGType >( 250 ) );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -155,7 +155,7 @@ void RNG_object::test< 11 >() {
   std::map< tk::ctr::RNGType, tk::ctr::RNGSSEParam > b;
   ensure_equals( "does not return default seed for no parameters",
                  m.param< tag::seed >
-                        ( tk::ctr::RNGType::RNGSSE_GM31, 0, b ), 0 );
+                        ( tk::ctr::RNGType::RNGSSE_GM31, 0U, b ), 0 );
 }
 
 //! Test that member function param<>() returns parameter for specified

@@ -3,12 +3,12 @@ cmake_minimum_required(VERSION 2.8.5)
 project(Mesh CXX)
 
 add_library(Mesh
-            UnsMesh.C
+            DerivedData.C
             STLMesh.C
             ZoltanInterOp.C
 )
 
-removeWarnings( "UnsMesh.C;ZoltanInterOp.C")
+removeWarnings("ZoltanInterOp.C")
 
 INSTALL(TARGETS Mesh
   	RUNTIME DESTINATION bin COMPONENT Runtime

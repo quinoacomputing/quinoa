@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:56:16 PM MST
+  \date      Fri 13 Mar 2015 08:05:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -11,10 +11,18 @@
     equivalent to main() in Charm++-land.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <mpi.h>
+#include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
 
-#include <mpi-interoperate.h>   // For interoperation of MPI and Charm++
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <pup_stl.h>
 
 #include <Config.h>
@@ -193,4 +201,13 @@ int main( int argc, char **argv ) {
   return 0;  
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <inciter.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

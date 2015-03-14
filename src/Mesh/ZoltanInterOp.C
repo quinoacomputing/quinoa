@@ -2,17 +2,24 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Mon 09 Mar 2015 10:10:12 PM MDT
+  \date      Sat 14 Mar 2015 06:46:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
     partitioning.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <zoltan.h>
-
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <ExceptionMPI.h>
 #include <ZoltanInterOp.h>
@@ -32,7 +39,11 @@ struct HGRAPH_DATA {
   ZOLTAN_ID_TYPE *nborGID;
 };
 
-static int get_number_of_vertices( void *data, int *ierr );
+static int get_number_of_vertices( void *data, int *ierr ) {
+  HGRAPH_DATA *hg = (HGRAPH_DATA *)data;
+  *ierr = ZOLTAN_OK;
+  return hg->numMyVertices;
+}
 
 void partitionMesh( const tk::UnsMesh& mesh ) {
 
@@ -62,12 +73,21 @@ void partitionMesh( const tk::UnsMesh& mesh ) {
 
   // Create hypergraph data structure based on mesh
   HGRAPH_DATA hg;
-  hg.numMyVertices = mesh.nnode();
+  hg.numMyVertices = static_cast< int >( mesh.nnode() );
   hg.numMyHEdges = hg.numMyVertices;
-  hg.vtxGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * hg.numMyVertices);
-  hg.edgeGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) * hg.numMyHEdges);
-  hg.nborIndex = (int *)malloc(sizeof(int) * (hg.numMyHEdges + 1));
-  for (int i=0; i<hg.numMyVertices; ++i) hg.vtxGID[i] = mesh.nodeId()[i];
+  hg.vtxGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) *
+                                    static_cast<std::size_t>(hg.numMyVertices));
+  hg.edgeGID = (ZOLTAN_ID_PTR)malloc(sizeof(ZOLTAN_ID_TYPE) *
+                                     static_cast<std::size_t>(hg.numMyHEdges));
+  hg.nborIndex = (int*)malloc(sizeof(int) *
+                              static_cast<std::size_t>(hg.numMyHEdges + 1));
+  for (int i=0; i<hg.numMyVertices; ++i) {
+    auto I = static_cast< std::size_t >( i );
+    auto id = mesh.nodeId()[ I ];
+    Assert( id >= 0,
+      "Node IDs must be positive required by ZOLTAN_ID_TYPE = unsigned int" );
+    hg.vtxGID[ I ] = static_cast< ZOLTAN_ID_TYPE >( id );
+  }
 
   // Set Zoltan query functions
   Zoltan_Set_Num_Obj_Fn( zz, get_number_of_vertices, &hg );
@@ -82,15 +102,6 @@ void partitionMesh( const tk::UnsMesh& mesh ) {
   // Destroy Zoltan data structure
   Zoltan_Destroy( &zz );
 }
-
-// Query functions
-
-static int get_number_of_vertices( void *data, int *ierr ) {
-  HGRAPH_DATA *hg = (HGRAPH_DATA *)data;
-  *ierr = ZOLTAN_OK;
-  return hg->numMyVertices;
-}
-
 
 } // zoltan::
 } // tk::

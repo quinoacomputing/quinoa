@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 12:33:38 PM MST
+  \date      Fri 13 Mar 2015 03:50:26 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -38,6 +38,8 @@ namespace tk {
 //! Toolkit general purpose grammar definition
 namespace grm {
 
+  using ncomp_t = kw::ncomp::info::expect::type;
+
   //! Parser's printer: this should be defined once per library in global-scope
   //! (still in namespace, of course) by a parser. It is defined in
   //! Control/[executable]/CmdLine/Parser.C, since every executable has at least
@@ -47,7 +49,7 @@ namespace grm {
   // Common InputDeck state
 
   //! Out-of-struct storage of field ID for pushing terms for statistics
-  static kw::ncomp::info::expect::type field = 0;
+  static ncomp_t field = 0;
   //! \brief Parser-lifetime storage for dependent variables selected.
   //! \details Used to track the dependent variable of differential equations
   //!   (i.e., models) assigned during parsing. It needs to be case insensitive
@@ -586,8 +588,8 @@ namespace grm {
   template< class Stack, class push >
   struct match_depvar : pegtl::action_base< match_depvar< Stack, push > > {
     static void apply( const std::string& value, Stack& stack ) {
-      // convert matched string to char
-      char var = stack.template convert< char >( value );
+      // convert matched string to char (int)
+      auto var = stack.template convert< char >( value );
       // find matched variable in set of selected ones
       if (depvars.find( var ) != depvars.end())
         push::apply( value, stack );
@@ -683,7 +685,9 @@ namespace grm {
       stats.back().emplace_back( tk::ctr::Term( v, field, m ) );
       // If central moment, trigger mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( toupper(v), field, tk::ctr::Moment::ORDINARY );
+        tk::ctr::Term term( static_cast<char>(toupper(v)),
+                            field,
+                            tk::ctr::Moment::ORDINARY );
         stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
       }
       field = 0;            // reset default field
@@ -711,7 +715,9 @@ namespace grm {
       pdf.back().emplace_back( tk::ctr::Term( value[0], field, m ) );
       // If central moment, trigger mean (in statistics)
       if (m == tk::ctr::Moment::CENTRAL) {
-        tk::ctr::Term term( toupper(value[0]), field, tk::ctr::Moment::ORDINARY );
+        tk::ctr::Term term( static_cast<char>(toupper(value[0])),
+                            field,
+                            tk::ctr::Moment::ORDINARY );
         auto& stats = stack.template get< tag::stat >();
         if (!stats.empty())
           stats.insert( stats.end()-1, tk::ctr::Product( 1, term ) );
@@ -858,7 +864,9 @@ namespace grm {
   struct save_field : pegtl::action_base< save_field< Stack > > {
     static void apply( const std::string& value, Stack& stack ) {
       // field ID numbers start at 0
-      field = stack.template convert< int >( value ) - 1; 
+      auto f = stack.template convert< long >( value ) - 1; 
+      Assert( f>=0, "Field value must be non-negative in tk::grm::save_field" );
+      field = static_cast< ncomp_t >( f );
     }
   };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 03:49:08 PM MST
+  \date      Thu 12 Mar 2015 10:00:11 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -24,6 +24,7 @@ template< class State, typename SeqNumType, unsigned int (*Generate)(State*) >
 class RNGSSE {
 
     using InitFn = void (*)( State*, SeqNumType );
+    using ncomp_t = kw::ncomp::info::expect::type;    
 
   public:
     //! \brief Constructor
@@ -52,9 +53,11 @@ class RNGSSE {
     //! \param[in] tid Thread (or more precisely) stream ID
     //! \param[in] num Number of RNGs to generate
     //! \param[inout r Pointer to memory to write the RNGs to
-    void uniform( int tid, int num, double* r ) const {
+    void uniform( int tid, ncomp_t num, double* r ) const {
       for (int i=0; i<num; ++i)
-        r[i] = static_cast<double>( Generate( &m_stream[tid] ) ) / 4294967296.0;
+        r[i] = static_cast<double>(
+                 Generate( &m_stream[ static_cast<std::size_t>(tid) ] ) )
+               / 4294967296.0;
     }
 
     //! Gaussian RNG: Generate Gaussian random numbers
@@ -62,7 +65,7 @@ class RNGSSE {
     //! \param[in] num Number of RNGs to generate
     //! \param[inout r Pointer to memory to write the RNGs to
     // TODO: not yet implemented
-    void gaussian( int tid, int num, double* r ) const {
+    void gaussian( int tid, ncomp_t num, double* r ) const {
       Throw( "RNGSSE::gaussian undefined" );
       IGNORE(tid);
       IGNORE(num);
@@ -88,7 +91,7 @@ class RNGSSE {
       m_stream = tk::make_unique< State[] >( x.m_nthreads );
       for (SeqNumType i=0; i<x.m_nthreads; ++i) {
         m_stream[i] = x.m_stream[i];
-        memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );
+        std::memset( &x.m_stream[i], 0, sizeof(x.m_stream[i]) );
       }
       x.m_nthreads = 0;
       x.m_init = nullptr;

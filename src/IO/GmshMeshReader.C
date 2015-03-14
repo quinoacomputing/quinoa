@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:18:19 AM MST
+  \date      Fri 13 Mar 2015 08:46:10 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -185,34 +185,70 @@ GmshMeshReader::readElements()
       }
 
       // Read and add element tags
-      std::vector<int> tags( ntags, 0 );
+      std::vector< int > tags( static_cast<std::size_t>(ntags), 0 );
       if (isASCII()) {
-        for (int j=0; j<ntags; j++)
+        for (std::size_t j=0; j<static_cast<std::size_t>(ntags); j++)
           m_inFile >> tags[j];
       } else {
         m_inFile.read(
-          reinterpret_cast<char*>(tags.data()), ntags*sizeof(int) );
+          reinterpret_cast<char*>(tags.data()),
+          static_cast<std::streamsize>(
+            static_cast<std::size_t>(ntags) * sizeof(int) ) );
       }
       // Put in element tags for different types of elements
-      push_back( elmtype, tags, m_mesh.lintag(), m_mesh.tritag(),
-                 m_mesh.tettag() );
+      switch ( elmtype ) {
+        case GmshElemType::LIN: m_mesh.lintag().push_back( tags ); break;
+        case GmshElemType::TRI: m_mesh.tritag().push_back( tags ); break;
+        case GmshElemType::TET: m_mesh.tettag().push_back( tags ); break;
+        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
+        default: Throw( std::string("Unsupported element type ") << elmtype <<
+                        " in mesh file: " << m_filename );
+
+      }
 
       // Read and add element node list (i.e. connectivity)
-      int nnode = it->second;
+      std::size_t nnode = static_cast< std::size_t >( it->second );
       std::vector< int > nodes( nnode, 0 );
       if (isASCII()) {
-        for (int j=0; j<nnode; j++)
+        for (std::size_t j=0; j<nnode; j++)
           m_inFile >> nodes[j];
       } else {
         m_inFile.read(
-          reinterpret_cast<char*>(nodes.data()), nnode*sizeof(int) );
+          reinterpret_cast<char*>(nodes.data()),
+            static_cast<std::streamsize>( nnode * sizeof(int) ) );
       }
       // Put in element connectivity for different types of elements
-      push_back( elmtype, nodes, m_mesh.lininpoel(), m_mesh.triinpoel(),
-                 m_mesh.tetinpoel() );
+      switch ( elmtype ) {
+        case GmshElemType::LIN:
+          for (const auto& j : nodes) m_mesh.lininpoel().push_back( j );
+          break;
+        case GmshElemType::TRI:
+          for (const auto& j : nodes) m_mesh.triinpoel().push_back( j );
+          break;
+        case GmshElemType::TET:
+          for (const auto& j : nodes) m_mesh.tetinpoel().push_back( j );
+          break;
+        case GmshElemType::PNT:
+          break;     // ignore 1-node 'point element' type
+        default: Throw( std::string("Unsupported element type ") << elmtype <<
+                        " in mesh file: " << m_filename );
+      }
 
       // Put in elemId for different types of elements
-      push_back( elmtype, id, m_mesh.linId(), m_mesh.triId(), m_mesh.tetId() );
+      switch ( elmtype ) {
+        case GmshElemType::LIN:
+          m_mesh.linId().push_back( id );
+          break;
+        case GmshElemType::TRI:
+          m_mesh.triId().push_back( id );
+          break;
+        case GmshElemType::TET:
+          m_mesh.tetId().push_back( id );
+          break;
+        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
+        default: Throw( std::string("Unsupported element type ") << elmtype <<
+                        " in mesh file: " << m_filename );
+      }
     }
   }
   getline( m_inFile, s );  // finish reading the last line

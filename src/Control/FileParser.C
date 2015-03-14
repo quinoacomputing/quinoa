@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Wed 25 Feb 2015 09:51:55 PM MST
+  \date      Thu 12 Mar 2015 10:06:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -97,7 +97,7 @@ FileParser::diagnostics( const tk::Print& print,
         // find a comma starting from after "at "
         auto eloc = e.find_first_of( ',', sloc );
         // extract line number of error from error message
-        const std::size_t lnum = std::stoi( e.substr( sloc, eloc-sloc ) );
+        const std::size_t lnum = std::stoul( e.substr( sloc, eloc-sloc ) );
         // store number of digits in line number
         const auto dlnum = eloc - sloc;
         // find a dot starting from after "at "
@@ -105,7 +105,7 @@ FileParser::diagnostics( const tk::Print& print,
         // skip line number
         sloc = e.find_first_of( ',', sloc ) + 1;
         // extract column number of error from error message
-        const decltype(sloc) cnum = std::stoi( e.substr( sloc, eloc-sloc ) )-1;
+        const decltype(sloc) cnum = std::stoul( e.substr( sloc, eloc-sloc ) )-1;
         // store erroneous line information in map
         auto& l = lines[ lnum ];
         // store number of digits in line number

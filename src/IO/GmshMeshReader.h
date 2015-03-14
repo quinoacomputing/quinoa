@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:18:14 AM MST
+  \date      Fri 13 Mar 2015 04:59:15 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class declaration
   \details   Gmsh mesh reader class declaration. Currently, this class supports
@@ -71,27 +71,6 @@ class GmshMeshReader : public Reader {
     int m_datasize;                     //!< Data size in mesh file
     GmshFileType m_type;                //!< Mesh file type: 0:ASCII, 1:binary
     UnsMesh& m_mesh;                    //!< Mesh object
-
-    //! \brief Push back object p into underlying std::vector for different
-    //!   element types
-    template< class Pushed, class ElmType1, class ElmType2, class ElmType3 >
-    void push_back( int etype,
-                    const Pushed& p,
-                    ElmType1& e1,
-                    ElmType2& e2,
-                    ElmType3& e3 )
-    {
-      using tk::operator<<;
-      switch ( etype ) {
-        case GmshElemType::LIN: e1.push_back( p ); break;
-        case GmshElemType::TRI: e2.push_back( p ); break;
-        case GmshElemType::TET: e3.push_back( p ); break;
-        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
-        default: Throw( std::string("Unsupported element type ") << etype <<
-                        " in mesh file: " << m_filename );
-
-      }
-    }
 
     //! \brief Gmsh element types and their corrseponding number of nodes
     //! \details See Gmsh documentation for element ids as keys

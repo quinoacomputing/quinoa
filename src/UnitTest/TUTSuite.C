@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 12:25:41 PM MDT
+  \date      Thu 12 Mar 2015 10:17:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -85,7 +85,9 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // created manually, i.e., without the awareness of the TUT library.
   // Unfortunately thus, there is no good way to count up these additional
   // tests.
-  if ( m_nrun == (m_ngroup-m_nmpi) * g_maxTestsInGroup + 13 ) {
+  if ( m_nrun ==
+       (m_ngroup-m_nmpi) * static_cast<std::size_t>(g_maxTestsInGroup) + 13 )
+  {
     assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
             m_ncomplete );
     // Quit
@@ -93,4 +95,13 @@ TUTSuite::evaluate( std::vector< std::string > status )
   }
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <tutsuite.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif

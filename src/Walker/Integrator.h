@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Thu 29 Jan 2015 09:32:19 AM MST
+  \date      Fri 13 Mar 2015 08:08:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -18,7 +18,18 @@
 
 #include <ParticleProperties.h>
 #include <DiffEq.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <walker.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 #include <integrator.decl.h>
 #include <Walker/InputDeck/InputDeck.h>
 #include <Statistics.h>
@@ -113,8 +124,17 @@ class Integrator : public CBase_Integrator< Proxy > {
 
 } // walker::
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #define CK_TEMPLATES_ONLY
 #include <integrator.def.h>
 #undef CK_TEMPLATES_ONLY
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #endif // Integrator_h

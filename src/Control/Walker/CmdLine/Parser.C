@@ -2,14 +2,22 @@
 /*!
   \file      src/Control/Walker/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:59:06 AM MST
+  \date      Fri 13 Mar 2015 08:06:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's comamnd line parser
   \details   Walker's comamnd line parser
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
 
 #include <charm++.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <Config.h>
 #include <Walker/CmdLine/Parser.h>
