@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/LoadDistributor.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 11:16:46 AM MST
+  \date      Sun 15 Mar 2015 12:11:38 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/LoadDistributor
   \details   Unit tests for Base/LoadDistributor
@@ -41,14 +41,16 @@ void LoadDistributor_object::test< 1 >() {
 
   uint64_t chunksize, remainder;
   tk::linearLoadDistributor( 0.5, 1234, chunksize, remainder );
-  // if exception is thrown, test fails with except
 }
 
-//! Test if linear distirbutor throws on to low virtualization parameter
+//! Test if linear distirbutor throws on too low virtualization parameter
 template<> template<>
 void LoadDistributor_object::test< 2 >() {
   set_test_name( "linear throws on too low virt" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
   try {
 
     uint64_t chunksize, remainder;
@@ -62,6 +64,7 @@ void LoadDistributor_object::test< 2 >() {
             std::string( e.what() ).find( "must be between" ) !=
               std::string::npos );
   }
+  #endif
 }
 
 //! Test if linear distirbutor throws on to high virtualization parameter
@@ -69,6 +72,9 @@ template<> template<>
 void LoadDistributor_object::test< 3 >() {
   set_test_name( "linear throws on too high virt" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
   try {
 
     uint64_t chunksize, remainder;
@@ -82,6 +88,7 @@ void LoadDistributor_object::test< 3 >() {
             std::string( e.what() ).find( "must be between" ) !=
               std::string::npos );
   }
+  #endif
 }
 
 //! Test if linear distirbutor returns number of chares less than or equal load
@@ -117,7 +124,6 @@ void LoadDistributor_object::test< 6 >() {
   // remainder should never be larger than chunksize
   ensure( "remainder too large",  remainder < chunksize );
 }
-
 
 } // tut::
 
