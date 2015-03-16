@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:57:50 AM MST
+  \date      Sun 15 Mar 2015 06:43:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck grammar definition
   \details   Inciter's input deck grammar definition. We use the Parsing
@@ -58,7 +58,7 @@ namespace deck {
   //! \brief Grammar entry point: parse keywords and ignores until eof
   //! \author J. Bakosi
   struct read_file :
-         tk::grm::read_file< Stack, keywords, tk::grm::ignore > {};
+         tk::grm::read_file< Stack, keywords, tk::grm::ignore< Stack > > {};
 
 } // deck::
 } // inciter::

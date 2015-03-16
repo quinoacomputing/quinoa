@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 08:32:24 AM MST
+  \date      Sun 15 Mar 2015 06:45:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -200,7 +200,7 @@ namespace deck {
   template< class eq >
   struct delta :
          pegtl::ifmust<
-           tk::grm::readkw< use< kw::delta >::pegtl_string >,
+           tk::grm::readkw< Stack, use< kw::delta >::pegtl_string >,
            // parse a spike ... end block (there can be multiple)
            tk::grm::block< Stack,
                            use< kw::end >,
@@ -798,7 +798,7 @@ namespace deck {
   //! 'walker' block
   struct walker :
          pegtl::ifmust<
-           tk::grm::readkw< use< kw::walker >::pegtl_string >,
+           tk::grm::readkw< Stack, use< kw::walker >::pegtl_string >,
            pegtl::sor< tk::grm::block< Stack,
                          use< kw::end >,
                          discretization_parameters,
@@ -816,7 +816,7 @@ namespace deck {
 
   //! entry point: parse keywords and ignores until eof
   struct read_file :
-         tk::grm::read_file< Stack, keywords, tk::grm::ignore > {};
+         tk::grm::read_file< Stack, keywords, tk::grm::ignore< Stack > > {};
 
 } // deck::
 } // walker::
