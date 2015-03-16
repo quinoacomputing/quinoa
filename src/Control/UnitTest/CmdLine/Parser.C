@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:10:45 PM MDT
+  \date      Sun 15 Mar 2015 05:46:19 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's comamnd line parser
   \details   This file defines the command-line argument parser for the unit
@@ -37,7 +37,8 @@ using unittest::CmdLineParser;
 CmdLineParser::CmdLineParser( int argc,
                               char** argv,
                               const tk::Print& print,
-                              ctr::CmdLine& cmdline ) :
+                              ctr::CmdLine& cmdline,
+                              bool& helped ) :
   StringParser( argc, argv )
 //******************************************************************************
 //  Contructor: parse the command line for UnitTest
@@ -82,17 +83,10 @@ CmdLineParser::CmdLineParser( int argc,
   // If we got here, the parser has succeeded
   print.item("Parsed command line", "success");
 
-  // Print out help on all command-line arguments if the help was requested
-  const auto helpcmd = cmdline.get< tag::help >();
-  if (helpcmd)
-    print.help< tk::QUIET >( UNITTEST_EXECUTABLE, cmdline.get< tag::cmdinfo >(),
-                             "Command-line Parameters:", "-" );
-
-  // Print out verbose help for a single keyword if requested
-  const auto helpkw = cmdline.get< tag::helpkw >();
-  if (!helpkw.keyword.empty())
-    print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
-
-  // Immediately exit if any help was output
-  if (helpcmd || !helpkw.keyword.empty()) CkExit();
+  // Will exit in main chare constructor if any help was output
+  if (cmdline.get< tag::help >() ||           // help on all cmdline args
+      !cmdline.get< tag::helpkw >().keyword.empty()) // help on a keyword
+    helped = true;
+  else
+    helped = false;
 }

@@ -2,12 +2,13 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:20:24 PM MDT
+  \date      Sun 15 Mar 2015 06:03:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     UnitTest's unit test suite Charm++ main chare.
-  \details   UnitTest's unit test suite Charm++ main chare. This file contains
+  \brief     UnitTest's Charm++ main chare and main().
+  \details   UnitTest's Charm++ main chare and main(). This file contains
     the definition of the Charm++ main chare, equivalent to main() in Charm++-
-    land.
+    land, running the serial and Charm++ unit tests as well as the ordinary
+    main() function, running the MPI unit test suite.
 */
 //******************************************************************************
 #if defined(__clang__) || defined(__GNUC__)
@@ -136,7 +137,7 @@ class Main : public CBase_Main {
     Main( CkArgMsg* msg )
     try :
       // Parse command line into m_cmdline using default simple pretty printer
-      m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline ),
+      m_cmdParser( msg->argc, msg->argv, tk::Print(), m_cmdline, m_helped ),
       // Create pretty printer initializing output streams based on command line
       m_print( m_cmdline.get< tag::verbose >() ? std::cout : std::clog ),
       // Create UnitTest driver
@@ -148,6 +149,8 @@ class Main : public CBase_Main {
                           m_print ) ),
       m_timer(1)  // Start new timer measuring the serial+Charm++ runtime
     {
+      // Immediately exit if any help was requested; help is printed in main()
+      if (m_helped) CkExit();
       // Save executable name to global-scope string so FileParser can access it
       unittest::g_executable = msg->argv[0];
       delete msg;
@@ -185,6 +188,7 @@ class Main : public CBase_Main {
     }
 
   private:
+    bool m_helped;      //!< Indicates if help was requested on the command line
     unittest::ctr::CmdLine m_cmdline;                   //!< Command line
     unittest::CmdLineParser m_cmdParser;                //!< Command line parser
     unittest::UnitTestPrint m_print;                    //!< Pretty printer
@@ -228,7 +232,27 @@ int main( int argc, char **argv ) {
 
     tk::Print print;    // quiet output by default using print, see ctr
     unittest::ctr::CmdLine cmdline;
-    unittest::CmdLineParser cmdParser( argc, argv, print, cmdline );
+    bool helped;
+    unittest::CmdLineParser cmdParser( argc, argv, print, cmdline, helped );
+
+    // Print out help on all command-line arguments if the help was requested
+    const auto helpcmd = cmdline.get< tag::help >();
+    if (peid == 0 && helpcmd)
+      print.help< tk::QUIET >( UNITTEST_EXECUTABLE,
+                               cmdline.get< tag::cmdinfo >(),
+                               "Command-line Parameters:", "-" );
+
+      // Print out verbose help for a single keyword if requested
+    const auto helpkw = cmdline.get< tag::helpkw >();
+    if (peid == 0 && !helpkw.keyword.empty())
+      print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
+
+    // Immediately exit if any help was output
+    if (helpcmd || !helpkw.keyword.empty()) {
+      MPI_Finalize();
+      return tk::ErrCode::SUCCESS;
+    }
+
     unittest::UnitTestPrint
       uprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
 
