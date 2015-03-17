@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 15 Mar 2015 06:03:50 PM MDT
+  \date      Sun 15 Mar 2015 06:06:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -62,6 +62,8 @@
   #include <tests/Control/Options/MKLUniformMethod.h>
 #endif
 #include <tests/Control/Options/RNG.h>
+
+#include <tests/Mesh/DerivedData.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,
 //!    etc., must be in global scope, unique per executable

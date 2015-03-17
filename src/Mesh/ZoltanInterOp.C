@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 06:46:59 AM MDT
+  \date      Tue 17 Mar 2015 07:27:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -81,13 +81,8 @@ void partitionMesh( const tk::UnsMesh& mesh ) {
                                      static_cast<std::size_t>(hg.numMyHEdges));
   hg.nborIndex = (int*)malloc(sizeof(int) *
                               static_cast<std::size_t>(hg.numMyHEdges + 1));
-  for (int i=0; i<hg.numMyVertices; ++i) {
-    auto I = static_cast< std::size_t >( i );
-    auto id = mesh.nodeId()[ I ];
-    Assert( id >= 0,
-      "Node IDs must be positive required by ZOLTAN_ID_TYPE = unsigned int" );
-    hg.vtxGID[ I ] = static_cast< ZOLTAN_ID_TYPE >( id );
-  }
+  for (int i=0; i<hg.numMyVertices; ++i)
+    hg.vtxGID[ static_cast<std::size_t>(i) ] = static_cast<ZOLTAN_ID_TYPE>(i+1);
 
   // Set Zoltan query functions
   Zoltan_Set_Num_Obj_Fn( zz, get_number_of_vertices, &hg );

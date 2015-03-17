@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 07:20:36 AM MDT
+  \date      Tue 17 Mar 2015 07:30:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -81,15 +81,16 @@ GmshMeshWriter::writeNodes()
   // Write node ids and coordinates: node-number x-coord y-coord z-coord
   if (isASCII()) {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
-      m_outFile << m_mesh.nodeId()[i] << " " << std::setprecision(16)
+      m_outFile << i+1 << " " << std::setprecision(16)
                 << m_mesh.x()[i] << " "
                 << m_mesh.y()[i] << " "
                 << m_mesh.z()[i] << std::endl;
     }
   } else {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
+      int I = static_cast< int >( i+1 );
       m_outFile.write(
-        reinterpret_cast<const char*>(&m_mesh.nodeId()[i]), sizeof(int) );
+        reinterpret_cast<const char*>(&I), sizeof(int) );
       m_outFile.write(
         reinterpret_cast<const char*>(&m_mesh.x()[i]), sizeof(double) );
       m_outFile.write(

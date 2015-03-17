@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:19:17 PM MDT
+  \date      Tue 17 Mar 2015 07:17:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -36,12 +36,6 @@ class UnsMesh {
     std::vector< tk::real >& z() noexcept { return m_z; }
     ///@}
 
-    /** @name Node ID accessors */
-    ///@{
-    const std::vector< int >& nodeId() const noexcept { return m_nodeId; }
-    std::vector< int >& nodeId() noexcept { return m_nodeId; }
-    ///@}
-
     /** @name Line element id accessors */
     ///@{
     const std::vector< int >& linId() const noexcept { return m_linId; }
@@ -62,8 +56,8 @@ class UnsMesh {
 
     /** @name Number of nodes accessors */
     ///@{
-    std::size_t nnode() const noexcept { return m_nodeId.size(); }
-    std::size_t nnode() noexcept { return m_nodeId.size(); }
+    std::size_t nnode() const noexcept { return m_x.size(); }
+    std::size_t nnode() noexcept { return m_x.size(); }
     ///@}
 
     //! Total number of elements accessor
@@ -116,9 +110,6 @@ class UnsMesh {
     ///@}
 
   private:
-    //!< Node Ids
-    std::vector< int > m_nodeId;
-
     //! Node coordinates
     std::vector< tk::real > m_x;
     std::vector< tk::real > m_y;
