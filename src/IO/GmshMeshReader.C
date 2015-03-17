@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:46:10 PM MDT
+  \date      Tue 17 Mar 2015 07:19:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -126,7 +126,6 @@ GmshMeshReader::readNodes()
       m_inFile.read( reinterpret_cast<char*>(coord.data()), 3*sizeof(double) );
     }
 
-    m_mesh.nodeId().push_back( id );
     m_mesh.x().push_back( coord[0] );
     m_mesh.y().push_back( coord[1] );
     m_mesh.z().push_back( coord[2] );

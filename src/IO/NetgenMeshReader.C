@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:20:09 PM MDT
+  \date      Tue 17 Mar 2015 07:21:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -49,7 +49,6 @@ NetgenMeshReader::readNodes()
   for (int i=0; i<nnode; ++i) {
     tk::real x, y, z;
     m_inFile >> x >> y >> z;
-    m_mesh.nodeId().push_back( i+1 );
     m_mesh.x().push_back( x );
     m_mesh.y().push_back( y );
     m_mesh.z().push_back( z );

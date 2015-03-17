@@ -133,12 +133,14 @@ endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
+                      Mesh
                       UnitTest
                       UnitTestControl
                       #${SILO_LIBRARY}
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
                       ${NETCDF_LIBRARIES}
+                      ${ZOLTAN_LIBRARIES}
 )
 
 # Add custom dependencies for UnitTest's main Charm++ module

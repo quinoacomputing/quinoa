@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:20:32 PM MDT
+  \date      Tue 17 Mar 2015 07:42:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -95,17 +95,13 @@ ExodusIIMeshReader::readNodes()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  m_mesh.x().reserve( static_cast< std::size_t >( m_nnode ) );
-  m_mesh.y().reserve( static_cast< std::size_t >( m_nnode ) );
-  m_mesh.z().reserve( static_cast< std::size_t >( m_nnode ) );
+  m_mesh.x().resize( static_cast< std::size_t >( m_nnode ) );
+  m_mesh.y().resize( static_cast< std::size_t >( m_nnode ) );
+  m_mesh.z().resize( static_cast< std::size_t >( m_nnode ) );
 
   ErrChk( ex_get_coord( m_inFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
           "Failed to read coordinates from file: " + m_filename );
-
-  for (int i=1; i<=m_nnode; ++i) {
-    m_mesh.nodeId().push_back( i );
-  }
 }
 
 void
