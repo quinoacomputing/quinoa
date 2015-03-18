@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:42:14 AM MDT
+  \date      Tue 17 Mar 2015 02:51:37 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -132,7 +132,6 @@ ExodusIIMeshReader::readElements()
         ErrChk( ne_get_n_elem_conn( m_inFile, id[i], e+1, 1, n.data() ) == 0,
                 "Failed to read " + std::string(eltype) +
                 " element connectivity from file: " + m_filename );
-        m_mesh.tetId().push_back( e );
         m_mesh.tettag().push_back( { 1 } );
         m_mesh.tetinpoel().push_back( n[0] );
         m_mesh.tetinpoel().push_back( n[1] );
@@ -145,7 +144,6 @@ ExodusIIMeshReader::readElements()
         ErrChk( ne_get_n_elem_conn( m_inFile, id[i], e+1, 1, n.data() ) == 0,
                 "Failed to read " + std::string(eltype) +
                 " element connectivity from file: " + m_filename );
-        m_mesh.triId().push_back( e );
         m_mesh.tritag().push_back( { 1 } );
         m_mesh.triinpoel().push_back( n[0] );
         m_mesh.triinpoel().push_back( n[1] );

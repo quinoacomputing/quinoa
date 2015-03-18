@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:21:53 AM MDT
+  \date      Tue 17 Mar 2015 02:51:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -67,7 +67,6 @@ NetgenMeshReader::readElements()
 {
   std::string s;
   int nel;
-  int Nel=0;    // total number of elements
 
   // Read in number of tetrahedra
   m_inFile >> nel;
@@ -82,7 +81,6 @@ NetgenMeshReader::readElements()
     std::array< int, 4 > n;
     // tag n[1-4]
     m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
-    m_mesh.tetId().push_back( ++Nel );
     m_mesh.tettag().push_back( { tag } );
     m_mesh.tetinpoel().push_back( n[0] );
     m_mesh.tetinpoel().push_back( n[1] );
@@ -103,7 +101,6 @@ NetgenMeshReader::readElements()
     std::array< int, 3 > n;
     // tag n[1-3]
     m_inFile >> tag >> n[0] >> n[1] >> n[2];
-    m_mesh.triId().push_back( ++Nel );
     m_mesh.tritag().push_back( { tag } );
     m_mesh.triinpoel().push_back( n[0] );
     m_mesh.triinpoel().push_back( n[1] );

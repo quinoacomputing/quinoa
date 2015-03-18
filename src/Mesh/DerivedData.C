@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:49:17 AM MDT
+  \date      Tue 17 Mar 2015 08:15:05 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -33,22 +33,27 @@ shiftToZero( std::vector< int >& inpoel )
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
-genEsup( const std::vector< int >& inpoel, std::size_t npoin )
+genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 //******************************************************************************
 //  Generate derived data structure, elements surrounding points
 //! \param[in] inpoel Inteconnectivity of points and elements
-//! \param[in] npoin Number of points in mesh
+//! \param[in] nnpe Number of nodes pe element
 //! \return Linked lists storing elements surrounding points
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
 {
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+
   // allocate one of the linked lists storing elements surrounding points: esup2
   // fill with zeros
   std::vector< std::size_t > esup2( npoin+1, 0 );
 
   // element pass 1: count number of elements connected to each point
-  for (auto e : inpoel) ++esup2[ static_cast<std::size_t>(e)+1 ];
+  for (auto n : inpoel) ++esup2[ static_cast<std::size_t>(n) + 1 ];
 
   // storage/reshuffling pass 1: update storage counter and store
   // also find out the maximum size of esup1 (mesup)
@@ -63,13 +68,13 @@ genEsup( const std::vector< int >& inpoel, std::size_t npoin )
   std::vector< std::size_t > esup1( mesup );
 
   // store the elements in esup1
-  std::size_t t=0;
-  for (auto e : inpoel) {
-    auto E = static_cast< std::size_t >( e );
-    auto j = esup2[E]+1;
-    esup2[E] = j;
-    esup1[j] = t;
-    ++t;
+  std::size_t e = 0;
+  for (auto n : inpoel) {
+    auto N = static_cast< std::size_t >( n );
+    auto j = esup2[N]+1;
+    esup2[N] = j;
+    esup1[j] = e/nnpe;
+    ++e;
   }
 
   // storage/reshuffling pass 2

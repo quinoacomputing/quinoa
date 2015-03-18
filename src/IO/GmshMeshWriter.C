@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:30:02 AM MDT
+  \date      Tue 17 Mar 2015 04:06:21 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -120,16 +120,13 @@ GmshMeshWriter::writeElements()
             << std::endl;
 
   // Write out line element ids, tags, and connectivity (node list)
-  writeElemBlock( 2, GmshElemType::LIN, m_mesh.linId(), m_mesh.lintag(),
-                  m_mesh.lininpoel() );
+  writeElemBlock( 2, GmshElemType::LIN, m_mesh.lintag(), m_mesh.lininpoel() );
 
   // Write out triangle element ids, tags, and connectivity (node list)
-  writeElemBlock( 3, GmshElemType::TRI, m_mesh.triId(), m_mesh.tritag(),
-                  m_mesh.triinpoel() );
+  writeElemBlock( 3, GmshElemType::TRI, m_mesh.tritag(), m_mesh.triinpoel() );
 
   // Write out terahedron element ids, tags, and connectivity (node list)
-  writeElemBlock( 4, GmshElemType::TET, m_mesh.tetId(), m_mesh.tettag(),
-                  m_mesh.tetinpoel() );
+  writeElemBlock( 4, GmshElemType::TET, m_mesh.tettag(), m_mesh.tetinpoel() );
 
   if (isBinary()) m_outFile << std::endl;
   m_outFile << "$EndElements" << std::endl;
@@ -138,50 +135,58 @@ GmshMeshWriter::writeElements()
 void
 GmshMeshWriter::writeElemBlock( std::size_t nnpe,
                                 GmshElemType type,
-                                const std::vector< int >& id,
                                 const std::vector< std::vector< int > >& tag,
                                 const std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
 //! \param[in] type Element type
-//! \param[in] id Vector of element ids
 //! \param[in] tag Vectors of element tags
 //! \param[in] inpoel Element connectivity
 //! \author J. Bakosi
 //******************************************************************************
 {
-  if (tag.size() == 0 || id.size() == 0 || inpoel.size() == 0) return;
+  // Return if connectivity is empty, there is no such element block in mesh
+  if (inpoel.empty()) return;
 
+  // Get number of points in mesh
   auto n = inpoel.size()/nnpe;
+
+  // Create empty tag vector if there is no tag
+  std::vector< std::vector< int > > tg;
+  if (!tag.empty())
+    tg = tag;
+  else {
+    tg.resize( n );
+    for (auto& t : tg) t.push_back( 0 );
+  }
 
   if (isASCII()) {
 
     for (std::size_t i=0; i<n; i++) {
       // elm-number elm-type number-of-tags < tag > ... node-number-list
-      m_outFile << id[i] << " " << type << " " << tag[i].size() << " ";
-
-      copy( tag[i].begin(), tag[i].end()-1,
+      m_outFile << i+1 << " " << type << " " << tg[i].size() << " ";
+      copy( tg[i].begin(), tg[i].end()-1,
             std::ostream_iterator< int >( m_outFile, " " ) );
-      m_outFile << tag[i].back() << " ";
+      m_outFile << tg[i].back() << " ";
 
-      for (std::size_t p=0; p<nnpe; p++) m_outFile << inpoel[i*nnpe+p] << " ";
+      for (std::size_t p=0; p<nnpe; p++) m_outFile << inpoel[i*nnpe+p]+1 << " ";
       m_outFile << std::endl;
     }
 
   } else {
 
-    int ntags = static_cast< int >( tag[0].size() );
+    int ntags = static_cast< int >( tg[0].size() );
     // elm-type num-of-elm-follow number-of-tags
     m_outFile.write( reinterpret_cast<char*>(&type), sizeof(int) );
     m_outFile.write( reinterpret_cast<char*>(&n), sizeof(int) );
     m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
     for (std::size_t i=0; i<n; i++) {
+      int I = static_cast< int >( i );
       // element id
-      m_outFile.write(
-        reinterpret_cast<const char*>(&id[i]), sizeof(int) );
+      m_outFile.write( reinterpret_cast<const char*>(&I), sizeof(int) );
       // element tags
-      m_outFile.write( reinterpret_cast<const char*>(tag[i].data()),
-                       static_cast<std::streamsize>(tag[i].size()*sizeof(int)) );
+      m_outFile.write( reinterpret_cast<const char*>(tg[i].data()),
+                       static_cast<std::streamsize>(tg[i].size()*sizeof(int)) );
       // element node list (i.e. connectivity)
       m_outFile.write( reinterpret_cast<const char*>(&inpoel[i*nnpe]),
                        static_cast<std::streamsize>(nnpe*sizeof(int)) );

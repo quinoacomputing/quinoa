@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/UnsMesh.h
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:17:32 AM MDT
+  \date      Tue 17 Mar 2015 02:06:04 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     3D unstructured mesh class declaration
   \details   3D unstructured mesh class declaration. This mesh class currently
@@ -34,24 +34,6 @@ class UnsMesh {
     std::vector< tk::real >& x() noexcept { return m_x; }
     std::vector< tk::real >& y() noexcept { return m_y; }
     std::vector< tk::real >& z() noexcept { return m_z; }
-    ///@}
-
-    /** @name Line element id accessors */
-    ///@{
-    const std::vector< int >& linId() const noexcept { return m_linId; }
-    std::vector< int >& linId() noexcept { return m_linId; }
-    ///@}
-
-    /** @name Triangle element id accessors */
-    ///@{
-    const std::vector< int >& triId() const noexcept { return m_triId; }
-    std::vector< int >& triId() noexcept { return m_triId; }
-    ///@}
-
-    /** @name Tetrahedron element id accessors */
-    ///@{
-    const std::vector< int >& tetId() const noexcept { return m_tetId; }
-    std::vector< int >& tetId() noexcept { return m_tetId; }
     ///@}
 
     /** @name Number of nodes accessors */
@@ -114,11 +96,6 @@ class UnsMesh {
     std::vector< tk::real > m_x;
     std::vector< tk::real > m_y;
     std::vector< tk::real > m_z;
-
-    //! Element ids
-    std::vector< int > m_linId;                 //!< Line element ids
-    std::vector< int > m_triId;                 //!< Triangle element ids
-    std::vector< int > m_tetId;                 //!< Tetrahedron element ids
 
     //! Element connectivity
     std::vector< int > m_lininpoel;             //!< Line connectivity

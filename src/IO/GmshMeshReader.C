@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 07:19:22 AM MDT
+  \date      Tue 17 Mar 2015 02:05:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -229,22 +229,6 @@ GmshMeshReader::readElements()
           break;
         case GmshElemType::PNT:
           break;     // ignore 1-node 'point element' type
-        default: Throw( std::string("Unsupported element type ") << elmtype <<
-                        " in mesh file: " << m_filename );
-      }
-
-      // Put in elemId for different types of elements
-      switch ( elmtype ) {
-        case GmshElemType::LIN:
-          m_mesh.linId().push_back( id );
-          break;
-        case GmshElemType::TRI:
-          m_mesh.triId().push_back( id );
-          break;
-        case GmshElemType::TET:
-          m_mesh.tetId().push_back( id );
-          break;
-        case GmshElemType::PNT: break;     // ignore 1-node 'point element' type
         default: Throw( std::string("Unsupported element type ") << elmtype <<
                         " in mesh file: " << m_filename );
       }
