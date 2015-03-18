@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/unittest.ci
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 05:09:48 PM MST
+  \date      Wed 18 Mar 2015 09:14:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for unittest
   \details   Charm++ module interface file for the unit test suite, unittest.
@@ -28,7 +28,7 @@ mainmodule unittest {
   mainchare Main {
     entry Main( CkArgMsg* msg );
     entry void execute();
-    entry void finalize();
+    entry void finalize( bool worked );
   }
 
   chare execute { entry execute(); }

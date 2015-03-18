@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:17:42 PM MDT
+  \date      Wed 18 Mar 2015 09:27:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class definition
   \details   Template Unit Test suite class definition. In principle there can
@@ -29,13 +29,14 @@ using unittest::TUTSuite;
 
 TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   m_print( cmdline.get< tag::verbose >() ? std::cout : std::clog ),
-  m_nmpi( 0 ),
   m_nrun( 0 ),
+  m_ngroup( 0 ),
   m_ncomplete( 0 ),
   m_nfail( 0 ),
   m_nskip( 0 ),
   m_nwarn( 0 ),
-  m_nexcp( 0 )
+  m_nexcp( 0 ),
+  m_nmigr( 0 )
 //******************************************************************************
 // Constructor
 //! \param[in] cmdline Data structure storing data from the command-line parser
@@ -45,20 +46,65 @@ TUTSuite::TUTSuite( const ctr::CmdLine& cmdline ) :
   // Output registered test groups
   const auto& groups = g_runner.get().list_groups();
   m_print.list( "Registered test groups", groups );
-  m_ngroup = groups.size();
 
-  m_print.endpart();
-  m_print.part( "Serial and Charm++ unit test suite" );
-  m_print.unithead( "Unit tests computed" );
+  // Get group name string passed in by -g
+  const auto grp = cmdline.get< tag::group >();
 
-  // Asynchronously fire up all tests in all groups using the Charm++ runtime
-  // system
-  for (const auto& g : groups)
-    if (g.find("MPI") == std::string::npos)     // don't start MPI test groups
-      for (int t=1; t<=g_maxTestsInGroup; ++t)
-        CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
-    else
-      ++m_nmpi;
+  // If only select groups to be run, see if there is any that will run
+  bool work = false;
+  if (grp.empty())
+    work = true;
+  else
+    for (const auto& g : groups)
+      if ( g.find("MPI") == std::string::npos &&   // don't consider MPI groups
+           g.find(grp) != std::string::npos )
+          work = true;
+
+  // Quit if there is no work to be done
+  if (!work) {
+
+    m_print.note( "\nNo serial or Charm++ test groups to be executed because "
+                  "no test group names match '" + grp + "'.\n" );
+    mainProxy.finalize( false );
+
+  } else {
+
+    m_print.endpart();
+    m_print.part( "Serial and Charm++ unit test suite" );
+    m_print.unithead( "Unit tests computed", grp );
+
+    // Fire up all tests in all groups using the Charm++ runtime system
+    for (const auto& g : groups)
+      if (g.find("MPI") == std::string::npos) {   // don't start MPI test groups
+        if (grp.empty()) {                        // consider all test groups
+          spawngrp( g );
+        } else if (g.find(grp) != std::string::npos) {
+          // spawn only the groups that match the string specified via -g string
+          spawngrp( g );
+        }
+      }
+
+  }
+}
+
+void
+TUTSuite::spawngrp( const std::string& g )
+//******************************************************************************
+//  Fire up all tests in a test group
+//! \param[in] g Name of the test group
+//! \author J. Bakosi
+//******************************************************************************
+{
+  ++m_ngroup;         // increase number of test groups to run
+
+  // Add up number of Charm++ migration tests (this is so we know how many to
+  // expect results from)
+  const auto it = migrations.find( g );
+  if (it != migrations.end()) m_nmigr += it->second;
+
+  // Asynchronously fire up all tests in test group
+  for (int t=1; t<=g_maxTestsInGroup; ++t)
+    CProxy_TUTTest< CProxy_TUTSuite >::ckNew( thisProxy, g, t );
 }
 
 void
@@ -79,19 +125,13 @@ TUTSuite::evaluate( std::vector< std::string > status )
   // Echo one-liner info on result of test
   m_print.test( m_ncomplete, m_nfail, status );
 
-  // The magic number in the conditional is the number of Charm++ migration
-  // tests. Every Charm++ migration test consists of two unit tests: one for
-  // send and one for receive. Both triggers a TUT test, but the receive side is
-  // created manually, i.e., without the awareness of the TUT library.
-  // Unfortunately thus, there is no good way to count up these additional
-  // tests.
-  if ( m_nrun ==
-       (m_ngroup-m_nmpi) * static_cast<std::size_t>(g_maxTestsInGroup) + 13 )
+  // Wait for all tests to finish, then quit
+  if (m_nrun == m_ngroup * static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
   {
     assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
             m_ncomplete );
     // Quit
-    mainProxy.finalize();
+    mainProxy.finalize( true );
   }
 }
 

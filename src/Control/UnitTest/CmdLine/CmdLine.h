@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:53:25 AM MST
+  \date      Tue 17 Mar 2015 08:45:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line
   \details   This file defines the heterogeneous stack that is used for storing
@@ -40,6 +40,7 @@ class CmdLine : public tk::Control<
                   tag::cmdinfo, tk::ctr::HelpFactory,
                   tag::ctrinfo, tk::ctr::HelpFactory,
                   tag::helpkw,  tk::ctr::HelpKw,
+                  tag::group,   std::string,
                   tag::error,   std::vector< std::string > > {
   public:
     //! \brief UnitTest command-line keywords
@@ -48,6 +49,7 @@ class CmdLine : public tk::Control<
     using keywords = boost::mpl::set< kw::verbose
                                     , kw::help
                                     , kw::helpkw
+                                    , kw::group
                                     >;
 
     //! \brief Constructor: set defaults.
@@ -77,6 +79,7 @@ class CmdLine : public tk::Control<
                    tag::cmdinfo, tk::ctr::HelpFactory,
                    tag::ctrinfo, tk::ctr::HelpFactory,
                    tag::helpkw,  tk::ctr::HelpKw,
+                   tag::group,   std::string,
                    tag::error,   std::vector< std::string > >::pup(p);
     }
     //! \brief Pack/Unpack serialize operator|

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sun 15 Mar 2015 06:06:52 PM MDT
+  \date      Wed 18 Mar 2015 10:03:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -175,9 +175,9 @@ class Main : public CBase_Main {
       } catch (...) { tk::processException(); }
     }
 
-    void finalize() {
+    void finalize( bool worked ) {
       try {
-        if (!m_timer.empty()) {
+        if (worked && !m_timer.empty()) {
           m_timestamp.emplace( "Serial and Charm++ tests runtime",
                                m_timer[0].hms() );
           m_print.time( "Serial and Charm++ test suite timers (h:m:s)",
@@ -237,14 +237,14 @@ int main( int argc, char **argv ) {
     bool helped;
     unittest::CmdLineParser cmdParser( argc, argv, print, cmdline, helped );
 
-    // Print out help on all command-line arguments if the help was requested
+    // Print out help on all command-line arguments if help was requested
     const auto helpcmd = cmdline.get< tag::help >();
     if (peid == 0 && helpcmd)
       print.help< tk::QUIET >( UNITTEST_EXECUTABLE,
                                cmdline.get< tag::cmdinfo >(),
                                "Command-line Parameters:", "-" );
 
-      // Print out verbose help for a single keyword if requested
+    // Print out verbose help for a single keyword if requested
     const auto helpkw = cmdline.get< tag::helpkw >();
     if (peid == 0 && !helpkw.keyword.empty())
       print.helpkw< tk::QUIET >( UNITTEST_EXECUTABLE, helpkw );
@@ -258,30 +258,65 @@ int main( int argc, char **argv ) {
     unittest::UnitTestPrint
       uprint( cmdline.get< tag::verbose >() ? std::cout : std::clog );
 
+    const auto& groups = unittest::g_runner.get().list_groups();
+
+    // Get group name string passed in by -g
+    const auto grp = cmdline.get< tag::group >();
+
+    // If only select groups to be run, see if there is any that will run
+    bool work = false;
+    if (grp.empty())
+      work = true;
+    else
+      for (const auto& g : groups)
+        if ( g.find("MPI") != std::string::npos &&  // only consider MPI groups
+             g.find(grp) != std::string::npos )
+          work = true;
+
+    // Quit if there is no work to be done
+    if (!work) {
+      if (peid == 0)
+        uprint.note( "\nNo MPI test groups to be executed because no test "
+                     "group names match '" + grp + "'.\n" );
+      MPI_Finalize();
+      return tk::ErrCode::SUCCESS;
+    }
+
     if (peid == 0) {
       uprint.endpart();
       uprint.part( "MPI unit test suite" );
-      uprint.unithead( "Unit tests computed" );
+      uprint.unithead( "Unit tests computed", cmdline.get< tag::group >() );
     }
 
+    std::size_t nrun=0, ncomplete=0, nwarn=0, nskip=0, nexcp=0, nfail=0;
     tk::Timer timer;  // start new timer measuring the MPI-suite runtime
 
-    // Fire up all tests in all test groups exercising MPI on rank 0
-    std::size_t nrun=0, ncomplete=0, nwarn=0, nskip=0, nexcp=0, nfail=0;
-    for (const auto& g : unittest::g_runner.get().list_groups())
-      if (g.find("MPI") != std::string::npos) // only start MPI test groups
-        for (int t=1; t<=unittest::g_maxTestsInGroup; ++t) {
-          tut::test_result tr;
-          unittest::g_runner.get().run_test( g, t, tr );
-          if (peid == 0) {
-            ++nrun;
-            std::vector< std::string > status
-              { tr.group, tr.name, std::to_string(tr.result), tr.message,
-                tr.exception_typeid };
-            unittest::evaluate( status, ncomplete, nwarn, nskip, nexcp, nfail );
-            uprint.test( ncomplete, nfail, status );
-          }
+    // Lambda to fire up all tests in a test group
+    auto spawngrp = [&]( const std::string& g ) {
+      for (int t=1; t<=unittest::g_maxTestsInGroup; ++t) {
+        tut::test_result tr;
+        unittest::g_runner.get().run_test( g, t, tr );
+        if (peid == 0) {
+          ++nrun;
+          std::vector< std::string > status
+            { tr.group, tr.name, std::to_string(tr.result), tr.message,
+              tr.exception_typeid };
+          unittest::evaluate( status, ncomplete, nwarn, nskip, nexcp, nfail );
+          uprint.test( ncomplete, nfail, status );
         }
+      }
+    };
+
+    // Fire up all tests in all test groups exercising MPI on rank 0
+    for (const auto& g : groups)
+      if (g.find("MPI") != std::string::npos) { // only start MPI test groups
+        if (grp.empty()) {                        // consider all test groups
+          spawngrp( g );
+        } else if (g.find(grp) != std::string::npos) {
+          // spawn only the groups that match the string specified via -g string
+          spawngrp( g );
+        }
+      }
 
     if (peid == 0) {
       unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );

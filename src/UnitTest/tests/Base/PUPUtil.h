@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 07:09:48 AM MDT
+  \date      Wed 18 Mar 2015 08:20:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -394,7 +394,7 @@ struct Migrated : CBase_Migrated {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 1 >() {
@@ -414,7 +414,7 @@ void PUPUtil_object::test< 1 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 2 >() {
@@ -434,7 +434,7 @@ void PUPUtil_object::test< 2 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 3 >() {
@@ -454,7 +454,7 @@ void PUPUtil_object::test< 3 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 4 >() {
@@ -474,7 +474,7 @@ void PUPUtil_object::test< 4 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 5 >() {
@@ -496,7 +496,7 @@ void PUPUtil_object::test< 5 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 6 >() {
@@ -521,7 +521,7 @@ void PUPUtil_object::test< 6 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 7 >() {
@@ -541,7 +541,7 @@ void PUPUtil_object::test< 7 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 8 >() {
@@ -561,7 +561,7 @@ void PUPUtil_object::test< 8 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 9 >() {
@@ -581,7 +581,7 @@ void PUPUtil_object::test< 9 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 10 >() {
@@ -601,7 +601,7 @@ void PUPUtil_object::test< 10 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void PUPUtil_object::test< 11 >() {

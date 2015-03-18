@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 07:10:37 AM MDT
+  \date      Wed 18 Mar 2015 08:20:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -446,7 +446,7 @@ using ValueFactory = std::map< int, std::function< VBase() > >;
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void Factory_object::test< 13 >() {
@@ -476,7 +476,7 @@ void Factory_object::test< 13 >() {
 //!   but the receive side is created manually, i.e., without the awareness of
 //!   the TUT library. Unfortunately thus, there is no good way to count up
 //!   these additional tests, and thus if a test such as this is added to the
-//!   suite this number must be updated in UnitTest/TUTSuite.C in
+//!   suite this number must be updated in UnitTest/TUTSuite.h in
 //!   unittest::TUTSuite::evaluate().
 template<> template<>
 void Factory_object::test< 14 >() {
