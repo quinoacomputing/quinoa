@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/TUTSuite.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:11:31 PM MDT
+  \date      Wed 18 Mar 2015 08:40:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Template Unit Test suite class declaration
   \details   Template Unit Test suite class declaration. In principle there can
@@ -43,7 +43,6 @@ class TUTSuite : public CBase_TUTSuite {
 
   private:
     UnitTestPrint m_print;      //!< Pretty printer
-    std::size_t m_nmpi;         //!< Number of MPI test groups
     std::size_t m_nrun;         //!< Number of tests ran (including dummies)
     std::size_t m_ngroup;       //!< Number of test groups
     std::size_t m_ncomplete;    //!< Number of completed tests
@@ -51,6 +50,26 @@ class TUTSuite : public CBase_TUTSuite {
     std::size_t m_nskip;        //!< Number of skipped tests
     std::size_t m_nwarn;        //!< Number of tests with a warning
     std::size_t m_nexcp;        //!< Number of tests with an exception
+    std::size_t m_nmigr;        //!< Number of Charm++ migration tests ran
+
+    //! \brief Charm++ migration test group names and number of tests
+    //! \details This map stores the names of test groups that define Charm++
+    //!   migration tests and their associated number of Charm++ migration
+    //!   tests. Every Charm++ migration test consists of two unit tests: one
+    //!   for send and one for receive. Both triggers a TUT test, but the
+    //!   receive side is created manually, i.e., without the awareness of the
+    //!   TUT library. Unfortunately thus, there is no good way to count up
+    //!   these additional tests, so they need to be explicitly maintained here.
+    //!   To find out what tests spanw a new Charm++ chare, grep the src
+    //!   directory for 'This test spawns a new Charm++ chare', which appears in
+    //!   the comment before each Charm++ migration test name.
+    const std::map< std::string, std::size_t > migrations {
+      { "Base/Factory", 2 },
+      { "Base/PUPUtil", 11 }
+    };
+
+    //! Fire up all tests in a test group
+    void spawngrp( const std::string& g );
 };
 
 } // unittest::

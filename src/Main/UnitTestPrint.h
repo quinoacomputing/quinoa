@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 12:09:17 PM MDT
+  \date      Wed 18 Mar 2015 08:40:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -35,7 +35,8 @@ class UnitTestPrint : public tk::Print {
     //! Print unit tests header (with legend)
     //! \param[in] title Section title
     //! \author J. Bakosi
-    void unithead( const std::string& title ) const {
+    void unithead( const std::string& title, const std::string& group ) const {
+      std::string g = group.empty() ? "all" : group;
       m_stream << m_section_title_fmt % m_section_indent
                                       % m_section_bullet
                                       % title;
@@ -43,7 +44,8 @@ class UnitTestPrint : public tk::Print {
                   % m_section_indent
                   % std::string( m_section_indent.size() + 2 + title.size(),
                                 '-' );
-      raw( m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
+      raw( m_item_indent + "Groups: " + g + " (use -g str to match groups)\n" +
+           m_item_indent + "Legend: [done/failed] group:test : result\n\n" );
     }
 
     //! \brief Print one-liner info for test.

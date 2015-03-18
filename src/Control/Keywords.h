@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 07:59:38 AM MST
+  \date      Wed 18 Mar 2015 08:53:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -2025,6 +2025,27 @@ struct output_info {
   };
 };
 using output = keyword< output_info, o,u,t,p,u,t >;
+
+struct group_info {
+  static std::string name() { return "group"; }
+  static std::string shortDescription() { return
+    "Select test group(s) to run"; }
+  static std::string longDescription() { return
+    R"(This option can be used to select one or more test groups to run by
+    specifying the full or a partial name of a test group. All tests of a
+    selected group will be executed. If this option is not given, all test
+    groups are executed by default. Examples: '--group make_list' - run only
+    the 'make_list' test group, '--group Parser' - run the test groups that have
+    the string 'Parser' in their name, e.g., groups 'Control/FileParser' and
+    'Control/StringParser'.)";
+  }
+  using alias = Alias< g >;
+  struct expect {
+    using type = std::string;
+    static std::string description() { return "string"; }
+  };
+};
+using group = keyword< group_info, g,r,o,u,p >;
 
 ////////// NOT YET FULLY DOCUMENTED //////////
 

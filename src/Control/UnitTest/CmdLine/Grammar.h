@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Grammar.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 06:56:01 AM MST
+  \date      Tue 17 Mar 2015 08:45:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's command line grammar definition
   \details   Grammar definition for parsing the command line. We use the Parsing
@@ -64,10 +64,17 @@ namespace cmd {
                                tk::grm::helpkw< Stack >,
                                pegtl::alnum > {};
 
+  //! \brief Match test group name(s) and only run those
+  //! \author J. Bakosi
+  struct group :
+         tk::grm::process_cmd< Stack,
+                               use< kw::group >,
+                               tk::grm::Store< Stack, tag::group > > {};
+
   //! \brief Match all command line keywords
   //! \author J. Bakosi
   struct keywords :
-         pegtl::sor< verbose, help, helpkw > {};
+         pegtl::sor< verbose, help, helpkw, group > {};
 
   //! \brief Grammar entry point: parse keywords until end of string
   //! \author J. Bakosi
