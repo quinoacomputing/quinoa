@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 06:56:03 AM MDT
+  \date      Tue 17 Mar 2015 04:06:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class declaration
   \details   Gmsh mesh writer class declaration. Currently, this class supports
@@ -60,7 +60,6 @@ class GmshMeshWriter : public Writer {
     //! Write element block: element ids, tags, and connectivity (node list)
     void writeElemBlock( std::size_t nnpe,
                          GmshElemType type,
-                         const std::vector< int >& id,
                          const std::vector< std::vector< int > >& tag,
                          const std::vector< int >& inpoel );
 
