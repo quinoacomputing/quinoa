@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTestPrint.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 08:40:08 AM MDT
+  \date      Thu 19 Mar 2015 11:48:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's printer
   \details   UnitTest's printer
@@ -34,6 +34,7 @@ class UnitTestPrint : public tk::Print {
 
     //! Print unit tests header (with legend)
     //! \param[in] title Section title
+    //! \param[in] group String attempting to match unit test groups
     //! \author J. Bakosi
     void unithead( const std::string& title, const std::string& group ) const {
       std::string g = group.empty() ? "all" : group;

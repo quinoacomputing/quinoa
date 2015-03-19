@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Stack.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 05:11:25 PM MST
+  \date      Thu 19 Mar 2015 01:55:54 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of TestU01 RNG statistical tests
   \details   Stack of TestU01 RNG statistical tests
@@ -54,7 +54,7 @@ class TestU01Stack {
     //! \param[in] names Vector of statisical test names (can be more than one
     //!   associated with a given test, since a test can contain more than one
     //!   statistical test evaluation, yielding multiple p-values)
-    //! \param[in] xargs... Extra arguments to test-run    
+    //! \param[in] xargs Extra arguments to test-run
     template< class TestType, class Proxy, typename... Ts >
     void add( Proxy& proxy,
               std::vector< std::function< StatTest() > >& tests,

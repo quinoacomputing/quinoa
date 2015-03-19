@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/NumberFractionBeta.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:30:07 AM MDT
+  \date      Thu 19 Mar 2015 11:44:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of number-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -157,7 +157,7 @@ class NumberFractionBeta {
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous density, rho,
     //!   based on the number fraction, X, and parameters rho2 and r'.
-    //! \param[in] p Instantaneous value of the mole fraction, X
+    //! \param[in] X Instantaneous value of the mole fraction, X
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the density, rho
     tk::real rho( tk::real X, ncomp_t i ) const {
@@ -168,7 +168,7 @@ class NumberFractionBeta {
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous specific volume, V,
     //!   based on the number fraction, X, and parameters rho2 and r'.
-    //! \param[in] p Instantaneous value of the mole fraction, X
+    //! \param[in] X Instantaneous value of the mole fraction, X
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
     tk::real vol( tk::real X, ncomp_t i ) const {

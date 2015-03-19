@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/RNGSSE.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:00:11 PM MDT
+  \date      Thu 19 Mar 2015 11:51:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to RNGSSE random number generators
   \details   Interface to RNGSSE random number generators
@@ -30,9 +30,9 @@ class RNGSSE {
     //! \brief Constructor
     //! \param[in] nthreads Initialize RNG using this many independent streams
     //! \param[in] fnShort RNG initializer function for short streams
-    //! \param[in] seqLen Sequence length enum: short, medium or long
+    //! \param[in] seqlen Sequence length enum: short, medium or long
     //! \param[in] fnLong RNG initializer function for long streams
-    //! \param[in] fnMedium RNG initializer function for medium streams
+    //! \param[in] fnMed RNG initializer function for medium streams
     explicit RNGSSE( SeqNumType nthreads,
                      InitFn fnShort,
                      ctr::RNGSSESeqLenType seqlen = ctr::RNGSSESeqLenType::SHORT,
@@ -52,7 +52,7 @@ class RNGSSE {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the RNGs to
     void uniform( int tid, ncomp_t num, double* r ) const {
       for (int i=0; i<num; ++i)
         r[i] = static_cast<double>(
@@ -63,7 +63,7 @@ class RNGSSE {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or rather) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the RNGs to
     // TODO: not yet implemented
     void gaussian( int tid, ncomp_t num, double* r ) const {
       Throw( "RNGSSE::gaussian undefined" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/TestU01Props.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 05:06:27 PM MST
+  \date      Thu 19 Mar 2015 11:56:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     TestU01 statistical test properties class
   \details   This file defines a generic TestU01 statistical test properties
@@ -70,7 +70,7 @@ class TestU01Props {
     //!   associated with a given test, since a test can contain more than one
     //!   statistical test evaluation, yielding multiple p-values)
     //! \param[in] gen Raw function pointer to TestU01 statistical test
-    //! \param[in] xargs... Extra arguments to test-run
+    //! \param[in] xargs Extra arguments to test-run
     explicit TestU01Props( Proxy& proxy,
                            tk::ctr::RNGType rng,
                            std::vector< std::string >&& names,
@@ -188,8 +188,8 @@ class TestU01Props {
     //!   RNG facilitating simultaneous calls to any or all wrappers as they are
     //!   unique functions.
     //! \param[inout] p Charm++'s PUP::er serializer object reference
-    //! \param[inou] gen Reference to raw function pointer to TestU01
-    //!   statistical test
+    //! \param[inout] g Reference to raw function pointer to TestU01 statistical
+    //!    test
     void pup( PUP::er& p, unif01_Gen*& g ) {
       using tk::ctr::RNGType;
       using tk::ctr::raw;

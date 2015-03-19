@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:14:49 AM MST
+  \date      Thu 19 Mar 2015 11:49:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator options and associations
   \details   Random number generator options and associations
@@ -210,7 +210,7 @@ class RNG : public tk::Toggle< RNGType > {
     //! \brief Return parameter based on Enum
     //! \details Here 'parameter' is the library-specific identifier of the
     //!    option, i.e., as the library identifies the given option
-    //! \param[in] m Enum value of the option requested
+    //! \param[in] rng Enum value of the option requested
     //! \return Library-specific parameter of the option
     //! \author J. Bakosi
     const ParamType& param( RNGType rng ) const {

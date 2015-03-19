@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:58:28 AM MST
+  \date      Thu 19 Mar 2015 12:01:08 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -30,7 +30,7 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //******************************************************************************
 //  Constructor
 //! \param[in] print Pretty printer
-//! \param[in] cmd Command line stack
+//! \param[in] cmdline Command line stack
 //! \param[inout] inputdeck Input deck stack where data is stored during parsing
 //! \author  J. Bakosi
 //******************************************************************************

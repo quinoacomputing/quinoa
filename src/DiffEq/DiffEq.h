@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:29:07 AM MDT
+  \date      Thu 19 Mar 2015 11:47:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -62,7 +62,7 @@ class DiffEq {
     //!   src/Base/Factory.h.
     //! \param[in] x Function pointer to a constructor of an object modeling
     //!    Concept.
-    //! \param[in] args... Constructor arguments
+    //! \param[in] args Zero or more constructor arguments
     template< typename T, typename...Args >
     explicit DiffEq( std::function<T(Args...)> x, Args... args ) :
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}

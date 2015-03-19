@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 12:59:44 PM MDT
+  \date      Thu 19 Mar 2015 12:03:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -550,7 +550,7 @@ class Print {
     //! \brief Clean up whitespaces and format a long string into multiple lines
     //! \param[in] str String to format
     //! \param[in] name String to insert before string to output
-    //! \param[in] witdth Width in characters to insert newlines for output
+    //! \param[in] width Width in characters to insert newlines for output
     //! \author J. Bakosi
     //! \see http://stackoverflow.com/a/6892562
     //! \see http://stackoverflow.com/a/8362145
@@ -570,7 +570,7 @@ class Print {
         std::unique( str.begin(), str.end(),
                      []( char a, char b ){ return a == b && a == ' '; } ),
         str.end() );
-      // format str to 'witdh'-character-long lines with indent
+      // format str to 'width'-character-long lines with indent
       const auto& indent = m_subsection_indent;
       str.insert( 0, indent + name );
       std::size_t currIndex = width - 1;

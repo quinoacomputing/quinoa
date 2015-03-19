@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/Battery.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:28:23 PM MDT
+  \date      Thu 19 Mar 2015 12:00:28 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test harness
   \details   This file defines a generic random number generator test harness
@@ -87,7 +87,7 @@ class Battery {
     //!   constructor.
     //! \param[in] c Function pointer to a constructor of an object modeling
     //!    Concept.
-    //! \param[in] args... Constructor arguments
+    //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
