@@ -1,17 +1,24 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/NumberFractionBeta.h
+  \file      src/DiffEq/MixBeta.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:30:07 AM MDT
+  \date      Thu 19 Mar 2015 11:29:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     System of number-fraction beta SDEs
+  \brief     System of mix beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
     diffusion, whose invariant is the joint [beta
-    distribution](http://en.wikipedia.org/wiki/Beta_distribution). The main
-    difference compared to the plain beta SDE (see DiffEq/Beta.h), is that in
-    the number-fraction beta SDE the dependent variable, there are two
-    additional stochastic variables computed from the beta variables.
+    distribution](http://en.wikipedia.org/wiki/Beta_distribution). There are two
+    differences compared to the plain beta SDE (see DiffEq/Beta.h):
+
+    - First, the parameters, b, and kappa are specified via functions that
+    constrain the beta SDE to be consistent with the turbulent mixing process.
+    In particular, the SDE is made consistent with the no-mix and fully mixed
+    limits.
+
+    - Second, there two additional random variables computed, the same as also
+    computed by the number-fraction beta equation, see also
+    DiffEq/NumberFractionBeta.h.
 
     In a nutshell, the equation integrated governs a set of scalars,
     \f$0\!\le\!X_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
@@ -20,15 +27,24 @@
        \mathrm{d}t + \sqrt{\kappa_\alpha X_\alpha(1-X_\alpha)}
        \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
     \f]
-    with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
-    < S_\alpha < 1\f$. This is the same as in DiffEq/Beta.h. Here
-    \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic vector-valued [Wiener
-    process](http://en.wikipedia.org/wiki/Wiener_process) with independent
-    increments. The invariant distribution is the joint beta distribution. This
-    system of SDEs consists of N independent equations. For
+    with parameter vectors \f$b_\alpha = \Theta b'_\alpha > 0\f$, \f$
+    \newcommand{\irv}[1]{\langle{#1^2}\rangle} \kappa_\alpha = \kappa' \irv{x} >
+    0\f$, and \f$0 < S_\alpha < 1\f$. This is similar to DiffEq/Beta.h, but the
+    parameters, \f$b\f$ and \f$\kappa\f$ constrained. Here \f$
+    \newcommand{\irv}[1]{\langle{#1^2}\rangle}
+    \newcommand{\irmean}[1]{{\langle{#1}\rangle}} \Theta = 1 - \irv{x} /
+    [ \irmean{X} (1-\irmean{X}) ]\f$. The fluctuation about the mean, \f$
+    \newcommand{\irmean}[1]{{\langle{#1}\rangle}} \irmean{X} \f$, is defined as
+    usual: \f$ \newcommand{\irmean}[1]{{\langle{#1}\rangle}} x = X - \irmean{X}
+    \f$, and \f$b'\f$ and \f$ \kappa'\f$ are user-specified constants. Also,
+    \f$\mathrm{d}W_\alpha(t)\f$ is an isotropic vector-valued
+    [Wiener process](http://en.wikipedia.org/wiki/Wiener_process) with
+    independent increments. The invariant distribution is the joint beta
+    distribution. This system of SDEs consists of N independent equations. For
     more on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
 
-    In addition to integrating the above SDE, there are two additional functions
+    Similar to the number-fraction beta SDE (DiffEq/NumberFractionBeta.h), in
+    addition to integrating the above SDE, there are two additional functions
     of \f$ X_\alpha \f$ are computed as
     \f[ \begin{align}
       \rho(X_\alpha) & = \rho_{2\alpha} ( 1 - r'_\alpha X_\alpha ) \\
@@ -42,19 +58,18 @@
     and \f$ r' \f$ are user input parameters and kept constant during
     integration. Since we compute the above variables, \f$\rho,\f$ and \f$V\f$,
     and call them mixture density and specific volume, respectively, \f$X\f$,
-    governed by the beta SDE is a number (or mole) fraction, hence the name
-    number-fraction beta.
+    governed by the beta SDE is a number (or mole) fraction.
 
     _All of this is unpublished, but will be linked in here once published_.
 */
 //******************************************************************************
-#ifndef NumberFractionBeta_h
-#define NumberFractionBeta_h
+#ifndef MixBeta_h
+#define MixBeta_h
 
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <NumberFractionBetaCoeffPolicy.h>
+#include <MixBetaCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -62,61 +77,62 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! \brief NumberFractionBeta SDE used polymorphically with DiffEq
+//! \brief MixBeta SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Init - initialization policy, see DiffEq/InitPolicy.h
 //!   - Coefficients - coefficients policy, see
-//!     DiffEq/NumberFractionBetaCoeffPolicy.h
+//!     DiffEq/MixBetaCoeffPolicy.h
 template< class Init, class Coefficients >
-class NumberFractionBeta {
+class MixBeta {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
 
   public:
     //! \brief Constructor
-    //! \param[in] c Index specifying which system of number-fraction beta SDEs
-    //!   to construct. There can be multiple nfracbeta ... end blocks in a
-    //!   control file. This index specifies which number-fraction beta SDE
+    //! \param[in] c Index specifying which system of mix beta SDEs
+    //!   to construct. There can be multiple mixbeta ... end blocks in a
+    //!   control file. This index specifies which mix beta SDE
     //!   system to instantiate. The index corresponds to the order in which the
-    //!   nfracbeta ... end blocks are given the control file.
+    //!   mixbeta ... end blocks are given the control file.
     //! \author J. Bakosi
-    explicit NumberFractionBeta( ncomp_t c ) :
+    explicit MixBeta( ncomp_t c ) :
       m_c( c ),
       m_depvar(
-        g_inputdeck.get< tag::param, tag::nfracbeta, tag::depvar >().at(c) ),
+        g_inputdeck.get< tag::param, tag::mixbeta, tag::depvar >().at(c) ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::nfracbeta >().at(c) / 3 ),
+        g_inputdeck.get< tag::component >().get< tag::mixbeta >().at(c) / 3 ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::nfracbeta >(c) ),
+        g_inputdeck.get< tag::component >().offset< tag::mixbeta >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::nfracbeta, tag::rng >().at(c) ) ) ),
+        g_inputdeck.get< tag::param, tag::mixbeta, tag::rng >().at(c) ) ) ),
       coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::nfracbeta, tag::b >().at(c),
-             g_inputdeck.get< tag::param, tag::nfracbeta, tag::S >().at(c),
-             g_inputdeck.get< tag::param, tag::nfracbeta, tag::kappa >().at(c),
-             g_inputdeck.get< tag::param, tag::nfracbeta, tag::rho2 >().at(c),
-             g_inputdeck.get< tag::param, tag::nfracbeta, tag::rcomma >().at(c),
-             m_b, m_S, m_k, m_rho2, m_rcomma ) {}
+             g_inputdeck.get< tag::param, tag::mixbeta, tag::bprime >().at(c),
+             g_inputdeck.get< tag::param, tag::mixbeta, tag::S >().at(c),
+             g_inputdeck.get< tag::param, tag::mixbeta, tag::kappaprime >().at(c),
+             g_inputdeck.get< tag::param, tag::mixbeta, tag::rho2 >().at(c),
+             g_inputdeck.get< tag::param, tag::mixbeta, tag::rcomma >().at(c),
+             m_bprime, m_S, m_kprime, m_rho2, m_rcomma, m_b, m_k ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::nfracbeta >
+      Init::template init< tag::mixbeta >
                          ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
     }
 
-    //! \brief Advance particles according to the system of number-fraction beta
-    //!    SDEs
+    //! \brief Advance particles according to the system of mix beta SDEs
     //! \author J. Bakosi
     void advance( tk::ParProps& particles,
                   int stream,
                   tk::real dt,
                   const std::map< tk::ctr::Product, tk::real >& moments )
     {
+      // Update SDE coefficients
+      coeff.update( m_depvar, m_ncomp, moments, m_bprime, m_kprime, m_b, m_k );
       // Advance particles
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
@@ -144,11 +160,13 @@ class NumberFractionBeta {
     const tk::RNG& m_rng;               //!< Random number generator
 
     //! Coefficients
-    std::vector< kw::sde_b::info::expect::type > m_b;
+    std::vector< kw::sde_bprime::info::expect::type > m_bprime;
     std::vector< kw::sde_S::info::expect::type > m_S;
-    std::vector< kw::sde_kappa::info::expect::type > m_k;
+    std::vector< kw::sde_kappaprime::info::expect::type > m_kprime;
     std::vector< kw::sde_rho2::info::expect::type > m_rho2;
     std::vector< kw::sde_rcomma::info::expect::type > m_rcomma;
+    std::vector< kw::sde_b::info::expect::type > m_b;
+    std::vector< kw::sde_kappa::info::expect::type > m_k;
 
     //! Coefficients policy
     Coefficients coeff;
@@ -178,4 +196,4 @@ class NumberFractionBeta {
 
 } // walker::
 
-#endif // NumberFractionBeta_h
+#endif // MixBeta_h

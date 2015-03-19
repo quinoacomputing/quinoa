@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Components.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 06:46:12 AM MST
+  \date      Wed 18 Mar 2015 12:01:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Storage for number of components
   \details   Storage for number of components. This is part of the input deck
@@ -27,7 +27,8 @@ using ncomps = tk::ctr::ncomponents<
   tag::skewnormal,   std::vector< tk::ctr::ncomp_type >,
   tag::gamma,        std::vector< tk::ctr::ncomp_type >,
   tag::beta,         std::vector< tk::ctr::ncomp_type >,
-  tag::nfracbeta,    std::vector< tk::ctr::ncomp_type >
+  tag::nfracbeta,    std::vector< tk::ctr::ncomp_type >,
+  tag::mixbeta,      std::vector< tk::ctr::ncomp_type >
 >;
 
 } // ctr::

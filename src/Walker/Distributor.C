@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:20:30 PM MDT
+  \date      Thu 19 Mar 2015 07:42:55 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -20,6 +20,7 @@
 #include <TxtStatWriter.h>
 #include <PDFWriter.h>
 #include <LoadDistributor.h>
+#include <StatCtr.h>
 #include <walker.decl.h>
 #include <flip_map.h>
 
@@ -62,6 +63,10 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
   // Compute size of initial time step
   const auto dt = computedt();
 
+  // Construct and initialize map of statistical moments
+  for (const auto& product : g_inputdeck.get< tag::stat >())
+    m_moments[ product ] = 0.0;
+
   // Activate SDAG-wait for estimation of ordinary statistics
   wait4ord();
   // Activate SDAG-wait for estimation of central moments
@@ -71,8 +76,10 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
 
   // Fire up asynchronous differential equation integrators
   for (uint64_t i = 1; i < m_count.get< tag::chare >(); ++i)
-    m_proxy.push_back( CProxyInt::ckNew( thisProxy, chunksize, dt, m_it ) );
-  m_proxy.push_back(CProxyInt::ckNew(thisProxy, chunksize+remainder, dt, m_it));
+    m_proxy.push_back(
+      CProxyInt::ckNew( thisProxy, chunksize, dt, m_it, m_moments ) );
+  m_proxy.push_back(
+    CProxyInt::ckNew( thisProxy, chunksize+remainder, dt, m_it, m_moments ) );
 }
 
 void
@@ -559,8 +566,17 @@ Distributor::evaluateTime()
   report();
 
   // Finish if either max iterations or max time reached 
-  if (std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
-    m_it < g_inputdeck.get< tag::discr, tag::nstep >()) {
+  if ( std::fabs(m_t - term) > std::numeric_limits< tk::real >::epsilon() &&
+       m_it < g_inputdeck.get< tag::discr, tag::nstep >() ) {
+
+    // Update map of statistical moments
+    std::size_t ord = 0;
+    std::size_t cen = 0;
+    for (const auto& product : g_inputdeck.get< tag::stat >())
+      if (tk::ctr::ordinary( product ))
+        m_moments[ product ] = m_ordinary[ ord++ ];
+      else
+        m_moments[ product ] = m_central[ cen++ ];
 
     // Zero statistics counters and accumulators
     m_count.get< tag::ordinary >() = m_count.get< tag::central >() = 0;
@@ -586,7 +602,7 @@ Distributor::evaluateTime()
     }
 
     // Continue with next time step with all integrators
-    for (auto& p : m_proxy) p.advance( dt, m_it );
+    for (auto& p : m_proxy) p.advance( dt, m_it, m_moments );
 
   } else {
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/integrator.ci
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 09:36:07 PM MST
+  \date      Thu 19 Mar 2015 07:35:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Integrator
   \details   Charm++ module interface file for Integrator
@@ -27,8 +27,15 @@ module integrator {
 
     template< class Proxy >
     chare Integrator {
-      entry Integrator( Proxy& proxy, uint64_t npar, tk::real dt, uint64_t it );
-      entry void advance( tk::real dt, uint64_t it );
+      entry Integrator( Proxy& proxy,
+                        uint64_t npar,
+                        tk::real dt,
+                        uint64_t it,
+                        const std::map< tk::ctr::Product, tk::real >& moments );
+      entry void advance( tk::real dt,
+                          uint64_t it,
+                          const std::map< tk::ctr::Product, tk::real >& moments
+      );
       entry void accumulateOrd();
       entry void accumulateCen( const std::vector< tk::real >& ord );
       entry void accumulateOrdPDF();

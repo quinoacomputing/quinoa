@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisher.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 03:54:27 PM MDT
+  \date      Thu 19 Mar 2015 11:30:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher SDE
   \details   This file implements the time integration of a system of stochastic
@@ -83,9 +83,8 @@ class WrightFisher {
     }
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
-    //! \param[in] stat Statistics object for accessing moments 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+    void initialize( tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
       //Init::template init< tag::wrightfisher >
       //                   ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
@@ -105,14 +104,15 @@ class WrightFisher {
           par -= particles( p, i, m_offset );
         }
       }
-
-      //! Pre-lookup required statistical moments
-      coeff.lookup( stat, m_depvar );
     }
 
     //! \brief Advance particles according to the Wright-Fisher SDE
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
+    void advance( tk::ParProps& particles,
+                  int stream,
+                  tk::real dt,
+                  const std::map< tk::ctr::Product, tk::real >& moments )
+    {
       // Compute sum of coefficients
       const auto omega = std::accumulate( begin(m_omega), end(m_omega), 0.0 );
       const auto npar = particles.npar();

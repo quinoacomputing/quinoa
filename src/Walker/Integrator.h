@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:08:07 AM MDT
+  \date      Thu 19 Mar 2015 11:31:19 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -49,7 +49,11 @@ class Integrator : public CBase_Integrator< Proxy > {
     //! \param[in] npar Number of particles this integrator advances
     //! \param[in] dt Size of time step
     //! \param[in] it Iteration count
-    explicit Integrator( Proxy& proxy, uint64_t npar, tk::real dt, uint64_t it )
+    explicit Integrator( Proxy& proxy,
+                         uint64_t npar,
+                         tk::real dt,
+                         uint64_t it,
+                         const std::map< tk::ctr::Product, tk::real >& moments )
       : m_proxy( proxy ),
         m_particles( npar, g_inputdeck.get< tag::component >().nprop() ),
         m_stat( m_particles,
@@ -60,21 +64,25 @@ class Integrator : public CBase_Integrator< Proxy > {
                 g_inputdeck.get< tag::discr, tag::binsize >() )
     {
       ic();                 // set initial conditions for all equations
-      advance( dt, it );    // start time stepping all equations
+      advance( dt, it, moments );    // start time stepping all equations
     }
 
     //! Set initial conditions
     void ic() {
-      for (const auto& eq : g_diffeqs) eq.initialize( m_particles, m_stat );
+      for (const auto& eq : g_diffeqs) eq.initialize( m_particles );
       m_proxy.init();   // signal to host that initialization is complete
     }
 
     //! Advance all particles owned by this integrator
     //! \param[in] dt Size of time step
     //! \param[in] it Iteration count
-    void advance( tk::real dt, uint64_t it ) {
+    void advance( tk::real dt,
+                  uint64_t it,
+                  const std::map< tk::ctr::Product, tk::real >& moments )
+    {
       //! Advance all equations one step in time
-      for (const auto& e : g_diffeqs) e.advance( m_particles, CkMyPe(), dt );
+      for (const auto& e : g_diffeqs)
+        e.advance( m_particles, CkMyPe(), dt, moments );
       // Accumulate sums for ordinary moments (every time step)
       accumulateOrd();
       // Accumulate sums for ordinary PDFs at select times

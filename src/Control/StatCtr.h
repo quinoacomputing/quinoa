@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 07:08:03 AM MDT
+  \date      Thu 19 Mar 2015 09:09:16 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -34,7 +34,7 @@ enum class Moment : uint8_t { ORDINARY=0,      //!< Full variable
 struct Term {
   using ncomp_t = kw::ncomp::info::expect::type;
 
-  char var;              //!< Variable name
+  char var;             //!< Variable name
   ncomp_t field;        //!< Field ID
   Moment moment;        //!< Moment type: ordinary, central
 
@@ -217,7 +217,8 @@ struct CaseInsensitiveCharLess {
 //! \param[in] vec Vector of Terms to check
 //! \return Boolean indicating if all terms are ordinary
 //! \author J. Bakosi
-static inline bool ordinary( const std::vector< ctr::Term >& vec ) {
+static inline bool
+ordinary( const std::vector< ctr::Term >& vec ) {
   bool ord = true;
   for (auto& term : vec) if (term.moment == ctr::Moment::CENTRAL) ord = false;
   return ord;
@@ -228,7 +229,8 @@ static inline bool ordinary( const std::vector< ctr::Term >& vec ) {
 //! \param[in] vec Vector of Terms to check
 //! \return Boolean indicating of any term is central
 //! \author J. Bakosi
-static inline bool central( const std::vector< ctr::Term >& vec )
+static inline bool
+central( const std::vector< ctr::Term >& vec )
 { return !ordinary( vec ); }
 
 //! \brief Probability density function (vector of sample space variables)
@@ -307,6 +309,39 @@ unique( Container& c ) {
   auto d = std::distance( begin(c), it );
   Assert( d >= 0, "Distance must be non-negative in tk::ctr::unique()" );
   c.resize( static_cast< std::size_t >( d ) );
+}
+
+//! Lookup moment in moments map based on product key
+static inline tk::real
+lookup( const Product& p, const std::map< Product, tk::real >& moments ) {
+  const auto& it = moments.find( p );
+  if (it != end(moments))
+    return it->second;
+  else
+    Throw( "Cannot find moment in moments map" );
+}
+
+//! Construct mean
+//! \param[in] var Variable
+//! \param[in] c Component number
+//! \return Constructed vector< Term > identifying the first ordinary moment
+//!   (mean) of field (component) c of variable var
+//! \author J. Bakosi
+static inline Product
+mean( char var, kw::ncomp::info::expect::type c ) {
+  tk::ctr::Term m( static_cast<char>(toupper(var)), c, Moment::ORDINARY );
+  return tk::ctr::Product( { m } );
+}
+//! Construct variance
+//! \param[in] var Variable
+//! \param[in] c Component number
+//! \return Constructed vector< Term > identifying the second central moment
+//!   (variance) of field (component) c of variable var
+//! \author J. Bakosi
+static inline Product
+variance( char var, kw::ncomp::info::expect::type c ) {
+  tk::ctr::Term f( static_cast<char>(tolower(var)), c, Moment::CENTRAL );
+  return tk::ctr::Product( { f, f } );
 }
 
 } // ctr::
