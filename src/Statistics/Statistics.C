@@ -2,7 +2,7 @@
 /*!
   \file      src/Statistics/Statistics.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:02:33 PM MDT
+  \date      Thu 19 Mar 2015 07:31:32 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Statistics class definition
   \details   This file implements a statistics class that can be used to
@@ -69,8 +69,6 @@ Statistics::setupOrdinary( const ctr::OffsetMap& offset,
 
       // Increase number of ordinary moments by one
       m_ordinary.push_back( 0.0 );
-      // Add product as key associated to ordinary moment to lookup map
-      m_pos[ product ] = &m_ordinary[ m_nord ];
       // Count up orindary moments
       ++m_nord;
     }
@@ -119,8 +117,6 @@ Statistics::setupCentral( const ctr::OffsetMap& offset,
 
         // Increase number of central moments by one
         m_central.push_back( 0.0 );
-        // Add product as key associated to central moment to lookup map
-        m_pos[ product ] = &m_central[ m_ncen ];
         // Count up central moments
         ++m_ncen;
       }

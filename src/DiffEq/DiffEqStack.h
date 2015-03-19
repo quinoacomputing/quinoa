@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 09:41:55 PM MDT
+  \date      Wed 18 Mar 2015 01:04:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -149,6 +149,9 @@ class DiffEqStack {
     std::vector< std::pair< std::string, std::string > >
     infoNumberFractionBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt )
     const;
+    //! Get information on mix Beta SDE
+    std::vector< std::pair< std::string, std::string > >
+    infoMixBeta( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;
     //! Get information on skew-normal SDE
     std::vector< std::pair< std::string, std::string > >
     infoSkewNormal( std::map< ctr::DiffEqType, ncomp_t >& cnt ) const;

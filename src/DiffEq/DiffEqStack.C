@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 07:10:50 AM MDT
+  \date      Wed 18 Mar 2015 01:07:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file defines class DiffEqStack, which implements various
@@ -24,6 +24,7 @@
 #include <WrightFisher.h>
 #include <Beta.h>
 #include <NumberFractionBeta.h>
+#include <MixBeta.h>
 #include <SkewNormal.h>
 #include <Gamma.h>
 #include <Factory.h>
@@ -162,6 +163,15 @@ DiffEqStack::DiffEqStack()
     registerDiffEq< NumberFractionBeta >
                   ( m_factory, ctr::DiffEqType::NFRACBETA, m_eqTypes ) );
 
+  // Mix Beta SDE
+  // Construct vector of vectors for all possible policies for SDE
+  using MixBetaPolicies =
+    mpl::vector< tk::InitPolicies, MixBetaCoeffPolicies >;
+  // Register SDE for all combinations of policies
+  mpl::cartesian_product< MixBetaPolicies >(
+    registerDiffEq< MixBeta >
+                  ( m_factory, ctr::DiffEqType::MIXBETA, m_eqTypes ) );
+
   // Skew-normal SDE
   // Construct vector of vectors for all possible policies for SDE
   using SkewNormalPolicies =
@@ -207,6 +217,8 @@ DiffEqStack::selected() const
       diffeqs.push_back( createDiffEq< tag::beta >( d, cnt ) );
     else if (d == ctr::DiffEqType::NFRACBETA)
       diffeqs.push_back( createDiffEq< tag::nfracbeta >( d, cnt ) );
+    else if (d == ctr::DiffEqType::MIXBETA)
+      diffeqs.push_back( createDiffEq< tag::mixbeta >( d, cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       diffeqs.push_back( createDiffEq< tag::skewnormal >( d, cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -244,6 +256,8 @@ DiffEqStack::info() const
       info.emplace_back( infoBeta( cnt ) );
     else if (d == ctr::DiffEqType::NFRACBETA)
       info.emplace_back( infoNumberFractionBeta( cnt ) );
+    else if (d == ctr::DiffEqType::MIXBETA)
+      info.emplace_back( infoMixBeta( cnt ) );
     else if (d == ctr::DiffEqType::SKEWNORMAL)
       info.emplace_back( infoSkewNormal( cnt ) );
     else if (d == ctr::DiffEqType::GAMMA)
@@ -566,6 +580,62 @@ DiffEqStack::infoNumberFractionBeta(
       g_inputdeck.get< tag::param, tag::nfracbeta, tag::rcomma >().at(c) ) );
   spikes( info,
           g_inputdeck.get< tag::param, tag::nfracbeta, tag::spike >().at(c) );
+
+  return info;
+}
+
+std::vector< std::pair< std::string, std::string > >
+DiffEqStack::infoMixBeta(
+  std::map< ctr::DiffEqType, std::size_t >& cnt ) const
+//******************************************************************************
+//  Return information on the mix beta SDE
+//! \param[inout] cnt std::map of counters for all differential equation types
+//! \return vector of string pairs describing the SDE configuration
+//! \author J. Bakosi
+//******************************************************************************
+{
+  auto c = ++cnt[ ctr::DiffEqType::MIXBETA ];       // count eqs
+  --c;  // used to index vectors starting with 0
+
+  std::vector< std::pair< std::string, std::string > > info;
+
+  info.emplace_back( ctr::DiffEq().name( ctr::DiffEqType::MIXBETA ), "" );
+  info.emplace_back( "kind", "stochastic" );
+  info.emplace_back( "dependent variable", std::string( 1,
+    g_inputdeck.get< tag::param, tag::mixbeta, tag::depvar >()[c] ) );
+  info.emplace_back( "initialization policy", tk::ctr::InitPolicy().name(
+    g_inputdeck.get< tag::param, tag::mixbeta, tag::initpolicy >()[c] ) );
+  info.emplace_back( "coefficients policy", tk::ctr::CoeffPolicy().name(
+    g_inputdeck.get< tag::param, tag::mixbeta, tag::coeffpolicy >()[c] ) );
+  info.emplace_back( "start offset in particle array", std::to_string(
+    g_inputdeck.get< tag::component >().offset< tag::mixbeta >(c) ) );
+  auto ncomp = g_inputdeck.get< tag::component >().get< tag::mixbeta >()[c] / 3;
+  info.emplace_back( "number of components", std::to_string( ncomp ) );
+  info.emplace_back( "random number generator", tk::ctr::RNG().name(
+    g_inputdeck.get< tag::param, tag::mixbeta, tag::rng >()[c] ) );
+  info.emplace_back(
+    "coeff b' [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixbeta, tag::bprime >().at(c) )
+  );
+  info.emplace_back(
+    "coeff S [" + std::to_string( ncomp ) + "]",
+    parameters( g_inputdeck.get< tag::param, tag::mixbeta, tag::S >().at(c) )
+  );
+  info.emplace_back(
+    "coeff kappa' [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixbeta, tag::kappaprime >().at(c) ) );
+  info.emplace_back(
+    "coeff rho2 [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixbeta, tag::rho2 >().at(c) ) );
+  info.emplace_back(
+    "coeff rcomma [" + std::to_string( ncomp ) + "]",
+    parameters(
+      g_inputdeck.get< tag::param, tag::mixbeta, tag::rcomma >().at(c) ) );
+  spikes( info,
+          g_inputdeck.get< tag::param, tag::mixbeta, tag::spike >().at(c) );
 
   return info;
 }

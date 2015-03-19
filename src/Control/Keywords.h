@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 08:53:37 AM MDT
+  \date      Wed 18 Mar 2015 02:37:17 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1486,6 +1486,39 @@ struct sde_kappa_info {
 };
 using sde_kappa = keyword< sde_kappa_info,  k,a,p,p,a >;
 
+struct sde_bprime_info {
+  static std::string name() { return "bprime"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) bprime)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "bprime 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = sde_b_info::expect::type;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_bprime = keyword< sde_bprime_info,  b,p,r,i,m,e >;
+
+struct sde_kappaprime_info {
+  static std::string name() { return "kappaprime"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) kappaprime)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "kappaprime 5.0 2.0 3.0 end". The length of the vector depends on the
+    particular type of SDE system and is controlled by the preceding keyword
+    'ncomp'.)"; }
+  struct expect {
+    using type = sde_kappa_info::expect::type;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_kappaprime = keyword< sde_kappaprime_info,  k,a,p,p,a,p,r,i,m,e >;
+
 struct sde_c_info {
   static std::string name() { return "c"; }
   static std::string shortDescription() { return
@@ -1749,10 +1782,10 @@ struct beta_info {
     "Introduce the beta SDE input block"; }
   static std::string longDescription() { return
     R"(This keyword is used to introduce the beta ... end block, used to specify
-    the configuration of a system of stochastic differential equations
-    (SDEs), with linear drift and quadratic diagonal diffusion, whose
-    invariant is the joint beta distribution. For more details
-    on the beta SDE, see http://doi.org/10.1080/14685248.2010.510843. Keywords
+    the configuration of a system of stochastic differential equations (SDEs),
+    with linear drift and quadratic diagonal diffusion, whose invariant is the
+    joint beta distribution. For more details on the beta SDE, see
+    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a beta ... end block: )" + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -1780,10 +1813,12 @@ struct nfracbeta_info {
     diffusion (whose invariant is joint beta), two additional variables are
     computed. In other words, this is a beta SDE but there are two additional
     stochastic variables computed based on the beta SDE. If X is governed by the
-    beta SDE, then the number-fraction beta SDE additionally governs Y = f(X),
-    where both X and Y are random variables.  For more details on the beta
-    SDE, see http://doi.org/10.1080/14685248.2010.510843 DiffEq/Beta.h. Keywords
-    allowed in a nfracbeta ... end block: )" + std::string("\'")
+    beta SDE, then the number-fraction beta SDE additionally governs rho(X) and
+    V(X), where both rho and V are random variables, computed by rho(X) = rho2
+    ( 1 - r' X ), and V(X) = 1 / [ rho2 ( 1 - r'X ) ]. For more details on the
+    beta SDE, see http://doi.org/10.1080/14685248.2010.510843 and
+    src/DiffEq/Beta.h. Keywords allowed in a nfracbeta ... end block: )"
+    + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
     + rng::string() + "\', \'"
@@ -1791,12 +1826,51 @@ struct nfracbeta_info {
     + coeff::string() + "\', \'"
     + sde_b::string() + "\', \'"
     + sde_S::string() + "\', \'"
-    + sde_kappa::string() + "\'. "
+    + sde_kappa::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_rcomma::string() + "\'. "
     + R"(For an example nfracbeta ... end block, see
       doc/html/walker_example_nfracbeta.html.)";
   }
 };
 using nfracbeta = keyword< nfracbeta_info, n,f,r,a,c,b,e,t,a >;
+
+struct mixbeta_info {
+  static std::string name() { return "Mix beta"; }
+  static std::string shortDescription() { return
+    "Introduce the mixbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the mixbeta ... end block, used to
+    specify the configuration of a system of mix beta SDEs, a system of
+    stochastic differential equations (SDEs), in which the usual parameters, b
+    and kappa are specified via functions that constrain the beta SDE to be
+    consistent with the turbulent mixing process. In particular, the SDE is made
+    consistent with the no-mix and fully mixed limits. If X is governed by the
+    beta SDE, but b = Theta * b' and kappa = kappa' * <x^2>, where Theta =
+    1 - <x^2> / [ <X> ( 1 - <X> ], the fluctuation about the mean, <X>, is
+    defined as usual: x = X - <X>, and b' and kappa' are user-specified
+    constants. Also, there two additional random variables computed besides, X,
+    and they are rho(X) and V(X), also computed by the number-fraction beta
+    equation. For more detail on the number-fraction beta SDE, see the help on
+    keyword 'nfracbeta'. For more details on the beta SDE, see
+    http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
+    allowed in a mixbeta ... end block: )"
+    + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_bprime::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappaprime::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_rcomma::string() + "\'. "
+    + R"(For an example mixbeta ... end block, see
+      doc/html/walker_example_mixbeta.html.)";
+  }
+};
+using mixbeta = keyword< mixbeta_info, m,i,x,b,e,t,a >;
 
 struct gamma_info {
   static std::string name() { return "Gamma"; }

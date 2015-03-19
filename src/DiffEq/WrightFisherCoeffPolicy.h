@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/WrightFisherCoeffPolicy.h
   \author    J. Bakosi
-  \date      Mon 26 Jan 2015 12:02:06 PM MST
+  \date      Thu 19 Mar 2015 11:27:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Wright-Fisher coefficients policies
   \details   This file defines coefficients policy classes for the Wright-Fisher
@@ -36,17 +36,6 @@
       \endcode
       which returns the enum value of the option from the underlying option
       class, collecting all possible options for coefficients policies.
-
-    - Must define the function _lookup()_, called from
-      WrightFisher::initialize(), performing pre-lookup of the locations of the
-      statistical moments required by the given model. Required signature:
-      \code{.cpp}
-        void lookup( const tk::Statistics& stat, char depvar )
-      \endcode
-      where _stat_ is the Statistics object, allowing access to the location of
-      the various moments in memory, and _depvar_ is the dependent variable
-      associated with the Wright-Fisher SDE, given in the control file by the
-      user.
 */
 //******************************************************************************
 #ifndef WrightFisherCoeffPolicy_h
@@ -77,12 +66,6 @@ class WrightFisherCoeffConst {
 
     static tk::ctr::CoeffPolicyType type() noexcept
     { return tk::ctr::CoeffPolicyType::CONSTANT; }
-
-    //! Lookup statistical moments required: no-op for constant coefficients
-    void lookup( const tk::Statistics& stat, char ) {}
-
-    //! Function call: no-op for constant coefficients
-    void operator()( const tk::real&, std::vector< tk::real >& ) {}
 };
 
 //! List of all Wright-Fisher's coefficients policies

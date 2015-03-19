@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 06:46:25 AM MST
+  \date      Wed 18 Mar 2015 12:21:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -166,7 +166,11 @@ class InputDeck :
                                      , kw::sde_rcomma
                                      , kw::delta
                                      >;
-    using keywords6 = boost::mpl::set< kw::spike >;
+    using keywords6 = boost::mpl::set< kw::spike
+                                     , kw::sde_bprime
+                                     , kw::sde_kappaprime
+                                     , kw::mixbeta
+                                     >;
 
     //! \brief Constructor: set all defaults
     //! \details Anything not set here is initialized by the compiler using the

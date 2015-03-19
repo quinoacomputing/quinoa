@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiagOrnsteinUhlenbeck.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 03:55:19 PM MDT
+  \date      Thu 19 Mar 2015 11:28:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     System of diagonal Ornstein-Uhlenbeck SDEs
   \details   This file implements the time integration of a system of stochastic
@@ -96,20 +96,21 @@ class DiagOrnsteinUhlenbeck {
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
-    //! \param[in] stat Statistics object for accessing moments 
     //! \author J. Bakosi
-    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) {
+    void initialize( tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
       Init::template init< tag::diagou >
                          ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
-      //! Pre-lookup required statistical moments
-      coeff.lookup( stat, m_depvar );
     }
 
     //! \brief Advance particles according to the system of diagonal
     //!   Orsntein-Uhlenbeck SDEs
     //! \author J. Bakosi
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) {
+    void advance( tk::ParProps& particles,
+                  int stream,
+                  tk::real dt,
+                  const std::map< tk::ctr::Product, tk::real >& moments )
+    {
       const auto npar = particles.npar();
       for (auto p=decltype(npar){0}; p<npar; ++p) {
         // Generate Gaussian random numbers with zero mean and unit variance

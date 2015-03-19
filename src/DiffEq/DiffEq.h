@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEq.h
   \author    J. Bakosi
-  \date      Fri 13 Feb 2015 02:49:00 PM MST
+  \date      Thu 19 Mar 2015 11:29:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation
   \details   This file defines a generic differential equation class. The class
@@ -68,12 +68,15 @@ class DiffEq {
       self( tk::make_unique< Model<T> >( std::move(x(args...)) ) ) {}
 
     //! Public interface to setting the initial conditions for the diff eq
-    void initialize( tk::ParProps& particles, const tk::Statistics& stat ) const
-    { self->initialize( particles, stat ); }
+    void initialize( tk::ParProps& particles ) const
+    { self->initialize( particles ); }
 
     //! Public interface to advancing particles in time by the diff eq
-    void advance( tk::ParProps& particles, int stream, tk::real dt ) const
-    { self->advance( particles, stream, dt ); }
+    void advance( tk::ParProps& particles,
+                  int stream,
+                  tk::real dt,
+                  const std::map< tk::ctr::Product, tk::real >& moments ) const
+    { self->advance( particles, stream, dt, moments ); }
 
     //! Copy assignment
     DiffEq& operator=( const DiffEq& x )
@@ -91,8 +94,11 @@ class DiffEq {
     struct Concept {
       virtual ~Concept() = default;
       virtual Concept* copy() const = 0;
-      virtual void initialize( tk::ParProps&, const tk::Statistics& ) = 0;
-      virtual void advance( tk::ParProps&, int, tk::real ) = 0;
+      virtual void initialize( tk::ParProps& ) = 0;
+      virtual void advance( tk::ParProps&,
+                            int,
+                            tk::real,
+                            const std::map< tk::ctr::Product, tk::real >& ) = 0;
     };
 
     //! Model models the Concept above by deriving from it and overriding the
@@ -101,10 +107,13 @@ class DiffEq {
     struct Model : Concept {
       Model( T x ) : data( std::move(x) ) {}
       Concept* copy() const override { return new Model( *this ); }
-      void initialize( tk::ParProps& particles, const tk::Statistics& stat )
-        override { data.initialize( particles, stat ); }
-      void advance( tk::ParProps& particles, int stream, tk::real dt ) override
-        { data.advance( particles, stream, dt ); }
+      void initialize( tk::ParProps& particles )
+        override { data.initialize( particles ); }
+      void advance( tk::ParProps& particles,
+                    int stream,
+                    tk::real dt,
+                    const std::map< tk::ctr::Product, tk::real >& moments )
+      override { data.advance( particles, stream, dt, moments ); }
       T data;
     };
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Sun 15 Mar 2015 06:45:27 PM MDT
+  \date      Wed 18 Mar 2015 12:23:27 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -70,7 +70,8 @@ namespace deck {
                            tag::skewnormal,   std::size_t,
                            tag::gamma,        std::size_t,
                            tag::beta,         std::size_t,
-                           tag::nfracbeta,    std::size_t > neq;
+                           tag::nfracbeta,    std::size_t,
+                           tag::mixbeta,      std::size_t > neq;
 
   // Walker's InputDeck actions
 
@@ -225,6 +226,18 @@ namespace deck {
            // do error checking on the init policy
            pegtl::apply< check_init< eq > > > {};
 
+  //! SDE parameter vector
+  template< class keyword, class eq, class param >
+  struct sde_parameter_vector :
+         tk::grm::parameter_vector< Stack,
+                                    use,
+                                    use< keyword >,
+                                    tk::grm::Store_back_back,
+                                    tk::grm::start_vector,
+                                    tk::grm::check_vector,
+                                    eq,
+                                    param > {};
+
   //! Diagonal Ornstein-Uhlenbeck SDE
   struct diag_ou :
          pegtl::ifmust<
@@ -257,33 +270,15 @@ namespace deck {
                                             tag::diagou,
                                             tag::coeffpolicy >,
                            delta< tag::diagou >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_sigmasq >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::diagou,
-                             tag::sigmasq >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_theta >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::diagou,
-                             tag::theta >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_mu >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::diagou,
-                             tag::mu > >,
+                           sde_parameter_vector< kw::sde_sigmasq,
+                                                 tag::diagou,
+                                                 tag::sigmasq >,
+                           sde_parameter_vector< kw::sde_theta,
+                                                 tag::diagou,
+                                                 tag::theta >,
+                           sde_parameter_vector< kw::sde_mu,
+                                                 tag::diagou,
+                                                 tag::mu > >,
            check_errors< tag::diagou > > {};
 
   //! Ornstein-Uhlenbeck SDE
@@ -318,33 +313,15 @@ namespace deck {
                                             tag::ou,
                                             tag::coeffpolicy >,
                            delta< tag::ou >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_sigmasq >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::ou,
-                             tag::sigmasq >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_theta >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::ou,
-                             tag::theta >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_mu >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::ou,
-                             tag::mu > >,
+                           sde_parameter_vector< kw::sde_sigmasq,
+                                                 tag::ou,
+                                                 tag::sigmasq >,
+                           sde_parameter_vector< kw::sde_theta,
+                                                 tag::ou,
+                                                 tag::theta >,
+                           sde_parameter_vector< kw::sde_mu,
+                                                 tag::ou,
+                                                 tag::mu > >,
            check_errors< tag::ou > > {};
 
   //! Skew-normal SDE
@@ -379,33 +356,15 @@ namespace deck {
                                             tag::skewnormal,
                                             tag::coeffpolicy >,
                            delta< tag::skewnormal >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_T >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::skewnormal,
-                             tag::timescale >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_sigmasq >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::skewnormal,
-                             tag::sigmasq >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_lambda >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::skewnormal,
-                             tag::lambda > >,
+                           sde_parameter_vector< kw::sde_T,
+                                                 tag::skewnormal,
+                                                 tag::timescale >,
+                           sde_parameter_vector< kw::sde_sigmasq,
+                                                 tag::skewnormal,
+                                                 tag::sigmasq >,
+                           sde_parameter_vector< kw::sde_lambda,
+                                                 tag::skewnormal,
+                                                 tag::lambda > >,
            check_errors< tag::skewnormal > > {};
 
   //! Beta SDE
@@ -440,33 +399,15 @@ namespace deck {
                                             tag::beta,
                                             tag::coeffpolicy >,
                            delta< tag::beta >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_b >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::beta,
-                             tag::b >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_S >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::beta,
-                             tag::S >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_kappa >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::beta,
-                             tag::kappa > >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::beta,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::beta,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::beta,
+                                                 tag::kappa > >,
            check_errors< tag::beta > > {};
 
   //! Number-fraction beta SDE
@@ -501,52 +442,71 @@ namespace deck {
                                             tag::nfracbeta,
                                             tag::coeffpolicy >,
                            delta< tag::nfracbeta >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_b >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::nfracbeta,
-                             tag::b >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_S >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::nfracbeta,
-                             tag::S >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_kappa >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::nfracbeta,
-                             tag::kappa >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_rho2 >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::nfracbeta,
-                             tag::rho2 >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_rcomma >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::nfracbeta,
-                             tag::rcomma > >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::nfracbeta,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::nfracbeta,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::nfracbeta,
+                                                 tag::kappa >,
+                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::nfracbeta,
+                                                 tag::rho2 >,
+                           sde_parameter_vector< kw::sde_rcomma,
+                                                 tag::nfracbeta,
+                                                 tag::rcomma > >,
            check_errors< tag::nfracbeta > > {};
+
+  //! Mix beta SDE
+  struct mixbeta :
+         pegtl::ifmust<
+           scan_sde< use< kw::mixbeta >, tag::mixbeta >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::depvar< Stack,
+                                            use,
+                                            tag::mixbeta,
+                                            tag::depvar >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::mixbeta >,
+                           tk::grm::rng< Stack,
+                                         use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::mixbeta,
+                                         tag::rng >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::init >,
+                                            tk::ctr::InitPolicy,
+                                            tag::mixbeta,
+                                            tag::initpolicy >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::coeff >,
+                                            tk::ctr::CoeffPolicy,
+                                            tag::mixbeta,
+                                            tag::coeffpolicy >,
+                           delta< tag::mixbeta >,
+                           sde_parameter_vector< kw::sde_bprime,
+                                                 tag::mixbeta,
+                                                 tag::bprime >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::mixbeta,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappaprime,
+                                                 tag::mixbeta,
+                                                 tag::kappaprime >,
+                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::mixbeta,
+                                                 tag::rho2 >,
+                           sde_parameter_vector< kw::sde_rcomma,
+                                                 tag::mixbeta,
+                                                 tag::rcomma > >,
+           check_errors< tag::mixbeta > > {};
 
   //! Gamma SDE
   struct gamma :
@@ -580,33 +540,15 @@ namespace deck {
                                             tag::gamma,
                                             tag::coeffpolicy >,
                            delta< tag::gamma >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_b >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gamma,
-                             tag::b >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_S >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gamma,
-                             tag::S >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_kappa >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gamma,
-                             tag::kappa > >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::gamma,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::gamma,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::gamma,
+                                                 tag::kappa > >,
            check_errors< tag::gamma > > {};
 
   //! Dirichlet SDE
@@ -640,34 +582,16 @@ namespace deck {
                                             tk::ctr::CoeffPolicy,
                                             tag::dirichlet,
                                             tag::coeffpolicy >,
-                            delta< tag::dirichlet >,
-                            tk::grm::parameter_vector<
-                              Stack,
-                              use,
-                              use< kw::sde_b >,
-                              tk::grm::Store_back_back,
-                              tk::grm::start_vector,
-                              tk::grm::check_vector,
-                              tag::dirichlet,
-                              tag::b >,
-                            tk::grm::parameter_vector<
-                              Stack,
-                              use,
-                              use< kw::sde_S >,
-                              tk::grm::Store_back_back,
-                              tk::grm::start_vector,
-                              tk::grm::check_vector,
-                              tag::dirichlet,
-                              tag::S >,
-                            tk::grm::parameter_vector<
-                              Stack,
-                              use,
-                              use< kw::sde_kappa >,
-                              tk::grm::Store_back_back,
-                              tk::grm::start_vector,
-                              tk::grm::check_vector,
-                              tag::dirichlet,
-                              tag::kappa > >,
+                           delta< tag::dirichlet >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::dirichlet,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::dirichlet,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::dirichlet,
+                                                 tag::kappa > >,
            check_errors< tag::dirichlet > > {};
 
   //! Generalized Dirichlet SDE
@@ -702,42 +626,18 @@ namespace deck {
                                             tag::gendir,
                                             tag::coeffpolicy >,
                            delta< tag::gendir >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_b >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gendir,
-                             tag::b >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_S >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gendir,
-                             tag::S >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_kappa >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gendir,
-                             tag::kappa >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_c >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::gendir,
-                             tag::c > >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::gendir,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::gendir,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::gendir,
+                                                 tag::kappa >,
+                           sde_parameter_vector< kw::sde_c,
+                                                 tag::gendir,
+                                                 tag::c > >,
            check_errors< tag::gendir > > {};
 
   //! Wright-Fisher SDE
@@ -772,15 +672,9 @@ namespace deck {
                                             tag::wrightfisher,
                                             tag::coeffpolicy >,
                            delta< tag::wrightfisher >,
-                           tk::grm::parameter_vector<
-                             Stack,
-                             use,
-                             use< kw::sde_omega >,
-                             tk::grm::Store_back_back,
-                             tk::grm::start_vector,
-                             tk::grm::check_vector,
-                             tag::wrightfisher,
-                             tag::omega > >,
+                           sde_parameter_vector< kw::sde_omega,
+                                                 tag::wrightfisher,
+                                                 tag::omega > >,
            check_errors< tag::wrightfisher > > {};
 
   //! stochastic differential equations
@@ -793,7 +687,8 @@ namespace deck {
                      skewnormal,
                      gamma,
                      beta,
-                     nfracbeta > {};
+                     nfracbeta,
+                     mixbeta > {};
 
   //! 'walker' block
   struct walker :

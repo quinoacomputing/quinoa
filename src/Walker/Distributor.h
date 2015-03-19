@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 09:35:08 AM MDT
+  \date      Thu 19 Mar 2015 07:20:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -134,6 +134,9 @@ class Distributor : public CBase_Distributor {
     std::vector< tk::UniPDF > m_cenupdf;        //!< Central univariate PDFs
     std::vector< tk::BiPDF > m_cenbpdf;         //!< Central bivariate PDFs
     std::vector< tk::TriPDF > m_centpdf;        //!< Central trivariate PDFs
+
+    //! Map used to lookup moments
+    std::map< tk::ctr::Product, tk::real > m_moments;
 };
 
 } // walker::
