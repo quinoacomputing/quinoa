@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 12:03:25 PM MST
+  \date      Thu 19 Mar 2015 12:04:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -62,7 +62,8 @@ WalkerPrint::diffeqs( const std::string& title, const std::vector< std::vector<
   std::pair< std::string, std::string > > >& info ) const
 //******************************************************************************
 //  Print configuration of a stack of differential equations
-//! \param[in] msg Message to print
+//! \param[in] title Title to use
+//! \param[in] info Info vector to use
 //! \author J. Bakosi
 //******************************************************************************
 {

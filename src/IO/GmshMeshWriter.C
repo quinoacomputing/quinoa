@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 04:06:21 PM MDT
+  \date      Thu 19 Mar 2015 11:54:17 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -29,6 +29,7 @@ GmshMeshWriter::GmshMeshWriter( const std::string& filename,
 //! \param[in] filename File to open as a Gmsh file
 //! \param[in] mesh Unstructured mesh object to write data from
 //! \param[in] type Gmsh file type: ASCII or binary
+//! \param[in] version Gmsh file version
 //! \param[in] datasize Size of double precision number on machine
 //! \author J. Bakosi
 //******************************************************************************
@@ -139,6 +140,7 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
                                 const std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block: element ids, tags, and connectivity (node list)
+//! \param[in] nnpe Number of nodes per element
 //! \param[in] type Element type
 //! \param[in] tag Vectors of element tags
 //! \param[in] inpoel Element connectivity

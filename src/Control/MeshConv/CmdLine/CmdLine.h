@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/MeshConv/CmdLine/CmdLine.h
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 11:45:16 AM MST
+  \date      Thu 19 Mar 2015 12:00:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     MeshConv's command line definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -58,7 +58,7 @@ class CmdLine :
     //!   default constructor for the corresponding type. While there is a
     //!   ctrinfo parameter, it is unused here, since meshconv does not have a
     //!   control file parser.
-    //! \param[in] ctrinfo empty std::map, unused so that PEGTLParsed's
+    //! \param[in] ctrnfo empty std::map, unused so that PEGTLParsed's
     //!    constructor can be kept generic that works with those executables
     //!    that do have both command-line argument and control file parsers
     //! \see walker::ctr::CmdLine

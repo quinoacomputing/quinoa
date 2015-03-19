@@ -2,7 +2,7 @@
 /*!
   \file      src/RNG/MKLRNG.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 09:58:40 PM MDT
+  \date      Thu 19 Mar 2015 11:52:52 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interface to Intel MKL VSL random number generators
   \details   Interface to Intel MKL VSL random number generators.
@@ -63,7 +63,7 @@ class MKLRNG {
     //! Uniform RNG: Generate uniform random numbers
     //! \param[in] tid Thread (or more precisely) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the RNGs to
     void uniform( int tid, ncomp_t num, double* r ) const {
       vdRngUniform( m_uniform_method,
                     m_stream[ static_cast<std::size_t>(tid) ],
@@ -76,7 +76,7 @@ class MKLRNG {
     //! Gaussian RNG: Generate Gaussian random numbers
     //! \param[in] tid Thread (or rather) stream ID
     //! \param[in] num Number of RNGs to generate
-    //! \param[inout r Pointer to memory to write the RNGs to
+    //! \param[inout] r Pointer to memory to write the RNGs to
     void gaussian( int tid, ncomp_t num, double* r ) const {
       vdRngGaussian( m_gaussian_method,
                      m_stream[ static_cast<std::size_t>(tid) ],

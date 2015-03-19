@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/StatCtr.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 09:09:16 AM MDT
+  \date      Thu 19 Mar 2015 11:49:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types and associated functions to deal with moments and PDFs
   \details   Types and associated functions to deal with statistical moments and
@@ -59,7 +59,6 @@ struct Term {
   //! \param[in] v Variable name
   //! \param[in] f Field ID
   //! \param[in] m Moment type enum: Moment::ORDINARY or Moment::CENTRAL
-  //! \param[in] p Indicates whether the variable will be plotted
   //! \author J. Bakosi
   explicit Term( char v = 0, ncomp_t f = 0, Moment m = Moment::ORDINARY ) :
     var( v ), field( f ), moment( m ) {}

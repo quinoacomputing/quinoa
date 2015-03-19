@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Integrator.h
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:31:19 AM MDT
+  \date      Thu 19 Mar 2015 11:43:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Integrator advances differential equations
   \details   Integrator advances differential equations. There are a potentially
@@ -49,6 +49,7 @@ class Integrator : public CBase_Integrator< Proxy > {
     //! \param[in] npar Number of particles this integrator advances
     //! \param[in] dt Size of time step
     //! \param[in] it Iteration count
+    //! \param[in] moments Map of statistical moments
     explicit Integrator( Proxy& proxy,
                          uint64_t npar,
                          tk::real dt,
@@ -76,6 +77,7 @@ class Integrator : public CBase_Integrator< Proxy > {
     //! Advance all particles owned by this integrator
     //! \param[in] dt Size of time step
     //! \param[in] it Iteration count
+    //! \param[in] moments Map of statistical moments
     void advance( tk::real dt,
                   uint64_t it,
                   const std::map< tk::ctr::Product, tk::real >& moments )

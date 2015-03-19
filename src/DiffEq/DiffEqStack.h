@@ -2,7 +2,7 @@
 /*!
   \file      src/DiffEq/DiffEqStack.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 01:04:06 PM MDT
+  \date      Thu 19 Mar 2015 11:46:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Stack of differential equations
   \details   This file declares class DiffEqStack, which implements various
@@ -175,8 +175,8 @@ class DiffEqStack {
 
     //! \brief Insert spike information (used to specify delta PDFs) into info
     //!   vector
-    //! \param[in] v Vector of vectors specifying spike info
     //! \param[inout] info Info vector of string-pairs to insert to
+    //! \param[in] spike Vector of vectors specifying spike info
     //! \author J. Bakosi
     template< typename Info, typename VV >
     void spikes( Info& info, const VV& spike ) const {

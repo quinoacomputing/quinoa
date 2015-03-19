@@ -2,7 +2,7 @@
 /*!
   \file      src/RNGTest/StatTest.h
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:25:03 PM MDT
+  \date      Thu 19 Mar 2015 11:59:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator statistical test
   \details   This file defines a generic random number generator statistical
@@ -56,12 +56,15 @@ class StatTest {
     explicit StatTest( T x ) :
       self( tk::make_unique< Model<T> >( std::move(x) ) ){}
 
-    //! Constructor taking a std::function holding a constructor bound to its
-    //! arguments of an object modeling Concept (see below). Passing
-    //! std::function allows late execution of the constructor of T, i.e., as
-    //! late as inside this class' constructor, and thus usage from a factory.
-    //! Object of T is constructed here. This overload is disabled for Charm++
-    //! chare objects defining typedef 'Proxy', see also below.
+    //! \brief Constructor taking a std::function holding a constructor bound to
+    //!   its arguments of an object modeling Concept (see below)
+    //! \details Passing std::function allows late execution of the constructor
+    //!   of T, i.e., as late as inside this class' constructor, and thus usage
+    //!   from a factory. Object of T is constructed here. This overload is
+    //!   disabled for Charm++ chare objects defining typedef 'Proxy', see also
+    //!   below.
+    //! \param[in] x Function pointer to a constructor bound of an object
+    //!   modeling Concept
     template< typename T,
       typename std::enable_if< !tk::HasTypedefProxy<T>::value, int >::type = 0 >
     explicit StatTest( std::function<T()> x ) :
@@ -86,8 +89,8 @@ class StatTest {
     //!   explicitly forward the model constructor arguments via this host
     //!   constructor.
     //! \param[in] c Function pointer to a constructor of an object modeling
-    //!    Concept.
-    //! \param[in] args... Constructor arguments
+    //!    Concept
+    //! \param[in] args Constructor arguments
     //! \see See also tk::recordCharmModel().
     template< typename T, typename... ConstrArgs,
       typename std::enable_if< tk::HasTypedefProxy<T>::value, int >::type = 0 >
