@@ -153,6 +153,38 @@ INSTALL(TARGETS ${UNITTEST_EXECUTABLE}
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
+## RegTest executable #########################################################
+add_executable(${REGTEST_EXECUTABLE}
+               RegTestDriver.C
+               RegTest.C
+)
+
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${REGTEST_EXECUTABLE} PROPERTIES
+                        COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+  set_target_properties(${REGTEST_EXECUTABLE} PROPERTIES
+                        LINK_FLAGS "${MPI_LINK_FLAGS}")
+endif()
+
+target_link_libraries(${REGTEST_EXECUTABLE}
+                      Base
+                      #RegTest
+                      RegTestControl
+)
+
+# Add custom dependencies for RegTest's main Charm++ module
+addCharmModule( "regtest" "${REGTEST_EXECUTABLE}" )
+removeWarnings( "RegTest.C;RegTestDriver.C")
+
+INSTALL(TARGETS ${REGTEST_EXECUTABLE}
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
 ### MeshConv executable ########################################################
 add_executable(${MESHCONV_EXECUTABLE}
                MeshConvDriver.C

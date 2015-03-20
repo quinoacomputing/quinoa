@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Config.h
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:43:12 PM MDT
+  \date      Fri 20 Mar 2015 11:43:34 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     CMake header input file with information to be passed to cmake
   \details   CMake header input file with information to be passed to cmake. See
@@ -14,6 +14,7 @@
 
 #define INCITER_EXECUTABLE           "@INCITER_EXECUTABLE@"
 #define RNGTEST_EXECUTABLE           "@RNGTEST_EXECUTABLE@"
+#define REGTEST_EXECUTABLE           "@REGTEST_EXECUTABLE@"
 #define UNITTEST_EXECUTABLE          "@UNITTEST_EXECUTABLE@"
 #define MESHCONV_EXECUTABLE          "@MESHCONV_EXECUTABLE@"
 #define WALKER_EXECUTABLE            "@WALKER_EXECUTABLE@"
