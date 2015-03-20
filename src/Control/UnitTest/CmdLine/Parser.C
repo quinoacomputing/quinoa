@@ -2,24 +2,13 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:49:11 AM MDT
+  \date      Fri 20 Mar 2015 11:38:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's comamnd line parser
   \details   This file defines the command-line argument parser for the unit
      test suite, UnitTest.
 */
 //******************************************************************************
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm++.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
-
 #include <Config.h>
 #include <UnitTest/CmdLine/Parser.h>
 #include <UnitTest/CmdLine/Grammar.h>
