@@ -57,6 +57,23 @@ INSTALL(TARGETS UnitTestControl
         ARCHIVE DESTINATION lib COMPONENT Development
 )
 
+#### RegTest control ###########################################################
+project(RegTestControl CXX)
+
+add_library(RegTestControl
+            StringParser.C
+            FileParser.C
+            RegTest/CmdLine/Parser.C
+)
+
+removeWarnings("RegTest/CmdLine/Parser.C")
+
+INSTALL(TARGETS RegTestControl
+        RUNTIME DESTINATION bin COMPONENT Runtime
+        LIBRARY DESTINATION lib COMPONENT Runtime
+        ARCHIVE DESTINATION lib COMPONENT Development
+)
+
 #### MeshConv control ##########################################################
 project(MeshConvControl CXX)
 

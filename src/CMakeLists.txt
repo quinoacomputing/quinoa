@@ -74,6 +74,7 @@ string(REGEX REPLACE "[\r\n]" "" BUILD_DATE "${BUILD_DATE}")
 # Set names of executables
 set(INCITER_EXECUTABLE "inciter")
 set(RNGTEST_EXECUTABLE "rngtest")
+set(REGTEST_EXECUTABLE "regtest")
 set(UNITTEST_EXECUTABLE "unittest")
 set(MESHCONV_EXECUTABLE "meshconv")
 set(WALKER_EXECUTABLE "walker")
