@@ -210,6 +210,18 @@ else()
   set(zoltan "zoltan")
 endif()
 
+# Detect PStreams, exclude if found, build if not
+if (NOT NO_SYSTEM_PSTREAMS)
+  find_package(PStreams)
+endif()
+if(PSTREAMS_FOUND)
+  #message(STATUS "PStreams found at ${PSTREAMS_INCLUDES} - will not unpack ours")
+  set(pstreams "")
+else()
+  #message(STATUS "PStreams not found - will unpack ours")
+  set(pstreams "pstreams")
+endif()
+
 # Define fine-grained targets
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS
              download patch configure build install test)
@@ -334,6 +346,33 @@ ExternalProject_Add_Step(
           ${SOURCE_DIR}/boost/mpl
           ${CMAKE_INSTALL_PREFIX}/include/boost/mpl
 )
+
+#### Pstreams (POSIX Process Control in C++) ###################################
+# http://pstreams.sourceforge.net/
+# Header only
+if (pstreams)
+  ExternalProject_Add(
+    pstreams
+    PREFIX pstreams
+    URL ${PROJECT_SOURCE_DIR}/pstreams-0.8.1.tar.gz
+    URL_MD5 d74bfa3fb292a7a0461cf0b7a240fe0f
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+  )
+  # Header-only, copy include dir over
+  ExternalProject_Get_Property(pstreams SOURCE_DIR)
+  ExternalProject_Add_Step(
+    pstreams copy-source
+    DEPENDEES download
+    COMMAND ${CMAKE_COMMAND} -E make_directory 
+            ${CMAKE_INSTALL_PREFIX}/include/pstreams
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${SOURCE_DIR}/pstream.h
+            ${CMAKE_INSTALL_PREFIX}/include/pstreams
+  )
+endif()
 
 #### HDF5 serial ###############################################################
 # http://www.hdfgroup.org/HDF5

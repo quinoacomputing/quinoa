@@ -1,0 +1,35 @@
+//******************************************************************************
+/*!
+  \file      src/RegTest/regression.ci
+  \author    J. Bakosi
+  \date      Sun 22 Mar 2015 09:16:27 PM MDT
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for regression tests
+  \details   Charm++ module interface file for regression tests
+*/
+//******************************************************************************
+
+module regression {
+
+  // Note that template chare Regression depends on chare RegSuite and in turn
+  // RegSuite depends on Regression (see also the interface file regsuite.ci).
+  // This is a mutual dependency and it is made to work with one of the chares
+  // (Regression) being a template chare. Note: if this extern module dependency
+  // is removed the code does not compile. See also the Charm++ manual on more
+  // information on template chares.
+  extern module regsuite;
+
+  namespace regtest {
+
+    // List all possible specializations of templated chare to instantiate
+    // registration and delivery of code for the individual specializations
+    chare Regression< CProxy_RegSuite >;
+
+    template< class Proxy >
+    chare Regression {
+      entry Regression( Proxy& proxy, const std::string& testcmd );
+    }
+
+  } // regtest::
+
+}

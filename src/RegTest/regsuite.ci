@@ -1,0 +1,35 @@
+//******************************************************************************
+/*!
+  \file      src/RegTest/regsuite.ci
+  \author    J. Bakosi
+  \date      Sun 22 Mar 2015 11:51:38 AM MDT
+  \copyright 2012-2015, Jozsef Bakosi.
+  \brief     Charm++ module interface file for the regression test suite
+  \details   Charm++ module interface file for the regression test suite
+*/
+//******************************************************************************
+
+module regsuite {
+
+  // Note that chare RegSuite depends on chare Regression and in turn Regression
+  // depends on RegSuite (see also the interface file regression.ci). This is a
+  // mutual dependency and it is made to work with one of the chares
+  // (Regression) being a template chare. Note: if this extern module dependency
+  // is removed, the code still compiles but Charm++ generates the wrong code
+  // yielding segfaults. See also the Charm++ manual on more information on
+  // template chares.
+  extern module regression;
+
+  include "RegTest/CmdLine/CmdLine.h";
+
+  namespace regtest {
+
+    chare RegSuite {
+      entry RegSuite( const ctr::CmdLine& cmdline );
+      entry [expedited] // expedited so one-liners are printed when tests finish
+        void evaluate( std::vector< std::string > status );
+    }
+
+  } // regtest::
+
+}

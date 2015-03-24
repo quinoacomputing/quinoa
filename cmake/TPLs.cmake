@@ -85,7 +85,7 @@ if (NOT NO_SYSTEM_ZOLTAN)
   find_package(Zoltan REQUIRED)
 endif()
 if(ZOLTAN_FOUND)
-  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
+  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib)")
 endif()
 
 #### BLAS/LAPACK library
@@ -99,6 +99,15 @@ else()
     find_library(LAPACKE_LIB NAMES lapacke REQUIRED)
     message(STATUS "Found BLAS/LAPACK: ${LAPACK_LIBRARIES} using via C-interface ${LAPACKE_PATH}/lapacke.h and ${LAPACKE_LIB}")
   endif()
+endif()
+
+#### PStreams library
+if (NOT NO_SYSTEM_PSTREAMS)
+  set(PSTREAMS_ROOT ${TPL_DIR}) # prefer ours
+  find_package(PStreams REQUIRED)
+endif()
+if(PSTREAMS_FOUND)
+  #message(STATUS "PStreams at ${PSTREAMS_INCLUDES}")
 endif()
 
 #### RNGSSE2 library
