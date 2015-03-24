@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTest.C
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 12:06:08 PM MDT
+  \date      Fri 20 Mar 2015 12:14:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's Charm++ main chare and main().
   \details   RegTest's Charm++ main chare and main(). This file contains
@@ -102,8 +102,7 @@ class Main : public CBase_Main {
         m_timestamp.emplace(
           "Migration of global-scope data + fire up all tests",
            m_timer[1].hms() );
-        m_driver.execute();       // does not fire up async chares
-        finalize( true );
+        m_driver.execute();       // fires up async chares
       } catch (...) { tk::processException(); }
     }
 

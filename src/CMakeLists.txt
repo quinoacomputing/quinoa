@@ -312,6 +312,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/RNGTest
                     ${QUINOA_SOURCE_DIR}/Statistics
                     ${QUINOA_SOURCE_DIR}/UnitTest
+                    ${QUINOA_SOURCE_DIR}/RegTest
                     ${TPL_DIR}/include
                     ${TPL_DIR}/include/pegtl
                     ${TPL_DIR}/include/tut
@@ -320,6 +321,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/RegTest       # for Charm++ modules
 )
 
 # Components
@@ -334,3 +336,4 @@ add_subdirectory(RNG)
 add_subdirectory(RNGTest)
 add_subdirectory(Statistics)
 add_subdirectory(UnitTest)
+add_subdirectory(RegTest)

@@ -171,7 +171,7 @@ endif()
 
 target_link_libraries(${REGTEST_EXECUTABLE}
                       Base
-                      #RegTest
+                      RegTest
                       RegTestControl
 )
 

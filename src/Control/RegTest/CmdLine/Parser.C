@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RegTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 12:07:15 PM MDT
+  \date      Fri 20 Mar 2015 12:27:09 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's comamnd line parser
   \details   This file defines the command-line argument parser for the
@@ -82,18 +82,11 @@ CmdLineParser::CmdLineParser( int argc,
   // If we got here, the parser has succeeded
   print.item("Parsed command line", "success");
 
-  // Print out help on all command-line arguments if the executable was invoked
-  // without arguments or the help was requested
+  // Print out help on all command-line arguments if help was requested
   const auto helpcmd = cmdline.get< tag::help >();
-  if (argc == 1 || helpcmd)
+  if (helpcmd)
     print.help< tk::QUIET >( REGTEST_EXECUTABLE, cmdline.get< tag::cmdinfo >(),
                              "Command-line Parameters:", "-" );
-
-  // Print out help on all control file keywords if they were requested
-  const auto helpctr = cmdline.get< tag::helpctr >();
-  if (helpctr)
-    print.help< tk::QUIET >( REGTEST_EXECUTABLE, cmdline.get< tag::ctrinfo >(),
-                             "Control File Keywords:" );
 
   // Print out verbose help for a single keyword if requested
   const auto helpkw = cmdline.get< tag::helpkw >();
@@ -101,5 +94,5 @@ CmdLineParser::CmdLineParser( int argc,
     print.helpkw< tk::QUIET >( REGTEST_EXECUTABLE, helpkw );
 
   // Immediately exit if any help was output or was called without any argument
-  if (argc == 1 || helpcmd || helpctr || !helpkw.keyword.empty()) CkExit();
+  if (helpcmd || !helpkw.keyword.empty()) CkExit();
 }

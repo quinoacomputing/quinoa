@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/regtest.ci
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 11:55:33 AM MDT
+  \date      Sun 22 Mar 2015 06:43:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for regtest
   \details   Charm++ module interface file for the regression test suite,
@@ -12,6 +12,8 @@
 //******************************************************************************
 
 mainmodule regtest {
+
+  extern module regsuite;
 
   readonly CProxy_Main mainProxy;
 

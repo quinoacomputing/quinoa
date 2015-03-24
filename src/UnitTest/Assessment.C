@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/Assessment.C
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 12:18:19 PM MDT
+  \date      Sun 22 Mar 2015 09:20:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit test suite assessment
   \details   Unit test suite assessment.
@@ -22,7 +22,7 @@ evaluate( std::vector< std::string > status,
           std::size_t& nfail )
 //******************************************************************************
 //  Evaluate a single unit test
-//! \param[in] status Vector strings containing the test results. See
+//! \param[in] status Vector of strings containing the test results. See
 //!   unittest::TUTTest constructor for the expected structure of status.
 //! \param[inout] ncomplete Number of completed tests
 //! \param[inout] nwarn Number of tests with a warning
