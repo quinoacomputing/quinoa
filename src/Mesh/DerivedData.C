@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 11:38:58 AM MDT
+  \date      Wed 25 Mar 2015 12:19:49 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -165,6 +165,8 @@ genPsup( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genPsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genPsup() with zero nodes per element" );
+  Assert( !esup.first.empty(), "Attempt to call genPsup() with empty esup1" );
+  Assert( !esup.second.empty(), "Attempt to call genPsup() with empty esup2" );
 
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 11:39:13 AM MDT
+  \date      Wed 25 Mar 2015 12:43:50 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -145,46 +145,47 @@ void DerivedData_object::test< 4 >() {
   ensure_equals( "node ids should start from zero", *minmax.first, 0 );
 }
 
-//! Attempt to generate elements surrounding elements on empty connectivity
+//! Attempt to generate elements surrounding points on empty connectivity
 template<> template<>
 void DerivedData_object::test< 5 >() {
   set_test_name( "genEsup throws on empty container" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
   // Attempt to generate elements surrounding points on empty container
   try {
     std::vector< int > empty;
     tk::genEsup( empty, 4 );
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& e ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, test ok
   }
+  #endif
 }
 
-//! Test genEsup if it throws on non-zero base element connectivity
+//! Test genEsup if it throws on non-zero based element connectivity
 template<> template<>
 void DerivedData_object::test< 6 >() {
   set_test_name( "genEsup throws on non-positive nnpe" );
 
-  // Partial mesh connectivity for simple tetrahedron-only mesh, non-zero based
-  std::vector< int > inpoel { 12, 14,  9, 11,
-                              14,  4, 13,  9 };
-
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
   try {
+    // Partial mesh non-zero based mesh connectivity for tetrahedron-mesh
+    std::vector< int > inpoel { 12, 14,  9, 11,
+                                14,  4, 13,  9 };
+
     // Attempt to generate elements surrounding points passing partial inpoel
     auto esup = tk::genEsup( inpoel, 0 );
-    #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& e ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, tk::genEsup() still did not fail on
-    // partial inpoel, test ok
   }
+  #endif
 }
 
 //! Generate and test elements surrounding points for tetrahedron-only mesh
@@ -271,12 +272,73 @@ void DerivedData_object::test< 7 >() {
 
 // genEsup should also be tested for triangles
 
-//! Generate and test points surrounding points for tetrahedron-only mesh
+//! Attempt to generate points surrounding points on empty connectivity
 template<> template<>
 void DerivedData_object::test< 8 >() {
+  set_test_name( "genPsup throws on empty container" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  // Attempt to generate points surrounding points on empty container
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< int > empty;
+    tk::genPsup( empty, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genPsup if it throws on non-zero based element connectivity
+template<> template<>
+void DerivedData_object::test< 9 >() {
+  set_test_name( "genPsup throws on non-positive nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    // Attempt to generate elements surrounding points passing partial inpoel
+    tk::genPsup( inpoel, 0, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genPsup if it throws on empty element surrounding points
+template<> template<>
+void DerivedData_object::test< 10 >() {
+  set_test_name( "genPsup throws on empty esup" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    // Attempt to generate elements surrounding points passing partial inpoel
+    tk::genPsup( inpoel, 4, {} );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+  #endif
+}
+
+//! Generate and test points surrounding points for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 11 >() {
   set_test_name( "genPsup for tetrahedra" );
 
-  // Mesh connectivity for simple tetrahedron-only mesh
+  // mesh connectivity for simple tetrahedron-only mesh
   std::vector< int > inpoel { 12, 14,  9, 11,
                               10, 14, 13, 12,
                               14, 13, 12,  9,
@@ -352,6 +414,8 @@ void DerivedData_object::test< 8 >() {
               "' incorrect", points == it->second );
   }
 }
+
+// genPsup should also be tested for triangles
 
 } // tut::
 
