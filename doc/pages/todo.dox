@@ -99,6 +99,10 @@
 ### Uncategorized
  - Charm++ codes to explore: GTC, NAMD, LeanMD, Mol3D
 
+ - Charm++ codes using structured AMR:
+   - Cello: http://client64-249.sdsc.edu/cello
+   - Chombo: https://commons.lbl.gov/display/chombo/Chombo+-+Software+for+Adaptive+Solutions+of+Partial+Differential+Equations
+
  - As the estimation of statistics should be closer (i.e., immediately after)
    updating the particle properties, the order of the particle properties in
    memory should be user-selectable at compile time
@@ -141,7 +145,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 24 Mar 2015 07:52:55 AM MDT
+<em>Page last updated:</em> Wed 25 Mar 2015 08:23:57 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
