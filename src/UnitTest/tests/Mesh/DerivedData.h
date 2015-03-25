@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 02:08:44 PM MDT
+  \date      Wed 25 Mar 2015 11:39:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -226,20 +226,20 @@ void DerivedData_object::test< 7 >() {
 
   // Generate correct solution for elements surrounding points
   std::map< std::size_t, std::vector< std::size_t > > correct_esup {
-    { { 0 }, { 4, 9, 14 } },
-    { { 1 }, { 11, 14, 15 } },
-    { { 2 }, { 8, 10, 11 } },
-    { { 3 }, { 9, 10, 12 } },
-    { { 4 }, { 4, 6, 13 } },
-    { { 5 }, { 5, 13, 15 } },
-    { { 6 }, { 5, 7, 8 } },
-    { { 7 }, { 6, 7, 12 } },
-    { { 8 }, { 0, 2, 9, 10, 11, 14, 17, 20, 22 } },
-    { { 9 }, { 1, 3, 5, 6, 7, 13, 16, 18, 19 } },
-    { { 10 }, { 0, 3, 4, 13, 14, 15, 16, 17, 18 } },
-    { { 11 }, { 0, 1, 2, 3, 5, 8, 11, 15, 16, 17, 20 } },
-    { { 12 }, { 1, 2, 7, 8, 10, 12, 19, 20, 21 } },
-    { { 13 }, { 0, 1, 2, 3, 4, 6, 9, 12, 18, 19, 22 } }
+    { { 0 }, { 4, 9, 14, 23 } },
+    { { 1 }, { 11, 14, 15, 17 } },
+    { { 2 }, { 8, 10, 11, 20 } },
+    { { 3 }, { 9, 10, 12, 22 } },
+    { { 4 }, { 4, 6, 13, 18 } },
+    { { 5 }, { 5, 13, 15, 16 } },
+    { { 6 }, { 5, 7, 8, 21 } },
+    { { 7 }, { 6, 7, 12, 19 } },
+    { { 8 }, { 0, 2, 9, 10, 11, 14, 17, 20, 22, 23 } },
+    { { 9 }, { 1, 3, 5, 6, 7, 13, 16, 18, 19, 21 } },
+    { { 10 }, { 0, 3, 4, 13, 14, 15, 16, 17, 18, 23 } },
+    { { 11 }, { 0, 1, 2, 3, 5, 8, 11, 15, 16, 17, 20, 21 } },
+    { { 12 }, { 1, 2, 7, 8, 10, 12, 19, 20, 21, 22 } },
+    { { 13 }, { 0, 1, 2, 3, 4, 6, 9, 12, 18, 19, 22, 23 } }
   };
 
   // find out number of points in mesh connectivity
@@ -254,7 +254,7 @@ void DerivedData_object::test< 7 >() {
   for (std::size_t p=0; p<npoin; ++p) {
     // extract element ids from generated elements surrounding point p
     std::vector< std::size_t > points;
-    for (auto i=esup.second[p]+1; i<esup.second[p+1]; ++i)
+    for (auto i=esup.second[p]+1; i<=esup.second[p+1]; ++i)
       points.push_back( esup.first[i] );
     // find correct element ids surrounding point p
     auto it = correct_esup.find( p );
@@ -265,6 +265,90 @@ void DerivedData_object::test< 7 >() {
     // test if element ids surrounding point p are correct
     if (it != correct_esup.end())
       ensure( "element ids surrounding point '" + std::to_string(p) +
+              "' incorrect", points == it->second );
+  }
+}
+
+// genEsup should also be tested for triangles
+
+//! Generate and test points surrounding points for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 8 >() {
+  set_test_name( "genPsup for tetrahedra" );
+
+  // Mesh connectivity for simple tetrahedron-only mesh
+  std::vector< int > inpoel { 12, 14,  9, 11,
+                              10, 14, 13, 12,
+                              14, 13, 12,  9,
+                              10, 14, 12, 11,
+                              1,  14,  5, 11,
+                              7,   6, 10, 12,
+                              14,  8,  5, 10,
+                              8,   7, 10, 13,
+                              7,  13,  3, 12,
+                              1,   4, 14,  9,
+                              13,  4,  3,  9,
+                              3,   2, 12,  9,
+                              4,   8, 14, 13,
+                              6,   5, 10, 11,
+                              1,   2,  9, 11,
+                              2,   6, 12, 11,
+                              6,  10, 12, 11,
+                              2,  12,  9, 11,
+                              5,  14, 10, 11,
+                              14,  8, 10, 13,
+                              13,  3, 12,  9,
+                              7,  10, 13, 12,
+                              14,  4, 13,  9,
+                              14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate elements surrounding points
+  auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
+
+  // Generate correct solution for elements surrounding points
+  std::map< std::size_t, std::vector< std::size_t > > correct_psup {
+    { { 0 }, { 1, 3, 4, 8, 10, 13 } },
+    { { 1 }, { 0, 2, 5, 8, 10, 11 } },
+    { { 2 }, { 1, 3, 6, 8, 11, 12 } },
+    { { 3 }, { 0, 2, 7, 8, 12, 13 } },
+    { { 4 }, { 0, 5, 7, 9, 10, 13 } },
+    { { 5 }, { 1, 4, 6, 9, 10, 11 } },
+    { { 6 }, { 2, 5, 7, 9, 11, 12 } },
+    { { 7 }, { 3, 4, 6, 9, 12, 13 } },
+    { { 8 }, { 0, 1, 2, 3, 10, 11, 12, 13 } },
+    { { 9 }, { 4, 5, 6, 7, 10, 11, 12, 13 } },
+    { { 10 }, { 0, 1, 4, 5, 8, 9, 11, 13 } },
+    { { 11 }, { 1, 2, 5, 6, 8, 9, 10, 12, 13 } },
+    { { 12 }, { 2, 3, 6, 7, 8, 9, 11, 13 } },
+    { { 13 }, { 0, 3, 4, 7, 8, 9, 10, 11, 12 } }
+  };
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+
+  ensure_equals( "number of points in psup incorrect",
+                 npoin, correct_psup.size() );
+
+  // test generated derived data structure, elements surrounding points
+  for (std::size_t p=0; p<npoin; ++p) {
+    // extract element ids from generated elements surrounding point p
+    std::vector< std::size_t > points;
+    for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
+      points.push_back( psup.first[i] );
+    // find correct element ids surrounding point p
+    auto it = correct_psup.find( p );
+    // test if element ids exist surrounding point p
+    ensure( "node id '" + std::to_string(p) + "' generated into psup but not "
+            "in correct psup",
+            it != correct_psup.end() );
+    // test if element ids surrounding point p are correct
+    if (it != correct_psup.end())
+      ensure( "point ids surrounding point '" + std::to_string(p) +
               "' incorrect", points == it->second );
   }
 }
