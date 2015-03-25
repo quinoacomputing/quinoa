@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 12:19:49 PM MDT
+  \date      Wed 25 Mar 2015 12:46:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -57,18 +57,18 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 //!   indices at which _esup1_ holds the element ids surrounding points. Looping
 //!   over all elements surrounding all points can then be accomplished by the
 //!   following loop:
-//! \code{.cpp}
-//!   for (std::size_t p=0; p<npoin; ++p)
-//!     for (auto i=esup.second[p]+1; i<=esup.second[p+1]; ++i)
-//!        use element id esup.first[i]
-//! \endcode
-//!   To find out the number of points, _npoin_, the mesh connectivity,
-//!   _inpoel_, can be queried:
-//! \code{.cpp}
-//!   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-//!   Assert( *minmax.first == 0, "node ids should start from zero" );
-//!   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
-//! \endcode
+//!   \code{.cpp}
+//!     for (std::size_t p=0; p<npoin; ++p)
+//!       for (auto i=esup.second[p]+1; i<=esup.second[p+1]; ++i)
+//!          use element id esup.first[i]
+//!   \endcode
+//!     To find out the number of points, _npoin_, the mesh connectivity,
+//!     _inpoel_, can be queried:
+//!   \code{.cpp}
+//!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+//!     Assert( *minmax.first == 0, "node ids should start from zero" );
+//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!   \endcode
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
@@ -147,17 +147,18 @@ genPsup( const std::vector< int >& inpoel,
 //!   indices at which _psup1_ holds the point ids surrounding points. Looping
 //!   over all points surrounding all points can then be accomplished by the
 //!   following loop:
-//! \code{.cpp}
-//!   for (std::size_t p=0; p<npoin; ++p)
-//!     for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
-//!        use point id psup.first[i]
-//! \endcode
-//!   To find out the number of points, _npoin_, the mesh connectivity,
-//!   _inpoel_, can be queried:
-//! \code{.cpp}
-//!   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
-//!   Assert( *minmax.first == 0, "node ids should start from zero" );
-//!   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!   \code{.cpp}
+//!     for (std::size_t p=0; p<npoin; ++p)
+//!       for (auto i=psup.second[p]+1; i<=psup.second[p+1]; ++i)
+//!          use point id psup.first[i]
+//!   \endcode
+//!     To find out the number of points, _npoin_, the mesh connectivity,
+//!     _inpoel_, can be queried:
+//!   \code{.cpp}
+//!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+//!     Assert( *minmax.first == 0, "node ids should start from zero" );
+//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!   \endcode
 //! \endcode
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
