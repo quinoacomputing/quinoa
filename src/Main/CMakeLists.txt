@@ -133,6 +133,7 @@ endif()
 
 target_link_libraries(${UNITTEST_EXECUTABLE}
                       Base
+                      IO
                       Mesh
                       UnitTest
                       UnitTestControl

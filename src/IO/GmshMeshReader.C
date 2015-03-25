@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 02:05:47 PM MDT
+  \date      Tue 24 Mar 2015 12:12:48 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh reader class definition
   \details   Gmsh mesh reader class definition. Currently, this class supports
@@ -16,6 +16,7 @@
 
 #include <UnsMesh.h>
 #include <GmshMeshReader.h>
+#include <DerivedData.h>
 
 using tk::GmshMeshReader;
 
@@ -235,6 +236,11 @@ GmshMeshReader::readElements()
     }
   }
   getline( m_inFile, s );  // finish reading the last line
+
+  // Shift node IDs to start from zero (gmsh likes one-based node ids)
+  shiftToZero( m_mesh.lininpoel() );
+  shiftToZero( m_mesh.triinpoel() );
+  shiftToZero( m_mesh.tetinpoel() );
 
   // Read in end of header: $EndNodes
   getline( m_inFile, s );

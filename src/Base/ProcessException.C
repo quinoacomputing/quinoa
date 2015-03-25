@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessException.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 12:02:08 PM MDT
+  \date      Tue 24 Mar 2015 12:23:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Process an exception
   \details   This file contains the implementation of processing an exception.
@@ -31,10 +31,13 @@
 
 namespace tk {
 
-//! \brief Process an exception
+//******************************************************************************
+//  Process an exception
 //! \details See Josuttis, The C++ Standard Library - A Tutorial and Reference,
 //!    2nd Edition, 2012.
 //! \author J. Bakosi
+//! \author J. Bakosi
+//******************************************************************************
 void processException() {
   try {
     throw;      // rethrow exception to deal with it here

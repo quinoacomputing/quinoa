@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 09:04:31 PM MDT
+  \date      Tue 24 Mar 2015 04:08:46 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class definition. Currently, this is a bare
@@ -104,18 +104,19 @@ ExodusIIMeshWriter::writeElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  writeElemBlock( 1, 3, "TRIANGLES", m_mesh.triinpoel() );
-  writeElemBlock( 2, 4, "TETRAHEDRA", m_mesh.tetinpoel() );
+  int elclass = 0;
+  writeElemBlock( elclass, 3, "TRIANGLES", m_mesh.triinpoel() );
+  writeElemBlock( elclass, 4, "TETRAHEDRA", m_mesh.tetinpoel() );
 }
 
 void
-ExodusIIMeshWriter::writeElemBlock( int elclass,
+ExodusIIMeshWriter::writeElemBlock( int& elclass,
                                     int nnpe,
                                     const std::string& eltype,
                                     const std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block to ExodusII file
-//! \param[in] elclass Element class id
+//! \param[inout] elclass Count element class ids in file
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
 //! \param[in] inpoel Element connectivity
@@ -123,6 +124,13 @@ ExodusIIMeshWriter::writeElemBlock( int elclass,
 //******************************************************************************
 {
   if (inpoel.empty()) return;
+
+  // increase number of element classes in file
+  ++elclass;
+
+  // Make sure element connectivity starts with zero
+  Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
+          "node ids should start from zero" );
 
   // Write element block information
   ErrChk(
@@ -135,13 +143,17 @@ ExodusIIMeshWriter::writeElemBlock( int elclass,
     "Failed to write " + eltype + " element block to file: " + m_filename );
 
   // Write element connectivity with 1-based element ids
-  for (int e=0; e<static_cast<int>(inpoel.size()); e+=nnpe) {
+  for (int i=0; i<static_cast<int>(inpoel.size())/nnpe; ++i) {
+    std::vector< int > Inpoel;
+    for (int k=0; k<nnpe; ++k)
+      Inpoel.push_back( inpoel[ static_cast<std::size_t>(i*nnpe+k) ]+1 );
+
     ErrChk(
       ne_put_n_elem_conn( m_outFile,
                           elclass,
-                          e/nnpe+1,
+                          i+1,
                           1,
-                          &inpoel[ static_cast< std::size_t >( e ) ] ) == 0,
+                          Inpoel.data() ) == 0,
       "Failed to write " + eltype + " element connectivity to file: " +
         m_filename );
   }

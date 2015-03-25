@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 02:51:59 PM MDT
+  \date      Tue 24 Mar 2015 08:27:18 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh reader class definition
   \details   Netgen mesh reader class definition. Only supports tetrahedra.
@@ -14,6 +14,7 @@
 #include <cmath>
 
 #include <NetgenMeshReader.h>
+#include <DerivedData.h>
 
 using tk::NetgenMeshReader;
 
@@ -65,45 +66,54 @@ NetgenMeshReader::readElements()
 //! \author J. Bakosi
 //******************************************************************************
 {
-  std::string s;
   int nel;
 
   // Read in number of tetrahedra
   m_inFile >> nel;
-  ErrChk( nel > 0,
-          "Number of tetrahedra (volume elements) must be greater than zero "
-          "in file " + m_filename );
-  getline( m_inFile, s );  // finish reading the last line
+  if (!m_inFile.eof()) {
+    ErrChk( nel > 0, "Number of tetrahedra (volume elements) must be greater "
+                     "than zero in file " + m_filename );
+    std::string s;
+    getline( m_inFile, s );  // finish reading the last line
 
-  // Read in tetrahedra element tags and connectivity
-  for (int i=0; i<nel; ++i) {
-    int tag;
-    std::array< int, 4 > n;
-    // tag n[1-4]
-    m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
-    m_mesh.tettag().push_back( { tag } );
-    m_mesh.tetinpoel().push_back( n[0] );
-    m_mesh.tetinpoel().push_back( n[1] );
-    m_mesh.tetinpoel().push_back( n[2] );
-    m_mesh.tetinpoel().push_back( n[3] );
+    // Read in tetrahedra element tags and connectivity
+    for (int i=0; i<nel; ++i) {
+      int tag;
+      std::array< int, 4 > n;
+      // tag n[1-4]
+      m_inFile >> tag >> n[3] >> n[0] >> n[1] >> n[2];
+      m_mesh.tettag().push_back( { tag } );
+      m_mesh.tetinpoel().push_back( n[0] );
+      m_mesh.tetinpoel().push_back( n[1] );
+      m_mesh.tetinpoel().push_back( n[2] );
+      m_mesh.tetinpoel().push_back( n[3] );
+    }
+
+    // Shift node IDs to start from zero
+    shiftToZero( m_mesh.tetinpoel() );
   }
 
   // Read in number of triangles
   m_inFile >> nel;
-  ErrChk( nel > 0,
-          "Number of triangles (surface elements) must be greater than zero in "
-          "file " + m_filename );
-  getline( m_inFile, s );  // finish reading the last line
+  if (!m_inFile.eof()) {
+    ErrChk( nel > 0, "Number of triangles (surface elements) must be greater "
+                     "than zero in file " + m_filename );
+    std::string s;
+    getline( m_inFile, s );  // finish reading the last line
 
-  // Read in triangle element tags and connectivity
-  for (int i=0; i<nel; ++i) {
-    int tag;
-    std::array< int, 3 > n;
-    // tag n[1-3]
-    m_inFile >> tag >> n[0] >> n[1] >> n[2];
-    m_mesh.tritag().push_back( { tag } );
-    m_mesh.triinpoel().push_back( n[0] );
-    m_mesh.triinpoel().push_back( n[1] );
-    m_mesh.triinpoel().push_back( n[2] );
+    // Read in triangle element tags and connectivity
+    for (int i=0; i<nel; ++i) {
+      int tag;
+      std::array< int, 3 > n;
+      // tag n[1-3]
+      m_inFile >> tag >> n[0] >> n[1] >> n[2];
+      m_mesh.tritag().push_back( { tag } );
+      m_mesh.triinpoel().push_back( n[0] );
+      m_mesh.triinpoel().push_back( n[1] );
+      m_mesh.triinpoel().push_back( n[2] );
+    }
+
+    // Shift node IDs to start from zero
+    shiftToZero( m_mesh.triinpoel() );
   }
 }

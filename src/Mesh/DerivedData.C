@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 08:15:05 PM MDT
+  \date      Tue 24 Mar 2015 02:00:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -22,9 +22,13 @@ shiftToZero( std::vector< int >& inpoel )
 //******************************************************************************
 //  Shift node IDs to start with zero in element connectivity
 //! \param[inout] inpoel Inteconnectivity of points and elements
+//! \details It is okay to call this function with an empty container; it will
+//!    simply return without throwing an exception.
 //! \author J. Bakosi
 //******************************************************************************
 {
+  if (inpoel.empty()) return;
+
   // find smallest node id
   auto minId = *std::min_element( begin(inpoel), end(inpoel) );
 
@@ -40,9 +44,14 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 //! \param[in] nnpe Number of nodes pe element
 //! \return Linked lists storing elements surrounding points
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+//! \details It is not okay to call this function with an empty container or a
+//!    non-positive number of nodes per element; it will throw an exception.
 //! \author J. Bakosi
 //******************************************************************************
 {
+  Assert( !inpoel.empty(), "Attempt call tk::genEsup() on empty container" );
+  Assert( nnpe > 0, "Attempt call tk::genEsup() with zero nodes per element" );
+
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
