@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/GmshMeshWriter.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 11:54:17 AM MDT
+  \date      Tue 24 Mar 2015 04:24:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Gmsh mesh writer class definition
   \details   Gmsh mesh writer class definition. Currently, this class supports
@@ -89,6 +89,7 @@ GmshMeshWriter::writeNodes()
     }
   } else {
     for (std::size_t i=0; i<m_mesh.nnode(); ++i) {
+      // gmsh likes one-based node ids
       int I = static_cast< int >( i+1 );
       m_outFile.write(
         reinterpret_cast<const char*>(&I), sizeof(int) );
@@ -143,14 +144,18 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] type Element type
 //! \param[in] tag Vectors of element tags
-//! \param[in] inpoel Element connectivity
+//! \param[in] inpoel Element connectivity (must be zero-based)
 //! \author J. Bakosi
 //******************************************************************************
 {
   // Return if connectivity is empty, there is no such element block in mesh
   if (inpoel.empty()) return;
 
-  // Get number of points in mesh
+  // Make sure element connectivity starts with zero
+  Assert( *std::minmax_element( begin(inpoel), end(inpoel) ).first == 0,
+          "node ids should start from zero" );
+
+  // Get number of elements in mesh
   auto n = inpoel.size()/nnpe;
 
   // Create empty tag vector if there is no tag
@@ -171,7 +176,8 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
             std::ostream_iterator< int >( m_outFile, " " ) );
       m_outFile << tg[i].back() << " ";
 
-      for (std::size_t p=0; p<nnpe; p++) m_outFile << inpoel[i*nnpe+p]+1 << " ";
+      // gmsh likes one-based node ids
+      for (std::size_t k=0; k<nnpe; k++) m_outFile << inpoel[i*nnpe+k]+1 << " ";
       m_outFile << std::endl;
     }
 
@@ -184,13 +190,16 @@ GmshMeshWriter::writeElemBlock( std::size_t nnpe,
     m_outFile.write( reinterpret_cast<char*>(&ntags), sizeof(int) );
     for (std::size_t i=0; i<n; i++) {
       int I = static_cast< int >( i );
+      // gmsh likes one-based node ids
+      std::vector< int > Inpoel;
+      for (std::size_t k=0; k<nnpe; ++k) Inpoel.push_back( inpoel[i*nnpe+k]+1 );
       // element id
       m_outFile.write( reinterpret_cast<const char*>(&I), sizeof(int) );
       // element tags
       m_outFile.write( reinterpret_cast<const char*>(tg[i].data()),
                        static_cast<std::streamsize>(tg[i].size()*sizeof(int)) );
       // element node list (i.e. connectivity)
-      m_outFile.write( reinterpret_cast<const char*>(&inpoel[i*nnpe]),
+      m_outFile.write( reinterpret_cast<const char*>(Inpoel.data()),
                        static_cast<std::streamsize>(nnpe*sizeof(int)) );
     }
 

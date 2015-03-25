@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 02:51:37 PM MDT
+  \date      Tue 24 Mar 2015 04:12:01 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -19,6 +19,7 @@
 
 #include <ExodusIIMeshReader.h>
 #include <Exception.h>
+#include <DerivedData.h>
 
 using tk::ExodusIIMeshReader;
 
@@ -124,7 +125,7 @@ ExodusIIMeshReader::readElements()
     ErrChk(
       ex_get_elem_block( m_inFile, id[i], eltype, &nel, &nnpe, &nattr ) == 0,
       "Failed to read element block information from file: " + m_filename );
-    
+
     // Read element connectivity
     if (nnpe == 4) {    // tetrahedra
       for (int e=0; e<nel; ++e) {
@@ -151,4 +152,8 @@ ExodusIIMeshReader::readElements()
       }
     }
   }
+
+  // Shift node IDs to start from zero
+  shiftToZero( m_mesh.triinpoel() );
+  shiftToZero( m_mesh.tetinpoel() );
 }

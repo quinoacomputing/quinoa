@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/NetgenMeshWriter.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:19:04 AM MST
+  \date      Tue 24 Mar 2015 04:12:29 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Netgen mesh writer class declaration
   \details   Netgen mesh writer class declaration. Only supports tetrahedra.
@@ -27,8 +27,8 @@ class NetgenMeshWriter : public Writer {
   public:
     //! Constructor
     explicit NetgenMeshWriter( const std::string filename,
-                               const UnsMesh& mesh ) : Writer( filename ),
-                                                       m_mesh( mesh ) {}
+                               const UnsMesh& mesh )
+      : Writer( filename ), m_mesh( mesh ) {}
 
     //! Write Netgen mesh
     void write() override;

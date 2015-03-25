@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 10:03:03 AM MDT
+  \date      Tue 24 Mar 2015 02:11:58 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -51,6 +51,7 @@
 #include <tests/Base/StrConvUtil.h>
 #include <tests/Base/Writer.h>
 #include <tests/Base/LoadDistributor.h>
+#include <tests/Base/ProcessControl.h>
 
 #include <tests/Control/Components.h>
 #include <tests/Control/Control.h>
@@ -62,6 +63,8 @@
   #include <tests/Control/Options/MKLUniformMethod.h>
 #endif
 #include <tests/Control/Options/RNG.h>
+
+#include <tests/IO/Mesh.h>
 
 #include <tests/Mesh/DerivedData.h>
 

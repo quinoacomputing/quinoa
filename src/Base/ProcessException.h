@@ -2,10 +2,10 @@
 /*!
   \file      src/Base/ProcessException.h
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:05:41 PM MST
+  \date      Tue 24 Mar 2015 12:23:53 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Process an exception
-  \details   This file contains the implementation of processing an exception.
+  \brief     Process an exception definition
+  \details   This file contains the definition of processing an exception.
     Logically, it would make sense to put this into Exception.C, however,
     Exception.h is included by all who want to be able throw an exception (a
     potentially large number of files) and that would pull in the charm++.h
@@ -20,6 +20,7 @@
 
 namespace tk {
 
+//! Process an exception
 void processException();
 
 } // tk::

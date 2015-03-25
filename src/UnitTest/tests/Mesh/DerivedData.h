@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Tue 17 Mar 2015 08:20:35 PM MDT
+  \date      Tue 24 Mar 2015 02:08:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -28,9 +28,21 @@ DerivedData_group DerivedData( "Mesh/DerivedData" );
 
 //! Test definitions for group
 
-//! Shift node ids to zero in line mesh
+//! Attempt to shift empty container using shiftToZero
 template<> template<>
 void DerivedData_object::test< 1 >() {
+  set_test_name( "shiftToZero graceful on empty container" );
+
+  // Attempt to shift node IDs on emptycontainer. If some error happens or an
+  // exception is throw that will go to the screen; no further tests are
+  // necessary.
+  std::vector< int > empty;
+  tk::shiftToZero( empty );
+}
+
+//! Shift node ids to zero in line mesh
+template<> template<>
+void DerivedData_object::test< 2 >() {
   set_test_name( "shiftToZero for lines" );
 
   // Mesh connectivity for simple line-only mesh
@@ -57,7 +69,7 @@ void DerivedData_object::test< 1 >() {
 
 //! Shift node ids to zero in triangle mesh
 template<> template<>
-void DerivedData_object::test< 2 >() {
+void DerivedData_object::test< 3 >() {
   set_test_name( "shiftToZero for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
@@ -96,7 +108,7 @@ void DerivedData_object::test< 2 >() {
 
 //! Shift node ids to zero in tetrahedron-only mesh
 template<> template<>
-void DerivedData_object::test< 3 >() {
+void DerivedData_object::test< 4 >() {
   set_test_name( "shiftToZero for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
@@ -133,10 +145,29 @@ void DerivedData_object::test< 3 >() {
   ensure_equals( "node ids should start from zero", *minmax.first, 0 );
 }
 
-//! Elements surrounding points for tetrahedron-only mesh
+//! Attempt to generate elements surrounding elements on empty connectivity
 template<> template<>
-void DerivedData_object::test< 4 >() {
-  set_test_name( "genEsup throws if inpoel non-zero based" );
+void DerivedData_object::test< 5 >() {
+  set_test_name( "genEsup throws on empty container" );
+
+  // Attempt to generate elements surrounding points on empty container
+  try {
+    std::vector< int > empty;
+    tk::genEsup( empty, 4 );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, test ok
+  }
+}
+
+//! Test genEsup if it throws on non-zero base element connectivity
+template<> template<>
+void DerivedData_object::test< 6 >() {
+  set_test_name( "genEsup throws on non-positive nnpe" );
 
   // Partial mesh connectivity for simple tetrahedron-only mesh, non-zero based
   std::vector< int > inpoel { 12, 14,  9, 11,
@@ -144,7 +175,7 @@ void DerivedData_object::test< 4 >() {
 
   try {
     // Attempt to generate elements surrounding points passing partial inpoel
-    auto esup = tk::genEsup( inpoel, 4 );
+    auto esup = tk::genEsup( inpoel, 0 );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -156,9 +187,9 @@ void DerivedData_object::test< 4 >() {
   }
 }
 
-//! Elements surrounding points for tetrahedron-only mesh
+//! Generate and test elements surrounding points for tetrahedron-only mesh
 template<> template<>
-void DerivedData_object::test< 5 >() {
+void DerivedData_object::test< 7 >() {
   set_test_name( "genEsup for tetrahedra" );
 
   // Mesh connectivity for simple tetrahedron-only mesh
