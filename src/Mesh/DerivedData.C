@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 12:46:44 PM MDT
+  \date      Thu 26 Mar 2015 09:31:10 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -11,6 +11,7 @@
 //******************************************************************************
 
 #include <algorithm>
+#include <set>
 
 #include <make_unique.h>
 #include <DerivedData.h>
@@ -140,8 +141,9 @@ genPsup( const std::vector< int >& inpoel,
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
 //! \return Linked lists storing points surrounding points
-//! \warning It is not okay to call this function with an empty container or a
-//!   non-positive number of nodes per element; it will throw an exception.
+//! \warning It is not okay to call this function with an empty container for
+//!   inpoel or esup.first or esup.second or a non-positive number of nodes per
+//!   element; it will throw an exception.
 //! \details The data generated here is stored in a linked list, more precisely,
 //!   two linked arrays (vectors), _psup1_ and _psup2_, where _psup2_ holds the
 //!   indices at which _psup1_ holds the point ids surrounding points. Looping
@@ -179,8 +181,7 @@ genPsup( const std::vector< int >& inpoel,
 
   // allocate both of the linked lists storing points surrounding points, we
   // only know the size of psup2, put in a single zero in psup1
-  std::vector< std::size_t > psup2( npoin+1 );
-  std::vector< std::size_t > psup1( 1, 0 );
+  std::vector< std::size_t > psup2( npoin+1 ), psup1( 1, 0 );
 
   // allocate and fill with zeros a temporary array, only used locally
   std::vector< std::size_t > lpoin( npoin, 0 );
@@ -210,6 +211,76 @@ genPsup( const std::vector< int >& inpoel,
 
   // Return (move out) linked list
   return std::make_pair( std::move(psup1), std::move(psup2) );
+}
+
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+genEsupel( const std::vector< int >& inpoel,
+           std::size_t nnpe,
+           const std::pair< std::vector< std::size_t >,
+                            std::vector< std::size_t > >& esup )
+//******************************************************************************
+//  Generate derived data structure, elements surrounding points of elements
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh. Example:
+//!   \code{.cpp}
+//!     std::vector< int > inpoel { 12, 14,  9, 11,
+//!                                 10, 14, 13, 12 };
+//!   \endcode
+//!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
+//!   and { 10, 14, 13, 12 }.
+//! \param[in] nnpe Number of nodes per element
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Linked lists storing elements surrounding points of elements
+//! \warning It is not okay to call this function with an empty container for
+//!   inpoel or esup.first or esup.second or a non-positive number of nodes per
+//!   element; it will throw an exception.
+//! \details The data generated here is stored in a linked list, more precisely,
+//!   two linked arrays (vectors), _esupel1_ and _esupel2_, where _esupel2_
+//!   holds the indices at which _esupel1_ holds the element ids surrounding
+//!   points of elements. Looping over all elements surrounding the points of
+//!   all elements can then be accomplished by the following loop:
+//!   \code{.cpp}
+//!     for (std::size_t e=0; e<nelem; ++e)
+//!       for (auto i=esupel.second[e]+1; i<=esupel.second[e+1]; ++i)
+//!          use element id esupel.first[i]
+//!   \endcode
+//!     To find out the number of elements, _nelem_, the size of the mesh
+//!     connectivity vector, _inpoel_, can be devided by the number of nodes per
+//!     elements, _nnpe_:
+//!   \code{.cpp}
+//!     auto nelem = inpoel.size()/nnpe;
+//!   \endcode
+//! \endcode
+//! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !inpoel.empty(), "Attempt to call genEsupel() on empty container" );
+  Assert( nnpe > 0, "Attempt to call genEsupel() with zero nodes per element" );
+  Assert( !esup.first.empty(), "Attempt to call genEsupel() with empty esup1" );
+  Assert( !esup.second.empty(), "Attempt to call genEsupel() with empty esup2" );
+
+  auto& esup1 = esup.first;
+  auto& esup2 = esup.second;
+
+  // linked lists storing elements surrounding points of elements, put in a
+  // single zero in both
+  std::vector< std::size_t > esupel2( 1, 0 ), esupel1( 1, 0 );
+
+  std::size_t e = 0;
+  std::set< std::size_t > esuel;
+  for (auto p : inpoel) {
+    auto P = static_cast< std::size_t >( p );
+    for (auto i=esup2[P]+1; i<=esup2[P+1]; ++i) esuel.insert( esup1[i] );
+    if (++e%nnpe == 0) {
+      for (auto i : esuel) esupel1.push_back( i );
+      esupel2.push_back( esupel2.back() + esuel.size() );
+      esuel.clear();
+    }
+  }
+
+  // Return (move out) linked list
+  return std::make_pair( std::move(esupel1), std::move(esupel2) );
 }
 
 } // tk::
