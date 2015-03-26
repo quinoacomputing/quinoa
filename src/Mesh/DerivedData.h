@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 09:32:44 PM MDT
+  \date      Thu 26 Mar 2015 12:47:32 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -36,6 +36,12 @@ genEsupel( const std::vector< int >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
                             std::vector< std::size_t > >& esup );
+
+//! Generate derived data structure, elements surrounding elements
+std::vector< long int >
+genEsuel( const std::vector< int >& inpoel,
+          const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esupel );
 
 } // tk::
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Thu 26 Mar 2015 10:25:21 AM MDT
+  \date      Fri 27 Mar 2015 08:03:03 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -153,7 +153,6 @@ void DerivedData_object::test< 5 >() {
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
-  // Attempt to generate elements surrounding points with empty connectivity
   try {
     std::vector< int > empty;
     tk::genEsup( empty, 4 );
@@ -177,9 +176,6 @@ void DerivedData_object::test< 6 >() {
     // Partial mesh non-zero based mesh connectivity for tetrahedron-mesh
     std::vector< int > inpoel { 12, 14,  9, 11,
                                 14,  4, 13,  9 };
-
-    // Attempt to generate elements surrounding points passing non-zero-based
-    // partial inpoel
     auto esup = tk::genEsup( inpoel, 0 );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -249,7 +245,8 @@ void DerivedData_object::test< 7 >() {
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 
-  ensure_equals( "number of points in esup incorrect",
+  // this is more of a test on this test
+  ensure_equals( "number of points in 'correct' esup incorrect",
                  npoin, correct_esup.size() );
 
   // test generated derived data structure, elements surrounding points
@@ -281,7 +278,6 @@ void DerivedData_object::test< 8 >() {
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
-  // Attempt to generate points surrounding points with empty connectivity
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
     std::vector< int > empty;
@@ -304,8 +300,6 @@ void DerivedData_object::test< 9 >() {
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points passing non-positive
-    // nodes per elements
     tk::genPsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -325,7 +319,6 @@ void DerivedData_object::test< 10 >() {
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points passing empty esup
     tk::genPsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -395,6 +388,7 @@ void DerivedData_object::test< 11 >() {
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 
+  // this is more of a test on this test
   ensure_equals( "number of points in psup incorrect",
                  npoin, correct_psup.size() );
 
@@ -428,7 +422,6 @@ void DerivedData_object::test< 12 >() {
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
-  // Attempt to generate points surrounding points with empty connectivity
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
     std::vector< int > empty;
@@ -451,8 +444,6 @@ void DerivedData_object::test< 13 >() {
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points of elements passing
-    // non-positive number of nodes per elements
     tk::genEsupel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -472,7 +463,6 @@ void DerivedData_object::test< 14 >() {
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points passing empty esup
     tk::genEsupel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -522,47 +512,48 @@ void DerivedData_object::test< 15 >() {
 
   // Generate correct solution for elements surrounding points of elements
   std::map< std::size_t, std::vector< std::size_t > > correct_esupel {
-    { { 0 }, { 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-               19, 20, 21, 22, 23 } },
-    { { 1 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19,
+    { { 0 }, { 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
                20, 21, 22, 23 } },
-    { { 2 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19,
+    { { 1 }, { 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19,
                20, 21, 22, 23 } },
-    { { 3 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    { { 2 }, { 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19,
                20, 21, 22, 23 } },
-    { { 4 }, { 0, 1, 2, 3, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23 } },
-    { { 5 }, { 0, 1, 2, 3, 5, 6, 7, 8, 11, 13, 15, 16, 17, 18, 19, 20, 21 } },
-    { { 6 }, { 0, 1, 2, 3, 4, 5, 6, 7, 9, 12, 13, 16, 18, 19, 21, 22, 23 } },
-    { { 7 }, { 1, 2, 3, 5, 6, 7, 8, 10, 12, 13, 16, 18, 19, 20, 21, 22 } },
-    { { 8 }, { 0, 1, 2, 3, 5, 7, 8, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22 } },
-    { { 9 }, { 0, 1, 2, 3, 4, 6, 9, 10, 11, 12, 14, 17, 18, 19, 20, 22, 23 } },
-    { { 10 }, { 0, 1, 2, 7, 8, 9, 10, 11, 12, 14, 17, 19, 20, 21, 22, 23 } },
-    { { 11 }, { 0, 1, 2, 3, 5, 8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23 } },
-    { { 12 }, { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 18, 19, 20, 21, 22, 23 } },
-    { { 13 }, { 0, 1, 3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 18, 19, 21, 23 } },
-    { { 14 }, { 0, 2, 3, 4, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 22, 23 } },
-    { { 15 }, { 0, 1, 2, 3, 4, 5, 8, 11, 13, 14, 15, 16, 17, 18, 20, 21, 23 } },
-    { { 16 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20,
-                21, 23 } },
-    { { 17 }, { 0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21,
-                22, 23 } },
-    { { 18 }, { 0, 1, 2, 3, 4, 5, 6, 7, 9, 12, 13, 14, 15, 16, 17, 18, 19, 21,
-                22, 23 } },
-    { { 19 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 16, 18, 19, 20, 21,
-                22, 23 } },
-    { { 20 }, { 0, 1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21,
-                22, 23 } },
+    { { 3 }, { 0, 1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+               20, 21, 22, 23 } },
+    { { 4 }, { 0, 1, 2, 3, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23 } },
+    { { 5 }, { 0, 1, 2, 3, 6, 7, 8, 11, 13, 15, 16, 17, 18, 19, 20, 21 } },
+    { { 6 }, { 0, 1, 2, 3, 4, 5, 7, 9, 12, 13, 16, 18, 19, 21, 22, 23 } },
+    { { 7 }, { 1, 2, 3, 5, 6, 8, 10, 12, 13, 16, 18, 19, 20, 21, 22 } },
+    { { 8 }, { 0, 1, 2, 3, 5, 7, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22 } },
+    { { 9 }, { 0, 1, 2, 3, 4, 6, 10, 11, 12, 14, 17, 18, 19, 20, 22, 23 } },
+    { { 10 }, { 0, 1, 2, 7, 8, 9, 11, 12, 14, 17, 19, 20, 21, 22, 23 } },
+    { { 11 }, { 0, 1, 2, 3, 5, 8, 9, 10, 14, 15, 16, 17, 20, 21, 22, 23 } },
+    { { 12 }, { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 18, 19, 20, 21, 22, 23 } },
+    { { 13 }, { 0, 1, 3, 4, 5, 6, 7, 14, 15, 16, 17, 18, 19, 21, 23 } },
+    { { 14 }, { 0, 2, 3, 4, 9, 10, 11, 13, 15, 16, 17, 18, 20, 22, 23 } },
+    { { 15 }, { 0, 1, 2, 3, 4, 5, 8, 11, 13, 14, 16, 17, 18, 20, 21, 23 } },
+    { { 16 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 14, 15, 17, 18, 19, 20, 21,
+                23 } },
+    { { 17 }, { 0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 13, 14, 15, 16, 18, 20, 21, 22,
+                23 } },
+    { { 18 }, { 0, 1, 2, 3, 4, 5, 6, 7, 9, 12, 13, 14, 15, 16, 17, 19, 21, 22,
+                23 } },
+    { { 19 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 16, 18, 20, 21, 22,
+                23 } },
+    { { 20 }, { 0, 1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19, 21, 22,
+                23 } },
     { { 21 }, { 0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20,
-                21, 22 } },
+                22 } },
     { { 22 }, { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 17, 18, 19, 20, 21,
-                22, 23 } },
+                23 } },
     { { 23 }, { 0, 1, 2, 3, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                22, 23 } }
+                22 } }
   };
 
   // find out number of elements from mesh connectivity
   auto nelem = inpoel.size()/4;
 
+  // this is more of a test on this test
   ensure_equals( "number of elements in esupel incorrect",
                  nelem, correct_esupel.size() );
 
@@ -588,6 +579,157 @@ void DerivedData_object::test< 15 >() {
 }
 
 // genEsupel should also be tested for triangles
+
+//! Attempt to generate elements surrounding elements with empty connectivity
+template<> template<>
+void DerivedData_object::test< 16 >() {
+  set_test_name( "genEsuel throws with empty inpoel" );
+
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< int > empty;
+    tk::genEsuel( empty, tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, genEsuel still graceful, test ok
+  }
+}
+
+//! Attempt to generate elements surrounding elements with non-tet connectivity
+template<> template<>
+void DerivedData_object::test< 17 >() {
+  set_test_name( "genEsuel throws with non-tet inpoel" );
+
+  try {
+    std::vector< int > inpoel { 0, 1, 2 };  // size non-divisible by 4 = non-tet
+    tk::genEsuel( inpoel, tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
+    #ifndef NDEBUG
+    fail( "should throw exception in DEBUG mode" );
+    #endif
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+    // Assert skipped in RELEASE mode, genEsuel still graceful, test ok
+  }
+}
+
+//! Test genEsuel if it throws with empty element surrounding points of elements
+template<> template<>
+void DerivedData_object::test< 18 >() {
+  set_test_name( "genEsuel throws with empty esupel" );
+
+ #ifdef NDEBUG        // exception only thrown in DEBUG mode
+   skip( "in RELEASE mode, would yield segmentation fault" );
+ #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genEsuel( inpoel, {} );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+  #endif
+}
+
+//! Generate and test elements surrounding elements for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 19 >() {
+  set_test_name( "genEsuel for tetrahedra" );
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< int > inpoel { 12, 14,  9, 11,
+                              10, 14, 13, 12,
+                              14, 13, 12,  9,
+                              10, 14, 12, 11,
+                              1,  14,  5, 11,
+                              7,   6, 10, 12,
+                              14,  8,  5, 10,
+                              8,   7, 10, 13,
+                              7,  13,  3, 12,
+                              1,   4, 14,  9,
+                              13,  4,  3,  9,
+                              3,   2, 12,  9,
+                              4,   8, 14, 13,
+                              6,   5, 10, 11,
+                              1,   2,  9, 11,
+                              2,   6, 12, 11,
+                              6,  10, 12, 11,
+                              2,  12,  9, 11,
+                              5,  14, 10, 11,
+                              14,  8, 10, 13,
+                              13,  3, 12,  9,
+                              7,  10, 13, 12,
+                              14,  4, 13,  9,
+                              14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate elements surrounding points
+  auto esuel = tk::genEsuel( inpoel,
+                             tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
+
+  // Generate correct solution for elements surrounding points of elements
+  std::map< std::size_t, std::vector< long int > > correct_esuel {
+    { { 0 }, { 2, 3, 17, 23 } },
+    { { 1 }, { 2, 3, 19, 21 } },
+    { { 2 }, { 0, 1, 20, 22 } },
+    { { 3 }, { 0, 1, 16, 18 } },
+    { { 4 }, { 18, 23, -1, -1 } },
+    { { 5 }, { 16, 21, -1, -1 } },
+    { { 6 }, { 18, 19, -1, -1 } },
+    { { 7 }, { 19, 21, -1, -1 } },
+    { { 8 }, { 20, 21, -1, -1 } },
+    { { 9 }, { 22, 23, -1, -1 } },
+    { { 10 }, { 20, 22, -1, -1 } },
+    { { 11 }, { 17, 20, -1, -1 } },
+    { { 12 }, { 19, 22, -1, -1 } },
+    { { 13 }, { 16, 18, -1, -1 } },
+    { { 14 }, { 17, 23, -1, -1 } },
+    { { 15 }, { 16, 17, -1, -1 } },
+    { { 16 }, { 3, 5, 13, 15 } },
+    { { 17 }, { 0, 11, 14, 15 } },
+    { { 18 }, { 3, 4, 6, 13 } },
+    { { 19 }, { 1, 6, 7, 12 } },
+    { { 20 }, { 2, 8, 10, 11 } },
+    { { 21 }, { 1, 5, 7, 8 } },
+    { { 22 }, { 2, 9, 10, 12 } },
+    { { 23 }, { 0, 4, 9, 14 } }
+  };
+
+  // find out number of elements from mesh connectivity
+  auto nelem = inpoel.size()/4;
+
+  // this is more of a test on this test
+  ensure_equals( "number of elements in esuel incorrect",
+                 nelem, correct_esuel.size() );
+
+  // test generated derived data structure, elements surrounding elements
+  for (std::size_t e=0; e<nelem; ++e) {
+    // extract element ids from generated elements surrounding elements
+    std::vector< long int > elements;
+    for (std::size_t i=0; i<4; ++i) elements.push_back( esuel[e*4+i] );
+    // find correct element ids surrounding elements e
+    auto it = correct_esuel.find( e );
+    // test if element ids exist surrounding element e
+    ensure( "element id '" + std::to_string(e) + "' generated into esuel but not "
+            "in correct esuel",
+            it != correct_esuel.end() );
+    // test if element ids surrounding element e are correct
+    if (it != correct_esuel.end()) {
+      ensure_equals( "number of elements surrounding element " +
+                     std::to_string(e) + " in generated esuel incorrect",
+                     it->second.size(), 4 );
+      ensure( "element ids surrounding element '" + std::to_string(e) +
+              "' incorrect", elements == it->second );
+    }
+  }
+}
 
 } // tut::
 
