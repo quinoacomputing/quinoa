@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Wed 25 Mar 2015 12:43:50 PM MDT
+  \date      Thu 26 Mar 2015 10:25:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -31,9 +31,9 @@ DerivedData_group DerivedData( "Mesh/DerivedData" );
 //! Attempt to shift empty container using shiftToZero
 template<> template<>
 void DerivedData_object::test< 1 >() {
-  set_test_name( "shiftToZero graceful on empty container" );
+  set_test_name( "shiftToZero graceful with empty inpoel" );
 
-  // Attempt to shift node IDs on emptycontainer. If some error happens or an
+  // Attempt to shift node IDs with empty connectivity. If some error happens or an
   // exception is throw that will go to the screen; no further tests are
   // necessary.
   std::vector< int > empty;
@@ -145,15 +145,15 @@ void DerivedData_object::test< 4 >() {
   ensure_equals( "node ids should start from zero", *minmax.first, 0 );
 }
 
-//! Attempt to generate elements surrounding points on empty connectivity
+//! Attempt to generate elements surrounding points with empty connectivity
 template<> template<>
 void DerivedData_object::test< 5 >() {
-  set_test_name( "genEsup throws on empty container" );
+  set_test_name( "genEsup throws with empty inpoel" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
-  // Attempt to generate elements surrounding points on empty container
+  // Attempt to generate elements surrounding points with empty connectivity
   try {
     std::vector< int > empty;
     tk::genEsup( empty, 4 );
@@ -165,7 +165,7 @@ void DerivedData_object::test< 5 >() {
   #endif
 }
 
-//! Test genEsup if it throws on non-zero based element connectivity
+//! Test genEsup if it throws on non-positive nodes per elements
 template<> template<>
 void DerivedData_object::test< 6 >() {
   set_test_name( "genEsup throws on non-positive nnpe" );
@@ -178,7 +178,8 @@ void DerivedData_object::test< 6 >() {
     std::vector< int > inpoel { 12, 14,  9, 11,
                                 14,  4, 13,  9 };
 
-    // Attempt to generate elements surrounding points passing partial inpoel
+    // Attempt to generate elements surrounding points passing non-zero-based
+    // partial inpoel
     auto esup = tk::genEsup( inpoel, 0 );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -272,15 +273,15 @@ void DerivedData_object::test< 7 >() {
 
 // genEsup should also be tested for triangles
 
-//! Attempt to generate points surrounding points on empty connectivity
+//! Attempt to generate points surrounding points with empty connectivity
 template<> template<>
 void DerivedData_object::test< 8 >() {
-  set_test_name( "genPsup throws on empty container" );
+  set_test_name( "genPsup throws with empty inpoel" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
-  // Attempt to generate points surrounding points on empty container
+  // Attempt to generate points surrounding points with empty connectivity
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
     std::vector< int > empty;
@@ -293,7 +294,7 @@ void DerivedData_object::test< 8 >() {
   #endif
 }
 
-//! Test genPsup if it throws on non-zero based element connectivity
+//! Test genPsup if it throws on non-positive number of nodes per elements
 template<> template<>
 void DerivedData_object::test< 9 >() {
   set_test_name( "genPsup throws on non-positive nnpe" );
@@ -303,7 +304,8 @@ void DerivedData_object::test< 9 >() {
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points passing partial inpoel
+    // Attempt to generate elements surrounding points passing non-positive
+    // nodes per elements
     tk::genPsup( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -313,17 +315,17 @@ void DerivedData_object::test< 9 >() {
   #endif
 }
 
-//! Test genPsup if it throws on empty element surrounding points
+//! Test genPsup if it throws with empty element surrounding points
 template<> template<>
 void DerivedData_object::test< 10 >() {
-  set_test_name( "genPsup throws on empty esup" );
+  set_test_name( "genPsup throws with empty esup" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
     skip( "in RELEASE mode, would yield segmentation fault" );
   #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    // Attempt to generate elements surrounding points passing partial inpoel
+    // Attempt to generate elements surrounding points passing empty esup
     tk::genPsup( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
@@ -370,7 +372,7 @@ void DerivedData_object::test< 11 >() {
   // Generate elements surrounding points
   auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
 
-  // Generate correct solution for elements surrounding points
+  // Generate correct solution for points surrounding points
   std::map< std::size_t, std::vector< std::size_t > > correct_psup {
     { { 0 }, { 1, 3, 4, 8, 10, 13 } },
     { { 1 }, { 0, 2, 5, 8, 10, 11 } },
@@ -416,6 +418,176 @@ void DerivedData_object::test< 11 >() {
 }
 
 // genPsup should also be tested for triangles
+
+//! \brief Attempt to generate elements surrounding points of elements with
+//!   empty connectivity
+template<> template<>
+void DerivedData_object::test< 12 >() {
+  set_test_name( "genEsupel throws with empty inpoel" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  // Attempt to generate points surrounding points with empty connectivity
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< int > empty;
+    tk::genEsupel( empty, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genEsupel if it throws on non-positive nodes per elements
+template<> template<>
+void DerivedData_object::test< 13 >() {
+  set_test_name( "genEsupel throws on non-positive nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    // Attempt to generate elements surrounding points of elements passing
+    // non-positive number of nodes per elements
+    tk::genEsupel( inpoel, 0, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genEsupel if it throws with empty element surrounding points
+template<> template<>
+void DerivedData_object::test< 14 >() {
+  set_test_name( "genEsupel throws with empty esup" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    // Attempt to generate elements surrounding points passing empty esup
+    tk::genEsupel( inpoel, 4, {} );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+  #endif
+}
+
+//! \brief Generate and test elements surrounding points of elements for
+//!   tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 15 >() {
+  set_test_name( "genEsupel for tetrahedra" );
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< int > inpoel { 12, 14,  9, 11,
+                              10, 14, 13, 12,
+                              14, 13, 12,  9,
+                              10, 14, 12, 11,
+                              1,  14,  5, 11,
+                              7,   6, 10, 12,
+                              14,  8,  5, 10,
+                              8,   7, 10, 13,
+                              7,  13,  3, 12,
+                              1,   4, 14,  9,
+                              13,  4,  3,  9,
+                              3,   2, 12,  9,
+                              4,   8, 14, 13,
+                              6,   5, 10, 11,
+                              1,   2,  9, 11,
+                              2,   6, 12, 11,
+                              6,  10, 12, 11,
+                              2,  12,  9, 11,
+                              5,  14, 10, 11,
+                              14,  8, 10, 13,
+                              13,  3, 12,  9,
+                              7,  10, 13, 12,
+                              14,  4, 13,  9,
+                              14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate elements surrounding points
+  auto esupel = tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4) );
+
+  // Generate correct solution for elements surrounding points of elements
+  std::map< std::size_t, std::vector< std::size_t > > correct_esupel {
+    { { 0 }, { 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+               19, 20, 21, 22, 23 } },
+    { { 1 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19,
+               20, 21, 22, 23 } },
+    { { 2 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19,
+               20, 21, 22, 23 } },
+    { { 3 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+               20, 21, 22, 23 } },
+    { { 4 }, { 0, 1, 2, 3, 4, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23 } },
+    { { 5 }, { 0, 1, 2, 3, 5, 6, 7, 8, 11, 13, 15, 16, 17, 18, 19, 20, 21 } },
+    { { 6 }, { 0, 1, 2, 3, 4, 5, 6, 7, 9, 12, 13, 16, 18, 19, 21, 22, 23 } },
+    { { 7 }, { 1, 2, 3, 5, 6, 7, 8, 10, 12, 13, 16, 18, 19, 20, 21, 22 } },
+    { { 8 }, { 0, 1, 2, 3, 5, 7, 8, 10, 11, 12, 15, 16, 17, 19, 20, 21, 22 } },
+    { { 9 }, { 0, 1, 2, 3, 4, 6, 9, 10, 11, 12, 14, 17, 18, 19, 20, 22, 23 } },
+    { { 10 }, { 0, 1, 2, 7, 8, 9, 10, 11, 12, 14, 17, 19, 20, 21, 22, 23 } },
+    { { 11 }, { 0, 1, 2, 3, 5, 8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23 } },
+    { { 12 }, { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 18, 19, 20, 21, 22, 23 } },
+    { { 13 }, { 0, 1, 3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 18, 19, 21, 23 } },
+    { { 14 }, { 0, 2, 3, 4, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 22, 23 } },
+    { { 15 }, { 0, 1, 2, 3, 4, 5, 8, 11, 13, 14, 15, 16, 17, 18, 20, 21, 23 } },
+    { { 16 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 14, 15, 16, 17, 18, 19, 20,
+                21, 23 } },
+    { { 17 }, { 0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21,
+                22, 23 } },
+    { { 18 }, { 0, 1, 2, 3, 4, 5, 6, 7, 9, 12, 13, 14, 15, 16, 17, 18, 19, 21,
+                22, 23 } },
+    { { 19 }, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 16, 18, 19, 20, 21,
+                22, 23 } },
+    { { 20 }, { 0, 1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 21,
+                22, 23 } },
+    { { 21 }, { 0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20,
+                21, 22 } },
+    { { 22 }, { 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 17, 18, 19, 20, 21,
+                22, 23 } },
+    { { 23 }, { 0, 1, 2, 3, 4, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                22, 23 } }
+  };
+
+  // find out number of elements from mesh connectivity
+  auto nelem = inpoel.size()/4;
+
+  ensure_equals( "number of elements in esupel incorrect",
+                 nelem, correct_esupel.size() );
+
+  // test generated derived data structure, elements surrounding points of
+  // elements
+  for (std::size_t e=0; e<nelem; ++e) {
+    // extract element ids from generated elements surrounding points of
+    // elements
+    std::vector< std::size_t > elements;
+    for (auto i=esupel.second[e]+1; i<=esupel.second[e+1]; ++i)
+      elements.push_back( esupel.first[i] );
+    // find correct element ids surrounding points of elements e
+    auto it = correct_esupel.find( e );
+    // test if element ids exist surrounding points of element e
+    ensure( "elem id '" + std::to_string(e) + "' generated into esupel but not "
+            "in correct esupel",
+            it != correct_esupel.end() );
+    // test if element ids surrounding points of element e are correct
+    if (it != correct_esupel.end())
+      ensure( "elem ids surrounding points of element '" + std::to_string(e) +
+              "' incorrect", elements == it->second );
+  }
+}
+
+// genEsupel should also be tested for triangles
 
 } // tut::
 
