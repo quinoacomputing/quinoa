@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Thu 26 Mar 2015 03:51:01 PM MDT
+  \date      Fri 27 Mar 2015 10:28:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -213,6 +213,80 @@ genPsup( const std::vector< int >& inpoel,
   return std::make_pair( std::move(psup1), std::move(psup2) );
 }
 
+std::vector< std::size_t >
+genInpoed( const std::vector< int >& inpoel,
+           std::size_t nnpe,
+           const std::pair< std::vector< std::size_t >,
+                            std::vector< std::size_t > >& esup )
+//******************************************************************************
+//  Generate derived data structure, edge connectivity
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh. Example:
+//!   \code{.cpp}
+//!     std::vector< int > inpoel { 12, 14,  9, 11,
+//!                                 10, 14, 13, 12 };
+//!   \endcode
+//!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
+//!   and { 10, 14, 13, 12 }.
+//! \param[in] nnpe Number of nodes per element
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Linear vector storing node ids connecting edges
+//! \warning It is not okay to call this function with an empty container for
+//!   inpoel or esup.first or esup.second or a non-positive number of nodes per
+//!   element; it will throw an exception.
+//! \details The data generated here is stored in a linear vector with both
+//!   point ids connecting an edge for all edges. By the name inpoed, Rainald
+//!   probably meant interconnectivity of points and edges.
+//! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !inpoel.empty(), "Attempt to call genInpoed() on empty container" );
+  Assert( nnpe > 0, "Attempt to call genInpoed() with zero nodes per element" );
+  Assert( !esup.first.empty(), "Attempt to call genInpoed() with empty esup1" );
+  Assert( !esup.second.empty(), "Attempt to call genInpoed() with empty esup2" );
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+
+  auto& esup1 = esup.first;
+  auto& esup2 = esup.second;
+
+  // linear vector to store edge connectivity
+  std::vector< std::size_t > inpoed;
+
+  // allocate and fill with zeros a temporary array, only used locally
+  std::vector< std::size_t > lpoin( npoin, 0 );
+
+  // map to contain stars, a point associated to points connected with edges
+  std::map< std::size_t, std::vector< std::size_t > > star;
+
+  // generate points surrounding points and store as stars
+  for (std::size_t p=0; p<npoin; ++p)
+    for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
+      for (std::size_t n=0; n<nnpe; ++n) {
+        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        if (q != p && lpoin[q] != p+1) {
+          star[p].push_back(q);
+          lpoin[q] = p+1;
+        }
+      }
+
+  // sort non-center points of each star and store all in linear vector
+  for (auto p : star) {
+    std::sort( begin(p.second), end(p.second) );
+    for (const auto& e : p.second) {
+      inpoed.push_back( p.first );
+      inpoed.push_back( e );
+    }
+  }
+
+  // Return (move out) edge connectivity
+  return inpoed;
+}
+
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsupel( const std::vector< int >& inpoel,
            std::size_t nnpe,
@@ -304,7 +378,7 @@ genEsuel( const std::vector< int >& inpoel,
 //!   and { 10, 14, 13, 12 }.
 //! \param[in] esupel Elements surrounding elements as linked lists, see
 //!   tk::genEsupel.
-//! \return Vector linearly storing all 4 elements surrounding elements
+//! \return Linear vector storing all 4 elements surrounding elements
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esupel.first or esupel.second; it will throw an exception.
 //! \details The data generated here is stored in a linear vector with all
