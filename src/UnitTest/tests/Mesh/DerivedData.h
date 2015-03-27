@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Fri 27 Mar 2015 10:48:36 AM MDT
+  \date      Fri 27 Mar 2015 03:17:36 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -240,7 +240,7 @@ void DerivedData_object::test< 7 >() {
     { { 13 }, { 0, 1, 2, 3, 4, 6, 9, 12, 18, 19, 22, 23 } }
   };
 
-  // find out number of points in mesh connectivity
+  // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
@@ -383,7 +383,7 @@ void DerivedData_object::test< 11 >() {
     { { 13 }, { 0, 3, 4, 7, 8, 9, 10, 11, 12 } }
   };
 
-  // find out number of points in mesh connectivity
+  // find out number of points from mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
   Assert( *minmax.first == 0, "node ids should start from zero" );
   auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
@@ -826,36 +826,65 @@ void DerivedData_object::test< 23 >() {
   // Generate edge connectivity
   auto inpoed = tk::genInpoed( inpoel, 4, tk::genEsup(inpoel,4) );
 
+  auto& inpoed1 = inpoed.first;
+  auto& inpoed2 = inpoed.second;
+
   // Generate correct solution for edge connectivity
-  std::vector< std::size_t > correct_inpoed {
-    0, 1, 0, 3, 0, 4, 0, 8, 0, 10, 0, 13,
-    1, 2, 1, 5, 1, 8, 1, 10, 1, 11,
-    2, 3, 2, 6, 2, 8, 2, 11, 2, 12,
-    3, 7, 3, 8, 3, 12, 3, 13,
-    4, 5, 4, 7, 4, 9, 4, 10, 4, 13,
-    5, 6, 5, 9, 5, 10, 5, 11,
-    6, 7, 6, 9, 6, 11, 6, 12,
-    7, 9, 7, 12, 7, 13,
-    8, 10, 8, 11, 8, 12, 8, 13,
-    9, 10, 9, 11, 9, 12, 9, 13,
-    10, 11, 10, 13,
-    11, 12, 11, 13,
-    12, 13 };
+  std::map< std::size_t, std::vector< std::size_t > > correct_inpoed {
+    { {  0 }, { 1,   3,  4,  8, 10, 13 } },
+    { {  1 }, { 2,   5,  8, 10, 11 } },
+    { {  2 }, { 3,   6,  8, 11, 12 } },
+    { {  3 }, { 7,   8, 12, 13 } },
+    { {  4 }, { 5,   7,  9, 10, 13 } },
+    { {  5 }, { 6,   9, 10, 11 } },
+    { {  6 }, { 7,   9, 11, 12 } },
+    { {  7 }, { 9,  12, 13 } },
+    { {  8 }, { 10, 11, 12, 13 } },
+    { {  9 }, { 10, 11, 12, 13 } },
+    { { 10 }, { 11, 13 } },
+    { { 11 }, { 12, 13 } },
+    { { 12 }, { 13 } },
+    // the last star of inpoed is always empty, since only edges whose point ids
+    // p < q are stored, however, the indices exist in inpoed2 and this allows
+    // client code to be simpler and consistent with using the other derived
+    // data structures, we don't test the last empty list
+    { { 13 }, { } }
+  };
+
+  // find out number of points from mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 
   // this is more of a test on this test
-  ensure_equals( "number of edges in 'correct' edge connectivity non-divisble "
-                 "by 2",
-                 correct_inpoed.size() % 2, 0 );
+  ensure_equals( "number of points (star centers) in inpoed incorrect",
+                 npoin, correct_inpoed.size() );
 
-  // test if edge connectivity is the correct size
-  ensure_equals( "number of edges in generated edge connectivity non-divisble "
-                 "by 2",
-                 inpoed.size() % 2, 0 );
-  ensure_equals( "number of edges in edge connectivity incorrect",
-                 inpoed.size(), correct_inpoed.size() );
-
-  // this if edge connectivity correct
-  ensure( "generatd edge connectivity incorrect", inpoed == correct_inpoed );
+  // Test generated derived data structure, edge connectivity. Will not test the
+  // last one, as that would attempt a "conditional jump or move depends on
+  // uninitialised value" due to the empty vector subject to the logical
+  // operator ==.
+  for (std::size_t p=0; p<npoin-1; ++p) {
+    // extract edge end-point ids from generated edge connectivity
+    std::vector< std::size_t > edges;
+    for (auto i=inpoed2[p]+1; i<=inpoed2[p+1]; ++i)
+      edges.push_back( inpoed1[i] );
+    // find correct star-center point id
+    auto it = correct_inpoed.find( p );
+    // test if star-end point ids exist originating from star-center p
+    ensure( "star-center point id '" + std::to_string(p) + "' generated into "
+            "inpoed but not in correct inpoed",
+            it != correct_inpoed.end() );
+    // test if star-end point ids starting from star-center point p are correct
+    if (it != correct_inpoed.end()) {
+      ensure_equals( "number of star-end points starting from star-center " +
+                     std::to_string(p) + " in generated inpoed incorrect",
+                     it->second.size(), edges.size() );
+      ensure( "star-end point ids starting from star-center'" +
+              std::to_string(p) + "' incorrect",
+              edges == it->second );
+    }
+  }
 }
 
 // genInpoed should also be tested for triangles
