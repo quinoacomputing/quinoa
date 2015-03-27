@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Fri 27 Mar 2015 10:28:41 AM MDT
+  \date      Fri 27 Mar 2015 01:46:55 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -254,25 +254,25 @@ genInpoed( const std::vector< int >& inpoel,
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
 
-  // linear vector to store edge connectivity
-  std::vector< std::size_t > inpoed;
-
   // allocate and fill with zeros a temporary array, only used locally
   std::vector< std::size_t > lpoin( npoin, 0 );
 
   // map to contain stars, a point associated to points connected with edges
   std::map< std::size_t, std::vector< std::size_t > > star;
 
-  // generate points surrounding points and store as stars
+  // generate edge connectivity and store as stars where center id < spike id
   for (std::size_t p=0; p<npoin; ++p)
     for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
       for (std::size_t n=0; n<nnpe; ++n) {
         auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
         if (q != p && lpoin[q] != p+1) {
-          star[p].push_back(q);
+          if (p < q) star[p].push_back(q);
           lpoin[q] = p+1;
         }
       }
+
+  // linear vector to store edge connectivity
+  std::vector< std::size_t > inpoed;
 
   // sort non-center points of each star and store all in linear vector
   for (auto p : star) {
