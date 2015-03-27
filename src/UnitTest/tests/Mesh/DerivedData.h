@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Fri 27 Mar 2015 08:03:03 AM MDT
+  \date      Fri 27 Mar 2015 10:28:06 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData
@@ -730,6 +730,136 @@ void DerivedData_object::test< 19 >() {
     }
   }
 }
+
+//! Attempt to generate edge connectivity with empty connectivity
+template<> template<>
+void DerivedData_object::test< 20 >() {
+  set_test_name( "genInpoed throws with empty inpoel" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< int > empty;
+    tk::genInpoed( empty, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genInpoed if it throws on non-positive number of nodes per elements
+template<> template<>
+void DerivedData_object::test< 21 >() {
+  set_test_name( "genInpoed throws on non-positive nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genInpoed( inpoel, 0, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genInpoed if it throws with empty element surrounding points
+template<> template<>
+void DerivedData_object::test< 22 >() {
+  set_test_name( "genInpoed throws with empty esup" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genPsup( inpoel, 4, {} );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+  #endif
+}
+
+//! Generate and test edge connectivity for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 23 >() {
+  set_test_name( "genInpoed for tetrahedra" );
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< int > inpoel { 12, 14,  9, 11,
+                              10, 14, 13, 12,
+                              14, 13, 12,  9,
+                              10, 14, 12, 11,
+                              1,  14,  5, 11,
+                              7,   6, 10, 12,
+                              14,  8,  5, 10,
+                              8,   7, 10, 13,
+                              7,  13,  3, 12,
+                              1,   4, 14,  9,
+                              13,  4,  3,  9,
+                              3,   2, 12,  9,
+                              4,   8, 14, 13,
+                              6,   5, 10, 11,
+                              1,   2,  9, 11,
+                              2,   6, 12, 11,
+                              6,  10, 12, 11,
+                              2,  12,  9, 11,
+                              5,  14, 10, 11,
+                              14,  8, 10, 13,
+                              13,  3, 12,  9,
+                              7,  10, 13, 12,
+                              14,  4, 13,  9,
+                              14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate edge connectivity
+  auto inpoed = tk::genInpoed( inpoel, 4, tk::genEsup(inpoel,4) );
+
+  // Generate correct solution for edge connectivity
+  std::vector< std::size_t > correct_inpoed {
+     0,  1,  0,  3,  0,  4,  0,  8,  0, 10,  0, 13,
+     1,  0,  1,  2,  1,  5,  1,  8,  1, 10,  1, 11,
+     2,  1,  2,  3,  2,  6,  2,  8,  2, 11,  2, 12,
+     3,  0,  3,  2,  3,  7,  3,  8,  3, 12,  3, 13,
+     4,  0,  4,  5,  4,  7,  4,  9,  4, 10,  4, 13,
+     5,  1,  5,  4,  5,  6,  5,  9,  5, 10,  5, 11,
+     6,  2,  6,  5,  6,  7,  6,  9,  6, 11,  6, 12,
+     7,  3,  7,  4,  7,  6,  7,  9,  7, 12,  7, 13,
+     8,  0,  8,  1,  8,  2,  8,  3,  8, 10,  8, 11,  8, 12,  8, 13,
+     9,  4,  9,  5,  9,  6,  9,  7,  9, 10,  9, 11,  9, 12,  9, 13,
+    10,  0, 10,  1, 10,  4, 10,  5, 10,  8, 10,  9, 10, 11, 10, 13,
+    11,  1, 11,  2, 11,  5, 11,  6, 11,  8, 11,  9, 11, 10, 11, 12, 11, 13,
+    12,  2, 12,  3, 12,  6, 12,  7, 12,  8, 12,  9, 12, 11, 12, 13,
+    13,  0, 13,  3, 13,  4, 13,  7, 13,  8, 13,  9, 13, 10, 13, 11, 13, 12 };
+
+  // this is more of a test on this test
+  ensure_equals( "number of edges in 'correct' edge connectivity non-divisble "
+                 "by 2",
+                 correct_inpoed.size() % 2, 0 );
+
+  // test if edge connectivity is the correct size
+  ensure_equals( "number of edges in generated edge connectivity non-divisble "
+                 "by 2",
+                 inpoed.size() % 2, 0 );
+  ensure_equals( "number of edges in edge connectivity incorrect",
+                 inpoed.size(), correct_inpoed.size() );
+
+  // this if edge connectivity correct
+  ensure( "generatd edge connectivity incorrect", inpoed == correct_inpoed );
+}
+
+// genInpoed should also be tested for triangles
 
 } // tut::
 

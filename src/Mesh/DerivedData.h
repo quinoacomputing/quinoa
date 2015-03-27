@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Thu 26 Mar 2015 12:47:32 PM MDT
+  \date      Fri 27 Mar 2015 09:29:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -29,6 +29,13 @@ genPsup( const std::vector< int >& inpoel,
          std::size_t nnpe,
          const std::pair< std::vector< std::size_t >,
                           std::vector< std::size_t > >& esup );
+
+//! Generate derived data structure, edge connectivity
+std::vector< std::size_t >
+genInpoed( const std::vector< int >& inpoel,
+           std::size_t nnpe,
+           const std::pair< std::vector< std::size_t >,
+                            std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, elements surrounding points of elements
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
