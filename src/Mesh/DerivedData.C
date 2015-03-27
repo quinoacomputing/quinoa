@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Fri 27 Mar 2015 01:46:55 PM MDT
+  \date      Fri 27 Mar 2015 03:16:57 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -119,7 +119,7 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
   }
   esup2[0] = 0;
 
-  // Return (move out) linked list
+  // Return (move out) linked lists
   return std::make_pair( std::move(esup1), std::move(esup2) );
 }
 
@@ -209,11 +209,11 @@ genPsup( const std::vector< int >& inpoel,
       std::next( begin(psup1), static_cast<std::ptrdiff_t>(psup2[p]+1) ),
       std::next( begin(psup1), static_cast<std::ptrdiff_t>(psup2[p+1]+1) ) );
 
-  // Return (move out) linked list
+  // Return (move out) linked lists
   return std::make_pair( std::move(psup1), std::move(psup2) );
 }
 
-std::vector< std::size_t >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genInpoed( const std::vector< int >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
@@ -230,13 +230,27 @@ genInpoed( const std::vector< int >& inpoel,
 //!   and { 10, 14, 13, 12 }.
 //! \param[in] nnpe Number of nodes per element
 //! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
-//! \return Linear vector storing node ids connecting edges
+//! \return Linked lists storing node ids of connecting edges
 //! \warning It is not okay to call this function with an empty container for
 //!   inpoel or esup.first or esup.second or a non-positive number of nodes per
 //!   element; it will throw an exception.
-//! \details The data generated here is stored in a linear vector with both
-//!   point ids connecting an edge for all edges. By the name inpoed, Rainald
-//!   probably meant interconnectivity of points and edges.
+//! \details The data generated here is stored in a linked list, more precisely,
+//!   two linked arrays (vectors), _inpoed1_ and _inpoed2_, where _inpoed2_
+//!   holds the indices at which _inpoed1_ holds the star-end point ids starting
+//!   from star-centers fofr all points. Only unique edges are stored. Looping
+//!   over all edges can then be accomplished by the following loop:
+//!   \code{.cpp}
+//!     for (std::size_t p=0; p<npoin; ++p)
+//!       for (auto i=inpoed.second[p]+1; i<=inpoed.second[p+1]; ++i)
+//!          use edge with point ids p < inpoed.first[i]
+//!   \endcode
+//!     To find out the number of points, _npoin_, the mesh connectivity,
+//!     _inpoel_, can be queried:
+//!   \code{.cpp}
+//!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+//!     Assert( *minmax.first == 0, "node ids should start from zero" );
+//!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+//!   \endcode
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
@@ -271,20 +285,18 @@ genInpoed( const std::vector< int >& inpoel,
         }
       }
 
-  // linear vector to store edge connectivity
-  std::vector< std::size_t > inpoed;
+  // linked lists (vectors) to store edge connectivity and their indices
+  std::vector< std::size_t > inpoed1( 1, 0 ), inpoed2( 1, 0 );
 
-  // sort non-center points of each star and store all in linear vector
+  // sort non-center points of each star and store nodes and indices in vectors
   for (auto p : star) {
     std::sort( begin(p.second), end(p.second) );
-    for (const auto& e : p.second) {
-      inpoed.push_back( p.first );
-      inpoed.push_back( e );
-    }
+    inpoed2.push_back( inpoed2.back() + p.second.size() );
+    for (auto e : p.second) inpoed1.push_back( e );
   }
 
-  // Return (move out) edge connectivity
-  return inpoed;
+  // Return (move out) linked lists
+  return std::make_pair( std::move(inpoed1), std::move(inpoed2) );
 }
 
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
@@ -358,7 +370,7 @@ genEsupel( const std::vector< int >& inpoel,
     }
   }
 
-  // Return (move out) linked list
+  // Return (move out) linked lists
   return std::make_pair( std::move(esupel1), std::move(esupel2) );
 }
 
@@ -452,7 +464,7 @@ genEsuel( const std::vector< int >& inpoel,
     }
   }
 
-  // Return (move out) linked list
+  // Return (move out) linked lists
   return esuel;
 }
 
