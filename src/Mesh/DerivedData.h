@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Fri 27 Mar 2015 03:18:12 PM MDT
+  \date      Sun 29 Mar 2015 02:26:24 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -30,8 +30,15 @@ genPsup( const std::vector< int >& inpoel,
          const std::pair< std::vector< std::size_t >,
                           std::vector< std::size_t > >& esup );
 
-//! Generate derived data structure, edge connectivity
+//! Generate derived data structure, edges surrounding points
 std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+genEdsup( const std::vector< int >& inpoel,
+          std::size_t nnpe,
+          const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esup );
+
+//! Generate derived data structure, edge connectivity
+std::vector< std::size_t >
 genInpoed( const std::vector< int >& inpoel,
            std::size_t nnpe,
            const std::pair< std::vector< std::size_t >,
@@ -49,6 +56,12 @@ std::vector< long int >
 genEsuel( const std::vector< int >& inpoel,
           const std::pair< std::vector< std::size_t >,
                            std::vector< std::size_t > >& esupel );
+
+//! Generate derived data structure, edges of elements
+std::vector< std::size_t >
+genInedel( const std::vector< int >& inpoel,
+           std::size_t nnpe,
+           const std::vector< std::size_t >& inpoed );
 
 } // tk::
 
