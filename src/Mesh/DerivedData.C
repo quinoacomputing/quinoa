@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Mon 30 Mar 2015 06:49:03 AM MDT
+  \date      Mon 30 Mar 2015 07:48:15 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -76,6 +76,7 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 {
   Assert( !inpoel.empty(), "Attempt to call genEsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsup() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
 
   // find out number of points in mesh connectivity
   auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
@@ -168,6 +169,7 @@ genPsup( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genPsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genPsup() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genPsup() with empty esup1" );
   Assert( !esup.second.empty(), "Attempt to call genPsup() with empty esup2" );
 
@@ -267,6 +269,7 @@ genEdsup( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genEdsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEdsup() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genEdsup() with empty esup1" );
   Assert( !esup.second.empty(), "Attempt to call genEdsup() with empty esup2" );
 
@@ -361,6 +364,7 @@ genInpoed( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genInpoed() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInpoed() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genInpoed() with empty esup1" );
   Assert( !esup.second.empty(),
           "Attempt to call genInpoed() with empty esup2" );
@@ -452,6 +456,7 @@ genEsupel( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genEsupel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEsupel() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genEsupel() with empty esup1" );
   Assert( !esup.second.empty(),
           "Attempt to call genEsupel() with empty esup2" );
@@ -619,6 +624,7 @@ genInedel( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genInedel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInedel() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !inpoed.empty(), "Attempt to call genInedel() with empty inpoed" );
 
   // First, generate index of star centers. This is necessary to avoid a
