@@ -1,6 +1,6 @@
 macro(get_compiler_flags)
 
-  # Convert CMAKE_DEBUG_TYPE to upper case so even if the user gives it via the
+  # Convert CMAKE_BUILD_TYPE to upper case so even if the user gives it via the
   # command line, the tests below work as intended
   string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
