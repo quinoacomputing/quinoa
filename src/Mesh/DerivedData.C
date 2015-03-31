@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/DerivedData.C
   \author    J. Bakosi
-  \date      Mon 30 Mar 2015 07:48:15 AM MDT
+  \date      Tue 31 Mar 2015 11:32:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generate data structures derived from unstructured mesh
   \details   Generate data structures derived from the connectivity information
@@ -70,6 +70,8 @@ genEsup( const std::vector< int >& inpoel, std::size_t nnpe )
 //!     Assert( *minmax.first == 0, "node ids should start from zero" );
 //!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 //!   \endcode
+//! \note In principle, this function *should* work for any positive nnpe,
+//!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
@@ -163,6 +165,8 @@ genPsup( const std::vector< int >& inpoel,
 //!     auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 //!   \endcode
 //! \endcode
+//! \note In principle, this function *should* work for any positive nnpe,
+//!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
@@ -247,7 +251,7 @@ genEdsup( const std::vector< int >& inpoel,
 //!   \code{.cpp}
 //!     for (std::size_t p=0; p<npoin; ++p)
 //!       for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i)
-//!          use edge with point ids p < edsup.first[i]
+//!         use edge with point ids p < edsup.first[i]
 //!   \endcode
 //!     To find out the number of points, _npoin_, the mesh connectivity,
 //!     _inpoel_, can be queried:
@@ -269,6 +273,9 @@ genEdsup( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genEdsup() on empty container" );
   Assert( nnpe > 0, "Attempt to call genEdsup() with zero nodes per element" );
+  Assert( nnpe == 3 || nnpe == 4,
+          "Attempt to call genEdsup() with nodes per element, nnpe, that is "
+          "neither 4 (tetrahedra) nor 3 (triangles)." );
   Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genEdsup() with empty esup1" );
   Assert( !esup.second.empty(), "Attempt to call genEdsup() with empty esup2" );
@@ -308,7 +315,9 @@ genEdsup( const std::vector< int >& inpoel,
     edsup2.push_back( edsup2.back() + p.second.size() );
     for (auto e : p.second) edsup1.push_back( e );
   }
-  edsup2.push_back( edsup2.back() );
+  // fill up index array with the last index for points with no new edges
+  for (std::size_t i=0; i<npoin-star.size(); ++i)
+    edsup2.push_back( edsup2.back() );
 
   // Return (move out) linked lists
   return std::make_pair( std::move(edsup1), std::move(edsup2) );
@@ -345,11 +354,13 @@ genInpoed( const std::vector< int >& inpoel,
 //!   allows direct access to edges (pair of point ids making up an edge),
 //!   edsup1 and edsup2 are smaller in memory, still allow accessing the same
 //!   data (edge point id pairs) but only in a linear fashion, not by direct
-//!   access to particular edges. Accessing a unique edge i using the edge
+//!   access to particular edges. Accessing all unique edges using the edge
 //!   connectivity data structure, inpoed, generated here can be accomplished by
 //!   \code{.cpp}
-//!      edge i point id p = inpoed[i*2];
-//!      edge i point id q = inpoed[i*2+1];
+//!     for (std::size_t e=0; e<inpoed.size()/2; ++e) {
+//!       use point id p of edge e = inpoed[e*2];
+//!       use point id q of edge e = inpoed[e*2+1];
+//!     }
 //!   \endcode
 //! \note At first sight, this function seems to work for elements with more
 //!   vertices than that of tetrahedra. However, that is not the case since the
@@ -364,6 +375,9 @@ genInpoed( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genInpoed() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInpoed() with zero nodes per element" );
+  Assert( nnpe == 3 || nnpe == 4,
+          "Attempt to call genInpoed() with nodes per element, nnpe, that is "
+          "neither 4 (tetrahedra) nor 3 (triangles)." );
   Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !esup.first.empty(), "Attempt to call genInpoed() with empty esup1" );
   Assert( !esup.second.empty(),
@@ -443,13 +457,14 @@ genEsupel( const std::vector< int >& inpoel,
 //!       for (auto i=esupel.second[e]+1; i<=esupel.second[e+1]; ++i)
 //!          use element id esupel.first[i]
 //!   \endcode
-//!     To find out the number of elements, _nelem_, the size of the mesh
-//!     connectivity vector, _inpoel_, can be devided by the number of nodes per
-//!     elements, _nnpe_:
+//!   To find out the number of elements, _nelem_, the size of the mesh
+//!   connectivity vector, _inpoel_, can be devided by the number of nodes per
+//!   elements, _nnpe_:
 //!   \code{.cpp}
 //!     auto nelem = inpoel.size()/nnpe;
 //!   \endcode
-//! \endcode
+//! \note In principle, this function *should* work for any positive nnpe,
+//!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
@@ -606,12 +621,30 @@ genInedel( const std::vector< int >& inpoel,
 //!   inpoel or inpoed or a non-positive number of nodes per element; it will
 //!   throw an exception.
 //! \details The data generated here is stored in a linear vector with all
-//!   edge ids * 2 (as defined by inpoed) of all elements. The edge ids are
-//!   multiplied by 2 so that they can be directly used to index the vector
-//!   inpoed. Because the derived data structure generated here, inedel, is
-//!   intended to be used in conjunction with the linear vector inpoed and not
-//!   with the linked lists edsup1 and edsup2, this function takes inpoed as an
-//!   argument.
+//!   edge ids (as defined by inpoed) of all elements. The edge ids stored in
+//!   inedel can be directly used to index the vector inpoed. Because the
+//!   derived data structure generated here, inedel, is intended to be used in
+//!   conjunction with the linear vector inpoed and not with the linked lists
+//!   edsup1 and edsup2, this function takes inpoed as an argument. Accessing
+//!   the edges of element e using the edge of elements data structure, inedel,
+//!   generated here can be accomplished by
+//!   \code{.cpp}
+//!     for (std::size_t e=0; e<nelem; ++e) {
+//!       for (std::size_t i=0; i<nepe; ++i) {
+//!         use edge id inedel[e*nepe+i] of element e, or
+//!         use point ids p < q of edge id inedel[e*nepe+i] of element e as
+//!           p = inpoed[ inedel[e*nepe+i]*2 ]
+//!           q = inpoed[ inedel[e*nepe+i]*2+1 ]
+//!       }
+//!     }
+//!   \endcode
+//!   where _nepe_ denotes the number of edges per elements: 3 for triangles, 6
+//!   for tetrahedra. To find out the number of elements, _nelem_, the size of
+//!   the mesh connectivity vector, _inpoel_, can be devided by the number of
+//!   nodes per elements, _nnpe_:
+//!   \code{.cpp}
+//!     auto nelem = inpoel.size()/nnpe;
+//!   \endcode
 //! \note At first sight, this function seems to work for elements with more
 //!   vertices than that of tetrahedra. However, that is not the case since the
 //!   algorithm for nnpe > 4 would erronously identify any two combination of
@@ -624,8 +657,16 @@ genInedel( const std::vector< int >& inpoel,
 {
   Assert( !inpoel.empty(), "Attempt to call genInedel() on empty container" );
   Assert( nnpe > 0, "Attempt to call genInedel() with zero nodes per element" );
+  Assert( nnpe == 3 || nnpe == 4,
+          "Attempt to call genInedel() with nodes per element, nnpe, that is "
+          "neither 4 (tetrahedra) nor 3 (triangles)." );
   Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
   Assert( !inpoed.empty(), "Attempt to call genInedel() with empty inpoed" );
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
 
   // First, generate index of star centers. This is necessary to avoid a
   // brute-force search for point ids of edges when searching for element edges.
@@ -639,8 +680,8 @@ genInedel( const std::vector< int >& inpoel,
   // storing only the end-point id, q, of point ids p < q
   std::map< std::size_t, std::vector< std::size_t > > star;
 
-  // generate stars from inpoed; every odd is a star center, every even is a
-  // spike
+  // generate stars from inpoed; starting with zero, every even is a star
+  // center, every odd is a spike
   for (std::size_t i=0; i<inpoed.size()/2; ++i)
     star[ inpoed[i*2] ].push_back( inpoed[i*2+1] );
 
@@ -648,7 +689,9 @@ genInedel( const std::vector< int >& inpoel,
   // star have already been sorted
   std::vector< std::size_t > edsup2( 1, 0 );
   for (auto p : star) edsup2.push_back( edsup2.back() + p.second.size() );
-  edsup2.push_back( edsup2.back() );
+  // fill up index array with the last index for points with no new edges
+  for (std::size_t i=0; i<npoin-star.size(); ++i)
+    edsup2.push_back( edsup2.back() );
   star.clear();
 
   // Second, generate edges of elements
@@ -665,7 +708,7 @@ genInedel( const std::vector< int >& inpoel,
       for (auto i=edsup2[p]+1; i<=edsup2[p+1]; ++i)
          for (std::size_t j=0; j<nnpe; ++j)
             if (inpoed[(i-1)*2+1] == static_cast<std::size_t>(inpoel[e*nnpe+j]))
-               edges[e].push_back( (i-1)*2 );
+               edges[e].push_back( i-1 );
     }
 
   // linear vector to store the edge ids of all elements
