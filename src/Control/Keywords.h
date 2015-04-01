@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Keywords.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 02:37:17 PM MDT
+  \date      Wed 01 Apr 2015 09:17:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Definition of all keywords
   \details   This file contains the definition of all keywords, including those
@@ -1675,7 +1675,23 @@ struct sde_rcomma_info {
     static std::string description() { return "real(s)"; }
   };
 };
-using sde_rcomma = keyword< sde_rcomma_info,  r,c,o,m,m,a >;
+using sde_rcomma = keyword< sde_rcomma_info, r,c,o,m,m,a >;
+
+struct sde_r_info {
+  static std::string name() { return "r"; }
+  static std::string shortDescription() { return
+    R"(Set SDE parameter(s) r)"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to specify a vector of real numbers used to
+    parameterize a system of stochastic differential equations. Example:
+    "r 5.0 2.0 3.0 end". The length of the vector depends on the particular
+    type of SDE system and is controlled by the preceding keyword 'ncomp'.)"; }
+  struct expect {
+    using type = tk::real;
+    static std::string description() { return "real(s)"; }
+  };
+};
+using sde_r = keyword< sde_r_info, r >;
 
 struct dirichlet_info {
   static std::string name() { return "Dirichlet"; }
@@ -1801,12 +1817,12 @@ struct beta_info {
 };
 using beta = keyword< beta_info, b,e,t,a >;
 
-struct nfracbeta_info {
+struct numfracbeta_info {
   static std::string name() { return "Number-fraction beta"; }
   static std::string shortDescription() { return
-    "Introduce the nfracbeta SDE input block"; }
+    "Introduce the numfracbeta SDE input block"; }
   static std::string longDescription() { return
-    R"(This keyword is used to introduce the nfracbeta ... end block, used to
+    R"(This keyword is used to introduce the numfracbeta ... end block, used to
     specify the configuration of a system of number-fraction beta SDEs, a system
     of stochastic differential equations (SDEs), in which, in addition to the
     dependent variable, computed with linear drift and quadratic diagonal
@@ -1817,7 +1833,7 @@ struct nfracbeta_info {
     V(X), where both rho and V are random variables, computed by rho(X) = rho2
     ( 1 - r' X ), and V(X) = 1 / [ rho2 ( 1 - r'X ) ]. For more details on the
     beta SDE, see http://doi.org/10.1080/14685248.2010.510843 and
-    src/DiffEq/Beta.h. Keywords allowed in a nfracbeta ... end block: )"
+    src/DiffEq/Beta.h. Keywords allowed in a numfracbeta ... end block: )"
     + std::string("\'")
     + depvar::string()+ "\', \'"
     + ncomp::string() + "\', \'"
@@ -1829,11 +1845,45 @@ struct nfracbeta_info {
     + sde_kappa::string() + "\', \'"
     + sde_rho2::string() + "\', \'"
     + sde_rcomma::string() + "\'. "
-    + R"(For an example nfracbeta ... end block, see
-      doc/html/walker_example_nfracbeta.html.)";
+    + R"(For an example numfracbeta ... end block, see
+      doc/html/walker_example_numfracbeta.html.)";
   }
 };
-using nfracbeta = keyword< nfracbeta_info, n,f,r,a,c,b,e,t,a >;
+using numfracbeta = keyword< numfracbeta_info, n,u,m,f,r,a,c,b,e,t,a >;
+
+struct massfracbeta_info {
+  static std::string name() { return "Mass-fraction beta"; }
+  static std::string shortDescription() { return
+    "Introduce the massfracbeta SDE input block"; }
+  static std::string longDescription() { return
+    R"(This keyword is used to introduce the massfracbeta ... end block, used to
+    specify the configuration of a system of number-fraction beta SDEs, a system
+    of stochastic differential equations (SDEs), in which, in addition to the
+    dependent variable, computed with linear drift and quadratic diagonal
+    diffusion (whose invariant is joint beta), two additional variables are
+    computed. In other words, this is a beta SDE but there are two additional
+    stochastic variables computed based on the beta SDE. If Y is governed by the
+    beta SDE, then the mass-fraction beta SDE additionally governs rho(Y) and
+    V(Y), where both rho and V are random variables, computed by rho(Y) = rho2 /
+    ( 1 + r Y ), and V(Y) = ( 1 + r Y ) / rho2. For more details on the beta
+    SDE, see http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h.
+    Keywords allowed in a massfracbeta ... end block: )"
+    + std::string("\'")
+    + depvar::string()+ "\', \'"
+    + ncomp::string() + "\', \'"
+    + rng::string() + "\', \'"
+    + init::string() + "\', \'"
+    + coeff::string() + "\', \'"
+    + sde_b::string() + "\', \'"
+    + sde_S::string() + "\', \'"
+    + sde_kappa::string() + "\', \'"
+    + sde_rho2::string() + "\', \'"
+    + sde_r::string() + "\'. "
+    + R"(For an example massfracbeta ... end block, see
+      doc/html/walker_example_massfracbeta.html.)";
+  }
+};
+using massfracbeta = keyword< massfracbeta_info, m,a,s,s,f,r,a,c,b,e,t,a >;
 
 struct mixbeta_info {
   static std::string name() { return "Mix beta"; }
@@ -1852,7 +1902,7 @@ struct mixbeta_info {
     constants. Also, there two additional random variables computed besides, X,
     and they are rho(X) and V(X), also computed by the number-fraction beta
     equation. For more detail on the number-fraction beta SDE, see the help on
-    keyword 'nfracbeta'. For more details on the beta SDE, see
+    keyword 'numfracbeta'. For more details on the beta SDE, see
     http://doi.org/10.1080/14685248.2010.510843 and src/DiffEq/Beta.h. Keywords
     allowed in a mixbeta ... end block: )"
     + std::string("\'")

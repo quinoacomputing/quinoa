@@ -106,9 +106,31 @@ Currently, the following differential equations are implemented:
    - For initialization policies, see DiffEq/InitPolicy.h.
    - For coefficients policies, see DiffEq/WrightFisherCoeffPolicy.h.
 
+ 9. <B>Number-fraction beta</B> - A system of SDEs, with linear drift and
+ quadratic diagonal diffusion, whose invariant is the joint beta distribution.
+ The number-fraction beta SDE is based on the beta SDE, additionally computing
+ two more stochastic variables that are functions of the beta variables
+ integrated. For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+
+   - For a short overview of the equation and its implementation, see
+     DiffEq/NumberFractionBeta.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/NumberFractionBetaCoeffPolicy.h.
+
+ 10. <B>Mass-fraction beta</B> - A system of SDEs, with linear drift and
+ quadratic diagonal diffusion, whose invariant is the joint beta distribution.
+ The mass-fraction beta SDE is based on the beta SDE, additionally computing
+ two more stochastic variables that are functions of the beta variables
+ integrated. For more details on the beta SDE, see [Bakosi, Ristorcelli, Exploring the beta distribution in variable-density turbulent mixing, J. Turbul, 2010](http://doi.org/10.1080/14685248.2010.510843).
+
+   - For a short overview of the equation and its implementation, see
+     DiffEq/MassFractionBeta.h.
+   - For initialization policies, see DiffEq/InitPolicy.h.
+   - For coefficients policies, see DiffEq/MassFractionBetaCoeffPolicy.h.
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 03 Feb 2015 10:32:04 PM MST
+<em>Page last updated:</em> Wed 01 Apr 2015 11:09:57 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */
