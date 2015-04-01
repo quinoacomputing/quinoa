@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 12:23:27 PM MDT
+  \date      Wed 01 Apr 2015 09:16:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -70,7 +70,8 @@ namespace deck {
                            tag::skewnormal,   std::size_t,
                            tag::gamma,        std::size_t,
                            tag::beta,         std::size_t,
-                           tag::nfracbeta,    std::size_t,
+                           tag::numfracbeta,  std::size_t,
+                           tag::massfracbeta, std::size_t,
                            tag::mixbeta,      std::size_t > neq;
 
   // Walker's InputDeck actions
@@ -411,53 +412,102 @@ namespace deck {
            check_errors< tag::beta > > {};
 
   //! Number-fraction beta SDE
-  struct nfracbeta :
+  struct numfracbeta :
          pegtl::ifmust<
-           scan_sde< use< kw::nfracbeta >, tag::nfracbeta >,
+           scan_sde< use< kw::numfracbeta >, tag::numfracbeta >,
            tk::grm::block< Stack,
                            use< kw::end >,
                            tk::grm::depvar< Stack,
                                             use,
-                                            tag::nfracbeta,
+                                            tag::numfracbeta,
                                             tag::depvar >,
                            tk::grm::component< Stack,
                                                use< kw::ncomp >,
-                                               tag::nfracbeta >,
+                                               tag::numfracbeta >,
                            tk::grm::rng< Stack,
                                          use,
                                          use< kw::rng >,
                                          tk::ctr::RNG,
-                                         tag::nfracbeta,
+                                         tag::numfracbeta,
                                          tag::rng >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::init >,
                                             tk::ctr::InitPolicy,
-                                            tag::nfracbeta,
+                                            tag::numfracbeta,
                                             tag::initpolicy >,
                            tk::grm::policy< Stack,
                                             use,
                                             use< kw::coeff >,
                                             tk::ctr::CoeffPolicy,
-                                            tag::nfracbeta,
+                                            tag::numfracbeta,
                                             tag::coeffpolicy >,
-                           delta< tag::nfracbeta >,
+                           delta< tag::numfracbeta >,
                            sde_parameter_vector< kw::sde_b,
-                                                 tag::nfracbeta,
+                                                 tag::numfracbeta,
                                                  tag::b >,
                            sde_parameter_vector< kw::sde_S,
-                                                 tag::nfracbeta,
+                                                 tag::numfracbeta,
                                                  tag::S >,
                            sde_parameter_vector< kw::sde_kappa,
-                                                 tag::nfracbeta,
+                                                 tag::numfracbeta,
                                                  tag::kappa >,
                            sde_parameter_vector< kw::sde_rho2,
-                                                 tag::nfracbeta,
+                                                 tag::numfracbeta,
                                                  tag::rho2 >,
                            sde_parameter_vector< kw::sde_rcomma,
-                                                 tag::nfracbeta,
+                                                 tag::numfracbeta,
                                                  tag::rcomma > >,
-           check_errors< tag::nfracbeta > > {};
+           check_errors< tag::numfracbeta > > {};
+
+  //! Mass-fraction beta SDE
+  struct massfracbeta :
+         pegtl::ifmust<
+           scan_sde< use< kw::massfracbeta >, tag::massfracbeta >,
+           tk::grm::block< Stack,
+                           use< kw::end >,
+                           tk::grm::depvar< Stack,
+                                            use,
+                                            tag::massfracbeta,
+                                            tag::depvar >,
+                           tk::grm::component< Stack,
+                                               use< kw::ncomp >,
+                                               tag::massfracbeta >,
+                           tk::grm::rng< Stack,
+                                         use,
+                                         use< kw::rng >,
+                                         tk::ctr::RNG,
+                                         tag::massfracbeta,
+                                         tag::rng >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::init >,
+                                            tk::ctr::InitPolicy,
+                                            tag::massfracbeta,
+                                            tag::initpolicy >,
+                           tk::grm::policy< Stack,
+                                            use,
+                                            use< kw::coeff >,
+                                            tk::ctr::CoeffPolicy,
+                                            tag::massfracbeta,
+                                            tag::coeffpolicy >,
+                           delta< tag::massfracbeta >,
+                           sde_parameter_vector< kw::sde_b,
+                                                 tag::massfracbeta,
+                                                 tag::b >,
+                           sde_parameter_vector< kw::sde_S,
+                                                 tag::massfracbeta,
+                                                 tag::S >,
+                           sde_parameter_vector< kw::sde_kappa,
+                                                 tag::massfracbeta,
+                                                 tag::kappa >,
+                           sde_parameter_vector< kw::sde_rho2,
+                                                 tag::massfracbeta,
+                                                 tag::rho2 >,
+                           sde_parameter_vector< kw::sde_r,
+                                                 tag::massfracbeta,
+                                                 tag::r > >,
+           check_errors< tag::massfracbeta > > {};
 
   //! Mix beta SDE
   struct mixbeta :
@@ -687,7 +737,8 @@ namespace deck {
                      skewnormal,
                      gamma,
                      beta,
-                     nfracbeta,
+                     numfracbeta,
+                     massfracbeta,
                      mixbeta > {};
 
   //! 'walker' block

@@ -1,0 +1,644 @@
+/*!
+  \page      walker_example_numfracbeta Walker: Integrating the number-fraction beta SDE
+  \tableofcontents
+
+This example runs [walker](walker_doc.html) to integrate the number-fraction
+beta SDE (see DiffEq/NumberFractionBeta.h) using constant coefficients. The
+number-fraction beta SDE is based on the beta SDE, additionally computing two
+more stochastic variables that are functions of the beta variables integrated.
+For more detail on the beta SDE, see
+http://dx.doi.org/10.1080/14685248.2010.510843.
+
+\section walker_example_numfracbeta_control Control file
+
+\verbatim
+title "Test Ray's closure ideas for <v^2> and <v^3>"
+
+walker
+
+  term  25.0    # Max time
+  dt    0.002   # Time step size
+  npar  10000   # Number of particles
+  ttyi  100     # TTY output interval
+
+  rngs
+    mkl_r250 end
+  end
+
+  numfracbeta   # Select the number-fraction beta SDE
+    depvar x    # Dependent variable: X, denoting mole or number fractions
+    ncomp 15    # = 3x5 = 5 systems each computing 3 variables:
+                #   X - number fraction,
+                #   R - density,
+                #   V - specific volume
+    init zero
+    coeff const
+    # alpha = Sb/kappa, beta = (1-S)b/kappa
+    kappa 2.0  0.76923  0.5  0.15873  0.1 end
+    b     0.4  1.0      1.0  1.0    100.0 end
+    S     0.5  0.53846  0.5  0.39683  0.5 end
+    rng mkl_r250
+    rho2 1.0 1.0 1.0 1.0 1.0 end
+    # low-A
+    rcomma 1.0e-2 1.0e-2 1.0e-2 1.0e-2 1.0e-2 end
+    # high-A
+    #rcomma 0.9 0.9 0.9 0.9 0.9 end
+  end
+
+  statistics    # column numbers in output file
+    # <X>, mole fraction means
+    <X1>        # 3
+    <X2>        # 4
+    <X3>        # 5
+    <X4>        # 6
+    <X5>        # 7
+    # <rho>, mean densities
+    <X6>        # 8
+    <X7>        # 9
+    <X8>        # 10
+    <X9>        # 11
+    <X10>       # 12
+    # <V>, mean specific volumes
+    <X11>       # 13
+    <X12>       # 14
+    <X13>       # 15
+    <X14>       # 16
+    <X15>       # 17
+    # <x^2>, mole fraction variances
+    <x1x1>      # 18
+    <x2x2>      # 19
+    <x3x3>      # 20
+    <x4x4>      # 21
+    <x5x5>      # 22
+     # <rho v>, density-specific-volume covariances
+    <x6x11>     # 25
+    <x7x12>     # 30
+    <x8x13>     # 25
+    <x9x14>     # 40
+    <x10x15>    # 45
+    # <rho v^2>
+    <x6x11x11>  # 26
+    <x7x12x12>  # 31
+    <x8x13x13>  # 36
+    <x9x14x14>  # 41
+    <x10x15x15> # 46
+    # <rho^2 v>
+    <x6x6x11>   # 23
+    <x7x7x12>   # 28
+    <x8x8x13>   # 33
+    <x9x9x14>   # 38
+    <x10x10x15> # 43
+    # <rho^2v^2>
+    <x6x6x11x11>   # 24
+    <x7x7x12x12>   # 29
+    <x8x8x13x13>   # 34
+    <x9x9x14x14>   # 39
+    <x10x10x15x15> # 43
+    # <rho v^3>
+    <x6x11x11x11>  # 27
+    <x7x12x12x12>  # 32
+    <x8x13x13x13>  # 37
+    <x9x14x14x14>  # 42
+    <x10x15x15x15> # 47
+    # <v^2>, specific volume variances
+    <x11x11>    # 48
+    <x12x12>    # 50
+    <x13x13>    # 52
+    <x14x14>    # 54
+    <x15x15>    # 56
+    # <v^3>, specific volume third central moments
+    <x11x11x11> # 49
+    <x12x12x12> # 51
+    <x13x13x13> # 53
+    <x14x14x14> # 55
+    <x15x15x15> # 57
+  end
+
+  pdfs
+    interval  100
+    filetype  txt
+    policy    overwrite
+    centering elem
+    format    scientific
+    precision 4
+    p1( X1 : 1.0e-2 )
+    p2( X2 : 1.0e-2 )
+    p3( X3 : 1.0e-2 )
+    p4( X4 : 1.0e-2 )
+    p5( X5 : 1.0e-2 )
+  end
+end
+\endverbatim
+
+\section walker_example_numfracbeta_run Example run on 8 CPUs
+\verbatim
+./charmrun +p8 Main/walker -v -c ../../tmp/numfracbeta.q -u 0.9
+\endverbatim
+
+\section walker_example_numfracbeta_output Output
+\verbatim
+Running on 8 processors:  Main/walker -c ../../tmp/numfracbeta.q -v -u 0.9
+charmrun>  /usr/bin/setarch x86_64 -R  mpirun -np 8  Main/walker -c ../../tmp/numfracbeta.q -v -u 0.9
+Charm++> Running on MPI version: 3.0
+Charm++> level of thread support used: MPI_THREAD_SINGLE (desired: MPI_THREAD_SINGLE)
+Charm++> Running in non-SMP mode: numPes 8
+Converse/Charm++ Commit ID: e31b196
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.003 seconds.
+
+      ,::,`                                                            `.
+   .;;;'';;;:                                                          ;;#
+  ;;;@+   +;;;  ;;;;;,   ;;;;. ;;;;;, ;;;;      ;;;;   `;;;;;;:        ;;;
+ :;;@`     :;;' .;;;@,    ,;@, ,;;;@: .;;;'     .;+;. ;;;@#:';;;      ;;;;'
+ ;;;#       ;;;: ;;;'      ;:   ;;;'   ;;;;;     ;#  ;;;@     ;;;     ;+;;'
+.;;+        ;;;# ;;;'      ;:   ;;;'   ;#;;;`    ;#  ;;@      `;;+   .;#;;;.
+;;;#        :;;' ;;;'      ;:   ;;;'   ;# ;;;    ;# ;;;@       ;;;   ;# ;;;+
+;;;#        .;;; ;;;'      ;:   ;;;'   ;# ,;;;   ;# ;;;#       ;;;:  ;@  ;;;
+;;;#        .;;' ;;;'      ;:   ;;;'   ;#  ;;;;  ;# ;;;'       ;;;+ ;',  ;;;@
+;;;+        ,;;+ ;;;'      ;:   ;;;'   ;#   ;;;' ;# ;;;'       ;;;' ;':::;;;;
+`;;;        ;;;@ ;;;'      ;:   ;;;'   ;#    ;;;';# ;;;@       ;;;:,;+++++;;;'
+ ;;;;       ;;;@ ;;;#     .;.   ;;;'   ;#     ;;;;# `;;+       ;;# ;#     ;;;'
+ .;;;      :;;@  ,;;+     ;+    ;;;'   ;#      ;;;#  ;;;      ;;;@ ;@      ;;;.
+  ';;;    ;;;@,   ;;;;``.;;@    ;;;'   ;+      .;;#   ;;;    :;;@ ;;;      ;;;+
+   :;;;;;;;+@`     ';;;;;'@    ;;;;;, ;;;;      ;;+    +;;;;;;#@ ;;;;.   .;;;;;;
+     .;;#@'         `#@@@:     ;::::; ;::::      ;@      '@@@+   ;:::;    ;::::::
+    :;;;;;;.      __      __        .__   __
+  .;@+@';;;;;;'  /  \    /  \_____  |  | |  | __ ___________
+    `     '#''@` \   \/\/   /\__  \ |  | |  |/ // __ \_  __ \
+                  \        /  / __ \|  |_|    <\  ___/|  | \/
+                   \__/\  /  (____  /____/__|_ \\___  >__|
+                        \/        \/          \/    \/
+
+                                 < ENVIRONMENT >                                
+                                 ------ o ------                          
+
+ * Build environment:
+ --------------------
+     Hostname                       : karman
+     Executable                     : walker
+     Version                        : 0.1
+     Release                        : LA-CC-XX-XXX
+     Revision                       : 9a73d91d8953d69ada52ed25d41b7e65e42e43b4
+     CMake build type               : Debug
+     Asserts                        : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     Exception trace                : on (turn off: CMAKE_BUILD_TYPE=RELEASE)
+     MPI C++ wrapper                : /opt/openmpi/1.8/clang/system/bin/mpicxx
+     Underlying C++ compiler        : /usr/bin/clang++-3.5
+     Build date                     : Tue Mar 31 11:33:32 MDT 2015
+
+ * Run-time environment:
+ -----------------------
+     Date, time                     : Wed Apr  1 10:54:45 2015
+     Work directory                 : /home/jbakosi/code/quinoa/build/clang
+     Executable (rel. to work dir)  : Main/walker
+     Command line arguments         : '-c ../../tmp/numfracbeta.q -v -u 0.9'
+     Output                         : verbose (quiet: omit -v)
+     Control file                   : ../../tmp/numfracbeta.q
+     Parsed control file            : success
+
+
+                                   < FACTORY >                                  
+                                   ---- o ----                            
+
+ * Particle properties data layout policy (CMake: LAYOUT):
+ ---------------------------------------------------------
+     particle-major                
+
+ * Registered differential equations:
+ ------------------------------------
+     Unique equation types          : 11
+     With all policy combinations   : 42
+
+     Legend: equation name : supported policies
+
+     Policy codes:
+      * i: initialization policy: R-raw, Z-zero, D-delta
+      * c: coefficients policy: C-const, J-jrrj
+
+     Beta                           : i:DRZ, c:C
+     Diagonal Ornstein-Uhlenbeck    : i:DRZ, c:C
+     Dirichlet                      : i:DRZ, c:C
+     Gamma                          : i:DRZ, c:C
+     Generalized Dirichlet          : i:DRZ, c:C
+     Mass-fraction beta             : i:DRZ, c:CJ
+     Mix beta                       : i:DRZ, c:CJ
+     Number-fraction beta           : i:DRZ, c:CJ
+     Ornstein-Uhlenbeck             : i:DRZ, c:C
+     Skew-Normal                    : i:DRZ, c:C
+     Wright-Fisher                  : i:DRZ, c:C
+
+
+                                   < PROBLEM >                                  
+                                   ---- o ----                            
+
+ * Title: Test Ray's closure ideas for <v^2> and <v^3>
+ -----------------------------------------------------
+
+ * Differential equations integrated (1):
+ ----------------------------------------
+   < Number-fraction beta >
+     kind                           : stochastic
+     dependent variable             : x
+     initialization policy          : Z
+     coefficients policy            : C
+     start offset in particle array : 0
+     number of components           : 5
+     random number generator        : MKL R250
+     coeff b [5]                    : { 0.4 1 1 1 100 }
+     coeff S [5]                    : { 0.5 0.53846 0.5 0.39683 0.5 }
+     coeff kappa [5]                : { 2 0.76923 0.5 0.15873 0.1 }
+     coeff rho2 [5]                 : { 1 1 1 1 1 }
+     coeff rcomma [5]               : { 0.01 0.01 0.01 0.01 0.01 }
+
+ * Output filenames:
+ -------------------
+     Statistics                     : stat.txt
+     PDF                            : pdf
+
+ * Discretization parameters:
+ ----------------------------
+     Number of time steps           : 18446744073709551615
+     Terminate time                 : 25
+     Initial time step size         : 0.002
+
+ * Output intervals:
+ -------------------
+     TTY                            : 100
+     Statistics                     : 1
+     PDF                            : 100
+
+ * Statistical moments and distributions:
+ ----------------------------------------
+     Estimated statistical moments  : <X1> <X2> <X3> <X4> <X5> <X6> <X7> <X8> <X9> <X10> <X11> <X12> <X13> <X14> <X15> <x1x1> <x2x2> <x3x3> <x4x4> <x5x5> <x6x6x11> <x6x6x11x11> <x6x11> <x6x11x11> <x6x11x11x11> <x7x7x12> <x7x7x12x12> <x7x12> <x7x12x12> <x7x12x12x12> <x8x8x13> <x8x8x13x13> <x8x13> <x8x13x13> <x8x13x13x13> <x9x9x14> <x9x9x14x14> <x9x14> <x9x14x14> <x9x14x14x14> <x10x10x15> <x10x10x15x15> <x10x15> <x10x15x15> <x10x15x15x15> <x11x11> <x11x11x11> <x12x12> <x12x12x12> <x13x13> <x13x13x13> <x14x14> <x14x14x14> <x15x15> <x15x15x15> 
+     PDFs                           : p1(X1:0.01) p2(X2:0.01) p3(X3:0.01) p4(X4:0.01) p5(X5:0.01) 
+     PDF output file type           : txt
+     PDF output file policy         : overwrite
+     PDF output file centering      : elem
+     Text floating-point format     : scientific
+     Text precision in digits       : 4
+
+ * Load distribution:
+ --------------------
+     Virtualization [0.0...1.0]     : 0.9
+     Load (number of particles)     : 10000
+     Number of processing elements  : 8
+     Number of work units           : 80 (79*125+125)
+
+ * Time integration: Differential equations testbed
+ --------------------------------------------------
+     Legend: it - iteration count
+              t - time
+             dt - time step size
+            ETE - estimated time elapsed (h:m:s)
+            ETA - estimated time for accomplishment (h:m:s)
+            out - output-saved flags (S: statistics, P: PDFs)
+     
+      it             t            dt        ETE        ETA   out
+ ---------------------------------------------------------------
+     100  2.000000e-01  2.000000e-03  000:00:01  000:02:57  SP
+     200  4.000000e-01  2.000000e-03  000:00:03  000:03:09  SP
+     300  6.000000e-01  2.000000e-03  000:00:04  000:03:02  SP
+     400  8.000000e-01  2.000000e-03  000:00:05  000:02:57  SP
+     500  1.000000e+00  2.000000e-03  000:00:07  000:02:54  SP
+     600  1.200000e+00  2.000000e-03  000:00:08  000:02:52  SP
+     700  1.400000e+00  2.000000e-03  000:00:10  000:02:52  SP
+     800  1.600000e+00  2.000000e-03  000:00:11  000:02:49  SP
+     900  1.800000e+00  2.000000e-03  000:00:13  000:02:47  SP
+    1000  2.000000e+00  2.000000e-03  000:00:14  000:02:45  SP
+    1100  2.200000e+00  2.000000e-03  000:00:16  000:02:46  SP
+    1200  2.400000e+00  2.000000e-03  000:00:17  000:02:44  SP
+    1300  2.600000e+00  2.000000e-03  000:00:19  000:02:43  SP
+    1400  2.800000e+00  2.000000e-03  000:00:20  000:02:41  SP
+    1500  3.000000e+00  2.000000e-03  000:00:21  000:02:40  SP
+    1600  3.200000e+00  2.000000e-03  000:00:23  000:02:38  SP
+    1700  3.400000e+00  2.000000e-03  000:00:24  000:02:36  SP
+    1800  3.600000e+00  2.000000e-03  000:00:26  000:02:36  SP
+    1900  3.800000e+00  2.000000e-03  000:00:27  000:02:35  SP
+    2000  4.000000e+00  2.000000e-03  000:00:29  000:02:34  SP
+    2100  4.200000e+00  2.000000e-03  000:00:30  000:02:32  SP
+    2200  4.400000e+00  2.000000e-03  000:00:32  000:02:33  SP
+    2300  4.600000e+00  2.000000e-03  000:00:34  000:02:31  SP
+    2400  4.800000e+00  2.000000e-03  000:00:35  000:02:30  SP
+    2500  5.000000e+00  2.000000e-03  000:00:37  000:02:28  SP
+    2600  5.200000e+00  2.000000e-03  000:00:38  000:02:27  SP
+    2700  5.400000e+00  2.000000e-03  000:00:40  000:02:26  SP
+    2800  5.600000e+00  2.000000e-03  000:00:41  000:02:25  SP
+    2900  5.800000e+00  2.000000e-03  000:00:43  000:02:23  SP
+    3000  6.000000e+00  2.000000e-03  000:00:44  000:02:22  SP
+    3100  6.200000e+00  2.000000e-03  000:00:46  000:02:20  SP
+    3200  6.400000e+00  2.000000e-03  000:00:47  000:02:18  SP
+    3300  6.600000e+00  2.000000e-03  000:00:49  000:02:17  SP
+    3400  6.800000e+00  2.000000e-03  000:00:50  000:02:15  SP
+    3500  7.000000e+00  2.000000e-03  000:00:52  000:02:13  SP
+    3600  7.200000e+00  2.000000e-03  000:00:53  000:02:12  SP
+    3700  7.400000e+00  2.000000e-03  000:00:54  000:02:10  SP
+    3800  7.600000e+00  2.000000e-03  000:00:56  000:02:09  SP
+    3900  7.800000e+00  2.000000e-03  000:00:58  000:02:08  SP
+    4000  8.000000e+00  2.000000e-03  000:00:59  000:02:07  SP
+    4100  8.200000e+00  2.000000e-03  000:01:01  000:02:05  SP
+    4200  8.400000e+00  2.000000e-03  000:01:02  000:02:04  SP
+    4300  8.600000e+00  2.000000e-03  000:01:04  000:02:02  SP
+    4400  8.800000e+00  2.000000e-03  000:01:05  000:02:00  SP
+    4500  9.000000e+00  2.000000e-03  000:01:07  000:01:59  SP
+    4600  9.200000e+00  2.000000e-03  000:01:08  000:01:57  SP
+    4700  9.400000e+00  2.000000e-03  000:01:10  000:01:56  SP
+    4800  9.600000e+00  2.000000e-03  000:01:11  000:01:54  SP
+    4900  9.800000e+00  2.000000e-03  000:01:13  000:01:53  SP
+    5000  1.000000e+01  2.000000e-03  000:01:14  000:01:51  SP
+    5100  1.020000e+01  2.000000e-03  000:01:16  000:01:50  SP
+    5200  1.040000e+01  2.000000e-03  000:01:17  000:01:49  SP
+    5300  1.060000e+01  2.000000e-03  000:01:19  000:01:47  SP
+    5400  1.080000e+01  2.000000e-03  000:01:20  000:01:46  SP
+    5500  1.100000e+01  2.000000e-03  000:01:22  000:01:44  SP
+    5600  1.120000e+01  2.000000e-03  000:01:23  000:01:42  SP
+    5700  1.140000e+01  2.000000e-03  000:01:24  000:01:41  SP
+    5800  1.160000e+01  2.000000e-03  000:01:26  000:01:39  SP
+    5900  1.180000e+01  2.000000e-03  000:01:27  000:01:38  SP
+    6000  1.200000e+01  2.000000e-03  000:01:29  000:01:36  SP
+    6100  1.220000e+01  2.000000e-03  000:01:30  000:01:35  SP
+    6200  1.240000e+01  2.000000e-03  000:01:32  000:01:33  SP
+    6300  1.260000e+01  2.000000e-03  000:01:33  000:01:32  SP
+    6400  1.280000e+01  2.000000e-03  000:01:35  000:01:30  SP
+    6500  1.300000e+01  2.000000e-03  000:01:36  000:01:29  SP
+    6600  1.320000e+01  2.000000e-03  000:01:38  000:01:27  SP
+    6700  1.340000e+01  2.000000e-03  000:01:39  000:01:26  SP
+    6800  1.360000e+01  2.000000e-03  000:01:40  000:01:24  SP
+    6900  1.380000e+01  2.000000e-03  000:01:42  000:01:23  SP
+    7000  1.400000e+01  2.000000e-03  000:01:43  000:01:21  SP
+    7100  1.420000e+01  2.000000e-03  000:01:45  000:01:20  SP
+    7200  1.440000e+01  2.000000e-03  000:01:46  000:01:18  SP
+    7300  1.460000e+01  2.000000e-03  000:01:48  000:01:17  SP
+    7400  1.480000e+01  2.000000e-03  000:01:49  000:01:15  SP
+    7500  1.500000e+01  2.000000e-03  000:01:51  000:01:14  SP
+    7600  1.520000e+01  2.000000e-03  000:01:52  000:01:12  SP
+    7700  1.540000e+01  2.000000e-03  000:01:53  000:01:10  SP
+    7800  1.560000e+01  2.000000e-03  000:01:55  000:01:09  SP
+    7900  1.580000e+01  2.000000e-03  000:01:56  000:01:07  SP
+    8000  1.600000e+01  2.000000e-03  000:01:58  000:01:06  SP
+    8100  1.620000e+01  2.000000e-03  000:01:59  000:01:04  SP
+    8200  1.640000e+01  2.000000e-03  000:02:01  000:01:03  SP
+    8300  1.660000e+01  2.000000e-03  000:02:02  000:01:01  SP
+    8400  1.680000e+01  2.000000e-03  000:02:03  000:01:00  SP
+    8500  1.700000e+01  2.000000e-03  000:02:05  000:00:58  SP
+    8600  1.720000e+01  2.000000e-03  000:02:06  000:00:57  SP
+    8700  1.740000e+01  2.000000e-03  000:02:08  000:00:55  SP
+    8800  1.760000e+01  2.000000e-03  000:02:09  000:00:54  SP
+    8900  1.780000e+01  2.000000e-03  000:02:10  000:00:52  SP
+    9000  1.800000e+01  2.000000e-03  000:02:12  000:00:51  SP
+    9100  1.820000e+01  2.000000e-03  000:02:13  000:00:49  SP
+    9200  1.840000e+01  2.000000e-03  000:02:15  000:00:48  SP
+    9300  1.860000e+01  2.000000e-03  000:02:16  000:00:47  SP
+    9400  1.880000e+01  2.000000e-03  000:02:18  000:00:45  SP
+    9500  1.900000e+01  2.000000e-03  000:02:19  000:00:44  SP
+    9600  1.920000e+01  2.000000e-03  000:02:21  000:00:42  SP
+    9700  1.940000e+01  2.000000e-03  000:02:22  000:00:41  SP
+    9800  1.960000e+01  2.000000e-03  000:02:24  000:00:39  SP
+    9900  1.980000e+01  2.000000e-03  000:02:25  000:00:38  SP
+   10000  2.000000e+01  2.000000e-03  000:02:27  000:00:36  SP
+   10100  2.020000e+01  2.000000e-03  000:02:28  000:00:35  SP
+   10200  2.040000e+01  2.000000e-03  000:02:30  000:00:33  SP
+   10300  2.060000e+01  2.000000e-03  000:02:31  000:00:32  SP
+   10400  2.080000e+01  2.000000e-03  000:02:32  000:00:30  SP
+   10500  2.100000e+01  2.000000e-03  000:02:34  000:00:29  SP
+   10600  2.120000e+01  2.000000e-03  000:02:35  000:00:27  SP
+   10700  2.140000e+01  2.000000e-03  000:02:37  000:00:26  SP
+   10800  2.160000e+01  2.000000e-03  000:02:38  000:00:24  SP
+   10900  2.180000e+01  2.000000e-03  000:02:40  000:00:23  SP
+   11000  2.200000e+01  2.000000e-03  000:02:41  000:00:22  SP
+   11100  2.220000e+01  2.000000e-03  000:02:42  000:00:20  SP
+   11200  2.240000e+01  2.000000e-03  000:02:44  000:00:19  SP
+   11300  2.260000e+01  2.000000e-03  000:02:45  000:00:17  SP
+   11400  2.280000e+01  2.000000e-03  000:02:47  000:00:16  SP
+   11500  2.300000e+01  2.000000e-03  000:02:48  000:00:14  SP
+   11600  2.320000e+01  2.000000e-03  000:02:50  000:00:13  SP
+   11700  2.340000e+01  2.000000e-03  000:02:51  000:00:11  SP
+   11800  2.360000e+01  2.000000e-03  000:02:53  000:00:10  SP
+   11900  2.380000e+01  2.000000e-03  000:02:54  000:00:08  SP
+   12000  2.400000e+01  2.000000e-03  000:02:55  000:00:07  SP
+   12100  2.420000e+01  2.000000e-03  000:02:57  000:00:05  SP
+   12200  2.440000e+01  2.000000e-03  000:02:58  000:00:04  SP
+   12300  2.460000e+01  2.000000e-03  000:03:00  000:00:02  SP
+   12400  2.480000e+01  2.000000e-03  000:03:01  000:00:01  SP
+   12500  2.500000e+01  2.000000e-03  000:03:03  000:00:00  SP
+
+     Normal finish, maximum time reached: 25.000000
+
+ * Timers (h:m:s):
+ -----------------
+     Initial conditions                                                : 0:0:0
+     Migration of global-scope data                                    : 0:0:0
+     Total runtime                                                     : 0:3:3
+
+
+[Partition 0][Node 0] End of program
+\endverbatim
+
+\section walker_example_numfracbeta_results Results
+
+The rationale for these runs is to integrate the system in time, extract the
+time evolution of various statistics, and then test several different closure
+hypotheses among the statistics. Example gnuplot commands to plot and test some
+closure ideas are:
+
+\verbatim
+# vim: filetype=gnuplot:
+
+# Nomenclature:
+# -------------
+# V - instantaneous specific volume
+# R - instantaneous density
+# v = V - <V>, fluctuating specific volume
+# r = R - <R>, fluctuating density
+# b = -<rv>, density-specific-volume covariance
+# B - as postfix means the Bousinessq approximation
+
+# <v^2>
+
+# IA: <v^2>B = b/<R>^2
+plot "stat.txt" u 2:(-$25/$8/$8), "stat.txt" u 2:48 w l lt 2    # no-mix
+plot "stat.txt" u 2:(-$30/$9/$9), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:(-$35/$10/$10), "stat.txt" u 2:52 w l lt 2  # uniform
+plot "stat.txt" u 2:(-$40/$11/$11), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:(-$45/$12/$12), "stat.txt" u 2:56 w l lt 2  # almost mixed
+
+#################### COLUMNS NOT UPDATED TO LATEST COLUMN NUMBER UNTIL HASHES
+
+# IB: <v^2>(B+1) = b/<R>^2 [ 1 + b(1+b)/(1+(1+b)^2) ]
+plot "stat.txt" u 2:(-$23/$8/$8*(1.0+(-$23*(1.0-$23)/(1.0+(1.0-$23)*(1.0-$23))))), "stat.txt" u 2:33 w l lt 2    # no-mix
+plot "stat.txt" u 2:(-$25/$9/$9*(1.0+(-$25*(1.0-$25)/(1.0+(1.0-$25)*(1.0-$25))))), "stat.txt" u 2:35 w l lt 2
+plot "stat.txt" u 2:(-$27/$10/$10*(1.0+(-$27*(1.0-$27)/(1.0+(1.0-$27)*(1.0-$27))))), "stat.txt" u 2:37 w l lt 2  # uniform
+plot "stat.txt" u 2:(-$29/$11/$11*(1.0+(-$29*(1.0-$29)/(1.0+(1.0-$29)*(1.0-$29))))), "stat.txt" u 2:39 w l lt 2
+plot "stat.txt" u 2:(-$31/$12/$12*(1.0+(-$31*(1.0-$31)/(1.0+(1.0-$31)*(1.0-$31))))), "stat.txt" u 2:41 w l lt 2  # almost mixed
+
+# <v^3>
+
+# IIA: <v^3>B = -<rv^2>/<R>^2
+plot "stat.txt" u 2:(-$24/$8/$8), "stat.txt" u 2:34 w l lt 2     # no-mix
+plot "stat.txt" u 2:(-$26/$9/$9), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(-$28/$10/$10), "stat.txt" u 2:38 w l lt 2   # uniform
+plot "stat.txt" u 2:(-$30/$11/$11), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(-$32/$12/$12), "stat.txt" u 2:42 w l lt 2   # almost mixed
+# IIA: <v^3>B = (b<V> + <R><v^2>) / <R>^2
+plot "stat.txt" u 2:(($23*$13+$8*$33)/$8/$8), "stat.txt" u 2:34 w l lt 2        # no-mix
+plot "stat.txt" u 2:(($25*$14+$9*$35)/$9/$9), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(($27*$15+$10*$37)/$10/$10), "stat.txt" u 2:38 w l lt 2     # uniform
+plot "stat.txt" u 2:(($29*$16+$11*$39)/$11/$11), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(($31*$17+$12*$41)/$12/$12), "stat.txt" u 2:42 w l lt 2     # almost mixed
+
+# IIB: <v^3>B = r'/rho2 <v^2>B (1-2<X>)
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$23)/$8/$8*(1.0-2.0*$3)), "stat.txt" u 2:34 w l lt 2       # no-mix
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$25)/$9/$9*(1.0-2.0*$4)), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$27)/$10/$10*(1.0-2.0*$5)), "stat.txt" u 2:38 w l lt 2     # uniform
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$29)/$11/$11*(1.0-2.0*$6)), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$31)/$12/$12*(1.0-2.0*$7)), "stat.txt" u 2:42 w l lt 2     # almost mixed
+
+# IIB2: <v^3>(B+1) = r'/rho2 <v^2>(B+1) (1-2<X>)
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$23/$8/$8*(1.0+(-$23*(1.0-$23)/(1.0+(1.0-$23)*(1.0-$23)))))*(1.0-2.0*$3)), "stat.txt" u 2:34 w l lt 2       # no-mix
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$25/$9/$9*(1.0+(-$25*(1.0-$25)/(1.0+(1.0-$25)*(1.0-$25)))))*(1.0-2.0*$4)), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$27/$10/$10*(1.0+(-$27*(1.0-$27)/(1.0+(1.0-$27)*(1.0-$27)))))*(1.0-2.0*$5)), "stat.txt" u 2:38 w l lt 2     # uniform
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$29/$11/$11*(1.0+(-$29*(1.0-$29)/(1.0+(1.0-$29)*(1.0-$29)))))*(1.0-2.0*$6)), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(1.0e-2/1.0*(-$31/$12/$12*(1.0+(-$31*(1.0-$31)/(1.0+(1.0-$31)*(1.0-$31)))))*(1.0-2.0*$7)), "stat.txt" u 2:42 w l lt 2     # almost mixed
+
+# IIC: <v^3>B = 2(1-2<V>)<v^2>B (1-theta)/(2-theta)
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$13)*(-$23/$8/$8)*(1.0-(1.0+$23/(-$23+1.0*1.0e-2*$3*(1.0-$3))))/(2.0-(1.0+$23/(-$23+1.0*1.0e-2*$3*(1.0-$3))))), "stat.txt" u 2:34 w l lt 2    # no-mix
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$14)*(-$25/$9/$9)*(1.0-(1.0+$25/(-$25+1.0*1.0e-2*$4*(1.0-$4))))/(2.0-(1.0+$25/(-$25+1.0*1.0e-2*$4*(1.0-$4))))), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$15)*(-$27/$10/$10)*(1.0-(1.0+$27/(-$27+1.0*1.0e-2*$5*(1.0-$5))))/(2.0-(1.0+$27/(-$27+1.0*1.0e-2*$5*(1.0-$5))))), "stat.txt" u 2:38 w l lt 2  # uniform
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$16)*(-$29/$11/$11)*(1.0-(1.0+$29/(-$29+1.0*1.0e-2*$6*(1.0-$6))))/(2.0-(1.0+$29/(-$29+1.0*1.0e-2*$6*(1.0-$6))))), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$17)*(-$31/$12/$12)*(1.0-(1.0+$31/(-$31+1.0*1.0e-2*$7*(1.0-$7))))/(2.0-(1.0+$31/(-$31+1.0*1.0e-2*$7*(1.0-$7))))), "stat.txt" u 2:42 w l lt 2  # almost mixed
+# IIC: <v^3>B = 2(1-2<V>)<v^2>(B+1) (1-theta)/(2-theta)
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$13)*(-$23/$8/$8*(1.0+(-$23*(1.0-$23)/(1.0+(1.0-$23)*(1.0-$23)))))*(1.0-(1.0+$23/(-$23+1.0*1.0e-2*$3*(1.0-$3))))/(2.0-(1.0+$23/(-$23+1.0*1.0e-2*$3*(1.0-$3))))), "stat.txt" u 2:34 w l lt 2    # no-mix
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$14)*(-$25/$9/$9*(1.0+(-$25*(1.0-$25)/(1.0+(1.0-$25)*(1.0-$25)))))*(1.0-(1.0+$25/(-$25+1.0*1.0e-2*$4*(1.0-$4))))/(2.0-(1.0+$25/(-$25+1.0*1.0e-2*$4*(1.0-$4))))), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$15)*(-$27/$10/$10*(1.0+(-$27*(1.0-$27)/(1.0+(1.0-$27)*(1.0-$27)))))*(1.0-(1.0+$27/(-$27+1.0*1.0e-2*$5*(1.0-$5))))/(2.0-(1.0+$27/(-$27+1.0*1.0e-2*$5*(1.0-$5))))), "stat.txt" u 2:38 w l lt 2  # uniform
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$16)*(-$29/$11/$11*(1.0+(-$29*(1.0-$29)/(1.0+(1.0-$29)*(1.0-$29)))))*(1.0-(1.0+$29/(-$29+1.0*1.0e-2*$6*(1.0-$6))))/(2.0-(1.0+$29/(-$29+1.0*1.0e-2*$6*(1.0-$6))))), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$17)*(-$31/$12/$12*(1.0+(-$31*(1.0-$31)/(1.0+(1.0-$31)*(1.0-$31)))))*(1.0-(1.0+$31/(-$31+1.0*1.0e-2*$7*(1.0-$7))))/(2.0-(1.0+$31/(-$31+1.0*1.0e-2*$7*(1.0-$7))))), "stat.txt" u 2:42 w l lt 2  # almost mixed
+# IIC: <v^3>B = 2(1-2<V>)<v^2>B (1-thetav)/(2-thetav)
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$13)*(-$23/$8/$8)*(1.0-(1.0-$33/($33+1.0*1.0e-2/1.0/0.99*$3*(1.0-$3))))/(2.0-(1.0-$33/($33+1.0*1.0e-2/1.0/0.99*$3*(1.0-$3))))), "stat.txt" u 2:34 w l lt 2    # no-mix
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$14)*(-$25/$9/$9)*(1.0-(1.0-$35/($35+1.0*1.0e-2/1.0/0.99*$4*(1.0-$4))))/(2.0-(1.0-$35/($35+1.0*1.0e-2/1.0/0.99*$4*(1.0-$4))))), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$15)*(-$27/$10/$10)*(1.0-(1.0-$37/($37+1.0*1.0e-2/1.0/0.99*$5*(1.0-$5))))/(2.0-(1.0-$37/($37+1.0*1.0e-2/1.0/0.99*$5*(1.0-$5))))), "stat.txt" u 2:38 w l lt 2  # uniform
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$16)*(-$29/$11/$11)*(1.0-(1.0-$39/($39+1.0*1.0e-2/1.0/0.99*$6*(1.0-$6))))/(2.0-(1.0-$39/($39+1.0*1.0e-2/1.0/0.99*$6*(1.0-$6))))), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$17)*(-$31/$12/$12)*(1.0-(1.0-$41/($41+1.0*1.0e-2/1.0/0.99*$7*(1.0-$7))))/(2.0-(1.0-$41/($41+1.0*1.0e-2/1.0/0.99*$7*(1.0-$7))))), "stat.txt" u 2:42 w l lt 2  # almost mixed
+# IIC: <v^3>B = 2(1-2<V>)<v^2>(B+1) (1-thetav)/(2-thetav)
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$13)*(-$23/$8/$8*(1.0+(-$23*(1.0-$23)/(1.0+(1.0-$23)*(1.0-$23)))))*(1.0-(1.0-$33/($33+1.0*1.0e-2/1.0/0.99*$3*(1.0-$3))))/(2.0-(1.0-$33/($33+1.0*1.0e-2/1.0/0.99*$3*(1.0-$3))))), "stat.txt" u 2:34 w l lt 2    # no-mix
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$14)*(-$25/$9/$9*(1.0+(-$25*(1.0-$25)/(1.0+(1.0-$25)*(1.0-$25)))))*(1.0-(1.0-$35/($35+1.0*1.0e-2/1.0/0.99*$4*(1.0-$4))))/(2.0-(1.0-$35/($35+1.0*1.0e-2/1.0/0.99*$4*(1.0-$4))))), "stat.txt" u 2:36 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$15)*(-$27/$10/$10*(1.0+(-$27*(1.0-$27)/(1.0+(1.0-$27)*(1.0-$27)))))*(1.0-(1.0-$37/($37+1.0*1.0e-2/1.0/0.99*$5*(1.0-$5))))/(2.0-(1.0-$37/($37+1.0*1.0e-2/1.0/0.99*$5*(1.0-$5))))), "stat.txt" u 2:38 w l lt 2  # uniform
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$16)*(-$29/$11/$11*(1.0+(-$29*(1.0-$29)/(1.0+(1.0-$29)*(1.0-$29)))))*(1.0-(1.0-$39/($39+1.0*1.0e-2/1.0/0.99*$6*(1.0-$6))))/(2.0-(1.0-$39/($39+1.0*1.0e-2/1.0/0.99*$6*(1.0-$6))))), "stat.txt" u 2:40 w l lt 2
+plot "stat.txt" u 2:(2.0*(1.0-2.0*$17)*(-$31/$12/$12*(1.0+(-$31*(1.0-$31)/(1.0+(1.0-$31)*(1.0-$31)))))*(1.0-(1.0-$41/($41+1.0*1.0e-2/1.0/0.99*$7*(1.0-$7))))/(2.0-(1.0-$41/($41+1.0*1.0e-2/1.0/0.99*$7*(1.0-$7))))), "stat.txt" u 2:42 w l lt 2  # almost mixed
+
+####################
+
+# <rv^3> = <rv><v^2>
+plot "stat.txt" u 2:($25*$48), "stat.txt" u 2:27 w l lt 2  # no-mix
+plot "stat.txt" u 2:($30*$50), "stat.txt" u 2:32 w l lt 2
+plot "stat.txt" u 2:($35*$52), "stat.txt" u 2:37 w l lt 2  # uniform
+plot "stat.txt" u 2:($40*$54), "stat.txt" u 2:42 w l lt 2
+plot "stat.txt" u 2:($45*$56), "stat.txt" u 2:47 w l lt 2  # almost mixed
+
+# <r^2v^2> = <rv>^2
+plot "stat.txt" u 2:($25*$25), "stat.txt" u 2:24 w l lt 2  # no-mix
+plot "stat.txt" u 2:($30*$30), "stat.txt" u 2:29 w l lt 2
+plot "stat.txt" u 2:($35*$35), "stat.txt" u 2:34 w l lt 2  # uniform
+plot "stat.txt" u 2:($40*$40), "stat.txt" u 2:39 w l lt 2
+plot "stat.txt" u 2:($45*$45), "stat.txt" u 2:43 w l lt 2  # almost mixed
+
+# <v^2> = b/<R>^2 ( 1-b^2-b^3 )
+plot "stat.txt" u 2:(-$25/$8/$8*(1.0-$25*$25-$25*$25*$25)), "stat.txt" u 2:48 w l lt 2  # no-mix
+plot "stat.txt" u 2:(-$30/$9/$9*(1.0-$30*$30-$30*$30*$30)), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:(-$35/$10/$10*(1.0-$35*$35-$35*$35*$35)), "stat.txt" u 2:52 w l lt 2  # uniform
+plot "stat.txt" u 2:(-$40/$11/$11*(1.0-$40*$40-$40*$40*$40)), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:(-$45/$12/$12*(1.0-$45*$45-$45*$45*$45)), "stat.txt" u 2:56 w l lt 2  # almost mixed
+
+# <rv^2>/<R>/<V>^2 = b^2(2+b)/(1+b)^2
+plot "stat.txt" u 2:($25*$25*(2.0-$25)/(1.0-$25)/(1.0-$25)), "stat.txt" u 2:($26/$8/$13/$13) w l lt 2  # no-mix
+plot "stat.txt" u 2:($30*$30*(2.0-$30)/(1.0-$30)/(1.0-$30)), "stat.txt" u 2:($31/$9/$14/$14) w l lt 2
+plot "stat.txt" u 2:($35*$35*(2.0-$35)/(1.0-$35)/(1.0-$35)), "stat.txt" u 2:($36/$10/$15/$15) w l lt 2  # uniform
+plot "stat.txt" u 2:($40*$40*(2.0-$40)/(1.0-$40)/(1.0-$40)), "stat.txt" u 2:($41/$11/$16/$16) w l lt 2
+plot "stat.txt" u 2:($45*$45*(2.0-$45)/(1.0-$45)/(1.0-$45)), "stat.txt" u 2:($46/$12/$17/$17) w l lt 2  # almost mixed
+
+# <r^2v> = -<R>^2 <rv^2>
+plot "stat.txt" u 2:(-$8*$8*$26), "stat.txt" u 2:23 w l lt 2  # no-mix
+plot "stat.txt" u 2:(-$9*$9*$31), "stat.txt" u 2:28 w l lt 2
+plot "stat.txt" u 2:(-$10*$10*$36), "stat.txt" u 2:33 w l lt 2  # uniform
+plot "stat.txt" u 2:(-$11*$11*$41), "stat.txt" u 2:38 w l lt 2
+plot "stat.txt" u 2:(-$12*$12*$46), "stat.txt" u 2:43 w l lt 2  # almost mixed
+
+# <Rv^3>/<R>/<V>^3 = -b^2 (3+b)/(1+b)^3
+plot "stat.txt" u 2:(-$25*$25*(3.0-$25)/(1.0-$25)**3.0), "stat.txt" u 2:(($8*$49+$27)/$8/$13/$13/$13) w l lt 2  # no-mix
+plot "stat.txt" u 2:(-$30*$30*(3.0-$30)/(1.0-$30)**3.0), "stat.txt" u 2:(($9*$51+$32)/$9/$14/$14/$14) w l lt 2
+plot "stat.txt" u 2:(-$35*$35*(3.0-$35)/(1.0-$35)**3.0), "stat.txt" u 2:(($10*$53+$37)/$10/$15/$15/$15) w l lt 2  # uniform
+plot "stat.txt" u 2:(-$40*$40*(3.0-$40)/(1.0-$40)**3.0), "stat.txt" u 2:(($11*$55+$42)/$11/$16/$16/$16) w l lt 2
+plot "stat.txt" u 2:(-$45*$45*(3.0-$45)/(1.0-$45)**3.0), "stat.txt" u 2:(($12*$57+$47)/$12/$17/$17/$17) w l lt 2  # almost mixed
+
+# <v^2> vs. rho2 * <v^3>
+plot "stat.txt" u 2:48, "stat.txt" u 2:49 w l lt 2 # no-mix
+plot "stat.txt" u 2:50, "stat.txt" u 2:51 w l lt 2
+plot "stat.txt" u 2:52, "stat.txt" u 2:53 w l lt 2 # uniform
+plot "stat.txt" u 2:54, "stat.txt" u 2:55 w l lt 2
+plot "stat.txt" u 2:56, "stat.txt" u 2:57 w l lt 2 # almost mixed
+
+# <v^2> = (1+r') b /<R>^2
+plot "stat.txt" u 2:((1.0+9)*(-$25)/$8/$8), "stat.txt" u 2:48 w l lt 2 # no-mix
+plot "stat.txt" u 2:((1.0+9)*(-$30)/$9/$9), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:((1.0+9)*(-$35)/$10/$10), "stat.txt" u 2:52 w l lt 2 # uniform
+plot "stat.txt" u 2:((1.0+9)*(-$40)/$11/$11), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:((1.0+9)*(-$45)/$12/$12), "stat.txt" u 2:56 w l lt 2 # almost mixed
+
+# <v^2> = b(1+b)[(r-2)/r]/<R>^2 + b/(r <R> rho1)
+plot "stat.txt" u 2:(-$25*(1.0-$25)*(0.0101-2.0)/0.0101/$8/$8-$25/0.0101/$8/0.99), "stat.txt" u 2:48 w l lt 2 # no-mix
+plot "stat.txt" u 2:(-$30*(1.0-$30)*(0.0101-2.0)/0.0101/$9/$9-$30/0.0101/$9/0.99), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:(-$35*(1.0-$35)*(0.0101-2.0)/0.0101/$10/$10-$35/0.0101/$10/0.99), "stat.txt" u 2:52 w l lt 2 # uniform
+plot "stat.txt" u 2:(-$40*(1.0-$30)*(0.0101-2.0)/0.0101/$11/$11-$40/0.0101/$11/0.99), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:(-$45*(1.0-$45)*(0.0101-2.0)/0.0101/$12/$12-$45/0.0101/$12/0.99), "stat.txt" u 2:56 w l lt 2 # almost mixed
+
+# <v^2> =  [(2+r)/(1+r)]b/(<R> rho1) - b(1+b)/<R>^2
+plot "stat.txt" u 2:((2.0+9.0)/(1.0+9.0)*(-$25)/$8/0.1+$25*(1.0-$25)/$8/$8), "stat.txt" u 2:48 w l lt 2 # no-mix
+plot "stat.txt" u 2:((2.0+9.0)/(1.0+9.0)*(-$30)/$9/0.1+$30*(1.0-$30)/$9/$9), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:((2.0+9.0)/(1.0+9.0)*(-$35)/$10/0.1+$35*(1.0-$35)/$10/$12), "stat.txt" u 2:52 w l lt 2 # uniform
+plot "stat.txt" u 2:((2.0+9.0)/(1.0+9.0)*(-$40)/$11/0.1+$40*(1.0-$40)/$11/$12), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:((2.0+9.0)/(1.0+9.0)*(-$45)/$12/0.1+$45*(1.0-$45)/$12/$12), "stat.txt" u 2:56 w l lt 2 # almost mixed
+
+# <v^2> = [b/<R>^2][1 + (b/b_{nm})[<R>^2/(rho_1rho_2) - 1]] with b_{nm} = r^2/(1+r) [X(1-X)]
+plot "stat.txt" u 2:((-$25/$8/$8)*(1.0-$25/(9.0*9.0/(1.0+9.0)*$3*(1.0-$3))*($8*$8/0.1-1.0))), "stat.txt" u 2:48 w l lt 2 # no-mix
+plot "stat.txt" u 2:((-$30/$9/$9)*(1.0-$30/(9.0*9.0/(1.0+9.0)*$4*(1.0-$4))*($9*$9/0.1-1.0))), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:((-$35/$10/$10)*(1.0-$35/(9.0*9.0/(1.0+9.0)*$5*(1.0-$5))*($10*$10/0.1-1.0))), "stat.txt" u 2:52 w l lt 2 # uniform
+plot "stat.txt" u 2:((-$40/$11/$11)*(1.0-$40/(9.0*9.0/(1.0+9.0)*$6*(1.0-$6))*($11*$11/0.1-1.0))), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:((-$45/$12/$12)*(1.0-$45/(9.0*9.0/(1.0+9.0)*$7*(1.0-$7))*($12*$12/0.1-1.0))), "stat.txt" u 2:56 w l lt 2 # almost mixed
+
+# (b/b_{nm})
+plot "stat.txt" u 2:(-$25/(9.0*9.0/(1.0+9.0)*$3*(1.0-$3)))
+
+# <v^2> = b(1+b)/<R>^2 + (b/<R>) [ (2+r)/rho_2 - 2(1+b)/<R> ] (b/b_{nm})^{1/2} where b_{nm} = r^2/(1+r) [X(1-X)], high At
+plot "stat.txt" u 2:((-$25*(1.0-$25)/$8/$8 - $25/$8 * ((2.0+9.0)-2.0*(1.0-$25)/$8)) * (-$25/(9.0*9.0/(1.0+9.0)*($3*(1.0-$3))))**(1.0/2.0)), "stat.txt" u 2:48 w l lt 2 # no-mix
+plot "stat.txt" u 2:((-$30*(1.0-$30)/$9/$9 - $30/$9 * ((2.0+9.0)-2.0*(1.0-$30)/$9)) * (-$30/(9.0*9.0/(1.0+9.0)*($4*(1.0-$4))))**(1.0/2.0)), "stat.txt" u 2:50 w l lt 2
+plot "stat.txt" u 2:((-$35*(1.0-$35)/$10/$10 - $35/$10 * ((2.0+9.0)-2.0*(1.0-$35)/$10)) * (-$35/(9.0*9.0/(1.0+9.0)*($5*(1.0-$5))))**(1.0/2.0)), "stat.txt" u 2:52 w l lt 2 # uniform
+plot "stat.txt" u 2:((-$40*(1.0-$40)/$11/$11 - $40/$11 * ((2.0+9.0)-2.0*(1.0-$40)/$11)) * (-$40/(9.0*9.0/(1.0+9.0)*($6*(1.0-$6))))**(1.0/2.0)), "stat.txt" u 2:54 w l lt 2
+plot "stat.txt" u 2:((-$45*(1.0-$45)/$12/$12 - $45/$12 * ((2.0+9.0)-2.0*(1.0-$45)/$12)) * (-$45/(9.0*9.0/(1.0+9.0)*($7*(1.0-$7))))**(1.0/2.0)), "stat.txt" u 2:56 w l lt 2 # almost mixed
+
+# <v^2> = b(1+b)/<R>^2 + (b/<R>) [ (2+r)/rho_2 - 2(1+b)/<R> ] (b/b_{nm})^{1/2} where b_{nm} = r^2/(1+r) [X(1-X)], low At
+plot "stat.txt.low" u 2:((-$25*(1.0-$25)/$8/$8 - $25/$8 * ((2.0+0.0101)-2.0*(1.0-$25)/$8)) * (-$25/(0.0101*0.0101/(1.0+0.0101)*($3*(1.0-$3))))**(1.0/2.0)), "stat.txt.low" u 2:48 w l lt 2 # no-mix
+plot "stat.txt.low" u 2:((-$30*(1.0-$30)/$9/$9 - $30/$9 * ((2.0+0.0101)-2.0*(1.0-$30)/$9)) * (-$30/(0.0101*0.0101/(1.0+0.0101)*($4*(1.0-$4))))**(1.0/2.0)), "stat.txt.low" u 2:50 w l lt 2
+plot "stat.txt.low" u 2:((-$35*(1.0-$35)/$10/$10 - $35/$10 * ((2.0+0.0101)-2.0*(1.0-$35)/$10)) * (-$35/(0.0101*0.0101/(1.0+0.0101)*($5*(1.0-$5))))**(1.0/2.0)), "stat.txt.low" u 2:52 w l lt 2 # uniform
+plot "stat.txt.low" u 2:((-$40*(1.0-$40)/$11/$11 - $40/$11 * ((2.0+0.0101)-2.0*(1.0-$40)/$11)) * (-$40/(0.0101*0.0101/(1.0+0.0101)*($6*(1.0-$6))))**(1.0/2.0)), "stat.txt.low" u 2:54 w l lt 2
+plot "stat.txt.low" u 2:((-$45*(1.0-$45)/$12/$12 - $45/$12 * ((2.0+0.0101)-2.0*(1.0-$45)/$12)) * (-$45/(0.0101*0.0101/(1.0+0.0101)*($7*(1.0-$7))))**(1.0/2.0)), "stat.txt.low" u 2:56 w l lt 2 # almost mixed
+
+# b = (rho2 r)^2<x^2> / <R>^2 * [1 + <x^2>/<x^2>_{nm} [<R>^2/(rho_1rho_2) - 1]] with <x^2>_{nm} = [X(1-X)], low At
+plot "stat.txt" u 2:(0.01*0.01*$18/$8/$8 * (1.0 + $18/($3*(1.0-$3)) * ($8*$8/0.99 - 1.0))), "stat.txt" u 2:(-$25) w l lt 2 # no-mix
+plot "stat.txt" u 2:(0.01*0.01*$19/$9/$9 * (1.0 + $19/($4*(1.0-$4)) * ($9*$9/0.99 - 1.0))), "stat.txt" u 2:(-$30) w l lt 2
+plot "stat.txt" u 2:(0.01*0.01*$20/$10/$10 * (1.0 + $20/($5*(1.0-$5)) * ($10*$10/0.99 - 1.0))), "stat.txt" u 2:(-$35) w l lt 2 # uniform
+plot "stat.txt" u 2:(0.01*0.01*$21/$11/$11 * (1.0 + $21/($6*(1.0-$6)) * ($11*$11/0.99 - 1.0))), "stat.txt" u 2:(-$40) w l lt 2 #
+plot "stat.txt" u 2:(0.01*0.01*$22/$12/$12 * (1.0 + $22/($7*(1.0-$7)) * ($12*$12/0.99 - 1.0))), "stat.txt" u 2:(-$45) w l lt 2 # almost mixed
+
+# b = (rho2 r)^2<x^2> / <R>^2 * [1 + <x^2>/<x^2>_{nm} [<R>^2/(rho_1rho_2) - 1]] with <x^2>_{nm} = [X(1-X)], high At
+plot "stat.txt" u 2:(0.9*0.9*$18/$8/$8 * (1.0 + $18/($3*(1.0-$3)) * ($8*$8/0.1 - 1.0))), "stat.txt" u 2:(-$25) w l lt 2 # no-mix
+plot "stat.txt" u 2:(0.9*0.9*$19/$9/$9 * (1.0 + $19/($4*(1.0-$4)) * ($9*$9/0.1 - 1.0))), "stat.txt" u 2:(-$30) w l lt 2
+plot "stat.txt" u 2:(0.9*0.9*$20/$10/$10 * (1.0 + $20/($5*(1.0-$5)) * ($10*$10/0.1 - 1.0))), "stat.txt" u 2:(-$35) w l lt 2 # uniform
+plot "stat.txt" u 2:(0.9*0.9*$21/$11/$11 * (1.0 + $21/($6*(1.0-$6)) * ($11*$11/0.1 - 1.0))), "stat.txt" u 2:(-$40) w l lt 2 #
+plot "stat.txt" u 2:(0.9*0.9*$22/$12/$12 * (1.0 + $22/($7*(1.0-$7)) * ($12*$12/0.1 - 1.0))), "stat.txt" u 2:(-$45) w l lt 2 # almost mixed
+\endverbatim
+
+<hr>
+<div><small>
+<em>Page last updated:</em> Wed 01 Apr 2015 11:17:00 AM MDT
+<em>Copyright 2012-2015, Jozsef Bakosi.</em>
+</small></div>
+*/

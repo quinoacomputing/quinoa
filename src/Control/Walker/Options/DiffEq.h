@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Options/DiffEq.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 01:08:12 PM MDT
+  \date      Wed 01 Apr 2015 09:20:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Differential equation options and associations
   \details   Differential equation options and associations
@@ -29,7 +29,8 @@ enum class DiffEqType : uint8_t { NO_DIFFEQ=0,
                                   SKEWNORMAL,
                                   GAMMA,
                                   BETA,
-                                  NFRACBETA,
+                                  NUMFRACBETA,
+                                  MASSFRACBETA,
                                   MIXBETA,
                                   DIRICHLET,
                                   GENDIR,
@@ -54,7 +55,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
                                        , kw::skewnormal
                                        , kw::gamma
                                        , kw::beta
-                                       , kw::nfracbeta
+                                       , kw::numfracbeta
+                                       , kw::massfracbeta
                                        , kw::mixbeta
                                        , kw::dirichlet
                                        , kw::gendir
@@ -72,7 +74,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { DiffEqType::SKEWNORMAL, kw::skewnormal::name() },
           { DiffEqType::GAMMA, kw::gamma::name() },
           { DiffEqType::BETA, kw::beta::name() },
-          { DiffEqType::NFRACBETA, kw::nfracbeta::name() },
+          { DiffEqType::NUMFRACBETA, kw::numfracbeta::name() },
+          { DiffEqType::MASSFRACBETA, kw::massfracbeta::name() },
           { DiffEqType::MIXBETA, kw::mixbeta::name() },
           { DiffEqType::DIRICHLET, kw::dirichlet::name() },
           { DiffEqType::GENDIR, kw::gendir::name() },
@@ -84,7 +87,8 @@ class DiffEq : public tk::Toggle< DiffEqType > {
           { kw::skewnormal::string(), DiffEqType::SKEWNORMAL },
           { kw::gamma::string(), DiffEqType::GAMMA },
           { kw::beta::string(), DiffEqType::BETA },
-          { kw::nfracbeta::string(), DiffEqType::NFRACBETA },
+          { kw::numfracbeta::string(), DiffEqType::NUMFRACBETA },
+          { kw::massfracbeta::string(), DiffEqType::MASSFRACBETA },
           { kw::mixbeta::string(), DiffEqType::MIXBETA },
           { kw::dirichlet::string(), DiffEqType::DIRICHLET },
           { kw::gendir::string(), DiffEqType::GENDIR },

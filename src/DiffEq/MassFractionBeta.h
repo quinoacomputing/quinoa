@@ -1,23 +1,23 @@
 //******************************************************************************
 /*!
-  \file      src/DiffEq/NumberFractionBeta.h
+  \file      src/DiffEq/MassFractionBeta.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 07:45:06 AM MDT
+  \date      Wed 01 Apr 2015 11:12:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     System of number-fraction beta SDEs
+  \brief     System of mass-fraction beta SDEs
   \details   This file implements the time integration of a system of stochastic
     differential equations (SDEs) with linear drift and quadratic diagonal
     diffusion, whose invariant is the joint [beta
     distribution](http://en.wikipedia.org/wiki/Beta_distribution). The main
     difference compared to the plain beta SDE (see DiffEq/Beta.h), is that in
-    the number-fraction beta SDE the dependent variable, there are two
+    the mass-fraction beta SDE the dependent variable, there are two
     additional stochastic variables computed from the beta variables.
 
     In a nutshell, the equation integrated governs a set of scalars,
-    \f$0\!\le\!X_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
+    \f$0\!\le\!Y_\alpha\f$, \f$\alpha\!=\!1,\dots,N\f$, as
     \f[
-       \mathrm{d}X_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - X_\alpha\right)
-       \mathrm{d}t + \sqrt{\kappa_\alpha X_\alpha(1-X_\alpha)}
+       \mathrm{d}Y_\alpha(t) = \frac{b_\alpha}{2}\left(S_\alpha - Y_\alpha\right)
+       \mathrm{d}t + \sqrt{\kappa_\alpha Y_\alpha(1-Y_\alpha)}
        \mathrm{d}W_\alpha(t), \qquad \alpha=1,\dots,N
     \f]
     with parameter vectors \f$b_\alpha > 0\f$, \f$\kappa_\alpha > 0\f$, and \f$0
@@ -29,10 +29,10 @@
     more on the beta SDE, see http://dx.doi.org/10.1080/14685248.2010.510843.
 
     In addition to integrating the above SDE, there are two additional functions
-    of \f$ X_\alpha \f$ are computed as
+    of \f$ Y_\alpha \f$ are computed as
     \f[ \begin{align}
-      \rho(X_\alpha) & = \rho_{2\alpha} ( 1 - r'_\alpha X_\alpha ) \\
-      V(X_\alpha) & = \frac{1}{ \rho(X\alpha) }
+      \rho(Y_\alpha) & = \frac{ \rho_{2\alpha} }{ 1 + r_\alpha Y_\alpha } \\
+      V(Y_\alpha) & = \frac{1}{ \rho(Y_\alpha) }
     \end{align} \f]
     These equations compute the instantaneous mixture density, \f$ \rho \f$, and
     instantaneous specific volume, \f$ V_\alpha \f$, for equation \f$ \alpha \f$
@@ -41,20 +41,20 @@
     \rho_1, \f$ and \f$ \rho_2 \f$. The additional parameters, \f$ \rho_2 \f$
     and \f$ r' \f$ are user input parameters and kept constant during
     integration. Since we compute the above variables, \f$\rho,\f$ and \f$V\f$,
-    and call them mixture density and specific volume, respectively, \f$X\f$,
-    governed by the beta SDE is a number (or mole) fraction, hence the name
-    number-fraction beta.
+    and call them mixture density and specific volume, respectively, \f$Y\f$,
+    governed by the beta SDE is a mass fraction, hence the name mass-fraction
+    beta.
 
     _All of this is unpublished, but will be linked in here once published_.
 */
 //******************************************************************************
-#ifndef NumberFractionBeta_h
-#define NumberFractionBeta_h
+#ifndef MassFractionBeta_h
+#define MassFractionBeta_h
 
 #include <cmath>
 
 #include <InitPolicy.h>
-#include <NumberFractionBetaCoeffPolicy.h>
+#include <MassFractionBetaCoeffPolicy.h>
 #include <RNG.h>
 
 namespace walker {
@@ -62,14 +62,14 @@ namespace walker {
 extern ctr::InputDeck g_inputdeck;
 extern std::map< tk::ctr::RawRNGType, tk::RNG > g_rng;
 
-//! \brief NumberFractionBeta SDE used polymorphically with DiffEq
+//! \brief MassFractionBeta SDE used polymorphically with DiffEq
 //! \details The template arguments specify policies and are used to configure
 //!   the behavior of the class. The policies are:
 //!   - Init - initialization policy, see DiffEq/InitPolicy.h
 //!   - Coefficients - coefficients policy, see
-//!     DiffEq/NumberFractionBetaCoeffPolicy.h
+//!     DiffEq/MassFractionBetaCoeffPolicy.h
 template< class Init, class Coefficients >
-class NumberFractionBeta {
+class MassFractionBeta {
 
   private:
     using ncomp_t = kw::ncomp::info::expect::type;
@@ -77,35 +77,36 @@ class NumberFractionBeta {
   public:
     //! \brief Constructor
     //! \param[in] c Index specifying which system of number-fraction beta SDEs
-    //!   to construct. There can be multiple numfracbeta ... end blocks in a
+    //!   to construct. There can be multiple massfracbeta ... end blocks in a
     //!   control file. This index specifies which number-fraction beta SDE
     //!   system to instantiate. The index corresponds to the order in which the
-    //!   numfracbeta ... end blocks are given the control file.
+    //!   massfracbeta ... end blocks are given the control file.
     //! \author J. Bakosi
-    explicit NumberFractionBeta( ncomp_t c ) :
+    explicit MassFractionBeta( ncomp_t c ) :
       m_c( c ),
       m_depvar(
-        g_inputdeck.get< tag::param, tag::numfracbeta, tag::depvar >().at(c) ),
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::depvar >().at(c) ),
       m_ncomp(
-        g_inputdeck.get< tag::component >().get< tag::numfracbeta >().at(c) / 3 ),
+        g_inputdeck.get< tag::component >().get< tag::massfracbeta >().at(c) / 3 ),
       m_offset(
-        g_inputdeck.get< tag::component >().offset< tag::numfracbeta >(c) ),
+        g_inputdeck.get< tag::component >().offset< tag::massfracbeta >(c) ),
       m_rng( g_rng.at( tk::ctr::raw(
-        g_inputdeck.get< tag::param, tag::numfracbeta, tag::rng >().at(c) ) ) ),
-      coeff( m_ncomp,
-             g_inputdeck.get< tag::param, tag::numfracbeta, tag::b >().at(c),
-             g_inputdeck.get< tag::param, tag::numfracbeta, tag::S >().at(c),
-             g_inputdeck.get< tag::param, tag::numfracbeta, tag::kappa >().at(c),
-             g_inputdeck.get< tag::param, tag::numfracbeta, tag::rho2 >().at(c),
-             g_inputdeck.get< tag::param, tag::numfracbeta, tag::rcomma >().at(c),
-             m_b, m_S, m_k, m_rho2, m_rcomma ) {}
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::rng >().at(c) ) ) ),
+      coeff(
+        m_ncomp,
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::b >().at(c),
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::S >().at(c),
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::kappa >().at(c),
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::rho2 >().at(c),
+        g_inputdeck.get< tag::param, tag::massfracbeta, tag::r >().at(c),
+        m_b, m_S, m_k, m_rho2, m_r ) {}
 
     //! Initalize SDE, prepare for time integration
     //! \param[inout] particles Array of particle properties 
     //! \author J. Bakosi
     void initialize( tk::ParProps& particles ) {
       //! Set initial conditions using initialization policy
-      Init::template init< tag::numfracbeta >
+      Init::template init< tag::massfracbeta >
                          ( g_inputdeck, particles, m_c, m_ncomp, m_offset );
     }
 
@@ -125,13 +126,13 @@ class NumberFractionBeta {
         m_rng.gaussian( stream, m_ncomp, dW );
         // Advance all m_ncomp scalars
         for (ncomp_t i=0; i<m_ncomp; ++i) {
-          tk::real& X = particles( p, i, m_offset );
-          tk::real d = m_k[i] * X * (1.0 - X) * dt;
+          tk::real& Y = particles( p, i, m_offset );
+          tk::real d = m_k[i] * Y * (1.0 - Y) * dt;
           d = (d > 0.0 ? std::sqrt(d) : 0.0);
-          X += 0.5*m_b[i]*(m_S[i] - X)*dt + d*dW[i];
-          // Compute instantaneous values derived from updated X
-          particles( p, m_ncomp+i, m_offset ) = rho( X, i );
-          particles( p, m_ncomp*2+i, m_offset ) = vol( X, i );
+          Y += 0.5*m_b[i]*(m_S[i] - Y)*dt + d*dW[i];
+          // Compute instantaneous values derived from updated Y
+          particles( p, m_ncomp+i, m_offset ) = rho( Y, i );
+          particles( p, m_ncomp*2+i, m_offset ) = vol( Y, i );
         }
       }
     }
@@ -148,7 +149,7 @@ class NumberFractionBeta {
     std::vector< kw::sde_S::info::expect::type > m_S;
     std::vector< kw::sde_kappa::info::expect::type > m_k;
     std::vector< kw::sde_rho2::info::expect::type > m_rho2;
-    std::vector< kw::sde_rcomma::info::expect::type > m_rcomma;
+    std::vector< kw::sde_r::info::expect::type > m_r;
 
     //! Coefficients policy
     Coefficients coeff;
@@ -156,26 +157,26 @@ class NumberFractionBeta {
     //! \brief Return density for mole fraction
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous density, rho,
-    //!   based on the number fraction, X, and parameters rho2 and r'.
-    //! \param[in] X Instantaneous value of the mole fraction, X
+    //!   based on the number fraction, Y, and parameters rho2 and r'.
+    //! \param[in] Y Instantaneous value of the mole fraction, Y
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the density, rho
-    tk::real rho( tk::real X, ncomp_t i ) const {
-      return m_rho2[i] * ( 1.0 - m_rcomma[i] * X );
+    tk::real rho( tk::real Y, ncomp_t i ) const {
+      return m_rho2[i] / ( 1.0 + m_r[i] * Y );
     }
 
     //! \brief Return specific volume for mole fraction
     //! \details Functional wrapper around the dependent variable of the beta
     //!   SDE. This function returns the instantaneous specific volume, V,
-    //!   based on the number fraction, X, and parameters rho2 and r'.
-    //! \param[in] X Instantaneous value of the mole fraction, X
+    //!   based on the number fraction, Y, and parameters rho2 and r'.
+    //! \param[in] Y Instantaneous value of the mole fraction, Y
     //! \param[in] i Index specifying which (of multiple) parameters to use
     //! \return Instantaneous value of the specific volume, V
-    tk::real vol( tk::real X, ncomp_t i ) const {
-      return 1.0 / rho( X, i );
+    tk::real vol( tk::real Y, ncomp_t i ) const {
+      return 1.0 / rho( Y, i );
     }
 };
 
 } // walker::
 
-#endif // NumberFractionBeta_h
+#endif // MassFractionBeta_h

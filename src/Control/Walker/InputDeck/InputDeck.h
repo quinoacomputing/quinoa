@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 12:21:49 PM MDT
+  \date      Wed 01 Apr 2015 09:16:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -161,7 +161,7 @@ class InputDeck :
                                      , kw::txt_float_default
                                      , kw::txt_float_fixed
                                      , kw::txt_float_scientific
-                                     , kw::nfracbeta
+                                     , kw::numfracbeta
                                      , kw::sde_rho2
                                      , kw::sde_rcomma
                                      , kw::delta
@@ -170,6 +170,8 @@ class InputDeck :
                                      , kw::sde_bprime
                                      , kw::sde_kappaprime
                                      , kw::mixbeta
+                                     , kw::massfracbeta
+                                     , kw::sde_r
                                      >;
 
     //! \brief Constructor: set all defaults

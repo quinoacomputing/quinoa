@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 12:01:28 PM MDT
+  \date      Wed 01 Apr 2015 07:50:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -213,6 +213,26 @@ using NumberFractionBetaParameters = tk::tuple::tagged_tuple<
   tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
 >;
 
+//! Mass-fraction beta parameters storage
+using MassFractionBetaParameters = tk::tuple::tagged_tuple<
+  tag::depvar,      std::vector< char >,
+  tag::b,           std::vector< std::vector<
+                      kw::sde_b::info::expect::type > >,
+  tag::S,           std::vector< std::vector<
+                      kw::sde_S::info::expect::type > >,
+  tag::kappa,       std::vector< std::vector<
+                      kw::sde_kappa::info::expect::type > >,
+  tag::rho2,        std::vector< std::vector<
+                      kw::sde_rho2::info::expect::type > >,
+  tag::r,           std::vector< std::vector<
+                      kw::sde_rcomma::info::expect::type > >,
+  tag::spike,       std::vector< std::vector< std::vector <
+                      kw::spike::info::expect::type > > >,
+  tag::rng,         std::vector< tk::ctr::RNGType >,
+  tag::initpolicy,  std::vector< tk::ctr::InitPolicyType >,
+  tag::coeffpolicy, std::vector< tk::ctr::CoeffPolicyType >
+>;
+
 //! Mix beta parameters storage
 using MixBetaParameters = tk::tuple::tagged_tuple<
   tag::depvar,      std::vector< char >,
@@ -247,7 +267,8 @@ using parameters = tk::tuple::tagged_tuple<
   tag::skewnormal,   SkewNormalParameters,
   tag::gamma,        GammaParameters,
   tag::beta,         BetaParameters,
-  tag::nfracbeta,    NumberFractionBetaParameters,
+  tag::numfracbeta,  NumberFractionBetaParameters,
+  tag::massfracbeta, MassFractionBetaParameters,
   tag::mixbeta,      MixBetaParameters
 >;
 
