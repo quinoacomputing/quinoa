@@ -52,10 +52,11 @@ genEsupel( const std::vector< int >& inpoel,
                             std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, elements surrounding elements
-std::vector< long int >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsuel( const std::vector< int >& inpoel,
+          std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esupel );
+                           std::vector< std::size_t > >& esup );
 
 //! Generate derived data structure, edges of elements
 std::vector< std::size_t >
