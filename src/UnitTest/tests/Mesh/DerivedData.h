@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Tue 31 Mar 2015 09:16:52 AM MDT
+  \date      Thu 02 Apr 2015 10:59:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -1009,7 +1009,7 @@ void DerivedData_object::test< 22 >() {
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
     std::vector< int > empty;
-    tk::genEsuel( empty, tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
+    tk::genEsuel( empty, 4, tk::genEsup(inpoel,4) );
     #ifndef NDEBUG
     fail( "should throw exception in DEBUG mode" );
     #endif
@@ -1020,35 +1020,36 @@ void DerivedData_object::test< 22 >() {
   }
 }
 
-//! Attempt to generate elements surrounding elements with non-tet connectivity
+//! Test genEsuel if it throws on non-positive nodes per elements
 template<> template<>
 void DerivedData_object::test< 23 >() {
-  set_test_name( "genEsuel throws with non-tet inpoel" );
+  set_test_name( "genEsuel throws on non-positive nnpe" );
 
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
   try {
-    std::vector< int > inpoel { 0, 1, 2 };  // size non-divisible by 4 = non-tet
-    tk::genEsuel( inpoel, tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
-    #ifndef NDEBUG
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genEsuel( inpoel, 0, tk::genEsup(inpoel,4) );
     fail( "should throw exception in DEBUG mode" );
-    #endif
   }
   catch ( tk::Exception& e ) {
     // exception thrown in DEBUG mode, test ok
-    // Assert skipped in RELEASE mode, genEsuel still graceful, test ok
   }
+  #endif
 }
 
-//! Test genEsuel if it throws with empty element surrounding points of elements
+//! Test genEsuel if it throws with empty element surrounding points
 template<> template<>
 void DerivedData_object::test< 24 >() {
-  set_test_name( "genEsuel throws with empty esupel" );
+  set_test_name( "genEsuel throws with empty esup" );
 
- #ifdef NDEBUG        // exception only thrown in DEBUG mode
-   skip( "in RELEASE mode, would yield segmentation fault" );
- #else
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
   try {
     std::vector< int > inpoel { 0, 1, 2, 3 };
-    tk::genEsuel( inpoel, {} );
+    tk::genEsuel( inpoel, 4, {} );
     fail( "should throw exception in DEBUG mode" );
   }
   catch ( tk::Exception& e ) {
@@ -1057,9 +1058,30 @@ void DerivedData_object::test< 24 >() {
   #endif
 }
 
-//! Generate and test elements surrounding elements for tetrahedron-only mesh
+//! \brief Test genEsuel if it throws on inpoel non-divisible by the number of
+//!   nodes per elements
 template<> template<>
 void DerivedData_object::test< 25 >() {
+  set_test_name( "genEsuel throws on inpoel non-div nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield invalid read" );
+  try {
+    // Partial mesh mesh connectivity
+    std::vector< int > inpoel { 12, 14,  9, 11,
+                                14,  4, 13 };
+    tk::genEsuel( inpoel, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Generate and test elements surrounding elements for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 26 >() {
   set_test_name( "genEsuel for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
@@ -1092,27 +1114,26 @@ void DerivedData_object::test< 25 >() {
   tk::shiftToZero( inpoel );
 
   // Generate elements surrounding points
-  auto esuel = tk::genEsuel( inpoel,
-                             tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4)) );
+  auto esuel = tk::genEsuel( inpoel, 4, tk::genEsup(inpoel,4) );
 
   // Generate correct solution for elements surrounding points of elements
-  std::map< std::size_t, std::vector< long int > > correct_esuel {
+  std::map< std::size_t, std::vector< std::size_t > > correct_esuel {
     { { 0 }, { 2, 3, 17, 23 } },
     { { 1 }, { 2, 3, 19, 21 } },
     { { 2 }, { 0, 1, 20, 22 } },
     { { 3 }, { 0, 1, 16, 18 } },
-    { { 4 }, { 18, 23, -1, -1 } },
-    { { 5 }, { 16, 21, -1, -1 } },
-    { { 6 }, { 18, 19, -1, -1 } },
-    { { 7 }, { 19, 21, -1, -1 } },
-    { { 8 }, { 20, 21, -1, -1 } },
-    { { 9 }, { 22, 23, -1, -1 } },
-    { { 10 }, { 20, 22, -1, -1 } },
-    { { 11 }, { 17, 20, -1, -1 } },
-    { { 12 }, { 19, 22, -1, -1 } },
-    { { 13 }, { 16, 18, -1, -1 } },
-    { { 14 }, { 17, 23, -1, -1 } },
-    { { 15 }, { 16, 17, -1, -1 } },
+    { { 4 }, { 18, 23 } },
+    { { 5 }, { 16, 21 } },
+    { { 6 }, { 18, 19 } },
+    { { 7 }, { 19, 21 } },
+    { { 8 }, { 20, 21 } },
+    { { 9 }, { 22, 23 } },
+    { { 10 }, { 20, 22 } },
+    { { 11 }, { 17, 20 } },
+    { { 12 }, { 19, 22 } },
+    { { 13 }, { 16, 18 } },
+    { { 14 }, { 17, 23 } },
+    { { 15 }, { 16, 17 } },
     { { 16 }, { 3, 5, 13, 15 } },
     { { 17 }, { 0, 11, 14, 15 } },
     { { 18 }, { 3, 4, 6, 13 } },
@@ -1133,8 +1154,9 @@ void DerivedData_object::test< 25 >() {
   // test generated derived data structure, elements surrounding elements
   for (std::size_t e=0; e<nelem; ++e) {
     // extract element ids from generated elements surrounding elements
-    std::vector< long int > elements;
-    for (std::size_t i=0; i<4; ++i) elements.push_back( esuel[e*4+i] );
+    std::vector< std::size_t > elements;
+    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+      elements.push_back( esuel.first[i] );
     // find correct element ids surrounding elements e
     auto it = correct_esuel.find( e );
     // test if element ids exist surrounding element e
@@ -1145,7 +1167,102 @@ void DerivedData_object::test< 25 >() {
     if (it != correct_esuel.end()) {
       ensure_equals( "number of elements surrounding element " +
                      std::to_string(e) + " in generated esuel incorrect",
-                     it->second.size(), 4 );
+                     it->second.size(), elements.size() );
+      ensure( "element ids surrounding element '" + std::to_string(e) +
+              "' incorrect", elements == it->second );
+    }
+  }
+}
+
+//! Generate and test elements surrounding elements for triangle-only mesh
+template<> template<>
+void DerivedData_object::test< 27 >() {
+  set_test_name( "genEsuel for triangles" );
+
+  // Mesh connectivity for simple triangle-only mesh
+  std::vector< int > inpoel { 1,  9,  2,
+                              1,  4,  9,
+                              2,  9,  3,
+                              3,  9,  4,
+                              5,  6, 10,
+                              5, 10,  8,
+                              6,  7, 10,
+                              7,  8, 10,
+                              1,  2, 11,
+                              1, 11,  5,
+                              2,  6, 11,
+                              5, 11,  6,
+                              2,  3, 12,
+                              2, 12,  6,
+                              3,  7, 12,
+                              6, 12,  7,
+                              3,  4, 13,
+                              3, 13,  7,
+                              4,  8, 13,
+                              7, 13,  8,
+                              1, 14,  4,
+                              1,  5, 14,
+                              4, 14,  8,
+                              5,  8, 14 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate elements surrounding points
+  auto esuel = tk::genEsuel( inpoel, 3, tk::genEsup(inpoel,3) );
+
+  // Generate correct solution for elements surrounding points of elements
+  std::map< std::size_t, std::vector< std::size_t > > correct_esuel {
+    { { 0 }, { 1, 2, 8 } },
+    { { 1 }, { 0, 3, 20 } },
+    { { 2 }, { 0, 3, 12 } },
+    { { 3 }, { 1, 2, 16 } },
+    { { 4 }, { 5, 6, 11 } },
+    { { 5 }, { 4, 7, 23 } },
+    { { 6 }, { 4, 7, 15 } },
+    { { 7 }, { 5, 6, 19 } },
+    { { 8 }, { 0, 9, 10 } },
+    { { 9 }, { 8, 11, 21 } },
+    { { 10 }, { 8, 11, 13 } },
+    { { 11 }, { 4, 9, 10 } },
+    { { 12 }, { 2, 13, 14 } },
+    { { 13 }, { 10, 12, 15 } },
+    { { 14 }, { 12, 15, 17 } },
+    { { 15 }, { 6, 13, 14 } },
+    { { 16 }, { 3, 17, 18 } },
+    { { 17 }, { 14, 16, 19 } },
+    { { 18 }, { 16, 19, 22 } },
+    { { 19 }, { 7, 17, 18 } },
+    { { 20 }, { 1, 21, 22 } },
+    { { 21 }, { 9, 20, 23 } },
+    { { 22 }, { 18, 20, 23 } },
+    { { 23 }, { 5, 21, 22 } }
+  };
+
+  // find out number of elements from mesh connectivity
+  auto nelem = inpoel.size()/3;
+
+  // this is more of a test on this test
+  ensure_equals( "number of elements in esuel incorrect",
+                 nelem, correct_esuel.size() );
+
+  // test generated derived data structure, elements surrounding elements
+  for (std::size_t e=0; e<nelem; ++e) {
+    // extract element ids from generated elements surrounding elements
+    std::vector< std::size_t > elements;
+    for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+      elements.push_back( esuel.first[i] );
+    // find correct element ids surrounding elements e
+    auto it = correct_esuel.find( e );
+    // test if element ids exist surrounding element e
+    ensure( "element id '" + std::to_string(e) + "' generated into esuel but not "
+            "in correct esuel",
+            it != correct_esuel.end() );
+    // test if element ids surrounding element e are correct
+    if (it != correct_esuel.end()) {
+      ensure_equals( "number of elements surrounding element " +
+                     std::to_string(e) + " in generated esuel incorrect",
+                     it->second.size(), elements.size() );
       ensure( "element ids surrounding element '" + std::to_string(e) +
               "' incorrect", elements == it->second );
     }
@@ -1154,7 +1271,7 @@ void DerivedData_object::test< 25 >() {
 
 //! Attempt to generate edges surrounding points with empty connectivity
 template<> template<>
-void DerivedData_object::test< 26 >() {
+void DerivedData_object::test< 28 >() {
   set_test_name( "genEdsup throws with empty inpoel" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1174,7 +1291,7 @@ void DerivedData_object::test< 26 >() {
 
 //! Test genEdsup if it throws on non-positive number of nodes per elements
 template<> template<>
-void DerivedData_object::test< 27 >() {
+void DerivedData_object::test< 29 >() {
   set_test_name( "genEdsup throws on non-positive nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1194,7 +1311,7 @@ void DerivedData_object::test< 27 >() {
 //! \brief Test genEdsup if it throws on non-tet or non-tri number of nodes per
 //!   elements
 template<> template<>
-void DerivedData_object::test< 28 >() {
+void DerivedData_object::test< 30 >() {
   set_test_name( "genEdsup throws on unsupported nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1213,7 +1330,7 @@ void DerivedData_object::test< 28 >() {
 
 //! Test genEdsup if it throws with empty element surrounding points
 template<> template<>
-void DerivedData_object::test< 29 >() {
+void DerivedData_object::test< 31 >() {
   set_test_name( "genEdsup throws with empty esup" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1233,7 +1350,7 @@ void DerivedData_object::test< 29 >() {
 //! \brief Test genEdsup if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
 template<> template<>
-void DerivedData_object::test< 30 >() {
+void DerivedData_object::test< 32 >() {
   set_test_name( "genEdsup throws on inpoel non-div nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1254,7 +1371,7 @@ void DerivedData_object::test< 30 >() {
 
 //! Generate and test edges surrounding points for tetrahedron-only mesh
 template<> template<>
-void DerivedData_object::test< 31 >() {
+void DerivedData_object::test< 33 >() {
   set_test_name( "genEdsup for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
@@ -1348,7 +1465,7 @@ void DerivedData_object::test< 31 >() {
 
 //! Generate and test edges surrounding points for triangle-only mesh
 template<> template<>
-void DerivedData_object::test< 32 >() {
+void DerivedData_object::test< 34 >() {
   set_test_name( "genEdsup for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
@@ -1443,7 +1560,7 @@ void DerivedData_object::test< 32 >() {
 
 //! Attempt to generate edge connectivity with empty connectivity
 template<> template<>
-void DerivedData_object::test< 33 >() {
+void DerivedData_object::test< 35 >() {
   set_test_name( "genInpoed throws with empty inpoel" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1463,7 +1580,7 @@ void DerivedData_object::test< 33 >() {
 
 //! Test genInpoed if it throws on non-positive number of nodes per elements
 template<> template<>
-void DerivedData_object::test< 34 >() {
+void DerivedData_object::test< 36 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1483,7 +1600,7 @@ void DerivedData_object::test< 34 >() {
 //! \brief Test genInpoed if it throws on non-tet or non-tri number of nodes per
 //!   elements
 template<> template<>
-void DerivedData_object::test< 35 >() {
+void DerivedData_object::test< 37 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1502,7 +1619,7 @@ void DerivedData_object::test< 35 >() {
 
 //! Test genInpoed if it throws with empty element surrounding points
 template<> template<>
-void DerivedData_object::test< 36 >() {
+void DerivedData_object::test< 38 >() {
   set_test_name( "genInpoed throws with empty esup" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1522,7 +1639,7 @@ void DerivedData_object::test< 36 >() {
 //! \brief Test genInpoed if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
 template<> template<>
-void DerivedData_object::test< 37 >() {
+void DerivedData_object::test< 39 >() {
   set_test_name( "genInpoed throws on inpoel non-div nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1543,7 +1660,7 @@ void DerivedData_object::test< 37 >() {
 
 //! Generate and test edge connectivity for tetrahedron-only mesh
 template<> template<>
-void DerivedData_object::test< 38 >() {
+void DerivedData_object::test< 40 >() {
   set_test_name( "genInpoed for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
@@ -1613,7 +1730,7 @@ void DerivedData_object::test< 38 >() {
 
 //! Generate and test edge connectivity for triangle-only mesh
 template<> template<>
-void DerivedData_object::test< 39 >() {
+void DerivedData_object::test< 41 >() {
   set_test_name( "genInpoed for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh
@@ -1678,7 +1795,7 @@ void DerivedData_object::test< 39 >() {
 
 //! Attempt to generate edges of elements with empty connectivity
 template<> template<>
-void DerivedData_object::test< 40 >() {
+void DerivedData_object::test< 42 >() {
   set_test_name( "genInedel throws with empty inpoel" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1698,7 +1815,7 @@ void DerivedData_object::test< 40 >() {
 
 //! Test genInedel if it throws on non-positive number of nodes per elements
 template<> template<>
-void DerivedData_object::test< 41 >() {
+void DerivedData_object::test< 43 >() {
   set_test_name( "genInpoed throws on non-positive nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1718,7 +1835,7 @@ void DerivedData_object::test< 41 >() {
 //! \brief Test genInedel if it throws on non-tet or non-tri number of nodes per
 //!   elements
 template<> template<>
-void DerivedData_object::test< 42 >() {
+void DerivedData_object::test< 44 >() {
   set_test_name( "genInpoed throws on unsupported nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1737,7 +1854,7 @@ void DerivedData_object::test< 42 >() {
 
 //! Test genInedel if it throws with empty edge connectivity
 template<> template<>
-void DerivedData_object::test< 43 >() {
+void DerivedData_object::test< 45 >() {
   set_test_name( "genInpoed throws with empty inpoed" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1757,7 +1874,7 @@ void DerivedData_object::test< 43 >() {
 //! \brief Test genInedel if it throws on inpoel non-divisible by the number of
 //!   nodes per elements
 template<> template<>
-void DerivedData_object::test< 44 >() {
+void DerivedData_object::test< 46 >() {
   set_test_name( "genInedel throws on inpoel non-div nnpe" );
 
   #ifdef NDEBUG        // exception only thrown in DEBUG mode
@@ -1778,7 +1895,7 @@ void DerivedData_object::test< 44 >() {
 
 //! Generate and test edges of elements for tetrahedron-only mesh
 template<> template<>
-void DerivedData_object::test< 45 >() {
+void DerivedData_object::test< 47 >() {
   set_test_name( "genInedel for tetrahedra" );
 
   // mesh connectivity for simple tetrahedron-only mesh
@@ -1873,7 +1990,7 @@ void DerivedData_object::test< 45 >() {
 
 //! Generate and test edges of elements for triangle-only mesh
 template<> template<>
-void DerivedData_object::test< 46 >() {
+void DerivedData_object::test< 48 >() {
   set_test_name( "genInedel for triangles" );
 
   // Mesh connectivity for simple triangle-only mesh

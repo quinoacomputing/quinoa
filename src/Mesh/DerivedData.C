@@ -504,12 +504,13 @@ genEsupel( const std::vector< int >& inpoel,
   return std::make_pair( std::move(esupel1), std::move(esupel2) );
 }
 
-std::vector< long int >
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
 genEsuel( const std::vector< int >& inpoel,
+          std::size_t nnpe,
           const std::pair< std::vector< std::size_t >,
-                           std::vector< std::size_t > >& esupel )
+                           std::vector< std::size_t > >& esup )
 //******************************************************************************
-//  Generate derived data structure, elements surrounding elements (tets only)
+//  Generate derived data structure, elements surrounding elements
 //! \param[in] inpoel Inteconnectivity of points and elements. These are the
 //!   node ids of each element of an unstructured mesh. Example:
 //!   \code{.cpp}
@@ -518,86 +519,79 @@ genEsuel( const std::vector< int >& inpoel,
 //!   \endcode
 //!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
 //!   and { 10, 14, 13, 12 }.
-//! \param[in] esupel Elements surrounding elements as linked lists, see
-//!   tk::genEsupel.
-//! \return Linear vector storing all 4 elements surrounding elements
+//! \param[in] nnpe Number of nodes per element
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Linked lists storing elements surrounding elements
 //! \warning It is not okay to call this function with an empty container for
-//!   inpoel or esupel.first or esupel.second; it will throw an exception.
-//! \details The data generated here is stored in a linear vector with all
-//!   maximum 4 element ids surrounding elements. Elements surrounding elements
-//!   are those that share a face with the element. This is similar to elements
-//!   surrounding points of elements, computed by tk::genEsupel(), but esuel is
-//!   smaller as it only stores the maximum 4 element ids that share a face with
-//!   the given element. If a face does not have a neighbor element its value in
-//!    esuel is -1.
-//! \note This function only works for tetrahedra element connectivity.
+//!   inpoel or esup.first or esup.second; it will throw an exception.
+//! \details The data generated here is stored in a linked list, more precisely,
+//!   two linked arrays (vectors), _esuel1_ and _esuel2_, where _esuel2_ holds
+//!   the indices at which _esuel1_ holds the element ids surrounding elements.
+//!   Looping over elements surrounding elements can then be accomplished by the
+//!   following loop:
+//!   \code{.cpp}
+//!     for (std::size_t e=0; e<nelem; ++e)
+//!       for (auto i=esuel.second[e]+1; i<=esuel.second[e+1]; ++i)
+//!          use element id esuel.first[i]
+//!   \endcode
+//!   To find out the number of elements, _nelem_, the size of the mesh
+//!   connectivity vector, _inpoel_, can be devided by the number of nodes per
+//!   elements, _nnpe_:
+//!   \code{.cpp}
+//!     auto nelem = inpoel.size()/nnpe;
+//!   \endcode
+//! \note In principle, this function *should* work for any positive nnpe,
+//!   however, only nnpe = 4 (tetrahedra) and nnpe = 3 (triangles) are tested.
 //! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
 //! \author J. Bakosi
 //******************************************************************************
 {
-  Assert( !inpoel.empty(), "Attempt to call genEsupel() on empty container" );
-  Assert( inpoel.size()%4 == 0, "Size of inpoel must be divisible by four" );
-  Assert( !esupel.first.empty(),
-          "Attempt to call genEsupel() with empty esupel1" );
-  Assert( !esupel.second.empty(),
-          "Attempt to call genEsupel() with empty esupel2" );
+  Assert( !inpoel.empty(), "Attempt to call genEsuel() on empty container" );
+  Assert( nnpe > 0, "Attempt to call genEsuel() with zero nodes per element" );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by four" );
+  Assert( !esup.first.empty(), "Attempt to call genEsuel() with empty esuel1" );
+  Assert( !esup.second.empty(),
+          "Attempt to call genEsuel() with empty esuel2" );
 
-  auto& esupel1 = esupel.first;
-  auto& esupel2 = esupel.second;
+  auto& esup1 = esup.first;
+  auto& esup2 = esup.second;
 
-  auto nelem = inpoel.size()/4;
+  auto nelem = inpoel.size()/nnpe;
 
-  // linear vector storing elements surrounding elements, a priori known size,
-  // initialize with -1 indicating no element on that side, i.e., boundary
-  std::vector< long int > esuel( inpoel.size(), -1 );
+  // lambda that returns true if elements hel and gel share a face
+  auto adj = [ &inpoel, nnpe ]( std::size_t hel, std::size_t gel ) -> bool {
+    std::vector< bool > sp;
+    for (std::size_t h=0; h<nnpe; ++h)
+      for (std::size_t g=0; g<nnpe; ++g)
+        if (inpoel[hel*nnpe+h] == inpoel[gel*nnpe+g]) sp.push_back( true );
+    if (sp.size() == nnpe-1) return true; else return false;
+  };
+
+  // map to associate unique elements and their surrounding elements
+  std::map< std::size_t, std::vector< std::size_t > > es;
 
   for (std::size_t e=0; e<nelem; ++e) {
-    auto A = inpoel[e*4+0];
-    auto B = inpoel[e*4+1];
-    auto C = inpoel[e*4+2];
-    auto D = inpoel[e*4+3];
-    std::set< long int > faces; // will collect elem ids of shared faces
-    // loop over elements surrounding points of elements
-    for (auto i=esupel2[e]+1; i<=esupel2[e+1]; ++i) {
-      auto f = esupel1[i];
-      auto F = static_cast< long int >( f );
-      // test if a face is shared between elements e and f
-      if ( (A==inpoel[f*4+0] || A==inpoel[f*4+1] ||
-            A==inpoel[f*4+2] || A==inpoel[f*4+3]) &&
-           (B==inpoel[f*4+0] || B==inpoel[f*4+1] ||
-            B==inpoel[f*4+2] || B==inpoel[f*4+3]) &&
-           (C==inpoel[f*4+0] || C==inpoel[f*4+1] ||
-            C==inpoel[f*4+2] || C==inpoel[f*4+3]) ) faces.insert( F );
-
-      if ( (A==inpoel[f*4+0] || A==inpoel[f*4+1] ||
-            A==inpoel[f*4+2] || A==inpoel[f*4+3]) &&
-           (B==inpoel[f*4+0] || B==inpoel[f*4+1] ||
-            B==inpoel[f*4+2] || B==inpoel[f*4+3]) &&
-           (D==inpoel[f*4+0] || D==inpoel[f*4+1] ||
-            D==inpoel[f*4+2] || D==inpoel[f*4+3]) ) faces.insert( F );
-
-      if ( (A==inpoel[f*4+0] || A==inpoel[f*4+1] ||
-            A==inpoel[f*4+2] || A==inpoel[f*4+3]) &&
-           (C==inpoel[f*4+0] || C==inpoel[f*4+1] ||
-            C==inpoel[f*4+2] || C==inpoel[f*4+3]) &&
-           (D==inpoel[f*4+0] || D==inpoel[f*4+1] ||
-            D==inpoel[f*4+2] || D==inpoel[f*4+3]) ) faces.insert( F );
-
-      if ( (C==inpoel[f*4+0] || C==inpoel[f*4+1] ||
-            C==inpoel[f*4+2] || C==inpoel[f*4+3]) &&
-           (B==inpoel[f*4+0] || B==inpoel[f*4+1] ||
-            B==inpoel[f*4+2] || B==inpoel[f*4+3]) &&
-           (D==inpoel[f*4+0] || D==inpoel[f*4+1] ||
-            D==inpoel[f*4+2] || D==inpoel[f*4+3]) ) faces.insert( F );
-
-      // store element ids for shared faces
-      std::size_t k=0;
-      for (auto j : faces) esuel[e*4+k++] = j;
+    std::set< std::size_t > faces; // will collect elem ids of shared faces
+    for (std::size_t n=0; n<nnpe; ++n) {
+      auto i = static_cast< std::size_t >( inpoel[ e*nnpe+n ] );
+      for (auto j=esup2[i]+1; j<=esup2[i+1]; ++j)
+        if (adj( e, esup1[j] )) faces.insert( esup1[j] );
     }
+    // store element ids of shared faces
+    for (auto j : faces) es[e].push_back(j);
   }
 
-  // Return (move out) vector
-  return esuel;
+  // storing elements surrounding elements
+  std::vector< std::size_t > esuel1( 1, 0 ), esuel2( 1, 0 );
+
+  // store elements surrounding elements in linked lists
+  for (auto e : es) {
+    esuel2.push_back( esuel2.back() + e.second.size() );
+    for (auto s : e.second) esuel1.push_back( s );
+  }
+
+  // Return (move out) linked lists
+  return std::make_pair( std::move(esuel1), std::move(esuel2) );
 }
 
 std::vector< std::size_t >
