@@ -2,7 +2,7 @@
 /*!
   \file      src/RegTest/Regression.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 08:33:21 AM MDT
+  \date      Thu 02 Apr 2015 03:40:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Regression test class declaration
   \details   Regression test class declaration.
@@ -33,7 +33,7 @@ class Regression : public CBase_Regression< Proxy > {
   public:
     //! Constructor: run test then call back to host proxy to evaluate it
     //! \param[in] proxy Host proxy to call back to after test has been run
-    //! \param[in] testname Name of the test
+    //! \param[in] testcmd Test command to run
     explicit Regression( Proxy& proxy, const std::string& testcmd ) {
 
       redi::ipstream is( testcmd );
