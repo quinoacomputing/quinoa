@@ -2,12 +2,22 @@
 /*!
   \file      src/Main/InciterDriver.C
   \author    J. Bakosi
-  \date      Sat 14 Mar 2015 12:38:57 PM MDT
+  \date      Fri 03 Apr 2015 09:47:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter driver
   \details   Inciter driver.
 */
 //******************************************************************************
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <inciter.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
 
 #include <InciterDriver.h>
 #include <Inciter/InputDeck/Parser.h>
@@ -19,17 +29,6 @@
 #include <NetgenMeshWriter.h>
 #include <GmshMeshWriter.h>
 #include <ExodusIIMeshWriter.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <inciter.decl.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 extern CProxy_Main mainProxy;
 
@@ -85,18 +84,27 @@ InciterDriver::execute() const
   tk::Timer mesh_read;
 
   // Read in mesh
-  tk::instantiate( readers, tk::detectInput( m_input ) )->read();
+  tk::instantiate( readers, tk::detectInput(m_input) )->read();
 
   // Report mesh read time to main proxy
   mainProxy.timestamp( "Mesh read", mesh_read.dsec() );
 
-  // Compute load distribution given total work (= number of mesh cells) and
-  // user-specified virtualization
+  // Compute load distribution given total work and user-specified
+  // virtualization. The load is taken to be proportional to the number of
+  // points of the mesh which is proportional to the number of unique edges in
+  // the mesh. Note that for a typical mesh of tetrahedra nelem = 5.5*npoin,
+  // nedge = 7*npoin, and npsup = 14*npoin, where
+  //  * nelem - number of elements,
+  //  * npoin - number of points,
+  //  * nedge - number of unique edges,
+  //  * npsup - number of points surrounding points, which is the same as the
+  // number of (non-unique) edges surrounding points. See also Lohner, An
+  // Introduction to Applied CFD Techniques, Wiley, 2008.
   uint64_t chunksize, remainder;
   const auto nchare =
     tk::linearLoadDistributor(
        g_inputdeck.get< tag::cmd, tag::virtualization >(),
-       g_mesh.tetinpoel().size()/4,
+       g_mesh.nnode(),
        chunksize,
        remainder );
 
@@ -134,7 +142,7 @@ const
   m_print.section( "Load distribution" );
   m_print.item( "Virtualization [0.0...1.0]",
                 g_inputdeck.get< tag::cmd, tag::virtualization >() );
-  m_print.item( "Load (number of mesh cells)", g_mesh.tetinpoel().size() );
+  m_print.item( "Load (number of mesh points)", g_mesh.nnode() );
   m_print.item( "Number of processing elements", CkNumPes() );
   m_print.item( "Number of work units",
                 std::to_string( nchare ) + " (" +

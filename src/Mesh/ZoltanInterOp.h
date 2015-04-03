@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:31:01 PM MST
+  \date      Thu 02 Apr 2015 02:34:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -18,6 +18,7 @@ namespace tk {
 //! Interoperation with the Zoltan library, used for static mesh partitioning
 namespace zoltan {
 
+//! Partition mesh using Zoltan
 void partitionMesh( const tk::UnsMesh& mesh );
 
 } // zoltan::
