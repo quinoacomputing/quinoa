@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:05:27 AM MDT
+  \date      Fri 03 Apr 2015 09:46:43 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -18,12 +18,12 @@
 
 #include <mpi.h>
 #include <mpi-interoperate.h>   // for interoperation of MPI and Charm++
+#include <pup_stl.h>
+#include <inciter.decl.h>
 
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
-
-#include <pup_stl.h>
 
 #include <Config.h>
 #include <RNG.h>
@@ -33,7 +33,6 @@
 #include <Inciter/CmdLine/Parser.h>
 #include <ZoltanInterOp.h>
 #include <ProcessException.h>
-#include <inciter.decl.h>
 #include <Init.h>
 
 //! \brief Charm handle to the main proxy, facilitates call-back to finalize,

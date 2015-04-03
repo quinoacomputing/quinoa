@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/inciter.ci
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:09:03 PM MST
+  \date      Fri 03 Apr 2015 09:34:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for inciter
   \details   Charm++ module interface file for the computational shock
@@ -16,6 +16,8 @@ mainmodule inciter {
 //  extern module integrator;
 
   readonly CProxy_Main mainProxy;
+
+  include "Types.h";
 
   namespace inciter {
 

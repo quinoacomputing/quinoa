@@ -15,11 +15,6 @@ STRING(REGEX REPLACE "<CMAKE_CXX_COMPILER>"
        ${CHARM_COMPILER}
        CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE}")
 
-#add_custom_command(OUTPUT ${MODULE}.decl.h ${MODULE}.def.h
-#                   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci
-#                   COMMAND ${CHARM_COMPILER}
-#                           ${CMAKE_CURRENT_SOURCE_DIR}/${MODULE}.ci)
-
 ### Inciter executable #########################################################
 add_executable(${INCITER_EXECUTABLE}
                InciterDriver.C
@@ -27,20 +22,6 @@ add_executable(${INCITER_EXECUTABLE}
                Inciter.C
                #Inciter_main.C
 )
-
-#message(STATUS "compiler: ${CMAKE_CXX_COMPILER}")
-#
-## Compile Inciter_main.C using MPI_COMMAND instead
-#string(REPLACE " " ";" CMAKE_CXX_FLAGS_WHITESPACE_UNQUOTED ${CMAKE_CXX_FLAGS})
-#add_custom_command(OUTPUT Inciter_main.o
-#                   DEPENDS Inciter_main.C
-#                   COMMAND ${MPI_COMPILER}
-#                           ${CMAKE_CXX_FLAGS_WHITESPACE_UNQUOTED}
-#                           -o ${CMAKE_CURRENT_BINARY_DIR}/Inciter_main.o
-#                           -c ${CMAKE_CURRENT_SOURCE_DIR}/Inciter_main.C)
-#add_custom_target(Inciter_main DEPENDS Inciter_main.o)
-#add_dependencies(${INCITER_EXECUTABLE} Inciter_main)
-#removeWarnings( "Inciter_main.C" )
 
 if(MPI_COMPILE_FLAGS)
   set_target_properties(${INCITER_EXECUTABLE} PROPERTIES
