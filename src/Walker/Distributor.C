@@ -2,15 +2,15 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 07:42:55 AM MDT
+  \date      Tue 07 Apr 2015 09:52:14 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
     The implementation uses the Charm++ runtime system and is fully asynchronous,
-    overlapping computation, communication as well I/O. The algorithm utilizes
-    the structured dagger (SDAG) Charm++ functionality. The high-level overview
-    of the algorithm structure and how it interfaces with Charm++ is discussed
-    in the Charm++ interface file src/Walker/distributor.ci.
+    overlapping computation, communication as well as I/O. The algorithm
+    utilizes the structured dagger (SDAG) Charm++ functionality. The high-level
+    overview of the algorithm structure and how it interfaces with Charm++ is
+    discussed in the Charm++ interface file src/Walker/distributor.ci.
 */
 //******************************************************************************
 
@@ -51,6 +51,7 @@ Distributor::Distributor( const ctr::CmdLine& cmdline ) :
     tk::linearLoadDistributor(
        g_inputdeck.get< tag::cmd, tag::virtualization >(),
        g_inputdeck.get< tag::discr, tag::npar >(),
+       CkNumPes(),
        chunksize,
        remainder );
 

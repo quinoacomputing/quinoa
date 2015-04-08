@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTestDriver.C
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 11:42:27 AM MST
+  \date      Wed 08 Apr 2015 08:07:53 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite driver
   \details   Random number generator test suite driver.
@@ -40,7 +40,9 @@ RNGTestDriver::RNGTestDriver( const RNGTestPrint& print,
   // All global-scope data to be migrated to all PEs initialized here
 
   // Parse input deck into g_inputdeck, transfer cmdline (no longer needed)
+  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
+  m_print.item( "Parsed control file", "success" );  
   m_print.endpart();
 }
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerDriver.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:12:20 AM MDT
+  \date      Wed 08 Apr 2015 08:08:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     WalkerDriver that drives Walker
   \details   WalkerDriver that drives Walker
@@ -46,7 +46,9 @@ WalkerDriver::WalkerDriver( const WalkerPrint& print,
   // All global-scope data to be migrated to all PEs initialized here (if any)
 
   // Parse input deck into g_inputdeck
+  m_print.item( "Control file", cmdline.get< tag::io, tag::control >() );  
   InputDeckParser inputdeckParser( m_print, cmdline, g_inputdeck );
+  m_print.item( "Parsed control file", "success" );  
 
   m_print.endpart();
   m_print.part( "Factory" );

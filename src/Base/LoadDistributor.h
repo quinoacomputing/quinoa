@@ -2,11 +2,11 @@
 /*!
   \file      src/Base/LoadDistributor.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:14:22 AM MST
+  \date      Mon 06 Apr 2015 11:04:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Load distributors
-  \details   Load distributors compute chunksize based on the degree of
-     virtualization.
+  \brief     Load distributors and partitioning data types
+  \details   Load distributors and partitioning data types. Load distributors
+     compute chunksize based on the degree of virtualization.
 */
 //******************************************************************************
 #ifndef LoadDistributor_h
@@ -20,6 +20,7 @@ namespace tk {
 uint64_t
 linearLoadDistributor( tk::real virtualization,
                        uint64_t load,
+                       int npe,
                        uint64_t& chunksize,
                        uint64_t& remainder );
 

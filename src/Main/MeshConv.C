@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 12:23:14 PM MDT
+  \date      Wed 08 Apr 2015 07:53:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -78,14 +78,14 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { tk::processException(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
       try {
         m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
         m_driver.execute();       // does not fire up async chares
         finalize();
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     void finalize() {
@@ -93,7 +93,7 @@ class Main : public CBase_Main {
         m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
         m_print.time( "Timers (h:m:s)", m_timestamp );
         m_print.endpart();
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }

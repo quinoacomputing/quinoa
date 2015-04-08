@@ -1,18 +1,20 @@
 //******************************************************************************
 /*!
-  \file      src/IO/MeshDetect.h
+  \file      src/IO/MeshFactory.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 03:01:11 PM MST
+  \date      Sat 04 Apr 2015 07:40:21 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
-  \brief     Unstructured mesh file type detector
-  \details   Unstructured mesh file type detector
+  \brief     Unstructured mesh reader and writer factory
+  \details   Unstructured mesh reader and writer factory.
 */
 //******************************************************************************
-#ifndef MeshDetect_h
-#define MeshDetect_h
+#ifndef MeshFactory_h
+#define MeshFactory_h
 
 #include <cstdint>
 #include <string>
+
+#include <UnsMesh.h>
 
 namespace tk {
 
@@ -32,6 +34,12 @@ MeshReaderType detectInput( const std::string& filename );
 //! Determine output mesh file type
 MeshWriterType pickOutput( const std::string& filename );
 
+//! Read unstructured mesh from file
+UnsMesh readUnsMesh( const std::string& filename );
+
+//! Write unstructured mesh to file
+void writeUnsMesh( const std::string& filename, const UnsMesh& mesh );
+
 } // tk::
 
-#endif // MeshDetect_h
+#endif // MeshFactory_h

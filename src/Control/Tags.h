@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Tags.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 07:50:03 AM MDT
+  \date      Wed 08 Apr 2015 09:46:11 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Tags
   \details   Tags are unique types, used for metaprogramming.
@@ -115,6 +115,8 @@ struct helpkw {};
 struct cmdinfo {};
 struct ctrinfo {};
 struct group {};
+struct psup {};
+struct owner {};
 
 struct BirthdaySpacings {};
 struct Collision {};

@@ -305,6 +305,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${QUINOA_SOURCE_DIR}/Control
                     ${QUINOA_SOURCE_DIR}/DiffEq
                     ${QUINOA_SOURCE_DIR}/Walker
+                    ${QUINOA_SOURCE_DIR}/Inciter
                     ${QUINOA_SOURCE_DIR}/IO
                     ${QUINOA_SOURCE_DIR}/Main
                     ${QUINOA_SOURCE_DIR}/Mesh
@@ -319,6 +320,7 @@ include_directories(${QUINOA_SOURCE_DIR}
                     ${TPL_DIR}/charm/include
                     ${PROJECT_BINARY_DIR}/Main          # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/Walker        # for Charm++ modules
+                    ${PROJECT_BINARY_DIR}/Inciter       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RNGTest       # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/UnitTest      # for Charm++ modules
                     ${PROJECT_BINARY_DIR}/RegTest       # for Charm++ modules
@@ -329,6 +331,7 @@ add_subdirectory(Base)
 add_subdirectory(Control)
 add_subdirectory(DiffEq)
 add_subdirectory(Walker)
+add_subdirectory(Inciter)
 add_subdirectory(IO)
 add_subdirectory(Main)
 add_subdirectory(Mesh)

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 10:00:26 AM MST
+  \date      Wed 08 Apr 2015 12:42:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Breeze's input deck file parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -35,8 +35,6 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.item("Control file", m_filename);
-
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );
 
@@ -70,7 +68,4 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 
   // Filter out repeated statistics
   tk::ctr::unique( inputdeck.get< tag::stat >() );
-
-  // If we got here, the parser has succeeded
-  print.item( "Parsed control file", "success" );
 }

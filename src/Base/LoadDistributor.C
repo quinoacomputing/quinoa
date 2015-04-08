@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/LoadDistributor.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 12:03:19 PM MDT
+  \date      Sat 04 Apr 2015 08:06:28 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Load distributors
   \details   Load distributors compute chunksize based on the degree of
@@ -11,17 +11,6 @@
 //******************************************************************************
 
 #include <limits>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wconversion"
-#endif
-
-#include <charm++.h>
-
-#if defined(__clang__) || defined(__GNUC__)
-  #pragma GCC diagnostic pop
-#endif
 
 #include <Types.h>
 #include <LoadDistributor.h>
@@ -32,12 +21,14 @@ namespace tk {
 uint64_t
 linearLoadDistributor( tk::real virtualization,
                        uint64_t load,
+                       int npe,
                        uint64_t& chunksize,
                        uint64_t& remainder )
 //******************************************************************************
 //  Compute linear load distribution for given total work and virtualization
 //! \param[in] virtualization Degree of virtualization [0.0...1.0]
 //! \param[in] load Total load, e.g., number of particles, number of mesh cells
+//! \param[in] npe Number of processing elements to distribute the load to
 //! \param[inout] chunksize Chunk size, see detailed description
 //! \param[inout] remainder Remainder, see detailed description
 //! \return Number of work units
@@ -48,7 +39,7 @@ linearLoadDistributor( tk::real virtualization,
 //!   between 0.0 and 1.0, inclusive, which controls the degree of
 //!   virtualization or over-decomposition. Independent of the value of
 //!   virtualization the work is approximately evenly distributed among the
-//!   available processing elements. For zero virtualization (no
+//!   available processing elements, given by npe. For zero virtualization (no
 //!   over-decomposition), the work is simply decomposed into total_work/numPEs,
 //!   which yields the smallest number of Charm++ chares and the largest chunks
 //!   of work units. The other extreme is unity virtualization, which decomposes
@@ -63,25 +54,17 @@ linearLoadDistributor( tk::real virtualization,
 //!   chunksize = (1 - n) * v + n;
 //!
 //!   where
-//!
 //!    - v = degree of virtualization
-//!
 //!    - n = load/npes
-//!
 //!    - load = total work, e.g., number of particles, number of mesh cells
-//!
 //!    - npes = number of hardware processing elements
-//!
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get virtualization parameter
   Assert( virtualization > -std::numeric_limits< tk::real >::epsilon() &&
           virtualization < 1.0+std::numeric_limits< tk::real >::epsilon(),
           "Virtualization parameter must be between [0.0...1.0]" );
-
-  // Query number of processing elements
-  const auto npe = CkNumPes();
+  Assert( npe > 0, "Number of processing elements must be larger than zero" );
 
   // Compute minimum number of work units
   const auto n = static_cast< tk::real >( load ) / npe;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Mesh/ZoltanInterOp.C
   \author    J. Bakosi
-  \date      Fri 03 Apr 2015 12:32:44 PM MDT
+  \date      Tue 07 Apr 2015 09:10:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
   \details   Interoperation with the Zoltan library, used for static mesh
@@ -246,13 +246,16 @@ get_hypergraph( void *data,
   for (int i=0; i<num_nonzeros; ++i) vtxGID[i] = hg->nborGID[i];
 }
 
-static std::size_t
+static 
+std::tuple< std::pair< std::vector< std::size_t >, std::vector< std::size_t > >,
+            std::size_t >
 createHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
 //******************************************************************************
-//  Create hypergraph data structure for rank zero
+//  Create hypergraph data structure on MPI rank zero
 //! \param[in] mesh Unstructured mesh object reference
 //! \param[inout] hg Hypergraph data structure to fill
 //! \return Number of hyperedges in graph
+//! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -306,14 +309,13 @@ createHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
 
-  return nhedge;
+  return std::make_tuple( psup, nhedge );
 }
 
 static std::size_t
-emptyHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
+emptyHyperGraph( HGRAPH_DATA& hg )
 //******************************************************************************
 //  Create empty hypergraph data structures for non-zero MPI ranks
-//! \param[in] mesh Unstructured mesh object reference
 //! \param[inout] hg Hypergraph data structure to fill
 //! \return Number of hyperedges in graph
 //! \author J. Bakosi
@@ -334,6 +336,7 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
 //******************************************************************************
 //  Destroy hypergraph data structure
 //! \param[inout] hg Hypergraph data structure to destroy
+//! \param[in] nhedge Number of hyperedges in graph
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -343,10 +346,19 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
   if (nhedge > 0) free( hg.nborGID );
 }
 
-void partitionMesh( const tk::UnsMesh& mesh )
+tuple::tagged_tuple< tag::psup,  std::pair< std::vector< std::size_t >,
+                                            std::vector< std::size_t > >,
+                     tag::owner, std::vector< int > >
+partitionMesh( const tk::UnsMesh& mesh, uint64_t npart )
 //******************************************************************************
 //  Partition mesh using Zoltan's hypergraph algorithm in serial
 //! \param[in] mesh Unstructured mesh object reference
+//! \param[in] npart Number of desired mesh partitions
+//! \return Tagged tuple containing points surrounding points (at tag::psup),
+//!   see tk::genEsup(), and array of chare ownership IDs mapping mesh points to
+//!   concurrent arsync chares (at tag::owner)
+//! \details This function uses Zoltan to partition the mesh in serial. It
+//!   assumes the mesh only exists on MPI rank 0.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -360,9 +372,10 @@ void partitionMesh( const tk::UnsMesh& mesh )
   zz = Zoltan_Create( MPI_COMM_WORLD );
   AssertMPI( zz != nullptr, "Failed to create Zoltan data structure" );
 
+  int peid;
+  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+
   // Set Zoltan parameters
-  char global_parts[10];
-  sprintf( global_parts, "%d", CkNumPes() );
   Zoltan_Set_Param( zz, "DEBUG_LEVEL", "0" );
   Zoltan_Set_Param( zz, "LB_METHOD", "HYPERGRAPH" );
   Zoltan_Set_Param( zz, "LB_APPROACH", "PARTITION" );
@@ -372,16 +385,15 @@ void partitionMesh( const tk::UnsMesh& mesh )
   Zoltan_Set_Param( zz, "OBJ_WEIGHT_DIM", "0" );
   Zoltan_Set_Param( zz, "EDGE_WEIGHT_DIM", "0" );
   Zoltan_Set_Param( zz, "RETURN_LISTS", "PART" );
-  Zoltan_Set_Param( zz, "NUM_GLOBAL_PARTS", global_parts );
+  Zoltan_Set_Param( zz, "NUM_GLOBAL_PARTS", std::to_string(npart).c_str() );
 
   HGRAPH_DATA hg;
   std::size_t nhedge = 0;
-  int peid;
-  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+  std::pair< std::vector< std::size_t >, std::vector< std::size_t > > psup;
   if (peid == 0)  
-    nhedge = createHyperGraph( mesh, hg );
+    std::tie( psup, nhedge ) = createHyperGraph( mesh, hg );
   else
-    nhedge = emptyHyperGraph( mesh, hg );
+    nhedge = emptyHyperGraph( hg );
 
   // Set Zoltan query functions
   Zoltan_Set_Num_Obj_Fn( zz, get_number_of_vertices, &hg );
@@ -411,13 +423,18 @@ void partitionMesh( const tk::UnsMesh& mesh )
       &exportProcs,      // Process to which I send each of the vertices
       &exportToPart );   // Partition to which each vertex will belong
 
-//   if (peid ==0 && numExport) {
-//     std::cout << '\n';
+  // Will return, only on MPI rank 0, array of chare IDs corresponding to the
+  // ownership of all points in the mesh, i.e., the coloring
+  const auto e = exportToPart;
+  std::vector< int > owner( e, e + numExport );
+
+//   if (numExport) {
+//     std::cout << "\n" << peid << ": ";
 //     for (int i=0; i<numExport; ++i) std::cout << exportToPart[i] << " ";
 //     std::cout << '\n';
 //   }
 
-//  std::cout << '\n' << peid << ": " << numImport << ", " << numExport << '\n';
+//   std::cout << '\n' << peid << ": " << numImport << ", " << numExport << '\n';
 
 //   if (changes) {
 //     std::cout << " i = " << numImport;
@@ -443,7 +460,7 @@ void partitionMesh( const tk::UnsMesh& mesh )
 
   if (rc != ZOLTAN_OK) {
     destruct();
-    Throw( "Zoltan_LB_Partition != ZOLTAN_OK" );
+    Throw( "Zoltan_LB_Partition failed" );
   }
 
   // Free the arrays allocated by Zoltan_LB_Partition
@@ -454,6 +471,8 @@ void partitionMesh( const tk::UnsMesh& mesh )
 
   // Free hypergraph and Zoltan data structure
   destruct();
+
+  return { psup, owner };
 }
 
 } // zoltan::

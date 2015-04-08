@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Fri 13 Mar 2015 08:14:36 AM MDT
+  \date      Wed 08 Apr 2015 07:53:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -162,14 +162,14 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { tk::processException(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
         m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     //! Normal exit point
@@ -180,7 +180,7 @@ class Main : public CBase_Main {
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
@@ -189,7 +189,7 @@ class Main : public CBase_Main {
     void timestamp( std::string label, tk::real stamp ) {
       try{
         m_timestamp.emplace( label, tk::hms( stamp ) );
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
   private:

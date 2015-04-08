@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:04:38 PM MST
+  \date      Wed 08 Apr 2015 07:53:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -169,13 +169,13 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { tk::processException(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
       try {
         m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
-      } catch (...) { tk::processException(); }   
+      } catch (...) { tk::processExceptionCharm(); }   
     }
 
     void finalize() {
@@ -185,7 +185,7 @@ class Main : public CBase_Main {
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
