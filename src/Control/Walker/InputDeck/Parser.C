@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Fri 16 Jan 2015 06:05:07 PM MST
+  \date      Wed 08 Apr 2015 12:41:51 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck file parser
   \details   Walker's input deck file parser
@@ -31,8 +31,6 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.item("Control file", m_filename);
-
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );
 
@@ -58,7 +56,4 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 
   // Filter out repeated statistics
   tk::ctr::unique( inputdeck.get< tag::stat >() );
-
-  // If we got here, the parser has succeeded
-  print.item( "Parsed control file", "success" );
 }

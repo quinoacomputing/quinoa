@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 02:11:58 PM MDT
+  \date      Wed 08 Apr 2015 07:53:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -167,7 +167,7 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { tk::processException(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
       try {
@@ -175,7 +175,7 @@ class Main : public CBase_Main {
           "Migration of global-scope data + fire up all tests",
            m_timer[1].hms() );
         m_driver.execute();       // fires up async chares
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     void finalize( bool worked ) {
@@ -187,7 +187,7 @@ class Main : public CBase_Main {
                         m_timestamp );
           m_print.endpart();
         }
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
@@ -235,7 +235,7 @@ int main( int argc, char **argv ) {
   // Run MPI test suite
   try {
 
-    tk::Print print;    // quiet output by default using print, see ctr
+    tk::Print print;    // quiet output by default using print, see ctor
     unittest::ctr::CmdLine cmdline;
     bool helped;
     unittest::CmdLineParser cmdParser( argc, argv, print, cmdline, helped );
@@ -328,7 +328,7 @@ int main( int argc, char **argv ) {
       uprint.time( "MPI test suite timers (h:m:s)", timestamp );
     }
 
-  } catch (...) { tk::processException(); }
+  } catch (...) { tk::processExceptionMPI(); }
 
   // Finalize MPI
   MPI_Finalize();

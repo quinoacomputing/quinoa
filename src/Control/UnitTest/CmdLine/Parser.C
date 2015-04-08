@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/UnitTest/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 11:38:54 AM MDT
+  \date      Sat 04 Apr 2015 06:50:59 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's comamnd line parser
   \details   This file defines the command-line argument parser for the unit
@@ -34,8 +34,8 @@ CmdLineParser::CmdLineParser( int argc,
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
-//! \param[inout] helped Boolean indicating if command-line help was requested
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
+//! \param[inout] helped Boolean indicating if command-line help was requested
 //! \author  J. Bakosi
 //******************************************************************************
 {

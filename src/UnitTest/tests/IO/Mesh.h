@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/IO/Mesh.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 09:07:41 PM MDT
+  \date      Sat 04 Apr 2015 07:48:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
@@ -13,7 +13,7 @@
 
 #include <tut/tut.hpp>
 
-#include <MeshDetect.h>
+#include <MeshFactory.h>
 #include <DerivedData.h>
 #include <ProcessControl.h>
 #include <GmshMeshWriter.h>

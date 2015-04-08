@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.5)
 project(IO CXX)
 
 add_library(IO
-            MeshDetect.C
+            MeshFactory.C
             GmshMeshReader.C            # readers
             STLTxtMeshReader.C
             NetgenMeshReader.C
@@ -16,7 +16,6 @@ add_library(IO
 #            SiloWriter.C
 )
 
-#removeWarnings( "TxtStatWriter.C;PDFWriter.C;ExodusIIMeshWriter.C;ExodusIIMeshReader.C;GmshMeshReader.C;NetgenMeshReader.C;GmshMeshWriter.C;NetgenMeshWriter.C" )
 removeWarnings( "TxtStatWriter.C;PDFWriter.C" )
 
 INSTALL(TARGETS IO

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 02:59:23 PM MST
+  \date      Sat 04 Apr 2015 07:42:08 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -14,13 +14,7 @@
 #include <Factory.h>
 #include <MeshConvDriver.h>
 #include <MeshConv/CmdLine/Parser.h>
-#include <MeshDetect.h>
-#include <GmshMeshReader.h>
-#include <NetgenMeshReader.h>
-#include <ExodusIIMeshReader.h>
-#include <NetgenMeshWriter.h>
-#include <GmshMeshWriter.h>
-#include <ExodusIIMeshWriter.h>
+#include <MeshFactory.h>
 
 using meshconv::MeshConvDriver;
 
@@ -43,38 +37,9 @@ MeshConvDriver::MeshConvDriver( const tk::Print& print,
 void
 MeshConvDriver::execute() const
 //******************************************************************************
-//  Execute: Convert Gmsh mesh to Exodus II mesh
+//  Execute: Convert mesh file
 //! \author J. Bakosi
 //******************************************************************************
 {
-  //! Mesh readers factory
-  std::map< tk::MeshReaderType, std::function<tk::Reader*()> > readers;
-
-  //! Mesh writers factory
-  std::map< tk::MeshWriterType, std::function<tk::Writer*()> > writers;
-
-  //! Create unstructured mesh to store mesh
-  tk::UnsMesh mesh;
-
-  // Register mesh readers
-  tk::record< tk::GmshMeshReader >( readers, tk::MeshReaderType::GMSH,
-                                    m_input, std::ref(mesh) );
-  tk::record< tk::NetgenMeshReader >( readers, tk::MeshReaderType::NETGEN,
-                                      m_input, std::ref(mesh) );
-  tk::record< tk::ExodusIIMeshReader >( readers, tk::MeshReaderType::EXODUSII,
-                                        m_input, std::ref(mesh) );
-
-  // Register mesh writers
-  tk::record< tk::GmshMeshWriter >( writers, tk::MeshWriterType::GMSH,
-                                    m_output, std::ref(mesh) );
-  tk::record< tk::NetgenMeshWriter >( writers, tk::MeshWriterType::NETGEN,
-                                      m_output, std::ref(mesh) );
-  tk::record< tk::ExodusIIMeshWriter >( writers, tk::MeshWriterType::EXODUSII,
-                                        m_output, std::ref(mesh) );
-
-  // Read in mesh
-  tk::instantiate( readers, tk::detectInput( m_input ) )->read();
-
-  // Write out mesh
-  tk::instantiate( writers, tk::pickOutput( m_output ) )->write();
+  tk::writeUnsMesh( m_output, tk::readUnsMesh( m_input ) );
 }

@@ -20,7 +20,6 @@ add_executable(${INCITER_EXECUTABLE}
                InciterDriver.C
                InciterPrint.C
                Inciter.C
-               #Inciter_main.C
 )
 
 if(MPI_COMPILE_FLAGS)
@@ -37,7 +36,7 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       Base
                       IO
                       Mesh
-                      Statistics
+                      Inciter
                       InciterControl
                       ${NEMESIS_LIBRARIES}
                       ${EXODUS_LIBRARIES}
@@ -226,7 +225,7 @@ target_link_libraries(${WALKER_EXECUTABLE}
                       Base
                       DiffEq
                       IO
-                      Mesh
+                      Mesh      # WALKER SHOULD NOT DEPEND ON MESH
                       Statistics
                       RNG
                       Walker

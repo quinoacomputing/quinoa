@@ -37,7 +37,8 @@
 
 ### Testing
  - Quantify code coverage by tests, e.g., COVTOOL: http://covtool.sourceforge.net
- - Regression tests with KitWare's CTest
+ - Regression tests with KitWare's CTest, see
+   http://www.cmake.org/Wiki/CMake/Testing_With_CTest
  - Test build with optional libraries on/off (all permutations)
  - Test suite for exceptions:
     + Automatically switch each potential throw location into a throw (is this
@@ -112,6 +113,8 @@
    updating the particle properties, the order of the particle properties in
    memory should be user-selectable at compile time
 
+ - Make ErrChkMPI work even if there is no MPI
+
  - emplace() is only more efficient than insert() if it calls a constructor
    internally instead of assignment() - check
 
@@ -150,7 +153,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Thu 26 Mar 2015 07:21:39 AM MDT
+<em>Page last updated:</em> Wed 08 Apr 2015 08:35:59 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

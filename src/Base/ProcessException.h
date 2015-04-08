@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/ProcessException.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 12:23:53 PM MDT
+  \date      Wed 08 Apr 2015 07:34:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Process an exception definition
   \details   This file contains the definition of processing an exception.
@@ -20,8 +20,11 @@
 
 namespace tk {
 
-//! Process an exception
-void processException();
+//! Process an exception from the Charm++ runtime system
+void processExceptionCharm();
+
+//! Process an exception from the MPI runtime system
+void processExceptionMPI();
 
 } // tk::
 

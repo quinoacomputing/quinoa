@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTest.C
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 12:14:46 PM MDT
+  \date      Wed 08 Apr 2015 07:53:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's Charm++ main chare and main().
   \details   RegTest's Charm++ main chare and main(). This file contains
@@ -95,7 +95,7 @@ class Main : public CBase_Main {
       CProxy_execute::ckNew();
       // Start new timer measuring the migration of global-scope data
       m_timer.emplace_back();
-    } catch (...) { tk::processException(); }
+    } catch (...) { tk::processExceptionCharm(); }
 
     void execute() {
       try {
@@ -103,7 +103,7 @@ class Main : public CBase_Main {
           "Migration of global-scope data + fire up all tests",
            m_timer[1].hms() );
         m_driver.execute();       // fires up async chares
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
     }
 
     void finalize( bool worked ) {
@@ -113,7 +113,7 @@ class Main : public CBase_Main {
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
-      } catch (...) { tk::processException(); }
+      } catch (...) { tk::processExceptionCharm(); }
       // Tell the Charm++ runtime system to exit
       CkExit();
     }

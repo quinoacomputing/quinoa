@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/RNGTest/InputDeck/Parser.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 12:00:14 PM MDT
+  \date      Wed 08 Apr 2015 12:42:20 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random number generator test suite input deck parser
   \details   This file declares the input deck, i.e., control file, parser for
@@ -35,8 +35,6 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
 //! \author  J. Bakosi
 //******************************************************************************
 {
-  print.item("Control file", m_filename);
-
   // Create PEGTL file input from std::string
   pegtl::file_input< ctr::Location > input( m_filename );
 
@@ -67,7 +65,4 @@ InputDeckParser::InputDeckParser( const tk::Print& print,
   // Strip input deck (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
   inputdeck = std::move( id );
-
-  // If we got here, the parser has succeeded
-  print.item("Parsed control file", "success");
 }
