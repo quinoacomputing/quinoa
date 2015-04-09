@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:53:27 AM MDT
+  \date      Thu 09 Apr 2015 06:00:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -82,18 +82,7 @@ namespace unittest {
 //! below is global-scope because they must be available to all PEs which could
 //! be on different machines.
 
-//! Template Unit Test test runner. This Pack/Unpack method (re-)creates the
-//! test runner singleton on all processing elements. Therefore we circumvent
-//! Charm's usual pack/unpack for this type, and thus sizing does not make
-//! sense: sizing is a no-op. We could initialize the stack in UnitTestDriver's
-//! constructor and let this function re-create the runner only when unpacking,
-//! but that leads to repeating the same code twice: once in UnitTestDriver's
-//! constructor, once here. Another option is to use this pack/unpack routine to
-//! both initially create (when packing) and to re-create (when unpacking) the
-//! runner, which eliminates the need for pre-creating the object in
-//! UnitTestDriver's constructor and therefore eliminates the repeated code.
-//! This explains the guard for sizing: the code below is called for packing
-//! only (in serial) and packing and unpacking (in parallel).
+//! Template Unit Test test runner
 tut::test_runner_singleton g_runner;
 
 //! Test suite Charm++ proxy facilitating call-back to unit test suite by
@@ -109,7 +98,18 @@ std::string g_executable;
 //!   this should be increased.
 int g_maxTestsInGroup = 50;
 
-//! Pack/Unpack test runner
+//! Pack/Unpack test runner. This Pack/Unpack method (re-)creates the
+//! test runner singleton on all processing elements. Therefore we circumvent
+//! Charm's usual pack/unpack for this type, and thus sizing does not make
+//! sense: sizing is a no-op. We could initialize the stack in UnitTestDriver's
+//! constructor and let this function re-create the runner only when unpacking,
+//! but that leads to repeating the same code twice: once in UnitTestDriver's
+//! constructor, once here. Another option is to use this pack/unpack routine to
+//! both initially create (when packing) and to re-create (when unpacking) the
+//! runner, which eliminates the need for pre-creating the object in
+//! UnitTestDriver's constructor and therefore eliminates the repeated code.
+//! This explains the guard for sizing: the code below is called for packing
+//! only (in serial) and packing and unpacking (in parallel).
 inline void operator|( PUP::er& p, tut::test_runner_singleton& runner )
 { if (!p.isSizing()) runner = tut::test_runner_singleton(); }
 
