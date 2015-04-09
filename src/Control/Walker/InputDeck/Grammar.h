@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/Grammar.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:16:50 AM MDT
+  \date      Wed 08 Apr 2015 09:41:52 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck grammar definition
   \details   Walker's input deck grammar definition. We use the [Parsing
@@ -750,7 +750,7 @@ namespace deck {
                          discretization_parameters,
                          sde,
                          tk::grm::rngblock< Stack, use, rngs >,
-                         tk::grm::statistics< Stack, use >,
+                         tk::grm::statistics< Stack, use, store_option >,
                          tk::grm::pdfs< Stack, use, store_option > >,
                        pegtl::apply<
                           tk::grm::error< Stack,

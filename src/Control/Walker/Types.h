@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/Types.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 07:50:26 AM MDT
+  \date      Wed 08 Apr 2015 09:24:41 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Types for Walker's parsers
   \details   Types for Walker's parsers. This file defines the components of the
@@ -35,8 +35,7 @@ using selects = tk::tuple::tagged_tuple<
   tag::rng,          std::vector< tk::ctr::RNGType >, //!< RNGs
   tag::pdffiletype,  tk::ctr::PDFFileType,      //!< PDF output file type
   tag::pdfpolicy,    tk::ctr::PDFPolicyType,    //!< PDF output file policy
-  tag::pdfctr,       tk::ctr::PDFCenteringType, //!< PDF output file centering
-  tag::float_format, tk::ctr::TxtFloatFormatType//!< Text floating-point format
+  tag::pdfctr,       tk::ctr::PDFCenteringType  //!< PDF output file centering
 >;
 
 //! Discretization parameters storage
@@ -46,8 +45,19 @@ using discretization = tk::tuple::tagged_tuple<
   tag::term,      kw::term::info::expect::type,   //!< Termination time
   tag::dt,        kw::dt::info::expect::type,     //!< Size of time step
   tag::binsize,   std::vector< std::vector< tk::real > >, //!< PDF binsizes
-  tag::extent,    std::vector< std::vector< tk::real > >, //!< PDF extents
-  tag::precision, kw::precision::info::expect::type  //!< Precision in digits
+  tag::extent,    std::vector< std::vector< tk::real > >  //!< PDF extents
+>;
+
+//! ASCII output floating-point precision in digits
+using precision = tk::tuple::tagged_tuple<
+  tag::stat, kw::precision::info::expect::type, //!< Statistics output precision
+  tag::pdf,  kw::precision::info::expect::type  //!< PDF output precision
+>;
+
+//! ASCII output floating-point format
+using floatformat = tk::tuple::tagged_tuple<
+  tag::stat, tk::ctr::TxtFloatFormatType, //!< Statistics output format
+  tag::pdf,  tk::ctr::TxtFloatFormatType  //!< PDF output format
 >;
 
 //! Output intervals storage

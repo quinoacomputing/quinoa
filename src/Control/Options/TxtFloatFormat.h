@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Options/TxtFloatFormat.h
   \author    J. Bakosi
-  \date      Wed 21 Jan 2015 07:59:32 AM MST
+  \date      Wed 08 Apr 2015 09:48:00 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Text floating-point output options
   \details   Text floating-point output options
@@ -51,7 +51,7 @@ class TxtFloatFormat : public tk::Toggle< TxtFloatFormatType > {
     explicit TxtFloatFormat() :
       Toggle< TxtFloatFormatType >(
         //! Group, i.e., options, name
-        "Text floating-point format",
+        "floating-point format",
         //! Enums -> names
         { { TxtFloatFormatType::DEFAULT, kw::txt_float_default::name() },
           { TxtFloatFormatType::FIXED, kw::txt_float_fixed::name() },

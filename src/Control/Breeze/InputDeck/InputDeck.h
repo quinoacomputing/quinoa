@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Breeze/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:47:27 AM MST
+  \date      Wed 08 Apr 2015 08:43:31 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Breeze's input deck definition
   \details   This file defines the heterogeneous stack that is used for storing
@@ -134,7 +134,9 @@ class InputDeck :
          ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
       set< tag::discr, tag::term >( 1.0 );
       set< tag::discr, tag::dt >( 0.5 );
-      set< tag::discr, tag::precision >( std::cout.precision() );
+      // Default txt floating-point output precision in digits
+      set< tag::prec, tag::stat >( std::cout.precision() );
+      set< tag::prec, tag::pdf >( std::cout.precision() );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::dump >( 1 );

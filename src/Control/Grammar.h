@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Grammar.h
   \author    J. Bakosi
-  \date      Mon 16 Mar 2015 07:33:13 AM MDT
+  \date      Wed 08 Apr 2015 09:41:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Generic, low-level grammar
   \details   Generic, low-level grammar. We use the [Parsing Expression Grammar
@@ -528,15 +528,15 @@ namespace grm {
   //!   is between the correct bounds of the underlying floating-point type.
   //! \see kw::precision_info
   //! \author J. Bakosi
-  template< class Stack >
-  struct store_precision : pegtl::action_base< store_precision< Stack > > {
+  template< class Stack, class prec >
+  struct store_precision : pegtl::action_base< store_precision<Stack,prec> > {
     static void apply( const std::string& value, Stack& stack ) {
       using PrEx = kw::precision::info::expect;
-      std::string low(value);
+      std::string low( value );
       std::transform( begin(low), end(low), begin(low), ::tolower );
       if (low == "max") {
         const auto maxprec = PrEx::upper;
-        stack.template set< tag::discr, tag::precision >( maxprec );
+        stack.template set< tag::prec, prec >( maxprec );
       } else {
         PrEx::type precision = std::cout.precision();  // set default
         try {
@@ -547,7 +547,7 @@ namespace grm {
         }
         // only set precision given if it makes sense
         if (precision >= PrEx::lower && precision <= PrEx::upper)
-          stack.template set< tag::discr, tag::precision >( precision );
+          stack.template set< tag::prec, prec >( precision );
         else
           Message< Stack, WARNING, MsgKey::PRECISIONBOUNDS >( stack, value );
       }
@@ -593,7 +593,7 @@ namespace grm {
   template< class Stack, class push >
   struct match_depvar : pegtl::action_base< match_depvar< Stack, push > > {
     static void apply( const std::string& value, Stack& stack ) {
-      // convert matched string to char (int)
+      // convert matched string to char
       auto var = stack.template convert< char >( value );
       // find matched variable in set of selected ones
       if (depvars.find( var ) != depvars.end())
@@ -1270,11 +1270,11 @@ namespace grm {
   //! \brief Match precision of floating-point numbers in digits (for text
   //!   output)
   //! \author J. Bakosi
-  template< class Stack, template< class > class use >
+  template< class Stack, template< class > class use, class prec >
   struct precision :
          process< Stack,
                   use< kw::precision >,
-                  store_precision< Stack >,
+                  store_precision< Stack, prec >,
                   pegtl::alnum > {};
 
   //! \brief Match control parameter
@@ -1306,13 +1306,23 @@ namespace grm {
 
   //! \brief Parse statistics ... end block
   //! \author J. Bakosi
-  template< class Stack, template< class > class use >
+  template< class Stack,
+            template< class > class use,
+            template< class... Ts > class store >
   struct statistics :
-         pegtl::ifmust< readkw< Stack, typename use< kw::statistics >::pegtl_string >,
+         pegtl::ifmust< readkw< Stack,
+                                typename use< kw::statistics >::pegtl_string >,
                         block< Stack,
                                use< kw::end >,
                                interval< Stack, use< kw::interval >,
                                          tag::stat >,
+                               process< Stack,
+                                        use< kw::txt_float_format >,
+                                        store< tk::ctr::TxtFloatFormat,
+                                               tag::flformat,
+                                               tag::stat >,
+                                        pegtl::alpha >,
+                               precision< Stack, use, tag::stat >,
                                parse_expectations< Stack > > > {};
 
   //! \brief Match model parameter
@@ -1444,9 +1454,9 @@ namespace grm {
              pdf_option< Stack,
                          use< kw::txt_float_format >,
                          store< tk::ctr::TxtFloatFormat,
-                                tag::selected,
-                                tag::float_format > >,
-             precision< Stack, use >,
+                                tag::flformat,
+                                tag::pdf > >,
+             precision< Stack, use, tag::pdf >,
              parse_pdf< Stack > > > {};
 
   //! \brief Ensures that a grammar only uses keywords from a pool of
