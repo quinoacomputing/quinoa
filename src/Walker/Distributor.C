@@ -2,7 +2,7 @@
 /*!
   \file      src/Walker/Distributor.C
   \author    J. Bakosi
-  \date      Tue 07 Apr 2015 09:52:14 PM MDT
+  \date      Wed 08 Apr 2015 10:02:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Distributor drives the time integration of differential equations
   \details   Distributor drives the time integration of differential equations.
@@ -22,7 +22,6 @@
 #include <LoadDistributor.h>
 #include <StatCtr.h>
 #include <walker.decl.h>
-#include <flip_map.h>
 
 extern CProxy_Main mainProxy;
 
@@ -162,7 +161,9 @@ Distributor::info( uint64_t chunksize, uint64_t remainder ) const
     header();
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
-                          std::string() );
+                          std::string(),
+                          g_inputdeck.get< tag::flformat, tag::stat >(),
+                          g_inputdeck.get< tag::prec, tag::stat >() );
     sw.header( m_nameOrdinary, m_nameCentral );
   }
 }
@@ -325,7 +326,10 @@ Distributor::outStat()
   if (!(m_it % g_inputdeck.get< tag::interval, tag::stat >())) {
     tk::TxtStatWriter sw( !m_nameOrdinary.empty() || !m_nameCentral.empty() ?
                           g_inputdeck.get< tag::cmd, tag::io, tag::stat >() :
-                          std::string(), std::ios_base::app );
+                          std::string(),
+                          g_inputdeck.get< tag::flformat, tag::stat >(),
+                          g_inputdeck.get< tag::prec, tag::stat >(),
+                          std::ios_base::app );
     if (sw.stat( m_it, m_t, m_ordinary, m_central ))
       m_output.get< tag::stat >() = true;
   }
@@ -378,8 +382,8 @@ Distributor::writeUniPDF( const tk::UniPDF& p, int& cnt )
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfw( filename,
-                      g_inputdeck.get< tag::selected, tag::float_format >(),
-                      g_inputdeck.get< tag::discr, tag::precision >() );
+                      g_inputdeck.get< tag::flformat, tag::pdf >(),
+                      g_inputdeck.get< tag::prec, tag::pdf >() );
 
   // Output PDF
   pdfw.writeTxt( p, info );
@@ -425,8 +429,8 @@ Distributor::writeBiPDF( const tk::BiPDF& p, int& cnt )
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfw( filename,
-                      g_inputdeck.get< tag::selected, tag::float_format >(),
-                      g_inputdeck.get< tag::discr, tag::precision >() );
+                      g_inputdeck.get< tag::flformat, tag::pdf >(),
+                      g_inputdeck.get< tag::prec, tag::pdf >() );
 
   // Output PDF
   if (filetype == tk::ctr::PDFFileType::TXT)
@@ -482,8 +486,8 @@ Distributor::writeTriPDF( const tk::TriPDF& p, int& cnt )
 
   // Create new PDF file (overwrite if exists)
   tk::PDFWriter pdfw( filename,
-                      g_inputdeck.get< tag::selected, tag::float_format >(),
-                      g_inputdeck.get< tag::discr, tag::precision >() );
+                      g_inputdeck.get< tag::flformat, tag::pdf >(),
+                      g_inputdeck.get< tag::prec, tag::pdf >() );
 
   // Output PDF
   if (filetype == tk::ctr::PDFFileType::TXT)

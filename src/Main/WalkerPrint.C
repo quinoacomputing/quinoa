@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/WalkerPrint.C
   \author    J. Bakosi
-  \date      Thu 19 Mar 2015 12:04:00 PM MDT
+  \date      Wed 08 Apr 2015 09:48:22 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker-specific pretty printer functionality
   \details   Walker-specific pretty printer functionality.
@@ -53,7 +53,7 @@ WalkerPrint::statistics( const std::string& title ) const
   {
     section( title );
     stats( "Estimated statistical moments" );
-    pdfs( "PDFs", tk::ctr::pdf );
+    pdfs( "Estimated PDFs", tk::ctr::pdf );
   }
 }
 
@@ -97,6 +97,13 @@ WalkerPrint::stats( const std::string& msg ) const
     for (auto& v : c) m_stream << v;
     m_stream << '\n';
   }
+
+  // Output options and settings affecting statistics output
+  tk::ctr::TxtFloatFormat fl;
+  item( "Stats " + fl.group(),
+        fl.name( g_inputdeck.get< tag::flformat, tag::stat >() ) );
+  item( "Stats text precision, digits",
+        g_inputdeck.get< tag::prec, tag::stat >() );
 }
 
 void
@@ -138,7 +145,7 @@ const
     m_stream << '\n';
   }
 
-  // Oputput options and settings affecting PDF output
+  // Output options and settings affecting PDF output
   if (!c.empty()) {
     tk::ctr::PDFFile f;
     item( f.group(),
@@ -150,9 +157,9 @@ const
     item( e.group(),
           e.name( g_inputdeck.get< tag::selected, tag::pdfctr >() ) );
     tk::ctr::TxtFloatFormat fl;
-    item( fl.group(),
-          fl.name( g_inputdeck.get< tag::selected, tag::float_format >() ) );
-    item( "Text precision in digits",
-          g_inputdeck.get< tag::discr, tag::precision >() );
+    item( "PDF text " + fl.group(),
+          fl.name( g_inputdeck.get< tag::flformat, tag::pdf >() ) );
+    item( "PDF text precision, digits",
+          g_inputdeck.get< tag::prec, tag::pdf >() );
   }
 }

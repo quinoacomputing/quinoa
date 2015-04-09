@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/PDFWriter.h
   \author    J. Bakosi
-  \date      Wed 28 Jan 2015 09:05:57 AM MST
+  \date      Wed 08 Apr 2015 08:53:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     PDF writer class declaration
   \details   This file declares a PDF writer class that facilitates outputing
@@ -30,11 +30,10 @@ class PDFWriter : public tk::Writer {
 
   public:
     //! Constructor
-    explicit PDFWriter( const std::string& filename,
-                        tk::ctr::TxtFloatFormatType format =
-                          tk::ctr::TxtFloatFormatType::DEFAULT,
-                        kw::precision::info::expect::type precision =
-                          std::cout.precision() );
+    explicit PDFWriter(
+      const std::string& filename,
+      tk::ctr::TxtFloatFormatType format = tk::ctr::TxtFloatFormatType::DEFAULT,
+      kw::precision::info::expect::type precision = std::cout.precision() );
 
     //! Write univariate PDF to text file
     void writeTxt( const UniPDF& pdf, const tk::ctr::PDFInfo& info ) const;

@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Walker/InputDeck/InputDeck.h
   \author    J. Bakosi
-  \date      Wed 01 Apr 2015 09:16:22 AM MDT
+  \date      Wed 08 Apr 2015 09:42:59 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Walker's input deck
   \details   Walker's input deck
@@ -30,6 +30,8 @@ class InputDeck :
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
                       tag::discr,      discretization,
+                      tag::prec,       precision,
+                      tag::flformat,   floatformat,
                       tag::component,  ncomps,
                       tag::interval,   intervals,
                       tag::cmd,        CmdLine,
@@ -185,7 +187,9 @@ class InputDeck :
          ( std::numeric_limits< kw::nstep::info::expect::type >::max() );
       set< tag::discr, tag::term >( 1.0 );
       set< tag::discr, tag::dt >( 0.5 );
-      set< tag::discr, tag::precision >( std::cout.precision() );
+      // Default txt floating-point output precision in digits
+      set< tag::prec, tag::stat >( std::cout.precision() );
+      set< tag::prec, tag::pdf >( std::cout.precision() );
       // Default intervals
       set< tag::interval, tag::tty >( 1 );
       set< tag::interval, tag::stat >( 1 );
@@ -238,6 +242,8 @@ class InputDeck :
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
                    tag::discr,      discretization,
+                   tag::prec,       precision,
+                   tag::flformat,   floatformat,
                    tag::component,  ncomps,
                    tag::interval,   intervals,
                    tag::cmd,        CmdLine,
