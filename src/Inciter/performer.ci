@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/performer.ci
   \author    J. Bakosi
-  \date      Tue 07 Apr 2015 10:00:37 PM MDT
+  \date      Thu 09 Apr 2015 02:17:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for Performer
   \details   Charm++ module interface file for Performer
@@ -26,7 +26,7 @@ module performer {
     chare Performer< CProxy_Conductor >;
 
     template< class Proxy >
-    chare Performer {
+    array [1D] Performer {
       entry Performer( Proxy& proxy );
     }
 

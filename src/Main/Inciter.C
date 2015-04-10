@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:53:46 AM MDT
+  \date      Fri 10 Apr 2015 02:04:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -37,6 +37,7 @@
 #include <ZoltanInterOp.h>
 #include <ExceptionMPI.h>
 #include <ProcessException.h>
+#include <ExodusIIMeshReader.h>
 #include <inciter.decl.h>
 #include <Init.h>
 
@@ -58,24 +59,14 @@ namespace inciter {
 ctr::InputDeck g_inputdeck_defaults;
 //! Input deck filled by parser, containing all input data
 ctr::InputDeck g_inputdeck;
-//! \brief Mesh is global so that it is accessible to both Zoltan and Charm++
-//! \details At this time, the mesh is read in from file on MPI rank 0 and is
-//!   partitioned by Zoltan. The we compute the communication maps and create
-//!   Charm++ chares each initializing their own portion of the mesh subdomain
-//!   based on the complete mesh. While the mesh object is declared in global
-//!   scope, it is NOT declared in Inciter's Charm++ main chare in
-//!   Main/inciter.ci so that the Charm++ runtime system does not migrate the
-//!   complete mesh across all PEs.
-tk::UnsMesh g_mesh;
-//! \brief Vector of export/import maps for all chare ids
-//! \details Vector of communication maps associating receiver/sender chare ids
-//!   to unique communicated point ids for all chare ids. While the vector of
-//!   communcation maps is declared in global scope, it is NOT declared in
-//!   Inciter's Charm++ main chare in Main/inciter.ci so that the Charm++
-//!   runtime system does not migrate it across all PEs. There is no need for it
-//!   in global scope, since each chare will store its own export and import
-//!   map.
-std::vector< std::map< int, std::vector< std::size_t > > > g_comm;
+//! Derived data structure, storing elements surrounding points in mesh
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > > g_esup;
+//! Mesh tetrahedron element connectivity
+std::vector< int > g_tetinpoel;
+//! Graph coloring for all mesh points
+std::vector< std::size_t > g_colors;
+//! Vector of export/import maps for all chare ids (empty if nchares = 1)
+std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 
 //! Conductor Charm++ proxy facilitating call-back to Conductor by the
 //! individual performers
@@ -279,43 +270,46 @@ parseCmdLine( int argc, char** argv )
 
 void
 meshinfo( const tk::Print& print,
-          const tk::UnsMesh& mesh,
+          const tk::UnsMesh& graph,
+          uint64_t load,
           uint64_t chunksize,
           uint64_t remainder,
           uint64_t nchare )
 //******************************************************************************
-//! Print information on mesh and load distribution
+//! Print information on mesh graph and load distribution
 //! \param[in] print Pretty printer
-//! \param[in] mesh Unstructured mesh object
+//! \param[in] graph Unstructured mesh graph object
+//! \param[in] load Computational load (here: number of graph nodes)
 //! \param[in] chunksize Chunk size, see Base/LoadDistribution.h
 //! \param[in] remainder Remainder, see Base/LoadDistribution.h
 //! \param[in] nchare Number of work units (Charm++ chares)
 //! \author J. Bakosi
 //******************************************************************************
 {
-  int peid;
+  int peid, numpes;
   MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+  MPI_Comm_size( MPI_COMM_WORLD, &numpes );
 
   if (peid == 0) {
-    // Print out mesh stats
-    print.section( "Input mesh statistics" );
-    print.item( "Number of element blocks", mesh.neblk() );
-    print.item( "Number of elements", mesh.nelem() );
-    print.item( "Number of nodes", mesh.nnode() );
+    // Print out mesh graph stats
+    print.section( "Input mesh graph statistics" );
+    print.item( "Number of element blocks", graph.neblk() );
+    print.item( "Number of elements", graph.nelem() );
+    print.item( "Number of nodes", graph.size() );
 
-    if (!mesh.lininpoel().empty())
-      print.item( "Number of lines", mesh.lininpoel().size()/2 );
-    if (!mesh.triinpoel().empty())
-      print.item( "Number of triangles", mesh.triinpoel().size()/3 );
-    if (!mesh.tetinpoel().empty())
-      print.item( "Number of tetrahedra", mesh.tetinpoel().size()/4 );
+    if (!graph.lininpoel().empty())
+      print.item( "Number of lines", graph.lininpoel().size()/2 );
+    if (!graph.triinpoel().empty())
+      print.item( "Number of triangles", graph.triinpoel().size()/3 );
+    if (!graph.tetinpoel().empty())
+      print.item( "Number of tetrahedra", graph.tetinpoel().size()/4 );
 
     // Print out info on load distribution
     print.section( "Load distribution" );
     print.item( "Virtualization [0.0...1.0]",
                   g_inputdeck.get< tag::cmd, tag::virtualization >() );
-    print.item( "Load (number of mesh points)", mesh.nnode() );
-    print.item( "Number of processing elements", CkNumPes() );
+    print.item( "Load (number of mesh points)", load );
+    print.item( "Number of processing elements", numpes );
     print.item( "Number of work units",
                 std::to_string( nchare ) + " (" +
                 std::to_string( nchare-1 ) + "*" +
@@ -325,18 +319,22 @@ meshinfo( const tk::Print& print,
 }
 
 void
-comMaps( const tk::UnsMesh& mesh,
+comMaps( const tk::UnsMesh& graph,
          tk::tuple::tagged_tuple<
+           tag::esup,  std::pair< std::vector< std::size_t >,
+                                  std::vector< std::size_t > >,
            tag::psup,  std::pair< std::vector< std::size_t >,
                                   std::vector< std::size_t > >,
-           tag::owner, std::vector< int > >&& partitions )
+           tag::owner, std::vector< std::size_t > >&& partitions )
 //******************************************************************************
-//! Compute communication (export-, and import-) maps for all mesh partitions
-//! \param[in] mesh Unstructured mesh object
-//! \param[in] partitions Tagged tuple containing points surrounding points (at
-//!   tag::psup), see tk::genEsup(), and array of chare ownership IDs mapping
-//!   mesh points to concurrent arsync chares. Assumed to be non-emtpy only on
-//!   MPI rank 0.
+//! Compute communication (export-, and import-) maps for all graph partitions
+//! \param[in] graph Unstructured mesh graph object
+//! \param[in] partitions Tagged tuple containing elements surrounding points
+//!   (at tag::esup), see tk::genEsup(), points surrounding points (at
+//!   tag::psup), see tk::genPsup(), and array of chare ownership IDs mapping
+//!   graph points to concurrent arsync chares (at tag::owner). Assumed to be
+//!   non-emtpy only on MPI rank 0. Note that this tuple is swallowed in and
+//!   cannibalized moving some of its parts to global scope.
 //! \return Vector of export/import maps associating receiver/sender chare ids
 //!   to unique communicated point ids for all chare ids, only on MPI rank 0.
 //! \details Compute communication maps: (1) the export map, associating chare
@@ -369,20 +367,29 @@ comMaps( const tk::UnsMesh& mesh,
     const auto& psup2 = partitions.get< tag::psup >().second;
     const auto& owner = partitions.get< tag::owner >();
 
-    Assert( owner.size() == mesh.nnode(),
-            "Size of ownership array must equal the number of mesh nodes" );
+    Assert( owner.size() == graph.size(),
+            "Size of ownership array must equal the number of graph nodes" );
+
+    // Move derived data structure storing elements surrounding points of mesh
+    // to global scope for Charm++ chares
+    g_esup = std::move( partitions.get< tag::esup >() );
 
     // find out number of chares desired
     auto minmax = std::minmax_element( begin(owner), end(owner) );
     auto nchare = *minmax.second - *minmax.first + 1;
-    // if mesh not partitioned, nothing to do, leave communication maps empty
-    if (nchare == 1) return;
+    // if graph not partitioned, nothing to do, leave communication maps empty
+    if (nchare == 1) {
+      // Move ownership array to global scope for Charm++ chares
+      g_colors = std::move( owner );
+      return;
+    }
 
-    auto npoin = mesh.nnode();
+    auto npoin = graph.size();
 
     // map to associate a chare id to a map of receiver/sender chare ids
     // accociated to unique point ids sent/received (export/import map)
-    std::map< int, std::map< int, std::set< std::size_t > > > comm;
+    std::map< std::size_t,
+              std::map< std::size_t, std::set< std::size_t > > > comm;
 
     // construct export and import maps
     for (std::size_t p=0; p<npoin; ++p)
@@ -392,8 +399,23 @@ comMaps( const tk::UnsMesh& mesh,
           comm[ owner[p] ][ owner[q] ].insert( p );
       }
 
-    Assert( comm.size() == nchare, "Number of export/import maps computed must "
-                                   "equal the number of chares desired" );
+    // This check should always be done, as it can result from incorrect user
+    // input compared to the mesh size and not due to programmer error.
+    ErrChk( comm.size() == nchare,
+            "Number of export/import maps computed (" +
+            std::to_string(comm.size()) + ") must equal the number of "
+            "work units desired (" + std::to_string(nchare) + "). "
+            "This happens when the overdecomposition is too large compared to "
+            "the number of work units computed based on the degree of "
+            "virtualization desired. As a result, there would be " +
+            std::to_string(nchare-comm.size()) +" work unit(s) with nothing to "
+            "do. Solution 1: decrease the virtualization (currently: "
+            + std::to_string(g_inputdeck.get< tag::cmd, tag::virtualization >())
+            + ") to a lower value using the command-line argument '-u'. "
+            "Solution 2: decrease the number processing elements (PEs) using "
+            "the charmrun command-line argument '+pN' where N is the number of "
+            "PEs, which implicitly increases the size (and thus decreases the "
+            "number) of work units." );
 
     std::size_t c = 0;
     for (const auto& e : comm) {
@@ -405,16 +427,8 @@ comMaps( const tk::UnsMesh& mesh,
                 "Export/import map recv/send chare ids must be non-negative" );
     }
 
-//   std::cout << "\n";
-//   for (const auto& e : comm) {
-//     std::cout << e.first << " -> ";
-//     for (const auto& x : e.second) {
-//       std::cout << x.first << ": ";
-//       for (auto p : x.second)
-//         std::cout << p << " ";
-//     }
-//     std::cout << '\n';
-//   }
+    // Move ownership array to global scope for Charm++ chares
+    g_colors = std::move( owner );
 
     // Construct final product: a vector of export/import maps associating
     // receiver/sender chare ids to unique communicated point ids for all chare
@@ -430,16 +444,17 @@ comMaps( const tk::UnsMesh& mesh,
     Assert( g_comm.size() == nchare,
             "Number of export/import maps must equal the number of chares" );
 
-//   std::size_t h = 0;
-//   for (const auto& m : g_comm) {
-//     std::cout << h++ << " -> ";
-//     for (const auto& x : m) {
-//       std::cout << x.first << ": ";
-//       for (auto p : x.second)
-//         std::cout << p << " ";
+//     std::size_t h = 0;
+//     for (const auto& m : g_comm) {
+//       std::cout << h++ << " -> ";
+//       for (const auto& x : m) {
+//         std::cout << x.first << ": ";
+//         for (auto p : x.second)
+//           std::cout << p << " ";
+//       }
+//       std::cout << '\n';
+//       std::cout << '\n';
 //     }
-//     std::cout << '\n';
-//   }
   }
 }
 
@@ -495,8 +510,6 @@ int main( int argc, char **argv ) {
       iprint.part( "Factory" );
     }
 
-    using inciter::g_mesh;
-
     // The load is taken to be proportional to the number of points of the mesh
     // which is proportional to the number of unique edges in the mesh. Note
     // that for a typical mesh of tetrahedra nelem = 5.5*npoin, nedge = 7*npoin,
@@ -510,15 +523,24 @@ int main( int argc, char **argv ) {
     uint64_t load;
     int load_tag = 1;
 
-    // Read mesh from file only on MPI rank 0 and distribute load size
+    // Create empty unstructured mesh object (will only load connectivity, so we
+    // call it a graph instead of a mesh)
+    tk::UnsMesh graph;
+
+    // Read mesh graph from file only on MPI rank 0 and distribute load size
     if (peid == 0) {
-      g_mesh = tk::readUnsMesh( cmdline.get< tag::io, tag::input >() );
-      load = g_mesh.nnode();
+      tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
+      er.readGraph();
+      load = graph.size();
       for (int i=1; i<numpes; ++i)
         MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
     } else {
       MPI_Recv( &load, 1, MPI_UINT64_T, 0, load_tag, MPI_COMM_WORLD, &status );
     }
+
+    // Store tetrahedron element connectivity graph in global scope so Charm++
+    // chares will be able to access it
+    inciter::g_tetinpoel = graph.tetinpoel();
 
     // Compute load distribution given total work (load) and user-specified
     // virtualization
@@ -528,16 +550,16 @@ int main( int argc, char **argv ) {
                                  load, numpes, chunksize, remainder );
 
     // Print out info on mesh and load distribution
-    inciter::meshinfo( iprint, g_mesh, chunksize, remainder, nchare );
+    inciter::meshinfo( iprint, graph, load, chunksize, remainder, nchare );
 
-    // Partition mesh using Zoltan and compute communication maps (stored in
-    // g_comMaps) for each mesh partition, each of which will become Charm++
+    // Partition graph using Zoltan and compute communication maps (stored in
+    // g_comMaps) for each graph partition, each of which will become Charm++
     // chares
-    inciter::comMaps( g_mesh, tk::zoltan::partitionMesh( g_mesh, nchare ) );
+    inciter::comMaps( graph, tk::zoltan::partitionMesh(graph, nchare, iprint) );
 
   } catch (...) { tk::processExceptionMPI(); }
 
-  // Run Charm++ main chare using the partitioned mesh
+  // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
   CharmLibExit();
 

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 04:12:01 PM MDT
+  \date      Thu 09 Apr 2015 12:38:44 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -42,7 +42,7 @@ ExodusIIMeshReader::ExodusIIMeshReader( const std::string& filename,
   m_inFile = ex_open( filename.c_str(), EX_READ, &cpuwordsize, &iowordsize,
                       &version );
 
-  ErrChk( m_inFile > 0, "Failed to open file: " + filename );
+  ErrChk( m_inFile > 0, "Failed to open ExodusII file: " + filename );
 }
 
 ExodusIIMeshReader::~ExodusIIMeshReader() noexcept
@@ -68,6 +68,17 @@ ExodusIIMeshReader::read()
 }
 
 void
+ExodusIIMeshReader::readGraph()
+//******************************************************************************
+//  Read only connectivity graph from file
+//! \author J. Bakosi
+//******************************************************************************
+{
+  readHeader();
+  readElements();
+}
+
+void
 ExodusIIMeshReader::readHeader()
 //******************************************************************************
 //  Read ExodusII header
@@ -87,6 +98,9 @@ ExodusIIMeshReader::readHeader()
   ErrChk( m_neblk > 0,
           "Number of element blocks read from file must be larger than zero" );
   ErrChk( ndim == 3, "Need a 3D mesh from file " + m_filename);
+
+  // set mesh graph size
+  m_mesh.size() = static_cast< std::size_t >( m_nnode );
 }
 
 void
@@ -103,6 +117,32 @@ ExodusIIMeshReader::readNodes()
   ErrChk( ex_get_coord( m_inFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
           "Failed to read coordinates from file: " + m_filename );
+}
+
+void
+ExodusIIMeshReader::readNode( std::size_t id,
+                              std::vector< tk::real >& x,
+                              std::vector< tk::real >& y,
+                              std::vector< tk::real >& z )
+//******************************************************************************
+//  Read the coordinates of a single mesh node from ExodusII file
+//! \param[in] id Node id whose coordinates to read
+//! \param[inout] x Vector of x coordinates to push to
+//! \param[inout] y Vector of y coordinates to push to
+//! \param[inout] z Vector of z coordinates to push to
+//! \author J. Bakosi
+//******************************************************************************
+{
+  tk::real px, py, pz;
+
+  ErrChk(
+    ne_get_n_coord(m_inFile, static_cast<int64_t>(id)+1, 1, &px, &py, &pz) == 0,
+    "Failed to read coordinates of node " + std::to_string( id ) +
+      " from file: " + m_filename );
+
+  x.push_back( px );
+  y.push_back( py );
+  z.push_back( pz );
 }
 
 void

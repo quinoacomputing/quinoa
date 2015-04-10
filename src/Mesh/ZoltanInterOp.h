@@ -21,10 +21,14 @@ namespace tk {
 namespace zoltan {
 
 //! Partition mesh using Zoltan's hypergraph algorithm in serial
-tk::tuple::tagged_tuple< tag::psup,  std::pair< std::vector< std::size_t >,
+tk::tuple::tagged_tuple< tag::esup,  std::pair< std::vector< std::size_t >,
                                                 std::vector< std::size_t > >,
-                         tag::owner, std::vector< int > >
-partitionMesh( const tk::UnsMesh& mesh, uint64_t npart );
+                         tag::psup,  std::pair< std::vector< std::size_t >,
+                                                std::vector< std::size_t > >,
+                         tag::owner, std::vector< std::size_t > >
+partitionMesh( const tk::UnsMesh& mesh,
+               uint64_t npart,
+               const tk::Print& print );
 
 } // zoltan::
 } // tk::

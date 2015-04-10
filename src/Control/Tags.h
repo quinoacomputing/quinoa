@@ -115,6 +115,7 @@ struct helpkw {};
 struct cmdinfo {};
 struct ctrinfo {};
 struct group {};
+struct esup {};
 struct psup {};
 struct owner {};
 

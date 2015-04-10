@@ -82,12 +82,10 @@ struct Mesh_common {
     // Shift node IDs to start from zero
     tk::shiftToZero( inpoel );
 
-    // Create unstructured-mesh object and fill point coordinates and element
-    // connectivity
-    tk::UnsMesh outmesh;
+    // Create unstructured-mesh object initializing element connectivity
+    tk::UnsMesh outmesh( std::move(inpoel) );
 
-    for (auto n : inpoel) outmesh.tetinpoel().push_back( n );
-
+    // Fill output mesh point coordinates
     for (std::size_t p=0; p<coord.size()/3; ++p) {
       outmesh.x().push_back( coord[p*3] );
       outmesh.y().push_back( coord[p*3+1] );
@@ -153,7 +151,7 @@ struct Mesh_common {
     ensure_equals( "number of nodes incorrect",
                    coord.size()/3, inmesh.z().size() );
     ensure_equals( "number of elements incorrect",
-                   inpoel.size(), inmesh.tetinpoel().size() );
+                   outmesh.tetinpoel().size(), inmesh.tetinpoel().size() );
 
     // Test if mesh nodes' coordinates are the same as was written out
     std::vector< tk::real > x, y, z;
@@ -167,7 +165,8 @@ struct Mesh_common {
     ensure( "nodes' z coordinates incorrect", z == inmesh.z() );
 
     // Test if mesh element connectivity is the same as was written out
-    ensure( "element connectivity incorrect", inpoel == inmesh.tetinpoel() );
+    ensure( "element connectivity incorrect",
+            outmesh.tetinpoel() == inmesh.tetinpoel() );
 
     // remove mesh file from disk
     tk::rm( filename );

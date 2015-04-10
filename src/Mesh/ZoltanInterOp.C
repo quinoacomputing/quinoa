@@ -5,7 +5,7 @@
   \date      Tue 07 Apr 2015 09:10:16 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Interoperation with the Zoltan library
-  \details   Interoperation with the Zoltan library, used for static mesh
+  \details   Interoperation with the Zoltan library, used for static mesh graph
     partitioning.
 */
 //******************************************************************************
@@ -248,23 +248,25 @@ get_hypergraph( void *data,
 
 static 
 std::tuple< std::pair< std::vector< std::size_t >, std::vector< std::size_t > >,
+            std::pair< std::vector< std::size_t >, std::vector< std::size_t > >,
             std::size_t >
-createHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
+createHyperGraph( const tk::UnsMesh& graph, HGRAPH_DATA& hg )
 //******************************************************************************
 //  Create hypergraph data structure on MPI rank zero
-//! \param[in] mesh Unstructured mesh object reference
+//! \param[in] graph Unstructured mesh graph object reference
 //! \param[inout] hg Hypergraph data structure to fill
-//! \return Number of hyperedges in graph
+//! \return Tuple containing at 0 elements surrounding points, at 1 points
+//!   surrounding points, and at 2 number of hyperedges in graph
 //! \warning This function must not be called on MPI ranks other than zero.
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Get number of points from mesh. The total load is taken to be proportional
-  // to the number of points of the mesh which is proportional to the number of
-  // unique edges in the mesh.
-  auto npoin = mesh.nnode();
+  // Get number of points from graph. The total load is taken to be proportional
+  // to the number of points of the graph which is proportional to the number of
+  // unique edges in the graph.
+  auto npoin = graph.size();
 
-  // Create hypergraph data structure based on mesh
+  // Create hypergraph data structure based on mesh graph
   hg.numMyVertices = static_cast< int >( npoin );
   hg.numMyHEdges = hg.numMyVertices;
   hg.vtxGID = (ZOLTAN_ID_PTR)
@@ -278,11 +280,12 @@ createHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
   for (int i=0; i<hg.numMyVertices; ++i)
     hg.vtxGID[ static_cast<std::size_t>(i) ] = static_cast<ZOLTAN_ID_TYPE>(i);
 
-  // Get tetrahedron mesh connectivity
-  const auto& inpoel = mesh.tetinpoel();
+  // Get tetrahedron mesh graph connectivity
+  const auto& inpoel = graph.tetinpoel();
 
-  // Generate (connectivity graph) points surrounding points for mesh
-  auto psup = tk::genPsup( inpoel, 4, tk::genEsup(inpoel,4) );
+  // Generate (connectivity graph) points surrounding points of graph
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto psup = tk::genPsup( inpoel, 4, esup );
   auto& psup1 = psup.first;
   auto& psup2 = psup.second;
 
@@ -309,7 +312,7 @@ createHyperGraph( const tk::UnsMesh& mesh, HGRAPH_DATA& hg )
     hg.nborIndex[p+1] = hg.nborIndex[p] + j;
   }
 
-  return std::make_tuple( psup, nhedge );
+  return std::make_tuple( esup, psup, nhedge );
 }
 
 static std::size_t
@@ -346,19 +349,25 @@ destroyHyperGraph( HGRAPH_DATA& hg, std::size_t nhedge )
   if (nhedge > 0) free( hg.nborGID );
 }
 
-tuple::tagged_tuple< tag::psup,  std::pair< std::vector< std::size_t >,
+tuple::tagged_tuple< tag::esup,  std::pair< std::vector< std::size_t >,
                                             std::vector< std::size_t > >,
-                     tag::owner, std::vector< int > >
-partitionMesh( const tk::UnsMesh& mesh, uint64_t npart )
+                     tag::psup,  std::pair< std::vector< std::size_t >,
+                                            std::vector< std::size_t > >,
+                     tag::owner, std::vector< std::size_t > >
+partitionMesh( const tk::UnsMesh& graph,
+               uint64_t npart,
+               const tk::Print& print )
 //******************************************************************************
-//  Partition mesh using Zoltan's hypergraph algorithm in serial
-//! \param[in] mesh Unstructured mesh object reference
-//! \param[in] npart Number of desired mesh partitions
-//! \return Tagged tuple containing points surrounding points (at tag::psup),
-//!   see tk::genEsup(), and array of chare ownership IDs mapping mesh points to
-//!   concurrent arsync chares (at tag::owner)
-//! \details This function uses Zoltan to partition the mesh in serial. It
-//!   assumes the mesh only exists on MPI rank 0.
+//  Partition mesh graph using Zoltan's hypergraph algorithm in serial
+//! \param[in] graph Unstructured mesh graph object reference
+//! \param[in] npart Number of desired graph partitions
+//! \param[in] print Pretty printer
+//! \return Tagged tuple containing elements surrounding points (at tag::esup),
+//!   see tk::genEsup(), points surrounding points (at tag::psup), see
+//!   tk::genPsup(), and array of chare ownership IDs mapping graph points
+//!   to concurrent arsync chares (at tag::owner)
+//! \details This function uses Zoltan to partition the mesh graph in serial. It
+//!   assumes the mesh graph only exists on MPI rank 0.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -389,9 +398,10 @@ partitionMesh( const tk::UnsMesh& mesh, uint64_t npart )
 
   HGRAPH_DATA hg;
   std::size_t nhedge = 0;
+  std::pair< std::vector< std::size_t >, std::vector< std::size_t > > esup;
   std::pair< std::vector< std::size_t >, std::vector< std::size_t > > psup;
   if (peid == 0)  
-    std::tie( psup, nhedge ) = createHyperGraph( mesh, hg );
+    std::tie( esup, psup, nhedge ) = createHyperGraph( graph, hg );
   else
     nhedge = emptyHyperGraph( hg );
 
@@ -424,33 +434,32 @@ partitionMesh( const tk::UnsMesh& mesh, uint64_t npart )
       &exportToPart );   // Partition to which each vertex will belong
 
   // Will return, only on MPI rank 0, array of chare IDs corresponding to the
-  // ownership of all points in the mesh, i.e., the coloring
-  const auto e = exportToPart;
-  std::vector< int > owner( e, e + numExport );
+  // ownership of all points in the mesh graph, i.e., the coloring
+  std::vector< std::size_t > owner;
+  for( int p=0; p<numExport; ++p )
+    owner.push_back( static_cast< std::size_t >( exportToPart[p] ) );
 
-//   if (numExport) {
-//     std::cout << "\n" << peid << ": ";
-//     for (int i=0; i<numExport; ++i) std::cout << exportToPart[i] << " ";
-//     std::cout << '\n';
-//   }
+  if (peid == 0) {
+    auto minmax = std::minmax_element( begin(owner), end(owner) );
+    auto nchare = *minmax.second - *minmax.first + 1;
 
-//   std::cout << '\n' << peid << ": " << numImport << ", " << numExport << '\n';
-
-//   if (changes) {
-//     std::cout << " i = " << numImport;
-//     if (numImport) {
-//       std::cout << " { ";
-//       for (int i=0; i<numImport; ++i) std::cout << importGlobalGids[i] << " ";
-//       std::cout << "}";
-//     }
-//     std::cout << " e = " << numExport;
-//     if (numExport) {
-//       std::cout << " { ";
-//       for (int i=0; i<numExport; ++i) std::cout << exportGlobalGids[i] << " ";
-//       std::cout << "}";
-//     }
-//     std::cout << '\n';
-//   }
+    if (npart > nchare)
+      print << "\n>>> WARNING: The number of parts returned from the graph "
+               "partitioner (" + std::to_string(nchare) + ") is smaller than "
+               "the number of work units computed (" + std::to_string(npart) +
+               ") based on the degree of virtualization desired. This may not "
+               "be a problem of itself, however, it may be an indication of a "
+               "too large overdecomposition. Solution 1: decrease the "
+               "virtualization to a lower value using the command-line "
+               "argument '-u'. Solution 2: decrease the number processing "
+               "elements (PEs) using the charmrun command-line argument '+pN' "
+               "where N is the number of PEs, which implicitly increases the "
+               "size (and thus decreases the number) of work units.";
+    else if (npart < nchare)
+      Throw( "The number of parts returned from Zoltan ("
+             + std::to_string(nchare) + ") is larger than the desired number "
+             "of parts (" + std::to_string(npart) + ")?" );
+  }
 
   // Destructor lambda
   auto destruct = [&]() {
@@ -472,7 +481,7 @@ partitionMesh( const tk::UnsMesh& mesh, uint64_t npart )
   // Free hypergraph and Zoltan data structure
   destruct();
 
-  return { psup, owner };
+  return { esup, psup, owner };
 }
 
 } // zoltan::
