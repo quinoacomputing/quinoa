@@ -38,6 +38,15 @@ class ExodusIIMeshReader : public Reader {
     //! Read ExodusII mesh from file
     void read() override;
 
+    //! Read only connectivity graph from file
+    void readGraph();
+
+    //  Read the coordinates of a single mesh node from ExodusII file
+    void readNode( std::size_t id,
+                   std::vector< tk::real >& x,
+                   std::vector< tk::real >& y,
+                   std::vector< tk::real >& z );
+
   private:
     //! Read ExodusII header
     void readHeader();

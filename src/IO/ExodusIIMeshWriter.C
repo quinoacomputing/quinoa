@@ -158,3 +158,61 @@ ExodusIIMeshWriter::writeElemBlock( int& elclass,
         m_filename );
   }
 }
+
+void
+ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time )
+//******************************************************************************
+//  Write time stamp to ExodusII file
+//! \param[in] it Iteration number
+//! \param[in] time Time
+//! \author J. Bakosi
+//******************************************************************************
+{
+  ErrChk( ex_put_time( m_outFile, it, &time ) == 0,
+          "Failed to time stamp to file: " + m_filename );
+}
+
+void
+ExodusIIMeshWriter::writeVarNames( const std::vector< std::string >& nvar )
+//******************************************************************************
+//  Write the number and names of output variables to ExodusII file
+//! \param[in] nvar Variable names
+//! \author J. Bakosi
+//******************************************************************************
+{
+  ErrChk(
+    ex_put_var_param( m_outFile, "n", static_cast<int>(nvar.size()) ) == 0,
+    "Failed to write the number of output variables to file: " + m_filename );
+
+  std::vector< const char* > names;
+  std::transform( std::begin(nvar), std::end(nvar), std::back_inserter(names),
+                  std::mem_fn(&std::string::c_str) );
+
+  ErrChk( ex_put_var_names( m_outFile,
+                            "n",
+                            static_cast<int>(nvar.size()),
+                            const_cast<char**>(names.data()) ) == 0,
+          "Failed to write the number of output variables to file: " +
+            m_filename );
+}
+
+void
+ExodusIIMeshWriter::writeNodeScalar( int it,
+                                     int varid,
+                                     const std::vector< tk::real >& var )
+//******************************************************************************
+//  Write node scalar field to ExodusII file
+//! \param[in] it Iteration number
+//! \param[in] time Time
+//! \param[in] varid Variable id
+//! \param[in] var Vector of variable to output
+//! \author J. Bakosi
+//******************************************************************************
+{
+  ErrChk( ex_put_nodal_var( m_outFile,
+                            it,
+                            varid,
+                            static_cast< int64_t >( var.size() ),
+                            var.data() ) == 0,
+          "Failed to write node scalar to file: " + m_filename );
+}

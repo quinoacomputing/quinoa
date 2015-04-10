@@ -38,6 +38,17 @@ class ExodusIIMeshWriter : public Writer {
     //! Write ExodusII mesh to file
     void write() override;
 
+    //!  Write time stamp to ExodusII file
+    void writeTimeStamp( int it, tk::real time );
+
+    //! Write the number and names of output variables to ExodusII file
+    void writeVarNames( const std::vector< std::string >& nvar );
+
+    //!  Write node scalar field to ExodusII file
+    void writeNodeScalar( int it,
+                          int varid,
+                          const std::vector< tk::real >& var );
+
   private:
     //! Write ExodusII header
     void writeHeader();

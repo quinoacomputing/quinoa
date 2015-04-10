@@ -20,19 +20,47 @@
 
 extern CProxy_Main mainProxy;
 
+namespace inciter {
+
+extern
+  std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
+
+} // inciter::
+
 using inciter::Conductor;
 
 Conductor::Conductor() :
-  m_print( g_inputdeck.get< tag::cmd, tag::verbose >() ? std::cout : std::clog )
+  m_print( g_inputdeck.get<tag::cmd,tag::verbose>() ? std::cout : std::clog ),
+  m_count( 0, 0 ),
+  m_timer( 1 )  // start timer
 //******************************************************************************
 // Constructor
 //! \author J. Bakosi
 //******************************************************************************
 {
-  // Start timer measuring total integration time
-  m_timer.emplace_back();
+  // Get number of chares
+  m_count.get< tag::chare >() =
+    static_cast< int >( g_comm.empty() ? 1 : g_comm.size() );
 
-  mainProxy.finalize();
+  // Fire up array of asynchronous performers
+  CProxyPerf::ckNew( thisProxy, m_count.get< tag::chare >() );
+}
+
+void
+Conductor::init()
+//******************************************************************************
+// Wait for all performers to finish initializing their data structures
+//! \author J. Bakosi
+//******************************************************************************
+{
+  // Increase number of performers completing initialization
+  ++m_count.get< tag::init >();
+
+  // Wait for all performers completing initialization
+  if (m_count.get< tag::init >() == m_count.get< tag::chare >()) {
+    mainProxy.timestamp( "Chare initialization", m_timer[0].dsec() );
+    mainProxy.finalize();
+  }
 }
 
 #if defined(__clang__) || defined(__GNUC__)

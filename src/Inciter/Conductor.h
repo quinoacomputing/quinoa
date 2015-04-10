@@ -16,8 +16,6 @@
 #ifndef Conductor_h
 #define Conductor_h
 
-#include <InciterPrint.h>
-
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wconversion"
@@ -28,6 +26,8 @@
 #if defined(__clang__) || defined(__GNUC__)
   #pragma GCC diagnostic pop
 #endif
+
+#include <InciterPrint.h>
 
 namespace inciter {
 
@@ -42,11 +42,18 @@ class Conductor : public CBase_Conductor {
     //! Constructor
     explicit Conductor();
 
+    //! Finish initialization
+    void init();
+
   private:
     using CProxyPerf = CProxy_Performer< CProxy_Conductor >;
 
     //! Pretty printer
     InciterPrint m_print;
+
+    //! Counters of performer chares completing a function
+    tk::tuple::tagged_tuple< tag::init,  int,
+                             tag::chare, int > m_count;
 
     std::vector< tk::Timer > m_timer;           //!< Timers
 };
