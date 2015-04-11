@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/FileParser.C
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:06:50 PM MDT
+  \date      Sat 11 Apr 2015 07:22:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     File parser base class definition
   \details   File parser base class defintion. File parser base serves as a
@@ -12,6 +12,7 @@
 */
 //******************************************************************************
 
+#include <map>
 #include <fstream>
 
 #include <FileParser.h>

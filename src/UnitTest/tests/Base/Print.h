@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Print.h
   \author    J. Bakosi
-  \date      Mon 23 Feb 2015 08:21:04 AM MST
+  \date      Sat 11 Apr 2015 07:58:00 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -191,14 +191,14 @@ template<> template<>
 void Print_object::test< 15 >() {
   set_test_name( "time(title,clocks) does not throw" );
 
-  std::map< std::string, tk::Timer::Watch > timesw;
-  timesw.emplace( "first timer", tk::Timer::Watch() );
-  timesw.emplace( "second timer", tk::Timer::Watch() );
+  std::vector< std::pair< std::string, tk::Timer::Watch > > timesw;
+  timesw.emplace_back( "first timer", tk::Timer::Watch() );
+  timesw.emplace_back( "second timer", tk::Timer::Watch() );
   prv.time( "timings as Watch", timesw );
 
-  std::map< std::string, tk::real > timesd;
-  timesd.emplace( "first timer", tk::Timer().dsec() );
-  timesd.emplace( "second timer", tk::Timer().dsec() );
+  std::vector< std::pair< std::string, tk::real > > timesd;
+  timesd.emplace_back( "first timer", tk::Timer().dsec() );
+  timesd.emplace_back( "second timer", tk::Timer().dsec() );
   prv.time( "timings as dsec", timesd );
 }
 

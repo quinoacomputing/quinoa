@@ -2,7 +2,7 @@
 /*!
   \file      src/Base/Print.h
   \author    J. Bakosi
-  \date      Fri 20 Mar 2015 11:49:39 AM MDT
+  \date      Sat 11 Apr 2015 07:49:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     General purpose pretty printer functionality
   \details   This file contains general purpose printer functions. Using the
@@ -18,7 +18,6 @@
 #include <sstream>
 #include <iomanip>
 #include <list>
-#include <map>
 
 #include <boost/format.hpp>
 
@@ -240,7 +239,8 @@ class Print {
     //! \author J. Bakosi
     template< Style s = VERBOSE, class ClockFormat >
     void time( const std::string& title,
-               const std::map< std::string, ClockFormat >& clock ) const
+               const std::vector<
+                 std::pair< std::string, ClockFormat > >& clock ) const
     {
       section<s>( title );
       for (const auto& c : clock) item<s>( c.first, c.second );

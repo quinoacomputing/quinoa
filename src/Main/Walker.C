@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 06:47:51 AM MDT
+  \date      Sat 11 Apr 2015 07:51:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -167,7 +167,7 @@ class Main : public CBase_Main {
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
+        m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
       } catch (...) { tk::processExceptionCharm(); }
     }
@@ -176,7 +176,7 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
@@ -188,7 +188,7 @@ class Main : public CBase_Main {
     //! Add time stamp contributing to final timers output
     void timestamp( std::string label, tk::real stamp ) {
       try{
-        m_timestamp.emplace( label, tk::hms( stamp ) );
+        m_timestamp.emplace_back( label, tk::hms( stamp ) );
       } catch (...) { tk::processExceptionCharm(); }
     }
 
@@ -200,7 +200,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                 //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Timer::Watch > m_timestamp;
+    std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 };
 
 //! \brief Charm++ chare execute
