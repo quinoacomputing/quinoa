@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:53:48 AM MDT
+  \date      Fri 10 Apr 2015 05:31:34 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -82,7 +82,7 @@ class Main : public CBase_Main {
 
     void execute() {
       try {
-        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // does not fire up async chares
         finalize();
       } catch (...) { tk::processExceptionCharm(); }

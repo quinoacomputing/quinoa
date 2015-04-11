@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Performer.h
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 03:39:11 PM MDT
+  \date      Fri 10 Apr 2015 03:58:33 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Performer advances the Euler equations
   \details   Performer advances the Euler equations. There are a potentially
@@ -73,7 +73,7 @@ class Performer : public CBase_Performer< Proxy > {
       // Read coordinates of owned and received mesh nodes
       initCoords( gnode );
       // Output chare mesh and nodal chare id field to file
-      //writeChareId( gnode.size() );
+      writeChareId( gnode.size() );
       // Signal host that initialization is complete
       m_proxy.init();
     }

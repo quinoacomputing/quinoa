@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 02:04:16 PM MDT
+  \date      Sat 11 Apr 2015 05:55:02 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -68,6 +68,18 @@ std::vector< std::size_t > g_colors;
 //! Vector of export/import maps for all chare ids (empty if nchares = 1)
 std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 
+//! \brief Time stamps in h:m:s for the initial MPI portion
+//! \details Time stamps collected here are those collected by the initial MPI
+//!   portion and are displayed by the Charm++ main chare at the end. While this
+//!   map of timers is declared in global scope (so that the Charm++ main chare
+//!   can access it), it is intentionally NOT declared in the Charm++ main
+//!   module interface file for Inciter in Main/inciter.ci, so that the Charm++
+//!   runtime system does not migrate it across all PEs. This is okay, since
+//!   since there is no need for any of the other Charm++ chares to access it in
+//!   the future. In fact, the main chare grabs it and swallows it right away
+//!   during its constructor.
+std::map< std::string, tk::Timer::Watch > g_timestamp;
+
 //! Conductor Charm++ proxy facilitating call-back to Conductor by the
 //! individual performers
 CProxy_Conductor g_ConductorProxy;
@@ -111,7 +123,9 @@ class Main : public CBase_Main {
       // Create Inciter driver
       m_driver( inciter::InciterDriver( m_print ) ),
       // Start new timer measuring the total runtime
-      m_timer(1)
+      m_timer(1),
+      // Import, i.e., swallow, timers from the initial MPI portion
+      m_timestamp( std::move(inciter::g_timestamp) )
     {
       const auto& cmdline = inciter::g_inputdeck.get< tag::cmd >();
       const auto helpcmd = cmdline.get< tag::help >();
@@ -136,7 +150,7 @@ class Main : public CBase_Main {
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();
       } catch (...) { tk::processExceptionCharm(); }
     }
@@ -145,7 +159,7 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+          m_timestamp.emplace( "Total Charm++ runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
@@ -469,6 +483,10 @@ comMaps( const tk::UnsMesh& graph,
 //! \author J. Bakosi
 int main( int argc, char **argv ) {
 
+  using inciter::g_timestamp;
+
+  tk::Timer mpi;        // start timing the MPI portion
+
   int peid, numpes;
   MPI_Status status;
 
@@ -529,8 +547,10 @@ int main( int argc, char **argv ) {
 
     // Read mesh graph from file only on MPI rank 0 and distribute load size
     if (peid == 0) {
+      tk::Timer timer;
       tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
       er.readGraph();
+      g_timestamp.emplace( "Read mesh graph from file", timer.hms() );
       load = graph.size();
       for (int i=1; i<numpes; ++i)
         MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
@@ -555,9 +575,13 @@ int main( int argc, char **argv ) {
     // Partition graph using Zoltan and compute communication maps (stored in
     // g_comMaps) for each graph partition, each of which will become Charm++
     // chares
+    tk::Timer t;
     inciter::comMaps( graph, tk::zoltan::partitionMesh(graph, nchare, iprint) );
+    g_timestamp.emplace("Partition mesh & compute communication maps", t.hms());
 
   } catch (...) { tk::processExceptionMPI(); }
+
+  g_timestamp.emplace( "Total MPI runtime", mpi.hms());
 
   // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );
