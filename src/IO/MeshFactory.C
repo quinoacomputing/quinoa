@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.C
   \author    J. Bakosi
-  \date      Sat 04 Apr 2015 07:40:42 AM MDT
+  \date      Sat 11 Apr 2015 06:34:20 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -82,10 +82,13 @@ pickOutput( const std::string& filename )
 }
 
 UnsMesh
-readUnsMesh( const std::string& filename )
+readUnsMesh( const std::string& filename,
+             std::pair< std::string, tk::real >& timestamp )
 //******************************************************************************
 //  Read unstructured mesh from file
 //! \param[in] filename Filename to read mesh from
+//! \param[out] timestamp A time stamp consisting of a timer label (a string),
+//!   and a time state (a tk::real in seconds) measuring the mesh read time
 //! \return Unstructured mesh object
 //! \author J. Bakosi
 //******************************************************************************
@@ -105,18 +108,24 @@ readUnsMesh( const std::string& filename )
         ( readers, MeshReaderType::EXODUSII, filename, std::ref(mesh) );
 
   // Read in mesh
+  tk::Timer t;
   instantiate( readers, detectInput( filename ) )->read();
+  timestamp = std::make_pair( "Read mesh from file", t.dsec() );
 
   // Return (move out) mesh object
   return mesh;
 }
 
 void
-writeUnsMesh( const std::string& filename, const UnsMesh& mesh )
+writeUnsMesh( const std::string& filename,
+              const UnsMesh& mesh,
+              std::pair< std::string, tk::real >& timestamp )
 //******************************************************************************
 //  Write unstructured mesh to file
 //! \param[in] filename Filename to write mesh to
 //! \param[in] mesh Unstructured mesh object to write from
+//! \param[out] timestamp A time stamp consisting of a timer label (a string),
+//!   and a time state (a tk::real in seconds) measuring the mesh write time
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -132,7 +141,9 @@ writeUnsMesh( const std::string& filename, const UnsMesh& mesh )
         ( writers, MeshWriterType::EXODUSII, filename, std::ref(mesh) );
 
   // Write out mesh
+  tk::Timer t;
   instantiate( writers, pickOutput( filename ) )->write();
+  timestamp = std::make_pair( "Write mesh to file", t.dsec() );
 }
 
 } // tk::

@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 05:31:25 PM MDT
+  \date      Sat 11 Apr 2015 06:47:51 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -124,7 +124,7 @@ class Main : public CBase_Main {
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
-    //!   a driver. Since Charm++ is fully asynchronous, the constructure
+    //!   a driver. Since Charm++ is fully asynchronous, the constructor
     //!   usually spawns asynchronous objects and immediately exits. Thus in the
     //!   body of the main chare constructor we fire up an 'execute' chare,
     //!   which then calls back to Main::execute(). Finishing the main chare
