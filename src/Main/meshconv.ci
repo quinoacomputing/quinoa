@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/meshconv.ci
   \author    J. Bakosi
-  \date      Mon 02 Mar 2015 02:01:06 PM MST
+  \date      Sat 11 Apr 2015 06:44:09 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Charm++ module interface file for meshconv
   \details   Charm++ module interface file for the mesh file converter,
@@ -19,6 +19,9 @@ mainmodule meshconv {
     entry Main( CkArgMsg* msg );
     entry void execute();
     entry void finalize();
+    entry void timestamp( std::string label, tk::real stamp );
+    entry
+      void timestamp( const std::vector< std::pair<std::string,tk::real> >& s );
   }
 
   chare execute { entry execute(); }

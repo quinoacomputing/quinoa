@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConvDriver.C
   \author    J. Bakosi
-  \date      Sat 04 Apr 2015 07:42:08 AM MDT
+  \date      Sat 11 Apr 2015 06:50:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh converter driver
   \details   Mesh converter driver.
@@ -16,7 +16,20 @@
 #include <MeshConv/CmdLine/Parser.h>
 #include <MeshFactory.h>
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
+#include <meshconv.decl.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
+
 using meshconv::MeshConvDriver;
+
+extern CProxy_Main mainProxy;
 
 MeshConvDriver::MeshConvDriver( const tk::Print& print,
                                 const ctr::CmdLine& cmdline )
@@ -41,5 +54,8 @@ MeshConvDriver::execute() const
 //! \author J. Bakosi
 //******************************************************************************
 {
-  tk::writeUnsMesh( m_output, tk::readUnsMesh( m_input ) );
+  std::pair< std::string, tk::real > rtime, wtime;
+  tk::writeUnsMesh( m_output, tk::readUnsMesh(m_input,rtime), wtime );
+  mainProxy.timestamp( { rtime, wtime } );
+  mainProxy.finalize();
 }

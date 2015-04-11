@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/MeshFactory.h
   \author    J. Bakosi
-  \date      Sat 04 Apr 2015 07:40:21 AM MDT
+  \date      Sat 11 Apr 2015 06:25:14 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unstructured mesh reader and writer factory
   \details   Unstructured mesh reader and writer factory.
@@ -35,10 +35,13 @@ MeshReaderType detectInput( const std::string& filename );
 MeshWriterType pickOutput( const std::string& filename );
 
 //! Read unstructured mesh from file
-UnsMesh readUnsMesh( const std::string& filename );
+UnsMesh readUnsMesh( const std::string& filename,
+                     std::pair< std::string, tk::real >& timestamp );
 
 //! Write unstructured mesh to file
-void writeUnsMesh( const std::string& filename, const UnsMesh& mesh );
+void writeUnsMesh( const std::string& filename,
+                   const UnsMesh& mesh,
+                   std::pair< std::string, tk::real >& timestamp );
 
 } // tk::
 

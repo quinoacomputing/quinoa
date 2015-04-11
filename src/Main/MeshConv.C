@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/MeshConv.C
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 05:31:34 PM MDT
+  \date      Sat 11 Apr 2015 06:52:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Mesh file converter Charm++ main chare
   \details   Mesh file converter Charm++ main chare. This file contains the
@@ -42,16 +42,15 @@ class Main : public CBase_Main {
     //!   program, called by the Charm++ runtime system. The constructor does
     //!   basic initialization steps, e.g., parser the command-line, prints out
     //!   some useful information to screen (in verbose mode), and instantiates
-    //!   a driver. Since Charm++ is fully asynchronous, the constructure
+    //!   a driver. Since Charm++ is fully asynchronous, the constructor
     //!   usually spawns asynchronous objects and immediately exits. Thus in the
     //!   body of the main chare constructor we fire up an 'execute' chare,
     //!   which then calls back to Main::execute(). Finishing the main chare
     //!   constructor the Charm++ runtime system then starts the
     //!   network-migration of all global-scope data (if any). The execute chare
     //!   calling back to Main::execute() signals the end of the migration of
-    //!   the global-scope data. Then we are ready to execute the driver. Since
-    //!   the mesh converter is not parallel at this time, once the driver
-    //!   finished its execute() function we simply call finalize() which exits
+    //!   the global-scope data. Then we are ready to execute the driver which
+    //!   calls back to Main::finalize() when it finished. Then finalize() exits
     //!   by calling Charm++'s CkExit(), shutting down the runtime system.
     //! \see http://charm.cs.illinois.edu/manuals/html/charm++/manual.html
     Main( CkArgMsg* msg )
@@ -83,8 +82,7 @@ class Main : public CBase_Main {
     void execute() {
       try {
         m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
-        m_driver.execute();       // does not fire up async chares
-        finalize();
+        m_driver.execute();
       } catch (...) { tk::processExceptionCharm(); }
     }
 
@@ -97,6 +95,16 @@ class Main : public CBase_Main {
       // Tell the Charm++ runtime system to exit
       CkExit();
     }
+
+    //! Add a time stamp contributing to final timers output
+    void timestamp( std::string label, tk::real stamp ) {
+      try {
+        m_timestamp.emplace( label, tk::hms( stamp ) );
+      } catch (...) { tk::processExceptionCharm(); }
+    }
+    //! Add multiple time stamps contributing to final timers output
+    void timestamp( const std::vector< std::pair< std::string, tk::real > >& s )
+    { for (const auto& t : s) timestamp( t.first, t.second ); }
 
   private:
     meshconv::ctr::CmdLine m_cmdline;           //!< Command line
@@ -116,4 +124,13 @@ class Main : public CBase_Main {
 //! \author J. Bakosi
 struct execute : CBase_execute { execute() { mainProxy.execute(); } };
 
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wconversion"
+#endif
+
 #include <meshconv.def.h>
+
+#if defined(__clang__) || defined(__GNUC__)
+  #pragma GCC diagnostic pop
+#endif
