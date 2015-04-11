@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Fri 10 Apr 2015 05:31:56 PM MDT
+  \date      Sat 11 Apr 2015 07:56:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -171,7 +171,7 @@ class Main : public CBase_Main {
 
     void execute() {
       try {
-        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
+        m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
       } catch (...) { tk::processExceptionCharm(); }
     }
@@ -179,8 +179,8 @@ class Main : public CBase_Main {
     void finalize( bool worked ) {
       try {
         if (worked && !m_timer.empty()) {
-          m_timestamp.emplace( "Serial and Charm++ tests runtime",
-                               m_timer[0].hms() );
+          m_timestamp.emplace_back( "Serial and Charm++ tests runtime",
+                                    m_timer[0].hms() );
           m_print.time( "Serial and Charm++ test suite timers (h:m:s)",
                         m_timestamp );
           m_print.endpart();
@@ -199,7 +199,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                   //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Timer::Watch > m_timestamp;
+    std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 };
 
 //! \brief Charm++ chare execute
@@ -321,8 +321,8 @@ int main( int argc, char **argv ) {
 
     if (peid == 0) {
       unittest::assess( uprint, "MPI", nfail, nwarn, nskip, nexcp, ncomplete );
-      std::map< std::string, tk::Timer::Watch > timestamp;
-      timestamp.emplace( "MPI tests runtime", timer.hms() );
+      std::vector< std::pair< std::string, tk::Timer::Watch > > timestamp;
+      timestamp.emplace_back( "MPI tests runtime", timer.hms() );
       uprint.time( "MPI test suite timers (h:m:s)", timestamp );
     }
 

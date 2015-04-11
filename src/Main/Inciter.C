@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 05:55:02 AM MDT
+  \date      Sat 11 Apr 2015 07:52:12 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -78,7 +78,7 @@ std::vector< std::map< std::size_t, std::vector< std::size_t > > > g_comm;
 //!   since there is no need for any of the other Charm++ chares to access it in
 //!   the future. In fact, the main chare grabs it and swallows it right away
 //!   during its constructor.
-std::map< std::string, tk::Timer::Watch > g_timestamp;
+std::vector< std::pair< std::string, tk::Timer::Watch > > g_timestamp;
 
 //! Conductor Charm++ proxy facilitating call-back to Conductor by the
 //! individual performers
@@ -150,7 +150,7 @@ class Main : public CBase_Main {
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
+        m_timestamp.emplace_back("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();
       } catch (...) { tk::processExceptionCharm(); }
     }
@@ -159,7 +159,7 @@ class Main : public CBase_Main {
     void finalize() {
       try {
         if (!m_timer.empty()) {
-          m_timestamp.emplace( "Total Charm++ runtime", m_timer[0].hms() );
+          m_timestamp.emplace_back("Total Charm++ runtime", m_timer[0].hms());
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
@@ -171,7 +171,7 @@ class Main : public CBase_Main {
     //! Add time stamp contributing to final timers output
     void timestamp( std::string label, tk::real stamp ) {
       try {
-        m_timestamp.emplace( label, tk::hms( stamp ) );
+        m_timestamp.emplace_back( label, tk::hms( stamp ) );
       } catch (...) { tk::processExceptionCharm(); }
     }
 
@@ -181,7 +181,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                 //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Timer::Watch > m_timestamp;
+    std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 };
 
 //! \brief Charm++ chare execute
@@ -550,7 +550,7 @@ int main( int argc, char **argv ) {
       tk::Timer timer;
       tk::ExodusIIMeshReader er( cmdline.get< tag::io, tag::input >(), graph );
       er.readGraph();
-      g_timestamp.emplace( "Read mesh graph from file", timer.hms() );
+      g_timestamp.emplace_back( "Read mesh graph from file", timer.hms() );
       load = graph.size();
       for (int i=1; i<numpes; ++i)
         MPI_Send( &load, 1, MPI_UINT64_T, i, load_tag, MPI_COMM_WORLD );
@@ -577,11 +577,11 @@ int main( int argc, char **argv ) {
     // chares
     tk::Timer t;
     inciter::comMaps( graph, tk::zoltan::partitionMesh(graph, nchare, iprint) );
-    g_timestamp.emplace("Partition mesh & compute communication maps", t.hms());
+    g_timestamp.emplace_back("Partition mesh & compute communication maps", t.hms());
 
   } catch (...) { tk::processExceptionMPI(); }
 
-  g_timestamp.emplace( "Total MPI runtime", mpi.hms());
+  g_timestamp.emplace_back( "Total MPI runtime", mpi.hms());
 
   // Run Charm++ main chare using the partitioned graph
   CharmLibInit( MPI_COMM_WORLD, argc, argv );

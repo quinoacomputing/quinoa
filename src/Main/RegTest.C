@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RegTest.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:53:56 AM MDT
+  \date      Sat 11 Apr 2015 07:50:33 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RegTest's Charm++ main chare and main().
   \details   RegTest's Charm++ main chare and main(). This file contains
@@ -99,7 +99,7 @@ class Main : public CBase_Main {
 
     void execute() {
       try {
-        m_timestamp.emplace(
+        m_timestamp.emplace_back(
           "Migration of global-scope data + fire up all tests",
            m_timer[1].hms() );
         m_driver.execute();       // fires up async chares
@@ -109,7 +109,7 @@ class Main : public CBase_Main {
     void finalize( bool worked ) {
       try {
         if (worked && !m_timer.empty()) {
-          m_timestamp.emplace( "Total runtime", m_timer[0].hms() );
+          m_timestamp.emplace_back( "Total runtime", m_timer[0].hms() );
           m_print.time( "Timers (h:m:s)", m_timestamp );
           m_print.endpart();
         }
@@ -126,7 +126,7 @@ class Main : public CBase_Main {
     std::vector< tk::Timer > m_timer;                   //!< Timers
 
     //! Time stamps in h:m:s with labels
-    std::map< std::string, tk::Timer::Watch > m_timestamp;
+    std::vector< std::pair< std::string, tk::Timer::Watch > > m_timestamp;
 };
 
 //! \brief Charm++ chare execute
