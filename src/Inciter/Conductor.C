@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Conductor.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:32:33 AM MDT
+  \date      Fri 10 Apr 2015 05:29:47 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Conductor drives the time integration of the Euler equations
   \details   Conductor drives the time integration of the Euler equations.
@@ -58,7 +58,7 @@ Conductor::init()
 
   // Wait for all performers completing initialization
   if (m_count.get< tag::init >() == m_count.get< tag::chare >()) {
-    mainProxy.timestamp( "Chare initialization", m_timer[0].dsec() );
+    mainProxy.timestamp( "Initialize chare array", m_timer[0].dsec() );
     mainProxy.finalize();
   }
 }

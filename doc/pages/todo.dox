@@ -83,6 +83,8 @@
  - Add side/node sets
  - Add of extra features, e.g., renumbering, partitioning, etc.
  - Should STLMesh use UnsMesh instead?
+ - Seems CPU-bound for large meshes. Can it be made faster? Possibly
+   parallelized?
 
 ### Documentation
  - Add to-level LICENSE and README (describing how to build tpl, code, and doc)
@@ -153,7 +155,7 @@
 
 <hr>
 <div><small>
-<em>Page last updated:</em> Wed 08 Apr 2015 08:35:59 AM MDT
+<em>Page last updated:</em> Fri 10 Apr 2015 06:23:55 PM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

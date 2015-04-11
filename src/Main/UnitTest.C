@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Thu 09 Apr 2015 01:02:17 PM MDT
+  \date      Fri 10 Apr 2015 05:31:56 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -171,7 +171,7 @@ class Main : public CBase_Main {
 
     void execute() {
       try {
-        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
       } catch (...) { tk::processExceptionCharm(); }
     }

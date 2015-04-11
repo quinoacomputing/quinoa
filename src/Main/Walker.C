@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Walker.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:53:12 AM MDT
+  \date      Fri 10 Apr 2015 05:31:25 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Random walker Charm++ main chare
   \details   Random walker Charm++ main chare. This file contains the definition
@@ -167,7 +167,7 @@ class Main : public CBase_Main {
     //! Execute driver created and initialized by constructor
     void execute() {
       try {
-        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
       } catch (...) { tk::processExceptionCharm(); }
     }

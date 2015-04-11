@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/RNGTest.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 07:53:02 AM MDT
+  \date      Fri 10 Apr 2015 05:31:06 PM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     RNGTest's random number generator test suite's Charm++ main chare.
   \details   RNGTest's random number generator test suite's Charm++ main chare.
@@ -173,7 +173,7 @@ class Main : public CBase_Main {
 
     void execute() {
       try {
-        m_timestamp.emplace("Migration of global-scope data", m_timer[1].hms());
+        m_timestamp.emplace("Migrate global-scope data", m_timer[1].hms());
         m_driver.execute();       // fires up async chares
       } catch (...) { tk::processExceptionCharm(); }   
     }
