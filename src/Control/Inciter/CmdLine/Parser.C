@@ -2,7 +2,7 @@
 /*!
   \file      src/Control/Inciter/CmdLine/Parser.C
   \author    J. Bakosi
-  \date      Wed 08 Apr 2015 08:03:02 AM MDT
+  \date      Sun 12 Apr 2015 07:20:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter's comamnd line parser
   \details   This file defines the command-line argument parser for the
@@ -44,13 +44,15 @@ using inciter::CmdLineParser;
 CmdLineParser::CmdLineParser( int argc,
                               char** argv,
                               const tk::Print& print,
-                              ctr::CmdLine& cmdline ) :
+                              ctr::CmdLine& cmdline,
+                              int peid ) :
   StringParser( argc, argv )
 //******************************************************************************
 //  Contructor: parse the command line for Inciter
 //! \param[in] argc Number of C-style character arrays in argv
 //! \param[in] argv C-style character array of character arrays
 //! \param[in] print Pretty printer
+//! \param[in] peid Processing element id (warnings will only be printed on 0)
 //! \param[inout] cmdline Command-line stack where data is stored from parsing
 //! \author  J. Bakosi
 //******************************************************************************
@@ -72,7 +74,7 @@ CmdLineParser::CmdLineParser( int argc,
   // sensible message. This is done in e.g., tk::grm::store_option. Resetting
   // the global g_print, to that of passed in as the constructor argument allows
   // not to have to create a new pretty printer, but use the existing one.
-  tk::grm::g_print.reset( print.save() );
+  if (peid == 0) tk::grm::g_print.reset( print.save() );
 
   // Parse command line string by populating the underlying tagged tuple:
   // basic_parse() below gives debug info during parsing, use it for debugging
@@ -81,7 +83,7 @@ CmdLineParser::CmdLineParser( int argc,
   pegtl::dummy_parse< cmd::read_string >( input, cmd );
 
   // Echo errors and warnings accumulated during parsing
-  diagnostics( print, cmd.get< tag::error >() );
+  if (peid == 0) diagnostics( print, cmd.get< tag::error >() );
 
   // Strip command line (and its underlying tagged tuple) from PEGTL instruments
   // and transfer it out
