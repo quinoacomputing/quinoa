@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/Inciter.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:52:12 AM MDT
+  \date      Sun 12 Apr 2015 07:22:27 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Inciter, computational shock hydrodynamics tool, Charm++ main
     chare.
@@ -267,6 +267,9 @@ parseCmdLine( int argc, char** argv )
 //! \author J. Bakosi
 //******************************************************************************
 {
+  int peid;
+  MPI_Comm_rank( MPI_COMM_WORLD, &peid );
+
   // Create basic pretty printer
   tk::Print print;    // quiet output by default using print, see tk::Print ctor
 
@@ -274,7 +277,7 @@ parseCmdLine( int argc, char** argv )
   inciter::ctr::CmdLine cmdline;
 
   // Parse command line into cmdline
-  inciter::CmdLineParser cmdParser( argc, argv, print, cmdline );
+  inciter::CmdLineParser cmdParser( argc, argv, print, cmdline, peid );
 
   // Echo help if requested and make sure mandatory command-line args are set
   inciter::help( argc, argv, cmdline, print );
@@ -520,7 +523,7 @@ int main( int argc, char **argv ) {
       iprint.item( "Control file", cmdline.get< tag::io, tag::control >() );
 
     inciter::InputDeckParser
-      inputdeckParser( iprint, cmdline, inciter::g_inputdeck );
+      inputdeckParser( iprint, cmdline, inciter::g_inputdeck, peid );
 
     if (peid == 0) {
       iprint.item( "Parsed control file", "success" );

@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 04:08:46 PM MDT
+  \date      Sat 11 Apr 2015 10:10:35 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class definition. Currently, this is a bare
@@ -203,7 +203,6 @@ ExodusIIMeshWriter::writeNodeScalar( int it,
 //******************************************************************************
 //  Write node scalar field to ExodusII file
 //! \param[in] it Iteration number
-//! \param[in] time Time
 //! \param[in] varid Variable id
 //! \param[in] var Vector of variable to output
 //! \author J. Bakosi
