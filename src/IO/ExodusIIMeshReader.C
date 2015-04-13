@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshReader.C
   \author    J. Bakosi
-  \date      Thu 09 Apr 2015 12:38:44 PM MDT
+  \date      Sun 12 Apr 2015 08:05:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh reader
   \details   ExodusII mesh reader class definition. Currently, this is a bare
@@ -52,7 +52,8 @@ ExodusIIMeshReader::~ExodusIIMeshReader() noexcept
 //******************************************************************************
 {
   if ( ex_close(m_inFile) < 0 )
-    printf( ">>> WARNING: Failed to close file: %s\n", m_filename.c_str() );
+    printf( ">>> WARNING: Failed to close ExodusII file: %s\n",
+            m_filename.c_str() );
 }
 
 void
@@ -91,13 +92,14 @@ ExodusIIMeshReader::readHeader()
   ErrChk(
     ex_get_init( m_inFile, title, &ndim, &m_nnode, &nel, &m_neblk, &nnodeset,
                  &nelemset ) == 0,
-    "Failed to read header from file: " + m_filename );
+    "Failed to read header from ExodusII file: " + m_filename );
 
   ErrChk( m_nnode > 0,
-          "Number of nodes read from file must be larger than zero" );
+          "Number of nodes read from ExodusII file must be larger than zero" );
   ErrChk( m_neblk > 0,
-          "Number of element blocks read from file must be larger than zero" );
-  ErrChk( ndim == 3, "Need a 3D mesh from file " + m_filename);
+          "Number of element blocks read from ExodusII file must be larger "
+          "than zero" );
+  ErrChk( ndim == 3, "Need a 3D mesh from ExodusII file " + m_filename);
 
   // set mesh graph size
   m_mesh.size() = static_cast< std::size_t >( m_nnode );
@@ -116,7 +118,7 @@ ExodusIIMeshReader::readNodes()
 
   ErrChk( ex_get_coord( m_inFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
-          "Failed to read coordinates from file: " + m_filename );
+          "Failed to read coordinates from ExodusII file: " + m_filename );
 }
 
 void
@@ -136,9 +138,10 @@ ExodusIIMeshReader::readNode( std::size_t id,
   tk::real px, py, pz;
 
   ErrChk(
-    ne_get_n_coord(m_inFile, static_cast<int64_t>(id)+1, 1, &px, &py, &pz) == 0,
-    "Failed to read coordinates of node " + std::to_string( id ) +
-      " from file: " + m_filename );
+    ne_get_n_coord(
+      m_inFile, static_cast<int64_t>(id)+1, 1, &px, &py, &pz) == 0,
+      "Failed to read coordinates of node " + std::to_string( id ) +
+      " from ExodusII file: " + m_filename );
 
   x.push_back( px );
   y.push_back( py );
@@ -153,43 +156,38 @@ ExodusIIMeshReader::readElements()
 //******************************************************************************
 {
   std::vector< int > id( static_cast< std::size_t >( m_neblk ) );
-  char eltype[MAX_STR_LENGTH+1];
-  int nel, nnpe, nattr;
 
   // Read element block ids
   ErrChk( ex_get_elem_blk_ids( m_inFile, id.data()) == 0,
-          "Failed to read element block ids from file: " + m_filename );
+          "Failed to read element block ids from ExodusII file: " +
+          m_filename );
 
   for (std::size_t i=0; i<static_cast<std::size_t>(m_neblk); ++i) {
+    char eltype[MAX_STR_LENGTH+1];
+    int nel, nnpe, nattr;
+
     // Read element block information
     ErrChk(
       ex_get_elem_block( m_inFile, id[i], eltype, &nel, &nnpe, &nattr ) == 0,
-      "Failed to read element block information from file: " + m_filename );
+      "Failed to read element block information from ExodusII file: " +
+      m_filename );
 
     // Read element connectivity
+    auto connectsize = static_cast< std::size_t >( nel*nnpe );
     if (nnpe == 4) {    // tetrahedra
-      for (int e=0; e<nel; ++e) {
-        std::array< int, 4 > n;
-        ErrChk( ne_get_n_elem_conn( m_inFile, id[i], e+1, 1, n.data() ) == 0,
-                "Failed to read " + std::string(eltype) +
-                " element connectivity from file: " + m_filename );
-        m_mesh.tettag().push_back( { 1 } );
-        m_mesh.tetinpoel().push_back( n[0] );
-        m_mesh.tetinpoel().push_back( n[1] );
-        m_mesh.tetinpoel().push_back( n[2] );
-        m_mesh.tetinpoel().push_back( n[3] );
-      }
+      m_mesh.tettag().resize( connectsize, { 1 } );
+      m_mesh.tetinpoel().resize( connectsize );
+      ErrChk(
+        ex_get_elem_conn( m_inFile, id[i], m_mesh.tetinpoel().data() ) == 0,
+        "Failed to read " + std::string(eltype) + " element connectivity from "
+        "ExodusII file: " + m_filename );
     } else if (nnpe == 3) {    // triangles
-      for (int e=0; e<nel; ++e) {
-        std::array< int, 3 > n;
-        ErrChk( ne_get_n_elem_conn( m_inFile, id[i], e+1, 1, n.data() ) == 0,
-                "Failed to read " + std::string(eltype) +
-                " element connectivity from file: " + m_filename );
-        m_mesh.tritag().push_back( { 1 } );
-        m_mesh.triinpoel().push_back( n[0] );
-        m_mesh.triinpoel().push_back( n[1] );
-        m_mesh.triinpoel().push_back( n[2] );
-      }
+      m_mesh.tritag().resize( connectsize, { 1 } );
+      m_mesh.triinpoel().resize( connectsize );
+      ErrChk(
+        ex_get_elem_conn( m_inFile, id[i], m_mesh.triinpoel().data() ) == 0,
+        "Failed to read " + std::string(eltype) + " element connectivity from "
+        "ExodusII file: " + m_filename );
     }
   }
 

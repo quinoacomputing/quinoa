@@ -2,7 +2,7 @@
 /*!
   \file      src/IO/ExodusIIMeshWriter.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 10:10:35 AM MDT
+  \date      Sun 12 Apr 2015 08:39:25 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     ExodusII mesh writer
   \details   ExodusII mesh writer class definition. Currently, this is a bare
@@ -14,7 +14,6 @@
 #include <iostream>
 
 #include <exodusII.h>
-#include <ne_nemesisI.h>
 
 #include <Config.h>
 #include <ExodusIIMeshWriter.h>
@@ -41,7 +40,7 @@ ExodusIIMeshWriter::ExodusIIMeshWriter( const std::string& filename,
                          &cpuwordsize,
                          &iowordsize );
 
-  ErrChk( m_outFile > 0, "Failed to create file: " + filename );
+  ErrChk( m_outFile > 0, "Failed to create ExodusII file: " + filename );
 }
 
 ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
@@ -51,7 +50,8 @@ ExodusIIMeshWriter::~ExodusIIMeshWriter() noexcept
 //******************************************************************************
 {
   if ( ex_close(m_outFile) < 0 )
-    printf( ">>> WARNING: Failed to close file: %s\n", m_filename.c_str() );
+    printf( ">>> WARNING: Failed to close ExodusII file: %s\n",
+            m_filename.c_str() );
 }
 
 void
@@ -94,7 +94,7 @@ ExodusIIMeshWriter::writeNodes()
 {
   ErrChk( ex_put_coord( m_outFile, m_mesh.x().data(), m_mesh.y().data(),
                         m_mesh.z().data() ) == 0,
-          "Failed to write coordinates to file: " + m_filename );
+          "Failed to write coordinates to ExodusII file: " + m_filename );
 }
 
 void
@@ -105,21 +105,45 @@ ExodusIIMeshWriter::writeElements()
 //******************************************************************************
 {
   int elclass = 0;
-  writeElemBlock( elclass, 3, "TRIANGLES", m_mesh.triinpoel() );
-  writeElemBlock( elclass, 4, "TETRAHEDRA", m_mesh.tetinpoel() );
+
+  // Note that we cast away the constness of the element connectivities
+  // explicitly below. This could be avoided if the mesh object reference,
+  // m_mesh, was simply held as a non-const reference. However, that would allow
+  // all other member functions in this class to modify the mesh object via
+  // their non-const member functions. Instead, that is not allowed (after all a
+  // writer should not modify the internal state of the object being written),
+  // and the constness of the mesh connectivity references, obtained by the
+  // element connectivity mesh object member functions, triinpoel() and
+  // tetinpoel(), are specifically and locally casted away so that the element
+  // block writer can temporarily shift the zero-based point ids to one-based
+  // ones, write the connectivities out to file, and then shift the point ids
+  // back. If everything goes well, this indeed does not modify the
+  // connectivities (as is visible to the outside. The rationale is that this
+  // avoids copies just for outputing to file and is thus significantly faster.
+  // Also the full connectivity is output at once, using the single ExodusII I/O
+  // call, ex_put_elem_conn, instead of having to use the NemesisI I/O call,
+  // ne_put_n_elem_conn, outputing a single element's connectivity at a time.
+  // See also member function writeElemBlock().
+
+  writeElemBlock( elclass, 3, "TRIANGLES",
+                  const_cast< std::vector< int >& >( m_mesh.triinpoel() ) );
+  writeElemBlock( elclass, 4, "TETRAHEDRA",
+                  const_cast< std::vector< int >& >( m_mesh.tetinpoel() ) );
 }
 
 void
 ExodusIIMeshWriter::writeElemBlock( int& elclass,
                                     int nnpe,
                                     const std::string& eltype,
-                                    const std::vector< int >& inpoel )
+                                    std::vector< int >& inpoel )
 //******************************************************************************
 //  Write element block to ExodusII file
 //! \param[inout] elclass Count element class ids in file
 //! \param[in] nnpe Number of nodes per element for block
 //! \param[in] eltype String describing element type
-//! \param[in] inpoel Element connectivity
+//! \param[in] inpoel Element connectivity. Note that inpoel is modified
+//!   in-place to avoid copying memory: the node coordinates are shifted to be
+//!   one-based, written out, then shifted back to zero-based.
 //! \author J. Bakosi
 //******************************************************************************
 {
@@ -140,23 +164,15 @@ ExodusIIMeshWriter::writeElemBlock( int& elclass,
                        static_cast< int64_t >( inpoel.size() ) / nnpe,
                        nnpe,
                        0 ) == 0,
-    "Failed to write " + eltype + " element block to file: " + m_filename );
+    "Failed to write " + eltype + " element block to ExodusII file: " +
+    m_filename );
 
   // Write element connectivity with 1-based element ids
-  for (int i=0; i<static_cast<int>(inpoel.size())/nnpe; ++i) {
-    std::vector< int > Inpoel;
-    for (int k=0; k<nnpe; ++k)
-      Inpoel.push_back( inpoel[ static_cast<std::size_t>(i*nnpe+k) ]+1 );
-
-    ErrChk(
-      ne_put_n_elem_conn( m_outFile,
-                          elclass,
-                          i+1,
-                          1,
-                          Inpoel.data() ) == 0,
-      "Failed to write " + eltype + " element connectivity to file: " +
-        m_filename );
-  }
+  for (auto& p : inpoel) ++p;   // shift node ids to one-based
+  ErrChk( ex_put_elem_conn( m_outFile, elclass, inpoel.data() ) == 0,
+          "Failed to write " + eltype + " element connectivity to ExodusII "
+          "file: " + m_filename );
+  for (auto& p : inpoel) --p;   // shift back node ids to zero-based
 }
 
 void
@@ -169,7 +185,7 @@ ExodusIIMeshWriter::writeTimeStamp( int it, tk::real time )
 //******************************************************************************
 {
   ErrChk( ex_put_time( m_outFile, it, &time ) == 0,
-          "Failed to time stamp to file: " + m_filename );
+          "Failed to time stamp to ExodusII file: " + m_filename );
 }
 
 void
@@ -182,7 +198,8 @@ ExodusIIMeshWriter::writeVarNames( const std::vector< std::string >& nvar )
 {
   ErrChk(
     ex_put_var_param( m_outFile, "n", static_cast<int>(nvar.size()) ) == 0,
-    "Failed to write the number of output variables to file: " + m_filename );
+    "Failed to write the number of output variables to ExodusII file: " +
+    m_filename );
 
   std::vector< const char* > names;
   std::transform( std::begin(nvar), std::end(nvar), std::back_inserter(names),
@@ -192,8 +209,8 @@ ExodusIIMeshWriter::writeVarNames( const std::vector< std::string >& nvar )
                             "n",
                             static_cast<int>(nvar.size()),
                             const_cast<char**>(names.data()) ) == 0,
-          "Failed to write the number of output variables to file: " +
-            m_filename );
+          "Failed to write the number of output variables to ExodusII file: " +
+          m_filename );
 }
 
 void
@@ -213,5 +230,5 @@ ExodusIIMeshWriter::writeNodeScalar( int it,
                             varid,
                             static_cast< int64_t >( var.size() ),
                             var.data() ) == 0,
-          "Failed to write node scalar to file: " + m_filename );
+          "Failed to write node scalar to ExodusII file: " + m_filename );
 }
