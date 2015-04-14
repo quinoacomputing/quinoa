@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/TaggedTuple.h
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:17:01 PM MST
+  \date      Tue 14 Apr 2015 11:44:58 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/TaggedTuple.h
   \details   Unit tests for Base/TaggedTuple.h
@@ -33,7 +33,7 @@ struct TaggedTuple_common {
 };
 
 //! Test group shortcuts
-using TaggedTuple_group = test_group< TaggedTuple_common >;
+using TaggedTuple_group = test_group< TaggedTuple_common, MAX_TESTS_IN_GROUP >;
 using TaggedTuple_object = TaggedTuple_group::object;
 
 //! Define test group

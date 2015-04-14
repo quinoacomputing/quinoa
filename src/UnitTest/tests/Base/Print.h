@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Print.h
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:58:00 AM MDT
+  \date      Tue 14 Apr 2015 11:44:22 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Print.h
   \details   Unit tests for Base/Print.h
@@ -29,7 +29,7 @@ struct Print_common {
 };
 
 //! Test group shortcuts
-using Print_group = test_group< Print_common >;
+using Print_group = test_group< Print_common, MAX_TESTS_IN_GROUP >;
 using Print_object = Print_group::object;
 
 //! Define test group

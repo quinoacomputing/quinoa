@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Timer.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:37:20 PM MDT
+  \date      Tue 14 Apr 2015 11:45:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Timer.h
   \details   Unit tests for Base/Timer.h
@@ -23,7 +23,7 @@ struct Timer_common {
 };
 
 //! Test group shortcuts
-using Timer_group = test_group< Timer_common >;
+using Timer_group = test_group< Timer_common, MAX_TESTS_IN_GROUP >;
 using Timer_object = Timer_group::object;
 
 //! Define test group

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Exception.h
   \author    J. Bakosi
-  \date      Sat 28 Feb 2015 10:17:08 PM MST
+  \date      Tue 14 Apr 2015 11:42:48 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Exception.h
   \details   Unit tests for Base/Exception.h
@@ -20,7 +20,7 @@ namespace tut {
 struct Exception_common {};
 
 //! Test group shortcuts
-using Exception_group = test_group< Exception_common >;
+using Exception_group = test_group< Exception_common, MAX_TESTS_IN_GROUP >;
 using Exception_object = Exception_group::object;
 
 //! Define test group

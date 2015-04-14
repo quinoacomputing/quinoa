@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/LoadDistributor.h
   \author    J. Bakosi
-  \date      Sat 04 Apr 2015 08:09:23 AM MDT
+  \date      Tue 14 Apr 2015 11:44:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/LoadDistributor
   \details   Unit tests for Base/LoadDistributor
@@ -26,7 +26,8 @@ namespace tut {
 struct LoadDistributor_common {};
 
 //! Test group shortcuts
-using LoadDistributor_group = test_group< LoadDistributor_common >;
+using LoadDistributor_group =
+  test_group< LoadDistributor_common, MAX_TESTS_IN_GROUP >;
 using LoadDistributor_object = LoadDistributor_group::object;
 
 //! Define test group

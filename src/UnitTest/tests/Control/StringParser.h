@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/StringParser.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 04:02:40 PM MDT
+  \date      Tue 14 Apr 2015 11:46:41 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/StringParser
   \details   Unit tests for Control/StringParser
@@ -28,7 +28,8 @@ struct StringParser_common {
 };
 
 //! Test group shortcuts
-using StringParser_group = test_group< StringParser_common >;
+using StringParser_group =
+  test_group< StringParser_common, MAX_TESTS_IN_GROUP >;
 using StringParser_object = StringParser_group::object;
 
 //! Define test group

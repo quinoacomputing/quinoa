@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/IO/Mesh.h
   \author    J. Bakosi
-  \date      Sat 04 Apr 2015 07:48:25 AM MDT
+  \date      Tue 14 Apr 2015 11:48:23 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for unstructured-mesh reader and writers in IO
   \details   Unit tests for unstructured-mesh reader and writers in IO
@@ -175,7 +175,7 @@ struct Mesh_common {
 };
 
 //! Test group shortcuts
-using Mesh_group = test_group< Mesh_common >;
+using Mesh_group = test_group< Mesh_common, MAX_TESTS_IN_GROUP >;
 using Mesh_object = Mesh_group::object;
 
 //! Define test group

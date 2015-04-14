@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Writer.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 04:10:06 PM MST
+  \date      Tue 14 Apr 2015 11:43:07 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Writer
   \details   Unit tests for Base/Writer
@@ -30,7 +30,7 @@ struct Writer_common {
 };
 
 //! Test group shortcuts
-using Writer_group = test_group< Writer_common >;
+using Writer_group = test_group< Writer_common, MAX_TESTS_IN_GROUP >;
 using Writer_object = Writer_group::object;
 
 //! Define test group

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/FileParser.h
   \author    J. Bakosi
-  \date      Sun 08 Mar 2015 01:13:35 PM MDT
+  \date      Tue 14 Apr 2015 11:47:13 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/FileParser
   \details   Unit tests for Control/FileParser
@@ -36,7 +36,7 @@ struct FileParser_common {
 };
 
 //! Test group shortcuts
-using FileParser_group = test_group< FileParser_common >;
+using FileParser_group = test_group< FileParser_common, MAX_TESTS_IN_GROUP >;
 using FileParser_object = FileParser_group::object;
 
 //! Define test group

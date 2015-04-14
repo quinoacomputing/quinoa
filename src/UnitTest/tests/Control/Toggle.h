@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Toggle.h
   \author    J. Bakosi
-  \date      Wed 06 Aug 2014 10:22:52 AM MDT
+  \date      Tue 14 Apr 2015 11:47:04 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Toggle
   \details   Unit tests for Control/Toggle
@@ -43,7 +43,7 @@ struct Toggle_common {
 };
 
 //! Test group shortcuts
-using Toggle_group = test_group< Toggle_common >;
+using Toggle_group = test_group< Toggle_common, MAX_TESTS_IN_GROUP >;
 using Toggle_object = Toggle_group::object;
 
 //! Define test group

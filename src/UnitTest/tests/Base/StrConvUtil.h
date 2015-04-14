@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/StrConvUtil.h
   \author    J. Bakosi
-  \date      Sat 26 Jul 2014 07:18:18 PM MDT
+  \date      Tue 14 Apr 2015 11:44:40 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/StrConvUtil.h
   \details   Unit tests for Base/StrConvUtil.h
@@ -20,7 +20,7 @@ namespace tut {
 struct StrConvUtil_common {};
 
 //! Test group shortcuts
-using StrConvUtil_group = test_group< StrConvUtil_common >;
+using StrConvUtil_group = test_group< StrConvUtil_common, MAX_TESTS_IN_GROUP >;
 using StrConvUtil_object = StrConvUtil_group::object;
 
 //! Define test group

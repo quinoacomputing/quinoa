@@ -252,8 +252,8 @@ genEdsup( const std::vector< int >& inpoel,
 //!       for (auto i=edsup.second[p]+1; i<=edsup.second[p+1]; ++i)
 //!         use edge with point ids p < edsup.first[i]
 //!   \endcode
-//!     To find out the number of points, _npoin_, the mesh connectivity,
-//!     _inpoel_, can be queried:
+//!   To find out the number of points, _npoin_, the mesh connectivity,
+//!   _inpoel_, can be queried:
 //!   \code{.cpp}
 //!     auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
 //!     Assert( *minmax.first == 0, "node ids should start from zero" );
@@ -712,6 +712,121 @@ genInedel( const std::vector< int >& inpoel,
 
   // Return (move out) vector
   return inedel;
+}
+
+std::pair< std::vector< std::size_t >, std::vector< std::size_t > >
+genEsued( const std::vector< int >& inpoel,
+          std::size_t nnpe,
+          const std::pair< std::vector< std::size_t >,
+                           std::vector< std::size_t > >& esup )
+//******************************************************************************
+//  Generate derived data structure, elements surrounding edges
+//! \param[in] inpoel Inteconnectivity of points and elements. These are the
+//!   node ids of each element of an unstructured mesh. Example:
+//!   \code{.cpp}
+//!     std::vector< int > inpoel { 12, 14,  9, 11,
+//!                                 10, 14, 13, 12 };
+//!   \endcode
+//!   specifies two tetrahedra whose vertices (node ids) are { 12, 14, 9, 11 },
+//!   and { 10, 14, 13, 12 }.
+//! \param[in] nnpe Number of nodes per element (3 or 4)
+//! \param[in] esup Elements surrounding points as linked lists, see tk::genEsup
+//! \return Linked lists storing elements surrounding edges
+//! \warning It is not okay to call this function with an empty container for
+//!   inpoel or esup.first or esup.second or a non-positive number of nodes per
+//!   element; it will throw an exception.
+//! \details The data generated here is stored in a linked list, more precisely,
+//!   two linked arrays (vectors), _esued1_ and _esued2_, where _esued2_ holds
+//!   the indices at which _esued1_ holds the element ids surrounding edges.
+//!   Looping over all elements surrounding edges can then be accomplished by
+//!   the following loop:
+//!   \code{.cpp}
+//!     for (std::size_t e=0; e<nedge; ++e)
+//!       for (auto i=esued.second[e]+1; i<=esued.second[e+1]; ++i)
+//!         use element id esued.first[i]
+//!   \endcode
+//!   To find out the number of edges, _nedge_, the edge connectivity, _inpoed_,
+//!   can be queried:
+//!   \code{.cpp}
+//!     auto esup = tk::genEsup(inpoel,nnpe);
+//!     auto nedge = tk::genInpoed(inpoel,nnpe,esup).size()/2;
+//!   \endcode
+//!   where _nnpe_ is the number of nodes per element (4 for tetrahedra, 3 for
+//!   triangles).
+//! \note At first sight, this function seems to work for elements with more
+//!   vertices than that of tetrahedra. However, that is not the case since the
+//!   algorithm for nnpe > 4 would erronously identify any two combination of
+//!   vertices as a valid edge of an element. Since only triangles and
+//!   tetrahedra have no internal edges, this algorithm only works for triangle
+//!   and tetrahedra element connectivity.
+//! \see Lohner, An Introduction to Applied CFD Techniques, Wiley, 2008
+//! \author J. Bakosi
+//******************************************************************************
+{
+  Assert( !inpoel.empty(), "Attempt to call genEsued() on empty container" );
+  Assert( nnpe > 0, "Attempt to call genEsued() with zero nodes per element" );
+  Assert( nnpe == 3 || nnpe == 4,
+          "Attempt to call genEsued() with nodes per element, nnpe, that is "
+          "neither 4 (tetrahedra) nor 3 (triangles)." );
+  Assert( inpoel.size()%nnpe == 0, "Size of inpoel must be divisible by nnpe" );
+  Assert( !esup.first.empty(), "Attempt to call genEsued() with empty esup1" );
+  Assert( !esup.second.empty(), "Attempt to call genEsued() with empty esup2" );
+
+  // find out number of points in mesh connectivity
+  auto minmax = std::minmax_element( begin(inpoel), end(inpoel) );
+  Assert( *minmax.first == 0, "node ids should start from zero" );
+  auto npoin = static_cast< std::size_t >( *minmax.second + 1 );
+
+  auto& esup1 = esup.first;
+  auto& esup2 = esup.second;
+
+  // allocate and fill with zeros a temporary array, only used locally
+  std::vector< std::size_t > lpoin( npoin, 0 );
+
+  // lambda that returns true if element e contains edge (p < q)
+  auto has = [ &inpoel, nnpe ]( std::size_t e, std::size_t p, std::size_t q )
+  -> bool {
+    std::vector< bool > sp;
+    for (std::size_t n=0; n<nnpe; ++n)
+      if (static_cast< std::size_t >( inpoel[e*nnpe+n] ) == p ||
+          static_cast< std::size_t >( inpoel[e*nnpe+n] ) == q)
+        sp.push_back( true );
+    if (sp.size() == 2) return true; else return false;
+  };
+
+  // map to associate edges to unique surrounding element ids
+  std::map< std::size_t,  std::vector< std::size_t > > revolver;
+
+  // generate edges and associated vector of unique surrounding element ids
+  std::size_t ed = 0;
+  for (std::size_t p=0; p<npoin; ++p)
+    for (std::size_t i=esup2[p]+1; i<=esup2[p+1]; ++i )
+      for (std::size_t n=0; n<nnpe; ++n) {
+        auto q = static_cast< std::size_t >( inpoel[ esup1[i] * nnpe + n ] );
+        if (q != p && lpoin[q] != p+1) {
+          if (p < q) {  // for edge given point ids p < q
+            for (std::size_t j=esup2[p]+1; j<=esup2[p+1]; ++j ) {
+              auto e = esup1[j];
+              if (has(e,p,q)) revolver[ed].push_back(e);
+            }
+            ++ed;
+          }
+          lpoin[q] = p+1;
+        }
+      }
+
+  // linked lists (vectors) to store elements surrounding edges
+  std::vector< std::size_t > esued1( 1, 0 ), esued2( 1, 0 );
+
+  // sort and store elements surrounding edges and their indices in vectors
+  for (auto p : revolver) {
+    std::sort( begin(p.second), end(p.second) );
+    esued2.push_back( esued2.back() + p.second.size() );
+    for (auto e : p.second) esued1.push_back( e );
+  }
+
+  // Return (move out) linked lists
+  return std::make_pair( std::move(esued1), std::move(esued2) );
 }
 
 } // tk::

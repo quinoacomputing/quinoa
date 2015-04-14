@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/MKLGaussianMethod.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:39:07 PM MDT
+  \date      Tue 14 Apr 2015 11:47:26 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLGaussianMethod
   \details   Unit tests for Control/Options/MKLGaussianMethod
@@ -22,7 +22,8 @@ struct MKLGaussianMethod_common {
 };
 
 //! Test group shortcuts
-using MKLGaussianMethod_group = test_group< MKLGaussianMethod_common >;
+using MKLGaussianMethod_group =
+  test_group< MKLGaussianMethod_common, MAX_TESTS_IN_GROUP >;
 using MKLGaussianMethod_object = MKLGaussianMethod_group::object;
 
 //! Define test group

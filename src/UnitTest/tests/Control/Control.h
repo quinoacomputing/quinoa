@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Control.h
   \author    J. Bakosi
-  \date      Fri 27 Feb 2015 11:07:08 AM MST
+  \date      Tue 14 Apr 2015 11:46:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Control
   \details   Unit tests for Control/Control
@@ -59,7 +59,7 @@ struct Control_common {
 };
 
 //! Test group shortcuts
-using Control_group = test_group< Control_common >;
+using Control_group = test_group< Control_common, MAX_TESTS_IN_GROUP >;
 using Control_object = Control_group::object;
 
 //! Define test group
