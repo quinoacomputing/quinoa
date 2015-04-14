@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/make_list.h
   \author    J. Bakosi
-  \date      Tue 17 Feb 2015 03:01:14 PM MST
+  \date      Tue 14 Apr 2015 11:46:18 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/make_list.h
   \details   Unit tests for Base/make_list.h
@@ -28,7 +28,7 @@ struct make_list_common {
 };
 
 //! Test group shortcuts
-using make_list_group = test_group< make_list_common >;
+using make_list_group = test_group< make_list_common, MAX_TESTS_IN_GROUP >;
 using make_list_object = make_list_group::object;
 
 //! Define test group

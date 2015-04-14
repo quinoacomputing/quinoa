@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/RNG.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:43:36 PM MDT
+  \date      Tue 14 Apr 2015 11:48:01 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/RNG
   \details   Unit tests for Control/Options/RNG
@@ -23,7 +23,7 @@ struct RNG_common {
 };
 
 //! Test group shortcuts
-using RNG_group = test_group< RNG_common >;
+using RNG_group = test_group< RNG_common, MAX_TESTS_IN_GROUP >;
 using RNG_object = RNG_group::object;
 
 //! Define test group

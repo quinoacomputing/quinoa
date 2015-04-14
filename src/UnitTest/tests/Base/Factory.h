@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Factory.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 08:20:31 AM MDT
+  \date      Tue 14 Apr 2015 11:43:37 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Factory.h
   \details   Unit tests for Base/Factory.h
@@ -120,7 +120,7 @@ struct Factory_common {
 }; // Factory_common
 
 //! Test group shortcuts
-using Factory_group = test_group< Factory_common >;
+using Factory_group = test_group< Factory_common, MAX_TESTS_IN_GROUP >;
 using Factory_object = Factory_group::object;
 
 //! Define test group

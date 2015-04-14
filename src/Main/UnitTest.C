@@ -2,7 +2,7 @@
 /*!
   \file      src/Main/UnitTest.C
   \author    J. Bakosi
-  \date      Sat 11 Apr 2015 07:56:29 AM MDT
+  \date      Tue 14 Apr 2015 11:49:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     UnitTest's Charm++ main chare and main().
   \details   UnitTest's Charm++ main chare and main(). This file contains
@@ -33,6 +33,16 @@
 #include <Assessment.h>
 #include <unittest.decl.h>
 #include <Init.h>
+
+namespace tut {
+
+//! \brief Maximum number of tests in every test group to attempt to run
+//! \details If any of the unit test groups have more tests than this number,
+//!   this should be increased. All test groups included below will use this
+//!   value to override the default template argument for tut::test_group<>.
+const int MAX_TESTS_IN_GROUP = 80;
+
+} // tut::
 
 // Unit test groups to be tested. Each file defines a different test group.
 #include <tests/Base/flip_map.h>
@@ -93,10 +103,8 @@ CProxy_TUTSuite g_suiteProxy;
 //! for opening.
 std::string g_executable;
 
-//! \brief Max number tests in every test group to attempt to run
-//! \details If any of the unit test groups have larger than this number than
-//!   this should be increased.
-int g_maxTestsInGroup = 50;
+//! Max number of tests in every group
+int g_maxTestsInGroup = tut::MAX_TESTS_IN_GROUP;
 
 //! Pack/Unpack test runner. This Pack/Unpack method (re-)creates the
 //! test runner singleton on all processing elements. Therefore we circumvent

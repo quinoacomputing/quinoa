@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Reader.h
   \author    J. Bakosi
-  \date      Tue 24 Feb 2015 10:58:08 AM MST
+  \date      Tue 14 Apr 2015 11:43:45 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Reader
   \details   Unit tests for Base/Reader
@@ -26,7 +26,7 @@ namespace tut {
 struct Reader_common {};
 
 //! Test group shortcuts
-using Reader_group = test_group< Reader_common >;
+using Reader_group = test_group< Reader_common, MAX_TESTS_IN_GROUP >;
 using Reader_object = Reader_group::object;
 
 //! Define test group

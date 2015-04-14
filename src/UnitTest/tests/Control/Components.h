@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Components.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 10:02:49 PM MST
+  \date      Tue 14 Apr 2015 11:46:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Components
   \details   Unit tests for Control/Components
@@ -58,7 +58,7 @@ struct Components_common {
 };
 
 //! Test group shortcuts
-using Components_group = test_group< Components_common >;
+using Components_group = test_group< Components_common, MAX_TESTS_IN_GROUP >;
 using Components_object = Components_group::object;
 
 //! Define test group

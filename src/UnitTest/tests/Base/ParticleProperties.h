@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ParticleProperties.h
   \author    J. Bakosi
-  \date      Wed 18 Feb 2015 04:43:52 PM MST
+  \date      Tue 14 Apr 2015 11:46:05 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ParticleProperties.h
   \details   Unit tests for Base/ParticleProperties.h
@@ -28,7 +28,8 @@ struct ParticleProperties_common {
 };
 
 //! Test group shortcuts
-using ParticleProperties_group = test_group< ParticleProperties_common >;
+using ParticleProperties_group =
+  test_group< ParticleProperties_common, MAX_TESTS_IN_GROUP >;
 using ParticleProperties_object = ParticleProperties_group::object;
 
 //! Define test group

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/CharmUtil.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 07:06:41 AM MST
+  \date      Tue 14 Apr 2015 11:44:49 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/CharmUtil.h
   \details   Unit tests for Base/CharmUtil.h
@@ -24,7 +24,7 @@ struct CharmUtil_common {
 };
 
 //! Test group shortcuts
-using CharmUtil_group = test_group< CharmUtil_common >;
+using CharmUtil_group = test_group< CharmUtil_common, MAX_TESTS_IN_GROUP >;
 using CharmUtil_object = CharmUtil_group::object;
 
 //! Define test group

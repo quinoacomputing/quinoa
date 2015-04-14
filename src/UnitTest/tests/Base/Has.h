@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/Has.h
   \author    J. Bakosi
-  \date      Sat 17 Jan 2015 07:05:25 AM MST
+  \date      Tue 14 Apr 2015 11:43:24 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/Has.h
   \details   Unit tests for Base/Has.h
@@ -32,7 +32,7 @@ struct Has_common {
 };
 
 //! Test group shortcuts
-using Has_group = test_group< Has_common >;
+using Has_group = test_group< Has_common, MAX_TESTS_IN_GROUP >;
 using Has_object = Has_group::object;
 
 //! Define test group

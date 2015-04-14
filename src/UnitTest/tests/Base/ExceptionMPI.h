@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ExceptionMPI.h
   \author    J. Bakosi
-  \date      Mon 09 Mar 2015 09:13:38 PM MDT
+  \date      Tue 14 Apr 2015 11:51:50 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ExceptionMPI.h
   \details   Unit tests for Base/ExceptionMPI.h
@@ -20,7 +20,8 @@ namespace tut {
 struct ExceptionMPI_common {};
 
 //! Test group shortcuts
-using ExceptionMPI_group = test_group< ExceptionMPI_common >;
+using ExceptionMPI_group =
+  test_group< ExceptionMPI_common, MAX_TESTS_IN_GROUP >;
 using ExceptionMPI_object = ExceptionMPI_group::object;
 
 //! Define test group

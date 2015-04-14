@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Mesh/DerivedData.h
   \author    J. Bakosi
-  \date      Thu 02 Apr 2015 10:59:45 AM MDT
+  \date      Tue 14 Apr 2015 11:39:31 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Mesh/DerivedData
   \details   Unit tests for Mesh/DerivedData. All unit tests start from simple
@@ -122,8 +122,10 @@ namespace tut {
 //! All tests in group inherited from this base
 struct DerivedData_common {};
 
-//! Test group shortcuts
-using DerivedData_group = test_group< DerivedData_common >;
+// Test group shortcuts
+// The 2nd template argument is the max number of tests in this group. If
+// omitted, the default is 50, specified in tut/tut.hpp.
+using DerivedData_group = test_group< DerivedData_common, MAX_TESTS_IN_GROUP >;
 using DerivedData_object = DerivedData_group::object;
 
 //! Define test group
@@ -2079,6 +2081,339 @@ void DerivedData_object::test< 48 >() {
       ensure( "edge ids surrounding element '" + std::to_string(e) +
               "' incorrect", edges == it->second );
     }
+  }
+}
+
+//! Attempt to generate elements surrounding edges with empty connectivity
+template<> template<>
+void DerivedData_object::test< 49 >() {
+  set_test_name( "genEsued throws with empty inpoel" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    std::vector< int > empty;
+    tk::genEsued( empty, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genEsued if it throws on non-positive number of nodes per elements
+template<> template<>
+void DerivedData_object::test< 50 >() {
+  set_test_name( "genEsued throws on non-positive nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genEsued( inpoel, 0, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! \brief Test genEsued if it throws on non-tet or non-tri number of nodes per
+//!   elements
+template<> template<>
+void DerivedData_object::test< 51 >() {
+  set_test_name( "genEsued throws on unsupported nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield floating point exception" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genEsued( inpoel, 5, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Test genEsued if it throws with empty element surrounding points
+template<> template<>
+void DerivedData_object::test< 52 >() {
+  set_test_name( "genEsued throws with empty esup" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield segmentation fault" );
+  #else
+  try {
+    std::vector< int > inpoel { 0, 1, 2, 3 };
+    tk::genEsued( inpoel, 4, {} );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown, test ok
+  }
+  #endif
+}
+
+//! \brief Test genEsued if it throws on inpoel non-divisible by the number of
+//!   nodes per elements
+template<> template<>
+void DerivedData_object::test< 53 >() {
+  set_test_name( "genEsued throws on inpoel non-div nnpe" );
+
+  #ifdef NDEBUG        // exception only thrown in DEBUG mode
+    skip( "in RELEASE mode, would yield invalid read" );
+  #else
+  try {
+    // Partial mesh mesh connectivity
+    std::vector< int > inpoel { 12, 14,  9, 11,
+                                14,  4, 13 };
+    tk::genEsued( inpoel, 4, tk::genEsup(inpoel,4) );
+    fail( "should throw exception in DEBUG mode" );
+  }
+  catch ( tk::Exception& e ) {
+    // exception thrown in DEBUG mode, test ok
+  }
+  #endif
+}
+
+//! Generate and test elements surrounding edges for tetrahedron-only mesh
+template<> template<>
+void DerivedData_object::test< 54 >() {
+  set_test_name( "genEsued for tetrahedra" );
+
+  // mesh connectivity for simple tetrahedron-only mesh
+  std::vector< int > inpoel { 12, 14,  9, 11,
+                              10, 14, 13, 12,
+                              14, 13, 12,  9,
+                              10, 14, 12, 11,
+                              1,  14,  5, 11,
+                              7,   6, 10, 12,
+                              14,  8,  5, 10,
+                              8,   7, 10, 13,
+                              7,  13,  3, 12,
+                              1,   4, 14,  9,
+                              13,  4,  3,  9,
+                              3,   2, 12,  9,
+                              4,   8, 14, 13,
+                              6,   5, 10, 11,
+                              1,   2,  9, 11,
+                              2,   6, 12, 11,
+                              6,  10, 12, 11,
+                              2,  12,  9, 11,
+                              5,  14, 10, 11,
+                              14,  8, 10, 13,
+                              13,  3, 12,  9,
+                              7,  10, 13, 12,
+                              14,  4, 13,  9,
+                              14,  1,  9, 11 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate edges surrounding points
+  auto esup = tk::genEsup( inpoel, 4 );
+  auto esued = tk::genEsued( inpoel, 4, esup );
+
+  auto& esued1 = esued.first;
+  auto& esued2 = esued.second;
+
+  // Generate correct solution for elements surrounding edges
+  std::set< std::vector< std::size_t > > correct_esued {
+    { 4, 9, 23 },
+    { 4 },
+    { 4, 14, 23 },
+    { 9 },
+    { 9, 14, 23 },
+    { 14 },
+    { 11 },
+    { 11, 15, 17 },
+    { 11, 14, 17 },
+    { 14, 15, 17 },
+    { 15 },
+    { 8 },
+    { 8, 10, 20 },
+    { 8, 11, 20 },
+    { 10 },
+    { 10, 11, 20 },
+    { 9, 12, 22 },
+    { 9, 10, 22 },
+    { 10, 12, 22 },
+    { 12 },
+    { 4, 6, 18 },
+    { 4, 13, 18 },
+    { 6 },
+    { 6, 13, 18 },
+    { 13 },
+    { 5 },
+    { 5, 13, 16 },
+    { 5, 15, 16 },
+    { 13, 15, 16 },
+    { 5, 7, 21 },
+    { 5, 8, 21 },
+    { 7 },
+    { 7, 8, 21 },
+    { 6, 12, 19 },
+    { 6, 7, 19 },
+    { 7, 12, 19 },
+    { 0, 2, 11, 17, 20 },
+    { 0, 2, 9, 22, 23 },
+    { 0, 14, 17, 23 },
+    { 2, 10, 20, 22 },
+    { 1, 3, 6, 18, 19 },
+    { 1, 7, 19, 21 },
+    { 1, 3, 5, 16, 21 },
+    { 3, 13, 16, 18 },
+    { 0, 3, 15, 16, 17 },
+    { 0, 3, 4, 18, 23 },
+    { 0, 1, 2, 3 },
+    { 1, 2, 8, 20, 21 },
+    { 1, 2, 12, 19, 22 }
+  };
+
+  // find out number of edges in mesh
+  auto nedge = tk::genInpoed(inpoel,4,esup).size()/2;
+
+  // this is more of a test on this test
+  ensure_equals( "number of edges in esued incorrect",
+                 nedge, correct_esued.size() );
+
+  // Test generated derived data structure, elements surrounding edges
+  for (std::size_t e=0; e<nedge; ++e) {
+    // extract element list generated for edge e
+    std::vector< std::size_t > elements;
+    for (auto i=esued2[e]+1; i<=esued2[e+1]; ++i) elements.push_back(esued1[i]);
+    // store element list as string to output it in case test fails
+    std::stringstream ss;
+    for (auto i : elements) ss << i << " ";
+    // attempt to find element list in correct esued
+    auto it = correct_esued.find( elements );
+    // test if element list can be found among the correct ones
+    ensure( "element list { " + ss.str() + "} surrounding edge '" +
+            std::to_string(e) + "' generated into esued but not in correct "
+            "esued",
+            it != correct_esued.end() );
+    // remove element list just tested from correct esued, this ensures that the
+    // generated esued does not contain edges whose element lists would be
+    // exactly the same, as later tests in this loop would fail in that case
+    correct_esued.erase( elements );
+  }
+}
+
+//! Generate and test elements surrounding edges for triangle-only mesh
+template<> template<>
+void DerivedData_object::test< 55 >() {
+  set_test_name( "genEsued for triangles" );
+
+  // Mesh connectivity for simple triangle-only mesh
+  std::vector< int > inpoel { 1,  9,  2,
+                              1,  4,  9,
+                              2,  9,  3,
+                              3,  9,  4,
+                              5,  6, 10,
+                              5, 10,  8,
+                              6,  7, 10,
+                              7,  8, 10,
+                              1,  2, 11,
+                              1, 11,  5,
+                              2,  6, 11,
+                              5, 11,  6,
+                              2,  3, 12,
+                              2, 12,  6,
+                              3,  7, 12,
+                              6, 12,  7,
+                              3,  4, 13,
+                              3, 13,  7,
+                              4,  8, 13,
+                              7, 13,  8,
+                              1, 14,  4,
+                              1,  5, 14,
+                              4, 14,  8,
+                              5,  8, 14 };
+
+  // Shift node IDs to start from zero
+  tk::shiftToZero( inpoel );
+
+  // Generate edges surrounding points
+  auto esup = tk::genEsup( inpoel, 3 );
+  auto esued = tk::genEsued( inpoel, 3, esup );
+
+  auto& esued1 = esued.first;
+  auto& esued2 = esued.second;
+
+  // Generate correct solution for elements surrounding edges
+  std::set< std::vector< std::size_t > > correct_esued {
+    { 0, 1 },
+    { 0, 8 },
+    { 1, 20 },
+    { 8, 9 },
+    { 9, 21 },
+    { 20, 21 },
+    { 0, 2 },
+    { 2, 12 },
+    { 8, 10 },
+    { 10, 13 },
+    { 12, 13 },
+    { 2, 3 },
+    { 3, 16 },
+    { 12, 14 },
+    { 14, 17 },
+    { 16, 17 },
+    { 1, 3 },
+    { 16, 18 },
+    { 18, 22 },
+    { 20, 22 },
+    { 4, 11 },
+    { 4, 5 },
+    { 5, 23 },
+    { 9, 11 },
+    { 21, 23 },
+    { 4, 6 },
+    { 6, 15 },
+    { 10, 11 },
+    { 13, 15 },
+    { 6, 7 },
+    { 7, 19 },
+    { 14, 15 },
+    { 17, 19 },
+    { 5, 7 },
+    { 18, 19 },
+    { 22, 23 }
+  };
+
+  // find out number of edges in mesh
+  auto nedge = tk::genInpoed(inpoel,3,esup).size()/2;
+
+  // this is more of a test on this test
+  ensure_equals( "number of edges in esued incorrect",
+                 nedge, correct_esued.size() );
+
+  // Test generated derived data structure, elements surrounding edges
+  for (std::size_t e=0; e<nedge; ++e) {
+    // extract element list generated for edge e
+    std::vector< std::size_t > elements;
+    for (auto i=esued2[e]+1; i<=esued2[e+1]; ++i) elements.push_back(esued1[i]);
+    // store element list as string to output it in case test fails
+    std::stringstream ss;
+    for (auto i : elements) ss << i << " ";
+    // attempt to find element list in correct esued
+    auto it = correct_esued.find( elements );
+    // test if element list can be found among the correct ones
+    ensure( "element list { " + ss.str() + "} surrounding edge '" +
+            std::to_string(e) + "' generated into esued but not in correct "
+            "esued",
+            it != correct_esued.end() );
+    // remove element list just tested from correct esued, this ensures that the
+    // generated esued does not contain edges whose element lists would be
+    // exactly the same, as later tests in this loop would fail in that case
+    correct_esued.erase( elements );
   }
 }
 

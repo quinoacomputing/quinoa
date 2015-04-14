@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/PUPUtil.h
   \author    J. Bakosi
-  \date      Wed 18 Mar 2015 08:20:17 AM MDT
+  \date      Tue 14 Apr 2015 11:45:54 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/PUPUtil.h
   \details   Unit tests for Base/PUPUtil.h
@@ -28,7 +28,7 @@ namespace tut {
 struct PUPUtil_common {};
 
 //! Test group shortcuts
-using PUPUtil_group = test_group< PUPUtil_common >;
+using PUPUtil_group = test_group< PUPUtil_common, MAX_TESTS_IN_GROUP >;
 using PUPUtil_object = PUPUtil_group::object;
 
 //! Define test group

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Control/Options/MKLUniformMethod.h
   \author    J. Bakosi
-  \date      Thu 12 Mar 2015 10:39:29 PM MDT
+  \date      Tue 14 Apr 2015 11:47:44 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Control/Options/MKLUniformMethod
   \details   Unit tests for Control/Options/MKLUniformMethod
@@ -22,7 +22,8 @@ struct MKLUniformMethod_common {
 };
 
 //! Test group shortcuts
-using MKLUniformMethod_group = test_group< MKLUniformMethod_common >;
+using MKLUniformMethod_group =
+  test_group< MKLUniformMethod_common, MAX_TESTS_IN_GROUP >;
 using MKLUniformMethod_object = MKLUniformMethod_group::object;
 
 //! Define test group

@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/ProcessControl.h
   \author    J. Bakosi
-  \date      Tue 24 Mar 2015 02:15:40 PM MDT
+  \date      Tue 14 Apr 2015 11:45:29 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/ProcessControl.h
   \details   Unit tests for Base/ProcessControl.h
@@ -20,7 +20,8 @@ namespace tut {
 struct ProcessControl_common {};
 
 //! Test group shortcuts
-using ProcessControl_group = test_group< ProcessControl_common >;
+using ProcessControl_group =
+  test_group< ProcessControl_common, MAX_TESTS_IN_GROUP >;
 using ProcessControl_object = ProcessControl_group::object;
 
 //! Define test group

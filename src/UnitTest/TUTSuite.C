@@ -126,7 +126,7 @@ TUTSuite::evaluate( std::vector< std::string > status )
   m_print.test( m_ncomplete, m_nfail, status );
 
   // Wait for all tests to finish, then quit
-  if (m_nrun == m_ngroup * static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
+  if (m_nrun == m_ngroup*static_cast<std::size_t>(g_maxTestsInGroup) + m_nmigr)
   {
     assess( m_print, "serial and Charm++", m_nfail, m_nwarn, m_nskip, m_nexcp,
             m_ncomplete );

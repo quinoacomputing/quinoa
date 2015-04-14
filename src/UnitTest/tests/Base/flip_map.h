@@ -2,7 +2,7 @@
 /*!
   \file      src/UnitTest/tests/Base/flip_map.h
   \author    J. Bakosi
-  \date      Tue 05 Aug 2014 04:02:31 PM MDT
+  \date      Tue 14 Apr 2015 11:42:56 AM MDT
   \copyright 2012-2015, Jozsef Bakosi.
   \brief     Unit tests for Base/flip_map.h
   \details   Unit tests for Base/flip_map.h
@@ -20,7 +20,7 @@ namespace tut {
 struct flip_map_common {};
 
 //! Test group shortcuts
-using flip_map_group = test_group< flip_map_common >;
+using flip_map_group = test_group< flip_map_common, MAX_TESTS_IN_GROUP >;
 using flip_map_object = flip_map_group::object;
 
 //! Define test group
