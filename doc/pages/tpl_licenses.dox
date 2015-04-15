@@ -53,9 +53,13 @@ Quinoa.
   - Web: http://pstreams.sourceforge.net/
   \verbinclude PStreams_license.txt
 
+\section hypre_license 13. Hypre for linear solvers and preconditioners
+  - Web: http://computation.llnl.gov/project/linear_solvers/software.php
+  \verbinclude Hypre_license.txt
+
 <hr>
 <div><small>
-<em>Page last updated:</em> Tue 24 Mar 2015 08:12:28 AM MDT
+<em>Page last updated:</em> Wed 15 Apr 2015 08:04:24 AM MDT
 <em>Copyright 2012-2015, Jozsef Bakosi.</em>
 </small></div>
 */

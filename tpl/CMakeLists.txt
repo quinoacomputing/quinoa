@@ -203,7 +203,7 @@ if (NOT NO_SYSTEM_ZOLTAN)
   find_package(Zoltan)
 endif()
 if(ZOLTAN_FOUND)
-  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include)) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
+  #message(STATUS "Zoltan found at ${ZOLTAN_INCLUDES} (include) and at ${ZOLTAN_LIBRARIES} (lib) - will not build ours")
   set(zoltan "")
 else()
   #message(STATUS "Zoltan not found - will build Trilinos")
@@ -220,6 +220,18 @@ if(PSTREAMS_FOUND)
 else()
   #message(STATUS "PStreams not found - will unpack ours")
   set(pstreams "pstreams")
+endif()
+
+# Detect Hypre, exclude if found, build if not
+if (NOT NO_SYSTEM_HYPRE)
+  find_package(Hypre)
+endif()
+if(HYPRE_FOUND)
+  #message(STATUS "Hypre found at ${HYPRE_INCLUDES} (include) and at ${HYPRE_LIBRARIES} (lib) - will not build ours")
+  set(hypre "")
+else()
+  #message(STATUS "Hypre not found - will build ours")
+  set(hypre "hypre")
 endif()
 
 # Define fine-grained targets
@@ -502,6 +514,27 @@ if (exodus OR zoltan)
                -D CMAKE_C_FLAGS:STRING=${CFLAGS}
                -D CMAKE_CXX_FLAGS:STRING=${CXXFLAGS}
                -D CMAKE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+    LOG_DOWNLOAD 1
+    LOG_CONFIGURE 1
+    LOG_BUILD 1
+    LOG_INSTALL 1
+  )
+endif()
+
+#### Hypre #####################################################################
+# http://computation.llnl.gov/project/linear_solvers/software.php
+if (hypre)
+  ExternalProject_Add(
+    hypre
+    PREFIX hypre
+    URL ${PROJECT_SOURCE_DIR}/hypre-2.10.0b.tar.gz
+    URL_MD5 768be38793a35bb5d055905b271f5b8e
+    CONFIGURE_COMMAND ${CMAKE_COMMAND}
+                      -D CMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+                      -D CMAKE_CXX_COMPILER:PATH=${UNDERLYING_CXX_COMPILER}
+                      -D CMAKE_CXX_FLAGS:STRING=${CXFLAGS}
+                      -D HYPRE_INSTALL_PREFIX:PATH=${CMAKE_INSTALL_PREFIX}
+                      ../hypre/src
     LOG_DOWNLOAD 1
     LOG_CONFIGURE 1
     LOG_BUILD 1
